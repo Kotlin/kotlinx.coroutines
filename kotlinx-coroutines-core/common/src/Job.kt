@@ -539,7 +539,7 @@ public fun CoroutineContext.cancel(): Unit {
 /**
  * Ensures that current job is [active][Job.isActive].
  * If the job is no longer active, throws [CancellationException].
- * If the job was cancelled, thrown exception contains original cancellation cause.
+ * If the job was cancelled, thrown exception contains the original cancellation cause.
  *
  * This method is a drop-in replacement for the following code, but with more precise exception:
  * ```
@@ -557,7 +557,7 @@ public fun Job.ensureActive(): Unit {
  * Throws [IllegalStateException] if the context does not have a job in it.
  *
  * If the job is no longer active, throws [CancellationException].
- * If the job was cancelled, thrown exception contains original cancellation cause.
+ * If the job was cancelled, thrown exception contains the original cancellation cause.
  *
  * This method is a drop-in replacement for the following code, but with more precise exception:
  * ```
@@ -567,7 +567,7 @@ public fun Job.ensureActive(): Unit {
  * ```
  */
 public fun CoroutineContext.ensureActive(): Unit {
-    val job = get(Job) ?: error("Context cannot be check for liveness because it does not have a job: $this")
+    val job = get(Job) ?: error("Context cannot be checked for liveness because it does not have a job: $this")
     job.ensureActive()
 }
 
