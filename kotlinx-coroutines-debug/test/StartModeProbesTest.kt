@@ -9,23 +9,7 @@ import org.junit.*
 import org.junit.Test
 import kotlin.test.*
 
-class StartModeProbesTest : TestBase() {
-
-    @Before
-    fun setUp() {
-        before()
-        DebugProbes.sanitizeStackTraces = false
-        DebugProbes.install()
-    }
-
-    @After
-    fun tearDown() {
-        try {
-            DebugProbes.uninstall()
-        } finally {
-            onCompletion()
-        }
-    }
+class StartModeProbesTest : DebugTestBase() {
 
     @Test
     fun testUndispatched() = runTest {

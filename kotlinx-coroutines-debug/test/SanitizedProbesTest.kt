@@ -13,21 +13,11 @@ import org.junit.Test
 import java.util.concurrent.*
 import kotlin.test.*
 
-class SanitizedProbesTest : TestBase() {
+class SanitizedProbesTest : DebugTestBase() {
     @Before
-    fun setUp() {
-        before()
+    override fun setUp() {
+        super.setUp()
         DebugProbes.sanitizeStackTraces = true
-        DebugProbes.install()
-    }
-
-    @After
-    fun tearDown() {
-        try {
-            DebugProbes.uninstall()
-        } finally {
-            onCompletion()
-        }
     }
 
     @Test

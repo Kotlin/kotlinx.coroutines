@@ -6,7 +6,6 @@ package kotlinx.coroutines.debug.internal
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.*
-import kotlinx.coroutines.internal.artificialFrame
 import net.bytebuddy.*
 import net.bytebuddy.agent.*
 import net.bytebuddy.dynamic.loading.*
@@ -16,6 +15,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.*
+import kotlinx.coroutines.internal.artificialFrame as createArtificialFrame // IDEA bug workaround
 
 /**
  * Mirror of [DebugProbes] with actual implementation.
@@ -134,7 +134,7 @@ internal object DebugProbesImpl {
 
                 append("\n\nCoroutine $key, state: $state")
                 if (observedStackTrace.isEmpty()) {
-                    append("\n\tat ${artificialFrame(ARTIFICIAL_FRAME_MESSAGE)}")
+                    append("\n\tat ${createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE)}")
                     printStackTrace(value.creationStackTrace)
                 } else {
                     printStackTrace(enhancedStackTrace)
@@ -168,7 +168,6 @@ internal object DebugProbesImpl {
          * 2) Find the next frame after BaseContinuationImpl.resumeWith (continuation machinery).
          *   Invariant: this method is called under the lock, so such method **should** be present
          *   in continuation stacktrace.
-         *
          * 3) Find target method in continuation stacktrace (metadata-based)
          * 4) Prepend dumped stacktrace (trimmed by target frame) to continuation stacktrace
          *
@@ -181,31 +180,60 @@ internal object DebugProbesImpl {
                     it.fileName == "ContinuationImpl.kt"
         }
 
-        // We haven't found "BaseContinuationImpl.resumeWith" resume call in stacktrace
-        // This is some inconsistency in machinery, do not fail, fallback
-        val continuationFrame = actualTrace.getOrNull(indexOfResumeWith - 1)
-            ?: return coroutineTrace
+        val (continuationStartFrame, frameSkipped) = findContinuationStartIndex(
+            indexOfResumeWith,
+            actualTrace,
+            coroutineTrace)
 
-        val continuationStartFrame = coroutineTrace.indexOfFirst {
-            it.fileName == continuationFrame.fileName &&
-                    it.className == continuationFrame.className &&
-                    it.methodName == continuationFrame.methodName
-        } + 1
+        if (continuationStartFrame == -1) return coroutineTrace
 
-        if (continuationStartFrame == 0) return coroutineTrace
-
-        val expectedSize = indexOfResumeWith + coroutineTrace.size - continuationStartFrame
+        val delta = if (frameSkipped) 1 else 0
+        val expectedSize = indexOfResumeWith + coroutineTrace.size - continuationStartFrame - 1 - delta
         val result = ArrayList<StackTraceElement>(expectedSize)
-
-        for (index in 0 until indexOfResumeWith) {
+        for (index in 0 until indexOfResumeWith - delta) {
             result += actualTrace[index]
         }
 
-        for (index in continuationStartFrame until coroutineTrace.size) {
+        for (index in continuationStartFrame + 1 until coroutineTrace.size) {
             result += coroutineTrace[index]
         }
 
         return result
+    }
+
+    /**
+     * Tries to find the lowest meaningful frame above `resumeWith` in the real stacktrace and
+     * its match in a coroutines stacktrace (steps 2-3 in heuristic).
+     *
+     * This method does more than just matching `realTrace.indexOf(resumeWith) - 1`:
+     * If method above `resumeWith` has no line number (thus it is `stateMachine.invokeSuspend`),
+     * it's skipped and attempt to match next one is made because state machine could have been missing in the original coroutine stacktrace.
+     *
+     * Returns index of such frame (or -1) and flag indicating whether frame with state machine was skipped
+     */
+    private fun findContinuationStartIndex(
+        indexOfResumeWith: Int,
+        actualTrace: Array<StackTraceElement>,
+        coroutineTrace: List<StackTraceElement>
+    ): Pair<Int, Boolean> {
+        val result = findIndexOfFrame(indexOfResumeWith - 1, actualTrace, coroutineTrace)
+        if (result == -1) return findIndexOfFrame(indexOfResumeWith - 2, actualTrace, coroutineTrace) to true
+        return result to false
+    }
+
+    private fun findIndexOfFrame(
+        frameIndex: Int,
+        actualTrace: Array<StackTraceElement>,
+        coroutineTrace: List<StackTraceElement>
+    ): Int {
+        val continuationFrame = actualTrace.getOrNull(frameIndex)
+            ?: return -1
+
+        return coroutineTrace.indexOfFirst {
+            it.fileName == continuationFrame.fileName &&
+                    it.className == continuationFrame.className &&
+                    it.methodName == continuationFrame.methodName
+        }
     }
 
     private fun StringBuilder.printStackTrace(frames: List<StackTraceElement>) {
@@ -292,7 +320,7 @@ internal object DebugProbesImpl {
 
         if (!DebugProbes.sanitizeStackTraces) {
             return List(size - probeIndex) {
-                if (it == 0) artificialFrame(ARTIFICIAL_FRAME_MESSAGE) else stackTrace[it + probeIndex]
+                if (it == 0) createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE) else stackTrace[it + probeIndex]
             }
         }
 
@@ -302,7 +330,7 @@ internal object DebugProbesImpl {
          * output will be [e, i1, i3, e, i4, e, i5, i7]
          */
         val result = ArrayList<StackTraceElement>(size - probeIndex + 1)
-        result += artificialFrame(ARTIFICIAL_FRAME_MESSAGE)
+        result += createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE)
         var includeInternalFrame = true
         for (i in (probeIndex + 1) until size - 1) {
             val element = stackTrace[i]
