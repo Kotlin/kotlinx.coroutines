@@ -82,7 +82,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * maintains the given [value] of the given [ThreadLocal] for coroutine regardless of the actual thread its is resumed on.
  * By default [ThreadLocal.get] is used as a value for the thread-local variable, but it can be overridden with [value] parameter.
  * Beware that context element **does not track** modifications of the thread-local and accessing thread-local from coroutine
- * without corresponding context element returns **undefined** value. See the examples for a detailed description.
+ * without the corresponding context element returns **undefined** value. See the examples for a detailed description.
  *
  *
  * Example usage:
@@ -117,7 +117,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * }
  * ```
  *
- * Accessing thread-local without corresponding context element leads to undefined value:
+ * Accessing the thread-local without corresponding context element leads to undefined value:
  * ```
  * val tl = ThreadLocal.withInitial { "initial" }
  *
