@@ -5,18 +5,17 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
-import kotlin.coroutines.*
 import org.w3c.dom.*
+import kotlin.coroutines.*
+import kotlin.js.*
 
 private const val MAX_DELAY = Int.MAX_VALUE.toLong()
 
 private fun delayToInt(timeMillis: Long): Int =
     timeMillis.coerceIn(0, MAX_DELAY).toInt()
 
-internal class NodeDispatcher : CoroutineDispatcher(), Delay {
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        setTimeout({ block.run() }, 0)
-    }
+internal object NodeDispatcher : CoroutineDispatcher(), Delay {
+    override fun dispatch(context: CoroutineContext, block: Runnable) = NodeJsMessageQueue.enqueue(block)
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val handle = setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
@@ -37,26 +36,9 @@ internal class NodeDispatcher : CoroutineDispatcher(), Delay {
 }
 
 internal class WindowDispatcher(private val window: Window) : CoroutineDispatcher(), Delay {
-    private val messageName = "dispatchCoroutine"
+    private val queue = WindowMessageQueue(window)
 
-    private val queue = object : MessageQueue() {
-        override fun schedule() {
-            window.postMessage(messageName, "*")
-        }
-    }
-
-    init {
-        window.addEventListener("message", { event: dynamic ->
-            if (event.source == window && event.data == messageName) {
-                event.stopPropagation()
-                queue.process()
-            }
-        }, true)
-    }
-
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        queue.enqueue(block)
-    }
+    override fun dispatch(context: CoroutineContext, block: Runnable) = queue.enqueue(block)
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         window.setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
@@ -72,12 +54,58 @@ internal class WindowDispatcher(private val window: Window) : CoroutineDispatche
     }
 }
 
+private class WindowMessageQueue(private val window: Window) : MessageQueue() {
+    private val messageName = "dispatchCoroutine"
+
+    init {
+        window.addEventListener("message", { event: dynamic ->
+            if (event.source == window && event.data == messageName) {
+                event.stopPropagation()
+                process()
+            }
+        }, true)
+    }
+
+    override fun schedule() {
+        Promise.resolve(Unit).then({ process() })
+    }
+
+    override fun reschedule() {
+        window.postMessage(messageName, "*")
+    }
+}
+
+private object NodeJsMessageQueue : MessageQueue() {
+    override fun schedule() {
+        // next tick is even faster than resolve
+        process.nextTick({ process() })
+    }
+
+    override fun reschedule() {
+        setTimeout({ process() }, 0)
+    }
+}
+
+/**
+ * An abstraction over JS scheduling mechanism that leverages micro-batching of [dispatch] blocks without
+ * paying the cost of JS callbacks scheduling on every dispatch.
+ *
+ * Queue uses two scheduling mechanisms:
+ * 1) [schedule] is used to schedule the initial processing of the message queue.
+ *    JS engine-specific microtask mechanism is used in order to boost performance on short runs and a dispatch batch
+ * 2) [reschedule] is used to schedule processing of the queue after yield to the JS event loop.
+ *    JS engine-specific macrotask mechanism is used not to starve animations and non-coroutines macrotasks.
+ *
+ * Yet there could be a long tail of "slow" reschedules, but it should be amortized by the queue size.
+ */
 internal abstract class MessageQueue : ArrayQueue<Runnable>() {
-    val yieldEvery = 16 // yield to JS event loop after this many processed messages
+    val yieldEvery = 16 // yield to JS macrotask event loop after this many processed messages
 
     private var scheduled = false
     
     abstract fun schedule()
+
+    abstract fun reschedule()
 
     fun enqueue(element: Runnable) {
         addLast(element)
@@ -98,7 +126,7 @@ internal abstract class MessageQueue : ArrayQueue<Runnable>() {
             if (isEmpty) {
                 scheduled = false
             } else {
-                schedule()
+                reschedule()
             }
         }
     }
@@ -108,3 +136,4 @@ internal abstract class MessageQueue : ArrayQueue<Runnable>() {
 // using them via "window" (which only works in browser)
 private external fun setTimeout(handler: dynamic, timeout: Int = definedExternally): Int
 private external fun clearTimeout(handle: Int = definedExternally)
+private external val process: dynamic
