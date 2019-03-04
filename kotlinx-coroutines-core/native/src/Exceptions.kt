@@ -59,3 +59,6 @@ private fun String?.withCause(cause: Throwable?) =
 
 @Suppress("NOTHING_TO_INLINE")
 internal actual inline fun Throwable.addSuppressedThrowable(other: Throwable) { /* empty */ }
+
+// For use in tests
+internal actual val RECOVER_STACK_TRACES: Boolean = false

@@ -48,8 +48,9 @@ public interface CopyableThrowable<T> where T : Throwable, T : CopyableThrowable
      * Creates a copy of the current instance.
      * For better debuggability, it is recommended to use original exception as [cause][Throwable.cause] of the resulting one.
      * Stacktrace of copied exception will be overwritten by stacktrace recovery machinery by [Throwable.setStackTrace] call.
+     * An exception can opt-out of copying by returning `null` from this function.
      */
-    public fun createCopy(): T
+    public fun createCopy(): T?
 }
 
 /**
@@ -77,8 +78,9 @@ internal val DEBUG = systemProp(DEBUG_PROPERTY_NAME).let { value ->
     }
 }
 
+// Note: stack-trace recovery is enabled only in debug mode
 @JvmField
-internal val RECOVER_STACKTRACES = systemProp(STACKTRACE_RECOVERY_PROPERTY_NAME, true)
+internal actual val RECOVER_STACK_TRACES = DEBUG && systemProp(STACKTRACE_RECOVERY_PROPERTY_NAME, true)
 
 // internal debugging tools
 

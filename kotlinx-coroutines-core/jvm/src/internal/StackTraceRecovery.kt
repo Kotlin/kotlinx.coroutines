@@ -12,9 +12,7 @@ import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
 internal actual fun <E : Throwable> recoverStackTrace(exception: E): E {
-    if (recoveryDisabled(exception)) {
-        return exception
-    }
+    if (recoveryDisabled(exception)) return exception
     // No unwrapping on continuation-less path: exception is not reported multiple times via slow paths
     val copy = tryCopyException(exception) ?: return exception
     return copy.sanitizeStackTrace()
@@ -41,10 +39,7 @@ private fun <E : Throwable> E.sanitizeStackTrace(): E {
 }
 
 internal actual fun <E : Throwable> recoverStackTrace(exception: E, continuation: Continuation<*>): E {
-    if (recoveryDisabled(exception) || continuation !is CoroutineStackFrame) {
-        return exception
-    }
-
+    if (recoveryDisabled(exception) || continuation !is CoroutineStackFrame) return exception
     return recoverFromStackFrame(exception, continuation)
 }
 
@@ -146,26 +141,23 @@ internal actual suspend inline fun recoverAndThrow(exception: Throwable): Nothin
 }
 
 internal actual fun <E : Throwable> unwrap(exception: E): E {
-    if (recoveryDisabled(exception)) {
-        return exception
-    }
-
+    if (recoveryDisabled(exception)) return exception
     val cause = exception.cause
     // Fast-path to avoid array cloning
     if (cause == null || cause.javaClass != exception.javaClass) {
         return exception
     }
-
+    // Slow path looks for artificial frames in a stack-trace
     if (exception.stackTrace.any { it.isArtificial() }) {
         @Suppress("UNCHECKED_CAST")
-        return exception.cause as? E ?: exception
+        return cause as E
     } else {
         return exception
     }
 }
 
 private fun <E : Throwable> recoveryDisabled(exception: E) =
-    !RECOVER_STACKTRACES || !DEBUG || exception is NonRecoverableThrowable
+    !RECOVER_STACK_TRACES || exception is NonRecoverableThrowable
 
 private fun createStackTrace(continuation: CoroutineStackFrame): ArrayDeque<StackTraceElement> {
     val stack = ArrayDeque<StackTraceElement>()

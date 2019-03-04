@@ -26,3 +26,6 @@ internal expect class JobCancellationException(
 internal expect class DispatchException(message: String, cause: Throwable) : RuntimeException
 
 internal expect fun Throwable.addSuppressedThrowable(other: Throwable)
+
+// For use in tests
+internal expect val RECOVER_STACK_TRACES: Boolean

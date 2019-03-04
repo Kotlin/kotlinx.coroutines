@@ -171,8 +171,10 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     @Test
     fun testCancel() = runTest {
         runOnlyCancellation(null) { e ->
-            assertNull(e.cause)
+            val cause = e.cause as JobCancellationException // shall be recovered JCE
+            assertNull(cause.cause)
             assertTrue(e.suppressed.isEmpty())
+            assertTrue(cause.suppressed.isEmpty())
         }
     }
 

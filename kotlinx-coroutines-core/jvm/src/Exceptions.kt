@@ -41,7 +41,7 @@ internal actual class JobCancellationException public actual constructor(
     message: String,
     cause: Throwable?,
     @JvmField internal actual val job: Job
-) : CancellationException(message) {
+) : CancellationException(message), CopyableThrowable<JobCancellationException> {
 
     init {
         if (cause != null) initCause(cause)
@@ -58,6 +58,17 @@ internal actual class JobCancellationException public actual constructor(
          * and hurts performance.
          */
         return this
+    }
+
+    override fun createCopy(): JobCancellationException? {
+        if (DEBUG) {
+            return JobCancellationException(message!!, this, job)
+        }
+
+        /*
+         * In non-debug mode we don't copy JCE for speed as it does not have the stack trace anyway.
+         */
+        return null
     }
 
     override fun toString(): String = "${super.toString()}; job=$job"
