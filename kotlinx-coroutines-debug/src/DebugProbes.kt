@@ -95,10 +95,10 @@ public object DebugProbes {
        printJob(scope.coroutineContext[Job] ?: error("Job is not present in the scope"), out)
 
     /**
-     * Returns all existing coroutine states.
+     * Returns all existing coroutines info.
      * The resulting collection represents a consistent snapshot of all existing coroutines at the moment of invocation.
      */
-    public fun dumpCoroutinesState(): List<CoroutineState> = DebugProbesImpl.dumpCoroutinesState()
+    public fun dumpCoroutinesInfo(): List<CoroutineInfo> = DebugProbesImpl.dumpCoroutinesInfo()
 
     /**
      * Dumps all active coroutines into the given output stream, providing a consistent snapshot of all existing coroutines at the moment of invocation.

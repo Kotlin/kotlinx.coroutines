@@ -17,7 +17,6 @@ class RunningThreadStackMergeTest : DebugTestBase() {
     fun testStackMergeWithContext() = runTest {
         launchCoroutine()
         awaitCoroutineStarted()
-
         verifyDump(
             "Coroutine \"coroutine#1\":BlockingCoroutine{Active}@62230679", // <- this one is ignored
             "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@50284dc4, state: RUNNING\n" +

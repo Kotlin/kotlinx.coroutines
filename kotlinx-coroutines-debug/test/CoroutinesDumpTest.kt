@@ -5,8 +5,6 @@
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.debug.junit4.*
-import org.junit.*
 import org.junit.Test
 import kotlin.coroutines.*
 import kotlin.test.*
@@ -32,8 +30,8 @@ class CoroutinesDumpTest : DebugTestBase() {
                 "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
                 "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n")
 
-        val found = DebugProbes.dumpCoroutinesState().single { it.jobOrNull === deferred }
-        assertSame(deferred, found.jobOrNull)
+        val found = DebugProbes.dumpCoroutinesInfo().single { it.job === deferred }
+        assertSame(deferred, found.job)
         runBlocking { deferred.cancelAndJoin() }
     }
 
@@ -96,7 +94,7 @@ class CoroutinesDumpTest : DebugTestBase() {
         }
 
         awaitCoroutineStarted()
-        val coroutine = DebugProbes.dumpCoroutinesState().first()
+        val coroutine = DebugProbes.dumpCoroutinesInfo().first()
         val result = coroutine.creationStackTrace.fold(StringBuilder()) { acc, element ->
             acc.append(element.toString())
             acc.append('\n')

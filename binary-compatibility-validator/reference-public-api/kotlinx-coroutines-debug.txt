@@ -1,11 +1,11 @@
-public final class kotlinx/coroutines/debug/CoroutineState {
-	public final fun component1 ()Lkotlin/coroutines/Continuation;
-	public final fun copy (Lkotlin/coroutines/Continuation;Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;J)Lkotlinx/coroutines/debug/CoroutineState;
-	public static synthetic fun copy$default (Lkotlinx/coroutines/debug/CoroutineState;Lkotlin/coroutines/Continuation;Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;JILjava/lang/Object;)Lkotlinx/coroutines/debug/CoroutineState;
+public final class kotlinx/coroutines/debug/CoroutineInfo {
+	public final fun component1 ()Lkotlin/coroutines/CoroutineContext;
+	public final fun copy (Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;J)Lkotlinx/coroutines/debug/CoroutineInfo;
+	public static synthetic fun copy$default (Lkotlinx/coroutines/debug/CoroutineInfo;Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;JILjava/lang/Object;)Lkotlinx/coroutines/debug/CoroutineInfo;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getContinuation ()Lkotlin/coroutines/Continuation;
+	public final fun getContext ()Lkotlin/coroutines/CoroutineContext;
 	public final fun getCreationStackTrace ()Ljava/util/List;
-	public final fun getJobOrNull ()Lkotlinx/coroutines/Job;
+	public final fun getJob ()Lkotlinx/coroutines/Job;
 	public final fun getState ()Lkotlinx/coroutines/debug/State;
 	public fun hashCode ()I
 	public final fun lastObservedStackTrace ()Ljava/util/List;
@@ -16,7 +16,7 @@ public final class kotlinx/coroutines/debug/DebugProbes {
 	public static final field INSTANCE Lkotlinx/coroutines/debug/DebugProbes;
 	public final fun dumpCoroutines (Ljava/io/PrintStream;)V
 	public static synthetic fun dumpCoroutines$default (Lkotlinx/coroutines/debug/DebugProbes;Ljava/io/PrintStream;ILjava/lang/Object;)V
-	public final fun dumpCoroutinesState ()Ljava/util/List;
+	public final fun dumpCoroutinesInfo ()Ljava/util/List;
 	public final fun getSanitizeStackTraces ()Z
 	public final fun install ()V
 	public final fun jobToString (Lkotlinx/coroutines/Job;)Ljava/lang/String;

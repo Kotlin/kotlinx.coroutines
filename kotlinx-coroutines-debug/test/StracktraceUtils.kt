@@ -97,7 +97,7 @@ public fun verifyPartialDump(createdCoroutinesCount: Int, vararg frames: String)
         trace.any { tr -> tr.contains(frame) }
     }
 
-    assertEquals(createdCoroutinesCount, DebugProbes.dumpCoroutinesState().size)
+    assertEquals(createdCoroutinesCount, DebugProbes.dumpCoroutinesInfo().size)
     assertTrue(matches)
 }
 

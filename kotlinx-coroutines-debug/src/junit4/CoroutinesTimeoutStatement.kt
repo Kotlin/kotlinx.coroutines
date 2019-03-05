@@ -73,8 +73,8 @@ internal class CoroutinesTimeoutStatement(
 
     private fun cancelIfNecessary() {
         if (cancelOnTimeout) {
-            DebugProbes.dumpCoroutinesState().forEach {
-                it.jobOrNull?.cancel()
+            DebugProbes.dumpCoroutinesInfo().forEach {
+                it.job?.cancel()
             }
         }
     }
