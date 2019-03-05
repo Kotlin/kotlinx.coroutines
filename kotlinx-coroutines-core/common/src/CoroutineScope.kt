@@ -14,11 +14,11 @@ import kotlin.coroutines.intrinsics.*
  * is an extension on [CoroutineScope] and inherits its [coroutineContext][CoroutineScope.coroutineContext]
  * to automatically propagate both context elements and cancellation.
  *
- * The best way to obtain a standalone instance of the scope is [CoroutineScope()] and [MainScope()] factory functions.
+ * The best ways to obtain a standalone instance of the scope are [CoroutineScope()] and [MainScope()] factory functions.
  * Additional context elements can be appended to the scope using [plus][CoroutineScope.plus] operator.
  *
  * Manual implementation of this interface is not recommended, implementation by delegation should be preferred instead.
- * By convention context of the scope should contain an instance of a [job][Job] to enforce structured concurrency.
+ * By convention, [context of the scope][CoroutineScope.coroutineContext] should contain an instance of a [job][Job] to enforce structured concurrency.
  *
  * Every coroutine builder (like [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc)
  * and every scoping function (like [coroutineScope], [withContext], etc) provides _its own_ scope
@@ -41,10 +41,7 @@ import kotlin.coroutines.intrinsics.*
  *      * in this method throws an exception, then all nested coroutines are cancelled.
  *      */
  *     fun showSomeData() = launch { // <- extension on current activity, launched in the main thread
- *        val data = withContext(Dispatchers.IO) {
- *            // Provides withContext scope that is child of he outer launch scope
- *            // blocking I/O operation
- *        }
+ *        // ... here we can use suspending functions or coroutine builders with other dispatchers
  *        draw(data) // draw in the main thread
  *     }
  * }
@@ -56,7 +53,7 @@ public interface CoroutineScope {
      * Context is encapsulated by the scope and used for implementation of coroutine builders that are extensions on the scope.
      * Accessing this property in general code is not recommended for any purposes except accessing [Job] instance for advanced usages.
      *
-     * By convention should contain an instance of a [job][Job] to enforce structured concurrency.
+     * By convention, should contain an instance of a [job][Job] to enforce structured concurrency.
      */
     public val coroutineContext: CoroutineContext
 }
