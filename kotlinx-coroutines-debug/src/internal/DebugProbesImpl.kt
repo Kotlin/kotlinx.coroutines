@@ -32,6 +32,16 @@ internal object DebugProbesImpl {
     // To sort coroutines by creation order, used as unique id
     private var sequenceNumber: Long = 0
 
+    /*
+     * This is an optimization in the face of KT-29997:
+     * Consider suspending call stack a()->b()->c() and c() completes its execution and every call is
+     * "almost" in tail position.
+     *
+     * Then at least three RUNNING -> RUNNING transitions will occur consecutively and complexity of each is O(depth).
+     * To avoid that quadratic complexity, we are caching lookup result for such chains in this map and update it incrementally.
+     */
+    private val stateCache = WeakHashMap<CoroutineStackFrame, CoroutineState>()
+
     @Synchronized
     public fun install() {
         if (++installations > 1) return
@@ -172,7 +182,7 @@ internal object DebugProbesImpl {
          * 4) Prepend dumped stacktrace (trimmed by target frame) to continuation stacktrace
          *
          * Heuristic may fail on recursion and overloads, but it will be automatically improved
-         * with KT-29997
+         * with KT-29997.
          */
         val indexOfResumeWith = actualTrace.indexOfFirst {
             it.className == "kotlin.coroutines.jvm.internal.BaseContinuationImpl" &&
@@ -248,9 +258,34 @@ internal object DebugProbesImpl {
 
     private fun updateState(frame: Continuation<*>, state: State) {
         if (!isInstalled) return
+        // KT-29997 is here only since 1.3.30
+        if (state == State.RUNNING && KotlinVersion.CURRENT.isAtLeast(1, 3, 30)) {
+            updateRunningState(frame, state)
+            return
+        }
+
         // Find ArtificialStackFrame of the coroutine
         val owner = frame.owner()
         updateState(owner, frame, state)
+    }
+
+    @Synchronized // See comment to stateCache
+    private fun updateRunningState(continuation: Continuation<*>, state: State) {
+        val frame = continuation as? CoroutineStackFrame ?: return
+        val coroutineState = stateCache.remove(frame) ?: capturedCoroutines[frame.owner()] ?: return
+        // Do not cache states for proxy-classes such as ScopeCoroutines
+        val caller = frame.realCaller()
+        if (caller != null) {
+            stateCache[caller] = coroutineState
+        }
+
+        coroutineState.updateState(state, continuation)
+    }
+
+    private tailrec fun CoroutineStackFrame.realCaller(): CoroutineStackFrame? {
+        val caller = callerFrame ?: return null
+        if (caller.getStackTraceElement() != null) return caller
+        else return caller.realCaller()
     }
 
     @Synchronized
