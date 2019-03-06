@@ -33,7 +33,7 @@ public fun SupervisorJob(parent: Job? = null) : CompletableJob = SupervisorJobIm
 
 /** @suppress Binary compatibility only */
 @Suppress("FunctionName")
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
 @JvmName("SupervisorJob")
 public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
 

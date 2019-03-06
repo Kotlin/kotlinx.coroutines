@@ -73,7 +73,7 @@ public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
     val future = CompletableFuture<T>()
     future.whenComplete { _, exception ->
         cancel(exception?.let {
-            it as? CancellationException ?: CancellationException("Future failed", it)
+            it as? CancellationException ?: CancellationException("CompletableFuture was completed exceptionally", it)
         })
     }
     invokeOnCompletion {

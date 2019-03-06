@@ -257,13 +257,13 @@ public interface ReceiveChannel<out E> {
     /**
      * @suppress This method implements old version of JVM ABI. Use [cancel].
      */
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     public fun cancel() = cancel(null)
 
     /**
      * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [cancel].
      */
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     public fun cancel(cause: Throwable? = null): Boolean
 }
 

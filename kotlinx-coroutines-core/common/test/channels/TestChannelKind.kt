@@ -64,7 +64,7 @@ private class ChannelViaBroadcast<E>(
     override fun cancel(cause: CancellationException?) = sub.cancel(cause)
 
     // implementing hidden method anyway, so can cast to an internal class
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     override fun cancel(cause: Throwable?): Boolean = (sub as AbstractChannel).cancelInternal(cause)
 
     override val onReceive: SelectClause1<E>

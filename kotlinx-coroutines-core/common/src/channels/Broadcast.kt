@@ -95,7 +95,7 @@ private open class BroadcastCoroutine<E>(
     override val channel: SendChannel<E>
         get() = this
 
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     final override fun cancel(cause: Throwable?): Boolean =
         cancelInternal(cause)
 

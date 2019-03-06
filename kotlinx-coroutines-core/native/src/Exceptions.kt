@@ -55,7 +55,11 @@ internal fun IllegalStateException(message: String, cause: Throwable?) =
     IllegalStateException(message.withCause(cause))
 
 private fun String?.withCause(cause: Throwable?) =
-    if (cause == null) this else "$this; caused by $cause"
+    when {
+        cause == null -> this
+        this == null -> "caused by $cause"
+        else -> "$this; caused by $cause"
+    }
 
 @Suppress("NOTHING_TO_INLINE")
 internal actual inline fun Throwable.addSuppressedThrowable(other: Throwable) { /* empty */ }

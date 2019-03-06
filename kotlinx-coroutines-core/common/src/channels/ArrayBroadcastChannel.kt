@@ -67,7 +67,7 @@ internal class ArrayBroadcastChannel<E>(
         return true
     }
 
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     override fun cancel(cause: Throwable?): Boolean =
         cancelInternal(cause)
 

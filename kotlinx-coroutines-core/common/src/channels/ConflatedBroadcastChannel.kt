@@ -204,7 +204,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     /**
      * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [cancel].
      */
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     public override fun cancel(cause: Throwable?): Boolean = close(cause)
 
     /**

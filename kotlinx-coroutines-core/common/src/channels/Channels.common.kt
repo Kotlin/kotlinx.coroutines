@@ -67,7 +67,7 @@ public fun ReceiveChannel<*>.consumes(): CompletionHandler = { cause: Throwable?
 @PublishedApi
 internal fun ReceiveChannel<*>.cancelConsumed(cause: Throwable?) {
     cancel(cause?.let {
-        it as? CancellationException ?: CancellationException("Consumed", it)
+        it as? CancellationException ?: CancellationException("Channel was consumed, consumer had failed", it)
     })
 }
 
