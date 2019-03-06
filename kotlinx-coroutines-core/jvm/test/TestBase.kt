@@ -62,13 +62,20 @@ public actual open class TestBase actual constructor() {
      */
     @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
     public actual fun error(message: Any, cause: Throwable? = null): Nothing {
-        val exception = IllegalStateException(message.toString(), cause)
+        throw makeError(message, cause)
+    }
+
+    private fun makeError(message: Any, cause: Throwable? = null): IllegalStateException =
+        IllegalStateException(message.toString(), cause).also {
+            setError(it)
+        }
+
+    private fun setError(exception: Throwable) {
         error.compareAndSet(null, exception)
-        throw exception
     }
 
     private fun printError(message: String, cause: Throwable) {
-        error.compareAndSet(null, cause)
+        setError(cause)
         println("$message: $cause")
         cause.printStackTrace(System.out)
         println("--- Detected at ---")
@@ -118,21 +125,35 @@ public actual open class TestBase actual constructor() {
         initPoolsBeforeTest()
         threadsBefore = currentThreads()
         originalUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler({ t, e ->
-            println("Uncaught exception in thread $t: $e")
+        Thread.setDefaultUncaughtExceptionHandler { t, e ->
+            println("Exception in thread $t: $e") // The same message as in default handler
             e.printStackTrace()
             uncaughtExceptions.add(e)
-        })
+        }
     }
 
     @After
     fun onCompletion() {
-        error.get()?.let { throw it }
-        check(actionIndex.get() == 0 || finished.get()) { "Expecting that 'finish(...)' was invoked, but it was not" }
+        // onCompletion should not throw exceptions before it finishes all cleanup, so that other tests always
+        // start in a clear, restored state
+        if (actionIndex.get() != 0 && !finished.get()) {
+            makeError("Expecting that 'finish(...)' was invoked, but it was not")
+        }
+        // Shutdown all thread pools
         shutdownPoolsAfterTest()
-        checkTestThreads(threadsBefore)
+        // Check that that are now leftover threads
+        runCatching {
+            checkTestThreads(threadsBefore)
+        }.onFailure {
+            setError(it)
+        }
+        // Restore original uncaught exception handler
         Thread.setDefaultUncaughtExceptionHandler(originalUncaughtExceptionHandler)
-        assertTrue(uncaughtExceptions.isEmpty(), "Expected no uncaught exceptions, but got $uncaughtExceptions")
+        if (uncaughtExceptions.isNotEmpty()) {
+            makeError("Expected no uncaught exceptions, but got $uncaughtExceptions")
+        }
+        // The very last action -- throw error if any was detected
+        error.get()?.let { throw it }
     }
 
     fun initPoolsBeforeTest() {
