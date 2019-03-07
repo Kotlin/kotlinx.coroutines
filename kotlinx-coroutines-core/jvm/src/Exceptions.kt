@@ -81,7 +81,7 @@ internal actual class JobCancellationException public actual constructor(
         (message!!.hashCode() * 31 + job.hashCode()) * 31 + (cause?.hashCode() ?: 0)
 }
 
-internal actual class DispatchException actual constructor(message: String, cause: Throwable) : RuntimeException(message, cause)
+internal actual class CoroutinesInternalError actual constructor(message: String, cause: Throwable) : Error(message, cause)
 
 @Suppress("NOTHING_TO_INLINE")
 internal actual inline fun Throwable.addSuppressedThrowable(other: Throwable) =
