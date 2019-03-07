@@ -56,7 +56,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
      * when the context of the coroutine this element.
      * The result of this function is the old value of the thread-local state that will be passed to [restoreThreadContext].
      * This method should handle its own exceptions and do not rethrow it. Thrown exceptions will leave coroutine which
-     * context is updated in an undefined state.
+     * context is updated in an undefined state and may crash an application.
      *
      * @param context the coroutine context.
      */
@@ -69,7 +69,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
      * The value of [oldState] is the result of the previous invocation of [updateThreadContext] and it should
      * be restored in the thread-local state by this function.
      * This method should handle its own exceptions and do not rethrow it. Thrown exceptions will leave coroutine which
-     * context is updated in an undefined state.
+     * context is updated in an undefined state and may crash an application.
      *
      * @param context the coroutine context.
      * @param oldState the value returned by the previous invocation of [updateThreadContext].

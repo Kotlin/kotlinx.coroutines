@@ -51,7 +51,7 @@ private fun DispatchedTask<*>.resumeUnconfined() {
     }
 }
 
-private inline fun runUnconfinedEventLoop(
+private inline fun DispatchedTask<*>.runUnconfinedEventLoop(
     eventLoop: EventLoop,
     block: () -> Unit
 ) {
@@ -64,10 +64,10 @@ private inline fun runUnconfinedEventLoop(
         }
     } catch (e: Throwable) {
         /*
-         * This exception doesn't happen normally, only if user either submitted throwing runnable
-         * or if we have a bug in implementation. Throw an exception that better explains the problem.
+         * This exception doesn't happen normally, only if we have a bug in implementation.
+         * Report it as a fatal exception.
          */
-        throw DispatchException("Unexpected exception in unconfined event loop", e)
+        handleFatalException(e, null)
     } finally {
         eventLoop.decrementUseCount(unconfined = true)
     }
@@ -216,6 +216,7 @@ internal abstract class DispatchedTask<in T>(
 
     public final override fun run() {
         val taskContext = this.taskContext
+        var exception: Throwable? = null
         try {
             val delegate = delegate as DispatchedContinuation<T>
             val continuation = delegate.continuation
@@ -234,10 +235,42 @@ internal abstract class DispatchedTask<in T>(
                 }
             }
         } catch (e: Throwable) {
-            throw DispatchException("Unexpected exception running $this", e)
+            // This instead of runCatching to have nicer stacktrace and debug experience
+            exception = e
         } finally {
-            taskContext.afterTask()
+            val result = runCatching { taskContext.afterTask() }
+            handleFatalException(exception, result.exceptionOrNull())
         }
+    }
+
+    /**
+     * Machinery that handles fatal exceptions in kotlinx.coroutines.
+     * There are two kinds of fatal exceptions:
+     *
+     * 1) Exceptions from kotlinx.coroutines code. Such exceptions indicate that either
+     *    the library or the compiler has a bug that breaks internal invariants.
+     *    They usually have specific workarounds, but require careful study of the cause and should
+     *    be reported to the maintainers and fixed on the library's side anyway.
+     *
+     * 2) Exceptions from [ThreadContextElement.updateThreadContext] and [ThreadContextElement.restoreThreadContext].
+     *    While a user code can trigger such exception by providing an improper implementation of [ThreadContextElement],
+     *    we can't ignore it because it may leave coroutine in the inconsistent state.
+     *    If you encounter such exception, you can either disable this context element or wrap it into
+     *    another context element that catches all exceptions and handles it in the application specific manner.
+     *
+     * Fatal exception handling can be intercepted with [CoroutineExceptionHandler] element in the context of
+     * a failed coroutine, but such exceptions should be reported anyway.
+     */
+    internal fun handleFatalException(exception: Throwable?, finallyException: Throwable?) {
+        if (exception === null && finallyException === null) return
+        if (exception !== null && finallyException !== null) {
+            exception.addSuppressedThrowable(finallyException)
+        }
+
+        val cause = exception ?: finallyException
+        val reason = DispatchException("Fatal exception in coroutines machinery for $this. " +
+                "Please read KDoc to 'handleFatalException' method and report this incident to maintainers", cause!!)
+        handleExceptionViaHandler(this.delegate.context, reason)
     }
 }
 
