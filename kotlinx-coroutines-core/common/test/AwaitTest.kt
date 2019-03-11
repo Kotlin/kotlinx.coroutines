@@ -37,11 +37,11 @@ class AwaitTest : TestBase() {
     fun testAwaitAllLazy() = runTest {
         expect(1)
         val d = async(start = CoroutineStart.LAZY) {
-            expect(2);
+            expect(2)
             1
         }
         val d2 = async(start = CoroutineStart.LAZY) {
-            expect(3);
+            expect(3)
             2
         }
         assertEquals(listOf(1, 2), awaitAll(d, d2))
