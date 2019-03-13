@@ -270,7 +270,7 @@ internal abstract class DispatchedTask<in T>(
         val cause = exception ?: finallyException
         val reason = CoroutinesInternalError("Fatal exception in coroutines machinery for $this. " +
                 "Please read KDoc to 'handleFatalException' method and report this incident to maintainers", cause!!)
-        handleExceptionViaHandler(this.delegate.context, reason)
+        handleCoroutineException(this.delegate.context, reason)
     }
 }
 
