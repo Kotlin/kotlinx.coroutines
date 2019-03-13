@@ -85,9 +85,13 @@ private open class TimeoutCoroutine<U, in T: U>(
     override val defaultResumeMode: Int get() = MODE_DIRECT
     override val callerFrame: CoroutineStackFrame? get() = (uCont as? CoroutineStackFrame)?.callerFrame
     override fun getStackTraceElement(): StackTraceElement? = (uCont as? CoroutineStackFrame)?.getStackTraceElement()
+
+    override val cancelsParent: Boolean
+        get() = false // it throws exception to parent instead of cancelling it
+
     @Suppress("LeakingThis", "Deprecation")
     override fun run() {
-        cancel(TimeoutCancellationException(time, this))
+        cancelCoroutine(TimeoutCancellationException(time, this))
     }
 
     @Suppress("UNCHECKED_CAST")

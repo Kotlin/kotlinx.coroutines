@@ -26,7 +26,7 @@ fun main(args: Array<String>) {
         log("g should not execute this line")
     }
     log("Started futures f && g... will not wait -- cancel them!!!")
-    job.cancel(CancellationException("I don't want it"))
+    job.cancel()
     check(f.isCancelled)
     check(g.isCancelled)
     log("f result = ${Try<Unit> { f.get() }}")

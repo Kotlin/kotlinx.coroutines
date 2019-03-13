@@ -2,6 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
+
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
@@ -77,10 +79,18 @@ class CancellableContinuationHandlersTest : TestBase() {
     }
 
     @Test
-    fun testExceptionInHandler() = runTest({it is CompletionHandlerException}) {
-        suspendCancellableCoroutine<Unit> { c ->
-            c.invokeOnCancellation { throw AssertionError() }
-            c.cancel()
+    fun testExceptionInHandler() = runTest(
+        unhandled = listOf({ it -> it is CompletionHandlerException })
+    ) {
+        expect(1)
+        try {
+            suspendCancellableCoroutine<Unit> { c ->
+                c.invokeOnCancellation { throw AssertionError() }
+                c.cancel()
+            }
+        } catch (e: CancellationException) {
+            expect(2)
         }
+        finish(3)
     }
 }

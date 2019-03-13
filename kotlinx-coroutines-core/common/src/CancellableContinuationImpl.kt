@@ -121,6 +121,7 @@ internal open class CancellableContinuationImpl<in T>(
         try {
             block()
         } catch (ex: Throwable) {
+            // Handler should never fail, if it does -- it is an unhandled exception
             handleCoroutineException(
                 context,
                 CompletionHandlerException("Exception in cancellation handler for $this", ex)

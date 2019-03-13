@@ -86,7 +86,7 @@ class AbstractCoroutineTest : TestBase() {
         expect(2)
         coroutine.start()
         expect(4)
-        coroutine.cancel(TestException1())
+        coroutine.cancelCoroutine(TestException1())
         expect(7)
         coroutine.resumeWithException(TestException2())
         finish(10)

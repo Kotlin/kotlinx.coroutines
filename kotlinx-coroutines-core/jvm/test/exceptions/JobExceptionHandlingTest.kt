@@ -44,11 +44,12 @@ class JobExceptionHandlingTest : TestBase() {
 
         expect(1)
         yield()
-        deferred.cancel(IOException())
+        deferred.cancel(TestCancellationException("TEST"))
         try {
             deferred.await()
             expectUnreached()
-        } catch (e: IOException) {
+        } catch (e: TestCancellationException) {
+            assertEquals("TEST", e.message)
             assertTrue(e.suppressed.isEmpty())
             finish(3)
         }
@@ -64,7 +65,7 @@ class JobExceptionHandlingTest : TestBase() {
 
         expect(1)
         yield()
-        parent.cancel(IOException())
+        parent.completeExceptionally(IOException())
         try {
             deferred.await()
             expectUnreached()
@@ -98,35 +99,6 @@ class JobExceptionHandlingTest : TestBase() {
         }
 
         checkException<IllegalStateException>(exception)
-    }
-
-    @Test
-    fun testConsecutiveCancellation() {
-        /*
-         * Root parent: JobImpl()
-         * Child: throws IOException
-         * Launcher: cancels child with AE and then cancels it with NPE
-         * Result: AE with suppressed NPE and IOE
-         */
-        val exception = runBlock {
-            val job = Job()
-            val child = launch(job, start = ATOMIC) {
-                expect(2)
-                throw IOException()
-            }
-
-            expect(1)
-            child.cancel(ArithmeticException())
-            child.cancel(NullPointerException())
-            job.join()
-            finish(3)
-        }
-
-        assertTrue(exception is ArithmeticException)
-        val suppressed = exception.suppressed
-        assertEquals(2, suppressed.size)
-        checkException<NullPointerException>(suppressed[0])
-        checkException<IOException>(suppressed[1])
     }
 
     @Test
@@ -216,7 +188,7 @@ class JobExceptionHandlingTest : TestBase() {
 
                 yield()
                 expect(4)
-                job.cancel(IOException())
+                job.completeExceptionally(IOException())
             }
 
             expect(1)

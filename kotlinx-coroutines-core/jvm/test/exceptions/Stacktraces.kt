@@ -5,13 +5,15 @@ import kotlin.test.*
 
 public fun verifyStackTrace(e: Throwable, vararg traces: String) {
     val stacktrace = toStackTrace(e)
+    val normalizedActual = stacktrace.normalizeStackTrace()
     traces.forEach {
-        assertTrue(
-            stacktrace.trimStackTrace().contains(it.trimStackTrace()),
-            "\nExpected trace element:\n$it\n\nActual stacktrace:\n$stacktrace"
-        )
+        val normalizedExpected = it.normalizeStackTrace()
+        if (!normalizedActual.contains(normalizedExpected)) {
+            // A more readable error message would be produced by assertEquals
+            assertEquals(normalizedExpected, normalizedActual, "Actual trace does not contain expected one")
+        }
     }
-
+    // Check "Caused by" counts
     val causes = stacktrace.count("Caused by")
     assertNotEquals(0, causes)
     assertEquals(traces.map { it.count("Caused by") }.sum(), causes)
@@ -23,14 +25,16 @@ public fun toStackTrace(t: Throwable): String {
     return sw.toString()
 }
 
-public fun String.trimStackTrace(): String {
-    return applyBackspace(trimIndent().replace(Regex(":[0-9]+"), "")
-        .replace("kotlinx_coroutines_core_main", "") // yay source sets
-        .replace("kotlinx_coroutines_core", ""))
-}
+public fun String.normalizeStackTrace(): String =
+    applyBackspace()
+    .replace(Regex(":[0-9]+"), "") // remove line numbers
+    .replace("kotlinx_coroutines_core_main", "") // yay source sets
+    .replace("kotlinx_coroutines_core", "")
+    .replace(Regex("@[0-9a-f]+"), "") // remove hex addresses in debug toStrings
+    .lines().joinToString("\n") // normalize line separators
 
-public fun applyBackspace(line: String): String {
-    val array = line.toCharArray()
+public fun String.applyBackspace(): String {
+    val array = toCharArray()
     val stack = CharArray(array.size)
     var stackSize = -1
     for (c in array) {
@@ -40,7 +44,6 @@ public fun applyBackspace(line: String): String {
             --stackSize
         }
     }
-
     return String(stack, 0, stackSize)
 }
 

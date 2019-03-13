@@ -92,15 +92,13 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
-    @Suppress("RETURN_TYPE_MISMATCH_ON_OVERRIDE")
-    override fun cancel(): Unit {
-    }
+    override fun cancel(cause: CancellationException?) {}
 
     /**
      * Always returns `false`.
-     * @suppress **This an internal API and should not be used from general code.**
+     * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [cancel].
      */
-    @InternalCoroutinesApi
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     override fun cancel(cause: Throwable?): Boolean = false // never handles exceptions
 
     /**

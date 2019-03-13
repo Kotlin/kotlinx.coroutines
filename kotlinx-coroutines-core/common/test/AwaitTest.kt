@@ -203,9 +203,9 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAllFullyCompletedExceptionally() = runTest {
         val d1 = CompletableDeferred<Unit>(parent = null)
-            .apply { cancel(TestException()) }
+            .apply { completeExceptionally(TestException()) }
         val d2 = CompletableDeferred<Unit>(parent = null)
-            .apply { cancel(TestException()) }
+            .apply { completeExceptionally(TestException()) }
         val job = async { expect(3) }
         expect(1)
         try {

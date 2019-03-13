@@ -202,9 +202,22 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     }
 
     /**
-     * Closes this broadcast channel. Same as [close].
+     * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [cancel].
      */
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     public override fun cancel(cause: Throwable?): Boolean = close(cause)
+
+    /**
+     * Cancels this conflated broadcast channel with an optional cause, same as [close].
+     * This function closes the channel with
+     * the specified cause (unless it was already closed),
+     * and [cancels][ReceiveChannel.cancel] all open subscriptions.
+     * A cause can be used to specify an error message or to provide other details on
+     * a cancellation reason for debugging purposes.
+     */
+    public override fun cancel(cause: CancellationException?) {
+        close(cause)
+    }
 
     /**
      * Sends the value to all subscribed receives and stores this value as the most recent state for
@@ -268,11 +281,10 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
     }
 
-    @Suppress("DEPRECATION")
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>
     ) : ConflatedChannel<E>(), ReceiveChannel<E> {
-        override fun cancel(cause: Throwable?): Boolean =
+        override fun cancelInternal(cause: Throwable?): Boolean =
             close(cause).also { closed ->
                 if (closed) broadcastChannel.closeSubscriber(this)
             }

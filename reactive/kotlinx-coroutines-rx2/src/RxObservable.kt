@@ -57,7 +57,6 @@ private class RxObservableCoroutine<T: Any>(
     private val subscriber: ObservableEmitter<T>
 ) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, SelectClause2<T, SendChannel<T>> {
     override val channel: SendChannel<T> get() = this
-    override val cancelsParent: Boolean get() = true
 
     // Mutex is locked when while subscriber.onXXX is being invoked
     private val mutex = Mutex()
@@ -66,7 +65,7 @@ private class RxObservableCoroutine<T: Any>(
 
     override val isClosedForSend: Boolean get() = isCompleted
     override val isFull: Boolean = mutex.isLocked
-    override fun close(cause: Throwable?): Boolean = cancel(cause)
+    override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
     override fun invokeOnClose(handler: (Throwable?) -> Unit) =
         throw UnsupportedOperationException("RxObservableCoroutine doesn't support invokeOnClose")
 
@@ -111,13 +110,12 @@ private class RxObservableCoroutine<T: Any>(
         try {
             subscriber.onNext(elem)
         } catch (e: Throwable) {
-            try {
-                if (!cancel(e))
-                    handleCoroutineException(context, e, this)
-            } finally {
-                doLockedSignalCompleted()
-            }
-            throw getCancellationException()
+            // If onNext fails with exception, then we cancel coroutine (with this exception) and then rethrow it
+            // to abort the corresponding send/offer invocation. From the standpoint of coroutines machinery,
+            // this failure is essentially equivalent to a failure of a child coroutine.
+            cancelCoroutine(e)
+            doLockedSignalCompleted()
+            throw e
         }
         /*
            There is no sense to check for `isActive` before doing `unlock`, because cancellation/completion might
@@ -143,7 +141,8 @@ private class RxObservableCoroutine<T: Any>(
                     else
                         subscriber.onComplete()
                 } catch (e: Throwable) {
-                    handleCoroutineException(context, e, this)
+                    // Unhandled exception (cannot handle in other way, since we are already complete)
+                    handleCoroutineException(context, e)
                 }
             }
         } finally {

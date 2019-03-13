@@ -9,34 +9,16 @@ import kotlin.coroutines.*
 internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable)
 
 /**
- * Helper function for coroutine builder implementations to handle uncaught exception in coroutines.
+ * Helper function for coroutine builder implementations to handle uncaught and unexpected exceptions in coroutines,
+ * that could not be otherwise handled in a normal way through structured concurrency, saving them to a future, and
+ * cannot be rethrown. This is a last resort handler to prevent lost exceptions.
  *
- * It tries to handle uncaught exception in the following way:
- * If current exception is [CancellationException], it's ignored: [CancellationException] is a normal way to cancel
- * coroutine.
- *
- * If there is a [Job] in the context and it's not a [caller], then [Job.cancel] is invoked.
- * If invocation returned `true`, method terminates: now [Job] is responsible for handling an exception.
- * Otherwise, If there is [CoroutineExceptionHandler] in the context, it is used. If it throws an exception during handling
- * or is absent, all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and [Thread.uncaughtExceptionHandler] are invoked
+ * If there is [CoroutineExceptionHandler] in the context, then it is used. If it throws an exception during handling
+ * or is absent, all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and
+ * [Thread.uncaughtExceptionHandler] are invoked.
  */
 @InternalCoroutinesApi
-public fun handleCoroutineException(context: CoroutineContext, exception: Throwable, caller: Job? = null) {
-    // Ignore CancellationException (they are normal ways to terminate a coroutine)
-    if (exception is CancellationException) return // nothing to do
-    // Try propagate exception to parent
-    val job = context[Job]
-    @Suppress("DEPRECATION")
-    if (job !== null && job !== caller && job.cancel(exception)) return // handle by parent
-    // otherwise -- use exception handlers
-    handleExceptionViaHandler(context, exception)
-}
-
-/**
- * @suppress This is an internal API and it is subject to change.
- */
-@InternalCoroutinesApi
-public fun handleExceptionViaHandler(context: CoroutineContext, exception: Throwable) {
+public fun handleCoroutineException(context: CoroutineContext, exception: Throwable) {
     // Invoke exception handler from the context if present
     try {
         context[CoroutineExceptionHandler]?.let {
@@ -47,7 +29,6 @@ public fun handleExceptionViaHandler(context: CoroutineContext, exception: Throw
         handleCoroutineExceptionImpl(context, handlerException(exception, t))
         return
     }
-
     // If handler is not present in the context or exception was thrown, fallback to the global handler
     handleCoroutineExceptionImpl(context, exception)
 }

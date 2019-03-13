@@ -29,8 +29,13 @@ class NonCancellableTest : TestBase() {
         try {
             job.await()
             expectUnreached()
-        } catch (e: CancellationException) {
-            assertNull(e.cause)
+        } catch (e: JobCancellationException) {
+            if (RECOVER_STACK_TRACES) {
+                val cause = e.cause as JobCancellationException // shall be recovered JCE
+                assertNull(cause.cause)
+            } else {
+                assertNull(e.cause)
+            }
             finish(6)
         }
     }
@@ -51,13 +56,14 @@ class NonCancellableTest : TestBase() {
         }
 
         yield()
-        deferred.cancel(TestException())
+        deferred.cancel(TestCancellationException("TEST"))
         expect(3)
         assertTrue(deferred.isCancelled)
         try {
             deferred.await()
             expectUnreached()
-        } catch (e: TestException) {
+        } catch (e: TestCancellationException) {
+            assertEquals("TEST", e.message)
             finish(6)
         }
     }
@@ -118,8 +124,13 @@ class NonCancellableTest : TestBase() {
         try {
             job.await()
             expectUnreached()
-        } catch (e: CancellationException) {
-            assertNull(e.cause)
+        } catch (e: JobCancellationException) {
+            if (RECOVER_STACK_TRACES) {
+                val cause = e.cause as JobCancellationException // shall be recovered JCE
+                assertNull(cause.cause)
+            } else {
+                assertNull(e.cause)
+            }
             finish(7)
         }
     }

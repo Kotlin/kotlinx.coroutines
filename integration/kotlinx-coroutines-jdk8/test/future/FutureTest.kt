@@ -368,29 +368,39 @@ class FutureTest : TestBase() {
     }
 
     @Test
-    fun testChildException() = runTest {
+    fun testStructuredException() = runTest(
+        expected = { it is TestException } // exception propagates to parent with structured concurrency
+    ) {
+        val result = future<Int>(Dispatchers.Unconfined) {
+            throw TestException("FAIL")
+        }
+        result.checkFutureException<TestException>()
+    }
+
+    @Test
+    fun testChildException() = runTest(
+        expected = { it is TestException } // exception propagates to parent with structured concurrency
+    ) {
         val result = future(Dispatchers.Unconfined) {
             // child crashes
             launch { throw TestException("FAIL") }
             42
         }
-
         result.checkFutureException<TestException>()
     }
 
     @Test
-    fun testExceptionAggregation() = runTest {
+    fun testExceptionAggregation() = runTest(
+        expected = { it is TestException } // exception propagates to parent with structured concurrency
+    ) {
         val result = future(Dispatchers.Unconfined) {
             // child crashes
             launch(start = CoroutineStart.ATOMIC) { throw TestException1("FAIL") }
             launch(start = CoroutineStart.ATOMIC) { throw TestException2("FAIL") }
             throw TestException()
         }
-
-        expect(1)
         result.checkFutureException<TestException>(TestException1::class, TestException2::class)
-        yield()
-        finish(2) // we are not cancelled
+        finish(1)
     }
 
     @Test
@@ -409,7 +419,9 @@ class FutureTest : TestBase() {
     }
 
     @Test
-    fun testExceptionOnExternalCompletion() = runTest(expected = {it is TestException}) {
+    fun testExceptionOnExternalCompletion() = runTest(
+        expected = { it is TestException } // exception propagates to parent with structured concurrency
+    ) {
         expect(1)
         val result = future(Dispatchers.Unconfined) {
             try {
@@ -419,7 +431,26 @@ class FutureTest : TestBase() {
                 throw TestException()
             }
         }
+        result.complete(Unit)
+        finish(3)
+    }
 
+    @Test
+    fun testUnhandledExceptionOnExternalCompletion() = runTest(
+        unhandled = listOf(
+            { it -> it is TestException } // exception is unhandled because there is no parent
+        )
+    ) {
+        expect(1)
+        // No parent here (NonCancellable), so nowhere to propagate exception
+        val result = future(NonCancellable + Dispatchers.Unconfined) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                expect(2)
+                throw TestException() // this exception cannot be handled
+            }
+        }
         result.complete(Unit)
         finish(3)
     }

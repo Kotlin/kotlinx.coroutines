@@ -241,8 +241,10 @@ public interface ReceiveChannel<out E> {
     public operator fun iterator(): ChannelIterator<E>
 
     /**
-     * Cancels reception of remaining elements from this channel. This function closes the channel
-     * and removes all buffered sent elements from it.
+     * Cancels reception of remaining elements from this channel with an optional [cause].
+     * This function closes the channel and removes all buffered sent elements from it.
+     * A cause can be used to specify an error message or to provide other details on
+     * a cancellation reason for debugging purposes.
      *
      * Immediately after invocation of this function [isClosedForReceive] and
      * [isClosedForSend][SendChannel.isClosedForSend]
@@ -250,21 +252,18 @@ public interface ReceiveChannel<out E> {
      * afterwards will throw [ClosedSendChannelException], while attempts to receive will throw
      * [ClosedReceiveChannelException].
      */
-    public fun cancel(): Unit
+    public fun cancel(cause: CancellationException? = null)
 
     /**
-     * @suppress
+     * @suppress This method implements old version of JVM ABI. Use [cancel].
      */
-    @Suppress("INAPPLICABLE_JVM_NAME", "DEPRECATION")
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
-    @JvmName("cancel")
-    public fun cancel0(): Boolean = cancel(null)
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
+    public fun cancel() = cancel(null)
 
     /**
-     * @suppress
+     * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [cancel].
      */
-    @ObsoleteCoroutinesApi
-    @Deprecated(level = DeprecationLevel.WARNING, message = "Use cancel without cause", replaceWith = ReplaceWith("cancel()"))
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     public fun cancel(cause: Throwable? = null): Boolean
 }
 
