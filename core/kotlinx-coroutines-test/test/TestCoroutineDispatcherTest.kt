@@ -1,11 +1,11 @@
 package kotlinx.coroutines.test
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
+import kotlin.test.assertNotSame
+import kotlin.test.assertSame
 
 class TestCoroutineDispatcherTest {
     @Test
@@ -99,5 +99,43 @@ class TestCoroutineDispatcherTest {
             delay(1_000)
         }
         subject.cleanupTestCoroutines()
+    }
+
+    @Test
+    fun whenDispatchCalled_runsOnCurrentThread() {
+        val currentThread = Thread.currentThread()
+        val subject = TestCoroutineDispatcher()
+        val scope = TestCoroutineScope(subject)
+
+        val deferred = scope.async(Dispatchers.Default) {
+            withContext(subject) {
+                assertNotSame(currentThread, Thread.currentThread())
+                3
+            }
+        }
+
+        runBlocking {
+            // just to ensure the above code terminates
+            assertEquals(3, deferred.await())
+        }
+    }
+
+    @Test
+    fun whenAllDispatchersMocked_runsOnSameThread() {
+        val currentThread = Thread.currentThread()
+        val subject = TestCoroutineDispatcher()
+        val scope = TestCoroutineScope(subject)
+
+        val deferred = scope.async(subject) {
+            withContext(subject) {
+                assertSame(currentThread, Thread.currentThread())
+                3
+            }
+        }
+
+        runBlocking {
+            // just to ensure the above code terminates
+            assertEquals(3, deferred.await())
+        }
     }
 }
