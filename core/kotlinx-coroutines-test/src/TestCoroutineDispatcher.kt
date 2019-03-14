@@ -3,8 +3,9 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.internal.ThreadSafeHeap
 import kotlinx.coroutines.test.internal.ThreadSafeHeapNode
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.max
 
 /**
  * Control the virtual clock time of a [CoroutineDispatcher].
@@ -16,37 +17,28 @@ interface DelayController {
     /**
      * Returns the current virtual clock-time as it is known to this Dispatcher.
      *
-     * @param unit The [TimeUnit] in which the clock-time must be returned.
      * @return The virtual clock-time
      */
     @ExperimentalCoroutinesApi
-    fun currentTime(unit: TimeUnit = TimeUnit.MILLISECONDS): Long
+    fun currentTime(): Long
 
     /**
      * Moves the Dispatcher's virtual clock forward by a specified amount of time.
      *
-     * The amount the clock is progressed may be larger than the requested delayTime if the code under test uses
+     * The amount the clock is progressed may be larger than the requested delayTimeMillis if the code under test uses
      * blocking coroutines.
      *
-     * @param delayTime The amount of time to move the CoroutineContext's clock forward.
-     * @param unit The [TimeUnit] in which [delayTime] and the return value is expressed.
+     * @param delayTimeMillis The amount of time to move the CoroutineContext's clock forward.
      * @return The amount of delay-time that this Dispatcher's clock has been forwarded.
      */
     @ExperimentalCoroutinesApi
-    fun advanceTimeBy(delayTime: Long, unit: TimeUnit = TimeUnit.MILLISECONDS): Long
+    fun advanceTimeBy(delayTimeMillis: Long): Long
 
-    /**
-     * Moves the current virtual clock forward just far enough so the next delay will return.
-     *
-     * @return the amount of delay-time that this Dispatcher's clock has been forwarded.
-     */
-    @ExperimentalCoroutinesApi
-    fun advanceTimeToNextDelayed(): Long
 
     /**
      * Immediately execute all pending tasks and advance the virtual clock-time to the last delay.
      *
-     * @return the amount of delay-time that this Dispatcher's clock has been forwarded.
+     * @return the amount of delay-time that this Dispatcher's clock has been forwarded in milliseconds.
      */
     @ExperimentalCoroutinesApi
     fun advanceUntilIdle(): Long
@@ -60,7 +52,7 @@ interface DelayController {
     fun runCurrent()
 
     /**
-     * Call after a test case completes.
+     * Test code must call this after test code completes to ensure that the dispatcher is properly cleaned up.
      *
      * @throws UncompletedCoroutinesError if any pending tasks are active, however it will not throw for suspended
      * coroutines.
@@ -75,7 +67,7 @@ interface DelayController {
      * By pausing the dispatcher any new coroutines will not execute immediately. After block executes, the dispatcher
      * will resume auto-advancing.
      *
-     * This is useful when testing functions that that start a coroutine. By pausing the dispatcher assertions or
+     * This is useful when testing functions that start a coroutine. By pausing the dispatcher assertions or
      * setup may be done between the time the coroutine is created and started.
      */
     @ExperimentalCoroutinesApi
@@ -84,8 +76,8 @@ interface DelayController {
     /**
      * Pause the dispatcher.
      *
-     * When paused the dispatcher will not execute any coroutines automatically, and you must call [runCurrent], or one
-     * of [advanceTimeBy], [advanceTimeToNextDelayed], or [advanceUntilIdle] to execute coroutines.
+     * When paused, the dispatcher will not execute any coroutines automatically, and you must call [runCurrent] or
+     * [advanceTimeBy], or [advanceUntilIdle] to execute coroutines.
      */
     @ExperimentalCoroutinesApi
     fun pauseDispatcher()
@@ -94,7 +86,7 @@ interface DelayController {
      * Resume the dispatcher from a paused state.
      *
      * Resumed dispatchers will automatically progress through all coroutines scheduled at the current time. To advance
-     * time and execute coroutines scheduled in the future use one of [advanceTimeBy], [advanceTimeToNextDelayed],
+     * time and execute coroutines scheduled in the future use, one of [advanceTimeBy],
      * or [advanceUntilIdle].
      */
     @ExperimentalCoroutinesApi
@@ -102,7 +94,7 @@ interface DelayController {
 }
 
 /**
- * Thrown when a test has completed by there are tasks that are not completed or cancelled.
+ * Thrown when a test has completed and there are tasks that are not completed or cancelled.
  */
 @ExperimentalCoroutinesApi
 class UncompletedCoroutinesError(message: String, cause: Throwable? = null): AssertionError(message, cause)
@@ -139,10 +131,10 @@ class TestCoroutineDispatcher:
     private val queue = ThreadSafeHeap<TimedRunnable>()
 
     // The per-scheduler global order counter.
-    private var counter = 0L
+    private var counter = AtomicLong(0)
 
     // Storing time in nanoseconds internally.
-    private var time = 0L
+    private var time = AtomicLong(0)
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         if (dispatchImmediately) {
@@ -165,13 +157,15 @@ class TestCoroutineDispatcher:
         }
     }
 
-    override fun toString(): String = "TestCoroutineDispatcher[time=${time}ns]"
+    override fun toString(): String {
+        return "TestCoroutineDispatcher[currentTime=${time}ms, queued=${queue.size}]"
+    }
 
     private fun post(block: Runnable) =
-            queue.addLast(TimedRunnable(block, counter++))
+            queue.addLast(TimedRunnable(block, counter.getAndIncrement()))
 
     private fun postDelayed(block: Runnable, delayTime: Long) =
-            TimedRunnable(block, counter++, time + TimeUnit.MILLISECONDS.toNanos(delayTime))
+            TimedRunnable(block, counter.getAndIncrement(), time.get() + delayTime)
                     .also {
                         queue.addLast(it)
                     }
@@ -181,49 +175,53 @@ class TestCoroutineDispatcher:
         while (true) {
             val current = queue.removeFirstIf { it.time <= targetTime } ?: break
             // If the scheduled time is 0 (immediate) use current virtual time
-            if (current.time != 0L) time = current.time
+            time.getAndAccumulate(current.time) { currentValue: Long, proposedValue: Long ->
+                if (proposedValue != 0L) {
+                    proposedValue
+                } else {
+                    currentValue
+                }
+            }
             current.run()
         }
     }
 
-    override fun currentTime(unit: TimeUnit)=
-            unit.convert(time, TimeUnit.NANOSECONDS)
+    override fun currentTime() = time.get()
 
-    override fun advanceTimeBy(delayTime: Long, unit: TimeUnit): Long {
-        val oldTime = time
-        advanceUntilTime(oldTime + unit.toNanos(delayTime), TimeUnit.NANOSECONDS)
-        return unit.convert(time - oldTime, TimeUnit.NANOSECONDS)
+    override fun advanceTimeBy(delayTimeMillis: Long): Long {
+        val oldTime = time.get()
+        advanceUntilTime(oldTime + delayTimeMillis)
+        return time.get() - oldTime
     }
 
     /**
      * Moves the CoroutineContext's clock-time to a particular moment in time.
      *
-     * @param targetTime The point in time to which to move the CoroutineContext's clock.
-     * @param unit The [TimeUnit] in which [targetTime] is expressed.
+     * @param targetTime The point in time to which to move the CoroutineContext's clock (milliseconds).
      */
-    private fun advanceUntilTime(targetTime: Long, unit: TimeUnit) {
-        val nanoTime = unit.toNanos(targetTime)
-        doActionsUntil(nanoTime)
-        if (nanoTime > time) time = nanoTime
-    }
-
-    override fun advanceTimeToNextDelayed(): Long {
-        val oldTime = time
-        runCurrent()
-        val next = queue.peek() ?: return 0
-        advanceUntilTime(next.time, TimeUnit.NANOSECONDS)
-        return time - oldTime
+    private fun advanceUntilTime(targetTime: Long) {
+        doActionsUntil(targetTime)
+        time.getAndAccumulate(targetTime) { currentValue: Long, proposedValue: Long ->
+            if (currentValue < proposedValue) {
+                proposedValue
+            } else {
+                currentValue
+            }
+        }
+        if (targetTime > time.get()) time
     }
 
     override fun advanceUntilIdle(): Long {
-        val oldTime = time
+        val oldTime = time.get()
         while(!queue.isEmpty) {
-            advanceTimeToNextDelayed()
+            runCurrent()
+            val next = queue.peek() ?: break
+            advanceUntilTime(next.time)
         }
-        return time - oldTime
+        return time.get() - oldTime
     }
 
-    override fun runCurrent() = doActionsUntil(time)
+    override fun runCurrent() = doActionsUntil(time.get())
 
     override suspend fun pauseDispatcher(block: suspend () -> Unit) {
         val previous = dispatchImmediately
@@ -245,7 +243,7 @@ class TestCoroutineDispatcher:
 
     override fun cleanupTestCoroutines() {
         // process any pending cancellations or completions, but don't advance time
-        doActionsUntil(time)
+        doActionsUntil(time.get())
 
         // run through all pending tasks, ignore any submitted coroutines that are not active
         val pendingTasks = mutableListOf<TimedRunnable>()

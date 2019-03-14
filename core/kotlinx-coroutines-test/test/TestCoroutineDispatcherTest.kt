@@ -11,42 +11,29 @@ class TestCoroutineDispatcherTest {
     @Test
     fun whenStringCalled_itReturnsString() {
         val subject = TestCoroutineDispatcher()
-        assertEquals("TestCoroutineDispatcher[time=0ns]", subject.toString())
+        assertEquals("TestCoroutineDispatcher[currentTime=0ms, queued=0]", subject.toString())
     }
 
     @Test
     fun whenStringCalled_itReturnsCurrentTime() {
         val subject = TestCoroutineDispatcher()
-        subject.advanceTimeBy(1000, TimeUnit.NANOSECONDS)
-        assertEquals("TestCoroutineDispatcher[time=1000ns]", subject.toString())
+        subject.advanceTimeBy(1000)
+        assertEquals("TestCoroutineDispatcher[currentTime=1000ms, queued=0]", subject.toString())
     }
 
     @Test
-    fun whenCurrentTimeCalled_returnsTimeAsSpecified() {
+    fun whenStringCalled_itShowsQueuedJobs() {
         val subject = TestCoroutineDispatcher()
-        subject.advanceTimeBy(1000, TimeUnit.MILLISECONDS)
-
-        assertEquals(1_000_000_000, subject.currentTime(TimeUnit.NANOSECONDS))
-        assertEquals(1_000, subject.currentTime(TimeUnit.MILLISECONDS))
-        assertEquals(1, subject.currentTime(TimeUnit.SECONDS))
-
-        assertEquals(1_000, subject.currentTime())
-    }
-
-    @Test
-    fun whenAdvanceTimeCalled_defaultsToMilliseconds() {
-        val subject = TestCoroutineDispatcher()
-        subject.advanceTimeBy(1_000)
-
-        assertEquals(1_000, subject.currentTime(TimeUnit.MILLISECONDS))
-    }
-
-    @Test
-    fun whenAdvanceTimeCalled_respectsTimeUnit() {
-        val subject = TestCoroutineDispatcher()
-        subject.advanceTimeBy(1, TimeUnit.SECONDS)
-
-        assertEquals(1_000, subject.currentTime(TimeUnit.MILLISECONDS))
+        val scope = TestCoroutineScope(subject)
+        scope.pauseDispatcher()
+        scope.launch {
+            delay(1_000)
+        }
+        assertEquals("TestCoroutineDispatcher[currentTime=0ms, queued=1]", subject.toString())
+        scope.advanceTimeBy(50)
+        assertEquals("TestCoroutineDispatcher[currentTime=50ms, queued=1]", subject.toString())
+        scope.advanceUntilIdle()
+        assertEquals("TestCoroutineDispatcher[currentTime=1000ms, queued=0]", subject.toString())
     }
 
     @Test

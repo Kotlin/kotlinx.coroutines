@@ -12,7 +12,8 @@ interface UncaughtExceptionCaptor {
     /**
      * List of uncaught coroutine exceptions.
      *
-     * The returned list will be a copy of the currently caught exceptions.
+     * The returned list will be a copy of the currently caught exceptions. All other exceptions will
+     * be printed using [Throwable.printStackTrace]
      *
      * During [cleanupTestCoroutines] the first element of this list will be rethrown if it is not empty.
      */
@@ -48,6 +49,8 @@ class TestCoroutineExceptionHandler: UncaughtExceptionCaptor, CoroutineException
     override fun cleanupTestCoroutines() {
         synchronized(_exceptions) {
             val exception = _exceptions.firstOrNull() ?: return
+            // log the rest
+            _exceptions.drop(1).forEach { it.printStackTrace() }
             throw exception
         }
     }
