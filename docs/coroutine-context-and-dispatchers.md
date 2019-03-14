@@ -635,7 +635,7 @@ fun main() = runBlocking<Unit> {
     threadLocal.set("main")
     println("Pre-main, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
     val job = launch(Dispatchers.Default + threadLocal.asContextElement(value = "launch")) {
-       println("Launch start, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
+        println("Launch start, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
         yield()
         println("After yield, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
     }
@@ -663,6 +663,10 @@ Post-main, current thread: Thread[main @coroutine#1,5,main], thread local value:
 ```
 
 <!--- TEST FLEXIBLE_THREAD -->
+
+Note how easily one may forget the corresponding context element and then still safely access thread local.
+To avoid such situations, it is recommended to use [ensurePresent] method
+and fail-fast on improper usages.
 
 `ThreadLocal` has first-class support and can be used with any primitive `kotlinx.coroutines` provides.
 It has one key limitation: when thread-local is mutated, a new value is not propagated to the coroutine caller 
@@ -701,5 +705,6 @@ that should be implemented.
 [MainScope()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-main-scope.html
 [Dispatchers.Main]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html
 [asContextElement]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/java.lang.-thread-local/as-context-element.html
+[ensurePresent]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/java.lang.-thread-local/ensure-present.html
 [ThreadContextElement]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-thread-context-element/index.html
 <!--- END -->

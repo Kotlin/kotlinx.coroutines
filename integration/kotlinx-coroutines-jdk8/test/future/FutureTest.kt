@@ -16,7 +16,6 @@ import java.util.function.*
 import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.reflect.*
-import kotlin.test.assertFailsWith
 
 class FutureTest : TestBase() {
     @Before
