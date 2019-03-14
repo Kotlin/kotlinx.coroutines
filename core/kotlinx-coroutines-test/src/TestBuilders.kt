@@ -83,7 +83,7 @@ fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.()
 }
 
 private fun CoroutineContext?.checkArguments(): Pair<CoroutineContext, ContinuationInterceptor> {
-    var safeContext= this ?: TestCoroutineExceptionHandler() + TestCoroutineDispatcher()
+    var safeContext = this ?: TestCoroutineExceptionHandler() + TestCoroutineDispatcher()
 
     val dispatcher = safeContext[ContinuationInterceptor].run {
         this?.let {

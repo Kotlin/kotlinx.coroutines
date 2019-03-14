@@ -73,7 +73,7 @@ class TestBuildersTest {
         scope.runCurrent()
         assertTrue(deferred.isActive)
 
-        scope.advanceTimeToNextDelayed()
+        scope.advanceUntilIdle()
         assertEquals(3, deferred.getCompleted())
     }
 
@@ -93,7 +93,7 @@ class TestBuildersTest {
             retval
         }
 
-        scope.advanceTimeToNextDelayed()
+        scope.advanceTimeBy(1_000)
         scope.launch {
             assertRunsFast {
                 assertEquals(3, deferred.getCompleted())
