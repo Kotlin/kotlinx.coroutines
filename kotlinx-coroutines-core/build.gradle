@@ -19,6 +19,11 @@ kotlin {
         def srcDir = name.endsWith('Main') ? 'src' : 'test'
         def platform = name[0..-5]
         kotlin.srcDir "$platform/$srcDir"
+        if (name == "jvmMain") {
+            resources.srcDirs = ["$platform/resources"]
+        } else if (name == "jvmTest") {
+            resources.srcDirs = ["$platform/test-resources"]
+        }
         languageSettings {
             progressiveMode = true
             experimentalAnnotations.each { useExperimentalAnnotation(it) }
