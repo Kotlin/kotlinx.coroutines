@@ -2,6 +2,7 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import java.util.Collections.synchronizedList
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -12,8 +13,7 @@ interface UncaughtExceptionCaptor {
     /**
      * List of uncaught coroutine exceptions.
      *
-     * The returned list will be a copy of the currently caught exceptions. All other exceptions will
-     * be printed using [Throwable.printStackTrace]
+     * The returned list will be a copy of the currently caught exceptions.
      *
      * During [cleanupTestCoroutines] the first element of this list will be rethrown if it is not empty.
      */
@@ -21,6 +21,9 @@ interface UncaughtExceptionCaptor {
 
     /**
      * Call after the test completes.
+     *
+     * The first exception in uncaughtExceptions will be rethrown. All other exceptions will
+     * be printed using [Throwable.printStackTrace].
      *
      * @throws Throwable the first uncaught exception, if there are any uncaught exceptions
      */
