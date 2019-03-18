@@ -167,7 +167,8 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     // ------ SendChannel ------
 
     public final override val isClosedForSend: Boolean get() = closedForSend != null
-    public final override val isFull: Boolean get() = queue.nextNode !is ReceiveOrClosed<*> && isBufferFull
+    public final override val isFull: Boolean get() = full
+    private val full: Boolean get() = queue.nextNode !is ReceiveOrClosed<*> && isBufferFull // TODO rename to `isFull`
 
     public final override suspend fun send(element: E) {
         // fast path -- try offer non-blocking
@@ -402,7 +403,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     private fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend (SendChannel<E>) -> R) {
         while (true) {
             if (select.isSelected) return
-            if (isFull) {
+            if (full) {
                 val enqueueOp = TryEnqueueSendDesc(element, select, block)
                 val enqueueResult = select.performAtomicIfNotSelected(enqueueOp) ?: return
                 when {
@@ -561,7 +562,8 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     // ------ ReceiveChannel ------
 
     public final override val isClosedForReceive: Boolean get() = closedForReceive != null && isBufferEmpty
-    public final override val isEmpty: Boolean get() = queue.nextNode !is Send && isBufferEmpty
+    public final override val isEmpty: Boolean get() = empty
+    private val empty: Boolean get() = queue.nextNode !is Send && isBufferEmpty // TODO rename to `isEmpty`
 
     @Suppress("UNCHECKED_CAST")
     public final override suspend fun receive(): E {
@@ -748,7 +750,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     private fun <R> registerSelectReceive(select: SelectInstance<R>, block: suspend (E) -> R) {
         while (true) {
             if (select.isSelected) return
-            if (isEmpty) {
+            if (empty) {
                 val enqueueOp = TryEnqueueReceiveDesc(select, block as (suspend (E?) -> R), nullOnClose = false)
                 val enqueueResult = select.performAtomicIfNotSelected(enqueueOp) ?: return
                 when {
@@ -782,7 +784,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     private fun <R> registerSelectReceiveOrNull(select: SelectInstance<R>, block: suspend (E?) -> R) {
         while (true) {
             if (select.isSelected) return
-            if (isEmpty) {
+            if (empty) {
                 val enqueueOp = TryEnqueueReceiveDesc(select, block, nullOnClose = true)
                 val enqueueResult = select.performAtomicIfNotSelected(enqueueOp) ?: return
                 when {
