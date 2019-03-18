@@ -30,14 +30,15 @@ public interface SendChannel<in E> {
      * Returns `true` if the channel is full (out of capacity) and the [send] attempt will suspend.
      * This function returns `false` for [isClosedForSend] channel.
      *
-     * **Note: This is an experimental api.** This property may change its semantics and/or name in the future.
+     * @suppress **Will be removed in next releases, no replacement.**
      */
     @ExperimentalCoroutinesApi
+    @Deprecated(level = DeprecationLevel.ERROR, message = "Will be removed in next releases without replacement")
     public val isFull: Boolean
 
     /**
-     * Adds [element] into to this channel, suspending the caller while this channel [isFull],
-     * or throws exception if the channel [isClosedForSend] (see [close] for details).
+     * Adds [element] into to this channel, suspending the caller while the buffer of this channel is full
+     * or if it does not exist, or throws exception if the channel [isClosedForSend] (see [close] for details).
      *
      * Note, that closing a channel _after_ this function had suspended does not cause this suspended send invocation
      * to abort, because closing a channel is conceptually like sending a special "close token" over this channel.
@@ -151,13 +152,14 @@ public interface ReceiveChannel<out E> {
      * Returns `true` if the channel is empty (contains no elements) and the [receive] attempt will suspend.
      * This function returns `false` for [isClosedForReceive] channel.
      *
-     * **Note: This is an experimental api.** This property may change its semantics and/or name in the future.
+     * @suppress **Will be removed in next releases, no replacement.**
      */
     @ExperimentalCoroutinesApi
+    @Deprecated(level = DeprecationLevel.ERROR, message = "Will be removed in next releases without replacement")
     public val isEmpty: Boolean
 
     /**
-     * Retrieves and removes the element from this channel suspending the caller while this channel [isEmpty]
+     * Retrieves and removes the element from this channel suspending the caller while this channel is empty,
      * or throws [ClosedReceiveChannelException] if the channel [isClosedForReceive].
      * If the channel was closed because of the exception, it is called a _failed_ channel and this function
      * throws the original [close][SendChannel.close] cause exception.
@@ -188,7 +190,7 @@ public interface ReceiveChannel<out E> {
     public val onReceive: SelectClause1<E>
 
     /**
-     * Retrieves and removes the element from this channel suspending the caller while this channel [isEmpty]
+     * Retrieves and removes the element from this channel suspending the caller while this channel is empty,
      * or returns `null` if the channel is [closed][isClosedForReceive] without cause
      * or throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
      *
@@ -227,7 +229,7 @@ public interface ReceiveChannel<out E> {
     public val onReceiveOrNull: SelectClause1<E?>
 
     /**
-     * Retrieves and removes the element from this channel, or returns `null` if this channel [isEmpty]
+     * Retrieves and removes the element from this channel, or returns `null` if this channel is empty
      * or is [isClosedForReceive] without cause.
      * It throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
      */
@@ -273,9 +275,8 @@ public interface ReceiveChannel<out E> {
  */
 public interface ChannelIterator<out E> {
     /**
-     * Returns `true` if the channel has more elements suspending the caller while this channel
-     * [isEmpty][ReceiveChannel.isEmpty] or returns `false` if the channel
-     * [isClosedForReceive][ReceiveChannel.isClosedForReceive] without cause.
+     * Returns `true` if the channel has more elements, suspending the caller while this channel is empty,
+     * or returns `false` if the channel [isClosedForReceive][ReceiveChannel.isClosedForReceive] without cause.
      * It throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
      *
      * This function retrieves and removes the element from this channel for the subsequent invocation
@@ -297,7 +298,7 @@ public interface ChannelIterator<out E> {
 
     /**
      * Retrieves and removes the element from this channel suspending the caller while this channel
-     * [isEmpty][ReceiveChannel.isEmpty] or throws [ClosedReceiveChannelException] if the channel
+     * is empty or throws [ClosedReceiveChannelException] if the channel
      * [isClosedForReceive][ReceiveChannel.isClosedForReceive] without cause.
      * It throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
      *

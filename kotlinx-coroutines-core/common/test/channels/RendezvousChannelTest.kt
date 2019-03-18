@@ -11,7 +11,6 @@ class RendezvousChannelTest : TestBase() {
     @Test
     fun testSimple() = runTest {
         val q = Channel<Int>(Channel.RENDEZVOUS)
-        check(q.isEmpty && q.isFull)
         expect(1)
         val sender = launch {
             expect(4)
@@ -31,14 +30,13 @@ class RendezvousChannelTest : TestBase() {
         expect(3)
         sender.join()
         receiver.join()
-        check(q.isEmpty && q.isFull)
         finish(10)
     }
 
     @Test
     fun testClosedReceiveOrNull() = runTest {
         val q = Channel<Int>(Channel.RENDEZVOUS)
-        check(q.isEmpty && q.isFull && !q.isClosedForSend && !q.isClosedForReceive)
+        check(!q.isClosedForSend && !q.isClosedForReceive)
         expect(1)
         launch {
             expect(3)
@@ -51,9 +49,9 @@ class RendezvousChannelTest : TestBase() {
         q.send(42)
         expect(5)
         q.close()
-        check(!q.isEmpty && !q.isFull && q.isClosedForSend && q.isClosedForReceive)
+        check(q.isClosedForSend && q.isClosedForReceive)
         yield()
-        check(!q.isEmpty && !q.isFull && q.isClosedForSend && q.isClosedForReceive)
+        check(q.isClosedForSend && q.isClosedForReceive)
         finish(7)
     }
 
