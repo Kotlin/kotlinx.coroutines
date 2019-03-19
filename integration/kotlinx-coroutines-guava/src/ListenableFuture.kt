@@ -68,10 +68,10 @@ private class ListenableFutureCoroutine<T>(
         future.set(value)
     }
 
-    override fun handleJobException(exception: Throwable, handled: Boolean) {
-        if (!future.setException(exception) && !handled) {
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        if (!future.setException(cause) && !handled) {
             // prevents loss of exception that was not handled by parent & could not be set to SettableFuture
-            handleCoroutineException(context, exception)
+            handleCoroutineException(context, cause)
         }
     }
 }

@@ -18,8 +18,12 @@ internal fun <T> Result<T>.toState(): Any? =
  *        or artificial [CancellationException] if no cause was provided
  */
 internal open class CompletedExceptionally(
-    @JvmField public val cause: Throwable
+    @JvmField public val cause: Throwable,
+    handled: Boolean = false
 ) {
+    private val _handled = atomic(handled)
+    val handled: Boolean get() = _handled.value
+    fun makeHandled(): Boolean = _handled.compareAndSet(false, true)
     override fun toString(): String = "$classSimpleName[$cause]"
 }
 
@@ -34,10 +38,7 @@ internal class CancelledContinuation(
     continuation: Continuation<*>,
     cause: Throwable?,
     handled: Boolean
-) : CompletedExceptionally(cause ?: CancellationException("Continuation $continuation was cancelled normally")) {
-    private val resumed = atomic(false)
-    private val handled = atomic(handled)
-
-    fun makeResumed(): Boolean = resumed.compareAndSet(false, true)
-    fun makeHandled(): Boolean = handled.compareAndSet(false, true)
+) : CompletedExceptionally(cause ?: CancellationException("Continuation $continuation was cancelled normally"), handled) {
+    private val _resumed = atomic(false)
+    fun makeResumed(): Boolean = _resumed.compareAndSet(false, true)
 }

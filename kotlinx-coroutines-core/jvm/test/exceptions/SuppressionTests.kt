@@ -31,9 +31,9 @@ class SuppressionTests : TestBase() {
                 expectUnreached()
             }
 
-            override fun onCompletedExceptionally(exception: Throwable) {
-                assertTrue(exception is ArithmeticException)
-                checkException<IOException>(exception.suppressed[0])
+            override fun onCancelled(cause: Throwable, handled: Boolean) {
+                assertTrue(cause is ArithmeticException)
+                checkException<IOException>(cause.suppressed[0])
                 expect(9)
             }
         }

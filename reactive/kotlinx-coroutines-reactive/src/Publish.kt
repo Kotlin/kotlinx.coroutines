@@ -68,8 +68,6 @@ private class PublisherCoroutine<in T>(
     @Volatile
     private var cancelled = false // true when Subscription.cancel() is invoked
 
-    private var shouldHandleException = false // when handleJobException is invoked
-
     override val isClosedForSend: Boolean get() = isCompleted
     override val isFull: Boolean = mutex.isLocked
     override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
@@ -172,14 +170,11 @@ private class PublisherCoroutine<in T>(
         try {
             if (_nRequested.value >= CLOSED) {
                 _nRequested.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
-                val cause = getCompletionCause()
+                val cause = completionCause
                 // Specification requires that after cancellation requested we don't call onXXX
                 if (cancelled) {
-                    // If the parent had failed to handle our exception (handleJobException was invoked), then
-                    // we must not loose this exception
-                    if (shouldHandleException && cause != null) {
-                        handleCoroutineException(context, cause)
-                    }
+                    // If the parent had failed to handle our exception, then we must not lose this exception
+                    if (cause != null && !completionCauseHandled) handleCoroutineException(context, cause)
                 } else {
                     try {
                         if (cause != null && cause !is CancellationException) {
@@ -191,7 +186,7 @@ private class PublisherCoroutine<in T>(
                     } catch (e: Throwable) {
                         handleCoroutineException(context, e)
                     }
-                }                                   
+                }
             }
         } finally {
             mutex.unlock()
@@ -240,19 +235,11 @@ private class PublisherCoroutine<in T>(
         }
     }
 
-    // Note: It is invoked when parent fails to handle an exception and strictly before onCompleted[Exception]
-    // so here we just raise a flag (and it need NOT be volatile!) to handle this exception.
-    // This way we defer decision to handle this exception based on our ability to send this exception
-    // to the subscriber (see doLockedSignalCompleted)
-    override fun handleJobException(exception: Throwable, handled: Boolean) {
-        if (!handled) shouldHandleException = true
-    }
-    
-    override fun onCompletedExceptionally(exception: Throwable) {
+    override fun onCompleted(value: Unit) {
         signalCompleted()
     }
 
-    override fun onCompleted(value: Unit) {
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
         signalCompleted()
     }
 

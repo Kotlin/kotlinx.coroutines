@@ -6,8 +6,8 @@ public abstract class kotlinx/coroutines/AbstractCoroutine : kotlinx/coroutines/
 	public fun getCoroutineContext ()Lkotlin/coroutines/CoroutineContext;
 	public fun isActive ()Z
 	protected fun onCancellation (Ljava/lang/Throwable;)V
+	protected fun onCancelled (Ljava/lang/Throwable;Z)V
 	protected fun onCompleted (Ljava/lang/Object;)V
-	protected fun onCompletedExceptionally (Ljava/lang/Throwable;)V
 	protected fun onStart ()V
 	public final fun resumeWith (Ljava/lang/Object;)V
 	public final fun start (Lkotlinx/coroutines/CoroutineStart;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
@@ -382,11 +382,12 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public fun getChildJobCancellationCause ()Ljava/lang/Throwable;
 	public final fun getChildren ()Lkotlin/sequences/Sequence;
 	protected final fun getCompletionCause ()Ljava/lang/Throwable;
+	protected final fun getCompletionCauseHandled ()Z
 	public final fun getCompletionExceptionOrNull ()Ljava/lang/Throwable;
 	protected fun getHandlesException ()Z
 	public final fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
 	public final fun getOnJoin ()Lkotlinx/coroutines/selects/SelectClause0;
-	protected fun handleJobException (Ljava/lang/Throwable;Z)V
+	protected fun handleJobException (Ljava/lang/Throwable;)Z
 	public final fun invokeOnCompletion (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
 	public final fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
 	public fun isActive ()Z

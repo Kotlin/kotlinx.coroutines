@@ -4,8 +4,9 @@
 
 package kotlinx.coroutines.rx2
 
+import io.reactivex.*
+import io.reactivex.disposables.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.reactive.*
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
@@ -108,5 +109,53 @@ class CompletableTest : TestBase() {
             { expectUnreached() },
             { assert(it is RuntimeException) }
         )
+    }
+
+    @Test
+    fun testSuppressedException() = runTest {
+        val completable = rxCompletable(NonCancellable) {
+            launch(start = CoroutineStart.ATOMIC) {
+                throw TestException() // child coroutine fails
+            }
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                throw TestException2() // but parent throws another exception while cleaning up
+            }
+        }
+        try {
+            completable.await()
+            expectUnreached()
+        } catch (e: TestException) {
+            assertTrue(e.suppressed[0] is TestException2)
+        }
+    }
+
+    @Test
+    fun testUnhandledException() = runTest(
+        unhandled = listOf { it -> it is TestException }
+    ) {
+        expect(1)
+        var disposable: Disposable? = null
+        val completable = rxCompletable(NonCancellable) {
+            expect(4)
+            disposable!!.dispose() // cancel our own subscription, so that delay will get cancelled
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                throw TestException() // would not be able to handle it since mono is disposed
+            }
+        }
+        completable.subscribe(object : CompletableObserver {
+            override fun onSubscribe(d: Disposable) {
+                expect(2)
+                disposable = d
+            }
+            override fun onComplete() { expectUnreached() }
+            override fun onError(t: Throwable) { expectUnreached() }
+        })
+        expect(3)
+        yield() // run coroutine
+        finish(5)
     }
 }

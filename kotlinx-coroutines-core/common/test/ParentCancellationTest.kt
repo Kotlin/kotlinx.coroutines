@@ -40,56 +40,56 @@ class ParentCancellationTest : TestBase() {
 
     @Test
     fun testLaunchChild() = runTest {
-        testParentCancellation { fail ->
+        testParentCancellation(runsInScopeContext = true) { fail ->
             launch { fail() }
         }
     }
 
     @Test
     fun testAsyncChild() = runTest {
-        testParentCancellation { fail ->
+        testParentCancellation(runsInScopeContext = true) { fail ->
             async { fail() }
         }
     }
 
     @Test
     fun testProduceChild() = runTest {
-        testParentCancellation { fail ->
+        testParentCancellation(runsInScopeContext = true) { fail ->
             produce<Unit> { fail() }
         }
     }
 
     @Test
     fun testBroadcastChild() = runTest {
-        testParentCancellation { fail ->
+        testParentCancellation(runsInScopeContext = true) { fail ->
             broadcast<Unit> { fail() }.openSubscription()
         }
     }
 
     @Test
     fun testSupervisorChild() = runTest {
-        testParentCancellation(expectParentActive = true, expectUnhandled = true) { fail ->
+        testParentCancellation(expectParentActive = true, expectUnhandled = true, runsInScopeContext = true) { fail ->
             supervisorScope { fail() }
         }
     }
 
     @Test
     fun testCoroutineScopeChild() = runTest {
-        testParentCancellation(expectParentActive = true, expectRethrows = true) { fail ->
+        testParentCancellation(expectParentActive = true, expectRethrows = true, runsInScopeContext = true) { fail ->
             coroutineScope { fail() }
         }
     }
 
     @Test
     fun testWithContextChild() = runTest {
-        testParentCancellation(expectParentActive = true, expectRethrows = true) { fail ->
+        testParentCancellation(expectParentActive = true, expectRethrows = true, runsInScopeContext = true) { fail ->
             withContext(CoroutineName("fail")) { fail() }
         }
     }
 
     @Test
     fun testWithTimeoutChild() = runTest {
-        testParentCancellation(expectParentActive = true, expectRethrows = true) { fail ->
+        testParentCancellation(expectParentActive = true, expectRethrows = true, runsInScopeContext = true) { fail ->
             withTimeout(1000) { fail() }
         }
     }
@@ -98,16 +98,32 @@ class ParentCancellationTest : TestBase() {
         expectParentActive: Boolean = false,
         expectRethrows: Boolean = false,
         expectUnhandled: Boolean = false,
+        runsInScopeContext: Boolean = false,
         child: suspend CoroutineScope.(block: suspend CoroutineScope.() -> Unit) -> Unit
     ) {
-        testWithException(expectParentActive, expectRethrows, expectUnhandled, TestException(), child)
-        testWithException(true, expectRethrows, false, CancellationException("Test"), child)
+        testWithException(
+            expectParentActive,
+            expectRethrows,
+            expectUnhandled,
+            runsInScopeContext,
+            TestException(),
+            child
+        )
+        testWithException(
+            true,
+            expectRethrows,
+            false,
+            runsInScopeContext,
+            CancellationException("Test"),
+            child
+        )
     }
 
     private suspend fun CoroutineScope.testWithException(
         expectParentActive: Boolean,
         expectRethrows: Boolean,
         expectUnhandled: Boolean,
+        runsInScopeContext: Boolean,
         throwException: Throwable,
         child: suspend CoroutineScope.(block: suspend CoroutineScope.() -> Unit) -> Unit
     ) {
@@ -124,10 +140,10 @@ class ParentCancellationTest : TestBase() {
                     throw throwException
                 }
                 grandchild.join()
-                if (expectUnhandled) {
-                    assertSame(throwException, unhandledException)
-                } else {
-                    assertNull(unhandledException)
+                when {
+                    !expectParentActive && runsInScopeContext -> expectUnreached()
+                    expectUnhandled -> assertSame(throwException, unhandledException)
+                    else -> assertNull(unhandledException)
                 }
             }
             if (expectRethrows && throwException !is CancellationException) {

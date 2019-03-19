@@ -118,7 +118,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         ------ completion listeners are not admitted anymore, invokeOnCompletion returns NonDisposableHandle
          + parentHandle.dispose
          + notifyCompletion (invoke all completion listeners)
-         + onCompletionInternal / onCompleted / onCompletedExceptionally
+         + onCompletionInternal / onCompleted / onCancelled
 
        ---------------------------------------------------------------------------------
      */
@@ -193,9 +193,9 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // ## IMPORTANT INVARIANT: Only one thread can be concurrently invoking this method.
     private fun tryFinalizeFinishingState(state: Finishing, proposedUpdate: Any?, mode: Int): Boolean {
         /*
-         * Note: proposed state can be Incompleted, e.g.
+         * Note: proposed state can be Incomplete, e.g.
          * async {
-         *   smth.invokeOnCompletion {} // <- returns handle which implements Incomplete under the hood
+         *     something.invokeOnCompletion {} // <- returns handle which implements Incomplete under the hood
          * }
          */
         require(this.state === state) // consistency check -- it cannot change
@@ -203,12 +203,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         require(state.isCompleting) // consistency check -- must be marked as completing
         val proposedException = (proposedUpdate as? CompletedExceptionally)?.cause
         // Create the final exception and seal the state so that no more exceptions can be added
-        var suppressed = false
         val finalException = synchronized(state) {
             val exceptions = state.sealLocked(proposedException)
             val finalCause = getFinalRootCause(state, exceptions)
-            // Report suppressed exceptions if initial cause doesn't match final cause (due to JCE unwrapping)
-            if (finalCause != null) suppressed = suppressExceptions(finalCause, exceptions) || finalCause !== state.rootCause
+            if (finalCause != null) addSuppressedExceptions(finalCause, exceptions)
             finalCause
         }
         // Create the final state object
@@ -222,13 +220,13 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         }
         // Now handle the final exception
         if (finalException != null) {
-            val handledByParent = cancelParent(finalException)
-            handleJobException(finalException, handledByParent)
+            val handled = cancelParent(finalException) || handleJobException(finalException)
+            if (handled) (finalState as CompletedExceptionally).makeHandled()
         }
         // Then CAS to completed state -> it must succeed
         require(_state.compareAndSet(state, finalState.boxIncomplete())) { "Unexpected state: ${_state.value}, expected: $state, update: $finalState" }
         // And process all post-completion actions
-        completeStateFinalization(state, finalState, mode, suppressed)
+        completeStateFinalization(state, finalState, mode)
         return true
     }
 
@@ -243,18 +241,15 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         return exceptions.firstOrNull { it !is CancellationException } ?: exceptions[0]
     }
 
-    private fun suppressExceptions(rootCause: Throwable, exceptions: List<Throwable>): Boolean {
-        if (exceptions.size <= 1) return false // nothing more to do here
+    private fun addSuppressedExceptions(rootCause: Throwable, exceptions: List<Throwable>) {
+        if (exceptions.size <= 1) return // nothing more to do here
         val seenExceptions = identitySet<Throwable>(exceptions.size)
-        var suppressed = false
         for (exception in exceptions) {
             val unwrapped = unwrap(exception)
             if (unwrapped !== rootCause && unwrapped !is CancellationException && seenExceptions.add(unwrapped)) {
                 rootCause.addSuppressedThrowable(unwrapped)
-                suppressed = true
             }
         }
-        return suppressed
     }
 
     // fast-path method to finalize normally completed coroutines without children
@@ -262,12 +257,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         check(state is Empty || state is JobNode<*>) // only simple state without lists where children can concurrently add
         check(update !is CompletedExceptionally) // only for normal completion
         if (!_state.compareAndSet(state, update.boxIncomplete())) return false
-        completeStateFinalization(state, update, mode, false)
+        completeStateFinalization(state, update, mode)
         return true
     }
 
     // suppressed == true when any exceptions were suppressed while building the final completion cause
-    private fun completeStateFinalization(state: Incomplete, update: Any?, mode: Int, suppressed: Boolean) {
+    private fun completeStateFinalization(state: Incomplete, update: Any?, mode: Int) {
         /*
          * Now the job in THE FINAL state. We need to properly handle the resulting state.
          * Order of various invocations here is important.
@@ -303,7 +298,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          *    It should be last so all callbacks observe consistent state
          *    of the job which doesn't depend on callback scheduling.
          */
-        onCompletionInternal(update, mode, suppressed)
+        onCompletionInternal(update, mode)
     }
 
     private fun notifyCancelling(list: NodeList, cause: Throwable) {
@@ -387,18 +382,21 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * [cancel] cause, [CancellationException] or **`null` if this job had completed normally**.
      * This function throws [IllegalStateException] when invoked for an job that has not [completed][isCompleted] nor
      * is being cancelled yet.
-     *
-     * @suppress **This is unstable API and it is subject to change.**
      */
-    protected fun getCompletionCause(): Throwable? = loopOnState { state ->
-        return when (state) {
+    protected val completionCause: Throwable?
+        get() = when (val state = state) {
             is Finishing -> state.rootCause
                 ?: error("Job is still new or active: $this")
             is Incomplete -> error("Job is still new or active: $this")
             is CompletedExceptionally -> state.cause
             else -> null
         }
-    }
+
+    /**
+     * Returns `true` when [completionCause] exception was handled by parent coroutine.
+     */
+    protected val completionCauseHandled: Boolean
+        get() = state.let { it is CompletedExceptionally && it.handled }
 
     @Suppress("OverridingDeprecatedMember")
     public final override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle =
@@ -859,8 +857,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     public final override val children: Sequence<Job> get() = sequence {
-        val state = this@JobSupport.state
-        when (state) {
+        when (val state = this@JobSupport.state) {
             is ChildHandleNode -> yield(state.childJob)
             is Incomplete -> state.list?.let { list ->
                 list.forEach<ChildHandleNode> { yield(it.childJob) }
@@ -885,6 +882,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     /**
      * Override to process any exceptions that were encountered while invoking completion handlers
      * installed via [invokeOnCompletion].
+     *
      * @suppress **This is unstable API and it is subject to change.**
      */
     internal open fun handleOnCompletionException(exception: Throwable) {
@@ -910,7 +908,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     protected open val cancelsParent: Boolean get() = true
 
     /**
-     * Returns `true` for jobs that handle their exceptions via [handleJobException] or integrate them
+     * Returns `true` for jobs that handle their exceptions or integrate them
      * into the job's result via [onCompletionInternal]. The only instance of the [Job] that does not
      * handle its exceptions is [JobImpl] and its subclass [SupervisorJobImpl].
      *
@@ -919,17 +917,18 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     protected open val handlesException: Boolean get() = true
 
     /**
-     * Handles the final job [exception] after it was reported to the by the parent,
-     * where [handled] is `true` when parent had already handled exception and `false` otherwise.
+     * Handles the final job [exception] that was not handled by the parent coroutine.
+     * Returns `true` if it handles exception (so handling at later stages is not needed).
+     * It is designed to be overridden by launch-like coroutines
+     * (`StandaloneCoroutine` and `ActorCoroutine`) that don't have a result type
+     * that can represent exceptions.
      *
      * This method is invoked **exactly once** when the final exception of the job is determined
      * and before it becomes complete. At the moment of invocation the job and all its children are complete.
      *
-     * Note, [handled] is always `true` when [exception] is [CancellationException].
-     *
      * @suppress **This is unstable API and it is subject to change.*
      */
-    protected open fun handleJobException(exception: Throwable, handled: Boolean) {}
+    protected open fun handleJobException(exception: Throwable): Boolean = false
 
     private fun cancelParent(cause: Throwable): Boolean {
         // CancellationException is considered "normal" and parent is not cancelled when child produces it.
@@ -944,10 +943,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * Override for post-completion actions that need to do something with the state.
      * @param state the final state.
      * @param mode completion mode.
-     * @param suppressed true when any exceptions were suppressed while building the final completion cause.
+     *
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal open fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {}
+    internal open fun onCompletionInternal(state: Any?, mode: Int) {}
 
     // for nicer debugging
     public override fun toString(): String =
@@ -1015,8 +1014,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                 return
             }
             if (exception === rootCause) return // nothing to do
-            val eh = _exceptionsHolder // volatile read
-            when (eh) {
+            when (val eh = _exceptionsHolder) { // volatile read
                 null -> _exceptionsHolder = exception
                 is Throwable -> {
                     if (exception === eh) return // nothing to do

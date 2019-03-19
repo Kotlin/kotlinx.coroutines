@@ -95,7 +95,7 @@ private open class TimeoutCoroutine<U, in T: U>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    internal override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
+    internal override fun onCompletionInternal(state: Any?, mode: Int) {
         if (state is CompletedExceptionally)
             uCont.resumeUninterceptedWithExceptionMode(state.cause, mode)
         else
