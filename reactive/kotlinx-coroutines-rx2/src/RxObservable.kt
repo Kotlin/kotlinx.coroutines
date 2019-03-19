@@ -134,7 +134,7 @@ private class RxObservableCoroutine<T: Any>(
         try {
             if (_signal.value >= CLOSED) {
                 _signal.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
-                val cause = getCompletionCause()
+                val cause = completionCause
                 try {
                     if (cause != null && cause !is CancellationException)
                         subscriber.onError(cause)
@@ -150,9 +150,17 @@ private class RxObservableCoroutine<T: Any>(
         }
     }
 
-    override fun onCancellation(cause: Throwable?) {
+    private fun signalCompleted() {
         if (!_signal.compareAndSet(OPEN, CLOSED)) return // abort, other thread invoked doLockedSignalCompleted
         if (mutex.tryLock()) // if we can acquire the lock
             doLockedSignalCompleted()
+    }
+
+    override fun onCompleted(value: Unit) {
+        signalCompleted()
+    }
+
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        signalCompleted()
     }
 }

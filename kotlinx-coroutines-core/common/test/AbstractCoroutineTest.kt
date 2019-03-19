@@ -28,7 +28,7 @@ class AbstractCoroutineTest : TestBase() {
                 expect(8)
             }
 
-            override fun onCompletedExceptionally(exception: Throwable) {
+            override fun onCancelled(cause: Throwable, handled: Boolean) {
                 expectUnreached()
             }
         }
@@ -67,8 +67,8 @@ class AbstractCoroutineTest : TestBase() {
                 expectUnreached()
             }
 
-            override fun onCompletedExceptionally(exception: Throwable) {
-                assertTrue(exception is TestException1)
+            override fun onCancelled(cause: Throwable, handled: Boolean) {
+                assertTrue(cause is TestException1)
                 expect(9)
             }
         }

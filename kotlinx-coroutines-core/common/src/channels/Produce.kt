@@ -94,9 +94,12 @@ private class ProducerCoroutine<E>(
     override val isActive: Boolean
         get() = super.isActive
 
-    override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
-        val cause = (state as? CompletedExceptionally)?.cause
+    override fun onCompleted(value: Unit) {
+        _channel.close()
+    }
+
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
         val processed = _channel.close(cause)
-        if (cause != null && !processed && suppressed) handleCoroutineException(context, cause)
+        if (!processed && !handled) handleCoroutineException(context, cause)
     }
 }

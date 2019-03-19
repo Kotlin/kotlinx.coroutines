@@ -50,8 +50,12 @@ private class MonoCoroutine<in T>(
         }
     }
 
-    override fun onCompletedExceptionally(exception: Throwable) {
-        if (!disposed) sink.error(exception)
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        if (!disposed) {
+            sink.error(cause)
+        } else if (!handled) {
+            handleCoroutineException(context, cause)
+        }
     }
     
     override fun dispose() {

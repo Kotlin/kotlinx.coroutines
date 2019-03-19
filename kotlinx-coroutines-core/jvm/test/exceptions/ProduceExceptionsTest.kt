@@ -51,17 +51,16 @@ class ProduceExceptionsTest : TestBase() {
 
     @Test
     fun testSuppressedException() = runTest {
-        val produce = produce<Int>(Job()) {
+        val produce = produce<Int>(NonCancellable) {
             launch(start = CoroutineStart.ATOMIC) {
-                throw TestException()
+                throw TestException() // child coroutine fails
             }
             try {
                 delay(Long.MAX_VALUE)
             } finally {
-                throw TestException2()
+                throw TestException2() // but parent throws another exception while cleaning up
             }
         }
-
         try {
             produce.receive()
             expectUnreached()

@@ -179,8 +179,9 @@ private open class StandaloneCoroutine(
     parentContext: CoroutineContext,
     active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active) {
-    override fun handleJobException(exception: Throwable, handled: Boolean) {
-        if (!handled) handleCoroutineException(context, exception)
+    override fun handleJobException(exception: Throwable): Boolean {
+        handleCoroutineException(context, exception)
+        return true
     }
 }
 
@@ -240,10 +241,10 @@ private class DispatchedCoroutine<in T>(
         }
     }
 
-    override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
+    override fun onCompletionInternal(state: Any?, mode: Int) {
         if (tryResume()) return // completed before getResult invocation -- bail out
         // otherwise, getResult has already commenced, i.e. completed later or in other thread
-        super.onCompletionInternal(state, mode, suppressed)
+        super.onCompletionInternal(state, mode)
     }
 
     fun getResult(): Any? {

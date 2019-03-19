@@ -57,10 +57,10 @@ private class CompletableFutureCoroutine<T>(
         future.complete(value)
     }
 
-    override fun handleJobException(exception: Throwable, handled: Boolean) {
-        if (!future.completeExceptionally(exception) && !handled) {
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        if (!future.completeExceptionally(cause) && !handled) {
             // prevents loss of exception that was not handled by parent & could not be set to CompletableFuture
-            handleCoroutineException(context, exception)
+            handleCoroutineException(context, cause)
         }
     }
 }

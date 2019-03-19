@@ -5,6 +5,7 @@
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
+import io.reactivex.disposables.*
 import io.reactivex.functions.*
 import io.reactivex.internal.functions.Functions.*
 import kotlinx.coroutines.*
@@ -237,5 +238,54 @@ class MaybeTest : TestBase() {
         expect(5)
         yield() // must cancel code inside maybe!!!
         finish(7)
+    }
+
+    @Test
+    fun testSuppressedException() = runTest {
+        val maybe = rxMaybe(NonCancellable) {
+            launch(start = CoroutineStart.ATOMIC) {
+                throw TestException() // child coroutine fails
+            }
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                throw TestException2() // but parent throws another exception while cleaning up
+            }
+        }
+        try {
+            maybe.await()
+            expectUnreached()
+        } catch (e: TestException) {
+            assertTrue(e.suppressed[0] is TestException2)
+        }
+    }
+
+    @Test
+    fun testUnhandledException() = runTest(
+        unhandled = listOf { it -> it is TestException }
+    ) {
+        expect(1)
+        var disposable: Disposable? = null
+        val maybe = rxMaybe(NonCancellable) {
+            expect(4)
+            disposable!!.dispose() // cancel our own subscription, so that delay will get cancelled
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                throw TestException() // would not be able to handle it since mono is disposed
+            }
+        }
+        maybe.subscribe(object : MaybeObserver<Unit> {
+            override fun onSubscribe(d: Disposable) {
+                expect(2)
+                disposable = d
+            }
+            override fun onComplete() { expectUnreached() }
+            override fun onSuccess(t: Unit) { expectUnreached() }
+            override fun onError(t: Throwable) { expectUnreached() }
+        })
+        expect(3)
+        yield() // run coroutine
+        finish(5)
     }
 }

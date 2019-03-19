@@ -23,7 +23,7 @@ internal open class ScopeCoroutine<in T>(
         get() = false // it throws exception to parent instead of cancelling it
 
     @Suppress("UNCHECKED_CAST")
-    internal override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
+    internal override fun onCompletionInternal(state: Any?, mode: Int) {
         if (state is CompletedExceptionally) {
             val exception = if (mode == MODE_IGNORE) state.cause else recoverStackTrace(state.cause, uCont)
             uCont.resumeUninterceptedWithExceptionMode(exception, mode)

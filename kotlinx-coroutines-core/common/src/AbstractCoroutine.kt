@@ -24,7 +24,7 @@ import kotlin.jvm.*
  * * [onCancellation] is invoked as soon as coroutine is _failing_, or is cancelled,
  *   or when it completes for any reason.
  * * [onCompleted] is invoked when coroutine completes with a value.
- * * [onCompletedExceptionally] in invoked when coroutines completes with exception.
+ * * [onCancelled] in invoked when coroutines completes with exception (cancelled).
  *
  * @param parentContext context of the parent coroutine.
  * @param active when `true` (by default) coroutine is created in _active_ state, when `false` in _new_ state.
@@ -89,20 +89,21 @@ public abstract class AbstractCoroutine<in T>(
     protected override fun onCancellation(cause: Throwable?) {}
 
     /**
-     * This function is invoked once when job is completed normally with the specified [value].
+     * This function is invoked once when job was completed normally with the specified [value].
      */
     protected open fun onCompleted(value: T) {}
 
     /**
-     * This function is invoked once when job is completed exceptionally with the specified [exception].
+     * This function is invoked once when job was cancelled with the specified [cause].
+     * @param cause The cancellation (failure) cause
+     * @param handled `true` if the exception was handled by parent (always `true` when it is a [CancellationException])
      */
-    // todo: rename to onCancelled
-    protected open fun onCompletedExceptionally(exception: Throwable) {}
+    protected open fun onCancelled(cause: Throwable, handled: Boolean) {}
 
     @Suppress("UNCHECKED_CAST")
-    internal override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
+    internal override fun onCompletionInternal(state: Any?, mode: Int) {
         if (state is CompletedExceptionally)
-            onCompletedExceptionally(state.cause)
+            onCancelled(state.cause, state.handled)
         else
             onCompleted(state as T)
     }

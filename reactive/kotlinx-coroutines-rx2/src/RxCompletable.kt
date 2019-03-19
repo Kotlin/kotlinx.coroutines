@@ -44,7 +44,11 @@ private class RxCompletableCoroutine(
         if (!subscriber.isDisposed) subscriber.onComplete()
     }
 
-    override fun onCompletedExceptionally(exception: Throwable) {
-        if (!subscriber.isDisposed) subscriber.onError(exception)
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        if (!subscriber.isDisposed) {
+            subscriber.onError(cause)
+        } else if (!handled) {
+            handleCoroutineException(context, cause)
+        }
     }
 }
