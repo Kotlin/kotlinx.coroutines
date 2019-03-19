@@ -12,8 +12,13 @@ repositories {
 
 jmh.jmhVersion = '1.21'
 
+// It is better to use the following to run benchmarks, otherwise you may get unexpected errors:
+// ../gradlew --no-daemon cleanJmhJar jmh
 jmh {
     duplicateClassesStrategy DuplicatesStrategy.INCLUDE
+    failOnError = true
+    resultFormat = 'CSV'
+//    include = ['.*ChannelProducerConsumer.*']
 }
 
 jmhJar {
