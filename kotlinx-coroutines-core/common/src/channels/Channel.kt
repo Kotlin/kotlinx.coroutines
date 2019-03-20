@@ -27,16 +27,6 @@ public interface SendChannel<in E> {
     public val isClosedForSend: Boolean
 
     /**
-     * Returns `true` if the channel is full (out of capacity) and the [send] attempt will suspend.
-     * This function returns `false` for [isClosedForSend] channel.
-     *
-     * @suppress **Will be removed in next releases, no replacement.**
-     */
-    @ExperimentalCoroutinesApi
-    @Deprecated(level = DeprecationLevel.ERROR, message = "Will be removed in next releases without replacement")
-    public val isFull: Boolean
-
-    /**
      * Adds [element] into to this channel, suspending the caller while the buffer of this channel is full
      * or if it does not exist, or throws exception if the channel [isClosedForSend] (see [close] for details).
      *
@@ -147,16 +137,6 @@ public interface ReceiveChannel<out E> {
      */
     @ExperimentalCoroutinesApi
     public val isClosedForReceive: Boolean
-
-    /**
-     * Returns `true` if the channel is empty (contains no elements) and the [receive] attempt will suspend.
-     * This function returns `false` for [isClosedForReceive] channel.
-     *
-     * @suppress **Will be removed in next releases, no replacement.**
-     */
-    @ExperimentalCoroutinesApi
-    @Deprecated(level = DeprecationLevel.ERROR, message = "Will be removed in next releases without replacement")
-    public val isEmpty: Boolean
 
     /**
      * Retrieves and removes the element from this channel suspending the caller while this channel is empty,
