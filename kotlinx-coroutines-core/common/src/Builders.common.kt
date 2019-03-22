@@ -241,10 +241,10 @@ private class DispatchedCoroutine<in T>(
         }
     }
 
-    override fun onCompletionInternal(state: Any?, mode: Int) {
+    override fun afterCompletionInternal(state: Any?, mode: Int) {
         if (tryResume()) return // completed before getResult invocation -- bail out
         // otherwise, getResult has already commenced, i.e. completed later or in other thread
-        super.onCompletionInternal(state, mode)
+        super.afterCompletionInternal(state, mode)
     }
 
     fun getResult(): Any? {

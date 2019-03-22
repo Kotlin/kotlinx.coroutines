@@ -20,9 +20,8 @@ import kotlin.jvm.*
  *
  * The following methods are available for override:
  *
- * * [onStart] is invoked when coroutine is create in not active state and is [started][Job.start].
- * * [onCancellation] is invoked as soon as coroutine is _failing_, or is cancelled,
- *   or when it completes for any reason.
+ * * [onStart] is invoked when coroutine was created in not active state and is being [started][Job.start].
+ * * [onCancelling] is invoked as soon as coroutine is being cancelled for any reason (or completes).
  * * [onCompleted] is invoked when coroutine completes with a value.
  * * [onCancelled] in invoked when coroutines completes with exception (cancelled).
  *
@@ -77,31 +76,26 @@ public abstract class AbstractCoroutine<in T>(
     }
 
     /**
-     * This function is invoked once when this coroutine is cancelled
-     * similarly to [invokeOnCompletion] with `onCancelling` set to `true`.
-     *
-     * The meaning of [cause] parameter:
-     * * Cause is `null` when job has completed normally.
-     * * Cause is an instance of [CancellationException] when job was cancelled _normally_.
-     *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
-     * * Otherwise, the job had been cancelled or failed with exception.
-     */
-    protected override fun onCancellation(cause: Throwable?) {}
-
-    /**
-     * This function is invoked once when job was completed normally with the specified [value].
+     * This function is invoked once when job was completed normally with the specified [value],
+     * right before all the waiters for coroutine's completion are notified.
      */
     protected open fun onCompleted(value: T) {}
 
     /**
-     * This function is invoked once when job was cancelled with the specified [cause].
+     * This function is invoked once when job was cancelled with the specified [cause],
+     * right before all the waiters for coroutine's completion are notified.
+     *
+     * **Note:** the state of the coroutine might not be final yet in this function and should not be queried.
+     * You can use [completionCause] and [completionCauseHandled] to recover parameters that we passed
+     * to this `onCancelled` invocation only when [isCompleted] returns `true`.
+     *
      * @param cause The cancellation (failure) cause
      * @param handled `true` if the exception was handled by parent (always `true` when it is a [CancellationException])
      */
     protected open fun onCancelled(cause: Throwable, handled: Boolean) {}
 
     @Suppress("UNCHECKED_CAST")
-    internal override fun onCompletionInternal(state: Any?, mode: Int) {
+    protected final override fun onCompletionInternal(state: Any?) {
         if (state is CompletedExceptionally)
             onCancelled(state.cause, state.handled)
         else

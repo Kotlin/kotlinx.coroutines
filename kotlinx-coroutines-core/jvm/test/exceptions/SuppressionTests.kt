@@ -21,7 +21,7 @@ class SuppressionTests : TestBase() {
                 expect(3)
             }
 
-            override fun onCancellation(cause: Throwable?) {
+            override fun onCancelling(cause: Throwable?) {
                 assertTrue(cause is ArithmeticException)
                 assertTrue(cause.suppressed.isEmpty())
                 expect(5)
@@ -34,7 +34,7 @@ class SuppressionTests : TestBase() {
             override fun onCancelled(cause: Throwable, handled: Boolean) {
                 assertTrue(cause is ArithmeticException)
                 checkException<IOException>(cause.suppressed[0])
-                expect(9)
+                expect(8)
             }
         }
 
@@ -47,7 +47,7 @@ class SuppressionTests : TestBase() {
         coroutine.invokeOnCompletion {
             assertTrue(it is ArithmeticException)
             checkException<IOException>(it.suppressed[0])
-            expect(8)
+            expect(9)
         }
 
         expect(2)

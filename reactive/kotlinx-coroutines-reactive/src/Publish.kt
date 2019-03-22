@@ -162,19 +162,20 @@ private class PublisherCoroutine<in T>(
         */
         mutex.unlock()
         // check isCompleted and and try to regain lock to signal completion
-        if (isCompleted && mutex.tryLock()) doLockedSignalCompleted()
+        if (isCompleted && mutex.tryLock()) {
+            doLockedSignalCompleted(completionCause, completionCauseHandled)
+        }
     }
 
     // assert: mutex.isLocked() & isCompleted
-    private fun doLockedSignalCompleted() {
+    private fun doLockedSignalCompleted(cause: Throwable?, handled: Boolean) {
         try {
             if (_nRequested.value >= CLOSED) {
                 _nRequested.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
-                val cause = completionCause
                 // Specification requires that after cancellation requested we don't call onXXX
                 if (cancelled) {
                     // If the parent had failed to handle our exception, then we must not lose this exception
-                    if (cause != null && !completionCauseHandled) handleCoroutineException(context, cause)
+                    if (cause != null && !handled) handleCoroutineException(context, cause)
                 } else {
                     try {
                         if (cause != null && cause !is CancellationException) {
@@ -217,7 +218,7 @@ private class PublisherCoroutine<in T>(
     }
 
     // assert: isCompleted
-    private fun signalCompleted() {
+    private fun signalCompleted(cause: Throwable?, handled: Boolean) {
         while (true) { // lock-free loop for nRequested
             val cur = _nRequested.value
             if (cur == SIGNALLED) return // some other thread holding lock already signalled cancellation/completion
@@ -225,10 +226,10 @@ private class PublisherCoroutine<in T>(
             if (!_nRequested.compareAndSet(cur, CLOSED)) continue // retry on failed CAS
             // Ok -- marked as CLOSED, now can unlock the mutex if it was locked due to backpressure
             if (cur == 0L) {
-                doLockedSignalCompleted()
+                doLockedSignalCompleted(cause, handled)
             } else {
                 // otherwise mutex was either not locked or locked in concurrent onNext... try lock it to signal completion
-                if (mutex.tryLock()) doLockedSignalCompleted()
+                if (mutex.tryLock()) doLockedSignalCompleted(cause, handled)
                 // Note: if failed `tryLock`, then `doLockedNext` will signal after performing `unlock`
             }
             return // done anyway
@@ -236,11 +237,11 @@ private class PublisherCoroutine<in T>(
     }
 
     override fun onCompleted(value: Unit) {
-        signalCompleted()
+        signalCompleted(null, false)
     }
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
-        signalCompleted()
+        signalCompleted(cause, handled)
     }
 
     override fun cancel() {
