@@ -150,7 +150,7 @@ public fun <T> ThreadLocal<T>.asContextElement(value: T = get()): ThreadContextE
  * }
  * ```
  */
-public suspend fun ThreadLocal<*>.isPresent(): Boolean = coroutineContext[ThreadLocalKey(this)] != null
+public suspend inline fun ThreadLocal<*>.isPresent(): Boolean = coroutineContext[ThreadLocalKey(this)] !== null
 
 /**
  * Checks whether current thread local is present in the coroutine context and throws [IllegalStateException] if it is not.
@@ -170,4 +170,5 @@ public suspend fun ThreadLocal<*>.isPresent(): Boolean = coroutineContext[Thread
  * }
  * ```
  */
-public suspend fun ThreadLocal<*>.ensurePresent(): Unit = check(isPresent()) { "ThreadLocal $this is missing from context $coroutineContext" }
+public suspend inline fun ThreadLocal<*>.ensurePresent(): Unit =
+    check(isPresent()) { "ThreadLocal $this is missing from context $coroutineContext" }
