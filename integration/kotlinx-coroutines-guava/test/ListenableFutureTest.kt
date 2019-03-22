@@ -11,9 +11,7 @@ import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.Test
-import java.io.*
 import java.util.concurrent.*
-import kotlin.test.assertFailsWith
 
 class ListenableFutureTest : TestBase() {
     @Before

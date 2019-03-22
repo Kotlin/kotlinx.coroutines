@@ -201,4 +201,10 @@ public actual open class TestBase actual constructor() {
         if (exCount < unhandled.size)
             error("Too few unhandled exceptions $exCount, expected ${unhandled.size}")
     }
+
+    protected inline fun <reified T: Throwable> assertFailsWith(block: () -> Unit): T {
+        val result = runCatching(block)
+        assertTrue(result.exceptionOrNull() is T, "Expected ${T::class}, but had $result")
+        return result.exceptionOrNull()!! as T
+    }
 }

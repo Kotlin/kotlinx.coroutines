@@ -98,7 +98,8 @@ internal fun restoreThreadContext(context: CoroutineContext, oldState: Any?) {
 }
 
 // top-level data class for a nicer out-of-the-box toString representation and class name
-private data class ThreadLocalKey(private val threadLocal: ThreadLocal<*>) : CoroutineContext.Key<ThreadLocalElement<*>>
+@PublishedApi
+internal data class ThreadLocalKey(private val threadLocal: ThreadLocal<*>) : CoroutineContext.Key<ThreadLocalElement<*>>
 
 internal class ThreadLocalElement<T>(
     private val value: T,
