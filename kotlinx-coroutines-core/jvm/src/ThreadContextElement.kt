@@ -56,7 +56,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
      * when the context of the coroutine this element.
      * The result of this function is the old value of the thread-local state that will be passed to [restoreThreadContext].
      * This method should handle its own exceptions and do not rethrow it. Thrown exceptions will leave coroutine which
-     * context is updated in an undefined state.
+     * context is updated in an undefined state and may crash an application.
      *
      * @param context the coroutine context.
      */
@@ -69,7 +69,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
      * The value of [oldState] is the result of the previous invocation of [updateThreadContext] and it should
      * be restored in the thread-local state by this function.
      * This method should handle its own exceptions and do not rethrow it. Thrown exceptions will leave coroutine which
-     * context is updated in an undefined state.
+     * context is updated in an undefined state and may crash an application.
      *
      * @param context the coroutine context.
      * @param oldState the value returned by the previous invocation of [updateThreadContext].
@@ -135,3 +135,40 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  */
 public fun <T> ThreadLocal<T>.asContextElement(value: T = get()): ThreadContextElement<T> =
     ThreadLocalElement(value, this)
+
+/**
+ * Return `true` when current thread local is present in the coroutine context, `false` otherwise.
+ * Thread local can be present in the context only if it was added via [asContextElement] to the context.
+ *
+ * Example of usage:
+ * ```
+ * suspend fun processRequest() {
+ *   if (traceCurrentRequestThreadLocal.isPresent()) { // Probabilistic tracing
+ *      // Do some heavy-weight tracing
+ *   }
+ *   // Process request regularly
+ * }
+ * ```
+ */
+public suspend inline fun ThreadLocal<*>.isPresent(): Boolean = coroutineContext[ThreadLocalKey(this)] !== null
+
+/**
+ * Checks whether current thread local is present in the coroutine context and throws [IllegalStateException] if it is not.
+ * It is a good practice to validate that thread local is present in the context, especially in large code-bases,
+ * to avoid stale thread-local values and to have a strict invariants.
+ *
+ * E.g. one may use the following method to enforce proper use of the thread locals with coroutines:
+ * ```
+ * public suspend inline fun <T> ThreadLocal<T>.getSafely(): T {
+ *   ensurePresent()
+ *   return get()
+ * }
+ *
+ * // Usage
+ * withContext(...) {
+ *   val value = threadLocal.getSafely() // Fail-fast in case of improper context
+ * }
+ * ```
+ */
+public suspend inline fun ThreadLocal<*>.ensurePresent(): Unit =
+    check(isPresent()) { "ThreadLocal $this is missing from context $coroutineContext" }

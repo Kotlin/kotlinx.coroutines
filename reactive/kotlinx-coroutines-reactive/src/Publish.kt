@@ -60,10 +60,6 @@ private class PublisherCoroutine<in T>(
 ) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Subscription, SelectClause2<T, SendChannel<T>> {
     override val channel: SendChannel<T> get() = this
 
-    // cancelsParent == true ensure that error is always reported to the parent, so that parent cannot complete
-    // without receiving reported error.
-    override val cancelsParent: Boolean get() = true
-
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
     private val mutex = Mutex(locked = true)
 
@@ -76,7 +72,7 @@ private class PublisherCoroutine<in T>(
 
     override val isClosedForSend: Boolean get() = isCompleted
     override val isFull: Boolean = mutex.isLocked
-    override fun close(cause: Throwable?): Boolean = cancel(cause)
+    override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
     override fun invokeOnClose(handler: (Throwable?) -> Unit) =
         throw UnsupportedOperationException("PublisherCoroutine doesn't support invokeOnClose")
 
@@ -136,8 +132,9 @@ private class PublisherCoroutine<in T>(
             subscriber.onNext(elem)
         } catch (e: Throwable) {
             // If onNext fails with exception, then we cancel coroutine (with this exception) and then rethrow it
-            // to abort the corresponding send/offer invocation
-            cancel(e)
+            // to abort the corresponding send/offer invocation. From the standpoint of coroutines machinery,
+            // this failure is essentially equivalent to a failure of a child coroutine.
+            cancelCoroutine(e)
             unlockAndCheckCompleted()
             throw e
         }
@@ -181,7 +178,7 @@ private class PublisherCoroutine<in T>(
                     // If the parent had failed to handle our exception (handleJobException was invoked), then
                     // we must not loose this exception
                     if (shouldHandleException && cause != null) {
-                        handleExceptionViaHandler(parentContext, cause)
+                        handleCoroutineException(context, cause)
                     }
                 } else {
                     try {
@@ -192,7 +189,7 @@ private class PublisherCoroutine<in T>(
                             subscriber.onComplete()
                         }
                     } catch (e: Throwable) {
-                        handleExceptionViaHandler(parentContext, e)
+                        handleCoroutineException(context, e)
                     }
                 }                                   
             }
@@ -204,7 +201,7 @@ private class PublisherCoroutine<in T>(
     override fun request(n: Long) {
         if (n <= 0) {
             // Specification requires IAE for n <= 0
-            cancel(IllegalArgumentException("non-positive subscription request $n"))
+            cancelCoroutine(IllegalArgumentException("non-positive subscription request $n"))
             return
         }
         while (true) { // lock-free loop for nRequested
@@ -247,8 +244,8 @@ private class PublisherCoroutine<in T>(
     // so here we just raise a flag (and it need NOT be volatile!) to handle this exception.
     // This way we defer decision to handle this exception based on our ability to send this exception
     // to the subscriber (see doLockedSignalCompleted)
-    override fun handleJobException(exception: Throwable) {
-        shouldHandleException = true
+    override fun handleJobException(exception: Throwable, handled: Boolean) {
+        if (!handled) shouldHandleException = true
     }
     
     override fun onCompletedExceptionally(exception: Throwable) {
@@ -263,6 +260,6 @@ private class PublisherCoroutine<in T>(
         // Specification requires that after cancellation publisher stops signalling
         // This flag distinguishes subscription cancellation request from the job crash
         cancelled = true
-        super.cancel()
+        super.cancel(null)
     }
 }

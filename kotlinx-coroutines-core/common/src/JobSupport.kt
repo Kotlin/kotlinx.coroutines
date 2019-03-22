@@ -220,9 +220,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             // cancelled job final state
             else -> CompletedExceptionally(finalException)
         }
-        // Now handle exception if parent can't handle it
-        if (finalException != null && !cancelParent(finalException)) {
-            handleJobException(finalException)
+        // Now handle the final exception
+        if (finalException != null) {
+            val handledByParent = cancelParent(finalException)
+            handleJobException(finalException, handledByParent)
         }
         // Then CAS to completed state -> it must succeed
         require(_state.compareAndSet(state, finalState.boxIncomplete())) { "Unexpected state: ${_state.value}, expected: $state, update: $finalState" }
@@ -369,16 +370,17 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     public final override fun getCancellationException(): CancellationException {
         val state = this.state
         return when (state) {
-            is Finishing -> state.rootCause?.toCancellationException("Job is cancelling")
+            is Finishing -> state.rootCause?.toCancellationException("$classSimpleName is cancelling")
                 ?: error("Job is still new or active: $this")
             is Incomplete -> error("Job is still new or active: $this")
-            is CompletedExceptionally -> state.cause.toCancellationException("Job was cancelled")
-            else -> JobCancellationException("Job has completed normally", null, this)
+            is CompletedExceptionally -> state.cause.toCancellationException()
+            else -> JobCancellationException("$classSimpleName has completed normally", null, this)
         }
     }
 
-    private fun Throwable.toCancellationException(message: String): CancellationException =
-        this as? CancellationException ?: JobCancellationException(message, this, this@JobSupport)
+    protected fun Throwable.toCancellationException(message: String? = null): CancellationException =
+        this as? CancellationException ?:
+            JobCancellationException(message ?: "$classSimpleName was cancelled", this, this@JobSupport)
 
     /**
      * Returns the cause that signals the completion of this job -- it returns the original
@@ -564,14 +566,20 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      */
     internal open val onCancelComplete: Boolean get() = false
 
-    // external cancel without cause, never invoked implicitly from internal machinery
-    public override fun cancel() {
-        @Suppress("DEPRECATION")
-        cancel(null) // must delegate here, because some classes override cancel(x)
+    // external cancel with cause, never invoked implicitly from internal machinery
+    public override fun cancel(cause: CancellationException?) {
+        cancelInternal(cause) // must delegate here, because some classes override cancelInternal(x)
     }
 
+    // HIDDEN in Job interface. Invoked only by legacy compiled code.
     // external cancel with (optional) cause, never invoked implicitly from internal machinery
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Added since 1.2.0 for binary compatibility with versions <= 1.1.x")
     public override fun cancel(cause: Throwable?): Boolean =
+        cancelInternal(cause)
+
+    // It is overridden in channel-linked implementation
+    // Note: Boolean result is used only in HIDDEN DEPRECATED functions that were public in versions <= 1.1.x
+    public open fun cancelInternal(cause: Throwable?): Boolean =
         cancelImpl(cause) && handlesException
 
     // Parent is cancelling child
@@ -580,8 +588,16 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     // Child was cancelled with cause
+    // It is overridden in supervisor implementations to ignore child cancellation
     public open fun childCancelled(cause: Throwable): Boolean =
         cancelImpl(cause) && handlesException
+
+    /**
+     * Makes this [Job] cancelled with a specified [cause].
+     * It is used in [AbstractCoroutine]-derived classes when there is an internal failure.
+     */
+    public fun cancelCoroutine(cause: Throwable?) =
+        cancelImpl(cause)
 
     // cause is Throwable or ParentJob when cancelChild was invoked
     // returns true is exception was handled, false otherwise
@@ -891,24 +907,29 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      *
      * @suppress **This is unstable API and it is subject to change.*
      */
-    protected open val cancelsParent: Boolean get() = false
+    protected open val cancelsParent: Boolean get() = true
 
     /**
      * Returns `true` for jobs that handle their exceptions via [handleJobException] or integrate them
      * into the job's result via [onCompletionInternal]. The only instance of the [Job] that does not
-     * handle its exceptions is [JobImpl].
+     * handle its exceptions is [JobImpl] and its subclass [SupervisorJobImpl].
      *
      * @suppress **This is unstable API and it is subject to change.*
      */
     protected open val handlesException: Boolean get() = true
 
     /**
+     * Handles the final job [exception] after it was reported to the by the parent,
+     * where [handled] is `true` when parent had already handled exception and `false` otherwise.
+     *
      * This method is invoked **exactly once** when the final exception of the job is determined
      * and before it becomes complete. At the moment of invocation the job and all its children are complete.
      *
+     * Note, [handled] is always `true` when [exception] is [CancellationException].
+     *
      * @suppress **This is unstable API and it is subject to change.*
      */
-    protected open fun handleJobException(exception: Throwable) {}
+    protected open fun handleJobException(exception: Throwable, handled: Boolean) {}
 
     private fun cancelParent(cause: Throwable): Boolean {
         // CancellationException is considered "normal" and parent is not cancelled when child produces it.
@@ -1184,7 +1205,6 @@ private class Empty(override val isActive: Boolean) : Incomplete {
 
 internal open class JobImpl(parent: Job?) : JobSupport(true), CompletableJob {
     init { initParentJobInternal(parent) }
-    override val cancelsParent: Boolean get() = true
     override val onCancelComplete get() = true
     override val handlesException: Boolean get() = false
     override fun complete() = makeCompleting(Unit)

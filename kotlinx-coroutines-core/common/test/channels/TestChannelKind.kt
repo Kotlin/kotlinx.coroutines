@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 
 enum class TestChannelKind {
@@ -53,14 +54,20 @@ private class ChannelViaBroadcast<E>(
     val sub = broadcast.openSubscription()
 
     override val isClosedForReceive: Boolean get() = sub.isClosedForReceive
+    @Suppress("DEPRECATION_ERROR")
     override val isEmpty: Boolean get() = sub.isEmpty
 
     override suspend fun receive(): E = sub.receive()
     override suspend fun receiveOrNull(): E? = sub.receiveOrNull()
     override fun poll(): E? = sub.poll()
     override fun iterator(): ChannelIterator<E> = sub.iterator()
-    override fun cancel(): Unit = sub.cancel()
-    override fun cancel(cause: Throwable?): Boolean = sub.cancel(cause)
+    
+    override fun cancel(cause: CancellationException?) = sub.cancel(cause)
+
+    // implementing hidden method anyway, so can cast to an internal class
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
+    override fun cancel(cause: Throwable?): Boolean = (sub as AbstractChannel).cancelInternal(cause)
+
     override val onReceive: SelectClause1<E>
         get() = sub.onReceive
     override val onReceiveOrNull: SelectClause1<E?>

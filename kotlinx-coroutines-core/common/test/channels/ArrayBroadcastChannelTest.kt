@@ -162,7 +162,9 @@ class ArrayBroadcastChannelTest : TestBase() {
         val channel = BroadcastChannel<Int>(1)
         // launch generator (for later) in this context
         launch {
-            for (x in 1..5) channel.send(x)
+            for (x in 1..5) {
+                channel.send(x)
+            }
             channel.close()
         }
         // start consuming
@@ -188,10 +190,10 @@ class ArrayBroadcastChannelTest : TestBase() {
     }
 
     @Test
-    fun testCancelWithCause() = runTest({ it is TestException }) {
+    fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
         val channel = BroadcastChannel<Int>(1)
         val subscription = channel.openSubscription()
-        subscription.cancel(TestException())
+        subscription.cancel(TestCancellationException())
         subscription.receiveOrNull()
     }
 

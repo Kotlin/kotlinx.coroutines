@@ -37,11 +37,11 @@ class AwaitTest : TestBase() {
     fun testAwaitAllLazy() = runTest {
         expect(1)
         val d = async(start = CoroutineStart.LAZY) {
-            expect(2);
+            expect(2)
             1
         }
         val d2 = async(start = CoroutineStart.LAZY) {
-            expect(3);
+            expect(3)
             2
         }
         assertEquals(listOf(1, 2), awaitAll(d, d2))
@@ -203,9 +203,9 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAllFullyCompletedExceptionally() = runTest {
         val d1 = CompletableDeferred<Unit>(parent = null)
-            .apply { cancel(TestException()) }
+            .apply { completeExceptionally(TestException()) }
         val d2 = CompletableDeferred<Unit>(parent = null)
-            .apply { cancel(TestException()) }
+            .apply { completeExceptionally(TestException()) }
         val job = async { expect(3) }
         expect(1)
         try {

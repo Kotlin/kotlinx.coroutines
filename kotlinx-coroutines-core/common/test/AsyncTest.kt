@@ -52,16 +52,20 @@ class AsyncTest : TestBase() {
     }
 
     @Test
-    fun testCancellationWithCause() = runTest(expected = { it is TestException }) {
+    fun testCancellationWithCause() = runTest {
         expect(1)
         val d = async(NonCancellable, start = CoroutineStart.ATOMIC) {
-            finish(3)
+            expect(3)
             yield()
         }
-
         expect(2)
-        d.cancel(TestException())
-        d.await()
+        d.cancel(TestCancellationException("TEST"))
+        try {
+            d.await()
+        } catch (e: TestCancellationException) {
+            finish(4)
+            assertEquals("TEST", e.message)
+        }
     }
 
     @Test
@@ -155,7 +159,7 @@ class AsyncTest : TestBase() {
             throw TestException()
         }
         expect(1)
-        deferred.cancel(TestException())
+        deferred.cancel()
         try {
             deferred.await()
         } catch (e: TestException) {

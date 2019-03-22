@@ -12,25 +12,6 @@ import kotlin.test.*
 
 @Suppress("DEPRECATION")
 class SuppressionTests : TestBase() {
-
-    @Test
-    fun testCancellationTransparency() = runTest {
-        val deferred = async(NonCancellable, start = CoroutineStart.ATOMIC) {
-            expect(2)
-            throw ArithmeticException()
-        }
-
-        expect(1)
-        deferred.cancel(TestException("Message"))
-
-        try {
-            deferred.await()
-        } catch (e: TestException) {
-            checkException<ArithmeticException>(e.suppressed[0])
-            finish(3)
-        }
-    }
-
     @Test
     fun testNotificationsWithException() = runTest {
         expect(1)
@@ -72,7 +53,7 @@ class SuppressionTests : TestBase() {
         expect(2)
         coroutine.start()
         expect(4)
-        coroutine.cancel(ArithmeticException())
+        coroutine.cancelInternal(ArithmeticException())
         expect(7)
         coroutine.resumeWithException(IOException())
         finish(10)
@@ -88,7 +69,7 @@ class SuppressionTests : TestBase() {
             }
 
             launch {
-                val exception = RecoverableTestException()
+                val exception = RecoverableTestCancellationException()
                 channel.cancel(exception)
                 throw exception
             }

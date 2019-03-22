@@ -6,6 +6,7 @@ package kotlinx.coroutines
 
 import org.junit.*
 import org.junit.Test
+import java.lang.IllegalStateException
 import kotlin.test.*
 
 @Suppress("RedundantAsync")
@@ -22,25 +23,33 @@ class ThreadLocalTest : TestBase() {
     @Test
     fun testThreadLocal() = runTest {
         assertNull(stringThreadLocal.get())
+        assertFalse(stringThreadLocal.isPresent())
         val deferred = async(Dispatchers.Default + stringThreadLocal.asContextElement("value")) {
             assertEquals("value", stringThreadLocal.get())
+            assertTrue(stringThreadLocal.isPresent())
             withContext(executor) {
+                assertTrue(stringThreadLocal.isPresent())
+                assertFailsWith<IllegalStateException> { intThreadLocal.ensurePresent() }
                 assertEquals("value", stringThreadLocal.get())
             }
+            assertTrue(stringThreadLocal.isPresent())
             assertEquals("value", stringThreadLocal.get())
         }
 
         assertNull(stringThreadLocal.get())
         deferred.await()
         assertNull(stringThreadLocal.get())
+        assertFalse(stringThreadLocal.isPresent())
     }
 
     @Test
     fun testThreadLocalInitialValue() = runTest {
         intThreadLocal.set(42)
+        assertFalse(intThreadLocal.isPresent())
         val deferred = async(Dispatchers.Default + intThreadLocal.asContextElement(239)) {
             assertEquals(239, intThreadLocal.get())
             withContext(executor) {
+                intThreadLocal.ensurePresent()
                 assertEquals(239, intThreadLocal.get())
             }
             assertEquals(239, intThreadLocal.get())
@@ -63,6 +72,8 @@ class ThreadLocalTest : TestBase() {
             withContext(executor) {
                 assertEquals(239, intThreadLocal.get())
                 assertEquals("pew", stringThreadLocal.get())
+                intThreadLocal.ensurePresent()
+                stringThreadLocal.ensurePresent()
             }
 
             assertEquals(239, intThreadLocal.get())
@@ -129,6 +140,7 @@ class ThreadLocalTest : TestBase() {
         }
 
         deferred.await()
+        assertFalse(stringThreadLocal.isPresent())
         assertEquals("main", stringThreadLocal.get())
     }
 
@@ -211,5 +223,11 @@ class ThreadLocalTest : TestBase() {
             assertEquals(42, intThreadLocal.get())
             assertNotSame(mainThread, Thread.currentThread())
         }.await()
+    }
+
+    @Test
+    fun testMissingThreadLocal() = runTest {
+        assertFailsWith<IllegalStateException> { stringThreadLocal.ensurePresent() }
+        assertFailsWith<IllegalStateException> { intThreadLocal.ensurePresent() }
     }
 }

@@ -94,7 +94,6 @@ private open class DeferredCoroutine<T>(
     parentContext: CoroutineContext,
     active: Boolean
 ) : AbstractCoroutine<T>(parentContext, active), Deferred<T>, SelectClause1<T> {
-    override val cancelsParent: Boolean get() = true
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T
     override val onAwait: SelectClause1<T> get() = this
@@ -163,14 +162,26 @@ public suspend fun <T> withContext(
     coroutine.getResult()
 }
 
+/**
+ * Calls the specified suspending block with the given [CoroutineDispatcher], suspends until it
+ * completes, and returns the result.
+ *
+ * This inline function calls [withContext].
+ */
+@ExperimentalCoroutinesApi
+public suspend inline operator fun <T> CoroutineDispatcher.invoke(
+    noinline block: suspend CoroutineScope.() -> T
+): T = withContext(this, block)
+
 // --------------- implementation ---------------
 
 private open class StandaloneCoroutine(
     parentContext: CoroutineContext,
     active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active) {
-    override val cancelsParent: Boolean get() = true
-    override fun handleJobException(exception: Throwable) = handleExceptionViaHandler(parentContext, exception)
+    override fun handleJobException(exception: Throwable, handled: Boolean) {
+        if (!handled) handleCoroutineException(context, exception)
+    }
 }
 
 private class LazyStandaloneCoroutine(

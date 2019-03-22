@@ -90,23 +90,29 @@ private open class BroadcastCoroutine<E>(
     protected val _channel: BroadcastChannel<E>,
     active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active), ProducerScope<E>, BroadcastChannel<E> by _channel {
-    override val cancelsParent: Boolean get() = true
     override val isActive: Boolean get() = super.isActive
 
     override val channel: SendChannel<E>
         get() = this
 
-    override fun cancel(cause: Throwable?): Boolean {
-        val wasCancelled = _channel.cancel(cause)
-        @Suppress("DEPRECATION")
-        if (wasCancelled) super.cancel(cause) // cancel the job
-        return wasCancelled
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
+    final override fun cancel(cause: Throwable?): Boolean =
+        cancelInternal(cause)
+
+    final override fun cancel(cause: CancellationException?) {
+        cancelInternal(cause)
+    }
+
+    override fun cancelInternal(cause: Throwable?): Boolean {
+        _channel.cancel(cause?.toCancellationException()) // cancel the channel
+        cancelCoroutine(cause) // cancel the job
+        return true // does not matter - result is used in DEPRECATED functions only
     }
 
     override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
         val cause = (state as? CompletedExceptionally)?.cause
         val processed = _channel.close(cause)
-        if (cause != null && !processed && suppressed) handleExceptionViaHandler(context, cause)
+        if (cause != null && !processed && suppressed) handleCoroutineException(context, cause)
     }
 }
 

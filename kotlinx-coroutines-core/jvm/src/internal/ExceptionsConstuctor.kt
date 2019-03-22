@@ -20,7 +20,7 @@ private val exceptionCtors: WeakHashMap<Class<out Throwable>, Ctor> = WeakHashMa
 internal fun <E : Throwable> tryCopyException(exception: E): E? {
     // Fast path for CopyableThrowable
     if (exception is CopyableThrowable<*>) {
-        return runCatching { exception.createCopy() as E }.getOrNull()
+        return runCatching { exception.createCopy() as E? }.getOrNull()
     }
     // Use cached ctor if found
     cacheLock.read { exceptionCtors[exception.javaClass] }?.let { cachedCtor ->

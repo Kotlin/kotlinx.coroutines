@@ -13,19 +13,23 @@ internal open class ChannelCoroutine<E>(
     protected val _channel: Channel<E>,
     active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active), Channel<E> by _channel {
-    override val cancelsParent: Boolean get() = true
-
     val channel: Channel<E> get() = this
 
     override fun cancel() {
-        cancel(null)
+        cancelInternal(null)
     }
 
-    override fun cancel0(): Boolean = cancel(null)
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
+    final override fun cancel(cause: Throwable?): Boolean =
+        cancelInternal(cause)
 
-    override fun cancel(cause: Throwable?): Boolean {
-        val wasCancelled = _channel.cancel(cause)
-        if (wasCancelled) super.cancel(cause) // cancel the job
-        return wasCancelled
+    final override fun cancel(cause: CancellationException?) {
+        cancelInternal(cause)
+    }
+
+    override fun cancelInternal(cause: Throwable?): Boolean {
+        _channel.cancel(cause?.toCancellationException()) // cancel the channel
+        cancelCoroutine(cause) // cancel the job
+        return true // does not matter - result is used in DEPRECATED functions only
     }
 }

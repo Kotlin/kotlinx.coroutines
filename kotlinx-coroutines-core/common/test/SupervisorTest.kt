@@ -168,7 +168,7 @@ class SupervisorTest : TestBase() {
         }
         expect(1)
         yield()
-        parent.cancel(TestException1())
+        parent.completeExceptionally(TestException1())
         try {
             deferred.await()
             expectUnreached()
@@ -190,7 +190,7 @@ class SupervisorTest : TestBase() {
     fun testSupervisorWithParentCancelException() {
         val parent = Job()
         val supervisor = SupervisorJob(parent)
-        supervisor.cancel(TestException1())
+        supervisor.completeExceptionally(TestException1())
         assertTrue(supervisor.isCancelled)
         assertTrue(parent.isCancelled)
     }

@@ -30,7 +30,7 @@ class DispatchersGuideTest {
   * [Parental responsibilities](#parental-responsibilities)
   * [Naming coroutines for debugging](#naming-coroutines-for-debugging)
   * [Combining context elements](#combining-context-elements)
-  * [Cancellation via explicit job](#cancellation-via-explicit-job)
+  * [Coroutine scope](#coroutine-scope)
   * [Thread-local data](#thread-local-data)
 
 <!--- END_TOC -->
@@ -487,47 +487,43 @@ I'm working in thread DefaultDispatcher-worker-1 @test#2
 
 <!--- TEST FLEXIBLE_THREAD -->
 
-### Cancellation via explicit job
+### Coroutine scope
 
 Let us put our knowledge about contexts, children and jobs together. Assume that our application has
 an object with a lifecycle, but that object is not a coroutine. For example, we are writing an Android application
 and launch various coroutines in the context of an Android activity to perform asynchronous operations to fetch 
 and update data, do animations, etc. All of these coroutines must be cancelled when activity is destroyed
-to avoid memory leaks. 
-  
-We manage a lifecycle of our coroutines by creating an instance of [Job] that is tied to 
-the lifecycle of our activity. A job instance is created using [Job()] factory function when
-activity is created and it is cancelled when an activity is destroyed like this:
+to avoid memory leaks. We, of course, can manipulate contexts and jobs manually to tie activity's 
+and coroutines lifecycles, but `kotlinx.coroutines` provides an abstraction that encapsulates that: [CoroutineScope].
+You should be already familiar with coroutine scope as all coroutine builders are declared as extensions on it. 
 
+We manage a lifecycle of our coroutines by creating an instance of [CoroutineScope] that is tied to 
+the lifecycle of our activity. `CoroutineScope` instance can be created by [CoroutineScope()] or [MainScope()]
+factory functions. The former creates a general-purpose scope, while the latter creates scope for UI applications and uses
+[Dispatchers.Main] as default dispatcher:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-class Activity : CoroutineScope {
-    lateinit var job: Job
-
-    fun create() {
-        job = Job()
-    }
-
+class Activity {
+    private val mainScope = MainScope()
+    
     fun destroy() {
-        job.cancel()
+        mainScope.cancel()
     }
     // to be continued ...
 ```
 
 </div>
 
-We also implement [CoroutineScope] interface in this `Actvity` class. We only need to provide an override
-for its [CoroutineScope.coroutineContext] property to specify the context for coroutines launched in its
-scope. We combine the desired dispatcher (we used [Dispatchers.Default] in this example) and a job:
+Alternatively, we can implement [CoroutineScope] interface in this `Actvity` class. The best way to do it is
+to use delegation with default factory functions.
+We also can combine the desired dispatcher (we used [Dispatchers.Default] in this example) with the scope:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-    // class Activity continues
-    override val coroutineContext: CoroutineContext
-        get() = Dispatchers.Default + job
+    class Activity : CoroutineScope by CoroutineScope(Dispatchers.Default) {
     // to be continued ...
 ```
 
@@ -566,21 +562,11 @@ onto the screen anymore if we wait:
 import kotlin.coroutines.*
 import kotlinx.coroutines.*
 
-class Activity : CoroutineScope {
-    lateinit var job: Job
-
-    fun create() {
-        job = Job()
-    }
+class Activity : CoroutineScope by CoroutineScope(Dispatchers.Default) {
 
     fun destroy() {
-        job.cancel()
+        cancel() // Extension on CoroutineScope
     }
-    // to be continued ...
-
-    // class Activity continues
-    override val coroutineContext: CoroutineContext
-        get() = Dispatchers.Default + job
     // to be continued ...
 
     // class Activity continues
@@ -598,7 +584,6 @@ class Activity : CoroutineScope {
 fun main() = runBlocking<Unit> {
 //sampleStart
     val activity = Activity()
-    activity.create() // create an activity
     activity.doSomething() // run test function
     println("Launched coroutines")
     delay(500L) // delay for half a second
@@ -650,7 +635,7 @@ fun main() = runBlocking<Unit> {
     threadLocal.set("main")
     println("Pre-main, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
     val job = launch(Dispatchers.Default + threadLocal.asContextElement(value = "launch")) {
-       println("Launch start, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
+        println("Launch start, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
         yield()
         println("After yield, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
     }
@@ -678,6 +663,10 @@ Post-main, current thread: Thread[main @coroutine#1,5,main], thread local value:
 ```
 
 <!--- TEST FLEXIBLE_THREAD -->
+
+Note how easily one may forget the corresponding context element and then still safely access thread local.
+To avoid such situations, it is recommended to use [ensurePresent] method
+and fail-fast on improper usages.
 
 `ThreadLocal` has first-class support and can be used with any primitive `kotlinx.coroutines` provides.
 It has one key limitation: when thread-local is mutated, a new value is not propagated to the coroutine caller 
@@ -712,7 +701,10 @@ that should be implemented.
 [CoroutineScope.coroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/coroutine-context.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/join.html
 [CoroutineName]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-name/index.html
-[Job()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job.html
+[CoroutineScope()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope.html
+[MainScope()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-main-scope.html
+[Dispatchers.Main]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html
 [asContextElement]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/java.lang.-thread-local/as-context-element.html
+[ensurePresent]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/java.lang.-thread-local/ensure-present.html
 [ThreadContextElement]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-thread-context-element/index.html
 <!--- END -->

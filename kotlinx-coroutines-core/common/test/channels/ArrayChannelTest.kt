@@ -11,12 +11,10 @@ class ArrayChannelTest : TestBase() {
     @Test
     fun testSimple() = runTest {
         val q = Channel<Int>(1)
-        check(q.isEmpty && !q.isFull)
         expect(1)
         val sender = launch {
             expect(4)
             q.send(1) // success -- buffered
-            check(!q.isEmpty && q.isFull)
             expect(5)
             q.send(2) // suspends (buffer full)
             expect(9)
@@ -25,7 +23,6 @@ class ArrayChannelTest : TestBase() {
         val receiver = launch {
             expect(6)
             check(q.receive() == 1) // does not suspend -- took from buffer
-            check(!q.isEmpty && q.isFull) // waiting sender's element moved to buffer
             expect(7)
             check(q.receive() == 2) // does not suspend (takes from sender)
             expect(8)
@@ -33,21 +30,20 @@ class ArrayChannelTest : TestBase() {
         expect(3)
         sender.join()
         receiver.join()
-        check(q.isEmpty && !q.isFull)
         finish(10)
     }
 
     @Test
     fun testClosedBufferedReceiveOrNull() = runTest {
         val q = Channel<Int>(1)
-        check(q.isEmpty && !q.isFull && !q.isClosedForSend && !q.isClosedForReceive)
+        check(!q.isClosedForSend && !q.isClosedForReceive)
         expect(1)
         launch {
             expect(5)
-            check(!q.isEmpty && !q.isFull && q.isClosedForSend && !q.isClosedForReceive)
+            check(q.isClosedForSend && !q.isClosedForReceive)
             assertEquals(42, q.receiveOrNull())
             expect(6)
-            check(!q.isEmpty && !q.isFull && q.isClosedForSend && q.isClosedForReceive)
+            check(q.isClosedForSend && q.isClosedForReceive)
             assertEquals(null, q.receiveOrNull())
             expect(7)
         }
@@ -56,9 +52,9 @@ class ArrayChannelTest : TestBase() {
         expect(3)
         q.close() // goes on
         expect(4)
-        check(!q.isEmpty && !q.isFull && q.isClosedForSend && !q.isClosedForReceive)
+        check(q.isClosedForSend && !q.isClosedForReceive)
         yield()
-        check(!q.isEmpty && !q.isFull && q.isClosedForSend && q.isClosedForReceive)
+        check(q.isClosedForSend && q.isClosedForReceive)
         finish(8)
     }
 
@@ -139,9 +135,9 @@ class ArrayChannelTest : TestBase() {
     }
 
     @Test
-    fun testCancelWithCause() = runTest({ it is TestException }) {
+    fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
         val channel = Channel<Int>(5)
-        channel.cancel(TestException())
+        channel.cancel(TestCancellationException())
         channel.receiveOrNull()
     }
 }

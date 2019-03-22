@@ -120,9 +120,14 @@ class CoroutineScopeTest : TestBase() {
             try {
                 callJobScoped()
                 expectUnreached()
-            } catch (e: CancellationException) {
+            } catch (e: JobCancellationException) {
                 expect(5)
-                assertNull(e.cause)
+                if (RECOVER_STACK_TRACES) {
+                    val cause = e.cause as JobCancellationException // shall be recovered JCE
+                    assertNull(cause.cause)
+                } else {
+                    assertNull(e.cause)
+                }
             }
         }
         repeat(3) { yield() } // let everything to start properly

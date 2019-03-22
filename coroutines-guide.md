@@ -38,7 +38,7 @@ The main coroutines guide has moved to the [docs folder](docs/coroutines-guide.m
   * <a name='parental-responsibilities'></a>[Parental responsibilities](docs/coroutine-context-and-dispatchers.md#parental-responsibilities)
   * <a name='naming-coroutines-for-debugging'></a>[Naming coroutines for debugging](docs/coroutine-context-and-dispatchers.md#naming-coroutines-for-debugging)
   * <a name='combining-context-elements'></a>[Combining context elements](docs/coroutine-context-and-dispatchers.md#combining-context-elements)
-  * <a name='cancellation-via-explicit-job'></a>[Cancellation via explicit job](docs/coroutine-context-and-dispatchers.md#cancellation-via-explicit-job)
+  * <a name='coroutine-scope'></a>[Coroutine scope](docs/coroutine-context-and-dispatchers.md#coroutine-scope)
   * <a name='thread-local-data'></a>[Thread-local data](docs/coroutine-context-and-dispatchers.md#thread-local-data)
 <!--- TOC_REF docs/exception-handling.md -->
 * <a name='exception-handling'></a>[Exception handling](docs/exception-handling.md#exception-handling)

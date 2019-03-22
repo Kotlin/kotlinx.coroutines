@@ -111,7 +111,7 @@ class StackTraceRecoveryNestedChannelsTest : TestBase() {
                 sendFromScope()
             } catch (e: Exception) {
                 verifyStackTrace(e,
-                    "kotlinx.coroutines.RecoverableTestException\n" +
+                    "kotlinx.coroutines.RecoverableTestCancellationException\n" +
                         "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedChannelsTest\$testSendFromScope\$1.invokeSuspend(StackTraceRecoveryNestedChannelsTest.kt:118)\n" +
                         "\t(Coroutine boundary)\n" +
                         "\tat kotlinx.coroutines.channels.AbstractSendChannel.offer(AbstractChannel.kt:180)\n" +
@@ -120,7 +120,7 @@ class StackTraceRecoveryNestedChannelsTest : TestBase() {
                         "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedChannelsTest\$sendWithContext\$2.invokeSuspend(StackTraceRecoveryNestedChannelsTest.kt:19)\n" +
                         "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedChannelsTest\$sendFromScope\$2.invokeSuspend(StackTraceRecoveryNestedChannelsTest.kt:29)\n" +
                         "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedChannelsTest\$testSendFromScope\$1\$deferred\$1.invokeSuspend(StackTraceRecoveryNestedChannelsTest.kt:109)\n" +
-                    "Caused by: kotlinx.coroutines.RecoverableTestException\n" +
+                    "Caused by: kotlinx.coroutines.RecoverableTestCancellationException\n" +
                         "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedChannelsTest\$testSendFromScope\$1.invokeSuspend(StackTraceRecoveryNestedChannelsTest.kt:118)\n" +
                         "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)")
             }
@@ -129,8 +129,37 @@ class StackTraceRecoveryNestedChannelsTest : TestBase() {
         yield()
         expect(2)
         // Cancel is an analogue of `produce` failure, just a shorthand
-        channel.cancel(RecoverableTestException())
+        channel.cancel(RecoverableTestCancellationException())
         finish(3)
         deferred.await()
+    }
+
+    // See https://github.com/Kotlin/kotlinx.coroutines/issues/950
+    @Test
+    fun testCancelledOffer() = runTest {
+        expect(1)
+        val job = Job()
+        val actor = actor<Int>(job, Channel.UNLIMITED) {
+            consumeEach {
+                expectUnreached() // is cancelled before offer
+            }
+        }
+        job.cancel()
+        try {
+            actor.offer(1)
+        } catch (e: Exception) {
+            verifyStackTrace(e,
+                "kotlinx.coroutines.JobCancellationException: Job was cancelled; job=JobImpl{Cancelling}@3af42ad0\n" +
+                        "\t(Coroutine boundary)\n" +
+                        "\tat kotlinx.coroutines.channels.AbstractSendChannel.offer(AbstractChannel.kt:186)\n" +
+                        "\tat kotlinx.coroutines.channels.ChannelCoroutine.offer(ChannelCoroutine.kt)\n" +
+                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedChannelsTest\$testCancelledOffer\$1.invokeSuspend(StackTraceRecoveryNestedChannelsTest.kt:150)\n" +
+                    "Caused by: kotlinx.coroutines.JobCancellationException: Job was cancelled; job=JobImpl{Cancelling}@3af42ad0\n",
+                    // ... java.lang.* stuff and JobSupport.* snipped here ...
+                        "\tat kotlinx.coroutines.Job\$DefaultImpls.cancel\$default(Job.kt:164)\n" +
+                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedChannelsTest\$testCancelledOffer\$1.invokeSuspend(StackTraceRecoveryNestedChannelsTest.kt:148)"
+            )
+            finish(2)
+        }
     }
 }

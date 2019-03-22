@@ -313,7 +313,9 @@ class CoroutinesTest : TestBase() {
     }
 
     @Test
-    fun testNotCancellableChildWithExceptionCancelled() = runTest(expected = { it is IllegalArgumentException }) {
+    fun testNotCancellableChildWithExceptionCancelled() = runTest(
+        expected = { it is TestException }
+    ) {
         expect(1)
         // CoroutineStart.ATOMIC makes sure it will not get cancelled for it starts executing
         val d = async(NonCancellable, start = CoroutineStart.ATOMIC) {
@@ -323,8 +325,8 @@ class CoroutinesTest : TestBase() {
         }
         expect(2)
         // now cancel with some other exception
-        d.cancel(IllegalArgumentException())
-        // now await to see how it got crashed -- IAE should have been suppressed by TestException
+        d.cancel(TestCancellationException())
+        // now await to see how it got crashed -- TestCancellationException should have been suppressed by TestException
         expect(3)
         d.await()
     }

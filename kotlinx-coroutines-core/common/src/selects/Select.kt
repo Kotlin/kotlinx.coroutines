@@ -309,10 +309,13 @@ internal class SelectBuilderImpl<in R>(
 
     @PublishedApi
     internal fun handleBuilderException(e: Throwable) {
-        if (trySelect(null))
+        if (trySelect(null)) {
             resumeWithException(e)
-        else
+        } else {
+            // Cannot handle this exception -- builder was already resumed with a different exception,
+            // so treat it as "unhandled exception"
             handleCoroutineException(context, e)
+        }
     }
 
     override val isSelected: Boolean get() = state !== this

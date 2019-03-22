@@ -8,21 +8,11 @@ package kotlinx.coroutines.guide.context10
 import kotlin.coroutines.*
 import kotlinx.coroutines.*
 
-class Activity : CoroutineScope {
-    lateinit var job: Job
-
-    fun create() {
-        job = Job()
-    }
+class Activity : CoroutineScope by CoroutineScope(Dispatchers.Default) {
 
     fun destroy() {
-        job.cancel()
+        cancel() // Extension on CoroutineScope
     }
-    // to be continued ...
-
-    // class Activity continues
-    override val coroutineContext: CoroutineContext
-        get() = Dispatchers.Default + job
     // to be continued ...
 
     // class Activity continues
@@ -40,7 +30,6 @@ class Activity : CoroutineScope {
 fun main() = runBlocking<Unit> {
 //sampleStart
     val activity = Activity()
-    activity.create() // create an activity
     activity.doSomething() // run test function
     println("Launched coroutines")
     delay(500L) // delay for half a second

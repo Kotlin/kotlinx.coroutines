@@ -9,6 +9,6 @@ dependencies {
 
 tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
-        url = new URL('https://reactivex.io/RxJava/javadoc/')
+        url = new URL('http://reactivex.io/RxJava/javadoc/')
     }
 }
