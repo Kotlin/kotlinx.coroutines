@@ -129,7 +129,7 @@ private open class ActorCoroutine<E>(
 ) : ChannelCoroutine<E>(parentContext, channel, active), ActorScope<E> {
     override val cancelsParent: Boolean get() = true
 
-    override fun onCancellation(cause: Throwable?) {
+    override fun onCancelling(cause: Throwable?) {
         _channel.cancel(cause?.let {
             it as? CancellationException ?: CancellationException("$classSimpleName was cancelled", it)
         })

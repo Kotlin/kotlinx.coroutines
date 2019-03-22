@@ -5,9 +5,9 @@ public abstract class kotlinx/coroutines/AbstractCoroutine : kotlinx/coroutines/
 	public final fun getContext ()Lkotlin/coroutines/CoroutineContext;
 	public fun getCoroutineContext ()Lkotlin/coroutines/CoroutineContext;
 	public fun isActive ()Z
-	protected fun onCancellation (Ljava/lang/Throwable;)V
 	protected fun onCancelled (Ljava/lang/Throwable;Z)V
 	protected fun onCompleted (Ljava/lang/Object;)V
+	protected final fun onCompletionInternal (Ljava/lang/Object;)V
 	protected fun onStart ()V
 	public final fun resumeWith (Ljava/lang/Object;)V
 	public final fun start (Lkotlinx/coroutines/CoroutineStart;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
@@ -368,6 +368,7 @@ public final class kotlinx/coroutines/JobKt {
 
 public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlinx/coroutines/Job, kotlinx/coroutines/ParentJob, kotlinx/coroutines/selects/SelectClause0 {
 	public fun <init> (Z)V
+	protected fun afterCompletionInternal (Ljava/lang/Object;I)V
 	public final fun attachChild (Lkotlinx/coroutines/ChildJob;)Lkotlinx/coroutines/ChildHandle;
 	public synthetic fun cancel ()V
 	public synthetic fun cancel (Ljava/lang/Throwable;)Z
@@ -396,7 +397,8 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public final fun isCompletedExceptionally ()Z
 	public final fun join (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun minusKey (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
-	protected fun onCancellation (Ljava/lang/Throwable;)V
+	protected fun onCancelling (Ljava/lang/Throwable;)V
+	protected fun onCompletionInternal (Ljava/lang/Object;)V
 	public final fun parentCancelled (Lkotlinx/coroutines/ParentJob;)V
 	public fun plus (Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
 	public fun plus (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;

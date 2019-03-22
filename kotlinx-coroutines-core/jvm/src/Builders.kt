@@ -61,7 +61,7 @@ private class BlockingCoroutine<T>(
     override val cancelsParent: Boolean
         get() = false // it throws exception to parent instead of cancelling it
 
-    override fun onCompletionInternal(state: Any?, mode: Int) {
+    override fun afterCompletionInternal(state: Any?, mode: Int) {
         // wake up blocked thread
         if (Thread.currentThread() != blockedThread)
             LockSupport.unpark(blockedThread)
