@@ -12,11 +12,11 @@ import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.*
 
 /**
- * Class describing coroutine state.
+ * Class describing coroutine info such as its context, state and stacktrace.
  */
 @ExperimentalCoroutinesApi
-public data class CoroutineState internal constructor(
-    public val continuation: Continuation<*>,
+public data class CoroutineInfo internal constructor(
+    val context: CoroutineContext,
     private val creationStackBottom: CoroutineStackFrame,
     @JvmField internal val sequenceNumber: Long
 ) {
@@ -25,7 +25,7 @@ public data class CoroutineState internal constructor(
      * [Job] associated with a current coroutine or null.
      * May be later used in [DebugProbes.printJob].
      */
-    public val jobOrNull: Job? get() = continuation.context[Job]
+    public val job: Job? get() = context[Job]
 
     /**
      * Creation stacktrace of the coroutine.
@@ -42,16 +42,32 @@ public data class CoroutineState internal constructor(
     @JvmField
     internal var lastObservedThread: Thread? = null
 
-    private var lastObservedFrame: CoroutineStackFrame? = null
+    @JvmField
+    internal var lastObservedFrame: CoroutineStackFrame? = null
 
     // Copy constructor
-    internal constructor(coroutine: Continuation<*>, state: CoroutineState) : this(
-        coroutine,
+    internal constructor(coroutine: Continuation<*>, state: CoroutineInfo) : this(
+        coroutine.context,
         state.creationStackBottom,
         state.sequenceNumber
     ) {
         _state = state.state
         this.lastObservedFrame = state.lastObservedFrame
+    }
+
+    /**
+     * Last observed stacktrace of the coroutine captured on its suspension or resumption point.
+     * It means that for [running][State.RUNNING] coroutines resulting stacktrace is inaccurate and
+     * reflects stacktrace of the resumption point, not the actual current stacktrace.
+     */
+    public fun lastObservedStackTrace(): List<StackTraceElement> {
+        var frame: CoroutineStackFrame? = lastObservedFrame ?: return emptyList()
+        val result = ArrayList<StackTraceElement>()
+        while (frame != null) {
+            frame.getStackTraceElement()?.let { result.add(sanitize(it)) }
+            frame = frame.callerFrame
+        }
+        return result
     }
 
     private fun creationStackTrace(): List<StackTraceElement> {
@@ -78,21 +94,6 @@ public data class CoroutineState internal constructor(
         } else {
             lastObservedThread = null
         }
-    }
-
-    /**
-     * Last observed stacktrace of the coroutine captured on its suspension or resumption point.
-     * It means that for [running][State.RUNNING] coroutines resulting stacktrace is inaccurate and
-     * reflects stacktrace of the resumption point, not the actual current stacktrace.
-     */
-    public fun lastObservedStackTrace(): List<StackTraceElement> {
-        var frame: CoroutineStackFrame? = lastObservedFrame ?: return emptyList()
-        val result = ArrayList<StackTraceElement>()
-        while (frame != null) {
-            frame.getStackTraceElement()?.let { result.add(sanitize(it)) }
-            frame = frame.callerFrame
-        }
-        return result
     }
 }
 

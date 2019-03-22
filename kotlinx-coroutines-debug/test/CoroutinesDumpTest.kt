@@ -5,31 +5,12 @@
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*
-import org.junit.*
 import org.junit.Test
 import kotlin.coroutines.*
 import kotlin.test.*
 
-@Suppress("SUSPENSION_POINT_INSIDE_MONITOR") // bug in 1.3.0 FE
-class CoroutinesDumpTest : TestBase() {
-
+class CoroutinesDumpTest : DebugTestBase() {
     private val monitor = Any()
-
-    @Before
-    fun setUp() {
-        before()
-        DebugProbes.sanitizeStackTraces = false
-        DebugProbes.install()
-    }
-
-    @After
-    fun tearDown() {
-        try {
-            DebugProbes.uninstall()
-        } finally {
-            onCompletion()
-        }
-    }
 
     @Test
     fun testSuspendedCoroutine() = synchronized(monitor) {
@@ -49,8 +30,8 @@ class CoroutinesDumpTest : TestBase() {
                 "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
                 "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n")
 
-        val found = DebugProbes.dumpCoroutinesState().single { it.jobOrNull === deferred }
-        assertSame(deferred, found.jobOrNull)
+        val found = DebugProbes.dumpCoroutinesInfo().single { it.job === deferred }
+        assertSame(deferred, found.job)
         runBlocking { deferred.cancelAndJoin() }
     }
 
@@ -85,8 +66,10 @@ class CoroutinesDumpTest : TestBase() {
         }
 
         awaitCoroutineStarted()
+        Thread.sleep(10)
         verifyDump(
-            "Coroutine \"coroutine#1\":DeferredCoroutine{Active}@1e4a7dd4, state: RUNNING (Last suspension stacktrace, not an actual stacktrace)\n" +
+            "Coroutine \"coroutine#1\":DeferredCoroutine{Active}@1e4a7dd4, state: RUNNING\n" +
+                "\tat java.lang.Thread.sleep(Native Method)\n" +
                 "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.nestedActiveMethod(CoroutinesDumpTest.kt:111)\n" +
                 "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.activeMethod(CoroutinesDumpTest.kt:106)\n" +
                 "\tat kotlinx.coroutines.debug.CoroutinesDumpTest\$testRunningCoroutineWithSuspensionPoint\$1\$deferred\$1.invokeSuspend(CoroutinesDumpTest.kt:71)\n" +
@@ -111,7 +94,7 @@ class CoroutinesDumpTest : TestBase() {
         }
 
         awaitCoroutineStarted()
-        val coroutine = DebugProbes.dumpCoroutinesState().first()
+        val coroutine = DebugProbes.dumpCoroutinesInfo().first()
         val result = coroutine.creationStackTrace.fold(StringBuilder()) { acc, element ->
             acc.append(element.toString())
             acc.append('\n')

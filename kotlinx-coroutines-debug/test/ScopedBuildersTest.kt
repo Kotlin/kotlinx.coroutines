@@ -8,22 +8,7 @@ import kotlinx.coroutines.*
 import org.junit.*
 import kotlin.coroutines.*
 
-class ScopedBuildersTest : TestBase() {
-    @Before
-    fun setUp() {
-        before()
-        DebugProbes.sanitizeStackTraces = false
-        DebugProbes.install()
-    }
-
-    @After
-    fun tearDown() {
-        try {
-            DebugProbes.uninstall()
-        } finally {
-            onCompletion()
-        }
-    }
+class ScopedBuildersTest : DebugTestBase() {
 
     @Test
     fun testNestedScopes() = runBlocking {
