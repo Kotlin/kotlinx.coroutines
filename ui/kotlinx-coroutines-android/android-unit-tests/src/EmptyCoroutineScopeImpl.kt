@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
+// Classes for testing service loader
 internal class EmptyCoroutineScopeImpl1 : CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = EmptyCoroutineContext

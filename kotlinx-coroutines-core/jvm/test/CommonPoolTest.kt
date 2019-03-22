@@ -39,7 +39,6 @@ class CommonPoolTest {
         val fjp1: ExecutorService = createFJP(1, fjpCtor, dwtfCtor) ?: return
         assertTrue(CommonPool.isGoodCommonPool(fjpClass, fjp1))
         fjp1.shutdown()
-        println("CommonPool.isGoodCommonPool test passed")
     }
 
     private fun createFJP(
