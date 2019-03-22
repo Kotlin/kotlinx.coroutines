@@ -1,15 +1,15 @@
 package kotlinx.coroutines.internal
 
-import java.util.*
 import java.io.*
 import java.net.*
+import java.util.*
 import java.util.jar.*
 import java.util.zip.*
 
 /**
  * Name of the boolean property that enables using of [FastServiceLoader].
  */
-private const val FAST_SERVICE_LOADER_PROPERTY_NAME = "kotlinx.coroutines.verify.service.loader"
+private const val FAST_SERVICE_LOADER_PROPERTY_NAME = "kotlinx.coroutines.fast.service.loader"
 
 /**
  * A simplified version of [ServiceLoader].
@@ -22,12 +22,10 @@ private const val FAST_SERVICE_LOADER_PROPERTY_NAME = "kotlinx.coroutines.verify
  *
  * If any error occurs during loading, it fallbacks to [ServiceLoader], mostly to prevent R8 issues.
  */
-
 internal object FastServiceLoader {
     private const val PREFIX: String = "META-INF/services/"
 
-    @JvmField
-    internal val FAST_SERVICE_LOADER_ENABLED = systemProp(FAST_SERVICE_LOADER_PROPERTY_NAME, true)
+    private val FAST_SERVICE_LOADER_ENABLED = systemProp(FAST_SERVICE_LOADER_PROPERTY_NAME, true)
 
     internal fun <S> load(service: Class<S>, loader: ClassLoader): List<S> {
         if (!FAST_SERVICE_LOADER_ENABLED) {
@@ -41,16 +39,14 @@ internal object FastServiceLoader {
         }
     }
 
+    // Visible for tests
     internal fun <S> loadProviders(service: Class<S>, loader: ClassLoader): List<S> {
         val fullServiceName = PREFIX + service.name
-        val urls = loader.getResources(fullServiceName).toList()
-        val providers = mutableListOf<S>()
-        urls.forEach {
-            val providerNames = parse(it)
-            providers.addAll(providerNames.map { getProviderInstance(it, loader, service) })
-        }
+        // Filter out situations when both JAR and regular files are in the classpath (e.g. IDEA)
+        val urls = loader.getResources(fullServiceName)
+        val providers = urls.toList().flatMap { parse(it) }.toSet()
         require(providers.isNotEmpty()) { "No providers were loaded with FastServiceLoader" }
-        return providers
+        return providers.map { getProviderInstance(it, loader, service) }
     }
 
     private fun <S> getProviderInstance(name: String, loader: ClassLoader, service: Class<S>): S {
@@ -60,16 +56,22 @@ internal object FastServiceLoader {
     }
 
     private fun parse(url: URL): List<String> {
-        val string = url.toString()
-        return if (string.startsWith("jar")) {
-            val pathToJar = string.substringAfter("jar:file:").substringBefore('!')
-            val entry = string.substringAfter("!/")
+        val path = url.toString()
+        // Fast-path for JARs
+        if (path.startsWith("jar")) {
+            val pathToJar = path.substringAfter("jar:file:").substringBefore('!')
+            val entry = path.substringAfter("!/")
+            // mind the verify = false flag!
             (JarFile(pathToJar, false) as Closeable).use { file ->
-                BufferedReader(InputStreamReader((file as JarFile).getInputStream(ZipEntry(entry)),"UTF-8")).use { r ->
-                    parseFile(r)
+                BufferedReader(InputStreamReader((file as JarFile).getInputStream(ZipEntry(entry)), "UTF-8")).use { r ->
+                    return parseFile(r)
                 }
             }
-        } else emptyList()
+        }
+        // Regular path for everything elese
+        return BufferedReader(InputStreamReader(url.openStream())).use { reader ->
+            parseFile(reader)
+        }
     }
 
     private fun parseFile(r: BufferedReader): List<String> {
