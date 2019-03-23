@@ -342,16 +342,16 @@ The output of this code is:
 <!--- TEST -->
 
 Note, that you can build the same pipeline using 
-[`buildIterator`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/build-iterator.html) 
+[`iterator`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/iterator.html) 
 coroutine builder from the standard library. 
-Replace `produce` with `buildIterator`, `send` with `yield`, `receive` with `next`, 
+Replace `produce` with `iterator`, `send` with `yield`, `receive` with `next`, 
 `ReceiveChannel` with `Iterator`, and get rid of the coroutine scope. You will not need `runBlocking` either.
 However, the benefit of a pipeline that uses channels as shown above is that it can actually use 
 multiple CPU cores if you run it in [Dispatchers.Default] context.
 
 Anyway, this is an extremely impractical way to find prime numbers. In practice, pipelines do involve some
 other suspending invocations (like asynchronous calls to remote services) and these pipelines cannot be
-built using `buildSequence`/`buildIterator`, because they do not allow arbitrary suspension, unlike
+built using `sequence`/`iterator`, because they do not allow arbitrary suspension, unlike
 `produce`, which is fully asynchronous.
  
 ### Fan-out
