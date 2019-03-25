@@ -131,7 +131,6 @@ class SupervisorTest : TestBase() {
     }
 
     @Test
-    @Ignore // JS BE bug
     fun testSupervisorThrowsWithFailingChild() = runTest(unhandled = listOf({e -> e is TestException2})) {
         try {
             supervisorScope {
