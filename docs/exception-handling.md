@@ -360,9 +360,9 @@ Caught original java.io.IOException
 As we have studied before, cancellation is a bidirectional relationship propagating through the whole
 coroutines hierarchy. But what if unidirectional cancellation is required? 
 
-Good example of such requirement can be a UI component with the job defined in its scope. If any of UI's child task
-has failed, it is not always necessary to cancel (effectively kill) the whole UI component,
-but if UI component is destroyed (and its job is cancelled), then it is necessary to fail all children jobs as their result is no longer required.
+A good example of such a requirement is a UI component with the job defined in its scope. If any of the UI's child tasks
+have failed, it is not always necessary to cancel (effectively kill) the whole UI component,
+but if UI component is destroyed (and its job is cancelled), then it is necessary to fail all child jobs as their results are no longer required.
 
 Another example is a server process that spawns several children jobs and needs to _supervise_
 their execution, tracking their failures and restarting just those children jobs that had failed.

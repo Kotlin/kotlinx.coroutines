@@ -15,7 +15,7 @@ import kotlin.coroutines.*
  * This function should not be used from coroutine. It is designed to bridge regular blocking code
  * to libraries that are written in suspending style, to be used in `main` functions and in tests.
  *
- * The default [CoroutineDispatcher] for this builder in an internal implementation of event loop that processes continuations
+ * The default [CoroutineDispatcher] for this builder is an internal implementation of event loop that processes continuations
  * in this blocked thread until the completion of this coroutine.
  * See [CoroutineDispatcher] for the other implementations that are provided by `kotlinx.coroutines`.
  *

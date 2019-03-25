@@ -137,7 +137,7 @@ Make sure that you have either `jcenter()` or `mavenCentral()` in the list of re
 
 Core modules of `kotlinx.coroutines` are also available for 
 [Kotlin/JS](js/README.md) and [Kotlin/Native](native/README.md). If you write
-a common code that should get compiled or different platforms, add 
+a common code that should get compiled for different platforms, add 
 [`org.jetbrains.kotlinx:kotlinx-coroutines-core-common:<version>`](common/kotlinx-coroutines-core-common/README.md) 
 to your common code dependencies.
 

@@ -13,8 +13,8 @@ import kotlin.jvm.*
  * when all deferred computations are complete or resumes with the first thrown exception if any of computations
  * complete exceptionally including cancellation.
  *
- * This function is **not** equivalent to `deferreds.map { it.await() }` which fails only when when it sequentially
- * gets to wait the failing deferred, while this `awaitAll` fails immediately as soon as any of the deferreds fail.
+ * This function is **not** equivalent to `deferreds.map { it.await() }` which fails only when it sequentially
+ * gets to wait for the failing deferred, while this `awaitAll` fails immediately as soon as any of the deferreds fail.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting,
