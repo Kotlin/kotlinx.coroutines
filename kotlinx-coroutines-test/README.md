@@ -7,7 +7,7 @@ Test utilities for `kotlinx.coroutines`. Provides `Dispatchers.setMain` to overr
 Add `kotlinx-coroutines-test` to your project test dependencies:
 ```
 dependencies {
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.1.1'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.2.0-alpha'
 }
 ```
 
