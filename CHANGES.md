@@ -1,5 +1,33 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.2.0-alpha
+
+* Major debug agent improvements. Real stacktraces are merged with coroutine stacktraces for running coroutines, merging heuristic is improved, API is cleaned up and is on its road to stabilization (#997).
+* `CoroutineTimeout` rule or JUnit4 is introduced to simplify coroutines debugging (#938).
+* Stacktrace recovery improvements. Exceptions with custom properties are no longer copied, `CopyableThrowable` interface is introduced, machinery is [documented](https://github.com/Kotlin/kotlinx.coroutines/blob/develop/docs/debugging.md) (#921, #950).
+* `Dispatchers.Unconfined`, `MainCoroutineDispatcher.immediate`, `MainScope` and `CoroutineScope.cancel` are promoted to stable API (#972).
+* `CompletableJob` is introduced (#971).
+* Structured concurrency is integrated into futures and listenable futures (#1008).
+* `ensurePresent` and `isPresent` extensions for `ThreadLocal` (#1028).
+* `ensureActive` extensions for `CoroutineContext`, `CoroutineScope` and `Job` (#963).
+* `SendChannel.isFull` and `ReceiveChannel.isEmpty` are deprecated (#1053).
+* `withContext` checks cancellation on entering (#962).
+* Operator `invoke` on `CoroutineDispatcher` (#428).
+* Java 8 extensions for `delay` and `withTimeout` now properly handle too large values (#428).
+* Performance of `Dispatcher.Main` initialization is significantly improved (#878).
+* A global exception handler for fatal exceptions in coroutines is introduced (#808, #773).
+* Major improvements in cancellation machinery and exceptions delivery consistency. Cancel with custom exception is completely removed.
+* Kotlin version is updated to 1.3.21.
+* Do not use private API on newer Androids to handle exceptions (#822).
+
+Bug fixes:
+* Proper `select` support in debug agent (#931).
+* Proper `supervisorScope` support in debug agent (#915).
+* Throwing `initCause` does no longer trigger an internal error (#933).
+* Lazy actors are started when calling `close` in order to cleanup their resources (#939).
+* Minor bugs in reactive integrations are fixed (#1008).
+* Experimental scheduler shutdown sequence is fixed (#990).
+
 ## Version 1.1.1
 
 * Maintenance release, no changes in the codebase
@@ -184,7 +212,7 @@ Visible consequences of include more robust exception handling for large corouti
 * Introduced IO dispatcher to offload blocking I/O-intensive tasks (see #79).
 * Introduced `ExecutorCoroutineDispatcher` instead of `CloseableCoroutineDispatcher` (see #385). 
 * Built with Kotlin 1.2.61 and Kotlin/Native 0.8.2.
-* JAR files for `kotlinx-coroutines` are now [JEP 238](http://openjdk.java.net/jeps/238) multi-release JAR files.
+* JAR files for `kotlinx-coroutines` are now [JEP 238](https://openjdk.java.net/jeps/238) multi-release JAR files.
   * On JDK9+ `VarHandle` is used for atomic operations instead of `Atomic*FieldUpdater` for better performance.
   * See [AtomicFu](https://github.com/Kotlin/kotlinx.atomicfu/blob/master/README.md) project for details.
 * Reversed addition of `BlockingChecker` extension point to control where `runBlocking` can be used (see #227).
@@ -221,7 +249,7 @@ Visible consequences of include more robust exception handling for large corouti
 * Includes multiple fixes to documentation contributed by @paolop, @SahilLone, @rocketraman, @bdavisx, @mtopolnik, @Groostav.   
 * Experimental coroutines scheduler preview (JVM only):
   * Written from scratch and optimized for communicating coroutines.
-  * Performs significantly better than ForkJoinPool on coroutine benchmarks and for connected applications with [ktor](http://ktor.io).
+  * Performs significantly better than ForkJoinPool on coroutine benchmarks and for connected applications with [ktor](https://ktor.io).
   * Supports automatic creating of new threads for blocking operations running on the same thread pool (with an eye on solving #79), but there is no stable public API for it just yet.
   * For preview, run JVM with `-Dkotlinx.coroutines.scheduler` option. In this case `DefaultDispatcher` is set to new experimental scheduler instead of FJP-based `CommonPool`.
   * Submit your feedback to issue #261.
@@ -514,7 +542,7 @@ Visible consequences of include more robust exception handling for large corouti
 * Fixed bug in internal class LockFreeLinkedList that resulted in ISE under stress in extremely rare circumstances.
 * Integrations:
   * [quasar](integration/kotlinx-coroutines-quasar): Introduced integration with suspendable JVM functions
-    that are instrumented with [Parallel Universe Quasar](http://docs.paralleluniverse.co/quasar/) 
+    that are instrumented with [Parallel Universe Quasar](https://docs.paralleluniverse.co/quasar/) 
     (thanks to the help of @pron). 
   * [reactor](reactive/kotlinx-coroutines-reactor): Replaced deprecated `setCancellation` with `onDipose` and 
     updated to Aluminium-SR3 release (courtesy of @yxf07, see #96) 

@@ -28,11 +28,11 @@ a better introduction into the world of coroutines.
 
 There are several modules in `kotlinx.coroutines` project that are related to reactive streams:
 
-* [kotlinx-coroutines-reactive](kotlinx-coroutines-reactive) -- utilities for [Reactive Streams](http://www.reactive-streams.org)
+* [kotlinx-coroutines-reactive](kotlinx-coroutines-reactive) -- utilities for [Reactive Streams](https://www.reactive-streams.org)
 * [kotlinx-coroutines-reactor](kotlinx-coroutines-reactor) -- utilities for [Reactor](https://projectreactor.io)
 * [kotlinx-coroutines-rx2](kotlinx-coroutines-rx2) -- utilities for [RxJava 2.x](https://github.com/ReactiveX/RxJava)
 
-This guide is mostly based on [Reactive Streams](http://www.reactive-streams.org) specification and uses
+This guide is mostly based on [Reactive Streams](https://www.reactive-streams.org) specification and uses
 its `Publisher` interface with some examples based on [RxJava 2.x](https://github.com/ReactiveX/RxJava),
 which implements reactive streams specification.
 
@@ -75,8 +75,8 @@ This section outlines key differences between reactive streams and coroutine-bas
 The [Channel] is somewhat similar concept to the following reactive stream classes:
 
 * Reactive stream [Publisher](https://github.com/reactive-streams/reactive-streams-jvm/blob/master/api/src/main/java/org/reactivestreams/Publisher.java);
-* Rx Java 1.x [Observable](http://reactivex.io/RxJava/javadoc/rx/Observable.html);
-* Rx Java 2.x [Flowable](http://reactivex.io/RxJava/2.x/javadoc/), which implements `Publisher`.
+* Rx Java 1.x [Observable](https://reactivex.io/RxJava/javadoc/rx/Observable.html);
+* Rx Java 2.x [Flowable](https://reactivex.io/RxJava/2.x/javadoc/), which implements `Publisher`.
 
 They all describe an asynchronous stream of elements (aka items in Rx), either infinite or finite, 
 and all of them support backpressure.
@@ -140,7 +140,7 @@ from it again cannot receive anything.
 Let us rewrite this code using [publish] coroutine builder from `kotlinx-coroutines-reactive` module
 instead of [produce] from `kotlinx-coroutines-core` module. The code stays the same, 
 but where `source` used to have [ReceiveChannel] type, it now has reactive streams 
-[Publisher](http://www.reactive-streams.org/reactive-streams-1.0.0-javadoc/org/reactivestreams/Publisher.html) 
+[Publisher](https://www.reactive-streams.org/reactive-streams-1.0.0-javadoc/org/reactivestreams/Publisher.html) 
 type.
 
 <!--- INCLUDE
@@ -211,8 +211,8 @@ See [this issue](https://github.com/Kotlin/kotlinx.coroutines/issues/167)
 for details.
 
 > Note, that we can replicate the same behaviour that we saw with channels by using Rx 
-[publish](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#publish()) 
-operator and [connect](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/flowables/ConnectableFlowable.html#connect())
+[publish](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#publish()) 
+operator and [connect](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/flowables/ConnectableFlowable.html#connect())
 method with it.
 
 ### Subscription and cancellation
@@ -264,7 +264,7 @@ With an explicit `openSubscription` we should [cancel][ReceiveChannel.cancel] th
 subscription to unsubscribe from the source. There is no need to invoke `cancel` explicitly -- under the hood
 `consume` does that for us.
 The installed 
-[doFinally](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#doFinally(io.reactivex.functions.Action))
+[doFinally](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#doFinally(io.reactivex.functions.Action))
 listener prints "Finally" to confirm that the subscription is actually being closed. Note that "OnComplete"
 is never printed because we did not consume all of the elements.
 
@@ -320,7 +320,7 @@ Backpressure is one of the most interesting and complex aspects of reactive stre
 _suspend_ and they provide a natural answer to handling backpressure. 
 
 In Rx Java 2.x a backpressure-capable class is called 
-[Flowable](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html).
+[Flowable](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html).
 In the following example we use [rxFlowable] coroutine builder from `kotlinx-coroutines-rx2` module to define a 
 flowable that sends three integers from 1 to 3. 
 It prints a message to the output before invocation of
@@ -328,7 +328,7 @@ suspending [send][SendChannel.send] function, so that we can study how it operat
 
 The integers are generated in the context of the main thread, but subscription is shifted 
 to another thread using Rx
-[observeOn](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#observeOn(io.reactivex.Scheduler,%20boolean,%20int))
+[observeOn](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#observeOn(io.reactivex.Scheduler,%20boolean,%20int))
 operator with a buffer of size 1. 
 The subscriber is slow. It takes 500 ms to process each item, which is simulated using `Thread.sleep`.
 
@@ -385,7 +385,7 @@ one. Only after consumer processes the first item, producer sends the second one
 RxJava has a concept of [Subject](https://github.com/ReactiveX/RxJava/wiki/Subject) which is an object that
 effectively broadcasts elements to all its subscribers. The matching concept in coroutines world is called a 
 [BroadcastChannel]. There is a variety of subjects in Rx with 
-[BehaviorSubject](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/BehaviorSubject.html) being
+[BehaviorSubject](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/BehaviorSubject.html) being
 the one used to manage state:
 
 <!--- INCLUDE
@@ -535,16 +535,16 @@ Another implementation of [BroadcastChannel] is `ArrayBroadcastChannel` with an 
 a specified `capacity`. It can be created with `BroadcastChannel(capacity)`. 
 It delivers every event to every
 subscriber since the moment the corresponding subscription is open. It corresponds to 
-[PublishSubject](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/PublishSubject.html) in Rx.
+[PublishSubject](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/PublishSubject.html) in Rx.
 The capacity of the buffer in the constructor of `ArrayBroadcastChannel` controls the numbers of elements
 that can be sent before the sender is suspended waiting for receiver to receive those elements.
 
 ## Operators
 
 Full-featured reactive stream libraries, like Rx, come with 
-[a very large set of operators](http://reactivex.io/documentation/operators.html) to create, transform, combine
+[a very large set of operators](https://reactivex.io/documentation/operators.html) to create, transform, combine
 and otherwise process the corresponding streams. Creating your own operators with support for
-back-pressure is [notoriously](http://akarnokd.blogspot.ru/2015/05/pitfalls-of-operator-implementations.html)
+back-pressure is [notoriously](https://akarnokd.blogspot.ru/2015/05/pitfalls-of-operator-implementations.html)
 [difficult](https://github.com/ReactiveX/RxJava/wiki/Writing-operators-for-2.0).
 
 Coroutines and channels are designed to provide an opposite experience. There are no built-in operators, 
@@ -556,10 +556,10 @@ This section shows coroutine-based implementation of several reactive stream ope
 ### Range
 
 Let's roll out own implementation of 
-[range](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#range(int,%20int))
+[range](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#range(int,%20int))
 operator for reactive streams `Publisher` interface. The asynchronous clean-slate implementation of this operator for
 reactive streams is explained in 
-[this blog post](http://akarnokd.blogspot.ru/2017/03/java-9-flow-api-asynchronous-integer.html).
+[this blog post](https://akarnokd.blogspot.ru/2017/03/java-9-flow-api-asynchronous-integer.html).
 It takes a lot of code.
 Here is the corresponding code with coroutines:
 
@@ -605,8 +605,8 @@ The result of this code is quite expected:
 ### Fused filter-map hybrid
 
 Reactive operators like 
-[filter](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#filter(io.reactivex.functions.Predicate)) and 
-[map](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#map(io.reactivex.functions.Function))
+[filter](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#filter(io.reactivex.functions.Predicate)) and 
+[map](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#map(io.reactivex.functions.Function))
 are trivial to implement with coroutines. For a bit of challenge and showcase, let us combine them
 into the single `fusedFilterMap` operator: 
 
@@ -662,8 +662,8 @@ It is not hard to see, that the result is going to be:
 ### Take until
 
 Let's implement our own version of
-[takeUntil](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#takeUntil(org.reactivestreams.Publisher))
-operator. It is quite a [tricky one](http://akarnokd.blogspot.ru/2015/05/pitfalls-of-operator-implementations.html) 
+[takeUntil](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#takeUntil(org.reactivestreams.Publisher))
+operator. It is quite a [tricky one](https://akarnokd.blogspot.ru/2015/05/pitfalls-of-operator-implementations.html) 
 to implement, because of the need to track and manage subscription to two streams. 
 We need to relay all the elements from the source stream until the other stream either completes or 
 emits anything. However, we have [select] expression to rescue us in coroutines implementation:
@@ -697,8 +697,8 @@ This code is using [whileSelect] as a nicer shortcut to `while(select{...}) {}` 
 expression to close the channels on exit, which unsubscribes from the corresponding publishers. 
 
 The following hand-written combination of 
-[range](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#range(int,%20int)) with 
-[interval](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#interval(long,%20java.util.concurrent.TimeUnit,%20io.reactivex.Scheduler))
+[range](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#range(int,%20int)) with 
+[interval](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#interval(long,%20java.util.concurrent.TimeUnit,%20io.reactivex.Scheduler))
 is used for testing. It is coded using a `publish` coroutine builder 
 (its pure-Rx implementation is shown in later sections):
 
@@ -737,7 +737,7 @@ Producing
 There are always at least two ways for processing multiple streams of data with coroutines. One way involving
 [select] was shown in the previous example. The other way is just to launch multiple coroutines. Let
 us implement 
-[merge](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#merge(org.reactivestreams.Publisher))
+[merge](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#merge(org.reactivestreams.Publisher))
 operator using the later approach:
 
 <!--- INCLUDE
@@ -817,7 +817,7 @@ And the results should be:
 All the example operators that are shown in the previous section have an explicit
 [CoroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/) 
 parameter. In Rx world it roughly corresponds to 
-a [Scheduler](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Scheduler.html).
+a [Scheduler](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Scheduler.html).
 
 ### Threads with Rx
 
@@ -849,7 +849,7 @@ fun main() {
 > You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-01.kt)
 
 We are explicitly passing the 
-[Schedulers.computation()](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/schedulers/Schedulers.html#computation()) 
+[Schedulers.computation()](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/schedulers/Schedulers.html#computation()) 
 scheduler to our `rangeWithIntervalRx` operator and
 it is going to be executed in Rx computation thread pool. The output is going to be similar to the following one:
 
@@ -901,18 +901,18 @@ The produced output is going to be similar to:
 <!--- TEST LINES_START -->
 
 Here we've used Rx 
-[subscribe](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#subscribe(io.reactivex.functions.Consumer))
+[subscribe](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#subscribe(io.reactivex.functions.Consumer))
 operator that does not have its own scheduler and operates on the same thread that the publisher -- on a default
 shared pool of threads in this example.
 
 ### Rx observeOn 
 
 In Rx you use special operators to modify the threading context for operations in the chain. You
-can find some [good guides](http://tomstechnicalblog.blogspot.ru/2016/02/rxjava-understanding-observeon-and.html)
+can find some [good guides](https://tomstechnicalblog.blogspot.ru/2016/02/rxjava-understanding-observeon-and.html)
 about them, if you are not familiar. 
 
 For example, there is
-[observeOn](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#observeOn(io.reactivex.Scheduler)) 
+[observeOn](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#observeOn(io.reactivex.Scheduler)) 
 operator. Let us modify the previous example to observe using `Schedulers.computation()`:   
 
 <!--- INCLUDE

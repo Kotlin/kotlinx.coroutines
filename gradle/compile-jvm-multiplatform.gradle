@@ -1,0 +1,40 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+repositories {
+    maven { url "https://dl.bintray.com/devexperts/Maven/" }
+}
+
+kotlin {
+    targets {
+        fromPreset(presets.jvm, 'jvm')
+    }
+    sourceSets {
+        jvmMain.dependencies {
+            api 'org.jetbrains.kotlin:kotlin-stdlib'
+            api "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
+        }
+
+        jvmTest.dependencies {
+            api "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
+            // Workaround to make addSuppressed work in tests
+            api "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+            api "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+            api "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+            api "junit:junit:$junit_version"
+        }
+    }
+}
+
+jvmTest {
+    testLogging {
+        showStandardStreams = true
+        events "passed", "failed"
+    }
+    def stressTest = project.properties['stressTest']
+    if (stressTest != null) systemProperties['stressTest'] = stressTest
+}

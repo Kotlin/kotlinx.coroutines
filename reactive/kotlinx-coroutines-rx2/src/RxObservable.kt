@@ -57,7 +57,6 @@ private class RxObservableCoroutine<T: Any>(
     private val subscriber: ObservableEmitter<T>
 ) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, SelectClause2<T, SendChannel<T>> {
     override val channel: SendChannel<T> get() = this
-    override val cancelsParent: Boolean get() = true
 
     // Mutex is locked when while subscriber.onXXX is being invoked
     private val mutex = Mutex()
@@ -66,7 +65,7 @@ private class RxObservableCoroutine<T: Any>(
 
     override val isClosedForSend: Boolean get() = isCompleted
     override val isFull: Boolean = mutex.isLocked
-    override fun close(cause: Throwable?): Boolean = cancel(cause)
+    override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
     override fun invokeOnClose(handler: (Throwable?) -> Unit) =
         throw UnsupportedOperationException("RxObservableCoroutine doesn't support invokeOnClose")
 
@@ -104,46 +103,47 @@ private class RxObservableCoroutine<T: Any>(
     private fun doLockedNext(elem: T) {
         // check if already closed for send
         if (!isActive) {
-            doLockedSignalCompleted()
+            doLockedSignalCompleted(completionCause, completionCauseHandled)
             throw getCancellationException()
         }
         // notify subscriber
         try {
             subscriber.onNext(elem)
         } catch (e: Throwable) {
-            try {
-                if (!cancel(e))
-                    handleCoroutineException(context, e, this)
-            } finally {
-                doLockedSignalCompleted()
-            }
-            throw getCancellationException()
+            // If onNext fails with exception, then we cancel coroutine (with this exception) and then rethrow it
+            // to abort the corresponding send/offer invocation. From the standpoint of coroutines machinery,
+            // this failure is essentially equivalent to a failure of a child coroutine.
+            cancelCoroutine(e)
+            doLockedSignalCompleted(e, false)
+            throw e
         }
         /*
            There is no sense to check for `isActive` before doing `unlock`, because cancellation/completion might
-           happen after this check and before `unlock` (see `onCancellation` that does not do anything
+           happen after this check and before `unlock` (see signalCompleted that does not do anything
            if it fails to acquire the lock that we are still holding).
            We have to recheck `isCompleted` after `unlock` anyway.
          */
         mutex.unlock()
         // recheck isActive
         if (!isActive && mutex.tryLock())
-            doLockedSignalCompleted()
+            doLockedSignalCompleted(completionCause, completionCauseHandled)
     }
 
     // assert: mutex.isLocked()
-    private fun doLockedSignalCompleted() {
+    private fun doLockedSignalCompleted(cause: Throwable?, handled: Boolean) {
+        // todo: handled is ignored here, might need something like in PublisherCoroutine to process
+        // cancellation failures
         try {
             if (_signal.value >= CLOSED) {
                 _signal.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
-                val cause = getCompletionCause()
                 try {
                     if (cause != null && cause !is CancellationException)
                         subscriber.onError(cause)
                     else
                         subscriber.onComplete()
                 } catch (e: Throwable) {
-                    handleCoroutineException(context, e, this)
+                    // Unhandled exception (cannot handle in other way, since we are already complete)
+                    handleCoroutineException(context, e)
                 }
             }
         } finally {
@@ -151,9 +151,17 @@ private class RxObservableCoroutine<T: Any>(
         }
     }
 
-    override fun onCancellation(cause: Throwable?) {
+    private fun signalCompleted(cause: Throwable?, handled: Boolean) {
         if (!_signal.compareAndSet(OPEN, CLOSED)) return // abort, other thread invoked doLockedSignalCompleted
         if (mutex.tryLock()) // if we can acquire the lock
-            doLockedSignalCompleted()
+            doLockedSignalCompleted(cause, handled)
+    }
+
+    override fun onCompleted(value: Unit) {
+        signalCompleted(null, false)
+    }
+
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        signalCompleted(cause, handled)
     }
 }

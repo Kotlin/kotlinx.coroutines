@@ -11,9 +11,7 @@ import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.Test
-import java.io.*
 import java.util.concurrent.*
-import kotlin.test.assertFailsWith
 
 class ListenableFutureTest : TestBase() {
     @Before
@@ -46,7 +44,7 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testAwaitWithContextCancellation() = runTest(expected = {it is IOException}) {
+    fun testAwaitWithCancellation() = runTest(expected = {it is TestCancellationException}) {
         val future = SettableFuture.create<Int>()
         val deferred = async {
             withContext(Dispatchers.Default) {
@@ -54,8 +52,9 @@ class ListenableFutureTest : TestBase() {
             }
         }
 
-        deferred.cancel(IOException())
-        deferred.await()
+        deferred.cancel(TestCancellationException())
+        deferred.await() // throws TCE
+        expectUnreached()
     }
 
     @Test
@@ -258,13 +257,24 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testChildException() = runTest {
+    fun testStructuredException() = runTest(
+        expected = { it is TestException } // exception propagates to parent with structured concurrency
+    ) {
+        val result = future<Int>(Dispatchers.Unconfined) {
+            throw TestException("FAIL")
+        }
+        result.checkFutureException<TestException>()
+    }
+
+    @Test
+    fun testChildException() = runTest(
+        expected = { it is TestException } // exception propagates to parent with structured concurrency
+    ) {
         val result = future(Dispatchers.Unconfined) {
             // child crashes
             launch { throw TestException("FAIL") }
             42
         }
-
         result.checkFutureException<TestException>()
     }
 
@@ -295,7 +305,26 @@ class ListenableFutureTest : TestBase() {
                 throw TestException()
             }
         }
+        result.cancel(true)
+        finish(3)
+    }
 
+    @Test
+    fun testUnhandledExceptionOnExternalCancellation() = runTest(
+        unhandled = listOf(
+            { it -> it is TestException } // exception is unhandled because there is no parent
+        )
+    ) {
+        expect(1)
+        // No parent here (NonCancellable), so nowhere to propagate exception
+        val result = future(NonCancellable + Dispatchers.Unconfined) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                expect(2)
+                throw TestException() // this exception cannot be handled
+            }
+        }
         result.cancel(true)
         finish(3)
     }

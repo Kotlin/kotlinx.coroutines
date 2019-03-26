@@ -6,8 +6,8 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.$$1$$2
 -->
-<!--- KNIT     ../core/kotlinx-coroutines-core/test/guide/.*\.kt -->
-<!--- TEST_OUT ../core/kotlinx-coroutines-core/test/guide/test/ChannelsGuideTest.kt
+<!--- KNIT     ../kotlinx-coroutines-core/jvm/test/guide/.*\.kt -->
+<!--- TEST_OUT ../kotlinx-coroutines-core/jvm/test/guide/test/ChannelsGuideTest.kt
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
 
@@ -71,7 +71,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-channel-01.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-01.kt)
 
 The output of this code is:
 
@@ -118,7 +118,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-channel-02.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-02.kt)
 
 <!--- TEST 
 1
@@ -160,7 +160,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-channel-03.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-03.kt)
 
 <!--- TEST 
 1
@@ -231,7 +231,7 @@ fun CoroutineScope.square(numbers: ReceiveChannel<Int>): ReceiveChannel<Int> = p
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-channel-04.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-04.kt)
 
 <!--- TEST 
 1
@@ -322,7 +322,7 @@ fun CoroutineScope.filter(numbers: ReceiveChannel<Int>, prime: Int) = produce<In
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-channel-05.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-05.kt)
 
 The output of this code is:
 
@@ -425,7 +425,7 @@ fun CoroutineScope.launchProcessor(id: Int, channel: ReceiveChannel<Int>) = laun
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-channel-06.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-06.kt)
 
 The output will be similar to the the following one, albeit the processor ids that receive
 each specific integer may be different:
@@ -505,7 +505,7 @@ suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-channel-07.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-07.kt)
 
 The output is:
 
@@ -557,7 +557,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-channel-08.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-08.kt)
 
 It prints "sending" _five_ times using a buffered channel with capacity of _four_:
 
@@ -612,7 +612,7 @@ suspend fun player(name: String, table: Channel<Ball>) {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-channel-09.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-09.kt)
 
 The "ping" coroutine is started first, so it is the first one to receive the ball. Even though "ping"
 coroutine immediately starts receiving the ball again after sending it back to the table, the ball gets
@@ -675,7 +675,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-channel-10.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-10.kt)
 
 It prints following lines:
 

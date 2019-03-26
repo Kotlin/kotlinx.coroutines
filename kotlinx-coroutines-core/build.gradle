@@ -1,0 +1,108 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+apply plugin: 'kotlin-multiplatform'
+apply from: rootProject.file("gradle/targets.gradle")
+apply from: rootProject.file("gradle/compile-jvm-multiplatform.gradle")
+apply from: rootProject.file("gradle/compile-common.gradle")
+apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
+apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
+apply from: rootProject.file('gradle/publish-npm-js.gradle')
+
+/*
+ * All platform plugins and configuration magic happens here instead of build.gradle
+ * because JMV-only projects depend on core, thus core should always be initialized before configuration.
+ */
+kotlin {
+    configure(sourceSets) {
+        def srcDir = name.endsWith('Main') ? 'src' : 'test'
+        def platform = name[0..-5]
+        kotlin.srcDir "$platform/$srcDir"
+        if (name == "jvmMain") {
+            resources.srcDirs = ["$platform/resources"]
+        } else if (name == "jvmTest") {
+            resources.srcDirs = ["$platform/test-resources"]
+        }
+        languageSettings {
+            progressiveMode = true
+            experimentalAnnotations.each { useExperimentalAnnotation(it) }
+        }
+    }
+
+    configure(targets) {
+        def targetName = it.name
+        compilations.all { compilation ->
+            def compileTask = tasks.getByName(compilation.compileKotlinTaskName)
+            // binary compatibility support
+            if (targetName.contains("jvm") && compilation.compilationName == "main") {
+                compileTask.kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
+            }
+        }
+    }
+}
+
+kotlin.sourceSets {
+    jvmTest.dependencies {
+        api "com.devexperts.lincheck:lincheck:$lincheck_version"
+        api "com.esotericsoftware:kryo:4.0.0"
+    }
+}
+
+task checkJdk16() {
+    // only fail w/o JDK_16 when actually trying to compile, not during project setup phase
+    doLast {
+        if (!System.env.JDK_16) {
+            throw new GradleException("JDK_16 environment variable is not defined. " +
+                    "Can't build against JDK 1.6 runtime and run JDK 1.6 compatibility tests. " +
+                    "Please ensure JDK 1.6 is installed and that JDK_16 points to it.")
+        }
+    }
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
+    kotlinOptions.jdkHome = System.env.JDK_16
+    // only fail when actually trying to compile, not during project setup phase
+    dependsOn(checkJdk16)
+}
+
+jvmTest {
+    minHeapSize = '1g'
+    maxHeapSize = '1g'
+    enableAssertions = true
+    systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
+    exclude '**/*LFTest.*'
+    systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
+}
+
+task lockFreedomTest(type: Test, dependsOn: compileTestKotlinJvm) {
+    classpath = files { jvmTest.classpath }
+    testClassesDirs = files { jvmTest.testClassesDirs }
+    include '**/*LFTest.*'
+}
+
+task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
+    classpath = files { jvmTest.classpath }
+    testClassesDirs = files { jvmTest.testClassesDirs }
+    executable = "$System.env.JDK_16/bin/java"
+    exclude '**/*LinearizabilityTest*.*'
+    exclude '**/*LFTest.*'
+    exclude '**/exceptions/**'
+    exclude '**/ExceptionsGuideTest.*'
+}
+
+// Run these tests only during nightly stress test
+jdk16Test.onlyIf { project.properties['stressTest'] != null }
+
+// Always run those tests
+task moreTest(dependsOn: [lockFreedomTest, jdk16Test])
+build.dependsOn moreTest
+
+task testsJar(type: Jar, dependsOn: jvmTestClasses) {
+    classifier = 'tests'
+    from compileTestKotlinJvm.destinationDir
+}
+
+artifacts {
+    archives testsJar
+}

@@ -16,11 +16,10 @@ update_version() {
 }
 
 update_version "README.md"
-update_version "core/kotlinx-coroutines-debug/README.md"
-update_version "core/kotlinx-coroutines-test/README.md"
+update_version "kotlinx-coroutines-core/README.md"
+update_version "kotlinx-coroutines-debug/README.md"
+update_version "kotlinx-coroutines-test/README.md"
 update_version "ui/coroutines-guide-ui.md"
-update_version "ui/coroutines-guide-ui.md"
-update_version "native/README.md"
 update_version "ui/kotlinx-coroutines-android/example-app/gradle.properties"
 update_version "ui/kotlinx-coroutines-android/animation-app/gradle.properties"
 update_version "gradle.properties"

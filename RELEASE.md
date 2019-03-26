@@ -49,7 +49,7 @@ To release new `<version>` of `kotlinx-coroutines`:
    * Wait until "Build" configuration for committed `master` branch passes tests.
    * Run "Deploy (Configure, RUN THIS ONE)" configuration with the corresponding new version.    
 
-2. In [GitHub](http://github.com/kotlin/kotlinx.coroutines) interface:
+2. In [GitHub](https://github.com/kotlin/kotlinx.coroutines) interface:
    * Create new release named as `<version>`. 
    * Cut & paste lines from [`CHANGES.md`](CHANGES.md) into description.    
 
@@ -61,7 +61,7 @@ To release new `<version>` of `kotlinx-coroutines`:
    * Wait until newly published version becomes the most recent.
    * Sync to Maven Central.
    
-5. Announce new release in [Slack](http://kotlinlang.slack.com)   
+5. Announce new release in [Slack](https://kotlinlang.slack.com)   
 
 6. Switch into `develop` branch:<br>
    `git checkout develop`

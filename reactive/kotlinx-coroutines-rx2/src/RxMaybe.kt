@@ -5,10 +5,8 @@
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
-import io.reactivex.functions.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
-import kotlin.experimental.*
 
 /**
  * Creates cold [maybe][Maybe] that will run a given [block] in a coroutine.
@@ -43,14 +41,17 @@ private class RxMaybeCoroutine<T>(
     parentContext: CoroutineContext,
     private val subscriber: MaybeEmitter<T>
 ) : AbstractCoroutine<T>(parentContext, true) {
-    override val cancelsParent: Boolean get() = true
     override fun onCompleted(value: T) {
         if (!subscriber.isDisposed) {
             if (value == null) subscriber.onComplete() else subscriber.onSuccess(value)
         }
     }
 
-    override fun onCompletedExceptionally(exception: Throwable) {
-        if (!subscriber.isDisposed) subscriber.onError(exception)
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        if (!subscriber.isDisposed) {
+            subscriber.onError(cause)
+        } else if (!handled) {
+            handleCoroutineException(context, cause)
+        }
     }
 }

@@ -7,10 +7,19 @@ apply plugin: "com.github.johnrengelman.shadow"
 apply plugin: "me.champeau.gradle.jmh"
 
 repositories {
-    maven { url "http://repo.typesafe.com/typesafe/releases/" }
+    maven { url "https://repo.typesafe.com/typesafe/releases/" }
 }
 
 jmh.jmhVersion = '1.21'
+
+// It is better to use the following to run benchmarks, otherwise you may get unexpected errors:
+// ../gradlew --no-daemon cleanJmhJar jmh
+jmh {
+    duplicateClassesStrategy DuplicatesStrategy.INCLUDE
+    failOnError = true
+    resultFormat = 'CSV'
+//    include = ['.*ChannelProducerConsumer.*']
+}
 
 jmhJar {
     baseName 'benchmarks'
@@ -20,8 +29,8 @@ jmhJar {
 }
 
 dependencies {
-    compile 'com.typesafe.akka:akka-actor_2.12:2.5.0'
-    compile project(':kotlinx-coroutines-core-common')
-    compile project(':kotlinx-coroutines-core')
     compile "org.openjdk.jmh:jmh-core:1.21"
+    compile 'com.typesafe.akka:akka-actor_2.12:2.5.0'
+    compile project(':kotlinx-coroutines-core')
 }
+

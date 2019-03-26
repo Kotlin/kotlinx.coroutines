@@ -21,13 +21,27 @@ import kotlin.coroutines.*
  */
 public sealed class HandlerDispatcher : MainCoroutineDispatcher(), Delay {
     /**
-     * Returns dispatcher that executes coroutines immediately when it is already in the right handler context
-     * (current looper is the same as this handler's looper). See [isDispatchNeeded] documentation on
-     * why this should not be done by default.
+     * Returns dispatcher that executes coroutines immediately when it is already in the right context
+     * (current looper is the same as this handler's looper) without an additional [re-dispatch][CoroutineDispatcher.dispatch].
+     * This dispatcher does not use [Handler.post] when current looper is the same as looper of the handler.
      *
-     * **Note: This is an experimental api.** Semantics of this dispatcher may change in the future.
+     * Immediate dispatcher is safe from stack overflows and in case of nested invocations forms event-loop similar to [Dispatchers.Unconfined].
+     * The event loop is an advanced topic and its implications can be found in [Dispatchers.Unconfined] documentation.
+     *
+     * Example of usage:
+     * ```
+     * suspend fun updateUiElement(val text: String) {
+     *   /*
+     *    * If it is known that updateUiElement can be invoked both from the Main thread and from other threads,
+     *    * `immediate` dispatcher is used as a performance optimization to avoid unnecessary dispatch.
+     *    */
+     *   withContext(Dispatchers.Main.immediate) {
+     *     uiElement.text = text
+     *   }
+     *   // Do context-independent logic such as logging
+     * }
+     * ```
      */
-    @ExperimentalCoroutinesApi
     public abstract override val immediate: HandlerDispatcher
 }
 

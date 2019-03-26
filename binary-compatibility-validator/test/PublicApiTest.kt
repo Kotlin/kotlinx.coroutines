@@ -60,7 +60,8 @@ class PublicApiTest(
                     it matches regex
                     && !it.endsWith("-sources.jar")
                     && !it.endsWith("-javadoc.jar")
-                    && !it.endsWith("-tests.jar")} }
+                    && !it.endsWith("-tests.jar")}
+                    && !it.name.contains("-metadata-")}
         return files.singleOrNull() ?: throw Exception("No single file matching $regex in $libsDir:\n${files.joinToString("\n")}")
     }
 }

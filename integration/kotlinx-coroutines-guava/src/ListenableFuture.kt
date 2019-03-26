@@ -47,9 +47,8 @@ public fun <T> CoroutineScope.future(
 
 private class ListenableFutureCoroutine<T>(
     context: CoroutineContext,
-    private val completion: SettableFuture<T>
+    private val future: SettableFuture<T>
 ) : AbstractCoroutine<T>(context), FutureCallback<T> {
-
     /*
      * We register coroutine as callback to the future this coroutine completes.
      * But when future is cancelled externally, we'd like to cancel coroutine,
@@ -66,12 +65,13 @@ private class ListenableFutureCoroutine<T>(
     }
 
     override fun onCompleted(value: T) {
-        completion.set(value)
+        future.set(value)
     }
 
-    override fun onCompletedExceptionally(exception: Throwable) {
-        if (!completion.setException(exception)) {
-            handleCoroutineException(parentContext, exception, this)
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        if (!future.setException(cause) && !handled) {
+            // prevents loss of exception that was not handled by parent & could not be set to SettableFuture
+            handleCoroutineException(context, cause)
         }
     }
 }

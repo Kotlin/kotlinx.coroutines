@@ -40,12 +40,15 @@ private class RxSingleCoroutine<T: Any>(
     parentContext: CoroutineContext,
     private val subscriber: SingleEmitter<T>
 ) : AbstractCoroutine<T>(parentContext, true) {
-    override val cancelsParent: Boolean get() = true
     override fun onCompleted(value: T) {
         if (!subscriber.isDisposed) subscriber.onSuccess(value)
     }
 
-    override fun onCompletedExceptionally(exception: Throwable) {
-        if (!subscriber.isDisposed) subscriber.onError(exception)
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        if (!subscriber.isDisposed) {
+            subscriber.onError(cause)
+        } else if (!handled) {
+            handleCoroutineException(context, cause)
+        }
     }
 }

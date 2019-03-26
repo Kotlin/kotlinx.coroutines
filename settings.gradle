@@ -20,12 +20,11 @@ include('site')
 
 module('binary-compatibility-validator')
 
-module('common/kotlinx-coroutines-core-common')
+include "kotlinx-coroutines-core"
 
-module('core/kotlinx-coroutines-core')
-module('core/kotlinx-coroutines-test')
-module('core/kotlinx-coroutines-debug')
-module('core/stdlib-stubs')
+module('kotlinx-coroutines-test')
+module('kotlinx-coroutines-debug')
+module('stdlib-stubs')
 
 module('integration/kotlinx-coroutines-guava')
 module('integration/kotlinx-coroutines-jdk8')
@@ -42,8 +41,5 @@ module('ui/kotlinx-coroutines-android/android-unit-tests')
 module('ui/kotlinx-coroutines-javafx')
 module('ui/kotlinx-coroutines-swing')
 
-module('js/kotlinx-coroutines-core-js')
 module('js/js-stub')
 module('js/example-frontend-js')
-
-module('native/kotlinx-coroutines-core-native')

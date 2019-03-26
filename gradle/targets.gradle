@@ -1,0 +1,28 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+/*
+ *  This is a hack to avoid creating unsupported native source sets when importing project into IDEA
+ */
+project.ext.ideaActive = System.getProperty('idea.active') == 'true'
+
+kotlin {
+    targets {
+        def manager = project.ext.hostManager
+        def linuxEnabled = manager.isEnabled(presets.linuxX64.konanTarget)
+        def macosEnabled = manager.isEnabled(presets.macosX64.konanTarget)
+        def winEnabled = manager.isEnabled(presets.mingwX64.konanTarget)
+
+        project.ext.isLinuxHost = linuxEnabled
+        project.ext.isMacosHost = macosEnabled
+        project.ext.isWinHost = winEnabled
+
+        if (project.ext.ideaActive) {
+            def ideaPreset = presets.linuxX64
+            if (macosEnabled) ideaPreset = presets.macosX64
+            if (winEnabled) ideaPreset = presets.mingwX64
+            project.ext.ideaPreset = ideaPreset
+        }
+    }
+}

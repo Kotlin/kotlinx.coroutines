@@ -9,6 +9,7 @@ import kotlinx.coroutines.reactive.*
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
+import org.reactivestreams.*
 import reactor.core.publisher.*
 import java.time.Duration.*
 
@@ -203,5 +204,54 @@ class MonoTest : TestBase() {
             { expectUnreached() },
             { assert(it is RuntimeException) }
         )
+    }
+
+    @Test
+    fun testSuppressedException() = runTest {
+        val mono = mono(NonCancellable) {
+            launch(start = CoroutineStart.ATOMIC) {
+                throw TestException() // child coroutine fails
+            }
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                throw TestException2() // but parent throws another exception while cleaning up
+            }
+        }
+        try {
+            mono.awaitSingle()
+            expectUnreached()
+        } catch (e: TestException) {
+            assertTrue(e.suppressed[0] is TestException2)
+        }
+    }
+
+    @Test
+    fun testUnhandledException() = runTest(
+        unhandled = listOf { it -> it is TestException }
+    ) {
+        expect(1)
+        var subscription: Subscription? = null
+        val mono = mono(NonCancellable) {
+            expect(4)
+            subscription!!.cancel() // cancel our own subscription, so that delay will get cancelled
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                throw TestException() // would not be able to handle it since mono is disposed
+            }
+        }
+        mono.subscribe(object : Subscriber<Unit> {
+            override fun onSubscribe(s: Subscription) {
+                expect(2)
+                subscription = s
+            }
+            override fun onNext(t: Unit?) { expectUnreached() }
+            override fun onComplete() { expectUnreached() }
+            override fun onError(t: Throwable) { expectUnreached() }
+        })
+        expect(3)
+        yield() // run coroutine
+        finish(5)
     }
 }

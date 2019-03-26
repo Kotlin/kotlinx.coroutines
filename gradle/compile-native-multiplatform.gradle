@@ -1,0 +1,34 @@
+kotlin {
+    targets {
+        if (project.ext.ideaActive) {
+            fromPreset(project.ext.ideaPreset, 'native')
+        } else {
+            fromPreset(presets.linuxX64, 'linuxX64')
+            fromPreset(presets.iosArm64, 'iosArm64')
+            fromPreset(presets.iosArm32, 'iosArm32')
+            fromPreset(presets.iosX64, 'iosX64')
+            fromPreset(presets.macosX64, 'macosX64')
+            fromPreset(presets.mingwX64, 'windowsX64')
+        }
+    }
+
+    sourceSets {
+        nativeMain.dependencies {
+            api "org.jetbrains.kotlinx:atomicfu-native:$atomicFU_version"
+        }
+
+        nativeMain { dependsOn commonMain }
+        // Empty source set is required in order to have native tests task 
+        nativeTest {}
+
+        if (!project.ext.ideaActive) {
+            configure([linuxX64Main, macosX64Main, windowsX64Main, iosArm32Main, iosArm64Main, iosX64Main]) {
+                dependsOn nativeMain
+            }
+
+            configure([linuxX64Test, macosX64Test, windowsX64Test, iosArm32Test, iosArm64Test, iosX64Test]) {
+                dependsOn nativeTest
+            }
+        }
+    }
+}

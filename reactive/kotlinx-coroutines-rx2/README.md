@@ -29,7 +29,7 @@ Suspending extension functions and suspending iteration:
 | [ObservableSource.awaitSingle][io.reactivex.ObservableSource.awaitSingle] | Awaits for the single value from the given observable
 | [ObservableSource.openSubscription][io.reactivex.ObservableSource.openSubscription] | Subscribes to observable and returns [ReceiveChannel] 
 
-Note, that `Flowable` is a subclass of [Reactive Streams](http://www.reactive-streams.org)
+Note, that `Flowable` is a subclass of [Reactive Streams](https://www.reactive-streams.org)
 `Publisher` and extensions for it are covered by
 [kotlinx-coroutines-reactive](../kotlinx-coroutines-reactive) module.
 

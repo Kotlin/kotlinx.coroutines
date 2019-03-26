@@ -6,8 +6,9 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.*
-import kotlinx.coroutines.channels.*
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 
 /**
@@ -43,36 +44,29 @@ public fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
 /**
  * Subscribes to this [MaybeSource] and performs the specified action for each received element.
  */
-public suspend inline fun <T> MaybeSource<T>.consumeEach(action: (T) -> Unit) {
-    val channel = openSubscription()
-    for (x in channel) action(x)
-    channel.cancel()
-}
+public suspend inline fun <T> MaybeSource<T>.consumeEach(action: (T) -> Unit) =
+    openSubscription().consumeEach(action)
 
 /**
  * Subscribes to this [ObservableSource] and performs the specified action for each received element.
  */
-public suspend inline fun <T> ObservableSource<T>.consumeEach(action: (T) -> Unit) {
-    val channel = openSubscription()
-    for (x in channel) action(x)
-    channel.cancel()
-}
+public suspend inline fun <T> ObservableSource<T>.consumeEach(action: (T) -> Unit) =
+    openSubscription().consumeEach(action)
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T> :
     LinkedListChannel<T>(), Observer<T>, MaybeObserver<T>
 {
-    @Volatile
-    var subscription: Disposable? = null
+    private val _subscription = atomic<Disposable?>(null)
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
-        subscription?.dispose()
+        _subscription.getAndSet(null)?.dispose() // dispose exactly once
     }
 
     // Observer overrider
     override fun onSubscribe(sub: Disposable) {
-        subscription = sub
+        _subscription.value = sub
     }
 
     override fun onSuccess(t: T) {

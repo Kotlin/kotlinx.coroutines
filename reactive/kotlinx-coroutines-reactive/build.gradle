@@ -30,6 +30,6 @@ test {
 
 tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
-        url = new URL("http://www.reactive-streams.org/reactive-streams-$reactive_streams_version-javadoc/")
+        url = new URL("https://www.reactive-streams.org/reactive-streams-$reactive_streams_version-javadoc/")
     }
 }
