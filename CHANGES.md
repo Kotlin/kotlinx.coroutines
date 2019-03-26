@@ -1,5 +1,33 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.2.0-alpha
+
+* Major debug agent improvements. Real stacktraces are merged with coroutine stacktraces for running coroutines, merging heuristic is improved, API is cleaned up and is on its road to stabilization (#997).
+* `CoroutineTimeout` rule or JUnit4 is introduced to simplify coroutines debugging (#938).
+* Stacktrace recovery improvements. Exceptions with custom properties are no longer copied, `CopyableThrowable` interface is introduced, machinery is [documented](https://github.com/Kotlin/kotlinx.coroutines/blob/develop/docs/debugging.md) (#921, #950).
+* `Dispatchers.Unconfined`, `MainCoroutineDispatcher.immediate`, `MainScope` and `CoroutineScope.cancel` are promoted to stable API (#972).
+* `CompletableJob` is introduced (#971).
+* Structured concurrency is integrated into futures and listenable futures (#1008).
+* `ensurePresent` and `isPresent` extensions for `ThreadLocal` (#1028).
+* `ensureActive` extensions for `CoroutineContext`, `CoroutineScope` and `Job` (#963).
+* `SendChannel.isFull` and `ReceiveChannel.isEmpty` are deprecated (#1053).
+* `withContext` checks cancellation on entering (#962).
+* Operator `invoke` on `CoroutineDispatcher` (#428).
+* Java 8 extensions for `delay` and `withTimeout` now properly handle too large values (#428).
+* Performance of `Dispatcher.Main` initialization is significantly improved (#878).
+* A global exception handler for fatal exceptions in coroutines is introduced (#808, #773).
+* Major improvements in cancellation machinery and exceptions delivery consistency. Cancel with custom exception is completely removed.
+* Kotlin version is updated to 1.3.21.
+* Do not use private API on newer Androids to handle exceptions (#822).
+
+Bug fixes:
+* Proper `select` support in debug agent (#931).
+* Proper `supervisorScope` support in debug agent (#915).
+* Throwing `initCause` does no longer trigger an internal error (#933).
+* Lazy actors are started when calling `close` in order to cleanup their resources (#939).
+* Minor bugs in reactive integrations are fixed (#1008).
+* Experimental scheduler shutdown sequence is fixed (#990).
+
 ## Version 1.1.1
 
 * Maintenance release, no changes in the codebase
