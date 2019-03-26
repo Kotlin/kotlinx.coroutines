@@ -33,7 +33,7 @@
 
 <h1 id="deferred">Deferred</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Deferred.kt#L34">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Deferred.kt#L34">(source)</a></div>
 
 <p>Deferred value is a non-blocking cancellable future — it is a <a href="../-job/index.html">Job</a> that has a result.</p>
 
@@ -223,9 +223,11 @@ returning the resulting value or throwing the corresponding exception if the def
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.Job$cancel(java.util.concurrent.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Cancels this job.
+        <p>Cancels this job with an optional cancellation <a href="../-job/cancel.html#kotlinx.coroutines.Job$cancel(java.util.concurrent.CancellationException)/cause">cause</a>.
+A cause can be used to specify an error message or to provide other details on
+a cancellation reason for debugging purposes.
 See <a href="../-job/index.html">Job</a> documentation for full explanation of cancellation machinery.</p>
 
       </td>
@@ -322,9 +324,10 @@ if it was already started or completed.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlin.coroutines.CoroutineContext, java.util.concurrent.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Cancels <a href="../-job/index.html">Job</a> of this context. See <a href="../-job/cancel.html">Job.cancel</a> for details.</p>
+        <p>Cancels <a href="../-job/index.html">Job</a> of this context with an optional cancellation cause.
+See <a href="../-job/cancel.html">Job.cancel</a> for details.</p>
 
       </td>
 </tr>

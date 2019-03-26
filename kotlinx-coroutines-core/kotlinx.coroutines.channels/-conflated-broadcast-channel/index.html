@@ -33,7 +33,7 @@
 
 <h1 id="conflatedbroadcastchannel">ConflatedBroadcastChannel</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">class </span><span class="identifier">ConflatedBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/ConflatedBroadcastChannel.kt#L32">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">class </span><span class="identifier">ConflatedBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/ConflatedBroadcastChannel.kt#L32">(source)</a></div>
 
 <p>Broadcasts the most recently sent element (aka <a href="value.html">value</a>) to all <a href="open-subscription.html">openSubscription</a> subscribers.</p>
 
@@ -96,20 +96,6 @@ the <a href="send.html">send</a> and <a href="offer.html">offer</a> attempts thr
 <tr>
 <td>
 
-        <p><a href="is-full.html">isFull</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isFull</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-        <p>Returns <code>true</code> if the channel is full (out of capacity) and the <a href="send.html">send</a> attempt will suspend.
-This function returns <code>false</code> for <a href="is-closed-for-send.html">isClosedForSend</a> channel.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
         <p><a href="on-send.html">onSend</a></p>
 
       </td>
@@ -163,9 +149,14 @@ initial value and no value was sent yet or if it was <a href="close.html">closed
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.ConflatedBroadcastChannel$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.ConflatedBroadcastChannel$cancel(java.util.concurrent.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Closes this broadcast channel. Same as <a href="close.html">close</a>.</p>
+        <p>Cancels this conflated broadcast channel with an optional cause, same as <a href="close.html">close</a>.
+This function closes the channel with
+the specified cause (unless it was already closed),
+and <a href="../-receive-channel/cancel.html">cancels</a> all open subscriptions.
+A cause can be used to specify an error message or to provide other details on
+a cancellation reason for debugging purposes.</p>
 
       </td>
 </tr>
@@ -280,19 +271,7 @@ from it by always invoking <a href="../-receive-channel/cancel.html">cancel</a> 
 
       </td>
 </tr>
-<tr data-platform="JVM"><td>
-
-        <p><a href="../send-blocking.html">sendBlocking</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="../send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sendBlocking</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels$sendBlocking(kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.channels.sendBlocking.E)), kotlinx.coroutines.channels.sendBlocking.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="../send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-        <p>Adds <a href="../send-blocking.html#kotlinx.coroutines.channels$sendBlocking(kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.channels.sendBlocking.E)), kotlinx.coroutines.channels.sendBlocking.E)/element">element</a> into to this channel, <strong>blocking</strong> the caller while this channel <a href="../-send-channel/is-full.html">Channel.isFull</a>,
-or throws exception if the channel <a href="../-send-channel/is-closed-for-send.html">Channel.isClosedForSend</a> (see <a href="../-send-channel/close.html">Channel.close</a> for details).</p>
-
-      </td>
-</tr></tbody>
+</tbody>
 </table>
 
       </div>

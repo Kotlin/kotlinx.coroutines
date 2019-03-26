@@ -45,7 +45,34 @@
 
         <p>Wraps <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html">ThreadLocal</a> into <a href="../-thread-context-element/index.html">ThreadContextElement</a>. The resulting <a href="../-thread-context-element/index.html">ThreadContextElement</a>
 maintains the given <a href="as-context-element.html#kotlinx.coroutines$asContextElement(java.lang.ThreadLocal((kotlinx.coroutines.asContextElement.T)), kotlinx.coroutines.asContextElement.T)/value">value</a> of the given <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html">ThreadLocal</a> for coroutine regardless of the actual thread its is resumed on.
-By default <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html#get()">ThreadLocal.get</a> is used as a value for the thread-local variable, but it can be overridden with <a href="as-context-element.html#kotlinx.coroutines$asContextElement(java.lang.ThreadLocal((kotlinx.coroutines.asContextElement.T)), kotlinx.coroutines.asContextElement.T)/value">value</a> parameter.</p>
+By default <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html#get()">ThreadLocal.get</a> is used as a value for the thread-local variable, but it can be overridden with <a href="as-context-element.html#kotlinx.coroutines$asContextElement(java.lang.ThreadLocal((kotlinx.coroutines.asContextElement.T)), kotlinx.coroutines.asContextElement.T)/value">value</a> parameter.
+Beware that context element <strong>does not track</strong> modifications of the thread-local and accessing thread-local from coroutine
+without the corresponding context element returns <strong>undefined</strong> value. See the examples for a detailed description.</p>
+
+      </td>
+</tr><tr data-platform="JVM"><td>
+
+        <p><a href="ensure-present.html">ensurePresent</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html"><span class="identifier">ThreadLocal</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">ensurePresent</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Checks whether current thread local is present in the coroutine context and throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if it is not.
+It is a good practice to validate that thread local is present in the context, especially in large code-bases,
+to avoid stale thread-local values and to have a strict invariants.</p>
+
+      </td>
+</tr><tr data-platform="JVM"><td>
+
+        <p><a href="is-present.html">isPresent</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html"><span class="identifier">ThreadLocal</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">isPresent</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Return <code>true</code> when current thread local is present in the coroutine context, <code>false</code> otherwise.
+Thread local can be present in the context only if it was added via <a href="as-context-element.html">asContextElement</a> to the context.</p>
 
       </td>
 </tr></tbody>

@@ -33,32 +33,34 @@
 
 <h1 id="ascontextelement">asContextElement</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html"><span class="identifier">ThreadLocal</span></a><span class="symbol">&lt;</span><a href="as-context-element.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asContextElement</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$asContextElement(java.lang.ThreadLocal((kotlinx.coroutines.asContextElement.T)), kotlinx.coroutines.asContextElement.T)/value">value</span><span class="symbol">:</span>&nbsp;<a href="as-context-element.html#T"><span class="identifier">T</span></a>&nbsp;<span class="symbol">=</span>&nbsp;get()<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-thread-context-element/index.html"><span class="identifier">ThreadContextElement</span></a><span class="symbol">&lt;</span><a href="as-context-element.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/ThreadContextElement.kt#L119">(source)</a></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html"><span class="identifier">ThreadLocal</span></a><span class="symbol">&lt;</span><a href="as-context-element.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asContextElement</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$asContextElement(java.lang.ThreadLocal((kotlinx.coroutines.asContextElement.T)), kotlinx.coroutines.asContextElement.T)/value">value</span><span class="symbol">:</span>&nbsp;<a href="as-context-element.html#T"><span class="identifier">T</span></a>&nbsp;<span class="symbol">=</span>&nbsp;get()<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-thread-context-element/index.html"><span class="identifier">ThreadContextElement</span></a><span class="symbol">&lt;</span><a href="as-context-element.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/ThreadContextElement.kt#L136">(source)</a></div>
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
 <p>Wraps <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html">ThreadLocal</a> into <a href="../-thread-context-element/index.html">ThreadContextElement</a>. The resulting <a href="../-thread-context-element/index.html">ThreadContextElement</a>
 maintains the given <a href="as-context-element.html#kotlinx.coroutines$asContextElement(java.lang.ThreadLocal((kotlinx.coroutines.asContextElement.T)), kotlinx.coroutines.asContextElement.T)/value">value</a> of the given <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html">ThreadLocal</a> for coroutine regardless of the actual thread its is resumed on.
-By default <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html#get()">ThreadLocal.get</a> is used as a value for the thread-local variable, but it can be overridden with <a href="as-context-element.html#kotlinx.coroutines$asContextElement(java.lang.ThreadLocal((kotlinx.coroutines.asContextElement.T)), kotlinx.coroutines.asContextElement.T)/value">value</a> parameter.</p>
+By default <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html#get()">ThreadLocal.get</a> is used as a value for the thread-local variable, but it can be overridden with <a href="as-context-element.html#kotlinx.coroutines$asContextElement(java.lang.ThreadLocal((kotlinx.coroutines.asContextElement.T)), kotlinx.coroutines.asContextElement.T)/value">value</a> parameter.
+Beware that context element <strong>does not track</strong> modifications of the thread-local and accessing thread-local from coroutine
+without the corresponding context element returns <strong>undefined</strong> value. See the examples for a detailed description.</p>
 
-<p>Example usage looks like this:</p>
+<p>Example usage:</p>
 
 <pre>val myThreadLocal = ThreadLocal&lt;String?&gt;()
 ...
 println(myThreadLocal.get()) // Prints "null"
 launch(Dispatchers.Default + myThreadLocal.asContextElement(value = "foo")) {
   println(myThreadLocal.get()) // Prints "foo"
-  withContext(UI) {
+  withContext(Dispatchers.Main) {
     println(myThreadLocal.get()) // Prints "foo", but it's on UI thread
   }
 }
 println(myThreadLocal.get()) // Prints "null"
 </pre>
 
-<p>Note that the context element does not track modifications of the thread-local variable, for example:</p>
+<p>The context element does not track modifications of the thread-local variable, for example:</p>
 
 <pre>myThreadLocal.set("main")
-withContext(UI) {
+withContext(Dispatchers.Main) {
   println(myThreadLocal.get()) // Prints "main"
   myThreadLocal.set("UI")
 }
@@ -71,6 +73,24 @@ println(myThreadLocal.get()) // Prints "main", not "UI"
     println(myThreadLocal.get()) // Prints "foo"
 }
 </pre>
+
+<p>Accessing the thread-local without corresponding context element leads to undefined value:</p>
+
+<pre>val tl = ThreadLocal.withInitial { "initial" }
+
+runBlocking {
+  println(tl.get()) // Will print "initial"
+  // Change context
+  withContext(tl.asContextElement("modified")) {
+    println(tl.get()) // Will print "modified"
+  }
+  // Context is changed again
+   println(tl.get()) // &lt;- WARN: can print either "modified" or "initial"
+}
+</pre>
+
+<p>to fix this behaviour use <code>runBlocking(tl.asContextElement())</code></p>
+
 
       </div>
     </main>

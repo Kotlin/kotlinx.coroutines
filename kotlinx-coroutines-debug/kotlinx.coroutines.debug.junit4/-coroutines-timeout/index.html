@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CoroutinesTimeout - kotlinx-coroutines-debug</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug.junit4/-coroutines-timeout/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-debug</a> / <a href="../index.html">kotlinx.coroutines.debug.junit4</a> / <a href="./index.html">CoroutinesTimeout</a></div>
+
+<h1 id="coroutinestimeout">CoroutinesTimeout</h1>
+
+<div class="signature"><code><span class="keyword">class </span><span class="identifier">CoroutinesTimeout</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">TestRule</span></code></div>
+
+<p>Coroutines timeout rule for JUnit4 that is applied to all methods in the class.
+This rule is very similar to <a href="#">Timeout</a> rule: it runs tests in a separate thread,
+fails tests after the given timeout and interrupts test thread.</p>
+
+<p>Additionally, this rule installs <a href="../../kotlinx.coroutines.debug/-debug-probes/index.html">DebugProbes</a> and dumps all coroutines at the moment of the timeout.
+It may cancel coroutines on timeout if <a href="#">cancelOnTimeout</a> set to <code>true</code>.</p>
+
+<p>Example of usage:</p>
+
+<pre>class HangingTest {
+
+  @Rule
+  @JvmField
+  val timeout = CoroutinesTimeout.seconds(5)
+
+  @Test
+  fun testThatHangs() = runBlocking {
+    ...
+    delay(Long.MAX_VALUE) // somewhere deep in the stack
+    ...
+  }
+}
+</pre>
+
+<h3 id="constructors">Constructors</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-init-.html">&lt;init&gt;</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="identifier">CoroutinesTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean)/testTimeoutMs">testTimeoutMs</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean)/cancelOnTimeout">cancelOnTimeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">)</span></code></div>
+
+        <p>Coroutines timeout rule for JUnit4 that is applied to all methods in the class.
+This rule is very similar to <a href="#">Timeout</a> rule: it runs tests in a separate thread,
+fails tests after the given timeout and interrupts test thread.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="companion-object-functions">Companion Object Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="seconds.html">seconds</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">seconds</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout.Companion$seconds(kotlin.Int, kotlin.Boolean)/seconds">seconds</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout.Companion$seconds(kotlin.Int, kotlin.Boolean)/cancelOnTimeout">cancelOnTimeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">CoroutinesTimeout</span></a></code></div>
+
+        <p>Creates <a href="./index.md">CoroutinesTimeout</a> rule with the given timeout in seconds.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

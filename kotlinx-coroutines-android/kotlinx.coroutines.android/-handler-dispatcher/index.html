@@ -52,9 +52,9 @@
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">immediate</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">HandlerDispatcher</span></a></code></div>
 
-        <p>Returns dispatcher that executes coroutines immediately when it is already in the right handler context
-(current looper is the same as this handler’s looper). See <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-main-coroutine-dispatcher/is-dispatch-needed.html">isDispatchNeeded</a> documentation on
-why this should not be done by default.</p>
+        <p>Returns dispatcher that executes coroutines immediately when it is already in the right context
+(current looper is the same as this handler’s looper) without an additional <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/dispatch.html">re-dispatch</a>.
+This dispatcher does not use <a href="https://developer.android.com/reference/android/os/Handler.html#post(java.lang.Runnable)">Handler.post</a> when current looper is the same as looper of the handler.</p>
 
       </td>
 </tr>

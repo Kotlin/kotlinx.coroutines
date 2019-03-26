@@ -33,11 +33,16 @@
 
 <h1 id="cancel">cancel</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.ConflatedBroadcastChannel$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/ConflatedBroadcastChannel.kt#L207">(source)</a></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.ConflatedBroadcastChannel$cancel(java.util.concurrent.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/ConflatedBroadcastChannel.kt#L218">(source)</a></div>
 
 <p>Overrides <a href="../-broadcast-channel/cancel.html">BroadcastChannel.cancel</a></p>
 
-<p>Closes this broadcast channel. Same as <a href="close.html">close</a>.</p>
+<p>Cancels this conflated broadcast channel with an optional cause, same as <a href="close.html">close</a>.
+This function closes the channel with
+the specified cause (unless it was already closed),
+and <a href="../-receive-channel/cancel.html">cancels</a> all open subscriptions.
+A cause can be used to specify an error message or to provide other details on
+a cancellation reason for debugging purposes.</p>
 
 
       </div>

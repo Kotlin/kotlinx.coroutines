@@ -33,52 +33,42 @@
 
 <h1 id="coroutinescope">CoroutineScope</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineScope</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/CoroutineScope.kt#L60">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineScope</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L50">(source)</a></div>
 
 <p>Defines a scope for new coroutines. Every coroutine builder
 is an extension on <a href="./index.md">CoroutineScope</a> and inherits its <a href="coroutine-context.html">coroutineContext</a>
 to automatically propagate both context elements and cancellation.</p>
 
+<p>The best ways to obtain a standalone instance of the scope are <a href="./index.md">CoroutineScope</a> and <a href="../-main-scope.html">MainScope</a> factory functions.
+Additional context elements can be appended to the scope using <a href="../plus.html">plus</a> operator.</p>
+
+<p>Manual implementation of this interface is not recommended, implementation by delegation should be preferred instead.
+By convention, <a href="coroutine-context.html">context of the scope</a> should contain an instance of a <a href="../-job/index.html">job</a> to enforce structured concurrency.</p>
+
 <p>Every coroutine builder (like <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, etc)
 and every scoping function (like <a href="../coroutine-scope.html">coroutineScope</a>, <a href="../with-context.html">withContext</a>, etc) provides <em>its own</em> scope
 with its own <a href="../-job/index.html">Job</a> instance into the inner block of code it runs.
-By convention, they all wait for all the coroutines inside
-their block to complete before completing themselves, thus enforcing the
-discipline of <strong>structured concurrency</strong>.</p>
+By convention, they all wait for all the coroutines inside their block to complete before completing themselves,
+thus enforcing the discipline of <strong>structured concurrency</strong>.</p>
 
-<p><a href="./index.md">CoroutineScope</a> should be implemented on entities with well-defined lifecycle that are responsible
+<p><a href="./index.md">CoroutineScope</a> should be implemented (or used as a field) on entities with a well-defined lifecycle that are responsible
 for launching children coroutines. Example of such entity on Android is Activity.
 Usage of this interface may look like this:</p>
 
-<pre>class MyActivity : AppCompatActivity(), CoroutineScope {
-    lateinit var job: Job
-    override val coroutineContext: CoroutineContext
-        get() = Dispatchers.Main + job
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        job = Job()
-    }
-
+<pre>class MyActivity : AppCompatActivity(), CoroutineScope by MainScope() {
     override fun onDestroy() {
-        super.onDestroy()
-        job.cancel() // Cancel job on activity destroy. After destroy all children jobs will be cancelled automatically
+        cancel() // cancel is extension on CoroutineScope
     }
 
     /*
      * Note how coroutine builders are scoped: if activity is destroyed or any of the launched coroutines
      * in this method throws an exception, then all nested coroutines are cancelled.
      */
-        fun loadDataFromUI() = launch { // &lt;- extension on current activity, launched in the main thread
-           val ioData = async(Dispatchers.IO) { // &lt;- extension on launch scope, launched in IO dispatcher
-               // blocking I/O operation
-           }
-           // do something else concurrently with I/O
-           val data = ioData.await() // wait for result of I/O
-           draw(data) // can draw in the main thread
+        fun showSomeData() = launch { // &lt;- extension on current activity, launched in the main thread
+           // ... here we can use suspending functions or coroutine builders with other dispatchers
+           draw(data) // draw in the main thread
         }
     }
-
 </pre>
 
 <h3 id="properties">Properties</h3>
@@ -94,7 +84,9 @@ Usage of this interface may look like this:</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">coroutineContext</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
 
-        <p>Context of this scope.</p>
+        <p>The context of this scope.
+Context is encapsulated by the scope and used for implementation of coroutine builders that are extensions on the scope.
+Accessing this property in general code is not recommended for any purposes except accessing <a href="../-job/index.html">Job</a> instance for advanced usages.</p>
 
       </td>
 </tr>
@@ -174,10 +166,26 @@ object can be used to <a href="../../kotlinx.coroutines.channels/-broadcast-chan
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="./index.md"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><a href="./index.md"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, java.util.concurrent.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Cancels this scope, including its job and all its children.
+        <p>Cancels this scope, including its job and all its children with an optional cancellation <a href="../cancel.html#kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, java.util.concurrent.CancellationException)/cause">cause</a>.
+A cause can be used to specify an error message or to provide other details on
+a cancellation reason for debugging purposes.
 Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the scope does not have a job in it.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../ensure-active.html">ensureActive</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="./index.md"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">ensureActive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Ensures that current scope is <a href="../is-active.html">active</a>.
+Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the context does not have a job in it.</p>
 
       </td>
 </tr>
@@ -202,7 +210,7 @@ The coroutine is cancelled when the resulting job is <a href="../-job/cancel.htm
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="./index.md"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">newCoroutineContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$newCoroutineContext(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
+        <div class="signature"><code><span class="keyword">expect</span> <span class="keyword">fun </span><a href="./index.md"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">newCoroutineContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$newCoroutineContext(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
 
         <p>Creates context for the new coroutine. It installs <a href="../-dispatchers/-default.html">Dispatchers.Default</a> when no other dispatcher nor
 <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a> is specified, and adds optional support for debugging facilities (when turned on).</p>

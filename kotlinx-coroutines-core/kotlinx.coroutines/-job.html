@@ -33,7 +33,7 @@
 
 <h1 id="job">Job</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines$Job(kotlinx.coroutines.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="-job/index.html"><span class="identifier">Job</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Job.kt#L354">(source)</a></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines$Job(kotlinx.coroutines.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="-completable-job/index.html"><span class="identifier">CompletableJob</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Job.kt#L357">(source)</a></div>
 
 <p>Creates a new job object in an active state.
 A failure of any child of this job immediately causes this job to fail, too, and cancels the rest of its children.</p>
@@ -43,6 +43,11 @@ A failure of any child of this job immediately causes this job to fail, too, and
 <p>If <a href="-job.html#kotlinx.coroutines$Job(kotlinx.coroutines.Job)/parent">parent</a> job is specified, then this job becomes a child job of its parent and
 is cancelled when its parent fails or is cancelled. All this job’s children are cancelled in this case, too.
 The invocation of <a href="-job/cancel.html">cancel</a> with exception (other than <a href="-cancellation-exception/index.html">CancellationException</a>) on this job also cancels parent.</p>
+
+<p>Conceptually, the resulting job works in the same way as the job created by the <code>launch { body }</code> invocation
+(see <a href="launch.html">launch</a>), but without any code in the body. It is active until cancelled or completed. Invocation of
+<a href="-completable-job/complete.html">CompletableJob.complete</a> or <a href="-completable-job/complete-exceptionally.html">CompletableJob.completeExceptionally</a> corresponds to the successful or
+failed completion of the body of the coroutine.</p>
 
 <h3 id="parameters">Parameters</h3>
 

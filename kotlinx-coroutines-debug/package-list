@@ -2,3 +2,4 @@ $dokka.format:kotlin-website
 $dokka.linkExtension:html
 
 kotlinx.coroutines.debug
+kotlinx.coroutines.debug.junit4

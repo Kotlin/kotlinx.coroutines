@@ -29,7 +29,7 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <p>Core primitives to work with coroutines.</p>
+        <p>Core primitives to work with coroutines, available on all platforms.</p>
 
 <h3 id="all-types">All Types</h3>
 
@@ -66,6 +66,14 @@ function.</p>
         <p>Cancellable continuation. It is <em>completed</em> when it is resumed or cancelled.
 When <a href="../kotlinx.coroutines/-cancellable-continuation/cancel.html">cancel</a> function is explicitly invoked, this continuation immediately resumes with <a href="../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a> or
 with the specified cancel cause.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines/-cancellation-exception/index.html">kotlinx.coroutines.CancellationException</a></p>
+      </td>
+<td>
 
       </td>
 </tr>
@@ -136,6 +144,17 @@ exception on send attempts.</p>
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines/-completable-job/index.html">kotlinx.coroutines.CompletableJob</a></p>
+      </td>
+<td>
+
+        <p>A job that can be completed using <a href="../kotlinx.coroutines/-completable-job/complete.html">complete</a> function.
+It is returned by <a href="../kotlinx.coroutines/-job/index.html">Job()</a> and <a href="../kotlinx.coroutines/-supervisor-job.html">SupervisorJob()</a> constructor functions.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines/-completion-handler.html">kotlinx.coroutines.CompletionHandler</a></p>
       </td>
 <td>
@@ -151,6 +170,17 @@ exception on send attempts.</p>
 <td>
 
         <p>Broadcasts the most recently sent element (aka <a href="../kotlinx.coroutines.channels/-conflated-broadcast-channel/value.html">value</a>) to all <a href="../kotlinx.coroutines.channels/-conflated-broadcast-channel/open-subscription.html">openSubscription</a> subscribers.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines/-copyable-throwable/index.html">kotlinx.coroutines.CopyableThrowable</a></p>
+      </td>
+<td>
+
+        <p>Throwable which can be cloned during stacktrace recovery in a class-specific way.
+For additional information about stacktrace recovery see <a href="#">STACKTRACE_RECOVERY_PROPERTY_NAME</a></p>
 
       </td>
 </tr>
@@ -298,6 +328,18 @@ the semantics of their behavior may change in some way that may break some code.
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines/-internal-coroutines-api/index.html">kotlinx.coroutines.InternalCoroutinesApi</a></p>
+      </td>
+<td>
+
+        <p>Marks declarations that are <strong>internal</strong> in coroutines API, which means that should not be used outside of
+<code>kotlinx.coroutines</code>, because their signatures and semantics will be changing between release without any
+warnings and without providing any migration aids.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines/-job/index.html">kotlinx.coroutines.Job</a></p>
       </td>
 <td>
@@ -377,6 +419,16 @@ so they cannot be deprecated right away.</p>
 <td>
 
         <p>Receiver’s interface to <a href="../kotlinx.coroutines.channels/-channel/index.html">Channel</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines/-runnable.html">kotlinx.coroutines.Runnable</a></p>
+      </td>
+<td>
+
+        <p>A runnable task for <a href="../kotlinx.coroutines/-coroutine-dispatcher/dispatch.html">CoroutineDispatcher.dispatch</a>.</p>
 
       </td>
 </tr>

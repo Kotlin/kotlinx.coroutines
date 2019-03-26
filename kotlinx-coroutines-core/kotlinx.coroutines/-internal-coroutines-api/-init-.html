@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CoroutineState.continuation - kotlinx-coroutines-debug</title>
+  <title>InternalCoroutinesApi.&lt;init&gt; - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-coroutine-state/continuation.html">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-internal-coroutines-api/-init-.html">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
@@ -29,11 +29,16 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-debug</a> / <a href="../index.html">kotlinx.coroutines.debug</a> / <a href="index.html">CoroutineState</a> / <a href="./continuation.html">continuation</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines</a> / <a href="index.html">InternalCoroutinesApi</a> / <a href="./-init-.html">&lt;init&gt;</a></div>
 
-<h1 id="continuation">continuation</h1>
+<h1 id="init">&lt;init&gt;</h1>
 
-<div class="signature"><code><span class="keyword">val </span><span class="identifier">continuation</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span></code></div>
+<div class="signature"><code><span class="identifier">InternalCoroutinesApi</span><span class="symbol">(</span><span class="symbol">)</span></code></div>
+
+<p>Marks declarations that are <strong>internal</strong> in coroutines API, which means that should not be used outside of
+<code>kotlinx.coroutines</code>, because their signatures and semantics will be changing between release without any
+warnings and without providing any migration aids.</p>
+
 
       </div>
     </main>

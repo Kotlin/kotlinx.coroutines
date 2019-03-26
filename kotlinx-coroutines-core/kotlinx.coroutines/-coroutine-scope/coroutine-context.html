@@ -33,9 +33,13 @@
 
 <h1 id="coroutinecontext">coroutineContext</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">coroutineContext</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/CoroutineScope.kt#L64">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">coroutineContext</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L58">(source)</a></div>
 
-<p>Context of this scope.</p>
+<p>The context of this scope.
+Context is encapsulated by the scope and used for implementation of coroutine builders that are extensions on the scope.
+Accessing this property in general code is not recommended for any purposes except accessing <a href="../-job/index.html">Job</a> instance for advanced usages.</p>
+
+<p>By convention, should contain an instance of a <a href="../-job/index.html">job</a> to enforce structured concurrency.</p>
 
 
       </div>

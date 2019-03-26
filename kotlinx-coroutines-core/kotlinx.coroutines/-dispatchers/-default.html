@@ -33,15 +33,14 @@
 
 <h1 id="default">Default</h1>
 
-<div class="signature"><code><span class="identifier">@JvmStatic</span> <span class="keyword">val </span><span class="identifier">Default</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/Dispatchers.kt#L33">(source)</a></div>
+<div class="signature"><code><span class="keyword">val </span><span class="identifier">Default</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Dispatchers.common.kt#L21">(source)</a></div>
 
 <p>The default <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> that is used by all standard builders like
-<a href="#">launch</a>, <a href="#">async</a>, etc
+<a href="../launch.html">launch</a>, <a href="../async.html">async</a>, etc
 if no dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a> is specified in their context.</p>
 
-<p>It is backed by a shared pool of threads on JVM. By default, the maximal level of parallelism used
-by this dispatcher is equal to the number of CPU cores, but is at least two.
-Level of parallelism X guarantees that no more than X tasks can be executed in this dispatcher in parallel.</p>
+<p>It is backed by a shared pool of threads on JVM. By default, the maximal number of threads used
+by this dispatcher is equal to the number CPU cores, but is at least two.</p>
 
 
       </div>

@@ -33,7 +33,7 @@
 
 <h1 id="producerscope">ProducerScope</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">interface </span><span class="identifier">ProducerScope</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Produce.kt#L17">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">interface </span><span class="identifier">ProducerScope</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Produce.kt#L17">(source)</a></div>
 
 <p>Scope for <a href="../produce.html">produce</a> coroutine builder.</p>
 
@@ -77,7 +77,9 @@ the channel instance returned by this function.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">coroutineContext</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
 
-        <p>Context of this scope.</p>
+        <p>The context of this scope.
+Context is encapsulated by the scope and used for implementation of coroutine builders that are extensions on the scope.
+Accessing this property in general code is not recommended for any purposes except accessing <a href="../../kotlinx.coroutines/-job/index.html">Job</a> instance for advanced usages.</p>
 
       </td>
 </tr>
@@ -92,20 +94,6 @@ the channel instance returned by this function.</p>
 
         <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-send-channel/close.html">close</a> and thus
 the <a href="../-send-channel/send.html">send</a> and <a href="../-send-channel/offer.html">offer</a> attempts throws exception.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../-send-channel/is-full.html">isFull</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isFull</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-        <p>Returns <code>true</code> if the channel is full (out of capacity) and the <a href="../-send-channel/send.html">send</a> attempt will suspend.
-This function returns <code>false</code> for <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> channel.</p>
 
       </td>
 </tr>
@@ -187,8 +175,8 @@ or throws exception if the channel <a href="../-send-channel/is-closed-for-send.
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">send</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$send(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Adds <a href="../-send-channel/send.html#kotlinx.coroutines.channels.SendChannel$send(kotlinx.coroutines.channels.SendChannel.E)/element">element</a> into to this channel, suspending the caller while this channel <a href="../-send-channel/is-full.html">isFull</a>,
-or throws exception if the channel <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> (see <a href="../-send-channel/close.html">close</a> for details).</p>
+        <p>Adds <a href="../-send-channel/send.html#kotlinx.coroutines.channels.SendChannel$send(kotlinx.coroutines.channels.SendChannel.E)/element">element</a> into to this channel, suspending the caller while the buffer of this channel is full
+or if it does not exist, or throws exception if the channel <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> (see <a href="../-send-channel/close.html">close</a> for details).</p>
 
       </td>
 </tr>
@@ -219,20 +207,7 @@ or throws exception if the channel <a href="../-send-channel/is-closed-for-send.
 
 <table class="api-docs-table">
 <tbody>
-<tr data-platform="JVM"><td>
-
-        <p><a href="../actor.html">actor</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">actor</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/onCompletion">onCompletion</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-completion-handler.html"><span class="identifier">CompletionHandler</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../-actor-scope/index.html"><span class="identifier">ActorScope</span></a><span class="symbol">&lt;</span><a href="../actor.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="../actor.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Launches new coroutine that is receiving messages from its mailbox channel
-and returns a reference to its mailbox channel as a <a href="../-send-channel/index.html">SendChannel</a>. The resulting
-object can be used to <a href="../-send-channel/send.html">send</a> messages to this coroutine.</p>
-
-      </td>
-</tr><tr>
+<tr>
 <td>
 
         <p><a href="../../kotlinx.coroutines/async.html">async</a></p>
@@ -268,10 +243,26 @@ object can be used to <a href="../-broadcast-channel/open-subscription.html">sub
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, java.util.concurrent.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Cancels this scope, including its job and all its children.
+        <p>Cancels this scope, including its job and all its children with an optional cancellation <a href="../../kotlinx.coroutines/cancel.html#kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, java.util.concurrent.CancellationException)/cause">cause</a>.
+A cause can be used to specify an error message or to provide other details on
+a cancellation reason for debugging purposes.
 Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the scope does not have a job in it.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../../kotlinx.coroutines/ensure-active.html">ensureActive</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">ensureActive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Ensures that current scope is <a href="../../kotlinx.coroutines/is-active.html">active</a>.
+Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the context does not have a job in it.</p>
 
       </td>
 </tr>
@@ -286,6 +277,20 @@ Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-sta
 
         <p>Launches new coroutine without blocking current thread and returns a reference to the coroutine as a <a href="../../kotlinx.coroutines/-job/index.html">Job</a>.
 The coroutine is cancelled when the resulting job is <a href="../../kotlinx.coroutines/-job/cancel.html">cancelled</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../../kotlinx.coroutines/new-coroutine-context.html">newCoroutineContext</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">expect</span> <span class="keyword">fun </span><a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">newCoroutineContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$newCoroutineContext(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
+
+        <p>Creates context for the new coroutine. It installs <a href="../../kotlinx.coroutines/-dispatchers/-default.html">Dispatchers.Default</a> when no other dispatcher nor
+<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a> is specified, and adds optional support for debugging facilities (when turned on).</p>
 
       </td>
 </tr>
@@ -318,19 +323,7 @@ object can be used to <a href="../-receive-channel/receive.html">receive</a> ele
 
       </td>
 </tr>
-<tr data-platform="JVM"><td>
-
-        <p><a href="../send-blocking.html">sendBlocking</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="../send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sendBlocking</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels$sendBlocking(kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.channels.sendBlocking.E)), kotlinx.coroutines.channels.sendBlocking.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="../send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-        <p>Adds <a href="../send-blocking.html#kotlinx.coroutines.channels$sendBlocking(kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.channels.sendBlocking.E)), kotlinx.coroutines.channels.sendBlocking.E)/element">element</a> into to this channel, <strong>blocking</strong> the caller while this channel <a href="../-send-channel/is-full.html">Channel.isFull</a>,
-or throws exception if the channel <a href="../-send-channel/is-closed-for-send.html">Channel.isClosedForSend</a> (see <a href="../-send-channel/close.html">Channel.close</a> for details).</p>
-
-      </td>
-</tr></tbody>
+</tbody>
 </table>
 
       </div>

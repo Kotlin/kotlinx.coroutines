@@ -33,7 +33,7 @@
 
 <h1 id="coroutinescope">coroutineScope</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">coroutineScope</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$coroutineScope(kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.coroutineScope.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="coroutine-scope.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="coroutine-scope.html#R"><span class="identifier">R</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/CoroutineScope.kt#L183">(source)</a></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">coroutineScope</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$coroutineScope(kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.coroutineScope.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="coroutine-scope.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="coroutine-scope.html#R"><span class="identifier">R</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L177">(source)</a></div>
 
 <p>Creates new <a href="-coroutine-scope/index.html">CoroutineScope</a> and calls the specified suspend block with this scope.
 The provided scope inherits its <a href="-coroutine-scope/coroutine-context.html">coroutineContext</a> from the outer scope, but overrides
@@ -44,13 +44,13 @@ this scope fails and all the rest of the children are cancelled (for a different
 This function returns as soon as given block and all its children coroutines are completed.
 Example of the scope usages looks like this:</p>
 
-<pre>suspend fun loadDataForUI() = coroutineScope {
+<pre>suspend fun showSomeData() = coroutineScope {
 
-  val data = async { // &lt;- extension on current scope
-     ... load some UI data ...
+  val data = async(Dispatchers.IO) { // &lt;- extension on current scope
+     ... load some UI data for the Main thread ...
   }
 
-  withContext(UI) {
+  withContext(Dispatchers.Main) {
     doSomeWork()
     val result = data.await()
     display(result)
@@ -61,9 +61,10 @@ Example of the scope usages looks like this:</p>
 <p>Semantics of the scope in this example:</p>
 
 <ol>
-  <li><code>loadDataForUI</code> returns as soon as data is loaded and UI is updated.</li>
-  <li>If <code>doSomeWork</code> throws an exception, then <code>async</code> task is cancelled and <code>loadDataForUI</code> rethrows that exception.</li>
-  <li>If outer scope of <code>loadDataForUI</code> is cancelled, both started <code>async</code> and <code>withContext</code> are cancelled.</li>
+  <li><code>showSomeData</code> returns as soon as data is loaded and displayed in the UI.</li>
+  <li>If <code>doSomeWork</code> throws an exception, then <code>async</code> task is cancelled and <code>showSomeData</code> rethrows that exception.</li>
+  <li>If outer scope of <code>showSomeData</code> is cancelled, both started <code>async</code> and <code>withContext</code> blocks are cancelled.</li>
+  <li>If <code>async</code> block fails, <code>withContext</code> will be cancelled.</li>
 </ol>
 
 <p>Method may throw <a href="-cancellation-exception/index.html">CancellationException</a> if the current job was cancelled externally

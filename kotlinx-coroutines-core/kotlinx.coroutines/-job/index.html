@@ -33,7 +33,7 @@
 
 <h1 id="job">Job</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Job.kt#L84">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Job.kt#L84">(source)</a></div>
 
 <p>A background job. Conceptually, a job is a cancellable thing with a life-cycle that
 culminates in its completion.</p>
@@ -252,9 +252,11 @@ This clause never fails, even if the job completes exceptionally.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.Job$cancel(java.util.concurrent.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Cancels this job.
+        <p>Cancels this job with an optional cancellation <a href="cancel.html#kotlinx.coroutines.Job$cancel(java.util.concurrent.CancellationException)/cause">cause</a>.
+A cause can be used to specify an error message or to provide other details on
+a cancellation reason for debugging purposes.
 See <a href="./index.md">Job</a> documentation for full explanation of cancellation machinery.</p>
 
       </td>
@@ -340,9 +342,10 @@ if it was already started or completed.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlin.coroutines.CoroutineContext, java.util.concurrent.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Cancels <a href="./index.md">Job</a> of this context. See <a href="cancel.html">Job.cancel</a> for details.</p>
+        <p>Cancels <a href="./index.md">Job</a> of this context with an optional cancellation cause.
+See <a href="cancel.html">Job.cancel</a> for details.</p>
 
       </td>
 </tr>
@@ -366,10 +369,26 @@ if it was already started or completed.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="./index.md"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelChildren</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><a href="./index.md"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelChildren</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancelChildren(kotlinx.coroutines.Job, java.util.concurrent.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Cancels all <a href="children.html">children</a> jobs of this coroutine using <a href="cancel.html">Job.cancel</a> for all of them.
+        <p>Cancels all <a href="children.html">children</a> jobs of this coroutine using <a href="cancel.html">Job.cancel</a> for all of them
+with an optional cancellation <a href="../cancel-children.html#kotlinx.coroutines$cancelChildren(kotlinx.coroutines.Job, java.util.concurrent.CancellationException)/cause">cause</a>.
 Unlike <a href="cancel.html">Job.cancel</a> on this job as a whole, the state of this job itself is not affected.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../ensure-active.html">ensureActive</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="./index.md"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">ensureActive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Ensures that current job is <a href="is-active.html">active</a>.
+If the job is no longer active, throws <a href="../-cancellation-exception/index.html">CancellationException</a>.
+If the job was cancelled, thrown exception contains the original cancellation cause.</p>
 
       </td>
 </tr>
@@ -380,6 +399,20 @@ Unlike <a href="cancel.html">Job.cancel</a> on this job as a whole, the state of
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+
+        <p><a href="../-completable-job/index.html">CompletableJob</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">CompletableJob</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">Job</span></a></code></div>
+
+        <p>A job that can be completed using <a href="../-completable-job/complete.html">complete</a> function.
+It is returned by <a href="./index.md">Job()</a> and <a href="../-supervisor-job.html">SupervisorJob()</a> constructor functions.</p>
+
+      </td>
+</tr>
 <tr>
 <td>
 

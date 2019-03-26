@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>kotlinx.coroutines.CancellationException - kotlinx-coroutines-core</title>
+  <title>CancellationException - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
   <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-cancellation-exception/">
@@ -33,51 +33,58 @@
 
 <h1 id="cancellationexception">CancellationException</h1>
 
-<div class="overload-group" data-platform="JVM">
+<div class="signature"><code><span class="keyword">open</span> <span class="keyword">expect</span> <span class="keyword">class </span><span class="identifier">CancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html"><span class="identifier">IllegalStateException</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Exceptions.common.kt#L13">(source)</a></div>
 
-  <div class="signature"><code><span class="keyword">typealias </span><span class="identifier">CancellationException</span>&nbsp;<span class="symbol">=</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CancellationException.html"><span class="identifier">CancellationException</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/Exceptions.kt#L24">(source)</a></div>
+<h3 id="constructors">Constructors</h3>
 
-  <p><strong>Platform and version requirements:</strong> JVM</p>
-
-  <p>Thrown by cancellable suspending functions if the <a href="../-job/index.html">Job</a> of the coroutine is cancelled while it is suspending.
-It indicates <em>normal</em> cancellation of a coroutine.
-<strong>It is not printed to console/log by default uncaught exception handler</strong>.
-See <a href="../-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a></p>
-
-</div>
-<div class="overload-group" data-platform="JS">
-
-  <div class="signature"><code><span class="keyword">open</span> <span class="keyword">class </span><span class="identifier">CancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html"><span class="identifier">IllegalStateException</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/js/kotlinx-coroutines-core-js/src/Exceptions.kt#L24">(source)</a></div>
-
-  <p><strong>Platform and version requirements:</strong> JS</p>
-
-  <p>Thrown by cancellable suspending functions if the <a href="../-job/index.html">Job</a> of the coroutine is cancelled while it is suspending.
-It indicates <em>normal</em> cancellation of a coroutine.
-<strong>It is not printed to console/log by default uncaught exception handler</strong>.
-(see <a href="../-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a>).</p>
-
-  <h3 id="constructors">Constructors</h3>
-
-  <table class="api-docs-table">
+<table class="api-docs-table">
 <tbody>
 <tr data-platform="JS, Native"><td>
 
-          <p><a href="-cancellation-exception/-init-.html">&lt;init&gt;</a></p>
+        <p><a href="-init-.html">&lt;init&gt;</a></p>
 
-        </td>
+      </td>
 <td>
-          <div class="signature"><code><span class="identifier">CancellationException</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.CancellationException$&lt;init&gt;(kotlin.String)/message">message</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">)</span></code></div>
+        <div class="signature"><code><span class="identifier">CancellationException</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.CancellationException$&lt;init&gt;(kotlin.String)/message">message</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">)</span></code></div>
 
-          <p>Thrown by cancellable suspending functions if the <a href="../-job/index.html">Job</a> of the coroutine is cancelled while it is suspending.
-It indicates <em>normal</em> cancellation of a coroutine.
-<strong>It is not printed to console/log by default uncaught exception handler</strong>.
-(see <a href="../-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a>).</p>
-
-        </td>
+      </td>
 </tr></tbody>
 </table>
 
-</div>
+<h3 id="inheritors">Inheritors</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="../../kotlinx.coroutines.channels/-closed-send-channel-exception/index.html">ClosedSendChannelException</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">ClosedSendChannelException</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">CancellationException</span></a></code></div>
+
+        <p>Indicates attempt to <a href="../../kotlinx.coroutines.channels/-send-channel/send.html">send</a> on <a href="../../kotlinx.coroutines.channels/-send-channel/is-closed-for-send.html">isClosedForSend</a> channel
+that was closed without a cause. A <em>failed</em> channel rethrows the original <a href="../../kotlinx.coroutines.channels/-send-channel/close.html">close</a> cause
+exception on send attempts.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../-timeout-cancellation-exception.html">TimeoutCancellationException</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">TimeoutCancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">CancellationException</span></a></code></div>
+
+        <p>This exception is thrown by <a href="../with-timeout.html">withTimeout</a> to indicate timeout.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
 
       </div>
     </main>

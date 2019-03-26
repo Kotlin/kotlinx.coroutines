@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CoroutineState - kotlinx-coroutines-debug</title>
+  <title>CoroutineInfo - kotlinx-coroutines-debug</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-coroutine-state/">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-coroutine-info/">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
@@ -29,13 +29,13 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-debug</a> / <a href="../index.html">kotlinx.coroutines.debug</a> / <a href="./index.html">CoroutineState</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-debug</a> / <a href="../index.html">kotlinx.coroutines.debug</a> / <a href="./index.html">CoroutineInfo</a></div>
 
-<h1 id="coroutinestate">CoroutineState</h1>
+<h1 id="coroutineinfo">CoroutineInfo</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">data</span> <span class="keyword">class </span><span class="identifier">CoroutineState</span></code></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">data</span> <span class="keyword">class </span><span class="identifier">CoroutineInfo</span></code></div>
 
-<p>Class describing coroutine state.</p>
+<p>Class describing coroutine info such as its context, state and stacktrace.</p>
 
 <h3 id="properties">Properties</h3>
 
@@ -44,11 +44,11 @@
 <tr>
 <td>
 
-        <p><a href="continuation.html">continuation</a></p>
+        <p><a href="context.html">context</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">continuation</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">context</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
 
       </td>
 </tr>
@@ -68,11 +68,11 @@
 <tr>
 <td>
 
-        <p><a href="job-or-null.html">jobOrNull</a></p>
+        <p><a href="job.html">job</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">jobOrNull</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span></code></div>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">job</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span></code></div>
 
         <p><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> associated with a current coroutine or null.
 May be later used in <a href="../-debug-probes/print-job.html">DebugProbes.printJob</a>.</p>

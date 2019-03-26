@@ -33,12 +33,16 @@
 
 <h1 id="completeexceptionally">completeExceptionally</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">completeExceptionally</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CompletableDeferred$completeExceptionally(kotlin.Throwable)/exception">exception</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/CompletableDeferred.kt#L37">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">completeExceptionally</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CompletableDeferred$completeExceptionally(kotlin.Throwable)/exception">exception</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CompletableDeferred.kt#L45">(source)</a></div>
 
 <p>Completes this deferred value exceptionally with a given <a href="complete-exceptionally.html#kotlinx.coroutines.CompletableDeferred$completeExceptionally(kotlin.Throwable)/exception">exception</a>. The result is <code>true</code> if this deferred was
 completed as a result of this invocation and <code>false</code> otherwise (if it was already completed).</p>
 
 <p>Repeated invocations of this function have no effect and always produce <code>false</code>.</p>
+
+<p>This function transitions this deferred into <em>cancelled</em> state if it was not completed or cancelled yet.
+However, that if this deferred has children, then it transitions into <em>cancelling</em> state and becomes <em>cancelled</em>
+once all its children are <a href="#">complete</a>. See <a href="../-job/index.html">Job</a> for details.</p>
 
 
       </div>

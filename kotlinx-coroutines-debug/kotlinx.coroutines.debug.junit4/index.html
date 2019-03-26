@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DebugProbes.dumpCoroutinesState - kotlinx-coroutines-debug</title>
+  <title>kotlinx.coroutines.debug.junit4 - kotlinx-coroutines-debug</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/dump-coroutines-state.html">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug.junit4/">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
@@ -29,15 +29,31 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-debug</a> / <a href="../index.html">kotlinx.coroutines.debug</a> / <a href="index.html">DebugProbes</a> / <a href="./dump-coroutines-state.html">dumpCoroutinesState</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-debug</a> / <a href="./index.html">kotlinx.coroutines.debug.junit4</a></div>
 
-<h1 id="dumpcoroutinesstate">dumpCoroutinesState</h1>
+<h2 id="package-kotlinxcoroutinesdebugjunit4">Package kotlinx.coroutines.debug.junit4</h2>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="identifier">dumpCoroutinesState</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-coroutine-state/index.html"><span class="identifier">CoroutineState</span></a><span class="symbol">&gt;</span></code></div>
+<h3 id="types">Types</h3>
 
-<p>Returns all existing coroutine states.
-The resulting collection represents a consistent snapshot of all existing coroutines at the moment of invocation.</p>
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
 
+        <p><a href="-coroutines-timeout/index.html">CoroutinesTimeout</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">CoroutinesTimeout</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">TestRule</span></code></div>
+
+        <p>Coroutines timeout rule for JUnit4 that is applied to all methods in the class.
+This rule is very similar to <a href="#">Timeout</a> rule: it runs tests in a separate thread,
+fails tests after the given timeout and interrupts test thread.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
 
       </div>
     </main>

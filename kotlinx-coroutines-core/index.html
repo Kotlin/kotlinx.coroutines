@@ -29,7 +29,7 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <p>Core primitives to work with coroutines.</p>
+        <p>Core primitives to work with coroutines, available on all platforms.</p>
 
 <p>Coroutine builder functions:</p>
 
@@ -62,12 +62,6 @@
       <td>Produces a stream of elements</td>
     </tr>
     <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/actor.html">actor</a></td>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a></td>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-actor-scope/index.html">ActorScope</a></td>
-      <td>Processes a stream of messages</td>
-    </tr>
-    <tr>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html">runBlocking</a></td>
       <td><code>T</code></td>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a></td>
@@ -93,18 +87,6 @@
     <tr>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-unconfined.html">Dispatchers.Unconfined</a></td>
       <td>Does not confine coroutine execution in any way</td>
-    </tr>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/new-single-thread-context.html">newSingleThreadContext</a></td>
-      <td>Create new single-threaded coroutine context</td>
-    </tr>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/new-fixed-thread-pool-context.html">newFixedThreadPoolContext</a></td>
-      <td>Creates new thread pool of a fixed size</td>
-    </tr>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/java.util.concurrent.-executor/as-coroutine-dispatcher.html">Executor.asCoroutineDispatcher</a></td>
-      <td>Extension to convert any executor</td>
     </tr>
   </tbody>
 </table>
@@ -255,14 +237,6 @@ helper function. <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-co
     </tr>
   </tbody>
 </table>
-
-<p>This module provides debugging facilities for coroutines (run JVM with <code>-ea</code> or <code>-Dkotlinx.coroutines.debug</code> options) 
-and <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/new-coroutine-context.html">newCoroutineContext</a> function to write user-defined coroutine builders that work with these
-debugging facilities.</p>
-
-<p>This module provides a special CoroutineContext type <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-test-coroutine-context/index.html">TestCoroutineCoroutineContext</a> that
-allows the writer of code that contains Coroutines with delays and timeouts to write non-flaky unit-tests for that code allowing these tests to
-terminate in near zero time. See the documentation for this class for more information.</p>
 
 <h3 id="packages">Packages</h3>
 

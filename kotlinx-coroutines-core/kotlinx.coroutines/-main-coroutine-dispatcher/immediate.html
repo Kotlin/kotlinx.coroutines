@@ -33,15 +33,32 @@
 
 <h1 id="immediate">immediate</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">immediate</span><span class="symbol">: </span><a href="index.html"><span class="identifier">MainCoroutineDispatcher</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/MainCoroutineDispatcher.kt#L25">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">immediate</span><span class="symbol">: </span><a href="index.html"><span class="identifier">MainCoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/MainCoroutineDispatcher.kt#L41">(source)</a></div>
 
 <p>Returns dispatcher that executes coroutines immediately when it is already in the right context
-(e.g. current looper is the same as this handler’s looper). See <a href="../-coroutine-dispatcher/is-dispatch-needed.html">isDispatchNeeded</a> documentation on
-why this should not be done by default.
-Method may throw <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unsupported-operation-exception/index.html">UnsupportedOperationException</a> if immediate dispatching is not supported by current dispatcher,
+(e.g. current looper is the same as this handler’s looper) without an additional <a href="../-coroutine-dispatcher/dispatch.html">re-dispatch</a>.</p>
+
+<p>Immediate dispatcher is safe from stack overflows and in case of nested invocations forms event-loop similar to <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a>.
+The event loop is an advanced topic and its implications can be found in <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> documentation.</p>
+
+<p>Example of usage:</p>
+
+<pre>suspend fun updateUiElement(val text: String) {
+  /*
+   * If it is known that updateUiElement can be invoked both from the Main thread and from other threads,
+   * `immediate` dispatcher is used as a performance optimization to avoid unnecessary dispatch.
+   */
+  withContext(Dispatchers.Main.immediate) {
+    uiElement.text = text
+  }
+  // Do context-independent logic such as logging
+}
+</pre>
+
+<p>Method may throw <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unsupported-operation-exception/index.html">UnsupportedOperationException</a> if immediate dispatching is not supported by current dispatcher,
 please refer to specific dispatcher documentation.</p>
 
-<p><strong>Note: This is an experimental api.</strong> Semantics of this dispatcher may change in the future.</p>
+<p><a href="../-dispatchers/-main.html">Dispatchers.Main</a> supports immediate execution for Android, JavaFx and Swing platforms.</p>
 
 
       </div>

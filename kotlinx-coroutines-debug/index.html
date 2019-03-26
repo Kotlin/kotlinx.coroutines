@@ -39,7 +39,7 @@ Call to <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-
 
 <p>After that, you can use <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/dump-coroutines.html">DebugProbes.dumpCoroutines</a> to print all active (suspended or running) coroutines, including their state, creation and
 suspension stacktraces.
-Additionally, it is possible to process the list of such coroutines via <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/dump-coroutines-state.html">DebugProbes.dumpCoroutinesState</a> or dump isolated parts
+Additionally, it is possible to process the list of such coroutines via <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/dump-coroutines-info.html">DebugProbes.dumpCoroutinesInfo</a> or dump isolated parts
 of coroutines hierarchy referenced by a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> or <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a> instances using  <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-job.html">DebugProbes.printJob</a> and <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-scope.html">DebugProbes.printScope</a> respectively.</p>
 
 <h3 id="using-in-your-project">Using in your project</h3>
@@ -47,54 +47,79 @@ of coroutines hierarchy referenced by a <a href="https://kotlin.github.io/kotlin
 <p>Add <code>kotlinx-coroutines-debug</code> to your project test dependencies:</p>
 
 <pre>dependencies {
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.1.0-alpha'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.2.0-alpha'
 }
 </pre>
+
+<h3 id="using-in-unit-tests">Using in unit tests</h3>
+
+<p>For JUnit4 debug module provides special test rule, <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug.junit4/-coroutines-timeout/index.html">CoroutinesTimeout</a>, for installing debug probes
+and to dump coroutines on timeout to simplify tests debugging.</p>
+
+<p>Its usage is better demonstrated by the example (runnable code is <a href="test/TestRuleExample.kt">here</a>):</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">TestRuleExample</span> <span class="p">{</span>
+    <span class="n">@Rule</span>
+    <span class="n">@JvmField</span>
+    <span class="k">public</span> <span class="kd">val</span> <span class="py">timeout</span> <span class="p">=</span> <span class="n">CoroutinesTimeout</span><span class="p">.</span><span class="n">seconds</span><span class="p">(</span><span class="m">1</span><span class="p">)</span>
+
+    <span class="k">private</span> <span class="n">suspend</span> <span class="k">fun</span> <span class="nf">someFunctionDeepInTheStack</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">withContext</span><span class="p">(</span><span class="n">Dispatchers</span><span class="p">.</span><span class="n">IO</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">delay</span><span class="p">(</span><span class="n">Long</span><span class="p">.</span><span class="n">MAX_VALUE</span><span class="p">)</span> <span class="c1">// Hang method
+</span>        <span class="p">}</span>  
+    <span class="p">}</span>
+
+    <span class="n">@Test</span>
+    <span class="k">fun</span> <span class="nf">hangingTest</span><span class="p">()</span> <span class="p">=</span> <span class="n">runBlocking</span> <span class="p">{</span>
+        <span class="kd">val</span> <span class="py">job</span> <span class="p">=</span> <span class="n">launch</span> <span class="p">{</span>
+            <span class="n">someFunctionDeepInTheStack</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="n">job</span><span class="p">.</span><span class="n">join</span><span class="p">()</span> <span class="c1">// Join will hang
+</span>    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>After 1 second, test will fail with <code>TestTimeoutException</code> and all coroutines (<code>runBlocking</code> and <code>launch</code>) and their
+stacktraces will be dumped to the console.</p>
 
 <h3 id="using-as-jvm-agent">Using as JVM agent</h3>
 
 <p>It is possible to use this module as a standalone JVM agent to enable debug probes on the application startup.
-You can run your application with an additional argument: <code>-javaagent:kotlinx-coroutines-debug-1.1.0-alpha.jar</code>.
+You can run your application with an additional argument: <code>-javaagent:kotlinx-coroutines-debug-1.2.0-alpha.jar</code>.
 Additionally, on Linux and Mac OS X you can use <code>kill -5 $pid</code> command in order to force your application to print all alive coroutines.</p>
 
 <h3 id="example-of-usage">Example of usage</h3>
 
-<p>Capabilities of this module can be demonstrated by the following example:</p>
+<p>Capabilities of this module can be demonstrated by the following example 
+(runnable code is <a href="test/Example.kt">here</a>):</p>
 
-<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">Computation</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">fun</span> <span class="nf">computeValue</span><span class="p">():</span> <span class="n">Deferred</span><span class="p">&lt;</span><span class="n">String</span><span class="p">&gt;</span> <span class="p">=</span> <span class="n">GlobalScope</span><span class="p">.</span><span class="n">async</span> <span class="p">{</span>
-        <span class="kd">val</span> <span class="py">firstPart</span> <span class="p">=</span> <span class="n">computeFirstPart</span><span class="p">()</span>
-        <span class="kd">val</span> <span class="py">secondPart</span> <span class="p">=</span> <span class="n">computeSecondPart</span><span class="p">()</span>
-
-        <span class="n">combineResults</span><span class="p">(</span><span class="n">firstPart</span><span class="p">,</span> <span class="n">secondPart</span><span class="p">)</span>
-    <span class="p">}</span>
-
-    <span class="k">private</span> <span class="n">suspend</span> <span class="k">fun</span> <span class="nf">combineResults</span><span class="p">(</span><span class="n">firstPart</span><span class="p">:</span> <span class="n">Deferred</span><span class="p">&lt;</span><span class="n">String</span><span class="p">&gt;,</span> <span class="n">secondPart</span><span class="p">:</span> <span class="n">Deferred</span><span class="p">&lt;</span><span class="n">String</span><span class="p">&gt;):</span> <span class="n">String</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">firstPart</span><span class="p">.</span><span class="n">await</span><span class="p">()</span> <span class="p">+</span> <span class="n">secondPart</span><span class="p">.</span><span class="n">await</span><span class="p">()</span>
-    <span class="p">}</span>
-
-
-    <span class="k">private</span> <span class="n">suspend</span> <span class="k">fun</span> <span class="nf">CoroutineScope</span><span class="p">.</span><span class="n">computeFirstPart</span><span class="p">()</span> <span class="p">=</span> <span class="n">async</span> <span class="p">{</span>
-        <span class="n">delay</span><span class="p">(</span><span class="m">5000</span><span class="p">)</span>
-        <span class="s">"4"</span>
-    <span class="p">}</span>
-
-    <span class="k">private</span> <span class="n">suspend</span> <span class="k">fun</span> <span class="nf">CoroutineScope</span><span class="p">.</span><span class="n">computeSecondPart</span><span class="p">()</span> <span class="p">=</span> <span class="n">async</span> <span class="p">{</span>
-        <span class="n">delay</span><span class="p">(</span><span class="m">5000</span><span class="p">)</span>
-        <span class="s">"2"</span>
-    <span class="p">}</span>
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">suspend</span> <span class="k">fun</span> <span class="nf">computeValue</span><span class="p">():</span> <span class="n">String</span> <span class="p">=</span> <span class="n">coroutineScope</span> <span class="p">{</span>
+    <span class="kd">val</span> <span class="py">one</span> <span class="p">=</span> <span class="n">async</span> <span class="p">{</span> <span class="n">computeOne</span><span class="p">()</span> <span class="p">}</span>
+    <span class="kd">val</span> <span class="py">two</span> <span class="p">=</span> <span class="n">async</span> <span class="p">{</span> <span class="n">computeTwo</span><span class="p">()</span> <span class="p">}</span>
+    <span class="n">combineResults</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">)</span>
 <span class="p">}</span>
 
-<span class="k">fun</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">Array</span><span class="p">&lt;</span><span class="n">String</span><span class="p">&gt;)</span> <span class="p">=</span> <span class="n">runBlocking</span> <span class="p">{</span>
-    <span class="n">DebugProbes</span><span class="p">.</span><span class="n">install</span><span class="p">()</span>
-    <span class="kd">val</span> <span class="py">computation</span> <span class="p">=</span> <span class="n">Computation</span><span class="p">()</span>
-    <span class="kd">val</span> <span class="py">deferred</span> <span class="p">=</span> <span class="n">computation</span><span class="p">.</span><span class="n">computeValue</span><span class="p">()</span>
+<span class="n">suspend</span> <span class="k">fun</span> <span class="nf">combineResults</span><span class="p">(</span><span class="n">one</span><span class="p">:</span> <span class="n">Deferred</span><span class="p">&lt;</span><span class="n">String</span><span class="p">&gt;,</span> <span class="n">two</span><span class="p">:</span> <span class="n">Deferred</span><span class="p">&lt;</span><span class="n">String</span><span class="p">&gt;):</span> <span class="n">String</span> <span class="p">=</span>
+    <span class="n">one</span><span class="p">.</span><span class="n">await</span><span class="p">()</span> <span class="p">+</span> <span class="n">two</span><span class="p">.</span><span class="n">await</span><span class="p">()</span>
 
+<span class="n">suspend</span> <span class="k">fun</span> <span class="nf">computeOne</span><span class="p">():</span> <span class="n">String</span> <span class="p">{</span>
+    <span class="n">delay</span><span class="p">(</span><span class="m">5000</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s">"4"</span>
+<span class="p">}</span>
+
+<span class="n">suspend</span> <span class="k">fun</span> <span class="nf">computeTwo</span><span class="p">():</span> <span class="n">String</span> <span class="p">{</span>
+    <span class="n">delay</span><span class="p">(</span><span class="m">5000</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s">"2"</span>
+<span class="p">}</span>
+
+<span class="k">fun</span> <span class="nf">main</span><span class="p">()</span> <span class="p">=</span> <span class="n">runBlocking</span> <span class="p">{</span>
+    <span class="n">DebugProbes</span><span class="p">.</span><span class="n">install</span><span class="p">()</span>
+    <span class="kd">val</span> <span class="py">deferred</span> <span class="p">=</span> <span class="n">async</span> <span class="p">{</span> <span class="n">computeValue</span><span class="p">()</span> <span class="p">}</span>
     <span class="c1">// Delay for some time
 </span>    <span class="n">delay</span><span class="p">(</span><span class="m">1000</span><span class="p">)</span>
-
-    <span class="n">DebugProbes</span><span class="p">.</span><span class="n">dumpCoroutines</span><span class="p">()</span>
-
+    <span class="c1">// Dump running coroutines
+</span>    <span class="n">DebugProbes</span><span class="p">.</span><span class="n">dumpCoroutines</span><span class="p">()</span>
     <span class="n">println</span><span class="p">(</span><span class="s">"\nDumping only deferred"</span><span class="p">)</span>
     <span class="n">DebugProbes</span><span class="p">.</span><span class="n">printJob</span><span class="p">(</span><span class="n">deferred</span><span class="p">)</span>
 <span class="p">}</span>
@@ -105,44 +130,40 @@ Additionally, on Linux and Mac OS X you can use <code>kill -5 $pid</code> comman
 
 <pre>Coroutines dump 2018/11/12 21:44:02
 
-Coroutine "coroutine#2":DeferredCoroutine{Active}@1b26f7b2, state: SUSPENDED
+Coroutine "coroutine#2":DeferredCoroutine{Active}@289d1c02, state: SUSPENDED
 	at kotlinx.coroutines.DeferredCoroutine.await$suspendImpl(Builders.common.kt:99)
-	at Computation.combineResults(Example.kt:18)
-	at Computation$computeValue$1.invokeSuspend(Example.kt:14)
+	at ExampleKt.combineResults(Example.kt:11)
+	at ExampleKt$computeValue$2.invokeSuspend(Example.kt:7)
+	at ExampleKt$main$1$deferred$1.invokeSuspend(Example.kt:25)
 	(Coroutine creation stacktrace)
 	at kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)
-	at kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)
-	at kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:109)
-	at kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:160)
-	at kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt:88)
-	at kotlinx.coroutines.BuildersKt.async(Unknown Source)
-	at kotlinx.coroutines.BuildersKt__Builders_commonKt.async$default(Builders.common.kt:81)
+	at kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:25)
 	at kotlinx.coroutines.BuildersKt.async$default(Unknown Source)
-	at Computation.computeValue(Example.kt:10)
-	at ExampleKt$main$1.invokeSuspend(Example.kt:36)
+	at ExampleKt$main$1.invokeSuspend(Example.kt:25)
 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)
-	at kotlinx.coroutines.DispatchedTask$DefaultImpls.run(Dispatched.kt:237)
-	at kotlinx.coroutines.DispatchedContinuation.run(Dispatched.kt:81)
-	at kotlinx.coroutines.EventLoopBase.processNextEvent(EventLoop.kt:123)
-	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:69)
-	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:45)
-	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
-	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:35)
+	at kotlinx.coroutines.DispatchedTask.run(Dispatched.kt:233)
 	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
-	at ExampleKt.main(Example.kt:33)
+	at ExampleKt.main(Example.kt:23)
+	at ExampleKt.main(Example.kt)
 
 ... More coroutines here ...
 
 Dumping only deferred
 "coroutine#2":DeferredCoroutine{Active}, continuation is SUSPENDED at line kotlinx.coroutines.DeferredCoroutine.await$suspendImpl(Builders.common.kt:99)
-	"coroutine#3":DeferredCoroutine{Active}, continuation is SUSPENDED at line Computation$computeFirstPart$2.invokeSuspend(Example.kt:23)
-	"coroutine#4":DeferredCoroutine{Active}, continuation is SUSPENDED at line Computation$computeSecondPart$2.invokeSuspend(Example.kt:28)
+			"coroutine#3":DeferredCoroutine{Active}, continuation is SUSPENDED at line ExampleKt.computeOne(Example.kt:14)
+		"coroutine#4":DeferredCoroutine{Active}, continuation is SUSPENDED at line ExampleKt.computeTwo(Example.kt:19)
 </pre>
 
 <h3 id="status-of-the-api">Status of the API</h3>
 
 <p>API is purely experimental and it is not guaranteed that it won’t be changed (while it is marked as <code>@ExperimentalCoroutinesApi</code>).
 Do not use this module in production environment and do not rely on the format of the data produced by <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/index.html">DebugProbes</a>.</p>
+
+<h3 id="debug-agent-and-android">Debug agent and Android</h3>
+
+<p>Unfortunately, Android runtime does not support Instrument API necessary for <code>kotlinx-coroutines-debug</code> to function, triggering <code>java.lang.NoClassDefFoundError: Failed resolution of: Ljava/lang/management/ManagementFactory;</code>.</p>
+
+<p>Nevertheless, it will be possible to support debug agent on Android as soon as <a href="https://github.com/Archinamon/android-gradle-aspectj">GradleAspectJ-Android</a>  will support androin-gradle 3.3</p>
 
 <h3 id="packages">Packages</h3>
 
@@ -152,6 +173,16 @@ Do not use this module in production environment and do not rely on the format o
 <td>
 
         <p><a href="kotlinx.coroutines.debug/index.html">kotlinx.coroutines.debug</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="kotlinx.coroutines.debug.junit4/index.html">kotlinx.coroutines.debug.junit4</a></p>
 
       </td>
 <td>
