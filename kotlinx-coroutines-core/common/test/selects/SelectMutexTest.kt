@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
 import kotlin.test.*
 
+@Ignore
 class SelectMutexTest : TestBase() {
     @Test
     fun testSelectLock() = runTest {

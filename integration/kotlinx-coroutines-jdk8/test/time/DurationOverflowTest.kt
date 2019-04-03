@@ -31,6 +31,7 @@ class DurationOverflowTest : TestBase() {
         finish(++counter)
     }
 
+    @Ignore
     @Test
     fun testOnTimeout() = runTest {
         for (duration in durations) {

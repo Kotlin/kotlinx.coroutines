@@ -9,10 +9,12 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.*
 import kotlinx.coroutines.selects.*
 import org.junit.*
+import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.*
 import kotlin.test.*
 
+@Ignore
 class SanitizedProbesTest : DebugTestBase() {
     @Before
     override fun setUp() {

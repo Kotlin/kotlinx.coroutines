@@ -9,6 +9,7 @@ import kotlinx.coroutines.selects.*
 import org.junit.*
 import org.junit.Assert.*
 
+@Ignore
 class ObservableSubscriptionSelectTest : TestBase() {
     @Test
     fun testSelect() = runTest {

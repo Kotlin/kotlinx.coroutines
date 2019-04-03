@@ -7,6 +7,7 @@ package kotlinx.coroutines.selects
 import kotlinx.coroutines.*
 import kotlin.test.*
 
+@Ignore
 class SelectTimeoutTest : TestBase() {
     @Test
     fun testBasic() = runTest {

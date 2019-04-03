@@ -11,6 +11,7 @@ import kotlinx.coroutines.channels.*
 import org.junit.*
 import kotlin.coroutines.*
 
+@Ignore
 class StackTraceRecoveryNestedChannelsTest : TestBase() {
 
     private val channel = Channel<Int>(0)

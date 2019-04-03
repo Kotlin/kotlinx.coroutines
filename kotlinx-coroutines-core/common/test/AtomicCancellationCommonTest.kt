@@ -102,6 +102,7 @@ class AtomicCancellationCommonTest : TestBase() {
         finish(5)
     }
 
+    @Ignore
     @Test
     fun testSelectLockAtomicCancel() = runTest {
         expect(1)

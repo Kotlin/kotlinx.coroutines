@@ -93,6 +93,7 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
         }
     }
 
+    @Ignore
     @Test
     fun testComplexOperator() = withVirtualTimeSource {
         runTest {

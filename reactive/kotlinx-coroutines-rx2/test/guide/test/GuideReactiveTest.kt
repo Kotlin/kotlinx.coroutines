@@ -2,8 +2,9 @@
 package kotlinx.coroutines.rx2.guide.test
 
 import kotlinx.coroutines.guide.test.*
-import org.junit.Test
+import org.junit.*
 
+@Ignore
 class GuideReactiveTest : ReactiveTestBase() {
 
     @Test

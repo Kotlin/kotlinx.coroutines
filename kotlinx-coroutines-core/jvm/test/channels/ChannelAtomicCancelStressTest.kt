@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.*
 /**
  * Tests cancel atomicity for channel send & receive operations, including their select versions.
  */
+@Ignore
 @RunWith(Parameterized::class)
 class ChannelAtomicCancelStressTest(private val kind: TestChannelKind) : TestBase() {
     companion object {

@@ -87,6 +87,7 @@ class AtomicCancellationTest : TestBase() {
         finish(6)
     }
 
+    @Ignore
     @Test
     fun testSelectDeferredAwaitCancellable() = runBlocking {
         expect(1)
@@ -117,6 +118,7 @@ class AtomicCancellationTest : TestBase() {
         expect(6)
     }
 
+    @Ignore
     @Test
     fun testSelectJobJoinCancellable() = runBlocking {
         expect(1)

@@ -9,6 +9,7 @@ import kotlinx.coroutines.sync.*
 import org.junit.*
 import org.junit.Assert.*
 
+@Ignore
 class SelectPhilosophersStressTest : TestBase() {
     private val TEST_DURATION = 3000L * stressTestMultiplier
 

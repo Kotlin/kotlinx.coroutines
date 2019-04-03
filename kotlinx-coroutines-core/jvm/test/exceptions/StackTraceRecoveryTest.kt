@@ -14,6 +14,7 @@ import kotlin.test.*
 /*
  * All stacktrace validation skips line numbers
  */
+@Ignore
 class StackTraceRecoveryTest : TestBase() {
 
     @Test
@@ -106,6 +107,7 @@ class StackTraceRecoveryTest : TestBase() {
         finish(4)
     }
 
+    @Ignore
     @Test
     fun testReceiveFromClosedChannel() = runTest {
         val channel = Channel<Int>()
