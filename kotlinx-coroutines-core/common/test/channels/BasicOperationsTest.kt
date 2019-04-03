@@ -17,7 +17,7 @@ class BasicOperationsTest : TestBase() {
 
     @Test
     fun testOfferAfterClose() = runTest {
-        TestChannelKind.values().forEach { kind -> testOffer(kind) }
+        TestChannelKind.values().forEach { kind -> testOfferAfterClose(kind) }
     }
 
     @Test
@@ -109,7 +109,7 @@ class BasicOperationsTest : TestBase() {
     }
 
 
-    private suspend fun testOffer(kind: TestChannelKind) = coroutineScope {
+    private suspend fun testOfferAfterClose(kind: TestChannelKind) = coroutineScope {
         val channel = kind.create()
         val d = async {
             try {

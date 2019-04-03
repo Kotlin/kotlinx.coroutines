@@ -283,11 +283,4 @@ class SelectArrayChannelTest : TestBase() {
         yield() // again
         finish(10)
     }
-
-    // only for debugging
-    internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {
-        this as SelectBuilderImpl // type assertion
-        if (!trySelect(null)) return
-        block.startCoroutineUnintercepted(this)
-    }
 }

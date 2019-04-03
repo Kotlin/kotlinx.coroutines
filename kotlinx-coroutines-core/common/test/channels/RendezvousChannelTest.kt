@@ -218,7 +218,7 @@ class RendezvousChannelTest : TestBase() {
         launch {
             expect(4)
             q.send(42) // suspend
-            expect(11)
+            expectUnreached()
         }
         expect(2)
         launch {
@@ -231,12 +231,10 @@ class RendezvousChannelTest : TestBase() {
         expect(7)
         yield() // try to resume sender (it will not resume despite the close!)
         expect(8)
-        assertEquals(42, q.receiveOrNull())
-        expect(9)
         assertNull(q.receiveOrNull())
-        expect(10)
+        expect(9)
         yield() // to sender, it was resumed!
-        finish(12)
+        finish(10)
     }
 
     class BadClass {
@@ -252,7 +250,7 @@ class RendezvousChannelTest : TestBase() {
             expect(1)
             send(bad)
         }
-        assertTrue(c.receive() === bad)
+        assertSame(bad, c.receive())
         finish(2)
     }
 
