@@ -28,8 +28,8 @@ class ChannelFactoryTest : TestBase() {
 
     @Test
     fun testArrayChannel() {
-        assertTrue(Channel<Int>(1) is ArrayChannel)
-        assertTrue(Channel<Int>(10) is ArrayChannel)
+        assertTrue(Channel<Int>(1) is BufferedChannel)
+        assertTrue(Channel<Int>(10) is BufferedChannel)
     }
 
     @Test

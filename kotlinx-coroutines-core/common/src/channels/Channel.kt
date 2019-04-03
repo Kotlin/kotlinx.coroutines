@@ -355,10 +355,8 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
  */
 public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> =
     when (capacity) {
-        RENDEZVOUS -> RendezvousChannel()
-        UNLIMITED -> LinkedListChannel()
         CONFLATED -> ConflatedChannel()
-        else -> ArrayChannel(capacity)
+        else -> BufferedChannel(capacity)
     }
 
 /**

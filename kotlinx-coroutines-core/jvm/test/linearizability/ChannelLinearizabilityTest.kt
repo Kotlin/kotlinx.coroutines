@@ -14,7 +14,8 @@ import kotlinx.coroutines.channels.*
 import org.junit.*
 import java.io.*
 
-@Param(name = "value", gen = IntGen::class, conf = "1:3")
+@Ignore
+@Param(name = "value", gen = IntGen::class, conf = "0:10")
 class ChannelLinearizabilityTest : TestBase() {
 
     private companion object {
@@ -68,6 +69,7 @@ class ChannelLinearizabilityTest : TestBase() {
             .invocationsPerIteration(500 * stressTestMultiplierSqrt)
             .threads(3)
             .verifier(LinVerifier::class.java)
+            .logLevel(LoggingLevel.DEBUG)
         LinChecker.check(ChannelLinearizabilityTest::class.java, options)
     }
 }
