@@ -98,14 +98,14 @@ internal class ArrayBroadcastChannel<E>(
     }
 
     // result is `ALREADY_SELECTED | OFFER_SUCCESS | OFFER_FAILED | Closed`
-    override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
+    private fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
         bufferLock.withLock {
             // check if closed for send (under lock, so size cannot change)
             closedForSend?.let { return it }
             val size = this.size
             if (size >= capacity) return OFFER_FAILED
             // let's try to select sending this element to buffer
-            if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
+            if (!select.trySelect(this, null)) { // :todo: move trySelect completion outside of lock
                 return ALREADY_SELECTED
             }
             val tail = this.tail
@@ -290,7 +290,7 @@ internal class ArrayBroadcastChannel<E>(
         }
 
         // result is `ALREADY_SELECTED | E | POLL_FAILED | Closed`
-        override fun pollSelectInternal(select: SelectInstance<*>): Any? {
+        private fun pollSelectInternal(select: SelectInstance<*>): Any? {
             var updated = false
             val result = subLock.withLock {
                 var result = peekUnderLock()
@@ -299,7 +299,8 @@ internal class ArrayBroadcastChannel<E>(
                     result === POLL_FAILED -> { /* just bail out of lock */ }
                     else -> {
                         // let's try to select receiving this element from buffer
-                        if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
+                        if (!select.trySelect(this, result)) { // TODO: this code is incorrect
+                                                                           // :todo: move trySelect completion outside of lock
                             result = ALREADY_SELECTED
                         } else {
                             // update subHead after retrieiving element from buffer

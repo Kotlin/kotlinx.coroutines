@@ -55,7 +55,7 @@ private const val SIGNALLED = -2  // already signalled subscriber onCompleted/on
 private class RxObservableCoroutine<T: Any>(
     parentContext: CoroutineContext,
     private val subscriber: ObservableEmitter<T>
-) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, SelectClause2<T, SendChannel<T>> {
+) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T> {
     override val channel: SendChannel<T> get() = this
 
     // Mutex is locked when while subscriber.onXXX is being invoked
@@ -87,16 +87,7 @@ private class RxObservableCoroutine<T: Any>(
     }
 
     override val onSend: SelectClause2<T, SendChannel<T>>
-        get() = this
-
-    // registerSelectSend
-    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
-    override fun <R> registerSelectClause2(select: SelectInstance<R>, element: T, block: suspend (SendChannel<T>) -> R) {
-        mutex.onLock.registerSelectClause2(select, null) {
-            doLockedNext(element)
-            block(this)
-        }
-    }
+        get() = TODO()
 
     // assert: mutex.isLocked()
     private fun doLockedNext(elem: T) {

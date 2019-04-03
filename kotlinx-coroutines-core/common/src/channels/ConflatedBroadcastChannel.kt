@@ -265,20 +265,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     }
 
     public override val onSend: SelectClause2<E, SendChannel<E>>
-        get() = object : SelectClause2<E, SendChannel<E>> {
-            override fun <R> registerSelectClause2(select: SelectInstance<R>, param: E, block: suspend (SendChannel<E>) -> R) {
-                registerSelectSend(select, param, block)
-            }
-        }
-
-    private fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend (SendChannel<E>) -> R) {
-        if (!select.trySelect(null)) return
-        offerInternal(element)?.let {
-            select.resumeSelectCancellableWithException(it.sendException)
-            return
-        }
-        block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
-    }
+        get() = TODO()
 
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>

@@ -53,23 +53,4 @@ internal open class ConflatedChannel<E> : AbstractChannel<E>() {
             }
         }
     }
-
-    // result is always `ALREADY_SELECTED | OFFER_SUCCESS | Closed`.
-    protected override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
-        while (true) {
-            val result = if (hasReceiveOrClosed)
-                super.offerSelectInternal(element, select) else
-                (select.performAtomicTrySelect(describeSendConflated(element)) ?: OFFER_SUCCESS)
-            when {
-                result === ALREADY_SELECTED -> return ALREADY_SELECTED
-                result === OFFER_SUCCESS -> return OFFER_SUCCESS
-                result === OFFER_FAILED -> {} // retry
-                result is Closed<*> -> {
-                    conflatePreviousSendBuffered(result)
-                    return result
-                }
-                else -> error("Invalid result $result")
-            }
-        }
-    }
 }

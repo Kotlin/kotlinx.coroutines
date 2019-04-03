@@ -145,8 +145,7 @@ private class LazyActorCoroutine<E>(
     parentContext: CoroutineContext,
     channel: Channel<E>,
     private val block: suspend ActorScope<E>.() -> Unit
-) : ActorCoroutine<E>(parentContext, channel, active = false),
-    SelectClause2<E, SendChannel<E>> {
+) : ActorCoroutine<E>(parentContext, channel, active = false) {
     override fun onStart() {
         block.startCoroutineCancellable(this, this)
     }
@@ -167,11 +166,5 @@ private class LazyActorCoroutine<E>(
     }
 
     override val onSend: SelectClause2<E, SendChannel<E>>
-        get() = this
-
-    // registerSelectSend
-    override fun <R> registerSelectClause2(select: SelectInstance<R>, param: E, block: suspend (SendChannel<E>) -> R) {
-        start()
-        super.onSend.registerSelectClause2(select, param, block)
-    }
+        get() = TODO()
 }

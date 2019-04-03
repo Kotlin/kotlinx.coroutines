@@ -57,7 +57,7 @@ private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/o
 private class PublisherCoroutine<in T>(
     parentContext: CoroutineContext,
     private val subscriber: Subscriber<T>
-) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Subscription, SelectClause2<T, SendChannel<T>> {
+) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Subscription {
     override val channel: SendChannel<T> get() = this
 
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
@@ -92,16 +92,7 @@ private class PublisherCoroutine<in T>(
     }
 
     override val onSend: SelectClause2<T, SendChannel<T>>
-        get() = this
-
-    // registerSelectSend
-    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
-    override fun <R> registerSelectClause2(select: SelectInstance<R>, element: T, block: suspend (SendChannel<T>) -> R) {
-        mutex.onLock.registerSelectClause2(select, null) {
-            doLockedNext(element)
-            block(this)
-        }
-    }
+        get() = TODO()
 
     /*
      * This code is not trivial because of the two properties:

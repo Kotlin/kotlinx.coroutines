@@ -23,7 +23,7 @@ import kotlin.jvm.*
  * @suppress **This is unstable API and it is subject to change.**
  */
 @Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
-public open class JobSupport constructor(active: Boolean) : Job, ChildJob, ParentJob, SelectClause0 {
+public open class JobSupport constructor(active: Boolean) : Job, ChildJob, ParentJob {
     final override val key: CoroutineContext.Key<*> get() = Job
 
     /*
@@ -512,28 +512,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     public final override val onJoin: SelectClause0
-        get() = this
-
-    // registerSelectJoin
-    public final override fun <R> registerSelectClause0(select: SelectInstance<R>, block: suspend () -> R) {
-        // fast-path -- check state and select/return if needed
-        loopOnState { state ->
-            if (select.isSelected) return
-            if (state !is Incomplete) {
-                // already complete -- select result
-                if (select.trySelect(null)) {
-                    select.completion.context.checkCompletion() // always check for our completion
-                    block.startCoroutineUnintercepted(select.completion)
-                }
-                return
-            }
-            if (startInternal(state) == 0) {
-                // slow-path -- register waiter for completion
-                select.disposeOnSelect(invokeOnCompletion(handler = SelectJoinOnCompletion(this, select, block).asHandler))
-                return
-            }
-        }
-    }
+        get() = TODO()
 
     /**
      * @suppress **This is unstable API and it is subject to change.**
@@ -1148,48 +1127,6 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         cont.disposeOnCancellation(invokeOnCompletion(ResumeAwaitOnCompletion(this, cont).asHandler))
         cont.getResult()
     }
-
-    /**
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    // registerSelectAwaitInternal
-    @Suppress("UNCHECKED_CAST")
-    internal fun <T, R> registerSelectClause1Internal(select: SelectInstance<R>, block: suspend (T) -> R) {
-        // fast-path -- check state and select/return if needed
-        loopOnState { state ->
-            if (select.isSelected) return
-            if (state !is Incomplete) {
-                // already complete -- select result
-                if (select.trySelect(null)) {
-                    if (state is CompletedExceptionally) {
-                        select.resumeSelectCancellableWithException(state.cause)
-                    }
-                    else {
-                        block.startCoroutineUnintercepted(state.unboxState() as T, select.completion)
-                    }
-                }
-                return
-            }
-            if (startInternal(state) == 0) {
-                // slow-path -- register waiter for completion
-                select.disposeOnSelect(invokeOnCompletion(handler = SelectAwaitOnCompletion(this, select, block).asHandler))
-                return
-            }
-        }
-    }
-
-    /**
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    @Suppress("UNCHECKED_CAST")
-    internal fun <T, R> selectAwaitCompletion(select: SelectInstance<R>, block: suspend (T) -> R) {
-        val state = this.state
-        // Note: await is non-atomic (can be cancelled while dispatched)
-        if (state is CompletedExceptionally)
-            select.resumeSelectCancellableWithException(state.cause)
-        else
-            block.startCoroutineCancellable(state.unboxState() as T, select.completion)
-    }
 }
 
 /*
@@ -1313,30 +1250,6 @@ internal class DisposeOnCompletion(
 ) : JobNode<Job>(job) {
     override fun invoke(cause: Throwable?) = handle.dispose()
     override fun toString(): String = "DisposeOnCompletion[$handle]"
-}
-
-private class SelectJoinOnCompletion<R>(
-    job: JobSupport,
-    private val select: SelectInstance<R>,
-    private val block: suspend () -> R
-) : JobNode<JobSupport>(job) {
-    override fun invoke(cause: Throwable?) {
-        if (select.trySelect(null))
-            block.startCoroutineCancellable(select.completion)
-    }
-    override fun toString(): String = "SelectJoinOnCompletion[$select]"
-}
-
-private class SelectAwaitOnCompletion<T, R>(
-    job: JobSupport,
-    private val select: SelectInstance<R>,
-    private val block: suspend (T) -> R
-) : JobNode<JobSupport>(job) {
-    override fun invoke(cause: Throwable?) {
-        if (select.trySelect(null))
-            job.selectAwaitCompletion(select, block)
-    }
-    override fun toString(): String = "SelectAwaitOnCompletion[$select]"
 }
 
 // -------- invokeOnCancellation nodes
