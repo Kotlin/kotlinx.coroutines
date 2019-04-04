@@ -11,7 +11,7 @@ import kotlinx.coroutines.*
  * values and completes normally or with an exception.
  *
  * All transformations on the flow, such as [map] and [filter] do not trigger flow collection or execution, only
- * terminal operators (e.g. [single])do trigger it.
+ * terminal operators (e.g. [single]) do trigger it.
  *
  * Flow can be collected in a suspending manner, without actual blocking using [collect] extension that will complete normally or exceptionally:
  * ```
