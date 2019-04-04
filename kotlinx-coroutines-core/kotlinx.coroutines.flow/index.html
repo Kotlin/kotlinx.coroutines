@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kotlinx.coroutines.flow - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="./index.html">kotlinx.coroutines.flow</a></div>
+
+<h2 id="package-kotlinxcoroutinesflow">Package kotlinx.coroutines.flow</h2>
+
+<h3 id="types">Types</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-flow/index.html">Flow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Flow</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
+
+        <p>A cold asynchronous stream of the data, that emits from zero to N (where N can be unbounded)
+values and completes normally or with an exception.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-flow-collector/index.html">FlowCollector</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">FlowCollector</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
+
+        <p><a href="-flow-collector/index.html">FlowCollector</a> is used as an intermediate or a terminal collector of the flow and represents
+an entity that accepts values emitted by the <a href="-flow/index.html">Flow</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="type-aliases">Type Aliases</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-exception-predicate.html">ExceptionPredicate</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">typealias </span><span class="identifier">ExceptionPredicate</span>&nbsp;<span class="symbol">=</span>&nbsp;<span class="symbol">(</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="extensions-for-external-classes">Extensions for External Classes</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="kotlin.-array/index.html">kotlin.Array</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="kotlin.-function0/index.html">kotlin.Function0</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="kotlin.-int-array/index.html">kotlin.IntArray</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="kotlin.-long-array/index.html">kotlin.LongArray</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="kotlin.-suspend-function0/index.html">kotlin.SuspendFunction0</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="kotlin.collections.-iterable/index.html">kotlin.collections.Iterable</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="kotlin.collections.-iterator/index.html">kotlin.collections.Iterator</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="kotlin.ranges.-int-range/index.html">kotlin.ranges.IntRange</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="kotlin.ranges.-long-range/index.html">kotlin.ranges.LongRange</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="kotlin.sequences.-sequence/index.html">kotlin.sequences.Sequence</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="functions">Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="as-flow.html">asFlow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../kotlinx.coroutines.channels/-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asFlow</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Represents the given broadcast channel as a hot flow.
+Every flow collector will trigger a new broadcast channel subscription.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="broadcast-in.html">broadcastIn</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="broadcast-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">broadcastIn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$broadcastIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.broadcastIn.T)), kotlinx.coroutines.CoroutineScope, kotlin.Int, kotlinx.coroutines.CoroutineStart)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$broadcastIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.broadcastIn.T)), kotlinx.coroutines.CoroutineScope, kotlin.Int, kotlinx.coroutines.CoroutineStart)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;1<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$broadcastIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.broadcastIn.T)), kotlinx.coroutines.CoroutineScope, kotlin.Int, kotlinx.coroutines.CoroutineStart)/start">start</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.LAZY<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../kotlinx.coroutines.channels/-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="broadcast-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Creates a <a href="../kotlinx.coroutines.channels/broadcast.html">broadcast</a> coroutine that collects the given flow.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="collect.html">collect</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="collect.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">collect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$collect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.collect.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.collect.T, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="collect.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Terminal flow operator that collects the given flow with a provided <a href="collect.html#kotlinx.coroutines.flow$collect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.collect.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.collect.T, kotlin.Unit)))/action">action</a>.
+If any exception occurs during collect or in the provided flow, this exception is rethrown from this method.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="concatenate.html">concatenate</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="concatenate.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">concatenate</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="concatenate.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Concatenates values of each flow sequentially, without interleaving them.</p>
+
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="concatenate.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">concatenate</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$concatenate(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.concatenate.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.concatenate.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.concatenate.R)))))/mapper">mapper</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="concatenate.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="concatenate.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="concatenate.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Transforms each value of the given flow into flow of another type and then flattens these flows
+sequentially, without interleaving them.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="count.html">count</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="count.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">count</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+
+        <p>Returns the number of elements in this flow.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="count.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">count</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$count(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.count.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.count.T, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="count.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+
+        <p>Returns the number of elements matching the given predicate.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="delay-each.html">delayEach</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="delay-each.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">delayEach</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$delayEach(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.delayEach.T)), kotlin.Long)/timeMillis">timeMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="delay-each.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Delays each element emitted by the given flow for the given <a href="delay-each.html#kotlinx.coroutines.flow$delayEach(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.delayEach.T)), kotlin.Long)/timeMillis">timeMillis</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="delay-flow.html">delayFlow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="delay-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">delayFlow</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$delayFlow(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.delayFlow.T)), kotlin.Long)/timeMillis">timeMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="delay-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Delays the emission of values from this flow for the given <a href="delay-flow.html#kotlinx.coroutines.flow$delayFlow(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.delayFlow.T)), kotlin.Long)/timeMillis">timeMillis</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="distinct-until-changed.html">distinctUntilChanged</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">distinctUntilChanged</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns flow where all subsequent repetitions of the same value are filtered out.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="distinct-until-changed-by.html">distinctUntilChangedBy</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">K</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="distinct-until-changed-by.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">distinctUntilChangedBy</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$distinctUntilChangedBy(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.distinctUntilChangedBy.T)), kotlin.Function1((kotlinx.coroutines.flow.distinctUntilChangedBy.T, kotlinx.coroutines.flow.distinctUntilChangedBy.K)))/keySelector">keySelector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="distinct-until-changed-by.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="distinct-until-changed-by.html#K"><span class="identifier">K</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="distinct-until-changed-by.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns flow where all subsequent repetitions of the same key are filtered out, where
+key is extracted with <a href="distinct-until-changed-by.html#kotlinx.coroutines.flow$distinctUntilChangedBy(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.distinctUntilChangedBy.T)), kotlin.Function1((kotlinx.coroutines.flow.distinctUntilChangedBy.T, kotlinx.coroutines.flow.distinctUntilChangedBy.K)))/keySelector">keySelector</a> function.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="drop.html">drop</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="drop.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">drop</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$drop(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.drop.T)), kotlin.Int)/count">count</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="drop.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow that ignores first <a href="drop.html#kotlinx.coroutines.flow$drop(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.drop.T)), kotlin.Int)/count">count</a> elements.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="drop-while.html">dropWhile</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="drop-while.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">dropWhile</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$dropWhile(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.dropWhile.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.dropWhile.T, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="drop-while.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="drop-while.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow containing all elements except first elements that satisfy the given predicate.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="empty-flow.html">emptyFlow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">emptyFlow</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="empty-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns an empty flow.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="filter.html">filter</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="filter.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filter</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$filter(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.filter.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.filter.T, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="filter.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="filter.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow containing only values of the original flow that matches the given <a href="filter.html#kotlinx.coroutines.flow$filter(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.filter.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.filter.T, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="filter-is-instance.html">filterIsInstance</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filterIsInstance</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="filter-is-instance.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow containing only values that are instances of specified type <a href="filter-is-instance.html#R">R</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="filter-not.html">filterNot</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="filter-not.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filterNot</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$filterNot(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.filterNot.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.filterNot.T, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="filter-not.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="filter-not.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow containing only values of the original flow that do not match the given <a href="filter-not.html#kotlinx.coroutines.flow$filterNot(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.filterNot.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.filterNot.T, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="filter-not-null.html">filterNotNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="filter-not-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filterNotNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="filter-not-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow containing only values of the original flow that are not null.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="flat-map.html">flatMap</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flat-map.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flatMap</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flatMap(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.T)), kotlin.Int, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMap.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.R)))))/concurrency">concurrency</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flatMap(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.T)), kotlin.Int, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMap.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.R)))))/bufferSize">bufferSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flatMap(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.T)), kotlin.Int, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMap.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.R)))))/mapper">mapper</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="flat-map.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flat-map.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flat-map.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Transforms elements emitted by the original flow by applying <a href="flat-map.html#kotlinx.coroutines.flow$flatMap(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.T)), kotlin.Int, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMap.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.R)))))/mapper">mapper</a>, that returns another flow, and then merging and flattening these flows.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="flow.html">flow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">flow</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flow(kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.flow.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<a href="flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Creates flow from the given suspendable <a href="flow.html#kotlinx.coroutines.flow$flow(kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.flow.T)), kotlin.Unit)))/block">block</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="flow-of.html">flowOf</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">flowOf</span><span class="symbol">(</span><span class="keyword">vararg</span> <span class="parameterName" id="kotlinx.coroutines.flow$flowOf(kotlin.Array((kotlinx.coroutines.flow.flowOf.T)))/elements">elements</span><span class="symbol">:</span>&nbsp;<a href="flow-of.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-of.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Creates flow that produces values from the given array of elements.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="flow-on.html">flowOn</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flowOn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/flowContext">flowContext</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/bufferSize">bufferSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>The operator that changes the context where this flow is executed to the given <a href="flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/flowContext">flowContext</a>.
+This operator is composable and affects only precedent operators that do not have its own context.
+This operator is pure: <a href="flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/flowContext">flowContext</a> <strong>does not</strong> leak into the downstream flow.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="flow-via-channel.html">flowViaChannel</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">flowViaChannel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowViaChannel(kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.flow.flowViaChannel.T)), kotlin.Unit)))/bufferSize">bufferSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowViaChannel(kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.flow.flowViaChannel.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="../kotlinx.coroutines.channels/-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="flow-via-channel.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-via-channel.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Creates an instance of the cold <a href="-flow/index.html">Flow</a> from a supplied <a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="flow-with.html">flowWith</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-with.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flowWith</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowWith(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlin.coroutines.CoroutineContext, kotlin.Int, kotlin.Function1((kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.R)))))/flowContext">flowContext</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowWith(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlin.coroutines.CoroutineContext, kotlin.Int, kotlin.Function1((kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.R)))))/bufferSize">bufferSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowWith(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlin.coroutines.CoroutineContext, kotlin.Int, kotlin.Function1((kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.R)))))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-with.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-with.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-with.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>The operator that changes the context where all transformations applied to the given flow within a <a href="flow-with.html#kotlinx.coroutines.flow$flowWith(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlin.coroutines.CoroutineContext, kotlin.Int, kotlin.Function1((kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.R)))))/builder">builder</a> are executed.
+This operator is pure and does not affect the context of the precedent and subsequent operations.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="fold.html">fold</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="fold.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">fold</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$fold(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.fold.T)), kotlinx.coroutines.flow.fold.R, kotlin.SuspendFunction2((kotlinx.coroutines.flow.fold.R, kotlinx.coroutines.flow.fold.T, )))/initial">initial</span><span class="symbol">:</span>&nbsp;<a href="fold.html#R"><span class="identifier">R</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$fold(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.fold.T)), kotlinx.coroutines.flow.fold.R, kotlin.SuspendFunction2((kotlinx.coroutines.flow.fold.R, kotlinx.coroutines.flow.fold.T, )))/operation">operation</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">acc</span><span class="symbol">:</span>&nbsp;<a href="fold.html#R"><span class="identifier">R</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="fold.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="fold.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="fold.html#R"><span class="identifier">R</span></a></code></div>
+
+        <p>Accumulates value starting with <a href="fold.html#kotlinx.coroutines.flow$fold(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.fold.T)), kotlinx.coroutines.flow.fold.R, kotlin.SuspendFunction2((kotlinx.coroutines.flow.fold.R, kotlinx.coroutines.flow.fold.T, )))/initial">initial</a> value and applying <a href="fold.html#kotlinx.coroutines.flow$fold(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.fold.T)), kotlinx.coroutines.flow.fold.R, kotlin.SuspendFunction2((kotlinx.coroutines.flow.fold.R, kotlinx.coroutines.flow.fold.T, )))/operation">operation</a> current accumulator value and each element</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="map.html">map</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="map.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">map</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$map(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.map.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.map.T, kotlinx.coroutines.flow.map.R)))/transformer">transformer</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="map.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="map.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="map.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow containing the results of applying the given <a href="map.html#kotlinx.coroutines.flow$map(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.map.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.map.T, kotlinx.coroutines.flow.map.R)))/transformer">transformer</a> function to each value of the original flow.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="map-not-null.html">mapNotNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="map-not-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">mapNotNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$mapNotNull(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.mapNotNull.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.mapNotNull.T, kotlinx.coroutines.flow.mapNotNull.R)))/transformer">transformer</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="map-not-null.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="map-not-null.html#R"><span class="identifier">R</span></a><span class="symbol">?</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="map-not-null.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow that contains only non-null results of applying the given <a href="map-not-null.html#kotlinx.coroutines.flow$mapNotNull(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.mapNotNull.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.mapNotNull.T, kotlinx.coroutines.flow.mapNotNull.R)))/transformer">transformer</a> function to each value of the original flow.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="on-each.html">onEach</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-each.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onEach</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$onEach(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onEach.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.onEach.T, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="on-each.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-each.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow which performs the given <a href="on-each.html#kotlinx.coroutines.flow$onEach(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onEach.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.onEach.T, kotlin.Unit)))/action">action</a> on each value of the original flow.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="on-error-collect.html">onErrorCollect</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-error-collect.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onErrorCollect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onErrorCollect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/fallback">fallback</span><span class="symbol">:</span>&nbsp;<a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-error-collect.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onErrorCollect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<a href="-exception-predicate.html"><span class="identifier">ExceptionPredicate</span></a>&nbsp;<span class="symbol">=</span>&nbsp;ALWAYS_TRUE<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-error-collect.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Switches to the <a href="on-error-collect.html#kotlinx.coroutines.flow$onErrorCollect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/fallback">fallback</a> flow if the original flow throws an exception that matches the <a href="on-error-collect.html#kotlinx.coroutines.flow$onErrorCollect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="on-error-return.html">onErrorReturn</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-error-return.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onErrorReturn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onErrorReturn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorReturn.T)), kotlinx.coroutines.flow.onErrorReturn.T, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/fallback">fallback</span><span class="symbol">:</span>&nbsp;<a href="on-error-return.html#T"><span class="identifier">T</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onErrorReturn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorReturn.T)), kotlinx.coroutines.flow.onErrorReturn.T, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<a href="-exception-predicate.html"><span class="identifier">ExceptionPredicate</span></a>&nbsp;<span class="symbol">=</span>&nbsp;ALWAYS_TRUE<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-error-return.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Emits the <a href="on-error-return.html#kotlinx.coroutines.flow$onErrorReturn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorReturn.T)), kotlinx.coroutines.flow.onErrorReturn.T, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/fallback">fallback</a> value and finishes successfully if the original flow throws exception that matches the given <a href="on-error-return.html#kotlinx.coroutines.flow$onErrorReturn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorReturn.T)), kotlinx.coroutines.flow.onErrorReturn.T, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</a>;</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="produce-in.html">produceIn</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="produce-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">produceIn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$produceIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.produceIn.T)), kotlinx.coroutines.CoroutineScope, kotlin.Int)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$produceIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.produceIn.T)), kotlinx.coroutines.CoroutineScope, kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;1<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="produce-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Creates a <a href="../kotlinx.coroutines.channels/produce.html">produce</a> coroutine that collects the given flow.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="reduce.html">reduce</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">S</span><span class="symbol">, </span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="reduce.html#S"><span class="identifier">S</span></a><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="reduce.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">reduce</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$reduce(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.reduce.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.reduce.S, kotlinx.coroutines.flow.reduce.T, )))/operation">operation</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">accumulator</span><span class="symbol">:</span>&nbsp;<a href="reduce.html#S"><span class="identifier">S</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="reduce.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="reduce.html#S"><span class="identifier">S</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="reduce.html#S"><span class="identifier">S</span></a></code></div>
+
+        <p>Accumulates value starting with the first element and applying <a href="reduce.html#kotlinx.coroutines.flow$reduce(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.reduce.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.reduce.S, kotlinx.coroutines.flow.reduce.T, )))/operation">operation</a> to current accumulator value and each element.
+Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unsupported-operation-exception/index.html">UnsupportedOperationException</a> if flow was empty.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="retry.html">retry</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="retry.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">retry</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/retries">retries</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Int.MAX_VALUE<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<a href="-exception-predicate.html"><span class="identifier">ExceptionPredicate</span></a>&nbsp;<span class="symbol">=</span>&nbsp;ALWAYS_TRUE<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="retry.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Operator that retries <a href="retry.html#kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/retries">n</a> times to collect the given flow in an exception that matches the given <a href="retry.html#kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</a> occurs
+in the given flow. Exceptions from collectors of this flow are not retried.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="single.html">single</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="single.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">single</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="single.html#T"><span class="identifier">T</span></a></code></div>
+
+        <p>Terminal operator, that awaits for one and only one value to be published.
+Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-no-such-element-exception/index.html">NoSuchElementException</a> for empty flow and <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> for flow
+that contains more than one element.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="single-or-null.html">singleOrNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="single-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">singleOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="single-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
+
+        <p>Terminal operator, that awaits for one and only one value to be published.
+Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> for flow that contains more than one element.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="take.html">take</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="take.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">take</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$take(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.take.T)), kotlin.Int)/count">count</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="take.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow that contains first <a href="take.html#kotlinx.coroutines.flow$take(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.take.T)), kotlin.Int)/count">count</a> elements.
+When <a href="take.html#kotlinx.coroutines.flow$take(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.take.T)), kotlin.Int)/count">count</a> elements are consumed, the original flow is cancelled.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="take-while.html">takeWhile</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="take-while.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">takeWhile</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$takeWhile(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.takeWhile.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.takeWhile.T, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="take-while.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="take-while.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow that contains first elements satisfying the given <a href="take-while.html#kotlinx.coroutines.flow$takeWhile(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.takeWhile.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.takeWhile.T, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="to-collection.html">toCollection</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">C</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-collection/index.html"><span class="identifier">MutableCollection</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<a href="to-collection.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="to-collection.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">toCollection</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$toCollection(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.toCollection.T)), kotlinx.coroutines.flow.toCollection.C)/destination">destination</span><span class="symbol">:</span>&nbsp;<a href="to-collection.html#C"><span class="identifier">C</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="to-collection.html#C"><span class="identifier">C</span></a></code></div>
+
+        <p>Collects given flow into a <a href="to-collection.html#kotlinx.coroutines.flow$toCollection(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.toCollection.T)), kotlinx.coroutines.flow.toCollection.C)/destination">destination</a></p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="to-list.html">toList</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="to-list.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">toList</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$toList(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.toList.T)), kotlin.collections.MutableList((kotlinx.coroutines.flow.toList.T)))/destination">destination</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html"><span class="identifier">MutableList</span></a><span class="symbol">&lt;</span><a href="to-list.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span>&nbsp;<span class="symbol">=</span>&nbsp;ArrayList()<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="to-list.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Collects given flow into a <a href="to-list.html#kotlinx.coroutines.flow$toList(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.toList.T)), kotlin.collections.MutableList((kotlinx.coroutines.flow.toList.T)))/destination">destination</a></p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="to-set.html">toSet</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="to-set.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">toSet</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$toSet(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.toSet.T)), kotlin.collections.MutableSet((kotlinx.coroutines.flow.toSet.T)))/destination">destination</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-set/index.html"><span class="identifier">MutableSet</span></a><span class="symbol">&lt;</span><a href="to-set.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span>&nbsp;<span class="symbol">=</span>&nbsp;LinkedHashSet()<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html"><span class="identifier">Set</span></a><span class="symbol">&lt;</span><a href="to-set.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Collects given flow into a <a href="to-set.html#kotlinx.coroutines.flow$toSet(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.toSet.T)), kotlin.collections.MutableSet((kotlinx.coroutines.flow.toSet.T)))/destination">destination</a></p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="transform.html">transform</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="transform.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">transform</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$transform(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.transform.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.transform.R)), kotlinx.coroutines.flow.transform.T, kotlin.Unit)))/transformer">transformer</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<a href="transform.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="transform.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="transform.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Applies <a href="transform.html#kotlinx.coroutines.flow$transform(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.transform.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.transform.R)), kotlinx.coroutines.flow.transform.T, kotlin.Unit)))/transformer">transformer</a> function to each value of the given flow.
+<a href="transform.html#kotlinx.coroutines.flow$transform(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.transform.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.transform.R)), kotlinx.coroutines.flow.transform.T, kotlin.Unit)))/transformer">transformer</a> is a generic function that may transform emitted element, skip it or emit it multiple times.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

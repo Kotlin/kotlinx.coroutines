@@ -10,4 +10,7 @@ $dokka.location:kotlinx.coroutines.reactive$awaitSingle(org.reactivestreams.Publ
 $dokka.location:kotlinx.coroutines.reactive$consumeEach(org.reactivestreams.Publisher((kotlinx.coroutines.reactive.consumeEach.T)), kotlin.Function1((kotlinx.coroutines.reactive.consumeEach.T, kotlin.Unit)))kotlinx.coroutines.reactive/org.reactivestreams.-publisher/consume-each.html
 $dokka.location:kotlinx.coroutines.reactive$openSubscription(org.reactivestreams.Publisher((kotlinx.coroutines.reactive.openSubscription.T)), kotlin.Int)kotlinx.coroutines.reactive/org.reactivestreams.-publisher/open-subscription.html
 $dokka.location:kotlinx.coroutines.reactive$publish(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.reactive.publish.T)), kotlin.Unit)))kotlinx.coroutines.reactive/kotlinx.coroutines.-coroutine-scope/publish.html
+$dokka.location:kotlinx.coroutines.reactive.flow$asFlow(org.reactivestreams.Publisher((kotlinx.coroutines.reactive.flow.asFlow.T)), kotlin.Int)kotlinx.coroutines.reactive/org.reactivestreams.-publisher/as-flow.html
+$dokka.location:kotlinx.coroutines.reactive.flow$asPublisher(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.reactive.flow.asPublisher.T)))kotlinx.coroutines.reactive.flow/kotlinx.coroutines.flow.-flow/as-publisher.html
 kotlinx.coroutines.reactive
+kotlinx.coroutines.reactive.flow

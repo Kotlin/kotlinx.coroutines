@@ -15,8 +15,20 @@ $dokka.location:kotlinx.coroutines$ensurePresent(java.lang.ThreadLocal((kotlin.A
 $dokka.location:kotlinx.coroutines$isActive#kotlin.coroutines.CoroutineContextkotlinx.coroutines/kotlin.coroutines.-coroutine-context/is-active.html
 $dokka.location:kotlinx.coroutines$isPresent(java.lang.ThreadLocal((kotlin.Any)))kotlinx.coroutines/java.lang.-thread-local/is-present.html
 $dokka.location:kotlinx.coroutines$joinAll(kotlin.collections.Collection((kotlinx.coroutines.Job)))kotlinx.coroutines/kotlin.collections.-collection/join-all.html
+$dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.Array((kotlinx.coroutines.flow.asFlow.T)))kotlinx.coroutines.flow/kotlin.-array/as-flow.html
+$dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.Function0((kotlinx.coroutines.flow.asFlow.T)))kotlinx.coroutines.flow/kotlin.-function0/as-flow.html
+$dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.IntArray)kotlinx.coroutines.flow/kotlin.-int-array/as-flow.html
+$dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.LongArray)kotlinx.coroutines.flow/kotlin.-long-array/as-flow.html
+$dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.SuspendFunction0((kotlinx.coroutines.flow.asFlow.T)))kotlinx.coroutines.flow/kotlin.-suspend-function0/as-flow.html
+$dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.collections.Iterable((kotlinx.coroutines.flow.asFlow.T)))kotlinx.coroutines.flow/kotlin.collections.-iterable/as-flow.html
+$dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.collections.Iterator((kotlinx.coroutines.flow.asFlow.T)))kotlinx.coroutines.flow/kotlin.collections.-iterator/as-flow.html
+$dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.ranges.IntRange)kotlinx.coroutines.flow/kotlin.ranges.-int-range/as-flow.html
+$dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.ranges.LongRange)kotlinx.coroutines.flow/kotlin.ranges.-long-range/as-flow.html
+$dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.sequences.Sequence((kotlinx.coroutines.flow.asFlow.T)))kotlinx.coroutines.flow/kotlin.sequences.-sequence/as-flow.html
+$dokka.location:kotlinx.coroutines.flow$merge(kotlin.collections.Iterable((kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.merge.T)))), kotlin.Int, kotlin.Int)kotlinx.coroutines.flow/kotlin.collections.-iterable/merge.html
 kotlinx.coroutines
 kotlinx.coroutines.channels
+kotlinx.coroutines.flow
 kotlinx.coroutines.selects
 kotlinx.coroutines.sync
 kotlinx.coroutines.test

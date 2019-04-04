@@ -247,6 +247,20 @@ It throws exception if the channel <a href="is-closed-for-send.html">isClosedFor
 <tr>
 <td>
 
+        <p><a href="../../kotlinx.coroutines.flow/as-flow.html">asFlow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.flow/as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asFlow</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.flow/-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.flow/as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Represents the given broadcast channel as a hot flow.
+Every flow collector will trigger a new broadcast channel subscription.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../consume.html">consume</a></p>
 
       </td>
