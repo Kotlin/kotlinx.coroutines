@@ -4,6 +4,8 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.flow.Flow
+
 /**
  * Marks declarations that are still **experimental** in coroutines API, which means that the design of the
  * corresponding declarations has open issues which may (or may not) lead to their changes in the future.
@@ -14,6 +16,20 @@ package kotlinx.coroutines
 @Retention(value = AnnotationRetention.BINARY)
 @Experimental(level = Experimental.Level.WARNING)
 public annotation class ExperimentalCoroutinesApi
+
+/**
+ * Marks all [Flow] declarations as a feature preview to indicate that [Flow] is still experimental and has a 'preview' status.
+ *
+ * Flow preview has **no** backward compatibility guarantees, including both binary and source compatibility.
+ * Its API and semantics can and will be changed in next releases.
+ *
+ * Feature preview can be used to evaluate its real-world strengths and weaknesses, gather and provide feedback.
+ * According to the feedback, [Flow] will be refined on its road to stabilization and promotion to stable API.
+ */
+@MustBeDocumented
+@Retention(value = AnnotationRetention.BINARY)
+@Experimental(level = Experimental.Level.WARNING)
+public annotation class FlowPreview
 
 /**
  * Marks declarations that are **obsolete** in coroutines API, which means that the design of the corresponding

@@ -12,9 +12,8 @@ internal object MainDispatcherLoader {
     private fun loadMainDispatcher(): MainCoroutineDispatcher {
         return try {
             val factories = MainDispatcherFactory::class.java.let { clz ->
-                ServiceLoader.load(clz, clz.classLoader).toList()
+                FastServiceLoader.load(clz, clz.classLoader)
             }
-
             factories.maxBy { it.loadPriority }?.tryCreateDispatcher(factories)
                 ?: MissingMainCoroutineDispatcher(null)
         } catch (e: Throwable) {
@@ -72,7 +71,7 @@ private class MissingMainCoroutineDispatcher(
         if  (cause == null) {
             throw IllegalStateException(
                 "Module with the Main dispatcher is missing. " +
-                        "Add dependency providing the Main dispatcher, e.g. 'kotlinx-coroutines-android'"
+                    "Add dependency providing the Main dispatcher, e.g. 'kotlinx-coroutines-android'"
             )
         } else {
             val message = "Module with the Main dispatcher had failed to initialize" + (errorHint?.let { ". $it" } ?: "")
@@ -92,6 +91,6 @@ public object MissingMainCoroutineDispatcherFactory : MainDispatcherFactory {
         get() = -1
 
     override fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher {
-       return MissingMainCoroutineDispatcher(null)
+        return MissingMainCoroutineDispatcher(null)
     }
 }

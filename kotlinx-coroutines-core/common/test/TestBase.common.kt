@@ -4,8 +4,10 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlinx.coroutines.internal.*
+import kotlin.test.*
 
 public expect open class TestBase constructor() {
     public val isStressTest: Boolean
@@ -24,6 +26,42 @@ public expect open class TestBase constructor() {
     )
 }
 
+public suspend inline fun hang(onCancellation: () -> Unit) {
+    try {
+        suspendCancellableCoroutine<Unit> { }
+    } finally {
+        onCancellation()
+    }
+}
+
+public inline fun <reified T : Throwable> assertFailsWith(block: () -> Unit) {
+    try {
+        block()
+        error("Should not be reached")
+    } catch (e: Throwable) {
+        assertTrue(e is T)
+    }
+}
+
+public suspend inline fun <reified T : Throwable> assertFailsWith(flow: Flow<*>) {
+    var e: Throwable? = null
+    var completed = false
+    flow.launchIn(CoroutineScope(Dispatchers.Unconfined)) {
+        onEach {}
+        catch<Throwable> {
+            e = it
+        }
+        finally {
+            completed = true
+            assertTrue(it is T)
+        }
+    }.join()
+    assertTrue(e is T)
+    assertTrue(completed)
+}
+
+public suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }
+
 public class TestException(message: String? = null) : Throwable(message), NonRecoverableThrowable
 public class TestException1(message: String? = null) : Throwable(message), NonRecoverableThrowable
 public class TestException2(message: String? = null) : Throwable(message), NonRecoverableThrowable
@@ -41,3 +79,4 @@ public fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
         }
     }
 }
+

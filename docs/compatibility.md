@@ -9,6 +9,7 @@
 * [Compatibility](#compatibility)
 * [Public API types](#public-api-types)
   * [Experimental API](#experimental-api)
+  * [Flow preview API](#flow-preview-api)
   * [Obsolete API](#obsolete-api)
   * [Internal API](#internal-api)
   * [Stable API](#stable-api)
@@ -41,6 +42,18 @@ When using experimental API may be dangerous:
 It may lead to undesired consequences when end users of your library update their `kotlinx.coroutines` version where experimental API
 has slightly different semantics.
 * You want to build core infrastructure of the application around experimental API. 
+
+### Flow preview API
+All [Flow]-related API is marked with [@FlowPreview][FlowPreview] annotation.
+This annotation indicates that Flow API is in preview status.
+We provide no compatibility guarantees between releases for preview features, including binary, source and semantics compatibility.
+
+When using preview API may be dangerous:
+* You are writing a library/framework and want to use [Flow] API in a stable release or in a stable API.
+* You want to use [Flow] in the core infrastructure of your application.
+* You want to use [Flow] as "write-and-forget" solution and cannot afford additional maintenance cost when 
+  it comes to `kotlinx.coroutines` updates.
+
 
 ### Obsolete API
 Obsolete API is marked with [@ObsoleteCoroutinesApi][ObsoleteCoroutinesApi] annotation.
@@ -108,8 +121,11 @@ For the Maven project, a warning can be disabled by passing a compiler flag in y
 
 
 <!--- MODULE kotlinx-coroutines-core -->
+<!--- INDEX kotlinx.coroutines.flow -->
+[Flow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html
 <!--- INDEX kotlinx.coroutines -->
 [ExperimentalCoroutinesApi]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html
+[FlowPreview]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-flow-preview/index.html
 [ObsoleteCoroutinesApi]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-obsolete-coroutines-api/index.html
 [InternalCoroutinesApi]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-internal-coroutines-api/index.html
 <!--- END -->

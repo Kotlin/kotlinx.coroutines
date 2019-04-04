@@ -9,4 +9,5 @@ ext.experimentalAnnotations = [
         "kotlin.ExperimentalMultiplatform",
         "kotlinx.coroutines.ExperimentalCoroutinesApi",
         "kotlinx.coroutines.ObsoleteCoroutinesApi",
-        "kotlinx.coroutines.InternalCoroutinesApi"]
+        "kotlinx.coroutines.InternalCoroutinesApi",
+        "kotlinx.coroutines.FlowPreview"]
