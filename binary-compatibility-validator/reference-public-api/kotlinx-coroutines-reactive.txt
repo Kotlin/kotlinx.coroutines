@@ -23,3 +23,13 @@ public final class kotlinx/coroutines/reactive/PublishKt {
 	public static synthetic fun publish$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/reactivestreams/Publisher;
 }
 
+public final class kotlinx/coroutines/reactive/flow/FlowAsPublisherKt {
+	public static final fun from (Lkotlinx/coroutines/flow/Flow;)Lorg/reactivestreams/Publisher;
+}
+
+public final class kotlinx/coroutines/reactive/flow/PublisherAsFlowKt {
+	public static final fun from (Lorg/reactivestreams/Publisher;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun from (Lorg/reactivestreams/Publisher;I)Lkotlinx/coroutines/flow/Flow;
+	public static synthetic fun from$default (Lorg/reactivestreams/Publisher;IILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
+}
+
