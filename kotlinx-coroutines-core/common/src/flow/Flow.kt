@@ -23,25 +23,7 @@ import kotlinx.coroutines.*
  *    println("Flow has thrown an exception: $e")
  * }
  * ```
- * Additionally, the library provides a rich set of terminal operators in `kotlinx.coroutines.flow.terminal`, such as
- * [single], [reduce] and others.
- *
- * Flow also can be collected asynchronously using launch-like coroutine:
- * ```
- * flow.launchIn(uiScope) {
- *   onEach { value ->
- *     println("Received $value")
- *   }
- *
- *   catch<MyException> {
- *     println("Flow has failed")
- *   }
- *
- *   finally {
- *     println("Doing cleanup)
- *   }
- * }
- * ```
+ * Additionally, the library provides a rich set of terminal operators such as [single], [reduce] and others.
  *
  * Flow does not carry information whether it is a cold stream (that can be collected multiple times and
  * triggers its evaluation every time collection is executed) or hot one, but conventionally flow represents a cold stream.
