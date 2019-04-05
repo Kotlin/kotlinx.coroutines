@@ -180,43 +180,51 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     private inline fun incCountersWithCondition(
         condition: (senders: Long, receivers: Long, bufferEnd: Long) -> Boolean,
         lowestModification: (curLowest: Long) -> Boolean,
-        action: (success: Boolean, senders: Long, receivers: Long, closed: Boolean) -> Unit
+        action: (success: Boolean, senders: Long, receivers: Long, bufferEnd: Long, closed: Boolean) -> Unit
     ) {
         acquireReadLock()
         while (true) {
-            val l = this.lowest.value
             val hSenders = this.hSenders
             val hReceivers = this.hReceivers
             val hBufferEnd = this.hBufferEnd
+            val l = this.lowest.value
             countCounters(l, hSenders, hReceivers, hBufferEnd) { senders, receivers, bufferEnd, closed ->
                 if (!condition(senders, receivers, bufferEnd)) {
                     releaseReadLock()
-                    action(false, -1, -1, closed)
+                    action(false, -1, -1, -1, closed)
                     return
                 }
                 if (lowestModification(l)) {
                     releaseReadLock()
                     fixOverflow(l, hSenders, hReceivers, hBufferEnd)
-                    action(true, senders, receivers, closed)
+                    action(true, senders, receivers, bufferEnd, closed)
                     return
                 }
             }
         }
     }
 
-    private inline fun tryIncSenders(block: (success: Boolean, senders: Long, receivers: Long, closed: Boolean) -> Unit) {
+    private inline fun tryIncSenders(block: (success: Boolean, senders: Long, receivers: Long, bufferEnd: Long, closed: Boolean) -> Unit) {
         incCountersWithCondition(
             { senders, receivers, bufferEnd -> unlimited || senders < receivers || senders < bufferEnd},
             { curLowest -> this.lowest.compareAndSet(curLowest, curLowest + SEND_INC) },
-            { success, senders, receivers, closed -> block(success, senders + 1, receivers, closed) }
+            { success, senders, receivers, bufferEnd, closed -> block(success, senders + 1, receivers, bufferEnd, closed) }
         )
     }
 
-    private inline fun tryIncReceivers(block: (success: Boolean, senders: Long, receivers: Long, closed: Boolean) -> Unit) {
+    private inline fun tryIncReceivers(block: (success: Boolean, senders: Long, receivers: Long, bufferEnd: Long, closed: Boolean) -> Unit) {
         incCountersWithCondition(
             { senders, receivers, bufferEnd -> receivers < senders },
             { curLowest -> this.lowest.compareAndSet(curLowest, curLowest + RECEIVE_INC) },
-            { success, senders, receivers, closed -> block(success, senders, receivers + 1, closed) }
+            { success, senders, receivers, bufferEnd, closed -> block(success, senders, receivers + 1, bufferEnd, closed) }
+        )
+    }
+
+    private inline fun tryIncReceiversAndBufferEnd(block: (success: Boolean, senders: Long, receivers: Long, bufferEnd: Long, closed: Boolean) -> Unit) {
+        incCountersWithCondition(
+            { senders, receivers, bufferEnd -> receivers < senders },
+            { curLowest -> this.lowest.compareAndSet(curLowest, curLowest + RECEIVE_INC + BUFFER_END_INC) },
+            { success, senders, receivers, bufferEnd, closed -> block(success, senders, receivers + 1, bufferEnd + 1, closed) }
         )
     }
 
@@ -360,7 +368,7 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         while (true) {
             val head = this.head.value
             val tail = this.tail.value
-            tryIncSenders { success, senders, receivers, closed ->
+            tryIncSenders { success, senders, receivers, bufferEnd, closed ->
                 if (!success) {
                     if (closed && closeCause.value != null) throw sendException
                     return false
@@ -370,10 +378,10 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                         onReceiveDequeued()
                         return true
                     }
-                } else {
+                } else if (unlimited || senders <= bufferEnd) {
                     if (!storeWaiter(CONT_BUFFERED, element, tail, senders)) throw sendException
                     return true
-                }
+                } else error("WTF???")
             }
         }
     }
@@ -391,20 +399,67 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     }
 
     private fun pollInternal(): Any? {
+        val startHead = this.head.value
+        var startBufferEnd = -1L
+        tryIncReceiversAndBufferEnd { success, senders, receivers, bufferEnd, closed ->
+            if (!success) return if (closed) CLOSED else FAILED
+            val resumeResult = resumeWaiter(Unit, startHead, receivers, closed = closed)
+            if (resumeResult != FAILED) {
+                if (senders >= bufferEnd) resumeNextWaitingSend(startHead, bufferEnd)
+                return resumeResult
+            } else {
+                startBufferEnd = bufferEnd
+            }
+        }
+
         while (true) {
             val head = this.head.value
-            tryIncReceivers { success, senders, receivers, closed ->
-                if (!success) {
-                    if (closed) return CLOSED
-                    return FAILED
-                }
+            tryIncReceivers { success, senders, receivers, bufferEnd, closed ->
+                if (!success) return if (closed) CLOSED else FAILED
                 val resumeResult = resumeWaiter(Unit, head, receivers, closed = closed)
                 if (resumeResult != FAILED) {
-                    resumeNextWaitingSend()
+                    if (senders >= startBufferEnd) resumeNextWaitingSend(startHead, bufferEnd)
                     return resumeResult
                 }
             }
         }
+    }
+
+    private fun resumeNextWaitingSend(startHead: Segment, startBufferEnd: Long) {
+        if (unlimited || rendezvous) return
+        val segment = findOrCreateSegment(startBufferEnd / SEGMENT_SIZE, startHead) ?: return
+        val i = (startBufferEnd % SEGMENT_SIZE).toInt()
+        if (makeBuffered(segment, i)) return
+        resumeNextWaitingSend()
+    }
+
+    // return true if we should finish
+    private fun makeBuffered(segment: Segment, index: Int): Boolean {
+        val waiter = segment.readContBlocking(index, CONT_RESUMING)
+        if (segment.getElement(index) === RECEIVER_ELEMENT) return true
+        if (waiter === CONT_DONE || waiter === CONT_CLEANED || waiter === CONT_BUFFERED) return true
+        when (waiter) {
+            is CancellableContinuation<*> -> {
+                waiter as CancellableContinuation<Unit>
+                val token = waiter.tryResume(Unit)
+                if (token !== null) {
+                    waiter.completeResume(token)
+                    segment.setCont(index, CONT_BUFFERED)
+                    return true
+                } else {
+                    segment.setCont(index, CONT_CLEANED)
+                }
+            }
+            is SelectInstance<*> -> {
+                if (waiter.trySelect(this@BufferedChannel, Unit)) {
+                    segment.setCont(index, CONT_BUFFERED)
+                    return true
+                } else {
+                    segment.setCont(index, CONT_CLEANED)
+                }
+            }
+        }
+        return false
     }
 
     private fun resumeNextWaitingSend() {
@@ -415,30 +470,7 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                 if (senders < bufferEnd) return
                 segment = findOrCreateSegment(bufferEnd / SEGMENT_SIZE, segment) ?: return
                 val i = (bufferEnd % SEGMENT_SIZE).toInt()
-                val waiter = segment.readContBlocking(i, CONT_RESUMING)
-                if (segment.getElement(i) === RECEIVER_ELEMENT) return
-                if (waiter === CONT_DONE || waiter === CONT_CLEANED) return
-                when (waiter) {
-                    is CancellableContinuation<*> -> {
-                        waiter as CancellableContinuation<Unit>
-                        val token = waiter.tryResume(Unit)
-                        if (token !== null) {
-                            waiter.completeResume(token)
-                            segment.setCont(i, CONT_BUFFERED)
-                            return
-                        } else {
-                            segment.setCont(i, CONT_CLEANED)
-                        }
-                    }
-                    is SelectInstance<*> -> {
-                        if (waiter.trySelect(this@BufferedChannel, Unit)) {
-                            segment.setCont(i, CONT_BUFFERED)
-                            return
-                        } else {
-                            segment.setCont(i, CONT_CLEANED)
-                        }
-                    }
-                }
+                if (makeBuffered(segment, i)) return
             }
         }
     }
@@ -489,25 +521,60 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     }
 
 
-    // TODO не нужно инкрементить буфер второй раз, если receive не удался
-    // TODO close() сейчас нелинеаризуем
+    // TODO cancel (а может и close) сейчас нелинеаризуем
     private suspend fun receiveInternal(): Any? {
-        resumeNextWaitingSend()
-        try_again@ while (true) {
+        val startHead = this.head.value
+        val startTail = this.tail.value
+        var startBufferEnd = -1L
+        incReceiversAndBufferEnd { senders, receivers, bufferEnd, closed ->
+            if (receivers <= senders) {
+                val resumeResult = resumeWaiter(Unit, startHead, receivers, closed = closed)
+                if (resumeResult != FAILED) {
+                    if (senders >= bufferEnd) resumeNextWaitingSend(startHead, bufferEnd)
+                    return resumeResult
+                } else {
+                    startBufferEnd = bufferEnd
+                }
+            } else {
+                if (closed) return CLOSED
+                return storeCurContinuationAsWaiter(RECEIVER_ELEMENT, startTail!!, receivers)
+            }
+        }
+
+        while (true) {
             val head = this.head.value
             val tail = this.tail.value
             incReceivers { senders, receivers, bufferEnd, closed ->
                 if (receivers <= senders) {
                     val resumeResult = resumeWaiter(Unit, head, receivers, closed = closed)
                     if (resumeResult != FAILED) {
+                        if (senders >= startBufferEnd) resumeNextWaitingSend(startHead, startBufferEnd)
                         return resumeResult
                     }
                 } else {
                     if (closed) return CLOSED
+                    if (senders >= startBufferEnd) resumeNextWaitingSend(startHead, startBufferEnd)
                     return storeCurContinuationAsWaiter(RECEIVER_ELEMENT, tail!!, receivers)
                 }
             }
         }
+//
+//        resumeNextWaitingSend()
+//        try_again@ while (true) {
+//            val head = this.head.value
+//            val tail = this.tail.value
+//            incReceivers { senders, receivers, bufferEnd, closed ->
+//                if (receivers <= senders) {
+//                    val resumeResult = resumeWaiter(Unit, head, receivers, closed = closed)
+//                    if (resumeResult != FAILED) {
+//                        return resumeResult
+//                    }
+//                } else {
+//                    if (closed) return CLOSED
+//                    return storeCurContinuationAsWaiter(RECEIVER_ELEMENT, tail!!, receivers)
+//                }
+//            }
+//        }
     }
 
     private fun resumeWaiter(result: Any?, curHead: Segment, counter: Long,
@@ -649,14 +716,43 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     }
 
     internal fun registerSelectForReceive(select: SelectInstance<*>) {
-        resumeNextWaitingSend()
-        try_again@ while (true) {
+        val startHead = this.head.value
+        val startTail = this.tail.value
+        var startBufferEnd = -1L
+        incReceiversAndBufferEnd { senders, receivers, bufferEnd, closed ->
+            if (receivers <= senders) {
+                val resumeResult = resumeWaiter(Unit, startHead, receivers, closed = closed)
+                if (resumeResult != FAILED) {
+                    if (senders >= bufferEnd) resumeNextWaitingSend(startHead, bufferEnd)
+                    select.selectInRegPhase(resumeResult)
+                    return
+                } else {
+                    startBufferEnd = bufferEnd
+                }
+            } else {
+                if (closed) {
+                    select.selectInRegPhase(CLOSED)
+                    return
+                }
+                val successful = storeWaiter(select, RECEIVER_ELEMENT, startTail, receivers)
+                if (successful) {
+                    onReceiveEnqueued()
+                    return
+                } else { // closed
+                    select.selectInRegPhase(CLOSED)
+                    return
+                }
+            }
+        }
+
+        while (true) {
             val head = this.head.value
             val tail = this.tail.value
             incReceivers { senders, receivers, bufferEnd, closed ->
                 if (receivers <= senders) {
                     val resumeResult = resumeWaiter(Unit, head, receivers, closed = closed)
                     if (resumeResult != FAILED) {
+                        if (senders >= startBufferEnd) resumeNextWaitingSend(startHead, startBufferEnd)
                         select.selectInRegPhase(resumeResult)
                         return
                     }
@@ -667,6 +763,7 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                     }
                     val successful = storeWaiter(select, RECEIVER_ELEMENT, tail, receivers)
                     if (successful) {
+                        if (senders >= startBufferEnd) resumeNextWaitingSend(startHead, startBufferEnd)
                         onReceiveEnqueued()
                         return
                     } else { // closed
@@ -708,7 +805,7 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                     true
                 },
                 { curLowest -> this.lowest.compareAndSet(curLowest, curLowest + RECEIVE_INC) },
-                {_, _, _, _ -> }
+                {_, _, _, _, _ -> }
             )
         }
     }
