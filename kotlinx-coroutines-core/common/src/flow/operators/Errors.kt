@@ -61,7 +61,7 @@ public fun <T> Flow<T>.retry(
                     try {
                         emit(value)
                     } catch (e: Throwable) {
-                        fromDownstream = predicate(e)
+                        fromDownstream = true
                         throw e
                     }
                 }
