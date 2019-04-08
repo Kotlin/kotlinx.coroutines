@@ -70,7 +70,11 @@ Synchronization primitives (mutex).
 
 # Package kotlinx.coroutines.channels
 
-Channels -- non-blocking primitives for communicating a stream of elements between coroutines.
+Channels &mdash; non-blocking primitives for communicating a stream of elements between coroutines.
+
+# Package kotlinx.coroutines.flow
+
+Flow &mdash; asynchronous cold stream of elements.
 
 # Package kotlinx.coroutines.selects
 
