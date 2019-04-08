@@ -7,7 +7,6 @@ package kotlinx.coroutines.sync
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
@@ -188,7 +187,13 @@ internal class MutexImpl(locked: Boolean) : Mutex {
     }
 
     private suspend fun lockSuspend(owner: Any?) = suspendAtomicCancellableCoroutine<Unit> sc@ { cont ->
-        val waiter = LockCont(owner, cont)
+        lockImpl(cont, owner)
+    }
+
+    // waiter is either `SelectInstance` or `CancellableContinuation`
+    private fun lockImpl(waiter: Any, owner: Any?) {
+        val isWaiterSelect = waiter is SelectInstance<*>
+        val waiterNode = if (isWaiterSelect) LockSelect(owner, this, waiter as SelectInstance<*>) else LockCont(owner, waiter as CancellableContinuation<Unit>)
         _state.loop { state ->
             when (state) {
                 is Empty -> {
@@ -198,18 +203,29 @@ internal class MutexImpl(locked: Boolean) : Mutex {
                         // try lock
                         val update = if (owner == null) EMPTY_LOCKED else Empty(owner)
                         if (_state.compareAndSet(state, update)) { // locked
-                            cont.resume(Unit)
-                            return@sc
+                            if (isWaiterSelect) {
+                                waiter as SelectInstance<*>
+                                waiter.selectInRegPhase(Unit)
+                            } else {
+                                waiter as CancellableContinuation<Unit>
+                                waiter.resume(Unit)
+                            }
+                            return
                         }
                     }
                 }
                 is LockedQueue -> {
                     val curOwner = state.owner
                     check(curOwner !== owner) { "Already locked by $owner" }
-                    if (state.addLastIf(waiter, { _state.value === state })) {
-                        // added to waiter list!
-                        cont.removeOnCancellation(waiter)
-                        return@sc
+                    if (state.addLastIf(waiterNode, { _state.value === state })) {
+                        if (isWaiterSelect) {
+                            waiter as SelectInstance<*>
+                            waiter.invokeOnCompletion { waiterNode.remove() }
+                        } else {
+                            waiter as CancellableContinuation<Unit>
+                            waiter.removeOnCancellation(waiterNode)
+                        }
+                        return
                     }
                 }
                 is OpDescriptor -> state.perform(this) // help
@@ -219,34 +235,9 @@ internal class MutexImpl(locked: Boolean) : Mutex {
     }
 
     override val onLock: SelectClause2<Any?, Mutex>
-        get() = TODO()
+        get() = SelectClause2Impl(this@MutexImpl, ::onLockRegFunction, ::onLockProcessResultFunction)
 
-    private class TryLockDesc(
-        @JvmField val mutex: MutexImpl,
-        @JvmField val owner: Any?
-    ) : AtomicDesc() {
-        // This is Harris's RDCSS (Restricted Double-Compare Single Swap) operation
-        private inner class PrepareOp(private val op: AtomicOp<*>) : OpDescriptor() {
-            override fun perform(affected: Any?): Any? {
-                val update: Any = if (op.isDecided) EMPTY_UNLOCKED else op // restore if was already decided
-                (affected as MutexImpl)._state.compareAndSet(this, update)
-                return null // ok
-            }
-        }
-
-        override fun prepare(op: AtomicOp<*>): Any? {
-            val prepare = PrepareOp(op)
-            if (!mutex._state.compareAndSet(EMPTY_UNLOCKED, prepare)) return LOCK_FAIL
-            return prepare.perform(mutex)
-        }
-
-        override fun complete(op: AtomicOp<*>, failure: Any?) {
-            val update = if (failure != null) EMPTY_UNLOCKED else {
-                if (owner == null) EMPTY_LOCKED else Empty(owner)
-            }
-            mutex._state.compareAndSet(op, update)
-        }
-    }
+    internal fun onLockSelectRegistration(select: SelectInstance<*>, owner: Any?) = lockImpl(select, owner)
 
     public override fun holdsLock(owner: Any) =
             _state.value.let { state ->
@@ -323,6 +314,16 @@ internal class MutexImpl(locked: Boolean) : Mutex {
         override fun toString(): String = "LockCont[$owner, $cont]"
     }
 
+    private class LockSelect(
+        owner: Any?,
+        @JvmField val mutex: Mutex,
+        @JvmField val select: SelectInstance<*>
+    ) : LockWaiter(owner) {
+        override fun tryResumeLockWaiter(): Any? = if (select.trySelect(mutex, Unit)) SELECT_SUCCESS else null
+        override fun completeResumeLockWaiter(token: Any) {}
+        override fun toString(): String = "LockSelect[$owner, $mutex, $select]"
+    }
+
     // atomic unlock operation that checks that waiters queue is empty
     private class UnlockOp(
         @JvmField val queue: LockedQueue
@@ -346,4 +347,10 @@ internal class MutexImpl(locked: Boolean) : Mutex {
             return if (affected._state.value === queue) UNLOCK_FAIL else null
         }
     }
+}
+
+private fun onLockProcessResultFunction(mutex: Any, result: Any?) = mutex
+private fun onLockRegFunction(mutex: Any, select: SelectInstance<*>, owner: Any?) {
+    mutex as MutexImpl
+    mutex.onLockSelectRegistration(select, owner)
 }

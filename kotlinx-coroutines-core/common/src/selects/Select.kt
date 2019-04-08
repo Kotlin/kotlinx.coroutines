@@ -8,10 +8,12 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.intrinsics.startCoroutineUnintercepted
 import kotlinx.coroutines.sync.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.math.*
+import kotlin.random.Random
 
 /**
  * Waits for the result of multiple suspending functions simultaneously, which are specified using _clauses_
@@ -128,16 +130,31 @@ public interface SelectBuilder<in R> {
  * Clause for [select] expression without additional parameters that does not select any value.
  */
 public interface SelectClause0 : SelectClause
+internal class SelectClause0Impl(
+        override val objForSelect: Any,
+        override val regFunc: RegistrationFunction,
+        override val processResFunc: ProcessResultFunction
+) : SelectClause0
 
 /**
  * Clause for [select] expression without additional parameters that selects value of type [Q].
  */
 public interface SelectClause1<out Q> : SelectClause
+internal class SelectClause1Impl<Q>(
+        override val objForSelect: Any,
+        override val regFunc: RegistrationFunction,
+        override val processResFunc: ProcessResultFunction
+) : SelectClause1<Q>
 
 /**
  * Clause for [select] expression with additional parameter of type [P] that selects value of type [Q].
  */
 public interface SelectClause2<in P, out Q> : SelectClause
+internal class SelectClause2Impl<P, Q>(
+        override val objForSelect: Any,
+        override val regFunc: RegistrationFunction,
+        override val processResFunc: ProcessResultFunction
+) : SelectClause2<P, Q>
 
 @InternalCoroutinesApi
 public interface SelectClause {
@@ -181,7 +198,7 @@ public interface SelectInstance<in R> {
      * This function should be called if this `select` is registered as a waiter. A function which removes the waiter
      * after this `select` is processed should be provided as a parameter.
      */
-    fun onRegister(onCompleteAction: () -> Unit)
+    fun invokeOnCompletion(onCompleteAction: () -> Unit)
 
     /**
      * This function should be called during this `select` registration phase on a successful rendezvous.
@@ -203,6 +220,8 @@ internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
     override var waitingFor: SelectInstance<*>? = null
     override var unbiased: Boolean = false
 
+    // TODO bridge with old SelectBuilderImpl (getResult + handleException + constructor) + test
+
     // 0: objForSelect
     // 1: RegistrationFunction
     // 2: ProcessResultFunction
@@ -214,7 +233,7 @@ internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
     private var resultOrOnCompleteAction: Any? = null
     private val state = atomic<Any?>(STATE_REG)
 
-    override fun onRegister(onCompleteAction: () -> Unit) {
+    override fun invokeOnCompletion(onCompleteAction: () -> Unit) {
         resultOrOnCompleteAction = onCompleteAction
     }
 
@@ -263,6 +282,7 @@ internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
      */
     private fun shuffleAlternatives() {
         // TODO implement me
+        // Random.nextInt()
     }
 
     suspend fun selectAlternative(): Any? {
@@ -283,10 +303,6 @@ internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
         return suspendAtomicCancellableCoroutine { cont ->
             this.cont = cont
             this.state.value = STATE_WAITING
-            cont.invokeOnCancellation {
-                cleanState()
-                cleanNonSelectedAlternatives(-1)
-            }
         }
     }
 
@@ -334,6 +350,8 @@ internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
         try {
             var curState: Any? = this.state.value
             while (curState === STATE_REG) {
+                // TODO backoff + Thread.onSpinWait
+                // TODO AbstractQueuedSynchronizer?
                 if (from != null && shouldBreakDeadlock(from, from, from.id)) return false
                 curState = this.state.value
             }
