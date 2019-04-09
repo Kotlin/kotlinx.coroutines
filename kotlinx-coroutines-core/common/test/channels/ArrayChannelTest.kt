@@ -11,10 +11,12 @@ class ArrayChannelTest : TestBase() {
     @Test
     fun testSimple() = runTest {
         val q = Channel<Int>(1)
+        check(q.isEmpty)
         expect(1)
         val sender = launch {
             expect(4)
             q.send(1) // success -- buffered
+            check(!q.isEmpty)
             expect(5)
             q.send(2) // suspends (buffer full)
             expect(9)
@@ -23,6 +25,7 @@ class ArrayChannelTest : TestBase() {
         val receiver = launch {
             expect(6)
             check(q.receive() == 1) // does not suspend -- took from buffer
+            check(!q.isEmpty) // waiting sender's element moved to buffer
             expect(7)
             check(q.receive() == 2) // does not suspend (takes from sender)
             expect(8)
@@ -30,20 +33,21 @@ class ArrayChannelTest : TestBase() {
         expect(3)
         sender.join()
         receiver.join()
+        check(q.isEmpty)
         finish(10)
     }
 
     @Test
     fun testClosedBufferedReceiveOrNull() = runTest {
         val q = Channel<Int>(1)
-        check(!q.isClosedForSend && !q.isClosedForReceive)
+        check(q.isEmpty && !q.isClosedForSend && !q.isClosedForReceive)
         expect(1)
         launch {
             expect(5)
-            check(q.isClosedForSend && !q.isClosedForReceive)
+            check(!q.isEmpty && q.isClosedForSend && !q.isClosedForReceive)
             assertEquals(42, q.receiveOrNull())
             expect(6)
-            check(q.isClosedForSend && q.isClosedForReceive)
+            check(!q.isEmpty && q.isClosedForSend && q.isClosedForReceive)
             assertEquals(null, q.receiveOrNull())
             expect(7)
         }
@@ -52,9 +56,9 @@ class ArrayChannelTest : TestBase() {
         expect(3)
         q.close() // goes on
         expect(4)
-        check(q.isClosedForSend && !q.isClosedForReceive)
+        check(!q.isEmpty && q.isClosedForSend && !q.isClosedForReceive)
         yield()
-        check(q.isClosedForSend && q.isClosedForReceive)
+        check(!q.isEmpty && q.isClosedForSend && q.isClosedForReceive)
         finish(8)
     }
 

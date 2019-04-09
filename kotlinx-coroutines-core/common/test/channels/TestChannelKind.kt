@@ -54,7 +54,6 @@ private class ChannelViaBroadcast<E>(
     val sub = broadcast.openSubscription()
 
     override val isClosedForReceive: Boolean get() = sub.isClosedForReceive
-    @Suppress("DEPRECATION_ERROR")
     override val isEmpty: Boolean get() = sub.isEmpty
 
     override suspend fun receive(): E = sub.receive()
