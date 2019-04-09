@@ -27,7 +27,7 @@ import kotlinx.coroutines.*
  *
  * Flow does not carry information whether it is a cold stream (that can be collected multiple times and
  * triggers its evaluation every time collection is executed) or hot one, but conventionally flow represents a cold stream.
- * Transitions between hot and cold streams are support via channels and corresponding API: [flowViaChannel], [broadcastIn], [produceIn].
+ * Transitions between hot and cold streams are supported via channels and corresponding API: [flowViaChannel], [broadcastIn], [produceIn].
  *
  * Flow is a **pure** concept: it encapsulates its own execution context and never propagates it to the downstream, thus making
  * reasoning about execution context of particular transformations or terminal operations trivial.
