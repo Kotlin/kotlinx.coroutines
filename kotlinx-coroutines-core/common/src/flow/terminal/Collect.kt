@@ -18,12 +18,12 @@ import kotlin.jvm.*
  * ```
  * val flow = getMyEvents()
  * try {
- *   flow.collect { value ->
- *     println("Received $value")
- *   }
- *   println("My events are consumed successfully")
+ *     flow.collect { value ->
+ *         println("Received $value")
+ *     }
+ *     println("My events are consumed successfully")
  * } catch (e: Throwable) {
- *   println("Exception from the flow: $e")
+ *     println("Exception from the flow: $e")
  * }
  * ```
  */

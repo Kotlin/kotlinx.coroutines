@@ -864,7 +864,7 @@ public final class kotlinx/coroutines/flow/MigrationKt {
 }
 
 public final class kotlinx/coroutines/flow/internal/SafeCollector : kotlinx/coroutines/flow/FlowCollector {
-	public fun <init> (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/ContinuationInterceptor;)V
+	public fun <init> (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/CoroutineContext;)V
 	public fun emit (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 

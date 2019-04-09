@@ -11,17 +11,97 @@ import kotlin.coroutines.*
  * search for their favourite operators and/or patterns that are missing or renamed in Flow.
  */
 
-/** @suppress **/
-@Deprecated(message = "Use flowWith or flowOn instead", level = DeprecationLevel.ERROR)
-public fun <T> Flow<T>.subscribeOn(context: CoroutineContext): Flow<T> = error("Should not be called")
-
-/** @suppress **/
-@Deprecated(message = "Use flowWith or flowOn instead", level = DeprecationLevel.ERROR)
+/**
+ * `observeOn` has no direct match in [Flow] API because all terminal flow operators are suspending and
+ * thus use the context of the caller.
+ *
+ * For example, the following code:
+ * ```
+ * flowable
+ *     .observeOn(Schedulers.io())
+ *     .doOnEach { value -> println("Received $value") }
+ *     .subscribe()
+ * ```
+ *
+ *  has the following Flow equivalent:
+ * ```
+ * withContext(Dispatchers.IO) {
+ *     flow.collect { value -> println("Received $value") }
+ * }
+ *
+ * ```
+ * @suppress
+ */
+@Deprecated(message = "Collect flow in the desired context instead", level = DeprecationLevel.ERROR)
 public fun <T> Flow<T>.observeOn(context: CoroutineContext): Flow<T> = error("Should not be called")
 
-/** @suppress **/
-@Deprecated(message = "Use flowWith or flowOn instead", level = DeprecationLevel.ERROR)
+/**
+ * `publishOn` has no direct match in [Flow] API because all terminal flow operators are suspending and
+ * thus use the context of the caller.
+ *
+ * For example, the following code:
+ * ```
+ * flux
+ *     .publishOn(Schedulers.io())
+ *     .doOnEach { value -> println("Received $value") }
+ *     .subscribe()
+ * ```
+ *
+ *  has the following Flow equivalent:
+ * ```
+ * withContext(Dispatchers.IO) {
+ *     flow.collect { value -> println("Received $value") }
+ * }
+ *
+ * ```
+ * @suppress
+ */
+@Deprecated(message = "Collect flow in the desired context instead", level = DeprecationLevel.ERROR)
 public fun <T> Flow<T>.publishOn(context: CoroutineContext): Flow<T> = error("Should not be called")
+
+/**
+ * `subscribeOn` has no direct match in [Flow] API because [Flow] preserves its context and does not leak it.
+ *
+ * For example, the following code:
+ * ```
+ * flowable
+ *     .map { value -> println("Doing map in IO"); value }
+ *     .subscribeOn(Schedulers.io())
+ *     .observeOn(Schedulers.computation())
+ *     .doOnEach { value -> println("Processing $value in computation")
+ *     .subscribe()
+ * ```
+ * has the following Flow equivalents:
+ * ```
+ * withContext(Dispatchers.Default) {
+ *     flow
+ *        .map { value -> println("Doing map in IO"); value }
+ *        .flowOn(Dispatchers.IO) // Works upstream, doesn't change downstream
+ *        .collect { value ->
+ *             println("Processing $value in computation")
+ *        }
+ * }
+ * ```
+ * or
+ *
+ * ```
+ *  withContext(Dispatchers.Default) {
+ *     flow
+ *        .flowWith(Dispatchers.IO) { map { value -> println("Doing map in IO"); value } }
+ *        .collect { value ->
+ *             println("Processing $value in computation")
+ *        }
+ * }
+ * ```
+ *
+ * The difference is that [flowWith] encapsulates ("preserves") the context within its lambda
+ * while [flowOn] changes the context of all preceding operators.
+ * Opposed to subscribeOn, it it **possible** to use multiple `flowOn` operators in the one flow.
+ *
+ * @suppress
+ */
+@Deprecated(message = "Use flowWith or flowOn instead", level = DeprecationLevel.ERROR)
+public fun <T> Flow<T>.subscribeOn(context: CoroutineContext): Flow<T> = error("Should not be called")
 
 /** @suppress **/
 @Deprecated(message = "Use BroadcastChannel.asFlow()", level = DeprecationLevel.ERROR)
@@ -45,14 +125,40 @@ public fun PublishSubject(): Any = error("Should not be called")
 )
 public fun <T> Flow<T>.onErrorResume(fallback: Flow<T>): Flow<T> = error("Should not be called")
 
-
-/** @suppress **/
+/**
+ * Self-explanatory, the reason of deprecation is "context preservation" property (you can read more in [Flow] documentation)
+ * @suppress
+ **/
 @Suppress("UNUSED_PARAMETER", "UNUSED", "DeprecatedCallableAddReplaceWith")
 @Deprecated(message = "withContext in flow body is deprecated, use flowOn instead", level = DeprecationLevel.ERROR)
 public fun <T, R> FlowCollector<T>.withContext(context: CoroutineContext, block: suspend () -> R): Unit = error("Should not be called")
 
 
-/** @suppress **/
+/**
+ * `subscribe` is Rx-specific API that has no direct match in flows.
+ * One can use `launch` instead, for example the following:
+ * ```
+ * flowable
+ *     .observeOn(Schedulers.io())
+ *     .subscribe({ println("Received $it") }, { println("Exception $it happened") }, { println("Flowable is completed successfully") }
+ * ```
+ *
+ * has the following Flow equivalent:
+ * ```
+ * launch(Dispatchers.IO) {
+ *     try {
+ *         flow.collect { value ->
+ *             println("Received $value")
+ *         }
+ *         println("Flow is completed successfully")
+ *     } catch (e: Throwable) {
+ *         println("Exception $e happened")
+ *     }
+ * }
+ * ```
+ * But most of the time it is better to use terminal operators like [single] instead of [collect].
+ * @suppress
+ */
 @Deprecated(message = "Use launch + collect instead", level = DeprecationLevel.ERROR)
 public fun <T> Flow<T>.subscribe(): Unit = error("Should not be called")
 
@@ -63,7 +169,6 @@ public fun <T> Flow<T>.subscribe(onEach: (T) -> Unit): Unit = error("Should not 
 /** @suppress **/
 @Deprecated(message = "Use launch + collect instead", level = DeprecationLevel.ERROR)
 public fun <T> Flow<T>.subscribe(onEach: (T) -> Unit, onError: (Throwable) -> Unit): Unit = error("Should not be called")
-
 
 /**
  * Note that this replacement is sequential (`concat`) by default.
@@ -84,7 +189,6 @@ public fun <T, R> Flow<T>.flatMap(mapper: suspend (T) -> Flow<R>): Flow<R> = err
     replaceWith = ReplaceWith("flatMapConcat(mapper)")
 )
 public fun <T, R> Flow<T>.concatMap(mapper: (T) -> Flow<R>): Flow<R> = error("Should not be called")
-
 
 /**
  * Note that this replacement is sequential (`concat`) by default.
