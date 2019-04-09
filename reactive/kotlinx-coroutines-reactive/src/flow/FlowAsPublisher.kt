@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
 /**
- * Transforms the given flow to a spec-compliant [Publisher]
+ * Transforms the given flow to a spec-compliant [Publisher].
  */
 @JvmName("from")
 @FlowPreview
@@ -19,7 +19,7 @@ public fun <T : Any> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
 
 /**
  * Adapter that transforms [Flow] into TCK-complaint [Publisher].
- * Any calls to [cancel] cancel the original flow.
+ * [cancel] invocation cancels the original flow.
  */
 @Suppress("PublisherImplementation")
 private class FlowAsPublisher<T : Any>(private val flow: Flow<T>) : Publisher<T> {
