@@ -63,14 +63,18 @@ To release new `<version>` of `kotlinx-coroutines`:
    
 5. Announce new release in [Slack](https://kotlinlang.slack.com)   
 
-6. Switch into `develop` branch:<br>
+6. Create a ticket to update coroutines version on [try.kotlinlang.org](try.kotlinlang.org).
+   * Use [KT-30870](https://youtrack.jetbrains.com/issue/KT-30870) as a template
+   * This step should be skipped for eap versions that are not merged to `master`
+
+7. Switch into `develop` branch:<br>
    `git checkout develop`
  
-7. Fetch the latest `master`:<br>
+8. Fetch the latest `master`:<br>
    `git fetch` 
    
-8. Merge release from `master`:<br>
+9. Merge release from `master`:<br>
    `git merge origin/master`
    
-9. Push updates to `develop`:<br>
+10. Push updates to `develop`:<br>
    `git push`      
