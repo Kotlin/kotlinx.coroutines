@@ -76,6 +76,10 @@ terminate in near zero time. See the documentation for this class for more infor
 
 General-purpose coroutine builders, contexts, and helper functions.
 
+# Package kotlinx.coroutines.flow
+
+Flow -- primitive to work with asynchronous and event-based streams of data.
+
 # Package kotlinx.coroutines.sync
 
 Synchronization primitives (mutex).
