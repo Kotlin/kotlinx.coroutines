@@ -36,7 +36,7 @@ class FlatMapStressTest : TestBase() {
         withContext(Dispatchers.Default) {
             val inFlightElements = AtomicLong(0L)
             var result = 0
-            (1..iterations step 4).asFlow().flatMap(bufferSize = bufferSize) { value ->
+            (1..iterations step 4).asFlow().flatMapMerge(bufferSize = bufferSize) { value ->
                 unsafeFlow {
                     repeat(4) {
                         emit(value + it)
@@ -59,7 +59,7 @@ class FlatMapStressTest : TestBase() {
     @Test
     fun testDelivery() = runTest {
         withContext(Dispatchers.Default) {
-            val result = (1..iterations step 4).asFlow().flatMap { value ->
+            val result = (1..iterations step 4).asFlow().flatMapMerge { value ->
                 unsafeFlow {
                     repeat(4) { emit(value + it) }
                 }
@@ -72,7 +72,7 @@ class FlatMapStressTest : TestBase() {
     fun testIndependentShortBursts() = runTest {
         withContext(Dispatchers.Default) {
             repeat(iterations) {
-                val result = (1..4).asFlow().flatMap { value ->
+                val result = (1..4).asFlow().flatMapMerge { value ->
                     unsafeFlow {
                         emit(value)
                         emit(value)
@@ -86,7 +86,7 @@ class FlatMapStressTest : TestBase() {
     private suspend fun testConcurrencyLevel(maxConcurrency: Int) {
         assumeTrue(maxConcurrency <= CORE_POOL_SIZE)
         val concurrency = AtomicLong()
-        val result = (1..iterations).asFlow().flatMap(concurrency = maxConcurrency) { value ->
+        val result = (1..iterations).asFlow().flatMapMerge(concurrency = maxConcurrency) { value ->
             unsafeFlow {
                 val current = concurrency.incrementAndGet()
                 assertTrue(current in 1..maxConcurrency)
