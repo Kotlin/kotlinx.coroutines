@@ -21,3 +21,4 @@ internal expect val DefaultDelay: Delay
 internal expect inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T
 internal expect fun Continuation<*>.toDebugString(): String
 internal expect val CoroutineContext.coroutineName: String?
+internal expect fun CoroutineContext.minusId(): CoroutineContext

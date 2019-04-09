@@ -19,26 +19,26 @@ import kotlin.jvm.*
  * Example of usage:
  * ```
  * fun fibonacci(): Flow<Long> = flow {
- *   emit(1L)
- *   var f1 = 1L
- *   var f2 = 1L
- *   repeat(100) {
- *     var tmp = f1
- *     f1 = f2
- *     f2 += tmp
- *     emit(f1)
- *   }
+ *     emit(1L)
+ *     var f1 = 1L
+ *     var f2 = 1L
+ *     repeat(100) {
+ *         var tmp = f1
+ *         f1 = f2
+ *         f2 += tmp
+ *         emit(f1)
+ *     }
  * }
  * ```
  *
- * `emit` should happen strictly in the dispatchers of the [block] in order to preserve flow purity.
+ * `emit` should happen strictly in the dispatchers of the [block] in order to preserve flow context.
  * For example, the following code will produce [IllegalStateException]:
  * ```
  * flow {
- *   emit(1) // Ok
- *   withContext(Dispatcher.IO) {
- *       emit(2) // Will fail with ISE
- *   }
+ *     emit(1) // Ok
+ *     withContext(Dispatcher.IO) {
+ *         emit(2) // Will fail with ISE
+ *     }
  * }
  * ```
  * If you want to switch the context where this flow is executed use [flowOn] operator.
@@ -47,7 +47,7 @@ import kotlin.jvm.*
 public fun <T> flow(@BuilderInference block: suspend FlowCollector<in T>.() -> Unit): Flow<T> {
     return object : Flow<T> {
         override suspend fun collect(collector: FlowCollector<in T>) {
-            SafeCollector(collector, coroutineContext[ContinuationInterceptor]).block()
+            SafeCollector(collector, coroutineContext).block()
         }
     }
 }
