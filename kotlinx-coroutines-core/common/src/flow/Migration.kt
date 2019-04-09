@@ -64,18 +64,44 @@ public fun <T> Flow<T>.subscribe(onEach: (T) -> Unit): Unit = error("Should not 
 @Deprecated(message = "Use launch + collect instead", level = DeprecationLevel.ERROR)
 public fun <T> Flow<T>.subscribe(onEach: (T) -> Unit, onError: (Throwable) -> Unit): Unit = error("Should not be called")
 
-/** @suppress **/
+
+/**
+ * Note that this replacement is sequential (`concat`) by default.
+ * For concurrent flatMap [flatMapMerge] can be used instead.
+ * @suppress
+ */
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Flow analogue is named concatenate",
-    replaceWith = ReplaceWith("concatenate()")
+    message = "Flow analogue is named flatMapConcat",
+    replaceWith = ReplaceWith("flatMapConcat(mapper)")
 )
-public fun <T> Flow<T>.concat(): Flow<T> = error("Should not be called")
+public fun <T, R> Flow<T>.flatMap(mapper: suspend (T) -> Flow<R>): Flow<R> = error("Should not be called")
 
 /** @suppress **/
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Flow analogue is named concatenate",
-    replaceWith = ReplaceWith("concatenate(mapper)")
+    message = "Flow analogue is named flatMapConcat",
+    replaceWith = ReplaceWith("flatMapConcat(mapper)")
 )
 public fun <T, R> Flow<T>.concatMap(mapper: (T) -> Flow<R>): Flow<R> = error("Should not be called")
+
+
+/**
+ * Note that this replacement is sequential (`concat`) by default.
+ * For concurrent flatMap [flattenMerge] can be used instead.
+ * @suppress
+ */
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue is named flattenConcat",
+    replaceWith = ReplaceWith("flattenConcat()")
+)
+public fun <T> Flow<Flow<T>>.merge(): Flow<T> = error("Should not be called")
+
+/** @suppress **/
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue is named flattenConcat",
+    replaceWith = ReplaceWith("flattenConcat()")
+)
+public fun <T> Flow<Flow<T>>.flatten(): Flow<T> = error("Should not be called")

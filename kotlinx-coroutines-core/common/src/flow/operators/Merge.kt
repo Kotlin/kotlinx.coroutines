@@ -7,12 +7,29 @@
 @file:Suppress("unused")
 
 package kotlinx.coroutines.flow
+
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
 import kotlin.jvm.*
+import kotlinx.coroutines.flow.unsafeFlow as flow
+
+/**
+ * Transforms elements emitted by the original flow by applying [mapper], that returns another flow, and then concatenating and flattening these flows.
+ * This method is identical to `flatMapMerge(concurrency = 1, bufferSize = 1)`
+ *
+ * Note that even though this operator looks very familiar, we discourage its usage in a regular application-specific flows.
+ * Most likely, suspending operation in [map] operator will be sufficient and linear transformations are much easier to reason about.
+ */
+@FlowPreview
+public fun <T, R> Flow<T>.flatMapConcat(mapper: suspend (value: T) -> Flow<R>): Flow<R> = flow {
+    collect { value ->
+        mapper(value).collect { innerValue ->
+            emit(innerValue)
+        }
+    }
+}
 
 /**
  * Transforms elements emitted by the original flow by applying [mapper], that returns another flow, and then merging and flattening these flows.
@@ -21,10 +38,10 @@ import kotlin.jvm.*
  * Most likely, suspending operation in [map] operator will be sufficient and linear transformations are much easier to reason about.
  *
  * [bufferSize] parameter controls the size of backpressure aka the amount of queued in-flight elements.
- * [concurrency] parameter controls the size of in-flight flows.
+ * [concurrency] parameter controls the size of in-flight flows, at most [concurrency] flows are collected at the same time.
  */
 @FlowPreview
-public fun <T, R> Flow<T>.flatMap(concurrency: Int = 16, bufferSize: Int = 16, mapper: suspend (value: T) -> Flow<R>): Flow<R> {
+public fun <T, R> Flow<T>.flatMapMerge(concurrency: Int = 16, bufferSize: Int = 16, mapper: suspend (value: T) -> Flow<R>): Flow<R> {
     return flow {
         val semaphore = Channel<Unit>(concurrency)
         val flatMap = SerializingFlatMapCollector(this, bufferSize)
@@ -47,48 +64,28 @@ public fun <T, R> Flow<T>.flatMap(concurrency: Int = 16, bufferSize: Int = 16, m
 }
 
 /**
- * Merges the given sequence of flows into a single flow with no guarantees on the order.
- *
- * [bufferSize] parameter controls the size of backpressure aka the amount of queued in-flight elements.
- * [concurrency] parameter controls the size of in-flight flows.
+ * Flattens the given flow of flows into a single flow in a sequentially manner, without interleaving nested flows.
+ * This method is identical to `flattenMerge(concurrency = 1, bufferSize = 1)
  */
 @FlowPreview
-public fun <T> Iterable<Flow<T>>.merge(concurrency: Int = 16, bufferSize: Int = 16): Flow<T> = asFlow().flatMap(concurrency, bufferSize) { it }
-
-/**
- * Merges the given flow of flows into a single flow with no guarantees on the order.
- *
- * [bufferSize] parameter controls the size of backpressure aka the amount of queued in-flight elements.
- * [concurrency] parameter controls the size of in-flight flows.
- */
-@FlowPreview
-public fun <T> Flow<Flow<T>>.merge(concurrency: Int = 16, bufferSize: Int = 16): Flow<T> = flatMap(concurrency, bufferSize) { it }
-
-/**
- * Concatenates values of each flow sequentially, without interleaving them.
- */
-@FlowPreview
-public fun <T> Flow<Flow<T>>.concatenate(): Flow<T> = flow {
-    collect {
-        val inner = it
-        inner.collect { value ->
-            emit(value)
-        }
-    }
-}
-
-/**
- * Transforms each value of the given flow into flow of another type and then flattens these flows
- * sequentially, without interleaving them.
- */
-@FlowPreview
-public fun <T, R> Flow<T>.concatenate(mapper: suspend (T) -> Flow<R>): Flow<R> = flow {
+public fun <T> Flow<Flow<T>>.flattenConcat(): Flow<T> = flow {
     collect { value ->
-        mapper(value).collect { innerValue ->
+        value.collect { innerValue ->
             emit(innerValue)
         }
     }
 }
+
+/**
+ * Flattens the given flow of flows into a single flow.
+ * This method is identical to `flatMapMerge(concurrency, bufferSize) { it }`
+ *
+ * [bufferSize] parameter controls the size of backpressure aka the amount of queued in-flight elements.
+ * [concurrency] parameter controls the size of in-flight flows, at most [concurrency] flows are collected at the same time.
+ */
+@FlowPreview
+public fun <T> Flow<Flow<T>>.flattenMerge(concurrency: Int = 16, bufferSize: Int = 16): Flow<T> = flatMapMerge(concurrency, bufferSize) { it }
+
 
 // Effectively serializes access to downstream collector from flatMap
 private class SerializingFlatMapCollector<T>(
@@ -96,7 +93,7 @@ private class SerializingFlatMapCollector<T>(
     private val bufferSize: Int
 ) {
 
-    // Let's try to leverage the fact that flatMap is never contended
+    // Let's try to leverage the fact that flatMapMerge is never contended
     private val channel: Channel<Any?> by lazy { Channel<Any?>(bufferSize) } // Should be any, but KT-30796
     private val inProgressLock = atomic(false)
     private val sentValues = atomic(0)
