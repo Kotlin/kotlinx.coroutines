@@ -273,7 +273,9 @@ public interface Job : CoroutineContext.Element {
      * Installed [handler] should not throw any exceptions. If it does, they will get caught,
      * wrapped into [CompletionHandlerException], and rethrown, potentially causing crash of unrelated code.
      *
-     * **Note**: Implementations of `CompletionHandler` must be fast and _lock-free_.
+     * **Note**: Implementation of `CompletionHandler` must be fast, non-blocking, and thread-safe.
+     * This handler can be invoked concurrently with the surrounding code.
+     * There is no guarantee on the execution context in which the [handler] is invoked.
      */
     public fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle
 
@@ -304,7 +306,9 @@ public interface Job : CoroutineContext.Element {
      * **Note**: This function is a part of internal machinery that supports parent-child hierarchies
      * and allows for implementation of suspending functions that wait on the Job's state.
      * This function should not be used in general application code.
-     * Implementations of `CompletionHandler` must be fast and _lock-free_.
+     * Implementation of `CompletionHandler` must be fast, non-blocking, and thread-safe.
+     * This handler can be invoked concurrently with the surrounding code.
+     * There is no guarantee on the execution context in which the [handler] is invoked.
      *
      * @param onCancelling when `true`, then the [handler] is invoked as soon as this job transitions to _cancelling_ state;
      *        when `false` then the [handler] is invoked only when it transitions to _completed_ state.

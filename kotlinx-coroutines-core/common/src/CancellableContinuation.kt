@@ -123,10 +123,16 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * with cancellation exception. Otherwise, the handler will be invoked once on cancellation if this
      * continuation is cancelled.
      *
-     * Installed [handler] should not throw any exceptions. If it does, they will get caught,
-     * wrapped into [CompletionHandlerException], and rethrown, potentially causing the crash of unrelated code.
+     * Installed [handler] should not throw any exceptions.
+     * If it does, they will get caught, wrapped into [CompletionHandlerException] and
+     * processed as uncaught exception in the context of the current coroutine
+     * (see [CoroutineExceptionHandler]).
      *
      * At most one [handler] can be installed on one continuation.
+     *
+     * **Note**: Implementation of `CompletionHandler` must be fast, non-blocking, and thread-safe.
+     * This handler can be invoked concurrently with the surrounding code.
+     * There is no guarantee on the execution context in which the [handler] is invoked.
      */
     public fun invokeOnCancellation(handler: CompletionHandler)
 
@@ -151,6 +157,34 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      */
     @ExperimentalCoroutinesApi
     public fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable)
+
+    /**
+     * Resumes this continuation with a given [value] and calls the specified [onCancellation]
+     * handler when resumed too late (when continuation was already cancelled) or when resumed
+     * successfully (before cancellation), but coroutine's job was cancelled before it had a
+     * chance to run in its dispatcher, so that suspended function threw an exception
+     * instead of returning this value.
+     *
+     * Installed [onCancellation] handler should not throw any exceptions.
+     * If it does, they will get caught, wrapped into [CompletionHandlerException] and
+     * processed as uncaught exception in the context of the current coroutine
+     * (see [CoroutineExceptionHandler]).
+     *
+     * This function shall be used when resuming with a resource that must be closed by the
+     * code that had called the corresponding suspending function, e.g.:
+     *
+     * ```
+     * continuation.resume(resource) {
+     *     resource.close()
+     * }
+     * ```
+     *
+     * **Note**: Implementation of [onCancellation] handler must be fast, non-blocking, and thread-safe.
+     * This handler can be invoked concurrently with the surrounding code.
+     * There is no guarantee on the execution context in which the [onCancellation] handler is invoked.
+     */
+    @ExperimentalCoroutinesApi // since 1.2.0, tentatively graduates in 1.3.0
+    public fun resume(value: T, onCancellation: (cause: Throwable) -> Unit)
 }
 
 /**

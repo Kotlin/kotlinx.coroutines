@@ -19,7 +19,7 @@ private const val RESUMED = 2
  */
 @PublishedApi
 internal open class CancellableContinuationImpl<in T>(
-    public final override val delegate: Continuation<T>,
+    final override val delegate: Continuation<T>,
     resumeMode: Int
 ) : DispatchedTask<T>(resumeMode), CancellableContinuation<T>, CoroutineStackFrame {
     public override val context: CoroutineContext = delegate.context
@@ -102,6 +102,14 @@ internal open class CancellableContinuationImpl<in T>(
 
     override fun takeState(): Any? = state
 
+    override fun cancelResult(state: Any?, cause: Throwable) {
+        if (state is CompletedWithCancellation) {
+            invokeHandlerSafely {
+                state.onCancellation(cause)
+            }
+        }
+    }
+
     public override fun cancel(cause: Throwable?): Boolean {
         _state.loop { state ->
             if (state !is NotCompleted) return false // false if already complete or cancelling
@@ -165,8 +173,19 @@ internal open class CancellableContinuationImpl<in T>(
         return getSuccessfulResult(state)
     }
 
-    override fun resumeWith(result: Result<T>) =
+    override fun resumeWith(result: Result<T>) {
         resumeImpl(result.toState(), resumeMode)
+    }
+
+    override fun resume(value: T, onCancellation: (cause: Throwable) -> Unit) {
+        val cancelled = resumeImpl(CompletedWithCancellation(value, onCancellation), resumeMode)
+        if (cancelled != null) {
+            // too late to resume (was cancelled) -- call handler
+            invokeHandlerSafely {
+                onCancellation(cancelled.cause)
+            }
+        }
+    }
 
     internal fun resumeWithExceptionMode(exception: Throwable, mode: Int) =
         resumeImpl(CompletedExceptionally(exception), mode)
@@ -219,14 +238,15 @@ internal open class CancellableContinuationImpl<in T>(
         dispatch(mode)
     }
 
-    private fun resumeImpl(proposedUpdate: Any?, resumeMode: Int) {
+    // returns null when successfully dispatched resumed, CancelledContinuation if too late (was already cancelled)
+    private fun resumeImpl(proposedUpdate: Any?, resumeMode: Int): CancelledContinuation? {
         _state.loop { state ->
             when (state) {
                 is NotCompleted -> {
                     if (!_state.compareAndSet(state, proposedUpdate)) return@loop // retry on cas failure
                     disposeParentHandle()
                     dispatchResume(resumeMode)
-                    return
+                    return null
                 }
                 is CancelledContinuation -> {
                     /*
@@ -234,7 +254,7 @@ internal open class CancellableContinuationImpl<in T>(
                      * because cancellation is asynchronous and may race with resume.
                      * Racy exceptions will be lost, too.
                      */
-                    if (state.makeResumed()) return // ok -- resumed just once
+                    if (state.makeResumed()) return state // tried to resume just once, but was cancelled
                 }
             }
             alreadyResumedError(proposedUpdate) // otherwise -- an error (second resume attempt)
@@ -307,7 +327,11 @@ internal open class CancellableContinuationImpl<in T>(
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> getSuccessfulResult(state: Any?): T =
-        if (state is CompletedIdempotentResult) state.result as T else state as T
+        when (state) {
+            is CompletedIdempotentResult -> state.result as T
+            is CompletedWithCancellation -> state.result as T
+            else -> state as T
+        }
 
     // For nicer debugging
     public override fun toString(): String =
@@ -344,3 +368,11 @@ private class CompletedIdempotentResult(
 ) {
     override fun toString(): String = "CompletedIdempotentResult[$result]"
 }
+
+private class CompletedWithCancellation(
+    @JvmField val result: Any?,
+    @JvmField val onCancellation: (cause: Throwable) -> Unit
+) {
+    override fun toString(): String = "CompletedWithCancellation[$result]"
+}
+
