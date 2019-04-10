@@ -93,6 +93,11 @@ class TaskTest : TestBase() {
     }
 
     @Test
+    fun testNullResultTaskAsDeferred() = runTest {
+        assertNull(Tasks.forResult(null).asDeferred().await())
+    }
+
+    @Test
     fun testCancelledTaskAsDeferred() = runTest {
         val deferred = Tasks.forCanceled<Int>().asDeferred()
 
