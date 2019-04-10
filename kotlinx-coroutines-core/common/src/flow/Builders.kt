@@ -183,19 +183,33 @@ public fun LongRange.asFlow(): Flow<Long> = flow {
 }
 
 /**
- * Creates an instance of the cold [Flow] from a supplied [SendChannel].
+ * Creates an instance of the cold [Flow] with elements that are sent to a [SendChannel]
+ * that is provided to the builder's [block] of code. It allows elements to be
+ * produced by the code that is running in a different context,
+ * e.g. from a callback-based API.
+ *
+ * The resulting flow is _cold_, which means that [block] is called on each call of a terminal operator
+ * on the resulting flow.
  *
  * To control backpressure, [bufferSize] is used and matches directly the `capacity` parameter of [Channel] factory.
  * The provided channel can later be used by any external service to communicate with flow and its buffer determines
  * backpressure buffer size or its behaviour (e.g. in case when [Channel.CONFLATED] was used).
  *
  * Example of usage:
+ *
  * ```
- * fun flowFrom(api: CallbackBasedApi): Flow<Int> = flowViaChannel { channel ->
- *     val adapter = FlowSinkAdapter(channel) // implementation of callback interface
- *     api.register(adapter)
+ * fun flowFrom(api: CallbackBasedApi): Flow<T> = flowViaChannel { channel ->
+ *     val callback = object : Callback { // implementation of some callback interface
+ *         override fun onNextValue(value: T) {
+ *             channel.offer(value) // Note: offer drops value when buffer is full
+ *         }
+ *         override fun onApiError(cause: Throwable) {
+ *             channel.cancel("API Error", CancellationException(cause))
+ *         }
+ *     }
+ *     api.register(callback)
  *     channel.invokeOnClose {
- *         api.unregister(adapter)
+ *         api.unregister(callback)
  *     }
  * }
  * ```
