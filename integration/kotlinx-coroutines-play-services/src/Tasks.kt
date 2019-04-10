@@ -50,7 +50,8 @@ public fun <T> Task<T>.asDeferred(): Deferred<T> {
     if (isComplete) {
         val e = exception
         return if (e == null) {
-            CompletableDeferred<T>().apply { if (isCanceled) cancel() else complete(result) }
+            @Suppress("UNCHECKED_CAST")
+            CompletableDeferred<T>().apply { if (isCanceled) cancel() else complete(result as T) }
         } else {
             CompletableDeferred<T>().apply { completeExceptionally(e) }
         }
@@ -60,7 +61,8 @@ public fun <T> Task<T>.asDeferred(): Deferred<T> {
     addOnCompleteListener {
         val e = it.exception
         if (e == null) {
-            if (isCanceled) result.cancel() else result.complete(it.result)
+            @Suppress("UNCHECKED_CAST")
+            if (isCanceled) result.cancel() else result.complete(it.result as T)
         } else {
             result.completeExceptionally(e)
         }
@@ -83,7 +85,8 @@ public suspend fun <T> Task<T>.await(): T {
             if (isCanceled) {
                 throw CancellationException("Task $this was cancelled normally.")
             } else {
-                result
+                @Suppress("UNCHECKED_CAST")
+                result as T
             }
         } else {
             throw e
@@ -94,7 +97,8 @@ public suspend fun <T> Task<T>.await(): T {
         addOnCompleteListener {
             val e = exception
             if (e == null) {
-                if (isCanceled) cont.cancel() else cont.resume(result)
+                @Suppress("UNCHECKED_CAST")
+                if (isCanceled) cont.cancel() else cont.resume(result as T)
             } else {
                 cont.resumeWithException(e)
             }
