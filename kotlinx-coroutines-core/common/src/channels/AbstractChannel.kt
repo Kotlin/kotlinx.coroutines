@@ -177,6 +177,14 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         return sendSuspend(element)
     }
 
+    internal suspend fun sendFair(element: E) {
+        if (offer(element)) {
+            yield() // Works only on fast path to properly work in sequential use-cases
+            return
+        }
+        return sendSuspend(element)
+    }
+
     public final override fun offer(element: E): Boolean {
         val result = offerInternal(element)
         return when {
