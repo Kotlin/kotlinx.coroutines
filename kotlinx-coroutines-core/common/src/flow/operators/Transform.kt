@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
  * ```
  */
 @FlowPreview
-public fun <T, R> Flow<T>.transform(@BuilderInference transformer: suspend FlowCollector<in R>.(value: T) -> Unit): Flow<R> {
+public fun <T, R> Flow<T>.transform(@BuilderInference transformer: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> {
     return flow {
         collect { value ->
             transformer(value)

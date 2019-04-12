@@ -5,13 +5,11 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.flow.operators.*
 import kotlin.test.*
 
 class FlatMapConcatTest : FlatMapBaseTest() {
 
-    override fun <T> Flow<T>.flatMap(mapper: suspend (T) -> Flow<T>): Flow<T> = flatMapConcat(mapper = mapper)
+    override fun <T> Flow<T>.flatMap(mapper: suspend (T) -> Flow<T>): Flow<T> = flatMapConcat(transform = mapper)
 
     @Test
     fun testFlatMapConcurrency() = runTest {

@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
  *         .single() // Will be executed in the Main
  * }
  * ```
- * For more explanation of purity concept please refer to [Flow] documentation.
+ * For more explanation of context preservation please refer to [Flow] documentation.
  *
  * This operator uses a channel of the specific [bufferSize] in order to switch between contexts,
  * but it is not guaranteed that the channel will be created, implementation is free to optimize it away in case of fusing.
@@ -83,7 +83,7 @@ public fun <T> Flow<T>.flowOn(flowContext: CoroutineContext, bufferSize: Int = 1
  *     }
  *     .map { ... } // Not affected
  * ```
- * For more explanation of purity concept please refer to [Flow] documentation.
+ * For more explanation of context preservation please refer to [Flow] documentation.
  *
  * This operator uses channel of the specific [bufferSize] in order to switch between contexts,
  * but it is not guaranteed that channel will be created, implementation is free to optimize it away in case of fusing.

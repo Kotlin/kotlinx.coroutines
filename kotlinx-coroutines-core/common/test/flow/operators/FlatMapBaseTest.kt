@@ -2,7 +2,7 @@
  * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.flow.operators
+package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -42,6 +42,15 @@ abstract class FlatMapBaseTest : TestBase() {
 
         val value = flow.single()
         assertEquals(42, value)
+    }
+
+    @Test
+    fun testNulls() = runTest {
+        val list = flowOf(1, null, 2).flatMap {
+            flowOf(1, null, null, 2)
+        }.toList()
+
+        assertEquals(List(3) { listOf(1, null, null, 2)}.flatten(), list)
     }
 
     @Test

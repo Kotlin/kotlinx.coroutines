@@ -63,13 +63,7 @@ private class FlowAsPublisher<T : Any>(private val flow: Flow<T>) : Publisher<T>
                 }
 
                 requested.decrementAndGet()
-                val result = runCatching {
-                    subscriber.onNext(value)
-                }
-
-                if (result.isFailure) {
-                    subscriber.onError(result.exceptionOrNull())
-                }
+                subscriber.onNext(value)
             }
         }
 
