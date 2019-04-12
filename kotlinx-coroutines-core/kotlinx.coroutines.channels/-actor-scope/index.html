@@ -105,6 +105,20 @@ an element from a failed channel throw the original <a href="../-send-channel/cl
 <tr>
 <td>
 
+        <p><a href="../-receive-channel/is-empty.html">isEmpty</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Returns <code>true</code> if the channel is empty (contains no elements) and the <a href="../-receive-channel/receive.html">receive</a> attempt will suspend.
+This function returns <code>false</code> for <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a> channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../-receive-channel/on-receive.html">onReceive</a></p>
 
       </td>

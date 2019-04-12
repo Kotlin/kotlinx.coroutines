@@ -33,34 +33,33 @@
 
 <h1 id="flow">Flow</h1>
 
-<div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">interface </span><span class="identifier">Flow</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Flow.kt#L60">(source)</a></div>
+<div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">interface </span><span class="identifier">Flow</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Flow.kt#L82">(source)</a></div>
 
-<p>A cold asynchronous stream of the data, that emits from zero to N (where N can be unbounded)
-values and completes normally or with an exception.</p>
+<p>A cold asynchronous stream of the data, that emits from zero to N (where N can be unbounded) values and completes normally or with an exception.</p>
 
-<p>All transformations on the flow, such as <a href="../map.html">map</a> and <a href="../filter.html">filter</a> do not trigger flow collection or execution, only
-terminal operators (e.g. <a href="../single.html">single</a>)do trigger it.</p>
+<p>All transformations on the flow, such as <a href="../map.html">map</a> and <a href="../filter.html">filter</a> do not trigger flow collection or execution, only terminal operators (e.g. <a href="../single.html">single</a>) do trigger it.</p>
 
-<p>Flow can be collected in a suspending manner, without actual blocking using <a href="collect.html">collect</a> extension that will complete normally or exceptionally:</p>
+<p>Flow can be collected in a suspending manner, without actual blocking, using <a href="collect.html">collect</a> extension that will complete normally or exceptionally:</p>
 
 <pre>try {
-  flow.collect { value -&gt;
-    println("Received $value")
-  }
+    flow.collect { value -&gt;
+        println("Received $value")
+    }
 } catch (e: Exception) {
-   println("Flow has thrown an exception: $e")
+    println("Flow has thrown an exception: $e")
 }
 </pre>
 
 <p>Additionally, the library provides a rich set of terminal operators such as <a href="../single.html">single</a>, <a href="../reduce.html">reduce</a> and others.</p>
 
 <p>Flow does not carry information whether it is a cold stream (that can be collected multiple times and
-triggers its evaluation every time collection is executed) or hot one, but conventionally flow represents a cold stream.
-Transitions between hot and cold streams are support via channels and corresponding API: <a href="../flow-via-channel.html">flowViaChannel</a>, <a href="../broadcast-in.html">broadcastIn</a>, <a href="../produce-in.html">produceIn</a>.</p>
+triggers its evaluation every time <a href="collect.html">collect</a> is executed) or a hot one, but conventionally flow represents a cold stream.
+Transitions between hot and cold streams are supported via channels and the corresponding API: <a href="../flow-via-channel.html">flowViaChannel</a>, <a href="../broadcast-in.html">broadcastIn</a>, <a href="../produce-in.html">produceIn</a>.</p>
 
-<p>Flow is a <strong>pure</strong> concept: it encapsulates its own execution context and never propagates it to the downstream, thus making
-reasoning about execution context of particular transformations or terminal operations trivial.
-There are two ways of changing the flow’s context: <a href="../flow-on.html">flowOn</a> and <a href="../flow-with.html">flowWith</a>.
+<p>Flow has a context preserving property: it encapsulates its own execution context and never propagates or leaks it to the downstream, thus making
+reasoning about execution context of particular transformations or terminal operations trivial.</p>
+
+<p>There are two ways of changing the flow’s context: <a href="../flow-on.html">flowOn</a> and <a href="../flow-with.html">flowWith</a>.
 The former changes the upstream context (“everything above the flowOn operator”) while the latter
 changes the context of the flow within <a href="../flow-with.html">flowWith</a> body. For additional information refer to these operators documentation.</p>
 
@@ -70,15 +69,38 @@ changes the context of the flow within <a href="../flow-with.html">flowWith</a> 
     .map { it + 1 } // Will be executed in ctx_1
     .flowOn(ctx_1) // Changes upstream context: flowOf and map
 
-// Now we have flow that is pure: it is executed somewhere but this information is encapsulated in the flow itself
+// Now we have flow that is context-preserving: it is executed somewhere but this information is encapsulated in the flow itself
 
-val filtered = flow
- .filter { it == 3 } // Pure operator without a context
+val filtered = flow // ctx_1 is inaccessible
+   .filter { it == 3 } // Pure operator without a context yet
 
 withContext(Dispatchers.Main) {
     // All not encapsulated operators will be executed in Main: filter and single
     val result = filtered.single()
     myUi.text = result
+}
+</pre>
+
+<p>From the implementation point of view it means that all intermediate operators on <a href="./index.md">Flow</a> should use the following constraint:
+If one wants to separate collection or emission into multiple coroutines, it should use <a href="../../kotlinx.coroutines/coroutine-scope.html">coroutineScope</a> or <a href="../../kotlinx.coroutines/supervisor-scope.html">supervisorScope</a> and
+is not allowed to modify coroutines context:</p>
+
+<pre>fun &lt;T&gt; Flow&lt;T&gt;.buffer(bufferSize: Int): Flow&lt;T&gt; = flow {
+    coroutineScope { // coroutine scope is necessary, withContext is prohibited
+        val channel = Channel&lt;T&gt;(bufferSize)
+        // GlobalScope.launch { is prohibited
+        // launch(Dispatchers.IO) { is prohibited
+        launch { // is OK
+            collect { value -&gt;
+                channel.send(value)
+            }
+            channel.close()
+        }
+
+        for (i in channel) {
+            emit(i)
+        }
+    }
 }
 </pre>
 
@@ -96,7 +118,7 @@ kotlinx-coroutines-reactive module.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">collect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow.Flow$collect(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.Flow.T)))/collector">collector</span><span class="symbol">:</span>&nbsp;<a href="../-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">collect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow.Flow$collect(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.Flow.T)))/collector">collector</span><span class="symbol">:</span>&nbsp;<a href="../-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Accepts the given <a href="collect.html#kotlinx.coroutines.flow.Flow$collect(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.Flow.T)))/collector">collector</a> and <a href="../-flow-collector/emit.html">emits</a> values into it.</p>
 
@@ -139,18 +161,14 @@ If any exception occurs during collect or in the provided flow, this exception i
 <tr>
 <td>
 
-        <p><a href="../concatenate.html">concatenate</a></p>
+        <p><a href="../combine-latest.html">combineLatest</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../concatenate.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">concatenate</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../concatenate.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T1</span><span class="symbol">, </span><span class="identifier">T2</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../combine-latest.html#T1"><span class="identifier">T1</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">combineLatest</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$combineLatest(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.combineLatest.T1)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.combineLatest.T2)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.combineLatest.T1, kotlinx.coroutines.flow.combineLatest.T2, kotlinx.coroutines.flow.combineLatest.R)))/other">other</span><span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../combine-latest.html#T2"><span class="identifier">T2</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$combineLatest(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.combineLatest.T1)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.combineLatest.T2)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.combineLatest.T1, kotlinx.coroutines.flow.combineLatest.T2, kotlinx.coroutines.flow.combineLatest.R)))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="../combine-latest.html#T1"><span class="identifier">T1</span></a><span class="symbol">,</span>&nbsp;<a href="../combine-latest.html#T2"><span class="identifier">T2</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../combine-latest.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../combine-latest.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Concatenates values of each flow sequentially, without interleaving them.</p>
-
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../concatenate.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">concatenate</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$concatenate(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.concatenate.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.concatenate.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.concatenate.R)))))/mapper">mapper</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="../concatenate.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../concatenate.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../concatenate.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Transforms each value of the given flow into flow of another type and then flattens these flows
-sequentially, without interleaving them.</p>
+        <p>Returns a <a href="./index.md">Flow</a> whose values are generated with <a href="../combine-latest.html#kotlinx.coroutines.flow$combineLatest(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.combineLatest.T1)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.combineLatest.T2)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.combineLatest.T1, kotlinx.coroutines.flow.combineLatest.T2, kotlinx.coroutines.flow.combineLatest.R)))/transform">transform</a> function by combining
+the most recently emitted values by each flow.</p>
 
       </td>
 </tr>
@@ -305,13 +323,55 @@ key is extracted with <a href="../distinct-until-changed-by.html#kotlinx.corouti
 <tr>
 <td>
 
-        <p><a href="../flat-map.html">flatMap</a></p>
+        <p><a href="../flat-map-concat.html">flatMapConcat</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flat-map.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flatMap</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flatMap(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.T)), kotlin.Int, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMap.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.R)))))/concurrency">concurrency</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flatMap(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.T)), kotlin.Int, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMap.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.R)))))/bufferSize">bufferSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flatMap(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.T)), kotlin.Int, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMap.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.R)))))/mapper">mapper</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../flat-map.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flat-map.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flat-map.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flat-map-concat.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flatMapConcat</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flatMapConcat(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMapConcat.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMapConcat.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMapConcat.R)))))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../flat-map-concat.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flat-map-concat.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flat-map-concat.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Transforms elements emitted by the original flow by applying <a href="../flat-map.html#kotlinx.coroutines.flow$flatMap(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.T)), kotlin.Int, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMap.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMap.R)))))/mapper">mapper</a>, that returns another flow, and then merging and flattening these flows.</p>
+        <p>Transforms elements emitted by the original flow by applying <a href="../flat-map-concat.html#kotlinx.coroutines.flow$flatMapConcat(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMapConcat.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMapConcat.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMapConcat.R)))))/transform">transform</a>, that returns another flow, and then concatenating and flattening these flows.
+This method is identical to <code>flatMapMerge(concurrency = 1, bufferSize = 1)</code></p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../flat-map-merge.html">flatMapMerge</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flat-map-merge.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flatMapMerge</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flatMapMerge(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMapMerge.T)), kotlin.Int, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMapMerge.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMapMerge.R)))))/concurrency">concurrency</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flatMapMerge(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMapMerge.T)), kotlin.Int, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMapMerge.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMapMerge.R)))))/bufferSize">bufferSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flatMapMerge(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMapMerge.T)), kotlin.Int, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMapMerge.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMapMerge.R)))))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../flat-map-merge.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flat-map-merge.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flat-map-merge.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Transforms elements emitted by the original flow by applying <a href="../flat-map-merge.html#kotlinx.coroutines.flow$flatMapMerge(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMapMerge.T)), kotlin.Int, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMapMerge.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMapMerge.R)))))/transform">transform</a>, that returns another flow, and then merging and flattening these flows.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../flatten-concat.html">flattenConcat</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flatten-concat.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flattenConcat</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flatten-concat.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Flattens the given flow of flows into a single flow in a sequentially manner, without interleaving nested flows.
+This method is identical to `flattenMerge(concurrency = 1, bufferSize = 1)</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../flatten-merge.html">flattenMerge</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flatten-merge.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flattenMerge</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flattenMerge(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flattenMerge.T)))), kotlin.Int, kotlin.Int)/concurrency">concurrency</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flattenMerge(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flattenMerge.T)))), kotlin.Int, kotlin.Int)/bufferSize">bufferSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flatten-merge.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Flattens the given flow of flows into a single flow.
+This method is identical to <code>flatMapMerge(concurrency, bufferSize) { it }</code></p>
 
       </td>
 </tr>
@@ -325,8 +385,8 @@ key is extracted with <a href="../distinct-until-changed-by.html#kotlinx.corouti
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flowOn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/flowContext">flowContext</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/bufferSize">bufferSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>The operator that changes the context where this flow is executed to the given <a href="../flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/flowContext">flowContext</a>.
-This operator is composable and affects only precedent operators that do not have its own context.
-This operator is pure: <a href="../flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/flowContext">flowContext</a> <strong>does not</strong> leak into the downstream flow.</p>
+This operator is composable and affects only preceding operators that do not have its own context.
+This operator is context preserving: <a href="../flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/flowContext">flowContext</a> <strong>does not</strong> leak into the downstream flow.</p>
 
       </td>
 </tr>
@@ -340,7 +400,7 @@ This operator is pure: <a href="../flow-on.html#kotlinx.coroutines.flow$flowOn(k
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flow-with.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flowWith</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowWith(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlin.coroutines.CoroutineContext, kotlin.Int, kotlin.Function1((kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.R)))))/flowContext">flowContext</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowWith(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlin.coroutines.CoroutineContext, kotlin.Int, kotlin.Function1((kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.R)))))/bufferSize">bufferSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowWith(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlin.coroutines.CoroutineContext, kotlin.Int, kotlin.Function1((kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.R)))))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flow-with.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flow-with.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flow-with.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>The operator that changes the context where all transformations applied to the given flow within a <a href="../flow-with.html#kotlinx.coroutines.flow$flowWith(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlin.coroutines.CoroutineContext, kotlin.Int, kotlin.Function1((kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowWith.R)))))/builder">builder</a> are executed.
-This operator is pure and does not affect the context of the precedent and subsequent operations.</p>
+This operator is context preserving and does not affect the context of the preceding and subsequent operations.</p>
 
       </td>
 </tr>
@@ -565,10 +625,24 @@ When <a href="../take.html#kotlinx.coroutines.flow$take(kotlinx.coroutines.flow.
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../transform.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">transform</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$transform(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.transform.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.transform.R)), kotlinx.coroutines.flow.transform.T, kotlin.Unit)))/transformer">transformer</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<a href="../transform.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../transform.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../transform.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../transform.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">transform</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$transform(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.transform.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.transform.R)), kotlinx.coroutines.flow.transform.T, kotlin.Unit)))/transformer">transformer</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="../transform.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../transform.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../transform.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Applies <a href="../transform.html#kotlinx.coroutines.flow$transform(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.transform.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.transform.R)), kotlinx.coroutines.flow.transform.T, kotlin.Unit)))/transformer">transformer</a> function to each value of the given flow.
 <a href="../transform.html#kotlinx.coroutines.flow$transform(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.transform.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.transform.R)), kotlinx.coroutines.flow.transform.T, kotlin.Unit)))/transformer">transformer</a> is a generic function that may transform emitted element, skip it or emit it multiple times.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../zip.html">zip</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T1</span><span class="symbol">, </span><span class="identifier">T2</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../zip.html#T1"><span class="identifier">T1</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">zip</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$zip(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T1)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T2)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.zip.T1, kotlinx.coroutines.flow.zip.T2, kotlinx.coroutines.flow.zip.R)))/other">other</span><span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../zip.html#T2"><span class="identifier">T2</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$zip(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T1)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T2)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.zip.T1, kotlinx.coroutines.flow.zip.T2, kotlinx.coroutines.flow.zip.R)))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="../zip.html#T1"><span class="identifier">T1</span></a><span class="symbol">,</span>&nbsp;<a href="../zip.html#T2"><span class="identifier">T2</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../zip.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../zip.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Zips values from the current flow (<code>this</code>) with <a href="../zip.html#kotlinx.coroutines.flow$zip(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T1)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T2)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.zip.T1, kotlinx.coroutines.flow.zip.T2, kotlinx.coroutines.flow.zip.R)))/other">other</a> flow using provided <a href="../zip.html#kotlinx.coroutines.flow$zip(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T1)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T2)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.zip.T1, kotlinx.coroutines.flow.zip.T2, kotlinx.coroutines.flow.zip.R)))/transform">transform</a> function applied to each pair of values.
+The resulting flow completes as soon as one of the flows completes and cancel is called on the remaining flow.</p>
 
       </td>
 </tr>

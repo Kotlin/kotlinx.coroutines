@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CancellableContinuation.resume - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-cancellable-continuation/resume.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines</a> / <a href="index.html">CancellableContinuation</a> / <a href="./resume.html">resume</a></div>
+
+<h1 id="resume">resume</h1>
+
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">resume</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/value">value</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L187">(source)</a></div>
+
+<p>Resumes this continuation with a given <a href="resume.html#kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/value">value</a> and calls the specified <a href="resume.html#kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</a>
+handler when resumed too late (when continuation was already cancelled) or when resumed
+successfully (before cancellation), but coroutine’s job was cancelled before it had a
+chance to run in its dispatcher, so that suspended function threw an exception
+instead of returning this value.</p>
+
+<p>Installed <a href="resume.html#kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</a> handler should not throw any exceptions.
+If it does, they will get caught, wrapped into <a href="#">CompletionHandlerException</a> and
+processed as uncaught exception in the context of the current coroutine
+(see <a href="../-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a>).</p>
+
+<p>This function shall be used when resuming with a resource that must be closed by the
+code that had called the corresponding suspending function, e.g.:</p>
+
+<pre>continuation.resume(resource) {
+    resource.close()
+}
+</pre>
+
+<p><strong>Note</strong>: Implementation of <a href="resume.html#kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</a> handler must be fast, non-blocking, and thread-safe.
+This handler can be invoked concurrently with the surrounding code.
+There is no guarantee on the execution context in which the <a href="resume.html#kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</a> handler is invoked.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

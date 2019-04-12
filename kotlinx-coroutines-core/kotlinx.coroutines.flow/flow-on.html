@@ -33,23 +33,25 @@
 
 <h1 id="flowon">flowOn</h1>
 
-<div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flowOn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/flowContext">flowContext</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/bufferSize">bufferSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Context.kt#L38">(source)</a></div>
+<div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flowOn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/flowContext">flowContext</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/bufferSize">bufferSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Context.kt#L40">(source)</a></div>
 
 <p>The operator that changes the context where this flow is executed to the given <a href="flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/flowContext">flowContext</a>.
-This operator is composable and affects only precedent operators that do not have its own context.
-This operator is pure: <a href="flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/flowContext">flowContext</a> <strong>does not</strong> leak into the downstream flow.</p>
+This operator is composable and affects only preceding operators that do not have its own context.
+This operator is context preserving: <a href="flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/flowContext">flowContext</a> <strong>does not</strong> leak into the downstream flow.</p>
 
 <p>For example:</p>
 
-<pre>val singleValue = intFlow // will be executed on IO if context wasn't specified before
-    .map { ... } // Will be executed in IO
-    .flowOn(Dispatchers.IO)
-    .filter { ... } // Will be executed in Default
-    .flowOn(Dispatchers.Default)
-    .single() // Will be executed in the context of the caller
+<pre>withContext(Dispatchers.Main) {
+    val singleValue = intFlow // will be executed on IO if context wasn't specified before
+        .map { ... } // Will be executed in IO
+        .flowOn(Dispatchers.IO)
+        .filter { ... } // Will be executed in Default
+        .flowOn(Dispatchers.Default)
+        .single() // Will be executed in the Main
+}
 </pre>
 
-<p>For more explanation of purity concept please refer to <a href="-flow/index.html">Flow</a> documentation.</p>
+<p>For more explanation of context preservation please refer to <a href="-flow/index.html">Flow</a> documentation.</p>
 
 <p>This operator uses a channel of the specific <a href="flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext, kotlin.Int)/bufferSize">bufferSize</a> in order to switch between contexts,
 but it is not guaranteed that the channel will be created, implementation is free to optimize it away in case of fusing.</p>

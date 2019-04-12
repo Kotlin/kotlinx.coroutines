@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Channel.CONFLATED - kotlinx-coroutines-core</title>
+  <title>ReceiveChannel.isEmpty - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/-c-o-n-f-l-a-t-e-d.html">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/is-empty.html">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
@@ -29,13 +29,14 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.channels</a> / <a href="index.html">Channel</a> / <a href="./-c-o-n-f-l-a-t-e-d.html">CONFLATED</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.channels</a> / <a href="index.html">ReceiveChannel</a> / <a href="./is-empty.html">isEmpty</a></div>
 
-<h1 id="conflated">CONFLATED</h1>
+<h1 id="isempty">isEmpty</h1>
 
-<div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">CONFLATED</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L363">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L156">(source)</a></div>
 
-<p>Requests conflated channel in <code>Channel(...)</code> factory function – the <code>ConflatedChannel</code> gets created.</p>
+<p>Returns <code>true</code> if the channel is empty (contains no elements) and the <a href="receive.html">receive</a> attempt will suspend.
+This function returns <code>false</code> for <a href="is-closed-for-receive.html">isClosedForReceive</a> channel.</p>
 
 
       </div>

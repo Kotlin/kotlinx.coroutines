@@ -33,7 +33,7 @@
 
 <h1 id="collect">collect</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">collect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow.Flow$collect(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.Flow.T)))/collector">collector</span><span class="symbol">:</span>&nbsp;<a href="../-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Flow.kt#L80">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">collect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow.Flow$collect(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.Flow.T)))/collector">collector</span><span class="symbol">:</span>&nbsp;<a href="../-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Flow.kt#L108">(source)</a></div>
 
 <p>Accepts the given <a href="collect.html#kotlinx.coroutines.flow.Flow$collect(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.Flow.T)))/collector">collector</a> and <a href="../-flow-collector/emit.html">emits</a> values into it.</p>
 
@@ -44,14 +44,22 @@
  The emission should happen in the context of the <a href="./collect.md">collect</a> call.</li>
 </ol>
 
-<p>Only coroutine builders that inherit the context are allowed, for example the following code is fine:</p>
+<p>Only coroutine builders that inherit the context are allowed, for example:</p>
 
-<pre>coroutineScope { // Context is inherited
-    launch { // Dispatcher is not overridden, fine as well
-        collector.emit(someValue)
+<pre>class MyFlow : Flow&lt;Int&gt; {
+    override suspend fun collect(collector: FlowCollector&lt;Int&gt;) {
+        coroutineScope {
+            // Context is inherited
+            launch { // Dispatcher is not overridden, fine as well
+                collector.emit(42) // Emit from the launched coroutine
+            }
+        }
     }
 }
 </pre>
+
+<p>is a proper <a href="index.html">Flow</a> implementation, but using <code>launch(Dispatchers.IO)</code> is not.</p>
+
 <ol>
   <li>It should serialize calls to <a href="../-flow-collector/emit.html">emit</a> as <a href="../-flow-collector/index.html">FlowCollector</a> implementations are not thread safe by default.</li>
 </ol>

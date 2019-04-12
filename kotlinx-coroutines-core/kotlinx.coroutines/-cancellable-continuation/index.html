@@ -73,12 +73,12 @@ with the specified cancel cause.</p>
 </table>
 
 <p>Invocation of <a href="cancel.html">cancel</a> transitions this continuation from <em>active</em> to <em>cancelled</em> state, while
-invocation of <a href="#">resume</a> or <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/resume-with-exception.html">resumeWithException</a> transitions it from <em>active</em> to <em>resumed</em> state.</p>
+invocation of <a href="resume.html">resume</a> or <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/resume-with-exception.html">resumeWithException</a> transitions it from <em>active</em> to <em>resumed</em> state.</p>
 
 <p>A <a href="is-cancelled.html">cancelled</a> continuation implies that it is <a href="is-completed.html">completed</a>.</p>
 
-<p>Invocation of <a href="#">resume</a> or <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/resume-with-exception.html">resumeWithException</a> in <em>resumed</em> state produces <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a>.
-Invocation of <a href="#">resume</a> in <em>cancelled</em> state is ignored (it is a trivial race between resume from the continuation owner and
+<p>Invocation of <a href="resume.html">resume</a> or <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/resume-with-exception.html">resumeWithException</a> in <em>resumed</em> state produces <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a>.
+Invocation of <a href="resume.html">resume</a> in <em>cancelled</em> state is ignored (it is a trivial race between resume from the continuation owner and
 outer job cancellation and cancellation wins).
 Invocation of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/resume-with-exception.html">resumeWithException</a> in <em>cancelled</em> state triggers exception handling of passed exception.</p>
 
@@ -172,6 +172,23 @@ cancelled as a result of this invocation and <code>false</code> otherwise.</p>
 When the continuation is already cancelled, then the handler is immediately invoked
 with cancellation exception. Otherwise, the handler will be invoked once on cancellation if this
 continuation is cancelled.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="resume.html">resume</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">resume</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/value">value</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Resumes this continuation with a given <a href="resume.html#kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/value">value</a> and calls the specified <a href="resume.html#kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</a>
+handler when resumed too late (when continuation was already cancelled) or when resumed
+successfully (before cancellation), but coroutine’s job was cancelled before it had a
+chance to run in its dispatcher, so that suspended function threw an exception
+instead of returning this value.</p>
 
       </td>
 </tr>

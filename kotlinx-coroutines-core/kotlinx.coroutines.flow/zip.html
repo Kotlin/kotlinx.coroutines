@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>zip - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/zip.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.flow</a> / <a href="./zip.html">zip</a></div>
+
+<h1 id="zip">zip</h1>
+
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T1</span><span class="symbol">, </span><span class="identifier">T2</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="zip.html#T1"><span class="identifier">T1</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">zip</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$zip(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T1)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T2)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.zip.T1, kotlinx.coroutines.flow.zip.T2, kotlinx.coroutines.flow.zip.R)))/other">other</span><span class="symbol">:</span>&nbsp;<a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="zip.html#T2"><span class="identifier">T2</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$zip(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T1)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T2)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.zip.T1, kotlinx.coroutines.flow.zip.T2, kotlinx.coroutines.flow.zip.R)))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="zip.html#T1"><span class="identifier">T1</span></a><span class="symbol">,</span>&nbsp;<a href="zip.html#T2"><span class="identifier">T2</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="zip.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="zip.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Zip.kt#L121">(source)</a></div>
+
+<p>Zips values from the current flow (<code>this</code>) with <a href="zip.html#kotlinx.coroutines.flow$zip(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T1)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T2)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.zip.T1, kotlinx.coroutines.flow.zip.T2, kotlinx.coroutines.flow.zip.R)))/other">other</a> flow using provided <a href="zip.html#kotlinx.coroutines.flow$zip(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T1)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T2)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.zip.T1, kotlinx.coroutines.flow.zip.T2, kotlinx.coroutines.flow.zip.R)))/transform">transform</a> function applied to each pair of values.
+The resulting flow completes as soon as one of the flows completes and cancel is called on the remaining flow.</p>
+
+<p>It can be demonstrated with the following example:</p>
+
+<pre>val flow = flowOf(1, 2, 3).delayEach(10)
+val flow2 = flowOf("a", "b", "c", "d").delayEach(15)
+flow.zip(flow2) { i, s -&gt; i.toString() + s }.collect {
+    println(it) // Will print "1a 2b 3c"
+}
+</pre>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

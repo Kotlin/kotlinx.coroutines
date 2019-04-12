@@ -42,12 +42,12 @@ If any exception occurs during collect or in the provided flow, this exception i
 
 <pre>val flow = getMyEvents()
 try {
-  flow.collect { value -&gt;
-    println("Received $value")
-  }
-  println("My events are consumed successfully")
+    flow.collect { value -&gt;
+        println("Received $value")
+    }
+    println("My events are consumed successfully")
 } catch (e: Throwable) {
-  println("Exception from the flow: $e")
+    println("Exception from the flow: $e")
 }
 </pre>
 
