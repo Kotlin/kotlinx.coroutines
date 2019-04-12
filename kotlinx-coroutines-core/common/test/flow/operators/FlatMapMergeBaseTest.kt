@@ -3,11 +3,10 @@
  */
 
 
-package kotlinx.coroutines.flow.operators
+package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.flow.*
 import kotlin.test.*
 
 abstract class FlatMapMergeBaseTest : FlatMapBaseTest() {

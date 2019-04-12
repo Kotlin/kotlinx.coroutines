@@ -111,8 +111,4 @@ public fun <T: Any> Flow<T>.asObservable() : Observable<T> = Observable.create {
  */
 @FlowPreview
 @JvmName("from")
-public fun <T: Any> Flow<T>.asFlowable(): Flowable<T> = FlowAsFlowable(asPublisher())
-
-private class FlowAsFlowable<T: Any>(private val publisher: Publisher<T>) : Flowable<T>() {
-    override fun subscribeActual(s: Subscriber<in T>?) = publisher.subscribe(s)
-}
+public fun <T: Any> Flow<T>.asFlowable(): Flowable<T> = Flowable.fromPublisher(asPublisher())

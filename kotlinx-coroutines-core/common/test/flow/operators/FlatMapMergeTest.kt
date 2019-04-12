@@ -5,13 +5,11 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.flow.operators.*
 import kotlin.test.*
 
 class FlatMapMergeTest : FlatMapMergeBaseTest() {
 
-    override fun <T> Flow<T>.flatMap(mapper: suspend (T) -> Flow<T>): Flow<T> = flatMapMerge(mapper = mapper)
+    override fun <T> Flow<T>.flatMap(mapper: suspend (T) -> Flow<T>): Flow<T> = flatMapMerge(transform = mapper)
 
     @Test
     override fun testFlatMapConcurrency() = runTest {
