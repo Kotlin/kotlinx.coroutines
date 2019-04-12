@@ -63,4 +63,39 @@ class TakeTest : TestBase() {
         assertEquals(42, flow.single())
         assertTrue(cancelled)
     }
+
+    @Test
+    fun takeWithRetries() = runTest {
+        val flow = flow {
+            expect(1)
+            emit(1)
+            expect(2)
+            emit(2)
+
+            while (true) {
+                emit(42)
+                expectUnreached()
+            }
+
+        }.retry(2) {
+            expectUnreached()
+            true
+        }.take(2)
+
+        val sum = flow.sum()
+        assertEquals(3, sum)
+        finish(3)
+    }
+
+    @Test
+    fun testNonIdempotentRetry() = runTest {
+        var count = 0
+        flow { while (true) emit(1) }
+            .retry { count++ % 2 != 0 }
+            .take(1)
+            .collect {
+                expect(1)
+            }
+        finish(2)
+    }
 }

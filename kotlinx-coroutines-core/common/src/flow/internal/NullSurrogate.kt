@@ -4,4 +4,11 @@
 
 package kotlinx.coroutines.flow.internal
 
-internal object NullSurrogate
+import kotlin.jvm.*
+
+internal object NullSurrogate {
+
+    @JvmStatic
+    @Suppress("UNCHECKED_CAST")
+    internal fun <T> unbox(value: Any?): T = if (value === NullSurrogate) null as T else value as T
+}

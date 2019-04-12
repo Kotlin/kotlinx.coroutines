@@ -203,15 +203,17 @@ internal fun <T> Continuation<T>.resumeDirectWithException(exception: Throwable)
 internal abstract class DispatchedTask<in T>(
     @JvmField public var resumeMode: Int
 ) : SchedulerTask() {
-    public abstract val delegate: Continuation<T>
+    internal abstract val delegate: Continuation<T>
 
-    public abstract fun takeState(): Any?
+    internal abstract fun takeState(): Any?
+
+    internal open fun cancelResult(state: Any?, cause: Throwable) {}
 
     @Suppress("UNCHECKED_CAST")
-    public open fun <T> getSuccessfulResult(state: Any?): T =
+    internal open fun <T> getSuccessfulResult(state: Any?): T =
         state as T
 
-    public fun getExceptionalResult(state: Any?): Throwable? =
+    internal fun getExceptionalResult(state: Any?): Throwable? =
         (state as? CompletedExceptionally)?.cause
 
     public final override fun run() {
@@ -224,9 +226,11 @@ internal abstract class DispatchedTask<in T>(
             val job = if (resumeMode.isCancellableMode) context[Job] else null
             val state = takeState() // NOTE: Must take state in any case, even if cancelled
             withCoroutineContext(context, delegate.countOrElement) {
-                if (job != null && !job.isActive)
-                    continuation.resumeWithException(job.getCancellationException())
-                else {
+                if (job != null && !job.isActive) {
+                    val cause = job.getCancellationException()
+                    cancelResult(state, cause)
+                    continuation.resumeWithException(cause)
+                } else {
                     val exception = getExceptionalResult(state)
                     if (exception != null)
                         continuation.resumeWithStackTrace(exception)

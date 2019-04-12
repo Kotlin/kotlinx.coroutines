@@ -5,6 +5,8 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 class FlowInvariantsTest : TestBase() {
@@ -22,9 +24,20 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testWithContextContractViolated() = runTest({ it is IllegalStateException }) {
+    fun testWithDispatcherContractViolated() = runTest({ it is IllegalStateException }) {
         flow {
             kotlinx.coroutines.withContext(NamedDispatchers("foo")) {
+                emit(1)
+            }
+        }.collect {
+            fail()
+        }
+    }
+
+    @Test
+    fun testWithNameContractViolated() = runTest({ it is IllegalStateException }) {
+        flow {
+            kotlinx.coroutines.withContext(CoroutineName("foo")) {
                 emit(1)
             }
         }.collect {
@@ -50,5 +63,41 @@ class FlowInvariantsTest : TestBase() {
         }
 
         assertEquals("original", result)
+    }
+
+    @Test
+    fun testScopedJob() = runTest {
+        flow { emit(1) }.buffer(EmptyCoroutineContext).collect {
+            expect(1)
+        }
+
+        finish(2)
+    }
+
+    @Test
+    fun testScopedJobWithViolation() = runTest({ it is IllegalStateException }) {
+        flow { emit(1) }.buffer(Dispatchers.Unconfined).collect {
+            expect(1)
+        }
+
+        finish(2)
+    }
+
+    private fun Flow<Int>.buffer(coroutineContext: CoroutineContext): Flow<Int> = flow {
+        coroutineScope {
+            val channel = Channel<Int>()
+            launch {
+                collect { value ->
+                    channel.send(value)
+                }
+                channel.close()
+            }
+
+            launch(coroutineContext) {
+                for (i in channel) {
+                    emit(i)
+                }
+            }
+        }
     }
 }

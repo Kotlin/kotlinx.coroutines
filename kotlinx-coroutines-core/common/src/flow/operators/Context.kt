@@ -15,19 +15,21 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
 
 /**
  * The operator that changes the context where this flow is executed to the given [flowContext].
- * This operator is composable and affects only precedent operators that do not have its own context.
- * This operator is pure: [flowContext] **does not** leak into the downstream flow.
+ * This operator is composable and affects only preceding operators that do not have its own context.
+ * This operator is context preserving: [flowContext] **does not** leak into the downstream flow.
  *
  * For example:
  * ```
- * val singleValue = intFlow // will be executed on IO if context wasn't specified before
- *     .map { ... } // Will be executed in IO
- *     .flowOn(Dispatchers.IO)
- *     .filter { ... } // Will be executed in Default
- *     .flowOn(Dispatchers.Default)
- *     .single() // Will be executed in the context of the caller
+ * withContext(Dispatchers.Main) {
+ *     val singleValue = intFlow // will be executed on IO if context wasn't specified before
+ *         .map { ... } // Will be executed in IO
+ *         .flowOn(Dispatchers.IO)
+ *         .filter { ... } // Will be executed in Default
+ *         .flowOn(Dispatchers.Default)
+ *         .single() // Will be executed in the Main
+ * }
  * ```
- * For more explanation of purity concept please refer to [Flow] documentation.
+ * For more explanation of context preservation please refer to [Flow] documentation.
  *
  * This operator uses a channel of the specific [bufferSize] in order to switch between contexts,
  * but it is not guaranteed that the channel will be created, implementation is free to optimize it away in case of fusing.
@@ -69,7 +71,7 @@ public fun <T> Flow<T>.flowOn(flowContext: CoroutineContext, bufferSize: Int = 1
 
 /**
  * The operator that changes the context where all transformations applied to the given flow within a [builder] are executed.
- * This operator is pure and does not affect the context of the precedent and subsequent operations.
+ * This operator is context preserving and does not affect the context of the preceding and subsequent operations.
  *
  * Example:
  * ```
@@ -81,7 +83,7 @@ public fun <T> Flow<T>.flowOn(flowContext: CoroutineContext, bufferSize: Int = 1
  *     }
  *     .map { ... } // Not affected
  * ```
- * For more explanation of purity concept please refer to [Flow] documentation.
+ * For more explanation of context preservation please refer to [Flow] documentation.
  *
  * This operator uses channel of the specific [bufferSize] in order to switch between contexts,
  * but it is not guaranteed that channel will be created, implementation is free to optimize it away in case of fusing.
@@ -98,9 +100,9 @@ public fun <T, R> Flow<T>.flowWith(
     val source = this
     return flow {
         /**
-         * Here we should subtract Job instance from the context.
+         * Here we should remove a Job instance from the context.
          * All builders are written using scoping and no global coroutines are launched, so it is safe not to provide explicit Job.
-         * It is also necessary not to mess with cancellations if multiple flowWith are used.
+         * It is also necessary not to mess with cancellation if multiple flowWith are used.
          */
         val originalContext = coroutineContext.minusKey(Job)
         val prepared = source.flowOn(originalContext, bufferSize)

@@ -14,7 +14,7 @@ import kotlinx.coroutines.*
  * Implementations of this interface are not thread-safe.
  */
 @FlowPreview
-public interface FlowCollector<T> {
+public interface FlowCollector<in T> {
 
     /**
      * Collects the value emitted by the upstream.

@@ -8,9 +8,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.reactivestreams.*
 import java.util.concurrent.atomic.*
+import kotlin.coroutines.*
 
 /**
- * Transforms the given flow to a spec-compliant [Publisher]
+ * Transforms the given flow to a spec-compliant [Publisher].
  */
 @JvmName("from")
 @FlowPreview
@@ -18,19 +19,14 @@ public fun <T : Any> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
 
 /**
  * Adapter that transforms [Flow] into TCK-complaint [Publisher].
- * Any calls to [cancel] cancels the original flow.
+ * [cancel] invocation cancels the original flow.
  */
 @Suppress("PublisherImplementation")
 private class FlowAsPublisher<T : Any>(private val flow: Flow<T>) : Publisher<T> {
 
     override fun subscribe(subscriber: Subscriber<in T>?) {
         if (subscriber == null) throw NullPointerException()
-        subscriber.onSubscribe(
-            FlowSubscription(
-                flow,
-                subscriber
-            )
-        )
+        subscriber.onSubscribe(FlowSubscription(flow, subscriber))
     }
 
     private class FlowSubscription<T>(val flow: Flow<T>, val subscriber: Subscriber<in T>) : Subscription {
@@ -45,18 +41,18 @@ private class FlowAsPublisher<T : Any>(private val flow: Flow<T>) : Publisher<T>
                 consumeFlow()
                 subscriber.onComplete()
             } catch (e: Throwable) {
-                // Failed with real exception
+                // Failed with real exception, not due to cancellation
                 if (!coroutineContext[Job]!!.isCancelled) {
                     subscriber.onError(e)
                 }
             }
         }
 
-        private suspend fun CoroutineScope.consumeFlow() {
+        private suspend fun consumeFlow() {
             flow.collect { value ->
-                if (!isActive) {
+                if (!coroutineContext.isActive) {
                     subscriber.onComplete()
-                    yield() // Force cancellation
+                    coroutineContext.ensureActive()
                 }
 
                 if (requested.get() == 0L) {
@@ -67,13 +63,7 @@ private class FlowAsPublisher<T : Any>(private val flow: Flow<T>) : Publisher<T>
                 }
 
                 requested.decrementAndGet()
-                val result = kotlin.runCatching {
-                    subscriber.onNext(value)
-                }
-
-                if (result.isFailure) {
-                    subscriber.onError(result.exceptionOrNull())
-                }
+                subscriber.onNext(value)
             }
         }
 
@@ -96,12 +86,10 @@ private class FlowAsPublisher<T : Any>(private val flow: Flow<T>) : Publisher<T>
                 snapshot = requested.get()
                 newValue = snapshot + n
                 if (newValue <= 0L) newValue = Long.MAX_VALUE
-
             } while (!requested.compareAndSet(snapshot, newValue))
 
             val prev = producer.get()
             if (prev == null || !producer.compareAndSet(prev, null)) return
-
             prev.resumeSafely()
         }
 

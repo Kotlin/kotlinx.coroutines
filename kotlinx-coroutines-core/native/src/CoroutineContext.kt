@@ -47,3 +47,5 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
 internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T = block()
 internal actual fun Continuation<*>.toDebugString(): String = toString()
 internal actual val CoroutineContext.coroutineName: String? get() = null // not supported on native
+@Suppress("NOTHING_TO_INLINE")
+internal actual inline fun CoroutineContext.minusId(): CoroutineContext = this

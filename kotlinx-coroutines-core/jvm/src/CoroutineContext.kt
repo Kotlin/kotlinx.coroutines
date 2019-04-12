@@ -79,6 +79,9 @@ internal actual val CoroutineContext.coroutineName: String? get() {
     return "$coroutineName#${coroutineId.id}"
 }
 
+@Suppress("NOTHING_TO_INLINE")
+internal actual inline fun CoroutineContext.minusId(): CoroutineContext = minusKey(CoroutineId)
+
 private const val DEBUG_THREAD_NAME_SEPARATOR = " @"
 
 internal data class CoroutineId(

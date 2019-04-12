@@ -151,11 +151,8 @@ public interface ReceiveChannel<out E> {
     /**
      * Returns `true` if the channel is empty (contains no elements) and the [receive] attempt will suspend.
      * This function returns `false` for [isClosedForReceive] channel.
-     *
-     * @suppress **Will be removed in next releases, no replacement.**
      */
     @ExperimentalCoroutinesApi
-    @Deprecated(level = DeprecationLevel.ERROR, message = "Will be removed in next releases without replacement")
     public val isEmpty: Boolean
 
     /**
