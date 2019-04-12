@@ -8,7 +8,7 @@ import kotlin.jvm.*
 
 internal object NullSurrogate {
 
-    @Suppress("NULL_FOR_NONNULL_TYPE")
     @JvmStatic
-    internal fun <T> unbox(value: Any?): T = if (value === NullSurrogate) null else value as T
+    @Suppress("UNCHECKED_CAST")
+    internal fun <T> unbox(value: Any?): T = if (value === NullSurrogate) null as T else value as T
 }
