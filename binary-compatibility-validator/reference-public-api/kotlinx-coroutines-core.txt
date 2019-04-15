@@ -808,8 +808,8 @@ public final class kotlinx/coroutines/selects/SelectBuilderImpl : kotlinx/corout
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause1;Lkotlin/jvm/functions/Function2;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
+	public fun invokeOnCompletion (Lkotlin/jvm/functions/Function0;)V
 	public final fun invokeSelectedAlternativeAction (ILjava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public fun onRegister (Lkotlin/jvm/functions/Function0;)V
 	public fun onTimeout (JLkotlin/jvm/functions/Function1;)Ljava/lang/Void;
 	public synthetic fun onTimeout (JLkotlin/jvm/functions/Function1;)V
 	public final fun selectAlternative (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -822,23 +822,44 @@ public final class kotlinx/coroutines/selects/SelectBuilderImpl : kotlinx/corout
 
 public abstract interface class kotlinx/coroutines/selects/SelectClause {
 	public abstract fun getObjForSelect ()Ljava/lang/Object;
-	public abstract fun getProcessResFunc ()Lkotlin/jvm/functions/Function2;
+	public abstract fun getProcessResFunc ()Lkotlin/jvm/functions/Function3;
 	public abstract fun getRegFunc ()Lkotlin/jvm/functions/Function3;
 }
 
 public abstract interface class kotlinx/coroutines/selects/SelectClause0 : kotlinx/coroutines/selects/SelectClause {
 }
 
+public final class kotlinx/coroutines/selects/SelectClause0Impl : kotlinx/coroutines/selects/SelectClause0 {
+	public fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;)V
+	public fun getObjForSelect ()Ljava/lang/Object;
+	public fun getProcessResFunc ()Lkotlin/jvm/functions/Function3;
+	public fun getRegFunc ()Lkotlin/jvm/functions/Function3;
+}
+
 public abstract interface class kotlinx/coroutines/selects/SelectClause1 : kotlinx/coroutines/selects/SelectClause {
+}
+
+public final class kotlinx/coroutines/selects/SelectClause1Impl : kotlinx/coroutines/selects/SelectClause1 {
+	public fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;)V
+	public fun getObjForSelect ()Ljava/lang/Object;
+	public fun getProcessResFunc ()Lkotlin/jvm/functions/Function3;
+	public fun getRegFunc ()Lkotlin/jvm/functions/Function3;
 }
 
 public abstract interface class kotlinx/coroutines/selects/SelectClause2 : kotlinx/coroutines/selects/SelectClause {
 }
 
+public final class kotlinx/coroutines/selects/SelectClause2Impl : kotlinx/coroutines/selects/SelectClause2 {
+	public fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;)V
+	public fun getObjForSelect ()Ljava/lang/Object;
+	public fun getProcessResFunc ()Lkotlin/jvm/functions/Function3;
+	public fun getRegFunc ()Lkotlin/jvm/functions/Function3;
+}
+
 public abstract interface class kotlinx/coroutines/selects/SelectInstance {
 	public abstract fun getId ()J
 	public abstract fun getWaitingFor ()Lkotlinx/coroutines/selects/SelectInstance;
-	public abstract fun onRegister (Lkotlin/jvm/functions/Function0;)V
+	public abstract fun invokeOnCompletion (Lkotlin/jvm/functions/Function0;)V
 	public abstract fun selectInRegPhase (Ljava/lang/Object;)V
 	public abstract fun setWaitingFor (Lkotlinx/coroutines/selects/SelectInstance;)V
 	public abstract fun trySelect (Ljava/lang/Object;Ljava/lang/Object;Lkotlinx/coroutines/selects/SelectInstance;)Z

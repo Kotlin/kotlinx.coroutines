@@ -11,4 +11,4 @@ internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {
 private val DEFAULT_OBJ_FOR_SELECT = Symbol("DEFAULT_OBJ_FOR_SELECT")
 private fun regDefault(objForSelect: Any, select: SelectInstance<*>, param: Any?) =
     select.selectInRegPhase(objForSelect)
-private fun processResDefault(objForSelect: Any, result: Any?): Any? = null
+private fun processResDefault(objForSelect: Any, param: Any?, selectResult: Any?): Any? = null

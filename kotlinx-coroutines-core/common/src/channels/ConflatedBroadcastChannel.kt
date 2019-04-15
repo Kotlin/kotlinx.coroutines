@@ -114,7 +114,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
                 }
                 is State<*> -> {
                     if (state.value !== UNDEFINED)
-                        subscriber.offerInternal(state.value as E)
+                        subscriber.offer(state.value as E)
                     val update = State(state.value, addSubscriber((state as State<E>).subscribers, subscriber))
                     if (_state.compareAndSet(state, update))
                         return subscriber
@@ -252,7 +252,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
                             // Note: Using offerInternal here to ignore the case when this subscriber was
                             // already concurrently closed (assume the close had conflated our offer for this
                             // particular subscriber).
-                            state.subscribers?.forEach { it.offerInternal(element) }
+                            state.subscribers?.forEach { it.offer(element) }
                             return null
                         }
                     }
@@ -270,11 +270,9 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>
     ) : ConflatedChannel<E>(), ReceiveChannel<E> {
-        override fun cancelInternal(cause: Throwable?): Boolean =
+        override fun cancelImpl(cause: Throwable?): Boolean =
             close(cause).also { closed ->
                 if (closed) broadcastChannel.closeSubscriber(this)
             }
-
-        public override fun offerInternal(element: E): Any = super.offerInternal(element)
     }
 }

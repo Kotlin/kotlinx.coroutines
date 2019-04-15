@@ -4,12 +4,13 @@
 
 package kotlinx.coroutines.sync
 
-import kotlinx.atomicfu.*
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.loop
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
-import kotlin.coroutines.*
-import kotlin.jvm.*
+import kotlin.coroutines.resume
+import kotlin.jvm.JvmField
 
 /**
  * Mutual exclusion for coroutines.
@@ -234,10 +235,15 @@ internal class MutexImpl(locked: Boolean) : Mutex {
         }
     }
 
-    override val onLock: SelectClause2<Any?, Mutex>
-        get() = SelectClause2Impl(this@MutexImpl, ::onLockRegFunction, ::onLockProcessResultFunction)
+    override val onLock: SelectClause2<Any?, Mutex> get() = SelectClause2Impl(
+            objForSelect = this,
+            regFunc = MutexImpl::onLockRegFunction as RegistrationFunction,
+            processResFunc = MutexImpl::onLockProcessResultFunction as ProcessResultFunction
+    )
 
-    internal fun onLockSelectRegistration(select: SelectInstance<*>, owner: Any?) = lockImpl(select, owner)
+    private fun onLockRegFunction(select: SelectInstance<*>, owner: Any?) = lockImpl(select, owner)
+    private fun onLockProcessResultFunction(ignoredParam: Any?, ignoredResult: Any?) = this
+
 
     public override fun holdsLock(owner: Any) =
             _state.value.let { state ->
@@ -347,10 +353,4 @@ internal class MutexImpl(locked: Boolean) : Mutex {
             return if (affected._state.value === queue) UNLOCK_FAIL else null
         }
     }
-}
-
-private fun onLockProcessResultFunction(mutex: Any, result: Any?) = mutex
-private fun onLockRegFunction(mutex: Any, select: SelectInstance<*>, owner: Any?) {
-    mutex as MutexImpl
-    mutex.onLockSelectRegistration(select, owner)
 }

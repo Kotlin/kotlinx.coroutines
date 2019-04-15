@@ -59,8 +59,8 @@ class ChannelLinearizabilityTest : TestBase() {
         select<Int> { channel.onReceive { it } }
     }
 
-//    @Operation(runOnce = true)
-//    fun close1() = lt.run("close1") { channel.close(IOException("close1")) }
+    @Operation(runOnce = true)
+    fun close1() = lt.run("close1") { channel.close(IOException("close1")) }
 
 //    @Operation(runOnce = true)
 //    fun close2() = lt.run("close2") { channel.close(IOException("close2")) }
@@ -68,17 +68,23 @@ class ChannelLinearizabilityTest : TestBase() {
 //    @Operation(runOnce = true)
 //    fun cancel1() = lt.run("cancel1") { channel.cancel(CancellationException("cancel1")) }
 
-//    @Operation(runOnce = true)
-//    fun isClosedForSend1() = lt.run("isClosedForSend1") { channel.isClosedForSend }
-//
-//    @Operation(runOnce = true)
-//    fun isClosedForReceive1() = lt.run("isClosedForReceive1") { channel.isClosedForReceive }
+    @Operation(runOnce = true)
+    fun isClosedForSend1() = lt.run("isClosedForSend1") { channel.isClosedForSend }
+
+    @Operation(runOnce = true)
+    fun isClosedForReceive1() = lt.run("isClosedForReceive1") { channel.isClosedForReceive }
 
     @Operation(runOnce = true, handleExceptionsAsResult = [IOException::class])
     fun offer1(@Param(name = "value") value: Int) = lt.run("offer1") { channel.offer(value) }
 
-//    @Operation(runOnce = true, handleExceptionsAsResult = [IOException::class])
-//    fun poll1() = lt.run("poll1") { channel.poll() }
+    @Operation(runOnce = true, handleExceptionsAsResult = [IOException::class])
+    fun offer2(@Param(name = "value") value: Int) = lt.run("offer2") { channel.offer(value) }
+
+    @Operation(runOnce = true, handleExceptionsAsResult = [IOException::class])
+    fun poll1() = lt.run("poll1") { channel.poll() }
+
+    @Operation(runOnce = true, handleExceptionsAsResult = [IOException::class])
+    fun poll2() = lt.run("poll2") { channel.poll() }
 
     @Test
     fun testRendezvousChannelLinearizability() = runTest(Channel.RENDEZVOUS)
@@ -86,6 +92,7 @@ class ChannelLinearizabilityTest : TestBase() {
     @Test
     fun testArrayChannelLinearizability() = listOf(1).forEach { runTest(it) }
 
+    @Ignore
     @Test
     fun testConflatedChannelLinearizability() = runTest(Channel.CONFLATED)
 
@@ -95,9 +102,9 @@ class ChannelLinearizabilityTest : TestBase() {
     private fun runTest(capacity: Int) {
         ChannelLinearizabilityTest.capacity = capacity
         val options = StressOptions()
-            .iterations(300 * stressTestMultiplierSqrt)
-            .invocationsPerIteration(1000 * stressTestMultiplierSqrt)
-            .threads(2)
+            .iterations(100 * stressTestMultiplierSqrt)
+            .invocationsPerIteration(5000 * stressTestMultiplierSqrt)
+            .threads(3)
             .verifier(LinVerifier::class.java)
             .logLevel(LoggingLevel.DEBUG)
         LinChecker.check(ChannelLinearizabilityTest::class.java, options)

@@ -118,7 +118,6 @@ class SelectDeferredTest : TestBase() {
         finish(9)
     }
 
-    @Ignore
     @Test
     fun testSelectCancel() = runTest(
         expected = { it is CancellationException }
@@ -138,7 +137,6 @@ class SelectDeferredTest : TestBase() {
         expectUnreached()
     }
 
-    @Ignore
     @Test
     fun testSelectIncomplete() = runTest {
         val deferred = async { Wrapper("OK") }

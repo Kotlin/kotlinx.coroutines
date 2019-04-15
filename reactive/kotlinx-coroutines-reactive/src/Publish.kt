@@ -91,8 +91,17 @@ private class PublisherCoroutine<in T>(
         doLockedNext(element)
     }
 
-    override val onSend: SelectClause2<T, SendChannel<T>>
-        get() = TODO()
+    override val onSend: SelectClause2<T, SendChannel<T>> get() = SelectClause2Impl(
+        objForSelect = this.mutex,
+            regFunc = this.mutex.onLock.regFunc,
+            processResFunc = PublisherCoroutine<*>::onSendProcessResFunction as ProcessResultFunction
+    )
+
+    private fun onSendProcessResFunction(element: T, selectResult: Any?): Any? {
+        this.mutex.onLock.processResFunc(this.mutex, element, selectResult)
+        doLockedNext(element)
+        return this
+    }
 
     /*
      * This code is not trivial because of the two properties:

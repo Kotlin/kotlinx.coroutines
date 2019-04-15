@@ -10,6 +10,7 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
+import kotlin.math.min
 
 /**
  * This is a common implementation for both rendezvous and buffered channels.
@@ -270,6 +271,7 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         // Initialize queue with empty node similar to MS queue
         // algorithm, but this node is just empty, not sentinel.
         val emptyNode = Segment(0, null)
+        emptyNode.setCont(0, CONT_CLEANED)
         head = atomic(emptyNode)
         tail = atomic(emptyNode)
     }
@@ -309,6 +311,7 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
      * and a new segment should be added.
      */
     private fun findOrCreateSegment(id: Long, cur: Segment): Segment? {
+        if (cur.id > id) return null
         // This method goes through `next` references and
         // adds new segments if needed, similarly to the `push` in
         // the Michael-Scott queue algorithm.
@@ -363,7 +366,11 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     // ######################
 
     override fun offer(element: E): Boolean {
-        // TODO optimization for unlimited channel
+        if (unlimited) {
+            sendUnlimited(element)
+            return true
+        }
+
         if (closed) throw sendException
         while (true) {
             val head = this.head.value
@@ -471,6 +478,48 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                 segment = findOrCreateSegment(bufferEnd / SEGMENT_SIZE, segment) ?: return
                 val i = (bufferEnd % SEGMENT_SIZE).toInt()
                 if (makeBuffered(segment, i)) return
+            }
+        }
+    }
+
+    protected fun offerConflated(element: E) {
+        val senders = sendUnlimited(element)
+        if (senders == -1L) return
+
+        val firstSegmentId = senders / SEGMENT_SIZE
+        var curSegment = findOrCreateSegment(senders / SEGMENT_SIZE, this.head.value)
+        while (curSegment !== null) {
+            val maxIndex = if (curSegment.id == firstSegmentId) ((senders - 1) % SEGMENT_SIZE).toInt() else (SEGMENT_SIZE - 1)
+            for (i in maxIndex downTo 0) {
+                var waiter = curSegment.getCont(i)
+                while (waiter === null) waiter = curSegment.getCont(i)
+                if (waiter === CONT_BUFFERED) curSegment.clean(i)
+            }
+            curSegment = curSegment.prev.value
+        }
+    }
+
+    private fun sendUnlimited(element: E): Long {
+        if (closed) throw sendException
+
+        while (true) {
+            val head = this.head.value
+            val tail = this.tail.value
+
+            incSenders { senders, receivers, bufferEnd, closed ->
+                if (closed) {
+                    storeWaiter(CONT_CLEANED, null, tail, senders)
+                    throw sendException
+                }
+                if (senders <= receivers) {
+                    if (resumeWaiter(element, head, senders) != FAILED) {
+                        onReceiveDequeued()
+                        return -1
+                    }
+                } else {
+                    if (!storeWaiter(CONT_BUFFERED, element, tail, senders)) throw sendException
+                    return senders
+                }
             }
         }
     }
@@ -652,7 +701,7 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                 waiter.cleanOnCancellation(segment, position)
             }
             is SelectInstance<*> -> {
-               waiter.onRegister { segment.clean(position) }
+               waiter.invokeOnCompletion { segment.clean(position) }
             }
         }
         return true
@@ -662,26 +711,26 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     // #######################
     // ## Select Expression ##
     // #######################
+    // TODO add SelectClauseXXXImpl
+    override val onSend: SelectClause2<E, SendChannel<E>> get() = SelectClause2Impl(
+            objForSelect = this@BufferedChannel,
+            regFunc = BufferedChannel<*>::registerSelectForSend as RegistrationFunction,
+            processResFunc = BufferedChannel<*>::processResultSelectSend as ProcessResultFunction
+    )
 
-    override val onSend: SelectClause2<E, SendChannel<E>> get() = object : SelectClause2<E, SendChannel<E>> {
-        override val objForSelect: Any = this@BufferedChannel
-        override val regFunc: RegistrationFunction = ::registerSelectSend
-        override val processResFunc: ProcessResultFunction = ::processResultSelectSend
-    }
+    override val onReceiveOrNull: SelectClause1<E?> get() = SelectClause1Impl(
+            objForSelect = this@BufferedChannel,
+            regFunc = BufferedChannel<*>::registerSelectForReceive as RegistrationFunction,
+            processResFunc = BufferedChannel<*>::processResultSelectReceiveOrNull as ProcessResultFunction
+    )
 
-    override val onReceiveOrNull: SelectClause1<E?> get() = object : SelectClause1<E?> {
-        override val objForSelect: Any = this@BufferedChannel
-        override val regFunc: RegistrationFunction = ::registerSelectReceive
-        override val processResFunc: ProcessResultFunction = ::processResultSelectReceiveOrNull
-    }
+    override val onReceive: SelectClause1<E> get() = SelectClause1Impl(
+            objForSelect = this@BufferedChannel,
+            regFunc = BufferedChannel<*>::registerSelectForReceive as RegistrationFunction,
+            processResFunc = BufferedChannel<*>::processResultSelectReceive as ProcessResultFunction
+    )
 
-    override val onReceive: SelectClause1<E> get() = object : SelectClause1<E> {
-        override val objForSelect: Any = this@BufferedChannel
-        override val regFunc: RegistrationFunction = ::registerSelectReceive
-        override val processResFunc: ProcessResultFunction = ::processResultSelectReceive
-    }
-
-    internal fun registerSelectForSend(select: SelectInstance<*>, element: Any?) {
+    private fun registerSelectForSend(select: SelectInstance<*>, element: Any?) {
         element as E
         if (closed) throw sendException
 
@@ -715,7 +764,7 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         }
     }
 
-    internal fun registerSelectForReceive(select: SelectInstance<*>) {
+    private fun registerSelectForReceive(select: SelectInstance<*>, ignoredParam: Any?) {
         val startHead = this.head.value
         val startTail = this.tail.value
         var startBufferEnd = -1L
@@ -775,6 +824,20 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         }
     }
 
+    private fun processResultSelectSend(ignoredParam: Any?, selectResult: Any?): Any? =
+            if (selectResult === CLOSED) throw sendException
+            else this
+
+    private fun processResultSelectReceive(ignoredParam: Any?, selectResult: Any?): Any? =
+            if (selectResult === CLOSED) throw receiveException
+            else selectResult
+
+    private fun processResultSelectReceiveOrNull(ignoredParam: Any?, selectResult: Any?): Any? =
+            if (selectResult === CLOSED) {
+                if (closeCause.value !== null) throw receiveException
+                null
+            } else selectResult
+
 
     // ##############################
     // ## Closing and Cancellation ##
@@ -795,13 +858,13 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
 
         while (true) {
             incCountersWithCondition(
-                { senders, receivers, bufferEnd ->
+                sc@ { senders, receivers, bufferEnd ->
                     val r = receivers + 1
-                    head = findOrCreateSegment(r / SEGMENT_SIZE, head) ?: return true
-                    if (r > senders) return true
-                    if (r > (tail.id + 1) * SEGMENT_SIZE) return true
+                    head = findOrCreateSegment(r / SEGMENT_SIZE, head) ?: return true.also { releaseReadLock(); }
+                    if (r > senders) { releaseReadLock(); return true }
+                    if (r > (tail.id + 1) * SEGMENT_SIZE) { releaseReadLock(); return true }
                     val waiter = head.getCont((r % SEGMENT_SIZE).toInt())
-                    if (waiter === CONT_BUFFERED) return false
+                    if (waiter === CONT_BUFFERED) { releaseReadLock(); return false }
                     true
                 },
                 { curLowest -> this.lowest.compareAndSet(curLowest, curLowest + RECEIVE_INC) },
@@ -816,11 +879,11 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
      * this channel was cancelled without error. Stores [NO_CLOSE_CAUSE] if this
      * channel is not cancelled.
      */
-    internal val closeCause = atomic<Any?>(NO_CLOSE_CAUSE)
+    private val closeCause = atomic<Any?>(NO_CLOSE_CAUSE)
 
-    internal val receiveException: Throwable
+    private val receiveException: Throwable
         get() = (closeCause.value as Throwable?) ?: ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE)
-    internal val sendException: Throwable
+    private val sendException: Throwable
         get() = (closeCause.value as Throwable?) ?: ClosedSendChannelException(DEFAULT_CLOSE_MESSAGE)
 
     // Stores the close handler.
@@ -857,6 +920,7 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                                 cont as CancellableContinuation<in Any>
                                 cont.resume(CLOSED)
                             } else {
+                                println(el)
                                 cont.resumeWithException(sendException)
                             }
                         }
@@ -926,11 +990,11 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     }
 
 
-    override fun cancel(cause: Throwable?): Boolean = cancelImpl(cause)
-    override fun cancel() { cancelImpl(null) }
-    override fun cancel(cause: CancellationException?) { cancelImpl(cause) }
+    final override fun cancel(cause: Throwable?): Boolean = cancelImpl(cause)
+    final override fun cancel() { cancelImpl(null) }
+    final override fun cancel(cause: CancellationException?) { cancelImpl(cause) }
 
-    private fun cancelImpl(cause: Throwable?): Boolean {
+    protected open fun cancelImpl(cause: Throwable?): Boolean {
         val closedByThisOperation = closeCause.compareAndSet(NO_CLOSE_CAUSE, cause)
         setClosedFlag {
             removeWaitingRequests(true)
@@ -1029,7 +1093,6 @@ private class Segment(@JvmField val id: Long) {
                 else -> if (casCont(index, cont, replacement)) return cont
             }
         }
-
     }
 
     // == Michael-Scott Queue + Fast Removing from the Middle ==
@@ -1119,27 +1182,6 @@ private class Segment(@JvmField val id: Long) {
         }
     }
 }
-
-private fun registerSelectSend(objForSelect: Any, select: SelectInstance<*>, param: Any?) =
-    (objForSelect as BufferedChannel<*>).run { registerSelectForSend(select, param) }
-
-private fun processResultSelectSend(objForSelect: Any, selectResult: Any?): Any? =
-    if (selectResult === CLOSED) throw (objForSelect as BufferedChannel<*>).sendException
-    else objForSelect
-
-private fun registerSelectReceive(objForSelect: Any, select: SelectInstance<*>, param: Any?) =
-    (objForSelect as BufferedChannel<*>).run { registerSelectForReceive(select) }
-
-private fun processResultSelectReceive(objForSelect: Any, selectResult: Any?): Any? =
-    if (selectResult === CLOSED) throw (objForSelect as BufferedChannel<*>).receiveException
-    else selectResult
-
-private fun processResultSelectReceiveOrNull(objForSelect: Any, selectResult: Any?): Any? =
-    if (selectResult === CLOSED) {
-        val c = objForSelect as BufferedChannel<*>
-        if (c.closeCause.value === null) null
-        else throw c.receiveException
-    } else selectResult
 
 
 // Number of waiters in each segment

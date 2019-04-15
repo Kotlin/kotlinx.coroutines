@@ -76,34 +76,6 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     protected fun takeFirstSendOrPeekClosed(): Send? =
         queue.removeFirstIfIsInstanceOfOrPeekIf<Send> { it is Closed<*> }
 
-    /**
-     * Queues buffered element, returns null on success or
-     * returns node reference if it was already closed or is waiting for receive.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    protected fun sendBuffered(element: E): ReceiveOrClosed<*>? {
-        queue.addLastIfPrev(SendBuffered(element), { prev ->
-            if (prev is ReceiveOrClosed<*>) return@sendBuffered prev
-            true
-        })
-        return null
-    }
-
-    /**
-     * Queues conflated element, returns null on success or
-     * returns node reference if it was already closed or is waiting for receive.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    protected fun sendConflated(element: E): ReceiveOrClosed<*>? {
-        val node = SendBuffered(element)
-        queue.addLastIfPrev(node, { prev ->
-            if (prev is ReceiveOrClosed<*>) return@sendConflated prev
-            true
-        })
-        conflatePreviousSendBuffered(node)
-        return null
-    }
-
     protected fun conflatePreviousSendBuffered(node: LockFreeLinkedListNode) {
         /*
          * Conflate all previous SendBuffered,
@@ -115,37 +87,6 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
                 prev.helpRemove()
             }
             prev = prev.prevNode
-        }
-    }
-
-    /**
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    protected fun describeSendBuffered(element: E): AddLastDesc<*> = SendBufferedDesc(queue, element)
-
-    private open class SendBufferedDesc<E>(
-        queue: LockFreeLinkedListHead,
-        element: E
-    ) : AddLastDesc<SendBuffered<E>>(queue, SendBuffered(element)) {
-        override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? {
-            if (affected is ReceiveOrClosed<*>) return OFFER_FAILED
-            return null
-        }
-    }
-
-    /**
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    protected fun describeSendConflated(element: E): AddLastDesc<*> = SendConflatedDesc(queue, element)
-
-    private class SendConflatedDesc<E>(
-        queue: LockFreeLinkedListHead,
-        element: E
-    ) : SendBufferedDesc<E>(queue, element) {
-        override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) {
-            super.finishOnSuccess(affected, next)
-            // remove previous SendBuffered
-            (affected as? SendBuffered<*>)?.remove()
         }
     }
 
@@ -769,14 +710,6 @@ internal val POLL_FAILED: Any = Symbol("POLL_FAILED")
 @JvmField
 @SharedImmutable
 internal val ENQUEUE_FAILED: Any = Symbol("ENQUEUE_FAILED")
-
-@JvmField
-@SharedImmutable
-internal val SELECT_STARTED: Any = Symbol("SELECT_STARTED")
-
-@JvmField
-@SharedImmutable
-internal val NULL_VALUE: Any = Symbol("NULL_VALUE")
 
 @JvmField
 @SharedImmutable

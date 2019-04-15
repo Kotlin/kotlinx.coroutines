@@ -7,7 +7,6 @@ package kotlinx.coroutines.selects
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-@Ignore
 class SelectJobTest : TestBase() {
     @Test
     fun testSelectCompleted() = runTest {

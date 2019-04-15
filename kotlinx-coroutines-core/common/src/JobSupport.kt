@@ -511,8 +511,22 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         cont.disposeOnCancellation(invokeOnCompletion(handler = ResumeOnCompletion(this, cont).asHandler))
     }
 
-    public final override val onJoin: SelectClause0
-        get() = TODO()
+    public final override val onJoin: SelectClause0 get() = SelectClause0Impl(
+            objForSelect = this@JobSupport,
+            regFunc = JobSupport::onJoinRegFunction as RegistrationFunction,
+            processResFunc = JobSupport::onJoinProcessResFunction as ProcessResultFunction
+    )
+
+    private fun onJoinRegFunction(select: SelectInstance<*>, ignoredParam: Any?) {
+        if (!joinInternal()) {
+            select.selectInRegPhase(null)
+        } else {
+            invokeOnCompletion { select.trySelect(this, null) }
+            select.invokeOnCompletion { /* TODO */ }
+        }
+    }
+
+    private fun onJoinProcessResFunction(ignoredParam: Any?, ignoredResult: Any?) = Unit
 
     /**
      * @suppress **This is unstable API and it is subject to change.**

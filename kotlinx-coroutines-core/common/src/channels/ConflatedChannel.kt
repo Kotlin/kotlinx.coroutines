@@ -18,39 +18,30 @@ import kotlinx.coroutines.internal.*
  *
  * This implementation is fully lock-free.
  */
-internal open class ConflatedChannel<E> : AbstractChannel<E>() {
-    protected final override val isBufferAlwaysEmpty: Boolean get() = true
-    protected final override val isBufferEmpty: Boolean get() = true
-    protected final override val isBufferAlwaysFull: Boolean get() = false
-    protected final override val isBufferFull: Boolean get() = false
-
-    override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
-        conflatePreviousSendBuffered(closed)
+internal open class ConflatedChannel<E> : BufferedChannel<E>(Channel.UNLIMITED) {
+    override suspend fun send(element: E) {
+        offerConflated(element)
     }
 
-    // result is always `OFFER_SUCCESS | Closed`
-    protected override fun offerInternal(element: E): Any {
-        while (true) {
-            val result = super.offerInternal(element)
-            when {
-                result === OFFER_SUCCESS -> return OFFER_SUCCESS
-                result === OFFER_FAILED -> { // try to buffer
-                    val sendResult = sendConflated(element)
-                    when (sendResult) {
-                        null -> return OFFER_SUCCESS
-                        is Closed<*> -> {
-                            conflatePreviousSendBuffered(sendResult)
-                            return sendResult
-                        }
-                    }
-                    // otherwise there was receiver in queue, retry super.offerInternal
-                }
-                result is Closed<*> -> {
-                    conflatePreviousSendBuffered(result)
-                    return result
-                }
-                else -> error("Invalid offerInternal result $result")
-            }
-        }
+    override fun offer(element: E): Boolean {
+        offerConflated(element)
+        return true
     }
+
+    override fun close(cause: Throwable?): Boolean {
+        return super.cancelImpl(cause)
+    }
+
+    override val onSend: SelectClause2<E, SendChannel<E>> get() = SelectClause2Impl(
+            objForSelect = this,
+            regFunc = ConflatedChannel<*>::onSendRegFunction as RegistrationFunction,
+            processResFunc = ConflatedChannel<*>::onSendProcessResFunction as ProcessResultFunction
+    )
+
+    private fun onSendRegFunction(select: SelectInstance<*>, element: E) {
+        offerConflated(element)
+        select.selectInRegPhase(Unit)
+    }
+
+    private fun onSendProcessResFunction(ignoredElement: E, ignoredSelectResult: Any?): Any? = this
 }

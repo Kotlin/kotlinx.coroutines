@@ -11,7 +11,6 @@ import org.junit.Assert.*
 import org.junit.runner.*
 import org.junit.runners.*
 
-@Ignore
 @RunWith(Parameterized::class)
 class PublisherSubscriptionSelectTest(private val request: Int) : TestBase() {
     companion object {

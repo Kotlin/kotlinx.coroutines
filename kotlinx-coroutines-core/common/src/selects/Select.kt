@@ -8,12 +8,8 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.intrinsics.startCoroutineUnintercepted
 import kotlinx.coroutines.sync.*
-import kotlin.coroutines.*
-import kotlin.coroutines.intrinsics.*
 import kotlin.math.*
-import kotlin.random.Random
 
 /**
  * Waits for the result of multiple suspending functions simultaneously, which are specified using _clauses_
@@ -130,7 +126,9 @@ public interface SelectBuilder<in R> {
  * Clause for [select] expression without additional parameters that does not select any value.
  */
 public interface SelectClause0 : SelectClause
-internal class SelectClause0Impl(
+
+@InternalCoroutinesApi
+public class SelectClause0Impl(
         override val objForSelect: Any,
         override val regFunc: RegistrationFunction,
         override val processResFunc: ProcessResultFunction
@@ -140,7 +138,9 @@ internal class SelectClause0Impl(
  * Clause for [select] expression without additional parameters that selects value of type [Q].
  */
 public interface SelectClause1<out Q> : SelectClause
-internal class SelectClause1Impl<Q>(
+
+@InternalCoroutinesApi
+public class SelectClause1Impl<Q>(
         override val objForSelect: Any,
         override val regFunc: RegistrationFunction,
         override val processResFunc: ProcessResultFunction
@@ -150,7 +150,9 @@ internal class SelectClause1Impl<Q>(
  * Clause for [select] expression with additional parameter of type [P] that selects value of type [Q].
  */
 public interface SelectClause2<in P, out Q> : SelectClause
-internal class SelectClause2Impl<P, Q>(
+
+@InternalCoroutinesApi
+class SelectClause2Impl<P, Q>(
         override val objForSelect: Any,
         override val regFunc: RegistrationFunction,
         override val processResFunc: ProcessResultFunction
@@ -164,7 +166,7 @@ public interface SelectClause {
 }
 
 public typealias RegistrationFunction = (objForSelect: Any, select: SelectInstance<*>, param: Any?) -> Unit
-public typealias ProcessResultFunction = (objForSelect: Any, selectResult: Any?) -> Any?
+public typealias ProcessResultFunction = (objForSelect: Any, param: Any?, selectResult: Any?) -> Any?
 public typealias OnCompleteAction = () -> Unit
 
 /**
@@ -262,10 +264,11 @@ internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
         state.value = STATE_DONE
     }
 
-    private fun processResult(i: Int, resumeResule: Any?): Any? {
+    private fun processResult(i: Int, resumeResult: Any?): Any? {
         val objForSelect = alternatives[i]!!
         val processResFunc = alternatives[i + 2] as ProcessResultFunction
-        return processResFunc(objForSelect, resumeResule)
+        val param = alternatives[i + 3]
+        return processResFunc(objForSelect, param, resumeResult)
     }
 
     internal fun addAlternative(objForSelect: Any, regFunc: RegistrationFunction, processResFunc: ProcessResultFunction, param: Any?, block: Any) {
