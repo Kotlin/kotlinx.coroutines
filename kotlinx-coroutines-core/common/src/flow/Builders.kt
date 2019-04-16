@@ -219,7 +219,6 @@ public fun <T> flowViaChannel(
     bufferSize: Int = 16,
     @BuilderInference block: suspend (SendChannel<T>) -> Unit
 ): Flow<T> {
-    require(bufferSize >= 0) { "Buffer size should be positive, but was $bufferSize" }
     return flow {
         coroutineScope {
             val channel = Channel<T>(bufferSize)

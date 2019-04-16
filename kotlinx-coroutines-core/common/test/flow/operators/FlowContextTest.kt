@@ -6,6 +6,7 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 class FlowContextTest : TestBase() {
@@ -141,5 +142,15 @@ class FlowContextTest : TestBase() {
         job.cancelAndJoin()
         finish(7)
         ensureActive()
+    }
+
+    @Test
+    fun testIllegalArgumentException() {
+        val flow = emptyFlow<Int>()
+        assertFailsWith<IllegalArgumentException> { flow.flowOn(Job()) }
+        assertFailsWith<IllegalArgumentException> { flow.flowWith(Job()) { this } }
+        assertFailsWith<IllegalArgumentException> { flow.flowOn(EmptyCoroutineContext, bufferSize = -1) }
+        assertFailsWith<IllegalArgumentException> { flow.flowWith(EmptyCoroutineContext, bufferSize = -1) { this } }
+
     }
 }

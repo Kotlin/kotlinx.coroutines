@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
  * This operator uses a channel of the specific [bufferSize] in order to switch between contexts,
  * but it is not guaranteed that the channel will be created, implementation is free to optimize it away in case of fusing.
  *
- * @throws [IllegalStateException] if provided context contains [Job] instance.
+ * @throws [IllegalArgumentException] if provided context contains [Job] instance.
  */
 @FlowPreview
 public fun <T> Flow<T>.flowOn(flowContext: CoroutineContext, bufferSize: Int = 16): Flow<T> {
@@ -88,7 +88,7 @@ public fun <T> Flow<T>.flowOn(flowContext: CoroutineContext, bufferSize: Int = 1
  * This operator uses channel of the specific [bufferSize] in order to switch between contexts,
  * but it is not guaranteed that channel will be created, implementation is free to optimize it away in case of fusing.
  *
- * @throws [IllegalStateException] if provided context contains [Job] instance.
+ * @throws [IllegalArgumentException] if provided context contains [Job] instance.
  */
 @FlowPreview
 public fun <T, R> Flow<T>.flowWith(

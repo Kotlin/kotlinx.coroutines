@@ -28,6 +28,13 @@ class DropTest : TestBase() {
     }
 
     @Test
+    fun testNegativeCount() {
+        assertFailsWith<IllegalArgumentException> {
+            emptyFlow<Int>().drop(-1)
+        }
+    }
+
+    @Test
     fun testErrorCancelsUpstream() = runTest {
         val flow = flow {
             coroutineScope {
