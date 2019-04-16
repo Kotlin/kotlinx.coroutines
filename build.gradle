@@ -23,10 +23,24 @@ static def platformOf(project) {
 }
 
 buildscript {
-    ext.useKotlinSnapshot = rootProject.properties['kotlinSnapshot'] != null
-    if (useKotlinSnapshot) {
-        ext.kotlin_version = '1.2-SNAPSHOT'
+    /*
+     * These property group is used to build kotlinx.coroutines against Kotlin compiler snapshot.
+     * How does it work:
+     * When build_snapshot_train is set to true, kotlin_version property is overridden with kotlin_snapshot_version,
+     * atomicfu_version is overwritten by TeamCity environment (AFU is built with snapshot and published to mavenLocal
+     * as previous step or the snapshot build).
+     * Additionally, mavenLocal and Sonatype snapshots are added to repository list and stress tests are disabled.
+     * DO NOT change the name of these properties without adapting kotlinx.train build chain.
+     */
+    def prop = rootProject.properties['build_snapshot_train']
+    ext.build_snapshot_train = prop != null && prop != ""
+    if (build_snapshot_train) {
+        ext.kotlin_version = rootProject.properties['kotlin_snapshot_version']
+        if (kotlin_version == null) {
+            throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
+        }
         repositories {
+            mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         }
     }
@@ -43,7 +57,7 @@ buildscript {
         classpath "org.jfrog.buildinfo:build-info-extractor-gradle:$artifactory_plugin_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
-        classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicFU_version"
+        classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintray_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
 
@@ -57,17 +71,27 @@ buildscript {
 allprojects {
     // the only place where HostManager could be instantiated
     project.ext.hostManager = new HostManager()
+    def deployVersion = properties['DeployVersion']
+    if (deployVersion != null) version = deployVersion
+
+    if (build_snapshot_train) {
+        ext.kotlin_version = rootProject.properties['kotlin_snapshot_version']
+        println "Using Kotlin $kotlin_version for project $it"
+
+        if (version != atomicfu_version) {
+            throw new IllegalStateException("Current deploy version is $version, but atomicfu version is not overridden ($atomicfu_version) for $it")
+        }
+
+        kotlin_version = rootProject.properties['kotlin_snapshot_version']
+        repositories {
+            mavenLocal()
+            maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        }
+    }
 }
 
 allprojects {
     apply plugin: 'kotlinx-atomicfu'
-
-    def deployVersion = properties['DeployVersion']
-    if (deployVersion != null) version = deployVersion
-    if (useKotlinSnapshot) {
-        kotlin_version = '1.2-SNAPSHOT'
-    }
-
     def projectName = it.name
     repositories {
         /*
@@ -96,7 +120,7 @@ allprojects {
     dependencies {
         // See comment below for rationale, it will be replaced with "project" dependency
         compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
-        compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
+        compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
 
         // the only way IDEA can resolve test classes
         testCompile project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
@@ -107,6 +131,19 @@ allprojects {
         kotlinOptions.freeCompilerArgs += "-progressive"
         // Binary compatibility support
         kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
+    }
+}
+
+if (build_snapshot_train) {
+    println "Hacking test tasks, removing stress and flaky tests"
+    allprojects {
+        tasks.withType(Test).all {
+            exclude '**/*LinearizabilityTest*.*'
+            exclude '**/*LFTest.*'
+            exclude '**/*StressTest.*'
+            exclude '**/*scheduler.*'
+            exclude '**/*Timeout.*'
+        }
     }
 }
 

@@ -16,7 +16,7 @@ kotlin {
     sourceSets {
         jvmMain.dependencies {
             api 'org.jetbrains.kotlin:kotlin-stdlib'
-            api "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
+            api "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
         }
 
         jvmTest.dependencies {
