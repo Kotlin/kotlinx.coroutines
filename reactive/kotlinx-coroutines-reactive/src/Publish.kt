@@ -76,7 +76,8 @@ private const val CLOSED = -1L    // closed, but have not signalled onCompleted/
 private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/onError
 
 @Suppress("CONFLICTING_JVM_DECLARATIONS", "RETURN_TYPE_MISMATCH_ON_INHERITANCE")
-private class PublisherCoroutine<in T>(
+@InternalCoroutinesApi
+public class PublisherCoroutine<in T>(
     parentContext: CoroutineContext,
     private val subscriber: Subscriber<T>
 ) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Subscription, SelectClause2<T, SendChannel<T>> {
