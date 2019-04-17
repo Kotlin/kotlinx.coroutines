@@ -138,11 +138,11 @@ if (build_snapshot_train) {
     println "Hacking test tasks, removing stress and flaky tests"
     allprojects {
         tasks.withType(Test).all {
-            exclude '**/*LinearizabilityTest*.*'
-            exclude '**/*LFTest.*'
-            exclude '**/*StressTest.*'
-            exclude '**/*scheduler.*'
-            exclude '**/*Timeout.*'
+            exclude '**/*LinearizabilityTest*'
+            exclude '**/*LFTest*'
+            exclude '**/*StressTest*'
+            exclude '**/*scheduling*'
+            exclude '**/*Timeout*'
         }
     }
 }
