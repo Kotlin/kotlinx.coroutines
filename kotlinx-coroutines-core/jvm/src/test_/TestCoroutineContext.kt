@@ -89,7 +89,7 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
      *
      * @param delayTime The amount of time to move the CoroutineContext's clock forward.
      * @param unit The [TimeUnit] in which [delayTime] and the return value is expressed.
-     * @return The amount of delay-time that this CoroutinesContext's clock has been forwarded.
+     * @return The amount of delay-time that this CoroutineContext's clock has been forwarded.
      */
     public fun advanceTimeBy(delayTime: Long, unit: TimeUnit = TimeUnit.MILLISECONDS): Long {
         val oldTime = time
