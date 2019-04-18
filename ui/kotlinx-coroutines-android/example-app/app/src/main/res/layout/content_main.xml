@@ -8,11 +8,46 @@
     tools:context="com.example.app.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <TextView
-        android:id="@+id/hello"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <Button
+            android:id="@+id/buttonEmptyTask"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="start Empty Task" />
+
+        <Button
+            android:id="@+id/buttonTaskWithProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="start Task With Progress" />
+
+        <Button
+            android:id="@+id/buttonCancelableTask"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="start Cancelable Task" />
+
+        <Button
+            android:id="@+id/buttonCancelTask"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="cancel Task" />
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
