@@ -158,7 +158,7 @@ threads are handled by Android runtime.
 
 For R8 no actions required, it will take obfuscation rules from the jar.
 
-For Proguard  you need to add options from [coroutines.pro](core/kotlinx-coroutines-core/resources/META-INF/proguard/coroutines.pro) to your rules manually.
+For Proguard  you need to add options from [coroutines.pro](kotlinx-coroutines-core/jvm/resources/META-INF/proguard/coroutines.pro) to your rules manually.
  
 R8 is a replacement for ProGuard in Android ecosystem, it is enabled by default since Android gradle plugin 3.3.0-beta.
 
