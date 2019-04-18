@@ -8,11 +8,16 @@ Library support for Kotlin coroutines with [multiplatform](#multiplatform) suppo
 This is a companion version for Kotlin `1.3.30` release.
 
 ```kotlin
-GlobalScope.launch {
-    delay(1000)
-    println("Hello from Kotlin Coroutines!")
+suspend fun main() = coroutineScope {
+    launch { 
+       delay(1000)
+       println("Kotlin Coroutines World!") 
+    }
+    println("Hello")
 }
 ```
+
+> Play with coroutines online [here](https://pl.kotl.in/hG_tKbid_)
 
 ## Modules
 
@@ -52,7 +57,7 @@ GlobalScope.launch {
   * [Deep dive into Coroutines](https://www.youtube.com/watch?v=YrrUCSi72E8) (Roman Elizarov at KotlinConf 2017, [slides](https://www.slideshare.net/elizarov/deep-dive-into-coroutines-on-jvm-kotlinconf-2017))
   * [Kotlin Coroutines in Practice](https://www.youtube.com/watch?v=a3agLJQ6vt8) (Roman Elizarov at KotlinConf 2018, [slides](https://www.slideshare.net/elizarov/kotlin-coroutines-in-practice-kotlinconf-2018))
 * Guides and manuals: 
-  * [Guide to kotlinx.coroutines by example](docs/coroutines-guide.md) (**read it first**)
+  * [Guide to kotlinx.coroutines by example](https://kotlinlang.org/docs/reference/coroutines/coroutines-guide.html) (**read it first**)
   * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
   * [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md)
   * [Debugging capabilities in kotlinx.coroutines](docs/debugging.md)
@@ -136,10 +141,10 @@ Make sure that you have either `jcenter()` or `mavenCentral()` in the list of re
 ### Multiplatform
 
 Core modules of `kotlinx.coroutines` are also available for 
-[Kotlin/JS](js/README.md) and [Kotlin/Native](native/README.md). If you write
-a common code that should get compiled for different platforms, add 
-[`org.jetbrains.kotlinx:kotlinx-coroutines-core-common:<version>`](common/kotlinx-coroutines-core-common/README.md) 
-to your common code dependencies.
+[Kotlin/JS](#js) and [Kotlin/Native](#native).
+In common code that should get compiled for different platforms, add dependency to  
+[`kotlinx-coroutines-core-common`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-common/1.2.0/jar)
+(follow the link to get the dependency declaration snippet).
 
 ### Android
 
@@ -149,6 +154,7 @@ module as dependency when using `kotlinx.coroutines` on Android:
 ```groovy
 implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.2.0'
 ```
+
 This gives you access to Android [Dispatchers.Main](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-android/kotlinx.coroutines.android/kotlinx.coroutines.-dispatchers/index.html)
 coroutine dispatcher and also makes sure that in case of crashed coroutine with unhandled exception this
 exception is logged before crashing Android application, similarly to the way uncaught exceptions in 
@@ -158,9 +164,34 @@ threads are handled by Android runtime.
 
 For R8 no actions required, it will take obfuscation rules from the jar.
 
-For Proguard  you need to add options from [coroutines.pro](core/kotlinx-coroutines-core/resources/META-INF/proguard/coroutines.pro) to your rules manually.
+For Proguard  you need to add options from [coroutines.pro](kotlinx-coroutines-core/jvm/resources/META-INF/proguard/coroutines.pro) to your rules manually.
  
 R8 is a replacement for ProGuard in Android ecosystem, it is enabled by default since Android gradle plugin 3.3.0-beta.
+
+### JS
+
+[Kotlin/JS](https://kotlinlang.org/docs/reference/js-overview.html) version of `kotlinx.coroutines` is published as 
+[`kotlinx-coroutines-core-js`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.2.0/jar)
+(follow the link to get the dependency declaration snippet).
+ 
+You can also use [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) package via NPM. 
+
+### Native
+
+[Kotlin/Native](https://kotlinlang.org/docs/reference/native-overview.html) version of `kotlinx.coroutines` is published as 
+[`kotlinx-coroutines-core-native`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-native/1.2.0/jar)
+(follow the link to get the dependency declaration snippet).
+
+Only single-threaded code (JS-style) on Kotlin/Native is currently supported. 
+Kotlin/Native supports only Gradle version 4.10 and you need to enable Gradle metadata in your
+`settings.gradle` file:
+
+```groovy
+enableFeaturePreview('GRADLE_METADATA')
+```
+
+Since Kotlin/Native does not generally provide binary compatibility between versions, 
+you should use the same version of Kotlin/Native compiler as was used to build `kotlinx.coroutines`. 
 
 ## Building 
 
