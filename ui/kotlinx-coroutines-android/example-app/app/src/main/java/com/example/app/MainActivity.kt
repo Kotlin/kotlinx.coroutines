@@ -58,7 +58,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @UseExperimental(InternalCoroutinesApi::class)
     private fun startCancelableTask() {
         println("start cancelable Task")
         job = GlobalScope.launch(Dispatchers.Main) {
@@ -67,9 +66,8 @@ class MainActivity : AppCompatActivity() {
             showText("Hello from Kotlin Coroutines!")
             progressBar.visibility = View.GONE
         }
-        job?.invokeOnCompletion(true) {
-            if (it != null) {
-                job?.cancel()
+        job?.invokeOnCompletion {
+            if (it is CancellationException) { // if coroutine was cancelled
                 showText("Cancelable Task was cancel")
                 progressBar.visibility = View.GONE
             }
