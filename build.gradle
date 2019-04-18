@@ -143,6 +143,23 @@ if (build_snapshot_train) {
             exclude '**/*StressTest*'
             exclude '**/*scheduling*'
             exclude '**/*Timeout*'
+            exclude '**/*coroutines/debug*' // Unmute after 1.3.31 where inlining was fixed
+            exclude '**/*definitely/not/kotlinx*'
+        }
+    }
+
+    println "Manifest of kotlin-compiler-embeddable.jar for coroutines"
+    configure(subprojects.findAll { it.name == "kotlinx-coroutines-core" }) {
+        configurations.matching { it.name == "kotlinCompilerClasspath" }.all {
+            resolvedConfiguration.getFiles().findAll { it.name.contains("kotlin-compiler-embeddable") }.each {
+                def manifest = zipTree(it).matching {
+                    include 'META-INF/MANIFEST.MF'
+                }.getFiles().first()
+
+                manifest.readLines().each {
+                    println it
+                }
+            }
         }
     }
 }
@@ -196,7 +213,6 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
         dokkaJavadoc.dependsOn project(":$coreModule").dokka
     }
 }
-
 
 // Report Kotlin compiler version when building project
 println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
