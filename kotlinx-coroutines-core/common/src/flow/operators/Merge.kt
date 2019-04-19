@@ -130,8 +130,10 @@ private class SerializingFlatMapCollector<T>(
     }
 }
 
-private fun AtomicBoolean.tryAcquire(): Boolean = compareAndSet(false, true)
+@Suppress("NOTHING_TO_INLINE")
+private inline fun AtomicBoolean.tryAcquire(): Boolean = compareAndSet(false, true)
 
-private fun AtomicBoolean.release() {
+@Suppress("NOTHING_TO_INLINE")
+private inline fun AtomicBoolean.release() {
     value = false
 }

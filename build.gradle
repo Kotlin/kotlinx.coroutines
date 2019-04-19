@@ -39,11 +39,15 @@ buildscript {
         if (kotlin_version == null) {
             throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
         }
+    }
+
+    if (build_snapshot_train || atomicfu_version.endsWith("-SNAPSHOT")) {
         repositories {
             mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         }
     }
+
     repositories {
         jcenter()
         maven { url "https://kotlin.bintray.com/kotlinx" }
@@ -83,6 +87,9 @@ allprojects {
         }
 
         kotlin_version = rootProject.properties['kotlin_snapshot_version']
+    }
+
+    if (build_snapshot_train || atomicfu_version.endsWith("-SNAPSHOT")) {
         repositories {
             mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
@@ -91,7 +98,7 @@ allprojects {
 }
 
 allprojects {
-    apply plugin: 'kotlinx-atomicfu'
+    apply plugin: 'kotlinx-atomicfu' // it also adds all the necessary dependencies
     def projectName = it.name
     repositories {
         /*
@@ -120,7 +127,6 @@ allprojects {
     dependencies {
         // See comment below for rationale, it will be replaced with "project" dependency
         compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
-        compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
 
         // the only way IDEA can resolve test classes
         testCompile project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
