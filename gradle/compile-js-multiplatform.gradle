@@ -12,7 +12,6 @@ kotlin {
     sourceSets {
         jsMain.dependencies {
             api group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-js', version: kotlin_version
-            api "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
         }
 
         jsTest.dependencies {
