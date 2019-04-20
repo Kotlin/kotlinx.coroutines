@@ -110,7 +110,7 @@ public class UncompletedCoroutinesError(message: String, cause: Throwable? = nul
  * immediately executed. If they were scheduled with a delay, the virtual clock-time must be advanced via one of the
  * methods on [DelayController].
  *
- * When swished to lazy execution using [pauseDispatcher] any coroutines started via [launch] or [async] will
+ * When switched to lazy execution using [pauseDispatcher] any coroutines started via [launch] or [async] will
  * not execute until a call to [DelayController.runCurrent] or the virtual clock-time has been advanced via one of the
  * methods on [DelayController].
  *
