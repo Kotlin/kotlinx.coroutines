@@ -1,48 +1,48 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.test
 
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import java.util.Collections.synchronizedList
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 
 /**
  * Access uncaught coroutine exceptions captured during test execution.
  */
-@ExperimentalCoroutinesApi
-interface UncaughtExceptionCaptor {
+@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+public interface UncaughtExceptionCaptor {
     /**
      * List of uncaught coroutine exceptions.
      *
-     * The returned list will be a copy of the currently caught exceptions.
-     *
-     * During [cleanupTestCoroutines] the first element of this list will be rethrown if it is not empty.
+     * The returned list is a copy of the currently caught exceptions.
+     * During [cleanupTestCoroutines] the first element of this list is rethrown if it is not empty.
      */
-    val uncaughtExceptions: List<Throwable>
+    public val uncaughtExceptions: List<Throwable>
 
     /**
-     * Call after the test completes.
+     * Call after the test completes to ensure that there were no uncaught exceptions.
      *
-     * The first exception in uncaughtExceptions will be rethrown. All other exceptions will
-     * be printed using [Throwable.printStackTrace].
+     * The first exception in uncaughtExceptions is rethrown. All other exceptions are
+     * printed using [Throwable.printStackTrace].
      *
-     * @throws Throwable the first uncaught exception, if there are any uncaught exceptions
+     * @throws Throwable the first uncaught exception, if there are any uncaught exceptions.
      */
-    fun cleanupTestCoroutines()
+    public fun cleanupTestCoroutines()
 }
 
 /**
- * An exception handler that can be used to capture uncaught exceptions in tests.
+ * An exception handler that captures uncaught exceptions in tests.
  */
-@ExperimentalCoroutinesApi
-class TestCoroutineExceptionHandler: UncaughtExceptionCaptor, CoroutineExceptionHandler {
-
+@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+public class TestCoroutineExceptionHandler:
+    AbstractCoroutineContextElement(CoroutineExceptionHandler), UncaughtExceptionCaptor, CoroutineExceptionHandler
+{
     override fun handleException(context: CoroutineContext, exception: Throwable) {
         synchronized(_exceptions) {
             _exceptions += exception
         }
     }
-
-    override val key = CoroutineExceptionHandler
 
     private val _exceptions = mutableListOf<Throwable>()
 

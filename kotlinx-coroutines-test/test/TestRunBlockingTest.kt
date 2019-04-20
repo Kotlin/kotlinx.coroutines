@@ -1,10 +1,14 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import org.junit.Assert.*
 import org.junit.Test
-import kotlin.coroutines.ContinuationInterceptor
-import kotlin.test.assertFails
+import kotlin.coroutines.*
+import kotlin.test.*
 
 class TestRunBlockingTest {
 

@@ -1,10 +1,11 @@
-@file:JvmName("TestBuilders")
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
 
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
-import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.*
 
 /**
  * Executes a [testBody] inside an immediate execution dispatcher.
@@ -39,8 +40,8 @@ import kotlin.coroutines.CoroutineContext
  * @param context An optional context that MUST contain a [DelayController] and/or [TestCoroutineExceptionHandler]
  * @param testBody The code of the unit-test.
  */
-@ExperimentalCoroutinesApi
-fun runBlockingTest(context: CoroutineContext? = null, testBody: suspend TestCoroutineScope.() -> Unit) {
+@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+public fun runBlockingTest(context: CoroutineContext? = null, testBody: suspend TestCoroutineScope.() -> Unit) {
     val (safeContext, dispatcher) = context.checkArguments()
     // smart cast dispatcher to expose interface
     dispatcher as DelayController
@@ -69,16 +70,17 @@ private fun CoroutineContext.activeJobs(): Set<Job> {
 /**
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineScope].
  */
-@ExperimentalCoroutinesApi
-fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit) {
+// todo: need documentation on how this extension is supposed to be used
+@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+public fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit) {
     runBlockingTest(coroutineContext, block)
 }
 
 /**
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineDispatcher].
  */
-@ExperimentalCoroutinesApi
-fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit) {
+@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit) {
     runBlockingTest(this, block)
 }
 
@@ -103,16 +105,4 @@ private fun CoroutineContext?.checkArguments(): Pair<CoroutineContext, Continuat
 
     safeContext = safeContext + dispatcher + exceptionHandler + job
     return Pair(safeContext, dispatcher)
-}
-
-/**
- * This method is deprecated.
- *
- * @see [runBlocking]
- */
-@Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
-        ReplaceWith("scope.runBlockingTest(testBody)", "kotlinx.coroutines.test"),
-        level = DeprecationLevel.ERROR)
-fun withTestContext(scope: TestCoroutineScope, testBody: suspend TestCoroutineScope.() -> Unit) {
-    scope.runBlockingTest(testBody)
 }

@@ -1,12 +1,13 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.test
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Assert.*
-import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.*
 
 class TestBuildersTest {
 
