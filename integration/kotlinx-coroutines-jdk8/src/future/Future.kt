@@ -5,6 +5,7 @@
 package kotlinx.coroutines.future
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import java.util.concurrent.*
 import java.util.function.*
 import kotlin.coroutines.*
@@ -46,20 +47,20 @@ public fun <T> CoroutineScope.future(
 
 private class CompletableFutureCoroutine<T>(
     context: CoroutineContext,
-    private val completion: CompletableFuture<T>
+    private val future: CompletableFuture<T>
 ) : AbstractCoroutine<T>(context), BiConsumer<T?, Throwable?> {
-
     override fun accept(value: T?, exception: Throwable?) {
         cancel()
     }
 
     override fun onCompleted(value: T) {
-        completion.complete(value)
+        future.complete(value)
     }
 
-    override fun onCompletedExceptionally(exception: Throwable) {
-        if (!completion.completeExceptionally(exception)) {
-            handleCoroutineException(parentContext, exception, this)
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        if (!future.completeExceptionally(cause) && !handled) {
+            // prevents loss of exception that was not handled by parent & could not be set to CompletableFuture
+            handleCoroutineException(context, cause)
         }
     }
 }
@@ -70,7 +71,11 @@ private class CompletableFutureCoroutine<T>(
  */
 public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
     val future = CompletableFuture<T>()
-    future.whenComplete { _, exception -> cancel(exception) }
+    future.whenComplete { _, exception ->
+        cancel(exception?.let {
+            it as? CancellationException ?: CancellationException("CompletableFuture was completed exceptionally", it)
+        })
+    }
     invokeOnCompletion {
         try {
             future.complete(getCompleted())

@@ -1,9 +1,0 @@
-# Module kotlinx-coroutines-core-js
-
-Common primitives to work with coroutines in
-[multiplatform Kotlin projects](https://kotlinlang.org/docs/reference/multiplatform.html).
-
-Documentation is provided in platform-specific modules:
-* [kotlinx-coroutines-core](../../core/kotlinx-coroutines-core/README.md) for Kotlin/JVM.
-* [kotlinx-coroutines-core-js](../../js/kotlinx-coroutines-core-js/README.md) for Kotlin/JS.
-* [kotlinx-coroutines-core-native](../../native/kotlinx-coroutines-core-native/README.md) for Kotlin/Native.

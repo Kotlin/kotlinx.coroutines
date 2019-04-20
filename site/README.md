@@ -4,7 +4,7 @@ This module builds references documentation.
 
 ## Building
 
-* Install [Jekyll](http://jekyllrb.com)
+* Install [Jekyll](https://jekyllrb.com)
 * If you already have Ruby/Jekyll installed you might need to update its version:
   * `cd site/docs`
   * `bundle install`

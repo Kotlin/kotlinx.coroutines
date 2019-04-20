@@ -12,71 +12,158 @@ apply plugin: "com.github.johnrengelman.shadow"
 
 apply from: project.rootProject.file('gradle/maven-central.gradle')
 
-def platform = platformOf(project)
-def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
-
 // ------------- tasks
 
-def isNative() { return project.name.endsWith("native") }
 def bUser = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
 def bKey = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
 
+task stubSources(type: Jar) {
+    classifier = 'sources'
+}
+
+task stubJavadoc(type: Jar) {
+    classifier = 'javadoc'
+}
+
+task emptyJar(type: Jar) {
+}
+
 task sourcesJar(type: Jar) {
     classifier = 'sources'
-    if (!isNative()) {
+    if (project.name == "kotlinx-coroutines-core") {
+        from kotlin.sourceSets.commonMain.kotlin
+    } else {
         from sourceSets.main.allSource
-    }
-
-    if (project.name == coroutines_core && platform != "common") {
-        // add common source, too
-        from rootProject.file("common/$project.name-common/src/main/kotlin")
     }
 }
 
+def configureTransitiveDependencies = { Project project, Publication publication ->
+    project.configure(project) {
+        publication.pom.withXml { pom ->
+            def dependenciesNode = asNode().getAt("dependencies")[0]
+            if (dependenciesNode == null) return
+            dependenciesNode.dependency.each {
+                it.artifactId.each { node ->
+                    def artifactId = node.text()
+                    if (!artifactId.endsWith("native")) return
+
+                    switch (project.name) {
+                        case 'metadata':
+                            node.setValue("${artifactId[0..-8]}-common")
+                            break
+                        case 'js':
+                            node.setValue("${artifactId[0..-8]}-js")
+                            break
+                    }
+                }
+            }
+        }
+    }
+}
+
+def isMultiplatform = project.name == "kotlinx-coroutines-core"
 
 publishing {
     repositories {
         maven { url = 'https://kotlin.bintray.com/kotlinx' }
     }
 
-    publications {
-        maven(MavenPublication) { publication ->
-            preparePublication(publication)
+    if (!isMultiplatform) {
+        publications {
+            maven(MavenPublication) { publication ->
+                if (project.name == "kotlinx-coroutines-debug") {
+                    project.shadow.component(publication)
+                } else {
+                    publication.from components.java
+                }
+                publication.artifact javadocJar
+                publication.artifact sourcesJar
+                publication.pom.withXml(configureMavenCentralMetadata)
+            }
+        }
+
+        disableMetadataPublicationKotlinJvm()
+        return
+    }
+
+    // Rename artifacts for backward compatibility
+    publications.all {
+        def type = it.name
+        switch (type) {
+            case 'kotlinMultiplatform':
+                it.artifactId = "$project.name-native"
+                it.artifact emptyJar
+                it.artifact stubJavadoc
+                it.artifact sourcesJar
+                break
+
+            case 'metadata':
+                it.artifactId = "$project.name-common"
+                break
+
+            case 'jvm':
+                it.artifactId = "$project.name"
+                break
+            case 'js':
+            case 'native':
+                it.artifactId = "$project.name-$type"
+                break
+        }
+
+        pom.withXml(configureMavenCentralMetadata)
+        configureTransitiveDependencies(project, it)
+    }
+
+    disableMetadataPublication()
+}
+
+private void disableMetadataPublicationKotlinJvm() {
+    publishing.publications.each { pub ->
+        pub.moduleDescriptorGenerator = null
+        tasks.matching { it.name == "generateMetadataFileFor${pub.name.capitalize()}Publication" }.all {
+            onlyIf { false }
         }
     }
 }
 
-artifactory {
-    contextUrl = 'https://oss.jfrog.org/artifactory'
-    publish {
-        repository {
-            repoKey = 'oss-snapshot-local'
-            username = bUser
-            password = bKey
-        }
+private void disableMetadataPublication() {
+    kotlin.targets.all { target ->
+        def publication = publishing.publications.findByName(target.name)
 
-        maven(MavenPublication) { publication ->
-            preparePublication(publication)
-        }
-
-        defaults {
-            publications('maven')
+        if (publication != null) {
+            publication.artifact stubJavadoc
+            if (target.platformType.name != 'native') {
+                publication.moduleDescriptorGenerator = null
+                tasks.matching { it.name == "generateMetadataFileFor${name.capitalize()}Publication" }.all {
+                    onlyIf { false }
+                }
+            } else {
+                publication.artifact emptyJar
+            }
         }
     }
 }
 
-def preparePublication(MavenPublication publication) {
-    if (!isNative()) {
-        if (project.name == "kotlinx-coroutines-debug") {
-            project.shadow.component(publication)
-        } else {
-            publication.from components.java
-        }
-        publication.artifact javadocJar
-        publication.artifact sourcesJar
-    }
-    publication.pom.withXml(configureMavenCentralMetadata)
-}
+// snapshot publication is temporary disabled
+//artifactory {
+//    contextUrl = 'https://oss.jfrog.org/artifactory'
+//    publish {
+//        repository {
+//            repoKey = 'oss-snapshot-local'
+//            username = bUser
+//            password = bKey
+//        }
+//
+//        maven(MavenPublication) { publication ->
+//            preparePublication(publication)
+//        }
+//
+//        defaults {
+//            publications('maven')
+//        }
+//    }
+//}
+
 
 task publishDevelopSnapshot() {
     def branch = System.getenv('currentBranch')
@@ -110,14 +197,5 @@ bintrayUpload.doFirst {
     publications = project.publishing.publications.findAll { !it.name.contains('-test') }.collect {
         println("Uploading artifact '$it.groupId:$it.artifactId:$it.version' from publication '$it.name'")
         it
-    }
-}
-
-// TODO :kludge this is required to disable publish of metadata for all but native
-if (!isNative()) {
-    afterEvaluate {
-        publishing.publications.each { pub ->
-            pub.moduleDescriptorGenerator = null
-        }
     }
 }

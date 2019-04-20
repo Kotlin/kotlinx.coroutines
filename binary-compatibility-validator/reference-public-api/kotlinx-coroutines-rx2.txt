@@ -28,6 +28,8 @@ public final class kotlinx/coroutines/rx2/RxConvertKt {
 	public static final fun asMaybe (Lkotlinx/coroutines/Deferred;Lkotlin/coroutines/CoroutineContext;)Lio/reactivex/Maybe;
 	public static final fun asObservable (Lkotlinx/coroutines/channels/ReceiveChannel;Lkotlin/coroutines/CoroutineContext;)Lio/reactivex/Observable;
 	public static final fun asSingle (Lkotlinx/coroutines/Deferred;Lkotlin/coroutines/CoroutineContext;)Lio/reactivex/Single;
+	public static final fun from (Lkotlinx/coroutines/flow/Flow;)Lio/reactivex/Flowable;
+	public static final fun from (Lkotlinx/coroutines/flow/Flow;)Lio/reactivex/Observable;
 }
 
 public final class kotlinx/coroutines/rx2/RxFlowableKt {

@@ -1,6 +1,6 @@
 # Module kotlinx-coroutines-reactive
 
-Utilities for [Reactive Streams](http://www.reactive-streams.org).
+Utilities for [Reactive Streams](https://www.reactive-streams.org).
 
 Coroutine builders:
 
@@ -45,4 +45,4 @@ Conversion functions:
 
 # Package kotlinx.coroutines.reactive
 
-Utilities for [Reactive Streams](http://www.reactive-streams.org).
+Utilities for [Reactive Streams](https://www.reactive-streams.org).

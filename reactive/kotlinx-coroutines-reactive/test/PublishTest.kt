@@ -252,4 +252,21 @@ class PublishTest : TestBase() {
         latch.await()
         finish(8)
     }
+
+    @Test
+    fun testFailingConsumer() = runTest {
+        val pub = publish {
+            repeat(3) {
+                expect(it + 1) // expect(1), expect(2) *should* be invoked
+                send(it)
+            }
+        }
+        try {
+            pub.consumeEach {
+                throw TestException()
+            }
+        } catch (e: TestException) {
+            finish(3)
+        }
+    }
 }

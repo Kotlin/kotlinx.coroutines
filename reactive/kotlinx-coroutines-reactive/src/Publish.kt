@@ -60,10 +60,6 @@ private class PublisherCoroutine<in T>(
 ) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Subscription, SelectClause2<T, SendChannel<T>> {
     override val channel: SendChannel<T> get() = this
 
-    // cancelsParent == true ensure that error is always reported to the parent, so that parent cannot complete
-    // without receiving reported error.
-    override val cancelsParent: Boolean get() = true
-
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
     private val mutex = Mutex(locked = true)
 
@@ -72,11 +68,9 @@ private class PublisherCoroutine<in T>(
     @Volatile
     private var cancelled = false // true when Subscription.cancel() is invoked
 
-    private var shouldHandleException = false // when handleJobException is invoked
-
     override val isClosedForSend: Boolean get() = isCompleted
     override val isFull: Boolean = mutex.isLocked
-    override fun close(cause: Throwable?): Boolean = cancel(cause)
+    override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
     override fun invokeOnClose(handler: (Throwable?) -> Unit) =
         throw UnsupportedOperationException("PublisherCoroutine doesn't support invokeOnClose")
 
@@ -136,8 +130,9 @@ private class PublisherCoroutine<in T>(
             subscriber.onNext(elem)
         } catch (e: Throwable) {
             // If onNext fails with exception, then we cancel coroutine (with this exception) and then rethrow it
-            // to abort the corresponding send/offer invocation
-            cancel(e)
+            // to abort the corresponding send/offer invocation. From the standpoint of coroutines machinery,
+            // this failure is essentially equivalent to a failure of a child coroutine.
+            cancelCoroutine(e)
             unlockAndCheckCompleted()
             throw e
         }
@@ -167,22 +162,20 @@ private class PublisherCoroutine<in T>(
         */
         mutex.unlock()
         // check isCompleted and and try to regain lock to signal completion
-        if (isCompleted && mutex.tryLock()) doLockedSignalCompleted()
+        if (isCompleted && mutex.tryLock()) {
+            doLockedSignalCompleted(completionCause, completionCauseHandled)
+        }
     }
 
     // assert: mutex.isLocked() & isCompleted
-    private fun doLockedSignalCompleted() {
+    private fun doLockedSignalCompleted(cause: Throwable?, handled: Boolean) {
         try {
             if (_nRequested.value >= CLOSED) {
                 _nRequested.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
-                val cause = getCompletionCause()
                 // Specification requires that after cancellation requested we don't call onXXX
                 if (cancelled) {
-                    // If the parent had failed to handle our exception (handleJobException was invoked), then
-                    // we must not loose this exception
-                    if (shouldHandleException && cause != null) {
-                        handleExceptionViaHandler(parentContext, cause)
-                    }
+                    // If the parent had failed to handle our exception, then we must not lose this exception
+                    if (cause != null && !handled) handleCoroutineException(context, cause)
                 } else {
                     try {
                         if (cause != null && cause !is CancellationException) {
@@ -192,9 +185,9 @@ private class PublisherCoroutine<in T>(
                             subscriber.onComplete()
                         }
                     } catch (e: Throwable) {
-                        handleExceptionViaHandler(parentContext, e)
+                        handleCoroutineException(context, e)
                     }
-                }                                   
+                }
             }
         } finally {
             mutex.unlock()
@@ -204,7 +197,7 @@ private class PublisherCoroutine<in T>(
     override fun request(n: Long) {
         if (n <= 0) {
             // Specification requires IAE for n <= 0
-            cancel(IllegalArgumentException("non-positive subscription request $n"))
+            cancelCoroutine(IllegalArgumentException("non-positive subscription request $n"))
             return
         }
         while (true) { // lock-free loop for nRequested
@@ -225,7 +218,7 @@ private class PublisherCoroutine<in T>(
     }
 
     // assert: isCompleted
-    private fun signalCompleted() {
+    private fun signalCompleted(cause: Throwable?, handled: Boolean) {
         while (true) { // lock-free loop for nRequested
             val cur = _nRequested.value
             if (cur == SIGNALLED) return // some other thread holding lock already signalled cancellation/completion
@@ -233,36 +226,28 @@ private class PublisherCoroutine<in T>(
             if (!_nRequested.compareAndSet(cur, CLOSED)) continue // retry on failed CAS
             // Ok -- marked as CLOSED, now can unlock the mutex if it was locked due to backpressure
             if (cur == 0L) {
-                doLockedSignalCompleted()
+                doLockedSignalCompleted(cause, handled)
             } else {
                 // otherwise mutex was either not locked or locked in concurrent onNext... try lock it to signal completion
-                if (mutex.tryLock()) doLockedSignalCompleted()
+                if (mutex.tryLock()) doLockedSignalCompleted(cause, handled)
                 // Note: if failed `tryLock`, then `doLockedNext` will signal after performing `unlock`
             }
             return // done anyway
         }
     }
 
-    // Note: It is invoked when parent fails to handle an exception and strictly before onCompleted[Exception]
-    // so here we just raise a flag (and it need NOT be volatile!) to handle this exception.
-    // This way we defer decision to handle this exception based on our ability to send this exception
-    // to the subscriber (see doLockedSignalCompleted)
-    override fun handleJobException(exception: Throwable) {
-        shouldHandleException = true
-    }
-    
-    override fun onCompletedExceptionally(exception: Throwable) {
-        signalCompleted()
+    override fun onCompleted(value: Unit) {
+        signalCompleted(null, false)
     }
 
-    override fun onCompleted(value: Unit) {
-        signalCompleted()
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        signalCompleted(cause, handled)
     }
 
     override fun cancel() {
         // Specification requires that after cancellation publisher stops signalling
         // This flag distinguishes subscription cancellation request from the job crash
         cancelled = true
-        super.cancel()
+        super.cancel(null)
     }
 }

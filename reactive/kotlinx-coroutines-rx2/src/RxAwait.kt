@@ -187,7 +187,7 @@ private suspend fun <T> ObservableSource<T>.awaitOne(
                 Mode.LAST, Mode.SINGLE -> {
                     if (mode == Mode.SINGLE && seenValue) {
                         if (cont.isActive)
-                            cont.resumeWithException(IllegalArgumentException("More that one onNext value for $mode"))
+                            cont.resumeWithException(IllegalArgumentException("More than one onNext value for $mode"))
                         subscription.dispose()
                     } else {
                         value = t

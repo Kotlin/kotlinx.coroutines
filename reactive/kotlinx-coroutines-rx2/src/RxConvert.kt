@@ -7,6 +7,9 @@ package kotlinx.coroutines.rx2
 import io.reactivex.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.reactive.flow.*
+import org.reactivestreams.*
 import kotlin.coroutines.*
 
 /**
@@ -76,3 +79,36 @@ public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): 
     for (t in this@asObservable)
         send(t)
 }
+
+/**
+ * Converts the given flow to a cold observable.
+ * The original flow is cancelled if the observable subscriber was disposed.
+ */
+@FlowPreview
+@JvmName("from")
+public fun <T: Any> Flow<T>.asObservable() : Observable<T> = Observable.create { emitter ->
+    /*
+     * ATOMIC is used here to provide stable behaviour of subscribe+dispose pair even if
+     * asObservable is already invoked from unconfined
+     */
+    val job = GlobalScope.launch(Dispatchers.Unconfined, start = CoroutineStart.ATOMIC) {
+        try {
+            collect { value -> emitter.onNext(value) }
+            emitter.onComplete()
+        } catch (e: Throwable) {
+            // 'create' provides safe emitter, so we can unconditionally call on* here if exception occurs in `onComplete`
+            if (e !is CancellationException) emitter.onError(e)
+            else emitter.onComplete()
+
+        }
+    }
+    emitter.setCancellable(RxCancellable(job))
+}
+
+/**
+ * Converts the given flow to a cold observable.
+ * The original flow is cancelled if the flowable subscriber was disposed.
+ */
+@FlowPreview
+@JvmName("from")
+public fun <T: Any> Flow<T>.asFlowable(): Flowable<T> = Flowable.fromPublisher(asPublisher())

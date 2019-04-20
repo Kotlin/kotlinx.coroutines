@@ -6,8 +6,8 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.$$1$$2
 -->
-<!--- KNIT     ../core/kotlinx-coroutines-core/test/guide/.*\.kt -->
-<!--- TEST_OUT ../core/kotlinx-coroutines-core/test/guide/test/ExceptionsGuideTest.kt
+<!--- KNIT     ../kotlinx-coroutines-core/jvm/test/guide/.*\.kt -->
+<!--- TEST_OUT ../kotlinx-coroutines-core/jvm/test/guide/test/ExceptionsGuideTest.kt
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
 
@@ -77,7 +77,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-exceptions-01.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-01.kt)
 
 The output of this code is (with [debug](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/coroutine-context-and-dispatchers.md#debugging-coroutines-and-threads)):
 
@@ -130,7 +130,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-exceptions-02.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-02.kt)
 
 The output of this code is:
 
@@ -177,7 +177,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-exceptions-03.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-03.kt)
 
 The output of this code is:
 
@@ -235,7 +235,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-exceptions-04.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-04.kt)
 
 The output of this code is:
 
@@ -295,7 +295,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-exceptions-05.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-05.kt)
 
 > Note: This above code will work properly only on JDK7+ that supports `suppressed` exceptions
 
@@ -345,7 +345,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-exceptions-06.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-06.kt)
 
 The output of this code is:
 
@@ -360,9 +360,9 @@ Caught original java.io.IOException
 As we have studied before, cancellation is a bidirectional relationship propagating through the whole
 coroutines hierarchy. But what if unidirectional cancellation is required? 
 
-Good example of such requirement can be a UI component with the job defined in its scope. If any of UI's child task
-has failed, it is not always necessary to cancel (effectively kill) the whole UI component,
-but if UI component is destroyed (and its job is cancelled), then it is necessary to fail all children jobs as their result is no longer required.
+A good example of such a requirement is a UI component with the job defined in its scope. If any of the UI's child tasks
+have failed, it is not always necessary to cancel (effectively kill) the whole UI component,
+but if UI component is destroyed (and its job is cancelled), then it is necessary to fail all child jobs as their results are no longer required.
 
 Another example is a server process that spawns several children jobs and needs to _supervise_
 their execution, tracking their failures and restarting just those children jobs that had failed.
@@ -408,7 +408,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-supervision-01.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-01.kt)
 
 The output of this code is:
 
@@ -457,7 +457,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-supervision-02.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-02.kt)
 
 The output of this code is:
 
@@ -498,7 +498,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-supervision-03.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-03.kt)
 
 The output of this code is:
 

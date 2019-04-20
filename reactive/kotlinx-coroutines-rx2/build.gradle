@@ -4,6 +4,8 @@
 
 dependencies {
     compile project(':kotlinx-coroutines-reactive')
+    testCompile project(':kotlinx-coroutines-reactive').sourceSets.test.output
+    testCompile "org.reactivestreams:reactive-streams-tck:$reactive_streams_version"
     compile 'io.reactivex.rxjava2:rxjava:2.1.9'
 }
 
@@ -11,4 +13,23 @@ tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
         url = new URL('http://reactivex.io/RxJava/javadoc/')
     }
+}
+
+task testNG(type: Test) {
+    useTestNG()
+    reports.html.destination = file("$buildDir/reports/testng")
+    include '**/*ReactiveStreamTckTest.*'
+    // Skip testNG when tests are filtered with --tests, otherwise it simply fails
+    onlyIf {
+        filter.includePatterns.isEmpty()
+    }
+    doFirst {
+        // Classic gradle, nothing works without doFirst
+        println "TestNG tests: ($includes)"
+    }
+}
+
+test {
+    dependsOn(testNG)
+    reports.html.destination = file("$buildDir/reports/junit")
 }

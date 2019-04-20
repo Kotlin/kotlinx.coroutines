@@ -40,12 +40,15 @@ private class RxCompletableCoroutine(
     parentContext: CoroutineContext,
     private val subscriber: CompletableEmitter
 ) : AbstractCoroutine<Unit>(parentContext, true) {
-    override val cancelsParent: Boolean get() = true
     override fun onCompleted(value: Unit) {
         if (!subscriber.isDisposed) subscriber.onComplete()
     }
 
-    override fun onCompletedExceptionally(exception: Throwable) {
-        if (!subscriber.isDisposed) subscriber.onError(exception)
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        if (!subscriber.isDisposed) {
+            subscriber.onError(cause)
+        } else if (!handled) {
+            handleCoroutineException(context, cause)
+        }
     }
 }

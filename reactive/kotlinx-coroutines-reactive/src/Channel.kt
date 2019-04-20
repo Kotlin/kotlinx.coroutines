@@ -30,11 +30,8 @@ public fun <T> Publisher<T>.openSubscription(request: Int = 0): ReceiveChannel<T
 /**
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  */
-public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) {
-    val channel = openSubscription()
-    for (x in channel) action(x)
-    channel.cancel()
-}
+public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) =
+    openSubscription().consumeEach(action)
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T>(
@@ -44,8 +41,7 @@ private class SubscriptionChannel<T>(
         require(request >= 0) { "Invalid request size: $request" }
     }
 
-    @Volatile
-    private var subscription: Subscription? = null
+    private val _subscription = atomic<Subscription?>(null)
 
     // requested from subscription minus number of received minus number of enqueued receivers,
     // can be negative if we have receivers, but no subscription yet
@@ -55,7 +51,7 @@ private class SubscriptionChannel<T>(
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onReceiveEnqueued() {
         _requested.loop { wasRequested ->
-            val subscription = this.subscription
+            val subscription = _subscription.value
             val needRequested = wasRequested - 1
             if (subscription != null && needRequested < 0) { // need to request more from subscription
                 // try to fixup by making request
@@ -76,12 +72,12 @@ private class SubscriptionChannel<T>(
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
-        subscription?.cancel()
+        _subscription.getAndSet(null)?.cancel() // cancel exactly once
     }
 
     // Subscriber overrides
     override fun onSubscribe(s: Subscription) {
-        subscription = s
+        _subscription.value = s
         while (true) { // lock-free loop on _requested
             if (isClosedForSend) {
                 s.cancel()

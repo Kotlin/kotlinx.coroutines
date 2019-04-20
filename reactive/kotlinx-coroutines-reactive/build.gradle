@@ -2,8 +2,6 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-ext.reactive_streams_version = '1.0.2'
-
 dependencies {
     compile "org.reactivestreams:reactive-streams:$reactive_streams_version"
     testCompile "org.reactivestreams:reactive-streams-tck:$reactive_streams_version"
@@ -30,6 +28,6 @@ test {
 
 tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
-        url = new URL("http://www.reactive-streams.org/reactive-streams-$reactive_streams_version-javadoc/")
+        url = new URL("https://www.reactive-streams.org/reactive-streams-$reactive_streams_version-javadoc/")
     }
 }

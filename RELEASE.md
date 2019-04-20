@@ -49,7 +49,7 @@ To release new `<version>` of `kotlinx-coroutines`:
    * Wait until "Build" configuration for committed `master` branch passes tests.
    * Run "Deploy (Configure, RUN THIS ONE)" configuration with the corresponding new version.    
 
-2. In [GitHub](http://github.com/kotlin/kotlinx.coroutines) interface:
+2. In [GitHub](https://github.com/kotlin/kotlinx.coroutines) interface:
    * Create new release named as `<version>`. 
    * Cut & paste lines from [`CHANGES.md`](CHANGES.md) into description.    
 
@@ -61,16 +61,20 @@ To release new `<version>` of `kotlinx-coroutines`:
    * Wait until newly published version becomes the most recent.
    * Sync to Maven Central.
    
-5. Announce new release in [Slack](http://kotlinlang.slack.com)   
+5. Announce new release in [Slack](https://kotlinlang.slack.com)   
 
-6. Switch into `develop` branch:<br>
+6. Create a ticket to update coroutines version on [try.kotlinlang.org](try.kotlinlang.org).
+   * Use [KT-30870](https://youtrack.jetbrains.com/issue/KT-30870) as a template
+   * This step should be skipped for eap versions that are not merged to `master`
+
+7. Switch into `develop` branch:<br>
    `git checkout develop`
  
-7. Fetch the latest `master`:<br>
+8. Fetch the latest `master`:<br>
    `git fetch` 
    
-8. Merge release from `master`:<br>
+9. Merge release from `master`:<br>
    `git merge origin/master`
    
-9. Push updates to `develop`:<br>
+10. Push updates to `develop`:<br>
    `git push`      

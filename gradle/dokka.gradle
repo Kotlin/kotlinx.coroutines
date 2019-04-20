@@ -4,14 +4,12 @@
 
 // Configures generation of JavaDoc & Dokka artifacts
 
-def platform = platformOf(project)
-def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
 
 def makeLinkMapping(dokka, projectDir) {
     dokka.linkMapping {
         def relPath = rootProject.projectDir.toPath().relativize(projectDir.toPath())
         dir = "$projectDir/src"
-        url = "http://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src"
+        url = "https://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src"
         suffix = "#L"
     }
 }
@@ -20,77 +18,79 @@ configurations {
     dokkaStubs.extendsFrom compileOnly
 }
 
-if (platform == "jvm") {
-    apply plugin: 'org.jetbrains.dokka'
+apply plugin: 'org.jetbrains.dokka'
 
-    tasks.withType(dokka.getClass()) {
-        jdkVersion = 8
-        includes = ['README.md']
-    }
+tasks.withType(dokka.getClass()) {
+    jdkVersion = 8
+    includes = ['README.md']
+}
 
-    dependencies {
-        dokkaStubs project(":stdlib-stubs")
-    }
+dependencies {
+    dokkaStubs project(":stdlib-stubs")
+}
 
-    dokka {
-        kotlinTasks { [] }
-        outputFormat = 'kotlin-website'
-        dependsOn(project.configurations.dokkaStubs)
+
+dokka {
+    kotlinTasks { [] }
+    outputFormat = 'kotlin-website'
+    dependsOn(project.configurations.dokkaStubs)
+
+    if (project.name != "kotlinx-coroutines-core") {
         dependsOn(project.configurations.compileClasspath)
         dependsOn(project.sourceSets.main.output)
         afterEvaluate {
             classpath = project.configurations.dokkaStubs.files + project.configurations.compileClasspath.files + project.sourceSets.main.output.files
         }
     }
+}
 
-    if (project.name == coroutines_core) {
-        // Custom configuration for MPP modules
-        dependencies {
-            dokkaStubs project(":js-stub") // so that JS library reference can resolve properly
+if (project.name == "kotlinx-coroutines-core") {
+    // Custom configuration for MPP modules
+    dependencies {
+        dokkaStubs project(":js-stub") // so that JS library reference can resolve properly
+        dokkaStubs project(":kotlinx-coroutines-core")
+    }
+
+    dokka {
+        kotlinTasks { [] }
+        suppressedModifiers = ['actual']
+        makeLinkMapping(it, projectDir)
+        makeLinkMapping(it, project.file("js"))
+        makeLinkMapping(it, project.file("jvm"))
+        makeLinkMapping(it, project.file("native"))
+        makeLinkMapping(it, project.file("common"))
+        // source roots
+        impliedPlatforms = ['JVM', 'JS', 'Native']
+        sourceRoot {
+            path = rootProject.file("$project.name/common/src")
         }
-        
-        dokka {
-            kotlinTasks { [] }
-            suppressedModifiers = ['actual']
-            // map for JS, Native, and Common sources
-            makeLinkMapping(it, projectDir)
-            makeLinkMapping(it, rootProject.file("js/$project.name-js"))
-            makeLinkMapping(it, rootProject.file("native/$project.name-native"))
-            makeLinkMapping(it, rootProject.file("common/$project.name-common"))
-            // source roots
-            impliedPlatforms = ['JVM', 'JS', 'Native']
-            sourceRoot {
-                path = rootProject.file("core/$project.name/src")
-                platforms = ['JVM']
-            }
-            sourceRoot {
-                path = rootProject.file("js/$project.name-js/src")
-                platforms = ['JS']
-            }
-            sourceRoot {
-                path = rootProject.file("native/$project.name-native/src")
-                platforms = ['Native']
-            }
-            sourceRoot {
-                path = rootProject.file("common/$project.name-common/src")
-            }
+        sourceRoot {
+            path = rootProject.file("$project.name/jvm/src")
+            platforms = ['JVM']
+        }
+        sourceRoot {
+            path = rootProject.file("$project.name/js/src")
+            platforms = ['JS']
+        }
+        sourceRoot {
+            path = rootProject.file("$project.name/native/src")
+            platforms = ['Native']
+        }
+        doFirst {
+            classpath = project.configurations.dokkaStubs.files +
+                    project.configurations.jvmCompileClasspath.files +
+                    project.kotlin.targets.jvm.compilations.main.output.allOutputs
         }
     }
+}
 
-    // real xxx-javadoc.jar for JVM
-    task dokkaJavadoc(type: dokka.getClass()) {
-        outputFormat = 'javadoc'
-        outputDirectory = "$buildDir/javadoc"
-    }
+// real xxx-javadoc.jar for JVM
+task dokkaJavadoc(type: dokka.getClass()) {
+    outputFormat = 'javadoc'
+    outputDirectory = "$buildDir/javadoc"
+}
 
-    task javadocJar(type: Jar, dependsOn: dokkaJavadoc) {
-        classifier = 'javadoc'
-        from "$buildDir/javadoc"
-    }
-} else {
-    // empty xxx-javadoc.jar for JS and Common modules
-    task javadocJar(type: Jar) {
-        classifier = 'javadoc'
-        from "$buildDir/javadoc" // would not exist
-    }
+task javadocJar(type: Jar, dependsOn: dokkaJavadoc) {
+    classifier = 'javadoc'
+    from "$buildDir/javadoc"
 }

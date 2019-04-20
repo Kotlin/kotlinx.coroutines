@@ -9,7 +9,7 @@ Coroutine builders:
 | [mono]          | `Mono`                                 | [CoroutineScope] | Cold mono that starts coroutine on subscribe
 | [flux]          | `Flux`                                 | [CoroutineScope] | Cold flux that starts coroutine on subscribe
 
-Note, that `Mono` and `Flux` are a subclass of [Reactive Streams](http://www.reactive-streams.org)
+Note, that `Mono` and `Flux` are a subclass of [Reactive Streams](https://www.reactive-streams.org)
 `Publisher` and extensions for it are covered by
 [kotlinx-coroutines-reactive](../kotlinx-coroutines-reactive) module.
 
