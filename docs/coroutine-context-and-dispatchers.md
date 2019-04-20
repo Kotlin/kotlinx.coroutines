@@ -516,7 +516,7 @@ class Activity {
 
 </div>
 
-Alternatively, we can implement [CoroutineScope] interface in this `Actvity` class. The best way to do it is
+Alternatively, we can implement [CoroutineScope] interface in this `Activity` class. The best way to do it is
 to use delegation with default factory functions.
 We also can combine the desired dispatcher (we used [Dispatchers.Default] in this example) with the scope:
 
