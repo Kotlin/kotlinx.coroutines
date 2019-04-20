@@ -1,11 +1,13 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.test.internal.ThreadSafeHeap
-import kotlinx.coroutines.test.internal.ThreadSafeHeapNode
-import java.util.concurrent.atomic.AtomicLong
-import kotlin.coroutines.CoroutineContext
-import kotlin.math.max
+import kotlinx.coroutines.internal.*
+import java.util.concurrent.atomic.*
+import kotlin.coroutines.*
 
 /**
  * Control the virtual clock time of a [CoroutineDispatcher].
