@@ -1281,10 +1281,19 @@ private class InvokeOnCompletion(
 }
 
 private class ResumeOnCompletion(
-    job: Job,
+    job: JobSupport,
     private val continuation: Continuation<Unit>
-) : JobNode<Job>(job)  {
-    override fun invoke(cause: Throwable?) = continuation.resume(Unit)
+) : JobNode<JobSupport>(job)  {
+    override fun invoke(cause: Throwable?) {
+        val state = job.state
+        check(state !is Incomplete)
+        if (state is CompletedExceptionally) {
+            // Resume with the CancellationException as designed.
+            continuation.resumeWithExceptionMode(job.getCancellationException(), MODE_ATOMIC_DEFAULT)
+        } else {
+            continuation.resume(Unit)
+        }
+    }
     override fun toString() = "ResumeOnCompletion[$continuation]"
 }
 
