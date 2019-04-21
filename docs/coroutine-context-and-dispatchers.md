@@ -105,7 +105,7 @@ The default dispatcher, that is used when coroutines are launched in [GlobalScop
 is represented by [Dispatchers.Default] and uses shared background pool of threads,
 so `launch(Dispatchers.Default) { ... }` uses the same dispatcher as `GlobalScope.launch { ... }`.
   
-[newSingleThreadContext] creates a new thread for the coroutine to run. 
+[newSingleThreadContext] creates a thread for the coroutine to run. 
 A dedicated thread is a very expensive resource. 
 In a real application it must be either released, when no longer needed, using [close][ExecutorCoroutineDispatcher.close] 
 function, or stored in a top-level variable and reused throughout the application.  

@@ -265,7 +265,7 @@ fun main() = runBlocking { // this: CoroutineScope
         println("Task from runBlocking")
     }
     
-    coroutineScope { // Creates a new coroutine scope
+    coroutineScope { // Creates a coroutine scope
         launch {
             delay(500L) 
             println("Task from nested launch")

@@ -367,7 +367,7 @@ internal class CoroutineScheduler(
     }
 
     /**
-     * Unparks or creates a new [Worker] for executing non-blocking tasks if there are idle cores
+     * Unparks or creates a [Worker] for executing non-blocking tasks if there are idle cores
      */
     private fun requestCpuWorker() {
         // No CPU available -- nothing to request
@@ -383,7 +383,7 @@ internal class CoroutineScheduler(
          */
         if (tryUnpark()) return
         /*
-         * Create a new thread.
+         * Create a thread.
          * It's not preferable to use 'cpuWorkersCounter' here (moreover, it's implicitly here as corePoolSize - cpuPermits.availableTokens),
          * cpuWorkersCounter doesn't take into account threads which are created (and either running or parked), but haven't
          * CPU token: retiring workers, recently unparked workers before `findTask` call, etc.
