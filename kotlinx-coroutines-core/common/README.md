@@ -18,8 +18,8 @@ Coroutine dispatchers implementing [CoroutineDispatcher]:
 | --------------------------- | ---------------
 | [Dispatchers.Default]       | Confines coroutine execution to a shared pool of background threads
 | [Dispatchers.Unconfined]    | Does not confine coroutine execution in any way
-| [newSingleThreadContext]    | Create new single-threaded coroutine context
-| [newFixedThreadPoolContext] | Creates new thread pool of a fixed size 
+| [newSingleThreadContext]    | Creates a single-threaded coroutine context
+| [newFixedThreadPoolContext] | Creates a thread pool of a fixed size 
 | [Executor.asCoroutineDispatcher][java.util.concurrent.Executor.asCoroutineDispatcher] | Extension to convert any executor
 
 More context elements:

@@ -38,7 +38,7 @@ public fun SupervisorJob(parent: Job? = null) : CompletableJob = SupervisorJobIm
 public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
 
 /**
- * Creates new [CoroutineScope] with [SupervisorJob] and calls the specified suspend block with this scope.
+ * Creates a [CoroutineScope] with [SupervisorJob] and calls the specified suspend block with this scope.
  * The provided scope inherits its [coroutineContext][CoroutineScope.coroutineContext] from the outer scope, but overrides
  * context's [Job] with [SupervisorJob].
  *

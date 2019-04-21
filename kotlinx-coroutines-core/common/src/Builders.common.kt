@@ -58,7 +58,7 @@ public fun CoroutineScope.launch(
 // --------------- async ---------------
 
 /**
- * Creates new coroutine and returns its future result as an implementation of [Deferred].
+ * Creates a coroutine and returns its future result as an implementation of [Deferred].
  * The running coroutine is cancelled when the resulting deferred is [cancelled][Job.cancel].
  *
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.

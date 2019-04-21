@@ -77,7 +77,7 @@ open class ExperimentalCoroutineDispatcher(
     }
 
     /**
-     * Creates new coroutine execution context with limited parallelism to execute tasks which may potentially block.
+     * Creates a coroutine execution context with limited parallelism to execute tasks which may potentially block.
      * Resulting [CoroutineDispatcher] doesn't own any resources (its threads) and provides a view of the original [ExperimentalCoroutineDispatcher],
      * giving it additional hints to adjust its behaviour.
      *
@@ -89,7 +89,7 @@ open class ExperimentalCoroutineDispatcher(
     }
 
     /**
-     * Creates new coroutine execution context with limited parallelism to execute CPU-intensive tasks.
+     * Creates a coroutine execution context with limited parallelism to execute CPU-intensive tasks.
      * Resulting [CoroutineDispatcher] doesn't own any resources (its threads) and provides a view of the original [ExperimentalCoroutineDispatcher],
      * giving it additional hints to adjust its behaviour.
      *

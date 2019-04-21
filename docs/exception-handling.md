@@ -48,7 +48,7 @@ while the latter are relying on the user to consume the final
 exception, for example via [await][Deferred.await] or [receive][ReceiveChannel.receive] 
 ([produce] and [receive][ReceiveChannel.receive] are covered later in [Channels](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/channels.md) section).
 
-It can be demonstrated by a simple example that creates new coroutines in [GlobalScope]:
+It can be demonstrated by a simple example that creates coroutines in the [GlobalScope]:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 

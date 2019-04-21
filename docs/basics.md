@@ -250,7 +250,7 @@ World!
 
 ### Scope builder
 In addition to the coroutine scope provided by different builders, it is possible to declare your own scope using
-[coroutineScope] builder. It creates new coroutine scope and does not complete until all launched children
+[coroutineScope] builder. It creates a coroutine scope and does not complete until all launched children
 complete. The main difference between [runBlocking] and [coroutineScope] is that the latter does not block the current thread 
 while waiting for all children to complete.
 
