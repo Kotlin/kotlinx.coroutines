@@ -101,7 +101,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-01.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-01.kt).
 
 <!--- TEST LINES_START
 Completed 100000 actions in
@@ -152,7 +152,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-01b.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-01b.kt).
 
 <!--- TEST LINES_START
 Completed 100000 actions in
@@ -198,7 +198,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-02.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-02.kt).
 
 <!--- TEST LINES_START
 Completed 100000 actions in
@@ -253,7 +253,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-03.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-03.kt).
 
 <!--- TEST ARBITRARY_TIME
 Completed 100000 actions in xxx ms
@@ -310,7 +310,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-04.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-04.kt).
 
 <!--- TEST ARBITRARY_TIME
 Completed 100000 actions in xxx ms
@@ -364,7 +364,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-05.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-05.kt).
 
 <!--- TEST ARBITRARY_TIME
 Completed 100000 actions in xxx ms
@@ -423,7 +423,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-06.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-06.kt).
 
 <!--- TEST ARBITRARY_TIME
 Completed 100000 actions in xxx ms
@@ -539,7 +539,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-07.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-07.kt).
 
 <!--- TEST ARBITRARY_TIME
 Completed 100000 actions in xxx ms

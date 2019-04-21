@@ -97,7 +97,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-01.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-01.kt).
 
 It produces something like this:
 
@@ -150,7 +150,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-02.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-02.kt).
 
 It produces something like this:
 
@@ -204,7 +204,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-03.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-03.kt).
 
 It produces something like this:
 
@@ -301,7 +301,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-04.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-04.kt).
 
 <!--- TEST ARBITRARY_TIME
 The answer is 42
@@ -377,7 +377,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-05.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-05.kt).
 
 We still have concurrent execution of both operations as evident from the output of the above main function: 
 
@@ -424,7 +424,7 @@ suspend fun failedConcurrentSum(): Int = coroutineScope {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-06.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-06.kt).
 
 Note, how both first `async` and awaiting parent are cancelled on the one child failure:
 ```text

@@ -8,7 +8,7 @@ package kotlinx.coroutines.guide.basic01
 import kotlinx.coroutines.*
 
 fun main() {
-    GlobalScope.launch { // launch new coroutine in background and continue
+    GlobalScope.launch { // launch a new coroutine in background and continue
         delay(1000L) // non-blocking delay for 1 second (default time unit is ms)
         println("World!") // print after delay
     }

@@ -20,8 +20,8 @@ fun main() = runBlocking { // this: CoroutineScope
         }
     
         delay(100L)
-        println("Task from coroutine scope") // This line will be printed before nested launch
+        println("Task from coroutine scope") // This line will be printed before the nested launch
     }
     
-    println("Coroutine scope is over") // This line is not printed until nested launch completes
+    println("Coroutine scope is over") // This line is not printed until the nested launch completes
 }
