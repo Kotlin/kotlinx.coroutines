@@ -18,13 +18,13 @@ import kotlin.jvm.*
 // --------------- launch ---------------
 
 /**
- * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].
+ * Launches a new coroutine without blocking the current thread and returns a reference to the coroutine as a [Job].
  * The coroutine is cancelled when the resulting job is [cancelled][Job.cancel].
  *
- * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
+ * The coroutine context is inherited from a [CoroutineScope]. Additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
- * with corresponding [coroutineContext] element.
+ * with a corresponding [coroutineContext] element.
  *
  * By default, the coroutine is immediately scheduled for execution.
  * Other start options can be specified via `start` parameter. See [CoroutineStart] for details.

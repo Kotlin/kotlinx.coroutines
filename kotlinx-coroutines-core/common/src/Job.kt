@@ -158,7 +158,7 @@ public interface Job : CoroutineContext.Element {
     /**
      * Cancels this job with an optional cancellation [cause].
      * A cause can be used to specify an error message or to provide other details on
-     * a cancellation reason for debugging purposes.
+     * the cancellation reason for debugging purposes.
      * See [Job] documentation for full explanation of cancellation machinery.
      */
     public fun cancel(cause: CancellationException? = null)
@@ -223,23 +223,23 @@ public interface Job : CoroutineContext.Element {
     // ------------ state waiting ------------
 
     /**
-     * Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
+     * Suspends the coroutine until this job is complete. This invocation resumes normally (without exception)
      * when the job is complete for any reason and the [Job] of the invoking coroutine is still [active][isActive].
      * This function also [starts][Job.start] the corresponding coroutine if the [Job] was still in _new_ state.
      *
      * Note that the job becomes complete only when all its children are complete.
      *
-     * This suspending function is cancellable and **always** checks for the cancellation of invoking coroutine's Job.
+     * This suspending function is cancellable and **always** checks for a cancellation of the invoking coroutine's Job.
      * If the [Job] of the invoking coroutine is cancelled or completed when this
      * suspending function is invoked or while it is suspended, this function
      * throws [CancellationException].
      *
      * In particular, it means that a parent coroutine invoking `join` on a child coroutine that was started using
      * `launch(coroutineContext) { ... }` builder throws [CancellationException] if the child
-     * had crashed, unless a non-standard [CoroutineExceptionHandler] if installed in the context.
+     * had crashed, unless a non-standard [CoroutineExceptionHandler] is installed in the context.
      *
      * This function can be used in [select] invocation with [onJoin] clause.
-     * Use [isCompleted] to check for completion of this job without waiting.
+     * Use [isCompleted] to check for a completion of this job without waiting.
      *
      * There is [cancelAndJoin] function that combines an invocation of [cancel] and `join`.
      */
@@ -462,9 +462,9 @@ internal fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle
     invokeOnCompletion(handler = DisposeOnCompletion(this, handle).asHandler)
 
 /**
- * Cancels the job and suspends invoking coroutine until the cancelled job is complete.
+ * Cancels the job and suspends the invoking coroutine until the cancelled job is complete.
  *
- * This suspending function is cancellable and **always** checks for the cancellation of invoking coroutine's Job.
+ * This suspending function is cancellable and **always** checks for a cancellation of the invoking coroutine's Job.
  * If the [Job] of the invoking coroutine is cancelled or completed when this
  * suspending function is invoked or while it is suspended, this function
  * throws [CancellationException].

@@ -119,7 +119,7 @@ World!
 -->
 
 The result is the same, but this code uses only non-blocking [delay]. 
-The main thread, that invokes `runBlocking`, _blocks_ until the coroutine inside `runBlocking` completes. 
+The main thread invoking `runBlocking` _blocks_ until the coroutine inside `runBlocking` completes. 
 
 This example can be also rewritten in a more idiomatic way, using `runBlocking` to wrap 
 the execution of the main function:
@@ -151,7 +151,7 @@ World!
 Here `runBlocking<Unit> { ... }` works as an adaptor that is used to start the top-level main coroutine. 
 We explicitly specify its `Unit` return type, because a well-formed `main` function in Kotlin has to return `Unit`.
 
-This is also a way to write unit-tests for suspending functions:
+This is also a way to write unit tests for suspending functions:
 
 <!--- INCLUDE
 import kotlinx.coroutines.*
@@ -209,11 +209,11 @@ the background job in any way. Much better.
 ### Structured concurrency
 
 There is still something to be desired for practical usage of coroutines. 
-When we use `GlobalScope.launch` we create a top-level coroutine. Even though it is light-weight, it still 
+When we use `GlobalScope.launch`, we create a top-level coroutine. Even though it is light-weight, it still 
 consumes some memory resources while it runs. If we forget to keep a reference to the newly launched 
 coroutine it still runs. What if the code in the coroutine hangs (for example, we erroneously
 delay for too long), what if we launched too many coroutines and ran out of memory? 
-Having to manually keep a reference to all the launched coroutines and [join][Job.join] them is error-prone. 
+Having to manually keep references to all the launched coroutines and [join][Job.join] them is error-prone. 
 
 There is a better solution. We can use structured concurrency in our code. 
 Instead of launching coroutines in the [GlobalScope], just like we usually do with threads (threads are always global), 
