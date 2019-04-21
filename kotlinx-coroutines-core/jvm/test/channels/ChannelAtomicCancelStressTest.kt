@@ -115,7 +115,12 @@ class ChannelAtomicCancelStressTest(private val kind: TestChannelKind) : TestBas
                         else -> error("cannot happen")
                     }
                     lastSent = trySend // update on success
-                    if (counter++ % 1000 == 0) yield() // yield periodically to check cancellation on LinkedListChannel
+                    when {
+                        // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
+                        kind == TestChannelKind.LINKED_LIST -> while (lastSent > lastReceived + 100) yield()
+                        // yield periodically to check cancellation on conflated channels
+                        kind.isConflated -> if (counter++ % 100 == 0) yield()
+                    }
                 }
             }
         }
