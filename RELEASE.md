@@ -50,7 +50,7 @@ To release new `<version>` of `kotlinx-coroutines`:
    * Run "Deploy (Configure, RUN THIS ONE)" configuration with the corresponding new version.    
 
 2. In [GitHub](https://github.com/kotlin/kotlinx.coroutines) interface:
-   * Create new release named as `<version>`. 
+   * Create a release named `<version>`. 
    * Cut & paste lines from [`CHANGES.md`](CHANGES.md) into description.    
 
 3. Build and publish documentation for web-site: <br>

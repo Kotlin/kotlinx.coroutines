@@ -31,7 +31,7 @@ fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
     newFixedThreadPoolContext(1, name)
 
 /**
- * Creates new coroutine execution context with the fixed-size thread-pool and built-in [yield] support.
+ * Creates a coroutine execution context with the fixed-size thread-pool and built-in [yield] support.
  * **NOTE: The resulting [ExecutorCoroutineDispatcher] owns native resources (its threads).
  * Resources are reclaimed by [ExecutorCoroutineDispatcher.close].**
  *
