@@ -250,9 +250,16 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     private fun addSuppressedExceptions(rootCause: Throwable, exceptions: List<Throwable>) {
         if (exceptions.size <= 1) return // nothing more to do here
         val seenExceptions = identitySet<Throwable>(exceptions.size)
+        /*
+         * Note that root cause may be a recovered exception as well.
+         * To avoid cycles we unwrap the root cause and check for self-suppression against unwrapped cause,
+         * but add suppressed exceptions to the recovered root cause (as it is our final exception)
+         */
+        val unwrappedCause = unwrap(rootCause)
         for (exception in exceptions) {
             val unwrapped = unwrap(exception)
-            if (unwrapped !== rootCause && unwrapped !is CancellationException && seenExceptions.add(unwrapped)) {
+            if (unwrapped !== rootCause && unwrapped !== unwrappedCause &&
+                unwrapped !is CancellationException && seenExceptions.add(unwrapped)) {
                 rootCause.addSuppressedThrowable(unwrapped)
             }
         }

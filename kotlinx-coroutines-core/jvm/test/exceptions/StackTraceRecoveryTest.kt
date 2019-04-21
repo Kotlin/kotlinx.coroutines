@@ -20,7 +20,7 @@ class StackTraceRecoveryTest : TestBase() {
     fun testAsync() = runTest {
         fun createDeferred(depth: Int): Deferred<*> {
             return if (depth == 0) {
-                async(coroutineContext + NonCancellable) {
+                async<Unit>(coroutineContext + NonCancellable) {
                     throw ExecutionException(null)
                 }
             } else {
@@ -47,7 +47,7 @@ class StackTraceRecoveryTest : TestBase() {
 
     @Test
     fun testCompletedAsync() = runTest {
-        val deferred = async(coroutineContext + NonCancellable) {
+        val deferred = async<Unit>(coroutineContext + NonCancellable) {
             throw ExecutionException(null)
         }
 
@@ -133,7 +133,7 @@ class StackTraceRecoveryTest : TestBase() {
 
     @Test
     fun testWithContext() = runTest {
-        val deferred = async(NonCancellable, start = CoroutineStart.LAZY) {
+        val deferred = async<Unit>(NonCancellable, start = CoroutineStart.LAZY) {
             throw RecoverableTestException()
         }
 
@@ -152,7 +152,7 @@ class StackTraceRecoveryTest : TestBase() {
         deferred.join()
     }
 
-    private suspend fun outerMethod(deferred: Deferred<Nothing>, vararg traces: String) {
+    private suspend fun outerMethod(deferred: Deferred<*>, vararg traces: String) {
         withContext(Dispatchers.IO) {
             innerMethod(deferred, *traces)
         }
@@ -160,9 +160,10 @@ class StackTraceRecoveryTest : TestBase() {
         assertTrue(true)
     }
 
-    private suspend fun innerMethod(deferred: Deferred<Nothing>, vararg traces: String) {
+    private suspend fun innerMethod(deferred: Deferred<*>, vararg traces: String) {
         try {
             deferred.await()
+            expectUnreached()
         } catch (e: RecoverableTestException) {
             verifyStackTrace(e, *traces)
         }
@@ -170,7 +171,7 @@ class StackTraceRecoveryTest : TestBase() {
 
     @Test
     fun testCoroutineScope() = runTest {
-        val deferred = async(NonCancellable, start = CoroutineStart.LAZY) {
+        val deferred = async<Unit>(NonCancellable, start = CoroutineStart.LAZY) {
             throw RecoverableTestException()
         }
 
@@ -203,7 +204,7 @@ class StackTraceRecoveryTest : TestBase() {
 
     @Test
     fun testThrowingInitCause() = runTest {
-        val deferred = async(NonCancellable) {
+        val deferred = async<Unit>(NonCancellable) {
             expect(2)
             throw TrickyException()
         }
@@ -217,7 +218,7 @@ class StackTraceRecoveryTest : TestBase() {
         }
     }
 
-    private suspend fun outerScopedMethod(deferred: Deferred<Nothing>, vararg traces: String) = coroutineScope {
+    private suspend fun outerScopedMethod(deferred: Deferred<*>, vararg traces: String) = coroutineScope {
         supervisorScope {
             innerMethod(deferred, *traces)
             assertTrue(true)
@@ -228,7 +229,7 @@ class StackTraceRecoveryTest : TestBase() {
     @Test
     fun testSelect() = runTest {
         expect(1)
-        val result = kotlin.runCatching { doSelect() }
+        val result = runCatching { doSelect() }
         expect(3)
         verifyStackTrace(result.exceptionOrNull()!!,
             "kotlinx.coroutines.RecoverableTestException\n" +
@@ -249,6 +250,25 @@ class StackTraceRecoveryTest : TestBase() {
                 expect(2)
                 throw RecoverableTestException()
             }
+        }
+    }
+
+    @Test
+    fun testSelfSuppression() = runTest {
+        try {
+            runBlocking {
+                val job = launch {
+                    coroutineScope<Unit> {
+                        throw RecoverableTestException()
+                    }
+                }
+
+                job.join()
+                expectUnreached()
+            }
+            expectUnreached()
+        } catch (e: RecoverableTestException) {
+            checkCycles(e)
         }
     }
 }
