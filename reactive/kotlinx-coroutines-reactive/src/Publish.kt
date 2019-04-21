@@ -118,7 +118,7 @@ private class PublisherCoroutine<in T>(
 
     // assert: mutex.isLocked()
     private fun doLockedNext(elem: T) {
-        // check if already closed for send, note, that isActive become false as soon as cancel() is invoked,
+        // check if already closed for send, note that isActive becomes false as soon as cancel() is invoked,
         // because the job is cancelled, so this check also ensure conformance to the reactive specification's
         // requirement that after cancellation requested we don't call onXXX
         if (!isActive) {

@@ -18,7 +18,7 @@ import kotlin.coroutines.*
  * Coroutine emits items with `send`. Unsubscribing cancels running coroutine.
  *
  * Invocations of `send` are suspended appropriately to ensure that `onNext` is not invoked concurrently.
- * Note, that Rx 2.x [Observable] **does not support backpressure**. Use [rxFlowable].
+ * Note that Rx 2.x [Observable] **does not support backpressure**. Use [rxFlowable].
  *
  * | **Coroutine action**                         | **Signal to subscriber**
  * | -------------------------------------------- | ------------------------

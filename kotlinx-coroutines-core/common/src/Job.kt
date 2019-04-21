@@ -69,7 +69,7 @@ import kotlin.jvm.*
  *
  * A job can have a _parent_ job. A job with a parent is cancelled when its parent is cancelled.
  * Parent job waits in _completing_ or _cancelling_ state for all its children to complete before finishing.
- * Note, that _completing_ state is purely internal to the job. For an outside observer a _completing_ job is still
+ * Note that _completing_ state is purely internal to the job. For an outside observer a _completing_ job is still
  * active, while internally it is waiting for its children.
  *
  * Normal cancellation of a job is distinguished from its failure by the type of its cancellation exception cause.
@@ -190,7 +190,7 @@ public interface Job : CoroutineContext.Element {
      * * Parent cannot complete until all its children are complete. Parent waits for all its children to
      *   complete in _completing_ or _cancelling_ state.
      * * Uncaught exception in a child, by default, cancels parent. In particular, this applies to
-     *   children created with [launch][CoroutineScope.launch] coroutine builder. Note, that
+     *   children created with [launch][CoroutineScope.launch] coroutine builder. Note that
      *   [async][CoroutineScope.async] and other future-like
      *   coroutine builders do not have uncaught exceptions by definition, since all their exceptions are
      *   caught and are encapsulated in their result.
@@ -227,7 +227,7 @@ public interface Job : CoroutineContext.Element {
      * when the job is complete for any reason and the [Job] of the invoking coroutine is still [active][isActive].
      * This function also [starts][Job.start] the corresponding coroutine if the [Job] was still in _new_ state.
      *
-     * Note, that the job becomes complete only when all its children are complete.
+     * Note that the job becomes complete only when all its children are complete.
      *
      * This suspending function is cancellable and **always** checks for the cancellation of invoking coroutine's Job.
      * If the [Job] of the invoking coroutine is cancelled or completed when this

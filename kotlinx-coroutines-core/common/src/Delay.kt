@@ -63,7 +63,7 @@ public interface Delay {
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  *
- * Note, that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ * Note that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
  * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
  * @param timeMillis time in milliseconds.

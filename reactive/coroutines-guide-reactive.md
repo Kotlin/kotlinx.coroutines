@@ -210,7 +210,7 @@ immediately throw an `IllegalStateException`.
 See [this issue](https://github.com/Kotlin/kotlinx.coroutines/issues/167)
 for details.
 
-> Note, that we can replicate the same behaviour that we saw with channels by using Rx 
+> Note that we can replicate the same behaviour that we saw with channels by using Rx 
 [publish](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#publish()) 
 operator and [connect](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/flowables/ConnectableFlowable.html#connect())
 method with it.
@@ -576,7 +576,7 @@ fun CoroutineScope.range(context: CoroutineContext, start: Int, count: Int) = pu
 ```
 
 In this code `CoroutineScope` and `context` are used instead of an `Executor` and all the backpressure aspects are taken care
-of by the coroutines machinery. Note, that this implementation depends only on the small reactive streams library
+of by the coroutines machinery. Note that this implementation depends only on the small reactive streams library
 that defines `Publisher` interface and its friends.
 
 It is straightforward to use from a coroutine:
@@ -1040,7 +1040,7 @@ like our initial example using Rx `subscribe` operator.
 
 <!--- TEST LINES_START -->
 
-Note, that [Dispatchers.Unconfined] context shall be used with care. It may improve the overall performance on certain tests,
+Note that [Dispatchers.Unconfined] context shall be used with care. It may improve the overall performance on certain tests,
 due to the increased stack-locality of operations and less scheduling overhead, but it also produces deeper stacks 
 and makes it harder to reason about asynchronicity of the code that is using it. 
 

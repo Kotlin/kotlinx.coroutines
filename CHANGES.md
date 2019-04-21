@@ -215,7 +215,7 @@ Visible consequences of include more robust exception handling for large corouti
 * Distribution no longer uses multi-version jar which is not supported on Android (see #510).
 * JS version of the library does not depend on AtomicFu anymore:
   All the atomic boxes in JS are fully erased.
-* Note, that versions 0.25.1-2 are skipped for technical reasons (they were not fully released).
+* Note that versions 0.25.1-2 are skipped for technical reasons (they were not fully released).
 
 ## Version 0.25.0
 

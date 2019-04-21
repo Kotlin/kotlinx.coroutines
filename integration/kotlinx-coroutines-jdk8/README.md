@@ -36,7 +36,7 @@ fun combineImagesAsync(name1: String, name2: String): CompletableFuture<Image> =
 }
 ```
 
-Note, that this module should be used only for integration with existing Java APIs based on `CompletableFuture`. 
+Note that this module should be used only for integration with existing Java APIs based on `CompletableFuture`. 
 Writing pure-Kotlin code that uses `CompletableFuture` is highly not recommended, since the resulting APIs based
 on the futures are quite error-prone. See the discussion on 
 [Asynchronous Programming Styles](https://github.com/Kotlin/KEEP/blob/master/proposals/coroutines.md#asynchronous-programming-styles)

@@ -171,7 +171,7 @@ public interface SelectInstance<in R> {
  * continue to execute even after it was cancelled from the same thread in the case when this select operation
  * was already resumed on atomically cancellable clause and the continuation was posted for execution to the thread's queue.
  *
- * Note, that this function does not check for cancellation when it is not suspended.
+ * Note that this function does not check for cancellation when it is not suspended.
  * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
  */
 public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() -> Unit): R =

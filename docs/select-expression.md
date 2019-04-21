@@ -376,7 +376,7 @@ fun CoroutineScope.asyncStringsList(): List<Deferred<String>> {
 </div>
 
 Now the main function awaits for the first of them to complete and counts the number of deferred values
-that are still active. Note, that we've used here the fact that `select` expression is a Kotlin DSL, 
+that are still active. Note that we've used here the fact that `select` expression is a Kotlin DSL, 
 so we can provide clauses for it using an arbitrary code. In this case we iterate over a list
 of deferred values to provide `onAwait` clause for each deferred value.
 

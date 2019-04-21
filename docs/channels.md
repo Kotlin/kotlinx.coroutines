@@ -341,7 +341,7 @@ The output of this code is:
 
 <!--- TEST -->
 
-Note, that you can build the same pipeline using 
+Note that you can build the same pipeline using 
 [`iterator`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/iterator.html) 
 coroutine builder from the standard library. 
 Replace `produce` with `iterator`, `send` with `yield`, `receive` with `next`, 
@@ -445,7 +445,7 @@ Processor #3 received 10
 
 <!--- TEST lines.size == 10 && lines.withIndex().all { (i, line) -> line.startsWith("Processor #") && line.endsWith(" received ${i + 1}") } -->
 
-Note, that cancelling a producer coroutine closes its channel, thus eventually terminating iteration
+Note that cancelling a producer coroutine closes its channel, thus eventually terminating iteration
 over the channel that processor coroutines are doing.
 
 Also, pay attention to how we explicitly iterate over channel with `for` loop to perform fan-out in `launchProcessor` code. 
@@ -627,7 +627,7 @@ pong Ball(hits=4)
 
 <!--- TEST -->
 
-Note, that sometimes channels may produce executions that look unfair due to the nature of the executor
+Note that sometimes channels may produce executions that look unfair due to the nature of the executor
 that is being used. See [this issue](https://github.com/Kotlin/kotlinx.coroutines/issues/111) for details.
 
 ### Ticker channels
