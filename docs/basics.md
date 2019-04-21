@@ -47,7 +47,7 @@ Run the following code:
 import kotlinx.coroutines.*
 
 fun main() {
-    GlobalScope.launch { // launch new coroutine in background and continue
+    GlobalScope.launch { // launch a new coroutine in background and continue
         delay(1000L) // non-blocking delay for 1 second (default time unit is ms)
         println("World!") // print after delay
     }
@@ -58,7 +58,7 @@ fun main() {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-01.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-01.kt).
 
 You will see the following result:
 
@@ -98,7 +98,7 @@ Let's be explicit about blocking using [runBlocking] coroutine builder:
 import kotlinx.coroutines.*
 
 fun main() { 
-    GlobalScope.launch { // launch new coroutine in background and continue
+    GlobalScope.launch { // launch a new coroutine in background and continue
         delay(1000L)
         println("World!")
     }
@@ -111,7 +111,7 @@ fun main() {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-02.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-02.kt).
 
 <!--- TEST
 Hello,
@@ -130,7 +130,7 @@ the execution of the main function:
 import kotlinx.coroutines.*
 
 fun main() = runBlocking<Unit> { // start main coroutine
-    GlobalScope.launch { // launch new coroutine in background and continue
+    GlobalScope.launch { // launch a new coroutine in background and continue
         delay(1000L)
         println("World!")
     }
@@ -141,7 +141,7 @@ fun main() = runBlocking<Unit> { // start main coroutine
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-02b.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-02b.kt).
 
 <!--- TEST
 Hello,
@@ -184,7 +184,7 @@ import kotlinx.coroutines.*
 
 fun main() = runBlocking {
 //sampleStart
-    val job = GlobalScope.launch { // launch new coroutine and keep a reference to its Job
+    val job = GlobalScope.launch { // launch a new coroutine and keep a reference to its Job
         delay(1000L)
         println("World!")
     }
@@ -196,7 +196,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-03.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-03.kt).
 
 <!--- TEST
 Hello,
@@ -231,7 +231,7 @@ in its scope complete. Thus, we can make our example simpler:
 import kotlinx.coroutines.*
 
 fun main() = runBlocking { // this: CoroutineScope
-    launch { // launch new coroutine in the scope of runBlocking
+    launch { // launch a new coroutine in the scope of runBlocking
         delay(1000L)
         println("World!")
     }
@@ -241,7 +241,7 @@ fun main() = runBlocking { // this: CoroutineScope
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-03s.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-03s.kt).
 
 <!--- TEST
 Hello,
@@ -272,16 +272,16 @@ fun main() = runBlocking { // this: CoroutineScope
         }
     
         delay(100L)
-        println("Task from coroutine scope") // This line will be printed before nested launch
+        println("Task from coroutine scope") // This line will be printed before the nested launch
     }
     
-    println("Coroutine scope is over") // This line is not printed until nested launch completes
+    println("Coroutine scope is over") // This line is not printed until the nested launch completes
 }
 ```
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-04.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-04.kt).
 
 <!--- TEST
 Task from coroutine scope
@@ -317,7 +317,7 @@ suspend fun doWorld() {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-05.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-05.kt).
 
 <!--- TEST
 Hello,
@@ -328,10 +328,10 @@ World!
 But what if the extracted function contains a coroutine builder which is invoked on the current scope?
 In this case `suspend` modifier on the extracted function is not enough. Making `doWorld` extension
 method on `CoroutineScope` is one of the solutions, but it may not always be applicable as it does not make API clearer.
-Idiomatic solution is to have either explicit `CoroutineScope` as a field in a class containing target function
-or implicit when outer class implements `CoroutineScope`.
+The idiomatic solution is to have either an explicit `CoroutineScope` as a field in a class containing the target function
+or an implicit one when the outer class implements `CoroutineScope`.
 As a last resort, [CoroutineScope(coroutineContext)][CoroutineScope()] can be used, but such approach is structurally unsafe 
-because you no longer have control on the scope this method is executed. Only private API can use this builder.
+because you no longer have control on the scope of execution of this method. Only private APIs can use this builder.
 
 ### Coroutines ARE light-weight
 
@@ -354,7 +354,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-06.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-06.kt).
 
 <!--- TEST lines.size == 1 && lines[0] == ".".repeat(100_000) -->
 
@@ -386,7 +386,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-07.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-07.kt).
 
 You can run and see that it prints three lines and terminates:
 
