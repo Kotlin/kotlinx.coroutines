@@ -11,7 +11,7 @@ coroutine-enabled primitives that this guide covers, including `launch`, `async`
 This is a guide on core features of `kotlinx.coroutines` with a series of examples, divided up into different topics.
 
 In order to use coroutines as well as follow the examples in this guide, you need to add a dependency on `kotlinx-coroutines-core` module as explained 
-[in the project README ](../README.md#using-in-your-projects).
+[in the project README](../README.md#using-in-your-projects).
 
 ## Table of contents
 
