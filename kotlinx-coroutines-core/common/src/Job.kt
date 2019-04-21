@@ -341,7 +341,7 @@ public interface Job : CoroutineContext.Element {
 }
 
 /**
- * Creates a new job object in an active state.
+ * Creates a job object in an active state.
  * A failure of any child of this job immediately causes this job to fail, too, and cancels the rest of its children.
  *
  * To handle children failure independently of each other use [SupervisorJob].

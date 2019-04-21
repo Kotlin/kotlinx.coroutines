@@ -13,7 +13,7 @@ import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
 
 /**
- * Creates a new _supervisor_ job object in an active state.
+ * Creates a _supervisor_ job object in an active state.
  * Children of a supervisor job can fail independently of each other.
  * 
  * A failure or cancellation of a child does not cause the supervisor job to fail and does not affect its other children,

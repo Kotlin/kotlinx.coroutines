@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.*
 
 /**
- * Creates a new coroutine execution context using a single thread with built-in [yield] support.
+ * Creates a coroutine execution context using a single thread with built-in [yield] support.
  * **NOTE: The resulting [ExecutorCoroutineDispatcher] owns native resources (its thread).
  * Resources are reclaimed by [ExecutorCoroutineDispatcher.close].**
  *
