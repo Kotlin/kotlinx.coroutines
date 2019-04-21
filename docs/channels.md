@@ -71,7 +71,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-01.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-01.kt).
 
 The output of this code is:
 
@@ -118,7 +118,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-02.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-02.kt).
 
 <!--- TEST 
 1
@@ -160,7 +160,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-03.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-03.kt).
 
 <!--- TEST 
 1
@@ -231,7 +231,7 @@ fun CoroutineScope.square(numbers: ReceiveChannel<Int>): ReceiveChannel<Int> = p
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-04.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-04.kt).
 
 <!--- TEST 
 1
@@ -322,7 +322,7 @@ fun CoroutineScope.filter(numbers: ReceiveChannel<Int>, prime: Int) = produce<In
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-05.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-05.kt).
 
 The output of this code is:
 
@@ -341,7 +341,7 @@ The output of this code is:
 
 <!--- TEST -->
 
-Note, that you can build the same pipeline using 
+Note that you can build the same pipeline using 
 [`iterator`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/iterator.html) 
 coroutine builder from the standard library. 
 Replace `produce` with `iterator`, `send` with `yield`, `receive` with `next`, 
@@ -425,7 +425,7 @@ fun CoroutineScope.launchProcessor(id: Int, channel: ReceiveChannel<Int>) = laun
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-06.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-06.kt).
 
 The output will be similar to the the following one, albeit the processor ids that receive
 each specific integer may be different:
@@ -445,7 +445,7 @@ Processor #3 received 10
 
 <!--- TEST lines.size == 10 && lines.withIndex().all { (i, line) -> line.startsWith("Processor #") && line.endsWith(" received ${i + 1}") } -->
 
-Note, that cancelling a producer coroutine closes its channel, thus eventually terminating iteration
+Note that cancelling a producer coroutine closes its channel, thus eventually terminating iteration
 over the channel that processor coroutines are doing.
 
 Also, pay attention to how we explicitly iterate over channel with `for` loop to perform fan-out in `launchProcessor` code. 
@@ -505,7 +505,7 @@ suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-07.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-07.kt).
 
 The output is:
 
@@ -557,7 +557,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-08.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-08.kt).
 
 It prints "sending" _five_ times using a buffered channel with capacity of _four_:
 
@@ -612,7 +612,7 @@ suspend fun player(name: String, table: Channel<Ball>) {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-09.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-09.kt).
 
 The "ping" coroutine is started first, so it is the first one to receive the ball. Even though "ping"
 coroutine immediately starts receiving the ball again after sending it back to the table, the ball gets
@@ -627,7 +627,7 @@ pong Ball(hits=4)
 
 <!--- TEST -->
 
-Note, that sometimes channels may produce executions that look unfair due to the nature of the executor
+Note that sometimes channels may produce executions that look unfair due to the nature of the executor
 that is being used. See [this issue](https://github.com/Kotlin/kotlinx.coroutines/issues/111) for details.
 
 ### Ticker channels
@@ -675,7 +675,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-10.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-channel-10.kt).
 
 It prints following lines:
 

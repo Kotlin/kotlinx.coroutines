@@ -125,7 +125,7 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-basic-01.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-basic-01.kt).
 
 You can clone [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) project from GitHub onto your 
 workstation and open the project in IDE. All the examples from this guide are in the test folder of 
@@ -207,7 +207,7 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-basic-02.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-basic-02.kt).
 
 So, what happens here? Because we are launching coroutine in the main UI context, we can freely update UI from 
 inside this coroutine and invoke _suspending functions_ like [delay] at the same time. UI is not frozen
@@ -234,10 +234,10 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-basic-03.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-basic-03.kt).
 
 Now, if the circle is clicked while countdown is still running, the countdown stops. 
-Note, that [Job.cancel] is completely thread-safe and non-blocking. It just signals the coroutine to cancel 
+Note that [Job.cancel] is completely thread-safe and non-blocking. It just signals the coroutine to cancel 
 its job, without waiting for it to actually terminate. It can be invoked from anywhere.
 Invoking it on a coroutine that was already cancelled or has completed does nothing. 
 
@@ -286,9 +286,9 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
 }
 ```  
 
-> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-actor-01.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-actor-01.kt).
 
-Note, that each time the circle is clicked, it starts a new coroutine and they all compete to 
+Note that each time the circle is clicked, it starts a new coroutine and they all compete to 
 update the text. Try it. It does not look very good. We'll fix it later.
 
 > On Android, the corresponding extension can be written for `View` class, so that the code
@@ -328,7 +328,7 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
 }
 ```  
 
-> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-actor-02.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-actor-02.kt).
   
 The key idea that underlies an integration of an actor coroutine and a regular event handler is that 
 there is an [offer][SendChannel.offer] function on [SendChannel] that does not wait. It sends an element to the actor immediately,
@@ -615,7 +615,7 @@ fun fibBlocking(x: Int): Int =
 You can now enjoy full-speed naive Fibonacci computation without blocking the main UI thread. 
 All we need is `withContext(Dispatchers.Default)`.
 
-Note, that because the `fib` function is invoked from the single actor in our code, there is at most one concurrent 
+Note that because the `fib` function is invoked from the single actor in our code, there is at most one concurrent 
 computation of it at any given time, so this code has a natural limit on the resource utilization. 
 It can saturate at most one CPU core.
   

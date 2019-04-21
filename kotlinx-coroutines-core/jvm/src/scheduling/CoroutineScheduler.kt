@@ -254,7 +254,7 @@ internal class CoroutineScheduler(
         private val MAX_SPINS = systemProp("kotlinx.coroutines.scheduler.spins", 1000, minValue = 1)
         private val MAX_YIELDS = MAX_SPINS + systemProp("kotlinx.coroutines.scheduler.yields", 0, minValue = 0)
 
-        @JvmStatic // Note, that is fits into Int (it is equal to 10^9)
+        @JvmStatic // Note that is fits into Int (it is equal to 10^9)
         private val MAX_PARK_TIME_NS = TimeUnit.SECONDS.toNanos(1).toInt()
 
         @JvmStatic
@@ -367,7 +367,7 @@ internal class CoroutineScheduler(
     }
 
     /**
-     * Unparks or creates a new [Worker] for executing non-blocking tasks if there are idle cores
+     * Unparks or creates a [Worker] for executing non-blocking tasks if there are idle cores
      */
     private fun requestCpuWorker() {
         // No CPU available -- nothing to request
@@ -383,7 +383,7 @@ internal class CoroutineScheduler(
          */
         if (tryUnpark()) return
         /*
-         * Create a new thread.
+         * Create a thread.
          * It's not preferable to use 'cpuWorkersCounter' here (moreover, it's implicitly here as corePoolSize - cpuPermits.availableTokens),
          * cpuWorkersCounter doesn't take into account threads which are created (and either running or parked), but haven't
          * CPU token: retiring workers, recently unparked workers before `findTask` call, etc.
@@ -833,7 +833,7 @@ internal class CoroutineScheduler(
             // actually park
             if (!doPark(idleWorkerKeepAliveNs)) return
             // try terminate when we are idle past termination deadline
-            // note, that comparison is written like this to protect against potential nanoTime wraparound
+            // note that comparison is written like this to protect against potential nanoTime wraparound
             if (System.nanoTime() - terminationDeadline >= 0) {
                 terminationDeadline = 0L // if attempt to terminate worker fails we'd extend deadline again
                 tryTerminateWorker()

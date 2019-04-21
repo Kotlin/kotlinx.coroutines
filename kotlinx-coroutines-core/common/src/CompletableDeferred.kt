@@ -10,7 +10,7 @@ import kotlinx.coroutines.selects.*
 /**
  * A [Deferred] that can be completed via public functions [complete] or [cancel][Job.cancel].
  *
- * Note, that [complete] functions returns `false` when this deferred value is already complete or completing,
+ * Note that [complete] functions returns `false` when this deferred value is already complete or completing,
  * while [cancel][Job.cancel] returns `true` as long the deferred is still _cancelling_ and the corresponding
  * exception is incorporated into the final [completion exception][getCompletionExceptionOrNull].
  *

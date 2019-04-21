@@ -29,7 +29,7 @@ class LockFreeTaskQueueLinearizabilityTestSC : LockFreeTaskQueueLinearizabilityT
     fun addLast(@Param(name = "value") value: Int) = q.addLast(value)
 
     /**
-     * Note, that removeFirstOrNull is not linearizable w.r.t. to addLast, so here
+     * Note that removeFirstOrNull is not linearizable w.r.t. to addLast, so here
      * we test only linearizability of close.
      */
 //    @Operation(group = "consumer")
@@ -61,7 +61,7 @@ class LockFreeTaskQueueLinearizabilityTestMC : LockFreeTaskQueueLinearizabilityT
     fun addLast(@Param(name = "value") value: Int) = q.addLast(value)
 
     /**
-     * Note, that removeFirstOrNull is not linearizable w.r.t. to addLast, so here
+     * Note that removeFirstOrNull is not linearizable w.r.t. to addLast, so here
      * we test only linearizability of close.
      */
 //    @Operation(group = "consumer")

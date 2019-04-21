@@ -115,7 +115,7 @@ fun main() = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-01.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-01.kt).
 
 This code produces the following output: 
 
@@ -173,7 +173,7 @@ fun main() = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-02.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-02.kt).
 
 Now the output of this code changes to:
 
@@ -210,7 +210,7 @@ immediately throw an `IllegalStateException`.
 See [this issue](https://github.com/Kotlin/kotlinx.coroutines/issues/167)
 for details.
 
-> Note, that we can replicate the same behaviour that we saw with channels by using Rx 
+> Note that we can replicate the same behaviour that we saw with channels by using Rx 
 [publish](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#publish()) 
 operator and [connect](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/flowables/ConnectableFlowable.html#connect())
 method with it.
@@ -246,7 +246,7 @@ fun main() = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-03.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-03.kt).
 
 It produces the following output:
  
@@ -289,7 +289,7 @@ fun main() = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-04.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-04.kt).
 
 We get the following output:
 
@@ -360,7 +360,7 @@ fun main() = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-05.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-05.kt).
 
 The output of this code nicely illustrates how backpressure works with coroutines:
 
@@ -404,7 +404,7 @@ fun main() {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-06.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-06.kt).
 
 This code prints the current state of the subject on subscription and all its further updates:
 
@@ -439,7 +439,7 @@ fun main() = runBlocking<Unit> {
 }
 ```   
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-07.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-07.kt).
 
 The result is the same:
 
@@ -485,7 +485,7 @@ fun main() = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-08.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-08.kt).
 
 Now coroutine process (prints) only the most recent update:
 
@@ -521,7 +521,7 @@ fun main() = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-09.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-09.kt).
 
 It produces the same output as the previous example based on `BehaviorSubject`:
 
@@ -576,7 +576,7 @@ fun CoroutineScope.range(context: CoroutineContext, start: Int, count: Int) = pu
 ```
 
 In this code `CoroutineScope` and `context` are used instead of an `Executor` and all the backpressure aspects are taken care
-of by the coroutines machinery. Note, that this implementation depends only on the small reactive streams library
+of by the coroutines machinery. Note that this implementation depends only on the small reactive streams library
 that defines `Publisher` interface and its friends.
 
 It is straightforward to use from a coroutine:
@@ -588,7 +588,7 @@ fun main() = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-operators-01.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-operators-01.kt).
 
 The result of this code is quite expected:
    
@@ -648,7 +648,7 @@ fun main() = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-operators-02.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-operators-02.kt).
 
 It is not hard to see, that the result is going to be:
 
@@ -721,7 +721,7 @@ fun main() = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-operators-03.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-operators-03.kt).
 
 Producing 
 
@@ -796,7 +796,7 @@ fun main() = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-operators-04.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-operators-04.kt).
 
 And the results should be: 
 
@@ -846,7 +846,7 @@ fun main() {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-01.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-01.kt).
 
 We are explicitly passing the 
 [Schedulers.computation()](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/schedulers/Schedulers.html#computation()) 
@@ -888,7 +888,7 @@ fun main() {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-02.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-02.kt).
 
 The produced output is going to be similar to:
 
@@ -939,7 +939,7 @@ fun main() {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-03.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-03.kt).
 
 Here is the difference in output, notice "RxComputationThreadPool":
 
@@ -979,7 +979,7 @@ fun main() = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-04.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-04.kt).
 
 The resulting messages are going to be printed in the main thread:
 
@@ -1019,7 +1019,7 @@ fun rangeWithIntervalRx(scheduler: Scheduler, time: Long, start: Int, count: Int
         BiFunction { x, _ -> x })
 
 fun main() = runBlocking<Unit> {
-    val job = launch(Dispatchers.Unconfined) { // launch new coroutine in Unconfined context (without its own thread pool)
+    val job = launch(Dispatchers.Unconfined) { // launch a new coroutine in Unconfined context (without its own thread pool)
         rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3)
             .consumeEach { println("$it on thread ${Thread.currentThread().name}") }
     }
@@ -1027,7 +1027,7 @@ fun main() = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-05.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-05.kt).
 
 Now, the output shows that the code of the coroutine is executing in the Rx computation thread pool, just
 like our initial example using Rx `subscribe` operator.
@@ -1040,7 +1040,7 @@ like our initial example using Rx `subscribe` operator.
 
 <!--- TEST LINES_START -->
 
-Note, that [Dispatchers.Unconfined] context shall be used with care. It may improve the overall performance on certain tests,
+Note that [Dispatchers.Unconfined] context shall be used with care. It may improve the overall performance on certain tests,
 due to the increased stack-locality of operations and less scheduling overhead, but it also produces deeper stacks 
 and makes it harder to reason about asynchronicity of the code that is using it. 
 

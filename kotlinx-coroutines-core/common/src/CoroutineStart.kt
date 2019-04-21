@@ -20,25 +20,25 @@ import kotlin.coroutines.*
  */
 public enum class CoroutineStart {
     /**
-     * Default -- immediately schedules coroutine for execution according to its context.
+     * Default -- immediately schedules the coroutine for execution according to its context.
      *
      * If the [CoroutineDispatcher] of the coroutine context returns `true` from [CoroutineDispatcher.isDispatchNeeded]
      * function as most dispatchers do, then the coroutine code is dispatched for execution later, while the code that
      * invoked the coroutine builder continues execution.
      *
-     * Note, that [Dispatchers.Unconfined] always returns `false` from its [CoroutineDispatcher.isDispatchNeeded]
-     * function, so starting coroutine with [Dispatchers.Unconfined] by [DEFAULT] is the same as using [UNDISPATCHED].
+     * Note that [Dispatchers.Unconfined] always returns `false` from its [CoroutineDispatcher.isDispatchNeeded]
+     * function, so starting a coroutine with [Dispatchers.Unconfined] by [DEFAULT] is the same as using [UNDISPATCHED].
      *
      * If coroutine [Job] is cancelled before it even had a chance to start executing, then it will not start its
      * execution at all, but will complete with an exception.
      *
-     * Cancellability of coroutine at suspension points depends on the particular implementation details of
+     * Cancellability of a coroutine at suspension points depends on the particular implementation details of
      * suspending functions. Use [suspendCancellableCoroutine] to implement cancellable suspending functions.
      */
     DEFAULT,
 
     /**
-     * Starts coroutine lazily, only when it is needed.
+     * Starts the coroutine lazily, only when it is needed.
      *
      * See the documentation for the corresponding coroutine builders for details
      * (like [launch][CoroutineScope.launch] and [async][CoroutineScope.async]).
@@ -49,7 +49,7 @@ public enum class CoroutineStart {
     LAZY,
 
     /**
-     * Atomically (i.e., in a non-cancellable way) schedules coroutine for execution according to its context.
+     * Atomically (i.e., in a non-cancellable way) schedules the coroutine for execution according to its context.
      * This is similar to [DEFAULT], but the coroutine cannot be cancelled before it starts executing.
      *
      * Cancellability of coroutine at suspension points depends on the particular implementation details of
@@ -59,7 +59,7 @@ public enum class CoroutineStart {
     ATOMIC,
 
     /**
-     * Immediately executes coroutine until its first suspension point _in the current thread_ as if the
+     * Immediately executes the coroutine until its first suspension point _in the current thread_ as if the
      * coroutine was started using [Dispatchers.Unconfined]. However, when coroutine is resumed from suspension
      * it is dispatched according to the [CoroutineDispatcher] in its context.
      *
@@ -75,7 +75,7 @@ public enum class CoroutineStart {
     UNDISPATCHED;
 
     /**
-     * Starts the corresponding block as a coroutine with this coroutine start strategy.
+     * Starts the corresponding block as a coroutine with this coroutine's start strategy.
      *
      * * [DEFAULT] uses [startCoroutineCancellable].
      * * [ATOMIC] uses [startCoroutine].

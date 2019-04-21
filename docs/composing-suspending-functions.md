@@ -97,7 +97,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-01.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-01.kt).
 
 It produces something like this:
 
@@ -150,7 +150,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-02.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-02.kt).
 
 It produces something like this:
 
@@ -162,7 +162,7 @@ Completed in 1017 ms
 <!--- TEST ARBITRARY_TIME -->
 
 This is twice as fast, because we have concurrent execution of two coroutines. 
-Note, that concurrency with coroutines is always explicit.
+Note that concurrency with coroutines is always explicit.
 
 ### Lazily started async
 
@@ -204,7 +204,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-03.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-03.kt).
 
 It produces something like this:
 
@@ -219,7 +219,7 @@ So, here the two coroutines are defined but not executed as in the previous exam
 the programmer on when exactly to start the execution by calling [start][Job.start]. We first 
 start `one`, then start `two`, and then await for the individual coroutines to finish. 
 
-Note, that if we have called [await][Deferred.await] in `println` and omitted [start][Job.start] on individual 
+Note that if we have called [await][Deferred.await] in `println` and omitted [start][Job.start] on individual 
 coroutines, then we would have got the sequential behaviour as [await][Deferred.await] starts the coroutine 
 execution and waits for the execution to finish, which is not the intended use-case for laziness. 
 The use-case for `async(start = CoroutineStart.LAZY)` is a replacement for the 
@@ -249,7 +249,7 @@ fun somethingUsefulTwoAsync() = GlobalScope.async {
 
 </div>
 
-Note, that these `xxxAsync` functions are **not** _suspending_ functions. They can be used from anywhere.
+Note that these `xxxAsync` functions are **not** _suspending_ functions. They can be used from anywhere.
 However, their use always implies asynchronous (here meaning _concurrent_) execution of their action
 with the invoking code.
  
@@ -264,7 +264,7 @@ import kotlinx.coroutines.*
 import kotlin.system.*
 
 //sampleStart
-// note, that we don't have `runBlocking` to the right of `main` in this example
+// note that we don't have `runBlocking` to the right of `main` in this example
 fun main() {
     val time = measureTimeMillis {
         // we can initiate async actions outside of a coroutine
@@ -301,7 +301,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-04.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-04.kt).
 
 <!--- TEST ARBITRARY_TIME
 The answer is 42
@@ -377,7 +377,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-05.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-05.kt).
 
 We still have concurrent execution of both operations as evident from the output of the above main function: 
 
@@ -424,7 +424,7 @@ suspend fun failedConcurrentSum(): Int = coroutineScope {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-06.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-06.kt).
 
 Note, how both first `async` and awaiting parent are cancelled on the one child failure:
 ```text

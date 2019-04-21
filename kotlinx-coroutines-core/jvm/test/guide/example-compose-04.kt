@@ -9,7 +9,7 @@ import kotlinx.coroutines.*
 import kotlin.system.*
 
 //sampleStart
-// note, that we don't have `runBlocking` to the right of `main` in this example
+// note that we don't have `runBlocking` to the right of `main` in this example
 fun main() {
     val time = measureTimeMillis {
         // we can initiate async actions outside of a coroutine

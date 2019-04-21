@@ -41,7 +41,7 @@ internal fun handlerException(originalException: Throwable, thrownException: Thr
 }
 
 /**
- * Creates new [CoroutineExceptionHandler] instance.
+ * Creates a [CoroutineExceptionHandler] instance.
  * @param handler a function which handles exception thrown by a coroutine
  */
 @Suppress("FunctionName")

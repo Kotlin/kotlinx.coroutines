@@ -11,8 +11,8 @@ import java.util.concurrent.locks.*
 import kotlin.coroutines.*
 
 /**
- * Runs new coroutine and **blocks** current thread _interruptibly_ until its completion.
- * This function should not be used from coroutine. It is designed to bridge regular blocking code
+ * Runs a new coroutine and **blocks** the current thread _interruptibly_ until its completion.
+ * This function should not be used from a coroutine. It is designed to bridge regular blocking code
  * to libraries that are written in suspending style, to be used in `main` functions and in tests.
  *
  * The default [CoroutineDispatcher] for this builder is an internal implementation of event loop that processes continuations
@@ -21,14 +21,15 @@ import kotlin.coroutines.*
  *
  * When [CoroutineDispatcher] is explicitly specified in the [context], then the new coroutine runs in the context of
  * the specified dispatcher while the current thread is blocked. If the specified dispatcher is an event loop of another `runBlocking`,
- * then this invocation uses an outer event loop.
+ * then this invocation uses the outer event loop.
  *
  * If this blocked thread is interrupted (see [Thread.interrupt]), then the coroutine job is cancelled and
  * this `runBlocking` invocation throws [InterruptedException].
  *
- * See [newCoroutineContext][CoroutineScope.newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
+ * See [newCoroutineContext][CoroutineScope.newCoroutineContext] for a description of debugging facilities that are available
+ * for a newly created coroutine.
  *
- * @param context context of the coroutine. The default value is an event loop on current thread.
+ * @param context the context of the coroutine. The default value is an event loop on the current thread.
  * @param block the coroutine code.
  */
 @Throws(InterruptedException::class)

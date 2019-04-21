@@ -24,7 +24,7 @@ import kotlin.jvm.*
  * can [cancel] its own children (including all their children recursively) without cancelling itself.
  *
  * The most basic instances of [Job] are created with [launch][CoroutineScope.launch] coroutine builder or with a
- * `Job()` factory function. By default, a failure of any of the job's children leads to an immediately failure
+ * `Job()` factory function. By default, a failure of any of the job's children leads to an immediate failure
  * of its parent and cancellation of the rest of its children. This behavior can be customized using [SupervisorJob].
  *
  * Conceptually, an execution of the job does not produce a result value. Jobs are launched solely for their
@@ -46,8 +46,8 @@ import kotlin.jvm.*
  * [CoroutineStart.LAZY]. Such a job can be made _active_ by invoking [start] or [join].
  *
  * A job is _active_ while the coroutine is working. Failure of the job with exception makes it _cancelling_.
- * A job can be cancelled it at any time with [cancel] function that forces it to transition to
- * _cancelling_ state immediately. The job becomes _cancelled_  when it finishes executing it work.
+ * A job can be cancelled at any time with [cancel] function that forces it to transition to
+ * _cancelling_ state immediately. The job becomes _cancelled_  when it finishes executing its work.
  *
  * ```
  *                                       wait children
@@ -69,7 +69,7 @@ import kotlin.jvm.*
  *
  * A job can have a _parent_ job. A job with a parent is cancelled when its parent is cancelled.
  * Parent job waits in _completing_ or _cancelling_ state for all its children to complete before finishing.
- * Note, that _completing_ state is purely internal to the job. For an outside observer a _completing_ job is still
+ * Note that _completing_ state is purely internal to the job. For an outside observer a _completing_ job is still
  * active, while internally it is waiting for its children.
  *
  * Normal cancellation of a job is distinguished from its failure by the type of its cancellation exception cause.
@@ -158,7 +158,7 @@ public interface Job : CoroutineContext.Element {
     /**
      * Cancels this job with an optional cancellation [cause].
      * A cause can be used to specify an error message or to provide other details on
-     * a cancellation reason for debugging purposes.
+     * the cancellation reason for debugging purposes.
      * See [Job] documentation for full explanation of cancellation machinery.
      */
     public fun cancel(cause: CancellationException? = null)
@@ -190,7 +190,7 @@ public interface Job : CoroutineContext.Element {
      * * Parent cannot complete until all its children are complete. Parent waits for all its children to
      *   complete in _completing_ or _cancelling_ state.
      * * Uncaught exception in a child, by default, cancels parent. In particular, this applies to
-     *   children created with [launch][CoroutineScope.launch] coroutine builder. Note, that
+     *   children created with [launch][CoroutineScope.launch] coroutine builder. Note that
      *   [async][CoroutineScope.async] and other future-like
      *   coroutine builders do not have uncaught exceptions by definition, since all their exceptions are
      *   caught and are encapsulated in their result.
@@ -223,23 +223,23 @@ public interface Job : CoroutineContext.Element {
     // ------------ state waiting ------------
 
     /**
-     * Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
+     * Suspends the coroutine until this job is complete. This invocation resumes normally (without exception)
      * when the job is complete for any reason and the [Job] of the invoking coroutine is still [active][isActive].
      * This function also [starts][Job.start] the corresponding coroutine if the [Job] was still in _new_ state.
      *
-     * Note, that the job becomes complete only when all its children are complete.
+     * Note that the job becomes complete only when all its children are complete.
      *
-     * This suspending function is cancellable and **always** checks for the cancellation of invoking coroutine's Job.
+     * This suspending function is cancellable and **always** checks for a cancellation of the invoking coroutine's Job.
      * If the [Job] of the invoking coroutine is cancelled or completed when this
      * suspending function is invoked or while it is suspended, this function
      * throws [CancellationException].
      *
      * In particular, it means that a parent coroutine invoking `join` on a child coroutine that was started using
      * `launch(coroutineContext) { ... }` builder throws [CancellationException] if the child
-     * had crashed, unless a non-standard [CoroutineExceptionHandler] if installed in the context.
+     * had crashed, unless a non-standard [CoroutineExceptionHandler] is installed in the context.
      *
      * This function can be used in [select] invocation with [onJoin] clause.
-     * Use [isCompleted] to check for completion of this job without waiting.
+     * Use [isCompleted] to check for a completion of this job without waiting.
      *
      * There is [cancelAndJoin] function that combines an invocation of [cancel] and `join`.
      */
@@ -341,7 +341,7 @@ public interface Job : CoroutineContext.Element {
 }
 
 /**
- * Creates a new job object in an active state.
+ * Creates a job object in an active state.
  * A failure of any child of this job immediately causes this job to fail, too, and cancels the rest of its children.
  *
  * To handle children failure independently of each other use [SupervisorJob].
@@ -462,9 +462,9 @@ internal fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle
     invokeOnCompletion(handler = DisposeOnCompletion(this, handle).asHandler)
 
 /**
- * Cancels the job and suspends invoking coroutine until the cancelled job is complete.
+ * Cancels the job and suspends the invoking coroutine until the cancelled job is complete.
  *
- * This suspending function is cancellable and **always** checks for the cancellation of invoking coroutine's Job.
+ * This suspending function is cancellable and **always** checks for a cancellation of the invoking coroutine's Job.
  * If the [Job] of the invoking coroutine is cancelled or completed when this
  * suspending function is invoked or while it is suspended, this function
  * throws [CancellationException].

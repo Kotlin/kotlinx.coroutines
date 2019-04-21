@@ -50,7 +50,7 @@ private fun <E : Throwable> recoverFromStackFrame(exception: E, continuation: Co
     */
     val (cause, recoveredStacktrace) = exception.causeAndStacktrace()
 
-    // Try to create new exception of the same type and get stacktrace from continuation
+    // Try to create an exception of the same type and get stacktrace from continuation
     val newException = tryCopyException(cause) ?: return exception
     val stacktrace = createStackTrace(continuation)
     if (stacktrace.isEmpty()) return exception

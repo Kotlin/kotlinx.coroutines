@@ -48,7 +48,7 @@ while the latter are relying on the user to consume the final
 exception, for example via [await][Deferred.await] or [receive][ReceiveChannel.receive] 
 ([produce] and [receive][ReceiveChannel.receive] are covered later in [Channels](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/channels.md) section).
 
-It can be demonstrated by a simple example that creates new coroutines in [GlobalScope]:
+It can be demonstrated by a simple example that creates coroutines in the [GlobalScope]:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -77,7 +77,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-01.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-01.kt).
 
 The output of this code is (with [debug](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/coroutine-context-and-dispatchers.md#debugging-coroutines-and-threads)):
 
@@ -130,7 +130,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-02.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-02.kt).
 
 The output of this code is:
 
@@ -177,7 +177,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-03.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-03.kt).
 
 The output of this code is:
 
@@ -235,7 +235,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-04.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-04.kt).
 
 The output of this code is:
 
@@ -295,7 +295,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-05.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-05.kt).
 
 > Note: This above code will work properly only on JDK7+ that supports `suppressed` exceptions
 
@@ -345,7 +345,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-06.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-06.kt).
 
 The output of this code is:
 
@@ -408,7 +408,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-01.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-01.kt).
 
 The output of this code is:
 
@@ -457,7 +457,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-02.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-02.kt).
 
 The output of this code is:
 
@@ -498,7 +498,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-03.kt)
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-03.kt).
 
 The output of this code is:
 

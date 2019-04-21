@@ -18,13 +18,13 @@ import kotlin.jvm.*
 // --------------- launch ---------------
 
 /**
- * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].
+ * Launches a new coroutine without blocking the current thread and returns a reference to the coroutine as a [Job].
  * The coroutine is cancelled when the resulting job is [cancelled][Job.cancel].
  *
- * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
+ * The coroutine context is inherited from a [CoroutineScope]. Additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
- * with corresponding [coroutineContext] element.
+ * with a corresponding [coroutineContext] element.
  *
  * By default, the coroutine is immediately scheduled for execution.
  * Other start options can be specified via `start` parameter. See [CoroutineStart] for details.
@@ -32,11 +32,11 @@ import kotlin.jvm.*
  * the coroutine [Job] is created in _new_ state. It can be explicitly started with [start][Job.start] function
  * and will be started implicitly on the first invocation of [join][Job.join].
  *
- * Uncaught exceptions in this coroutine cancel parent job in the context by default
+ * Uncaught exceptions in this coroutine cancel the parent job in the context by default
  * (unless [CoroutineExceptionHandler] is explicitly specified), which means that when `launch` is used with
- * the context of another coroutine, then any uncaught exception leads to the cancellation of parent coroutine.
+ * the context of another coroutine, then any uncaught exception leads to the cancellation of the parent coroutine.
  *
- * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
+ * See [newCoroutineContext] for a description of debugging facilities that are available for a newly created coroutine.
  *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
@@ -58,7 +58,7 @@ public fun CoroutineScope.launch(
 // --------------- async ---------------
 
 /**
- * Creates new coroutine and returns its future result as an implementation of [Deferred].
+ * Creates a coroutine and returns its future result as an implementation of [Deferred].
  * The running coroutine is cancelled when the resulting deferred is [cancelled][Job.cancel].
  *
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
@@ -127,7 +127,7 @@ private class LazyDeferredCoroutine<T>(
  *
  * This function uses dispatcher from the new context, shifting execution of the [block] into the
  * different thread if a new dispatcher is specified, and back to the original dispatcher
- * when it completes. Note, that the result of `withContext` invocation is
+ * when it completes. Note that the result of `withContext` invocation is
  * dispatched into the original context in a cancellable way, which means that if the original [coroutineContext],
  * in which `withContext` was invoked, is cancelled by the time its dispatcher starts to execute the code,
  * it discards the result of `withContext` and throws [CancellationException].

@@ -116,7 +116,7 @@ public val CoroutineScope.isActive: Boolean
  * and are not cancelled prematurely.
  * Another use of the global scope is operators running in [Dispatchers.Unconfined], which don't have any job associated with them.
  *
- * Application code usually should use application-defined [CoroutineScope], using
+ * Application code usually should use an application-defined [CoroutineScope]. Using
  * [async][CoroutineScope.async] or [launch][CoroutineScope.launch]
  * on the instance of [GlobalScope] is highly discouraged.
  *
@@ -140,14 +140,14 @@ public object GlobalScope : CoroutineScope {
 }
 
 /**
- * Creates new [CoroutineScope] and calls the specified suspend block with this scope.
+ * Creates a [CoroutineScope] and calls the specified suspend block with this scope.
  * The provided scope inherits its [coroutineContext][CoroutineScope.coroutineContext] from the outer scope, but overrides
- * context's [Job].
+ * the context's [Job].
  *
- * This function is designed for a _parallel decomposition_ of work. When any child coroutine in this scope fails,
+ * This function is designed for _parallel decomposition_ of work. When any child coroutine in this scope fails,
  * this scope fails and all the rest of the children are cancelled (for a different behavior see [supervisorScope]).
- * This function returns as soon as given block and all its children coroutines are completed.
- * Example of the scope usages looks like this:
+ * This function returns as soon as the given block and all its children coroutines are completed.
+ * A usage example of a scope looks like this:
  *
  * ```
  * suspend fun showSomeData() = coroutineScope {
@@ -166,12 +166,12 @@ public object GlobalScope : CoroutineScope {
  *
  * Semantics of the scope in this example:
  * 1) `showSomeData` returns as soon as data is loaded and displayed in the UI.
- * 2) If `doSomeWork` throws an exception, then `async` task is cancelled and `showSomeData` rethrows that exception.
- * 3) If outer scope of `showSomeData` is cancelled, both started `async` and `withContext` blocks are cancelled.
- * 4) If `async` block fails, `withContext` will be cancelled.
+ * 2) If `doSomeWork` throws an exception, then the `async` task is cancelled and `showSomeData` rethrows that exception.
+ * 3) If the outer scope of `showSomeData` is cancelled, both started `async` and `withContext` blocks are cancelled.
+ * 4) If the `async` block fails, `withContext` will be cancelled.
  *
- * Method may throw [CancellationException] if the current job was cancelled externally
- * or may throw the corresponding unhandled [Throwable] if there is any unhandled exception in this scope
+ * The method may throw a [CancellationException] if the current job was cancelled externally
+ * or may throw a corresponding unhandled [Throwable] if there is any unhandled exception in this scope
  * (for example, from a crashed coroutine that was started with [launch][CoroutineScope.launch] in this scope).
  */
 public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R =
@@ -181,7 +181,7 @@ public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R 
     }
 
 /**
- * Creates [CoroutineScope] that wraps the given coroutine [context].
+ * Creates a [CoroutineScope] that wraps the given coroutine [context].
  *
  * If the given [context] does not contain a [Job] element, then a default `Job()` is created.
  * This way, cancellation or failure or any child coroutine in this scope cancels all the other children,
