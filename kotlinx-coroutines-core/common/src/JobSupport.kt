@@ -1288,11 +1288,15 @@ private class ResumeOnCompletion(
         val state = job.state
         check(state !is Incomplete)
         if (state is CompletedExceptionally) {
-            // Resume with the CancellationException as designed.
-            continuation.resumeWithExceptionMode(job.getCancellationException(), MODE_ATOMIC_DEFAULT)
-        } else {
-            continuation.resume(Unit)
+            val parentJob = continuation.context[Job]
+            // Only if the parent job is cancelled.
+            if (parentJob != null && !parentJob.isActive) {
+                // Resume with the CancellationException as designed.
+                continuation.resumeWithExceptionMode(job.getCancellationException(), MODE_ATOMIC_DEFAULT)
+                return
+            }
         }
+        continuation.resume(Unit)
     }
     override fun toString() = "ResumeOnCompletion[$continuation]"
 }
