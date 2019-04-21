@@ -16,6 +16,7 @@ dependencies {
 **Do not** depend on this project in your main sources, all utilities are intended and designed to be used only from tests.
 
 ## Dispatchers.Main Delegation
+
 `Dispatchers.setMain` will override the `Main` dispatcher in test situations. This is helpful when you want to execute a
 test in situations where the platform `Main` dispatcher is not available, or you wish to replace `Dispatchers.Main` with a
 testing dispatcher.
@@ -46,7 +47,7 @@ class SomeTest {
     @Test
     fun testSomeUI() = runBlocking {
         launch(Dispatchers.Main) {  // Will be launched in the mainThreadSurrogate dispatcher
-            ...
+            // ...
         }
     }
 }
@@ -66,6 +67,7 @@ builder that provides extra test control to coroutines.
 5. Report uncaught exceptions as test failures
 
 ### Testing regular suspend functions
+
 To test regular suspend functions, which may have a delay, you can use the [runBlockingTest] builder to start a testing 
 coroutine. Any calls to `delay` will automatically advance time.
 
@@ -73,12 +75,12 @@ coroutine. Any calls to `delay` will automatically advance time.
 @Test
 fun testFoo() = runBlockingTest { // a coroutine with a extra test control
     val actual = foo() 
-    ...
+    // ...
 }
 
 suspend fun foo() {
     delay(1_000)        // auto-advances without delay due to runBlockingTest
-    ...
+    // ...
 }
 ```
 
@@ -94,10 +96,10 @@ the first [delay].
 
 ```kotlin
 @Test
-fun testFoo_withLaunch() = runBlockingTest {
+fun testFooWithLaunch() = runBlockingTest {
     foo()
     // the coroutine launched by foo() is completed before foo() returns
-    ...
+    // ...
 }
 
 fun CoroutineScope.foo() {
@@ -124,12 +126,12 @@ To control time in the test you can use the [DelayController] interface. The blo
 
 ```kotlin
 @Test
-fun testFoo_withLaunch_andDelay() = runBlockingTest {
+fun testFooWithLaunchAndDelay() = runBlockingTest {
     foo()
     // the coroutine launched by foo has not completed here, it is suspended waiting for delay(1_000)
     advanceTimeBy(1_000)      // progress time, this will cause the delay to resume
     // foo() coroutine launched by foo has completed here
-    ...
+    // ...
 }
 
 suspend fun CoroutineScope.foo() {
@@ -142,7 +144,8 @@ suspend fun CoroutineScope.foo() {
 ```
 
 *Note:* `runBlockingTest` will always attempt to auto-progress time until all coroutines are completed just before 
-exiting. This is a convenience to avoid having to call [advanceUntilIdle] as the last line of many common test cases.
+exiting. This is a convenience to avoid having to call [advanceUntilIdle][DelayController.advanceUntilIdle] 
+as the last line of many common test cases.
 If any coroutines cannot complete by advancing time, a [UncompletedCoroutinesError] is thrown.
 
 ### Testing `withTimeout` using `runBlockingTest`
@@ -155,18 +158,18 @@ example an uncompleted `Deferred<Foo>` is provided to the function under test vi
 
 ```kotlin
 @Test(expected = TimeoutCancellationException::class)
-fun testFoo_withTimeout() {
+fun testFooWithTimeout() {
     val uncompleted = CompletableDeferred<Foo>()     // this Deferred<Foo> will never complete
     foo(uncompleted)
     advanceTimeBy(1_000)                             // advance time, which will cause the timeout to throw an exception
-    ...
+    // ...
 }
 
 fun CoroutineScope.foo(resultDeferred: Deferred<Foo>) {
     launch {
         withTimeout(1_000) {
             resultDeferred.await()                   // await() will suspend forever waiting for uncompleted
-            ...
+            // ...
         }
     }
 }
@@ -181,15 +184,15 @@ create a second coroutine.
 The eager execution of `launch` and `async` bodies makes many tests easier, but some tests need more fine grained 
 control of coroutine execution.
 
-To disable eager execution, you can call [pauseDispatcher] to pause the [TestCoroutineDispatcher] that [runBlockingTest]
- uses.
+To disable eager execution, you can call [pauseDispatcher][DelayController.pauseDispatcher] 
+to pause the [TestCoroutineDispatcher] that [runBlockingTest] uses.
 
 When the dispatcher is paused, all coroutines will be added to a queue instead running. In addition, time will never 
 auto-progress due to `delay` on a paused dispatcher.
 
 ```kotlin
 @Test
-fun testFoo_withPauseDispatcher() = runBlockingTest {
+fun testFooWithPauseDispatcher() = runBlockingTest {
     pauseDispatcher {
         foo()
         // the coroutine started by foo has not run yet
@@ -198,7 +201,7 @@ fun testFoo_withPauseDispatcher() = runBlockingTest {
         advanceTimeBy(1_000)      // progress time, this will cause the delay to resume
         // the coroutine started by foo has called println(2) and has completed here
     }
-    ...
+    // ...
 }
 
 fun CoroutineScope.foo() {
@@ -216,8 +219,8 @@ non-trivial external dependencies and side effects in their launch body.
 
 *Important:* When passed a lambda block, `pauseDispatcher` will resume eager execution immediately after the block. 
 This will cause time to auto-progress if there are any outstanding `delay` calls that were not resolved before the
-`pauseDispatcher` block returned. In advanced situations tests can call [pauseDispatcher][pausedispatcher.noarg] without a lambda block and 
-then explicitly resume the dispatcher with [resumeDispatcher].
+`pauseDispatcher` block returned. In advanced situations tests can call [pauseDispatcher][DelayController.pauseDispatcher] 
+without a lambda block and then explicitly resume the dispatcher with [resumeDispatcher][DelayController.resumeDispatcher].
 
 ## Integrating tests with structured concurrency
 
@@ -241,6 +244,7 @@ By providing [TestCoroutineScope] a test case is able to control execution of co
 uncaught exceptions thrown by coroutines are converted into test failures.
 
 ### Providing `TestCoroutineScope` from `runBlockingTest`
+
 In simple cases, tests can use the [TestCoroutineScope] created by [runBlockingTest] directly.
 
 ```kotlin
@@ -251,7 +255,7 @@ fun testFoo() = runBlockingTest {
 
 fun CoroutineScope.foo() {
     launch {  // CoroutineScope for launch is the TestCoroutineScope provided by runBlockingTest
-        ...
+        // ...
     }
 }
 ```
@@ -259,13 +263,14 @@ fun CoroutineScope.foo() {
 This style is preferred when the `CoroutineScope` is passed through an extension function style.
 
 ### Providing an explicit `TestCoroutineScope`
+
 In many cases, the direct style is not preferred because [CoroutineScope] may need to be provided through anther means 
 such as dependency injection or service locators.
 
 Tests can declare a [TestCoroutineScope] explicitly in the class to support these use cases.
 
 Since [TestCoroutineScope] is stateful in order to keep track of executing coroutines and uncaught exceptions, it is 
-important to ensure that [cleanupTestCoroutines][cleanupTestCoroutines.scope] is called after every test case. 
+important to ensure that [cleanupTestCoroutines][TestCoroutineScope.cleanupTestCoroutines] is called after every test case. 
 
 ```kotlin
 class TestClass {
@@ -304,6 +309,7 @@ test libraries to provide library specific integrations. For example, a JUnit4 `
 [Dispatchers.setMain][setMain] then expose [TestCoroutineScope] for use in tests.
 
 ### Providing an explicit `TestCoroutineDispatcher`
+
 While providing a [TestCoroutineScope] is slightly preferred due to the improved uncaught exception handling, there are 
 many situations where it is easier to provide a [TestCoroutineDispatcher]. For example [Dispatchers.setMain][setMain] 
 does not accept a [TestCoroutineScope] and requires a [TestCoroutineDispatcher] to control coroutine execution in 
@@ -319,7 +325,7 @@ when the class under test allows a test to provide a [CoroutineDispatcher] but d
 [CoroutineScope].
 
 Since [TestCoroutineDispatcher] is stateful in order to keep track of executing coroutines, it is 
-important to ensure that [cleanupTestCoroutines][cleanupTestCoroutines.dispatcher] is called after every test case. 
+important to ensure that [cleanupTestCoroutines][TestCoroutineDispatcher.cleanupTestCoroutines] is called after every test case. 
 
 ```kotlin
 class TestClass {
@@ -363,7 +369,7 @@ this to provide alternatives to `runBlockingTest`.
 
 ```kotlin
 @Test
-fun testFoo_withAutoProgress() {
+fun testFooWithAutoProgress() {
     val scope = TestCoroutineScope()
     scope.foo()
     // foo is suspended waiting for time to progress
@@ -381,6 +387,7 @@ fun CoroutineScope.foo() {
 ```
 
 ## Using time control with `withContext`
+
 Calls to `withContext(Dispatchers.IO)` or `withContext(Dispatchers.Default)` are common in coroutines based codebases. 
 Both dispatchers are not designed to interact with `TestCoroutineDispatcher`.
 
@@ -413,37 +420,34 @@ delays, or when execution control is needed to test complex logic.
 ### Status of the API
 
 This API is experimental and it is may change before migrating out of experimental (while it is marked as
-`@ExperimentalCoroutinesApi`). Changes during experimental may have deprecation applied when possible, but it is not
-advised to use the API before it leaves experimental due to possible breaking changes.
+[`@ExperimentalCoroutinesApi`][ExperimentalCoroutinesApi]).
+Changes during experimental may have deprecation applied when possible, but it is not
+advised to use the API in stable code before it leaves experimental due to possible breaking changes.
 
 If you have any suggestions for improvements to this experimental API please share them them on the 
 [issue tracker](https://github.com/Kotlin/kotlinx.coroutines/issues).
-
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->
 [Dispatchers.Main]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html
 [CoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html
-[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html
 [async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html
 [delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html
+[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
+[ExperimentalCoroutinesApi]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html
 <!--- MODULE kotlinx-coroutines-test -->
 <!--- INDEX kotlinx.coroutines.test -->
 [setMain]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/kotlinx.coroutines.-dispatchers/set-main.html
-
-[runBlockingTest]: https://notapage/
-[UncompletedCoroutinesError]: https://notapage/
-[DelayController]: https://notapage/
-[pauseDispatcher]: https://notapage/
-[pauseDispatcher.noarg]: https://notapage/noarg
-[resumeDispatcher]: https://notapage/
-[advanceUntilIdle]: https://notapage/
-[advanceTimeBy]: https://notapage/
-[resumeDispatcher]: https://notapage/
-[TestCoroutineDispatcher]: https://notapage/
-[TestCoroutineExceptionHandler]: https://notapage/
-[TestCoroutineScope]: https://notapage/
-[cleanupTestCoroutines.scope]: https://notapage/cleanupscope
-[cleanupTestCoroutines.dispatcher]: https://notapage/cleanupdispatcher
+[runBlockingTest]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-blocking-test.html
+[UncompletedCoroutinesError]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-uncompleted-coroutines-error/index.html
+[DelayController]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-delay-controller/index.html
+[DelayController.advanceUntilIdle]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-delay-controller/advance-until-idle.html
+[DelayController.pauseDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-delay-controller/pause-dispatcher.html
+[TestCoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-dispatcher/index.html
+[DelayController.resumeDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-delay-controller/resume-dispatcher.html
+[TestCoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html
+[TestCoroutineExceptionHandler]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-exception-handler/index.html
+[TestCoroutineScope.cleanupTestCoroutines]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/cleanup-test-coroutines.html
+[TestCoroutineDispatcher.cleanupTestCoroutines]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-dispatcher/cleanup-test-coroutines.html
 <!--- END -->
