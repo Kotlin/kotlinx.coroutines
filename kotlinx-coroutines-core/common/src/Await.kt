@@ -109,7 +109,7 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
                 }
             } else if (notCompletedCount.decrementAndGet() == 0) {
                 continuation.resume(deferreds.map { it.getCompleted() })
-                // Note, that all deferreds are complete here, so we don't need to dispose their nodes
+                // Note that all deferreds are complete here, so we don't need to dispose their nodes
             }
         }
     }

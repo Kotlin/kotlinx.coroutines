@@ -35,7 +35,7 @@ fun combineImagesAsync(name1: String, name2: String): ListenableFuture<Image> = 
 }
 ```
 
-Note, that this module should be used only for integration with existing Java APIs based on `ListenableFuture`. 
+Note that this module should be used only for integration with existing Java APIs based on `ListenableFuture`. 
 Writing pure-Kotlin code that uses `ListenableFuture` is highly not recommended, since the resulting APIs based
 on the futures are quite error-prone. See the discussion on 
 [Asynchronous Programming Styles](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md#asynchronous-programming-styles)

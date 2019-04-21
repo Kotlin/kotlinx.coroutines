@@ -16,7 +16,7 @@ import kotlinx.coroutines.selects.*
  * successful or failed result of the computation that was carried out. The result of the deferred is
  * available when it is [completed][isCompleted] and can be retrieved by [await] method, which throws
  * exception if the deferred had failed.
- * Note, that a _cancelled_ deferred is also considered to be completed.
+ * Note that a _cancelled_ deferred is also considered to be completed.
  * The corresponding exception can be retrieved via [getCompletionExceptionOrNull] from a completed instance of deferred.
  *
  * Usually, a deferred value is created in _active_ state (it is created and started).

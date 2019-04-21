@@ -237,7 +237,7 @@ fun setup(hello: Text, fab: Circle) {
 > You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-basic-03.kt)
 
 Now, if the circle is clicked while countdown is still running, the countdown stops. 
-Note, that [Job.cancel] is completely thread-safe and non-blocking. It just signals the coroutine to cancel 
+Note that [Job.cancel] is completely thread-safe and non-blocking. It just signals the coroutine to cancel 
 its job, without waiting for it to actually terminate. It can be invoked from anywhere.
 Invoking it on a coroutine that was already cancelled or has completed does nothing. 
 
@@ -288,7 +288,7 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
 
 > You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-actor-01.kt)
 
-Note, that each time the circle is clicked, it starts a new coroutine and they all compete to 
+Note that each time the circle is clicked, it starts a new coroutine and they all compete to 
 update the text. Try it. It does not look very good. We'll fix it later.
 
 > On Android, the corresponding extension can be written for `View` class, so that the code
@@ -615,7 +615,7 @@ fun fibBlocking(x: Int): Int =
 You can now enjoy full-speed naive Fibonacci computation without blocking the main UI thread. 
 All we need is `withContext(Dispatchers.Default)`.
 
-Note, that because the `fib` function is invoked from the single actor in our code, there is at most one concurrent 
+Note that because the `fib` function is invoked from the single actor in our code, there is at most one concurrent 
 computation of it at any given time, so this code has a natural limit on the resource utilization. 
 It can saturate at most one CPU core.
   

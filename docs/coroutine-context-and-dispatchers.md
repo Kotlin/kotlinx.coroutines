@@ -267,7 +267,7 @@ same coroutine as you can see in the output below:
 
 <!--- TEST -->
 
-Note, that this example also uses `use` function from the Kotlin standard library to release threads that
+Note that this example also uses `use` function from the Kotlin standard library to release threads that
 are created with [newSingleThreadContext] when they are no longer needed. 
 
 ### Job in the context
@@ -299,7 +299,7 @@ My job is "coroutine#1":BlockingCoroutine{Active}@6d311334
 
 <!--- TEST lines.size == 1 && lines[0].startsWith("My job is \"coroutine#1\":BlockingCoroutine{Active}@") -->
 
-Note, that [isActive] in [CoroutineScope] is just a convenient shortcut for
+Note that [isActive] in [CoroutineScope] is just a convenient shortcut for
 `coroutineContext[Job]?.isActive == true`.
 
 ### Children of a coroutine

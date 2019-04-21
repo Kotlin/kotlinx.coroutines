@@ -26,7 +26,7 @@ public enum class CoroutineStart {
      * function as most dispatchers do, then the coroutine code is dispatched for execution later, while the code that
      * invoked the coroutine builder continues execution.
      *
-     * Note, that [Dispatchers.Unconfined] always returns `false` from its [CoroutineDispatcher.isDispatchNeeded]
+     * Note that [Dispatchers.Unconfined] always returns `false` from its [CoroutineDispatcher.isDispatchNeeded]
      * function, so starting coroutine with [Dispatchers.Unconfined] by [DEFAULT] is the same as using [UNDISPATCHED].
      *
      * If coroutine [Job] is cancelled before it even had a chance to start executing, then it will not start its

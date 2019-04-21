@@ -50,7 +50,7 @@ public interface Mutex {
      * continue to execute even after it was cancelled from the same thread in the case when this lock operation
      * was already resumed and the continuation was posted for execution to the thread's queue.
      *
-     * Note, that this function does not check for cancellation when it is not suspended.
+     * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
      * This function can be used in [select] invocation with [onLock] clause.

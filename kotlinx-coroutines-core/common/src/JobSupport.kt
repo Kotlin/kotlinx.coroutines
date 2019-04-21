@@ -81,7 +81,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
        successfully without children (in this case it directly goes from EMPTY_A or SINGLE state to FINAL_R
        state without going to COMPLETING state)
 
-       Note, that the actual `_state` variable can also be a reference to atomic operation descriptor `OpDescriptor`
+       Note that the actual `_state` variable can also be a reference to atomic operation descriptor `OpDescriptor`
 
        ---------- TIMELINE of state changes and notification in Job lifecycle ----------
 
@@ -909,7 +909,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     /**
      * When this function returns `true` the parent is cancelled on cancellation of this job.
-     * Note, that [CancellationException] is considered "normal" and parent is not cancelled when child produces it.
+     * Note that [CancellationException] is considered "normal" and parent is not cancelled when child produces it.
      * This allows parent to cancel its children (normally) without being cancelled itself, unless
      * child crashes and produce some other exception during its completion.
      *

@@ -553,7 +553,7 @@ works as a solution to the problem of shared mutable state. Indeed, actors may m
 Actor is more efficient than locking under load, because in this case it always has work to do and it does not 
 have to switch to a different context at all.
 
-> Note, that an [actor] coroutine builder is a dual of [produce] coroutine builder. An actor is associated 
+> Note that an [actor] coroutine builder is a dual of [produce] coroutine builder. An actor is associated 
   with the channel that it receives messages from, while a producer is associated with the channel that it 
   sends elements to.
 

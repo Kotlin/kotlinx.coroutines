@@ -40,7 +40,7 @@ public interface SendChannel<in E> {
      * Adds [element] into to this channel, suspending the caller while the buffer of this channel is full
      * or if it does not exist, or throws exception if the channel [isClosedForSend] (see [close] for details).
      *
-     * Note, that closing a channel _after_ this function had suspended does not cause this suspended send invocation
+     * Note that closing a channel _after_ this function had suspended does not cause this suspended send invocation
      * to abort, because closing a channel is conceptually like sending a special "close token" over this channel.
      * All elements that are sent over the channel are delivered in first-in first-out order. The element that
      * is being sent will get delivered to receivers before a close token.
@@ -54,7 +54,7 @@ public interface SendChannel<in E> {
      * continue to execute even after it was cancelled from the same thread in the case when this send operation
      * was already resumed and the continuation was posted for execution to the thread's queue.
      *
-     * Note, that this function does not check for cancellation when it is not suspended.
+     * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
      * This function can be used in [select] invocation with [onSend] clause.
@@ -170,7 +170,7 @@ public interface ReceiveChannel<out E> {
      * continue to execute even after it was cancelled from the same thread in the case when this receive operation
      * was already resumed and the continuation was posted for execution to the thread's queue.
      *
-     * Note, that this function does not check for cancellation when it is not suspended.
+     * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
      * This function can be used in [select] invocation with [onReceive] clause.
@@ -200,7 +200,7 @@ public interface ReceiveChannel<out E> {
      * continue to execute even after it was cancelled from the same thread in the case when this receive operation
      * was already resumed and the continuation was posted for execution to the thread's queue.
      *
-     * Note, that this function does not check for cancellation when it is not suspended.
+     * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
      * This function can be used in [select] invocation with [onReceiveOrNull] clause.
@@ -288,7 +288,7 @@ public interface ChannelIterator<out E> {
      * continue to execute even after it was cancelled from the same thread in the case when this receive operation
      * was already resumed and the continuation was posted for execution to the thread's queue.
      *
-     * Note, that this function does not check for cancellation when it is not suspended.
+     * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      */
     public suspend operator fun hasNext(): Boolean
@@ -308,7 +308,7 @@ public interface ChannelIterator<out E> {
      * continue to execute even after it was cancelled from the same thread in the case when this receive operation
      * was already resumed and the continuation was posted for execution to the thread's queue.
      *
-     * Note, that this function does not check for cancellation when it is not suspended.
+     * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      */
     public suspend operator fun next(): E
