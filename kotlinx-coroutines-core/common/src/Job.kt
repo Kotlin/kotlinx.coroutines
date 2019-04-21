@@ -24,7 +24,7 @@ import kotlin.jvm.*
  * can [cancel] its own children (including all their children recursively) without cancelling itself.
  *
  * The most basic instances of [Job] are created with [launch][CoroutineScope.launch] coroutine builder or with a
- * `Job()` factory function. By default, a failure of any of the job's children leads to an immediately failure
+ * `Job()` factory function. By default, a failure of any of the job's children leads to an immediate failure
  * of its parent and cancellation of the rest of its children. This behavior can be customized using [SupervisorJob].
  *
  * Conceptually, an execution of the job does not produce a result value. Jobs are launched solely for their
@@ -46,8 +46,8 @@ import kotlin.jvm.*
  * [CoroutineStart.LAZY]. Such a job can be made _active_ by invoking [start] or [join].
  *
  * A job is _active_ while the coroutine is working. Failure of the job with exception makes it _cancelling_.
- * A job can be cancelled it at any time with [cancel] function that forces it to transition to
- * _cancelling_ state immediately. The job becomes _cancelled_  when it finishes executing it work.
+ * A job can be cancelled at any time with [cancel] function that forces it to transition to
+ * _cancelling_ state immediately. The job becomes _cancelled_  when it finishes executing its work.
  *
  * ```
  *                                       wait children

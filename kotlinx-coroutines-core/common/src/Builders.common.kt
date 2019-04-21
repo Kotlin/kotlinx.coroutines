@@ -32,11 +32,11 @@ import kotlin.jvm.*
  * the coroutine [Job] is created in _new_ state. It can be explicitly started with [start][Job.start] function
  * and will be started implicitly on the first invocation of [join][Job.join].
  *
- * Uncaught exceptions in this coroutine cancel parent job in the context by default
+ * Uncaught exceptions in this coroutine cancel the parent job in the context by default
  * (unless [CoroutineExceptionHandler] is explicitly specified), which means that when `launch` is used with
- * the context of another coroutine, then any uncaught exception leads to the cancellation of parent coroutine.
+ * the context of another coroutine, then any uncaught exception leads to the cancellation of the parent coroutine.
  *
- * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
+ * See [newCoroutineContext] for a description of debugging facilities that are available for a newly created coroutine.
  *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
