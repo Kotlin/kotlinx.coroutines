@@ -55,13 +55,16 @@ class PublicApiTest(
 
     private fun getJarPath(libsDir: File): File {
         val regex = Regex("$moduleName-.+\\.jar")
-        val files = (libsDir.listFiles() ?: throw Exception("Cannot list files in $libsDir"))
+        var files = (libsDir.listFiles() ?: throw Exception("Cannot list files in $libsDir"))
             .filter { it.name.let {
                     it matches regex
                     && !it.endsWith("-sources.jar")
                     && !it.endsWith("-javadoc.jar")
                     && !it.endsWith("-tests.jar")}
                     && !it.name.contains("-metadata-")}
-        return files.singleOrNull() ?: throw Exception("No single file matching $regex in $libsDir:\n${files.joinToString("\n")}")
+        if (files.size > 1) // maybe multiplatform?
+            files = files.filter { it.name.startsWith("$moduleName-jvm-") }
+        return files.singleOrNull() ?:
+            error("No single file matching $regex in $libsDir:\n${files.joinToString("\n")}")
     }
 }
