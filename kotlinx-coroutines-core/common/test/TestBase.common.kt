@@ -17,6 +17,7 @@ public expect open class TestBase constructor() {
     public fun expect(index: Int)
     public fun expectUnreached()
     public fun finish(index: Int)
+    public fun ensureFinished() // Ensures that 'finish' was invoked
     public fun reset() // Resets counter and finish flag. Workaround for parametrized tests absence in common
 
     public fun runTest(

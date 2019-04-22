@@ -32,7 +32,6 @@ private val VERBOSE = systemProp("test.verbose", false)
  * }
  * ```
  */
-@Suppress("DEPRECATION")
 public actual open class TestBase actual constructor() {
     /**
      * Is `true` when running in a nightly stress test mode.
@@ -112,6 +111,13 @@ public actual open class TestBase actual constructor() {
     public actual fun finish(index: Int) {
         expect(index)
         check(!finished.getAndSet(true)) { "Should call 'finish(...)' at most once" }
+    }
+
+    /**
+     * Asserts that [finish] was invoked
+     */
+    public actual fun ensureFinished() {
+        require(finished.get()) { "finish(...) should be caller prior to this check" }
     }
 
     public actual fun reset() {
