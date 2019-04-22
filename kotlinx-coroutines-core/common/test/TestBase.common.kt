@@ -61,6 +61,7 @@ public suspend inline fun <reified T : Throwable> assertFailsWith(flow: Flow<*>)
 }
 
 public suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }
+public suspend fun Flow<Long>.longSum() = fold(0L) { acc, value -> acc + value }
 
 public class TestException(message: String? = null) : Throwable(message), NonRecoverableThrowable
 public class TestException1(message: String? = null) : Throwable(message), NonRecoverableThrowable

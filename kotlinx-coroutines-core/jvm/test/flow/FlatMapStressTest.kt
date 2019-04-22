@@ -14,7 +14,7 @@ import kotlin.test.*
 class FlatMapStressTest : TestBase() {
 
     private val iterations = 2000 * stressTestMultiplier
-    private val expectedSum = iterations * (iterations + 1) / 2
+    private val expectedSum = iterations.toLong() * (iterations + 1) / 2
 
     @Test
     fun testConcurrencyLevel() = runTest {
@@ -35,7 +35,7 @@ class FlatMapStressTest : TestBase() {
         val bufferSize = 5
         withContext(Dispatchers.Default) {
             val inFlightElements = AtomicLong(0L)
-            var result = 0
+            var result = 0L
             (1..iterations step 4).asFlow().flatMapMerge(bufferSize = bufferSize) { value ->
                 unsafeFlow {
                     repeat(4) {
@@ -59,11 +59,11 @@ class FlatMapStressTest : TestBase() {
     @Test
     fun testDelivery() = runTest {
         withContext(Dispatchers.Default) {
-            val result = (1..iterations step 4).asFlow().flatMapMerge { value ->
+            val result = (1L..iterations step 4).asFlow().flatMapMerge { value ->
                 unsafeFlow {
                     repeat(4) { emit(value + it) }
                 }
-            }.sum()
+            }.longSum()
             assertEquals(expectedSum, result)
         }
     }
@@ -72,12 +72,12 @@ class FlatMapStressTest : TestBase() {
     fun testIndependentShortBursts() = runTest {
         withContext(Dispatchers.Default) {
             repeat(iterations) {
-                val result = (1..4).asFlow().flatMapMerge { value ->
+                val result = (1L..4L).asFlow().flatMapMerge { value ->
                     unsafeFlow {
                         emit(value)
                         emit(value)
                     }
-                }.sum()
+                }.longSum()
                 assertEquals(20, result)
             }
         }
@@ -86,14 +86,14 @@ class FlatMapStressTest : TestBase() {
     private suspend fun testConcurrencyLevel(maxConcurrency: Int) {
         assumeTrue(maxConcurrency <= CORE_POOL_SIZE)
         val concurrency = AtomicLong()
-        val result = (1..iterations).asFlow().flatMapMerge(concurrency = maxConcurrency) { value ->
+        val result = (1L..iterations).asFlow().flatMapMerge(concurrency = maxConcurrency) { value ->
             unsafeFlow {
                 val current = concurrency.incrementAndGet()
                 assertTrue(current in 1..maxConcurrency)
                 emit(value)
                 concurrency.decrementAndGet()
             }
-        }.sum()
+        }.longSum()
 
         assertEquals(0, concurrency.get())
         assertEquals(expectedSum, result)
