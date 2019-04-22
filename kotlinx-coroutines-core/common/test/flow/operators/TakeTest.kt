@@ -28,13 +28,15 @@ class TakeTest : TestBase() {
     }
 
     @Test
-    fun testNonPositiveValues() = runTest {
+    fun testNonPositiveValues() {
         val flow = flowOf(1)
         assertFailsWith<IllegalArgumentException> {
             flow.take(-1)
         }
 
-        assertNull(flow.take(0).singleOrNull())
+        assertFailsWith<IllegalArgumentException> {
+            flow.take(0)
+        }
     }
 
     @Test

@@ -50,8 +50,7 @@ public fun <T> Flow<T>.dropWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
  */
 @FlowPreview
 public fun <T> Flow<T>.take(count: Int): Flow<T> {
-    require(count >= 0) { "Requested element count $count is less than zero." }
-    if (count == 0) return emptyFlow()
+    require(count > 0) { "Requested element count $count should be positive" }
     return flow {
         var consumed = 0
         try {
