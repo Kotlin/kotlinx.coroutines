@@ -60,7 +60,7 @@ public fun <T> Flow<T>.debounce(timeoutMs: Long): Flow<T> {
     require(timeoutMs > 0) { "Debounce timeout should be positive" }
     return flow {
         coroutineScope {
-            val values = Channel<Any>(Channel.CONFLATED)
+            val values = Channel<Any?>(Channel.CONFLATED) // Actually Any, KT-30796
             // Channel is not closed deliberately as there is no close with value
             val collector = launch {
                 try {
@@ -114,7 +114,7 @@ public fun <T> Flow<T>.sample(periodMs: Long): Flow<T> {
     require(periodMs > 0) { "Sample period should be positive" }
     return flow {
         coroutineScope {
-            val values = produce<Any>(capacity = Channel.CONFLATED) {
+            val values = produce<Any?>(capacity = Channel.CONFLATED) {  // Actually Any, KT-30796
                 collect { value -> send(value ?: NullSurrogate) }
             }
 

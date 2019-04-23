@@ -45,20 +45,12 @@ public inline fun <reified T : Throwable> assertFailsWith(block: () -> Unit) {
 }
 
 public suspend inline fun <reified T : Throwable> assertFailsWith(flow: Flow<*>) {
-    var e: Throwable? = null
-    var completed = false
-    flow.launchIn(CoroutineScope(Dispatchers.Unconfined)) {
-        onEach {}
-        catch<Throwable> {
-            e = it
-        }
-        finally {
-            completed = true
-            assertTrue(it is T)
-        }
-    }.join()
-    assertTrue(e is T)
-    assertTrue(completed)
+    try {
+        flow.collect { /* Do nothing */ }
+        fail("Should be unreached")
+    } catch (e: Throwable) {
+        assertTrue(e is T)
+    }
 }
 
 public suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }

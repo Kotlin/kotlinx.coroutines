@@ -150,7 +150,7 @@ class SampleTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamError() = withVirtualTime {
+    fun testUpstreamError() = runTest {
         val latch = Channel<Unit>()
         val flow = flow {
             expect(1)
