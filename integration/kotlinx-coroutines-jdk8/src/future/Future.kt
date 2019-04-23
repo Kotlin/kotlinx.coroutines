@@ -83,15 +83,15 @@ public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
 }
 
 /**
- * Converts this completable job to the instance of [CompletableFuture].
+ * Converts this job to the instance of [CompletableFuture].
  * The job is cancelled when the resulting future is cancelled or otherwise completed.
  */
 public fun Job.asCompletableFuture(): CompletableFuture<Unit> {
     val future = CompletableFuture<Unit>()
     setupCancellation(future)
-    invokeOnCompletion { throwable ->
-        if (throwable === null) future.complete(Unit)
-        else future.completeExceptionally(throwable)
+    invokeOnCompletion { cause ->
+        if (cause === null) future.complete(Unit)
+        else future.completeExceptionally(cause)
     }
     return future
 }
