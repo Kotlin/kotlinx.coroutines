@@ -16,7 +16,6 @@ def distTag(version) {
 
 def npmTemplateDir = file("$projectDir/js/npm")
 def npmDeployDir = file("$buildDir/npm")
-def npmDeployTag = distTag(version)
 
 def authToken = prop("kotlin.npmjs.auth.token", "")
 def dryRun = prop("dryRun", "false")
@@ -32,10 +31,12 @@ task preparePublishNpm(type: Copy) {
 
 task publishNpm(type: NpmTask, dependsOn: [preparePublishNpm]) {
     workingDir = npmDeployDir
-    def deployArgs = ['publish',
-                      "--//registry.npmjs.org/:_authToken=$authToken",
-                      "--tag=$npmDeployTag"]
+  
     doFirst {
+        def npmDeployTag = distTag(version)
+        def deployArgs = ['publish',
+                          "--//registry.npmjs.org/:_authToken=$authToken",
+                          "--tag=$npmDeployTag"]
         if (dryRun == "true") {
             println("$npmDeployDir \$ npm arguments: $deployArgs")
             args = ['pack']
