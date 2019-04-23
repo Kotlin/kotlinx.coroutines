@@ -22,7 +22,7 @@ import kotlin.coroutines.*
  * with non-blocking Rx chains that contain delays, timeouts, intervals and such.
  *
  * This dispatcher can also handle *blocking* coroutines that are started by [runBlocking].
- * This dispatcher's virtual time will be automatically advanced based based on the delayed actions
+ * This dispatcher's virtual time will be automatically advanced based on the delayed actions
  * within the Coroutine(s).
  *
  * **Note: This API will become obsolete in future updates due to integration with structured concurrency.**
