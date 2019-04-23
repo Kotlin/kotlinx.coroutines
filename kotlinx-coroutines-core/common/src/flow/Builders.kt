@@ -185,18 +185,17 @@ public fun LongRange.asFlow(): Flow<Long> = flow {
 /**
  * Creates an instance of the cold [Flow] with elements that are sent to a [SendChannel]
  * that is provided to the builder's [block] of code. It allows elements to be
- * produced by the code that is running in a different context,
- * e.g. from a callback-based API.
+ * produced by the code that is running in a different context, e.g. from a callback-based API.
  *
  * The resulting flow is _cold_, which means that [block] is called on each call of a terminal operator
- * on the resulting flow.
+ * on the resulting flow. The [block] is not suspending deliberately, if you need suspending scope, [flow] builder
+ * should be used instead.
  *
  * To control backpressure, [bufferSize] is used and matches directly the `capacity` parameter of [Channel] factory.
  * The provided channel can later be used by any external service to communicate with flow and its buffer determines
  * backpressure buffer size or its behaviour (e.g. in case when [Channel.CONFLATED] was used).
  *
  * Example of usage:
- *
  * ```
  * fun flowFrom(api: CallbackBasedApi): Flow<T> = flowViaChannel { channel ->
  *     val callback = object : Callback { // implementation of some callback interface
@@ -206,6 +205,7 @@ public fun LongRange.asFlow(): Flow<Long> = flow {
  *         override fun onApiError(cause: Throwable) {
  *             channel.cancel("API Error", CancellationException(cause))
  *         }
+ *         override fun onCompleted() = channel.close()
  *     }
  *     api.register(callback)
  *     channel.invokeOnClose {
@@ -217,7 +217,7 @@ public fun LongRange.asFlow(): Flow<Long> = flow {
 @FlowPreview
 public fun <T> flowViaChannel(
     bufferSize: Int = 16,
-    @BuilderInference block: suspend (SendChannel<T>) -> Unit
+    @BuilderInference block: CoroutineScope.(channel: SendChannel<T>) -> Unit
 ): Flow<T> {
     return flow {
         coroutineScope {
