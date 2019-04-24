@@ -179,7 +179,7 @@ internal open class CancellableContinuationImpl<in T>(
             if (job != null && !job.isActive) {
                 val cause = job.getCancellationException()
                 cancelResult(state, cause)
-                throw cause
+                throw recoverStackTrace(cause, this)
             }
         }
         return getSuccessfulResult(state)

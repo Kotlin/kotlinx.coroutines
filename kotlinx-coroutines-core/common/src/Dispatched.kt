@@ -229,7 +229,7 @@ internal abstract class DispatchedTask<in T>(
                 if (job != null && !job.isActive) {
                     val cause = job.getCancellationException()
                     cancelResult(state, cause)
-                    continuation.resumeWithException(cause)
+                    continuation.resumeWithStackTrace(cause)
                 } else {
                     val exception = getExceptionalResult(state)
                     if (exception != null)
