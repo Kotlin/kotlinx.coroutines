@@ -23,9 +23,14 @@ def dryRun = prop("dryRun", "false")
 // Note: publish transformed files using dependency on sourceSets.main.output
 task preparePublishNpm(type: Copy) {
     from(npmTemplateDir) {
-        expand (project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
+        // Postpone expansion of package.json until we configure version property in build.gradle
+        def copySpec = it
+        afterEvaluate {
+            copySpec.expand(project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
+        }
     }
-    from(compileKotlinJs.destinationDir)
+    // we must publish output that is transformed by atomicfu
+    from(kotlin.targets.js.compilations.main.output.allOutputs)
     into npmDeployDir
 }
 

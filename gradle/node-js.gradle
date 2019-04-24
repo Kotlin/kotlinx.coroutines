@@ -15,16 +15,11 @@ node {
 
 task prepareNodePackage(type: Copy) {
     from("npm") {
-        include 'package.json'
-        /*
-         * Postpone expansion of package.json until we configure version property in build.gradle
-         */
+        // Postpone expansion of package.json until we configure version property in build.gradle
+        def copySpec = it
         afterEvaluate {
-            expand(project.properties + [kotlinDependency: ""])
+            copySpec.expand(project.properties + [kotlinDependency: ""])
         }
-    }
-    from("npm") {
-        exclude 'package.json'
     }
     into "$node.nodeModulesDir"
 }
