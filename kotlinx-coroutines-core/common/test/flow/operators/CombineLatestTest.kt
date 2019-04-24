@@ -16,7 +16,7 @@ class CombineLatestTest : TestBase() {
     fun testCombineLatest() = runTest {
         val flow = flowOf("a", "b", "c")
         val flow2 = flowOf(1, 2, 3)
-        val list = flow.combineLatest(flow2,  { i, j -> i + j }).toList()
+        val list = flow.combineLatest(flow2) { i, j -> i + j }.toList()
         assertEquals(listOf("a1", "b1", "b2", "c2", "c3"), list)
     }
 
@@ -24,7 +24,7 @@ class CombineLatestTest : TestBase() {
     fun testNulls() = runTest {
         val flow = flowOf("a", null, null)
         val flow2 = flowOf(1, 2, 3)
-        val list = flow.combineLatest(flow2,  { i, j -> i + j }).toList()
+        val list = flow.combineLatest(flow2, { i, j -> i + j }).toList()
         assertEquals(listOf("a1", "null1", "null2", "null2", "null3"), list)
     }
 
@@ -32,13 +32,13 @@ class CombineLatestTest : TestBase() {
     fun testNullsOther() = runTest {
         val flow = flowOf("a", "b", "c")
         val flow2 = flowOf(null, 2, null)
-        val list = flow.combineLatest(flow2,  { i, j -> i + j }).toList()
+        val list = flow.combineLatest(flow2, { i, j -> i + j }).toList()
         assertEquals(listOf("anull", "bnull", "b2", "c2", "cnull"), list)
     }
 
     @Test
     fun testEmptyFlow() = runTest {
-        val flow = emptyFlow<String>().combineLatest(emptyFlow<Int>(),  { i, j -> i + j })
+        val flow = emptyFlow<String>().combineLatest(emptyFlow<Int>(), { i, j -> i + j })
         assertNull(flow.singleOrNull())
     }
 
@@ -46,14 +46,14 @@ class CombineLatestTest : TestBase() {
     fun testFirstIsEmpty() = runTest {
         val f1 = emptyFlow<String>()
         val f2 = flowOf(1)
-        assertEquals(emptyList(), f1.combineLatest(f2,  { i, j -> i + j }).toList())
+        assertEquals(emptyList(), f1.combineLatest(f2) { i, j -> i + j }.toList())
     }
 
     @Test
     fun testSecondIsEmpty() = runTest {
         val f1 = flowOf("a")
         val f2 = emptyFlow<Int>()
-        assertEquals(emptyList(), f1.combineLatest(f2,  { i, j -> i + j }).toList())
+        assertEquals(emptyList(), f1.combineLatest(f2) { i, j -> i + j }.toList())
     }
 
     @Test
@@ -80,7 +80,7 @@ class CombineLatestTest : TestBase() {
             emit(3)
         }
 
-        val result = f1.combineLatest(f2,  { i, j -> i + j }).toList()
+        val result = f1.combineLatest(f2) { i, j -> i + j }.toList()
         assertEquals(listOf("a1", "b1", "c1", "c2", "c3"), result)
         finish(8)
     }
@@ -137,7 +137,7 @@ class CombineLatestTest : TestBase() {
             }
         }
 
-        val value =  withContext(NamedDispatchers("main")) {
+        val value = withContext(NamedDispatchers("main")) {
             f1.combineLatest(f2) { i, j ->
                 assertEquals("main", NamedDispatchers.name())
                 expect(5)
@@ -170,8 +170,8 @@ class CombineLatestTest : TestBase() {
             expect(1)
             i + j
         }.flowOn(NamedDispatchers("combine")).onEach {
-                throw TestException()
-            }
+            throw TestException()
+        }
 
         assertFailsWith<TestException>(flow)
         finish(4)

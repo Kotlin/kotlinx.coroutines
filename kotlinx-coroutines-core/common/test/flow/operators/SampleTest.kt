@@ -130,6 +130,25 @@ class SampleTest : TestBase() {
     }
 
     @Test
+    // note that this test depends on the sampling strategy -- when sampling time starts on a quiescent flow that suddenly emits
+    fun testLongWait() = withVirtualTime {
+        expect(1)
+        val flow = flow {
+            expect(2)
+            emit("A")
+            delay(3500) // long delay -- multiple sampling intervals
+            emit("B")
+            delay(900) // crosses time = 4000 barrier
+            emit("C")
+            delay(3000) // long wait again
+
+        }
+        val result = flow.sample(1000).toList()
+        assertEquals(listOf("A", "B", "C"), result)
+        finish(3)
+    }
+
+    @Test
     fun testPace() = withVirtualTime {
         val flow = flow {
             expect(1)

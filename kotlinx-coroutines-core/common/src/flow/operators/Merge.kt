@@ -90,8 +90,8 @@ public fun <T> Flow<Flow<T>>.flattenConcat(): Flow<T> = flow {
 public fun <T> Flow<Flow<T>>.flattenMerge(concurrency: Int = 16, bufferSize: Int = 16): Flow<T> = flatMapMerge(concurrency, bufferSize) { it }
 
 /**
- * Returns a flow that switches to the new flow produced by [transform] function every time the original flow emits a value.
- * When switch on the newer flow is performed, the previous one is cancelled.
+ * Returns a flow that switches to a new flow produced by [transform] function every time the original flow emits a value.
+ * When switch on the a flow is performed, the previous one is cancelled.
  *
  * For example, the following flow:
  * ```
@@ -107,7 +107,7 @@ public fun <T> Flow<Flow<T>>.flattenMerge(concurrency: Int = 16, bufferSize: Int
  *     }
  * }
  * ```
- * will produce `aa bb b_last`
+ * produces `aa bb b_last`
  */
 @FlowPreview
 public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): Flow<R> = flow {

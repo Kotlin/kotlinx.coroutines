@@ -42,11 +42,11 @@ class SwitchMapTest : TestBase() {
             emit(2)
             emit(4)
         }.flowOn(NamedDispatchers("source")).switchMap { value ->
-               flow {
-                   assertEquals("switch$value", NamedDispatchers.name())
-                   emit(value)
-                   expect(value)
-               }.flowOn(NamedDispatchers("switch$value"))
+            flow {
+                assertEquals("switch$value", NamedDispatchers.name())
+                emit(value)
+                expect(value)
+            }.flowOn(NamedDispatchers("switch$value"))
         }.onEach {
             expect(it + 1)
             assertEquals("main", NamedDispatchers.nameOr("main"))

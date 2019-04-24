@@ -10,7 +10,7 @@ import kotlin.jvm.*
 private class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : CoroutineDispatcher(), Delay {
 
     private val originalDispatcher = enclosingScope.coroutineContext[ContinuationInterceptor] as CoroutineDispatcher
-    private val heap = ArrayList<TimedTask>() // TODO use MPP heap/ordered set implementation
+    private val heap = ArrayList<TimedTask>() // TODO use MPP heap/ordered set implementation (commonize ThreadSafeHeap)
     private var currentTime = 0L
 
     init {
@@ -21,10 +21,10 @@ private class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : CoroutineD
          */
         enclosingScope.launch {
             while (true) {
-                val secret = ThreadLocalEventLoop.currentOrNull()?.processNextEvent()
+                val delayNanos = ThreadLocalEventLoop.currentOrNull()?.processNextEvent()
                     ?: error("Event loop is missing, virtual time source works only as part of event loop")
-                if (secret <= 0) continue
-                if (secret > 0 && secret != Long.MAX_VALUE) error("Unexpected external delay: $secret")
+                if (delayNanos <= 0) continue
+                if (delayNanos > 0 && delayNanos != Long.MAX_VALUE) error("Unexpected external delay: $delayNanos")
                 val nextTask = heap.minBy { it.deadline } ?: return@launch
                 heap.remove(nextTask)
                 currentTime = nextTask.deadline

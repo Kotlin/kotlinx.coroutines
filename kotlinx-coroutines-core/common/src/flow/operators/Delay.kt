@@ -20,9 +20,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
 @FlowPreview
 public fun <T> Flow<T>.delayFlow(timeMillis: Long): Flow<T> = flow {
     delay(timeMillis)
-    collect { value ->
-        emit(value)
-    }
+    collect(this@flow)
 }
 
 /**
@@ -38,26 +36,30 @@ public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = flow {
 
 /**
  * Returns a flow that mirrors the original flow, but filters out values
- * that are followed by the newer values within the given [timeout][timeoutMs].
+ * that are followed by the newer values within the given [timeout][timeoutMillis].
  * The latest value is always emitted.
+ *
  * Example:
  * ```
  * flow {
- *   emit(1)
- *   delay(99)
- *   emit(2)
- *   delay(99)
- *   emit(3)
- *   delay(1001)
- *   emit(4)
- *   delay(1001)
- *   emit(5)
+ *     emit(1)
+ *     delay(99)
+ *     emit(2)
+ *     delay(99)
+ *     emit(3)
+ *     delay(1001)
+ *     emit(4)
+ *     delay(1001)
+ *     emit(5)
  * }.debounce(1000)
  * ```
- * will produce `3, 4, 5`.
+ * produces `3, 4, 5`.
+ *
+ * Note that the resulting flow does not emit anything as long as the original flow emits
+ * items faster than every [timeoutMillis] milliseconds.
  */
-public fun <T> Flow<T>.debounce(timeoutMs: Long): Flow<T> {
-    require(timeoutMs > 0) { "Debounce timeout should be positive" }
+public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
+    require(timeoutMillis > 0) { "Debounce timeout should be positive" }
     return flow {
         coroutineScope {
             val values = Channel<Any?>(Channel.CONFLATED) // Actually Any, KT-30796
@@ -79,10 +81,11 @@ public fun <T> Flow<T>.debounce(timeoutMs: Long): Flow<T> {
                         lastValue = it
                     }
 
-                    onTimeout(timeoutMs) {
-                        val value = lastValue ?: return@onTimeout
-                        lastValue = null // Consume the value
-                        emit(NullSurrogate.unbox(value))
+                    lastValue?.let { value -> // set timeout when lastValue != null
+                        onTimeout(timeoutMillis) {
+                            lastValue = null // Consume the value
+                            emit(NullSurrogate.unbox(value))
+                        }
                     }
 
                     // Close with value 'idiom'
@@ -97,21 +100,23 @@ public fun <T> Flow<T>.debounce(timeoutMs: Long): Flow<T> {
 }
 
 /**
- * Returns a flow that emits only the latest value emitted by the original flow during the given sampling [period][periodMs].
+ * Returns a flow that emits only the latest value emitted by the original flow during the given sampling [period][periodMillis].
+ *
  * Example:
  * ```
  * flow {
- *   repeat(10) {
- *       emit(it)
- *       delay(50)
- *   }
+ *     repeat(10) {
+ *         emit(it)
+ *         delay(50)
+ *     }
  * }.sample(100)
  * ```
- * will produce `1, 3, 5, 7, 9`.
+ * produces `1, 3, 5, 7, 9`.
+ * 
  * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
-public fun <T> Flow<T>.sample(periodMs: Long): Flow<T> {
-    require(periodMs > 0) { "Sample period should be positive" }
+public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
+    require(periodMillis > 0) { "Sample period should be positive" }
     return flow {
         coroutineScope {
             val values = produce<Any?>(capacity = Channel.CONFLATED) {  // Actually Any, KT-30796
@@ -120,7 +125,7 @@ public fun <T> Flow<T>.sample(periodMs: Long): Flow<T> {
 
             var isDone = false
             var lastValue: Any? = null
-            val ticker = fixedPeriodTicker(periodMs, periodMs)
+            val ticker = fixedPeriodTicker(periodMillis)
             while (!isDone) {
                 select<Unit> {
                     values.onReceiveOrNull {
@@ -132,6 +137,7 @@ public fun <T> Flow<T>.sample(periodMs: Long): Flow<T> {
                         }
                     }
 
+                    // todo: shall be start sampling only when an element arrives or sample aways as here?
                     ticker.onReceive {
                         val value = lastValue ?: return@onReceive
                         lastValue = null // Consume the value
