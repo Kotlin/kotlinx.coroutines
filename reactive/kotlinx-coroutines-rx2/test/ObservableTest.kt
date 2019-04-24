@@ -106,7 +106,7 @@ class ObservableTest : TestBase() {
         expect(2)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(3)
-            observable.consumeEach{
+            observable.collect {
                 expect(8)
                 assertEquals("OK", it)
             }
@@ -134,7 +134,7 @@ class ObservableTest : TestBase() {
             }
         }
         try {
-            pub.consumeEach {
+            pub.collect {
                 expect(3)
                 throw TestException()
             }

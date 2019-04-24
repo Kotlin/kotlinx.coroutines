@@ -11,9 +11,9 @@ import org.reactivestreams.*
 import kotlin.coroutines.*
 
 fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = GlobalScope.publish<T>(context) {
-  consumeEach { pub ->                 // for each publisher received on the source channel
+  collect { pub -> // for each publisher collected
       launch {  // launch a child coroutine
-          pub.consumeEach { send(it) } // resend all element from this publisher
+          pub.collect { send(it) } // resend all element from this publisher
       }
   }
 }
@@ -33,5 +33,5 @@ fun CoroutineScope.testPub() = publish<Publisher<Int>> {
 }
 
 fun main() = runBlocking<Unit> {
-    testPub().merge(coroutineContext).consumeEach { println(it) } // print the whole stream
+    testPub().merge(coroutineContext).collect { println(it) } // print the whole stream
 }

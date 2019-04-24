@@ -21,12 +21,12 @@ fun main() = runBlocking<Unit> {
     }
     // print elements from the source
     println("Elements:")
-    source.consumeEach { // consume elements from it
+    source.collect { // collect elements from it
         println(it)
     }
     // print elements from the source AGAIN
     println("Again:")
-    source.consumeEach { // consume elements from it
+    source.collect { // collect elements from it
         println(it)
     }
 }

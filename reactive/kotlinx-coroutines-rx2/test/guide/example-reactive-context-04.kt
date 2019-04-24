@@ -20,5 +20,5 @@ fun rangeWithIntervalRx(scheduler: Scheduler, time: Long, start: Int, count: Int
 
 fun main() = runBlocking<Unit> {
     rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3)
-        .consumeEach { println("$it on thread ${Thread.currentThread().name}") }
+        .collect { println("$it on thread ${Thread.currentThread().name}") }
 }
