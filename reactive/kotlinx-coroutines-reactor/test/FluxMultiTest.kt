@@ -46,7 +46,7 @@ class FluxMultiTest : TestBase() {
     fun testIteratorResendUnconfined() {
         val n = 10_000 * stressTestMultiplier
         val flux = GlobalScope.flux(Dispatchers.Unconfined) {
-            Flux.range(0, n).consumeEach { send(it) }
+            Flux.range(0, n).collect { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
             assertEquals((0 until n).toList(), list)
@@ -57,7 +57,7 @@ class FluxMultiTest : TestBase() {
     fun testIteratorResendPool() {
         val n = 10_000 * stressTestMultiplier
         val flux = GlobalScope.flux {
-            Flux.range(0, n).consumeEach { send(it) }
+            Flux.range(0, n).collect { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
             assertEquals((0 until n).toList(), list)

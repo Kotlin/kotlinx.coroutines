@@ -162,12 +162,12 @@ fun main() = runBlocking<Unit> {
     }
     // print elements from the source
     println("Elements:")
-    source.consumeEach { // consume elements from it
+    source.collect { // collect elements from it
         println(it)
     }
     // print elements from the source AGAIN
     println("Again:")
-    source.consumeEach { // consume elements from it
+    source.collect { // collect elements from it
         println(it)
     }
 }
@@ -198,7 +198,7 @@ elements is produced. It becomes the actual stream of elements on _subscription_
 a different stream of elements, depending on how the corresponding implementation of `Publisher` works.
 
 The [publish] coroutine builder, that is used in the above example, launches a fresh coroutine on each subscription.
-Every [Publisher.consumeEach][org.reactivestreams.Publisher.consumeEach] invocation creates a fresh subscription.
+Every [Publisher.collect][org.reactivestreams.Publisher.collect] invocation creates a fresh subscription.
 We have two of them in this code and that is why we see "Begin" printed twice. 
 
 In Rx lingo this is called a _cold_ publisher. Many standard Rx operators produce cold streams, too. We can iterate
@@ -217,9 +217,9 @@ method with it.
 
 ### Subscription and cancellation
 
-An example in the previous section uses `source.consumeEach { ... }` snippet to open a subscription 
+An example in the previous section uses `source.collect { ... }` snippet to open a subscription 
 and receive all the elements from it. If we need more control on how what to do with 
-the elements that are being received from the channel, we can use [Publisher.openSubscription][org.reactivestreams.Publisher.openSubscription]
+the elements that are being received from the channel, we can use [Publisher.collect][org.reactivestreams.Publisher.collect]
 as shown in the following example:
 
 <!--- INCLUDE
@@ -269,7 +269,7 @@ listener prints "Finally" to confirm that the subscription is actually being clo
 is never printed because we did not consume all of the elements.
 
 We do not need to use an explicit `cancel` either if iteration is performed over all the items that are emitted 
-by the publisher, because it is being cancelled automatically by `consumeEach`:
+by the publisher, because it is being cancelled automatically by `collect`:
 
 <!--- INCLUDE
 import io.reactivex.*
@@ -285,7 +285,7 @@ fun main() = runBlocking<Unit> {
         .doOnComplete { println("OnComplete") }   // ...
         .doFinally { println("Finally") }         // ... into what's going on
     // iterate over the source fully
-    source.consumeEach { println(it) }
+    source.collect { println(it) }
 }
 ```
 
@@ -308,7 +308,7 @@ Finally
 
 Notice, how "OnComplete" and "Finally" are printed before the last element "5". It happens because our `main` function in this
 example is a coroutine that we start with [runBlocking] coroutine builder.
-Our main coroutine receives on the channel using `source.consumeEach { ... }` expression.
+Our main coroutine receives on the flowable using `source.collect { ... }` expression.
 The main coroutine is _suspended_ while it waits for the source to emit an item.
 When the last item is emitted by `Flowable.range(1, 5)` it
 _resumes_ the main coroutine, which gets dispatched onto the main thread to print this
@@ -422,7 +422,7 @@ You can subscribe to subjects from a coroutine just as with any other reactive s
 <!--- INCLUDE 
 import io.reactivex.subjects.BehaviorSubject
 import kotlinx.coroutines.*
-import kotlinx.coroutines.rx2.consumeEach
+import kotlinx.coroutines.rx2.collect
 -->   
    
 ```kotlin
@@ -432,7 +432,7 @@ fun main() = runBlocking<Unit> {
     subject.onNext("two")
     // now launch a coroutine to print everything
     GlobalScope.launch(Dispatchers.Unconfined) { // launch coroutine in unconfined context
-        subject.consumeEach { println(it) }
+        subject.collect { println(it) }
     }
     subject.onNext("three")
     subject.onNext("four")
@@ -476,7 +476,7 @@ fun main() = runBlocking<Unit> {
     subject.onNext("two")
     // now launch a coroutine to print the most recent update
     launch { // use the context of the main thread for a coroutine
-        subject.consumeEach { println(it) }
+        subject.collect { println(it) }
     }
     subject.onNext("three")
     subject.onNext("four")
@@ -584,7 +584,7 @@ It is straightforward to use from a coroutine:
 ```kotlin
 fun main() = runBlocking<Unit> {
     // Range inherits parent job from runBlocking, but overrides dispatcher with Dispatchers.Default
-    range(Dispatchers.Default, 1, 5).consumeEach { println(it) }
+    range(Dispatchers.Default, 1, 5).collect { println(it) }
 }
 ```
 
@@ -623,7 +623,7 @@ fun <T, R> Publisher<T>.fusedFilterMap(
     predicate: (T) -> Boolean,   // the filter predicate
     mapper: (T) -> R             // the mapper function
 ) = GlobalScope.publish<R>(context) {
-    consumeEach {                // consume the source stream 
+    collect {                    // collect the source stream 
         if (predicate(it))       // filter part
             send(mapper(it))     // map part
     }        
@@ -644,7 +644,7 @@ fun CoroutineScope.range(start: Int, count: Int) = publish<Int> {
 fun main() = runBlocking<Unit> {
    range(1, 5)
        .fusedFilterMap(coroutineContext, { it % 2 == 0}, { "$it is even" })
-       .consumeEach { println(it) } // print all the resulting strings
+       .collect { println(it) } // print all the resulting strings
 }
 ```
 
@@ -717,7 +717,7 @@ The following code shows how `takeUntil` works:
 fun main() = runBlocking<Unit> {
     val slowNums = rangeWithInterval(200, 1, 10)         // numbers with 200ms interval
     val stop = rangeWithInterval(500, 1, 10)             // the first one after 500ms
-    slowNums.takeUntil(coroutineContext, stop).consumeEach { println(it) } // let's test it
+    slowNums.takeUntil(coroutineContext, stop).collect { println(it) } // let's test it
 }
 ```
 
@@ -749,9 +749,9 @@ import kotlin.coroutines.*
 
 ```kotlin
 fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = GlobalScope.publish<T>(context) {
-  consumeEach { pub ->                 // for each publisher received on the source channel
+  collect { pub -> // for each publisher collected
       launch {  // launch a child coroutine
-          pub.consumeEach { send(it) } // resend all element from this publisher
+          pub.collect { send(it) } // resend all element from this publisher
       }
   }
 }
@@ -792,7 +792,7 @@ The test code is to use `merge` on `testPub` and to display the results:
 
 ```kotlin
 fun main() = runBlocking<Unit> {
-    testPub().merge(coroutineContext).consumeEach { println(it) } // print the whole stream
+    testPub().merge(coroutineContext).collect { println(it) } // print the whole stream
 }
 ```
 
@@ -975,7 +975,7 @@ fun rangeWithIntervalRx(scheduler: Scheduler, time: Long, start: Int, count: Int
 
 fun main() = runBlocking<Unit> {
     rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3)
-        .consumeEach { println("$it on thread ${Thread.currentThread().name}") }
+        .collect { println("$it on thread ${Thread.currentThread().name}") }
 }
 ```
 
@@ -1021,7 +1021,7 @@ fun rangeWithIntervalRx(scheduler: Scheduler, time: Long, start: Int, count: Int
 fun main() = runBlocking<Unit> {
     val job = launch(Dispatchers.Unconfined) { // launch a new coroutine in Unconfined context (without its own thread pool)
         rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3)
-            .consumeEach { println("$it on thread ${Thread.currentThread().name}") }
+            .collect { println("$it on thread ${Thread.currentThread().name}") }
     }
     job.join() // wait for our coroutine to complete
 }
@@ -1077,8 +1077,7 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 <!--- MODULE kotlinx-coroutines-reactive -->
 <!--- INDEX kotlinx.coroutines.reactive -->
 [publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/kotlinx.coroutines.-coroutine-scope/publish.html
-[org.reactivestreams.Publisher.consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/consume-each.html
-[org.reactivestreams.Publisher.openSubscription]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/open-subscription.html
+[org.reactivestreams.Publisher.collect]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/collect.html
 <!--- MODULE kotlinx-coroutines-rx2 -->
 <!--- INDEX kotlinx.coroutines.rx2 -->
 [rxFlowable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/kotlinx.coroutines.-coroutine-scope/rx-flowable.html

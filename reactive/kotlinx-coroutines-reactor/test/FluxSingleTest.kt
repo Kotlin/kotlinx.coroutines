@@ -180,7 +180,7 @@ class FluxSingleTest {
     fun testFluxIteration() {
         val flux = GlobalScope.flux {
             var result = ""
-            Flux.just("O", "K").consumeEach { result += it }
+            Flux.just("O", "K").collect { result += it }
             send(result)
         }
 
@@ -193,7 +193,7 @@ class FluxSingleTest {
     fun testFluxIterationFailure() {
         val flux = GlobalScope.flux {
             try {
-                Flux.error<String>(RuntimeException("OK")).consumeEach { fail("Should not be here") }
+                Flux.error<String>(RuntimeException("OK")).collect { fail("Should not be here") }
                 send("Fail")
             } catch (e: RuntimeException) {
                 send(e.message!!)

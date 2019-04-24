@@ -262,7 +262,7 @@ class PublishTest : TestBase() {
             }
         }
         try {
-            pub.consumeEach {
+            pub.collect {
                 throw TestException()
             }
         } catch (e: TestException) {

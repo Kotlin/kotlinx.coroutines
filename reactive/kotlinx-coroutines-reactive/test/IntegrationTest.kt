@@ -50,7 +50,7 @@ class IntegrationTest(
         assertNSE { pub.awaitLast() }
         assertNSE { pub.awaitSingle() }
         var cnt = 0
-        pub.consumeEach { cnt++ }
+        pub.collect { cnt++ }
         assertThat(cnt, IsEqual(0))
     }
 
@@ -67,7 +67,7 @@ class IntegrationTest(
         assertThat(pub.awaitLast(), IsEqual("OK"))
         assertThat(pub.awaitSingle(), IsEqual("OK"))
         var cnt = 0
-        pub.consumeEach {
+        pub.collect {
             assertThat(it, IsEqual("OK"))
             cnt++
         }
@@ -125,7 +125,7 @@ class IntegrationTest(
 
     private suspend fun checkNumbers(n: Int, pub: Publisher<Int>) {
         var last = 0
-        pub.consumeEach {
+        pub.collect {
             assertThat(it, IsEqual(++last))
         }
         assertThat(last, IsEqual(n))
