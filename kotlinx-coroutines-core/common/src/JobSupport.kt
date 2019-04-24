@@ -529,7 +529,6 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             if (state !is Incomplete) {
                 // already complete -- select result
                 if (select.trySelect(null)) {
-                    select.completion.context.checkCompletion() // always check for our completion
                     block.startCoroutineUnintercepted(select.completion)
                 }
                 return
