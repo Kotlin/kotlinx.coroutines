@@ -18,8 +18,8 @@ fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>
         other.openSubscription().consume { // explicitly open channel to Publisher<U>
             val other = this
             whileSelect {
-                other.onReceive { false }          // bail out on any received element from `other`
-                current.onReceive { send(it); true }  // resend element from this channel and continue
+                other.onReceive { false }            // bail out on any received element from `other`
+                current.onReceive { send(it); true } // resend element from this channel and continue
             }
         }
     }
