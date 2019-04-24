@@ -15,7 +15,7 @@ fun <T, R> Publisher<T>.fusedFilterMap(
     predicate: (T) -> Boolean,   // the filter predicate
     mapper: (T) -> R             // the mapper function
 ) = GlobalScope.publish<R>(context) {
-    collect {                // consume the source stream 
+    collect {                    // collect the source stream 
         if (predicate(it))       // filter part
             send(mapper(it))     // map part
     }        
