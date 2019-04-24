@@ -23,6 +23,7 @@ class ChannelFlowTest : TestBase() {
 
     @Test
     fun testExceptionInBroadcast() = runTest {
+        expect(1)
         val channel = broadcast(NonCancellable) { // otherwise failure will cancel scope as well
             repeat(10) {
                 send(it + 1)
@@ -30,7 +31,14 @@ class ChannelFlowTest : TestBase() {
             throw TestException()
         }
         assertEquals(15, channel.asFlow().take(5).sum())
-        assertFailsWith<TestException>(channel.asFlow())
+
+        // Workaround for JS bug
+        try {
+            channel.asFlow().collect { /* Do nothing */ }
+            expectUnreached()
+        } catch (e: TestException) {
+            finish(2)
+        }
     }
 
     @Test
