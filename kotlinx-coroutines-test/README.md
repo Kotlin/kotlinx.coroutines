@@ -9,7 +9,7 @@ This package provides testing utilities for effectively testing coroutines.
 Add `kotlinx-coroutines-test` to your project test dependencies:
 ```
 dependencies {
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.2.0'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.2.1'
 }
 ```
 
@@ -274,8 +274,8 @@ important to ensure that [cleanupTestCoroutines][TestCoroutineScope.cleanupTestC
 
 ```kotlin
 class TestClass {
-    val testScope = TestCoroutineScope()
-    lateinit var subject: Subject = null 
+    private val testScope = TestCoroutineScope()
+    private lateinit var subject: Subject = null 
     
     @Before
     fun setup() {
