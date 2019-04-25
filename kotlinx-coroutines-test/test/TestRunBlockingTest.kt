@@ -5,8 +5,6 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
-import org.junit.Assert.*
-import org.junit.Test
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -370,5 +368,30 @@ class TestRunBlockingTest {
         }
         runCurrent()
         assertEquals(true, result.isSuccess)
+    }
+
+
+    private val exceptionHandler = TestCoroutineExceptionHandler()
+
+    @Test
+    fun testPartialContextOverride() = runBlockingTest(CoroutineName("named")) {
+        assertEquals(CoroutineName("named"), coroutineContext[CoroutineName])
+        assertNotNull(coroutineContext[CoroutineExceptionHandler])
+        assertNotSame(coroutineContext[CoroutineExceptionHandler], exceptionHandler)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun testPartialDispatcherOverride() = runBlockingTest(Dispatchers.Unconfined) {
+        fail("Unreached")
+    }
+
+    @Test
+    fun testOverrideExceptionHandler() = runBlockingTest(exceptionHandler) {
+        assertSame(coroutineContext[CoroutineExceptionHandler], exceptionHandler)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun testOverrideExceptionHandlerError() = runBlockingTest(CoroutineExceptionHandler { _, _ -> }) {
+        fail("Unreached")
     }
 }

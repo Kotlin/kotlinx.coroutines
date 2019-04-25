@@ -13,7 +13,7 @@ import kotlin.coroutines.*
  * This is similar to [runBlocking] but it will immediately progress past delays and into [launch] and [async] blocks.
  * You can use this to write tests that execute in the presence of calls to [delay] without causing your test to take
  * extra time.
- **
+ *
  * ```
  * @Test
  * fun exampleTest() = runBlockingTest {
@@ -37,17 +37,14 @@ import kotlin.coroutines.*
  * @throws UncompletedCoroutinesError If the [testBody] does not complete (or cancel) all coroutines that it launches
  * (including coroutines suspended on join/await).
  *
- * @param context An optional context that MUST contain a [DelayController] and/or [TestCoroutineExceptionHandler]
+ * @param context additional context elements. If [context] contains [CoroutineDispatcher] or [CoroutineExceptionHandler],
+ *        then they must implement [DelayController] and [TestCoroutineExceptionHandler] respectively.
  * @param testBody The code of the unit-test.
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public fun runBlockingTest(context: CoroutineContext? = null, testBody: suspend TestCoroutineScope.() -> Unit) {
+public fun runBlockingTest(context: CoroutineContext = EmptyCoroutineContext, testBody: suspend TestCoroutineScope.() -> Unit) {
     val (safeContext, dispatcher) = context.checkArguments()
-    // smart cast dispatcher to expose interface
-    dispatcher as DelayController
-
     val startingJobs = safeContext.activeJobs()
-
     val scope = TestCoroutineScope(safeContext)
     val deferred = scope.async {
         scope.testBody()
@@ -72,37 +69,28 @@ private fun CoroutineContext.activeJobs(): Set<Job> {
  */
 // todo: need documentation on how this extension is supposed to be used
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit) {
-    runBlockingTest(coroutineContext, block)
-}
+public fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit) = runBlockingTest(coroutineContext, block)
 
 /**
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineDispatcher].
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit) {
-    runBlockingTest(this, block)
-}
+public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit) = runBlockingTest(this, block)
 
-private fun CoroutineContext?.checkArguments(): Pair<CoroutineContext, ContinuationInterceptor> {
-    var safeContext = this ?: TestCoroutineExceptionHandler() + TestCoroutineDispatcher()
-
-    val dispatcher = safeContext[ContinuationInterceptor].run {
-        this?.let {
-            require(this is DelayController) { "Dispatcher must implement DelayController" }
-        }
+private fun CoroutineContext.checkArguments(): Pair<CoroutineContext, DelayController> {
+    // TODO optimize it
+    val dispatcher = get(ContinuationInterceptor).run {
+        this?.let { require(this is DelayController) { "Dispatcher must implement DelayController: $this" } }
         this ?: TestCoroutineDispatcher()
     }
 
-    val exceptionHandler = safeContext[CoroutineExceptionHandler].run {
+    val exceptionHandler =  get(CoroutineExceptionHandler).run {
         this?.let {
-            require(this is UncaughtExceptionCaptor) { "coroutineExceptionHandler must implement UncaughtExceptionCaptor" }
+            require(this is UncaughtExceptionCaptor) { "coroutineExceptionHandler must implement UncaughtExceptionCaptor: $this" }
         }
         this ?: TestCoroutineExceptionHandler()
     }
 
-    val job = safeContext[Job] ?: SupervisorJob()
-
-    safeContext = safeContext + dispatcher + exceptionHandler + job
-    return Pair(safeContext, dispatcher)
+    val job = get(Job) ?: SupervisorJob()
+    return Pair(this + dispatcher + exceptionHandler + job, dispatcher as DelayController)
 }

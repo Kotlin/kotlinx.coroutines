@@ -6,6 +6,7 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import org.junit.*
+import kotlin.coroutines.*
 
 class TestRunBlockingOrderTest : TestBase() {
     @Test
@@ -15,6 +16,17 @@ class TestRunBlockingOrderTest : TestBase() {
             expect(2)
         }
         finish(3)
+    }
+
+    @Test
+    fun testYield() = runBlockingTest {
+        expect(1)
+        launch {
+            expect(2)
+            yield()
+            finish(4)
+        }
+        expect(3)
     }
 
     @Test

@@ -23,6 +23,7 @@ public final class kotlinx/coroutines/test/TestCoroutineDispatcher : kotlinx/cor
 	public fun cleanupTestCoroutines ()V
 	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
+	public fun dispatchYield (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun getCurrentTime ()J
 	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
 	public fun pauseDispatcher ()V
