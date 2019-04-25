@@ -73,13 +73,13 @@ coroutine. Any calls to `delay` will automatically advance time.
 
 ```kotlin
 @Test
-fun testFoo() = runBlockingTest { // a coroutine with a extra test control
+fun testFoo() = runBlockingTest { // a coroutine with an extra test control
     val actual = foo() 
     // ...
 }
 
 suspend fun foo() {
-    delay(1_000)        // auto-advances without delay due to runBlockingTest
+    delay(1_000) // auto-advances without delay due to runBlockingTest
     // ...
 }
 ```
@@ -105,8 +105,8 @@ fun testFooWithLaunch() = runBlockingTest {
 fun CoroutineScope.foo() {
      // This coroutines `Job` is not shared with the test code
      launch {
-         bar()               // executes eagerly when foo() is called due to runBlockingTest
-         println(1)          // executes eagerly when foo() is called due to runBlockingTest
+         bar()      // executes eagerly when foo() is called due to runBlockingTest
+         println(1) // executes eagerly when foo() is called due to runBlockingTest
      }
 }
 
@@ -129,16 +129,16 @@ To control time in the test you can use the [DelayController] interface. The blo
 fun testFooWithLaunchAndDelay() = runBlockingTest {
     foo()
     // the coroutine launched by foo has not completed here, it is suspended waiting for delay(1_000)
-    advanceTimeBy(1_000)      // progress time, this will cause the delay to resume
+    advanceTimeBy(1_000) // progress time, this will cause the delay to resume
     // foo() coroutine launched by foo has completed here
     // ...
 }
 
 suspend fun CoroutineScope.foo() {
     launch {
-        println(1)            // executes eagerly when foo() is called due to runBlockingTest
-        delay(1_000)          // suspends until time is advanced by at least 1_000
-        println(2)            // executes after advanceTimeBy(1_000)
+        println(1)   // executes eagerly when foo() is called due to runBlockingTest
+        delay(1_000) // suspends until time is advanced by at least 1_000
+        println(2)   // executes after advanceTimeBy(1_000)
     }
 }
 ```
@@ -146,7 +146,7 @@ suspend fun CoroutineScope.foo() {
 *Note:* `runBlockingTest` will always attempt to auto-progress time until all coroutines are completed just before 
 exiting. This is a convenience to avoid having to call [advanceUntilIdle][DelayController.advanceUntilIdle] 
 as the last line of many common test cases.
-If any coroutines cannot complete by advancing time, a [UncompletedCoroutinesError] is thrown.
+If any coroutines cannot complete by advancing time, an [UncompletedCoroutinesError] is thrown.
 
 ### Testing `withTimeout` using `runBlockingTest`
 
@@ -159,16 +159,16 @@ example an uncompleted `Deferred<Foo>` is provided to the function under test vi
 ```kotlin
 @Test(expected = TimeoutCancellationException::class)
 fun testFooWithTimeout() {
-    val uncompleted = CompletableDeferred<Foo>()     // this Deferred<Foo> will never complete
+    val uncompleted = CompletableDeferred<Foo>() // this Deferred<Foo> will never complete
     foo(uncompleted)
-    advanceTimeBy(1_000)                             // advance time, which will cause the timeout to throw an exception
+    advanceTimeBy(1_000) // advance time, which will cause the timeout to throw an exception
     // ...
 }
 
 fun CoroutineScope.foo(resultDeferred: Deferred<Foo>) {
     launch {
         withTimeout(1_000) {
-            resultDeferred.await()                   // await() will suspend forever waiting for uncompleted
+            resultDeferred.await() // await() will suspend forever waiting for uncompleted
             // ...
         }
     }
@@ -196,9 +196,9 @@ fun testFooWithPauseDispatcher() = runBlockingTest {
     pauseDispatcher {
         foo()
         // the coroutine started by foo has not run yet
-        runCurrent()              // the coroutine started by foo advances to delay(1_000)
+        runCurrent() // the coroutine started by foo advances to delay(1_000)
         // the coroutine started by foo has called println(1), and is suspended on delay(1_000)
-        advanceTimeBy(1_000)      // progress time, this will cause the delay to resume
+        advanceTimeBy(1_000) // progress time, this will cause the delay to resume
         // the coroutine started by foo has called println(2) and has completed here
     }
     // ...
@@ -206,9 +206,9 @@ fun testFooWithPauseDispatcher() = runBlockingTest {
 
 fun CoroutineScope.foo() {
     launch {
-        println(1)                // executes after runCurrent() is called
-        delay(1_000)              // suspends until time is advanced by at least 1_000
-        println(2)                // executes after advanceTimeBy(1_000)
+        println(1)   // executes after runCurrent() is called
+        delay(1_000) // suspends until time is advanced by at least 1_000
+        println(2)   // executes after advanceTimeBy(1_000)
     }
 }
 ```
@@ -250,7 +250,7 @@ In simple cases, tests can use the [TestCoroutineScope] created by [runBlockingT
 ```kotlin
 @Test
 fun testFoo() = runBlockingTest {        
-    foo()     // runBlockingTest passed in a TestCoroutineScope as this
+    foo() // runBlockingTest passed in a TestCoroutineScope as this
 }
 
 fun CoroutineScope.foo() {
@@ -329,7 +329,7 @@ important to ensure that [cleanupTestCoroutines][TestCoroutineDispatcher.cleanup
 
 ```kotlin
 class TestClass {
-    val testDispatcher = TestCoroutineDispatcher()
+    private val testDispatcher = TestCoroutineDispatcher()
         
     @Before
     fun setup() {
@@ -398,7 +398,7 @@ either dependency injection, a service locator, or a default parameter.
 ```kotlin
 suspend fun veryExpensiveOne() = withContext(Dispatchers.Default) {
     delay(1_000)
-    1       // for very expensive values of 1
+    1 // for very expensive values of 1
 }
 ```
 
@@ -409,7 +409,7 @@ directly, there is no need to inject a `TestCoroutineDispatcher` into this funct
 
 ```kotlin
 suspend fun veryExpensiveTwo() = withContext(Dispatchers.Default) {
-    2       // for very expensive values of 2
+    2 // for very expensive values of 2
 }
 ```
 
