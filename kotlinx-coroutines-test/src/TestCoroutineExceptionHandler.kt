@@ -35,20 +35,22 @@ public interface UncaughtExceptionCaptor {
  * An exception handler that captures uncaught exceptions in tests.
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public class TestCoroutineExceptionHandler:
+public class TestCoroutineExceptionHandler :
     AbstractCoroutineContextElement(CoroutineExceptionHandler), UncaughtExceptionCaptor, CoroutineExceptionHandler
 {
+    private val _exceptions = mutableListOf<Throwable>()
+
     override fun handleException(context: CoroutineContext, exception: Throwable) {
         synchronized(_exceptions) {
             _exceptions += exception
         }
     }
 
-    private val _exceptions = mutableListOf<Throwable>()
-
+    /** @suppress **/
     override val uncaughtExceptions
         get() = synchronized(_exceptions) { _exceptions.toList() }
 
+    /** @suppress **/
     override fun cleanupTestCoroutines() {
         synchronized(_exceptions) {
             val exception = _exceptions.firstOrNull() ?: return

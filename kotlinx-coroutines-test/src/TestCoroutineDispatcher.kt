@@ -136,6 +136,7 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     // Storing time in nanoseconds internally.
     private val _time = atomic(0L)
 
+    /** @suppress */
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         if (dispatchImmediately) {
             block.run()
@@ -144,10 +145,18 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
         }
     }
 
+    /** @suppress */
+    @InternalCoroutinesApi
+    override fun dispatchYield(context: CoroutineContext, block: Runnable) {
+        post(block)
+    }
+
+    /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         postDelayed(CancellableContinuationRunnable(continuation) { resumeUndispatched(Unit) }, timeMillis)
     }
 
+    /** @suppress */
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
         val node = postDelayed(block, timeMillis)
         return object : DisposableHandle {
@@ -157,6 +166,7 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
         }
     }
 
+    /** @suppress */
     override fun toString(): String {
         return "TestCoroutineDispatcher[currentTime=${currentTime}ms, queued=${queue.size}]"
     }
@@ -186,8 +196,10 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
         }
     }
 
+    /** @suppress */
     override val currentTime get() = _time.value
 
+    /** @suppress */
     override fun advanceTimeBy(delayTimeMillis: Long): Long {
         val oldTime = currentTime
         advanceUntilTime(oldTime + delayTimeMillis)
@@ -204,6 +216,7 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
         _time.update { currentValue -> max(currentValue, targetTime) }
     }
 
+    /** @suppress */
     override fun advanceUntilIdle(): Long {
         val oldTime = currentTime
         while(!queue.isEmpty) {
@@ -214,8 +227,10 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
         return currentTime - oldTime
     }
 
+    /** @suppress */
     override fun runCurrent() = doActionsUntil(currentTime)
 
+    /** @suppress */
     override suspend fun pauseDispatcher(block: suspend () -> Unit) {
         val previous = dispatchImmediately
         dispatchImmediately = false
@@ -226,14 +241,17 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
         }
     }
 
+    /** @suppress */
     override fun pauseDispatcher() {
         dispatchImmediately = false
     }
 
+    /** @suppress */
     override fun resumeDispatcher() {
         dispatchImmediately = true
     }
 
+    /** @suppress */
     override fun cleanupTestCoroutines() {
         // process any pending cancellations or completions, but don't advance time
         doActionsUntil(currentTime)
