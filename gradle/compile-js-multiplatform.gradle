@@ -11,8 +11,7 @@ kotlin {
 
     sourceSets {
         jsMain.dependencies {
-            api group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-js', version: kotlin_version
-            api "org.jetbrains.kotlinx:atomicfu-js:$atomicFU_version"
+            api "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
         }
 
         jsTest.dependencies {
@@ -43,7 +42,8 @@ compileTestKotlinJs {
 }
 
 task populateNodeModules(type: Copy, dependsOn: compileTestKotlinJs) {
-    from compileKotlinJs.destinationDir
+    // we must copy output that is transformed by atomicfu
+    from(kotlin.targets.js.compilations.main.output.allOutputs)
     into "$node.nodeModulesDir/node_modules"
 
     def configuration = configurations.jsTestRuntimeClasspath

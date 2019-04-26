@@ -15,7 +15,7 @@ fun <T, R> Publisher<T>.fusedFilterMap(
     predicate: (T) -> Boolean,   // the filter predicate
     mapper: (T) -> R             // the mapper function
 ) = GlobalScope.publish<R>(context) {
-    consumeEach {                // consume the source stream 
+    collect {                    // collect the source stream 
         if (predicate(it))       // filter part
             send(mapper(it))     // map part
     }        
@@ -28,5 +28,5 @@ fun CoroutineScope.range(start: Int, count: Int) = publish<Int> {
 fun main() = runBlocking<Unit> {
    range(1, 5)
        .fusedFilterMap(coroutineContext, { it % 2 == 0}, { "$it is even" })
-       .consumeEach { println(it) } // print all the resulting strings
+       .collect { println(it) } // print all the resulting strings
 }

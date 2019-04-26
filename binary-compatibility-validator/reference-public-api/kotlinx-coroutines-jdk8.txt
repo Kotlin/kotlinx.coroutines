@@ -1,5 +1,6 @@
 public final class kotlinx/coroutines/future/FutureKt {
 	public static final fun asCompletableFuture (Lkotlinx/coroutines/Deferred;)Ljava/util/concurrent/CompletableFuture;
+	public static final fun asCompletableFuture (Lkotlinx/coroutines/Job;)Ljava/util/concurrent/CompletableFuture;
 	public static final fun asDeferred (Ljava/util/concurrent/CompletionStage;)Lkotlinx/coroutines/Deferred;
 	public static final fun await (Ljava/util/concurrent/CompletionStage;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun future (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;)Ljava/util/concurrent/CompletableFuture;

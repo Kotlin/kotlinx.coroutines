@@ -82,7 +82,7 @@ class FlowAsObservableTest : TestBase() {
         expect(1)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            observable.consumeEach {
+            observable.collect {
                 expect(5)
                 assertEquals("OK", it)
             }
@@ -106,7 +106,7 @@ class FlowAsObservableTest : TestBase() {
         }.asObservable()
 
         try {
-            observable.consumeEach {
+            observable.collect {
                 expect(3)
                 throw TestException()
             }

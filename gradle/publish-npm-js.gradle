@@ -16,7 +16,6 @@ def distTag(version) {
 
 def npmTemplateDir = file("$projectDir/js/npm")
 def npmDeployDir = file("$buildDir/npm")
-def npmDeployTag = distTag(version)
 
 def authToken = prop("kotlin.npmjs.auth.token", "")
 def dryRun = prop("dryRun", "false")
@@ -24,18 +23,25 @@ def dryRun = prop("dryRun", "false")
 // Note: publish transformed files using dependency on sourceSets.main.output
 task preparePublishNpm(type: Copy) {
     from(npmTemplateDir) {
-        expand (project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
+        // Postpone expansion of package.json until we configure version property in build.gradle
+        def copySpec = it
+        afterEvaluate {
+            copySpec.expand(project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
+        }
     }
-    from(compileKotlinJs.destinationDir)
+    // we must publish output that is transformed by atomicfu
+    from(kotlin.targets.js.compilations.main.output.allOutputs)
     into npmDeployDir
 }
 
 task publishNpm(type: NpmTask, dependsOn: [preparePublishNpm]) {
     workingDir = npmDeployDir
-    def deployArgs = ['publish',
-                      "--//registry.npmjs.org/:_authToken=$authToken",
-                      "--tag=$npmDeployTag"]
+  
     doFirst {
+        def npmDeployTag = distTag(version)
+        def deployArgs = ['publish',
+                          "--//registry.npmjs.org/:_authToken=$authToken",
+                          "--tag=$npmDeployTag"]
         if (dryRun == "true") {
             println("$npmDeployDir \$ npm arguments: $deployArgs")
             args = ['pack']

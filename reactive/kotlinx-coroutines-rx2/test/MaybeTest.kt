@@ -229,7 +229,7 @@ class MaybeTest : TestBase() {
         expect(2)
         val timeout = withTimeoutOrNull(100) {
             expect(3)
-            maybe.consumeEach {
+            maybe.collect {
                 expectUnreached()
             }
             expectUnreached()

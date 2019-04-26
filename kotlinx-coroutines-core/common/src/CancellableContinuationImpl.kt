@@ -170,6 +170,18 @@ internal open class CancellableContinuationImpl<in T>(
         // otherwise, onCompletionInternal was already invoked & invoked tryResume, and the result is in the state
         val state = this.state
         if (state is CompletedExceptionally) throw recoverStackTrace(state.cause, this)
+        // if the parent job was already cancelled, then throw the corresponding cancellation exception
+        // otherwise, there is a race is suspendCancellableCoroutine { cont -> ... } does cont.resume(...)
+        // before the block returns. This getResult would return a result as opposed to cancellation
+        // exception that should have happened if the continuation is dispatched for execution later.
+        if (resumeMode == MODE_CANCELLABLE) {
+            val job = context[Job]
+            if (job != null && !job.isActive) {
+                val cause = job.getCancellationException()
+                cancelResult(state, cause)
+                throw recoverStackTrace(cause, this)
+            }
+        }
         return getSuccessfulResult(state)
     }
 

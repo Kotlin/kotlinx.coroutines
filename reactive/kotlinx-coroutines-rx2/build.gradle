@@ -6,7 +6,7 @@ dependencies {
     compile project(':kotlinx-coroutines-reactive')
     testCompile project(':kotlinx-coroutines-reactive').sourceSets.test.output
     testCompile "org.reactivestreams:reactive-streams-tck:$reactive_streams_version"
-    compile 'io.reactivex.rxjava2:rxjava:2.1.9'
+    compile "io.reactivex.rxjava2:rxjava:$rxjava2_version"
 }
 
 tasks.withType(dokka.getClass()) {

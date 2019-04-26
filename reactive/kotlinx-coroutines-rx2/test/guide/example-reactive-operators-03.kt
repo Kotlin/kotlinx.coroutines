@@ -18,8 +18,8 @@ fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>
         other.openSubscription().consume { // explicitly open channel to Publisher<U>
             val other = this
             whileSelect {
-                other.onReceive { false }          // bail out on any received element from `other`
-                current.onReceive { send(it); true }  // resend element from this channel and continue
+                other.onReceive { false }            // bail out on any received element from `other`
+                current.onReceive { send(it); true } // resend element from this channel and continue
             }
         }
     }
@@ -35,5 +35,5 @@ fun CoroutineScope.rangeWithInterval(time: Long, start: Int, count: Int) = publi
 fun main() = runBlocking<Unit> {
     val slowNums = rangeWithInterval(200, 1, 10)         // numbers with 200ms interval
     val stop = rangeWithInterval(500, 1, 10)             // the first one after 500ms
-    slowNums.takeUntil(coroutineContext, stop).consumeEach { println(it) } // let's test it
+    slowNums.takeUntil(coroutineContext, stop).collect { println(it) } // let's test it
 }

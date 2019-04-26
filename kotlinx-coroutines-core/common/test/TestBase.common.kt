@@ -17,6 +17,7 @@ public expect open class TestBase constructor() {
     public fun expect(index: Int)
     public fun expectUnreached()
     public fun finish(index: Int)
+    public fun ensureFinished() // Ensures that 'finish' was invoked
     public fun reset() // Resets counter and finish flag. Workaround for parametrized tests absence in common
 
     public fun runTest(
@@ -44,23 +45,16 @@ public inline fun <reified T : Throwable> assertFailsWith(block: () -> Unit) {
 }
 
 public suspend inline fun <reified T : Throwable> assertFailsWith(flow: Flow<*>) {
-    var e: Throwable? = null
-    var completed = false
-    flow.launchIn(CoroutineScope(Dispatchers.Unconfined)) {
-        onEach {}
-        catch<Throwable> {
-            e = it
-        }
-        finally {
-            completed = true
-            assertTrue(it is T)
-        }
-    }.join()
-    assertTrue(e is T)
-    assertTrue(completed)
+    try {
+        flow.collect { /* Do nothing */ }
+        fail("Should be unreached")
+    } catch (e: Throwable) {
+        assertTrue(e is T)
+    }
 }
 
 public suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }
+public suspend fun Flow<Long>.longSum() = fold(0L) { acc, value -> acc + value }
 
 public class TestException(message: String? = null) : Throwable(message), NonRecoverableThrowable
 public class TestException1(message: String? = null) : Throwable(message), NonRecoverableThrowable

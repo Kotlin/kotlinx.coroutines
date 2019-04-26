@@ -107,7 +107,7 @@ class FluxTest : TestBase() {
         expect(2)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(3)
-            observable.consumeEach {
+            observable.collect {
                 expect(8)
                 assertEquals("OK", it)
             }
@@ -131,7 +131,7 @@ class FluxTest : TestBase() {
             }
         }
         try {
-            pub.consumeEach {
+            pub.collect {
                 throw TestException()
             }
         } catch (e: TestException) {

@@ -13,10 +13,6 @@ kotlin {
     }
 
     sourceSets {
-        nativeMain.dependencies {
-            api "org.jetbrains.kotlinx:atomicfu-native:$atomicFU_version"
-        }
-
         nativeMain { dependsOn commonMain }
         // Empty source set is required in order to have native tests task 
         nativeTest {}

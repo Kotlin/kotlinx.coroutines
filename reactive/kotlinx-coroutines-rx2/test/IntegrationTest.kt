@@ -50,7 +50,7 @@ class IntegrationTest(
         assertNSE { observable.awaitLast() }
         assertNSE { observable.awaitSingle() }
         var cnt = 0
-        observable.consumeEach {
+        observable.collect {
             cnt++
         }
         assertThat(cnt, IsEqual(0))
@@ -69,7 +69,7 @@ class IntegrationTest(
         assertThat(observable.awaitLast(), IsEqual("OK"))
         assertThat(observable.awaitSingle(), IsEqual("OK"))
         var cnt = 0
-        observable.consumeEach {
+        observable.collect {
             assertThat(it, IsEqual("OK"))
             cnt++
         }
@@ -127,7 +127,7 @@ class IntegrationTest(
 
     private suspend fun checkNumbers(n: Int, observable: Observable<Int>) {
         var last = 0
-        observable.consumeEach {
+        observable.collect {
             assertThat(it, IsEqual(++last))
         }
         assertThat(last, IsEqual(n))

@@ -14,6 +14,7 @@ import kotlin.jvm.*
 
 /**
  * Returns a flow that ignores first [count] elements.
+ * Throws [IllegalArgumentException] if [count] is negative.
  */
 @FlowPreview
 public fun <T> Flow<T>.drop(count: Int): Flow<T> {
@@ -45,10 +46,11 @@ public fun <T> Flow<T>.dropWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
 /**
  * Returns a flow that contains first [count] elements.
  * When [count] elements are consumed, the original flow is cancelled.
+ * Throws [IllegalArgumentException] if [count] is negative.
  */
 @FlowPreview
 public fun <T> Flow<T>.take(count: Int): Flow<T> {
-    require(count > 0) { "Take count should be positive, but had $count" }
+    require(count > 0) { "Requested element count $count should be positive" }
     return flow {
         var consumed = 0
         try {

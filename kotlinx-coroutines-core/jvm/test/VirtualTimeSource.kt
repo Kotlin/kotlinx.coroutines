@@ -10,7 +10,7 @@ import java.util.concurrent.locks.*
 
 private const val SHUTDOWN_TIMEOUT = 1000L
 
-internal inline fun withVirtualTimeSource(log: PrintStream = System.`out`, block: () -> Unit) {
+internal inline fun withVirtualTimeSource(log: PrintStream? = null, block: () -> Unit) {
     DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT) // shutdown execution with old time source (in case it was working)
     val testTimeSource = VirtualTimeSource(log)
     timeSource = testTimeSource
@@ -41,7 +41,7 @@ private const val REAL_PARK_NANOS = 10_000_000L // 10 ms -- park for a little to
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 internal class VirtualTimeSource(
-    private val log: PrintStream
+    private val log: PrintStream?
 ) : TimeSource {
     private val mainThread: Thread = Thread.currentThread()
     private var checkpointNanos: Long = System.nanoTime()
@@ -138,7 +138,7 @@ internal class VirtualTimeSource(
     }
 
     private fun logTime(s: String) {
-        log.println("[$s: Time = ${TimeUnit.NANOSECONDS.toMillis(time)} ms]")
+        log?.println("[$s: Time = ${TimeUnit.NANOSECONDS.toMillis(time)} ms]")
     }
 
     private fun minParkedTill(): Long =

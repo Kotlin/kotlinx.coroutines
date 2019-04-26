@@ -16,7 +16,7 @@ fun main() = runBlocking<Unit> {
     subject.onNext("two")
     // now launch a coroutine to print the most recent update
     launch { // use the context of the main thread for a coroutine
-        subject.consumeEach { println(it) }
+        subject.collect { println(it) }
     }
     subject.onNext("three")
     subject.onNext("four")

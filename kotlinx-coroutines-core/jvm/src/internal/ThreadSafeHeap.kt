@@ -4,21 +4,28 @@
 
 package kotlinx.coroutines.internal
 
+import kotlinx.coroutines.*
 import java.util.*
 
-internal interface ThreadSafeHeapNode {
+/**
+ * @suppress **This an internal API and should not be used from general code.**
+ */
+@InternalCoroutinesApi
+public interface ThreadSafeHeapNode {
     public var heap: ThreadSafeHeap<*>?
     public var index: Int
 }
 
 /**
  * Synchronized binary heap.
+ * @suppress **This an internal API and should not be used from general code.**
  */
-internal class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNode, T: Comparable<T> {
+@InternalCoroutinesApi
+public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNode, T: Comparable<T> {
     private var a: Array<T?>? = null
 
-    @JvmField @PublishedApi @Volatile
-    internal var size = 0
+    @JvmField @Volatile
+    public var size = 0
 
     public val isEmpty: Boolean get() = size == 0
 

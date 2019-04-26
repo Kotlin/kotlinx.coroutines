@@ -27,10 +27,17 @@ public fun <T> Publisher<T>.openSubscription(request: Int = 0): ReceiveChannel<T
     return channel
 }
 
+// Will be promoted to error in 1.3.0, removed in 1.4.0
+@Deprecated(message = "Use collect instead", level = DeprecationLevel.WARNING, replaceWith = ReplaceWith("this.collect(action)"))
+public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) =
+    openSubscription().consumeEach(action)
+
 /**
  * Subscribes to this [Publisher] and performs the specified action for each received element.
+ * Cancels subscription if any exception happens during collect.
  */
-public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) =
+@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit) =
     openSubscription().consumeEach(action)
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")

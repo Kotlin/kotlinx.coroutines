@@ -1,5 +1,23 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.2.1
+
+Major:
+  * Infrastructure for testing coroutine-specific code in `kotlinx-coroutines-test`: `runBlockingTest`, `TestCoroutineScope` and `TestCoroutineDispatcher`, contributed by Sean McQuillan (@objcode). Obsolete `TestCoroutineContext` from `kotlinx-coroutines-core` is deprecated.
+  * `Job.asCompletableFuture` extension in jdk8 module (#1113).
+
+Flow improvements:
+  * `flowViaChannel` rework: block parameter is no longer suspending, but provides `CoroutineScope` receiver and allows conflated channel (#1081, #1112).
+  * New operators: `switchMap`, `sample`, `debounce` (#1107).
+  * `consumerEach` is deprecated on `Publisher`, `ObservableSource` and `MaybeSource`, `collect` extension is introduced instead (#1080).
+
+Other:
+  * Race in Job.join and concurrent cancellation is fixed (#1123).
+  * Stacktrace recovery machinery improved: cycle detection works through recovered exceptions, cancellation exceptions are recovered on cancellation fast-path.
+  * Atomicfu-related bug fixes: publish transformed artifacts, do not propagate transitive atomicfu dependency (#1064, #1116).
+  * Publication to NPM fixed (#1118).
+  * Misplaced resources are removed from the final jar (#1131).
+
 ## Version 1.2.0
 
  * Kotlin updated to 1.3.30.

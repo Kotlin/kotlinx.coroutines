@@ -71,11 +71,7 @@ private class CompletableFutureCoroutine<T>(
  */
 public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
     val future = CompletableFuture<T>()
-    future.whenComplete { _, exception ->
-        cancel(exception?.let {
-            it as? CancellationException ?: CancellationException("CompletableFuture was completed exceptionally", it)
-        })
-    }
+    setupCancellation(future)
     invokeOnCompletion {
         try {
             future.complete(getCompleted())
@@ -84,6 +80,28 @@ public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
         }
     }
     return future
+}
+
+/**
+ * Converts this job to the instance of [CompletableFuture].
+ * The job is cancelled when the resulting future is cancelled or otherwise completed.
+ */
+public fun Job.asCompletableFuture(): CompletableFuture<Unit> {
+    val future = CompletableFuture<Unit>()
+    setupCancellation(future)
+    invokeOnCompletion { cause ->
+        if (cause === null) future.complete(Unit)
+        else future.completeExceptionally(cause)
+    }
+    return future
+}
+
+private fun Job.setupCancellation(future: CompletableFuture<*>) {
+    future.whenComplete { _, exception ->
+        cancel(exception?.let {
+            it as? CancellationException ?: CancellationException("CompletableFuture was completed exceptionally", it)
+        })
+    }
 }
 
 /**

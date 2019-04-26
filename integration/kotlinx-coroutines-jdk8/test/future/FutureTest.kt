@@ -163,47 +163,6 @@ class FutureTest : TestBase() {
     }
 
     @Test
-    fun testCompletedDeferredAsCompletableFuture() = runBlocking {
-        expect(1)
-        val deferred = async(start = CoroutineStart.UNDISPATCHED) {
-            expect(2) // completed right away
-            "OK"
-        }
-        expect(3)
-        val future = deferred.asCompletableFuture()
-        assertThat(future.await(), IsEqual("OK"))
-        finish(4)
-    }
-
-    @Test
-    fun testWaitForDeferredAsCompletableFuture() = runBlocking {
-        expect(1)
-        val deferred = async {
-            expect(3) // will complete later
-            "OK"
-        }
-        expect(2)
-        val future = deferred.asCompletableFuture()
-        assertThat(future.await(), IsEqual("OK")) // await yields main thread to deferred coroutine
-        finish(4)
-    }
-
-    @Test
-    fun testAsCompletableFutureThrowable() {
-        val deferred = GlobalScope.async {
-            throw OutOfMemoryError()
-        }
-
-        val future = deferred.asCompletableFuture()
-        try {
-            future.get()
-        } catch (e: ExecutionException) {
-            assertTrue(future.isCompletedExceptionally)
-            assertTrue(e.cause is OutOfMemoryError)
-        }
-    }
-
-    @Test
     fun testCancellableAwaitFuture() = runBlocking {
         expect(1)
         val toAwait = CompletableFuture<String>()

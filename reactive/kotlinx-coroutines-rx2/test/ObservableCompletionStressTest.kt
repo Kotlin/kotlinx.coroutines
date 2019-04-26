@@ -24,7 +24,7 @@ class ObservableCompletionStressTest : TestBase() {
             runBlocking {
                 withTimeout(5000) {
                     var received = 0
-                    range(Dispatchers.Default, 1, count).consumeEach { x ->
+                    range(Dispatchers.Default, 1, count).collect { x ->
                         received++
                         if (x != received) error("$x != $received")
                     }

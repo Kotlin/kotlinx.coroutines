@@ -52,6 +52,13 @@ public actual open class TestBase actual constructor() {
         finished = true
     }
 
+    /**
+     * Asserts that [finish] was invoked
+     */
+    public actual fun ensureFinished() {
+        require(finished) { "finish(...) should be caller prior to this check" }
+    }
+
     public actual fun reset() {
         check(actionIndex == 0 || finished) { "Expecting that 'finish(...)' was invoked, but it was not" }
         actionIndex = 0

@@ -22,7 +22,7 @@ import kotlin.coroutines.*
  * with non-blocking Rx chains that contain delays, timeouts, intervals and such.
  *
  * This dispatcher can also handle *blocking* coroutines that are started by [runBlocking].
- * This dispatcher's virtual time will be automatically advanced based based on the delayed actions
+ * This dispatcher's virtual time will be automatically advanced based on the delayed actions
  * within the Coroutine(s).
  *
  * **Note: This API will become obsolete in future updates due to integration with structured concurrency.**
@@ -30,7 +30,9 @@ import kotlin.coroutines.*
  *
  * @param name A user-readable name for debugging purposes.
  */
-@ObsoleteCoroutinesApi
+@Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
+        ReplaceWith("TestCoroutineScope", "kotlin.coroutines.test"),
+        level = DeprecationLevel.WARNING)
 class TestCoroutineContext(private val name: String? = null) : CoroutineContext {
     private val uncaughtExceptions = mutableListOf<Throwable>()
 
@@ -89,7 +91,7 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
      *
      * @param delayTime The amount of time to move the CoroutineContext's clock forward.
      * @param unit The [TimeUnit] in which [delayTime] and the return value is expressed.
-     * @return The amount of delay-time that this CoroutinesContext's clock has been forwarded.
+     * @return The amount of delay-time that this CoroutineContext's clock has been forwarded.
      */
     public fun advanceTimeBy(delayTime: Long, unit: TimeUnit = TimeUnit.MILLISECONDS): Long {
         val oldTime = time
@@ -281,7 +283,9 @@ private class TimedRunnable(
  * provided instead.
  * @param testBody The code of the unit-test.
  */
-@ObsoleteCoroutinesApi
+@Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
+        ReplaceWith("testContext.runBlockingTest(testBody)", "kotlin.coroutines.test"),
+        level = DeprecationLevel.WARNING)
 public fun withTestContext(testContext: TestCoroutineContext = TestCoroutineContext(), testBody: TestCoroutineContext.() -> Unit) {
     with (testContext) {
         testBody()

@@ -15,6 +15,6 @@ fun main() = runBlocking<Unit> {
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
         .doOnComplete { println("OnComplete") }   // ...
         .doFinally { println("Finally") }         // ... into what's going on
-    // iterate over the source fully
-    source.consumeEach { println(it) }
+    // collect the source fully
+    source.collect { println(it) }
 }

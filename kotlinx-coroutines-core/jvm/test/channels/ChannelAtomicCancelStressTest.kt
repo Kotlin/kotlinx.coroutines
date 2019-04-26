@@ -24,9 +24,12 @@ class ChannelAtomicCancelStressTest(private val kind: TestChannelKind) : TestBas
         fun params(): Collection<Array<Any>> = TestChannelKind.values().map { arrayOf<Any>(it) }
     }
 
-    private val TEST_DURATION = 3000L * stressTestMultiplier
+    private val TEST_DURATION = 1000L * stressTestMultiplier
 
-    val channel = kind.create()
+    private val dispatcher = newFixedThreadPoolContext(2, "ChannelAtomicCancelStressTest")
+    private val scope = CoroutineScope(dispatcher)
+
+    private val channel = kind.create()
     private val senderDone = Channel<Boolean>(1)
     private val receiverDone = Channel<Boolean>(1)
 
@@ -43,6 +46,11 @@ class ChannelAtomicCancelStressTest(private val kind: TestChannelKind) : TestBas
 
     lateinit var sender: Job
     lateinit var receiver: Job
+
+    @After
+    fun tearDown() {
+        dispatcher.close()
+    }
 
     fun fail(e: Throwable) = failed.compareAndSet(null, e)
 
@@ -95,7 +103,7 @@ class ChannelAtomicCancelStressTest(private val kind: TestChannelKind) : TestBas
     }
 
     private fun launchSender() {
-        sender = GlobalScope.launch(start = CoroutineStart.ATOMIC) {
+        sender = scope.launch(start = CoroutineStart.ATOMIC) {
             val rnd = Random()
             cancellable(senderDone) {
                 var counter = 0
@@ -107,7 +115,12 @@ class ChannelAtomicCancelStressTest(private val kind: TestChannelKind) : TestBas
                         else -> error("cannot happen")
                     }
                     lastSent = trySend // update on success
-                    if (counter++ % 1000 == 0) yield() // yield periodically to check cancellation on LinkedListChannel
+                    when {
+                        // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
+                        kind == TestChannelKind.LINKED_LIST -> while (lastSent > lastReceived + 100) yield()
+                        // yield periodically to check cancellation on conflated channels
+                        kind.isConflated -> if (counter++ % 100 == 0) yield()
+                    }
                 }
             }
         }
@@ -120,7 +133,7 @@ class ChannelAtomicCancelStressTest(private val kind: TestChannelKind) : TestBas
     }
 
     private fun launchReceiver() {
-        receiver = GlobalScope.launch(start = CoroutineStart.ATOMIC) {
+        receiver = scope.launch(start = CoroutineStart.ATOMIC) {
             val rnd = Random()
             cancellable(receiverDone) {
                 while (true) {

@@ -179,7 +179,7 @@ class ObservableSingleTest {
     fun testObservableIteration() {
         val observable = GlobalScope.rxObservable {
             var result = ""
-            Observable.just("O", "K").consumeEach { result += it }
+            Observable.just("O", "K").collect { result += it }
             send(result)
         }
 
@@ -192,7 +192,7 @@ class ObservableSingleTest {
     fun testObservableIterationFailure() {
         val observable = GlobalScope.rxObservable {
             try {
-                Observable.error<String>(RuntimeException("OK")).consumeEach { fail("Should not be here") }
+                Observable.error<String>(RuntimeException("OK")).collect { fail("Should not be here") }
                 send("Fail")
             } catch (e: RuntimeException) {
                 send(e.message!!)
