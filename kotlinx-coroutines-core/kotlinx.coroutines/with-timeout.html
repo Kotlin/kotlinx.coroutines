@@ -42,7 +42,7 @@
 cancellable suspending function inside the block throws <a href="-timeout-cancellation-exception.html">TimeoutCancellationException</a>.</p>
 
 <p>The sibling function that does not throw exception on timeout is <a href="with-timeout-or-null.html">withTimeoutOrNull</a>.
-Note, that timeout action can be specified for <a href="../kotlinx.coroutines.selects/select.html">select</a> invocation with <a href="../kotlinx.coroutines.selects/-select-builder/on-timeout.html">onTimeout</a> clause.</p>
+Note that timeout action can be specified for <a href="../kotlinx.coroutines.selects/select.html">select</a> invocation with <a href="../kotlinx.coroutines.selects/-select-builder/on-timeout.html">onTimeout</a> clause.</p>
 
 <p>Implementation note: how exactly time is tracked is an implementation detail of <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in the context.</p>
 

@@ -44,7 +44,7 @@ It is in <a href="../-job/is-active.html">active</a> state while the value is be
 successful or failed result of the computation that was carried out. The result of the deferred is
 available when it is <a href="../-job/is-completed.html">completed</a> and can be retrieved by <a href="await.html">await</a> method, which throws
 exception if the deferred had failed.
-Note, that a <em>cancelled</em> deferred is also considered to be completed.
+Note that a <em>cancelled</em> deferred is also considered to be completed.
 The corresponding exception can be retrieved via <a href="get-completion-exception-or-null.html">getCompletionExceptionOrNull</a> from a completed instance of deferred.</p>
 
 <p>Usually, a deferred value is created in <em>active</em> state (it is created and started).
@@ -227,7 +227,7 @@ returning the resulting value or throwing the corresponding exception if the def
 
         <p>Cancels this job with an optional cancellation <a href="../-job/cancel.html#kotlinx.coroutines.Job$cancel(java.util.concurrent.CancellationException)/cause">cause</a>.
 A cause can be used to specify an error message or to provide other details on
-a cancellation reason for debugging purposes.
+the cancellation reason for debugging purposes.
 See <a href="../-job/index.html">Job</a> documentation for full explanation of cancellation machinery.</p>
 
       </td>
@@ -257,7 +257,7 @@ job is complete.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
+        <p>Suspends the coroutine until this job is complete. This invocation resumes normally (without exception)
 when the job is complete for any reason and the <a href="../-job/index.html">Job</a> of the invoking coroutine is still <a href="../-job/is-active.html">active</a>.
 This function also <a href="../-job/start.html">starts</a> the corresponding coroutine if the <a href="../-job/index.html">Job</a> was still in <em>new</em> state.</p>
 
@@ -340,7 +340,7 @@ See <a href="../-job/cancel.html">Job.cancel</a> for details.</p>
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelAndJoin</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Cancels the job and suspends invoking coroutine until the cancelled job is complete.</p>
+        <p>Cancels the job and suspends the invoking coroutine until the cancelled job is complete.</p>
 
       </td>
 </tr>

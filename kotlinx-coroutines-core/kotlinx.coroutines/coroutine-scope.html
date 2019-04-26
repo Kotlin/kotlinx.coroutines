@@ -35,14 +35,14 @@
 
 <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">coroutineScope</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$coroutineScope(kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.coroutineScope.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="coroutine-scope.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="coroutine-scope.html#R"><span class="identifier">R</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L177">(source)</a></div>
 
-<p>Creates new <a href="-coroutine-scope/index.html">CoroutineScope</a> and calls the specified suspend block with this scope.
+<p>Creates a <a href="-coroutine-scope/index.html">CoroutineScope</a> and calls the specified suspend block with this scope.
 The provided scope inherits its <a href="-coroutine-scope/coroutine-context.html">coroutineContext</a> from the outer scope, but overrides
-context’s <a href="-job/index.html">Job</a>.</p>
+the context’s <a href="-job/index.html">Job</a>.</p>
 
-<p>This function is designed for a <em>parallel decomposition</em> of work. When any child coroutine in this scope fails,
+<p>This function is designed for <em>parallel decomposition</em> of work. When any child coroutine in this scope fails,
 this scope fails and all the rest of the children are cancelled (for a different behavior see <a href="supervisor-scope.html">supervisorScope</a>).
-This function returns as soon as given block and all its children coroutines are completed.
-Example of the scope usages looks like this:</p>
+This function returns as soon as the given block and all its children coroutines are completed.
+A usage example of a scope looks like this:</p>
 
 <pre>suspend fun showSomeData() = coroutineScope {
 
@@ -62,13 +62,13 @@ Example of the scope usages looks like this:</p>
 
 <ol>
   <li><code>showSomeData</code> returns as soon as data is loaded and displayed in the UI.</li>
-  <li>If <code>doSomeWork</code> throws an exception, then <code>async</code> task is cancelled and <code>showSomeData</code> rethrows that exception.</li>
-  <li>If outer scope of <code>showSomeData</code> is cancelled, both started <code>async</code> and <code>withContext</code> blocks are cancelled.</li>
-  <li>If <code>async</code> block fails, <code>withContext</code> will be cancelled.</li>
+  <li>If <code>doSomeWork</code> throws an exception, then the <code>async</code> task is cancelled and <code>showSomeData</code> rethrows that exception.</li>
+  <li>If the outer scope of <code>showSomeData</code> is cancelled, both started <code>async</code> and <code>withContext</code> blocks are cancelled.</li>
+  <li>If the <code>async</code> block fails, <code>withContext</code> will be cancelled.</li>
 </ol>
 
-<p>Method may throw <a href="-cancellation-exception/index.html">CancellationException</a> if the current job was cancelled externally
-or may throw the corresponding unhandled <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a> if there is any unhandled exception in this scope
+<p>The method may throw a <a href="-cancellation-exception/index.html">CancellationException</a> if the current job was cancelled externally
+or may throw a corresponding unhandled <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a> if there is any unhandled exception in this scope
 (for example, from a crashed coroutine that was started with <a href="launch.html">launch</a> in this scope).</p>
 
 

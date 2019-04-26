@@ -35,7 +35,7 @@
 
 <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">supervisorScope</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$supervisorScope(kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.supervisorScope.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="supervisor-scope.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="supervisor-scope.html#R"><span class="identifier">R</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Supervisor.kt#L50">(source)</a></div>
 
-<p>Creates new <a href="-coroutine-scope/index.html">CoroutineScope</a> with <a href="-supervisor-job.html">SupervisorJob</a> and calls the specified suspend block with this scope.
+<p>Creates a <a href="-coroutine-scope/index.html">CoroutineScope</a> with <a href="-supervisor-job.html">SupervisorJob</a> and calls the specified suspend block with this scope.
 The provided scope inherits its <a href="-coroutine-scope/coroutine-context.html">coroutineContext</a> from the outer scope, but overrides
 context’s <a href="-job/index.html">Job</a> with <a href="-supervisor-job.html">SupervisorJob</a>.</p>
 

@@ -46,7 +46,7 @@ launch(MDCContext()) {
 }
 </pre>
 
-<p>Note, that you cannot update MDC context from inside of the coroutine simply
+<p>Note that you cannot update MDC context from inside of the coroutine simply
 using <a href="https://www.slf4j.org/apidocs/org/slf4j/MDC.html#put(java.lang.String, java.lang.String)">MDC.put</a>. These updates are going to be lost on the next suspension and
 reinstalled to the MDC context that was captured or explicitly specified in
 <a href="-init-.html#kotlinx.coroutines.slf4j.MDCContext$&lt;init&gt;(kotlin.collections.Map((kotlin.String, )))/contextMap">contextMap</a> when this object was created on the next resumption.

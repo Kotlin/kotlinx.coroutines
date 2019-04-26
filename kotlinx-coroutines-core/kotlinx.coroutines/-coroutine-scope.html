@@ -35,7 +35,7 @@
 
 <div class="signature"><code><span class="keyword">fun </span><span class="identifier">CoroutineScope</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines$CoroutineScope(kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L191">(source)</a></div>
 
-<p>Creates <a href="-coroutine-scope/index.html">CoroutineScope</a> that wraps the given coroutine <a href="-coroutine-scope.html#kotlinx.coroutines$CoroutineScope(kotlin.coroutines.CoroutineContext)/context">context</a>.</p>
+<p>Creates a <a href="-coroutine-scope/index.html">CoroutineScope</a> that wraps the given coroutine <a href="-coroutine-scope.html#kotlinx.coroutines$CoroutineScope(kotlin.coroutines.CoroutineContext)/context">context</a>.</p>
 
 <p>If the given <a href="-coroutine-scope.html#kotlinx.coroutines$CoroutineScope(kotlin.coroutines.CoroutineContext)/context">context</a> does not contain a <a href="-job/index.html">Job</a> element, then a default <code>Job()</code> is created.
 This way, cancellation or failure or any child coroutine in this scope cancels all the other children,

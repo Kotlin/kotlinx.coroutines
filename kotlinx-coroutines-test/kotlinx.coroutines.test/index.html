@@ -33,6 +33,99 @@
 
 <h2 id="package-kotlinxcoroutinestest">Package kotlinx.coroutines.test</h2>
 
+<h3 id="types">Types</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-delay-controller/index.html">DelayController</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">DelayController</span></code></div>
+
+        <p>Control the virtual clock time of a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-test-coroutine-dispatcher/index.html">TestCoroutineDispatcher</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">TestCoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-delay/index.html"><span class="identifier">Delay</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-delay-controller/index.html"><span class="identifier">DelayController</span></a></code></div>
+
+        <p><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> that performs both immediate and lazy execution of coroutines in tests
+and implements <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-delay-controller/index.html">DelayController</a> to control its virtual clock.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-test-coroutine-exception-handler/index.html">TestCoroutineExceptionHandler</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">TestCoroutineExceptionHandler</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-uncaught-exception-captor/index.html"><span class="identifier">UncaughtExceptionCaptor</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-exception-handler/index.html"><span class="identifier">CoroutineExceptionHandler</span></a></code></div>
+
+        <p>An exception handler that captures uncaught exceptions in tests.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-test-coroutine-scope/index.html">TestCoroutineScope</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">TestCoroutineScope</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-uncaught-exception-captor/index.html"><span class="identifier">UncaughtExceptionCaptor</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-delay-controller/index.html"><span class="identifier">DelayController</span></a></code></div>
+
+        <p>A scope which provides detailed control over the execution of coroutines for tests.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-uncaught-exception-captor/index.html">UncaughtExceptionCaptor</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">UncaughtExceptionCaptor</span></code></div>
+
+        <p>Access uncaught coroutine exceptions captured during test execution.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="exceptions">Exceptions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-uncompleted-coroutines-error/index.html">UncompletedCoroutinesError</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">UncompletedCoroutinesError</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-assertion-error/index.html"><span class="identifier">AssertionError</span></a></code></div>
+
+        <p>Thrown when a test has completed and there are tasks that are not completed or cancelled.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="extensions-for-external-classes">Extensions for External Classes</h3>
 
 <table class="api-docs-table">
@@ -44,6 +137,47 @@
 
       </td>
 <td>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="functions">Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-test-coroutine-scope.html">TestCoroutineScope</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">TestCoroutineScope</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.test$TestCoroutineScope(kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-test-coroutine-scope/index.html"><span class="identifier">TestCoroutineScope</span></a></code></div>
+
+        <p>A scope which provides detailed control over the execution of coroutines for tests.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="run-blocking-test.html">runBlockingTest</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">runBlockingTest</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.test$runBlockingTest(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.test.TestCoroutineScope, kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.test$runBlockingTest(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.test.TestCoroutineScope, kotlin.Unit)))/testBody">testBody</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-test-coroutine-scope/index.html"><span class="identifier">TestCoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Executes a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/run-blocking-test/test-body.html">testBody</a> inside an immediate execution dispatcher.</p>
+
+        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-test-coroutine-scope/index.html"><span class="identifier">TestCoroutineScope</span></a><span class="symbol">.</span><span class="identifier">runBlockingTest</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.test$runBlockingTest(kotlinx.coroutines.test.TestCoroutineScope, kotlin.SuspendFunction1((kotlinx.coroutines.test.TestCoroutineScope, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-test-coroutine-scope/index.html"><span class="identifier">TestCoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">&lt;ERROR CLASS&gt;</span></code></div>
+
+        <p>Convenience method for calling <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/run-blocking-test.html">runBlockingTest</a> on an existing <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-test-coroutine-scope/index.html">TestCoroutineScope</a>.</p>
+
+        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-test-coroutine-dispatcher/index.html"><span class="identifier">TestCoroutineDispatcher</span></a><span class="symbol">.</span><span class="identifier">runBlockingTest</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.test$runBlockingTest(kotlinx.coroutines.test.TestCoroutineDispatcher, kotlin.SuspendFunction1((kotlinx.coroutines.test.TestCoroutineScope, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-test-coroutine-scope/index.html"><span class="identifier">TestCoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">&lt;ERROR CLASS&gt;</span></code></div>
+
+        <p>Convenience method for calling <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/run-blocking-test.html">runBlockingTest</a> on an existing <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-test-coroutine-dispatcher/index.html">TestCoroutineDispatcher</a>.</p>
 
       </td>
 </tr>

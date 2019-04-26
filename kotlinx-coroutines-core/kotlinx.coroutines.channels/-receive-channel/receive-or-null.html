@@ -48,7 +48,7 @@ As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI th
 continue to execute even after it was cancelled from the same thread in the case when this receive operation
 was already resumed and the continuation was posted for execution to the thread’s queue.</p>
 
-<p>Note, that this function does not check for cancellation when it is not suspended.
+<p>Note that this function does not check for cancellation when it is not suspended.
 Use <a href="../../kotlinx.coroutines/yield.html">yield</a> or <a href="../../kotlinx.coroutines/is-active.html">CoroutineScope.isActive</a> to periodically check for cancellation in tight loops if needed.</p>
 
 <p>This function can be used in <a href="../../kotlinx.coroutines.selects/select.html">select</a> invocation with <a href="on-receive-or-null.html">onReceiveOrNull</a> clause.

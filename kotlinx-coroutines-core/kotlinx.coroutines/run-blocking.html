@@ -33,12 +33,12 @@
 
 <h1 id="runblocking">runBlocking</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">runBlocking</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$runBlocking(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.runBlocking.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$runBlocking(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.runBlocking.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="run-blocking.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="run-blocking.html#T"><span class="identifier">T</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/Builders.kt#L35">(source)</a></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">runBlocking</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$runBlocking(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.runBlocking.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$runBlocking(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.runBlocking.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="run-blocking.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="run-blocking.html#T"><span class="identifier">T</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/Builders.kt#L36">(source)</a></div>
 
 <p><strong>Platform and version requirements:</strong> JVM, Native</p>
 
-<p>Runs new coroutine and <strong>blocks</strong> current thread <em>interruptibly</em> until its completion.
-This function should not be used from coroutine. It is designed to bridge regular blocking code
+<p>Runs a new coroutine and <strong>blocks</strong> the current thread <em>interruptibly</em> until its completion.
+This function should not be used from a coroutine. It is designed to bridge regular blocking code
 to libraries that are written in suspending style, to be used in <code>main</code> functions and in tests.</p>
 
 <p>The default <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> for this builder is an internal implementation of event loop that processes continuations
@@ -47,16 +47,17 @@ See <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> for the o
 
 <p>When <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> is explicitly specified in the <a href="run-blocking.html#kotlinx.coroutines$runBlocking(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.runBlocking.T)))/context">context</a>, then the new coroutine runs in the context of
 the specified dispatcher while the current thread is blocked. If the specified dispatcher is an event loop of another <code>runBlocking</code>,
-then this invocation uses an outer event loop.</p>
+then this invocation uses the outer event loop.</p>
 
 <p>If this blocked thread is interrupted (see <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#interrupt()">Thread.interrupt</a>), then the coroutine job is cancelled and
 this <code>runBlocking</code> invocation throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/InterruptedException.html">InterruptedException</a>.</p>
 
-<p>See <a href="new-coroutine-context.html">newCoroutineContext</a> for a description of debugging facilities that are available for newly created coroutine.</p>
+<p>See <a href="new-coroutine-context.html">newCoroutineContext</a> for a description of debugging facilities that are available
+for a newly created coroutine.</p>
 
 <h3 id="parameters">Parameters</h3>
 
-<p><code>context</code> - context of the coroutine. The default value is an event loop on current thread.</p>
+<p><code>context</code> - the context of the coroutine. The default value is an event loop on the current thread.</p>
 
 <p><code>block</code> - the coroutine code.</p>
 

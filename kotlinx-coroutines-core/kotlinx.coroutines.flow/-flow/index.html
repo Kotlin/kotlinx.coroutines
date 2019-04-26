@@ -192,6 +192,21 @@ the most recently emitted values by each flow.</p>
 <tr>
 <td>
 
+        <p><a href="../debounce.html">debounce</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../debounce.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">debounce</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$debounce(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.debounce.T)), kotlin.Long)/timeoutMillis">timeoutMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../debounce.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow that mirrors the original flow, but filters out values
+that are followed by the newer values within the given <a href="../debounce.html#kotlinx.coroutines.flow$debounce(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.debounce.T)), kotlin.Long)/timeoutMillis">timeout</a>.
+The latest value is always emitted.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../delay-each.html">delayEach</a></p>
 
       </td>
@@ -251,7 +266,8 @@ key is extracted with <a href="../distinct-until-changed-by.html#kotlinx.corouti
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../drop.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">drop</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$drop(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.drop.T)), kotlin.Int)/count">count</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../drop.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Returns a flow that ignores first <a href="../drop.html#kotlinx.coroutines.flow$drop(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.drop.T)), kotlin.Int)/count">count</a> elements.</p>
+        <p>Returns a flow that ignores first <a href="../drop.html#kotlinx.coroutines.flow$drop(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.drop.T)), kotlin.Int)/count">count</a> elements.
+Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-argument-exception/index.html">IllegalArgumentException</a> if <a href="../drop.html#kotlinx.coroutines.flow$drop(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.drop.T)), kotlin.Int)/count">count</a> is negative.</p>
 
       </td>
 </tr>
@@ -526,6 +542,19 @@ in the given flow. Exceptions from collectors of this flow are not retried.</p>
 <tr>
 <td>
 
+        <p><a href="../sample.html">sample</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../sample.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sample</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$sample(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.sample.T)), kotlin.Long)/periodMillis">periodMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../sample.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow that emits only the latest value emitted by the original flow during the given sampling <a href="../sample.html#kotlinx.coroutines.flow$sample(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.sample.T)), kotlin.Long)/periodMillis">period</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../single.html">single</a></p>
 
       </td>
@@ -555,6 +584,20 @@ Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-sta
 <tr>
 <td>
 
+        <p><a href="../switch-map.html">switchMap</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../switch-map.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">switchMap</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$switchMap(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.switchMap.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.switchMap.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.switchMap.R)))))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../switch-map.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../switch-map.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../switch-map.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow that switches to a new flow produced by <a href="../switch-map.html#kotlinx.coroutines.flow$switchMap(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.switchMap.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.switchMap.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.switchMap.R)))))/transform">transform</a> function every time the original flow emits a value.
+When switch on the a flow is performed, the previous one is cancelled.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../take.html">take</a></p>
 
       </td>
@@ -562,7 +605,8 @@ Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-sta
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../take.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">take</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$take(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.take.T)), kotlin.Int)/count">count</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../take.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Returns a flow that contains first <a href="../take.html#kotlinx.coroutines.flow$take(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.take.T)), kotlin.Int)/count">count</a> elements.
-When <a href="../take.html#kotlinx.coroutines.flow$take(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.take.T)), kotlin.Int)/count">count</a> elements are consumed, the original flow is cancelled.</p>
+When <a href="../take.html#kotlinx.coroutines.flow$take(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.take.T)), kotlin.Int)/count">count</a> elements are consumed, the original flow is cancelled.
+Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-argument-exception/index.html">IllegalArgumentException</a> if <a href="../take.html#kotlinx.coroutines.flow$take(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.take.T)), kotlin.Int)/count">count</a> is negative.</p>
 
       </td>
 </tr>

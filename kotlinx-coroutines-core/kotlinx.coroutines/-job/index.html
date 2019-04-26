@@ -44,7 +44,7 @@ with an exception other than <a href="../-cancellation-exception/index.html">Can
 can <a href="cancel.html">cancel</a> its own children (including all their children recursively) without cancelling itself.</p>
 
 <p>The most basic instances of <a href="./index.md">Job</a> are created with <a href="../launch.html">launch</a> coroutine builder or with a
-<code>Job()</code> factory function. By default, a failure of any of the job’s children leads to an immediately failure
+<code>Job()</code> factory function. By default, a failure of any of the job’s children leads to an immediate failure
 of its parent and cancellation of the rest of its children. This behavior can be customized using <a href="../-supervisor-job.html">SupervisorJob</a>.</p>
 
 <p>Conceptually, an execution of the job does not produce a result value. Jobs are launched solely for their
@@ -106,8 +106,8 @@ that provide an optional <code>start</code> parameter create a coroutine in <em>
 <a href="../-coroutine-start/-l-a-z-y.html">CoroutineStart.LAZY</a>. Such a job can be made <em>active</em> by invoking <a href="start.html">start</a> or <a href="join.html">join</a>.</p>
 
 <p>A job is <em>active</em> while the coroutine is working. Failure of the job with exception makes it <em>cancelling</em>.
-A job can be cancelled it at any time with <a href="cancel.html">cancel</a> function that forces it to transition to
-<em>cancelling</em> state immediately. The job becomes <em>cancelled</em>  when it finishes executing it work.</p>
+A job can be cancelled at any time with <a href="cancel.html">cancel</a> function that forces it to transition to
+<em>cancelling</em> state immediately. The job becomes <em>cancelled</em>  when it finishes executing its work.</p>
 
 <pre>                                          wait children
     +-----+ start  +--------+ complete   +-------------+  finish  +-----------+
@@ -128,7 +128,7 @@ represents the coroutine itself.</p>
 
 <p>A job can have a <em>parent</em> job. A job with a parent is cancelled when its parent is cancelled.
 Parent job waits in <em>completing</em> or <em>cancelling</em> state for all its children to complete before finishing.
-Note, that <em>completing</em> state is purely internal to the job. For an outside observer a <em>completing</em> job is still
+Note that <em>completing</em> state is purely internal to the job. For an outside observer a <em>completing</em> job is still
 active, while internally it is waiting for its children.</p>
 
 <p>Normal cancellation of a job is distinguished from its failure by the type of its cancellation exception cause.
@@ -256,7 +256,7 @@ This clause never fails, even if the job completes exceptionally.</p>
 
         <p>Cancels this job with an optional cancellation <a href="cancel.html#kotlinx.coroutines.Job$cancel(java.util.concurrent.CancellationException)/cause">cause</a>.
 A cause can be used to specify an error message or to provide other details on
-a cancellation reason for debugging purposes.
+the cancellation reason for debugging purposes.
 See <a href="./index.md">Job</a> documentation for full explanation of cancellation machinery.</p>
 
       </td>
@@ -286,7 +286,7 @@ job is complete.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
+        <p>Suspends the coroutine until this job is complete. This invocation resumes normally (without exception)
 when the job is complete for any reason and the <a href="./index.md">Job</a> of the invoking coroutine is still <a href="is-active.html">active</a>.
 This function also <a href="start.html">starts</a> the corresponding coroutine if the <a href="./index.md">Job</a> was still in <em>new</em> state.</p>
 
@@ -358,7 +358,7 @@ See <a href="cancel.html">Job.cancel</a> for details.</p>
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="./index.md"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelAndJoin</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Cancels the job and suspends invoking coroutine until the cancelled job is complete.</p>
+        <p>Cancels the job and suspends the invoking coroutine until the cancelled job is complete.</p>
 
       </td>
 </tr>

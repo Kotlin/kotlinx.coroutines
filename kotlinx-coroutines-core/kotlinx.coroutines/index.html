@@ -598,7 +598,7 @@ It is optionally a child of a <a href="-completable-deferred.html#kotlinx.corout
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">CoroutineExceptionHandler</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$CoroutineExceptionHandler(kotlin.Function2((kotlin.coroutines.CoroutineContext, kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">,</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-coroutine-exception-handler/index.html"><span class="identifier">CoroutineExceptionHandler</span></a></code></div>
 
-        <p>Creates new <a href="-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a> instance.</p>
+        <p>Creates a <a href="-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a> instance.</p>
 
       </td>
 </tr>
@@ -611,7 +611,7 @@ It is optionally a child of a <a href="-completable-deferred.html#kotlinx.corout
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">CoroutineScope</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines$CoroutineScope(kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a></code></div>
 
-        <p>Creates <a href="-coroutine-scope/index.html">CoroutineScope</a> that wraps the given coroutine <a href="-coroutine-scope.html#kotlinx.coroutines$CoroutineScope(kotlin.coroutines.CoroutineContext)/context">context</a>.</p>
+        <p>Creates a <a href="-coroutine-scope/index.html">CoroutineScope</a> that wraps the given coroutine <a href="-coroutine-scope.html#kotlinx.coroutines$CoroutineScope(kotlin.coroutines.CoroutineContext)/context">context</a>.</p>
 
       </td>
 </tr>
@@ -624,7 +624,7 @@ It is optionally a child of a <a href="-completable-deferred.html#kotlinx.corout
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines$Job(kotlinx.coroutines.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="-completable-job/index.html"><span class="identifier">CompletableJob</span></a></code></div>
 
-        <p>Creates a new job object in an active state.
+        <p>Creates a job object in an active state.
 A failure of any child of this job immediately causes this job to fail, too, and cancels the rest of its children.</p>
 
       </td>
@@ -664,7 +664,7 @@ A failure of any child of this job immediately causes this job to fail, too, and
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">SupervisorJob</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines$SupervisorJob(kotlinx.coroutines.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="-completable-job/index.html"><span class="identifier">CompletableJob</span></a></code></div>
 
-        <p>Creates a new <em>supervisor</em> job object in an active state.
+        <p>Creates a <em>supervisor</em> job object in an active state.
 Children of a supervisor job can fail independently of each other.</p>
 
       </td>
@@ -689,7 +689,7 @@ Children of a supervisor job can fail independently of each other.</p>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">async</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$async(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.async.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$async(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.async.T)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$async(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.async.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="async.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><a href="async.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Creates new coroutine and returns its future result as an implementation of <a href="-deferred/index.html">Deferred</a>.
+        <p>Creates a coroutine and returns its future result as an implementation of <a href="-deferred/index.html">Deferred</a>.
 The running coroutine is cancelled when the resulting deferred is <a href="-job/cancel.html">cancelled</a>.</p>
 
       </td>
@@ -734,7 +734,7 @@ Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-sta
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelAndJoin</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Cancels the job and suspends invoking coroutine until the cancelled job is complete.</p>
+        <p>Cancels the job and suspends the invoking coroutine until the cancelled job is complete.</p>
 
       </td>
 </tr>
@@ -774,9 +774,9 @@ This is a shortcut for the following code with slightly more efficient implement
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">coroutineScope</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$coroutineScope(kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.coroutineScope.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="coroutine-scope.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="coroutine-scope.html#R"><span class="identifier">R</span></a></code></div>
 
-        <p>Creates new <a href="-coroutine-scope/index.html">CoroutineScope</a> and calls the specified suspend block with this scope.
+        <p>Creates a <a href="-coroutine-scope/index.html">CoroutineScope</a> and calls the specified suspend block with this scope.
 The provided scope inherits its <a href="-coroutine-scope/coroutine-context.html">coroutineContext</a> from the outer scope, but overrides
-context’s <a href="-job/index.html">Job</a>.</p>
+the context’s <a href="-job/index.html">Job</a>.</p>
 
       </td>
 </tr>
@@ -868,7 +868,7 @@ This method is semantically equivalent to joining all given jobs one by one with
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">launch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$launch(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$launch(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$launch(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-job/index.html"><span class="identifier">Job</span></a></code></div>
 
-        <p>Launches new coroutine without blocking current thread and returns a reference to the coroutine as a <a href="-job/index.html">Job</a>.
+        <p>Launches a new coroutine without blocking the current thread and returns a reference to the coroutine as a <a href="-job/index.html">Job</a>.
 The coroutine is cancelled when the resulting job is <a href="-job/cancel.html">cancelled</a>.</p>
 
       </td>
@@ -895,7 +895,7 @@ The coroutine is cancelled when the resulting job is <a href="-job/cancel.html">
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">newFixedThreadPoolContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$newFixedThreadPoolContext(kotlin.Int, kotlin.String)/nThreads">nThreads</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$newFixedThreadPoolContext(kotlin.Int, kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-executor-coroutine-dispatcher/index.html"><span class="identifier">ExecutorCoroutineDispatcher</span></a></code></div>
 
-        <p>Creates new coroutine execution context with the fixed-size thread-pool and built-in <a href="yield.html">yield</a> support.
+        <p>Creates a coroutine execution context with the fixed-size thread-pool and built-in <a href="yield.html">yield</a> support.
 <strong>NOTE: The resulting <a href="-executor-coroutine-dispatcher/index.html">ExecutorCoroutineDispatcher</a> owns native resources (its threads).Resources are reclaimed by <a href="-executor-coroutine-dispatcher/close.html">ExecutorCoroutineDispatcher.close</a>.</strong></p>
 
       </td>
@@ -907,7 +907,7 @@ The coroutine is cancelled when the resulting job is <a href="-job/cancel.html">
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">newSingleThreadContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$newSingleThreadContext(kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-executor-coroutine-dispatcher/index.html"><span class="identifier">ExecutorCoroutineDispatcher</span></a></code></div>
 
-        <p>Creates a new coroutine execution context using a single thread with built-in <a href="yield.html">yield</a> support.
+        <p>Creates a coroutine execution context using a single thread with built-in <a href="yield.html">yield</a> support.
 <strong>NOTE: The resulting <a href="-executor-coroutine-dispatcher/index.html">ExecutorCoroutineDispatcher</a> owns native resources (its thread).Resources are reclaimed by <a href="-executor-coroutine-dispatcher/close.html">ExecutorCoroutineDispatcher.close</a>.</strong></p>
 
       </td>
@@ -944,8 +944,8 @@ scope’s context with the corresponding keys.</p>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">runBlocking</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$runBlocking(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.runBlocking.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$runBlocking(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.runBlocking.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="run-blocking.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="run-blocking.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>Runs new coroutine and <strong>blocks</strong> current thread <em>interruptibly</em> until its completion.
-This function should not be used from coroutine. It is designed to bridge regular blocking code
+        <p>Runs a new coroutine and <strong>blocks</strong> the current thread <em>interruptibly</em> until its completion.
+This function should not be used from a coroutine. It is designed to bridge regular blocking code
 to libraries that are written in suspending style, to be used in <code>main</code> functions and in tests.</p>
 
       </td>
@@ -958,7 +958,7 @@ to libraries that are written in suspending style, to be used in <code>main</cod
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">supervisorScope</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$supervisorScope(kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.supervisorScope.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="supervisor-scope.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="supervisor-scope.html#R"><span class="identifier">R</span></a></code></div>
 
-        <p>Creates new <a href="-coroutine-scope/index.html">CoroutineScope</a> with <a href="-supervisor-job.html">SupervisorJob</a> and calls the specified suspend block with this scope.
+        <p>Creates a <a href="-coroutine-scope/index.html">CoroutineScope</a> with <a href="-supervisor-job.html">SupervisorJob</a> and calls the specified suspend block with this scope.
 The provided scope inherits its <a href="-coroutine-scope/coroutine-context.html">coroutineContext</a> from the outer scope, but overrides
 context’s <a href="-job/index.html">Job</a> with <a href="-supervisor-job.html">SupervisorJob</a>.</p>
 

@@ -29,21 +29,30 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <p>Test utilities for <code>kotlinx.coroutines</code>. Provides <code>Dispatchers.setMain</code> to override the <code>Main</code> dispatcher.</p>
+        <p>Test utilities for <code>kotlinx.coroutines</code>.</p>
+
+<p>This package provides testing utilities for effectively testing coroutines.</p>
 
 <h2 id="using-in-your-project">Using in your project</h2>
 
 <p>Add <code>kotlinx-coroutines-test</code> to your project test dependencies:</p>
 
 <pre>dependencies {
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.2.0'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.2.1'
 }
 </pre>
 
 <p><strong>Do not</strong> depend on this project in your main sources, all utilities are intended and designed to be used only from tests.</p>
 
-<p>Once you have this dependency in the runtime, <a href="https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html"><code>ServiceLoader</code></a> mechanism will
-overwrite <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html">Dispatchers.Main</a> with a testable implementation.</p>
+<h2 id="dispatchersmain-delegation">Dispatchers.Main Delegation</h2>
+
+<p><code>Dispatchers.setMain</code> will override the <code>Main</code> dispatcher in test situations. This is helpful when you want to execute a
+test in situations where the platform <code>Main</code> dispatcher is not available, or you wish to replace <code>Dispatchers.Main</code> with a
+testing dispatcher.</p>
+
+<p>Once you have this dependency in the runtime,
+<a href="https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html"><code>ServiceLoader</code></a> mechanism will overwrite
+<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html">Dispatchers.Main</a> with a testable implementation.</p>
 
 <p>You can override the <code>Main</code> implementation using <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/kotlinx.coroutines.-dispatchers/set-main.html">setMain</a> method with any <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementation, e.g.:</p>
 
@@ -65,12 +74,402 @@ overwrite <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutine
     <span class="n">@Test</span>
     <span class="k">fun</span> <span class="nf">testSomeUI</span><span class="p">()</span> <span class="p">=</span> <span class="n">runBlocking</span> <span class="p">{</span>
         <span class="n">launch</span><span class="p">(</span><span class="n">Dispatchers</span><span class="p">.</span><span class="n">Main</span><span class="p">)</span> <span class="p">{</span>  <span class="c1">// Will be launched in the mainThreadSurrogate dispatcher
-</span>            <span class="o">..</span><span class="p">.</span>
-        <span class="p">}</span>
+</span>            <span class="c1">// ...
+</span>        <span class="p">}</span>
     <span class="p">}</span>
 <span class="p">}</span>
 </code></pre>
 </div>
+
+<p>Calling <code>setMain</code> or <code>resetMain</code> immediately changes the <code>Main</code> dispatcher globally. The testable version of 
+<code>Dispatchers.Main</code> installed by the <code>ServiceLoader</code> will delegate to the dispatcher provided by <code>setMain</code>.</p>
+
+<h2 id="runblockingtest">runBlockingTest</h2>
+
+<p>To test regular suspend functions or coroutines started with <code>launch</code> or <code>async</code> use the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-blocking-test.html">runBlockingTest</a> coroutine 
+builder that provides extra test control to coroutines.</p>
+
+<ol>
+  <li>Auto-advancing of time for regular suspend functions</li>
+  <li>Explicit time control for testing multiple coroutines</li>
+  <li>Eager execution of <code>launch</code> or <code>async</code> code blocks</li>
+  <li>Pause, manually advance, and restart the execution of coroutines in a test</li>
+  <li>Report uncaught exceptions as test failures</li>
+</ol>
+
+<h3 id="testing-regular-suspend-functions">Testing regular suspend functions</h3>
+
+<p>To test regular suspend functions, which may have a delay, you can use the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-blocking-test.html">runBlockingTest</a> builder to start a testing 
+coroutine. Any calls to <code>delay</code> will automatically advance time.</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">@Test</span>
+<span class="k">fun</span> <span class="nf">testFoo</span><span class="p">()</span> <span class="p">=</span> <span class="n">runBlockingTest</span> <span class="p">{</span> <span class="c1">// a coroutine with an extra test control
+</span>    <span class="kd">val</span> <span class="py">actual</span> <span class="p">=</span> <span class="n">foo</span><span class="p">()</span> 
+    <span class="c1">// ...
+</span><span class="p">}</span>
+
+<span class="n">suspend</span> <span class="k">fun</span> <span class="nf">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">delay</span><span class="p">(</span><span class="m">1</span><span class="n">_000</span><span class="p">)</span> <span class="c1">// auto-advances without delay due to runBlockingTest
+</span>    <span class="c1">// ...
+</span><span class="p">}</span>
+</code></pre>
+</div>
+
+<p><code>runBlockingTest</code> returns <code>Unit</code> so it may be used in a single expression with common testing libraries.</p>
+
+<h3 id="testing-launch-or-async">Testing <code>launch</code> or <code>async</code></h3>
+
+<p>Inside of <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-blocking-test.html">runBlockingTest</a>, both <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html">launch</a> and <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html">async</a> will start a new coroutine that may run concurrently with the 
+test case.</p>
+
+<p>To make common testing situations easier, by default the body of the coroutine is executed <em>eagerly</em> until 
+the first <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html">delay</a>.</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">@Test</span>
+<span class="k">fun</span> <span class="nf">testFooWithLaunch</span><span class="p">()</span> <span class="p">=</span> <span class="n">runBlockingTest</span> <span class="p">{</span>
+    <span class="n">foo</span><span class="p">()</span>
+    <span class="c1">// the coroutine launched by foo() is completed before foo() returns
+</span>    <span class="c1">// ...
+</span><span class="p">}</span>
+
+<span class="k">fun</span> <span class="nf">CoroutineScope</span><span class="p">.</span><span class="n">foo</span><span class="p">()</span> <span class="p">{</span>
+     <span class="c1">// This coroutines `Job` is not shared with the test code
+</span>     <span class="n">launch</span> <span class="p">{</span>
+         <span class="n">bar</span><span class="p">()</span>      <span class="c1">// executes eagerly when foo() is called due to runBlockingTest
+</span>         <span class="n">println</span><span class="p">(</span><span class="m">1</span><span class="p">)</span> <span class="c1">// executes eagerly when foo() is called due to runBlockingTest
+</span>     <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">suspend</span> <span class="k">fun</span> <span class="nf">bar</span><span class="p">()</span> <span class="p">{}</span>
+</code></pre>
+</div>
+
+<p><code>runBlockingTest</code> will auto-progress time until all coroutines are completed before returning. If any coroutines are not
+able to complete, an <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-uncompleted-coroutines-error/index.html">UncompletedCoroutinesError</a> will be thrown.</p>
+
+<h3 id="testing-launch-or-async-with-delay">Testing <code>launch</code> or <code>async</code> with <code>delay</code></h3>
+
+<p>If the coroutine created by <code>launch</code> or <code>async</code> calls <code>delay</code> then the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-blocking-test.html">runBlockingTest</a> will not auto-progress time 
+right away. This allows tests to observe the interaction of multiple coroutines with different delays.</p>
+
+<p>To control time in the test you can use the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-delay-controller/index.html">DelayController</a> interface. The block passed to 
+<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-blocking-test.html">runBlockingTest</a> can call any method on the <code>DelayController</code> interface.</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">@Test</span>
+<span class="k">fun</span> <span class="nf">testFooWithLaunchAndDelay</span><span class="p">()</span> <span class="p">=</span> <span class="n">runBlockingTest</span> <span class="p">{</span>
+    <span class="n">foo</span><span class="p">()</span>
+    <span class="c1">// the coroutine launched by foo has not completed here, it is suspended waiting for delay(1_000)
+</span>    <span class="n">advanceTimeBy</span><span class="p">(</span><span class="m">1</span><span class="n">_000</span><span class="p">)</span> <span class="c1">// progress time, this will cause the delay to resume
+</span>    <span class="c1">// foo() coroutine launched by foo has completed here
+</span>    <span class="c1">// ...
+</span><span class="p">}</span>
+
+<span class="n">suspend</span> <span class="k">fun</span> <span class="nf">CoroutineScope</span><span class="p">.</span><span class="n">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">launch</span> <span class="p">{</span>
+        <span class="n">println</span><span class="p">(</span><span class="m">1</span><span class="p">)</span>   <span class="c1">// executes eagerly when foo() is called due to runBlockingTest
+</span>        <span class="n">delay</span><span class="p">(</span><span class="m">1</span><span class="n">_000</span><span class="p">)</span> <span class="c1">// suspends until time is advanced by at least 1_000
+</span>        <span class="n">println</span><span class="p">(</span><span class="m">2</span><span class="p">)</span>   <span class="c1">// executes after advanceTimeBy(1_000)
+</span>    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p><em>Note:</em> <code>runBlockingTest</code> will always attempt to auto-progress time until all coroutines are completed just before 
+exiting. This is a convenience to avoid having to call <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-delay-controller/advance-until-idle.html">advanceUntilIdle</a> 
+as the last line of many common test cases.
+If any coroutines cannot complete by advancing time, an <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-uncompleted-coroutines-error/index.html">UncompletedCoroutinesError</a> is thrown.</p>
+
+<h3 id="testing-withtimeout-using-runblockingtest">Testing <code>withTimeout</code> using <code>runBlockingTest</code></h3>
+
+<p>Time control can be used to test timeout code. To do so, ensure that the function under test is suspended inside a 
+<code>withTimeout</code> block and advance time until the timeout is triggered.</p>
+
+<p>Depending on the code, causing the code to suspend may need to use different mocking or fake techniques. For this 
+example an uncompleted <code>Deferred&lt;Foo&gt;</code> is provided to the function under test via parameter injection.</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">@Test</span><span class="p">(</span><span class="n">expected</span> <span class="p">=</span> <span class="n">TimeoutCancellationException</span><span class="o">::</span><span class="k">class</span><span class="p">)</span>
+<span class="k">fun</span> <span class="nf">testFooWithTimeout</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">val</span> <span class="py">uncompleted</span> <span class="p">=</span> <span class="n">CompletableDeferred</span><span class="p">&lt;</span><span class="n">Foo</span><span class="p">&gt;()</span> <span class="c1">// this Deferred&lt;Foo&gt; will never complete
+</span>    <span class="n">foo</span><span class="p">(</span><span class="n">uncompleted</span><span class="p">)</span>
+    <span class="n">advanceTimeBy</span><span class="p">(</span><span class="m">1</span><span class="n">_000</span><span class="p">)</span> <span class="c1">// advance time, which will cause the timeout to throw an exception
+</span>    <span class="c1">// ...
+</span><span class="p">}</span>
+
+<span class="k">fun</span> <span class="nf">CoroutineScope</span><span class="p">.</span><span class="n">foo</span><span class="p">(</span><span class="n">resultDeferred</span><span class="p">:</span> <span class="n">Deferred</span><span class="p">&lt;</span><span class="n">Foo</span><span class="p">&gt;)</span> <span class="p">{</span>
+    <span class="n">launch</span> <span class="p">{</span>
+        <span class="n">withTimeout</span><span class="p">(</span><span class="m">1</span><span class="n">_000</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">resultDeferred</span><span class="p">.</span><span class="n">await</span><span class="p">()</span> <span class="c1">// await() will suspend forever waiting for uncompleted
+</span>            <span class="c1">// ...
+</span>        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p><em>Note:</em> Testing timeouts is simpler with a second coroutine that can be suspended (as in this example). If the 
+call to <code>withTimeout</code> is in a regular suspend function, consider calling <code>launch</code> or <code>async</code> inside your test body to 
+create a second coroutine.</p>
+
+<h3 id="using-pausedispatcher-for-explicit-execution-of-runblockingtest">Using <code>pauseDispatcher</code> for explicit execution of <code>runBlockingTest</code></h3>
+
+<p>The eager execution of <code>launch</code> and <code>async</code> bodies makes many tests easier, but some tests need more fine grained 
+control of coroutine execution.</p>
+
+<p>To disable eager execution, you can call <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-delay-controller/pause-dispatcher.html">pauseDispatcher</a> 
+to pause the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-dispatcher/index.html">TestCoroutineDispatcher</a> that <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-blocking-test.html">runBlockingTest</a> uses.</p>
+
+<p>When the dispatcher is paused, all coroutines will be added to a queue instead running. In addition, time will never 
+auto-progress due to <code>delay</code> on a paused dispatcher.</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">@Test</span>
+<span class="k">fun</span> <span class="nf">testFooWithPauseDispatcher</span><span class="p">()</span> <span class="p">=</span> <span class="n">runBlockingTest</span> <span class="p">{</span>
+    <span class="n">pauseDispatcher</span> <span class="p">{</span>
+        <span class="n">foo</span><span class="p">()</span>
+        <span class="c1">// the coroutine started by foo has not run yet
+</span>        <span class="n">runCurrent</span><span class="p">()</span> <span class="c1">// the coroutine started by foo advances to delay(1_000)
+</span>        <span class="c1">// the coroutine started by foo has called println(1), and is suspended on delay(1_000)
+</span>        <span class="n">advanceTimeBy</span><span class="p">(</span><span class="m">1</span><span class="n">_000</span><span class="p">)</span> <span class="c1">// progress time, this will cause the delay to resume
+</span>        <span class="c1">// the coroutine started by foo has called println(2) and has completed here
+</span>    <span class="p">}</span>
+    <span class="c1">// ...
+</span><span class="p">}</span>
+
+<span class="k">fun</span> <span class="nf">CoroutineScope</span><span class="p">.</span><span class="n">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">launch</span> <span class="p">{</span>
+        <span class="n">println</span><span class="p">(</span><span class="m">1</span><span class="p">)</span>   <span class="c1">// executes after runCurrent() is called
+</span>        <span class="n">delay</span><span class="p">(</span><span class="m">1</span><span class="n">_000</span><span class="p">)</span> <span class="c1">// suspends until time is advanced by at least 1_000
+</span>        <span class="n">println</span><span class="p">(</span><span class="m">2</span><span class="p">)</span>   <span class="c1">// executes after advanceTimeBy(1_000)
+</span>    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Using <code>pauseDispatcher</code> gives tests explicit control over the progress of time as well as the ability to enqueue all 
+coroutines. As a best practice consider adding two tests, one paused and one eager, to test coroutines that have 
+non-trivial external dependencies and side effects in their launch body.</p>
+
+<p><em>Important:</em> When passed a lambda block, <code>pauseDispatcher</code> will resume eager execution immediately after the block. 
+This will cause time to auto-progress if there are any outstanding <code>delay</code> calls that were not resolved before the
+<code>pauseDispatcher</code> block returned. In advanced situations tests can call <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-delay-controller/pause-dispatcher.html">pauseDispatcher</a> 
+without a lambda block and then explicitly resume the dispatcher with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-delay-controller/resume-dispatcher.html">resumeDispatcher</a>.</p>
+
+<h2 id="integrating-tests-with-structured-concurrency">Integrating tests with structured concurrency</h2>
+
+<p>Code that uses structured concurrency needs a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a> in order to launch a coroutine. In order to integrate 
+<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-blocking-test.html">runBlockingTest</a> with code that uses common structured concurrency patterns tests can provide one (or both) of these
+classes to application code.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html">TestCoroutineScope</a></td>
+      <td>A <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a> which provides detailed control over the execution of coroutines for tests and integrates with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-blocking-test.html">runBlockingTest</a>.</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-dispatcher/index.html">TestCoroutineDispatcher</a></td>
+      <td>A <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> which can be used for tests and integrates with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-blocking-test.html">runBlockingTest</a>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Both classes are provided to allow for various testing needs. Depending on the code that’s being 
+ tested, it may be easier to provide a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-dispatcher/index.html">TestCoroutineDispatcher</a>. For example <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/kotlinx.coroutines.-dispatchers/set-main.html">Dispatchers.setMain</a> will accept
+ a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-dispatcher/index.html">TestCoroutineDispatcher</a> but not a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html">TestCoroutineScope</a>.</p>
+
+<p><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html">TestCoroutineScope</a> will always use a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-dispatcher/index.html">TestCoroutineDispatcher</a> to execute coroutines. It 
+ also uses <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-exception-handler/index.html">TestCoroutineExceptionHandler</a> to convert uncaught exceptions into test failures.</p>
+
+<p>By providing <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html">TestCoroutineScope</a> a test case is able to control execution of coroutines, as well as ensure that 
+uncaught exceptions thrown by coroutines are converted into test failures.</p>
+
+<h3 id="providing-testcoroutinescope-from-runblockingtest">Providing <code>TestCoroutineScope</code> from <code>runBlockingTest</code></h3>
+
+<p>In simple cases, tests can use the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html">TestCoroutineScope</a> created by <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-blocking-test.html">runBlockingTest</a> directly.</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">@Test</span>
+<span class="k">fun</span> <span class="nf">testFoo</span><span class="p">()</span> <span class="p">=</span> <span class="n">runBlockingTest</span> <span class="p">{</span>        
+    <span class="n">foo</span><span class="p">()</span> <span class="c1">// runBlockingTest passed in a TestCoroutineScope as this
+</span><span class="p">}</span>
+
+<span class="k">fun</span> <span class="nf">CoroutineScope</span><span class="p">.</span><span class="n">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">launch</span> <span class="p">{</span>  <span class="c1">// CoroutineScope for launch is the TestCoroutineScope provided by runBlockingTest
+</span>        <span class="c1">// ...
+</span>    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>This style is preferred when the <code>CoroutineScope</code> is passed through an extension function style.</p>
+
+<h3 id="providing-an-explicit-testcoroutinescope">Providing an explicit <code>TestCoroutineScope</code></h3>
+
+<p>In many cases, the direct style is not preferred because <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a> may need to be provided through anther means 
+such as dependency injection or service locators.</p>
+
+<p>Tests can declare a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html">TestCoroutineScope</a> explicitly in the class to support these use cases.</p>
+
+<p>Since <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html">TestCoroutineScope</a> is stateful in order to keep track of executing coroutines and uncaught exceptions, it is 
+important to ensure that <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/cleanup-test-coroutines.html">cleanupTestCoroutines</a> is called after every test case.</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">TestClass</span> <span class="p">{</span>
+    <span class="k">private</span> <span class="kd">val</span> <span class="py">testScope</span> <span class="p">=</span> <span class="n">TestCoroutineScope</span><span class="p">()</span>
+    <span class="k">private</span> <span class="k">lateinit</span> <span class="kd">var</span> <span class="py">subject</span><span class="p">:</span> <span class="n">Subject</span> <span class="p">=</span> <span class="k">null</span> 
+    
+    <span class="n">@Before</span>
+    <span class="k">fun</span> <span class="nf">setup</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">// provide the scope explicitly, in this example using a constructor parameter
+</span>        <span class="n">subject</span> <span class="p">=</span> <span class="n">Subject</span><span class="p">(</span><span class="n">testScope</span><span class="p">)</span>
+    <span class="p">}</span>
+    
+    <span class="n">@After</span>
+    <span class="k">fun</span> <span class="nf">cleanUp</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">testScope</span><span class="p">.</span><span class="n">cleanupTestCoroutines</span><span class="p">()</span>
+    <span class="p">}</span>
+    
+    <span class="n">@Test</span>
+    <span class="k">fun</span> <span class="nf">testFoo</span><span class="p">()</span> <span class="p">=</span> <span class="n">testScope</span><span class="p">.</span><span class="n">runBlockingTest</span> <span class="p">{</span>
+        <span class="c1">// TestCoroutineScope.runBlockingTest uses the Dispatcher and exception handler provided by `testScope`
+</span>        <span class="n">subject</span><span class="p">.</span><span class="n">foo</span><span class="p">()</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">Subject</span><span class="p">(</span><span class="kd">val</span> <span class="py">scope</span><span class="p">:</span> <span class="n">CoroutineScope</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">fun</span> <span class="nf">foo</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">scope</span><span class="p">.</span><span class="n">launch</span> <span class="p">{</span>
+            <span class="c1">// launch uses the testScope injected in setup
+</span>        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p><em>Note:</em> <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html">TestCoroutineScope</a>, <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-dispatcher/index.html">TestCoroutineDispatcher</a>, and <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-exception-handler/index.html">TestCoroutineExceptionHandler</a> are interfaces to enable 
+test libraries to provide library specific integrations. For example, a JUnit4 <code>@Rule</code> may call 
+<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/kotlinx.coroutines.-dispatchers/set-main.html">Dispatchers.setMain</a> then expose <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html">TestCoroutineScope</a> for use in tests.</p>
+
+<h3 id="providing-an-explicit-testcoroutinedispatcher">Providing an explicit <code>TestCoroutineDispatcher</code></h3>
+
+<p>While providing a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html">TestCoroutineScope</a> is slightly preferred due to the improved uncaught exception handling, there are 
+many situations where it is easier to provide a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-dispatcher/index.html">TestCoroutineDispatcher</a>. For example <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/kotlinx.coroutines.-dispatchers/set-main.html">Dispatchers.setMain</a> 
+does not accept a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html">TestCoroutineScope</a> and requires a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-dispatcher/index.html">TestCoroutineDispatcher</a> to control coroutine execution in 
+tests.</p>
+
+<p>The main difference between <code>TestCoroutineScope</code> and <code>TestCoroutineDispatcher</code> is how uncaught exceptions are handled. 
+When using <code>TestCoroutineDispatcher</code> uncaught exceptions thrown in coroutines will use regular 
+<a href="https://kotlinlang.org/docs/reference/coroutines/exception-handling.html">coroutine exception handling</a>. 
+<code>TestCoroutineScope</code> will always use <code>TestCoroutineDispatcher</code> as it’s dispatcher.</p>
+
+<p>A test can use a <code>TestCoroutineDispatcher</code> without declaring an explicit <code>TestCoroutineScope</code>. This is preferred 
+when the class under test allows a test to provide a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> but does not allow the test to provide a 
+<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.</p>
+
+<p>Since <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-dispatcher/index.html">TestCoroutineDispatcher</a> is stateful in order to keep track of executing coroutines, it is 
+important to ensure that <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-dispatcher/cleanup-test-coroutines.html">cleanupTestCoroutines</a> is called after every test case.</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">TestClass</span> <span class="p">{</span>
+    <span class="k">private</span> <span class="kd">val</span> <span class="py">testDispatcher</span> <span class="p">=</span> <span class="n">TestCoroutineDispatcher</span><span class="p">()</span>
+        
+    <span class="n">@Before</span>
+    <span class="k">fun</span> <span class="nf">setup</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">// provide the scope explicitly, in this example using a constructor parameter
+</span>        <span class="n">Dispatchers</span><span class="p">.</span><span class="n">setMain</span><span class="p">(</span><span class="n">testDispatcher</span><span class="p">)</span>
+    <span class="p">}</span>
+    
+    <span class="n">@After</span>
+    <span class="k">fun</span> <span class="nf">cleanUp</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">Dispatchers</span><span class="p">.</span><span class="n">resetMain</span><span class="p">()</span>
+        <span class="n">testScope</span><span class="p">.</span><span class="n">cleanupTestCoroutines</span><span class="p">()</span>
+    <span class="p">}</span>
+    
+    <span class="n">@Test</span>
+    <span class="k">fun</span> <span class="nf">testFoo</span><span class="p">()</span> <span class="p">=</span> <span class="n">testDispatcher</span><span class="p">.</span><span class="n">runBlockingTest</span> <span class="p">{</span>
+        <span class="c1">// TestCoroutineDispatcher.runBlockingTest uses `testDispatcher` to run coroutines 
+</span>        <span class="n">foo</span><span class="p">()</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">fun</span> <span class="nf">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">MainScope</span><span class="p">().</span><span class="n">launch</span> <span class="p">{</span> 
+        <span class="c1">// launch will use the testDispatcher provided by setMain
+</span>    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p><em>Note:</em> Prefer to provide <code>TestCoroutineScope</code> when it does not complicate code since it will also elevate exceptions 
+to test failures. However, exposing a <code>CoroutineScope</code> to callers of a function may lead to complicated code, in which 
+case this is the preferred pattern.</p>
+
+<h3 id="using-testcoroutinescope-and-testcoroutinedispatcher-without-runblockingtest">Using <code>TestCoroutineScope</code> and <code>TestCoroutineDispatcher</code> without <code>runBlockingTest</code></h3>
+
+<p>It is supported to use both <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html">TestCoroutineScope</a> and <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-dispatcher/index.html">TestCoroutineDispatcher</a> without using the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-blocking-test.html">runBlockingTest</a> 
+builder. Tests may need to do this in situations such as introducing multiple dispatchers and library writers may do 
+this to provide alternatives to <code>runBlockingTest</code>.</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">@Test</span>
+<span class="k">fun</span> <span class="nf">testFooWithAutoProgress</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">val</span> <span class="py">scope</span> <span class="p">=</span> <span class="n">TestCoroutineScope</span><span class="p">()</span>
+    <span class="n">scope</span><span class="p">.</span><span class="n">foo</span><span class="p">()</span>
+    <span class="c1">// foo is suspended waiting for time to progress
+</span>    <span class="n">scope</span><span class="p">.</span><span class="n">advanceUntilIdle</span><span class="p">()</span>
+    <span class="c1">// foo's coroutine will be completed before here
+</span><span class="p">}</span>
+
+<span class="k">fun</span> <span class="nf">CoroutineScope</span><span class="p">.</span><span class="n">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">launch</span> <span class="p">{</span>
+        <span class="n">println</span><span class="p">(</span><span class="m">1</span><span class="p">)</span>            <span class="c1">// executes eagerly when foo() is called due to TestCoroutineScope
+</span>        <span class="n">delay</span><span class="p">(</span><span class="m">1</span><span class="n">_000</span><span class="p">)</span>          <span class="c1">// suspends until time is advanced by at least 1_000
+</span>        <span class="n">println</span><span class="p">(</span><span class="m">2</span><span class="p">)</span>            <span class="c1">// executes after advanceTimeUntilIdle
+</span>    <span class="p">}</span>
+<span class="p">}</span> 
+</code></pre>
+</div>
+
+<h2 id="using-time-control-with-withcontext">Using time control with <code>withContext</code></h2>
+
+<p>Calls to <code>withContext(Dispatchers.IO)</code> or <code>withContext(Dispatchers.Default)</code> are common in coroutines based codebases. 
+Both dispatchers are not designed to interact with <code>TestCoroutineDispatcher</code>.</p>
+
+<p>Tests should provide a <code>TestCoroutineDispatcher</code> to replace these dispatchers if the <code>withContext</code> calls <code>delay</code> in the
+function under test. For example, a test that calls <code>veryExpensiveOne</code> should provide a <code>TestCoroutineDispatcher</code> using
+either dependency injection, a service locator, or a default parameter.</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">suspend</span> <span class="k">fun</span> <span class="nf">veryExpensiveOne</span><span class="p">()</span> <span class="p">=</span> <span class="n">withContext</span><span class="p">(</span><span class="n">Dispatchers</span><span class="p">.</span><span class="n">Default</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">delay</span><span class="p">(</span><span class="m">1</span><span class="n">_000</span><span class="p">)</span>
+    <span class="m">1</span> <span class="c1">// for very expensive values of 1
+</span><span class="p">}</span>
+</code></pre>
+</div>
+
+<p>In situations where the code inside the <code>withContext</code> is very simple, it is not as important to provide a test 
+dispatcher. The function <code>veryExpensiveTwo</code> will behave identically in a <code>TestCoroutineDispatcher</code> and 
+<code>Dispatchers.Default</code> after the thread switch for <code>Dispatchers.Default</code>. Because <code>withContext</code> always returns a value by
+directly, there is no need to inject a <code>TestCoroutineDispatcher</code> into this function.</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">suspend</span> <span class="k">fun</span> <span class="nf">veryExpensiveTwo</span><span class="p">()</span> <span class="p">=</span> <span class="n">withContext</span><span class="p">(</span><span class="n">Dispatchers</span><span class="p">.</span><span class="n">Default</span><span class="p">)</span> <span class="p">{</span>
+    <span class="m">2</span> <span class="c1">// for very expensive values of 2
+</span><span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Tests should provide a <code>TestCoroutineDispatcher</code> to code that calls <code>withContext</code> to provide time control for 
+delays, or when execution control is needed to test complex logic.</p>
+
+<h3 id="status-of-the-api">Status of the API</h3>
+
+<p>This API is experimental and it is may change before migrating out of experimental (while it is marked as
+<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html"><code>@ExperimentalCoroutinesApi</code></a>).
+Changes during experimental may have deprecation applied when possible, but it is not
+advised to use the API in stable code before it leaves experimental due to possible breaking changes.</p>
+
+<p>If you have any suggestions for improvements to this experimental API please share them them on the 
+<a href="https://github.com/Kotlin/kotlinx.coroutines/issues">issue tracker</a>.</p>
 
 <h3 id="packages">Packages</h3>
 

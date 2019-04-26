@@ -29,7 +29,7 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <p>Test utilities for <code>kotlinx.coroutines</code>. Provides <code>Dispatchers.setMain</code> to override the <code>Main</code> dispatcher.</p>
+        <p>Test utilities for <code>kotlinx.coroutines</code>.</p>
 
 <h3 id="all-types">All Types</h3>
 
@@ -37,9 +37,70 @@
 <tbody>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.test/-delay-controller/index.html">kotlinx.coroutines.test.DelayController</a></p>
+      </td>
+<td>
+
+        <p>Control the virtual clock time of a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.test/kotlinx.coroutines.-dispatchers/index.html">kotlinx.coroutines.Dispatchers</a> (extensions in package kotlinx.coroutines.test)</p>
       </td>
 <td>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.test/-test-coroutine-dispatcher/index.html">kotlinx.coroutines.test.TestCoroutineDispatcher</a></p>
+      </td>
+<td>
+
+        <p><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> that performs both immediate and lazy execution of coroutines in tests
+and implements <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-delay-controller/index.html">DelayController</a> to control its virtual clock.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.test/-test-coroutine-exception-handler/index.html">kotlinx.coroutines.test.TestCoroutineExceptionHandler</a></p>
+      </td>
+<td>
+
+        <p>An exception handler that captures uncaught exceptions in tests.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.test/-test-coroutine-scope/index.html">kotlinx.coroutines.test.TestCoroutineScope</a></p>
+      </td>
+<td>
+
+        <p>A scope which provides detailed control over the execution of coroutines for tests.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.test/-uncaught-exception-captor/index.html">kotlinx.coroutines.test.UncaughtExceptionCaptor</a></p>
+      </td>
+<td>
+
+        <p>Access uncaught coroutine exceptions captured during test execution.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.test/-uncompleted-coroutines-error/index.html">kotlinx.coroutines.test.UncompletedCoroutinesError</a></p>
+      </td>
+<td>
+
+        <p>Thrown when a test has completed and there are tasks that are not completed or cancelled.</p>
 
       </td>
 </tr>

@@ -35,7 +35,7 @@
 
 <div class="signature"><code><span class="keyword">fun </span><span class="identifier">SupervisorJob</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines$SupervisorJob(kotlinx.coroutines.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="-completable-job/index.html"><span class="identifier">CompletableJob</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Supervisor.kt#L32">(source)</a></div>
 
-<p>Creates a new <em>supervisor</em> job object in an active state.
+<p>Creates a <em>supervisor</em> job object in an active state.
 Children of a supervisor job can fail independently of each other.</p>
 
 <p>A failure or cancellation of a child does not cause the supervisor job to fail and does not affect its other children,

@@ -35,9 +35,9 @@
 
 <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelAndJoin</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Job.kt#L478">(source)</a></div>
 
-<p>Cancels the job and suspends invoking coroutine until the cancelled job is complete.</p>
+<p>Cancels the job and suspends the invoking coroutine until the cancelled job is complete.</p>
 
-<p>This suspending function is cancellable and <strong>always</strong> checks for the cancellation of invoking coroutine’s Job.
+<p>This suspending function is cancellable and <strong>always</strong> checks for a cancellation of the invoking coroutine’s Job.
 If the <a href="-job/index.html">Job</a> of the invoking coroutine is cancelled or completed when this
 suspending function is invoked or while it is suspended, this function
 throws <a href="-cancellation-exception/index.html">CancellationException</a>.</p>

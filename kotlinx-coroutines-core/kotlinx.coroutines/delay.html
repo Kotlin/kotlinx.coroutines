@@ -40,7 +40,7 @@ This suspending function is cancellable.
 If the <a href="-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
 immediately resumes with <a href="-cancellation-exception/index.html">CancellationException</a>.</p>
 
-<p>Note, that delay can be used in <a href="../kotlinx.coroutines.selects/select.html">select</a> invocation with <a href="../kotlinx.coroutines.selects/-select-builder/on-timeout.html">onTimeout</a> clause.</p>
+<p>Note that delay can be used in <a href="../kotlinx.coroutines.selects/select.html">select</a> invocation with <a href="../kotlinx.coroutines.selects/-select-builder/on-timeout.html">onTimeout</a> clause.</p>
 
 <p>Implementation note: how exactly time is tracked is an implementation detail of <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in the context.</p>
 

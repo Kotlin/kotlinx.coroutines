@@ -35,19 +35,19 @@
 
 <div class="signature"><code><span class="identifier">DEFAULT</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineStart.kt#L38">(source)</a></div>
 
-<p>Default – immediately schedules coroutine for execution according to its context.</p>
+<p>Default – immediately schedules the coroutine for execution according to its context.</p>
 
 <p>If the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> of the coroutine context returns <code>true</code> from <a href="../-coroutine-dispatcher/is-dispatch-needed.html">CoroutineDispatcher.isDispatchNeeded</a>
 function as most dispatchers do, then the coroutine code is dispatched for execution later, while the code that
 invoked the coroutine builder continues execution.</p>
 
-<p>Note, that <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> always returns <code>false</code> from its <a href="../-coroutine-dispatcher/is-dispatch-needed.html">CoroutineDispatcher.isDispatchNeeded</a>
-function, so starting coroutine with <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> by <a href="./-d-e-f-a-u-l-t.md">DEFAULT</a> is the same as using <a href="-u-n-d-i-s-p-a-t-c-h-e-d.html">UNDISPATCHED</a>.</p>
+<p>Note that <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> always returns <code>false</code> from its <a href="../-coroutine-dispatcher/is-dispatch-needed.html">CoroutineDispatcher.isDispatchNeeded</a>
+function, so starting a coroutine with <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> by <a href="./-d-e-f-a-u-l-t.md">DEFAULT</a> is the same as using <a href="-u-n-d-i-s-p-a-t-c-h-e-d.html">UNDISPATCHED</a>.</p>
 
 <p>If coroutine <a href="../-job/index.html">Job</a> is cancelled before it even had a chance to start executing, then it will not start its
 execution at all, but will complete with an exception.</p>
 
-<p>Cancellability of coroutine at suspension points depends on the particular implementation details of
+<p>Cancellability of a coroutine at suspension points depends on the particular implementation details of
 suspending functions. Use <a href="../suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> to implement cancellable suspending functions.</p>
 
 

@@ -33,7 +33,9 @@
 
 <h1 id="testcoroutinecontext">TestCoroutineContext</h1>
 
-<div class="signature"><code><span class="identifier">@ObsoleteCoroutinesApi</span> <span class="keyword">class </span><span class="identifier">TestCoroutineContext</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/test_/TestCoroutineContext.kt#L34">(source)</a></div>
+<div class="signature"><code><span class="keyword">class </span><s><span class="identifier">TestCoroutineContext</span></s>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/test_/TestCoroutineContext.kt#L36">(source)</a></div>
+
+<p><strong>Deprecated:</strong> This API has been deprecated to integrate with Structured Concurrency.</p>
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
@@ -48,7 +50,7 @@ and then advance time or trigger the actions to make the co-routines execute as 
 with non-blocking Rx chains that contain delays, timeouts, intervals and such.</p>
 
 <p>This dispatcher can also handle <em>blocking</em> coroutines that are started by <a href="../../kotlinx.coroutines/run-blocking.html">runBlocking</a>.
-This dispatcher’s virtual time will be automatically advanced based based on the delayed actions
+This dispatcher’s virtual time will be automatically advanced based on the delayed actions
 within the Coroutine(s).</p>
 
 <p><strong>Note: This API will become obsolete in future updates due to integration with structured concurrency.</strong>
