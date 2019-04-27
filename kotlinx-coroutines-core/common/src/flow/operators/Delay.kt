@@ -116,21 +116,59 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
  * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
 public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
-    require(periodMillis > 0) { "Sample period should be positive" }
+    return sampleBy(flow {
+        delay(periodMillis)
+        while (true) {
+            emit(Unit)
+            delay(periodMillis)
+        }
+    })
+}
+
+/**
+ * Returns a flow that emits only the latest value emitted by the original flow only when the [sampler] emits.
+ *
+ * Example:
+ * ```
+ * flow {
+ *     repeat(10) {
+ *         emit(it)
+ *         delay(50)
+ *     }
+ * }.sampleBy(flow {
+ *     repeat(10) {
+ *         delay(100)
+ *         emit(it)
+ *     }
+ * })
+ *
+ * ```
+ * produces `0, 2, 4, 6, 8`.
+ *
+ * Note that the latest element is not emitted if it does not fit into the sampling window.
+ */
+public fun <T, R> Flow<T>.sampleBy(sampler: Flow<R>): Flow<T> {
     return flow {
         coroutineScope {
-            val values = produce<Any?>(capacity = Channel.CONFLATED) {  // Actually Any, KT-30796
+            val values = produce<Any?>(capacity = Channel.CONFLATED) {
+                // Actually Any, KT-30796
                 collect { value -> send(value ?: NullSurrogate) }
             }
 
+            val otherChannel = Channel<R>(Channel.CONFLATED)
+            val job = launch {
+                sampler.collect {
+                    otherChannel.send(it)
+                }
+            }
             var isDone = false
             var lastValue: Any? = null
-            val ticker = fixedPeriodTicker(periodMillis)
             while (!isDone) {
                 select<Unit> {
                     values.onReceiveOrNull {
                         if (it == null) {
-                            ticker.cancel()
+                            otherChannel.cancel()
+                            job.cancel()
                             isDone = true
                         } else {
                             lastValue = it
@@ -138,7 +176,7 @@ public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
                     }
 
                     // todo: shall be start sampling only when an element arrives or sample aways as here?
-                    ticker.onReceive {
+                    otherChannel.onReceive {
                         val value = lastValue ?: return@onReceive
                         lastValue = null // Consume the value
                         emit(NullSurrogate.unbox(value))
@@ -149,17 +187,58 @@ public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
     }
 }
 
-/*
- * TODO this design (and design of the corresponding operator) depends on #540
+/**
+ * Returns a flow that emits only the latest value emitted by the original flow only when the [sampler] channel emits.
+ *
+ * Example:
+ * ```
+ * val receiveChannel = produce {
+ *     repeat(10) {
+ *         delay(100)
+ *         send(it)
+ *     }
+ * }
+ * launch {
+ *     flow {
+ *         repeat(10) {
+ *             emit(it)
+ *             delay(50)
+ *         }
+ *     }.sampleBy(receiveChannel)
+ * ```
+ * produces `0, 2, 4, 6, 8`.
+ *
+ * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
-internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMillis: Long = delayMillis): ReceiveChannel<Unit> {
-    require(delayMillis >= 0) { "Expected non-negative delay, but has $delayMillis ms" }
-    require(initialDelayMillis >= 0) { "Expected non-negative initial delay, but has $initialDelayMillis ms" }
-    return produce(capacity = 0) {
-        delay(initialDelayMillis)
-        while (true) {
-            channel.send(Unit)
-            delay(delayMillis)
+public fun <T, R> Flow<T>.sampleBy(sampler: ReceiveChannel<R>): Flow<T> {
+    return flow {
+        coroutineScope {
+            val values = produce<Any?>(capacity = Channel.CONFLATED) {
+                // Actually Any, KT-30796
+                collect { value -> send(value ?: NullSurrogate) }
+            }
+
+            var isDone = false
+            var lastValue: Any? = null
+            while (!isDone) {
+                select<Unit> {
+                    values.onReceiveOrNull {
+                        if (it == null) {
+                            sampler.cancel()
+                            isDone = true
+                        } else {
+                            lastValue = it
+                        }
+                    }
+
+                    // todo: shall be start sampling only when an element arrives or sample aways as here?
+                    sampler.onReceive {
+                        val value = lastValue ?: return@onReceive
+                        lastValue = null // Consume the value
+                        emit(NullSurrogate.unbox(value))
+                    }
+                }
+            }
         }
     }
 }
