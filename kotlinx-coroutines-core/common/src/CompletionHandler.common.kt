@@ -13,8 +13,8 @@ import kotlinx.coroutines.internal.*
  * wrapped into [CompletionHandlerException], and rethrown, potentially causing crash of unrelated code.
  *
  * The meaning of `cause` that is passed to the handler:
- * * Cause is `null` when job has completed normally.
- * * Cause is an instance of [CancellationException] when job was cancelled _normally_.
+ * * Cause is `null` when the job has completed normally.
+ * * Cause is an instance of [CancellationException] when the job was cancelled _normally_.
  *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
  * * Otherwise, the job had _failed_.
  *

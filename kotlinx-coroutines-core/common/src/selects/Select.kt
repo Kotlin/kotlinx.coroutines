@@ -19,7 +19,7 @@ import kotlin.jvm.*
  */
 public interface SelectBuilder<in R> {
     /**
-     * Registers clause in this [select] expression without additional parameters that does not select any value.
+     * Registers a clause in this [select] expression without additional parameters that does not select any value.
      */
     public operator fun SelectClause0.invoke(block: suspend () -> R)
 
@@ -148,7 +148,7 @@ public interface SelectInstance<in R> {
 
  * There is no `default` clause for select expression. Instead, each selectable suspending function has the
  * corresponding non-suspending version that can be used with a regular `when` expression to select one
- * of the alternatives or to perform default (`else`) action if none of them can be immediately selected.
+ * of the alternatives or to perform the default (`else`) action if none of them can be immediately selected.
  *
  * | **Receiver**     | **Suspending function**                       | **Select clause**                                | **Non-suspending version**
  * | ---------------- | --------------------------------------------- | ------------------------------------------------ | --------------------------

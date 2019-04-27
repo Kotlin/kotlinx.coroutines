@@ -20,13 +20,13 @@ import kotlin.jvm.*
  *
  * The following methods are available for override:
  *
- * * [onStart] is invoked when coroutine was created in not active state and is being [started][Job.start].
- * * [onCancelling] is invoked as soon as coroutine is being cancelled for any reason (or completes).
- * * [onCompleted] is invoked when coroutine completes with a value.
- * * [onCancelled] in invoked when coroutines completes with exception (cancelled).
+ * * [onStart] is invoked when the coroutine was created in non-active state and is being [started][Job.start].
+ * * [onCancelling] is invoked as soon as the coroutine starts being cancelled for any reason (or completes).
+ * * [onCompleted] is invoked when the coroutine completes with a value.
+ * * [onCancelled] in invoked when the coroutine completes with an exception (cancelled).
  *
- * @param parentContext context of the parent coroutine.
- * @param active when `true` (by default) coroutine is created in _active_ state, when `false` in _new_ state.
+ * @param parentContext the context of the parent coroutine.
+ * @param active when `true` (by default), the coroutine is created in the _active_ state, otherwise it is created in the _new_ state.
  *               See [Job] for details.
  *
  * @suppress **This an internal API and should not be used from general code.**
@@ -34,30 +34,30 @@ import kotlin.jvm.*
 @InternalCoroutinesApi
 public abstract class AbstractCoroutine<in T>(
     /**
-     * Context of the parent coroutine.
+     * The context of the parent coroutine.
      */
     @JvmField
     protected val parentContext: CoroutineContext,
     active: Boolean = true
 ) : JobSupport(active), Job, Continuation<T>, CoroutineScope {
     /**
-     * Context of this coroutine that includes this coroutine as a [Job].
+     * The context of this coroutine that includes this coroutine as a [Job].
      */
     @Suppress("LeakingThis")
     public final override val context: CoroutineContext = parentContext + this
 
     /**
-     * Context of this scope which is the same as the [context] of this coroutine.
+     * The context of this scope which is the same as the [context] of this coroutine.
      */
     public override val coroutineContext: CoroutineContext get() = context
 
     override val isActive: Boolean get() = super.isActive
 
     /**
-     * Initializes parent job from the `parentContext` of this coroutine that was passed to it during construction.
+     * Initializes the parent job from the `parentContext` of this coroutine that was passed to it during construction.
      * It shall be invoked at most once after construction after all other initialization.
      * 
-     * Invocation of this function may cause this coroutine to become cancelled if parent is already cancelled,
+     * Invocation of this function may cause this coroutine to become cancelled if the parent is already cancelled,
      * in which case it synchronously invokes all the corresponding handlers.
      * @suppress **This is unstable API and it is subject to change.**
      */
@@ -66,7 +66,7 @@ public abstract class AbstractCoroutine<in T>(
     }
 
     /**
-     * This function is invoked once when non-active coroutine (constructed with `active` set to `false)
+     * This function is invoked once when a non-active coroutine (constructed with `active` set to `false)
      * is [started][start].
      */
     protected open fun onStart() {}
@@ -76,13 +76,13 @@ public abstract class AbstractCoroutine<in T>(
     }
 
     /**
-     * This function is invoked once when job was completed normally with the specified [value],
-     * right before all the waiters for coroutine's completion are notified.
+     * This function is invoked once when the job was completed normally with the specified [value],
+     * right before all the waiters for the coroutine's completion are notified.
      */
     protected open fun onCompleted(value: T) {}
 
     /**
-     * This function is invoked once when job was cancelled with the specified [cause],
+     * This function is invoked once when the job was cancelled with the specified [cause],
      * right before all the waiters for coroutine's completion are notified.
      *
      * **Note:** the state of the coroutine might not be final yet in this function and should not be queried.
