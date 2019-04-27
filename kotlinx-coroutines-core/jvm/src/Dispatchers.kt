@@ -41,13 +41,16 @@ public actual object Dispatchers {
      *
      * Depending on platform and classpath it can be mapped to different dispatchers:
      * - On JS and Native it is equivalent of [Default] dispatcher.
-     * - On JVM it either Android main thread dispatcher, JavaFx or Swing EDT dispatcher. It is chosen by
+     * - On JVM it is either Android main thread dispatcher, JavaFx or Swing EDT dispatcher. It is chosen by
      *   [`ServiceLoader`](https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html).
      *
-     * In order to work with `Main` dispatcher, following artifact should be added to project runtime dependencies:
+     * In order to work with `Main` dispatcher, the following artifacts should be added to project runtime dependencies:
      *  - `kotlinx-coroutines-android` for Android Main thread dispatcher
      *  - `kotlinx-coroutines-javafx` for JavaFx Application thread dispatcher
      *  - `kotlinx-coroutines-swing` for Swing EDT dispatcher
+     *
+     * In order to set a custom `Main` dispatcher for testing purposes, add the `kotlinx-coroutines-test` artifact to 
+     * project test dependencies.
      *
      * Implementation note: [MainCoroutineDispatcher.immediate] is not supported on Native and JS platforms.
      */
