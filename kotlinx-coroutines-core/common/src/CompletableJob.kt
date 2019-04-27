@@ -13,7 +13,7 @@ public interface CompletableJob : Job {
      * Completes this job. The result is `true` if this job was completed as a result of this invocation and
      * `false` otherwise (if it was already completed).
      *
-     * Repeated invocations of this function have no effect and always produce `false`.
+     * Subsequent invocations of this function have no effect and always produce `false`.
      *
      * This function transitions this job into _completed- state if it was not completed or cancelled yet.
      * However, that if this job has children, then it transitions into _completing_ state and becomes _complete_
@@ -25,7 +25,7 @@ public interface CompletableJob : Job {
      * Completes this job exceptionally with a given [exception]. The result is `true` if this job was
      * completed as a result of this invocation and `false` otherwise (if it was already completed).
      *
-     * Repeated invocations of this function have no effect and always produce `false`.
+     * Subsequent invocations of this function have no effect and always produce `false`.
      *
      * This function transitions this job into _cancelled_ state if it was not completed or cancelled yet.
      * However, that if this job has children, then it transitions into _cancelling_ state and becomes _cancelled_

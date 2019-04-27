@@ -19,7 +19,7 @@ internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exce
  */
 @InternalCoroutinesApi
 public fun handleCoroutineException(context: CoroutineContext, exception: Throwable) {
-    // Invoke exception handler from the context if present
+    // Invoke an exception handler from the context if present
     try {
         context[CoroutineExceptionHandler]?.let {
             it.handleException(context, exception)
@@ -29,7 +29,7 @@ public fun handleCoroutineException(context: CoroutineContext, exception: Throwa
         handleCoroutineExceptionImpl(context, handlerException(exception, t))
         return
     }
-    // If handler is not present in the context or exception was thrown, fallback to the global handler
+    // If a handler is not present in the context or an exception was thrown, fallback to the global handler
     handleCoroutineExceptionImpl(context, exception)
 }
 
@@ -54,7 +54,7 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
 /**
  * An optional element in the coroutine context to handle uncaught exceptions.
  *
- * Normally, uncaught exceptions can only result from coroutines created using [launch][CoroutineScope.launch] builder.
+ * Normally, uncaught exceptions can only result from coroutines created using the [launch][CoroutineScope.launch] builder.
  * A coroutine that was created using [async][CoroutineScope.async] always catches all its exceptions and represents them
  * in the resulting [Deferred] object.
  *

@@ -80,7 +80,7 @@ public interface SendChannel<in E> {
 
     /**
      * Closes this channel.
-     * This is an idempotent operation -- repeated invocations of this function have no effect and return `false`.
+     * This is an idempotent operation -- subsequent invocations of this function have no effect and return `false`.
      * Conceptually, its sends a special "close token" over this channel.
      *
      * Immediately after invocation of this function
