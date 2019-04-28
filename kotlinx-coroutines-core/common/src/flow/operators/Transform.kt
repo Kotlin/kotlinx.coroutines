@@ -12,8 +12,8 @@ import kotlin.jvm.*
 import kotlinx.coroutines.flow.unsafeFlow as flow
 
 /**
- * Applies [transformer] function to each value of the given flow.
- * [transformer] is a generic function that may transform emitted element, skip it or emit it multiple times.
+ * Applies [transform] function to each value of the given flow.
+ * [transform] is a generic function that may transform emitted element, skip it or emit it multiple times.
  *
  * This operator is useless by itself, but can be used as a building block of user-specific operators:
  * ```
@@ -26,10 +26,10 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
  * ```
  */
 @FlowPreview
-public fun <T, R> Flow<T>.transform(@BuilderInference transformer: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> {
+public fun <T, R> Flow<T>.transform(@BuilderInference transform: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> {
     return flow {
         collect { value ->
-            transformer(value)
+            transform(value)
         }
     }
 }
@@ -70,17 +70,19 @@ public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = flow<T> {
 }
 
 /**
- * Returns a flow containing the results of applying the given [transformer] function to each value of the original flow.
+ * Returns a flow containing the results of applying the given [transform] function to each value of the original flow.
  */
 @FlowPreview
-public fun <T, R> Flow<T>.map(transformer: suspend (value: T) -> R): Flow<R> = transform { value -> emit(transformer(value)) }
+public fun <T, R> Flow<T>.map(transform: suspend (value: T) -> R): Flow<R> = transform { value ->
+    emit(transform(value))
+}
 
 /**
- * Returns a flow that contains only non-null results of applying the given [transformer] function to each value of the original flow.
+ * Returns a flow that contains only non-null results of applying the given [transform] function to each value of the original flow.
  */
 @FlowPreview
-public fun <T, R: Any> Flow<T>.mapNotNull(transformer: suspend (value: T) -> R?): Flow<R> = transform { value ->
-    val transformed = transformer(value) ?: return@transform
+public fun <T, R: Any> Flow<T>.mapNotNull(transform: suspend (value: T) -> R?): Flow<R> = transform { value ->
+    val transformed = transform(value) ?: return@transform
     emit(transformed)
 }
 
