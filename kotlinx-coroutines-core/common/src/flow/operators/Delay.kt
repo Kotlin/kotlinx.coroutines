@@ -156,7 +156,7 @@ public fun <T, R> Flow<T>.sampleBy(sampler: Flow<R>): Flow<T> {
             }
 
             val otherChannel = Channel<R>(Channel.CONFLATED)
-            val job = launch {
+            val samplerJob = launch {
                 sampler.collect {
                     otherChannel.send(it)
                 }
@@ -168,7 +168,7 @@ public fun <T, R> Flow<T>.sampleBy(sampler: Flow<R>): Flow<T> {
                     values.onReceiveOrNull {
                         if (it == null) {
                             otherChannel.cancel()
-                            job.cancel()
+                            samplerJob.cancel()
                             isDone = true
                         } else {
                             lastValue = it
@@ -213,6 +213,8 @@ public fun <T, R> Flow<T>.sampleBy(sampler: Flow<R>): Flow<T> {
 public fun <T, R> Flow<T>.sampleBy(sampler: ReceiveChannel<R>): Flow<T> {
     return flow {
         coroutineScope {
+
+
             val values = produce<Any?>(capacity = Channel.CONFLATED) {
                 // Actually Any, KT-30796
                 collect { value -> send(value ?: NullSurrogate) }
@@ -232,10 +234,12 @@ public fun <T, R> Flow<T>.sampleBy(sampler: ReceiveChannel<R>): Flow<T> {
                     }
 
                     // todo: shall be start sampling only when an element arrives or sample aways as here?
-                    sampler.onReceive {
-                        val value = lastValue ?: return@onReceive
-                        lastValue = null // Consume the value
-                        emit(NullSurrogate.unbox(value))
+                    sampler.onReceiveOrNull {
+                        if(it != null){
+                            val value = lastValue ?: return@onReceiveOrNull
+                            lastValue = null // Consume the value
+                            emit(NullSurrogate.unbox(value))
+                        }
                     }
                 }
             }
