@@ -42,41 +42,6 @@ class SampleByTest : TestBase() {
         assertEquals(listOf("B", "D"), result)
         finish(8)
     }
-
-    @Test
-    public fun testBasicWithChannel() = withVirtualTime {
-        expect(1)
-        val flow = flow {
-            expect(3)
-            delay(200)
-            emit("A")
-            expect(4)
-            delay(600)
-            emit("B")
-            delay(200)
-            emit("C")
-            delay(200)
-            expect(6)
-            emit("D")
-            delay(1000)
-            emit("E")
-            expect(7)
-        }
-
-
-        val samplerChannel = produce {
-            delay(1000)
-            expect(5)
-            send("AA")
-            delay(1000)
-            send("BB")
-        }
-        expect(2)
-        val result = flow.sampleBy(samplerChannel).toList()
-        assertEquals(listOf("B", "D"), result)
-        finish(8)
-    }
-
     @Test
     fun testDelayedFirstWithFlow() = withVirtualTime {
         val flow = flow {
@@ -94,24 +59,6 @@ class SampleByTest : TestBase() {
         finish(4)
     }
 
-    @Test
-    fun testDelayedFirstWithChannel() = withVirtualTime {
-        val channel = Channel<Int>(Channel.CONFLATED)
-        launch {
-            delay(100)
-            channel.send(4)
-            expect(2)
-        }
-        val flow = flow {
-            delay(60)
-            emit(1)
-            expect(1)
-            delay(60)
-            expect(3)
-        }.sampleBy(channel)
-        assertEquals(1, flow.singleOrNull())
-        finish(4)
-    }
 
     @Test
     fun testBasicFlow2() = withVirtualTime {
@@ -146,38 +93,6 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testBasicChannel2() = withVirtualTime {
-        expect(1)
-        val flow = flow {
-            expect(3)
-            emit(1)
-            emit(2)
-            delay(501)
-            emit(3)
-            delay(100)
-            emit(4)
-            delay(100)
-            emit(5)
-            emit(6)
-            delay(301)
-            emit(7)
-            delay(501)
-            expect(4)
-        }
-        val channel = produce {
-            delay(500)
-            repeat(10) {
-                send(1)
-                delay(500)
-            }
-        }
-        expect(2)
-        val result = flow.sampleBy(channel).toList()
-        assertEquals(listOf(2, 6, 7), result)
-        finish(5)
-    }
-
-    @Test
     fun testFixedDelayWithFlow() = withVirtualTime {
         val flow = flow {
             emit("A")
@@ -195,24 +110,6 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testFixedDelayWithChannel() = withVirtualTime {
-        val channel = produce {
-            delay(100)
-            send(1)
-            expect(2)
-        }
-        val flow = flow {
-            emit("A")
-            expect(1)
-            delay(150)
-            emit("B")
-            expect(3)
-        }.sampleBy(channel)
-        assertEquals("A", flow.single())
-        finish(4)
-    }
-
-    @Test
     fun testSingleNullWithFlow() = withVirtualTime {
         val flow = flow<Int?> {
             emit(null)
@@ -222,22 +119,6 @@ class SampleByTest : TestBase() {
             delay(1)
             emit(1)
         })
-        assertNull(flow.single())
-        finish(2)
-    }
-
-
-    @Test
-    fun testSingleNullWithChannel() = withVirtualTime {
-        val channel = produce {
-            delay(1)
-            send(1)
-        }
-        val flow = flow<Int?> {
-            emit(null)
-            delay(2)
-            expect(1)
-        }.sampleBy(channel)
         assertNull(flow.single())
         finish(2)
     }
@@ -275,38 +156,6 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testBasicWithNullsWithChannel() = withVirtualTime {
-        expect(1)
-        val flow = flow {
-            expect(3)
-            emit("A")
-            delay(1500)
-            emit(null)
-            delay(500)
-            emit("C")
-            delay(250)
-            emit(null)
-            delay(2000)
-            emit("E")
-            expect(4)
-        }
-
-        expect(2)
-        val channel = produce {
-            repeat(20) {
-                delay(1000)
-                repeat(10) {
-                    send(1)
-                    delay(1000)
-                }
-            }
-        }
-        val result = flow.sampleBy(channel).toList()
-        assertEquals(listOf("A", null, null), result)
-        finish(5)
-    }
-
-    @Test
     fun testEmptyWithFlow() = runTest {
         val flow = emptyFlow<Int>().sampleBy(flow {
             delay(Long.MAX_VALUE)
@@ -316,30 +165,10 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testEmptyWithChannel() = runTest {
-        val channel = produce {
-            delay(Long.MAX_VALUE)
-            send(1)
-        }
-
-        val flow = emptyFlow<Int>().sampleBy(channel)
-        assertNull(flow.singleOrNull())
-    }
-
-    @Test
     fun testScalarWithFlow() = runTest {
         val flow = flowOf(1, 2, 3).sampleBy(flow {
             delay(Long.MAX_VALUE)
             emit(1)
-        })
-        assertNull(flow.singleOrNull())
-    }
-
-    @Test
-    fun testScalarWithChannel() = runTest {
-        val flow = flowOf(1, 2, 3).sampleBy(produce {
-            delay(Long.MAX_VALUE)
-            send(1)
         })
         assertNull(flow.singleOrNull())
     }
@@ -362,31 +191,6 @@ class SampleByTest : TestBase() {
             repeat(10){
                 delay(1000)
                 emit(1)
-            }
-        }).toList()
-        assertEquals(listOf("A", "B", "C"), result)
-        finish(3)
-    }
-
-
-    @Test
-    // note that this test depends on the sampling strategy -- when sampling time starts on a quiescent flow that suddenly emits
-    fun testLongWaitWithChannel() = withVirtualTime {
-        expect(1)
-        val flow = flow {
-            expect(2)
-            emit("A")
-            delay(3500) // long delay -- multiple sampling intervals
-            emit("B")
-            delay(900) // crosses time = 4000 barrier
-            emit("C")
-            delay(3000) // long wait again
-
-        }
-        val result = flow.sampleBy(produce {
-            repeat(10){
-                delay(1000)
-                send(1)
             }
         }).toList()
         assertEquals(listOf("A", "B", "C"), result)
@@ -420,31 +224,6 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testPaceWithChannel() = withVirtualTime {
-        val flow = flow {
-            expect(1)
-            repeat(4) {
-                emit(-it)
-                delay(50)
-            }
-
-            repeat(4) {
-                emit(it)
-                delay(100)
-            }
-            expect(2)
-        }.sampleBy( produce {
-            repeat(10) {
-                delay(100)
-                send(1)
-            }
-        })
-        assertEquals(listOf(-1, -3, 0, 1, 2, 3), flow.toList())
-        finish(3)
-
-    }
-
-    @Test
     fun testUpstreamErrorWithFlow() = runTest {
         val latch = Channel<Unit>()
         val flow = flow {
@@ -459,31 +238,6 @@ class SampleByTest : TestBase() {
                 emit(1)
             }
         }).map {
-            latch.send(Unit)
-            hang { expect(3) }
-        }
-
-        assertFailsWith<TestException>(flow)
-        finish(4)
-    }
-
-    @Test
-    fun testUpstreamErrorWithChannel() = runTest {
-        val channel = Channel<Int>(Channel.CONFLATED)
-        launch {
-            repeat(10) {
-                delay(1)
-                channel.send(1)
-            }
-        }
-        val latch = Channel<Unit>()
-        val flow = flow {
-            expect(1)
-            emit(1)
-            expect(2)
-            latch.receive()
-            throw TestException()
-        }.sampleBy(channel).map {
             latch.send(Unit)
             hang { expect(3) }
         }
@@ -517,32 +271,6 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamErrorIsolatedContextWithChannel() = withVirtualTime {
-        val sampler = Channel<Int>(Channel.CONFLATED)
-        launch {
-            repeat(10) {
-                delay(1)
-                sampler.send(1)
-            }
-        }
-        val latch = Channel<Unit>()
-        val flow = flow {
-            assertEquals("upstream", NamedDispatchers.name())
-            expect(1)
-            emit(1)
-            expect(2)
-            latch.receive()
-            throw TestException()
-        }.flowOn(NamedDispatchers("upstream")).sampleBy(sampler).map {
-            latch.send(Unit)
-            hang { expect(3) }
-        }
-
-        assertFailsWith<TestException>(flow)
-        finish(4)
-    }
-
-    @Test
     fun testUpstreamErrorSampleNotTriggeredWithFlow() = runTest {
         val flow = flow {
             expect(1)
@@ -560,26 +288,6 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamErrorSampleNotTriggeredWithChannel() = withVirtualTime {
-
-        val channel = Channel<Int>(Channel.CONFLATED)
-        launch {
-            delay(Long.MAX_VALUE)
-            channel.send(1)
-        }
-        val flow = flow<Int> {
-            expect(1)
-            expect(2)
-            throw TestException()
-        }.sampleBy(channel).map {
-            expectUnreached()
-        }
-        assertFailsWith<TestException>(flow)
-        finish(3)
-    }
-
-
-    @Test
     fun testUpstreamErrorSampleNotTriggeredInIsolatedContextWithFlow() = runTest {
         val flow = flow {
             expect(1)
@@ -594,29 +302,6 @@ class SampleByTest : TestBase() {
                 expectUnreached()
             }
         }
-
-        assertFailsWith<TestException>(flow)
-        finish(3)
-    }
-
-    @Test
-    fun testUpstreamErrorSampleNotTriggeredInIsolatedContextWithChannel() = withVirtualTime {
-        val channel = Channel<Int>(Channel.CONFLATED)
-        launch {
-            delay(Long.MAX_VALUE)
-            channel.send(1)
-        }
-        val flow = flow {
-            expect(1)
-            emit(1)
-            expect(2)
-            throw TestException()
-        }.flowWith(NamedDispatchers("unused")) {
-            sampleBy(channel).map {
-                expectUnreached()
-            }
-        }
-
 
         assertFailsWith<TestException>(flow)
         finish(3)
@@ -645,30 +330,6 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testDownstreamErrorWithChannel() = runTest {
-        val channel = Channel<Int>(Channel.CONFLATED)
-        launch {
-            repeat(100) {
-                delay(1)
-                channel.send(1)
-            }
-        }
-        val flow = flow {
-            expect(1)
-            emit(1)
-            hang { expect(3) }
-        }.sampleBy(channel).map {
-            expect(2)
-            yield()
-            throw TestException()
-            it
-        }
-
-        assertFailsWith<TestException>(flow)
-        finish(4)
-    }
-
-    @Test
     fun testDownstreamErrorIsolatedContextWithFlow() = runTest {
         val flow = flow {
             assertEquals("upstream", NamedDispatchers.name())
@@ -681,31 +342,6 @@ class SampleByTest : TestBase() {
                 emit(1)
             }
         }).map {
-            expect(2)
-            yield()
-            throw TestException()
-            it
-        }
-
-        assertFailsWith<TestException>(flow)
-        finish(4)
-    }
-
-    @Test
-    fun testDownstreamErrorIsolatedContextWithChannel() = withVirtualTime {
-        val channel = Channel<Int>(Channel.CONFLATED)
-        launch {
-                repeat(100) {
-                    delay(1)
-                    channel.send(1)
-                }
-        }
-        val flow = flow {
-            assertEquals("upstream", NamedDispatchers.name())
-            expect(1)
-            emit(1)
-            hang { expect(3) }
-        }.flowOn(NamedDispatchers("upstream")).sampleBy(channel).map {
             expect(2)
             yield()
             throw TestException()
