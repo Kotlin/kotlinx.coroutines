@@ -213,13 +213,12 @@ public fun <T, R> Flow<T>.sampleBy(sampler: Flow<R>): Flow<T> {
 public fun <T, R> Flow<T>.sampleBy(sampler: ReceiveChannel<R>): Flow<T> {
     return flow {
         coroutineScope {
-
-
             val values = produce<Any?>(capacity = Channel.CONFLATED) {
                 // Actually Any, KT-30796
-                collect { value -> send(value ?: NullSurrogate) }
+                collect { value ->
+                    send(value ?: NullSurrogate)
+                }
             }
-
             var isDone = false
             var lastValue: Any? = null
             while (!isDone) {
@@ -239,6 +238,8 @@ public fun <T, R> Flow<T>.sampleBy(sampler: ReceiveChannel<R>): Flow<T> {
                             val value = lastValue ?: return@onReceiveOrNull
                             lastValue = null // Consume the value
                             emit(NullSurrogate.unbox(value))
+                        }else{
+                            isDone = true
                         }
                     }
                 }

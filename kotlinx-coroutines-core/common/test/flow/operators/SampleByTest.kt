@@ -25,9 +25,8 @@ class SampleByTest : TestBase() {
             delay(200)
             expect(6)
             emit("D")
-            delay(800)
+            delay(10000)
             expect(7)
-            emit("E")
         }
 
 
@@ -59,9 +58,9 @@ class SampleByTest : TestBase() {
             delay(200)
             expect(6)
             emit("D")
-            delay(800)
-            expect(7)
+            delay(1000)
             emit("E")
+            expect(7)
         }
 
 
@@ -197,7 +196,6 @@ class SampleByTest : TestBase() {
 
     @Test
     fun testFixedDelayWithChannel() = withVirtualTime {
-        throw Exception()
         val channel = produce {
             delay(100)
             send(1)
@@ -519,7 +517,14 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamErrorIsolatedContextWithChannel() = runTest {
+    fun testUpstreamErrorIsolatedContextWithChannel() = withVirtualTime {
+        val sampler = Channel<Int>(Channel.CONFLATED)
+        launch {
+            repeat(10) {
+                delay(1)
+                sampler.send(1)
+            }
+        }
         val latch = Channel<Unit>()
         val flow = flow {
             assertEquals("upstream", NamedDispatchers.name())
@@ -528,12 +533,7 @@ class SampleByTest : TestBase() {
             expect(2)
             latch.receive()
             throw TestException()
-        }.flowOn(NamedDispatchers("upstream")).sampleBy(produce {
-            repeat(10) {
-                delay(1)
-                send(1)
-            }
-        }).map {
+        }.flowOn(NamedDispatchers("upstream")).sampleBy(sampler).map {
             latch.send(Unit)
             hang { expect(3) }
         }
@@ -600,8 +600,7 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamErrorSampleNotTriggeredInIsolatedContextWithChannel() = runTest {
-        throw Exception()
+    fun testUpstreamErrorSampleNotTriggeredInIsolatedContextWithChannel() = withVirtualTime {
         val channel = Channel<Int>(Channel.CONFLATED)
         launch {
             delay(Long.MAX_VALUE)
@@ -617,6 +616,7 @@ class SampleByTest : TestBase() {
                 expectUnreached()
             }
         }
+
 
         assertFailsWith<TestException>(flow)
         finish(3)
@@ -692,18 +692,20 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testDownstreamErrorIsolatedContextWithChannel() = runTest {
+    fun testDownstreamErrorIsolatedContextWithChannel() = withVirtualTime {
+        val channel = Channel<Int>(Channel.CONFLATED)
+        launch {
+                repeat(100) {
+                    delay(1)
+                    channel.send(1)
+                }
+        }
         val flow = flow {
             assertEquals("upstream", NamedDispatchers.name())
             expect(1)
             emit(1)
             hang { expect(3) }
-        }.flowOn(NamedDispatchers("upstream")).sampleBy(produce {
-            repeat(100) {
-                delay(1)
-                send(1)
-            }
-        }).map {
+        }.flowOn(NamedDispatchers("upstream")).sampleBy(channel).map {
             expect(2)
             yield()
             throw TestException()
