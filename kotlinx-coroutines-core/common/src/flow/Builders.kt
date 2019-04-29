@@ -58,7 +58,7 @@ public fun <T> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit
  */
 @FlowPreview
 @PublishedApi
-internal fun <T> unsafeFlow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
+internal inline fun <T> unsafeFlow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
     return object : Flow<T> {
         override suspend fun collect(collector: FlowCollector<T>) {
             collector.block()
