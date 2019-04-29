@@ -7,54 +7,54 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 
 /**
- * A cold asynchronous stream of the data, that emits from zero to N (where N can be unbounded) values and completes normally or with an exception.
+ * A cold asynchronous data stream emitting zero to N (where N can be unbounded) values and completing normally or with an exception.
  *
- * All transformations on the flow, such as [map] and [filter] do not trigger flow collection or execution, only terminal operators (e.g. [single]) do trigger it.
+ * Transformations on a flow, such as [map] and [filter], do not trigger its collection or execution (which is only done by terminal operators like [single]).
  *
- * Flow can be collected in a suspending manner, without actual blocking, using [collect] extension that will complete normally or exceptionally:
+ * A flow can be collected in a suspending manner, without actual blocking, using the [collect] extension that will complete normally or exceptionally:
  * ```
  * try {
  *     flow.collect { value ->
  *         println("Received $value")
  *     }
  * } catch (e: Exception) {
- *     println("Flow has thrown an exception: $e")
+ *     println("The flow has thrown an exception: $e")
  * }
  * ```
  * Additionally, the library provides a rich set of terminal operators such as [single], [reduce] and others.
  *
- * Flow does not carry information whether it is a cold stream (that can be collected multiple times and
- * triggers its evaluation every time [collect] is executed) or a hot one, but conventionally flow represents a cold stream.
+ * Flows don't carry information whether they are cold streams (which can be collected repeatedly and
+ * trigger their evaluation every time [collect] is executed) or hot ones, but, conventionally, they represent cold streams.
  * Transitions between hot and cold streams are supported via channels and the corresponding API: [flowViaChannel], [broadcastIn], [produceIn].
  *
- * Flow has a context preserving property: it encapsulates its own execution context and never propagates or leaks it to the downstream, thus making
- * reasoning about execution context of particular transformations or terminal operations trivial.
+ * The flow has a context preserving property: it encapsulates its own execution context and never propagates or leaks it downstream, thus making
+ * reasoning about the execution context of particular transformations or terminal operations trivial.
  *
- * There are two ways of changing the flow's context: [flowOn][Flow.flowOn] and [flowWith][Flow.flowWith].
+ * There are two ways to change the context of a flow: [flowOn][Flow.flowOn] and [flowWith][Flow.flowWith].
  * The former changes the upstream context ("everything above the flowOn operator") while the latter
- * changes the context of the flow within [flowWith] body. For additional information refer to these operators documentation.
+ * changes the context of the flow within [flowWith] body. For additional information refer to these operators' documentation.
  *
- * This reasoning can be demonstrated in the practice:
+ * This reasoning can be demonstrated in practice:
  * ```
  * val flow = flowOf(1, 2, 3)
  *     .map { it + 1 } // Will be executed in ctx_1
- *     .flowOn(ctx_1) // Changes upstream context: flowOf and map
+ *     .flowOn(ctx_1) // Changes the upstream context: flowOf and map
  *
- * // Now we have flow that is context-preserving: it is executed somewhere but this information is encapsulated in the flow itself
+ * // Now we have a context-preserving flow: it is executed somewhere but this information is encapsulated in the flow itself
  *
  * val filtered = flow // ctx_1 is inaccessible
  *    .filter { it == 3 } // Pure operator without a context yet
  *
  * withContext(Dispatchers.Main) {
- *     // All not encapsulated operators will be executed in Main: filter and single
+ *     // All non-encapsulated operators will be executed in Main: filter and single
  *     val result = filtered.single()
  *     myUi.text = result
  * }
  * ```
  *
- * From the implementation point of view it means that all intermediate operators on [Flow] should use the following constraint:
- * If one wants to separate collection or emission into multiple coroutines, it should use [coroutineScope] or [supervisorScope] and
- * is not allowed to modify coroutines context:
+ * From the implementation point of view it means that all intermediate operators on [Flow] should abide by the following constraint:
+ * If collection or emission of a flow is to be separated into multiple coroutines, it should use [coroutineScope] or [supervisorScope] and
+ * is not allowed to modify the coroutines' context:
  * ```
  * fun <T> Flow<T>.buffer(bufferSize: Int): Flow<T> = flow {
  *     coroutineScope { // coroutine scope is necessary, withContext is prohibited

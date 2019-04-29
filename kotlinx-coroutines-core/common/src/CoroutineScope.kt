@@ -51,7 +51,7 @@ public interface CoroutineScope {
     /**
      * The context of this scope.
      * Context is encapsulated by the scope and used for implementation of coroutine builders that are extensions on the scope.
-     * Accessing this property in general code is not recommended for any purposes except accessing [Job] instance for advanced usages.
+     * Accessing this property in general code is not recommended for any purposes except accessing the [Job] instance for advanced usages.
      *
      * By convention, should contain an instance of a [job][Job] to enforce structured concurrency.
      */
@@ -91,7 +91,7 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
 public fun MainScope(): CoroutineScope = ContextScope(SupervisorJob() + Dispatchers.Main)
 
 /**
- * Returns `true` when current [Job] is still active (has not completed and was not cancelled yet).
+ * Returns `true` when the current [Job] is still active (has not completed and was not cancelled yet).
  *
  * Check this property in long-running computation loops to support cancellation:
  * ```
