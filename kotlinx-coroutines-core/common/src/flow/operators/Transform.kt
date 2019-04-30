@@ -29,7 +29,8 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
 public inline fun <T, R> Flow<T>.transform(@BuilderInference crossinline transform: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> {
     return flow {
         collect { value ->
-            transform(value)
+            // kludge, without it Unit will be returned and TCE won't kick in, KT-28938
+            return@collect transform(value)
         }
     }
 }
@@ -40,7 +41,7 @@ public inline fun <T, R> Flow<T>.transform(@BuilderInference crossinline transfo
 @FlowPreview
 public inline fun <T> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolean): Flow<T> = flow {
     collect { value ->
-        if (predicate(value)) emit(value)
+        if (predicate(value)) return@collect emit(value)
     }
 }
 
@@ -50,7 +51,7 @@ public inline fun <T> Flow<T>.filter(crossinline predicate: suspend (T) -> Boole
 @FlowPreview
 public inline fun <T> Flow<T>.filterNot(crossinline predicate: suspend (T) -> Boolean): Flow<T> = flow {
     collect { value ->
-        if (!predicate(value)) emit(value)
+        if (!predicate(value)) return@collect emit(value)
     }
 }
 
@@ -66,7 +67,7 @@ public inline fun <reified R> Flow<*>.filterIsInstance(): Flow<R> = filter { it 
  */
 @FlowPreview
 public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = flow<T> {
-    collect { value -> if (value != null) emit(value) }
+    collect { value -> if (value != null) return@collect  emit(value) }
 }
 
 /**
@@ -74,7 +75,7 @@ public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = flow<T> {
  */
 @FlowPreview
 public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -> R): Flow<R> = transform { value ->
-    emit(transform(value))
+   return@transform emit(transform(value))
 }
 
 /**
@@ -83,7 +84,7 @@ public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -
 @FlowPreview
 public inline fun <T, R: Any> Flow<T>.mapNotNull(crossinline transform: suspend (value: T) -> R?): Flow<R> = transform { value ->
     val transformed = transform(value) ?: return@transform
-    emit(transformed)
+    return@transform emit(transformed)
 }
 
 /**
