@@ -242,14 +242,16 @@ public interface ReceiveChannel<out E> {
     /**
      * Cancels reception of remaining elements from this channel with an optional [cause].
      * This function closes the channel and removes all buffered sent elements from it.
+     *
      * A cause can be used to specify an error message or to provide other details on
      * a cancellation reason for debugging purposes.
+     * If the cause is not specified, then an instance of [CancellationException] with a
+     * default message is created to [close][SendChannel.close] the channel.
      *
      * Immediately after invocation of this function [isClosedForReceive] and
      * [isClosedForSend][SendChannel.isClosedForSend]
-     * on the side of [SendChannel] start returning `true`, so all attempts to send to this channel
-     * afterwards will throw [ClosedSendChannelException], while attempts to receive will throw
-     * [ClosedReceiveChannelException].
+     * on the side of [SendChannel] start returning `true`. All attempts to send to this channel
+     * or receive from this channel will throw [CancellationException].
      */
     public fun cancel(cause: CancellationException? = null)
 
@@ -382,14 +384,18 @@ public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> =
  * Indicates attempt to [send][SendChannel.send] on [isClosedForSend][SendChannel.isClosedForSend] channel
  * that was closed without a cause. A _failed_ channel rethrows the original [close][SendChannel.close] cause
  * exception on send attempts.
+ *
+ * This exception is a subclass of [IllegalStateException] because, conceptually, sender is responsible
+ * for closing the channel and not be trying to send anything after the channel was close. Attempts to
+ * send into the closed channel indicate logical error in the sender's code.
  */
-public class ClosedSendChannelException(message: String?) : CancellationException(message)
+public class ClosedSendChannelException(message: String?) : IllegalStateException(message)
 
 /**
  * Indicates attempt to [receive][ReceiveChannel.receive] on [isClosedForReceive][ReceiveChannel.isClosedForReceive]
  * channel that was closed without a cause. A _failed_ channel rethrows the original [close][SendChannel.close] cause
  * exception on receive attempts.
  *
- * This exception is subclass of [NoSuchElementException] to be consistent with plain collections.
+ * This exception is a subclass of [NoSuchElementException] to be consistent with plain collections.
  */
 public class ClosedReceiveChannelException(message: String?) : NoSuchElementException(message)

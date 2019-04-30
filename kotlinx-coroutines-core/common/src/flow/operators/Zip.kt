@@ -78,7 +78,7 @@ public fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspen
 
 private inline fun SelectBuilder<Unit>.onReceive(
     isClosed: Boolean,
-    channel: Channel<Any>,
+    channel: ReceiveChannel<Any>,
     crossinline onClosed: () -> Unit,
     noinline onReceive: suspend (value: Any) -> Unit
 ) {
@@ -90,18 +90,11 @@ private inline fun SelectBuilder<Unit>.onReceive(
 }
 
 // Channel has any type due to onReceiveOrNull. This will be fixed after receiveOrClosed
-private fun CoroutineScope.asFairChannel(flow: Flow<*>): Channel<Any> {
-    val channel = RendezvousChannel<Any>() // Explicit type
-    launch {
-        try {
-            flow.collect { value ->
-                channel.sendFair(value ?: NullSurrogate)
-            }
-        } finally {
-            channel.close()
-        }
+private fun CoroutineScope.asFairChannel(flow: Flow<*>): ReceiveChannel<Any> = produce {
+    val channel = channel as ChannelCoroutine<Any>
+    flow.collect { value ->
+        channel.sendFair(value ?: NullSurrogate)
     }
-    return channel
 }
 
 
@@ -133,7 +126,9 @@ public fun <T1, T2, R> Flow<T1>.zip(other: Flow<T2>, transform: suspend (T1, T2)
          *
          * Invariant: this clause is invoked only when all elements from the channel were processed (=> rendezvous restriction).
          */
-        (second as SendChannel<*>).invokeOnClose { first.cancel() }
+        (second as SendChannel<*>).invokeOnClose {
+            if (!first.isClosedForReceive) first.cancel(AbortFlowException())
+        }
 
         val otherIterator = second.iterator()
         try {
@@ -144,8 +139,10 @@ public fun <T1, T2, R> Flow<T1>.zip(other: Flow<T2>, transform: suspend (T1, T2)
                 val secondValue = NullSurrogate.unbox<T2>(otherIterator.next())
                 emit(transform(NullSurrogate.unbox(value), NullSurrogate.unbox(secondValue)))
             }
+        } catch (e: AbortFlowException) {
+            // complete
         } finally {
-            second.cancel()
+            if (!second.isClosedForReceive) second.cancel(AbortFlowException())
         }
     }
 }

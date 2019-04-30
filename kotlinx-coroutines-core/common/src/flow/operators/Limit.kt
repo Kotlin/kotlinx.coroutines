@@ -8,9 +8,10 @@
 
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.flow.unsafeFlow as flow
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
+import kotlinx.coroutines.flow.unsafeFlow as flow
 
 /**
  * Returns a flow that ignores first [count] elements.
@@ -57,10 +58,10 @@ public fun <T> Flow<T>.take(count: Int): Flow<T> {
             collect { value ->
                 emit(value)
                 if (++consumed == count) {
-                    throw TakeLimitException()
+                    throw AbortFlowException()
                 }
             }
-        } catch (e: TakeLimitException) {
+        } catch (e: AbortFlowException) {
             // Nothing, bail out
         }
     }
@@ -74,14 +75,9 @@ public fun <T> Flow<T>.takeWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
     try {
         collect { value ->
             if (predicate(value)) emit(value)
-            else throw TakeLimitException()
+            else throw AbortFlowException()
         }
-    } catch (e: TakeLimitException) {
+    } catch (e: AbortFlowException) {
         // Nothing, bail out
     }
-}
-
-private class TakeLimitException : CancellationException("Flow limit is reached, cancelling") {
-    // TODO expect/actual
-    // override fun fillInStackTrace(): Throwable = this
 }

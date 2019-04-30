@@ -38,7 +38,7 @@ class ProduceTest : TestBase() {
                 expectUnreached()
             } catch (e: Throwable) {
                 expect(7)
-                check(e is ClosedSendChannelException)
+                check(e is CancellationException)
                 throw e
             }
             expectUnreached()
@@ -48,7 +48,7 @@ class ProduceTest : TestBase() {
         expect(4)
         c.cancel()
         expect(5)
-        assertNull(c.receiveOrNull())
+        assertFailsWith<CancellationException> { c.receiveOrNull() }
         expect(6)
         yield() // to produce
         finish(8)
@@ -107,7 +107,6 @@ class ProduceTest : TestBase() {
         produced.cancel()
         try {
             source.receive()
-            // TODO shouldn't it be ClosedReceiveChannelException ?
         } catch (e: CancellationException) {
             finish(4)
         }

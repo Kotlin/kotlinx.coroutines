@@ -170,23 +170,25 @@ class ArrayBroadcastChannelTest : TestBase() {
         // start consuming
         val sub = channel.openSubscription()
         var expected = 0
-        sub.consumeEach {
-            check(it == ++expected)
-            if (it == 2) {
-                sub.cancel()
+        assertFailsWith<CancellationException> {
+            sub.consumeEach {
+                check(it == ++expected)
+                if (it == 2) {
+                    sub.cancel()
+                }
             }
         }
         check(expected == 2)
     }
 
     @Test
-    fun testReceiveFromClosedSub() = runTest({ it is ClosedReceiveChannelException }) {
+    fun testReceiveFromCancelledSub() = runTest {
         val channel = BroadcastChannel<Int>(1)
         val sub = channel.openSubscription()
         assertFalse(sub.isClosedForReceive)
         sub.cancel()
         assertTrue(sub.isClosedForReceive)
-        sub.receive()
+        assertFailsWith<CancellationException> { sub.receive() }
     }
 
     @Test

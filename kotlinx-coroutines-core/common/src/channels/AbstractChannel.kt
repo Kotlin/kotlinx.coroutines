@@ -669,7 +669,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         cancelInternal(cause)
 
     final override fun cancel(cause: CancellationException?) {
-        cancelInternal(cause)
+        cancelInternal(cause ?: CancellationException("$classSimpleName was cancelled"))
     }
 
     // It needs to be internal to support deprecated cancel(Throwable?) API

@@ -8,7 +8,6 @@ import kotlinx.coroutines.*
 import kotlin.test.*
 
 class BasicOperationsTest : TestBase() {
-
     @Test
     fun testSimpleSendReceive() = runTest {
         // Parametrized common test :(
@@ -18,6 +17,11 @@ class BasicOperationsTest : TestBase() {
     @Test
     fun testOfferAfterClose() = runTest {
         TestChannelKind.values().forEach { kind -> testOffer(kind) }
+    }
+
+    @Test
+    fun testSendAfterClose() = runTest {
+        TestChannelKind.values().forEach { kind -> testSendAfterClose(kind) }
     }
 
     @Test
@@ -126,6 +130,23 @@ class BasicOperationsTest : TestBase() {
         }
 
         d.await()
+    }
+
+    /**
+     * [ClosedSendChannelException] should not be eaten.
+     * See [https://github.com/Kotlin/kotlinx.coroutines/issues/957]
+     */
+    private suspend fun testSendAfterClose(kind: TestChannelKind) {
+        assertFailsWith<ClosedSendChannelException> {
+            coroutineScope {
+                val channel = kind.create()
+                channel.close()
+
+                launch {
+                    channel.send(1)
+                }
+            }
+        }
     }
 
     private suspend fun testSendReceive(kind: TestChannelKind, iterations: Int) = coroutineScope {
