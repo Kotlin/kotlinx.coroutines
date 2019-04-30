@@ -325,7 +325,7 @@ when the class under test allows a test to provide a [CoroutineDispatcher] but d
 [CoroutineScope].
 
 Since [TestCoroutineDispatcher] is stateful in order to keep track of executing coroutines, it is 
-important to ensure that [cleanupTestCoroutines][TestCoroutineDispatcher.cleanupTestCoroutines] is called after every test case. 
+important to ensure that [cleanupTestCoroutines][DelayController.cleanupTestCoroutines] is called after every test case. 
 
 ```kotlin
 class TestClass {
@@ -340,7 +340,7 @@ class TestClass {
     @After
     fun cleanUp() {
         Dispatchers.resetMain()
-        testScope.cleanupTestCoroutines()
+        testDispatcher.cleanupTestCoroutines()
     }
     
     @Test
@@ -449,5 +449,5 @@ If you have any suggestions for improvements to this experimental API please sha
 [TestCoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html
 [TestCoroutineExceptionHandler]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-exception-handler/index.html
 [TestCoroutineScope.cleanupTestCoroutines]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/cleanup-test-coroutines.html
-[TestCoroutineDispatcher.cleanupTestCoroutines]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-dispatcher/cleanup-test-coroutines.html
+[DelayController.cleanupTestCoroutines]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-delay-controller/cleanup-test-coroutines.html
 <!--- END -->
