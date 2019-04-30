@@ -692,7 +692,7 @@ public final class kotlinx/coroutines/channels/ClosedReceiveChannelException : j
 	public fun <init> (Ljava/lang/String;)V
 }
 
-public final class kotlinx/coroutines/channels/ClosedSendChannelException : java/util/concurrent/CancellationException {
+public final class kotlinx/coroutines/channels/ClosedSendChannelException : java/lang/IllegalStateException {
 	public fun <init> (Ljava/lang/String;)V
 }
 
