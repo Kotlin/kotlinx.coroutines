@@ -127,7 +127,7 @@ public fun <T1, T2, R> Flow<T1>.zip(other: Flow<T2>, transform: suspend (T1, T2)
          * Invariant: this clause is invoked only when all elements from the channel were processed (=> rendezvous restriction).
          */
         (second as SendChannel<*>).invokeOnClose {
-            first.cancel(AbortFlowException())
+            if (!first.isClosedForReceive) first.cancel(AbortFlowException())
         }
 
         val otherIterator = second.iterator()
@@ -142,7 +142,7 @@ public fun <T1, T2, R> Flow<T1>.zip(other: Flow<T2>, transform: suspend (T1, T2)
         } catch (e: AbortFlowException) {
             // complete
         } finally {
-            second.cancel(AbortFlowException())
+            if (!second.isClosedForReceive) second.cancel(AbortFlowException())
         }
     }
 }

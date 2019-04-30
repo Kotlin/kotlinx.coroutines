@@ -107,7 +107,6 @@ class ProduceTest : TestBase() {
         produced.cancel()
         try {
             source.receive()
-            // TODO shouldn't it be ClosedReceiveChannelException ?
         } catch (e: CancellationException) {
             finish(4)
         }

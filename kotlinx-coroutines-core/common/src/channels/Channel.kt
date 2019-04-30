@@ -245,8 +245,8 @@ public interface ReceiveChannel<out E> {
      *
      * A cause can be used to specify an error message or to provide other details on
      * a cancellation reason for debugging purposes.
-     * If cause is not specified, then an instance of [CancellationException] with a
-     * default message is create to [close][SendChannel.close] the channel. 
+     * If the cause is not specified, then an instance of [CancellationException] with a
+     * default message is created to [close][SendChannel.close] the channel.
      *
      * Immediately after invocation of this function [isClosedForReceive] and
      * [isClosedForSend][SendChannel.isClosedForSend]

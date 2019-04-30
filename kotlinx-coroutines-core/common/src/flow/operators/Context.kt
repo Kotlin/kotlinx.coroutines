@@ -53,17 +53,8 @@ public fun <T> Flow<T>.flowOn(flowContext: CoroutineContext, bufferSize: Int = 1
                     send(value)
                 }
             }
-
-            // TODO semantics doesn't play well here and we pay for that with additional object
-             (channel as Job).invokeOnCompletion { if (it is CancellationException && it.cause == null) cancel() }
-            for (element in channel) {
-                emit(element)
-            }
-
-            val producer = channel as Job
-            if (producer.isCancelled) {
-                producer.join()
-                throw producer.getCancellationException()
+            channel.consumeEach { value ->
+                emit(value)
             }
         }
     }

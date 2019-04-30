@@ -227,6 +227,4 @@ class ZipTest : TestBase() {
         assertFailsWith<TestException>(flow)
         finish(2)
     }
-
-    private suspend fun sum(s: String?, i: Int?): String = s + i
 }

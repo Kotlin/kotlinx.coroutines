@@ -144,7 +144,7 @@ class BasicOperationsTest : TestBase() {
 
                 launch {
                     channel.send(1)
-                }.join()
+                }
             }
         }
     }

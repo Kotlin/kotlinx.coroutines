@@ -29,7 +29,7 @@ internal open class ChannelCoroutine<E>(
 
     override fun cancelInternal(cause: Throwable?): Boolean {
         val exception = cause?.toCancellationException()
-            ?: JobCancellationException("Job was cancelled", null, this)
+            ?: JobCancellationException("$classSimpleName was cancelled", null, this)
         _channel.cancel(exception) // cancel the channel
         cancelCoroutine(exception) // cancel the job
         return true // does not matter - result is used in DEPRECATED functions only

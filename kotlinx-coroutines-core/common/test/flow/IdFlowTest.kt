@@ -21,13 +21,12 @@ class IdFlowTest : TestBase() {
             expect(2)
             emit(1)
             expect(3)
-            delay(Long.MAX_VALUE)
-            expectUnreached()
+            hang { finish(6) }
         }.idScoped().collect { value ->
             expect(4)
             assertEquals(1, value)
             kotlin.coroutines.coroutineContext.cancel()
-            finish(5)
+            expect(5)
         }
         expectUnreached()
     }
@@ -55,7 +54,7 @@ class IdFlowTest : TestBase() {
  */
 private fun <T> Flow<T>.idScoped(): Flow<T> = flow {
     coroutineScope {
-        val channel = produce<T> {
+        val channel = produce {
             collect { send(it) }
         }
         channel.consumeEach {
