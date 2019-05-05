@@ -8,9 +8,9 @@ class CancellationTimeOutsGuideTest {
     @Test
     fun testKotlinxCoroutinesGuideCancel01() {
         test("KotlinxCoroutinesGuideCancel01") { kotlinx.coroutines.guide.cancel01.main() }.verifyLines(
-            "I'm sleeping 0 ...",
-            "I'm sleeping 1 ...",
-            "I'm sleeping 2 ...",
+            "job: I'm sleeping 0 ...",
+            "job: I'm sleeping 1 ...",
+            "job: I'm sleeping 2 ...",
             "main: I'm tired of waiting!",
             "main: Now I can quit."
         )
@@ -19,12 +19,12 @@ class CancellationTimeOutsGuideTest {
     @Test
     fun testKotlinxCoroutinesGuideCancel02() {
         test("KotlinxCoroutinesGuideCancel02") { kotlinx.coroutines.guide.cancel02.main() }.verifyLines(
-            "I'm sleeping 0 ...",
-            "I'm sleeping 1 ...",
-            "I'm sleeping 2 ...",
+            "job: I'm sleeping 0 ...",
+            "job: I'm sleeping 1 ...",
+            "job: I'm sleeping 2 ...",
             "main: I'm tired of waiting!",
-            "I'm sleeping 3 ...",
-            "I'm sleeping 4 ...",
+            "job: I'm sleeping 3 ...",
+            "job: I'm sleeping 4 ...",
             "main: Now I can quit."
         )
     }
@@ -32,9 +32,9 @@ class CancellationTimeOutsGuideTest {
     @Test
     fun testKotlinxCoroutinesGuideCancel03() {
         test("KotlinxCoroutinesGuideCancel03") { kotlinx.coroutines.guide.cancel03.main() }.verifyLines(
-            "I'm sleeping 0 ...",
-            "I'm sleeping 1 ...",
-            "I'm sleeping 2 ...",
+            "job: I'm sleeping 0 ...",
+            "job: I'm sleeping 1 ...",
+            "job: I'm sleeping 2 ...",
             "main: I'm tired of waiting!",
             "main: Now I can quit."
         )
@@ -43,11 +43,11 @@ class CancellationTimeOutsGuideTest {
     @Test
     fun testKotlinxCoroutinesGuideCancel04() {
         test("KotlinxCoroutinesGuideCancel04") { kotlinx.coroutines.guide.cancel04.main() }.verifyLines(
-            "I'm sleeping 0 ...",
-            "I'm sleeping 1 ...",
-            "I'm sleeping 2 ...",
+            "job: I'm sleeping 0 ...",
+            "job: I'm sleeping 1 ...",
+            "job: I'm sleeping 2 ...",
             "main: I'm tired of waiting!",
-            "I'm running finally",
+            "job: I'm running finally",
             "main: Now I can quit."
         )
     }
@@ -55,12 +55,12 @@ class CancellationTimeOutsGuideTest {
     @Test
     fun testKotlinxCoroutinesGuideCancel05() {
         test("KotlinxCoroutinesGuideCancel05") { kotlinx.coroutines.guide.cancel05.main() }.verifyLines(
-            "I'm sleeping 0 ...",
-            "I'm sleeping 1 ...",
-            "I'm sleeping 2 ...",
+            "job: I'm sleeping 0 ...",
+            "job: I'm sleeping 1 ...",
+            "job: I'm sleeping 2 ...",
             "main: I'm tired of waiting!",
-            "I'm running finally",
-            "And I've just delayed for 1 sec because I'm non-cancellable",
+            "job: I'm running finally",
+            "job: And I've just delayed for 1 sec because I'm non-cancellable",
             "main: Now I can quit."
         )
     }
