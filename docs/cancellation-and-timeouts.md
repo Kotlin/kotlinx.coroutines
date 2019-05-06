@@ -23,7 +23,7 @@ class CancellationTimeOutsGuideTest {
   * [Cancelling coroutine execution](#cancelling-coroutine-execution)
   * [Cancellation is cooperative](#cancellation-is-cooperative)
   * [Making computation code cancellable](#making-computation-code-cancellable)
-  * [Closing resources with `finally`](#closing-resources-with-`finally`)
+  * [Closing resources with `finally`](#closing-resources-with-finally)
   * [Run non-cancellable block](#run-non-cancellable-block)
   * [Timeout](#timeout)
 
