@@ -12,16 +12,16 @@ import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
 
 /**
- * Runs a given suspending [block] of code inside a coroutine with a specified timeout and throws
- * [TimeoutCancellationException] if timeout was exceeded.
+ * Runs a given suspending [block] of code inside a coroutine with a specified [timeout][timeMillis] and throws
+ * a [TimeoutCancellationException] if the timeout was exceeded.
  *
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
- * cancellable suspending function inside the block throws [TimeoutCancellationException].
+ * the cancellable suspending function inside the block throws a [TimeoutCancellationException].
  *
- * The sibling function that does not throw exception on timeout is [withTimeoutOrNull].
- * Note that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ * The sibling function that does not throw an exception on timeout is [withTimeoutOrNull].
+ * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
- * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
+ * Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
  *
  * @param timeMillis timeout time in milliseconds.
  */
@@ -33,16 +33,16 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
 }
 
 /**
- * Runs a given suspending block of code inside a coroutine with a specified timeout and returns
+ * Runs a given suspending block of code inside a coroutine with a specified [timeout][timeMillis] and returns
  * `null` if this timeout was exceeded.
  *
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
- * cancellable suspending function inside the block throws [TimeoutCancellationException].
+ * cancellable suspending function inside the block throws a [TimeoutCancellationException].
  *
- * The sibling function that throws exception on timeout is [withTimeout].
- * Note that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ * The sibling function that throws an exception on timeout is [withTimeout].
+ * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
- * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
+ * Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
  *
  * @param timeMillis timeout time in milliseconds.
  */
@@ -57,7 +57,7 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
             setupTimeout<T?, T?>(timeoutCoroutine, block)
         }
     } catch (e: TimeoutCancellationException) {
-        // Return null iff it's our exception, otherwise propagate it upstream (e.g. in case of nested withTimeouts)
+        // Return null if it's our exception, otherwise propagate it upstream (e.g. in case of nested withTimeouts)
         if (e.coroutine === coroutine) {
             return null
         }
@@ -73,8 +73,8 @@ private fun <U, T: U> setupTimeout(
     val cont = coroutine.uCont
     val context = cont.context
     coroutine.disposeOnCompletion(context.delay.invokeOnTimeout(coroutine.time, coroutine))
-    // restart block using new coroutine with new job,
-    // however start it as undispatched coroutine, because we are already in the proper context
+    // restart the block using a new coroutine with a new job,
+    // however, start it undispatched, because we already are in the proper context
     return coroutine.startUndispatchedOrReturnIgnoreTimeout(coroutine, block)
 }
 
@@ -114,7 +114,7 @@ public class TimeoutCancellationException internal constructor(
     @JvmField internal val coroutine: Job?
 ) : CancellationException(message) {
     /**
-     * Creates timeout exception with a given message.
+     * Creates a timeout exception with the given message.
      * This constructor is needed for exception stack-traces recovery.
      */
     @Suppress("UNUSED")

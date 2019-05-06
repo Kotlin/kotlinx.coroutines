@@ -14,7 +14,7 @@ import kotlin.coroutines.*
 import kotlin.jvm.*
 
 /**
- * Creates flow from the given suspendable [block].
+ * Creates a flow from the given suspendable [block].
  *
  * Example of usage:
  * ```
@@ -31,8 +31,8 @@ import kotlin.jvm.*
  * }
  * ```
  *
- * `emit` should happen strictly in the dispatchers of the [block] in order to preserve flow context.
- * For example, the following code will produce [IllegalStateException]:
+ * `emit` should happen strictly in the dispatchers of the [block] in order to preserve the flow context.
+ * For example, the following code will result in an [IllegalStateException]:
  * ```
  * flow {
  *     emit(1) // Ok
@@ -41,7 +41,7 @@ import kotlin.jvm.*
  *     }
  * }
  * ```
- * If you want to switch the context where this flow is executed use [flowOn] operator.
+ * If you want to switch the context of execution of a flow, use the [flowOn] operator.
  */
 @FlowPreview
 public fun <T> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
@@ -53,8 +53,8 @@ public fun <T> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit
 }
 
 /**
- * Analogue of [flow] builder that does not check a context of flow execution.
- * Used in our own operators where we trust the context of the invocation.
+ * An analogue of the [flow] builder that does not check the context of execution of the resulting flow.
+ * Used in our own operators where we trust the context of invocations.
  */
 @FlowPreview
 @PublishedApi
@@ -67,7 +67,7 @@ internal fun <T> unsafeFlow(@BuilderInference block: suspend FlowCollector<T>.()
 }
 
 /**
- * Creates flow that produces single value from the given functional type.
+ * Creates a flow that produces a single value from the given functional type.
  */
 @FlowPreview
 public fun <T> (() -> T).asFlow(): Flow<T> = unsafeFlow {
@@ -75,7 +75,7 @@ public fun <T> (() -> T).asFlow(): Flow<T> = unsafeFlow {
 }
 
 /**
- * Creates flow that produces single value from the given functional type.
+ * Creates a flow that produces a single value from the given functional type.
  */
 @FlowPreview
 public fun <T> (suspend () -> T).asFlow(): Flow<T> = unsafeFlow {
@@ -83,7 +83,7 @@ public fun <T> (suspend () -> T).asFlow(): Flow<T> = unsafeFlow {
 }
 
 /**
- * Creates flow that produces values from the given iterable.
+ * Creates a flow that produces values from the given iterable.
  */
 @FlowPreview
 public fun <T> Iterable<T>.asFlow(): Flow<T> = unsafeFlow {
@@ -93,7 +93,7 @@ public fun <T> Iterable<T>.asFlow(): Flow<T> = unsafeFlow {
 }
 
 /**
- * Creates flow that produces values from the given iterable.
+ * Creates a flow that produces values from the given iterable.
  */
 @FlowPreview
 public fun <T> Iterator<T>.asFlow(): Flow<T> = unsafeFlow {
@@ -103,7 +103,7 @@ public fun <T> Iterator<T>.asFlow(): Flow<T> = unsafeFlow {
 }
 
 /**
- * Creates flow that produces values from the given sequence.
+ * Creates a flow that produces values from the given sequence.
  */
 @FlowPreview
 public fun <T> Sequence<T>.asFlow(): Flow<T> = unsafeFlow {
@@ -113,7 +113,7 @@ public fun <T> Sequence<T>.asFlow(): Flow<T> = unsafeFlow {
 }
 
 /**
- * Creates flow that produces values from the given array of elements.
+ * Creates a flow that produces values from the given array of elements.
  */
 @FlowPreview
 public fun <T> flowOf(vararg elements: T): Flow<T> = unsafeFlow {
@@ -133,7 +133,7 @@ private object EmptyFlow : Flow<Nothing> {
 }
 
 /**
- * Creates flow that produces values from the given array.
+ * Creates a flow that produces values from the given array.
  */
 @FlowPreview
 public fun <T> Array<T>.asFlow(): Flow<T> = flow {
