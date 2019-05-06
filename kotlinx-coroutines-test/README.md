@@ -264,7 +264,7 @@ This style is preferred when the `CoroutineScope` is passed through an extension
 
 ### Providing an explicit `TestCoroutineScope`
 
-In many cases, the direct style is not preferred because [CoroutineScope] may need to be provided through anther means 
+In many cases, the direct style is not preferred because [CoroutineScope] may need to be provided through another means 
 such as dependency injection or service locators.
 
 Tests can declare a [TestCoroutineScope] explicitly in the class to support these use cases.

@@ -15,10 +15,10 @@ import kotlin.coroutines.intrinsics.*
  * to automatically propagate both context elements and cancellation.
  *
  * The best ways to obtain a standalone instance of the scope are [CoroutineScope()] and [MainScope()] factory functions.
- * Additional context elements can be appended to the scope using [plus][CoroutineScope.plus] operator.
+ * Additional context elements can be appended to the scope using the [plus][CoroutineScope.plus] operator.
  *
  * Manual implementation of this interface is not recommended, implementation by delegation should be preferred instead.
- * By convention, [context of the scope][CoroutineScope.coroutineContext] should contain an instance of a [job][Job] to enforce structured concurrency.
+ * By convention, the [context of a scope][CoroutineScope.coroutineContext] should contain an instance of a [job][Job] to enforce structured concurrency.
  *
  * Every coroutine builder (like [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc)
  * and every scoping function (like [coroutineScope], [withContext], etc) provides _its own_ scope
@@ -51,7 +51,7 @@ public interface CoroutineScope {
     /**
      * The context of this scope.
      * Context is encapsulated by the scope and used for implementation of coroutine builders that are extensions on the scope.
-     * Accessing this property in general code is not recommended for any purposes except accessing [Job] instance for advanced usages.
+     * Accessing this property in general code is not recommended for any purposes except accessing the [Job] instance for advanced usages.
      *
      * By convention, should contain an instance of a [job][Job] to enforce structured concurrency.
      */
@@ -91,7 +91,7 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
 public fun MainScope(): CoroutineScope = ContextScope(SupervisorJob() + Dispatchers.Main)
 
 /**
- * Returns `true` when current [Job] is still active (has not completed and was not cancelled yet).
+ * Returns `true` when the current [Job] is still active (has not completed and was not cancelled yet).
  *
  * Check this property in long-running computation loops to support cancellation:
  * ```
@@ -164,8 +164,8 @@ public object GlobalScope : CoroutineScope {
  * }
  * ```
  *
- * Semantics of the scope in this example:
- * 1) `showSomeData` returns as soon as data is loaded and displayed in the UI.
+ * The scope in this example has the following semantics:
+ * 1) `showSomeData` returns as soon as the data is loaded and displayed in the UI.
  * 2) If `doSomeWork` throws an exception, then the `async` task is cancelled and `showSomeData` rethrows that exception.
  * 3) If the outer scope of `showSomeData` is cancelled, both started `async` and `withContext` blocks are cancelled.
  * 4) If the `async` block fails, `withContext` will be cancelled.

@@ -167,7 +167,7 @@ For R8 no actions required, it will take obfuscation rules from the jar.
 
 For Proguard  you need to add options from [coroutines.pro](kotlinx-coroutines-core/jvm/resources/META-INF/proguard/coroutines.pro) to your rules manually.
  
-R8 is a replacement for ProGuard in Android ecosystem, it is enabled by default since Android gradle plugin 3.3.0-beta.
+R8 is a replacement for ProGuard in Android ecosystem, it is enabled by default since Android gradle plugin 3.4.0 (3.3.0-beta also had it enabled).
 
 ### JS
 

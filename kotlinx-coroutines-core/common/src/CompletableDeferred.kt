@@ -10,8 +10,8 @@ import kotlinx.coroutines.selects.*
 /**
  * A [Deferred] that can be completed via public functions [complete] or [cancel][Job.cancel].
  *
- * Note that [complete] functions returns `false` when this deferred value is already complete or completing,
- * while [cancel][Job.cancel] returns `true` as long the deferred is still _cancelling_ and the corresponding
+ * Note that the [complete] function returns `false` when this deferred value is already complete or completing,
+ * while [cancel][Job.cancel] returns `true` as long as the deferred is still _cancelling_ and the corresponding
  * exception is incorporated into the final [completion exception][getCompletionExceptionOrNull].
  *
  * An instance of completable deferred can be created by `CompletableDeferred()` function in _active_ state.
@@ -24,7 +24,7 @@ public interface CompletableDeferred<T> : Deferred<T> {
      * Completes this deferred value with a given [value]. The result is `true` if this deferred was
      * completed as a result of this invocation and `false` otherwise (if it was already completed).
      *
-     * Repeated invocations of this function have no effect and always produce `false`.
+     * Subsequent invocations of this function have no effect and always produce `false`.
      *
      * This function transitions this deferred into _completed_ state if it was not completed or cancelled yet.
      * However, if this deferred has children, then it transitions into _completing_ state and becomes _complete_
@@ -36,7 +36,7 @@ public interface CompletableDeferred<T> : Deferred<T> {
      * Completes this deferred value exceptionally with a given [exception]. The result is `true` if this deferred was
      * completed as a result of this invocation and `false` otherwise (if it was already completed).
      *
-     * Repeated invocations of this function have no effect and always produce `false`.
+     * Subsequent invocations of this function have no effect and always produce `false`.
      *
      * This function transitions this deferred into _cancelled_ state if it was not completed or cancelled yet.
      * However, that if this deferred has children, then it transitions into _cancelling_ state and becomes _cancelled_

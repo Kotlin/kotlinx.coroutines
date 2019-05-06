@@ -76,7 +76,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
              +--------+---------+--------------------+
 
 
-       This state machine and its transition matrix are optimized for the common case when job is created in active
+       This state machine and its transition matrix are optimized for the common case when a job is created in active
        state (EMPTY_A), at most one completion listener is added to it during its life-time, and it completes
        successfully without children (in this case it directly goes from EMPTY_A or SINGLE state to FINAL_R
        state without going to COMPLETING state)
@@ -880,7 +880,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          * is handled specially by invokeOnCompletion itself -- it adds this node to the list even
          * if the job is already cancelling. For cancelling state child is attached under state lock.
          * It's required to properly wait all children before completion and provide linearizable hierarchy view:
-         * If child is attached when job is already being cancelled, such child will receive immediate notification on
+         * If child is attached when the job is already being cancelled, such child will receive immediate notification on
          * cancellation, but parent *will* wait for that child before completion and will handle its exception.
          */
         return invokeOnCompletion(onCancelling = true, handler = ChildHandleNode(this, child).asHandler) as ChildHandle
@@ -901,8 +901,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * similarly to [invokeOnCompletion] with `onCancelling` set to `true`.
      *
      * The meaning of [cause] parameter:
-     * * Cause is `null` when job has completed normally.
-     * * Cause is an instance of [CancellationException] when job was cancelled _normally_.
+     * * Cause is `null` when the job has completed normally.
+     * * Cause is an instance of [CancellationException] when the job was cancelled _normally_.
      *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
      * * Otherwise, the job had been cancelled or failed with exception.
      *

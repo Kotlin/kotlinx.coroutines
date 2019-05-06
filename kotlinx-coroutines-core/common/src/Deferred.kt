@@ -7,20 +7,20 @@ package kotlinx.coroutines
 import kotlinx.coroutines.selects.*
 
 /**
- * Deferred value is a non-blocking cancellable future &mdash; it is a [Job] that has a result.
+ * Deferred value is a non-blocking cancellable future &mdash; it is a [Job] with a result.
  *
- * It is created with [async][CoroutineScope.async] coroutine builder or via constructor of [CompletableDeferred] class.
+ * It is created with the [async][CoroutineScope.async] coroutine builder or via the constructor of [CompletableDeferred] class.
  * It is in [active][isActive] state while the value is being computed.
  *
- * Deferred value has the same state machine as the [Job] with additional convenience methods to retrieve
- * successful or failed result of the computation that was carried out. The result of the deferred is
+ * `Deferred` has the same state machine as the [Job] with additional convenience methods to retrieve
+ * the successful or failed result of the computation that was carried out. The result of the deferred is
  * available when it is [completed][isCompleted] and can be retrieved by [await] method, which throws
- * exception if the deferred had failed.
- * Note that a _cancelled_ deferred is also considered to be completed.
+ * an exception if the deferred had failed.
+ * Note that a _cancelled_ deferred is also considered as completed.
  * The corresponding exception can be retrieved via [getCompletionExceptionOrNull] from a completed instance of deferred.
  *
  * Usually, a deferred value is created in _active_ state (it is created and started).
- * However, [async][CoroutineScope.async] coroutine builder has an optional `start` parameter that creates a deferred value in _new_ state
+ * However, the [async][CoroutineScope.async] coroutine builder has an optional `start` parameter that creates a deferred value in _new_ state
  * when this parameter is set to [CoroutineStart.LAZY].
  * Such a deferred can be be made _active_ by invoking [start], [join], or [await].
  *
