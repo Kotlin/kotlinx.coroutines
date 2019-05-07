@@ -1,13 +1,17 @@
-package kotlinx.coroutines.experimental.sync
+package kotlinx.coroutines.sync
 
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.loop
-import kotlinx.coroutines.experimental.internal.*
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
-import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
+import kotlinx.coroutines.internal.AtomicOp
+import kotlinx.coroutines.internal.LockFreeLinkedListHead
+import kotlinx.coroutines.internal.LockFreeLinkedListNode
+import kotlinx.coroutines.internal.OpDescriptor
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
+import kotlin.coroutines.resume
 
-interface Semaphore {
+public interface Semaphore {
     val permits: Int
     fun tryAcquire(): Boolean
     suspend fun acquire()
@@ -18,20 +22,22 @@ interface Semaphore {
  * Counting semaphore for coroutines. This implementation is fair and
  * non-suspending when permits are available.
  */
-fun Semaphore(initialPermits: Int): Semaphore = SemaphoreImpl(initialPermits)
+public fun Semaphore(initialPermits: Int): Semaphore = SemaphoreImpl(initialPermits)
 
-private class SemaphoreImpl(initialPermits: Int) : Semaphore {
+internal class SemaphoreImpl(initialPermits: Int) : Semaphore {
 
     // permits: number of permits available to be acquired
     // waiters: number of coroutines waiting to acquire permits
     private class State(val permits: Int, val waiters: Int)
+
     private val _state = atomic<Any>(State(initialPermits, 0)) // S | OpDescriptor
 
-    private class Waiter(val cont: Continuation<Unit>) :  LockFreeLinkedListNode()
+    private class Waiter(val cont: Continuation<Unit>) : LockFreeLinkedListNode()
+
     val queue = LockFreeLinkedListHead() // queue of waiters
 
     // create an op to atomically enqueue a waiter and increment the waiter count in the state
-    private fun createAddWaiterOp(state: State, cont: Continuation<Unit>) : OpDescriptor {
+    private fun createAddWaiterOp(state: State, cont: Continuation<Unit>): OpDescriptor {
         val waiter = Waiter(cont)
         val addLastDesc = queue.describeAddLast(waiter)
         return object : AtomicOp<Any?>() {
@@ -46,19 +52,20 @@ private class SemaphoreImpl(initialPermits: Int) : Semaphore {
         }
     }
 
-    override val permits: Int get() {
-        _state.loop { state ->
-            when (state) {
-                is OpDescriptor -> state.perform(this) // help
-                is State -> return state.permits
-                else -> error("unexpected state $state")
+    override val permits: Int
+        get() {
+            _state.loop { state ->
+                when (state) {
+                    is OpDescriptor -> state.perform(this) // help
+                    is State -> return state.permits
+                    else -> error("unexpected state $state")
+                }
             }
         }
-    }
 
     override suspend fun acquire() {
         if (tryAcquire()) return
-        else return suspendCoroutineOrReturn { acquireCont(it) }
+        else return suspendCoroutineUninterceptedOrReturn { acquireCont(it) }
     }
 
     override fun tryAcquire(): Boolean {

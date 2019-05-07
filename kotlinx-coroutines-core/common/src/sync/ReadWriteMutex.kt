@@ -1,14 +1,16 @@
-package kotlinx.coroutines.experimental.sync
+package kotlinx.coroutines.sync
 
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.loop
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.selects.SelectClause2
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
-import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.selects.SelectClause2
+import kotlinx.coroutines.sync.Mutex
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
+import kotlin.coroutines.resume
 
-interface ReadWriteMutex {
+public interface ReadWriteMutex {
     val read: Mutex
     val write: Mutex
 }
@@ -17,9 +19,10 @@ interface ReadWriteMutex {
  * Read-write lock for coroutines. This implementation is fair, non-reentrant,
  * and non-suspending when there are no writers.
  */
-fun ReadWriteMutex(): ReadWriteMutex = ReadWriteMutexImpl()
+@Suppress("FunctionName")
+public fun ReadWriteMutex2(): ReadWriteMutex = ReadWriteMutexImpl()
 
-private class ReadWriteMutexImpl : ReadWriteMutex {
+internal class ReadWriteMutexImpl : ReadWriteMutex {
 
     // count -1: write lock held
     // count 0: no locks held
@@ -80,7 +83,7 @@ private class ReadWriteMutexImpl : ReadWriteMutex {
         override suspend fun lock(owner: Any?) {
             require(owner == null) { "owners not supported for read mutex" }
             if (tryLock()) return
-            else return suspendCoroutineOrReturn { lockCont(it) }
+            else return suspendCoroutineUninterceptedOrReturn { lockCont(it) }
         }
 
         private fun lockCont(cont: Continuation<Unit>): Any {
@@ -171,7 +174,7 @@ private class ReadWriteMutexImpl : ReadWriteMutex {
 
         override suspend fun lock(owner: Any?) {
             if (tryLock(owner)) return
-            else return suspendCoroutineOrReturn { lockCont(owner, it) }
+            else return suspendCoroutineUninterceptedOrReturn { lockCont(owner, it) }
         }
 
         private fun lockCont(owner: Any?, cont: Continuation<Unit>): Any {
