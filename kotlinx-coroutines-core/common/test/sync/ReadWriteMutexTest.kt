@@ -1,10 +1,12 @@
-package kotlinx.coroutines.experimental.sync
+package kotlinx.coroutines.sync
 
-import kotlin.coroutines.experimental.*
-import kotlin.test.*
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.yield
+import kotlinx.coroutines.TestBase
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
+import kotlin.test.Test
+import kotlin.test.assertFails
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class WriteMutexTest : AbstractMutexTest() {
     override fun createMutex(): Mutex {
@@ -26,13 +28,19 @@ class ReadWriteMutexTest : TestBase() {
     private val rw: ReadWriteMutex = ReadWriteMutex()
 
     @Test
-    fun testWriteSuspendsRead() { testLockSimple(rw.write, rw.read) }
+    fun testWriteSuspendsRead() {
+        testLockSimple(rw.write, rw.read)
+    }
 
     @Test
-    fun testReadSuspendsWrite() { testLockSimple(rw.read, rw.write) }
+    fun testReadSuspendsWrite() {
+        testLockSimple(rw.read, rw.write)
+    }
 
     @Test
-    fun testWriteSuspendsWrite() { testLockSimple(rw.write, rw.write) }
+    fun testWriteSuspendsWrite() {
+        testLockSimple(rw.write, rw.write)
+    }
 
     private fun testLockSimple(mutex1: Mutex, mutex2: Mutex) = runTest {
         launch(coroutineContext) {
@@ -81,13 +89,19 @@ class ReadWriteMutexTest : TestBase() {
     }
 
     @Test
-    fun testLockWriteTryRead() { testTryLockSimple(rw.write, rw.read) }
+    fun testLockWriteTryRead() {
+        testTryLockSimple(rw.write, rw.read)
+    }
 
     @Test
-    fun testLockReadTryWrite() { testTryLockSimple(rw.read, rw.write) }
+    fun testLockReadTryWrite() {
+        testTryLockSimple(rw.read, rw.write)
+    }
 
     @Test
-    fun testLockWriteTryWrite() { testTryLockSimple(rw.write, rw.write) }
+    fun testLockWriteTryWrite() {
+        testTryLockSimple(rw.write, rw.write)
+    }
 
     private fun testTryLockSimple(toLock: Mutex, toTry: Mutex) = runTest {
         launch(coroutineContext) {
@@ -150,13 +164,19 @@ class ReadWriteMutexTest : TestBase() {
     }
 
     @Test
-    fun testWriteReadNonReentrant() { testNonReentrant(rw.write, rw.read) }
+    fun testWriteReadNonReentrant() {
+        testNonReentrant(rw.write, rw.read)
+    }
 
     @Test
-    fun testReadWriteNonReentrant() { testNonReentrant(rw.read, rw.write) }
+    fun testReadWriteNonReentrant() {
+        testNonReentrant(rw.read, rw.write)
+    }
 
     @Test
-    fun testWriteWriteNonReentrant() { testNonReentrant(rw.write, rw.write) }
+    fun testWriteWriteNonReentrant() {
+        testNonReentrant(rw.write, rw.write)
+    }
 
     private fun testNonReentrant(mutex1: Mutex, mutex2: Mutex) = runTest {
         launch(coroutineContext) {
@@ -206,10 +226,14 @@ class ReadWriteMutexTest : TestBase() {
     }
 
     @Test
-    fun testWriteReadWriteFairness() { testFairness(rw.write, rw.read) }
+    fun testWriteReadWriteFairness() {
+        testFairness(rw.write, rw.read)
+    }
 
     @Test
-    fun testReadWriteReadFairness() { testFairness(rw.read, rw.write) }
+    fun testReadWriteReadFairness() {
+        testFairness(rw.read, rw.write)
+    }
 
     private fun testFairness(mutex1: Mutex, mutex2: Mutex) = runTest {
         launch(coroutineContext) {

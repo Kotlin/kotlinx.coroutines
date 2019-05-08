@@ -1,10 +1,9 @@
-package kotlinx.coroutines.experimental.sync
+package kotlinx.coroutines.sync
 
-import kotlin.coroutines.experimental.*
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.selects.SelectClause2
-import kotlinx.coroutines.experimental.yield
+import kotlinx.coroutines.TestBase
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.SelectClause2
+import kotlinx.coroutines.yield
 import kotlin.test.Test
 import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
@@ -104,9 +103,11 @@ class SemaphoreMutexTest : AbstractMutexTest() {
             override suspend fun lock(owner: Any?) = sema.acquire()
             override val onLock: SelectClause2<Any?, Mutex>
                 get() = TODO("not implemented")
+
             override fun holdsLock(owner: Any): Boolean {
                 TODO("not implemented")
             }
+
             override fun unlock(owner: Any?) = sema.release()
         }
     }

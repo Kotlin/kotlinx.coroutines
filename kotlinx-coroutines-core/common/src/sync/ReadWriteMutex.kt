@@ -20,7 +20,7 @@ public interface ReadWriteMutex {
  * and non-suspending when there are no writers.
  */
 @Suppress("FunctionName")
-public fun ReadWriteMutex2(): ReadWriteMutex = ReadWriteMutexImpl()
+public fun ReadWriteMutex(): ReadWriteMutex = ReadWriteMutexImpl()
 
 internal class ReadWriteMutexImpl : ReadWriteMutex {
 
