@@ -47,7 +47,7 @@ public fun <T> Flow<T>.dropWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
 /**
  * Returns a flow that contains first [count] elements.
  * When [count] elements are consumed, the original flow is cancelled.
- * Throws [IllegalArgumentException] if [count] is negative.
+ * Throws [IllegalArgumentException] if [count] is not positive.
  */
 @FlowPreview
 public fun <T> Flow<T>.take(count: Int): Flow<T> {

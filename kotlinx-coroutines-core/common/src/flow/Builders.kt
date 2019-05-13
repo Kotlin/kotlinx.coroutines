@@ -76,6 +76,11 @@ public fun <T> (() -> T).asFlow(): Flow<T> = unsafeFlow {
 
 /**
  * Creates a flow that produces a single value from the given functional type.
+ * Example of usage:
+ * ```
+ * suspend fun remoteCall(): R = ...
+ * suspend fun remoteCallFlow(): Flow<R> = ::remoteCall.asFlow()
+ * ```
  */
 @FlowPreview
 public fun <T> (suspend () -> T).asFlow(): Flow<T> = unsafeFlow {
