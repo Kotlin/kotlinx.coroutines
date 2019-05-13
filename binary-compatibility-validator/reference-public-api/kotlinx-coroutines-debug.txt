@@ -47,6 +47,8 @@ public final class kotlinx/coroutines/debug/junit4/CoroutinesTimeout : org/junit
 
 public final class kotlinx/coroutines/debug/junit4/CoroutinesTimeout$Companion {
 	public final fun seconds (IZ)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
+	public final fun seconds (JZ)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
 	public static synthetic fun seconds$default (Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout$Companion;IZILjava/lang/Object;)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
+	public static synthetic fun seconds$default (Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout$Companion;JZILjava/lang/Object;)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
 }
 
