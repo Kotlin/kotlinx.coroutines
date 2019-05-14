@@ -74,3 +74,5 @@ public fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
     }
 }
 
+public suspend fun wrapperDispatcher(): CoroutineContext = wrapperDispatcher(coroutineContext)
+
