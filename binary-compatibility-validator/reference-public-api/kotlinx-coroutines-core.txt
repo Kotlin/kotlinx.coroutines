@@ -561,7 +561,12 @@ public final class kotlinx/coroutines/channels/Channel$Factory {
 
 public abstract interface class kotlinx/coroutines/channels/ChannelIterator {
 	public abstract fun hasNext (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract fun next (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun next ()Ljava/lang/Object;
+	public abstract synthetic fun next (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/channels/ChannelIterator$DefaultImpls {
+	public static synthetic fun next (Lkotlinx/coroutines/channels/ChannelIterator;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/channels/ChannelKt {
