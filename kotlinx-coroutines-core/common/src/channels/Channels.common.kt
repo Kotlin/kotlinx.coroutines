@@ -1196,7 +1196,7 @@ public suspend inline fun <E, K, V, M : MutableMap<in K, MutableList<V>>> Receiv
  * The operation is _intermediate_ and _stateless_.
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
-// todo: mark transform with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
+@ObsoleteCoroutinesApi
 public fun <E, R> ReceiveChannel<E>.map(context: CoroutineContext = Dispatchers.Unconfined, transform: suspend (E) -> R): ReceiveChannel<R> =
     GlobalScope.produce(context, onCompletion = consumes()) {
         consumeEach {
