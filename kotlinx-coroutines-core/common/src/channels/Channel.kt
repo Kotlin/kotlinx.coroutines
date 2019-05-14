@@ -11,7 +11,7 @@ import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.selects.*
-import kotlin.coroutines.*
+import kotlin.jvm.*
 
 /**
  * Sender's interface to [Channel].
@@ -296,7 +296,17 @@ public interface ChannelIterator<out E> {
     public suspend operator fun hasNext(): Boolean
 
     @Deprecated(message = "Since 1.3.0, binary compatibility with versions <= 1.2.x", level = DeprecationLevel.HIDDEN)
-    public fun next(continuation: Continuation<*>): Any? = next()
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("next")
+    public suspend fun next0(): E {
+        /*
+         * Before 1.3.0 the "next()" could have been used without invoking "hasNext" first and there were code samples
+         * demonstrating this behavior, so we preserve this logic for full binary backwards compatibility with previously
+         * compiled code.
+         */
+        if (!hasNext()) throw ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE)
+        return next()
+    }
 
     /**
      * Retrieves the element from the current iterator previously removed from the channel by preceding call to [hasNext] or
