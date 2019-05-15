@@ -158,7 +158,7 @@ example an uncompleted `Deferred<Foo>` is provided to the function under test vi
 
 ```kotlin
 @Test(expected = TimeoutCancellationException::class)
-fun testFooWithTimeout() {
+fun testFooWithTimeout() = runBlockingTest {
     val uncompleted = CompletableDeferred<Foo>() // this Deferred<Foo> will never complete
     foo(uncompleted)
     advanceTimeBy(1_000) // advance time, which will cause the timeout to throw an exception
