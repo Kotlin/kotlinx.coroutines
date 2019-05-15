@@ -17,5 +17,6 @@ dependencies {
 tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
         url = new URL("https://developer.android.com/reference/")
+        packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
     }
 }

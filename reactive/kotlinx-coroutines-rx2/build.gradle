@@ -12,6 +12,7 @@ dependencies {
 tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
         url = new URL('http://reactivex.io/RxJava/javadoc/')
+        packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
     }
 }
 
