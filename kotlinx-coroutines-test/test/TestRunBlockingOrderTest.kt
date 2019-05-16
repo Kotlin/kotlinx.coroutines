@@ -67,4 +67,13 @@ class TestRunBlockingOrderTest : TestBase() {
         }
         expect(2)
     }
+
+    @Test
+    fun testAdvanceUntilIdle_inRunBlocking() = runBlockingTest {
+        expect(1)
+        assertRunsFast {
+            advanceUntilIdle()   // ensure this doesn't block forever
+        }
+        finish(2)
+    }
 }
