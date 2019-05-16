@@ -901,15 +901,15 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         }
 
         @Suppress("UNCHECKED_CAST")
-        override suspend fun next(): E {
+        override fun next(): E {
             val result = this.result
             if (result is Closed<*>) throw recoverStackTrace(result.receiveException)
             if (result !== POLL_FAILED) {
                 this.result = POLL_FAILED
                 return result as E
             }
-            // rare case when hasNext was not invoked yet -- just delegate to receive (leave state as is)
-            return channel.receive()
+
+            throw IllegalStateException("'hasNext' should be called prior to 'next' invocation")
         }
     }
 

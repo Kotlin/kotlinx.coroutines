@@ -73,6 +73,18 @@ class BasicOperationsTest : TestBase() {
         finish(4)
     }
 
+    @Test
+    fun testIterator() = runTest {
+        TestChannelKind.values().forEach { kind ->
+            val channel = kind.create()
+            val iterator = channel.iterator()
+            assertFailsWith<IllegalStateException> { iterator.next() }
+            channel.close()
+            assertFailsWith<IllegalStateException> { iterator.next() }
+            assertFalse(iterator.hasNext())
+        }
+    }
+
     private suspend fun testReceiveOrNull(kind: TestChannelKind) = coroutineScope {
         val channel = kind.create()
         val d = async(NonCancellable) {

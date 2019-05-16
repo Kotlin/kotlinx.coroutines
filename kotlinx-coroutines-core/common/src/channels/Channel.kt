@@ -295,25 +295,34 @@ public interface ChannelIterator<out E> {
      */
     public suspend operator fun hasNext(): Boolean
 
+    @Deprecated(message = "Since 1.3.0, binary compatibility with versions <= 1.2.x", level = DeprecationLevel.HIDDEN)
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("next")
+    public suspend fun next0(): E {
+        /*
+         * Before 1.3.0 the "next()" could have been used without invoking "hasNext" first and there were code samples
+         * demonstrating this behavior, so we preserve this logic for full binary backwards compatibility with previously
+         * compiled code.
+         */
+        if (!hasNext()) throw ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE)
+        return next()
+    }
+
     /**
-     * Retrieves and removes the element from this channel suspending the caller while this channel
-     * is empty or throws [ClosedReceiveChannelException] if the channel
-     * [isClosedForReceive][ReceiveChannel.isClosedForReceive] without cause.
+     * Retrieves the element from the current iterator previously removed from the channel by preceding call to [hasNext] or
+     * throws [IllegalStateException] if [hasNext] was not invoked.
+     * [next] should only be used in pair with [hasNext]:
+     * ```
+     * while (iterator.hasNext()) {
+     *     val element = iterator.next()
+     *     // ... handle element ...
+     * }
+     * ```
+     *
+     * This method throws [ClosedReceiveChannelException] if the channel [isClosedForReceive][ReceiveChannel.isClosedForReceive] without cause.
      * It throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
-     *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
-     * function is suspended, this function immediately resumes with [CancellationException].
-     *
-     * *Cancellation of suspended receive is atomic* -- when this function
-     * throws [CancellationException] it means that the element was not retrieved from this channel.
-     * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
-     * continue to execute even after it was cancelled from the same thread in the case when this receive operation
-     * was already resumed and the continuation was posted for execution to the thread's queue.
-     *
-     * Note that this function does not check for cancellation when it is not suspended.
-     * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      */
-    public suspend operator fun next(): E
+    public operator fun next(): E
 }
 
 /**
