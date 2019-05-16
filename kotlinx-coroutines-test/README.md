@@ -69,7 +69,7 @@ builder that provides extra test control to coroutines.
 ### Testing regular suspend functions
 
 To test regular suspend functions, which may have a delay, you can use the [runBlockingTest] builder to start a testing 
-coroutine. Any calls to `delay` will automatically advance time.
+coroutine. Any calls to `delay` will automatically advance virtual time by the amount delayed.
 
 ```kotlin
 @Test
@@ -79,7 +79,7 @@ fun testFoo() = runBlockingTest { // a coroutine with an extra test control
 }
 
 suspend fun foo() {
-    delay(1_000) // auto-advances without delay due to runBlockingTest
+    delay(1_000) // auto-advances virtual time by 1_000ms due to runBlockingTest
     // ...
 }
 ```
@@ -92,7 +92,7 @@ Inside of [runBlockingTest], both [launch] and [async] will start a new coroutin
 test case. 
 
 To make common testing situations easier, by default the body of the coroutine is executed *eagerly* until 
-the first [delay].
+the first call to [delay] or [yield].
 
 ```kotlin
 @Test
@@ -113,8 +113,10 @@ fun CoroutineScope.foo() {
 suspend fun bar() {}
 ```
 
-`runBlockingTest` will auto-progress time until all coroutines are completed before returning. If any coroutines are not
-able to complete, an [UncompletedCoroutinesError] will be thrown.
+`runBlockingTest` will auto-progress virtual time until all coroutines are completed before returning. If any coroutines
+are not able to complete, an [UncompletedCoroutinesError] will be thrown.
+
+*Note:* The default eager behavior of [runBlockingTest] will ignore [CoroutineStart] parameters.
 
 ### Testing `launch` or `async` with `delay`
 
@@ -130,7 +132,7 @@ fun testFooWithLaunchAndDelay() = runBlockingTest {
     foo()
     // the coroutine launched by foo has not completed here, it is suspended waiting for delay(1_000)
     advanceTimeBy(1_000) // progress time, this will cause the delay to resume
-    // foo() coroutine launched by foo has completed here
+    // the coroutine launched by foo has completed here
     // ...
 }
 
@@ -434,6 +436,8 @@ If you have any suggestions for improvements to this experimental API please sha
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html
 [async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html
 [delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html
+[yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/yield.html
+[CoroutineStart]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-start/index.html
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
 [ExperimentalCoroutinesApi]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html
 <!--- MODULE kotlinx-coroutines-test -->
