@@ -5,12 +5,15 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.combineLatest as combineLatestOriginal
 import kotlin.test.*
 
 /*
  * Replace:  { i, j -> i + j } ->  { i, j -> i + j } as soon as KT-30991 is fixed
  */
-class CombineLatestTest : TestBase() {
+abstract class CombineLatestTestBase : TestBase() {
+
+    abstract fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R>
 
     @Test
     fun testCombineLatest() = runTest {
@@ -195,6 +198,13 @@ class CombineLatestTest : TestBase() {
         assertFailsWith<TestException>(flow)
         finish(2)
     }
+}
 
-    private suspend fun sum(s: String?, i: Int?) = s + i
+class CombineLatestTest : CombineLatestTestBase() {
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = combineLatestOriginal(other, transform)
+}
+
+class CombineLatestVarargAdapterTest : CombineLatestTestBase() {
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
+        (this as Flow<*>).combineLatestOriginal(other) { args: Array<Any?> -> transform(args[0] as T1, args[1] as T2) }
 }
