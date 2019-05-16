@@ -16,14 +16,26 @@ internal class SafeCollector<T>(
 ) : FlowCollector<T>, SynchronizedObject() {
 
     private val collectContext = collectContext.minusKey(Job).minusId()
+    private var lastObservedContext: CoroutineContext? = null
 
     override suspend fun emit(value: T)  {
-        val emitContext = coroutineContext.minusKey(Job).minusId()
-        if (emitContext != collectContext) {
-            error(
-                "Flow invariant is violated: flow was collected in $collectContext, but emission happened in $emitContext. " +
-                        "Please refer to 'flow' documentation or use 'flowOn' instead")
+        /*
+         * Benign data-race here:
+         * We read potentially racy published coroutineContext, but we only use it for
+         * referential comparison (=> thus safe) and are not using it for actual comparisons.
+         */
+        val currentContext = coroutineContext
+        if (lastObservedContext !== currentContext) {
+            val emitContext = currentContext.minusKey(Job).minusId()
+            if (emitContext != collectContext) {
+                error(
+                    "Flow invariant is violated: flow was collected in $collectContext, but emission happened in $emitContext. " +
+                            "Please refer to 'flow' documentation or use 'flowOn' instead"
+                )
+            }
+            // Racy publication
+            lastObservedContext = currentContext
         }
-        collector.emit(value)
+        collector.emit(value) // TCE
     }
 }

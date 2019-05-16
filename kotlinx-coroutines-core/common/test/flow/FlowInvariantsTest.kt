@@ -35,6 +35,27 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
+    fun testCachedInvariantCheckResult() = runTest {
+        flow {
+            emit(1)
+
+            try {
+                kotlinx.coroutines.withContext(NamedDispatchers("foo")) {
+                    emit(1)
+                }
+                fail()
+            } catch (e: IllegalStateException) {
+                expect(2)
+            }
+
+            emit(3)
+        }.collect {
+            expect(it)
+        }
+        finish(4)
+    }
+
+    @Test
     fun testWithNameContractViolated() = runTest({ it is IllegalStateException }) {
         flow {
             kotlinx.coroutines.withContext(CoroutineName("foo")) {
