@@ -160,7 +160,9 @@ class ProduceExceptionsTest : TestBase() {
         yield()
         try {
             channel.receive()
-        } catch (e: TestException2) {
+        } catch (e: CancellationException) {
+            // RECOVER_STACK_TRACES
+            assertTrue(e.cause?.cause is TestException2)
             finish(4)
         }
     }

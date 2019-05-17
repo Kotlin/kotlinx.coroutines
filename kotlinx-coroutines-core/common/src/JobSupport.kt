@@ -635,29 +635,20 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     private fun createJobCancellationException() =
         JobCancellationException("Job was cancelled", null, this)
 
-    override fun getChildJobCancellationCause(): Throwable {
+    override fun getChildJobCancellationCause(): CancellationException {
         // determine root cancellation cause of this job (why is it cancelling its children?)
         val state = this.state
         val rootCause = when (state) {
-            is Finishing -> state.rootCause
+            is Finishing -> state.rootCause as? CancellationException ?: JobCancellationException("Parent job was cancelled", state.rootCause, this)
+            is CompletedExceptionally -> state.cause as? CancellationException ?: JobCancellationException("Parent job was cancelled", state.cause, this)
             is Incomplete -> error("Cannot be cancelling child in this state: $state")
-            is CompletedExceptionally -> state.cause
             else -> null // create exception with the below code on normal completion
         }
-        /*
-         * If this parent job handles exceptions, then wrap cause into JobCancellationException, because we
-         * don't want the child to handle this exception on more time. Otherwise, pass our original rootCause
-         * to the child for cancellation.
-         */
-        return if (rootCause == null || handlesException && rootCause !is CancellationException) {
-            JobCancellationException("Parent job is ${stateString(state)}", rootCause, this)
-        } else {
-            rootCause
-        }
+        return rootCause ?: JobCancellationException("Parent job is ${stateString(state)}", rootCause, this)
     }
 
     // cause is Throwable or ParentJob when cancelChild was invoked
-    private fun createCauseException(cause: Any?): Throwable = when(cause) {
+    private fun createCauseException(cause: Any?): Throwable = when (cause) {
         is Throwable? -> cause ?: createJobCancellationException()
         else -> (cause as ParentJob).getChildJobCancellationCause()
     }

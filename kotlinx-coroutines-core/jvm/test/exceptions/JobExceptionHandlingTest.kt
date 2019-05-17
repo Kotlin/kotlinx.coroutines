@@ -18,9 +18,9 @@ class JobExceptionHandlingTest : TestBase() {
         /*
          * Root parent: JobImpl()
          * Child: throws ISE
-         * Result: ISE in exception handler
+         * Result: ISE in exception handlerWithContextExceptionHandlingTest
          */
-        val exception = runBlock {
+        val exception = captureExceptionsRun {
             val job = Job()
             launch(job, start = ATOMIC) {
                 expect(2)
@@ -33,26 +33,6 @@ class JobExceptionHandlingTest : TestBase() {
         }
 
         checkException<IllegalStateException>(exception)
-    }
-
-    @Test
-    fun testAsyncCancellationWithCause() = runTest {
-        val deferred = async(NonCancellable) {
-            expect(2)
-            delay(Long.MAX_VALUE)
-        }
-
-        expect(1)
-        yield()
-        deferred.cancel(TestCancellationException("TEST"))
-        try {
-            deferred.await()
-            expectUnreached()
-        } catch (e: TestCancellationException) {
-            assertEquals("TEST", e.message)
-            assertTrue(e.suppressed.isEmpty())
-            finish(3)
-        }
     }
 
     @Test
@@ -69,10 +49,26 @@ class JobExceptionHandlingTest : TestBase() {
         try {
             deferred.await()
             expectUnreached()
-        } catch (e: IOException) {
+        } catch (e: CancellationException) {
             assertTrue(e.suppressed.isEmpty())
+            assertTrue(e.cause?.suppressed?.isEmpty() ?: false)
             finish(3)
         }
+    }
+
+    @Test
+    fun testAsyncCancellationWithCauseAndParentDoesNotTriggerHandling() = runTest {
+        val parent = Job()
+        val job = launch(parent) {
+            expect(2)
+            delay(Long.MAX_VALUE)
+        }
+
+        expect(1)
+        yield()
+        parent.completeExceptionally(IOException())
+        job.join()
+        finish(3)
     }
 
     @Test
@@ -85,7 +81,7 @@ class JobExceptionHandlingTest : TestBase() {
          *
          * Github issue #354
          */
-        val exception = runBlock {
+        val exception = captureExceptionsRun {
             val job = Job()
             val child = launch(job, start = ATOMIC) {
                 expect(2)
@@ -109,7 +105,7 @@ class JobExceptionHandlingTest : TestBase() {
          * Inner child: throws AE
          * Result: AE in exception handler
          */
-        val exception = runBlock {
+        val exception = captureExceptionsRun {
             val job = Job()
             launch(job) {
                 expect(2) // <- child is launched successfully
@@ -145,7 +141,7 @@ class JobExceptionHandlingTest : TestBase() {
         * Inner child: throws AE
         * Result: AE
         */
-        val exception = runBlock {
+        val exception = captureExceptionsRun {
             val job = Job()
             launch(job, start = ATOMIC) {
                 expect(2)
@@ -173,7 +169,7 @@ class JobExceptionHandlingTest : TestBase() {
          * Inner child: throws AE
          * Result: IOE with suppressed AE
          */
-        val exception = runBlock {
+        val exception = captureExceptionsRun {
             val job = Job()
             launch(job) {
                 expect(2) // <- child is launched successfully
@@ -196,11 +192,9 @@ class JobExceptionHandlingTest : TestBase() {
             finish(5)
         }
 
-        assertTrue(exception is IOException)
+        assertTrue(exception is ArithmeticException)
         assertNull(exception.cause)
-        val suppressed = exception.suppressed
-        assertEquals(1, suppressed.size)
-        checkException<ArithmeticException>(suppressed[0])
+        assertTrue(exception.suppressed.isEmpty())
     }
 
     @Test
@@ -211,7 +205,7 @@ class JobExceptionHandlingTest : TestBase() {
           * Child: launch 3 children, each of them throws an exception (AE, IOE, IAE) and calls delay()
           * Result: AE with suppressed IOE and IAE
           */
-        val exception = runBlock {
+        val exception = captureExceptionsRun {
             val job = Job()
             launch(job, start = ATOMIC) {
                 expect(2)
@@ -253,7 +247,7 @@ class JobExceptionHandlingTest : TestBase() {
          * Child: launch 2 children (each of them throws an exception (IOE, IAE)), throws AE
          * Result: AE with suppressed IOE and IAE
          */
-        val exception = runBlock {
+        val exception = captureExceptionsRun {
             val job = Job()
             launch(job, start = ATOMIC) {
                 expect(2)
@@ -280,6 +274,34 @@ class JobExceptionHandlingTest : TestBase() {
         assertEquals(2, suppressed.size)
         assertTrue(suppressed[0] is IOException)
         assertTrue(suppressed[1] is IllegalArgumentException)
+    }
+
+    @Test
+    fun testExceptionIsHandledOnce() = runTest(unhandled = listOf { e -> e is TestException }) {
+        val job = Job()
+        val j1 = launch(job) {
+            expect(1)
+            delay(Long.MAX_VALUE)
+        }
+
+        val j2 = launch(job) {
+            expect(2)
+            throw TestException()
+        }
+
+        joinAll(j1 ,j2)
+        finish(3)
+    }
+
+    @Test
+    fun testCancelledParent() = runTest {
+        expect(1)
+        val parent = Job()
+        parent.completeExceptionally(TestException())
+        launch(parent) {
+            expectUnreached()
+        }.join()
+        finish(2)
     }
 
     @Test

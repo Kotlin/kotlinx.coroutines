@@ -422,10 +422,13 @@ public interface ParentJob : Job {
      * Child job is using this method to learn its cancellation cause when the parent cancels it with [ChildJob.parentCancelled].
      * This method is invoked only if the child was not already being cancelled.
      *
+     * Note that [CancellationException] is the method's return type: if child is cancelled by its parent,
+     * then the original exception is **already** handled by either the parent or the original source of failure.
+     *
      * @suppress **This is unstable API and it is subject to change.**
      */
     @InternalCoroutinesApi
-    public fun getChildJobCancellationCause(): Throwable
+    public fun getChildJobCancellationCause(): CancellationException
 }
 
 /**

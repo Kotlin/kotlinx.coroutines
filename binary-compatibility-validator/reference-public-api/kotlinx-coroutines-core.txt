@@ -382,7 +382,7 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
 	public final fun getCancellationException ()Ljava/util/concurrent/CancellationException;
 	protected fun getCancelsParent ()Z
-	public fun getChildJobCancellationCause ()Ljava/lang/Throwable;
+	public fun getChildJobCancellationCause ()Ljava/util/concurrent/CancellationException;
 	public final fun getChildren ()Lkotlin/sequences/Sequence;
 	protected final fun getCompletionCause ()Ljava/lang/Throwable;
 	protected final fun getCompletionCauseHandled ()Z
@@ -447,7 +447,7 @@ public abstract interface annotation class kotlinx/coroutines/ObsoleteCoroutines
 }
 
 public abstract interface class kotlinx/coroutines/ParentJob : kotlinx/coroutines/Job {
-	public abstract fun getChildJobCancellationCause ()Ljava/lang/Throwable;
+	public abstract fun getChildJobCancellationCause ()Ljava/util/concurrent/CancellationException;
 }
 
 public final class kotlinx/coroutines/ParentJob$DefaultImpls {

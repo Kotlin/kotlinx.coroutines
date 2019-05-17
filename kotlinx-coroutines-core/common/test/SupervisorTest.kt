@@ -171,7 +171,8 @@ class SupervisorTest : TestBase() {
         try {
             deferred.await()
             expectUnreached()
-        } catch (e: TestException1) {
+        } catch (e: CancellationException) {
+            assertTrue(e.cause?.cause is TestException1)
             finish(3)
         }
     }
