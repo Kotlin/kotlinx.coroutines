@@ -6,7 +6,9 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import org.junit.*
+import kotlin.concurrent.thread
 import kotlin.coroutines.*
+import kotlin.test.assertEquals
 
 class TestRunBlockingOrderTest : TestBase() {
     @Test
@@ -66,6 +68,96 @@ class TestRunBlockingOrderTest : TestBase() {
             expect(3)
         }
         expect(2)
+    }
+
+    @Test
+    fun testNewThread_inSuspendCancellableCoroutine() = runBlockingTest {
+        expect(1)
+        suspendCancellableCoroutine<Unit> { cont ->
+            expect(2)
+            thread {
+                expect(3)
+                cont.resume(Unit)
+            }
+        }
+        finish(4)
+    }
+
+    @Test(expected = UncompletedCoroutinesError::class)
+    fun testWithOddlyCompletingJob_fails() {
+        // this test is suspect since it relies upon the exact ordering of code in runBlockingTest
+        // however, it needs to ensure the job finishes *after* advanceUntilIdle is called in order
+        // to ensure that runBlockingTest errors when presented with threading non-determinism.
+
+        // this test is stable and will always pass unless the implementation changes.
+
+        // If this starts failing because the call to cleanupTestCoroutines changes it will need a similarly
+        // implementation driven test.
+
+        class FakeDispatcher(val delegate: TestCoroutineDispatcher):
+                CoroutineDispatcher(),
+                Delay by delegate,
+                DelayController by delegate {
+            private var cleanupCallback: (() -> Unit)? = null
+
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                delegate.dispatch(context, block)
+            }
+
+            fun onCleanup(block: () -> Unit) {
+                cleanupCallback = block
+            }
+
+            override fun cleanupTestCoroutines() {
+                delegate.cleanupTestCoroutines()
+                cleanupCallback?.invoke()
+            }
+        }
+
+        val dispatcher = FakeDispatcher(TestCoroutineDispatcher())
+        val scope = TestCoroutineScope(dispatcher)
+        val resumeAfterTest = CompletableDeferred<Unit>()
+
+        scope.runBlockingTest {
+            expect(1)
+            dispatcher.onCleanup {
+                // after advanceTimeUntilIdle, complete the launched coroutine
+                expect(3)
+                resumeAfterTest.complete(Unit)
+                finish(5)
+            }
+            expect(2)
+            resumeAfterTest.await() // this will resume just before child jobs are checked
+            expect(4)
+        }
+    }
+
+    @Test
+    fun testThrows_throws() {
+        val expected = IllegalStateException("expected")
+        val result = runCatching {
+            expect(1)
+            runBlockingTest {
+                expect(2)
+                throw expected
+            }
+        }
+        finish(3)
+        assertEquals(expected, result.exceptionOrNull())
+    }
+
+    @Test
+    fun testSuspendForever_fails() {
+        val uncompleted = CompletableDeferred<Unit>()
+        val result = runCatching {
+            expect(1)
+            runBlockingTest {
+                expect(2)
+                uncompleted.await()
+            }
+        }
+        finish(3)
+        assertEquals(true, result.isFailure)
     }
 
     @Test
