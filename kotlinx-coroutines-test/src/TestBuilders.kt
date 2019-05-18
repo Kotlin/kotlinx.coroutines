@@ -46,18 +46,56 @@ public fun runBlockingTest(context: CoroutineContext = EmptyCoroutineContext, te
     val (safeContext, dispatcher) = context.checkArguments()
     val startingJobs = safeContext.activeJobs()
     val scope = TestCoroutineScope(safeContext)
+
     val deferred = scope.async {
         scope.testBody()
     }
+
+    // run any outstanding coroutines that can be completed by advancing virtual-time
     dispatcher.advanceUntilIdle()
-    deferred.getCompletionExceptionOrNull()?.let {
-        throw it
-    }
+
+    // fetch results from the coroutine - this may require a thread hop if some child coroutine was *completed* on
+    // another thread during this test so we must use an invokeOnCompletion handler to retrieve the result.
+
+    // There are two code paths for fetching the error:
+    //
+    // 1. The job was already completed (happy path, normal test)
+    //    - invokeOnCompletion was executed immediately and errorThrownByTestOrNull is already at it's final value so
+    //      we can throw it
+    // 2. The job has not already completed (always fail the test due to error or time-based non-determinism)
+    //    - invokeOnCompletion will not be triggered right away. To avoid introducing wall non-deterministic  behavior
+    //      (the deferred may complete between here and the call to activeJobs below) this will always be considered a
+    //      test failure.
+    //    - this will not happen if all coroutines are only waiting to complete due to thread hops, but may happen
+    //      if another thread triggers completion concurrently with this cleanup code.
+    //
+    // give test code errors a priority in the happy path, throw here if the error is already known.
+    val (wasCompletedAfterTest, errorThrownByTestOrNull) = deferred.getResultIfKnown()
+    errorThrownByTestOrNull?.let { throw it }
+
     scope.cleanupTestCoroutines()
     val endingJobs = safeContext.activeJobs()
     if ((endingJobs - startingJobs).isNotEmpty()) {
         throw UncompletedCoroutinesError("Test finished with active jobs: $endingJobs")
     }
+
+    if (!wasCompletedAfterTest) {
+        // Handle path #2, we are going to fail the test in an opinionated way at this point so let the developer know
+        // how to fix it.
+        throw UncompletedCoroutinesError("Test completed all jobs after cleanup code started. This is " +
+                "thrown to avoid non-deterministic behavior in tests (the next execution may fail randomly). Ensure " +
+                "all threads started by the test are completed before returning from runBlockingTest.")
+    }
+}
+
+private fun Deferred<Unit>.getResultIfKnown(): Pair<Boolean, Throwable?> {
+    var testError: Throwable? = null
+    var wasExecuted = false
+    invokeOnCompletion { errorFromTestOrNull ->
+        testError = errorFromTestOrNull
+        wasExecuted = true
+    }.dispose()
+    return Pair(wasExecuted, testError)
 }
 
 private fun CoroutineContext.activeJobs(): Set<Job> {
