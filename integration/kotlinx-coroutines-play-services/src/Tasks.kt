@@ -77,31 +77,38 @@ public fun <T> Task<T>.asDeferred(): Deferred<T> {
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * stops waiting for the completion stage and immediately resumes with [CancellationException].
  */
-public suspend fun <T> Task<T>.await(): T {
-    // fast path
+public suspend fun <R> Task<R>.await(): R {
     if (isComplete) {
-        val e = exception
-        return if (e == null) {
-            if (isCanceled) {
+        when (val e = exception) {
+            null -> if (isCanceled) {
                 throw CancellationException("Task $this was cancelled normally.")
             } else {
-                @Suppress("UNCHECKED_CAST")
-                result as T
+                @Suppress("UNCHECKED_CAST") return result as R
             }
-        } else {
-            throw e
+            else -> throw e
         }
     }
-
-    return suspendCancellableCoroutine { cont ->
-        addOnCompleteListener {
-            val e = exception
-            if (e == null) {
-                @Suppress("UNCHECKED_CAST")
-                if (isCanceled) cont.cancel() else cont.resume(result as T)
-            } else {
-                cont.resumeWithException(e)
+    val continuationWrapper = object {
+        var continuation: CancellableContinuation<R>? = null
+    }
+    try {
+        return suspendCancellableCoroutine { continuation ->
+            continuationWrapper.continuation = continuation
+            addOnCompleteListener { task: Task<R> ->
+                val c = continuationWrapper.continuation ?: return@addOnCompleteListener
+                try {
+                    when (val e = task.exception) {
+                        null -> if (task.isCanceled) c.cancel() else {
+                            @Suppress("UNCHECKED_CAST") c.resume(task.result as R)
+                        }
+                        else -> c.resumeWithException(e)
+                    }
+                } catch (ignored: IllegalStateException) {
+                    // Continuation has been cancelled, or completion callback has been invoked repeatedly.
+                }
             }
         }
+    } finally {
+        continuationWrapper.continuation = null
     }
 }
