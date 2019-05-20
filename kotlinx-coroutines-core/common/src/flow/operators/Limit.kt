@@ -23,7 +23,7 @@ public fun <T> Flow<T>.drop(count: Int): Flow<T> {
     return flow {
         var skipped = 0
         collect { value ->
-            if (++skipped > count) emit(value)
+            if (skipped >= count) emit(value) else ++skipped
         }
     }
 }
