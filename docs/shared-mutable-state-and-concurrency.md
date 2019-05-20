@@ -108,7 +108,7 @@ Completed 100000 actions in
 Counter =
 -->
 
-What does it print at the end? It is highly unlikely to ever print "Counter = 100000", because a thousand coroutines 
+What does it print at the end? It is highly unlikely to ever print "Counter = 100000", because a hundred coroutines 
 increment the `counter` concurrently from multiple threads without any synchronization.
 
 > Note: if you have an old system with 2 or fewer CPUs, then you _will_ consistently see 100000, because
