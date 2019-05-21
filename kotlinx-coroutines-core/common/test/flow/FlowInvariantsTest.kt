@@ -104,6 +104,71 @@ class FlowInvariantsTest : TestBase() {
         finish(2)
     }
 
+    @Test
+    fun testMergeViolation() = runTest {
+        fun Flow<Int>.merge(other: Flow<Int>): Flow<Int> = flow {
+            coroutineScope {
+                launch {
+                    collect { value -> emit(value) }
+                }
+                other.collect { value -> emit(value) }
+            }
+        }
+
+        fun Flow<Int>.trickyMerge(other: Flow<Int>): Flow<Int> = flow {
+            coroutineScope {
+                launch {
+                    collect { value ->
+                        coroutineScope { emit(value) }
+                    }
+                }
+                other.collect { value -> emit(value) }
+            }
+        }
+
+        val flow = flowOf(1)
+        assertFailsWith<IllegalStateException> { flow.merge(flow).toList() }
+        assertFailsWith<IllegalStateException> { flow.trickyMerge(flow).toList() }
+    }
+
+
+    // TODO merge artifact
+    fun <T> channelFlow(bufferSize: Int = 16, @BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> =
+        flow {
+            coroutineScope {
+                val channel = produce(capacity = bufferSize, block = block)
+                channel.consumeEach { value ->
+                    emit(value)
+                }
+            }
+        }
+
+    @Test
+    fun testNoMergeViolation() = runTest {
+        fun Flow<Int>.merge(other: Flow<Int>): Flow<Int> = channelFlow {
+            launch {
+                collect { value -> send(value) }
+            }
+            other.collect { value -> send(value) }
+        }
+
+        fun Flow<Int>.trickyMerge(other: Flow<Int>): Flow<Int> = channelFlow {
+            coroutineScope {
+                launch {
+                    collect { value ->
+                        coroutineScope { send(value) }
+                    }
+                }
+                other.collect { value -> send(value) }
+            }
+        }
+
+        val flow = flowOf(1)
+        assertEquals(listOf(1, 1), flow.merge(flow).toList())
+        assertEquals(listOf(1, 1), flow.trickyMerge(flow).toList())
+    }
+
+
     private fun Flow<Int>.buffer(coroutineContext: CoroutineContext): Flow<Int> = flow {
         coroutineScope {
             val channel = Channel<Int>()

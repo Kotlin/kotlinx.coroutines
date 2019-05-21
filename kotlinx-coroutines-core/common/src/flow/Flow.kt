@@ -27,7 +27,7 @@ import kotlinx.coroutines.*
  * trigger their evaluation every time [collect] is executed) or hot ones, but, conventionally, they represent cold streams.
  * Transitions between hot and cold streams are supported via channels and the corresponding API: [flowViaChannel], [broadcastIn], [produceIn].
  *
- * The flow has a context preserving property: it encapsulates its own execution context and never propagates or leaks it downstream, thus making
+ * The flow has a context preservation property: it encapsulates its own execution context and never propagates or leaks it downstream, thus making
  * reasoning about the execution context of particular transformations or terminal operations trivial.
  *
  * There are two ways to change the context of a flow: [flowOn][Flow.flowOn] and [flowWith][Flow.flowWith].
@@ -104,6 +104,7 @@ public interface Flow<out T> {
      * is a proper [Flow] implementation, but using `launch(Dispatchers.IO)` is not.
      *
      * 2) It should serialize calls to [emit][FlowCollector.emit] as [FlowCollector] implementations are not thread safe by default.
+     *    To automatically serialize emissions [channelFlow] builder can be used instead of [flow]
      */
     public suspend fun collect(collector: FlowCollector<T>)
 }

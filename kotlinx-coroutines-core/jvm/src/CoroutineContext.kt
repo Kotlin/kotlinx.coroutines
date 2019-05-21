@@ -80,7 +80,7 @@ internal actual val CoroutineContext.coroutineName: String? get() {
 }
 
 @Suppress("NOTHING_TO_INLINE")
-internal actual inline fun CoroutineContext.minusId(): CoroutineContext = minusKey(CoroutineId)
+internal actual inline fun CoroutineContext.minusId(): CoroutineContext =  if (DEBUG) minusKey(CoroutineId) else this
 
 private const val DEBUG_THREAD_NAME_SEPARATOR = " @"
 
