@@ -17,16 +17,16 @@ import java.util.concurrent.*
  * Results:
  *
  * // Throw FlowAborted overhead
- * Numbers.primes             avgt    7  4106.837 ± 59.672  us/op
- * Numbers.primesRx           avgt    7  2777.232 ± 85.357  us/op
+ * Numbers.primes            avgt    7  3039.185 ± 25.598  us/op
+ * Numbers.primesRx          avgt    7  2677.937 ± 17.720  us/op
  *
  * // On par
- * Numbers.transformations    avgt    7    20.290 ±  1.367  us/op
- * Numbers.transformationsRx  avgt    7    22.932 ±  1.863  us/op
+ * Numbers.transformations   avgt    7    16.207 ±  0.133  us/op
+ * Numbers.transformationsRx avgt    7    19.626 ±  0.135  us/op
  *
  * // Channels overhead
- * Numbers.zip                avgt    7   470.737 ± 10.838  us/op
- * Numbers.zipRx              avgt    7   104.811 ±  9.073  us/op
+ * Numbers.zip               avgt    7   434.160 ±  7.014  us/op
+ * Numbers.zipRx             avgt    7    87.898 ±  5.007  us/op
  *
  */
 @Warmup(iterations = 7, time = 1, timeUnit = TimeUnit.SECONDS)
