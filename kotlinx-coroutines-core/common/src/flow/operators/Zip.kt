@@ -61,14 +61,14 @@ public fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspen
                 onReceive(firstIsClosed, firstChannel, { firstIsClosed = true }) { value ->
                     firstValue = value
                     if (secondValue !== null) {
-                        emit(transform(NullSurrogate.unbox(firstValue), NullSurrogate.unbox(secondValue)))
+                        emit(transform(NULL.unbox(firstValue), NULL.unbox(secondValue)))
                     }
                 }
 
                 onReceive(secondIsClosed, secondChannel, { secondIsClosed = true }) { value ->
                     secondValue = value
                     if (firstValue !== null) {
-                        emit(transform(NullSurrogate.unbox(firstValue), NullSurrogate.unbox(secondValue)))
+                        emit(transform(NULL.unbox(firstValue), NULL.unbox(secondValue)))
                     }
                 }
             }
@@ -163,7 +163,7 @@ internal fun <T, R> Flow<T>.combineLatest(vararg others: Flow<T>, arrayFactory: 
                         if (latestValues.all { it !== null }) {
                             val arguments = arrayFactory()
                             for (index in 0 until size) {
-                                arguments[index] = NullSurrogate.unbox(latestValues[index])
+                                arguments[index] = NULL.unbox(latestValues[index])
                             }
                             emit(transform(arguments as Array<T>))
                         }
@@ -191,7 +191,7 @@ private inline fun SelectBuilder<Unit>.onReceive(
 private fun CoroutineScope.asFairChannel(flow: Flow<*>): ReceiveChannel<Any> = produce {
     val channel = channel as ChannelCoroutine<Any>
     flow.collect { value ->
-        channel.sendFair(value ?: NullSurrogate)
+        channel.sendFair(value ?: NULL)
     }
 }
 
@@ -235,8 +235,8 @@ public fun <T1, T2, R> Flow<T1>.zip(other: Flow<T2>, transform: suspend (T1, T2)
                 if (!otherIterator.hasNext()) {
                     return@consumeEach
                 }
-                val secondValue = NullSurrogate.unbox<T2>(otherIterator.next())
-                emit(transform(NullSurrogate.unbox(value), NullSurrogate.unbox(secondValue)))
+                val secondValue = NULL.unbox<T2>(otherIterator.next())
+                emit(transform(NULL.unbox(value), NULL.unbox(secondValue)))
             }
         } catch (e: AbortFlowException) {
             // complete
@@ -249,6 +249,6 @@ public fun <T1, T2, R> Flow<T1>.zip(other: Flow<T2>, transform: suspend (T1, T2)
 // Channel has any type due to onReceiveOrNull. This will be fixed after receiveOrClosed
 private fun CoroutineScope.asChannel(flow: Flow<*>): ReceiveChannel<Any> = produce {
     flow.collect { value ->
-        channel.send(value ?: NullSurrogate)
+        channel.send(value ?: NULL)
     }
 }

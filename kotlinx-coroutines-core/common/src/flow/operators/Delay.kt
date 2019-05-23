@@ -65,7 +65,7 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
             val values = Channel<Any?>(Channel.CONFLATED) // Actually Any, KT-30796
             // Channel is not closed deliberately as there is no close with value
             val collector = async {
-                collect { value -> values.send(value ?: NullSurrogate) }
+                collect { value -> values.send(value ?: NULL) }
             }
 
             var isDone = false
@@ -79,13 +79,13 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
                     lastValue?.let { value -> // set timeout when lastValue != null
                         onTimeout(timeoutMillis) {
                             lastValue = null // Consume the value
-                            emit(NullSurrogate.unbox(value))
+                            emit(NULL.unbox(value))
                         }
                     }
 
                     // Close with value 'idiom'
                     collector.onAwait {
-                        if (lastValue != null) emit(NullSurrogate.unbox(lastValue))
+                        if (lastValue != null) emit(NULL.unbox(lastValue))
                         isDone = true
                     }
                 }
@@ -115,7 +115,7 @@ public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
     return flow {
         coroutineScope {
             val values = produce<Any?>(capacity = Channel.CONFLATED) {  // Actually Any, KT-30796
-                collect { value -> send(value ?: NullSurrogate) }
+                collect { value -> send(value ?: NULL) }
             }
 
             var isDone = false
@@ -136,7 +136,7 @@ public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
                     ticker.onReceive {
                         val value = lastValue ?: return@onReceive
                         lastValue = null // Consume the value
-                        emit(NullSurrogate.unbox(value))
+                        emit(NULL.unbox(value))
                     }
                 }
             }

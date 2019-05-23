@@ -88,17 +88,10 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
      * The most recently sent element to this channel or `null` when this class is constructed without
      * initial value and no value was sent yet or if it was [closed][close].
      */
-    @Suppress("UNCHECKED_CAST")
-    public val valueOrNull: E? get() {
-        val state = _state.value
-        when (state) {
-            is Closed -> return null
-            is State<*> -> {
-                if (state.value === UNDEFINED) return null
-                return state.value as E
-            }
-            else -> error("Invalid state $state")
-        }
+    public val valueOrNull: E? get() = when (val state = _state.value) {
+        is Closed -> null
+        is State<*> -> UNDEFINED.unbox(state.value)
+        else -> error("Invalid state $state")
     }
 
     public override val isClosedForSend: Boolean get() = _state.value is Closed
