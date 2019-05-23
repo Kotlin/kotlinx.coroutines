@@ -138,7 +138,7 @@ private class SerializingFlatMapCollector<T>(
 
     public suspend fun emit(value: T) {
         if (!inProgressLock.tryAcquire()) {
-            channel.send(value ?: NullSurrogate)
+            channel.send(value ?: NULL)
             if (inProgressLock.tryAcquire()) {
                 helpEmit()
             }
@@ -154,7 +154,7 @@ private class SerializingFlatMapCollector<T>(
         while (true) {
             var element = channel.poll()
             while (element != null) { // TODO receive or closed (#330)
-                downstream.emit(NullSurrogate.unbox(element))
+                downstream.emit(NULL.unbox(element))
                 element = channel.poll()
             }
 

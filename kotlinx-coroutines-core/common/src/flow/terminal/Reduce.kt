@@ -18,10 +18,10 @@ import kotlin.jvm.*
  */
 @FlowPreview
 public suspend fun <S, T : S> Flow<T>.reduce(operation: suspend (accumulator: S, value: T) -> S): S {
-    var accumulator: Any? = NullSurrogate
+    var accumulator: Any? = NULL
 
     collect { value ->
-        accumulator = if (accumulator !== NullSurrogate) {
+        accumulator = if (accumulator !== NULL) {
             @Suppress("UNCHECKED_CAST")
             operation(accumulator as S, value)
         } else {
@@ -29,7 +29,7 @@ public suspend fun <S, T : S> Flow<T>.reduce(operation: suspend (accumulator: S,
         }
     }
 
-    if (accumulator === NullSurrogate) throw UnsupportedOperationException("Empty flow can't be reduced")
+    if (accumulator === NULL) throw UnsupportedOperationException("Empty flow can't be reduced")
     @Suppress("UNCHECKED_CAST")
     return accumulator as S
 }
@@ -56,13 +56,13 @@ public suspend inline fun <T, R> Flow<T>.fold(
  */
 @FlowPreview
 public suspend fun <T> Flow<T>.single(): T {
-    var result: Any? = NullSurrogate
+    var result: Any? = NULL
     collect { value ->
-        if (result !== NullSurrogate) error("Expected only one element")
+        if (result !== NULL) error("Expected only one element")
         result = value
     }
 
-    if (result === NullSurrogate) throw NoSuchElementException("Expected at least one element")
+    if (result === NULL) throw NoSuchElementException("Expected at least one element")
     @Suppress("UNCHECKED_CAST")
     return result as T
 }

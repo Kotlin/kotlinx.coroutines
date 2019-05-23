@@ -978,8 +978,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
 
         @Suppress("UNCHECKED_CAST")
         override fun completeResumeReceive(token: Any) {
-            val value: E = (if (token === NULL_VALUE) null else token) as E
-            block.startCoroutine(value, select.completion)
+            block.startCoroutine(NULL_VALUE.unbox<E>(token), select.completion)
         }
 
         override fun resumeReceiveClosed(closed: Closed<*>) {
@@ -1035,7 +1034,7 @@ internal val SELECT_STARTED: Any = Symbol("SELECT_STARTED")
 
 @JvmField
 @SharedImmutable
-internal val NULL_VALUE: Any = Symbol("NULL_VALUE")
+internal val NULL_VALUE: Symbol = Symbol("NULL_VALUE")
 
 @JvmField
 @SharedImmutable
