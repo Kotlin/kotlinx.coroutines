@@ -71,14 +71,14 @@ public fun <T> Flow<T>.retry(
                 }
                 break
             } catch (e: Throwable) {
-                if (fromDownstream || e.isCancellationCause()) throw e
+                if (fromDownstream || e.isCancellationCause(coroutineContext)) throw e
                 if (!predicate(e) || retries-- == 0) throw e
             }
         }
     }
 }
 
-private suspend fun Throwable.isCancellationCause(): Boolean {
+private fun Throwable.isCancellationCause(coroutineContext: CoroutineContext): Boolean {
     val job = coroutineContext[Job]
     if (job == null || !job.isCancelled) return false
     return unwrap(job.getCancellationException()) == unwrap(this)
@@ -98,7 +98,7 @@ private fun <T> Flow<T>.collectSafely(onException: suspend FlowCollector<T>.(Thr
                 }
             }
         } catch (e: Throwable) {
-            if (fromDownstream || e.isCancellationCause()) throw e
+            if (fromDownstream || e.isCancellationCause(coroutineContext)) throw e
             onException(e)
         }
     }
