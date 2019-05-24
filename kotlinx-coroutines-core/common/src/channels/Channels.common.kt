@@ -100,18 +100,9 @@ public fun consumesAll(vararg channels: ReceiveChannel<*>): CompletionHandler =
  * Makes sure that the given [block] consumes all elements from the given channel
  * by always invoking [cancel][ReceiveChannel.cancel] after the execution of the block.
  *
- * **WARNING**: It is planned that in the future a second invocation of this method
- * on an channel that is already being consumed is going to fail fast, that is
- * immediately throw an [IllegalStateException].
- * See [this issue](https://github.com/Kotlin/kotlinx.coroutines/issues/167)
- * for details.
- *
  * The operation is _terminal_.
- *
- * **Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.**
- *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
  */
-@ObsoleteCoroutinesApi
+@ExperimentalCoroutinesApi // since 1.3.0, tentatively graduates in 1.4.0
 public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -> R): R {
     var cause: Throwable? = null
     try {
@@ -125,21 +116,14 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
 }
 
 /**
- * Performs the given [action] for each received element.
- *
- * **WARNING**: It is planned that in the future a second invocation of this method
- * on an channel that is already being consumed is going to fail fast, that is
- * immediately throw an [IllegalStateException].
- * See [this issue](https://github.com/Kotlin/kotlinx.coroutines/issues/167)
- * for details.
+ * Performs the given [action] for each received element and [cancels][ReceiveChannel.cancel]
+ * the channel after the execution of the block.
+ * If you need to iterate over the channel without consuming it, a regular `for` loop should be used instead.
  *
  * The operation is _terminal_.
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
- *
- * **Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.**
- *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
  */
-@ObsoleteCoroutinesApi
+@ExperimentalCoroutinesApi // since 1.3.0, tentatively graduates in 1.4.0
 public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit) =
     consume {
         for (e in this) action(e)
