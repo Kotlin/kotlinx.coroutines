@@ -73,7 +73,6 @@ internal actual class JobCancellationException public actual constructor(
 
     override fun toString(): String = "${super.toString()}; job=$job"
 
-    @Suppress("DEPRECATION")
     override fun equals(other: Any?): Boolean =
         other === this ||
             other is JobCancellationException && other.message == message && other.job == job && other.cause == cause
