@@ -172,7 +172,8 @@ class SupervisorTest : TestBase() {
             deferred.await()
             expectUnreached()
         } catch (e: CancellationException) {
-            assertTrue(e.cause?.cause is TestException1)
+            val cause = if (RECOVER_STACK_TRACES) e.cause?.cause!! else e.cause
+            assertTrue(cause is TestException1)
             finish(3)
         }
     }

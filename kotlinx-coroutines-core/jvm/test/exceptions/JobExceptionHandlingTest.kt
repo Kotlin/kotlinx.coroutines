@@ -18,7 +18,7 @@ class JobExceptionHandlingTest : TestBase() {
         /*
          * Root parent: JobImpl()
          * Child: throws ISE
-         * Result: ISE in exception handlerWithContextExceptionHandlingTest
+         * Result: ISE in exception handler
          */
         val exception = captureExceptionsRun {
             val job = Job()
@@ -305,6 +305,48 @@ class JobExceptionHandlingTest : TestBase() {
     }
 
     @Test
+    fun testExceptionIsNotReported() = runTest {
+        try {
+            expect(1)
+            coroutineScope {
+                val job = Job(coroutineContext[Job])
+                launch(job) {
+                    throw TestException()
+                }
+            }
+            expectUnreached()
+        } catch (e: TestException) {
+            finish(2)
+        }
+    }
+
+    @Test
+    fun testExceptionIsNotReportedTripleChain() = runTest {
+        try {
+            expect(1)
+            coroutineScope {
+                val job = Job(Job(Job(coroutineContext[Job])))
+                launch(job) {
+                    throw TestException()
+                }
+            }
+            expectUnreached()
+        } catch (e: TestException) {
+            finish(2)
+        }
+    }
+
+    @Test
+    fun testAttachToCancelledJob() = runTest(unhandled = listOf({ e -> e is TestException })) {
+        val parent = launch(Job()) {
+            throw TestException()
+        }.apply { join() }
+
+        launch(parent) { expectUnreached() }
+        launch(Job(parent)) { expectUnreached() }
+    }
+
+    @Test
     fun testBadException() = runTest(unhandled = listOf({e -> e is BadException})) {
         val job = launch(Job()) {
             expect(2)
@@ -313,7 +355,7 @@ class JobExceptionHandlingTest : TestBase() {
                 throw BadException()
             }
 
-            launch(start = CoroutineStart.ATOMIC) {
+            launch(start = ATOMIC) {
                 expect(4)
                 throw BadException()
             }

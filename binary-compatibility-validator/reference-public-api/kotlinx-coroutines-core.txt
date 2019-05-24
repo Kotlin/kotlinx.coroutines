@@ -387,7 +387,6 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	protected final fun getCompletionCause ()Ljava/lang/Throwable;
 	protected final fun getCompletionCauseHandled ()Z
 	public final fun getCompletionExceptionOrNull ()Ljava/lang/Throwable;
-	protected fun getHandlesException ()Z
 	public final fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
 	public final fun getOnJoin ()Lkotlinx/coroutines/selects/SelectClause0;
 	protected fun handleJobException (Ljava/lang/Throwable;)Z

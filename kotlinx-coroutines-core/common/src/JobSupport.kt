@@ -11,6 +11,7 @@ import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
+import kotlin.js.*
 import kotlin.jvm.*
 
 /**
@@ -127,7 +128,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     private val _state = atomic<Any?>(if (active) EMPTY_ACTIVE else EMPTY_NEW)
 
     @Volatile
-    private var parentHandle: ChildHandle? = null
+    @JvmField
+    internal var parentHandle: ChildHandle? = null
 
     // ------------ initialization ------------
 
@@ -639,12 +641,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // determine root cancellation cause of this job (why is it cancelling its children?)
         val state = this.state
         val rootCause = when (state) {
-            is Finishing -> state.rootCause as? CancellationException ?: JobCancellationException("Parent job was cancelled", state.rootCause, this)
-            is CompletedExceptionally -> state.cause as? CancellationException ?: JobCancellationException("Parent job was cancelled", state.cause, this)
+            is Finishing -> state.rootCause
+            is CompletedExceptionally -> state.cause
             is Incomplete -> error("Cannot be cancelling child in this state: $state")
             else -> null // create exception with the below code on normal completion
         }
-        return rootCause ?: JobCancellationException("Parent job is ${stateString(state)}", rootCause, this)
+        return (rootCause as? CancellationException) ?: JobCancellationException("Parent job is ${stateString(state)}", rootCause, this)
     }
 
     // cause is Throwable or ParentJob when cancelChild was invoked
@@ -915,13 +917,13 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     protected open val cancelsParent: Boolean get() = true
 
     /**
-     * Returns `true` for jobs that handle their exceptions or integrate them
-     * into the job's result via [onCompletionInternal]. The only instance of the [Job] that does not
-     * handle its exceptions is [JobImpl] and its subclass [SupervisorJobImpl].
+     * Returns `true` for jobs that handle their exceptions or integrate them into the job's result via [onCompletionInternal].
+     * A valid implementation of this getter should recursively check parent as well before returning `false`.
      *
+     * The only instance of the [Job] that does not handle its exceptions is [JobImpl] and its subclass [SupervisorJobImpl].
      * @suppress **This is unstable API and it is subject to change.*
      */
-    protected open val handlesException: Boolean get() = true
+    internal open val handlesException: Boolean get() = true
 
     /**
      * Handles the final job [exception] that was not handled by the parent coroutine.
@@ -1222,10 +1224,29 @@ private class Empty(override val isActive: Boolean) : Incomplete {
 internal open class JobImpl(parent: Job?) : JobSupport(true), CompletableJob {
     init { initParentJobInternal(parent) }
     override val onCancelComplete get() = true
-    override val handlesException: Boolean get() = false
+    /*
+     * Check whether parent is able to handle exceptions as well.
+     * With this check, an exception in that pattern will be handled once:
+     * ```
+     * launch {
+     *     val child = Job(coroutineContext[Job])
+     *     launch(child) { throw ... }
+     * }
+     * ```
+     */
+    override val handlesException: Boolean = handlesException()
     override fun complete() = makeCompleting(Unit)
     override fun completeExceptionally(exception: Throwable): Boolean =
         makeCompleting(CompletedExceptionally(exception))
+
+    @JsName("handlesExceptionF")
+    private fun handlesException(): Boolean {
+        var parentJob = (parentHandle as? ChildHandleNode)?.job ?: return false
+        while (true) {
+            if (parentJob.handlesException) return true
+            parentJob = (parentJob.parentHandle as? ChildHandleNode)?.job ?: return false
+        }
+    }
 }
 
 // -------- invokeOnCompletion nodes
