@@ -58,7 +58,7 @@ public fun <T> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit
  */
 @FlowPreview
 @PublishedApi
-internal fun <T> unsafeFlow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
+internal inline fun <T> unsafeFlow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
     return object : Flow<T> {
         override suspend fun collect(collector: FlowCollector<T>) {
             collector.block()
@@ -128,6 +128,18 @@ public fun <T> flowOf(vararg elements: T): Flow<T> = unsafeFlow {
 }
 
 /**
+ * Creates flow that produces a given [value].
+ */
+@FlowPreview
+public fun <T> flowOf(value: T): Flow<T> = unsafeFlow {
+    /*
+     * Implementation note: this is just an "optimized" overload of flowOf(vararg)
+     * which significantly reduce the footprint of widespread single-value flows.
+     */
+    emit(value)
+}
+
+/**
  * Returns an empty flow.
  */
 @FlowPreview
@@ -141,7 +153,7 @@ private object EmptyFlow : Flow<Nothing> {
  * Creates a flow that produces values from the given array.
  */
 @FlowPreview
-public fun <T> Array<T>.asFlow(): Flow<T> = flow {
+public fun <T> Array<T>.asFlow(): Flow<T> = unsafeFlow {
     forEach { value ->
         emit(value)
     }
@@ -151,7 +163,7 @@ public fun <T> Array<T>.asFlow(): Flow<T> = flow {
  * Creates flow that produces values from the given array.
  */
 @FlowPreview
-public fun IntArray.asFlow(): Flow<Int> = flow {
+public fun IntArray.asFlow(): Flow<Int> = unsafeFlow {
     forEach { value ->
         emit(value)
     }
@@ -161,7 +173,7 @@ public fun IntArray.asFlow(): Flow<Int> = flow {
  * Creates flow that produces values from the given array.
  */
 @FlowPreview
-public fun LongArray.asFlow(): Flow<Long> = flow {
+public fun LongArray.asFlow(): Flow<Long> = unsafeFlow {
     forEach { value ->
         emit(value)
     }
@@ -171,7 +183,7 @@ public fun LongArray.asFlow(): Flow<Long> = flow {
  * Creates flow that produces values from the given range.
  */
 @FlowPreview
-public fun IntRange.asFlow(): Flow<Int> = flow {
+public fun IntRange.asFlow(): Flow<Int> = unsafeFlow {
     forEach { value ->
         emit(value)
     }

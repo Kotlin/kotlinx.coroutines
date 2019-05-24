@@ -10,7 +10,4 @@ import kotlinx.coroutines.*
  * This exception is thrown when operator need no more elements from the flow.
  * This exception should never escape outside of operator's implementation.
  */
-internal class AbortFlowException : CancellationException("Flow was aborted, no more elements needed") {
-    // TODO expect/actual
-    // override fun fillInStackTrace(): Throwable = this
-}
+internal expect class AbortFlowException() : CancellationException
