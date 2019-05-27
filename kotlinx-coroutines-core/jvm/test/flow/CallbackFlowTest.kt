@@ -41,7 +41,7 @@ class CallbackFlowTest : TestBase() {
 
         val flow = channelFlow<Int>(16) {
             api.start(channel)
-            channel.invokeOnClose {
+            awaitClose {
                 api.stop()
             }
         }
@@ -85,7 +85,7 @@ class CallbackFlowTest : TestBase() {
 
         val flow = channelFlow<Int> {
             api.start(channel)
-            channel.invokeOnClose {
+            awaitClose {
                 api.stop()
             }
         }
