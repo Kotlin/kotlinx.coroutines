@@ -94,6 +94,60 @@ class ProduceTest : TestBase() {
         cancelOnCompletion(coroutineContext)
     }
 
+    @Test
+    fun testAwaitConsumerCancellation() = runTest {
+        val parent = Job()
+        val channel = produce<Int>(parent) {
+            expect(2)
+            awaitClose { expect(4) }
+        }
+        expect(1)
+        yield()
+        expect(3)
+        channel.cancel()
+        parent.complete()
+        parent.join()
+        finish(5)
+    }
+
+    @Test
+    fun testAwaitProducerCancellation() = runTest {
+        val parent = Job()
+        produce<Int>(parent) {
+            expect(2)
+            launch {
+                expect(3)
+                this@produce.cancel()
+            }
+            awaitClose { expect(4) }
+        }
+        expect(1)
+        parent.complete()
+        parent.join()
+        finish(5)
+    }
+
+    @Test
+    fun testAwaitParentCancellation() = runTest {
+        val parent = Job()
+        produce<Int>(parent) {
+            expect(2)
+            awaitClose { expect(4) }
+        }
+        expect(1)
+        yield()
+        expect(3)
+        parent.cancelAndJoin()
+        finish(5)
+    }
+
+    @Test
+    fun testAwaitIllegalState() = runTest {
+        val channel = produce<Int> {  }
+        @Suppress("RemoveExplicitTypeArguments") // KT-31525
+        assertFailsWith<IllegalStateException> { (channel as ProducerScope<*>).awaitClose<Nothing>() }
+    }
+
     private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {
         val source = Channel<Int>()
         expect(1)
