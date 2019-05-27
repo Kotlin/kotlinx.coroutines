@@ -12,10 +12,9 @@ import kotlin.test.*
 class FlowInvariantsTest : TestBase() {
 
     @Test
-    fun testWithContextContract() = runTest {
+    fun testWithContextContract() = runTest({ it is IllegalStateException }) {
         flow {
             kotlinx.coroutines.withContext(NonCancellable) {
-                // This one cannot be prevented :(
                 emit(1)
             }
         }.collect {
@@ -87,7 +86,7 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testScopedJob() = runTest {
+    fun testScopedJob() = runTest({ it is IllegalStateException }) {
         flow { emit(1) }.buffer(EmptyCoroutineContext).collect {
             expect(1)
         }
@@ -131,9 +130,8 @@ class FlowInvariantsTest : TestBase() {
         assertFailsWith<IllegalStateException> { flow.trickyMerge(flow).toList() }
     }
 
-
     // TODO merge artifact
-    fun <T> channelFlow(bufferSize: Int = 16, @BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> =
+    private fun <T> channelFlow(bufferSize: Int = 16, @BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> =
         flow {
             coroutineScope {
                 val channel = produce(capacity = bufferSize, block = block)
@@ -168,6 +166,23 @@ class FlowInvariantsTest : TestBase() {
         assertEquals(listOf(1, 1), flow.trickyMerge(flow).toList())
     }
 
+    @Test
+    fun testScopedCoroutineNoViolation() = runTest {
+        fun Flow<Int>.buffer(): Flow<Int> = flow {
+            coroutineScope {
+                val channel = produce {
+                    collect {
+                        send(it)
+                    }
+                }
+                channel.consumeEach {
+                    emit(it)
+                }
+            }
+        }
+
+        assertEquals(listOf(1, 1), flowOf(1, 1).buffer().toList())
+    }
 
     private fun Flow<Int>.buffer(coroutineContext: CoroutineContext): Flow<Int> = flow {
         coroutineScope {

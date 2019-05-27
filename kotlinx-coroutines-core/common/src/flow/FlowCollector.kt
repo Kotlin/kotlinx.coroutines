@@ -18,6 +18,7 @@ public interface FlowCollector<in T> {
 
     /**
      * Collects the value emitted by the upstream.
+     * This method is not thread-safe and should not be invoked concurrently.
      */
     public suspend fun emit(value: T)
 }
