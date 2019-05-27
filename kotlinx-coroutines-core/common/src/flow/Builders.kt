@@ -234,7 +234,7 @@ public fun <T> flowViaChannel(
  * on the resulting flow.
  *
  * This builder ensures thread-safety and context preservation, thus the provided [ProducerScope] can be used concurrently from different contexts.
- * The resulting flow will complete as soon as [ProducerScope], to artificially prolong it [await] can be used.
+ * The resulting flow will complete as soon as [ProducerScope], to artificially prolong it [awaitClose] can be used.
  * For more detailed example please refer to [callbackFlow] documentation.
  *
  * To control backpressure, [bufferSize] is used and matches directly the `capacity` parameter of [Channel] factory.
@@ -283,7 +283,7 @@ public fun <T> channelFlow(bufferSize: Int = 16, @BuilderInference block: suspen
  * This builder ensures thread-safety and context preservation, thus the provided [ProducerScope] can be used from any context,
  * e.g. from the callback-based API. The flow completes as soon as its scope completes, thus if you are using channel from the
  * callback-based API, to artificially prolong scope lifetime and avoid memory-leaks related to unregistered resources,
- * [await] extension should be used. [await] argument will be invoked when either flow consumer cancels flow collection
+ * [awaitClose] extension should be used. [awaitClose] argument will be invoked when either flow consumer cancels flow collection
  * or when callback-based API invokes [SendChannel.close] manually.
  *
  * To control backpressure, [bufferSize] is used and matches directly the `capacity` parameter of [Channel] factory.
@@ -295,10 +295,12 @@ public fun <T> channelFlow(bufferSize: Int = 16, @BuilderInference block: suspen
  * fun flowFrom(api: CallbackBasedApi): Flow<T> = callbackFlow {
  *     val callback = object : Callback { // implementation of some callback interface
  *         override fun onNextValue(value: T) {
- *             offer(value) // Note: offer drops value when buffer is full
+ *             // Note: offer drops value when buffer is full
+ *             // Channel.UNLIMITED can be used to avoid overfill
+ *             offer(value)
  *         }
  *         override fun onApiError(cause: Throwable) {
- *             cancel("API Error", CancellationException(cause))
+ *             cancel(CancellationException("API Error", cause))
  *         }
  *         override fun onCompleted() = channel.close()
  *     }

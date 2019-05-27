@@ -38,7 +38,7 @@ class FlowCallbackTest : TestBase() {
                 close()
             }
             expect(1)
-            await()
+            awaitClose()
         }
 
         assertEquals(listOf(1), flow.toList())

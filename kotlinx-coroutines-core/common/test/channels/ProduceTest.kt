@@ -99,7 +99,7 @@ class ProduceTest : TestBase() {
         val parent = Job()
         val channel = produce<Int>(parent) {
             expect(2)
-            await { expect(4) }
+            awaitClose { expect(4) }
         }
         expect(1)
         yield()
@@ -119,7 +119,7 @@ class ProduceTest : TestBase() {
                 expect(3)
                 this@produce.cancel()
             }
-            await { expect(4) }
+            awaitClose { expect(4) }
         }
         expect(1)
         parent.complete()
@@ -132,7 +132,7 @@ class ProduceTest : TestBase() {
         val parent = Job()
         produce<Int>(parent) {
             expect(2)
-            await { expect(4) }
+            awaitClose { expect(4) }
         }
         expect(1)
         yield()
@@ -145,7 +145,7 @@ class ProduceTest : TestBase() {
     fun testAwaitIllegalState() = runTest {
         val channel = produce<Int> {  }
         @Suppress("RemoveExplicitTypeArguments") // KT-31525
-        assertFailsWith<IllegalStateException> { (channel as ProducerScope<*>).await<Nothing>() }
+        assertFailsWith<IllegalStateException> { (channel as ProducerScope<*>).awaitClose<Nothing>() }
     }
 
     private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {
