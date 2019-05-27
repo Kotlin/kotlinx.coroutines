@@ -63,9 +63,9 @@ import kotlinx.coroutines.*
  * 3) If you are looking for the performance and are sure that no concurrent emits and context jumps will happen, [flow] builder
  *    alongside with [coroutineScope] or [supervisorScope] can be used instead:
  *
- *    - scoped primitive should be used to provide a [CoroutineScope]
- *    - changing the context of the coroutines is prohibited, no matter whether it is `withContext(ctx)` or builder argument (e.g. `launch(ctx)`)
- *    - Emissions are allowed only from the enclosing scope, emissions from launched coroutines are prohibited.
+ *    - Scoped primitive should be used to provide a [CoroutineScope]
+ *    - Changing the context of emission is prohibited, no matter whether it is `withContext(ctx)` or builder argument (e.g. `launch(ctx)`)
+ *    - Changing the context of collection is allowed, but it has the same effect as [flowOn] operator and changes the upstream context.
  *
  * These constraints are enforced by the default [flow] builder.
  * Example of the proper `buffer` implementation:
@@ -73,7 +73,6 @@ import kotlinx.coroutines.*
  * fun <T> Flow<T>.buffer(bufferSize: Int): Flow<T> = flow {
  *     coroutineScope { // coroutine scope is necessary, withContext is prohibited
  *         // GlobalScope.produce { is prohibited
- *         // produce(Dispatchers.IO) { is prohibited
  *         val channel = produce(bufferSize) {
  *             collect { value -> // Collect from started coroutine -- OK
  *                 channel.send(value)
@@ -82,7 +81,8 @@ import kotlinx.coroutines.*
  *
  *         for (i in channel) {
  *             emit(i) // Emission from the enclosing scope -- OK
- *             // launch { emit (i) } -- prohibited
+ *             // launch { emit(i) } -- prohibited
+ *             // withContext(Dispatchers.IO) { emit(i) }
  *         }
  *     }
  * }
