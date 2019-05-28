@@ -11,3 +11,8 @@ import kotlinx.coroutines.*
  * This exception should never escape outside of operator's implementation.
  */
 internal expect class AbortFlowException() : CancellationException
+
+/**
+ * Exception used to cancel child of [scopedFlow] without cancelling the whole scope.
+ */
+internal expect class ChildCancelledException() : CancellationException

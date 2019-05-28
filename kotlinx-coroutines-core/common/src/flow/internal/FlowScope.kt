@@ -56,5 +56,3 @@ internal class FlowScope<T, R>(
 
     override suspend fun emit(value: R) = collector.emit(value)
 }
-
-internal class ChildCancelledException : CancellationException(null)

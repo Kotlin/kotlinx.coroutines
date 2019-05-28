@@ -7,3 +7,5 @@ package kotlinx.coroutines.flow.internal
 import kotlinx.coroutines.*
 
 internal actual class AbortFlowException : CancellationException("Flow was aborted, no more elements needed")
+internal actual class ChildCancelledException : CancellationException("Child of the scoped flow was cancelled")
+
