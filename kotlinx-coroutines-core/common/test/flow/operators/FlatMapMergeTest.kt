@@ -36,4 +36,41 @@ class FlatMapMergeTest : FlatMapMergeBaseTest() {
         consumer.cancelAndJoin()
         finish(3)
     }
+
+    @Test
+    fun testCancellationExceptionDownstream() = runTest {
+        val flow = flow {
+            emit(1)
+            hang { expect(2) }
+        }.flatMapMerge {
+            flow {
+                emit(it)
+                expect(1)
+                throw CancellationException("")
+            }
+        }
+
+        assertFailsWith<CancellationException>(flow)
+        finish(3)
+    }
+
+    @Test
+    fun testCancellationExceptionUpstream() = runTest {
+        val flow = flow {
+            expect(1)
+            emit(1)
+            expect(2)
+            yield()
+            throw CancellationException("")
+        }.flatMapMerge {
+            flow {
+                expect(3)
+                emit(it)
+                hang { expect(4) }
+            }
+        }
+
+        assertFailsWith<CancellationException>(flow)
+        finish(5)
+    }
 }

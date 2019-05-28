@@ -620,16 +620,15 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     /**
-     * Returns `true` if job should cancel itself during on child [CancellationException].
+     * Returns `true` if job should cancel itself on child [CancellationException].
      */
     public open fun cancelOnChildCancellation(cause: CancellationException) = false
 
     /**
      * Child was cancelled with a cause.
-     * At this point parent decides whether it cancels itself (e.g. on a critical failure) and
+     * In this method parent decides whether it cancels itself (e.g. on a critical failure) and
      * whether it handles the exception of the child.
-     *
-     * It is overridden in supervisor implementations to completely ignore any child cancellation
+     * It is overridden in supervisor implementations to completely ignore any child cancellation.
      */
     public open fun childCancelled(cause: Throwable): Boolean {
         if (cause is CancellationException && !cancelOnChildCancellation(cause)) return true
@@ -949,11 +948,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     /**
      * Returns `true` for scoped coroutines.
-     * Scoped coroutine is a coroutine that is executed sequentially within the enclosing scope
-     * without any concurrency.
-     * Scoped coroutines always handle any exception happened within -- they just rethrow it
-     * to the enclosing scope.
-     *
+     * Scoped coroutine is a coroutine that is executed sequentially within the enclosing scope without any concurrency.
+     * Scoped coroutines always handle any exception happened within -- they just rethrow it to the enclosing scope.
      * Examples of scoped coroutines are `coroutineScope`, `withTimeout` and `runBlocking`.
      */
     protected open val isScopedCoroutine: Boolean get() = false

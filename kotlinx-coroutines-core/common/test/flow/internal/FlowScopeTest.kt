@@ -5,9 +5,14 @@
 package kotlinx.coroutines.flow.internal
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlin.test.*
 
 class FlowScopeTest : TestBase() {
+
+    private suspend fun flowScope(block: suspend CoroutineScope.() -> Unit): Unit {
+        scopedFlow<Unit>(block).singleOrNull()
+    }
 
     @Test
     fun testCancellation() = runTest {
