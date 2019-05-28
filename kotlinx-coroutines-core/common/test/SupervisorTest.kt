@@ -219,4 +219,22 @@ class SupervisorTest : TestBase() {
         yield() // to coroutineScope
         finish(7)
     }
+
+    @Test
+    fun testSupervisorJobCancellationException() = runTest {
+        val job = SupervisorJob()
+        val child = launch(job + CoroutineExceptionHandler { _, _ -> expectUnreached() }) {
+            expect(1)
+            hang {
+                expect(3)
+            }
+        }
+
+        yield()
+        expect(2)
+        child.cancelAndJoin()
+        job.complete()
+        job.join()
+        finish(4)
+    }
 }
