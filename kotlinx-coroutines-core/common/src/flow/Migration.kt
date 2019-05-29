@@ -193,3 +193,24 @@ public fun <T> Flow<Flow<T>>.merge(): Flow<T> = error("Should not be called")
     replaceWith = ReplaceWith("flattenConcat()")
 )
 public fun <T> Flow<Flow<T>>.flatten(): Flow<T> = error("Should not be called")
+
+/**
+ * Kotlin has a built-in generic mechanism for making chained calls.
+ * If you wish to write something like
+ * ```
+ * myFlow.compose(MyFlowExtensions.ignoreErrors()).collect { ... }
+ * ```
+ * you can replace it with
+ *
+ * ```
+ * myFlow.let(MyFlowExtensions.ignoreErrors()).collect { ... }
+ * ```
+ *
+ * @suppress
+ */
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Kotlin analogue of compose is 'let'",
+    replaceWith = ReplaceWith("let(transformer)")
+)
+public fun <T, R> Flow<T>.compose(transformer: Flow<T>.() -> Flow<R>): Flow<R> = error("Should not be called")
