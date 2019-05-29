@@ -9,6 +9,11 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
+import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
+import kotlinx.coroutines.channels.Channel.Factory.OPTIONAL_CHANNEL
+import kotlinx.coroutines.flow.internal.*
+import kotlin.coroutines.*
 import kotlin.jvm.*
 
 /**
@@ -33,30 +38,32 @@ public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
  *
  * This transformation is **stateful**, it launches a [broadcast] coroutine
  * that collects the given flow and thus resulting channel should be properly closed or cancelled.
+ *
+ * A channel with [default][Channel.Factory.BUFFERED] buffer size is created.
+ * Use [buffer] operator on the flow before calling `produce` to specify a value other than
+ * default and to control what happens when data is produced faster than it is consumed,
+ * that is to control backpressure behavior.
  */
 @FlowPreview
 public fun <T> Flow<T>.broadcastIn(
-    scope: CoroutineScope, capacity: Int = 1,
+    scope: CoroutineScope,
     start: CoroutineStart = CoroutineStart.LAZY
-): BroadcastChannel<T> = scope.broadcast(capacity = capacity, start = start) {
-    collect { value ->
-        send(value)
-    }
-}
+): BroadcastChannel<T> =
+    asChannelFlow().broadcastImpl(scope, start)
 
 /**
  * Creates a [produce] coroutine that collects the given flow.
  *
  * This transformation is **stateful**, it launches a [produce] coroutine
  * that collects the given flow and thus resulting channel should be properly closed or cancelled.
+ *
+ * A channel with [default][Channel.Factory.BUFFERED] buffer size is created.
+ * Use [buffer] operator on the flow before calling `produce` to specify a value other than
+ * default and to control what happens when data is produced faster than it is consumed,
+ * that is to control backpressure behavior.
  */
 @FlowPreview
 public fun <T> Flow<T>.produceIn(
-    scope: CoroutineScope,
-    capacity: Int = 1
-): ReceiveChannel<T> = scope.produce(capacity = capacity) {
-    // TODO it would be nice to have it with start = lazy as well
-    collect { value ->
-        send(value)
-    }
-}
+    scope: CoroutineScope
+): ReceiveChannel<T> =
+    asChannelFlow().produceImpl(scope)

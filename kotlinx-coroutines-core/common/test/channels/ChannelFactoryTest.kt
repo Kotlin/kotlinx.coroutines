@@ -34,6 +34,6 @@ class ChannelFactoryTest : TestBase() {
 
     @Test
     fun testInvalidCapacityNotSupported() = runTest({ it is IllegalArgumentException }) {
-        Channel<Int>(-2)
+        Channel<Int>(-3)
     }
 }
