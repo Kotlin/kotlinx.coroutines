@@ -9,6 +9,7 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
 import kotlinx.coroutines.flow.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
@@ -206,24 +207,15 @@ public fun LongRange.asFlow(): Flow<Long> = flow {
 @Deprecated(
     message = "Use channelFlow instead",
     level = DeprecationLevel.WARNING,
-    replaceWith = ReplaceWith("channelFlow(bufferSize, block)")
+    replaceWith = ReplaceWith("channelFlow(block)")
 )
 public fun <T> flowViaChannel(
-    bufferSize: Int = 16,
+    bufferSize: Int = BUFFERED,
     @BuilderInference block: CoroutineScope.(channel: SendChannel<T>) -> Unit
 ): Flow<T> {
-    return flow {
-        coroutineScope {
-            val channel = Channel<T>(bufferSize)
-            launch {
-                block(channel)
-            }
-
-            channel.consumeEach { value ->
-                emit(value)
-            }
-        }
-    }
+    return channelFlow<T> {
+        block(channel)
+    }.buffer(bufferSize)
 }
 
 /**
@@ -233,28 +225,37 @@ public fun <T> flowViaChannel(
  * The resulting flow is _cold_, which means that [block] is called on each call of a terminal operator
  * on the resulting flow.
  *
- * This builder ensures thread-safety and context preservation, thus the provided [ProducerScope] can be used concurrently from different contexts.
- * The resulting flow will complete as soon as [ProducerScope], to artificially prolong it [awaitClose] can be used.
+ * This builder ensures thread-safety and context preservation, thus the provided [ProducerScope] can be used
+ * concurrently from different contexts.
+ * The resulting flow completes as soon as the code in the [block] and all its children complete.
+ * Use [awaitClose] as the last statement to keep it running.
  * For more detailed example please refer to [callbackFlow] documentation.
  *
- * To control backpressure, [bufferSize] is used and matches directly the `capacity` parameter of [Channel] factory.
- * The provided channel can later be used by any external service to communicate with the flow and its buffer determines
- * backpressure buffer size or its behaviour (e.g. in the case when [Channel.CONFLATED] was used).
+ * A channel with [default][Channel.BUFFERED] buffer size is used. Use [buffer] operator on the
+ * resulting flow to specify a value other than default and to control what happens when data is produced faster
+ * than it is consumed, that is to control backpressure behavior.
+ *
+ * Adjacent applications of [channelFlow], [flowOn], [buffer], [produceIn], and [broadcastIn] are
+ * always fused so that only one properly configured channel is used for execution.
  *
  * Examples of usage:
+ *
  * ```
  * fun <T> Flow<T>.merge(other: Flow<T>): Flow<T> = channelFlow {
+ *     // collect from one coroutine and send it
  *     launch {
- *         collect { value -> send(value) }
+ *         collect { send(it) }
  *     }
- *     other.collect { value -> send(value) }
+ *     // collect and send from this coroutine, too, concurrently
+ *     other.collect { send(it) }
  * }
  *
  * fun <T> contextualFlow(): Flow<T> = channelFlow {
+ *     // send from one coroutine
  *     launch(Dispatchers.IO) {
  *         send(computeIoValue())
  *     }
- *
+ *     // send from another coroutine, concurrently
  *     launch(Dispatchers.Default) {
  *         send(computeCpuValue())
  *     }
@@ -262,15 +263,8 @@ public fun <T> flowViaChannel(
  * ```
  */
 @FlowPreview
-public fun <T> channelFlow(bufferSize: Int = 16, @BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> =
-    flow {
-        coroutineScope {
-            val channel = produce(capacity = bufferSize, block = block)
-            channel.consumeEach { value ->
-                emit(value)
-            }
-        }
-    }
+public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> =
+    ChannelFlowBuilder(block)
 
 /**
  * Creates an instance of the cold [Flow] with elements that are sent to a [SendChannel]
@@ -280,23 +274,28 @@ public fun <T> channelFlow(bufferSize: Int = 16, @BuilderInference block: suspen
  * The resulting flow is _cold_, which means that [block] is called on each call of a terminal operator
  * on the resulting flow.
  *
- * This builder ensures thread-safety and context preservation, thus the provided [ProducerScope] can be used from any context,
- * e.g. from the callback-based API. The flow completes as soon as its scope completes, thus if you are using channel from the
- * callback-based API, to artificially prolong scope lifetime and avoid memory-leaks related to unregistered resources,
- * [awaitClose] extension should be used. [awaitClose] argument will be invoked when either flow consumer cancels flow collection
+ * This builder ensures thread-safety and context preservation, thus the provided [ProducerScope] can be used
+ * from any context, e.g. from the callback-based API.
+ * The resulting flow completes as soon as the code in the [block] and all its children complete.
+ * Use [awaitClose] as the last statement to keep it running.
+ * [awaitClose] argument is called when either flow consumer cancels flow collection
  * or when callback-based API invokes [SendChannel.close] manually.
  *
- * To control backpressure, [bufferSize] is used and matches directly the `capacity` parameter of [Channel] factory.
- * The provided channel can later be used by any external service to communicate with the flow and its buffer determines
- * backpressure buffer size or its behaviour (e.g. in the case when [Channel.CONFLATED] was used).
+ * A channel with [default][Channel.BUFFERED] buffer size is used. Use [buffer] operator on the
+ * resulting flow to specify a value other than default and to control what happens when data is produced faster
+ * than it is consumed, that is to control backpressure behavior.
+ *
+ * Adjacent applications of [callbackFlow], [flowOn], [buffer], [produceIn], and [broadcastIn] are
+ * always fused so that only one properly configured channel is used for execution.
  *
  * Example of usage:
+ *
  * ```
  * fun flowFrom(api: CallbackBasedApi): Flow<T> = callbackFlow {
  *     val callback = object : Callback { // implementation of some callback interface
  *         override fun onNextValue(value: T) {
  *             // Note: offer drops value when buffer is full
- *             // Channel.UNLIMITED can be used to avoid overfill
+ *             // Use either buffer(Channel.CONFLATED) or buffer(Channel.UNLIMITED) to avoid overfill
  *             offer(value)
  *         }
  *         override fun onApiError(cause: Throwable) {
@@ -310,5 +309,22 @@ public fun <T> channelFlow(bufferSize: Int = 16, @BuilderInference block: suspen
  * }
  * ```
  */
-public inline fun <T> callbackFlow(bufferSize: Int = 16, @BuilderInference crossinline block: suspend ProducerScope<T>.() -> Unit): Flow<T> =
-    channelFlow(bufferSize) { block() }
+@Suppress("NOTHING_TO_INLINE")
+public inline fun <T> callbackFlow(@BuilderInference noinline block: suspend ProducerScope<T>.() -> Unit): Flow<T> =
+    channelFlow(block)
+
+// ChannelFlow implementation that is the first in the chain of flow operations and introduces (builds) a flow 
+private class ChannelFlowBuilder<T>(
+    private val block: suspend ProducerScope<T>.() -> Unit,
+    context: CoroutineContext = EmptyCoroutineContext,
+    capacity: Int = BUFFERED
+) : ChannelFlow<T>(context, capacity) {
+    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
+        ChannelFlowBuilder(block, context, capacity)
+
+    override suspend fun collectTo(scope: ProducerScope<T>) =
+        block(scope)
+
+    override fun toString(): String =
+        "block[$block] -> ${super.toString()}"
+}

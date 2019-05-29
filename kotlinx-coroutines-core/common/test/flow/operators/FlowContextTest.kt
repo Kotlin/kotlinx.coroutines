@@ -150,8 +150,5 @@ class FlowContextTest : TestBase() {
         val flow = emptyFlow<Int>()
         assertFailsWith<IllegalArgumentException> { flow.flowOn(Job()) }
         assertFailsWith<IllegalArgumentException> { flow.flowWith(Job()) { this } }
-        assertFailsWith<IllegalArgumentException> { flow.flowOn(EmptyCoroutineContext, bufferSize = -1) }
-        assertFailsWith<IllegalArgumentException> { flow.flowWith(EmptyCoroutineContext, bufferSize = -1) { this } }
-
     }
 }
