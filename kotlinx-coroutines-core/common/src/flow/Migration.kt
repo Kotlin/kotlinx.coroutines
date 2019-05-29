@@ -214,3 +214,13 @@ public fun <T> Flow<Flow<T>>.flatten(): Flow<T> = error("Should not be called")
     replaceWith = ReplaceWith("let(transformer)")
 )
 public fun <T, R> Flow<T>.compose(transformer: Flow<T>.() -> Flow<R>): Flow<R> = error("Should not be called")
+
+/**
+ * @suppress
+ */
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Kotlin analogue of 'skip' is 'drop'",
+    replaceWith = ReplaceWith("drop(count)")
+)
+public fun <T> Flow<T>.skip(count: Int): Flow<T> = error("Should not be called")

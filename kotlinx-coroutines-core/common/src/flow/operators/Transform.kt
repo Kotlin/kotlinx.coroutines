@@ -4,10 +4,12 @@
 
 @file:JvmMultifileClass
 @file:JvmName("FlowKt")
+@file:Suppress("UNCHECKED_CAST")
 
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.internal.NullSurrogate
 import kotlin.jvm.*
 import kotlinx.coroutines.flow.unsafeFlow as flow
 
@@ -95,5 +97,46 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = flow {
     collect { value ->
         action(value)
         emit(value)
+    }
+}
+
+/**
+ * Reduces the given flow with [operation], emitting every intermediate result, including initial value.
+ * The first element is takes as initial value for operation accumulator.
+ * For example:
+ * ```
+ * flowOf(1, 2, 3, 4).scan { (v1, v2) -> v1 + v2 }.toList()
+ * ```
+ * will produce `[1, 3, 6, 10]`
+ */
+@FlowPreview
+public fun <T> Flow<T>.scan(operation: suspend (accumulator: T, value: T) -> T): Flow<T> = flow {
+    var accumulator: Any? = NullSurrogate
+    collect { value ->
+        accumulator = if (accumulator === NullSurrogate) {
+            value
+        } else {
+            operation(accumulator as T, value)
+        }
+        emit(accumulator as T)
+    }
+}
+
+/**
+ * Reduces the given flow with [operation], emitting every intermediate result, including initial value.
+ * An initial value is provided lazily by [initialSupplier] and is always immediately emitted.
+ * For example:
+ * ```
+ * flowOf(1, 2, 3).scan(::emptyList) { acc: List<Int>, value -> acc + value }.toList()
+ * ```
+ * will produce `[], [1], [1, 2], [1, 2, 3]]`.
+ */
+@FlowPreview
+public fun <T, R> Flow<T>.scan(initialSupplier: () -> R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = flow {
+    var accumulator: R = initialSupplier()
+    emit(accumulator)
+    collect { value ->
+        accumulator = operation(accumulator, value)
+        emit(accumulator)
     }
 }

@@ -80,11 +80,7 @@ public fun <T, R> Flow<T>.flatMapMerge(
  */
 @FlowPreview
 public fun <T> Flow<Flow<T>>.flattenConcat(): Flow<T> = flow {
-    collect { value ->
-        value.collect { innerValue ->
-            emit(innerValue)
-        }
-    }
+    collect { value -> emitAll(value) }
 }
 
 /**
@@ -137,9 +133,7 @@ public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): F
         previousFlow?.join()
         // Undispatched to have better user experience in case of synchronous flows
         previousFlow = launch(start = CoroutineStart.UNDISPATCHED) {
-            transform(value).collect { innerValue ->
-                downstream.emit(innerValue)
-            }
+            downstream.emitAll(transform(value))
         }
     }
 }
