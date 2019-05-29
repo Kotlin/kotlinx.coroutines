@@ -776,6 +776,11 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             if (!tryFinalizeSimpleState(state, proposedUpdate, mode)) return COMPLETING_RETRY
             return COMPLETING_COMPLETED
         }
+        // The separate slow-path function to simplify profiling
+        return tryMakeCompletingSlowPath(state, proposedUpdate, mode)
+    }
+
+    private fun tryMakeCompletingSlowPath(state: Incomplete, proposedUpdate: Any?, mode: Int): Int {
         // get state's list or else promote to list to correctly operate on child lists
         val list = getOrPromoteCancellingList(state) ?: return COMPLETING_RETRY
         // promote to Finishing state if we are not in it yet
@@ -1195,7 +1200,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
  * Class to represent object as the final state of the Job
  */
 private class IncompleteStateBox(@JvmField val state: Incomplete)
-private fun Any?.boxIncomplete(): Any? = if (this is Incomplete) IncompleteStateBox(this) else this
+internal fun Any?.boxIncomplete(): Any? = if (this is Incomplete) IncompleteStateBox(this) else this
 internal fun Any?.unboxState(): Any? = (this as? IncompleteStateBox)?.state ?: this
 
 // --------------- helper classes & constants for job implementation

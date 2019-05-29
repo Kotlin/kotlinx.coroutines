@@ -27,7 +27,7 @@ import kotlinx.coroutines.*
  * trigger their evaluation every time [collect] is executed) or hot ones, but, conventionally, they represent cold streams.
  * Transitions between hot and cold streams are supported via channels and the corresponding API: [flowViaChannel], [broadcastIn], [produceIn].
  *
- * The flow has a context preserving property: it encapsulates its own execution context and never propagates or leaks it downstream, thus making
+ * The flow has a context preservation property: it encapsulates its own execution context and never propagates or leaks it downstream, thus making
  * reasoning about the execution context of particular transformations or terminal operations trivial.
  *
  * There are two ways to change the context of a flow: [flowOn][Flow.flowOn] and [flowWith][Flow.flowWith].
@@ -52,24 +52,37 @@ import kotlinx.coroutines.*
  * }
  * ```
  *
- * From the implementation point of view it means that all intermediate operators on [Flow] should abide by the following constraint:
- * If collection or emission of a flow is to be separated into multiple coroutines, it should use [coroutineScope] or [supervisorScope] and
- * is not allowed to modify the coroutines' context:
+ * From the implementation point of view it means that all intermediate operators on [Flow] should abide by the following constraints:
+ * 1) If an operator is trivial and does not start any coroutines, regular [flow] builder should be used. Its implementation
+ *    efficiently enforces all the invariants and prevents most of the development mistakes.
+ *
+ * 2) If the collection and emission of the flow are to be separated into multiple coroutines, [channelFlow] should be used.
+ *   [channelFlow] encapsulates all the context preservation work and allows you to focus on your domain-specific problem,
+ *   rather than invariant implementation details.  It is possible to use any combination of coroutine builders from within [channelFlow].
+ *
+ * 3) If you are looking for the performance and are sure that no concurrent emits and context jumps will happen, [flow] builder
+ *    alongside with [coroutineScope] or [supervisorScope] can be used instead:
+ *
+ *    - Scoped primitive should be used to provide a [CoroutineScope]
+ *    - Changing the context of emission is prohibited, no matter whether it is `withContext(ctx)` or builder argument (e.g. `launch(ctx)`)
+ *    - Changing the context of collection is allowed, but it has the same effect as [flowOn] operator and changes the upstream context.
+ *
+ * These constraints are enforced by the default [flow] builder.
+ * Example of the proper `buffer` implementation:
  * ```
  * fun <T> Flow<T>.buffer(bufferSize: Int): Flow<T> = flow {
  *     coroutineScope { // coroutine scope is necessary, withContext is prohibited
- *         val channel = Channel<T>(bufferSize)
- *         // GlobalScope.launch { is prohibited
- *         // launch(Dispatchers.IO) { is prohibited
- *         launch { // is OK
- *             collect { value ->
+ *         // GlobalScope.produce { is prohibited
+ *         val channel = produce(bufferSize) {
+ *             collect { value -> // Collect from started coroutine -- OK
  *                 channel.send(value)
  *             }
- *             channel.close()
  *         }
  *
  *         for (i in channel) {
- *             emit(i)
+ *             emit(i) // Emission from the enclosing scope -- OK
+ *             // launch { emit(i) } -- prohibited
+ *             // withContext(Dispatchers.IO) { emit(i) }
  *         }
  *     }
  * }
@@ -87,23 +100,10 @@ public interface Flow<out T> {
      * A valid implementation of this method has the following constraints:
      * 1) It should not change the coroutine context (e.g. with `withContext(Dispatchers.IO)`) when emitting values.
      *    The emission should happen in the context of the [collect] call.
-     *
-     * Only coroutine builders that inherit the context are allowed, for example:
-     * ```
-     * class MyFlow : Flow<Int> {
-     *     override suspend fun collect(collector: FlowCollector<Int>) {
-     *         coroutineScope {
-     *             // Context is inherited
-     *             launch { // Dispatcher is not overridden, fine as well
-     *                 collector.emit(42) // Emit from the launched coroutine
-     *             }
-     *         }
-     *     }
-     * }
-     * ```
-     * is a proper [Flow] implementation, but using `launch(Dispatchers.IO)` is not.
+     *    Please refer to the top-level [Flow] documentation for more details.
      *
      * 2) It should serialize calls to [emit][FlowCollector.emit] as [FlowCollector] implementations are not thread safe by default.
+     *    To automatically serialize emissions [channelFlow] builder can be used instead of [flow]
      */
     public suspend fun collect(collector: FlowCollector<T>)
 }

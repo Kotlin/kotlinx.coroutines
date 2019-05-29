@@ -19,6 +19,8 @@ internal open class ScopeCoroutine<in T>(
     final override fun getStackTraceElement(): StackTraceElement? = null
     override val defaultResumeMode: Int get() = MODE_DIRECT
 
+    internal val parent: Job? get() = parentContext[Job]
+
     override val cancelsParent: Boolean
         get() = false // it throws exception to parent instead of cancelling it
 
