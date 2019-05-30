@@ -7,11 +7,6 @@ import java.util.jar.*
 import java.util.zip.*
 
 /**
- * Name of the boolean property that enables using of [FastServiceLoader].
- */
-private const val FAST_SERVICE_LOADER_PROPERTY_NAME = "kotlinx.coroutines.fast.service.loader"
-
-/**
  * A simplified version of [ServiceLoader].
  * FastServiceLoader locates and instantiates all service providers named in configuration
  * files placed in the resource directory <tt>META-INF/services</tt>.
@@ -25,12 +20,7 @@ private const val FAST_SERVICE_LOADER_PROPERTY_NAME = "kotlinx.coroutines.fast.s
 internal object FastServiceLoader {
     private const val PREFIX: String = "META-INF/services/"
 
-    private val FAST_SERVICE_LOADER_ENABLED = systemProp(FAST_SERVICE_LOADER_PROPERTY_NAME, true)
-
     internal fun <S> load(service: Class<S>, loader: ClassLoader): List<S> {
-        if (!FAST_SERVICE_LOADER_ENABLED) {
-            return ServiceLoader.load(service, loader).toList()
-        }
         return try {
             loadProviders(service, loader)
         } catch (e: Throwable) {
