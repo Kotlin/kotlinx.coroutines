@@ -100,8 +100,16 @@ public fun <E> CoroutineScope.produce(
 }
 
 /**
- * @suppress **This an internal API and should not be used from general code.**
- *           onCompletion parameter will be redesigned.
+ * This an internal API and should not be used from general code.**
+ * onCompletion parameter will be redesigned.
+ * If you have to use `onCompletion` operator, please report to https://github.com/Kotlin/kotlinx.coroutines/issues/.
+ * As a temporary solution, [invokeOnCompletion][Job.invokeOnCompletion] can be used instead:
+ * ```
+ * fun <E> ReceiveChannel<E>.myOperator(): ReceiveChannel<E> = GlobalScope.produce(Dispatchers.Unconfined) {
+ *     coroutineContext[Job]?.invokeOnCompletion { consumes() }
+ * }
+ * ```
+ * @suppress
  */
 @InternalCoroutinesApi
 public fun <E> CoroutineScope.produce(
