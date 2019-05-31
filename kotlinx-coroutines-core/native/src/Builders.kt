@@ -66,7 +66,8 @@ private class BlockingCoroutine<T>(
                 val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
                 // note: process next even may loose unpark flag, so check if completed before parking
                 if (isCompleted) break
-                timespec.tv_nsec = parkNanos.convert()
+                timespec.tv_sec = parkNanos / 1000000000L // 1e9 ns -> sec
+                timespec.tv_nsec = (parkNanos % 1000000000L).convert() // % 1e9
                 nanosleep(timespec.ptr, null)
             }
         } finally { // paranoia
