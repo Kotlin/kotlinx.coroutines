@@ -5,10 +5,9 @@
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
-import kotlin.test.Test
-import kotlin.test.assertTrue
+import kotlin.test.*
 
-class DelayExceptionTest {
+class DelayExceptionTest : TestBase() {
     private object Dispatcher : CoroutineDispatcher() {
         override fun isDispatchNeeded(context: CoroutineContext): Boolean = true
         override fun dispatch(context: CoroutineContext, block: Runnable) { block.run() }
@@ -24,5 +23,17 @@ class DelayExceptionTest {
         }
 
         assertTrue(exception is IllegalStateException)
+    }
+
+    @Test
+    fun testMaxDelay() = runBlocking {
+        expect(1)
+        val job = launch {
+            expect(2)
+            delay(Long.MAX_VALUE)
+        }
+        yield()
+        job.cancel()
+        finish(3)
     }
 }
