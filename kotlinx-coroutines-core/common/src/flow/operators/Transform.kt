@@ -102,7 +102,9 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = flow {
 
 /**
  * Reduces the given flow with [operation], emitting every intermediate result, including initial value.
- * The first element is takes as initial value for operation accumulator.
+ * The first element is taken as initial value for operation accumulator.
+ * This operator has a sibling with initial value -- [accumulate].
+ *
  * For example:
  * ```
  * flowOf(1, 2, 3, 4).scan { (v1, v2) -> v1 + v2 }.toList()
@@ -123,17 +125,17 @@ public fun <T> Flow<T>.scan(operation: suspend (accumulator: T, value: T) -> T):
 }
 
 /**
- * Reduces the given flow with [operation], emitting every intermediate result, including initial value.
- * An initial value is provided lazily by [initialSupplier] and is always immediately emitted.
+ * Reduces the given flow with [operation], emitting every intermediate result, including [initial] value.
+ * Note that initial value should be immutable (or should not be mutated) as it is shared between different collectors.
  * For example:
  * ```
- * flowOf(1, 2, 3).scan(::emptyList) { acc: List<Int>, value -> acc + value }.toList()
+ * flowOf(1, 2, 3).accumulate(emptyList<Int>()) { acc, value -> acc + value }.toList()
  * ```
  * will produce `[], [1], [1, 2], [1, 2, 3]]`.
  */
 @FlowPreview
-public fun <T, R> Flow<T>.scan(initialSupplier: () -> R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = flow {
-    var accumulator: R = initialSupplier()
+public fun <T, R> Flow<T>.accumulate(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = flow {
+    var accumulator: R = initial
     emit(accumulator)
     collect { value ->
         accumulator = operation(accumulator, value)

@@ -19,7 +19,7 @@ class ScanTest : TestBase() {
     @Test
     fun testScanWithInitial() = runTest {
         val flow = flowOf(1, 2, 3)
-        val result = flow.scan(::emptyList) { acc: List<Int>, value -> acc + value }.toList()
+        val result = flow.accumulate(emptyList<Int>()) { acc, value -> acc + value }.toList()
         assertEquals(listOf(emptyList(), listOf(1), listOf(1, 2), listOf(1, 2, 3)), result)
     }
 

@@ -37,4 +37,4 @@ public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value
  * Collects all the values from the given [flow] and emits them to the collector.
  * Shortcut for `flow.collect { value -> emit(value) }`.
  */
-public suspend inline fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) = flow.collect { value -> emit(value) }
+public suspend inline fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) = flow.collect(this)
