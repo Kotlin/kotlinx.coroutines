@@ -4,11 +4,12 @@
 
 package kotlinx.coroutines
 
-private var counter = 0
+import kotlin.math.*
 
-internal actual val Any.hexAddress: String
-    get() {
-        return "<not_implemented>" // :todo:
-    }
+internal actual val Any.hexAddress: String get() = abs(id().let { if (it == Int.MIN_VALUE) 0 else it }).toString(16)
 
 internal actual val Any.classSimpleName: String get() = this::class.simpleName ?: "Unknown"
+
+
+@SymbolName("Kotlin_Any_hashCode")
+external fun Any.id(): Int // Note: can return negative value on K/N
