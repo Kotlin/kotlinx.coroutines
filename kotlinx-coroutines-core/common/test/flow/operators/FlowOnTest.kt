@@ -6,7 +6,6 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlin.math.*
 import kotlin.test.*
 
 class FlowOnTest : TestBase() {

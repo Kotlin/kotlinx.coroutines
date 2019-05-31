@@ -377,7 +377,6 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public fun cancel (Ljava/util/concurrent/CancellationException;)V
 	public final fun cancelCoroutine (Ljava/lang/Throwable;)Z
 	public fun cancelInternal (Ljava/lang/Throwable;)Z
-	public fun cancelOnChildCancellation (Ljava/util/concurrent/CancellationException;)Z
 	public fun childCancelled (Ljava/lang/Throwable;)Z
 	public fun fold (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;

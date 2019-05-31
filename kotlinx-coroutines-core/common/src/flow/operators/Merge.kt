@@ -129,7 +129,7 @@ public fun <T> Flow<Flow<T>>.flattenMerge(concurrency: Int = DEFAULT_CONCURRENCY
  * produces `aa bb b_last`
  */
 @FlowPreview
-public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): Flow<R> = scopedFlow {
+public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): Flow<R> = scopedFlow { downstream ->
     var previousFlow: Job? = null
     collect { value ->
         // Linearize calls to emit as alternative to the channel. Bonus points for never-overlapping channels.
@@ -138,7 +138,7 @@ public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): F
         // Undispatched to have better user experience in case of synchronous flows
         previousFlow = launch(start = CoroutineStart.UNDISPATCHED) {
             transform(value).collect { innerValue ->
-                emit(innerValue)
+                downstream.emit(innerValue)
             }
         }
     }

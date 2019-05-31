@@ -320,10 +320,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     /**
-     * The method that is invoked when the job is cancelled to possible propagate cancellation to the parent.
+     * The method that is invoked when the job is cancelled to possibly propagate cancellation to the parent.
      * Returns `true` if the parent is responsible for handling the exception, `false` otherwise.
      *
-     * Invariant: never returns `true` for instances of [CancellationException], otherwise such exception
+     * Invariant: never returns `false` for instances of [CancellationException], otherwise such exception
      * may leak to the [CoroutineExceptionHandler].
      */
     private fun cancelParent(cause: Throwable): Boolean {
@@ -620,18 +620,16 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     /**
-     * Returns `true` if job should cancel itself on child [CancellationException].
-     */
-    public open fun cancelOnChildCancellation(cause: CancellationException) = false
-
-    /**
      * Child was cancelled with a cause.
-     * In this method parent decides whether it cancels itself (e.g. on a critical failure) and
-     * whether it handles the exception of the child.
+     * In this method parent decides whether it cancels itself (e.g. on a critical failure) and whether it handles the exception of the child.
      * It is overridden in supervisor implementations to completely ignore any child cancellation.
+     * Returns `true` if exception is handled, `false` otherwise (then caller is responsible for handling an exception)
+     *
+     * Invariant: never returns `false` for instances of [CancellationException], otherwise such exception
+     * may leak to the [CoroutineExceptionHandler].
      */
     public open fun childCancelled(cause: Throwable): Boolean {
-        if (cause is CancellationException && !cancelOnChildCancellation(cause)) return true
+        if (cause is CancellationException) return true
         return cancelImpl(cause) && handlesException
     }
 
@@ -643,7 +641,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     // cause is Throwable or ParentJob when cancelChild was invoked
     // returns true is exception was handled, false otherwise
-    private fun cancelImpl(cause: Any?): Boolean {
+    internal fun cancelImpl(cause: Any?): Boolean {
         if (onCancelComplete) {
             // make sure it is completing, if cancelMakeCompleting returns true it means it had make it
             // completing and had recorded exception
