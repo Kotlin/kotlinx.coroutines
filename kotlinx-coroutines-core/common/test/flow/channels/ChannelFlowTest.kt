@@ -34,8 +34,10 @@ class ChannelFlowTest : TestBase() {
         val flow = channelFlow(bufferSize = Channel.CONFLATED) {
             assertTrue(offer(1))
             assertTrue(offer(2))
+            assertTrue(offer(3))
+            assertTrue(offer(4))
         }
-        assertEquals(listOf(1), flow.toList())
+        assertEquals(listOf(1, 4), flow.toList()) // two elements in the middle got conflated
     }
 
     @Test

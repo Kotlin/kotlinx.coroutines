@@ -105,35 +105,6 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     }
 
     /**
-     * Queues conflated element, returns null on success or
-     * returns node reference if it was already closed or is waiting for receive.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    protected fun sendConflated(element: E): ReceiveOrClosed<*>? {
-        val node = SendBuffered(element)
-        queue.addLastIfPrev(node, { prev ->
-            if (prev is ReceiveOrClosed<*>) return@sendConflated prev
-            true
-        })
-        conflatePreviousSendBuffered(node)
-        return null
-    }
-
-    protected fun conflatePreviousSendBuffered(node: LockFreeLinkedListNode) {
-        /*
-         * Conflate all previous SendBuffered,
-         * helping other sends to coflate
-         */
-        var prev = node.prevNode
-        while (prev is SendBuffered<*>) {
-            if (!prev.remove()) {
-                prev.helpRemove()
-            }
-            prev = prev.prevNode
-        }
-    }
-
-    /**
      * @suppress **This is unstable API and it is subject to change.**
      */
     protected fun describeSendBuffered(element: E): AddLastDesc<*> = SendBufferedDesc(queue, element)
@@ -331,7 +302,6 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
             previous as Receive<E> // type assertion
             previous.resumeReceiveClosed(closed)
         }
-
         onClosedIdempotent(closed)
     }
 
@@ -499,7 +469,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         override fun toString(): String = "SendSelect($pollResult)[$channel, $select]"
     }
 
-    private class SendBuffered<out E>(
+    internal class SendBuffered<out E>(
         @JvmField val element: E
     ) : LockFreeLinkedListNode(), Send {
         override val pollResult: Any? get() = element
