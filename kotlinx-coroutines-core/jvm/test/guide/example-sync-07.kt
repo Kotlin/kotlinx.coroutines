@@ -9,16 +9,17 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.system.*
 
-suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+suspend fun massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
-        val jobs = List(n) {
-            launch {
-                repeat(k) { action() }
+        coroutineScope { // scope for coroutines 
+            repeat(n) {
+                launch {
+                    repeat(k) { action() }
+                }
             }
         }
-        jobs.forEach { it.join() }
     }
     println("Completed ${n * k} actions in $time ms")    
 }
@@ -39,16 +40,18 @@ fun CoroutineScope.counterActor() = actor<CounterMsg> {
     }
 }
 
-fun main() = runBlocking<Unit> {
 //sampleStart
+fun main() = runBlocking {
     val counter = counterActor() // create the actor
-    GlobalScope.massiveRun {
-        counter.send(IncCounter)
+    withContext(Dispatchers.Default) {
+        massiveRun {
+            counter.send(IncCounter)
+        }
     }
     // send a message to get a counter value from an actor
     val response = CompletableDeferred<Int>()
     counter.send(GetCounter(response))
     println("Counter = ${response.await()}")
     counter.close() // shutdown the actor
-//sampleEnd    
 }
+//sampleEnd    
