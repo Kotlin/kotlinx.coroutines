@@ -14,14 +14,6 @@ class SharedStateGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideSync01b() {
-        test("KotlinxCoroutinesGuideSync01b") { kotlinx.coroutines.guide.sync01b.main() }.verifyLinesStart(
-            "Completed 100000 actions in",
-            "Counter ="
-        )
-    }
-
-    @Test
     fun testKotlinxCoroutinesGuideSync02() {
         test("KotlinxCoroutinesGuideSync02") { kotlinx.coroutines.guide.sync02.main() }.verifyLinesStart(
             "Completed 100000 actions in",
