@@ -152,12 +152,9 @@ class DebounceTest : TestBase() {
             emit(1)
             expect(2)
             throw TestException()
-        }.flowWith(NamedDispatchers("unused")) {
-            debounce(Long.MAX_VALUE).map {
+        }.flowOn(NamedDispatchers("source")).debounce(Long.MAX_VALUE).map {
                 expectUnreached()
-            }
         }
-
         assertFailsWith<TestException>(flow)
         finish(3)
     }

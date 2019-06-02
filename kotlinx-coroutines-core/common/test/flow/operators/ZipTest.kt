@@ -112,52 +112,15 @@ class ZipTest : TestBase() {
     }
 
     @Test
-    fun testContextIsIsolated() = runTest {
-        val f1 = flow {
-            emit("a")
-            assertEquals("first", NamedDispatchers.name())
-            expect(1)
-        }.flowOn(NamedDispatchers("first")).onEach {
-            assertEquals("nested", NamedDispatchers.name())
-            expect(2)
-        }.flowOn(NamedDispatchers("nested"))
-
-        val f2 = flow {
-            emit(1)
-            assertEquals("second", NamedDispatchers.name())
-            expect(3)
-        }.flowOn(NamedDispatchers("second")).flowWith(NamedDispatchers("with")) {
-            onEach {
-                assertEquals("with", NamedDispatchers.name())
-                expect(4)
-            }
-        }
-
-        val value = withContext(NamedDispatchers("main")) {
-            f1.zip(f2) { i, j ->
-                assertEquals("main", NamedDispatchers.name())
-                expect(5)
-                i + j
-            }.single()
-        }
-
-        assertEquals("a1", value)
-        finish(6)
-    }
-
-    @Test
     fun testContextIsIsolatedReversed() = runTest {
         val f1 = flow {
             emit("a")
             assertEquals("first", NamedDispatchers.name())
             expect(1)
-        }.flowOn(NamedDispatchers("first"))
-            .flowWith(NamedDispatchers("with")) {
-                onEach {
-                    assertEquals("with", NamedDispatchers.name())
-                    expect(2)
-                }
-            }
+        }.flowOn(NamedDispatchers("first")).onEach {
+            assertEquals("with", NamedDispatchers.name())
+            expect(2)
+        }.flowOn(NamedDispatchers("with"))
 
         val f2 = flow {
             emit(1)
@@ -179,7 +142,6 @@ class ZipTest : TestBase() {
         assertEquals("a1", value)
         finish(6)
     }
-
 
     @Test
     fun testErrorInDownstreamCancelsUpstream() = runTest {

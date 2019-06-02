@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION")
 class FlowContextTest : TestBase() {
 
     private val captured = ArrayList<String>()

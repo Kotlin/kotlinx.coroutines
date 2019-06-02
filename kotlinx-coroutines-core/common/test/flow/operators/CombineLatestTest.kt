@@ -5,8 +5,8 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.combineLatest as combineLatestOriginal
 import kotlin.test.*
+import kotlinx.coroutines.flow.combineLatest as combineLatestOriginal
 
 /*
  * Replace:  { i, j -> i + j } ->  { i, j -> i + j } as soon as KT-30991 is fixed
@@ -133,12 +133,11 @@ abstract class CombineLatestTestBase : TestBase() {
             emit(1)
             assertEquals("second", NamedDispatchers.name())
             expect(3)
-        }.flowOn(NamedDispatchers("second")).flowWith(NamedDispatchers("with")) {
-            onEach {
-                assertEquals("with", NamedDispatchers.name())
+        }.flowOn(NamedDispatchers("second"))
+            .onEach {
+                assertEquals("onEach", NamedDispatchers.name())
                 expect(4)
-            }
-        }
+            }.flowOn(NamedDispatchers("onEach"))
 
         val value = withContext(NamedDispatchers("main")) {
             f1.combineLatest(f2) { i, j ->

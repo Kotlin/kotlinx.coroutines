@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION")
 class FlowWithTest : TestBase() {
 
     private fun mapper(name: String, index: Int): suspend (Int) -> Int = {
