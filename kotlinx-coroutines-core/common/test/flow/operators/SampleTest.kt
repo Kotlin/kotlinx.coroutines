@@ -227,10 +227,8 @@ class SampleTest : TestBase() {
             emit(1)
             expect(2)
             throw TestException()
-        }.flowWith(NamedDispatchers("unused")) {
-            sample(Long.MAX_VALUE).map {
-                expectUnreached()
-            }
+        }.flowOn(NamedDispatchers("unused")).sample(Long.MAX_VALUE).map {
+            expectUnreached()
         }
 
         assertFailsWith<TestException>(flow)

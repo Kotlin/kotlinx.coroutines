@@ -77,11 +77,23 @@ public fun <T> Flow<T>.flowOn(flowContext: CoroutineContext, bufferSize: Int = 1
  * For more explanation of context preservation please refer to [Flow] documentation.
  *
  * This operator uses channel of the specific [bufferSize] in order to switch between contexts,
- * but it is not guaranteed that channel will be created, implementation is free to optimize it away in case of fusing.
+ * but it is not guaranteed that channel will be created, implementation is free to optimize it away in case of fusing.*
  *
- * @throws [IllegalArgumentException] if provided context contains [Job] instance.
+ * This operator is deprecated without replacement because it was discovered that it doesn't play well with coroutines and flow semantics:
+ * 1) It doesn't prevent context elements from the downstream to leak into its body
+ *     ```
+ *     flowOf(1).flowWith(EmptyCoroutineContext) {
+ *         onEach { println(kotlin.coroutines.coroutineContext[CoroutineName]) } // Will print 42
+ *     }.flowOn(CoroutineName(42))
+ *     ```
+ * 2) To avoid such leaks, new primitive should be introduced to `kotlinx.coroutines` -- the subtraction of contexts.
+ *    And this will become a new concept to learn, maintain and explain.
+ * 3) It defers the execution of declarative [builder] until the moment of [collection][Flow.collect] similarly
+ *    to `Observable.defer`. But it is unexpected because nothing in the name `flowWith` reflects this fact.
+ * 4) It can be confused with [flowOn] operator, though [flowWith] is much rarer.
  */
 @FlowPreview
+@Deprecated(message = "flowWith is deprecated without replacement, please refer to its KDoc for an explanation", level = DeprecationLevel.WARNING) // Error in beta release, removal in 1.4
 public fun <T, R> Flow<T>.flowWith(
     flowContext: CoroutineContext,
     bufferSize: Int = 16,

@@ -71,7 +71,7 @@ public fun <T> Flow<T>.publishOn(context: CoroutineContext): Flow<T> = error("Sh
  *     .doOnEach { value -> println("Processing $value in computation")
  *     .subscribe()
  * ```
- * has the following Flow equivalents:
+ * has the following Flow equivalent:
  * ```
  * withContext(Dispatchers.Default) {
  *     flow
@@ -82,25 +82,10 @@ public fun <T> Flow<T>.publishOn(context: CoroutineContext): Flow<T> = error("Sh
  *        }
  * }
  * ```
- * or
- *
- * ```
- *  withContext(Dispatchers.Default) {
- *     flow
- *        .flowWith(Dispatchers.IO) { map { value -> println("Doing map in IO"); value } }
- *        .collect { value ->
- *             println("Processing $value in computation")
- *        }
- * }
- * ```
- *
- * The difference is that [flowWith] encapsulates ("preserves") the context within its lambda
- * while [flowOn] changes the context of all preceding operators.
- * Opposed to subscribeOn, it it **possible** to use multiple `flowOn` operators in the one flow.
- *
+ * Opposed to subscribeOn, it it **possible** to use multiple `flowOn` operators in the one flow
  * @suppress
  */
-@Deprecated(message = "Use flowWith or flowOn instead", level = DeprecationLevel.ERROR)
+@Deprecated(message = "Use flowOn instead", level = DeprecationLevel.ERROR)
 public fun <T> Flow<T>.subscribeOn(context: CoroutineContext): Flow<T> = error("Should not be called")
 
 /** @suppress **/

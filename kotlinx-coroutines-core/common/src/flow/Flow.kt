@@ -30,9 +30,8 @@ import kotlinx.coroutines.*
  * The flow has a context preservation property: it encapsulates its own execution context and never propagates or leaks it downstream, thus making
  * reasoning about the execution context of particular transformations or terminal operations trivial.
  *
- * There are two ways to change the context of a flow: [flowOn][Flow.flowOn] and [flowWith][Flow.flowWith].
- * The former changes the upstream context ("everything above the flowOn operator") while the latter
- * changes the context of the flow within [flowWith] body. For additional information refer to these operators' documentation.
+ * There is the only way to change the context of a flow: [flowOn][Flow.flowOn] operator,
+ * that changes the upstream context ("everything above the flowOn operator"). For additional information refer to its documentation.
  *
  * This reasoning can be demonstrated in practice:
  * ```
