@@ -145,6 +145,7 @@ if (build_snapshot_train) {
     allprojects {
         tasks.withType(Test).all {
             exclude '**/*LinearizabilityTest*'
+            exclude '**/*PublicApiTest*' // KT-30956
             exclude '**/*LFTest*'
             exclude '**/*StressTest*'
             exclude '**/*scheduling*'
