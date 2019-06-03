@@ -4,6 +4,17 @@
 
 repositories {
     google()
+    // TODO Remove once R8 is updated to a 1.5.x version.
+    maven {
+        url "http://storage.googleapis.com/r8-releases/raw/master"
+        metadataSources {
+            artifact()
+        }
+    }
+}
+
+configurations {
+    r8
 }
 
 dependencies {
@@ -12,6 +23,40 @@ dependencies {
 
     testImplementation 'com.google.android:android:4.1.1.4'
     testImplementation 'org.robolectric:robolectric:4.0-alpha-3'
+    testImplementation 'org.smali:baksmali:2.2.7'
+
+    // TODO Replace with a 1.5.x version once released to maven.google.com.
+    r8 'com.android.tools:r8:878ec25559ca91497517345ec3a6c16102b7025c'
+}
+
+def optimizedDex = new File(buildDir, "dex/")
+task runR8(type: JavaExec, dependsOn: 'jar') {
+    classpath = configurations.r8
+    main = 'com.android.tools.r8.R8'
+
+    doFirst {
+        if (optimizedDex.exists()) {
+            optimizedDex.deleteDir()
+        }
+        optimizedDex.mkdirs()
+
+        def arguments = [
+            '--release',
+            '--no-desugaring',
+            '--output', optimizedDex.absolutePath,
+            '--pg-conf', file('r8-test-rules.pro').absolutePath
+        ]
+        arguments.addAll(configurations.runtimeClasspath.files.collect { it.absolutePath })
+        arguments.addAll(jar.archivePath.absolutePath)
+
+        args = arguments
+    }
+}
+
+test {
+    // Ensure the R8-processed dex is built and supply its path as a property to the test.
+    dependsOn(runR8)
+    systemProperty 'dexPath', new File(optimizedDex, "classes.dex").absolutePath
 }
 
 tasks.withType(dokka.getClass()) {
