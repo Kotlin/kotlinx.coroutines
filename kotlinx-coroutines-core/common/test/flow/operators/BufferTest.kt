@@ -164,7 +164,6 @@ class BufferTest : TestBase() {
         }
 
     @Test
-    @Ignore // todo: conflated behavior is pretty useless right now, because closing channel overwrites last value
     fun testConflate() = runTest {
         expect(1)
         // emit all and conflate / then collect first & last

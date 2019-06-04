@@ -94,6 +94,11 @@ import kotlin.jvm.*
  * }
  * ```
  *
+ * ### Conflation
+ *
+ * Usage of this function with [capacity] of [Channel.CONFLATED][Channel.CONFLATED] is provided as a shortcut via
+ * [conflate] operator. See its documentation for details.
+ *
  * @param capacity type/capacity of the buffer between coroutines. Allowed values are the same as in `Channel(...)`
  * factory function: [BUFFERED][Channel.BUFFERED] (by default), [CONFLATED][Channel.CONFLATED],
  * [RENDEZVOUS][Channel.RENDEZVOUS], [UNLIMITED][Channel.UNLIMITED] or a non-negative value indicating
@@ -110,9 +115,40 @@ public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> {
         ChannelFlowOperatorImpl(this, capacity = capacity)
 }
 
-// todo: conflate would be a useful operator only when Channel.CONFLATE is changed to always deliver the last send value
-//@FlowPreview
-//public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
+/**
+ * Conflates flow emissions via conflated channel and runs collector in a separate coroutine.
+ * The effect of this is that emitter is never suspended due to a slow collector, but collector
+ * always gets the most recent value emitted.
+ *
+ * For example, consider the flow that emits integers from 1 to 30 with 100 ms delay between them:
+ *
+ * ```
+ * val flow = flow {
+ *     for (i in 1..30) {
+ *         delay(100)
+ *         emit(i)
+ *     }
+ * }
+ * ```
+ *
+ * Applying `conflate()` operator to it allows a collector that delays 1 second on each element to get
+ * integers 1, 10, 20, 30:
+ *
+ * ```
+ * val result = flow.conflate().onEach { delay(1000) }.toList()
+ * assertEquals(listOf(1, 10, 20, 30), result)
+ * ```
+ *
+ * Note that `conflate` operator is a shortcut for [buffer] with `capacity` of [Channel.CONFLATED][Channel.CONFLATED].
+ *
+ * ### Operator fusion
+ *
+ * Adjacent applications of `conflate`/[buffer], [channelFlow], [flowOn], [produceIn], and [broadcastIn] are
+ * always fused so that only one properly configured channel is used for execution.
+ * **Conflation takes precedence over `buffer()` calls with any other capacity.**
+ */
+@FlowPreview
+public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
 
 /**
  * The operator that changes the context where this flow is executed to the given [context].
