@@ -9,6 +9,7 @@ import org.junit.Test
 import kotlin.coroutines.*
 import kotlin.test.*
 
+@Ignore
 class CoroutinesDumpTest : DebugTestBase() {
     private val monitor = Any()
 
