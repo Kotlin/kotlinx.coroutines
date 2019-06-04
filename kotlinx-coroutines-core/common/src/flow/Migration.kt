@@ -224,3 +224,18 @@ public fun <T, R> Flow<T>.compose(transformer: Flow<T>.() -> Flow<R>): Flow<R> =
     replaceWith = ReplaceWith("drop(count)")
 )
 public fun <T> Flow<T>.skip(count: Int): Flow<T> = error("Should not be called")
+
+/**
+ * Flow extension to iterate over elements is [collect].
+ * Foreach wasn't introduced deliberately to avoid confusion.
+ * Flow is not a collection, iteration over it may be not idempotent
+ * and can *launch* computations with side-effects.
+ * This behaviour is not reflected in [forEach] name.
+ * @suppress
+ */
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'forEach' is 'collect'",
+    replaceWith = ReplaceWith("collect(block)")
+)
+public fun <T> Flow<T>.forEach(action: suspend (value: T) -> Unit): Unit = error("Should not be called")
