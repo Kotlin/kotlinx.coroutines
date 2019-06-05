@@ -239,3 +239,10 @@ public fun <T> Flow<T>.skip(count: Int): Flow<T> = error("Should not be called")
     replaceWith = ReplaceWith("collect(block)")
 )
 public fun <T> Flow<T>.forEach(action: suspend (value: T) -> Unit): Unit = error("Should not be called")
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow has less verbose 'scan' shortcut",
+    replaceWith = ReplaceWith("scan(initial, operation)")
+)
+public fun <T, R> Flow<T>.scanFold(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = error("Should not be called")

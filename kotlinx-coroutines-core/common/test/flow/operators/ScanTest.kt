@@ -12,27 +12,27 @@ class ScanTest : TestBase() {
     @Test
     fun testScan() = runTest {
         val flow = flowOf(1, 2, 3, 4, 5)
-        val result = flow.scan { acc, v -> acc + v }.toList()
+        val result = flow.scanReduce { acc, v -> acc + v }.toList()
         assertEquals(listOf(1, 3, 6, 10, 15), result)
     }
 
     @Test
     fun testScanWithInitial() = runTest {
         val flow = flowOf(1, 2, 3)
-        val result = flow.accumulate(emptyList<Int>()) { acc, value -> acc + value }.toList()
+        val result = flow.scan(emptyList<Int>()) { acc, value -> acc + value }.toList()
         assertEquals(listOf(emptyList(), listOf(1), listOf(1, 2), listOf(1, 2, 3)), result)
     }
 
     @Test
     fun testNulls() = runTest {
         val flow = flowOf(null, 2, null, null, null, 5)
-        val result = flow.scan { acc, v ->  if (v == null) acc else (if (acc == null) v else acc + v) }.toList()
+        val result = flow.scanReduce { acc, v ->  if (v == null) acc else (if (acc == null) v else acc + v) }.toList()
         assertEquals(listOf(null, 2, 2, 2, 2, 7), result)
     }
 
     @Test
     fun testEmptyFlow() = runTest {
-        val result = emptyFlow<Int>().scan { _, _ -> 1 }.toList()
+        val result = emptyFlow<Int>().scanReduce { _, _ -> 1 }.toList()
         assertTrue(result.isEmpty())
     }
 
@@ -49,7 +49,7 @@ class ScanTest : TestBase() {
                 emit(1)
                 emit(2)
             }
-        }.scan { _, value ->
+        }.scanReduce { _, value ->
             expect(value) // 2
             latch.receive()
             throw TestException()

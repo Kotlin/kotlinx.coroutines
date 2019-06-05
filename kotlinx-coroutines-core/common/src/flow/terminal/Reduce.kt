@@ -89,7 +89,7 @@ public suspend fun <T: Any> Flow<T>.singleOrNull(): T? {
  */
 @FlowPreview
 public suspend fun <T> Flow<T>.first(): T {
-    var result: Any? = NullSurrogate
+    var result: Any? = NULL
     try {
         collect { value ->
             result = value
@@ -99,7 +99,7 @@ public suspend fun <T> Flow<T>.first(): T {
         // Do nothing
     }
 
-    if (result === NullSurrogate) throw NoSuchElementException("Expected at least one element")
+    if (result === NULL) throw NoSuchElementException("Expected at least one element")
     return result as T
 }
 
@@ -109,7 +109,7 @@ public suspend fun <T> Flow<T>.first(): T {
  */
 @FlowPreview
 public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
-    var result: Any? = NullSurrogate
+    var result: Any? = NULL
     try {
         collect { value ->
             if (predicate(value)) {
@@ -121,6 +121,6 @@ public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
         // Do nothing
     }
 
-    if (result === NullSurrogate) throw NoSuchElementException("Expected at least one element matching the predicate $predicate")
+    if (result === NULL) throw NoSuchElementException("Expected at least one element matching the predicate $predicate")
     return result as T
 }
