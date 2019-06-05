@@ -81,4 +81,63 @@ class ChannelFlowTest : TestBase() {
         assertFailsWith<TestException>(flow)
         finish(4)
     }
+
+    @Test
+    fun testMergeOneCoroutineWithCancellation() = runTest {
+        val flow = flowOf(1, 2, 3)
+        val f = flow.mergeOneCoroutine(flow).take(2)
+        assertEquals(listOf(1, 1), f.toList())
+    }
+
+    @Test
+    fun testMergeTwoCoroutinesWithCancellation() = runTest {
+        val flow = flowOf(1, 2, 3)
+        val f = flow.mergeTwoCoroutines(flow).take(2)
+        assertEquals(listOf(1, 1), f.toList())
+    }
+
+    private fun Flow<Int>.mergeTwoCoroutines(other: Flow<Int>): Flow<Int> = channelFlow {
+        launch {
+            collect { send(it); yield() }
+        }
+        launch {
+            other.collect { send(it) }
+        }
+    }
+
+    private fun Flow<Int>.mergeOneCoroutine(other: Flow<Int>): Flow<Int> = channelFlow {
+        launch {
+            collect { send(it); yield() }
+        }
+
+        other.collect { send(it); yield() }
+    }
+
+    @Test
+    fun testBufferWithTimeout() = runTest {
+        fun Flow<Int>.bufferWithTimeout(): Flow<Int> = channelFlow {
+            expect(2)
+            launch {
+                expect(3)
+                hang {
+                    expect(5)
+                }
+            }
+            launch {
+                expect(4)
+                collect {
+                    withTimeout(-1) {
+                        send(it)
+                    }
+                    expectUnreached()
+                }
+                expectUnreached()
+            }
+        }
+
+        val flow = flowOf(1, 2, 3).bufferWithTimeout()
+        expect(1)
+        assertFailsWith<TimeoutCancellationException>(flow)
+        finish(6)
+    }
 }

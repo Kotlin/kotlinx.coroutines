@@ -59,8 +59,7 @@ private class BlockingCoroutine<T>(
     private val blockedThread: Thread,
     private val eventLoop: EventLoop?
 ) : AbstractCoroutine<T>(parentContext, true) {
-    override val cancelsParent: Boolean
-        get() = false // it throws exception to parent instead of cancelling it
+    override val isScopedCoroutine: Boolean get() = true
 
     override fun afterCompletionInternal(state: Any?, mode: Int) {
         // wake up blocked thread

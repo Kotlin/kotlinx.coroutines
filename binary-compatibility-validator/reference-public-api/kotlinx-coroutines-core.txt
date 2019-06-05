@@ -381,7 +381,6 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public fun fold (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
 	public final fun getCancellationException ()Ljava/util/concurrent/CancellationException;
-	protected fun getCancelsParent ()Z
 	public fun getChildJobCancellationCause ()Ljava/util/concurrent/CancellationException;
 	public final fun getChildren ()Lkotlin/sequences/Sequence;
 	protected final fun getCompletionCause ()Ljava/lang/Throwable;
@@ -396,6 +395,7 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public final fun isCancelled ()Z
 	public final fun isCompleted ()Z
 	public final fun isCompletedExceptionally ()Z
+	protected fun isScopedCoroutine ()Z
 	public final fun join (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun minusKey (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
 	protected fun onCancelling (Ljava/lang/Throwable;)V

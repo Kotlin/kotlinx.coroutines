@@ -319,6 +319,31 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         cancelParent(cause) // tentative cancellation -- does not matter if there is no parent
     }
 
+    /**
+     * The method that is invoked when the job is cancelled to possibly propagate cancellation to the parent.
+     * Returns `true` if the parent is responsible for handling the exception, `false` otherwise.
+     *
+     * Invariant: never returns `false` for instances of [CancellationException], otherwise such exception
+     * may leak to the [CoroutineExceptionHandler].
+     */
+    private fun cancelParent(cause: Throwable): Boolean {
+        /* CancellationException is considered "normal" and parent usually is not cancelled when child produces it.
+         * This allow parent to cancel its children (normally) without being cancelled itself, unless
+         * child crashes and produce some other exception during its completion.
+         */
+        val isCancellation = cause is CancellationException
+        val parent = parentHandle
+        // No parent -- ignore CE, report other exceptions.
+        if (parent === null || parent === NonDisposableHandle) {
+            return isCancellation
+        }
+
+        // Is scoped coroutine -- don't propagate, will be rethrown
+        if (isScopedCoroutine) return isCancellation
+        // Notify parent but don't forget to check cancellation
+        return parent.childCancelled(cause) || isCancellation
+    }
+
     private fun NodeList.notifyCompletion(cause: Throwable?) =
         notifyHandlers<JobNode<*>>(this, cause)
 
@@ -594,21 +619,29 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         cancelImpl(parentJob)
     }
 
-    // Child was cancelled with cause
-    // It is overridden in supervisor implementations to ignore child cancellation
-    public open fun childCancelled(cause: Throwable): Boolean =
-        cancelImpl(cause) && handlesException
+    /**
+     * Child was cancelled with a cause.
+     * In this method parent decides whether it cancels itself (e.g. on a critical failure) and whether it handles the exception of the child.
+     * It is overridden in supervisor implementations to completely ignore any child cancellation.
+     * Returns `true` if exception is handled, `false` otherwise (then caller is responsible for handling an exception)
+     *
+     * Invariant: never returns `false` for instances of [CancellationException], otherwise such exception
+     * may leak to the [CoroutineExceptionHandler].
+     */
+    public open fun childCancelled(cause: Throwable): Boolean {
+        if (cause is CancellationException) return true
+        return cancelImpl(cause) && handlesException
+    }
 
     /**
      * Makes this [Job] cancelled with a specified [cause].
      * It is used in [AbstractCoroutine]-derived classes when there is an internal failure.
      */
-    public fun cancelCoroutine(cause: Throwable?) =
-        cancelImpl(cause)
+    public fun cancelCoroutine(cause: Throwable?) = cancelImpl(cause)
 
     // cause is Throwable or ParentJob when cancelChild was invoked
     // returns true is exception was handled, false otherwise
-    private fun cancelImpl(cause: Any?): Boolean {
+    internal fun cancelImpl(cause: Any?): Boolean {
         if (onCancelComplete) {
             // make sure it is completing, if cancelMakeCompleting returns true it means it had make it
             // completing and had recorded exception
@@ -912,14 +945,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     protected open fun onCancelling(cause: Throwable?) {}
 
     /**
-     * When this function returns `true` the parent is cancelled on cancellation of this job.
-     * Note that [CancellationException] is considered "normal" and parent is not cancelled when child produces it.
-     * This allows parent to cancel its children (normally) without being cancelled itself, unless
-     * child crashes and produce some other exception during its completion.
-     *
-     * @suppress **This is unstable API and it is subject to change.*
+     * Returns `true` for scoped coroutines.
+     * Scoped coroutine is a coroutine that is executed sequentially within the enclosing scope without any concurrency.
+     * Scoped coroutines always handle any exception happened within -- they just rethrow it to the enclosing scope.
+     * Examples of scoped coroutines are `coroutineScope`, `withTimeout` and `runBlocking`.
      */
-    protected open val cancelsParent: Boolean get() = true
+    protected open val isScopedCoroutine: Boolean get() = false
 
     /**
      * Returns `true` for jobs that handle their exceptions or integrate them into the job's result via [onCompletionInternal].
@@ -939,19 +970,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      *
      * This method is invoked **exactly once** when the final exception of the job is determined
      * and before it becomes complete. At the moment of invocation the job and all its children are complete.
-     *
-     * @suppress **This is unstable API and it is subject to change.*
      */
     protected open fun handleJobException(exception: Throwable): Boolean = false
-
-    private fun cancelParent(cause: Throwable): Boolean {
-        // CancellationException is considered "normal" and parent is not cancelled when child produces it.
-        // This allow parent to cancel its children (normally) without being cancelled itself, unless
-        // child crashes and produce some other exception during its completion.
-        if (cause is CancellationException) return true
-        if (!cancelsParent) return false
-        return parentHandle?.childCancelled(cause) == true
-    }
 
     /**
      * Override for completion actions that need to update some external object depending on job's state,

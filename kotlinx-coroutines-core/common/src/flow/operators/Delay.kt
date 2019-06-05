@@ -60,34 +60,33 @@ public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = flow {
  */
 public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
     require(timeoutMillis > 0) { "Debounce timeout should be positive" }
-    return flow {
-        coroutineScope {
-            val values = Channel<Any?>(Channel.CONFLATED) // Actually Any, KT-30796
-            // Channel is not closed deliberately as there is no close with value
-            val collector = async {
-                collect { value -> values.send(value ?: NULL) }
-            }
+    return scopedFlow { downstream ->
+        val values = Channel<Any?>(Channel.CONFLATED) // Actually Any, KT-30796
+        // Channel is not closed deliberately as there is no close with value
+        val collector = async {
+            collect { value -> values.send(value ?: NULL) }
+        }
 
-            var isDone = false
-            var lastValue: Any? = null
-            while (!isDone) {
-                select<Unit> {
-                    values.onReceive {
-                        lastValue = it
-                    }
+        var isDone = false
+        var lastValue: Any? = null
+        while (!isDone) {
+            select<Unit> {
+                values.onReceive {
+                    lastValue = it
+                }
 
-                    lastValue?.let { value -> // set timeout when lastValue != null
-                        onTimeout(timeoutMillis) {
-                            lastValue = null // Consume the value
-                            emit(NULL.unbox(value))
-                        }
+                lastValue?.let { value ->
+                    // set timeout when lastValue != null
+                    onTimeout(timeoutMillis) {
+                        lastValue = null // Consume the value
+                        downstream.emit(NULL.unbox(value))
                     }
+                }
 
-                    // Close with value 'idiom'
-                    collector.onAwait {
-                        if (lastValue != null) emit(NULL.unbox(lastValue))
-                        isDone = true
-                    }
+                // Close with value 'idiom'
+                collector.onAwait {
+                    if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
+                    isDone = true
                 }
             }
         }
@@ -112,32 +111,31 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
  */
 public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
     require(periodMillis > 0) { "Sample period should be positive" }
-    return flow {
-        coroutineScope {
-            val values = produce<Any?>(capacity = Channel.CONFLATED) {  // Actually Any, KT-30796
-                collect { value -> send(value ?: NULL) }
-            }
+    return scopedFlow { downstream ->
+        val values = produce<Any?>(capacity = Channel.CONFLATED) {
+            // Actually Any, KT-30796
+            collect { value -> send(value ?: NULL) }
+        }
 
-            var isDone = false
-            var lastValue: Any? = null
-            val ticker = fixedPeriodTicker(periodMillis)
-            while (!isDone) {
-                select<Unit> {
-                    values.onReceiveOrNull {
-                        if (it == null) {
-                            ticker.cancel()
-                            isDone = true
-                        } else {
-                            lastValue = it
-                        }
+        var isDone = false
+        var lastValue: Any? = null
+        val ticker = fixedPeriodTicker(periodMillis)
+        while (!isDone) {
+            select<Unit> {
+                values.onReceiveOrNull {
+                    if (it == null) {
+                        ticker.cancel(ChildCancelledException())
+                        isDone = true
+                    } else {
+                        lastValue = it
                     }
+                }
 
-                    // todo: shall be start sampling only when an element arrives or sample aways as here?
-                    ticker.onReceive {
-                        val value = lastValue ?: return@onReceive
-                        lastValue = null // Consume the value
-                        emit(NULL.unbox(value))
-                    }
+                // todo: shall be start sampling only when an element arrives or sample aways as here?
+                ticker.onReceive {
+                    val value = lastValue ?: return@onReceive
+                    lastValue = null // Consume the value
+                    downstream.emit(NULL.unbox(value))
                 }
             }
         }

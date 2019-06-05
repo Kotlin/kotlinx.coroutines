@@ -113,4 +113,10 @@ class SwitchMapTest : TestBase() {
         assertFailsWith<TestException>(flow)
         finish(5)
     }
+
+    @Test
+    fun testTake() = runTest {
+        val flow = flowOf(1, 2, 3, 4, 5).switchMap { flowOf(it) }
+        assertEquals(listOf(1), flow.take(1).toList())
+    }
 }

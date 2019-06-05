@@ -93,7 +93,7 @@ class ZipTest : TestBase() {
     }
 
     @Test
-    fun testCancesWhenFlowIsDone2() = runTest {
+    fun testCancelWhenFlowIsDone2() = runTest {
         val f1 = flow<String> {
             emit("1")
             emit("2")
@@ -188,5 +188,53 @@ class ZipTest : TestBase() {
         val flow = f1.zip(f2) { _, _ -> 1 }
         assertFailsWith<TestException>(flow)
         finish(2)
+    }
+
+    @Test
+    fun testCancellationUpstream() = runTest {
+        val f1 = flow {
+            expect(1)
+            emit(1)
+            yield()
+            expect(4)
+            throw CancellationException("")
+        }
+
+        val f2 = flow {
+            expect(2)
+            emit(1)
+            expect(5)
+            hang { expect(6) }
+        }
+
+        val flow = f1.zip(f2, { _, _ -> 1 }).onEach { expect(3) }
+        assertFailsWith<CancellationException>(flow)
+        finish(7)
+    }
+
+    @Test
+    fun testCancellationDownstream() = runTest {
+        val f1 = flow {
+            expect(1)
+            emit(1)
+            yield()
+            expect(4)
+            hang { expect(6) }
+        }
+
+        val f2 = flow {
+            expect(2)
+            emit(1)
+            expect(5)
+            hang { expect(7) }
+        }
+
+        val flow = f1.zip(f2, { _, _ -> 1 }).onEach {
+            expect(3)
+            yield()
+            throw CancellationException("")
+        }
+        assertFailsWith<CancellationException>(flow)
+        finish(8)
     }
 }

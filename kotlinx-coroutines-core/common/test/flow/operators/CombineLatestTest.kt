@@ -197,6 +197,46 @@ abstract class CombineLatestTestBase : TestBase() {
         assertFailsWith<TestException>(flow)
         finish(2)
     }
+
+    @Test
+    fun testCancellationExceptionUpstream() = runTest {
+        val f1 = flow {
+            expect(1)
+            emit(1)
+            throw CancellationException("")
+        }
+        val f2 = flow {
+            emit(1)
+            hang { expect(3) }
+        }
+
+        val flow = f1.combineLatest(f2, { _, _ -> 1 }).onEach { expect(2) }
+        assertFailsWith<CancellationException>(flow)
+        finish(4)
+    }
+
+    @Test
+    fun testCancellationExceptionDownstream() = runTest {
+        val f1 = flow {
+            emit(1)
+            expect(2)
+            hang { expect(5) }
+        }
+        val f2 = flow {
+            emit(1)
+            expect(3)
+            hang { expect(6) }
+        }
+
+        val flow = f1.combineLatest(f2, { _, _ -> 1 }).onEach {
+            expect(1)
+            yield()
+            expect(4)
+            throw CancellationException("")
+        }
+        assertFailsWith<CancellationException>(flow)
+        finish(7)
+    }
 }
 
 class CombineLatestTest : CombineLatestTestBase() {

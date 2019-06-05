@@ -54,8 +54,7 @@ private class BlockingCoroutine<T>(
     parentContext: CoroutineContext,
     private val eventLoop: EventLoop?
 ) : AbstractCoroutine<T>(parentContext, true) {
-    override val cancelsParent: Boolean
-        get() = false // it throws exception to parent instead of cancelling it
+    override val isScopedCoroutine: Boolean get() = true
 
     @Suppress("UNCHECKED_CAST")
     fun joinBlocking(): T = memScoped {

@@ -118,7 +118,6 @@ public fun <T> Flow<T>.onErrorResume(fallback: Flow<T>): Flow<T> = error("Should
 @Deprecated(message = "withContext in flow body is deprecated, use flowOn instead", level = DeprecationLevel.ERROR)
 public fun <T, R> FlowCollector<T>.withContext(context: CoroutineContext, block: suspend () -> R): Unit = error("Should not be called")
 
-
 /**
  * `subscribe` is Rx-specific API that has no direct match in flows.
  * One can use `launch` instead, for example the following:
