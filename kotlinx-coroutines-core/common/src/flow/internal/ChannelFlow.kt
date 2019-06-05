@@ -63,10 +63,10 @@ internal abstract class ChannelFlow<T>(
         scope.broadcast(context, produceCapacity, start, block = collectToFun)
 
     fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
-        scope.produce(context, produceCapacity, block = collectToFun)
+        scope.flowProduce(context, produceCapacity, block = collectToFun)
 
     override suspend fun collect(collector: FlowCollector<T>) =
-        coroutineScope { // todo: flowScope
+        coroutineScope {
             val channel = produceImpl(this)
             channel.consumeEach { collector.emit(it) }
         }

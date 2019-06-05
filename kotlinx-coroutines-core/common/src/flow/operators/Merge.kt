@@ -174,7 +174,7 @@ private class ChannelFlowMerge<T>(
     override suspend fun flowCollect(collector: FlowCollector<T>) {
         // this function should not have been invoked when channel was explicitly requested
         check(capacity == OPTIONAL_CHANNEL)
-        coroutineScope { // todo: flowScope
+        flowScope {
             mergeImpl(this, collector.asConcurrentFlowCollector())
         }
     }

@@ -45,4 +45,3 @@ class FlowCallbackTest : TestBase() {
         finish(3)
     }
 }
-
