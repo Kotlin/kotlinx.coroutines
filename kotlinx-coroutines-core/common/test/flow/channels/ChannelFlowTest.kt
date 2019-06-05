@@ -112,4 +112,32 @@ class ChannelFlowTest : TestBase() {
 
         other.collect { send(it); yield() }
     }
+
+    @Test
+    fun testBufferWithTimeout() = runTest {
+        fun Flow<Int>.bufferWithTimeout(): Flow<Int> = channelFlow {
+            expect(2)
+            launch {
+                expect(3)
+                hang {
+                    expect(5)
+                }
+            }
+            launch {
+                expect(4)
+                collect {
+                    withTimeout(-1) {
+                        send(it)
+                    }
+                    expectUnreached()
+                }
+                expectUnreached()
+            }
+        }
+
+        val flow = flowOf(1, 2, 3).bufferWithTimeout()
+        expect(1)
+        assertFailsWith<TimeoutCancellationException>(flow)
+        finish(6)
+    }
 }

@@ -313,7 +313,7 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
 public inline fun <T> callbackFlow(@BuilderInference noinline block: suspend ProducerScope<T>.() -> Unit): Flow<T> =
     channelFlow(block)
 
-// ChannelFlow implementation that is the first in the chain of flow operations and introduces (builds) a flow 
+// ChannelFlow implementation that is the first in the chain of flow operations and introduces (builds) a flow
 private class ChannelFlowBuilder<T>(
     private val block: suspend ProducerScope<T>.() -> Unit,
     context: CoroutineContext = EmptyCoroutineContext,

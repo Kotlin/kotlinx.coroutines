@@ -5,6 +5,7 @@
 package kotlinx.coroutines.flow.internal
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
@@ -51,9 +52,29 @@ internal fun <R> scopedFlow(@BuilderInference block: suspend CoroutineScope.(Flo
         flowScope { block(collector) }
     }
 
-internal class FlowCoroutine<T>(context: CoroutineContext, uCont: Continuation<T>) :
+/*
+ * Shortcut for produce { flowScope {block() } }
+ */
+internal fun <T> CoroutineScope.flowProduce(capacity: Int = 0, @BuilderInference block: suspend ProducerScope<T>.() -> Unit): ReceiveChannel<T> {
+    val channel = Channel<T>(capacity)
+    val newContext = newCoroutineContext(EmptyCoroutineContext) // To have a default dispatcher and coroutine id
+    val coroutine = FlowProduceCoroutine(newContext, channel)
+    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
+    return coroutine
+
+}
+
+private class FlowCoroutine<T>(context: CoroutineContext, uCont: Continuation<T>) :
     ScopeCoroutine<T>(context, uCont) {
 
+    public override fun childCancelled(cause: Throwable): Boolean {
+        if (cause is ChildCancelledException) return true
+        return cancelImpl(cause)
+    }
+}
+
+private class FlowProduceCoroutine<T>(parentContext: CoroutineContext, channel: Channel<T>) :
+    ProducerCoroutine<T>(parentContext, channel) {
     public override fun childCancelled(cause: Throwable): Boolean {
         if (cause is ChildCancelledException) return true
         return cancelImpl(cause)
