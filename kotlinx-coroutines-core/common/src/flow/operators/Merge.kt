@@ -13,6 +13,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.channels.Channel.Factory.OPTIONAL_CHANNEL
 import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.sync.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlinx.coroutines.flow.unsafeFlow as flow
@@ -149,16 +150,15 @@ private class ChannelFlowMerge<T>(
 
     // The actual merge implementation with concurrency limit
     private suspend fun mergeImpl(scope: CoroutineScope, collector: ConcurrentFlowCollector<T>) {
-        val semaphore = Channel<Unit>(concurrency)
+        val semaphore = Semaphore(concurrency)
         @Suppress("UNCHECKED_CAST")
         flow.collect { inner ->
-            // TODO real semaphore (#94)
-            semaphore.send(Unit) // Acquire concurrency permit
+            semaphore.acquire() // Acquire concurrency permit
             scope.launch {
                 try {
                     inner.collect(collector)
                 } finally {
-                    semaphore.receive() // Release concurrency permit
+                    semaphore.release() // Release concurrency permit
                 }
             }
         }
