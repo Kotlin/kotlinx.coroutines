@@ -17,7 +17,7 @@ import kotlin.jvm.*
  * Accumulates value starting with the first element and applying [operation] to current accumulator value and each element.
  * Throws [UnsupportedOperationException] if flow was empty.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public suspend fun <S, T : S> Flow<T>.reduce(operation: suspend (accumulator: S, value: T) -> S): S {
     var accumulator: Any? = NULL
 
@@ -38,7 +38,7 @@ public suspend fun <S, T : S> Flow<T>.reduce(operation: suspend (accumulator: S,
 /**
  * Accumulates value starting with [initial] value and applying [operation] current accumulator value and each element
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public suspend inline fun <T, R> Flow<T>.fold(
     initial: R,
     crossinline operation: suspend (acc: R, value: T) -> R
@@ -55,7 +55,7 @@ public suspend inline fun <T, R> Flow<T>.fold(
  * Throws [NoSuchElementException] for empty flow and [IllegalStateException] for flow
  * that contains more than one element.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.single(): T {
     var result: Any? = NULL
     collect { value ->
@@ -72,7 +72,7 @@ public suspend fun <T> Flow<T>.single(): T {
  * The terminal operator, that awaits for one and only one value to be published.
  * Throws [IllegalStateException] for flow that contains more than one element.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public suspend fun <T: Any> Flow<T>.singleOrNull(): T? {
     var result: T? = null
     collect { value ->
@@ -87,7 +87,7 @@ public suspend fun <T: Any> Flow<T>.singleOrNull(): T? {
  * The terminal operator that returns the first element emitted by the flow and then cancels flow's collection.
  * Throws [NoSuchElementException] if the flow was empty.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.first(): T {
     var result: Any? = NULL
     try {
@@ -107,7 +107,7 @@ public suspend fun <T> Flow<T>.first(): T {
  * The terminal operator that returns the first element emitted by the flow matching the given [predicate] and then cancels flow's collection.
  * Throws [NoSuchElementException] if the flow has not contained elements matching the [predicate].
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
     var result: Any? = NULL
     try {

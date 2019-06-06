@@ -109,7 +109,7 @@ import kotlinx.coroutines.*
  * Flow is [Reactive Streams](http://www.reactive-streams.org/) compliant, you can safely interop it with
  * reactive streams using [Flow.asPublisher] and [Publisher.asFlow] from kotlinx-coroutines-reactive module.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public interface Flow<out T> {
 
     /**

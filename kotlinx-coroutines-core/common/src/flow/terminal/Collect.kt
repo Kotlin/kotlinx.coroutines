@@ -27,7 +27,7 @@ import kotlin.jvm.*
  * }
  * ```
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value: T) -> Unit): Unit =
     collect(object : FlowCollector<T> {
         override suspend fun emit(value: T) = action(value)
@@ -37,4 +37,5 @@ public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value
  * Collects all the values from the given [flow] and emits them to the collector.
  * Shortcut for `flow.collect { value -> emit(value) }`.
  */
+@ExperimentalCoroutinesApi
 public suspend inline fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) = flow.collect(this)

@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
  * }
  * ```
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = flow {
     coroutineScope {
         val firstChannel = asFairChannel(this@combineLatest)
@@ -80,7 +80,7 @@ public fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspen
  * Returns a [Flow] whose values are generated with [transform] function by combining
  * the most recently emitted values by each flow.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public inline fun <T1, T2, T3, R> Flow<T1>.combineLatest(
     other: Flow<T2>,
     other2: Flow<T3>,
@@ -97,7 +97,7 @@ public inline fun <T1, T2, T3, R> Flow<T1>.combineLatest(
  * Returns a [Flow] whose values are generated with [transform] function by combining
  * the most recently emitted values by each flow.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public inline fun <T1, T2, T3, T4, R> Flow<T1>.combineLatest(
     other: Flow<T2>,
     other2: Flow<T3>,
@@ -116,7 +116,7 @@ public inline fun <T1, T2, T3, T4, R> Flow<T1>.combineLatest(
  * Returns a [Flow] whose values are generated with [transform] function by combining
  * the most recently emitted values by each flow.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public inline fun <T1, T2, T3, T4, T5, R> Flow<T1>.combineLatest(
     other: Flow<T2>,
     other2: Flow<T3>,
@@ -137,7 +137,7 @@ public inline fun <T1, T2, T3, T4, T5, R> Flow<T1>.combineLatest(
  * Returns a [Flow] whose values are generated with [transform] function by combining
  * the most recently emitted values by each flow.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public inline fun <reified T, R> Flow<T>.combineLatest(vararg others: Flow<T>, crossinline transform: suspend (Array<T>) -> R): Flow<R> =
     combineLatest(*others, arrayFactory = { arrayOfNulls(others.size + 1) }, transform = { transform(it) })
 
@@ -209,7 +209,7 @@ private fun CoroutineScope.asFairChannel(flow: Flow<*>): ReceiveChannel<Any> = p
  * }
  * ```
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T1, T2, R> Flow<T1>.zip(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = flow {
     coroutineScope {
         val first = asChannel(this@zip)
