@@ -4,6 +4,7 @@
 
 @file:JvmMultifileClass
 @file:JvmName("FlowKt")
+@file:Suppress("UNCHECKED_CAST")
 
 package kotlinx.coroutines.flow
 
@@ -50,7 +51,7 @@ public suspend inline fun <T, R> Flow<T>.fold(
 }
 
 /**
- * Terminal operator, that awaits for one and only one value to be published.
+ * The terminal operator, that awaits for one and only one value to be published.
  * Throws [NoSuchElementException] for empty flow and [IllegalStateException] for flow
  * that contains more than one element.
  */
@@ -68,7 +69,7 @@ public suspend fun <T> Flow<T>.single(): T {
 }
 
 /**
- * Terminal operator, that awaits for one and only one value to be published.
+ * The terminal operator, that awaits for one and only one value to be published.
  * Throws [IllegalStateException] for flow that contains more than one element.
  */
 @FlowPreview
@@ -80,4 +81,46 @@ public suspend fun <T: Any> Flow<T>.singleOrNull(): T? {
     }
 
     return result
+}
+
+/**
+ * The terminal operator that returns the first element emitted by the flow and then cancels flow's collection.
+ * Throws [NoSuchElementException] if the flow was empty.
+ */
+@FlowPreview
+public suspend fun <T> Flow<T>.first(): T {
+    var result: Any? = NULL
+    try {
+        collect { value ->
+            result = value
+            throw AbortFlowException()
+        }
+    } catch (e: AbortFlowException) {
+        // Do nothing
+    }
+
+    if (result === NULL) throw NoSuchElementException("Expected at least one element")
+    return result as T
+}
+
+/**
+ * The terminal operator that returns the first element emitted by the flow matching the given [predicate] and then cancels flow's collection.
+ * Throws [NoSuchElementException] if the flow has not contained elements matching the [predicate].
+ */
+@FlowPreview
+public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
+    var result: Any? = NULL
+    try {
+        collect { value ->
+            if (predicate(value)) {
+                result = value
+                throw AbortFlowException()
+            }
+        }
+    } catch (e: AbortFlowException) {
+        // Do nothing
+    }
+
+    if (result === NULL) throw NoSuchElementException("Expected at least one element matching the predicate $predicate")
+    return result as T
 }

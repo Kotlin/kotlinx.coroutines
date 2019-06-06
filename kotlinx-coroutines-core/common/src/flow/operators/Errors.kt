@@ -27,9 +27,7 @@ public fun <T> Flow<T>.onErrorCollect(
     predicate: ExceptionPredicate = ALWAYS_TRUE
 ): Flow<T> = collectSafely { e ->
     if (!predicate(e)) throw e
-    fallback.collect { value ->
-        emit(value)
-    }
+    emitAll(fallback)
 }
 
 /**
