@@ -45,16 +45,17 @@ We'll also measure their completion time for further comparisons:
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+suspend fun massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
-        val jobs = List(n) {
-            launch {
-                repeat(k) { action() }
+        coroutineScope { // scope for coroutines 
+            repeat(n) {
+                launch {
+                    repeat(k) { action() }
+                }
             }
         }
-        jobs.forEach { it.join() }
     }
     println("Completed ${n * k} actions in $time ms")    
 }
@@ -63,7 +64,7 @@ suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
 </div> 
 
 We start with a very simple action that increments a shared mutable variable using 
-multi-threaded [Dispatchers.Default] that is used in [GlobalScope]. 
+multi-threaded [Dispatchers.Default]. 
 
 <!--- CLEAR -->
 
@@ -73,30 +74,33 @@ multi-threaded [Dispatchers.Default] that is used in [GlobalScope].
 import kotlinx.coroutines.*
 import kotlin.system.*    
 
-suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+suspend fun massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
-        val jobs = List(n) {
-            launch {
-                repeat(k) { action() }
+        coroutineScope { // scope for coroutines 
+            repeat(n) {
+                launch {
+                    repeat(k) { action() }
+                }
             }
         }
-        jobs.forEach { it.join() }
     }
     println("Completed ${n * k} actions in $time ms")    
 }
 
+//sampleStart
 var counter = 0
 
-fun main() = runBlocking<Unit> {
-//sampleStart
-    GlobalScope.massiveRun {
-        counter++
+fun main() = runBlocking {
+    withContext(Dispatchers.Default) {
+        massiveRun {
+            counter++
+        }
     }
     println("Counter = $counter")
-//sampleEnd    
 }
+//sampleEnd    
 ```
 
 </div>
@@ -108,56 +112,8 @@ Completed 100000 actions in
 Counter =
 -->
 
-What does it print at the end? It is highly unlikely to ever print "Counter = 100000", because a thousand coroutines 
+What does it print at the end? It is highly unlikely to ever print "Counter = 100000", because a hundred coroutines 
 increment the `counter` concurrently from multiple threads without any synchronization.
-
-> Note: if you have an old system with 2 or fewer CPUs, then you _will_ consistently see 100000, because
-the thread pool is running in only one thread in this case. To reproduce the problem you'll need to make the
-following change:
-
-<!--- CLEAR -->
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
-```kotlin
-import kotlinx.coroutines.*
-import kotlin.system.*
-
-suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
-    val n = 100  // number of coroutines to launch
-    val k = 1000 // times an action is repeated by each coroutine
-    val time = measureTimeMillis {
-        val jobs = List(n) {
-            launch {
-                repeat(k) { action() }
-            }
-        }
-        jobs.forEach { it.join() }
-    }
-    println("Completed ${n * k} actions in $time ms")    
-}
-
-val mtContext = newFixedThreadPoolContext(2, "mtPool") // explicitly define context with two threads
-var counter = 0
-
-fun main() = runBlocking<Unit> {
-//sampleStart
-    CoroutineScope(mtContext).massiveRun { // use it instead of Dispatchers.Default in this sample and below 
-        counter++
-    }
-    println("Counter = $counter")
-//sampleEnd    
-}
-```
-
-</div>
-
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-sync-01b.kt).
-
-<!--- TEST LINES_START
-Completed 100000 actions in
-Counter =
--->
 
 ### Volatiles are of no help
 
@@ -171,29 +127,34 @@ There is common misconception that making a variable `volatile` solves concurren
 import kotlinx.coroutines.*
 import kotlin.system.*
 
-suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+suspend fun massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
-        val jobs = List(n) {
-            launch {
-                repeat(k) { action() }
+        coroutineScope { // scope for coroutines 
+            repeat(n) {
+                launch {
+                    repeat(k) { action() }
+                }
             }
         }
-        jobs.forEach { it.join() }
     }
     println("Completed ${n * k} actions in $time ms")    
 }
 
+//sampleStart
 @Volatile // in Kotlin `volatile` is an annotation 
 var counter = 0
 
-fun main() = runBlocking<Unit> {
-    GlobalScope.massiveRun {
-        counter++
+fun main() = runBlocking {
+    withContext(Dispatchers.Default) {
+        massiveRun {
+            counter++
+        }
     }
     println("Counter = $counter")
 }
+//sampleEnd    
 ```
 
 </div>
@@ -225,30 +186,33 @@ import kotlinx.coroutines.*
 import java.util.concurrent.atomic.*
 import kotlin.system.*
 
-suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+suspend fun massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
-        val jobs = List(n) {
-            launch {
-                repeat(k) { action() }
+        coroutineScope { // scope for coroutines 
+            repeat(n) {
+                launch {
+                    repeat(k) { action() }
+                }
             }
         }
-        jobs.forEach { it.join() }
     }
     println("Completed ${n * k} actions in $time ms")    
 }
 
+//sampleStart
 var counter = AtomicInteger()
 
-fun main() = runBlocking<Unit> {
-//sampleStart
-    GlobalScope.massiveRun {
-        counter.incrementAndGet()
+fun main() = runBlocking {
+    withContext(Dispatchers.Default) {
+        massiveRun {
+            counter.incrementAndGet()
+        }
     }
-    println("Counter = ${counter.get()}")
-//sampleEnd    
+    println("Counter = $counter")
 }
+//sampleEnd    
 ```
 
 </div>
@@ -279,33 +243,37 @@ single-threaded context.
 import kotlinx.coroutines.*
 import kotlin.system.*
 
-suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+suspend fun massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
-        val jobs = List(n) {
-            launch {
-                repeat(k) { action() }
+        coroutineScope { // scope for coroutines 
+            repeat(n) {
+                launch {
+                    repeat(k) { action() }
+                }
             }
         }
-        jobs.forEach { it.join() }
     }
     println("Completed ${n * k} actions in $time ms")    
 }
 
+//sampleStart
 val counterContext = newSingleThreadContext("CounterContext")
 var counter = 0
 
-fun main() = runBlocking<Unit> {
-//sampleStart
-    GlobalScope.massiveRun { // run each coroutine with DefaultDispathcer
-        withContext(counterContext) { // but confine each increment to the single-threaded context
-            counter++
+fun main() = runBlocking {
+    withContext(Dispatchers.Default) {
+        massiveRun {
+            // confine each increment to a single-threaded context
+            withContext(counterContext) {
+                counter++
+            }
         }
     }
     println("Counter = $counter")
-//sampleEnd    
 }
+//sampleEnd      
 ```
 
 </div>
@@ -318,14 +286,14 @@ Counter = 100000
 -->
 
 This code works very slowly, because it does _fine-grained_ thread-confinement. Each individual increment switches 
-from multi-threaded [Dispatchers.Default] context to the single-threaded context using [withContext] block.
+from multi-threaded [Dispatchers.Default] context to the single-threaded context using 
+[withContext(counterContext)][withContext] block.
 
 ### Thread confinement coarse-grained
 
 In practice, thread confinement is performed in large chunks, e.g. big pieces of state-updating business logic
 are confined to the single thread. The following example does it like that, running each coroutine in 
 the single-threaded context to start with. 
-Here we use [CoroutineScope()] function to convert coroutine context reference to [CoroutineScope]:
 
 <!--- CLEAR -->
 
@@ -335,31 +303,35 @@ Here we use [CoroutineScope()] function to convert coroutine context reference t
 import kotlinx.coroutines.*
 import kotlin.system.*
 
-suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+suspend fun massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
-        val jobs = List(n) {
-            launch {
-                repeat(k) { action() }
+        coroutineScope { // scope for coroutines 
+            repeat(n) {
+                launch {
+                    repeat(k) { action() }
+                }
             }
         }
-        jobs.forEach { it.join() }
     }
     println("Completed ${n * k} actions in $time ms")    
 }
 
+//sampleStart
 val counterContext = newSingleThreadContext("CounterContext")
 var counter = 0
 
-fun main() = runBlocking<Unit> {
-//sampleStart
-    CoroutineScope(counterContext).massiveRun { // run each coroutine in the single-threaded context
-        counter++
+fun main() = runBlocking {
+    // confine everything to a single-threaded context
+    withContext(counterContext) {
+        massiveRun {
+            counter++
+        }
     }
     println("Counter = $counter")
-//sampleEnd    
 }
+//sampleEnd     
 ```
 
 </div>
@@ -392,33 +364,37 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
 import kotlin.system.*
 
-suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+suspend fun massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
-        val jobs = List(n) {
-            launch {
-                repeat(k) { action() }
+        coroutineScope { // scope for coroutines 
+            repeat(n) {
+                launch {
+                    repeat(k) { action() }
+                }
             }
         }
-        jobs.forEach { it.join() }
     }
     println("Completed ${n * k} actions in $time ms")    
 }
 
+//sampleStart
 val mutex = Mutex()
 var counter = 0
 
-fun main() = runBlocking<Unit> {
-//sampleStart
-    GlobalScope.massiveRun {
-        mutex.withLock {
-            counter++        
+fun main() = runBlocking {
+    withContext(Dispatchers.Default) {
+        massiveRun {
+            // protect each increment with lock
+            mutex.withLock {
+                counter++
+            }
         }
     }
     println("Counter = $counter")
-//sampleEnd    
 }
+//sampleEnd    
 ```
 
 </div>
@@ -436,7 +412,8 @@ is confined to.
 
 ### Actors
 
-An [actor](https://en.wikipedia.org/wiki/Actor_model) is an entity made up of a combination of a coroutine, the state that is confined and encapsulated into this coroutine,
+An [actor](https://en.wikipedia.org/wiki/Actor_model) is an entity made up of a combination of a coroutine,
+the state that is confined and encapsulated into this coroutine,
 and a channel to communicate with other coroutines. A simple actor can be written as a function, 
 but an actor with a complex state is better suited for a class. 
 
@@ -492,16 +469,17 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.system.*
 
-suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+suspend fun massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
-        val jobs = List(n) {
-            launch {
-                repeat(k) { action() }
+        coroutineScope { // scope for coroutines 
+            repeat(n) {
+                launch {
+                    repeat(k) { action() }
+                }
             }
         }
-        jobs.forEach { it.join() }
     }
     println("Completed ${n * k} actions in $time ms")    
 }
@@ -522,19 +500,21 @@ fun CoroutineScope.counterActor() = actor<CounterMsg> {
     }
 }
 
-fun main() = runBlocking<Unit> {
 //sampleStart
+fun main() = runBlocking {
     val counter = counterActor() // create the actor
-    GlobalScope.massiveRun {
-        counter.send(IncCounter)
+    withContext(Dispatchers.Default) {
+        massiveRun {
+            counter.send(IncCounter)
+        }
     }
     // send a message to get a counter value from an actor
     val response = CompletableDeferred<Int>()
     counter.send(GetCounter(response))
     println("Counter = ${response.await()}")
     counter.close() // shutdown the actor
-//sampleEnd    
 }
+//sampleEnd    
 ```
 
 </div>
@@ -548,7 +528,8 @@ Counter = 100000
 
 It does not matter (for correctness) what context the actor itself is executed in. An actor is
 a coroutine and a coroutine is executed sequentially, so confinement of the state to the specific coroutine
-works as a solution to the problem of shared mutable state. Indeed, actors may modify their own private state, but can only affect each other through messages (avoiding the need for any locks).
+works as a solution to the problem of shared mutable state. Indeed, actors may modify their own private state, 
+but can only affect each other through messages (avoiding the need for any locks).
 
 Actor is more efficient than locking under load, because in this case it always has work to do and it does not 
 have to switch to a different context at all.
@@ -560,10 +541,7 @@ have to switch to a different context at all.
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->
 [Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
-[GlobalScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-global-scope/index.html
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html
-[CoroutineScope()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope.html
-[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
 [CompletableDeferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-completable-deferred/index.html
 <!--- INDEX kotlinx.coroutines.sync -->
 [Mutex]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-mutex/index.html

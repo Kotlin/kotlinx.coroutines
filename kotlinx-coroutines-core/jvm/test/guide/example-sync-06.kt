@@ -9,30 +9,34 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
 import kotlin.system.*
 
-suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+suspend fun massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
-        val jobs = List(n) {
-            launch {
-                repeat(k) { action() }
+        coroutineScope { // scope for coroutines 
+            repeat(n) {
+                launch {
+                    repeat(k) { action() }
+                }
             }
         }
-        jobs.forEach { it.join() }
     }
     println("Completed ${n * k} actions in $time ms")    
 }
 
+//sampleStart
 val mutex = Mutex()
 var counter = 0
 
-fun main() = runBlocking<Unit> {
-//sampleStart
-    GlobalScope.massiveRun {
-        mutex.withLock {
-            counter++        
+fun main() = runBlocking {
+    withContext(Dispatchers.Default) {
+        massiveRun {
+            // protect each increment with lock
+            mutex.withLock {
+                counter++
+            }
         }
     }
     println("Counter = $counter")
-//sampleEnd    
 }
+//sampleEnd    

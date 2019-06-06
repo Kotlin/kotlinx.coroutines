@@ -8,30 +8,34 @@ package kotlinx.coroutines.guide.sync04
 import kotlinx.coroutines.*
 import kotlin.system.*
 
-suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+suspend fun massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
-        val jobs = List(n) {
-            launch {
-                repeat(k) { action() }
+        coroutineScope { // scope for coroutines 
+            repeat(n) {
+                launch {
+                    repeat(k) { action() }
+                }
             }
         }
-        jobs.forEach { it.join() }
     }
     println("Completed ${n * k} actions in $time ms")    
 }
 
+//sampleStart
 val counterContext = newSingleThreadContext("CounterContext")
 var counter = 0
 
-fun main() = runBlocking<Unit> {
-//sampleStart
-    GlobalScope.massiveRun { // run each coroutine with DefaultDispathcer
-        withContext(counterContext) { // but confine each increment to the single-threaded context
-            counter++
+fun main() = runBlocking {
+    withContext(Dispatchers.Default) {
+        massiveRun {
+            // confine each increment to a single-threaded context
+            withContext(counterContext) {
+                counter++
+            }
         }
     }
     println("Counter = $counter")
-//sampleEnd    
 }
+//sampleEnd      

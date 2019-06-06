@@ -585,7 +585,7 @@ public fun CoroutineContext.cancel(cause: Throwable? = null): Boolean =
     (this[Job] as? JobSupport)?.cancelInternal(cause) ?: false
 
 /**
- * Cancels all children of the [Job] in this context, without touching the the state of this job itself
+ * Cancels all children of the [Job] in this context, without touching the state of this job itself
  * with an optional cancellation cause. See [Job.cancel].
  * It does not do anything if there is no job in the context or it has no children.
  */
