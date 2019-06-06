@@ -780,6 +780,12 @@ public final class kotlinx/coroutines/channels/TickerMode : java/lang/Enum {
 	public static fun values ()[Lkotlinx/coroutines/channels/TickerMode;
 }
 
+public abstract class kotlinx/coroutines/flow/AbstractFlow : kotlinx/coroutines/flow/Flow {
+	public fun <init> ()V
+	public final fun collect (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun collectSafely (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public abstract interface class kotlinx/coroutines/flow/Flow {
 	public abstract fun collect (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
