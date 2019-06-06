@@ -7,12 +7,37 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.coroutines.*
+import kotlin.reflect.*
 import kotlin.test.*
 
 class FlowInvariantsTest : TestBase() {
 
+    private fun <T> runParametrizedTest(
+        expectedException: KClass<out Throwable>? = null,
+        testBody: suspend (flowFactory: (suspend FlowCollector<T>.() -> Unit) -> Flow<T>) -> Unit
+    ) = runTest {
+        val r1 = runCatching { testBody { flow(it) } }.exceptionOrNull()
+        check(r1, expectedException)
+        reset()
+
+        val r2 = runCatching { testBody { abstractFlow(it) } }.exceptionOrNull()
+        check(r2, expectedException)
+    }
+
+    private fun <T> abstractFlow(block: suspend FlowCollector<T>.() -> Unit): Flow<T> = object : AbstractFlow<T>() {
+        override suspend fun collectSafely(collector: FlowCollector<T>) {
+            collector.block()
+        }
+    }
+
+    private fun check(exception: Throwable?, expectedException: KClass<out Throwable>?) {
+        if (expectedException != null && exception == null) fail("Expected $expectedException, but test completed successfully")
+        if (expectedException != null && exception != null) assertTrue(expectedException.isInstance(exception))
+        if (expectedException == null && exception != null) throw exception
+    }
+
     @Test
-    fun testWithContextContract() = runTest({ it is IllegalStateException }) {
+    fun testWithContextContract() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
         flow {
             kotlinx.coroutines.withContext(NonCancellable) {
                 emit(1)
@@ -23,7 +48,7 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testWithDispatcherContractViolated() = runTest({ it is IllegalStateException }) {
+    fun testWithDispatcherContractViolated() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
         flow {
             kotlinx.coroutines.withContext(NamedDispatchers("foo")) {
                 emit(1)
@@ -34,7 +59,7 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testCachedInvariantCheckResult() = runTest {
+    fun testCachedInvariantCheckResult() = runParametrizedTest<Int> { flow ->
         flow {
             emit(1)
 
@@ -55,7 +80,7 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testWithNameContractViolated() = runTest({ it is IllegalStateException }) {
+    fun testWithNameContractViolated() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
         flow {
             kotlinx.coroutines.withContext(CoroutineName("foo")) {
                 emit(1)
@@ -86,8 +111,8 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testScopedJob() = runTest({ it is IllegalStateException }) {
-        flow { emit(1) }.buffer(EmptyCoroutineContext).collect {
+    fun testScopedJob() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
+        flow { emit(1) }.buffer(EmptyCoroutineContext, flow).collect {
             expect(1)
         }
 
@@ -95,8 +120,8 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testScopedJobWithViolation() = runTest({ it is IllegalStateException }) {
-        flow { emit(1) }.buffer(Dispatchers.Unconfined).collect {
+    fun testScopedJobWithViolation() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
+        flow { emit(1) }.buffer(Dispatchers.Unconfined, flow).collect {
             expect(1)
         }
 
@@ -104,7 +129,7 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testMergeViolation() = runTest {
+    fun testMergeViolation() = runParametrizedTest<Int> { flow ->
         fun Flow<Int>.merge(other: Flow<Int>): Flow<Int> = flow {
             coroutineScope {
                 launch {
@@ -129,17 +154,6 @@ class FlowInvariantsTest : TestBase() {
         assertFailsWith<IllegalStateException> { flow.merge(flow).toList() }
         assertFailsWith<IllegalStateException> { flow.trickyMerge(flow).toList() }
     }
-
-    // TODO merge artifact
-    private fun <T> channelFlow(bufferSize: Int = 16, @BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> =
-        flow {
-            coroutineScope {
-                val channel = produce(capacity = bufferSize, block = block)
-                channel.consumeEach { value ->
-                    emit(value)
-                }
-            }
-        }
 
     @Test
     fun testNoMergeViolation() = runTest {
@@ -167,7 +181,7 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testScopedCoroutineNoViolation() = runTest {
+    fun testScopedCoroutineNoViolation() = runParametrizedTest<Int> { flow ->
         fun Flow<Int>.buffer(): Flow<Int> = flow {
             coroutineScope {
                 val channel = produce {
@@ -180,11 +194,10 @@ class FlowInvariantsTest : TestBase() {
                 }
             }
         }
-
         assertEquals(listOf(1, 1), flowOf(1, 1).buffer().toList())
     }
 
-    private fun Flow<Int>.buffer(coroutineContext: CoroutineContext): Flow<Int> = flow {
+    private fun Flow<Int>.buffer(coroutineContext: CoroutineContext, flow: (suspend FlowCollector<Int>.() -> Unit) -> Flow<Int>): Flow<Int> = flow {
         coroutineScope {
             val channel = Channel<Int>()
             launch {

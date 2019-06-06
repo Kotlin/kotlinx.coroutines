@@ -5,6 +5,8 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.internal.SafeCollector
+import kotlin.coroutines.*
 
 /**
  * A cold asynchronous data stream that sequentially emits values
@@ -114,15 +116,57 @@ public interface Flow<out T> {
 
     /**
      * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
+     * This method should never be implemented or used directly.
+     *
+     * The only way to implement flow interface directly is to extend [AbstractFlow].
+     * To collect it into the specific collector, either `collector.emitAll(flow)` or `collect { }` extension should be used.
+     * Such limitation ensures that context preservation property is not violated and prevents most of the developer mistakes
+     * related to concurrency, inconsistent flow dispatchers and cancellation.
+     */
+    @InternalCoroutinesApi
+    public suspend fun collect(collector: FlowCollector<T>)
+}
+
+/**
+ * Base class to extend to have a stateful implementation of the flow.
+ * It tracks all the properties required for context preservation and throws [IllegalStateException] if any of the properties are violated.
+ * Example of the implementation:
+ * ```
+ * // list.asFlow() + collect counter
+ * class CountingListFlow(private val values: List<Int>) : AbstractFlow<Int>() {
+ *     private val collectedCounter = AtomicInteger(0)
+ *
+ *     override suspend fun collectSafely(collector: FlowCollector<Int>) {
+ *         collectedCounter.incrementAndGet() // Increment collected counter
+ *         values.forEach { // Emit all the values
+ *             collector.emit(it)
+ *         }
+ *     }
+ *
+ *     fun toDiagnosticString(): String = "Flow with values $values was collected ${collectedCounter.value} times"
+ * }
+ * ```
+ */
+@FlowPreview
+public abstract class AbstractFlow<T> : Flow<T> {
+
+    @InternalCoroutinesApi
+    public final override suspend fun collect(collector: FlowCollector<T>) {
+        collectSafely(SafeCollector(collector, collectContext = coroutineContext))
+    }
+
+    /**
+     * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
      *
      * A valid implementation of this method has the following constraints:
      * 1) It should not change the coroutine context (e.g. with `withContext(Dispatchers.IO)`) when emitting values.
      *    The emission should happen in the context of the [collect] call.
      *    Please refer to the top-level [Flow] documentation for more details.
-     *
      * 2) It should serialize calls to [emit][FlowCollector.emit] as [FlowCollector] implementations are not
-     * thread safe by default.
+     *    thread-safe by default.
      *    To automatically serialize emissions [channelFlow] builder can be used instead of [flow]
+     *
+     * @throws IllegalStateException if any of the invariants are violated.
      */
-    public suspend fun collect(collector: FlowCollector<T>)
+    public abstract suspend fun collectSafely(collector: FlowCollector<T>)
 }
