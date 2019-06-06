@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
 /**
  * Returns flow where all subsequent repetitions of the same value are filtered out.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.distinctUntilChanged(): Flow<T> = distinctUntilChangedBy { it }
 
 /**

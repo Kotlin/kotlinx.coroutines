@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
 /**
  * Delays the emission of values from this flow for the given [timeMillis].
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.delayFlow(timeMillis: Long): Flow<T> = flow {
     delay(timeMillis)
     collect(this@flow)
@@ -26,7 +26,7 @@ public fun <T> Flow<T>.delayFlow(timeMillis: Long): Flow<T> = flow {
 /**
  * Delays each element emitted by the given flow for the given [timeMillis].
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = flow {
     collect { value ->
         delay(timeMillis)
@@ -58,6 +58,7 @@ public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = flow {
  * Note that the resulting flow does not emit anything as long as the original flow emits
  * items faster than every [timeoutMillis] milliseconds.
  */
+@FlowPreview
 public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
     require(timeoutMillis > 0) { "Debounce timeout should be positive" }
     return scopedFlow { downstream ->
@@ -109,6 +110,7 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
  * 
  * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
+@FlowPreview
 public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
     require(periodMillis > 0) { "Sample period should be positive" }
     return scopedFlow { downstream ->

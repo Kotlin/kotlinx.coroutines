@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
  * }
  * ```
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public inline fun <T, R> Flow<T>.transform(@BuilderInference crossinline transform: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> {
     return flow {
         collect { value ->
@@ -40,7 +40,7 @@ public inline fun <T, R> Flow<T>.transform(@BuilderInference crossinline transfo
 /**
  * Returns a flow containing only values of the original flow that matches the given [predicate].
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public inline fun <T> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolean): Flow<T> = flow {
     collect { value ->
         if (predicate(value)) return@collect emit(value)
@@ -50,7 +50,7 @@ public inline fun <T> Flow<T>.filter(crossinline predicate: suspend (T) -> Boole
 /**
  * Returns a flow containing only values of the original flow that do not match the given [predicate].
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public inline fun <T> Flow<T>.filterNot(crossinline predicate: suspend (T) -> Boolean): Flow<T> = flow {
     collect { value ->
         if (!predicate(value)) return@collect emit(value)
@@ -60,14 +60,14 @@ public inline fun <T> Flow<T>.filterNot(crossinline predicate: suspend (T) -> Bo
 /**
  * Returns a flow containing only values that are instances of specified type [R].
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 @Suppress("UNCHECKED_CAST")
 public inline fun <reified R> Flow<*>.filterIsInstance(): Flow<R> = filter { it is R } as Flow<R>
 
 /**
  * Returns a flow containing only values of the original flow that are not null.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = flow<T> {
     collect { value -> if (value != null) return@collect  emit(value) }
 }
@@ -75,7 +75,7 @@ public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = flow<T> {
 /**
  * Returns a flow containing the results of applying the given [transform] function to each value of the original flow.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -> R): Flow<R> = transform { value ->
    return@transform emit(transform(value))
 }
@@ -83,7 +83,7 @@ public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -
 /**
  * Returns a flow that contains only non-null results of applying the given [transform] function to each value of the original flow.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public inline fun <T, R: Any> Flow<T>.mapNotNull(crossinline transform: suspend (value: T) -> R?): Flow<R> = transform { value ->
     val transformed = transform(value) ?: return@transform
     return@transform emit(transformed)
@@ -92,7 +92,7 @@ public inline fun <T, R: Any> Flow<T>.mapNotNull(crossinline transform: suspend 
 /**
  * Returns a flow which performs the given [action] on each value of the original flow.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = flow {
     collect { value ->
         action(value)
@@ -109,7 +109,7 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = flow {
  * ```
  * will produce `[], [1], [1, 2], [1, 2, 3]]`.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = flow {
     var accumulator: R = initial
     emit(accumulator)
@@ -130,7 +130,7 @@ public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend 
  * ```
  * will produce `[1, 3, 6, 10]`
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.scanReduce(operation: suspend (accumulator: T, value: T) -> T): Flow<T> = flow {
     var accumulator: Any? = NULL
     collect { value ->

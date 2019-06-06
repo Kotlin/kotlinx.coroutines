@@ -104,7 +104,7 @@ import kotlin.jvm.*
  * [RENDEZVOUS][Channel.RENDEZVOUS], [UNLIMITED][Channel.UNLIMITED] or a non-negative value indicating
  * an explicitly requested size.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> {
     require(capacity >= 0 || capacity == BUFFERED || capacity == CONFLATED) {
         "Buffer size should be non-negative, BUFFERED, or CONFLATED, but was $capacity"
@@ -147,7 +147,7 @@ public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> {
  * always fused so that only one properly configured channel is used for execution.
  * **Conflation takes precedence over `buffer()` calls with any other capacity.**
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
 
 /**
@@ -194,7 +194,7 @@ public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
  *
  * @throws [IllegalArgumentException] if provided context contains [Job] instance.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.flowOn(context: CoroutineContext): Flow<T> {
     checkFlowContext(context)
     return when {

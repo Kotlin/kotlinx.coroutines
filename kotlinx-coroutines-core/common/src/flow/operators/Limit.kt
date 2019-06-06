@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
  * Returns a flow that ignores first [count] elements.
  * Throws [IllegalArgumentException] if [count] is negative.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.drop(count: Int): Flow<T> {
     require(count >= 0) { "Drop count should be non-negative, but had $count" }
     return flow {
@@ -31,7 +31,7 @@ public fun <T> Flow<T>.drop(count: Int): Flow<T> {
 /**
  * Returns a flow containing all elements except first elements that satisfy the given predicate.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.dropWhile(predicate: suspend (T) -> Boolean): Flow<T> = flow {
     var matched = false
     collect { value ->
@@ -49,7 +49,7 @@ public fun <T> Flow<T>.dropWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
  * When [count] elements are consumed, the original flow is cancelled.
  * Throws [IllegalArgumentException] if [count] is not positive.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.take(count: Int): Flow<T> {
     require(count > 0) { "Requested element count $count should be positive" }
     return flow {
@@ -70,7 +70,7 @@ public fun <T> Flow<T>.take(count: Int): Flow<T> {
 /**
  * Returns a flow that contains first elements satisfying the given [predicate].
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.takeWhile(predicate: suspend (T) -> Boolean): Flow<T> = flow {
     try {
         collect { value ->

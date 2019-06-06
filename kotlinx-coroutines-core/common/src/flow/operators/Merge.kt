@@ -124,7 +124,7 @@ public fun <T> Flow<Flow<T>>.flattenMerge(concurrency: Int = DEFAULT_CONCURRENCY
  * ```
  * produces `aa bb b_last`
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): Flow<R> = scopedFlow { downstream ->
     var previousFlow: Job? = null
     collect { value ->
