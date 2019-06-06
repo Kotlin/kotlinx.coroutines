@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
  * }
  * ```
  */
+@ExperimentalCoroutinesApi
 public fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = flow {
     coroutineScope {
         val firstChannel = asFairChannel(this@combineLatest)
@@ -60,14 +61,14 @@ public fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspen
                 onReceive(firstIsClosed, firstChannel, { firstIsClosed = true }) { value ->
                     firstValue = value
                     if (secondValue !== null) {
-                        emit(transform(NullSurrogate.unbox(firstValue), NullSurrogate.unbox(secondValue)))
+                        emit(transform(NULL.unbox(firstValue), NULL.unbox(secondValue)))
                     }
                 }
 
                 onReceive(secondIsClosed, secondChannel, { secondIsClosed = true }) { value ->
                     secondValue = value
                     if (firstValue !== null) {
-                        emit(transform(NullSurrogate.unbox(firstValue), NullSurrogate.unbox(secondValue)))
+                        emit(transform(NULL.unbox(firstValue), NULL.unbox(secondValue)))
                     }
                 }
             }
@@ -75,10 +76,107 @@ public fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspen
     }
 }
 
+/**
+ * Returns a [Flow] whose values are generated with [transform] function by combining
+ * the most recently emitted values by each flow.
+ */
+@ExperimentalCoroutinesApi
+public inline fun <T1, T2, T3, R> Flow<T1>.combineLatest(
+    other: Flow<T2>,
+    other2: Flow<T3>,
+    crossinline transform: suspend (T1, T2, T3) -> R
+): Flow<R> = (this as Flow<*>).combineLatest(other, other2) { args: Array<*> ->
+    transform(
+        args[0] as T1,
+        args[1] as T2,
+        args[2] as T3
+    )
+}
+
+/**
+ * Returns a [Flow] whose values are generated with [transform] function by combining
+ * the most recently emitted values by each flow.
+ */
+@ExperimentalCoroutinesApi
+public inline fun <T1, T2, T3, T4, R> Flow<T1>.combineLatest(
+    other: Flow<T2>,
+    other2: Flow<T3>,
+    other3: Flow<T4>,
+    crossinline transform: suspend (T1, T2, T3, T4) -> R
+): Flow<R> = (this as Flow<*>).combineLatest(other, other2, other3) { args: Array<*> ->
+    transform(
+        args[0] as T1,
+        args[1] as T2,
+        args[2] as T3,
+        args[3] as T4
+    )
+}
+
+/**
+ * Returns a [Flow] whose values are generated with [transform] function by combining
+ * the most recently emitted values by each flow.
+ */
+@ExperimentalCoroutinesApi
+public inline fun <T1, T2, T3, T4, T5, R> Flow<T1>.combineLatest(
+    other: Flow<T2>,
+    other2: Flow<T3>,
+    other3: Flow<T4>,
+    other4: Flow<T5>,
+    crossinline transform: suspend (T1, T2, T3, T4, T5) -> R
+): Flow<R> = (this as Flow<*>).combineLatest(other, other2, other3, other4) { args: Array<*> ->
+    transform(
+        args[0] as T1,
+        args[1] as T2,
+        args[2] as T3,
+        args[3] as T4,
+        args[4] as T5
+    )
+}
+
+/**
+ * Returns a [Flow] whose values are generated with [transform] function by combining
+ * the most recently emitted values by each flow.
+ */
+@ExperimentalCoroutinesApi
+public inline fun <reified T, R> Flow<T>.combineLatest(vararg others: Flow<T>, crossinline transform: suspend (Array<T>) -> R): Flow<R> =
+    combineLatest(*others, arrayFactory = { arrayOfNulls(others.size + 1) }, transform = { transform(it) })
+
+/**
+ * Returns a [Flow] whose values are generated with [transform] function by combining
+ * the most recently emitted values by each flow.
+ */
+@PublishedApi
+internal fun <T, R> Flow<T>.combineLatest(vararg others: Flow<T>, arrayFactory: () -> Array<T?>, transform: suspend (Array<T>) -> R): Flow<R> = flow {
+    coroutineScope {
+        val size = others.size + 1
+        val channels =
+            Array(size) { if (it == 0) asFairChannel(this@combineLatest) else asFairChannel(others[it - 1]) }
+        val latestValues = arrayOfNulls<Any?>(size)
+        val isClosed = Array(size) { false }
+
+        // See flow.combineLatest(other) for explanation.
+        while (!isClosed.all { it }) {
+            select<Unit> {
+                for (i in 0 until size) {
+                    onReceive(isClosed[i], channels[i], { isClosed[i] = true }) { value ->
+                        latestValues[i] = value
+                        if (latestValues.all { it !== null }) {
+                            val arguments = arrayFactory()
+                            for (index in 0 until size) {
+                                arguments[index] = NULL.unbox(latestValues[index])
+                            }
+                            emit(transform(arguments as Array<T>))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 private inline fun SelectBuilder<Unit>.onReceive(
     isClosed: Boolean,
-    channel: Channel<Any>,
+    channel: ReceiveChannel<Any>,
     crossinline onClosed: () -> Unit,
     noinline onReceive: suspend (value: Any) -> Unit
 ) {
@@ -90,18 +188,11 @@ private inline fun SelectBuilder<Unit>.onReceive(
 }
 
 // Channel has any type due to onReceiveOrNull. This will be fixed after receiveOrClosed
-private fun CoroutineScope.asFairChannel(flow: Flow<*>): Channel<Any> {
-    val channel = RendezvousChannel<Any>() // Explicit type
-    launch {
-        try {
-            flow.collect { value ->
-                channel.sendFair(value ?: NullSurrogate)
-            }
-        } finally {
-            channel.close()
-        }
+private fun CoroutineScope.asFairChannel(flow: Flow<*>): ReceiveChannel<Any> = produce {
+    val channel = channel as ChannelCoroutine<Any>
+    flow.collect { value ->
+        channel.sendFair(value ?: NULL)
     }
-    return channel
 }
 
 
@@ -118,6 +209,7 @@ private fun CoroutineScope.asFairChannel(flow: Flow<*>): Channel<Any> {
  * }
  * ```
  */
+@ExperimentalCoroutinesApi
 public fun <T1, T2, R> Flow<T1>.zip(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = flow {
     coroutineScope {
         val first = asChannel(this@zip)
@@ -133,7 +225,9 @@ public fun <T1, T2, R> Flow<T1>.zip(other: Flow<T2>, transform: suspend (T1, T2)
          *
          * Invariant: this clause is invoked only when all elements from the channel were processed (=> rendezvous restriction).
          */
-        (second as SendChannel<*>).invokeOnClose { first.cancel() }
+        (second as SendChannel<*>).invokeOnClose {
+            if (!first.isClosedForReceive) first.cancel(AbortFlowException())
+        }
 
         val otherIterator = second.iterator()
         try {
@@ -141,11 +235,13 @@ public fun <T1, T2, R> Flow<T1>.zip(other: Flow<T2>, transform: suspend (T1, T2)
                 if (!otherIterator.hasNext()) {
                     return@consumeEach
                 }
-                val secondValue = NullSurrogate.unbox<T2>(otherIterator.next())
-                emit(transform(NullSurrogate.unbox(value), NullSurrogate.unbox(secondValue)))
+                val secondValue = NULL.unbox<T2>(otherIterator.next())
+                emit(transform(NULL.unbox(value), NULL.unbox(secondValue)))
             }
+        } catch (e: AbortFlowException) {
+            // complete
         } finally {
-            second.cancel()
+            if (!second.isClosedForReceive) second.cancel(AbortFlowException())
         }
     }
 }
@@ -153,6 +249,6 @@ public fun <T1, T2, R> Flow<T1>.zip(other: Flow<T2>, transform: suspend (T1, T2)
 // Channel has any type due to onReceiveOrNull. This will be fixed after receiveOrClosed
 private fun CoroutineScope.asChannel(flow: Flow<*>): ReceiveChannel<Any> = produce {
     flow.collect { value ->
-        channel.send(value ?: NullSurrogate)
+        channel.send(value ?: NULL)
     }
 }

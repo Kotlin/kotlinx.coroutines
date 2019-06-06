@@ -15,8 +15,8 @@ const val SLOW = 10_000L
  */
 suspend fun CoroutineScope.assertRunsFast(block: suspend CoroutineScope.() -> Unit) {
     val start = Instant.now().toEpochMilli()
-    // don''t need to be fancy with timeouts here since anything longer than a few ms is an error
-    this.block()
+    // don't need to be fancy with timeouts here since anything longer than a few ms is an error
+    block()
     val duration = Instant.now().minusMillis(start).toEpochMilli()
     Assert.assertTrue("All tests must complete within 2000ms (use longer timeouts to cause failure)", duration < 2_000)
 }

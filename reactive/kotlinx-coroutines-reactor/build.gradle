@@ -9,6 +9,7 @@ dependencies {
 
 tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
-        url = new URL('https://projectreactor.io/docs/core/3.2.5.RELEASE/api/')
+        url = new URL("https://projectreactor.io/docs/core/$reactor_vesion/api/")
+        packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
     }
 }

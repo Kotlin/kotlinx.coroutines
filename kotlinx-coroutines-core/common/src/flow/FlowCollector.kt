@@ -13,11 +13,12 @@ import kotlinx.coroutines.*
  * This interface should usually not be implemented directly, but rather used as a receiver in a [flow] builder when implementing a custom operator.
  * Implementations of this interface are not thread-safe.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public interface FlowCollector<in T> {
 
     /**
      * Collects the value emitted by the upstream.
+     * This method is not thread-safe and should not be invoked concurrently.
      */
     public suspend fun emit(value: T)
 }

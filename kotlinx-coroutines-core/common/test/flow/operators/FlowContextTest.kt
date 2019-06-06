@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION")
 class FlowContextTest : TestBase() {
 
     private val captured = ArrayList<String>()
@@ -149,8 +150,5 @@ class FlowContextTest : TestBase() {
         val flow = emptyFlow<Int>()
         assertFailsWith<IllegalArgumentException> { flow.flowOn(Job()) }
         assertFailsWith<IllegalArgumentException> { flow.flowWith(Job()) { this } }
-        assertFailsWith<IllegalArgumentException> { flow.flowOn(EmptyCoroutineContext, bufferSize = -1) }
-        assertFailsWith<IllegalArgumentException> { flow.flowWith(EmptyCoroutineContext, bufferSize = -1) { this } }
-
     }
 }

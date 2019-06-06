@@ -9,7 +9,7 @@ This package provides testing utilities for effectively testing coroutines.
 Add `kotlinx-coroutines-test` to your project test dependencies:
 ```
 dependencies {
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.2.1'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.3.0-M1'
 }
 ```
 
@@ -69,7 +69,7 @@ builder that provides extra test control to coroutines.
 ### Testing regular suspend functions
 
 To test regular suspend functions, which may have a delay, you can use the [runBlockingTest] builder to start a testing 
-coroutine. Any calls to `delay` will automatically advance time.
+coroutine. Any calls to `delay` will automatically advance virtual time by the amount delayed.
 
 ```kotlin
 @Test
@@ -79,7 +79,7 @@ fun testFoo() = runBlockingTest { // a coroutine with an extra test control
 }
 
 suspend fun foo() {
-    delay(1_000) // auto-advances without delay due to runBlockingTest
+    delay(1_000) // auto-advances virtual time by 1_000ms due to runBlockingTest
     // ...
 }
 ```
@@ -92,7 +92,7 @@ Inside of [runBlockingTest], both [launch] and [async] will start a new coroutin
 test case. 
 
 To make common testing situations easier, by default the body of the coroutine is executed *eagerly* until 
-the first [delay].
+the first call to [delay] or [yield].
 
 ```kotlin
 @Test
@@ -113,8 +113,10 @@ fun CoroutineScope.foo() {
 suspend fun bar() {}
 ```
 
-`runBlockingTest` will auto-progress time until all coroutines are completed before returning. If any coroutines are not
-able to complete, an [UncompletedCoroutinesError] will be thrown.
+`runBlockingTest` will auto-progress virtual time until all coroutines are completed before returning. If any coroutines
+are not able to complete, an [UncompletedCoroutinesError] will be thrown.
+
+*Note:* The default eager behavior of [runBlockingTest] will ignore [CoroutineStart] parameters.
 
 ### Testing `launch` or `async` with `delay`
 
@@ -130,7 +132,7 @@ fun testFooWithLaunchAndDelay() = runBlockingTest {
     foo()
     // the coroutine launched by foo has not completed here, it is suspended waiting for delay(1_000)
     advanceTimeBy(1_000) // progress time, this will cause the delay to resume
-    // foo() coroutine launched by foo has completed here
+    // the coroutine launched by foo has completed here
     // ...
 }
 
@@ -325,7 +327,7 @@ when the class under test allows a test to provide a [CoroutineDispatcher] but d
 [CoroutineScope].
 
 Since [TestCoroutineDispatcher] is stateful in order to keep track of executing coroutines, it is 
-important to ensure that [cleanupTestCoroutines][TestCoroutineDispatcher.cleanupTestCoroutines] is called after every test case. 
+important to ensure that [cleanupTestCoroutines][DelayController.cleanupTestCoroutines] is called after every test case. 
 
 ```kotlin
 class TestClass {
@@ -340,7 +342,7 @@ class TestClass {
     @After
     fun cleanUp() {
         Dispatchers.resetMain()
-        testScope.cleanupTestCoroutines()
+        testDispatcher.cleanupTestCoroutines()
     }
     
     @Test
@@ -434,6 +436,8 @@ If you have any suggestions for improvements to this experimental API please sha
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html
 [async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html
 [delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html
+[yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/yield.html
+[CoroutineStart]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-start/index.html
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
 [ExperimentalCoroutinesApi]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html
 <!--- MODULE kotlinx-coroutines-test -->
@@ -449,4 +453,5 @@ If you have any suggestions for improvements to this experimental API please sha
 [TestCoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html
 [TestCoroutineExceptionHandler]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-exception-handler/index.html
 [TestCoroutineScope.cleanupTestCoroutines]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/cleanup-test-coroutines.html
+[DelayController.cleanupTestCoroutines]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-delay-controller/cleanup-test-coroutines.html
 <!--- END -->

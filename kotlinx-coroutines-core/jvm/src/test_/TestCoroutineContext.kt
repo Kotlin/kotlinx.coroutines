@@ -43,7 +43,7 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
     }
 
     // The ordered queue for the runnable tasks.
-    private val queue = ThreadSafeHeap<TimedRunnable>()
+    private val queue = ThreadSafeHeap<TimedRunnableObsolete>()
 
     // The per-scheduler global order counter.
     private var counter = 0L
@@ -184,10 +184,10 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
     }
 
     private fun enqueue(block: Runnable) =
-        queue.addLast(TimedRunnable(block, counter++))
+        queue.addLast(TimedRunnableObsolete(block, counter++))
 
     private fun postDelayed(block: Runnable, delayTime: Long) =
-        TimedRunnable(block, counter++, time + TimeUnit.MILLISECONDS.toNanos(delayTime))
+        TimedRunnableObsolete(block, counter++, time + TimeUnit.MILLISECONDS.toNanos(delayTime))
             .also {
                 queue.addLast(it)
             }
@@ -245,17 +245,17 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
     }
 }
 
-private class TimedRunnable(
+private class TimedRunnableObsolete(
     private val run: Runnable,
     private val count: Long = 0,
     @JvmField internal val time: Long = 0
-) : Comparable<TimedRunnable>, Runnable by run, ThreadSafeHeapNode {
+) : Comparable<TimedRunnableObsolete>, Runnable by run, ThreadSafeHeapNode {
     override var heap: ThreadSafeHeap<*>? = null
     override var index: Int = 0
 
     override fun run() = run.run()
 
-    override fun compareTo(other: TimedRunnable) = if (time == other.time) {
+    override fun compareTo(other: TimedRunnableObsolete) = if (time == other.time) {
         count.compareTo(other.count)
     } else {
         time.compareTo(other.time)

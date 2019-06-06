@@ -234,6 +234,33 @@ class FlowOnTest : TestBase() {
         finish(6)
     }
 
+    @Test
+    fun testTimeoutExceptionUpstream() = runTest {
+        val flow = flow {
+            emit(1)
+            yield()
+            withTimeout(-1) {}
+            emit(42)
+        }.flowOn(NamedDispatchers("foo")).onEach {
+            expect(1)
+        }
+        assertFailsWith<TimeoutCancellationException>(flow)
+        finish(2)
+    }
+
+    @Test
+    fun testTimeoutExceptionDownstream() = runTest {
+        val flow = flow {
+            emit(1)
+            hang { expect(2) }
+        }.flowOn(NamedDispatchers("foo")).onEach {
+            expect(1)
+            withTimeout(-1) {}
+        }
+        assertFailsWith<TimeoutCancellationException>(flow)
+        finish(3)
+    }
+
     private inner class Source(private val value: Int) {
         public var contextName: String = "unknown"
 

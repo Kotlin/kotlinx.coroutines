@@ -272,7 +272,7 @@ class RendezvousChannelTest : TestBase() {
         q.cancel()
         check(q.isClosedForSend)
         check(q.isClosedForReceive)
-        check(q.receiveOrNull() == null)
+        assertFailsWith<CancellationException> { q.receiveOrNull() }
         finish(12)
     }
 

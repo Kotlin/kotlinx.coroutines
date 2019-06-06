@@ -49,7 +49,13 @@ public class CoroutinesTimeout(
          * Creates [CoroutinesTimeout] rule with the given timeout in seconds.
          */
         public fun seconds(seconds: Int, cancelOnTimeout: Boolean = false): CoroutinesTimeout =
-            CoroutinesTimeout(TimeUnit.SECONDS.toMillis(seconds.toLong()), cancelOnTimeout)
+            seconds(seconds.toLong(), cancelOnTimeout)
+
+        /**
+         * Creates [CoroutinesTimeout] rule with the given timeout in seconds.
+         */
+        public fun seconds(seconds: Long, cancelOnTimeout: Boolean = false): CoroutinesTimeout =
+            CoroutinesTimeout(TimeUnit.SECONDS.toMillis(seconds), cancelOnTimeout) // Overflow is properly handled by TimeUnit
     }
 
     /**

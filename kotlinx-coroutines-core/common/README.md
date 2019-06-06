@@ -1,6 +1,6 @@
 # Module kotlinx-coroutines-core
 
-Core primitives to work with coroutines.
+Core primitives to work with coroutines available on all platforms.
 
 Coroutine builder functions:
 
@@ -10,7 +10,6 @@ Coroutine builder functions:
 | [async]       | [Deferred]    | [CoroutineScope] | Returns a single value with the future result
 | [produce][kotlinx.coroutines.channels.produce]     | [ReceiveChannel][kotlinx.coroutines.channels.ReceiveChannel] | [ProducerScope][kotlinx.coroutines.channels.ProducerScope]  | Produces a stream of elements
 | [actor][kotlinx.coroutines.channels.actor]     | [SendChannel][kotlinx.coroutines.channels.SendChannel] | [ActorScope][kotlinx.coroutines.channels.ActorScope]  | Processes a stream of messages
-| [runBlocking] | `T`           | [CoroutineScope] | Blocks the thread while the coroutine runs
 
 Coroutine dispatchers implementing [CoroutineDispatcher]:
  
@@ -96,14 +95,6 @@ Select expression to perform multiple suspending operations simultaneously until
 
 Low-level primitives for finer-grained control of coroutines.
 
-# Package kotlinx.coroutines.timeunit
-
-Optional time unit support for multiplatform projects.
-
-# Package kotlinx.coroutines.test
-
-Components to ease writing unit-tests for code that contains coroutines with delays and timeouts.
-
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html
@@ -111,7 +102,6 @@ Components to ease writing unit-tests for code that contains coroutines with del
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
 [async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html
 [Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html
-[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
 [CoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html
 [Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
 [Dispatchers.Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-unconfined.html

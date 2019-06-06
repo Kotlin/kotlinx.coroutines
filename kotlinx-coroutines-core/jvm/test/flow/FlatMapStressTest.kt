@@ -36,14 +36,14 @@ class FlatMapStressTest : TestBase() {
         withContext(Dispatchers.Default) {
             val inFlightElements = AtomicLong(0L)
             var result = 0L
-            (1..iterations step 4).asFlow().flatMapMerge(bufferSize = bufferSize) { value ->
+            (1..iterations step 4).asFlow().flatMapMerge { value ->
                 unsafeFlow {
                     repeat(4) {
                         emit(value + it)
                         inFlightElements.incrementAndGet()
                     }
                 }
-            }.collect { value ->
+            }.buffer(bufferSize).collect { value ->
                 val inFlight = inFlightElements.get()
                 assertTrue(inFlight <= bufferSize + 1,
                     "Expected less in flight elements than ${bufferSize + 1}, but had $inFlight")

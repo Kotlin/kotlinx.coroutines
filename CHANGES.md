@@ -1,5 +1,43 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.3.0-M1
+
+Flow:
+ * Core `Flow` interfaces and operators are graduated from preview status to experimental. 
+ * Context preservation invariant rework (#1210).
+    * `channelFlow` and `callbackFlow` replacements for `flowViaChannel` for concurrent flows or callback-based APIs.
+    * `flow` prohibits emissions from non-scoped coroutines by default and recommends to use `channelFlow` instead to avoid most of the concurrency-related bugs.
+ * Flow cannot be implemented directly 
+    * `AbstractFlow` is introduced for extension (e.g. for managing state) and ensures all context preservation invariants.
+ * Buffer size is decoupled from all operators that imply channel usage (#1233)
+    * `buffer` operator can be used to adjust buffer size of any buffer-dependent operator (e.g. `channelFlow`, `flowOn` and `flatMapMerge`).
+    * `conflate` operator is introduced.
+ * Flow performance is significantly improved.
+ * New operators: `scan`, `scanReduce`, `first`, `emitAll`.
+ * `flowWith` and `flowViaChannel` are deprecated.
+ * `retry` ignores cancellation exceptions from upstream when the flow was externally cancelled (#1122).
+ * `combineLatest` overloads for multiple flows (#1193).
+ * Fixed numerical overflow in `drop` operator.
+
+Channels:
+ * `consumeEach` is promoted to experimental API (#1080).
+ * Conflated channels always deliver the latest value after closing (#332, #1235).
+ * Non-suspending `ChannelIterator.next` to improve iteration performance (#1162).
+ * Channel exception types are consistent with `produce` and are no longer swallowed as cancellation exceptions in case of programmatic errors (#957, #1128).
+ * All operators on channels (that were prone to coroutine leaks) are deprecated in the favor of `Flow`.
+
+General changes:
+ * Kotlin updated to 1.3.31
+ * `Semaphore` implementation (#1088)
+ * Loading of `Dispatchers.Main` is tweaked so the latest version of R8 can completely remove I/O when loading it (#1231).
+ * Performace of all JS dispatchers is significantly improved (#820).
+ * `withContext` checks cancellation status on exit to make reasoning about sequential concurrent code easier (#1177).
+ * Consistent exception handling mechanism for complex hierarchies (#689).
+ * Convenient overload for `CoroutinesTimeout.seconds` (#1184).
+ * Fix cancellation bug in onJoin (#1130).
+ * Prevent internal names clash that caused errors for ProGuard (#1159).
+ * POSIX's `nanosleep` as `delay` in `runBlocking ` in K/N (#1225).
+
 ## Version 1.2.1
 
 Major:
