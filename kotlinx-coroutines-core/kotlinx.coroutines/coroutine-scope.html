@@ -58,10 +58,10 @@ A usage example of a scope looks like this:</p>
 }
 </pre>
 
-<p>Semantics of the scope in this example:</p>
+<p>The scope in this example has the following semantics:</p>
 
 <ol>
-  <li><code>showSomeData</code> returns as soon as data is loaded and displayed in the UI.</li>
+  <li><code>showSomeData</code> returns as soon as the data is loaded and displayed in the UI.</li>
   <li>If <code>doSomeWork</code> throws an exception, then the <code>async</code> task is cancelled and <code>showSomeData</code> rethrows that exception.</li>
   <li>If the outer scope of <code>showSomeData</code> is cancelled, both started <code>async</code> and <code>withContext</code> blocks are cancelled.</li>
   <li>If the <code>async</code> block fails, <code>withContext</code> will be cancelled.</li>

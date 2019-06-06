@@ -52,7 +52,7 @@
 
         <p>The default <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> that is used by all standard builders like
 <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, etc
-if no dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a> is specified in their context.</p>
+if neither a dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a> is specified in their context.</p>
 
       </td>
 </tr>
@@ -77,7 +77,7 @@ if no dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/st
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">Main</span><span class="symbol">: </span><a href="../-main-coroutine-dispatcher/index.html"><span class="identifier">MainCoroutineDispatcher</span></a></code></div>
 
         <p>A coroutine dispatcher that is confined to the Main thread operating with UI objects.
-Usually such dispatcher is single-threaded.</p>
+Usually such dispatchers are single-threaded.</p>
 
       </td>
 </tr>
@@ -91,7 +91,7 @@ Usually such dispatcher is single-threaded.</p>
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">Unconfined</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code></div>
 
         <p>A coroutine dispatcher that is not confined to any specific thread.
-It executes initial continuation of the coroutine in the current call-frame
+It executes the initial continuation of a coroutine in the current call-frame
 and lets the coroutine resume in whatever thread that is used by the corresponding suspending function, without
 mandating any specific threading policy. Nested coroutines launched in this dispatcher form an event-loop to avoid
 stack overflows.</p>
@@ -99,6 +99,22 @@ stack overflows.</p>
       </td>
 </tr>
 </tbody>
+</table>
+
+<h3 id="extension-functions">Extension Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr data-platform="Native"><td>
+
+        <p><a href="../kotlin.-any/id.html">id</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">external</span> <span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">.</span><span class="identifier">id</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+
+      </td>
+</tr></tbody>
 </table>
 
       </div>

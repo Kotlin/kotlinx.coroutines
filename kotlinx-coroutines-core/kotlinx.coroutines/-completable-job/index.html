@@ -147,7 +147,8 @@ This clause never fails, even if the job completes exceptionally.</p>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">completeExceptionally</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CompletableJob$completeExceptionally(kotlin.Throwable)/exception">exception</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Completes this job exceptionally with a given <a href="complete-exceptionally.html#kotlinx.coroutines.CompletableJob$completeExceptionally(kotlin.Throwable)/exception">exception</a>. The result is <code>true</code> if this job was
-completed as a result of this invocation and <code>false</code> otherwise (if it was already completed).</p>
+completed as a result of this invocation and <code>false</code> otherwise (if it was already completed).
+<a href="complete-exceptionally.html#kotlinx.coroutines.CompletableJob$completeExceptionally(kotlin.Throwable)/exception">exception</a> parameter is used as an additional debug information that is not handled by any exception handlers.</p>
 
       </td>
 </tr>
@@ -184,8 +185,8 @@ See <a href="../-job/index.html">Job</a> documentation for full explanation of c
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
 
         <p>Registers handler that is <strong>synchronously</strong> invoked once on completion of this job.
-When job is already complete, then the handler is immediately invoked
-with a job’s exception or cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
+When the job is already complete, then the handler is immediately invoked
+with the job’s exception or cancellation cause or <code>null</code>. Otherwise, the handler will be invoked once when this
 job is complete.</p>
 
       </td>

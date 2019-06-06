@@ -33,9 +33,10 @@
 
 <h1 id="emit">emit</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">emit</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow.FlowCollector$emit(kotlinx.coroutines.flow.FlowCollector.T)/value">value</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/FlowCollector.kt#L22">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">emit</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow.FlowCollector$emit(kotlinx.coroutines.flow.FlowCollector.T)/value">value</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/FlowCollector.kt#L23">(source)</a></div>
 
-<p>Collects the value emitted by the upstream.</p>
+<p>Collects the value emitted by the upstream.
+This method is not thread-safe and should not be invoked concurrently.</p>
 
 
       </div>

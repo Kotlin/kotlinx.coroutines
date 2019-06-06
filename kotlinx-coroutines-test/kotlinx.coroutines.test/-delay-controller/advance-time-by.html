@@ -37,8 +37,33 @@
 
 <p>Moves the Dispatcher’s virtual clock forward by a specified amount of time.</p>
 
-<p>The amount the clock is progressed may be larger than the requested delayTimeMillis if the code under test uses
+<p>The amount the clock is progressed may be larger than the requested <code>delayTimeMillis</code> if the code under test uses
 blocking coroutines.</p>
+
+<p>The virtual clock time will advance once for each delay resumed until the next delay exceeds the requested
+<code>delayTimeMills</code>. In the following test, the virtual time will progress by 2_000 then 1 to resume three different
+calls to delay.</p>
+
+<pre>@Test
+fun advanceTimeTest() = runBlockingTest {
+    foo()
+    advanceTimeBy(2_000)  // advanceTimeBy(2_000) will progress through the first two delays
+    // virtual time is 2_000, next resume is at 2_001
+    advanceTimeBy(2)      // progress through the last delay of 501 (note 500ms were already advanced)
+    // virtual time is 2_0002
+}
+
+fun CoroutineScope.foo() {
+    launch {
+        delay(1_000)    // advanceTimeBy(2_000) will progress through this delay (resume @ virtual time 1_000)
+        // virtual time is 1_000
+        delay(500)      // advanceTimeBy(2_000) will progress through this delay (resume @ virtual time 1_500)
+        // virtual time is 1_500
+        delay(501)      // advanceTimeBy(2_000) will not progress through this delay (resume @ virtual time 2_001)
+        // virtual time is 2_001
+    }
+}
+</pre>
 
 <h3 id="parameters">Parameters</h3>
 

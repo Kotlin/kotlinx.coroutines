@@ -36,27 +36,27 @@
 <div class="signature"><code><span class="keyword">val </span><span class="identifier">Main</span><span class="symbol">: </span><a href="../-main-coroutine-dispatcher/index.html"><span class="identifier">MainCoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Dispatchers.common.kt#L41">(source)</a></div>
 
 <p>A coroutine dispatcher that is confined to the Main thread operating with UI objects.
-Usually such dispatcher is single-threaded.</p>
+Usually such dispatchers are single-threaded.</p>
 
-<p>Access to this property may throw <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if no main dispatchers are present in the classpath.</p>
+<p>Access to this property may throw an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if no main dispatchers are present in the classpath.</p>
 
 <p>Depending on platform and classpath it can be mapped to different dispatchers:</p>
 
 <ul>
-  <li>On JS and Native it is equivalent of <a href="-default.html">Default</a> dispatcher.</li>
-  <li>On JVM it either Android main thread dispatcher, JavaFx or Swing EDT dispatcher. It is chosen by
+  <li>On JS and Native it is equivalent to the <a href="-default.html">Default</a> dispatcher.</li>
+  <li>On JVM it either the Android main thread dispatcher, JavaFx or Swing EDT dispatcher. It is chosen by the
 <a href="https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html"><code>ServiceLoader</code></a>.</li>
 </ul>
 
-<p>In order to work with <code>Main</code> dispatcher, following artifact should be added to project runtime dependencies:</p>
+<p>In order to work with the <code>Main</code> dispatcher, the following artifact should be added to the project runtime dependencies:</p>
 
 <ul>
-  <li><code>kotlinx-coroutines-android</code> for Android Main thread dispatcher</li>
-  <li><code>kotlinx-coroutines-javafx</code> for JavaFx Application thread dispatcher</li>
-  <li><code>kotlinx-coroutines-swing</code> for Swing EDT dispatcher</li>
+  <li><code>kotlinx-coroutines-android</code> — for Android Main thread dispatcher</li>
+  <li><code>kotlinx-coroutines-javafx</code> — for JavaFx Application thread dispatcher</li>
+  <li><code>kotlinx-coroutines-swing</code> — for Swing EDT dispatcher</li>
 </ul>
 
-<p>Implementation note: <a href="../-main-coroutine-dispatcher/immediate.html">MainCoroutineDispatcher.immediate</a> is not supported on Native and JS platforms.</p>
+<p>Implementation note: <a href="../-main-coroutine-dispatcher/immediate.html">MainCoroutineDispatcher.immediate</a> is not supported on the Native and JS platforms.</p>
 
 
       </div>

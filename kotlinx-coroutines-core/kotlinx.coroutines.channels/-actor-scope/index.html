@@ -81,7 +81,7 @@ the channel instance returned by this function.</p>
 
         <p>The context of this scope.
 Context is encapsulated by the scope and used for implementation of coroutine builders that are extensions on the scope.
-Accessing this property in general code is not recommended for any purposes except accessing <a href="../../kotlinx.coroutines/-job/index.html">Job</a> instance for advanced usages.</p>
+Accessing this property in general code is not recommended for any purposes except accessing the <a href="../../kotlinx.coroutines/-job/index.html">Job</a> instance for advanced usages.</p>
 
       </td>
 </tr>
@@ -165,9 +165,7 @@ the original <a href="../-send-channel/close.html">close</a> cause exception if 
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels.ReceiveChannel$cancel(java.util.concurrent.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Cancels reception of remaining elements from this channel with an optional <a href="../-receive-channel/cancel.html#kotlinx.coroutines.channels.ReceiveChannel$cancel(java.util.concurrent.CancellationException)/cause">cause</a>.
-This function closes the channel and removes all buffered sent elements from it.
-A cause can be used to specify an error message or to provide other details on
-a cancellation reason for debugging purposes.</p>
+This function closes the channel and removes all buffered sent elements from it.</p>
 
       </td>
 </tr>

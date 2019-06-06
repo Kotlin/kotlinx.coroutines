@@ -33,12 +33,12 @@
 
 <h1 id="flowcollector">FlowCollector</h1>
 
-<div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">interface </span><span class="identifier">FlowCollector</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/FlowCollector.kt#L17">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">interface </span><span class="identifier">FlowCollector</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/FlowCollector.kt#L17">(source)</a></div>
 
 <p><a href="./index.md">FlowCollector</a> is used as an intermediate or a terminal collector of the flow and represents
 an entity that accepts values emitted by the <a href="../-flow/index.html">Flow</a>.</p>
 
-<p>This interface usually should not be implemented directly, but rather used as a receiver in <a href="#">flow</a> builder when implementing a custom operator.
+<p>This interface should usually not be implemented directly, but rather used as a receiver in a <a href="#">flow</a> builder when implementing a custom operator.
 Implementations of this interface are not thread-safe.</p>
 
 <h3 id="functions">Functions</h3>
@@ -54,7 +54,29 @@ Implementations of this interface are not thread-safe.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">emit</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow.FlowCollector$emit(kotlinx.coroutines.flow.FlowCollector.T)/value">value</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Collects the value emitted by the upstream.</p>
+        <p>Collects the value emitted by the upstream.
+This method is not thread-safe and should not be invoked concurrently.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="extension-functions">Extension Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="../emit-all.html">emitAll</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="../emit-all.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">emitAll</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$emitAll(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.emitAll.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.emitAll.T)))/flow">flow</span><span class="symbol">:</span>&nbsp;<a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../emit-all.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Collects all the values from the given <a href="../emit-all.html#kotlinx.coroutines.flow$emitAll(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.emitAll.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.emitAll.T)))/flow">flow</a> and emits them to the collector.
+Shortcut for <code>flow.collect { value -&gt; emit(value) }</code>.</p>
 
       </td>
 </tr>

@@ -36,7 +36,7 @@
 <div class="signature"><code><span class="keyword">val </span><span class="identifier">Unconfined</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Dispatchers.common.kt#L75">(source)</a></div>
 
 <p>A coroutine dispatcher that is not confined to any specific thread.
-It executes initial continuation of the coroutine in the current call-frame
+It executes the initial continuation of a coroutine in the current call-frame
 and lets the coroutine resume in whatever thread that is used by the corresponding suspending function, without
 mandating any specific threading policy. Nested coroutines launched in this dispatcher form an event-loop to avoid
 stack overflows.</p>
@@ -60,12 +60,12 @@ println("Done")
 </pre>
 
 <p>Can print both “1 2 3” and “1 3 2”, this is an implementation detail that can be changed.
-But it is guaranteed that “Done” will be printed only when both <code>withContext</code> are completed.</p>
+But it is guaranteed that “Done” will be printed only when both <code>withContext</code> calls are completed.</p>
 
 <p>Note that if you need your coroutine to be confined to a particular thread or a thread-pool after resumption,
 but still want to execute it in the current call-frame until its first suspension, then you can use
 an optional <a href="../-coroutine-start/index.html">CoroutineStart</a> parameter in coroutine builders like
-<a href="../launch.html">launch</a> and <a href="../async.html">async</a> setting it to the
+<a href="../launch.html">launch</a> and <a href="../async.html">async</a> setting it to
 the value of <a href="../-coroutine-start/-u-n-d-i-s-p-a-t-c-h-e-d.html">CoroutineStart.UNDISPATCHED</a>.</p>
 
 

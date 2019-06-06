@@ -35,20 +35,20 @@
 
 <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Deferred.kt#L34">(source)</a></div>
 
-<p>Deferred value is a non-blocking cancellable future — it is a <a href="../-job/index.html">Job</a> that has a result.</p>
+<p>Deferred value is a non-blocking cancellable future — it is a <a href="../-job/index.html">Job</a> with a result.</p>
 
-<p>It is created with <a href="../async.html">async</a> coroutine builder or via constructor of <a href="../-completable-deferred/index.html">CompletableDeferred</a> class.
+<p>It is created with the <a href="../async.html">async</a> coroutine builder or via the constructor of <a href="../-completable-deferred/index.html">CompletableDeferred</a> class.
 It is in <a href="../-job/is-active.html">active</a> state while the value is being computed.</p>
 
-<p>Deferred value has the same state machine as the <a href="../-job/index.html">Job</a> with additional convenience methods to retrieve
-successful or failed result of the computation that was carried out. The result of the deferred is
+<p><code>Deferred</code> has the same state machine as the <a href="../-job/index.html">Job</a> with additional convenience methods to retrieve
+the successful or failed result of the computation that was carried out. The result of the deferred is
 available when it is <a href="../-job/is-completed.html">completed</a> and can be retrieved by <a href="await.html">await</a> method, which throws
-exception if the deferred had failed.
-Note that a <em>cancelled</em> deferred is also considered to be completed.
+an exception if the deferred had failed.
+Note that a <em>cancelled</em> deferred is also considered as completed.
 The corresponding exception can be retrieved via <a href="get-completion-exception-or-null.html">getCompletionExceptionOrNull</a> from a completed instance of deferred.</p>
 
 <p>Usually, a deferred value is created in <em>active</em> state (it is created and started).
-However, <a href="../async.html">async</a> coroutine builder has an optional <code>start</code> parameter that creates a deferred value in <em>new</em> state
+However, the <a href="../async.html">async</a> coroutine builder has an optional <code>start</code> parameter that creates a deferred value in <em>new</em> state
 when this parameter is set to <a href="../-coroutine-start/-l-a-z-y.html">CoroutineStart.LAZY</a>.
 Such a deferred can be be made <em>active</em> by invoking <a href="../-job/start.html">start</a>, <a href="../-job/join.html">join</a>, or <a href="await.html">await</a>.</p>
 
@@ -242,8 +242,8 @@ See <a href="../-job/index.html">Job</a> documentation for full explanation of c
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
 
         <p>Registers handler that is <strong>synchronously</strong> invoked once on completion of this job.
-When job is already complete, then the handler is immediately invoked
-with a job’s exception or cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
+When the job is already complete, then the handler is immediately invoked
+with the job’s exception or cancellation cause or <code>null</code>. Otherwise, the handler will be invoked once when this
 job is complete.</p>
 
       </td>

@@ -36,15 +36,15 @@
 <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Job.kt#L280">(source)</a></div>
 
 <p>Registers handler that is <strong>synchronously</strong> invoked once on completion of this job.
-When job is already complete, then the handler is immediately invoked
-with a job’s exception or cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
+When the job is already complete, then the handler is immediately invoked
+with the job’s exception or cancellation cause or <code>null</code>. Otherwise, the handler will be invoked once when this
 job is complete.</p>
 
 <p>The meaning of <code>cause</code> that is passed to the handler:</p>
 
 <ul>
-  <li>Cause is <code>null</code> when job has completed normally.</li>
-  <li>Cause is an instance of <a href="../-cancellation-exception/index.html">CancellationException</a> when job was cancelled <em>normally</em>.
+  <li>Cause is <code>null</code> when the job has completed normally.</li>
+  <li>Cause is an instance of <a href="../-cancellation-exception/index.html">CancellationException</a> when the job was cancelled <em>normally</em>.
 <strong>It should not be treated as an error</strong>. In particular, it should not be reported to error logs.</li>
   <li>Otherwise, the job had <em>failed</em>.</li>
 </ul>

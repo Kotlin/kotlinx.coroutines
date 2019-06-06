@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Semaphore - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-semaphore/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.sync</a> / <a href="./index.html">Semaphore</a></div>
+
+<h1 id="semaphore">Semaphore</h1>
+
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Semaphore</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/sync/Semaphore.kt#L19">(source)</a></div>
+
+<p>A counting semaphore for coroutines. It maintains a number of available permits.
+Each <a href="acquire.html">acquire</a> suspends if necessary until a permit is available, and then takes it.
+Each <a href="release.html">release</a> adds a permit, potentially releasing a suspended acquirer.</p>
+
+<p>Semaphore with <code>permits = 1</code> is essentially a <a href="../-mutex/index.html">Mutex</a>.</p>
+
+<h3 id="properties">Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="available-permits.html">availablePermits</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">availablePermits</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+
+        <p>Returns the current number of permits available in this semaphore.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="functions">Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="acquire.html">acquire</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">acquire</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Acquires a permit from this semaphore, suspending until one is available.
+All suspending acquirers are processed in first-in-first-out (FIFO) order.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="release.html">release</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">release</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Releases a permit, returning it into this semaphore. Resumes the first
+suspending acquirer if there is one at the point of invocation.
+Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if there is no acquired permit
+at the point of invocation.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="try-acquire.html">tryAcquire</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">tryAcquire</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Tries to acquire a permit from this semaphore without suspension.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="extension-functions">Extension Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="../with-permit.html">withPermit</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Semaphore</span></a><span class="symbol">.</span><span class="identifier">withPermit</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.sync$withPermit(kotlinx.coroutines.sync.Semaphore, kotlin.Function0((kotlinx.coroutines.sync.withPermit.T)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../with-permit.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../with-permit.html#T"><span class="identifier">T</span></a></code></div>
+
+        <p>Executes the given <a href="../with-permit.html#kotlinx.coroutines.sync$withPermit(kotlinx.coroutines.sync.Semaphore, kotlin.Function0((kotlinx.coroutines.sync.withPermit.T)))/action">action</a>, acquiring a permit from this semaphore at the beginning
+and releasing it after the <a href="../with-permit.html#kotlinx.coroutines.sync$withPermit(kotlinx.coroutines.sync.Semaphore, kotlin.Function0((kotlinx.coroutines.sync.withPermit.T)))/action">action</a> is completed.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

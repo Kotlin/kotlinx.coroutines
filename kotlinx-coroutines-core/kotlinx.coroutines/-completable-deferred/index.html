@@ -37,8 +37,8 @@
 
 <p>A <a href="../-deferred/index.html">Deferred</a> that can be completed via public functions <a href="complete.html">complete</a> or <a href="../-job/cancel.html">cancel</a>.</p>
 
-<p>Note that <a href="complete.html">complete</a> functions returns <code>false</code> when this deferred value is already complete or completing,
-while <a href="../-job/cancel.html">cancel</a> returns <code>true</code> as long the deferred is still <em>cancelling</em> and the corresponding
+<p>Note that the <a href="complete.html">complete</a> function returns <code>false</code> when this deferred value is already complete or completing,
+while <a href="../-job/cancel.html">cancel</a> returns <code>true</code> as long as the deferred is still <em>cancelling</em> and the corresponding
 exception is incorporated into the final <a href="../-deferred/get-completion-exception-or-null.html">completion exception</a>.</p>
 
 <p>An instance of completable deferred can be created by <code>CompletableDeferred()</code> function in <em>active</em> state.</p>

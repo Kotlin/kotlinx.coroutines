@@ -79,7 +79,7 @@ the channel instance returned by this function.</p>
 
         <p>The context of this scope.
 Context is encapsulated by the scope and used for implementation of coroutine builders that are extensions on the scope.
-Accessing this property in general code is not recommended for any purposes except accessing <a href="../../kotlinx.coroutines/-job/index.html">Job</a> instance for advanced usages.</p>
+Accessing this property in general code is not recommended for any purposes except accessing the <a href="../../kotlinx.coroutines/-job/index.html">Job</a> instance for advanced usages.</p>
 
       </td>
 </tr>
@@ -129,7 +129,7 @@ is passed into the corresponding block.</p>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Closes this channel.
-This is an idempotent operation – repeated invocations of this function have no effect and return <code>false</code>.
+This is an idempotent operation – subsequent invocations of this function have no effect and return <code>false</code>.
 Conceptually, its sends a special “close token” over this channel.</p>
 
       </td>
@@ -196,7 +196,7 @@ or if it does not exist, or throws exception if the channel <a href="../-send-ch
 <td>
         <div class="signature"><code><span class="keyword">val </span><a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Returns <code>true</code> when current <a href="../../kotlinx.coroutines/-job/index.html">Job</a> is still active (has not completed and was not cancelled yet).</p>
+        <p>Returns <code>true</code> when the current <a href="../../kotlinx.coroutines/-job/index.html">Job</a> is still active (has not completed and was not cancelled yet).</p>
 
       </td>
 </tr>
@@ -217,7 +217,24 @@ or if it does not exist, or throws exception if the channel <a href="../-send-ch
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">async</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$async(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.async.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$async(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.async.T)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$async(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.async.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../../kotlinx.coroutines/async.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines/-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines/async.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Creates a coroutine and returns its future result as an implementation of <a href="../../kotlinx.coroutines/-deferred/index.html">Deferred</a>.
-The running coroutine is cancelled when the resulting deferred is <a href="../../kotlinx.coroutines/-job/cancel.html">cancelled</a>.</p>
+The running coroutine is cancelled when the resulting deferred is <a href="../../kotlinx.coroutines/-job/cancel.html">cancelled</a>.
+The resulting coroutine has a key difference compared with similar primitives in other languages
+and frameworks: it cancels the parent job (or outer scope) on failure to enforce <em>structured concurrency</em> paradigm.
+To change that behaviour, supervising parent (<a href="../../kotlinx.coroutines/-supervisor-job.html">SupervisorJob</a> or <a href="../../kotlinx.coroutines/supervisor-scope.html">supervisorScope</a>) can be used.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../await-close.html">awaitClose</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="../await-close.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitClose</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$awaitClose(kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.channels.awaitClose.T)), kotlin.Function0((kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;{}<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Suspends the current coroutine until the channel is either <a href="../-send-channel/close.html">closed</a> or <a href="../-receive-channel/cancel.html">cancelled</a>
+and invokes the given <a href="../await-close.html#kotlinx.coroutines.channels$awaitClose(kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.channels.awaitClose.T)), kotlin.Function0((kotlin.Unit)))/block">block</a> before resuming the coroutine.</p>
 
       </td>
 </tr>

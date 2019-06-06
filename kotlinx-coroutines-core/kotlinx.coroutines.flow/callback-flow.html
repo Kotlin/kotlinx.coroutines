@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>callbackFlow - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/callback-flow.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.flow</a> / <a href="./callback-flow.html">callbackFlow</a></div>
+
+<h1 id="callbackflow">callbackFlow</h1>
+
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">inline</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">callbackFlow</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">noinline</span> <span class="parameterName" id="kotlinx.coroutines.flow$callbackFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.callbackFlow.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="callback-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="callback-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Builders.kt#L313">(source)</a></div>
+
+<p>Creates an instance of the cold <a href="-flow/index.html">Flow</a> with elements that are sent to a <a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>
+that is provided to the builder’s <a href="callback-flow.html#kotlinx.coroutines.flow$callbackFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.callbackFlow.T)), kotlin.Unit)))/block">block</a> of code via <a href="../kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>. It allows elements to be
+produced by the code that is running in a different context or running concurrently.</p>
+
+<p>The resulting flow is <em>cold</em>, which means that <a href="callback-flow.html#kotlinx.coroutines.flow$callbackFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.callbackFlow.T)), kotlin.Unit)))/block">block</a> is called on each call of a terminal operator
+on the resulting flow.</p>
+
+<p>This builder ensures thread-safety and context preservation, thus the provided <a href="../kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a> can be used
+from any context, e.g. from the callback-based API.
+The resulting flow completes as soon as the code in the <a href="callback-flow.html#kotlinx.coroutines.flow$callbackFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.callbackFlow.T)), kotlin.Unit)))/block">block</a> and all its children complete.
+Use <a href="../kotlinx.coroutines.channels/await-close.html">awaitClose</a> as the last statement to keep it running.
+<a href="../kotlinx.coroutines.channels/await-close.html">awaitClose</a> argument is called when either flow consumer cancels flow collection
+or when callback-based API invokes <a href="../kotlinx.coroutines.channels/-send-channel/close.html">SendChannel.close</a> manually.</p>
+
+<p>A channel with <a href="../kotlinx.coroutines.channels/-channel/-b-u-f-f-e-r-e-d.html">default</a> buffer size is used. Use <a href="buffer.html">buffer</a> operator on the
+resulting flow to specify a value other than default and to control what happens when data is produced faster
+than it is consumed, that is to control backpressure behavior.</p>
+
+<p>Adjacent applications of <a href="./callback-flow.md">callbackFlow</a>, <a href="flow-on.html">flowOn</a>, <a href="buffer.html">buffer</a>, <a href="produce-in.html">produceIn</a>, and <a href="broadcast-in.html">broadcastIn</a> are
+always fused so that only one properly configured channel is used for execution.</p>
+
+<p>Example of usage:</p>
+
+<pre>fun flowFrom(api: CallbackBasedApi): Flow&lt;T&gt; = callbackFlow {
+    val callback = object : Callback { // implementation of some callback interface
+        override fun onNextValue(value: T) {
+            // Note: offer drops value when buffer is full
+            // Use either buffer(Channel.CONFLATED) or buffer(Channel.UNLIMITED) to avoid overfill
+            offer(value)
+        }
+        override fun onApiError(cause: Throwable) {
+            cancel(CancellationException("API Error", cause))
+        }
+        override fun onCompleted() = channel.close()
+    }
+    api.register(callback)
+    // Suspend until either onCompleted or external cancellation are invoked
+    await { api.unregister(callback) }
+}
+</pre>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

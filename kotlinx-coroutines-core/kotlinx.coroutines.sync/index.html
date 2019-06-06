@@ -52,6 +52,21 @@
 
       </td>
 </tr>
+<tr>
+<td>
+
+        <p><a href="-semaphore/index.html">Semaphore</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Semaphore</span></code></div>
+
+        <p>A counting semaphore for coroutines. It maintains a number of available permits.
+Each <a href="-semaphore/acquire.html">acquire</a> suspends if necessary until a permit is available, and then takes it.
+Each <a href="-semaphore/release.html">release</a> adds a permit, potentially releasing a suspended acquirer.</p>
+
+      </td>
+</tr>
 </tbody>
 </table>
 
@@ -76,6 +91,19 @@ The mutex created is fair: lock is granted in first come, first served order.</p
 <tr>
 <td>
 
+        <p><a href="-semaphore.html">Semaphore</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">Semaphore</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.sync$Semaphore(kotlin.Int, kotlin.Int)/permits">permits</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.sync$Semaphore(kotlin.Int, kotlin.Int)/acquiredPermits">acquiredPermits</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-semaphore/index.html"><span class="identifier">Semaphore</span></a></code></div>
+
+        <p>Creates new <a href="-semaphore/index.html">Semaphore</a> instance.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="with-lock.html">withLock</a></p>
 
       </td>
@@ -83,6 +111,20 @@ The mutex created is fair: lock is granted in first come, first served order.</p
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-mutex/index.html"><span class="identifier">Mutex</span></a><span class="symbol">.</span><span class="identifier">withLock</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.sync$withLock(kotlinx.coroutines.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.sync.withLock.T)))/owner">owner</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.sync$withLock(kotlinx.coroutines.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.sync.withLock.T)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="with-lock.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="with-lock.html#T"><span class="identifier">T</span></a></code></div>
 
         <p>Executes the given <a href="with-lock.html#kotlinx.coroutines.sync$withLock(kotlinx.coroutines.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.sync.withLock.T)))/action">action</a> under this mutex’s lock.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="with-permit.html">withPermit</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-semaphore/index.html"><span class="identifier">Semaphore</span></a><span class="symbol">.</span><span class="identifier">withPermit</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.sync$withPermit(kotlinx.coroutines.sync.Semaphore, kotlin.Function0((kotlinx.coroutines.sync.withPermit.T)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="with-permit.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="with-permit.html#T"><span class="identifier">T</span></a></code></div>
+
+        <p>Executes the given <a href="with-permit.html#kotlinx.coroutines.sync$withPermit(kotlinx.coroutines.sync.Semaphore, kotlin.Function0((kotlinx.coroutines.sync.withPermit.T)))/action">action</a>, acquiring a permit from this semaphore at the beginning
+and releasing it after the <a href="with-permit.html#kotlinx.coroutines.sync$withPermit(kotlinx.coroutines.sync.Semaphore, kotlin.Function0((kotlinx.coroutines.sync.withPermit.T)))/action">action</a> is completed.</p>
 
       </td>
 </tr>

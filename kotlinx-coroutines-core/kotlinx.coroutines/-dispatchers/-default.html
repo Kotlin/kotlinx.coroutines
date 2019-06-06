@@ -37,10 +37,10 @@
 
 <p>The default <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> that is used by all standard builders like
 <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, etc
-if no dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a> is specified in their context.</p>
+if neither a dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a> is specified in their context.</p>
 
-<p>It is backed by a shared pool of threads on JVM. By default, the maximal number of threads used
-by this dispatcher is equal to the number CPU cores, but is at least two.</p>
+<p>It is backed by a shared pool of threads on JVM. By default, the maximum number of threads used
+by this dispatcher is equal to the number of CPU cores, but is at least two.</p>
 
 
       </div>

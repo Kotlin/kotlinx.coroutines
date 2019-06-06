@@ -37,6 +37,9 @@
 
 <p>Immediately execute all pending tasks and advance the virtual clock-time to the last delay.</p>
 
+<p>If new tasks are scheduled due to advancing virtual time, they will be executed before <code>advanceUntilIdle</code>
+returns.</p>
+
 <p><strong>Return</strong>
 the amount of delay-time that this Dispatcher’s clock has been forwarded in milliseconds.</p>
 

@@ -33,7 +33,7 @@
 
 <h1 id="immediate">immediate</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">immediate</span><span class="symbol">: </span><a href="index.html"><span class="identifier">MainCoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/MainCoroutineDispatcher.kt#L41">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">immediate</span><span class="symbol">: </span><a href="index.html"><span class="identifier">MainCoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/MainCoroutineDispatcher.kt#L44">(source)</a></div>
 
 <p>Returns dispatcher that executes coroutines immediately when it is already in the right context
 (e.g. current looper is the same as this handler’s looper) without an additional <a href="../-coroutine-dispatcher/dispatch.html">re-dispatch</a>.</p>
@@ -47,6 +47,9 @@ The event loop is an advanced topic and its implications can be found in <a href
   /*
    * If it is known that updateUiElement can be invoked both from the Main thread and from other threads,
    * `immediate` dispatcher is used as a performance optimization to avoid unnecessary dispatch.
+   *
+   * In that case, when `updateUiElement` is invoked from the Main thread, `uiElement.text` will be
+   * invoked immediately without any dispatching, otherwise, the `Dispatchers.Main` dispatch cycle will be triggered.
    */
   withContext(Dispatchers.Main.immediate) {
     uiElement.text = text

@@ -33,18 +33,20 @@
 
 <h1 id="cancel">cancel</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels.ReceiveChannel$cancel(java.util.concurrent.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L254">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels.ReceiveChannel$cancel(java.util.concurrent.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L259">(source)</a></div>
 
 <p>Cancels reception of remaining elements from this channel with an optional <a href="cancel.html#kotlinx.coroutines.channels.ReceiveChannel$cancel(java.util.concurrent.CancellationException)/cause">cause</a>.
-This function closes the channel and removes all buffered sent elements from it.
-A cause can be used to specify an error message or to provide other details on
-a cancellation reason for debugging purposes.</p>
+This function closes the channel and removes all buffered sent elements from it.</p>
+
+<p>A cause can be used to specify an error message or to provide other details on
+a cancellation reason for debugging purposes.
+If the cause is not specified, then an instance of <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a> with a
+default message is created to <a href="../-send-channel/close.html">close</a> the channel.</p>
 
 <p>Immediately after invocation of this function <a href="is-closed-for-receive.html">isClosedForReceive</a> and
 <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a>
-on the side of <a href="../-send-channel/index.html">SendChannel</a> start returning <code>true</code>, so all attempts to send to this channel
-afterwards will throw <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a>, while attempts to receive will throw
-<a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a>.</p>
+on the side of <a href="../-send-channel/index.html">SendChannel</a> start returning <code>true</code>. All attempts to send to this channel
+or receive from this channel will throw <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.</p>
 
 
       </div>

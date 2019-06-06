@@ -38,7 +38,7 @@
 <p>Completes this deferred value with a given <a href="complete.html#kotlinx.coroutines.CompletableDeferred$complete(kotlinx.coroutines.CompletableDeferred.T)/value">value</a>. The result is <code>true</code> if this deferred was
 completed as a result of this invocation and <code>false</code> otherwise (if it was already completed).</p>
 
-<p>Repeated invocations of this function have no effect and always produce <code>false</code>.</p>
+<p>Subsequent invocations of this function have no effect and always produce <code>false</code>.</p>
 
 <p>This function transitions this deferred into <em>completed</em> state if it was not completed or cancelled yet.
 However, if this deferred has children, then it transitions into <em>completing</em> state and becomes <em>complete</em>

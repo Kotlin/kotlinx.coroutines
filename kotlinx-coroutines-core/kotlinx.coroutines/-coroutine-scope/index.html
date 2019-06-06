@@ -40,10 +40,10 @@ is an extension on <a href="./index.md">CoroutineScope</a> and inherits its <a h
 to automatically propagate both context elements and cancellation.</p>
 
 <p>The best ways to obtain a standalone instance of the scope are <a href="./index.md">CoroutineScope</a> and <a href="../-main-scope.html">MainScope</a> factory functions.
-Additional context elements can be appended to the scope using <a href="../plus.html">plus</a> operator.</p>
+Additional context elements can be appended to the scope using the <a href="../plus.html">plus</a> operator.</p>
 
 <p>Manual implementation of this interface is not recommended, implementation by delegation should be preferred instead.
-By convention, <a href="coroutine-context.html">context of the scope</a> should contain an instance of a <a href="../-job/index.html">job</a> to enforce structured concurrency.</p>
+By convention, the <a href="coroutine-context.html">context of a scope</a> should contain an instance of a <a href="../-job/index.html">job</a> to enforce structured concurrency.</p>
 
 <p>Every coroutine builder (like <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, etc)
 and every scoping function (like <a href="../coroutine-scope.html">coroutineScope</a>, <a href="../with-context.html">withContext</a>, etc) provides <em>its own</em> scope
@@ -86,7 +86,7 @@ Usage of this interface may look like this:</p>
 
         <p>The context of this scope.
 Context is encapsulated by the scope and used for implementation of coroutine builders that are extensions on the scope.
-Accessing this property in general code is not recommended for any purposes except accessing <a href="../-job/index.html">Job</a> instance for advanced usages.</p>
+Accessing this property in general code is not recommended for any purposes except accessing the <a href="../-job/index.html">Job</a> instance for advanced usages.</p>
 
       </td>
 </tr>
@@ -106,7 +106,7 @@ Accessing this property in general code is not recommended for any purposes exce
 <td>
         <div class="signature"><code><span class="keyword">val </span><a href="./index.md"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Returns <code>true</code> when current <a href="../-job/index.html">Job</a> is still active (has not completed and was not cancelled yet).</p>
+        <p>Returns <code>true</code> when the current <a href="../-job/index.html">Job</a> is still active (has not completed and was not cancelled yet).</p>
 
       </td>
 </tr>
@@ -140,7 +140,10 @@ object can be used to <a href="../../kotlinx.coroutines.channels/-send-channel/s
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">async</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$async(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.async.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$async(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.async.T)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="../-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$async(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.async.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="./index.md"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../async.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><a href="../async.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Creates a coroutine and returns its future result as an implementation of <a href="../-deferred/index.html">Deferred</a>.
-The running coroutine is cancelled when the resulting deferred is <a href="../-job/cancel.html">cancelled</a>.</p>
+The running coroutine is cancelled when the resulting deferred is <a href="../-job/cancel.html">cancelled</a>.
+The resulting coroutine has a key difference compared with similar primitives in other languages
+and frameworks: it cancels the parent job (or outer scope) on failure to enforce <em>structured concurrency</em> paradigm.
+To change that behaviour, supervising parent (<a href="../-supervisor-job.html">SupervisorJob</a> or <a href="../supervisor-scope.html">supervisorScope</a>) can be used.</p>
 
       </td>
 </tr>

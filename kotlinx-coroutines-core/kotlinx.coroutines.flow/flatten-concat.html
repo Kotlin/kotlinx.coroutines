@@ -33,10 +33,12 @@
 
 <h1 id="flattenconcat">flattenConcat</h1>
 
-<div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flatten-concat.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flattenConcat</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flatten-concat.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Merge.kt#L74">(source)</a></div>
+<div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flatten-concat.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flattenConcat</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flatten-concat.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Merge.kt#L83">(source)</a></div>
 
 <p>Flattens the given flow of flows into a single flow in a sequentially manner, without interleaving nested flows.
-This method is identical to `flattenMerge(concurrency = 1, bufferSize = 1)</p>
+This method is conceptually identical to <code>flattenMerge(concurrency = 1)</code> but has faster implementation.</p>
+
+<p>Inner flows are collected by this operator <em>sequentially</em>.</p>
 
 
       </div>

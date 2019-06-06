@@ -43,8 +43,8 @@ wrapped into <a href="#">CompletionHandlerException</a>, and rethrown, potential
 <p>The meaning of <code>cause</code> that is passed to the handler:</p>
 
 <ul>
-  <li>Cause is <code>null</code> when job has completed normally.</li>
-  <li>Cause is an instance of <a href="-cancellation-exception/index.html">CancellationException</a> when job was cancelled <em>normally</em>.
+  <li>Cause is <code>null</code> when the job has completed normally.</li>
+  <li>Cause is an instance of <a href="-cancellation-exception/index.html">CancellationException</a> when the job was cancelled <em>normally</em>.
 <strong>It should not be treated as an error</strong>. In particular, it should not be reported to error logs.</li>
   <li>Otherwise, the job had <em>failed</em>.</li>
 </ul>

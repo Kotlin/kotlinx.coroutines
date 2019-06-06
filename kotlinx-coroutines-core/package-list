@@ -12,6 +12,7 @@ $dokka.location:kotlinx.coroutines$cancel(kotlin.coroutines.CoroutineContext, ja
 $dokka.location:kotlinx.coroutines$cancelChildren(kotlin.coroutines.CoroutineContext, java.util.concurrent.CancellationException)kotlinx.coroutines/kotlin.coroutines.-coroutine-context/cancel-children.html
 $dokka.location:kotlinx.coroutines$ensureActive(kotlin.coroutines.CoroutineContext)kotlinx.coroutines/kotlin.coroutines.-coroutine-context/ensure-active.html
 $dokka.location:kotlinx.coroutines$ensurePresent(java.lang.ThreadLocal((kotlin.Any)))kotlinx.coroutines/java.lang.-thread-local/ensure-present.html
+$dokka.location:kotlinx.coroutines$id(kotlin.Any)kotlinx.coroutines/kotlin.-any/id.html
 $dokka.location:kotlinx.coroutines$isActive#kotlin.coroutines.CoroutineContextkotlinx.coroutines/kotlin.coroutines.-coroutine-context/is-active.html
 $dokka.location:kotlinx.coroutines$isPresent(java.lang.ThreadLocal((kotlin.Any)))kotlinx.coroutines/java.lang.-thread-local/is-present.html
 $dokka.location:kotlinx.coroutines$joinAll(kotlin.collections.Collection((kotlinx.coroutines.Job)))kotlinx.coroutines/kotlin.collections.-collection/join-all.html

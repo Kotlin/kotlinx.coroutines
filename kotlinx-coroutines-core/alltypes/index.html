@@ -29,7 +29,7 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <p>Core primitives to work with coroutines, available on all platforms.</p>
+        <p>Core primitives to work with coroutines.</p>
 
 <h3 id="all-types">All Types</h3>
 
@@ -37,11 +37,31 @@
 <tbody>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.flow/-abstract-flow/index.html">kotlinx.coroutines.flow.AbstractFlow</a></p>
+      </td>
+<td>
+
+        <p>Base class to extend to have a stateful implementation of the flow.
+It tracks all the properties required for context preservation and throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if any of the properties are violated.
+Example of the implementation:</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.channels/-actor-scope/index.html">kotlinx.coroutines.channels.ActorScope</a></p>
       </td>
 <td>
 
         <p>Scope for <a href="../kotlinx.coroutines.channels/actor.html">actor</a> coroutine builder.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines/kotlin.-any/index.html">kotlin.Any</a> (extensions in package kotlinx.coroutines)</p>
+      </td>
+<td>
 
       </td>
 </tr>
@@ -260,7 +280,7 @@ It is used in <code>start</code> parameter of <a href="../kotlinx.coroutines/lau
       </td>
 <td>
 
-        <p>Deferred value is a non-blocking cancellable future — it is a <a href="../kotlinx.coroutines/-job/index.html">Job</a> that has a result.</p>
+        <p>Deferred value is a non-blocking cancellable future — it is a <a href="../kotlinx.coroutines/-job/index.html">Job</a> with a result.</p>
 
       </td>
 </tr>
@@ -338,7 +358,8 @@ the semantics of their behavior may change in some way that may break some code.
       </td>
 <td>
 
-        <p>A cold asynchronous stream of the data, that emits from zero to N (where N can be unbounded) values and completes normally or with an exception.</p>
+        <p>A cold asynchronous data stream that sequentially emits values
+and completes normally or with an exception.</p>
 
       </td>
 </tr>
@@ -359,7 +380,7 @@ an entity that accepts values emitted by the <a href="../kotlinx.coroutines.flow
       </td>
 <td>
 
-        <p>Marks all <a href="../kotlinx.coroutines.flow/-flow/index.html">Flow</a> declarations as a feature preview to indicate that <a href="../kotlinx.coroutines.flow/-flow/index.html">Flow</a> is still experimental and has a ‘preview’ status.</p>
+        <p>Marks <a href="../kotlinx.coroutines.flow/-flow/index.html">Flow</a>-related API as a feature preview.</p>
 
       </td>
 </tr>
@@ -404,7 +425,7 @@ an entity that accepts values emitted by the <a href="../kotlinx.coroutines.flow
 <td>
 
         <p>Marks declarations that are <strong>internal</strong> in coroutines API, which means that should not be used outside of
-<code>kotlinx.coroutines</code>, because their signatures and semantics will be changing between release without any
+<code>kotlinx.coroutines</code>, because their signatures and semantics will change between future releases without any
 warnings and without providing any migration aids.</p>
 
       </td>
@@ -572,6 +593,18 @@ so they cannot be deprecated right away.</p>
 <td>
 
         <p>Clause for <a href="../kotlinx.coroutines.selects/select.html">select</a> expression with additional parameter of type <a href="../kotlinx.coroutines.selects/-select-clause2.html#P">P</a> that selects value of type <a href="../kotlinx.coroutines.selects/-select-clause2.html#Q">Q</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.sync/-semaphore/index.html">kotlinx.coroutines.sync.Semaphore</a></p>
+      </td>
+<td>
+
+        <p>A counting semaphore for coroutines. It maintains a number of available permits.
+Each <a href="../kotlinx.coroutines.sync/-semaphore/acquire.html">acquire</a> suspends if necessary until a permit is available, and then takes it.
+Each <a href="../kotlinx.coroutines.sync/-semaphore/release.html">release</a> adds a permit, potentially releasing a suspended acquirer.</p>
 
       </td>
 </tr>

@@ -33,9 +33,9 @@
 
 <h1 id="single">single</h1>
 
-<div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="single.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">single</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="single.html#T"><span class="identifier">T</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/terminal/Reduce.kt#L58">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="single.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">single</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="single.html#T"><span class="identifier">T</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/terminal/Reduce.kt#L59">(source)</a></div>
 
-<p>Terminal operator, that awaits for one and only one value to be published.
+<p>The terminal operator, that awaits for one and only one value to be published.
 Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-no-such-element-exception/index.html">NoSuchElementException</a> for empty flow and <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> for flow
 that contains more than one element.</p>
 

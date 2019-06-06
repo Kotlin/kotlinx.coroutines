@@ -35,16 +35,16 @@
 
 <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">withTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$withTimeout(kotlin.Long, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeout.T)))/timeMillis">timeMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$withTimeout(kotlin.Long, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeout.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="with-timeout.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="with-timeout.html#T"><span class="identifier">T</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Timeout.kt#L28">(source)</a></div>
 
-<p>Runs a given suspending <a href="with-timeout.html#kotlinx.coroutines$withTimeout(kotlin.Long, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeout.T)))/block">block</a> of code inside a coroutine with a specified timeout and throws
-<a href="-timeout-cancellation-exception.html">TimeoutCancellationException</a> if timeout was exceeded.</p>
+<p>Runs a given suspending <a href="with-timeout.html#kotlinx.coroutines$withTimeout(kotlin.Long, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeout.T)))/block">block</a> of code inside a coroutine with a specified <a href="with-timeout.html#kotlinx.coroutines$withTimeout(kotlin.Long, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeout.T)))/timeMillis">timeout</a> and throws
+a <a href="-timeout-cancellation-exception.html">TimeoutCancellationException</a> if the timeout was exceeded.</p>
 
 <p>The code that is executing inside the <a href="with-timeout.html#kotlinx.coroutines$withTimeout(kotlin.Long, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeout.T)))/block">block</a> is cancelled on timeout and the active or next invocation of
-cancellable suspending function inside the block throws <a href="-timeout-cancellation-exception.html">TimeoutCancellationException</a>.</p>
+the cancellable suspending function inside the block throws a <a href="-timeout-cancellation-exception.html">TimeoutCancellationException</a>.</p>
 
-<p>The sibling function that does not throw exception on timeout is <a href="with-timeout-or-null.html">withTimeoutOrNull</a>.
-Note that timeout action can be specified for <a href="../kotlinx.coroutines.selects/select.html">select</a> invocation with <a href="../kotlinx.coroutines.selects/-select-builder/on-timeout.html">onTimeout</a> clause.</p>
+<p>The sibling function that does not throw an exception on timeout is <a href="with-timeout-or-null.html">withTimeoutOrNull</a>.
+Note that the timeout action can be specified for a <a href="../kotlinx.coroutines.selects/select.html">select</a> invocation with <a href="../kotlinx.coroutines.selects/-select-builder/on-timeout.html">onTimeout</a> clause.</p>
 
-<p>Implementation note: how exactly time is tracked is an implementation detail of <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in the context.</p>
+<p>Implementation note: how the time is tracked exactly is an implementation detail of the context’s <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a>.</p>
 
 <h3 id="parameters">Parameters</h3>
 

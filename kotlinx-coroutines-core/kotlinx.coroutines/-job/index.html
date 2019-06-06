@@ -39,8 +39,8 @@
 culminates in its completion.</p>
 
 <p>Jobs can be arranged into parent-child hierarchies where cancellation
-of parent lead to an immediate cancellation of all its <a href="children.html">children</a>. Failure or cancellation of a child
-with an exception other than <a href="../-cancellation-exception/index.html">CancellationException</a> immediately cancels its parent. This way, parent
+of a parent leads to immediate cancellation of all its <a href="children.html">children</a>. Failure or cancellation of a child
+with an exception other than <a href="../-cancellation-exception/index.html">CancellationException</a> immediately cancels its parent. This way, a parent
 can <a href="cancel.html">cancel</a> its own children (including all their children recursively) without cancelling itself.</p>
 
 <p>The most basic instances of <a href="./index.md">Job</a> are created with <a href="../launch.html">launch</a> coroutine builder or with a
@@ -271,8 +271,8 @@ See <a href="./index.md">Job</a> documentation for full explanation of cancellat
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
 
         <p>Registers handler that is <strong>synchronously</strong> invoked once on completion of this job.
-When job is already complete, then the handler is immediately invoked
-with a job’s exception or cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
+When the job is already complete, then the handler is immediately invoked
+with the job’s exception or cancellation cause or <code>null</code>. Otherwise, the handler will be invoked once when this
 job is complete.</p>
 
       </td>
@@ -422,7 +422,7 @@ It is returned by <a href="./index.md">Job()</a> and <a href="../-supervisor-job
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">Job</span></a></code></div>
 
-        <p>Deferred value is a non-blocking cancellable future — it is a <a href="./index.md">Job</a> that has a result.</p>
+        <p>Deferred value is a non-blocking cancellable future — it is a <a href="./index.md">Job</a> with a result.</p>
 
       </td>
 </tr>

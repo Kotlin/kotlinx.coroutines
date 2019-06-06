@@ -38,7 +38,7 @@
 <p>Completes this job. The result is <code>true</code> if this job was completed as a result of this invocation and
 <code>false</code> otherwise (if it was already completed).</p>
 
-<p>Repeated invocations of this function have no effect and always produce <code>false</code>.</p>
+<p>Subsequent invocations of this function have no effect and always produce <code>false</code>.</p>
 
 <p>This function transitions this job into _completed- state if it was not completed or cancelled yet.
 However, that if this job has children, then it transitions into <em>completing</em> state and becomes <em>complete</em>

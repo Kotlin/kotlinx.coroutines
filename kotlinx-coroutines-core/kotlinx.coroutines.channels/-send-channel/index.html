@@ -33,7 +33,7 @@
 
 <h1 id="sendchannel">SendChannel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L19">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L22">(source)</a></div>
 
 <p>Sender’s interface to <a href="../-channel/index.html">Channel</a>.</p>
 
@@ -87,7 +87,7 @@ is passed into the corresponding block.</p>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Closes this channel.
-This is an idempotent operation – repeated invocations of this function have no effect and return <code>false</code>.
+This is an idempotent operation – subsequent invocations of this function have no effect and return <code>false</code>.
 Conceptually, its sends a special “close token” over this channel.</p>
 
       </td>
