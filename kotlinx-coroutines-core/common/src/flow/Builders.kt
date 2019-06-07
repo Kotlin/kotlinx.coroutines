@@ -214,6 +214,7 @@ public fun <T> flowViaChannel(
 ): Flow<T> {
     return channelFlow<T> {
         block(channel)
+        awaitClose()
     }.buffer(bufferSize)
 }
 
