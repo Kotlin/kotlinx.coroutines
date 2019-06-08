@@ -5,13 +5,15 @@
 package kotlinx.coroutines.flow.operators
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
-class SampleByTest : TestBase() {
+class SampleTest : TestBase() {
     @Test
-    public fun testBasicWithFlow() = withVirtualTime {
+    public fun testBasic() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(3)
@@ -38,19 +40,20 @@ class SampleByTest : TestBase() {
             emit("BB")
         }
         expect(2)
-        val result = flow.sampleBy(samplerFlow).toList()
+        val result = flow.sample(samplerFlow).toList()
         assertEquals(listOf("B", "D"), result)
         finish(8)
     }
+
     @Test
-    fun testDelayedFirstWithFlow() = withVirtualTime {
+    fun testDelayedFirst() = withVirtualTime {
         val flow = flow {
             delay(60)
             emit(1)
             expect(1)
             delay(60)
             expect(3)
-        }.sampleBy(flow {
+        }.sample(flow {
             delay(100)
             emit(4)
             expect(2)
@@ -87,20 +90,20 @@ class SampleByTest : TestBase() {
             }
         }
         expect(2)
-        val result = flow.sampleBy(samplerFlow).toList()
+        val result = flow.sample(samplerFlow).toList()
         assertEquals(listOf(2, 6, 7), result)
         finish(5)
     }
 
     @Test
-    fun testFixedDelayWithFlow() = withVirtualTime {
+    fun testFixedDelay() = withVirtualTime {
         val flow = flow {
             emit("A")
             expect(1)
             delay(150)
             emit("B")
             expect(3)
-        }.sampleBy(flow {
+        }.sample(flow {
             delay(100)
             emit("A")
             expect(2)
@@ -110,12 +113,12 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testSingleNullWithFlow() = withVirtualTime {
+    fun testSingleNull() = withVirtualTime {
         val flow = flow<Int?> {
             emit(null)
             delay(2)
             expect(1)
-        }.sampleBy(flow {
+        }.sample(flow {
             delay(1)
             emit(1)
         })
@@ -124,7 +127,7 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testBasicWithNullsWithFlow() = withVirtualTime {
+    fun testBasicWithNulls() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(3)
@@ -142,22 +145,20 @@ class SampleByTest : TestBase() {
 
         expect(2)
         val sampler = flow {
-            repeat(20) {
+            delay(1000)
+            repeat(10) {
+                emit(1)
                 delay(1000)
-                repeat(10) {
-                    emit(1)
-                    delay(1000)
-                }
             }
         }
-        val result = flow.sampleBy(sampler).toList()
+        val result = flow.sample(sampler).toList()
         assertEquals(listOf("A", null, null), result)
         finish(5)
     }
 
     @Test
-    fun testEmptyWithFlow() = runTest {
-        val flow = emptyFlow<Int>().sampleBy(flow {
+    fun testEmpty() = runTest {
+        val flow = emptyFlow<Int>().sample(flow {
             delay(Long.MAX_VALUE)
             emit(1)
         })
@@ -165,8 +166,8 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testScalarWithFlow() = runTest {
-        val flow = flowOf(1, 2, 3).sampleBy(flow {
+    fun testScalar() = runTest {
+        val flow = flowOf(1, 2, 3).sample(flow {
             delay(Long.MAX_VALUE)
             emit(1)
         })
@@ -175,7 +176,7 @@ class SampleByTest : TestBase() {
 
     @Test
     // note that this test depends on the sampling strategy -- when sampling time starts on a quiescent flow that suddenly emits
-    fun testLongWaitWithFlow() = withVirtualTime {
+    fun testLongWait() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(2)
@@ -187,8 +188,8 @@ class SampleByTest : TestBase() {
             delay(3000) // long wait again
 
         }
-        val result = flow.sampleBy(flow {
-            repeat(10){
+        val result = flow.sample(flow {
+            repeat(10) {
                 delay(1000)
                 emit(1)
             }
@@ -198,7 +199,7 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testPaceWithFlow() = withVirtualTime {
+    fun testPace() = withVirtualTime {
         val flow = flow {
             expect(1)
             repeat(4) {
@@ -211,7 +212,7 @@ class SampleByTest : TestBase() {
                 delay(100)
             }
             expect(2)
-        }.sampleBy( flow {
+        }.sample(flow {
             repeat(10) {
                 delay(100)
                 emit(1)
@@ -224,7 +225,7 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamErrorWithFlow() = runTest {
+    fun testUpstreamError() = runTest {
         val latch = Channel<Unit>()
         val flow = flow {
             expect(1)
@@ -232,7 +233,7 @@ class SampleByTest : TestBase() {
             expect(2)
             latch.receive()
             throw TestException()
-        }.sampleBy(flow {
+        }.sample(flow {
             repeat(10) {
                 delay(1)
                 emit(1)
@@ -247,7 +248,7 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamErrorIsolatedContextWithFlow() = runTest {
+    fun testUpstreamErrorIsolatedContext() = runTest {
         val latch = Channel<Unit>()
         val flow = flow {
             assertEquals("upstream", NamedDispatchers.name())
@@ -256,7 +257,7 @@ class SampleByTest : TestBase() {
             expect(2)
             latch.receive()
             throw TestException()
-        }.flowOn(NamedDispatchers("upstream")).sampleBy(flow {
+        }.flowOn(NamedDispatchers("upstream")).sample(flow {
             repeat(10) {
                 delay(1)
                 emit(1)
@@ -271,13 +272,13 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamErrorSampleNotTriggeredWithFlow() = runTest {
+    fun testUpstreamErrorSampleNotTriggered() = runTest {
         val flow = flow {
             expect(1)
             emit(1)
             expect(2)
             throw TestException()
-        }.sampleBy(flow{
+        }.sample(flow {
             delay(Long.MAX_VALUE)
             emit(1)
         }).map {
@@ -288,14 +289,14 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamErrorSampleNotTriggeredInIsolatedContextWithFlow() = runTest {
+    fun testUpstreamErrorSampleNotTriggeredInIsolatedContext() = runTest {
         val flow = flow {
             expect(1)
             emit(1)
             expect(2)
             throw TestException()
         }.flowWith(NamedDispatchers("unused")) {
-            sampleBy(flow{
+            sample(flow {
                 delay(Long.MAX_VALUE)
                 emit(1)
             }).map {
@@ -308,12 +309,12 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testDownstreamErrorWithFlow() = runTest {
+    fun testDownstreamError() = runTest {
         val flow = flow {
             expect(1)
             emit(1)
             hang { expect(3) }
-        }.sampleBy(flow {
+        }.sample(flow {
             repeat(100) {
                 delay(1)
                 emit(1)
@@ -330,13 +331,13 @@ class SampleByTest : TestBase() {
     }
 
     @Test
-    fun testDownstreamErrorIsolatedContextWithFlow() = runTest {
+    fun testDownstreamErrorIsolatedContext() = runTest {
         val flow = flow {
             assertEquals("upstream", NamedDispatchers.name())
             expect(1)
             emit(1)
             hang { expect(3) }
-        }.flowOn(NamedDispatchers("upstream")).sampleBy(flow {
+        }.flowOn(NamedDispatchers("upstream")).sample(flow {
             repeat(100) {
                 delay(1)
                 emit(1)
