@@ -54,7 +54,7 @@ class AtomicCancellationCommonTest : TestBase() {
                 finish(7) // but will execute finally blocks
             }
         }
-        expect(3) // continues to execute when job suspends
+        expect(3) // continues to execute when the job suspends
         yield() // to deferred & canceller
         expect(6)
     }
@@ -81,7 +81,7 @@ class AtomicCancellationCommonTest : TestBase() {
                 finish(7) // but will execute finally blocks
             }
         }
-        expect(3) // continues to execute when job suspends
+        expect(3) // continues to execute when the job suspends
         yield() // to jobToJoin & canceller
         expect(6)
     }

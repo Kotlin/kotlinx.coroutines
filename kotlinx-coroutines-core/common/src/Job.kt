@@ -19,8 +19,8 @@ import kotlin.jvm.*
  * culminates in its completion.
  *
  * Jobs can be arranged into parent-child hierarchies where cancellation
- * of parent lead to an immediate cancellation of all its [children]. Failure or cancellation of a child
- * with an exception other than [CancellationException] immediately cancels its parent. This way, parent
+ * of a parent leads to immediate cancellation of all its [children]. Failure or cancellation of a child
+ * with an exception other than [CancellationException] immediately cancels its parent. This way, a parent
  * can [cancel] its own children (including all their children recursively) without cancelling itself.
  *
  * The most basic instances of [Job] are created with [launch][CoroutineScope.launch] coroutine builder or with a
@@ -255,13 +255,13 @@ public interface Job : CoroutineContext.Element {
 
     /**
      * Registers handler that is **synchronously** invoked once on completion of this job.
-     * When job is already complete, then the handler is immediately invoked
-     * with a job's exception or cancellation cause or `null`. Otherwise, handler will be invoked once when this
+     * When the job is already complete, then the handler is immediately invoked
+     * with the job's exception or cancellation cause or `null`. Otherwise, the handler will be invoked once when this
      * job is complete.
      *
      * The meaning of `cause` that is passed to the handler:
-     * * Cause is `null` when job has completed normally.
-     * * Cause is an instance of [CancellationException] when job was cancelled _normally_.
+     * * Cause is `null` when the job has completed normally.
+     * * Cause is an instance of [CancellationException] when the job was cancelled _normally_.
      *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
      * * Otherwise, the job had _failed_.
      *
@@ -281,13 +281,13 @@ public interface Job : CoroutineContext.Element {
 
     /**
      * Registers handler that is **synchronously** invoked once on cancellation or completion of this job.
-     * When job was already cancelled and is completed its execution, then the handler is immediately invoked
-     * with a job's cancellation cause or `null` unless [invokeImmediately] is set to false.
+     * when the job was already cancelled and is completed its execution, then the handler is immediately invoked
+     * with the job's cancellation cause or `null` unless [invokeImmediately] is set to false.
      * Otherwise, handler will be invoked once when this job is cancelled or is complete.
      *
      * The meaning of `cause` that is passed to the handler:
-     * * Cause is `null` when job has completed normally.
-     * * Cause is an instance of [CancellationException] when job was cancelled _normally_.
+     * * Cause is `null` when the job has completed normally.
+     * * Cause is an instance of [CancellationException] when the job was cancelled _normally_.
      *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
      * * Otherwise, the job had _failed_.
      *
