@@ -93,7 +93,7 @@ class ZipTest : TestBase() {
     }
 
     @Test
-    fun testCancesWhenFlowIsDone2() = runTest {
+    fun testCancelWhenFlowIsDone2() = runTest {
         val f1 = flow<String> {
             emit("1")
             emit("2")
@@ -112,52 +112,15 @@ class ZipTest : TestBase() {
     }
 
     @Test
-    fun testContextIsIsolated() = runTest {
-        val f1 = flow {
-            emit("a")
-            assertEquals("first", NamedDispatchers.name())
-            expect(1)
-        }.flowOn(NamedDispatchers("first")).onEach {
-            assertEquals("nested", NamedDispatchers.name())
-            expect(2)
-        }.flowOn(NamedDispatchers("nested"))
-
-        val f2 = flow {
-            emit(1)
-            assertEquals("second", NamedDispatchers.name())
-            expect(3)
-        }.flowOn(NamedDispatchers("second")).flowWith(NamedDispatchers("with")) {
-            onEach {
-                assertEquals("with", NamedDispatchers.name())
-                expect(4)
-            }
-        }
-
-        val value = withContext(NamedDispatchers("main")) {
-            f1.zip(f2) { i, j ->
-                assertEquals("main", NamedDispatchers.name())
-                expect(5)
-                i + j
-            }.single()
-        }
-
-        assertEquals("a1", value)
-        finish(6)
-    }
-
-    @Test
     fun testContextIsIsolatedReversed() = runTest {
         val f1 = flow {
             emit("a")
             assertEquals("first", NamedDispatchers.name())
             expect(1)
-        }.flowOn(NamedDispatchers("first"))
-            .flowWith(NamedDispatchers("with")) {
-                onEach {
-                    assertEquals("with", NamedDispatchers.name())
-                    expect(2)
-                }
-            }
+        }.flowOn(NamedDispatchers("first")).onEach {
+            assertEquals("with", NamedDispatchers.name())
+            expect(2)
+        }.flowOn(NamedDispatchers("with"))
 
         val f2 = flow {
             emit(1)
@@ -179,7 +142,6 @@ class ZipTest : TestBase() {
         assertEquals("a1", value)
         finish(6)
     }
-
 
     @Test
     fun testErrorInDownstreamCancelsUpstream() = runTest {
@@ -228,5 +190,51 @@ class ZipTest : TestBase() {
         finish(2)
     }
 
-    private suspend fun sum(s: String?, i: Int?): String = s + i
+    @Test
+    fun testCancellationUpstream() = runTest {
+        val f1 = flow {
+            expect(1)
+            emit(1)
+            yield()
+            expect(4)
+            throw CancellationException("")
+        }
+
+        val f2 = flow {
+            expect(2)
+            emit(1)
+            expect(5)
+            hang { expect(6) }
+        }
+
+        val flow = f1.zip(f2, { _, _ -> 1 }).onEach { expect(3) }
+        assertFailsWith<CancellationException>(flow)
+        finish(7)
+    }
+
+    @Test
+    fun testCancellationDownstream() = runTest {
+        val f1 = flow {
+            expect(1)
+            emit(1)
+            yield()
+            expect(4)
+            hang { expect(6) }
+        }
+
+        val f2 = flow {
+            expect(2)
+            emit(1)
+            expect(5)
+            hang { expect(7) }
+        }
+
+        val flow = f1.zip(f2, { _, _ -> 1 }).onEach {
+            expect(3)
+            yield()
+            throw CancellationException("")
+        }
+        assertFailsWith<CancellationException>(flow)
+        finish(8)
+    }
 }

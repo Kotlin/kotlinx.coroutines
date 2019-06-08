@@ -13,10 +13,15 @@ import kotlin.coroutines.*
  * Note that Android may have dummy [Thread.contextClassLoader] which is used by one-argument [ServiceLoader.load] function,
  * see (https://stackoverflow.com/questions/13407006/android-class-loader-may-fail-for-processes-that-host-multiple-applications).
  * So here we explicitly use two-argument `load` with a class-loader of [CoroutineExceptionHandler] class.
+ *
+ * We are explicitly using the `ServiceLoader.load(MyClass::class.java, MyClass::class.java.classLoader).iterator()`
+ * form of the ServiceLoader call to enable R8 optimization when compiled on Android.
  */
-private val handlers: List<CoroutineExceptionHandler> = CoroutineExceptionHandler::class.java.let { serviceClass ->
-    ServiceLoader.load(serviceClass, serviceClass.classLoader).toList()
-}
+private val handlers: List<CoroutineExceptionHandler> = ServiceLoader.load(
+        CoroutineExceptionHandler::class.java,
+        CoroutineExceptionHandler::class.java.classLoader
+).iterator().asSequence().toList()
+
 
 internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) {
     // use additional extension handlers

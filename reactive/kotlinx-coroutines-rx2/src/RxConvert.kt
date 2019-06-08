@@ -84,8 +84,8 @@ public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): 
  * Converts the given flow to a cold observable.
  * The original flow is cancelled if the observable subscriber was disposed.
  */
-@FlowPreview
 @JvmName("from")
+@ExperimentalCoroutinesApi
 public fun <T: Any> Flow<T>.asObservable() : Observable<T> = Observable.create { emitter ->
     /*
      * ATOMIC is used here to provide stable behaviour of subscribe+dispose pair even if
@@ -109,6 +109,6 @@ public fun <T: Any> Flow<T>.asObservable() : Observable<T> = Observable.create {
  * Converts the given flow to a cold observable.
  * The original flow is cancelled if the flowable subscriber was disposed.
  */
-@FlowPreview
 @JvmName("from")
+@ExperimentalCoroutinesApi
 public fun <T: Any> Flow<T>.asFlowable(): Flowable<T> = Flowable.fromPublisher(asPublisher())

@@ -15,7 +15,7 @@ class WithContextTest : TestBase() {
     fun testThrowException() = runTest {
         expect(1)
         try {
-            withContext(coroutineContext) {
+            withContext<Unit>(coroutineContext) {
                 expect(2)
                 throw AssertionError()
             }
@@ -31,7 +31,7 @@ class WithContextTest : TestBase() {
     fun testThrowExceptionFromWrappedContext() = runTest {
         expect(1)
         try {
-            withContext(wrapperDispatcher(coroutineContext)) {
+            withContext<Unit>(wrapperDispatcher(coroutineContext)) {
                 expect(2)
                 throw AssertionError()
             }
@@ -151,7 +151,7 @@ class WithContextTest : TestBase() {
             expect(2)
             try {
                 // Same dispatcher, different context
-                withContext(CoroutineName("testRunCancellationUndispatchedVsException")) {
+                withContext<Unit>(CoroutineName("testRunCancellationUndispatchedVsException")) {
                     expect(3)
                     yield() // must suspend
                     expect(5)
@@ -176,7 +176,7 @@ class WithContextTest : TestBase() {
             expect(2)
             try {
                 // "Different" dispatcher (schedules execution back and forth)
-                withContext(wrapperDispatcher(coroutineContext)) {
+                withContext<Unit>(wrapperDispatcher(coroutineContext)) {
                     expect(4)
                     yield() // must suspend
                     expect(6)
@@ -204,7 +204,7 @@ class WithContextTest : TestBase() {
         job = launch(Job()) {
             try {
                 expect(3)
-                withContext(wrapperDispatcher(coroutineContext)) {
+                withContext<Unit>(wrapperDispatcher(coroutineContext)) {
                     require(isActive)
                     expect(5)
                     job!!.cancel()
@@ -347,6 +347,26 @@ class WithContextTest : TestBase() {
             expectUnreached()
         }
         expectUnreached()
+    }
+
+    @Test
+    fun testSequentialCancellation() = runTest {
+        val job = launch {
+            expect(1)
+            withContext(wrapperDispatcher()) {
+                expect(2)
+            }
+            expectUnreached()
+        }
+
+        yield()
+        val job2 = launch {
+            expect(3)
+            job.cancel()
+        }
+
+        joinAll(job, job2)
+        finish(4)
     }
 
     private class Wrapper(val value: String) : Incomplete {

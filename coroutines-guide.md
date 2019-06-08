@@ -17,7 +17,7 @@ The main coroutines guide has moved to the [docs folder](docs/coroutines-guide.m
   * <a name='cancelling-coroutine-execution'></a>[Cancelling coroutine execution](docs/cancellation-and-timeouts.md#cancelling-coroutine-execution)
   * <a name='cancellation-is-cooperative'></a>[Cancellation is cooperative](docs/cancellation-and-timeouts.md#cancellation-is-cooperative)
   * <a name='making-computation-code-cancellable'></a>[Making computation code cancellable](docs/cancellation-and-timeouts.md#making-computation-code-cancellable)
-  * <a name='closing-resources-with-finally'></a>[Closing resources with finally](docs/cancellation-and-timeouts.md#closing-resources-with-finally)
+  * <a name='closing-resources-with-finally'></a>[Closing resources with `finally`](docs/cancellation-and-timeouts.md#closing-resources-with-finally)
   * <a name='run-non-cancellable-block'></a>[Run non-cancellable block](docs/cancellation-and-timeouts.md#run-non-cancellable-block)
   * <a name='timeout'></a>[Timeout](docs/cancellation-and-timeouts.md#timeout)
 <!--- TOC_REF docs/composing-suspending-functions.md -->

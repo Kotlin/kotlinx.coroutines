@@ -73,15 +73,12 @@ internal actual class JobCancellationException public actual constructor(
 
     override fun toString(): String = "${super.toString()}; job=$job"
 
-    @Suppress("DEPRECATION")
     override fun equals(other: Any?): Boolean =
         other === this ||
             other is JobCancellationException && other.message == message && other.job == job && other.cause == cause
     override fun hashCode(): Int =
         (message!!.hashCode() * 31 + job.hashCode()) * 31 + (cause?.hashCode() ?: 0)
 }
-
-internal actual class CoroutinesInternalError actual constructor(message: String, cause: Throwable) : Error(message, cause)
 
 @Suppress("NOTHING_TO_INLINE")
 internal actual inline fun Throwable.addSuppressedThrowable(other: Throwable) =

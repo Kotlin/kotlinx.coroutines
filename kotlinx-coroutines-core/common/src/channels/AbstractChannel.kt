@@ -105,35 +105,6 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     }
 
     /**
-     * Queues conflated element, returns null on success or
-     * returns node reference if it was already closed or is waiting for receive.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    protected fun sendConflated(element: E): ReceiveOrClosed<*>? {
-        val node = SendBuffered(element)
-        queue.addLastIfPrev(node, { prev ->
-            if (prev is ReceiveOrClosed<*>) return@sendConflated prev
-            true
-        })
-        conflatePreviousSendBuffered(node)
-        return null
-    }
-
-    protected fun conflatePreviousSendBuffered(node: LockFreeLinkedListNode) {
-        /*
-         * Conflate all previous SendBuffered,
-         * helping other sends to coflate
-         */
-        var prev = node.prevNode
-        while (prev is SendBuffered<*>) {
-            if (!prev.remove()) {
-                prev.helpRemove()
-            }
-            prev = prev.prevNode
-        }
-    }
-
-    /**
      * @suppress **This is unstable API and it is subject to change.**
      */
     protected fun describeSendBuffered(element: E): AddLastDesc<*> = SendBufferedDesc(queue, element)
@@ -331,7 +302,6 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
             previous as Receive<E> // type assertion
             previous.resumeReceiveClosed(closed)
         }
-
         onClosedIdempotent(closed)
     }
 
@@ -499,7 +469,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         override fun toString(): String = "SendSelect($pollResult)[$channel, $select]"
     }
 
-    private class SendBuffered<out E>(
+    internal class SendBuffered<out E>(
         @JvmField val element: E
     ) : LockFreeLinkedListNode(), Send {
         override val pollResult: Any? get() = element
@@ -669,7 +639,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         cancelInternal(cause)
 
     final override fun cancel(cause: CancellationException?) {
-        cancelInternal(cause)
+        cancelInternal(cause ?: CancellationException("$classSimpleName was cancelled"))
     }
 
     // It needs to be internal to support deprecated cancel(Throwable?) API
@@ -901,15 +871,15 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         }
 
         @Suppress("UNCHECKED_CAST")
-        override suspend fun next(): E {
+        override fun next(): E {
             val result = this.result
             if (result is Closed<*>) throw recoverStackTrace(result.receiveException)
             if (result !== POLL_FAILED) {
                 this.result = POLL_FAILED
                 return result as E
             }
-            // rare case when hasNext was not invoked yet -- just delegate to receive (leave state as is)
-            return channel.receive()
+
+            throw IllegalStateException("'hasNext' should be called prior to 'next' invocation")
         }
     }
 
@@ -978,8 +948,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
 
         @Suppress("UNCHECKED_CAST")
         override fun completeResumeReceive(token: Any) {
-            val value: E = (if (token === NULL_VALUE) null else token) as E
-            block.startCoroutine(value, select.completion)
+            block.startCoroutine(NULL_VALUE.unbox<E>(token), select.completion)
         }
 
         override fun resumeReceiveClosed(closed: Closed<*>) {
@@ -1035,7 +1004,7 @@ internal val SELECT_STARTED: Any = Symbol("SELECT_STARTED")
 
 @JvmField
 @SharedImmutable
-internal val NULL_VALUE: Any = Symbol("NULL_VALUE")
+internal val NULL_VALUE: Symbol = Symbol("NULL_VALUE")
 
 @JvmField
 @SharedImmutable

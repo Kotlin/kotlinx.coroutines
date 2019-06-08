@@ -24,6 +24,7 @@ public interface CompletableJob : Job {
     /**
      * Completes this job exceptionally with a given [exception]. The result is `true` if this job was
      * completed as a result of this invocation and `false` otherwise (if it was already completed).
+     * [exception] parameter is used as an additional debug information that is not handled by any exception handlers.
      *
      * Subsequent invocations of this function have no effect and always produce `false`.
      *

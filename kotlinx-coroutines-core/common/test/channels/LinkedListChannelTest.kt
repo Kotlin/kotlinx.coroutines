@@ -31,7 +31,7 @@ class LinkedListChannelTest : TestBase() {
         q.cancel()
         check(q.isClosedForSend)
         check(q.isClosedForReceive)
-        check(q.receiveOrNull() == null)
+        assertFailsWith<CancellationException> { q.receiveOrNull() }
     }
 
     @Test

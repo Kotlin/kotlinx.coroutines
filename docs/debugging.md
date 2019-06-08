@@ -72,7 +72,7 @@ The full tutorial of how to use debug agent can be found in the corresponding [r
 
 Unfortunately, Android runtime does not support Instrument API necessary for `kotlinx-coroutines-debug` to function, triggering `java.lang.NoClassDefFoundError: Failed resolution of: Ljava/lang/management/ManagementFactory;`.
 
-Nevertheless, it will be possible to support debug agent on Android as soon as [GradleAspectJ-Android](https://github.com/Archinamon/android-gradle-aspectj)  will support androin-gradle 3.3 
+Nevertheless, it will be possible to support debug agent on Android as soon as [GradleAspectJ-Android](https://github.com/Archinamon/android-gradle-aspectj)  will support android-gradle 3.3 
 
 <!---
 Make an exception googlable

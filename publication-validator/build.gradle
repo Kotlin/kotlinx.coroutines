@@ -1,0 +1,35 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.3.30'
+}
+
+def deployVersion = properties['DeployVersion']
+ext.coroutines_version = deployVersion
+println "Checking coroutines version $coroutines_version"
+
+group 'org.jetbrains.kotlinx'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.apache.commons:commons-compress:1.18'
+    testCompile 'com.google.code.gson:gson:2.8.5'
+    testCompile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+    testCompile "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}

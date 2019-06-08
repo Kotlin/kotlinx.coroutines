@@ -10,6 +10,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
+import kotlinx.coroutines.channels.Channel.Factory.CHANNEL_DEFAULT_CAPACITY
+import kotlinx.coroutines.internal.systemProp
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
 
@@ -242,14 +245,16 @@ public interface ReceiveChannel<out E> {
     /**
      * Cancels reception of remaining elements from this channel with an optional [cause].
      * This function closes the channel and removes all buffered sent elements from it.
+     *
      * A cause can be used to specify an error message or to provide other details on
      * a cancellation reason for debugging purposes.
+     * If the cause is not specified, then an instance of [CancellationException] with a
+     * default message is created to [close][SendChannel.close] the channel.
      *
      * Immediately after invocation of this function [isClosedForReceive] and
      * [isClosedForSend][SendChannel.isClosedForSend]
-     * on the side of [SendChannel] start returning `true`, so all attempts to send to this channel
-     * afterwards will throw [ClosedSendChannelException], while attempts to receive will throw
-     * [ClosedReceiveChannelException].
+     * on the side of [SendChannel] start returning `true`. All attempts to send to this channel
+     * or receive from this channel will throw [CancellationException].
      */
     public fun cancel(cause: CancellationException? = null)
 
@@ -293,25 +298,34 @@ public interface ChannelIterator<out E> {
      */
     public suspend operator fun hasNext(): Boolean
 
+    @Deprecated(message = "Since 1.3.0, binary compatibility with versions <= 1.2.x", level = DeprecationLevel.HIDDEN)
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("next")
+    public suspend fun next0(): E {
+        /*
+         * Before 1.3.0 the "next()" could have been used without invoking "hasNext" first and there were code samples
+         * demonstrating this behavior, so we preserve this logic for full binary backwards compatibility with previously
+         * compiled code.
+         */
+        if (!hasNext()) throw ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE)
+        return next()
+    }
+
     /**
-     * Retrieves and removes the element from this channel suspending the caller while this channel
-     * is empty or throws [ClosedReceiveChannelException] if the channel
-     * [isClosedForReceive][ReceiveChannel.isClosedForReceive] without cause.
+     * Retrieves the element from the current iterator previously removed from the channel by preceding call to [hasNext] or
+     * throws [IllegalStateException] if [hasNext] was not invoked.
+     * [next] should only be used in pair with [hasNext]:
+     * ```
+     * while (iterator.hasNext()) {
+     *     val element = iterator.next()
+     *     // ... handle element ...
+     * }
+     * ```
+     *
+     * This method throws [ClosedReceiveChannelException] if the channel [isClosedForReceive][ReceiveChannel.isClosedForReceive] without cause.
      * It throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
-     *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
-     * function is suspended, this function immediately resumes with [CancellationException].
-     *
-     * *Cancellation of suspended receive is atomic* -- when this function
-     * throws [CancellationException] it means that the element was not retrieved from this channel.
-     * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
-     * continue to execute even after it was cancelled from the same thread in the case when this receive operation
-     * was already resumed and the continuation was posted for execution to the thread's queue.
-     *
-     * Note that this function does not check for cancellation when it is not suspended.
-     * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      */
-    public suspend operator fun next(): E
+    public operator fun next(): E
 }
 
 /**
@@ -361,6 +375,27 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
          * Requests conflated channel in `Channel(...)` factory function -- the `ConflatedChannel` gets created.
          */
         public const val CONFLATED = -1
+
+        /**
+         * Requests buffered channel with a default buffer capacity in `Channel(...)` factory function --
+         * the `ArrayChannel` gets created with a default capacity.
+         * This capacity is equal to 16 by default and can be overridden by setting
+         * [DEFAULT_BUFFER_PROPERTY_NAME] on JVM.
+         */
+        public const val BUFFERED = -2
+
+        // only for internal use, cannot be used with Channel(...)
+        internal const val OPTIONAL_CHANNEL = -3
+
+        /**
+         * Name of the property that defines the default channel capacity when
+         * [BUFFERED] is used as parameter in `Channel(...)` factory function.
+         */
+        public const val DEFAULT_BUFFER_PROPERTY_NAME = "kotlinx.coroutines.channels.defaultBuffer"
+
+        internal val CHANNEL_DEFAULT_CAPACITY = systemProp(DEFAULT_BUFFER_PROPERTY_NAME,
+            16, 1, UNLIMITED - 1
+        )
     }
 }
 
@@ -368,13 +403,15 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
  * Creates a channel with the specified buffer capacity (or without a buffer by default).
  * See [Channel] interface documentation for details.
  *
- * @throws IllegalArgumentException when [capacity] < -1
+ * @param capacity either a positive channel capacity or one of the constants defined in [Channel.Factory].
+ * @throws IllegalArgumentException when [capacity] < -2
  */
 public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> =
     when (capacity) {
         RENDEZVOUS -> RendezvousChannel()
         UNLIMITED -> LinkedListChannel()
         CONFLATED -> ConflatedChannel()
+        BUFFERED -> ArrayChannel(CHANNEL_DEFAULT_CAPACITY)
         else -> ArrayChannel(capacity)
     }
 
@@ -382,14 +419,18 @@ public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> =
  * Indicates attempt to [send][SendChannel.send] on [isClosedForSend][SendChannel.isClosedForSend] channel
  * that was closed without a cause. A _failed_ channel rethrows the original [close][SendChannel.close] cause
  * exception on send attempts.
+ *
+ * This exception is a subclass of [IllegalStateException] because, conceptually, sender is responsible
+ * for closing the channel and not be trying to send anything after the channel was close. Attempts to
+ * send into the closed channel indicate logical error in the sender's code.
  */
-public class ClosedSendChannelException(message: String?) : CancellationException(message)
+public class ClosedSendChannelException(message: String?) : IllegalStateException(message)
 
 /**
  * Indicates attempt to [receive][ReceiveChannel.receive] on [isClosedForReceive][ReceiveChannel.isClosedForReceive]
  * channel that was closed without a cause. A _failed_ channel rethrows the original [close][SendChannel.close] cause
  * exception on receive attempts.
  *
- * This exception is subclass of [NoSuchElementException] to be consistent with plain collections.
+ * This exception is a subclass of [NoSuchElementException] to be consistent with plain collections.
  */
 public class ClosedReceiveChannelException(message: String?) : NoSuchElementException(message)

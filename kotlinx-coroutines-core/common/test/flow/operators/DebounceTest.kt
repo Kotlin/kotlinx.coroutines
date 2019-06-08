@@ -95,20 +95,25 @@ class DebounceTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamError() = runTest {
+    fun testUpstreamError()= testUpstreamError(TimeoutCancellationException(""))
+
+    @Test
+    fun testUpstreamErrorCancellation() = testUpstreamError(TimeoutCancellationException(""))
+
+    private inline fun <reified T: Throwable> testUpstreamError(cause: T) = runTest {
         val latch = Channel<Unit>()
         val flow = flow {
             expect(1)
             emit(1)
             expect(2)
             latch.receive()
-            throw TestException()
+            throw cause
         }.debounce(1).map {
             latch.send(Unit)
             hang { expect(3) }
         }
 
-        assertFailsWith<TestException>(flow)
+        assertFailsWith<T>(flow)
         finish(4)
     }
 
@@ -152,12 +157,9 @@ class DebounceTest : TestBase() {
             emit(1)
             expect(2)
             throw TestException()
-        }.flowWith(NamedDispatchers("unused")) {
-            debounce(Long.MAX_VALUE).map {
+        }.flowOn(NamedDispatchers("source")).debounce(Long.MAX_VALUE).map {
                 expectUnreached()
-            }
         }
-
         assertFailsWith<TestException>(flow)
         finish(3)
     }

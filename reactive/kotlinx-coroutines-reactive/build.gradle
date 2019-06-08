@@ -29,5 +29,6 @@ test {
 tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
         url = new URL("https://www.reactive-streams.org/reactive-streams-$reactive_streams_version-javadoc/")
+        packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
     }
 }
