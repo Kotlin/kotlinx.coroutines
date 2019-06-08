@@ -8,16 +8,18 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
+import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlinx.coroutines.flow.unsafeFlow as flow
 
-// TODO discuss usability from IDE with lambda as last parameter
 public typealias ExceptionPredicate = (Throwable) -> Boolean
 
 private val ALWAYS_TRUE: ExceptionPredicate = { true }
 
 /**
  * Switches to the [fallback] flow if the original flow throws an exception that matches the [predicate].
+ * Cancellation exceptions that were caused by the direct [cancel] call are not handled by this operator.
  */
 @FlowPreview
 public fun <T> Flow<T>.onErrorCollect(
@@ -25,13 +27,12 @@ public fun <T> Flow<T>.onErrorCollect(
     predicate: ExceptionPredicate = ALWAYS_TRUE
 ): Flow<T> = collectSafely { e ->
     if (!predicate(e)) throw e
-    fallback.collect { value ->
-        emit(value)
-    }
+    emitAll(fallback)
 }
 
 /**
- * Emits the [fallback] value and finishes successfully if the original flow throws exception that matches the given [predicate];
+ * Emits the [fallback] value and finishes successfully if the original flow throws exception that matches the given [predicate].
+ * Cancellation exceptions that were caused by the direct [cancel] call are not handled by this operator.
  */
 @FlowPreview
 public fun <T> Flow<T>.onErrorReturn(fallback: T, predicate: ExceptionPredicate = ALWAYS_TRUE): Flow<T> =
@@ -43,6 +44,7 @@ public fun <T> Flow<T>.onErrorReturn(fallback: T, predicate: ExceptionPredicate 
 /**
  * Operator that retries [n][retries] times to collect the given flow in an exception that matches the given [predicate] occurs
  * in the given flow. Exceptions from collectors of this flow are not retried.
+ * Cancellation exceptions that were caused by the direct [cancel] call are not handled by this operator.
  */
 @FlowPreview
 public fun <T> Flow<T>.retry(
@@ -67,11 +69,17 @@ public fun <T> Flow<T>.retry(
                 }
                 break
             } catch (e: Throwable) {
-                if (fromDownstream) throw e
+                if (fromDownstream || e.isCancellationCause(coroutineContext)) throw e
                 if (!predicate(e) || retries-- == 0) throw e
             }
         }
     }
+}
+
+private fun Throwable.isCancellationCause(coroutineContext: CoroutineContext): Boolean {
+    val job = coroutineContext[Job]
+    if (job == null || !job.isCancelled) return false
+    return unwrap(job.getCancellationException()) == unwrap(this)
 }
 
 private fun <T> Flow<T>.collectSafely(onException: suspend FlowCollector<T>.(Throwable) -> Unit): Flow<T> =
@@ -88,7 +96,7 @@ private fun <T> Flow<T>.collectSafely(onException: suspend FlowCollector<T>.(Thr
                 }
             }
         } catch (e: Throwable) {
-            if (fromDownstream) throw e
+            if (fromDownstream || e.isCancellationCause(coroutineContext)) throw e
             onException(e)
         }
     }

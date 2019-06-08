@@ -171,7 +171,9 @@ class SupervisorTest : TestBase() {
         try {
             deferred.await()
             expectUnreached()
-        } catch (e: TestException1) {
+        } catch (e: CancellationException) {
+            val cause = if (RECOVER_STACK_TRACES) e.cause?.cause!! else e.cause
+            assertTrue(cause is TestException1)
             finish(3)
         }
     }
@@ -216,5 +218,23 @@ class SupervisorTest : TestBase() {
         expect(4)
         yield() // to coroutineScope
         finish(7)
+    }
+
+    @Test
+    fun testSupervisorJobCancellationException() = runTest {
+        val job = SupervisorJob()
+        val child = launch(job + CoroutineExceptionHandler { _, _ -> expectUnreached() }) {
+            expect(1)
+            hang {
+                expect(3)
+            }
+        }
+
+        yield()
+        expect(2)
+        child.cancelAndJoin()
+        job.complete()
+        job.join()
+        finish(4)
     }
 }

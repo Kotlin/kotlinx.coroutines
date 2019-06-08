@@ -17,10 +17,11 @@ internal open class ScopeCoroutine<in T>(
 ) : AbstractCoroutine<T>(context, true), CoroutineStackFrame {
     final override val callerFrame: CoroutineStackFrame? get() = uCont as CoroutineStackFrame?
     final override fun getStackTraceElement(): StackTraceElement? = null
+    final override val isScopedCoroutine: Boolean get() = true
+
     override val defaultResumeMode: Int get() = MODE_DIRECT
 
-    override val cancelsParent: Boolean
-        get() = false // it throws exception to parent instead of cancelling it
+    internal val parent: Job? get() = parentContext[Job]
 
     @Suppress("UNCHECKED_CAST")
     override fun afterCompletionInternal(state: Any?, mode: Int) {

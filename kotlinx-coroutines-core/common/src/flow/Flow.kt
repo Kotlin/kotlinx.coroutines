@@ -5,81 +5,155 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.internal.SafeCollector
+import kotlin.coroutines.*
 
 /**
- * A cold asynchronous stream of the data, that emits from zero to N (where N can be unbounded) values and completes normally or with an exception.
+ * A cold asynchronous data stream that sequentially emits values
+ * and completes normally or with an exception.
  *
- * All transformations on the flow, such as [map] and [filter] do not trigger flow collection or execution, only terminal operators (e.g. [single]) do trigger it.
+ * _Cold flow_ means that intermediate operators on a flow such as [map] and [filter] do not trigger its execution,
+ * which is only done by terminal operators like [single]. By default, flows are _sequential_ and all flow
+ * operations are executed sequentially in the same coroutine, see [buffer] for details.
  *
- * Flow can be collected in a suspending manner, without actual blocking, using [collect] extension that will complete normally or exceptionally:
+ * _Collecting the flow_ means executing all its operations.
+ * Flow values can be collected in a suspending manner without actual blocking using the [collect] extension that
+ * completes normally or exceptionally:
+ *
  * ```
  * try {
  *     flow.collect { value ->
  *         println("Received $value")
  *     }
  * } catch (e: Exception) {
- *     println("Flow has thrown an exception: $e")
+ *     println("The flow has thrown an exception: $e")
  * }
  * ```
+ *
  * Additionally, the library provides a rich set of terminal operators such as [single], [reduce] and others.
  *
- * Flow does not carry information whether it is a cold stream (that can be collected multiple times and
- * triggers its evaluation every time [collect] is executed) or a hot one, but conventionally flow represents a cold stream.
- * Transitions between hot and cold streams are supported via channels and the corresponding API: [flowViaChannel], [broadcastIn], [produceIn].
+ * Flows don't carry information whether they are cold streams (which can be collected repeatedly and
+ * trigger their evaluation every time [collect] is executed) or hot ones, but, conventionally, they represent cold streams.
+ * Transitions between hot and cold streams are supported via channels and the corresponding API:
+ * [channelFlow], [produceIn], [broadcastIn].
  *
- * Flow has a context preserving property: it encapsulates its own execution context and never propagates or leaks it to the downstream, thus making
- * reasoning about execution context of particular transformations or terminal operations trivial.
+ * ### Flow builders
  *
- * There are two ways of changing the flow's context: [flowOn][Flow.flowOn] and [flowWith][Flow.flowWith].
- * The former changes the upstream context ("everything above the flowOn operator") while the latter
- * changes the context of the flow within [flowWith] body. For additional information refer to these operators documentation.
+ * There are the following basic ways to create a flow:
  *
- * This reasoning can be demonstrated in the practice:
+ * * [flowOf(...)][flowOf] functions to create a flow from a fixed set of values.
+ * * [asFlow()][asFlow] extension functions on various types to convert them into flows.
+ * * [flow { ... }][flow] builder function to construct arbitrary flows from
+ *   sequential calls to [emit][FlowCollector.emit] function.
+ * * [channelFlow { ... }][channelFlow] builder function to construct arbitrary flows from
+ *   potentially concurrent calls to [send][kotlinx.coroutines.channels.SendChannel.send] function.
+ *
+ * ### Flow context
+ *
+ * The flow has a context preservation property: it encapsulates its own execution context and never propagates or leaks
+ * it downstream, thus making reasoning about the execution context of particular transformations or terminal
+ * operations trivial.
+ *
+ * There is the only way to change the context of a flow: [flowOn][Flow.flowOn] operator,
+ * that changes the upstream context ("everything above the flowOn operator").
+ * For additional information refer to its documentation.
+ *
+ * This reasoning can be demonstrated in practice:
+ *
  * ```
- * val flow = flowOf(1, 2, 3)
- *     .map { it + 1 } // Will be executed in ctx_1
- *     .flowOn(ctx_1) // Changes upstream context: flowOf and map
+ * val flowA = flowOf(1, 2, 3)
+ *     .map { it + 1 } // Will be executed in ctxA
+ *     .flowOn(ctxA) // Changes the upstream context: flowOf and map
  *
- * // Now we have flow that is context-preserving: it is executed somewhere but this information is encapsulated in the flow itself
+ * // Now we have a context-preserving flow: it is executed somewhere but this information is encapsulated in the flow itself
  *
- * val filtered = flow // ctx_1 is inaccessible
+ * val filtered = flowA // ctxA is encapsulated in flowA
  *    .filter { it == 3 } // Pure operator without a context yet
  *
  * withContext(Dispatchers.Main) {
- *     // All not encapsulated operators will be executed in Main: filter and single
+ *     // All non-encapsulated operators will be executed in Main: filter and single
  *     val result = filtered.single()
  *     myUi.text = result
  * }
  * ```
  *
- * From the implementation point of view it means that all intermediate operators on [Flow] should use the following constraint:
- * If one wants to separate collection or emission into multiple coroutines, it should use [coroutineScope] or [supervisorScope] and
- * is not allowed to modify coroutines context:
- * ```
- * fun <T> Flow<T>.buffer(bufferSize: Int): Flow<T> = flow {
- *     coroutineScope { // coroutine scope is necessary, withContext is prohibited
- *         val channel = Channel<T>(bufferSize)
- *         // GlobalScope.launch { is prohibited
- *         // launch(Dispatchers.IO) { is prohibited
- *         launch { // is OK
- *             collect { value ->
- *                 channel.send(value)
- *             }
- *             channel.close()
- *         }
+ * From the implementation point of view it means that all flow implementations should
+ * emit only from the same coroutine.
+ * This constraint is efficiently enforced by the default [flow] builder.
+ * The [flow] builder should be used if flow implementation does not start any coroutines.
+ * Its implementation prevents most of the development mistakes:
  *
- *         for (i in channel) {
- *             emit(i)
- *         }
- *     }
+ * ```
+ * val myFlow = flow {
+ *    // GlobalScope.launch { // is prohibited
+ *    // launch(Dispatchers.IO) { // is prohibited
+ *    // withContext(CoroutineName("myFlow")) // is prohibited
+ *    emit(1) // OK
+ *    coroutineScope {
+ *        emit(2) // OK -- still the same coroutine
+ *    }
  * }
  * ```
  *
- * Flow is [Reactive Streams](http://www.reactive-streams.org/) compliant, you can safely interop it with reactive streams using [Flow.asPublisher] and [Publisher.asFlow] from
- * kotlinx-coroutines-reactive module.
+ * Use [channelFlow] if the collection and emission of the flow are to be separated into multiple coroutines.
+ * It encapsulates all the context preservation work and allows you to focus on your
+ * domain-specific problem, rather than invariant implementation details.
+ * It is possible to use any combination of coroutine builders from within [channelFlow].
+ *
+ * If you are looking for the performance and are sure that no concurrent emits and context jumps will happen,
+ * [flow] builder alongside with [coroutineScope] or [supervisorScope] can be used instead:
+ *  - Scoped primitive should be used to provide a [CoroutineScope].
+ *  - Changing the context of emission is prohibited, no matter whether it is `withContext(ctx)` or
+ *    builder argument (e.g. `launch(ctx)`).
+ *  - Collecting another flow from a separate context is allowed, but it has the same effect as
+ *    [flowOn] operator on that flow, which is more efficient.
+ *
+ * Flow is [Reactive Streams](http://www.reactive-streams.org/) compliant, you can safely interop it with
+ * reactive streams using [Flow.asPublisher] and [Publisher.asFlow] from kotlinx-coroutines-reactive module.
+ */
+@ExperimentalCoroutinesApi
+public interface Flow<out T> {
+
+    /**
+     * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
+     * This method should never be implemented or used directly.
+     *
+     * The only way to implement flow interface directly is to extend [AbstractFlow].
+     * To collect it into the specific collector, either `collector.emitAll(flow)` or `collect { }` extension should be used.
+     * Such limitation ensures that context preservation property is not violated and prevents most of the developer mistakes
+     * related to concurrency, inconsistent flow dispatchers and cancellation.
+     */
+    @InternalCoroutinesApi
+    public suspend fun collect(collector: FlowCollector<T>)
+}
+
+/**
+ * Base class to extend to have a stateful implementation of the flow.
+ * It tracks all the properties required for context preservation and throws [IllegalStateException] if any of the properties are violated.
+ * Example of the implementation:
+ * ```
+ * // list.asFlow() + collect counter
+ * class CountingListFlow(private val values: List<Int>) : AbstractFlow<Int>() {
+ *     private val collectedCounter = AtomicInteger(0)
+ *
+ *     override suspend fun collectSafely(collector: FlowCollector<Int>) {
+ *         collectedCounter.incrementAndGet() // Increment collected counter
+ *         values.forEach { // Emit all the values
+ *             collector.emit(it)
+ *         }
+ *     }
+ *
+ *     fun toDiagnosticString(): String = "Flow with values $values was collected ${collectedCounter.value} times"
+ * }
+ * ```
  */
 @FlowPreview
-public interface Flow<out T> {
+public abstract class AbstractFlow<T> : Flow<T> {
+
+    @InternalCoroutinesApi
+    public final override suspend fun collect(collector: FlowCollector<T>) {
+        collectSafely(SafeCollector(collector, collectContext = coroutineContext))
+    }
 
     /**
      * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
@@ -87,23 +161,12 @@ public interface Flow<out T> {
      * A valid implementation of this method has the following constraints:
      * 1) It should not change the coroutine context (e.g. with `withContext(Dispatchers.IO)`) when emitting values.
      *    The emission should happen in the context of the [collect] call.
+     *    Please refer to the top-level [Flow] documentation for more details.
+     * 2) It should serialize calls to [emit][FlowCollector.emit] as [FlowCollector] implementations are not
+     *    thread-safe by default.
+     *    To automatically serialize emissions [channelFlow] builder can be used instead of [flow]
      *
-     * Only coroutine builders that inherit the context are allowed, for example:
-     * ```
-     * class MyFlow : Flow<Int> {
-     *     override suspend fun collect(collector: FlowCollector<Int>) {
-     *         coroutineScope {
-     *             // Context is inherited
-     *             launch { // Dispatcher is not overridden, fine as well
-     *                 collector.emit(42) // Emit from the launched coroutine
-     *             }
-     *         }
-     *     }
-     * }
-     * ```
-     * is a proper [Flow] implementation, but using `launch(Dispatchers.IO)` is not.
-     *
-     * 2) It should serialize calls to [emit][FlowCollector.emit] as [FlowCollector] implementations are not thread safe by default.
+     * @throws IllegalStateException if any of the invariants are violated.
      */
-    public suspend fun collect(collector: FlowCollector<T>)
+    public abstract suspend fun collectSafely(collector: FlowCollector<T>)
 }

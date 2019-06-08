@@ -28,8 +28,15 @@ internal open class ChannelCoroutine<E>(
     }
 
     override fun cancelInternal(cause: Throwable?): Boolean {
-        _channel.cancel(cause?.toCancellationException()) // cancel the channel
-        cancelCoroutine(cause) // cancel the job
+        val exception = cause?.toCancellationException()
+            ?: JobCancellationException("$classSimpleName was cancelled", null, this)
+        _channel.cancel(exception) // cancel the channel
+        cancelCoroutine(exception) // cancel the job
         return true // does not matter - result is used in DEPRECATED functions only
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    suspend fun sendFair(element: E) {
+        (_channel as AbstractSendChannel<E>).sendFair(element)
     }
 }

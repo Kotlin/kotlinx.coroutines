@@ -48,8 +48,6 @@ internal actual class JobCancellationException public actual constructor(
         (message!!.hashCode() * 31 + job.hashCode()) * 31 + (cause?.hashCode() ?: 0)
 }
 
-internal actual class CoroutinesInternalError actual constructor(message: String, cause: Throwable) : Error(message.withCause(cause))
-
 @Suppress("FunctionName")
 internal fun IllegalStateException(message: String, cause: Throwable?) =
     IllegalStateException(message.withCause(cause))

@@ -71,7 +71,7 @@ public fun <T> Flow<T>.publishOn(context: CoroutineContext): Flow<T> = error("Sh
  *     .doOnEach { value -> println("Processing $value in computation")
  *     .subscribe()
  * ```
- * has the following Flow equivalents:
+ * has the following Flow equivalent:
  * ```
  * withContext(Dispatchers.Default) {
  *     flow
@@ -82,25 +82,10 @@ public fun <T> Flow<T>.publishOn(context: CoroutineContext): Flow<T> = error("Sh
  *        }
  * }
  * ```
- * or
- *
- * ```
- *  withContext(Dispatchers.Default) {
- *     flow
- *        .flowWith(Dispatchers.IO) { map { value -> println("Doing map in IO"); value } }
- *        .collect { value ->
- *             println("Processing $value in computation")
- *        }
- * }
- * ```
- *
- * The difference is that [flowWith] encapsulates ("preserves") the context within its lambda
- * while [flowOn] changes the context of all preceding operators.
- * Opposed to subscribeOn, it it **possible** to use multiple `flowOn` operators in the one flow.
- *
+ * Opposed to subscribeOn, it it **possible** to use multiple `flowOn` operators in the one flow
  * @suppress
  */
-@Deprecated(message = "Use flowWith or flowOn instead", level = DeprecationLevel.ERROR)
+@Deprecated(message = "Use flowOn instead", level = DeprecationLevel.ERROR)
 public fun <T> Flow<T>.subscribeOn(context: CoroutineContext): Flow<T> = error("Should not be called")
 
 /** @suppress **/
@@ -132,7 +117,6 @@ public fun <T> Flow<T>.onErrorResume(fallback: Flow<T>): Flow<T> = error("Should
 @Suppress("UNUSED_PARAMETER", "UNUSED", "DeprecatedCallableAddReplaceWith")
 @Deprecated(message = "withContext in flow body is deprecated, use flowOn instead", level = DeprecationLevel.ERROR)
 public fun <T, R> FlowCollector<T>.withContext(context: CoroutineContext, block: suspend () -> R): Unit = error("Should not be called")
-
 
 /**
  * `subscribe` is Rx-specific API that has no direct match in flows.
@@ -209,3 +193,56 @@ public fun <T> Flow<Flow<T>>.merge(): Flow<T> = error("Should not be called")
     replaceWith = ReplaceWith("flattenConcat()")
 )
 public fun <T> Flow<Flow<T>>.flatten(): Flow<T> = error("Should not be called")
+
+/**
+ * Kotlin has a built-in generic mechanism for making chained calls.
+ * If you wish to write something like
+ * ```
+ * myFlow.compose(MyFlowExtensions.ignoreErrors()).collect { ... }
+ * ```
+ * you can replace it with
+ *
+ * ```
+ * myFlow.let(MyFlowExtensions.ignoreErrors()).collect { ... }
+ * ```
+ *
+ * @suppress
+ */
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Kotlin analogue of compose is 'let'",
+    replaceWith = ReplaceWith("let(transformer)")
+)
+public fun <T, R> Flow<T>.compose(transformer: Flow<T>.() -> Flow<R>): Flow<R> = error("Should not be called")
+
+/**
+ * @suppress
+ */
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Kotlin analogue of 'skip' is 'drop'",
+    replaceWith = ReplaceWith("drop(count)")
+)
+public fun <T> Flow<T>.skip(count: Int): Flow<T> = error("Should not be called")
+
+/**
+ * Flow extension to iterate over elements is [collect].
+ * Foreach wasn't introduced deliberately to avoid confusion.
+ * Flow is not a collection, iteration over it may be not idempotent
+ * and can *launch* computations with side-effects.
+ * This behaviour is not reflected in [forEach] name.
+ * @suppress
+ */
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'forEach' is 'collect'",
+    replaceWith = ReplaceWith("collect(block)")
+)
+public fun <T> Flow<T>.forEach(action: suspend (value: T) -> Unit): Unit = error("Should not be called")
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow has less verbose 'scan' shortcut",
+    replaceWith = ReplaceWith("scan(initial, operation)")
+)
+public fun <T, R> Flow<T>.scanFold(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = error("Should not be called")

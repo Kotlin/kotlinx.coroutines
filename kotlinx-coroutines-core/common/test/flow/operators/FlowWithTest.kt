@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION")
 class FlowWithTest : TestBase() {
 
     private fun mapper(name: String, index: Int): suspend (Int) -> Int = {
@@ -197,5 +198,34 @@ class FlowWithTest : TestBase() {
         job.cancelAndJoin()
         ensureActive()
         finish(5)
+    }
+
+    @Test
+    fun testTimeoutException() = runTest {
+        val flow = flow {
+            emit(1)
+            yield()
+            withTimeout(-1) {}
+            emit(42)
+        }.flowWith(NamedDispatchers("foo")) {
+            onEach { expect(1) }
+        }
+        assertFailsWith<TimeoutCancellationException>(flow)
+        finish(2)
+    }
+
+    @Test
+    fun testTimeoutExceptionDownstream() = runTest {
+        val flow = flow {
+            emit(1)
+            hang { expect(2) }
+        }.flowWith(NamedDispatchers("foo")) {
+            onEach {
+                expect(1)
+                withTimeout(-1) {}
+            }
+        }
+        assertFailsWith<TimeoutCancellationException>(flow)
+        finish(3)
     }
 }

@@ -169,20 +169,25 @@ class SampleTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamError() = runTest {
+    fun testUpstreamError() = testUpstreamError(TestException())
+
+    @Test
+    fun testUpstreamErrorCancellationException() = testUpstreamError(CancellationException(""))
+
+    private inline fun <reified T: Throwable> testUpstreamError(cause: T) = runTest {
         val latch = Channel<Unit>()
         val flow = flow {
             expect(1)
             emit(1)
             expect(2)
             latch.receive()
-            throw TestException()
+            throw cause
         }.sample(1).map {
             latch.send(Unit)
             hang { expect(3) }
         }
 
-        assertFailsWith<TestException>(flow)
+        assertFailsWith<T>(flow)
         finish(4)
     }
 
@@ -219,7 +224,6 @@ class SampleTest : TestBase() {
         finish(3)
     }
 
-
     @Test
     fun testUpstreamErrorSampleNotTriggeredInIsolatedContext() = runTest {
         val flow = flow {
@@ -227,10 +231,8 @@ class SampleTest : TestBase() {
             emit(1)
             expect(2)
             throw TestException()
-        }.flowWith(NamedDispatchers("unused")) {
-            sample(Long.MAX_VALUE).map {
-                expectUnreached()
-            }
+        }.flowOn(NamedDispatchers("unused")).sample(Long.MAX_VALUE).map {
+            expectUnreached()
         }
 
         assertFailsWith<TestException>(flow)

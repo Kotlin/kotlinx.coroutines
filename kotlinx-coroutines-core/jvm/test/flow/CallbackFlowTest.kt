@@ -10,7 +10,7 @@ import org.junit.Test
 import kotlin.concurrent.*
 import kotlin.test.*
 
-class FlowFromChannelTest : TestBase() {
+class CallbackFlowTest : TestBase() {
 
     private class CallbackApi(val block: (SendChannel<Int>) -> Unit) {
         var started = false
@@ -39,9 +39,9 @@ class FlowFromChannelTest : TestBase() {
             runCatching {  it.offer(++i) }
         }
 
-        val flow = flowViaChannel<Int> { channel ->
+        val flow = channelFlow<Int> {
             api.start(channel)
-            channel.invokeOnClose {
+            awaitClose {
                 api.stop()
             }
         }
@@ -83,9 +83,9 @@ class FlowFromChannelTest : TestBase() {
             }
         }
 
-        val flow = flowViaChannel<Int> { channel ->
+        val flow = channelFlow<Int> {
             api.start(channel)
-            channel.invokeOnClose {
+            awaitClose {
                 api.stop()
             }
         }
@@ -105,5 +105,23 @@ class FlowFromChannelTest : TestBase() {
         api.thread.join()
         assertTrue(api.started)
         assertTrue(api.stopped)
+    }
+
+
+    @Test
+    fun testMergeExample() = runTest {
+        // Too slow on JS
+        withContext(Dispatchers.Default) {
+            val f1 = (1..10_000).asFlow()
+            val f2 = (10_001..20_000).asFlow()
+            assertEquals((1..20_000).toSet(), f1.merge(f2).toSet())
+        }
+    }
+
+    private fun Flow<Int>.merge(other: Flow<Int>): Flow<Int> = channelFlow {
+        launch {
+            collect { send(it) }
+        }
+        other.collect { send(it) }
     }
 }

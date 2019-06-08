@@ -205,12 +205,6 @@ We have two of them in this code and that is why we see "Begin" printed twice.
 In Rx lingo this is called a _cold_ publisher. Many standard Rx operators produce cold streams, too. We can collect
 them from a coroutine, and every collector gets the same stream of elements.
 
-**WARNING**: It is planned that in the future a second invocation of `consumeEach` method
-on an channel that is already being consumed is going to fail fast, that is
-immediately throw an `IllegalStateException`.
-See [this issue](https://github.com/Kotlin/kotlinx.coroutines/issues/167)
-for details.
-
 > Note that we can replicate the same behaviour that we saw with channels by using Rx 
 [publish](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#publish()) 
 operator and [connect](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/flowables/ConnectableFlowable.html#connect())

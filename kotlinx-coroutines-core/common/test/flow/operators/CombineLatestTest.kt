@@ -6,11 +6,14 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlin.test.*
+import kotlinx.coroutines.flow.combineLatest as combineLatestOriginal
 
 /*
  * Replace:  { i, j -> i + j } ->  { i, j -> i + j } as soon as KT-30991 is fixed
  */
-class CombineLatestTest : TestBase() {
+abstract class CombineLatestTestBase : TestBase() {
+
+    abstract fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R>
 
     @Test
     fun testCombineLatest() = runTest {
@@ -130,12 +133,11 @@ class CombineLatestTest : TestBase() {
             emit(1)
             assertEquals("second", NamedDispatchers.name())
             expect(3)
-        }.flowOn(NamedDispatchers("second")).flowWith(NamedDispatchers("with")) {
-            onEach {
-                assertEquals("with", NamedDispatchers.name())
+        }.flowOn(NamedDispatchers("second"))
+            .onEach {
+                assertEquals("onEach", NamedDispatchers.name())
                 expect(4)
-            }
-        }
+            }.flowOn(NamedDispatchers("onEach"))
 
         val value = withContext(NamedDispatchers("main")) {
             f1.combineLatest(f2) { i, j ->
@@ -196,5 +198,52 @@ class CombineLatestTest : TestBase() {
         finish(2)
     }
 
-    private suspend fun sum(s: String?, i: Int?) = s + i
+    @Test
+    fun testCancellationExceptionUpstream() = runTest {
+        val f1 = flow {
+            expect(1)
+            emit(1)
+            throw CancellationException("")
+        }
+        val f2 = flow {
+            emit(1)
+            hang { expect(3) }
+        }
+
+        val flow = f1.combineLatest(f2, { _, _ -> 1 }).onEach { expect(2) }
+        assertFailsWith<CancellationException>(flow)
+        finish(4)
+    }
+
+    @Test
+    fun testCancellationExceptionDownstream() = runTest {
+        val f1 = flow {
+            emit(1)
+            expect(2)
+            hang { expect(5) }
+        }
+        val f2 = flow {
+            emit(1)
+            expect(3)
+            hang { expect(6) }
+        }
+
+        val flow = f1.combineLatest(f2, { _, _ -> 1 }).onEach {
+            expect(1)
+            yield()
+            expect(4)
+            throw CancellationException("")
+        }
+        assertFailsWith<CancellationException>(flow)
+        finish(7)
+    }
+}
+
+class CombineLatestTest : CombineLatestTestBase() {
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = combineLatestOriginal(other, transform)
+}
+
+class CombineLatestVarargAdapterTest : CombineLatestTestBase() {
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
+        (this as Flow<*>).combineLatestOriginal(other) { args: Array<Any?> -> transform(args[0] as T1, args[1] as T2) }
 }

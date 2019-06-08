@@ -7,11 +7,6 @@ import java.util.jar.*
 import java.util.zip.*
 
 /**
- * Name of the boolean property that enables using of [FastServiceLoader].
- */
-private const val FAST_SERVICE_LOADER_PROPERTY_NAME = "kotlinx.coroutines.fast.service.loader"
-
-/**
  * A simplified version of [ServiceLoader].
  * FastServiceLoader locates and instantiates all service providers named in configuration
  * files placed in the resource directory <tt>META-INF/services</tt>.
@@ -25,12 +20,7 @@ private const val FAST_SERVICE_LOADER_PROPERTY_NAME = "kotlinx.coroutines.fast.s
 internal object FastServiceLoader {
     private const val PREFIX: String = "META-INF/services/"
 
-    private val FAST_SERVICE_LOADER_ENABLED = systemProp(FAST_SERVICE_LOADER_PROPERTY_NAME, true)
-
     internal fun <S> load(service: Class<S>, loader: ClassLoader): List<S> {
-        if (!FAST_SERVICE_LOADER_ENABLED) {
-            return ServiceLoader.load(service, loader).toList()
-        }
         return try {
             loadProviders(service, loader)
         } catch (e: Throwable) {
@@ -62,15 +52,34 @@ internal object FastServiceLoader {
             val pathToJar = path.substringAfter("jar:file:").substringBefore('!')
             val entry = path.substringAfter("!/")
             // mind the verify = false flag!
-            (JarFile(pathToJar, false) as Closeable).use { file ->
-                BufferedReader(InputStreamReader((file as JarFile).getInputStream(ZipEntry(entry)), "UTF-8")).use { r ->
+            (JarFile(pathToJar, false)).use { file ->
+                BufferedReader(InputStreamReader(file.getInputStream(ZipEntry(entry)), "UTF-8")).use { r ->
                     return parseFile(r)
                 }
             }
         }
-        // Regular path for everything elese
+        // Regular path for everything else
         return BufferedReader(InputStreamReader(url.openStream())).use { reader ->
             parseFile(reader)
+        }
+    }
+
+    // JarFile does no implement Closesable on Java 1.6
+    private inline fun <R> JarFile.use(block: (JarFile) -> R): R {
+        var cause: Throwable? = null
+        try {
+            return block(this)
+        } catch (e: Throwable) {
+            cause = e
+            throw e
+        } finally {
+            try {
+                close()
+            } catch (closeException: Throwable) {
+                if (cause === null) throw closeException
+                cause.addSuppressed(closeException)
+                throw cause
+            }
         }
     }
 

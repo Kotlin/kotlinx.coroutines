@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
 /**
  * Delays the emission of values from this flow for the given [timeMillis].
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.delayFlow(timeMillis: Long): Flow<T> = flow {
     delay(timeMillis)
     collect(this@flow)
@@ -26,7 +26,7 @@ public fun <T> Flow<T>.delayFlow(timeMillis: Long): Flow<T> = flow {
 /**
  * Delays each element emitted by the given flow for the given [timeMillis].
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = flow {
     collect { value ->
         delay(timeMillis)
@@ -58,41 +58,36 @@ public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = flow {
  * Note that the resulting flow does not emit anything as long as the original flow emits
  * items faster than every [timeoutMillis] milliseconds.
  */
+@FlowPreview
 public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
     require(timeoutMillis > 0) { "Debounce timeout should be positive" }
-    return flow {
-        coroutineScope {
-            val values = Channel<Any?>(Channel.CONFLATED) // Actually Any, KT-30796
-            // Channel is not closed deliberately as there is no close with value
-            val collector = launch {
-                try {
-                    collect { value -> values.send(value ?: NullSurrogate) }
-                } catch (e: Throwable) {
-                    values.close(e) // Workaround for #1130
-                    throw e
+    return scopedFlow { downstream ->
+        val values = Channel<Any?>(Channel.CONFLATED) // Actually Any, KT-30796
+        // Channel is not closed deliberately as there is no close with value
+        val collector = async {
+            collect { value -> values.send(value ?: NULL) }
+        }
+
+        var isDone = false
+        var lastValue: Any? = null
+        while (!isDone) {
+            select<Unit> {
+                values.onReceive {
+                    lastValue = it
                 }
-            }
 
-            var isDone = false
-            var lastValue: Any? = null
-            while (!isDone) {
-                select<Unit> {
-                    values.onReceive {
-                        lastValue = it
+                lastValue?.let { value ->
+                    // set timeout when lastValue != null
+                    onTimeout(timeoutMillis) {
+                        lastValue = null // Consume the value
+                        downstream.emit(NULL.unbox(value))
                     }
+                }
 
-                    lastValue?.let { value -> // set timeout when lastValue != null
-                        onTimeout(timeoutMillis) {
-                            lastValue = null // Consume the value
-                            emit(NullSurrogate.unbox(value))
-                        }
-                    }
-
-                    // Close with value 'idiom'
-                    collector.onJoin {
-                        if (lastValue != null) emit(NullSurrogate.unbox(lastValue))
-                        isDone = true
-                    }
+                // Close with value 'idiom'
+                collector.onAwait {
+                    if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
+                    isDone = true
                 }
             }
         }
@@ -115,7 +110,40 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
  * 
  * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
+@FlowPreview
 public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
+    require(periodMillis > 0) { "Sample period should be positive" }
+    return scopedFlow { downstream ->
+        val values = produce<Any?>(capacity = Channel.CONFLATED) {
+            // Actually Any, KT-30796
+            collect { value -> send(value ?: NULL) }
+        }
+
+        var isDone = false
+        var lastValue: Any? = null
+        val ticker = fixedPeriodTicker(periodMillis)
+        while (!isDone) {
+            select<Unit> {
+                values.onReceiveOrNull {
+                    if (it == null) {
+                        ticker.cancel(ChildCancelledException())
+                        isDone = true
+                    } else {
+                        lastValue = it
+                    }
+                }
+
+                // todo: shall be start sampling only when an element arrives or sample aways as here?
+                ticker.onReceive {
+                    val value = lastValue ?: return@onReceive
+                    lastValue = null // Consume the value
+                    downstream.emit(NULL.unbox(value))
+                }
+            }
+        }
+    }
+}
+/*
     return sampleBy(flow {
         delay(periodMillis)
         while (true) {
@@ -123,7 +151,7 @@ public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
             delay(periodMillis)
         }
     })
-}
+ */
 
 /**
  * Returns a flow that emits only the latest value emitted by the original flow only when the [sampler] emits.
@@ -147,7 +175,7 @@ public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
  *
  * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
-public fun <T, R> Flow<T>.sampleBy(sampler: Flow<R>): Flow<T> {
+public fun <T, R> Flow<T>.sample(sampler: Flow<R>): Flow<T> {
     return flow {
         coroutineScope {
             val values = produce<Any?>(capacity = Channel.CONFLATED) {
@@ -183,6 +211,21 @@ public fun <T, R> Flow<T>.sampleBy(sampler: Flow<R>): Flow<T> {
                     }
                 }
             }
+        }
+    }
+}
+
+/*
+ * TODO this design (and design of the corresponding operator) depends on #540
+ */
+internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMillis: Long = delayMillis): ReceiveChannel<Unit> {
+    require(delayMillis >= 0) { "Expected non-negative delay, but has $delayMillis ms" }
+    require(initialDelayMillis >= 0) { "Expected non-negative initial delay, but has $initialDelayMillis ms" }
+    return produce(capacity = 0) {
+        delay(initialDelayMillis)
+        while (true) {
+            channel.send(Unit)
+            delay(delayMillis)
         }
     }
 }

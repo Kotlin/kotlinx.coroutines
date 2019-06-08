@@ -33,6 +33,6 @@ class BroadcastChannelFactoryTest : TestBase() {
 
     @Test
     fun testInvalidCapacityNotSupported() {
-        assertFailsWith<IllegalArgumentException> { BroadcastChannel<Int>(-2) }
+        assertFailsWith<IllegalArgumentException> { BroadcastChannel<Int>(-3) }
     }
 }

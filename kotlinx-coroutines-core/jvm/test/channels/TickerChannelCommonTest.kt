@@ -48,8 +48,7 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
 
             delayChannel.cancel()
             delay(5100)
-            delayChannel.checkEmpty()
-            delayChannel.cancel()
+            assertFailsWith<CancellationException> { delayChannel.poll() }
         }
     }
 

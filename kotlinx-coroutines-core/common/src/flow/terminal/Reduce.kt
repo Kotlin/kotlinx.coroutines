@@ -4,6 +4,7 @@
 
 @file:JvmMultifileClass
 @file:JvmName("FlowKt")
+@file:Suppress("UNCHECKED_CAST")
 
 package kotlinx.coroutines.flow
 
@@ -16,12 +17,12 @@ import kotlin.jvm.*
  * Accumulates value starting with the first element and applying [operation] to current accumulator value and each element.
  * Throws [UnsupportedOperationException] if flow was empty.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public suspend fun <S, T : S> Flow<T>.reduce(operation: suspend (accumulator: S, value: T) -> S): S {
-    var accumulator: Any? = NullSurrogate
+    var accumulator: Any? = NULL
 
     collect { value ->
-        accumulator = if (accumulator !== NullSurrogate) {
+        accumulator = if (accumulator !== NULL) {
             @Suppress("UNCHECKED_CAST")
             operation(accumulator as S, value)
         } else {
@@ -29,7 +30,7 @@ public suspend fun <S, T : S> Flow<T>.reduce(operation: suspend (accumulator: S,
         }
     }
 
-    if (accumulator === NullSurrogate) throw UnsupportedOperationException("Empty flow can't be reduced")
+    if (accumulator === NULL) throw UnsupportedOperationException("Empty flow can't be reduced")
     @Suppress("UNCHECKED_CAST")
     return accumulator as S
 }
@@ -37,10 +38,10 @@ public suspend fun <S, T : S> Flow<T>.reduce(operation: suspend (accumulator: S,
 /**
  * Accumulates value starting with [initial] value and applying [operation] current accumulator value and each element
  */
-@FlowPreview
-public suspend fun <T, R> Flow<T>.fold(
+@ExperimentalCoroutinesApi
+public suspend inline fun <T, R> Flow<T>.fold(
     initial: R,
-    operation: suspend (acc: R, value: T) -> R
+    crossinline operation: suspend (acc: R, value: T) -> R
 ): R {
     var accumulator = initial
     collect { value ->
@@ -50,28 +51,28 @@ public suspend fun <T, R> Flow<T>.fold(
 }
 
 /**
- * Terminal operator, that awaits for one and only one value to be published.
+ * The terminal operator, that awaits for one and only one value to be published.
  * Throws [NoSuchElementException] for empty flow and [IllegalStateException] for flow
  * that contains more than one element.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.single(): T {
-    var result: Any? = NullSurrogate
+    var result: Any? = NULL
     collect { value ->
-        if (result !== NullSurrogate) error("Expected only one element")
+        if (result !== NULL) error("Expected only one element")
         result = value
     }
 
-    if (result === NullSurrogate) throw NoSuchElementException("Expected at least one element")
+    if (result === NULL) throw NoSuchElementException("Expected at least one element")
     @Suppress("UNCHECKED_CAST")
     return result as T
 }
 
 /**
- * Terminal operator, that awaits for one and only one value to be published.
+ * The terminal operator, that awaits for one and only one value to be published.
  * Throws [IllegalStateException] for flow that contains more than one element.
  */
-@FlowPreview
+@ExperimentalCoroutinesApi
 public suspend fun <T: Any> Flow<T>.singleOrNull(): T? {
     var result: T? = null
     collect { value ->
@@ -80,4 +81,46 @@ public suspend fun <T: Any> Flow<T>.singleOrNull(): T? {
     }
 
     return result
+}
+
+/**
+ * The terminal operator that returns the first element emitted by the flow and then cancels flow's collection.
+ * Throws [NoSuchElementException] if the flow was empty.
+ */
+@ExperimentalCoroutinesApi
+public suspend fun <T> Flow<T>.first(): T {
+    var result: Any? = NULL
+    try {
+        collect { value ->
+            result = value
+            throw AbortFlowException()
+        }
+    } catch (e: AbortFlowException) {
+        // Do nothing
+    }
+
+    if (result === NULL) throw NoSuchElementException("Expected at least one element")
+    return result as T
+}
+
+/**
+ * The terminal operator that returns the first element emitted by the flow matching the given [predicate] and then cancels flow's collection.
+ * Throws [NoSuchElementException] if the flow has not contained elements matching the [predicate].
+ */
+@ExperimentalCoroutinesApi
+public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
+    var result: Any? = NULL
+    try {
+        collect { value ->
+            if (predicate(value)) {
+                result = value
+                throw AbortFlowException()
+            }
+        }
+    } catch (e: AbortFlowException) {
+        // Do nothing
+    }
+
+    if (result === NULL) throw NoSuchElementException("Expected at least one element matching the predicate $predicate")
+    return result as T
 }
