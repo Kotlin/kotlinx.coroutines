@@ -20,8 +20,8 @@ class GuideReactiveTest : ReactiveTestBase() {
 
 # Guide to reactive streams with coroutines
 
-This guide explains key differences between Kotlin coroutines and reactive streams and shows 
-how they can be used together for greater good. Prior familiarity with basic coroutine concepts
+This guide explains the key differences between Kotlin coroutines and reactive streams and shows 
+how they can be used together for the greater good. Prior familiarity with the basic coroutine concepts
 that are covered in [Guide to kotlinx.coroutines](../docs/coroutines-guide.md) is not required, 
 but is a big plus. If you are familiar with reactive streams, you may find this guide
 a better introduction into the world of coroutines.
@@ -130,18 +130,18 @@ Again:
 
 <!--- TEST -->
 
-Notice, how "Begin" line was printed just once, because [produce] _coroutine builder_, when it is executed,
+Notice how the "Begin" line was printed just once, because the [produce] _coroutine builder_, when it is executed,
 launches one coroutine to produce a stream of elements. All the produced elements are consumed 
 with [ReceiveChannel.consumeEach][consumeEach] 
 extension function. There is no way to receive the elements from this
-channel again. The channel is closed when the producer coroutine is over and the attempt to receive 
+channel again. The channel is closed when the producer coroutine is over and an attempt to receive 
 from it again cannot receive anything.
 
-Let us rewrite this code using [publish] coroutine builder from `kotlinx-coroutines-reactive` module
+Let us rewrite this code using the [publish] coroutine builder from `kotlinx-coroutines-reactive` module
 instead of [produce] from `kotlinx-coroutines-core` module. The code stays the same, 
-but where `source` used to have [ReceiveChannel] type, it now has reactive streams 
+but where `source` used to have the [ReceiveChannel] type, it now has the reactive streams' 
 [Publisher](https://www.reactive-streams.org/reactive-streams-1.0.0-javadoc/org/reactivestreams/Publisher.html) 
-type, where [consumeEach] was used to _consume_ elements from the channel, 
+type, and where [consumeEach] was used to _consume_ elements from the channel, 
 now [collect][org.reactivestreams.Publisher.collect] is used to _collect_ elements from the publisher. 
 
 <!--- INCLUDE
@@ -198,11 +198,11 @@ functional concept. While the channel _is_ a stream of elements, the reactive st
 elements is produced. It becomes the actual stream of elements when _collected_. Each collector may receive the same or
 a different stream of elements, depending on how the corresponding implementation of `Publisher` works.
 
-The [publish] coroutine builder, that is used in the above example, does not launch a coroutine,
-but every [collect][org.reactivestreams.Publisher.collect] invocation launches a coroutine.
-We have two of them in this code and that is why we see "Begin" printed twice. 
+The [publish] coroutine builder used in the above example does not launch a coroutine,
+but every [collect][org.reactivestreams.Publisher.collect] invocation does.
+There are two of them here and that is why we see "Begin" printed twice. 
 
-In Rx lingo this is called a _cold_ publisher. Many standard Rx operators produce cold streams, too. We can collect
+In Rx lingo, this kind of publisher is called _cold_. Many standard Rx operators produce cold streams, too. We can collect
 them from a coroutine, and every collector gets the same stream of elements.
 
 > Note that we can replicate the same behaviour that we saw with channels by using Rx 
@@ -212,10 +212,10 @@ method with it.
 
 ### Subscription and cancellation
 
-An example in the previous section uses `source.collect { ... }` to collect all elements. 
-Instead of collecting elements, we can open a channel using [openSubscription][org.reactivestreams.Publisher.openSubscription]
-and iterate over it, so that we have more finer-grained control on our iteration, 
-for example using `break`, as shown below:
+In the second example from the previous section, `source.collect { ... }` was used to collect all elements. 
+Instead, we can open a channel using [openSubscription][org.reactivestreams.Publisher.openSubscription]
+and iterate over it. In this way, we can have finer-grained control over our iteration 
+(using `break`, for example), as shown below:
 
 <!--- INCLUDE
 import io.reactivex.*
@@ -256,8 +256,8 @@ Finally
 <!--- TEST -->
 
 With an explicit `openSubscription` we should [cancel][ReceiveChannel.cancel] the corresponding 
-subscription to unsubscribe from the source, but there is no need to call `cancel` explicitly -- under the hood
-[consume] does that for us.
+subscription to unsubscribe from the source, but there is no need to call `cancel` explicitly -- 
+[consume] does that for us under the hood.
 The installed 
 [doFinally](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#doFinally(io.reactivex.functions.Action))
 listener prints "Finally" to confirm that the subscription is actually being closed. Note that "OnComplete"
@@ -300,9 +300,9 @@ Finally
 
 <!--- TEST -->
 
-Notice, how "OnComplete" and "Finally" are printed before the last element "5". It happens because our `main` function in this
-example is a coroutine that we start with [runBlocking] coroutine builder.
-Our main coroutine receives on the flowable using `source.collect { ... }` expression.
+Notice how "OnComplete" and "Finally" are printed before the last element "5". It happens because our `main` function in this
+example is a coroutine that we start with the [runBlocking] coroutine builder.
+Our main coroutine receives on the flowable using the `source.collect { ... }` expression.
 The main coroutine is _suspended_ while it waits for the source to emit an item.
 When the last item is emitted by `Flowable.range(1, 5)` it
 _resumes_ the main coroutine, which gets dispatched onto the main thread to print this
@@ -313,14 +313,14 @@ _resumes_ the main coroutine, which gets dispatched onto the main thread to prin
 Backpressure is one of the most interesting and complex aspects of reactive streams. Coroutines can 
 _suspend_ and they provide a natural answer to handling backpressure. 
 
-In Rx Java 2.x a backpressure-capable class is called 
+In Rx Java 2.x, the backpressure-capable class is called 
 [Flowable](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html).
-In the following example we use [rxFlowable] coroutine builder from `kotlinx-coroutines-rx2` module to define a 
+In the following example, we use [rxFlowable] coroutine builder from `kotlinx-coroutines-rx2` module to define a 
 flowable that sends three integers from 1 to 3. 
-It prints a message to the output before invocation of
+It prints a message to the output before invocation of the
 suspending [send][SendChannel.send] function, so that we can study how it operates.
 
-The integers are generated in the context of the main thread, but subscription is shifted 
+The integers are generated in the context of the main thread, but the subscription is shifted 
 to another thread using Rx
 [observeOn](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#observeOn(io.reactivex.Scheduler,%20boolean,%20int))
 operator with a buffer of size 1. 
@@ -370,14 +370,14 @@ Complete
 
 <!--- TEST -->
 
-We see here how producer coroutine puts the first element in the buffer and is suspended while trying to send another 
-one. Only after consumer processes the first item, producer sends the second one and resumes, etc.
+We see here how the producer coroutine puts the first element in the buffer and is suspended while trying to send another 
+one. Only after the consumer processes the first item, the producer sends the second one and resumes, etc.
 
 
 ### Rx Subject vs BroadcastChannel
  
 RxJava has a concept of [Subject](https://github.com/ReactiveX/RxJava/wiki/Subject) which is an object that
-effectively broadcasts elements to all its subscribers. The matching concept in coroutines world is called a 
+effectively broadcasts elements to all its subscribers. The matching concept in the coroutines world is called a 
 [BroadcastChannel]. There is a variety of subjects in Rx with 
 [BehaviorSubject](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/BehaviorSubject.html) being
 the one used to manage state:
@@ -445,7 +445,7 @@ four
 
 <!--- TEST -->
 
-Here we use [Dispatchers.Unconfined] coroutine context to launch consuming coroutine with the same behaviour as subscription in Rx. 
+Here we use the [Dispatchers.Unconfined] coroutine context to launch a consuming coroutine with the same behavior as subscription in Rx. 
 It basically means that the launched coroutine is going to be immediately executed in the same thread that 
 is emitting elements. Contexts are covered in more details in a [separate section](#coroutine-context).
 
@@ -453,7 +453,7 @@ The advantage of coroutines is that it is easy to get conflation behavior for si
 A typical UI application does not need to react to every state change. Only the most recent state is relevant.
 A sequence of back-to-back updates to the application state needs to get reflected in UI only once, 
 as soon as the UI thread is free. For the following example we are going to simulate this by launching 
-consuming coroutine in the context of the main thread and use [yield] function to simulate a break in the 
+a consuming coroutine in the context of the main thread and use the [yield] function to simulate a break in the 
 sequence of updates and to release the main thread:
 
 <!--- INCLUDE
@@ -475,13 +475,13 @@ fun main() = runBlocking<Unit> {
     subject.onNext("three")
     subject.onNext("four")
     yield() // yield the main thread to the launched coroutine <--- HERE
-    subject.onComplete() // now complete subject's sequence to cancel consumer, too    
+    subject.onComplete() // now complete the subject's sequence to cancel the consumer, too    
 }
 ```
 
 > You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-08.kt).
 
-Now coroutine process (prints) only the most recent update:
+Now the coroutine processes (prints) only the most recent update:
 
 ```text
 four
@@ -489,7 +489,7 @@ four
 
 <!--- TEST -->
 
-The corresponding behavior in a pure coroutines world is implemented by [ConflatedBroadcastChannel] 
+The corresponding behavior in the pure coroutines world is implemented by [ConflatedBroadcastChannel] 
 that provides the same logic on top of coroutine channels directly, 
 without going through the bridge to the reactive streams:
 
@@ -511,7 +511,7 @@ fun main() = runBlocking<Unit> {
     broadcast.offer("three")
     broadcast.offer("four")
     yield() // yield the main thread to the launched coroutine
-    broadcast.close() // now close broadcast channel to cancel consumer, too    
+    broadcast.close() // now close the broadcast channel to cancel the consumer, too    
 }
 ```
 
@@ -528,10 +528,10 @@ four
 Another implementation of [BroadcastChannel] is `ArrayBroadcastChannel` with an array-based buffer of
 a specified `capacity`. It can be created with `BroadcastChannel(capacity)`. 
 It delivers every event to every
-subscriber since the moment the corresponding subscription is open. It corresponds to 
+subscriber as soon as their corresponding subscriptions are opened. It corresponds to 
 [PublishSubject](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/PublishSubject.html) in Rx.
 The capacity of the buffer in the constructor of `ArrayBroadcastChannel` controls the numbers of elements
-that can be sent before the sender is suspended waiting for receiver to receive those elements.
+that can be sent before the sender is suspended waiting for a receiver to receive those elements.
 
 ## Operators
 
@@ -545,13 +545,13 @@ Coroutines and channels are designed to provide an opposite experience. There ar
 but processing streams of elements is extremely simple and back-pressure is supported automatically 
 without you having to explicitly think about it.
 
-This section shows coroutine-based implementation of several reactive stream operators.  
+This section shows a coroutine-based implementation of several reactive stream operators.  
 
 ### Range
 
 Let's roll out own implementation of 
 [range](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#range(int,%20int))
-operator for reactive streams `Publisher` interface. The asynchronous clean-slate implementation of this operator for
+operator for the reactive streams' `Publisher` interface. The asynchronous clean-slate implementation of this operator for
 reactive streams is explained in 
 [this blog post](https://akarnokd.blogspot.ru/2017/03/java-9-flow-api-asynchronous-integer.html).
 It takes a lot of code.
@@ -569,11 +569,11 @@ fun CoroutineScope.range(context: CoroutineContext, start: Int, count: Int) = pu
 }
 ```
 
-In this code `CoroutineScope` and `context` are used instead of an `Executor` and all the backpressure aspects are taken care
+Here, `CoroutineScope` and `context` are used instead of an `Executor` and all the backpressure aspects are taken care
 of by the coroutines machinery. Note that this implementation depends only on the small reactive streams library
-that defines `Publisher` interface and its friends.
+that defines the `Publisher` interface and its friends.
 
-It is straightforward to use from a coroutine:
+Using it from a coroutine is straightforward:
 
 ```kotlin
 fun main() = runBlocking<Unit> {
@@ -644,7 +644,7 @@ fun main() = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-operators-02.kt).
 
-It is not hard to see, that the result is going to be:
+It is not hard to see that the result is going to be:
 
 ```text
 2 is even
@@ -657,10 +657,10 @@ It is not hard to see, that the result is going to be:
 
 Let's implement our own version of
 [takeUntil](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#takeUntil(org.reactivestreams.Publisher))
-operator. It is quite a [tricky one](https://akarnokd.blogspot.ru/2015/05/pitfalls-of-operator-implementations.html) 
-to implement, because of the need to track and manage subscription to two streams. 
+operator. It is quite [tricky](https://akarnokd.blogspot.ru/2015/05/pitfalls-of-operator-implementations.html) 
+as subscriptions to two streams need to be tracked and managed. 
 We need to relay all the elements from the source stream until the other stream either completes or 
-emits anything. However, we have [select] expression to rescue us in coroutines implementation:
+emits anything. However, we have the [select] expression to rescue us in the coroutines implementation:
 
 <!--- INCLUDE
 import kotlinx.coroutines.channels.*
@@ -732,7 +732,7 @@ There are always at least two ways for processing multiple streams of data with 
 [select] was shown in the previous example. The other way is just to launch multiple coroutines. Let
 us implement 
 [merge](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#merge(org.reactivestreams.Publisher))
-operator using the later approach:
+operator using the latter approach:
 
 <!--- INCLUDE
 import kotlinx.coroutines.*
@@ -751,16 +751,16 @@ fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = GlobalScope.p
 }
 ```
 
-Notice, the use of 
+Notice the use of 
 [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html)
 in the invocation of [launch] coroutine builder. It is used to refer
 to the context of the enclosing `publish` coroutine. This way, all the coroutines that are
 being launched here are [children](../docs/coroutines-guide.md#children-of-a-coroutine) of the `publish`
 coroutine and will get cancelled when the `publish` coroutine is cancelled or is otherwise completed. 
-Moreover, since parent coroutine waits until all children are complete, this implementation fully
+Moreover, since the parent coroutine waits until all the children are complete, this implementation fully
 merges all the received streams.
 
-For a test, let us start with `rangeWithInterval` function from the previous example and write a 
+For a test, let us start with the `rangeWithInterval` function from the previous example and write a 
 producer that sends its results twice with some delay:
 
 <!--- INCLUDE
@@ -810,7 +810,7 @@ And the results should be:
 
 All the example operators that are shown in the previous section have an explicit
 [CoroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/) 
-parameter. In Rx world it roughly corresponds to 
+parameter. In the Rx world it roughly corresponds to 
 a [Scheduler](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Scheduler.html).
 
 ### Threads with Rx
@@ -988,13 +988,13 @@ The resulting messages are going to be printed in the main thread:
 ### Unconfined context
 
 Most Rx operators do not have any specific thread (scheduler) associated with them and are working 
-in whatever thread that they happen to be invoked in. We've seen it on the example of `subscribe` operator 
+in whatever thread they happen to be invoked. We've seen it in the example with the `subscribe` operator 
 in the [threads with Rx](#threads-with-rx) section.
  
 In the world of coroutines, [Dispatchers.Unconfined] context serves a similar role. Let us modify our previous example,
 but instead of iterating over the source `Flowable` from the `runBlocking` coroutine that is confined 
-to the main thread, we launch a new coroutine in `Dispatchers.Unconfined` context, while the main coroutine
-simply waits its completion using [Job.join]:
+to the main thread, we launch a new coroutine in the `Dispatchers.Unconfined` context, while the main coroutine
+simply waits for its completion using [Job.join]:
 
 <!--- INCLUDE
 import io.reactivex.*
@@ -1024,7 +1024,7 @@ fun main() = runBlocking<Unit> {
 > You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-05.kt).
 
 Now, the output shows that the code of the coroutine is executing in the Rx computation thread pool, just
-like our initial example using Rx `subscribe` operator.
+like our initial example using the Rx `subscribe` operator.
 
 ```text
 1 on thread RxComputationThreadPool-1
@@ -1034,14 +1034,14 @@ like our initial example using Rx `subscribe` operator.
 
 <!--- TEST LINES_START -->
 
-Note that [Dispatchers.Unconfined] context shall be used with care. It may improve the overall performance on certain tests,
+Note that the [Dispatchers.Unconfined] context should be used with care. It may improve the overall performance on certain tests,
 due to the increased stack-locality of operations and less scheduling overhead, but it also produces deeper stacks 
 and makes it harder to reason about asynchronicity of the code that is using it. 
 
 If a coroutine sends an element to a channel, then the thread that invoked the 
-[send][SendChannel.send] may start executing the code of a coroutine with [Dispatchers.Unconfined] dispatcher.
+[send][SendChannel.send] may start executing the code of the coroutine with the [Dispatchers.Unconfined] dispatcher.
 The original producer coroutine that invoked `send`  is paused until the unconfined consumer coroutine hits its next
-suspension point. This is very similar to a lock-step single-threaded `onNext` execution in Rx world in the absense
+suspension point. This is very similar to a lock-step single-threaded `onNext` execution in the Rx world in the absense
 of thread-shifting operators. It is a normal default for Rx, because operators are usually doing very small chunks
 of work and you have to combine many operators for a complex processing. However, this is unusual with coroutines, 
 where you can have an arbitrary complex processing in a coroutine. Usually, you only need to chain stream-processing
