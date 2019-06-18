@@ -1,5 +1,9 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.2.2
+
+* Kotlin updated to 1.3.40.
+
 ## Version 1.2.1
 
 Major:
