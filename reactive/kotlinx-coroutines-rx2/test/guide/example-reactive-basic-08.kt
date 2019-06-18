@@ -21,5 +21,5 @@ fun main() = runBlocking<Unit> {
     subject.onNext("three")
     subject.onNext("four")
     yield() // yield the main thread to the launched coroutine <--- HERE
-    subject.onComplete() // now complete subject's sequence to cancel consumer, too    
+    subject.onComplete() // now complete the subject's sequence to cancel the consumer, too    
 }

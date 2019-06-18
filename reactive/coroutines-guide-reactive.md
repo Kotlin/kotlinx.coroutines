@@ -687,8 +687,7 @@ fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>
 ```
 
 This code is using [whileSelect] as a nicer shortcut to `while(select{...}) {}` loop and Kotlin's
-[use](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.io/use.html) 
-expression to close the channels on exit, which unsubscribes from the corresponding publishers. 
+[consume] expressions to close the channels on exit, which unsubscribes from the corresponding publishers. 
 
 The following hand-written combination of 
 [range](https://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#range(int,%20int)) with 
@@ -751,11 +750,8 @@ fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = GlobalScope.p
 }
 ```
 
-Notice the use of 
-[coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html)
-in the invocation of [launch] coroutine builder. It is used to refer
-to the context of the enclosing `publish` coroutine. This way, all the coroutines that are
-being launched here are [children](../docs/coroutines-guide.md#children-of-a-coroutine) of the `publish`
+Notice that all the coroutines that are
+being launched here are the children of the `publish`
 coroutine and will get cancelled when the `publish` coroutine is cancelled or is otherwise completed. 
 Moreover, since the parent coroutine waits until all the children are complete, this implementation fully
 merges all the received streams.
@@ -1052,7 +1048,6 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
 [Dispatchers.Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-unconfined.html
 [yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/yield.html
-[launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html
 [Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/join.html
 <!--- INDEX kotlinx.coroutines.channels -->
