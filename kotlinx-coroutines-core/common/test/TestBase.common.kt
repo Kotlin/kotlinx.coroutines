@@ -46,7 +46,7 @@ public inline fun <reified T : Throwable> assertFailsWith(block: () -> Unit) {
 
 public suspend inline fun <reified T : Throwable> assertFailsWith(flow: Flow<*>) {
     try {
-        flow.collect { /* Do nothing */ }
+        flow.collect()
         fail("Should be unreached")
     } catch (e: Throwable) {
         assertTrue(e is T)

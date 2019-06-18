@@ -7,30 +7,24 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-class OnErrorTest : TestBase() {
+class CatchTest : TestBase() {
     @Test
-    fun testOnErrorReturn() = runTest {
+    fun testCatchEmit() = runTest {
         val flow = flow {
             emit(1)
             throw TestException()
         }
 
-        assertEquals(42, flow.onErrorReturn(41).sum())
+        assertEquals(42, flow.catch { emit(41) }.sum())
         assertFailsWith<TestException>(flow)
     }
 
     @Test
-    fun testOnErrorReturnPredicate() = runTest {
-        val flow = flow { emit(1); throw TestException() }
-        assertFailsWith<TestException>(flow.onErrorReturn(42) { it !is TestException })
-    }
-
-    @Test
-    fun testOnErrorReturnExceptionFromDownstream() = runTest {
+    fun testCatchEmitExceptionFromDownstream() = runTest {
         var executed = 0
         val flow = flow {
             emit(1)
-        }.onErrorReturn(42).map {
+        }.catch { emit(42) }.map {
             ++executed
             throw TestException()
         }
@@ -40,27 +34,21 @@ class OnErrorTest : TestBase() {
     }
 
     @Test
-    fun testOnErrorCollect() = runTest {
+    fun testCatchEmitAll() = runTest {
         val flow = flow {
             emit(1)
             throw TestException()
-        }.onErrorCollect(flowOf(2))
+        }.catch { emitAll(flowOf(2)) }
 
         assertEquals(3, flow.sum())
     }
 
     @Test
-    fun testOnErrorCollectPredicate() = runTest {
-        val flow = flow { emit(1); throw TestException() }
-        assertFailsWith<TestException>(flow.onErrorCollect(flowOf(2)) { it !is TestException })
-    }
-
-    @Test
-    fun testOnErrorCollectExceptionFromDownstream() = runTest {
+    fun testCatchEmitAllExceptionFromDownstream() = runTest {
         var executed = 0
         val flow = flow {
             emit(1)
-        }.onErrorCollect(flowOf(1, 2, 3)).map {
+        }.catch { emitAll(flowOf(1, 2, 3)) }.map {
             ++executed
             throw TestException()
         }
@@ -70,23 +58,23 @@ class OnErrorTest : TestBase() {
     }
 
     @Test
-    fun testWithTimeoutOnError() = runTest {
+    fun testWithTimeoutCatch() = runTest {
         val flow = flow<Int> {
             withTimeout(1) {
                 hang { expect(1) }
             }
             expectUnreached()
-        }.onErrorReturn(1)
+        }.catch { emit(1) }
 
         assertEquals(1, flow.single())
         finish(2)
     }
 
     @Test
-    fun testCancellationFromUpstreamOnError() = runTest {
+    fun testCancellationFromUpstreamCatch() = runTest {
         val flow = flow<Int> {
             hang {  }
-        }.onErrorCollect(flow { expectUnreached() })
+        }.catch { expectUnreached() }
 
         val job = launch {
             expect(1)

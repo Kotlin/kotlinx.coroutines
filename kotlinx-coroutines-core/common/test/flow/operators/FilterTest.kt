@@ -39,7 +39,7 @@ class FilterTest : TestBase() {
             latch.receive()
             throw TestException()
             true
-        }.onErrorReturn(42)
+        }.catch { emit(42) }
 
         assertEquals(42, flow.single())
         assertTrue(cancelled)
@@ -75,7 +75,7 @@ class FilterTest : TestBase() {
             latch.receive()
             throw TestException()
             true
-        }.onErrorReturn(42)
+        }.catch { emit(42) }
 
         assertEquals(42, flow.single())
         assertTrue(cancelled)

@@ -134,8 +134,8 @@ internal class ChannelFlowOperatorImpl<T>(
 // Now if the underlying collector was accepting concurrent emits, then this one is too
 // todo: we might need to generalize this pattern for "thread-safe" operators that can fuse with channels
 private fun <T> FlowCollector<T>.withUndispatchedContextCollector(emitContext: CoroutineContext): FlowCollector<T> = when (this) {
-    // SendingCollector does not care about the context at all so can be used as it
-    is SendingCollector -> this
+    // SendingCollector & NopCollector do not care about the context at all and can be used as is
+    is SendingCollector, is NopCollector -> this
     // Original collector is concurrent, so wrap into ConcurrentUndispatchedContextCollector (also concurrent)
     is ConcurrentFlowCollector -> ConcurrentUndispatchedContextCollector(this, emitContext)
     // Otherwise just wrap into UndispatchedContextCollector interface implementation

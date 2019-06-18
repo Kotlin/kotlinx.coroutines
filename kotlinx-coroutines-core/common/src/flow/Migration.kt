@@ -105,10 +105,17 @@ public fun PublishSubject(): Any = error("Should not be called")
 /** @suppress **/
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Flow analogue is named onErrorCollect",
-    replaceWith = ReplaceWith("onErrorCollect(fallback)")
+    message = "Flow analogue of 'onErrorXxx' is 'catch'. Use 'catch { emitAll(fallback) }'",
+    replaceWith = ReplaceWith("catch { emitAll(fallback) }")
 )
 public fun <T> Flow<T>.onErrorResume(fallback: Flow<T>): Flow<T> = error("Should not be called")
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'onErrorXxx' is 'catch'. Use 'catch { emitAll(fallback) }'",
+    replaceWith = ReplaceWith("catch { emitAll(fallback) }")
+)
+public fun <T> Flow<T>.onErrorResumeNext(fallback: Flow<T>): Flow<T> = error("Should not be called")
 
 /**
  * Self-explanatory, the reason of deprecation is "context preservation" property (you can read more in [Flow] documentation)
@@ -181,7 +188,7 @@ public fun <T, R> Flow<T>.concatMap(mapper: (T) -> Flow<R>): Flow<R> = error("Sh
  */
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Flow analogue is named flattenConcat",
+    message = "Flow analogue of 'merge' is 'flattenConcat'",
     replaceWith = ReplaceWith("flattenConcat()")
 )
 public fun <T> Flow<Flow<T>>.merge(): Flow<T> = error("Should not be called")
@@ -189,7 +196,7 @@ public fun <T> Flow<Flow<T>>.merge(): Flow<T> = error("Should not be called")
 /** @suppress **/
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Flow analogue is named flattenConcat",
+    message = "Flow analogue of 'flatten' is 'flattenConcat'",
     replaceWith = ReplaceWith("flattenConcat()")
 )
 public fun <T> Flow<Flow<T>>.flatten(): Flow<T> = error("Should not be called")
@@ -210,7 +217,7 @@ public fun <T> Flow<Flow<T>>.flatten(): Flow<T> = error("Should not be called")
  */
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Kotlin analogue of compose is 'let'",
+    message = "Flow analogue of 'compose' is 'let'",
     replaceWith = ReplaceWith("let(transformer)")
 )
 public fun <T, R> Flow<T>.compose(transformer: Flow<T>.() -> Flow<R>): Flow<R> = error("Should not be called")
@@ -220,7 +227,7 @@ public fun <T, R> Flow<T>.compose(transformer: Flow<T>.() -> Flow<R>): Flow<R> =
  */
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Kotlin analogue of 'skip' is 'drop'",
+    message = "Flow analogue of 'skip' is 'drop'",
     replaceWith = ReplaceWith("drop(count)")
 )
 public fun <T> Flow<T>.skip(count: Int): Flow<T> = error("Should not be called")
@@ -246,3 +253,23 @@ public fun <T> Flow<T>.forEach(action: suspend (value: T) -> Unit): Unit = error
     replaceWith = ReplaceWith("scan(initial, operation)")
 )
 public fun <T, R> Flow<T>.scanFold(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = error("Should not be called")
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'onErrorXxx' is 'catch'. Use 'catch { emit(fallback) }'",
+    replaceWith = ReplaceWith("catch { emit(fallback) }")
+)
+// Note: this version without predicate gives better "replaceWith" action
+public fun <T> Flow<T>.onErrorReturn(fallback: T): Flow<T> = error("Should not be called")
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'onErrorXxx' is 'catch'. Use 'catch { e -> if (predicate(e)) emit(fallback) else throw e }'",
+    replaceWith = ReplaceWith("catch { e -> if (predicate(e)) emit(fallback) else throw e }")
+)
+public fun <T> Flow<T>.onErrorReturn(fallback: T, predicate: (Throwable) -> Boolean = { true }): Flow<T> =
+    catch { e ->
+        // Note: default value is for binary compatibility with preview version, that is why it has body
+        if (!predicate(e)) throw e
+        emit(fallback)
+    }

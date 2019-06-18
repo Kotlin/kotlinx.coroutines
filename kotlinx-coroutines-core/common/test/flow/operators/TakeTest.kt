@@ -70,7 +70,7 @@ class TakeTest : TestBase() {
             .map {
                 throw TestException()
                 42
-            }.onErrorReturn(42)
+            }.catch { emit(42) }
 
         assertEquals(42, flow.single())
         assertTrue(cancelled)
