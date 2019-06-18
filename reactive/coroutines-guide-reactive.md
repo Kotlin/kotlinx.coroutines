@@ -292,19 +292,20 @@ OnSubscribe
 1
 2
 3
-4
 OnComplete
 Finally
+4
 5
 ```
 
 <!--- TEST -->
 
-Notice how "OnComplete" and "Finally" are printed before the last element "5". It happens because our `main` function in this
+Notice how "OnComplete" and "Finally" are printed before the lasts elements "4" and "5". 
+It happens because our `main` function in this
 example is a coroutine that we start with the [runBlocking] coroutine builder.
 Our main coroutine receives on the flowable using the `source.collect { ... }` expression.
 The main coroutine is _suspended_ while it waits for the source to emit an item.
-When the last item is emitted by `Flowable.range(1, 5)` it
+When the last items are emitted by `Flowable.range(1, 5)` it
 _resumes_ the main coroutine, which gets dispatched onto the main thread to print this
  last element at a later point in time, while the source completes and prints "Finally".
 
