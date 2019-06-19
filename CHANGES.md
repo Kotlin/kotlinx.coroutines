@@ -38,6 +38,10 @@ General changes:
  * Prevent internal names clash that caused errors for ProGuard (#1159).
  * POSIX's `nanosleep` as `delay` in `runBlocking ` in K/N (#1225).
 
+## Version 1.2.2
+
+* Kotlin updated to 1.3.40.
+
 ## Version 1.2.1
 
 Major:
