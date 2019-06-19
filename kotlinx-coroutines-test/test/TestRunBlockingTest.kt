@@ -5,6 +5,7 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import java.lang.IllegalStateException
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -129,7 +130,6 @@ class TestRunBlockingTest {
 
     @Test
     fun whenUsingTimeout_inAsync_doesNotTriggerWhenNotDelayed() = runBlockingTest {
-        val testScope = this
         val deferred = async {
             withTimeout(SLOW) {
                 delay(0)
@@ -187,13 +187,13 @@ class TestRunBlockingTest {
 
         assertRunsFast {
             job.join()
-            throw job.getCancellationException().cause ?: assertFails { "expected exception" }
+            throw job.getCancellationException().cause ?: IllegalStateException("expected exception")
         }
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun throwingException__inAsync_throws() = runBlockingTest {
-        val deferred = async {
+        val deferred : Deferred<Unit> = async {
             delay(SLOW)
             throw IllegalArgumentException("Test")
         }
@@ -274,7 +274,7 @@ class TestRunBlockingTest {
     }
 
     @Test(expected = UncompletedCoroutinesError::class)
-    fun whenACoroutineLeaks_errorIsThrown() = runBlockingTest {
+    fun whenACoroutineLeaks_errorIsThrown() = runBlockingTest(waitConfig = SingleDispatcherWaitConfig) {
         val uncompleted = CompletableDeferred<Unit>()
         launch {
             uncompleted.await()
@@ -342,7 +342,7 @@ class TestRunBlockingTest {
     fun testWithTestContextThrowingAnAssertionError() = runBlockingTest {
         val expectedError = IllegalAccessError("hello")
 
-        val job = launch {
+        launch {
             throw expectedError
         }
 
