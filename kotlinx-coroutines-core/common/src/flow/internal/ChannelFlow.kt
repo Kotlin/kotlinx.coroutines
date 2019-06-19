@@ -16,7 +16,8 @@ internal fun <T> Flow<T>.asChannelFlow(): ChannelFlow<T> =
     this as? ChannelFlow ?: ChannelFlowOperatorImpl(this)
 
 // Operators that use channels extend this ChannelFlow and are always fused with each other
-internal abstract class ChannelFlow<T>(
+@InternalCoroutinesApi
+public abstract class ChannelFlow<T>(
     // upstream context
     @JvmField val context: CoroutineContext,
     // buffer capacity between upstream and downstream context
