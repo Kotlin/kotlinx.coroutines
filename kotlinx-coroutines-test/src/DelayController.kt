@@ -2,6 +2,7 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 
 /**
  * Control the virtual clock time of a [CoroutineDispatcher].
@@ -112,9 +113,75 @@ public interface DelayController {
      * Resumed dispatchers will automatically progress through all coroutines scheduled at the current time. To advance
      * time and execute coroutines scheduled in the future use, one of [advanceTimeBy],
      * or [advanceUntilIdle].
+     *
+     * When the dispatcher is resumed, all execution be immediate in the thread that triggered it. This means
+     * that the following code will not switch back from Dispatchers.IO after `withContext`
+     *
+     * ```
+     * runBlockingTest {
+     *     withContext(Dispatchers.IO) { doIo() }
+     *     // runBlockingTest is still on Dispatchers.IO here
+     * }
+     * ```
+     *
+     * For tests that need accurate threading behavior, [pauseDispatcher] will ensure that the following test dispatches
+     * on the correct thread.
+     *
+     * ```
+     * runBlockingTest {
+     *     pauseDispatcher()
+     *     withContext(Dispatchers.IO) { doIo() }
+     *     // runBlockingTest has returned to it's starting thread here
+     * }
+     * ```
      */
     @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
     public fun resumeDispatcher()
+
+    /**
+     * Represents the queue state of a DelayController.
+     *
+     * Tests do not normally need to use this API. It is exposed for advanced situations like integrating multiple
+     * [TestCoroutineDispatcher] instances or creating alternatives to [runBlockingtest].
+     */
+    public sealed class QueueState {
+        /**
+         * A [DelayController] that is idle does not currently have any tasks to perform.
+         *
+         * This may happen if all coroutines in this [DelayController] have completed, or if they are all suspended
+         * waiting on other dispatchers.
+         */
+        public object Idle: QueueState() {
+            override fun toString() = "Idle"
+        }
+
+        /**
+         * A [DelayController] that has a task that will execute in response to a call to [runCurrent].
+         *
+         * There may also be delayed tasks scheduled, in which case [HasCurrentTask] takes priority since current tasks
+         * will execute at an earlier virtual time.
+         */
+        public object HasCurrentTask: QueueState() {
+            override fun toString() = "HasCurrentTask"
+        }
+
+        /**
+         * A [DelayController] that has delayed tasks has a task scheduled for sometime in the future.
+         *
+         * If there are also tasks at the current time, [HasCurrentTask] will take priority.
+         */
+        public object HasDelayedTask: QueueState(){
+            override fun toString() = "HasDelayedTask"
+        }
+    }
+
+    /**
+     * A ConflatedBroadcastChannel that is up to date with the current [QueueState].
+     *
+     * Tests do not normally need to use this API. It is exposed for advanced situations like integrating multiple
+     * [TestCoroutineDispatcher] instances or creating alternatives to [runBlockingtest].
+     */
+    public val queueState: ConflatedBroadcastChannel<QueueState>
 }
 
 /**

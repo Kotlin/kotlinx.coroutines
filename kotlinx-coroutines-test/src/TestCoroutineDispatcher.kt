@@ -4,11 +4,15 @@
 
 package kotlinx.coroutines.test
 
-import kotlinx.atomicfu.*
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.update
 import kotlinx.coroutines.*
-import kotlinx.coroutines.internal.*
-import kotlin.coroutines.*
-import kotlin.math.*
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.internal.ThreadSafeHeap
+import kotlinx.coroutines.internal.ThreadSafeHeapNode
+import kotlinx.coroutines.test.DelayController.QueueState.*
+import kotlin.coroutines.CoroutineContext
+import kotlin.math.max
 
 /**
  * [CoroutineDispatcher] that performs both immediate and lazy execution of coroutines in tests
@@ -44,6 +48,8 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     // Storing time in nanoseconds internally.
     private val _time = atomic(0L)
 
+    override val queueState = ConflatedBroadcastChannel<DelayController.QueueState>(Idle)
+        
     /** @suppress */
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         if (dispatchImmediately) {
@@ -70,6 +76,7 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
         return object : DisposableHandle {
             override fun dispose() {
                 queue.remove(node)
+                updateQueueObservers()
             }
         }
     }
@@ -79,14 +86,18 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
         return "TestCoroutineDispatcher[currentTime=${currentTime}ms, queued=${queue.size}]"
     }
 
-    private fun post(block: Runnable) =
+    private fun post(block: Runnable) {
         queue.addLast(TimedRunnable(block, _counter.getAndIncrement()))
+        updateQueueObservers()
+    }
 
-    private fun postDelayed(block: Runnable, delayTime: Long) =
-        TimedRunnable(block, _counter.getAndIncrement(), safePlus(currentTime, delayTime))
-            .also {
-                queue.addLast(it)
-            }
+    private fun postDelayed(block: Runnable, delayTime: Long): TimedRunnable {
+        return TimedRunnable(block, _counter.getAndIncrement(), safePlus(currentTime, delayTime))
+                .also {
+                    queue.addLast(it)
+                    updateQueueObservers()
+                }
+    }
 
     private fun safePlus(currentTime: Long, delayTime: Long): Long {
         check(delayTime >= 0)
@@ -111,6 +122,7 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     override fun advanceTimeBy(delayTimeMillis: Long): Long {
         val oldTime = currentTime
         advanceUntilTime(oldTime + delayTimeMillis)
+        updateQueueObservers()
         return currentTime - oldTime
     }
 
@@ -122,6 +134,7 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     private fun advanceUntilTime(targetTime: Long) {
         doActionsUntil(targetTime)
         _time.update { currentValue -> max(currentValue, targetTime) }
+        updateQueueObservers()
     }
 
     /** @suppress */
@@ -132,11 +145,16 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
             val next = queue.peek() ?: break
             advanceUntilTime(next.time)
         }
+
+        updateQueueObservers()
         return currentTime - oldTime
     }
 
     /** @suppress */
-    override fun runCurrent() = doActionsUntil(currentTime)
+    override fun runCurrent() {
+        doActionsUntil(currentTime)
+        updateQueueObservers()
+    }
 
     /** @suppress */
     override suspend fun pauseDispatcher(block: suspend () -> Unit) {
@@ -163,6 +181,7 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     override fun cleanupTestCoroutines() {
         // process any pending cancellations or completions, but don't advance time
         doActionsUntil(currentTime)
+        updateQueueObservers()
 
         // run through all pending tasks, ignore any submitted coroutines that are not active
         val pendingTasks = mutableListOf<TimedRunnable>()
@@ -179,6 +198,25 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
                 "Unfinished coroutines during teardown. Ensure all coroutines are" +
                     " completed or cancelled by your test."
             )
+        }
+    }
+
+    private fun updateQueueObservers() {
+        // note: this will be called from any thread, and is safe lock-free in runBlockingTest but to guard against
+        // third party code code updating this will use a lock
+        synchronized(queue) {
+            val next = queue.peek()
+            when {
+                next == null-> queueState.offerIfChanged(Idle)
+                next.time <= currentTime -> queueState.offerIfChanged(HasCurrentTask)
+                next.time > currentTime -> queueState.offerIfChanged(HasDelayedTask)
+            }
+        }
+    }
+
+    private fun ConflatedBroadcastChannel<DelayController.QueueState>.offerIfChanged(element: DelayController.QueueState) {
+        if (valueOrNull != element) {
+            offer(element)
         }
     }
 }

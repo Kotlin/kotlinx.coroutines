@@ -4,11 +4,12 @@
 
 package kotlinx.coroutines.test
 
+import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import org.junit.*
+import java.util.concurrent.Executors
 import kotlin.concurrent.thread
-import kotlin.coroutines.*
-import kotlin.test.assertEquals
 
 class TestRunBlockingOrderTest : TestBase() {
     @Test
@@ -77,59 +78,20 @@ class TestRunBlockingOrderTest : TestBase() {
             expect(2)
             thread {
                 expect(3)
-                cont.resume(Unit)
+                cont.resume(Unit) { Unit }
             }
         }
         finish(4)
     }
 
-    @Test(expected = UncompletedCoroutinesError::class)
-    fun testWithOddlyCompletingJob_fails() {
-        // this test is suspect since it relies upon the exact ordering of code in runBlockingTest
-        // however, it needs to ensure the job finishes *after* advanceUntilIdle is called in order
-        // to ensure that runBlockingTest errors when presented with threading non-determinism.
-
-        // this test is stable and will always pass unless the implementation changes.
-
-        // If this starts failing because the call to cleanupTestCoroutines changes it will need a similarly
-        // implementation driven test.
-
-        class FakeDispatcher(val delegate: TestCoroutineDispatcher):
-                CoroutineDispatcher(),
-                Delay by delegate,
-                DelayController by delegate {
-            private var cleanupCallback: (() -> Unit)? = null
-
-            override fun dispatch(context: CoroutineContext, block: Runnable) {
-                delegate.dispatch(context, block)
-            }
-
-            fun onCleanup(block: () -> Unit) {
-                cleanupCallback = block
-            }
-
-            override fun cleanupTestCoroutines() {
-                delegate.cleanupTestCoroutines()
-                cleanupCallback?.invoke()
-            }
-        }
-
-        val dispatcher = FakeDispatcher(TestCoroutineDispatcher())
-        val scope = TestCoroutineScope(dispatcher)
-        val resumeAfterTest = CompletableDeferred<Unit>()
-
-        scope.runBlockingTest {
-            expect(1)
-            dispatcher.onCleanup {
-                // after advanceTimeUntilIdle, complete the launched coroutine
-                expect(3)
-                resumeAfterTest.complete(Unit)
-                finish(5)
-            }
+    @Test
+    fun testWithDelayInOtherDispatcher_passesWhenDelayIsShort() = runBlockingTest {
+        expect(1)
+        withContext(Dispatchers.IO) {
+            delay(1)
             expect(2)
-            resumeAfterTest.await() // this will resume just before child jobs are checked
-            expect(4)
         }
+        finish(3)
     }
 
     @Test
@@ -151,7 +113,7 @@ class TestRunBlockingOrderTest : TestBase() {
         val uncompleted = CompletableDeferred<Unit>()
         val result = runCatching {
             expect(1)
-            runBlockingTest {
+            runBlockingTest(waitConfig = SingleDispatcherWaitConfig) {
                 expect(2)
                 uncompleted.await()
             }
@@ -167,5 +129,192 @@ class TestRunBlockingOrderTest : TestBase() {
             advanceUntilIdle()   // ensure this doesn't block forever
         }
         finish(2)
+    }
+
+    @Test
+    fun testComplexDispatchFromOtherDispatchersOverTime_completes() {
+        val otherDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+
+        val max = 10
+
+        val numbersFromOtherDispatcherWithDelays = flow<Int> {
+            var current = 0
+            while (current < max) {
+                delay(1)
+                emit(++current)
+            }
+        }.flowOn(otherDispatcher)
+
+        try {
+            runBlockingTest {
+                numbersFromOtherDispatcherWithDelays.collect { value ->
+                    expect(value)
+                }
+                expect(max + 1)
+            }
+        } finally {
+            otherDispatcher.close()
+        }
+        finish(max + 2)
+    }
+
+    @Test
+    fun testComplexDispatchFromOtherDispatchersOverTime_withPasuedTestDispatcher_completes() {
+        val otherDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+
+        val max = 10
+
+        val numbersFromOtherDispatcherWithDelays = flow { for(x in 1..max) { emit(x) } }
+                .buffer(0)
+                .delayEach(1)
+                .flowOn(otherDispatcher)
+
+        otherDispatcher.use {
+            runBlockingTest {
+                pauseDispatcher()
+                numbersFromOtherDispatcherWithDelays.collect { value ->
+                    expect(value)
+                }
+                expect(max + 1)
+            }
+        }
+        finish(max + 2)
+    }
+
+    @Test
+    fun testDispatchFromOtherDispatch_triggersInternalDispatch() {
+        val otherDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+
+        val numbersFromOtherDispatcherWithDelays = flow { emit(1) }
+                .delayEach(1)
+                .buffer(0)
+                .flowOn(otherDispatcher)
+
+        otherDispatcher.use {
+            runBlockingTest {
+                numbersFromOtherDispatcherWithDelays.collect { value ->
+                    expect(value)
+                    launch {
+                        expect(2)
+                    }
+                }
+                expect(3)
+            }
+        }
+        finish(4)
+    }
+
+    @Test
+    fun testDispatchFromOtherDispatch_triggersInternalDispatch_withDelay() {
+        val otherDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+
+        val max = 10
+
+        val numbersFromOtherDispatcherWithDelays = flow { for(x in 1..max) { emit(x)} }
+                .filter { it % 2 == 1 }
+                .delayEach(1)
+                .buffer(0)
+                .flowOn(otherDispatcher)
+
+        otherDispatcher.use {
+            runBlockingTest {
+                numbersFromOtherDispatcherWithDelays.collect { value ->
+                    expect(value)
+                    delay(1)
+                    expect (value + 1)
+                }
+                delay(1)
+                expect(max + 1)
+            }
+        }
+        finish(max + 2)
+    }
+
+    object OneMillisecondWaitConfig : WaitConfig {
+        override val wait = 1L
+
+        override fun toString() = "OneMillisecondWaitConfig"
+    }
+
+    @Test
+    fun whenWaitConfig_timesOut_getExceptionWithMessage() {
+        expect(1)
+        val uncompleted = CompletableDeferred<Unit>()
+        val result = runCatching {
+            runBlockingTest(waitConfig = OneMillisecondWaitConfig) {
+                withContext(Dispatchers.IO) {
+                    expect(2)
+                    uncompleted.await()
+                }
+            }
+        }
+        finish(3)
+        val hasDetailedError = result.exceptionOrNull()?.message?.contains("may be empty")
+        assertEquals(true, hasDetailedError)
+        uncompleted.cancel()
+    }
+
+    @Test
+    fun whenWaitConfig_isSingleThreaded_hasDetailedErrorMessage() {
+        expect(1)
+        val uncompleted = CompletableDeferred<Unit>()
+        val result = runCatching {
+            runBlockingTest(waitConfig = SingleDispatcherWaitConfig) {
+                launch {
+                    expect(2)
+                    uncompleted.await()
+                }
+            }
+        }
+        finish(3)
+        val hasDetailedError = result.exceptionOrNull()?.message?.contains("Please update your test to use the default value of MultiDispatcherWaitConfig")
+        assertEquals(true, hasDetailedError)
+        uncompleted.cancel()
+    }
+
+    @Test
+    fun whenCoroutineStartedInScope_doesntLeakOnAnotherDispatcher() {
+        var job: Job? = null
+        runBlockingTest {
+            expect(1)
+            job = launch(Dispatchers.IO) {
+                delay(1)
+                expect(3)
+            }
+            expect(2)
+        }
+        assertEquals(true, job?.isCompleted)
+        finish(4)
+    }
+
+    @Test
+    fun whenDispatcherPaused_runBlocking_dispatchesToTestThread() {
+        val thread = Thread.currentThread()
+        runBlockingTest {
+            pauseDispatcher()
+            withContext(Dispatchers.IO) {
+                expect(1)
+                delay(1)
+                expect(2)
+            }
+            assertEquals(thread, Thread.currentThread())
+            finish(3)
+        }
+    }
+
+    @Test
+    fun whenDispatcherResumed_runBlocking_dispatchesImmediatelyOnIO() {
+        var thread: Thread? = null
+        runBlockingTest {
+            resumeDispatcher()
+            withContext(Dispatchers.IO) {
+                thread = Thread.currentThread()
+                expect(1)
+                delay(1)
+                expect(2)
+            }
+            assertEquals(thread, Thread.currentThread())
+            finish(3)
+        }
     }
 }
