@@ -204,16 +204,17 @@ public fun LongRange.asFlow(): Flow<Long> = flow {
  */
 @FlowPreview
 @Deprecated(
-    message = "Use channelFlow instead",
-    level = DeprecationLevel.WARNING,
-    replaceWith = ReplaceWith("channelFlow(block)")
+    message = "Use channelFlow with awaitClose { } instead of flowViaChannel and invokeOnClose { }.",
+    level = DeprecationLevel.WARNING
 )
+@Suppress("DeprecatedCallableAddReplaceWith")
 public fun <T> flowViaChannel(
     bufferSize: Int = BUFFERED,
     @BuilderInference block: CoroutineScope.(channel: SendChannel<T>) -> Unit
 ): Flow<T> {
     return channelFlow<T> {
         block(channel)
+        awaitClose()
     }.buffer(bufferSize)
 }
 
