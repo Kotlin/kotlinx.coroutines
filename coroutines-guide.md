@@ -51,7 +51,7 @@ The main coroutines guide has moved to the [docs folder](docs/coroutines-guide.m
   * <a name='supervision-scope'></a>[Supervision scope](docs/exception-handling.md#supervision-scope)
   * <a name='exceptions-in-supervised-coroutines'></a>[Exceptions in supervised coroutines](docs/exception-handling.md#exceptions-in-supervised-coroutines)
 <!--- TOC_REF docs/channels.md -->
-* <a name='channels-experimental'></a>[Channels (experimental)](docs/channels.md#channels-experimental)
+* <a name='channels'></a>[Channels](docs/channels.md#channels)
   * <a name='channel-basics'></a>[Channel basics](docs/channels.md#channel-basics)
   * <a name='closing-and-iteration-over-channels'></a>[Closing and iteration over channels](docs/channels.md#closing-and-iteration-over-channels)
   * <a name='building-channel-producers'></a>[Building channel producers](docs/channels.md#building-channel-producers)
