@@ -10,8 +10,9 @@ import org.reactivestreams.*
 import org.reactivestreams.example.unicast.*
 import org.reactivestreams.tck.*
 
-class RangePublisherBufferedTest : PublisherVerification<Int>(TestEnvironment(50, 50)) {
-
+class RangePublisherBufferedTest :
+    PublisherVerification<Int>(TestEnvironment(50, 50))
+{
     override fun createPublisher(elements: Long): Publisher<Int> {
         return RangePublisher(1, elements.toInt()).asFlow().buffer(2).asPublisher()
     }

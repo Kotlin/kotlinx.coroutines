@@ -11,7 +11,6 @@ import kotlinx.coroutines.reactive.*
 import kotlin.test.*
 
 class PublisherAsFlowTest : TestBase() {
-
     @Test
     fun testCancellation() = runTest {
         var onNext = 0
@@ -87,16 +86,64 @@ class PublisherAsFlowTest : TestBase() {
     }
 
     @Test
-    fun testProduce() = runTest {
-        val flow = publish { repeat(10) { send(it) } }.asFlow()
-        check(flow.produceIn(this))
-        check(flow.buffer(2).produceIn(this))
-        check(flow.buffer(Channel.UNLIMITED).produceIn(this))
+    fun testConflated() = runTest {
+        val publisher = publish {
+            for (i in 1..5) send(i)
+        }
+        val list = publisher.asFlow().conflate().toList()
+        assertEquals(listOf(1, 5), list)
     }
 
-    private suspend fun check(channel: ReceiveChannel<Int>) {
+    @Test
+    fun testProduce() = runTest {
+        val flow = publish { repeat(10) { send(it) } }.asFlow()
+        check((0..9).toList(), flow.produceIn(this))
+        check((0..9).toList(), flow.buffer(2).produceIn(this))
+        check((0..9).toList(), flow.buffer(Channel.UNLIMITED).produceIn(this))
+        check(listOf(0, 9), flow.conflate().produceIn(this))
+    }
+
+    private suspend fun check(expected: List<Int>, channel: ReceiveChannel<Int>) {
         val result = ArrayList<Int>(10)
         channel.consumeEach { result.add(it) }
-        assertEquals((0..9).toList(), result)
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun testProduceCancellation() = runTest {
+        expect(1)
+        // publisher is an async coroutine, so it overproduces to the channel, but still gets cancelled
+        val flow = publish {
+            expect(3)
+            repeat(10) { value ->
+                when (value) {
+                    in 0..6 -> send(value)
+                    7 -> try {
+                        send(value)
+                    } catch (e: CancellationException) {
+                        finish(6)
+                        throw e
+                    }
+                    else -> expectUnreached()
+                }
+            }
+        }.asFlow()
+        assertFailsWith<TestException> {
+            coroutineScope {
+                expect(2)
+                val channel = flow.produceIn(this)
+                channel.consumeEach { value ->
+                    when (value) {
+                        in 0..4 -> {}
+                        5 -> {
+                            expect(4)
+                            throw TestException()
+                        }
+                        else -> expectUnreached()
+                    }
+                }
+            }
+        }
+        expect(5)
     }
 }

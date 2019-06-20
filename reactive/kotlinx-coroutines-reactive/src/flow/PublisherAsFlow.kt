@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.internal.*
+import kotlinx.coroutines.reactive.*
 import org.reactivestreams.*
 import kotlin.coroutines.*
 
@@ -34,84 +35,96 @@ public fun <T : Any> Publisher<T>.asFlow(): Flow<T> =
 )
 public fun <T : Any> Publisher<T>.asFlow(batchSize: Int): Flow<T> = asFlow().buffer(batchSize)
 
-
 private class PublisherAsFlow<T : Any>(
-    private val publisher: Publisher<T>, capacity: Int
-) : ChannelFlow<T>(
-    EmptyCoroutineContext,
-    capacity
-) {
+    private val publisher: Publisher<T>,
+    capacity: Int
+) : ChannelFlow<T>(EmptyCoroutineContext, capacity) {
+    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
+        PublisherAsFlow(publisher, capacity)
 
-    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> {
-        return PublisherAsFlow(publisher, capacity)
+    override fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> {
+        // use another channel for conflation (cannot do openSubscription)
+        if (capacity < 0) return super.produceImpl(scope)
+        // Open subscription channel directly
+        val channel = publisher.openSubscription(capacity)
+        val handle = scope.coroutineContext[Job]?.invokeOnCompletion(onCancelling = true) { cause ->
+            channel.cancel(cause?.let {
+                it as? CancellationException ?: CancellationException("Job was cancelled", it)
+            })
+        }
+        if (handle != null && handle !== NonDisposableHandle) {
+            @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+            (channel as SubscriptionChannel<*>).invokeOnClose {
+                handle.dispose()
+            }
+        }
+        return channel
     }
 
-    /*
-     * It's possible to get rid of the second channel here, but it requires intrusive changes in ChannelFlow.
-     * Do it after API stabilization (including produceIn/broadcastIn).
-     */
-    override suspend fun collectTo(scope: ProducerScope<T>) = collect { scope.send(it) }
+    private val requestSize: Long
+        get() = when (capacity) {
+            Channel.CONFLATED -> Long.MAX_VALUE // request all and conflate incoming
+            Channel.RENDEZVOUS -> 1L // need to request at least one anyway
+            Channel.UNLIMITED -> Long.MAX_VALUE // reactive streams way to say "give all" must be Long.MAX_VALUE
+            else -> capacity.toLong().also { check(it >= 1) }
+        }
 
     override suspend fun collect(collector: FlowCollector<T>) {
-        val channel = Channel<T>(capacity)
-        val subscriber = ReactiveSubscriber(channel, capacity)
+        val subscriber = ReactiveSubscriber<T>(capacity, requestSize)
         publisher.subscribe(subscriber)
         try {
-            var consumed = 0
-            for (i in channel) {
-                collector.emit(i)
-                if (++consumed == capacity) {
-                    consumed = 0
-                    subscriber.subscription.request(capacity.toLong())
+            var consumed = 0L
+            while (true) {
+                val value = subscriber.takeNextOrNull() ?: break
+                collector.emit(value)
+                if (++consumed == requestSize) {
+                    consumed = 0L
+                    subscriber.makeRequest()
                 }
             }
         } finally {
-            subscriber.subscription.cancel()
+            subscriber.cancel()
         }
     }
 
-    private suspend inline fun collect(emit: (element: T) -> Unit) {
-        val channel = Channel<T>(capacity)
-        val subscriber = ReactiveSubscriber(channel, capacity)
-        publisher.subscribe(subscriber)
-        try {
-            var consumed = 0
-            for (i in channel) {
-                emit(i)
-                if (++consumed == capacity) {
-                    consumed = 0
-                    subscriber.subscription.request(capacity.toLong())
-                }
-            }
-        } finally {
-            subscriber.subscription.cancel()
-        }
-    }
+    // The second channel here is used only for broadcast
+    override suspend fun collectTo(scope: ProducerScope<T>) =
+        collect(SendingCollector(scope.channel))
 }
 
 @Suppress("SubscriberImplementation")
 private class ReactiveSubscriber<T : Any>(
-    private val channel: Channel<T>,
-    private val requestSize: Int
+    capacity: Int,
+    private val requestSize: Long
 ) : Subscriber<T> {
+    private lateinit var subscription: Subscription
+    private val channel = Channel<T>(capacity)
 
-    lateinit var subscription: Subscription
+    suspend fun takeNextOrNull(): T? = channel.receiveOrNull()
+
+    override fun onNext(value: T) {
+        // Controlled by requestSize
+        require(channel.offer(value)) { "Element $value was not added to channel because it was full, $channel" }
+    }
 
     override fun onComplete() {
         channel.close()
     }
 
-    override fun onSubscribe(s: Subscription) {
-        subscription = s
-        s.request(requestSize.toLong())
-    }
-
-    override fun onNext(t: T) {
-        // Controlled by requestSize
-        require(channel.offer(t)) { "Element $t was not added to channel because it was full, $channel" }
-    }
-
     override fun onError(t: Throwable?) {
         channel.close(t)
+    }
+
+    override fun onSubscribe(s: Subscription) {
+        subscription = s
+        makeRequest()
+    }
+
+    fun makeRequest() {
+        subscription.request(requestSize)
+    }
+
+    fun cancel() {
+        subscription.cancel()
     }
 }

@@ -40,8 +40,8 @@ public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) =
 public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit) =
     openSubscription().consumeEach(action)
 
-@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-private class SubscriptionChannel<T>(
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
+internal class SubscriptionChannel<T>(
     private val request: Int
 ) : LinkedListChannel<T>(), Subscriber<T> {
     init {

@@ -5,6 +5,7 @@
 package kotlinx.coroutines.flow.internal
 
 import kotlinx.atomicfu.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.channels.ArrayChannel
 import kotlinx.coroutines.flow.*
@@ -17,8 +18,13 @@ internal fun <T> FlowCollector<T>.asConcurrentFlowCollector(): ConcurrentFlowCol
 // Two basic implementations are here: SendingCollector and ConcurrentFlowCollector
 internal interface ConcurrentFlowCollector<T> : FlowCollector<T>
 
-// Concurrent collector because it sends to a channel
-internal class SendingCollector<T>(
+/**
+ * Collection that sends to channel. It is marked as [ConcurrentFlowCollector] because it can be used concurrently.
+ *
+ * @suppress **This an internal API and should not be used from general code.**
+ */
+@InternalCoroutinesApi
+public class SendingCollector<T>(
     private val channel: SendChannel<T>
 ) : ConcurrentFlowCollector<T> {
     override suspend fun emit(value: T) = channel.send(value)
