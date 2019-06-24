@@ -9,6 +9,25 @@ import kotlin.test.*
 
 class RetryTest : TestBase() {
     @Test
+    fun testRetryWhen() = runTest {
+        expect(1)
+        val flow = flow {
+            emit(1)
+            throw TestException()
+        }
+        val sum = flow.retryWhen { cause, attempt ->
+            assertTrue(cause is TestException)
+            expect(2 + attempt.toInt())
+            attempt < 3
+        }.catch { cause ->
+            expect(6)
+            assertTrue(cause is TestException)
+        }.sum()
+        assertEquals(4, sum)
+        finish(7)
+    }
+
+    @Test
     fun testRetry() = runTest {
         var counter = 0
         val flow = flow {

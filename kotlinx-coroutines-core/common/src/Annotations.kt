@@ -31,6 +31,7 @@ public annotation class ExperimentalCoroutinesApi
 @MustBeDocumented
 @Retention(value = AnnotationRetention.BINARY)
 @Experimental(level = Experimental.Level.WARNING)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.TYPEALIAS, AnnotationTarget.PROPERTY)
 public annotation class FlowPreview
 
 /**

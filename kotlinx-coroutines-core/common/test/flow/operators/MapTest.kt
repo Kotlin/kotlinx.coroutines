@@ -38,11 +38,10 @@ class MapTest : TestBase() {
                 }
                 emit(1)
             }
-        }.map {
+        }.onEach {
             latch.receive()
             throw TestException()
-            it + 1
-        }.onErrorReturn(42)
+        }.catch { emit(42) }
 
         assertEquals(42, flow.single())
         assertTrue(cancelled)

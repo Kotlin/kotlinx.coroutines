@@ -52,7 +52,7 @@ class DropTest : TestBase() {
                 expect(4)
                 throw TestException()
                 42
-            }.onErrorReturn(42)
+            }.catch { emit(42) }
 
         expect(1)
         assertEquals(42, flow.single())

@@ -151,7 +151,7 @@ public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> {
 public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
 
 /**
- * The operator that changes the context where this flow is executed to the given [context].
+ * Changes the context where this flow is executed to the given [context].
  * This operator is composable and affects only preceding operators that do not have its own context.
  * This operator is context preserving: [context] **does not** leak into the downstream flow.
  *
