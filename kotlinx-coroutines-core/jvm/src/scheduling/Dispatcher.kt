@@ -115,7 +115,7 @@ open class ExperimentalCoroutineDispatcher(
     // fot tests only
     @Synchronized
     internal fun usePrivateScheduler() {
-        coroutineScheduler.shutdown(10_000L)
+        coroutineScheduler.shutdown(1_000L)
         coroutineScheduler = createScheduler()
     }
 
