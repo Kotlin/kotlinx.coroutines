@@ -35,11 +35,11 @@ import kotlin.coroutines.*
  * ```
  *
  * By default, flows are _sequential_ and all flow operations are executed sequentially in the same coroutine,
- * with exception for a few operations specifically designed to introduce concurrency into flow
- * execution such a [buffer] and [flatMapMerge]. See their documentation for details.
+ * with an exception for a few operations specifically designed to introduce concurrency into flow
+ * the execution such a [buffer] and [flatMapMerge]. See their documentation for details.
  *
  * Flow interface does not carry information whether a flow is a truly a cold stream that can be collected repeatedly and
- * triggers execution of the same code every time it is collected or if it is a hot streams that emits different
+ * triggers execution of the same code every time it is collected or if it is a hot stream that emits different
  * values from the same running source on each collection. However, conventionally flows represent cold streams.
  * Transitions between hot and cold streams are supported via channels and the corresponding API:
  * [channelFlow], [produceIn], [broadcastIn].
@@ -55,14 +55,14 @@ import kotlin.coroutines.*
  * * [channelFlow { ... }][channelFlow] builder function to construct arbitrary flows from
  *   potentially concurrent calls to [send][kotlinx.coroutines.channels.SendChannel.send] function.
  *
- * ### Flow constrains
+ * ### Flow constraints
  *
  * All implementations of `Flow` interface must adhere to two key properties that are described in detail below:
  *
  * * Context preservation.
  * * Exception transparency.
  *
- * These properties ensure ability to perform local reasoning about the code with flows and modularize the code
+ * These properties ensure the ability to perform local reasoning about the code with flows and modularize the code
  * in such a way so that upstream flow emitters can be developed separately from downstream flow collectors.
  * A user of the flow does not needs to know implementation details of the upstream flows it uses.
  *
@@ -95,7 +95,7 @@ import kotlin.coroutines.*
  * }
  * ```
  *
- * From the implementation point of view it means that all flow implementations should
+ * From the implementation point of view, it means that all flow implementations should
  * emit only from the same coroutine.
  * This constraint is efficiently enforced by the default [flow] builder.
  * The [flow] builder should be used if flow implementation does not start any coroutines.
@@ -128,10 +128,10 @@ import kotlin.coroutines.*
  *
  * ### Exception transparency
  *
- * Flow implementations never catch or handle exceptions that occur in downstream flows. From implementation standpoint
+ * Flow implementations never catch or handle exceptions that occur in downstream flows. From the implementation standpoint
  * it means that calls to [emit][FlowCollector.emit] and [emitAll] shall never be wrapped into
  * `try { ... } catch { ... }` blocks. Exception handling in flows shall be performed with
- * [catch][Flow.catch] operator and it is designed to catch only exception coming from upstream flow, while passing
+ * [catch][Flow.catch] operator and it is designed to catch only exception coming from upstream flow while passing
  * all the downstream exceptions. Similarly, terminal operators like [collect][Flow.collect]
  * throw any unhandled exception that occurs in its code or in upstream flows, for example:
  *
@@ -144,10 +144,10 @@ import kotlin.coroutines.*
  * ```
  *
  * Failure to adhere to the exception transparency requirement would result in strange behaviours that would make
- * it hard to reason about the code, because exception in the `collect { ... }` could be somehow "caught"
- * by the upstream flow, limiting ability of local reasoning about the code.
+ * it hard to reason about the code because an exception in the `collect { ... }` could be somehow "caught"
+ * by the upstream flow, limiting the ability of local reasoning about the code.
  *
- * Currently, flow infrastructure does not enforce exception transparency contracts, however it might be enforced
+ * Currently, flow infrastructure does not enforce exception transparency contracts, however, it might be enforced
  * in the future either at run time or at compile time.
  *
  * ### Reactive streams

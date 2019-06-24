@@ -18,7 +18,7 @@ import kotlin.jvm.*
  * It is a shorthand for `collect {}`.
  *
  * This operator is usually used with [onEach] and [catch] operators to process all emitted values and
- * handle exception that might occur in the upstream flow or during processing, for example:
+ * handle an exception that might occur in the upstream flow or during processing, for example:
  *
  * ```
  * flow

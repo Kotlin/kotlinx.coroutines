@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
 /**
  * Catches exceptions in the flow completion and calls a specified [action] with
  * the caught exception. This operator is *transparent* to exceptions that occur
- * in downstream flow and does not catch exception that are thrown to cancel the flow.
+ * in downstream flow and does not catch exceptions that are thrown to cancel the flow.
  *
  * For example:
  *
@@ -31,7 +31,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
  * Conceptually, the action of `catch` operator is similar to wrapping the code of upstream flows with
  * `try { ... } catch (e: Throwable) { action(e) }`.
  *
- * Any exception in the [action] code itself proceed downstream where it can be
+ * Any exception in the [action] code itself proceeds downstream where it can be
  * caught by further `catch` operators if needed. If a particular exception does not need to be
  * caught it can be rethrown from the action of `catch` operator. For example:
  *
@@ -43,7 +43,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
  * }
  * ```
  *
- * The [action] code has [FlowCollector] as receiver and can [emit][FlowCollector.emit] values downstream.
+ * The [action] code has [FlowCollector] as a receiver and can [emit][FlowCollector.emit] values downstream.
  * For example, caught exception can be replaced with some wrapper value for errors:
  *
  * ```
@@ -52,7 +52,7 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
  *
  * The [action] can also use [emitAll] to fallback on some other flow in case of an error. However, to
  * retry an original flow use [retryWhen] operator that can retry the flow multiple times without
- * introducing ever growing stack of suspending calls.
+ * introducing ever-growing stack of suspending calls.
  */
 @ExperimentalCoroutinesApi // tentatively stable in 1.3.0
 public fun <T> Flow<T>.catch(action: suspend FlowCollector<T>.(cause: Throwable) -> Unit): Flow<T> =
@@ -204,8 +204,13 @@ private suspend inline fun <T> Flow<T>.catchImpl(
             }
         }
     } catch (e: Throwable) {
-        if (e.isSameExceptionAs(fromDownstream) || e.isCancellationCause(coroutineContext))
+        /*
+         * First check ensures that we catch an original exception, not one rethrown by an operator.
+         * Seconds check ignores cancellation causes, they cannot be caught.
+         */
+        if (e.isSameExceptionAs(fromDownstream) || e.isCancellationCause(coroutineContext)) {
             throw e
+        }
         collector.action(e)
     }
 }
