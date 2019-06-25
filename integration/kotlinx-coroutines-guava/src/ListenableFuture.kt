@@ -40,7 +40,7 @@ public fun <T> CoroutineScope.future(
     val newContext = newCoroutineContext(context)
     val future = SettableFuture.create<T>()
     val coroutine = ListenableFutureCoroutine(newContext, future)
-    Futures.addCallback(future, coroutine, MoreExecutors.directExecutor())
+    Futures.addCallback(future, coroutine, CoroutineScope(newContext).asExecutor())
     coroutine.start(start, coroutine, block)
     return future
 }
@@ -122,7 +122,7 @@ public fun <T> ListenableFuture<T>.asDeferred(): Deferred<T> {
         override fun onFailure(t: Throwable) {
             deferred.completeExceptionally(t)
         }
-    }, MoreExecutors.directExecutor())
+    }, CoroutineScope(deferred).asExecutor())
 
     deferred.invokeOnCompletion { cancel(false) }
     return deferred
@@ -147,7 +147,7 @@ public suspend fun <T> ListenableFuture<T>.await(): T {
 
     return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
         val callback = ContinuationCallback(cont)
-        Futures.addCallback(this, callback, MoreExecutors.directExecutor())
+        Futures.addCallback(this, callback, CoroutineScope(cont.context).asExecutor())
         cont.invokeOnCancellation {
             cancel(false)
             callback.cont = null // clear the reference to continuation from the future's callback
@@ -162,3 +162,35 @@ private class ContinuationCallback<T>(
     override fun onSuccess(result: T?) { cont?.resume(result as T) }
     override fun onFailure(t: Throwable) { cont?.resumeWithException(t) }
 }
+
+/**
+ * Returns an [Executor] that uses the [CoroutineScope] to run executed Runnables.
+ *
+ * Using this Executor ensures inputs pass through coroutine dispatch and
+ * continuation.
+ *
+ * This Executor can be used in place of
+ * [com.google.common.util.concurrent.MoreExecutors.directExecutor]. Using `directExecutor()` to
+ * schedule a [FutureCallback] has the negative property of non-deterministic execution scope:
+ *
+ * 1. If the [FutureCallback] is attached to a completed [ListenableFuture], the scheduling thread
+ * will execute the callback inline, reentering from the call stack.
+ * 2. If a [FutureCallback] is attached to an incomplete [ListenableFuture], the thread that
+ * completes the [ListenableFuture] will call the callback, and won't reenter from the call stack
+ * call stack.
+ *
+ * Coroutines (barring use of Start.UNDISPATCHED...) *don't* reenter on the stack when running a
+ * continuation, avoiding an entire class of bugs by design.
+ *
+ * Using this Executor instead of a `directExecutor()` avoids reintroducing
+ * non-deterministic-stack-reentrancy bugs to Coroutine-centric code.
+ */
+inline fun CoroutineScope.asExecutor(): Executor {
+    return Executor {
+        checkNotNull(it)
+        this.async {
+            it.run()
+        }
+    }
+}
+
