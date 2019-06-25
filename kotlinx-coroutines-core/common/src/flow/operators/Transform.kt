@@ -134,7 +134,7 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = flow {
  *     .onCompletion { println(it) } // Can print exceptions from emitData, computeOne, onCompletion and computeTwo
  * ```
  */
-@ExperimentalCoroutinesApi
+@ExperimentalCoroutinesApi // tentatively stable in 1.3.0
 public fun <T> Flow<T>.onCompletion(action: suspend (cause: Throwable?) -> Unit): Flow<T> = flow {
     // Optimization: this var is used to detect exception from downstream and then as final cause
     var fromDownstream: Throwable? = null

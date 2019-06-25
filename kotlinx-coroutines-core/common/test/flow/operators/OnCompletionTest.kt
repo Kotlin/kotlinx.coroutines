@@ -93,4 +93,23 @@ class OnCompletionTest : TestBase() {
         }.collect()
         finish(4)
     }
+
+    @Test
+    fun testContextPreservation() = runTest {
+        flowOf(1).onCompletion {
+            assertEquals("OK", NamedDispatchers.name())
+            assertNull(it)
+            expect(1)
+        }.flowOn(NamedDispatchers("OK"))
+            .onEach {
+                expect(2)
+                assertEquals("default", NamedDispatchers.nameOr("default"))
+                throw TestException()
+            }
+            .catch {
+                assertTrue(it is TestException)
+                expect(3)
+            }.collect()
+        finish(4)
+    }
 }
