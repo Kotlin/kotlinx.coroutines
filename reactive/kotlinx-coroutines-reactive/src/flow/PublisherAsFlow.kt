@@ -53,8 +53,7 @@ private class PublisherAsFlow<T : Any>(
             })
         }
         if (handle != null && handle !== NonDisposableHandle) {
-            @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-            (channel as SubscriptionChannel<*>).invokeOnClose {
+            (channel as SendChannel<*>).invokeOnClose {
                 handle.dispose()
             }
         }
