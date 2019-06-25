@@ -5,6 +5,7 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 class CatchTest : TestBase() {
@@ -85,5 +86,63 @@ class CatchTest : TestBase() {
         expect(2)
         job.cancelAndJoin()
         finish(3)
+    }
+
+    @Test
+    fun testCatchContext() = runTest {
+        expect(1)
+        val flow = flow {
+            expect(2)
+            emit("OK")
+            expect(3)
+            throw TestException()
+        }
+        val d0 = coroutineContext[ContinuationInterceptor] as CoroutineContext
+        val d1 = wrapperDispatcher(coroutineContext)
+        val d2 = wrapperDispatcher(coroutineContext)
+        flow
+            .catch { e ->
+                expect(4)
+                assertTrue(e is TestException)
+                assertEquals("A", kotlin.coroutines.coroutineContext[CoroutineName]?.name)
+                assertSame(d1, kotlin.coroutines.coroutineContext[ContinuationInterceptor] as CoroutineContext)
+                throw e // rethrow downstream
+            }
+            .flowOn(CoroutineName("A"))
+            .catch { e ->
+                expect(5)
+                assertTrue(e is TestException)
+                assertEquals("B", kotlin.coroutines.coroutineContext[CoroutineName]?.name)
+                assertSame(d1, kotlin.coroutines.coroutineContext[ContinuationInterceptor] as CoroutineContext)
+                throw e // rethrow downstream
+            }
+            .flowOn(CoroutineName("B"))
+            .catch { e ->
+                expect(6)
+                assertTrue(e is TestException)
+                assertSame(d1, kotlin.coroutines.coroutineContext[ContinuationInterceptor] as CoroutineContext)
+                throw e // rethrow downstream
+            }
+            .flowOn(d1)
+            .catch { e ->
+                expect(7)
+                assertTrue(e is TestException)
+                assertSame(d2, kotlin.coroutines.coroutineContext[ContinuationInterceptor] as CoroutineContext)
+                throw e // rethrow downstream
+            }
+            .flowOn(d2)
+            // flowOn with a different dispatcher introduces asynchrony so that all exceptions in the
+            // upstream flows are handled before they go downstream
+            .onEach { value ->
+                expect(8)
+                assertEquals("OK", value)
+            }
+            .catch { e ->
+                expect(9)
+                assertTrue(e is TestException)
+                assertSame(d0, kotlin.coroutines.coroutineContext[ContinuationInterceptor] as CoroutineContext)
+            }
+            .collect()
+        finish(10)
     }
 }
