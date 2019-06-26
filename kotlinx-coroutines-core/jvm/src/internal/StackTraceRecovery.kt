@@ -161,26 +161,14 @@ private fun <E : Throwable> recoveryDisabled(exception: E) =
 
 private fun createStackTrace(continuation: CoroutineStackFrame): ArrayDeque<StackTraceElement> {
     val stack = ArrayDeque<StackTraceElement>()
-    continuation.getStackTraceElement()?.let { stack.add(sanitize(it)) }
+    continuation.getStackTraceElement()?.let { stack.add(it) }
 
     var last = continuation
     while (true) {
         last = (last as? CoroutineStackFrame)?.callerFrame ?: break
-        last.getStackTraceElement()?.let { stack.add(sanitize(it)) }
+        last.getStackTraceElement()?.let { stack.add(it) }
     }
     return stack
-}
-
-/**
- * @suppress
- */
-@InternalCoroutinesApi
-public fun sanitize(element: StackTraceElement): StackTraceElement {
-    if (!element.className.contains('/')) {
-        return element
-    }
-    // KT-28237: STE generated with debug metadata contains '/' as separators in FQN, while Java contains dots
-    return StackTraceElement(element.className.replace('/', '.'), element.methodName, element.fileName, element.lineNumber)
 }
 
 /**
