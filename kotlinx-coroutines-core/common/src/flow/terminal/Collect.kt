@@ -17,7 +17,7 @@ import kotlin.jvm.*
  *
  * It is a shorthand for `collect {}`.
  *
- * This operator is usually used with [onEach] and [catch] operators to process all emitted values and
+ * This operator is usually used with [onEach], [onCompletion] and [catch] operators to process all emitted values and
  * handle an exception that might occur in the upstream flow or during processing, for example:
  *
  * ```
@@ -29,6 +29,27 @@ import kotlin.jvm.*
  */
 @ExperimentalCoroutinesApi // tentatively stable in 1.3.0
 public suspend fun Flow<*>.collect() = collect(NopCollector)
+
+/**
+ * Terminal flow operator that [launches][launch] the [collection][collect] of the given flow in the [scope].
+ * It is a shorthand for `scope.launch { flow.collect() }`.
+ *
+ * This operator is usually used with [onEach], [onCompletion] and [catch] operators to process all emitted values
+ * handle an exception that might occur in the upstream flow or during processing, for example:
+ * ```
+ * flow
+ *     .onEach { value -> updateUi(value) }
+ *     .onCompletion { cause -> updateUi(if (cause == null) "Done" else "Failed") }
+ *     .catch { cause -> LOG.error("Exception: $cause") }
+ *     .launchIn(uiScope)
+ * ```
+ *
+ * Note that resulting value of [launchIn] is not used the provided scope takes care of cancellation.
+ */
+@ExperimentalCoroutinesApi // tentatively stable in 1.3.0
+public fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = scope.launch {
+    collect() // tail-call
+}
 
 /**
  * Terminal flow operator that collects the given flow with a provided [action].

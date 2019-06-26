@@ -18,7 +18,8 @@ import kotlin.coroutines.*
  * They only set up a chain of operations for future execution and quickly return.
  * This is known as a _cold flow_ property.
  *
- * _Terminal operators_ on the flow are suspending functions such as [collect], [single], [reduce], [toList], etc.
+ * _Terminal operators_ on the flow are either suspending functions such as [collect], [single], [reduce], [toList], etc.
+ * or [launchIn] operator that starts collection of the flow in the given scope.
  * They are applied to the upstream flow and trigger execution of all operations.
  * Execution of the flow is also called _collecting the flow_  and is always performed in a suspending manner
  * without actual blocking. Terminal operator complete normally or exceptionally depending on successful or failed
@@ -142,6 +143,7 @@ import kotlin.coroutines.*
  *     .map { computeTwo(it) }
  *     .collect { process(it) } // throws exceptions from process and computeTwo
  * ```
+ * The same reasoning can be applied to [onCompletion] operator that is a declarative replacement for `finally` block.
  *
  * Failure to adhere to the exception transparency requirement would result in strange behaviours that would make
  * it hard to reason about the code because an exception in the `collect { ... }` could be somehow "caught"

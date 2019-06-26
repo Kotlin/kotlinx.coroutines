@@ -127,7 +127,7 @@ public fun <T, R> FlowCollector<T>.withContext(context: CoroutineContext, block:
 
 /**
  * `subscribe` is Rx-specific API that has no direct match in flows.
- * One can use `launch` instead, for example the following:
+ * One can use [launchIn] instead, for example the following:
  * ```
  * flowable
  *     .observeOn(Schedulers.io())
@@ -136,30 +136,36 @@ public fun <T, R> FlowCollector<T>.withContext(context: CoroutineContext, block:
  *
  * has the following Flow equivalent:
  * ```
- * launch(Dispatchers.IO) {
- *     try {
- *         flow.collect { value ->
- *             println("Received $value")
- *         }
- *         println("Flow is completed successfully")
- *     } catch (e: Throwable) {
- *         println("Exception $e happened")
- *     }
- * }
+ * flow
+ *     .onEach { value -> println("Received $value") }
+ *     .onCompletion { cause -> if (cause == null) println("Flow is completed successfully") }
+ *     .catch { cause -> println("Exception $cause happened") }
+ *     .flowOn(Dispatchers.IO)
+ *     .launchIn(myScope)
  * ```
- * But most of the time it is better to use terminal operators like [single] instead of [collect].
+ *
+ * Note that resulting value of [launchIn] is not used because the provided scope takes care of cancellation.
+ *
+ * Or terminal operators like [single] can be used from suspend functions.
  * @suppress
  */
-@Deprecated(message = "Use launch + collect instead", level = DeprecationLevel.ERROR)
+@Deprecated(
+    message = "Use launchIn with onEach, onCompletion and catch operators instead",
+    level = DeprecationLevel.ERROR
+)
 public fun <T> Flow<T>.subscribe(): Unit = error("Should not be called")
 
 /** @suppress **/
-@Deprecated(message = "Use launch + collect instead", level = DeprecationLevel.ERROR)
-public fun <T> Flow<T>.subscribe(onEach: (T) -> Unit): Unit = error("Should not be called")
+@Deprecated(
+    message = "Use launchIn with onEach, onCompletion and catch operators instead",
+    level = DeprecationLevel.ERROR
+)public fun <T> Flow<T>.subscribe(onEach: suspend (T) -> Unit): Unit = error("Should not be called")
 
 /** @suppress **/
-@Deprecated(message = "Use launch + collect instead", level = DeprecationLevel.ERROR)
-public fun <T> Flow<T>.subscribe(onEach: (T) -> Unit, onError: (Throwable) -> Unit): Unit = error("Should not be called")
+@Deprecated(
+    message = "Use launchIn with onEach, onCompletion and catch operators instead",
+    level = DeprecationLevel.ERROR
+)public fun <T> Flow<T>.subscribe(onEach: suspend (T) -> Unit, onError: suspend (Throwable) -> Unit): Unit = error("Should not be called")
 
 /**
  * Note that this replacement is sequential (`concat`) by default.

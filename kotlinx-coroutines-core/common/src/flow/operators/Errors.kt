@@ -57,9 +57,8 @@ import kotlinx.coroutines.flow.unsafeFlow as flow
 @ExperimentalCoroutinesApi // tentatively stable in 1.3.0
 public fun <T> Flow<T>.catch(action: suspend FlowCollector<T>.(cause: Throwable) -> Unit): Flow<T> =
     flow {
-        catchImpl(this) { e ->
-            action(e)
-        }
+        val exception = catchImpl(this)
+        if (exception != null) action(exception)
     }
 
 /**
@@ -177,22 +176,22 @@ public fun <T> Flow<T>.retryWhen(predicate: suspend FlowCollector<T>.(cause: Thr
         var shallRetry: Boolean
         do {
             shallRetry = false
-            catchImpl(this) { e ->
-                if (predicate(e, attempt)) {
+            val cause = catchImpl(this)
+            if (cause != null) {
+                if (predicate(cause, attempt)) {
                     shallRetry = true
                     attempt++
                 } else {
-                    throw e
+                    throw cause
                 }
             }
         } while (shallRetry)
     }
 
-// Note that exception may come from the downstream operators, we should not catch them
-private suspend inline fun <T> Flow<T>.catchImpl(
-    collector: FlowCollector<T>,
-    action: FlowCollector<T>.(Throwable) -> Unit
-) {
+// Return exception from upstream or null
+internal suspend fun <T> Flow<T>.catchImpl(
+    collector: FlowCollector<T>
+): Throwable? {
     var fromDownstream: Throwable? = null
     try {
         collect {
@@ -209,10 +208,12 @@ private suspend inline fun <T> Flow<T>.catchImpl(
          * Seconds check ignores cancellation causes, they cannot be caught.
          */
         if (e.isSameExceptionAs(fromDownstream) || e.isCancellationCause(coroutineContext)) {
-            throw e
+            throw e // Rethrow exceptions from downstream and cancellation causes
+        } else {
+            return e // not from downstream
         }
-        collector.action(e)
     }
+    return null
 }
 
 private fun Throwable.isCancellationCause(coroutineContext: CoroutineContext): Boolean {

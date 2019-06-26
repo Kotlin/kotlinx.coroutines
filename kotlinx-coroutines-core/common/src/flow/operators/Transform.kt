@@ -9,7 +9,8 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.internal.NULL
+import kotlinx.coroutines.flow.internal.*
+import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlinx.coroutines.flow.unsafeFlow as flow
 
@@ -97,6 +98,64 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = flow {
     collect { value ->
         action(value)
         emit(value)
+    }
+}
+
+/**
+ * Invokes the given [action] when the given flow is completed or cancelled, using
+ * the exception from the upstream (if any) as cause parameter of [action].
+ *
+ * Conceptually, [onCompletion] is similar to wrapping the flow collection into a `finally` block,
+ * for example the following imperative snippet:
+ * ```
+ * try {
+ *     myFlow.collect { value ->
+ *         println(value)
+ *     }
+ * } finally {
+ *     println("Done")
+ * }
+ * ```
+ *
+ * can be replaced with a declarative one using [onCompletion]:
+ * ```
+ * myFlow
+ *     .onEach { println(it) }
+ *     .onCompletion { println("Done") }
+ *     .collect()
+ * ```
+ *
+ * This operator is *transparent* to exceptions that occur in downstream flow
+ * and does not observe exceptions that are thrown to cancel the flow,
+ * while any exception from the [action] will be thrown downstream.
+ * This behaviour can be demonstrated by the following example:
+ * ```
+ * flow { emitData() }
+ *     .map { computeOne(it) }
+ *     .onCompletion { println(it) } // Can print exceptions from emitData and computeOne
+ *     .map { computeTwo(it) }
+ *     .onCompletion { println(it) } // Can print exceptions from emitData, computeOne, onCompletion and computeTwo
+ *     .collect()
+ * ```
+ */
+@ExperimentalCoroutinesApi // tentatively stable in 1.3.0
+public fun <T> Flow<T>.onCompletion(action: suspend (cause: Throwable?) -> Unit): Flow<T> = flow {
+    var exception: Throwable? = null
+    try {
+        exception = catchImpl(this)
+    } finally {
+        // Separate method because of KT-32220
+        invokeSafely(action, exception)
+        exception?.let { throw it }
+    }
+}
+
+private suspend fun invokeSafely(action: suspend (cause: Throwable?) -> Unit, cause: Throwable?) {
+    try {
+        action(cause)
+    } catch (e: Throwable) {
+        if (cause !== null) e.addSuppressedThrowable(cause)
+        throw e
     }
 }
 
