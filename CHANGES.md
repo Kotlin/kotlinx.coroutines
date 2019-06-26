@@ -1,5 +1,12 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.3.0-M2
+ * Kotlin updated to 1.3.40.
+ * `Flow` exception transparency concept.
+ * New Flow declarative `Flow` operators: `onCompletion`, `catch`, `retryWhen`, `launchIn` (#1263).
+ * `Publisher.asFlow` is integrated with `buffer` operator.
+ * `Publisher.openSubscription` default request size is `1` instead of `0` (#1267).
+
 ## Version 1.3.0-M1
 
 Flow:
@@ -37,6 +44,10 @@ General changes:
  * Fix cancellation bug in onJoin (#1130).
  * Prevent internal names clash that caused errors for ProGuard (#1159).
  * POSIX's `nanosleep` as `delay` in `runBlocking ` in K/N (#1225).
+
+## Version 1.2.2
+
+* Kotlin updated to 1.3.40.
 
 ## Version 1.2.1
 

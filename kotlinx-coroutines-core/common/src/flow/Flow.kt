@@ -12,13 +12,18 @@ import kotlin.coroutines.*
  * A cold asynchronous data stream that sequentially emits values
  * and completes normally or with an exception.
  *
- * _Cold flow_ means that intermediate operators on a flow such as [map] and [filter] do not trigger its execution,
- * which is only done by terminal operators like [single]. By default, flows are _sequential_ and all flow
- * operations are executed sequentially in the same coroutine, see [buffer] for details.
+ * _Intermediate operators_ on the flow such as [map], [filter], [take], [zip], etc are functions that are
+ * applied to the _upstream_ flow or flows and return a _downstream_ flow where further operators can be applied to.
+ * Intermediate operations do not execute any code in the flow and are not suspending functions themselves.
+ * They only set up a chain of operations for future execution and quickly return.
+ * This is known as a _cold flow_ property.
  *
- * _Collecting the flow_ means executing all its operations.
- * Flow values can be collected in a suspending manner without actual blocking using the [collect] extension that
- * completes normally or exceptionally:
+ * _Terminal operators_ on the flow are either suspending functions such as [collect], [single], [reduce], [toList], etc.
+ * or [launchIn] operator that starts collection of the flow in the given scope.
+ * They are applied to the upstream flow and trigger execution of all operations.
+ * Execution of the flow is also called _collecting the flow_  and is always performed in a suspending manner
+ * without actual blocking. Terminal operator complete normally or exceptionally depending on successful or failed
+ * execution of all the flow operations in the upstream. The most basic terminal operator is [collect], for example:
  *
  * ```
  * try {
@@ -30,10 +35,13 @@ import kotlin.coroutines.*
  * }
  * ```
  *
- * Additionally, the library provides a rich set of terminal operators such as [single], [reduce] and others.
+ * By default, flows are _sequential_ and all flow operations are executed sequentially in the same coroutine,
+ * with an exception for a few operations specifically designed to introduce concurrency into flow
+ * the execution such a [buffer] and [flatMapMerge]. See their documentation for details.
  *
- * Flows don't carry information whether they are cold streams (which can be collected repeatedly and
- * trigger their evaluation every time [collect] is executed) or hot ones, but, conventionally, they represent cold streams.
+ * Flow interface does not carry information whether a flow is a truly a cold stream that can be collected repeatedly and
+ * triggers execution of the same code every time it is collected or if it is a hot stream that emits different
+ * values from the same running source on each collection. However, conventionally flows represent cold streams.
  * Transitions between hot and cold streams are supported via channels and the corresponding API:
  * [channelFlow], [produceIn], [broadcastIn].
  *
@@ -48,7 +56,18 @@ import kotlin.coroutines.*
  * * [channelFlow { ... }][channelFlow] builder function to construct arbitrary flows from
  *   potentially concurrent calls to [send][kotlinx.coroutines.channels.SendChannel.send] function.
  *
- * ### Flow context
+ * ### Flow constraints
+ *
+ * All implementations of `Flow` interface must adhere to two key properties that are described in detail below:
+ *
+ * * Context preservation.
+ * * Exception transparency.
+ *
+ * These properties ensure the ability to perform local reasoning about the code with flows and modularize the code
+ * in such a way so that upstream flow emitters can be developed separately from downstream flow collectors.
+ * A user of the flow does not needs to know implementation details of the upstream flows it uses.
+ *
+ * ### Context preservation
  *
  * The flow has a context preservation property: it encapsulates its own execution context and never propagates or leaks
  * it downstream, thus making reasoning about the execution context of particular transformations or terminal
@@ -77,7 +96,7 @@ import kotlin.coroutines.*
  * }
  * ```
  *
- * From the implementation point of view it means that all flow implementations should
+ * From the implementation point of view, it means that all flow implementations should
  * emit only from the same coroutine.
  * This constraint is efficiently enforced by the default [flow] builder.
  * The [flow] builder should be used if flow implementation does not start any coroutines.
@@ -108,20 +127,46 @@ import kotlin.coroutines.*
  *  - Collecting another flow from a separate context is allowed, but it has the same effect as
  *    [flowOn] operator on that flow, which is more efficient.
  *
+ * ### Exception transparency
+ *
+ * Flow implementations never catch or handle exceptions that occur in downstream flows. From the implementation standpoint
+ * it means that calls to [emit][FlowCollector.emit] and [emitAll] shall never be wrapped into
+ * `try { ... } catch { ... }` blocks. Exception handling in flows shall be performed with
+ * [catch][Flow.catch] operator and it is designed to catch only exception coming from upstream flow while passing
+ * all the downstream exceptions. Similarly, terminal operators like [collect][Flow.collect]
+ * throw any unhandled exception that occurs in its code or in upstream flows, for example:
+ *
+ * ```
+ * flow { emitData() }
+ *     .map { computeOne(it) }
+ *     .catch { ... } // catches exceptions in emitData and computeOne
+ *     .map { computeTwo(it) }
+ *     .collect { process(it) } // throws exceptions from process and computeTwo
+ * ```
+ * The same reasoning can be applied to [onCompletion] operator that is a declarative replacement for `finally` block.
+ *
+ * Failure to adhere to the exception transparency requirement would result in strange behaviours that would make
+ * it hard to reason about the code because an exception in the `collect { ... }` could be somehow "caught"
+ * by the upstream flow, limiting the ability of local reasoning about the code.
+ *
+ * Currently, flow infrastructure does not enforce exception transparency contracts, however, it might be enforced
+ * in the future either at run time or at compile time.
+ *
+ * ### Reactive streams
+ *
  * Flow is [Reactive Streams](http://www.reactive-streams.org/) compliant, you can safely interop it with
- * reactive streams using [Flow.asPublisher] and [Publisher.asFlow] from kotlinx-coroutines-reactive module.
+ * reactive streams using [Flow.asPublisher] and [Publisher.asFlow] from `kotlinx-coroutines-reactive` module.
  */
 @ExperimentalCoroutinesApi
 public interface Flow<out T> {
-
     /**
      * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
      * This method should never be implemented or used directly.
      *
      * The only way to implement flow interface directly is to extend [AbstractFlow].
-     * To collect it into the specific collector, either `collector.emitAll(flow)` or `collect { }` extension should be used.
-     * Such limitation ensures that context preservation property is not violated and prevents most of the developer mistakes
-     * related to concurrency, inconsistent flow dispatchers and cancellation.
+     * To collect it into the specific collector, either `collector.emitAll(flow)` or `collect { ... }` extension
+     * should be used. Such limitation ensures that context preservation property is not violated and prevents most
+     * of the developer mistakes related to concurrency, inconsistent flow dispatchers and cancellation.
      */
     @InternalCoroutinesApi
     public suspend fun collect(collector: FlowCollector<T>)
@@ -129,8 +174,11 @@ public interface Flow<out T> {
 
 /**
  * Base class to extend to have a stateful implementation of the flow.
- * It tracks all the properties required for context preservation and throws [IllegalStateException] if any of the properties are violated.
+ * It tracks all the properties required for context preservation and throws [IllegalStateException]
+ * if any of the properties are violated.
+ * 
  * Example of the implementation:
+ *
  * ```
  * // list.asFlow() + collect counter
  * class CountingListFlow(private val values: List<Int>) : AbstractFlow<Int>() {

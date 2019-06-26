@@ -53,7 +53,7 @@ public actual open class TestBase actual constructor() {
     private lateinit var threadsBefore: Set<Thread>
     private val uncaughtExceptions = Collections.synchronizedList(ArrayList<Throwable>())
     private var originalUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
-    private val SHUTDOWN_TIMEOUT = 10_000L // 10s at most to wait
+    private val SHUTDOWN_TIMEOUT = 1_000L // 1s at most to wait per thread
 
     /**
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not

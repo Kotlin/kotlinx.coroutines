@@ -7,7 +7,6 @@
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.internal.sanitize
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.*
 
@@ -64,7 +63,7 @@ public data class CoroutineInfo internal constructor(
         var frame: CoroutineStackFrame? = lastObservedFrame ?: return emptyList()
         val result = ArrayList<StackTraceElement>()
         while (frame != null) {
-            frame.getStackTraceElement()?.let { result.add(sanitize(it)) }
+            frame.getStackTraceElement()?.let { result.add(it) }
             frame = frame.callerFrame
         }
         return result

@@ -105,10 +105,17 @@ public fun PublishSubject(): Any = error("Should not be called")
 /** @suppress **/
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Flow analogue is named onErrorCollect",
-    replaceWith = ReplaceWith("onErrorCollect(fallback)")
+    message = "Flow analogue of 'onErrorXxx' is 'catch'. Use 'catch { emitAll(fallback) }'",
+    replaceWith = ReplaceWith("catch { emitAll(fallback) }")
 )
 public fun <T> Flow<T>.onErrorResume(fallback: Flow<T>): Flow<T> = error("Should not be called")
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'onErrorXxx' is 'catch'. Use 'catch { emitAll(fallback) }'",
+    replaceWith = ReplaceWith("catch { emitAll(fallback) }")
+)
+public fun <T> Flow<T>.onErrorResumeNext(fallback: Flow<T>): Flow<T> = error("Should not be called")
 
 /**
  * Self-explanatory, the reason of deprecation is "context preservation" property (you can read more in [Flow] documentation)
@@ -120,7 +127,7 @@ public fun <T, R> FlowCollector<T>.withContext(context: CoroutineContext, block:
 
 /**
  * `subscribe` is Rx-specific API that has no direct match in flows.
- * One can use `launch` instead, for example the following:
+ * One can use [launchIn] instead, for example the following:
  * ```
  * flowable
  *     .observeOn(Schedulers.io())
@@ -129,30 +136,36 @@ public fun <T, R> FlowCollector<T>.withContext(context: CoroutineContext, block:
  *
  * has the following Flow equivalent:
  * ```
- * launch(Dispatchers.IO) {
- *     try {
- *         flow.collect { value ->
- *             println("Received $value")
- *         }
- *         println("Flow is completed successfully")
- *     } catch (e: Throwable) {
- *         println("Exception $e happened")
- *     }
- * }
+ * flow
+ *     .onEach { value -> println("Received $value") }
+ *     .onCompletion { cause -> if (cause == null) println("Flow is completed successfully") }
+ *     .catch { cause -> println("Exception $cause happened") }
+ *     .flowOn(Dispatchers.IO)
+ *     .launchIn(myScope)
  * ```
- * But most of the time it is better to use terminal operators like [single] instead of [collect].
+ *
+ * Note that resulting value of [launchIn] is not used because the provided scope takes care of cancellation.
+ *
+ * Or terminal operators like [single] can be used from suspend functions.
  * @suppress
  */
-@Deprecated(message = "Use launch + collect instead", level = DeprecationLevel.ERROR)
+@Deprecated(
+    message = "Use launchIn with onEach, onCompletion and catch operators instead",
+    level = DeprecationLevel.ERROR
+)
 public fun <T> Flow<T>.subscribe(): Unit = error("Should not be called")
 
 /** @suppress **/
-@Deprecated(message = "Use launch + collect instead", level = DeprecationLevel.ERROR)
-public fun <T> Flow<T>.subscribe(onEach: (T) -> Unit): Unit = error("Should not be called")
+@Deprecated(
+    message = "Use launchIn with onEach, onCompletion and catch operators instead",
+    level = DeprecationLevel.ERROR
+)public fun <T> Flow<T>.subscribe(onEach: suspend (T) -> Unit): Unit = error("Should not be called")
 
 /** @suppress **/
-@Deprecated(message = "Use launch + collect instead", level = DeprecationLevel.ERROR)
-public fun <T> Flow<T>.subscribe(onEach: (T) -> Unit, onError: (Throwable) -> Unit): Unit = error("Should not be called")
+@Deprecated(
+    message = "Use launchIn with onEach, onCompletion and catch operators instead",
+    level = DeprecationLevel.ERROR
+)public fun <T> Flow<T>.subscribe(onEach: suspend (T) -> Unit, onError: suspend (Throwable) -> Unit): Unit = error("Should not be called")
 
 /**
  * Note that this replacement is sequential (`concat`) by default.
@@ -181,7 +194,7 @@ public fun <T, R> Flow<T>.concatMap(mapper: (T) -> Flow<R>): Flow<R> = error("Sh
  */
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Flow analogue is named flattenConcat",
+    message = "Flow analogue of 'merge' is 'flattenConcat'",
     replaceWith = ReplaceWith("flattenConcat()")
 )
 public fun <T> Flow<Flow<T>>.merge(): Flow<T> = error("Should not be called")
@@ -189,7 +202,7 @@ public fun <T> Flow<Flow<T>>.merge(): Flow<T> = error("Should not be called")
 /** @suppress **/
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Flow analogue is named flattenConcat",
+    message = "Flow analogue of 'flatten' is 'flattenConcat'",
     replaceWith = ReplaceWith("flattenConcat()")
 )
 public fun <T> Flow<Flow<T>>.flatten(): Flow<T> = error("Should not be called")
@@ -210,7 +223,7 @@ public fun <T> Flow<Flow<T>>.flatten(): Flow<T> = error("Should not be called")
  */
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Kotlin analogue of compose is 'let'",
+    message = "Flow analogue of 'compose' is 'let'",
     replaceWith = ReplaceWith("let(transformer)")
 )
 public fun <T, R> Flow<T>.compose(transformer: Flow<T>.() -> Flow<R>): Flow<R> = error("Should not be called")
@@ -220,7 +233,7 @@ public fun <T, R> Flow<T>.compose(transformer: Flow<T>.() -> Flow<R>): Flow<R> =
  */
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Kotlin analogue of 'skip' is 'drop'",
+    message = "Flow analogue of 'skip' is 'drop'",
     replaceWith = ReplaceWith("drop(count)")
 )
 public fun <T> Flow<T>.skip(count: Int): Flow<T> = error("Should not be called")
@@ -246,3 +259,23 @@ public fun <T> Flow<T>.forEach(action: suspend (value: T) -> Unit): Unit = error
     replaceWith = ReplaceWith("scan(initial, operation)")
 )
 public fun <T, R> Flow<T>.scanFold(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = error("Should not be called")
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'onErrorXxx' is 'catch'. Use 'catch { emit(fallback) }'",
+    replaceWith = ReplaceWith("catch { emit(fallback) }")
+)
+// Note: this version without predicate gives better "replaceWith" action
+public fun <T> Flow<T>.onErrorReturn(fallback: T): Flow<T> = error("Should not be called")
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'onErrorXxx' is 'catch'. Use 'catch { e -> if (predicate(e)) emit(fallback) else throw e }'",
+    replaceWith = ReplaceWith("catch { e -> if (predicate(e)) emit(fallback) else throw e }")
+)
+public fun <T> Flow<T>.onErrorReturn(fallback: T, predicate: (Throwable) -> Boolean = { true }): Flow<T> =
+    catch { e ->
+        // Note: default value is for binary compatibility with preview version, that is why it has body
+        if (!predicate(e)) throw e
+        emit(fallback)
+    }

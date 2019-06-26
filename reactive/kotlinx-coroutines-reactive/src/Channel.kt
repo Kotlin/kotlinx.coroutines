@@ -17,11 +17,11 @@ import org.reactivestreams.*
  * **Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.**
  *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
  *
- * @param request how many items to request from publisher in advance (optional, on-demand request by default).
+ * @param request how many items to request from publisher in advance (optional, one by default).
  */
 @ObsoleteCoroutinesApi
 @Suppress("CONFLICTING_OVERLOADS")
-public fun <T> Publisher<T>.openSubscription(request: Int = 0): ReceiveChannel<T> {
+public fun <T> Publisher<T>.openSubscription(request: Int = 1): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>(request)
     subscribe(channel)
     return channel
@@ -40,7 +40,7 @@ public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) =
 public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit) =
     openSubscription().consumeEach(action)
 
-@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
 private class SubscriptionChannel<T>(
     private val request: Int
 ) : LinkedListChannel<T>(), Subscriber<T> {
