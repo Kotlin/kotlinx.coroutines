@@ -15,8 +15,13 @@ import kotlin.jvm.*
 internal fun <T> Flow<T>.asChannelFlow(): ChannelFlow<T> =
     this as? ChannelFlow ?: ChannelFlowOperatorImpl(this)
 
-// Operators that use channels extend this ChannelFlow and are always fused with each other
-internal abstract class ChannelFlow<T>(
+/**
+ * Operators that use channels extend this ChannelFlow and are always fused with each other.
+ *
+ * @suppress **This an internal API and should not be used from general code.**
+ */
+@InternalCoroutinesApi
+public abstract class ChannelFlow<T>(
     // upstream context
     @JvmField val context: CoroutineContext,
     // buffer capacity between upstream and downstream context
@@ -62,7 +67,7 @@ internal abstract class ChannelFlow<T>(
     fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =
         scope.broadcast(context, produceCapacity, start, block = collectToFun)
 
-    fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
+    open fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
         scope.flowProduce(context, produceCapacity, block = collectToFun)
 
     override suspend fun collect(collector: FlowCollector<T>) =
