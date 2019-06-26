@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>catch - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/catch.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.flow</a> / <a href="./catch.html">catch</a></div>
+
+<h1 id="catch">catch</h1>
+
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">catch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Errors.kt#L58">(source)</a></div>
+
+<p>Catches exceptions in the flow completion and calls a specified <a href="catch.html#kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> with
+the caught exception. This operator is <em>transparent</em> to exceptions that occur
+in downstream flow and does not catch exceptions that are thrown to cancel the flow.</p>
+
+<p>For example:</p>
+
+<pre>flow { emitData() }
+    .map { computeOne(it) }
+    .catch { ... } // catches exceptions in emitData and computeOne
+    .map { computeTwo(it) }
+    .collect { process(it) } // throws exceptions from process and computeTwo
+</pre>
+
+<p>Conceptually, the action of <code>catch</code> operator is similar to wrapping the code of upstream flows with
+<code>try { ... } catch (e: Throwable) { action(e) }</code>.</p>
+
+<p>Any exception in the <a href="catch.html#kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> code itself proceeds downstream where it can be
+caught by further <code>catch</code> operators if needed. If a particular exception does not need to be
+caught it can be rethrown from the action of <code>catch</code> operator. For example:</p>
+
+<pre>flow.catch { e -&gt;
+    if (e !is IOException) throw e // rethrow all but IOException
+    // e is IOException here
+    ...
+}
+</pre>
+
+<p>The <a href="catch.html#kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> code has <a href="-flow-collector/index.html">FlowCollector</a> as a receiver and can <a href="-flow-collector/emit.html">emit</a> values downstream.
+For example, caught exception can be replaced with some wrapper value for errors:</p>
+
+<pre>flow.catch { e -&gt; emit(ErrorWrapperValue(e)) }
+</pre>
+
+<p>The <a href="catch.html#kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> can also use <a href="emit-all.html">emitAll</a> to fallback on some other flow in case of an error. However, to
+retry an original flow use <a href="retry-when.html">retryWhen</a> operator that can retry the flow multiple times without
+introducing ever-growing stack of suspending calls.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

@@ -33,18 +33,23 @@
 
 <h1 id="flow">Flow</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">interface </span><span class="identifier">Flow</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Flow.kt#L115">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">interface </span><span class="identifier">Flow</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Flow.kt#L161">(source)</a></div>
 
 <p>A cold asynchronous data stream that sequentially emits values
 and completes normally or with an exception.</p>
 
-<p><em>Cold flow</em> means that intermediate operators on a flow such as <a href="../map.html">map</a> and <a href="../filter.html">filter</a> do not trigger its execution,
-which is only done by terminal operators like <a href="../single.html">single</a>. By default, flows are <em>sequential</em> and all flow
-operations are executed sequentially in the same coroutine, see <a href="../buffer.html">buffer</a> for details.</p>
+<p><em>Intermediate operators</em> on the flow such as <a href="../map.html">map</a>, <a href="../filter.html">filter</a>, <a href="../take.html">take</a>, <a href="../zip.html">zip</a>, etc are functions that are
+applied to the <em>upstream</em> flow or flows and return a <em>downstream</em> flow where further operators can be applied to.
+Intermediate operations do not execute any code in the flow and are not suspending functions themselves.
+They only set up a chain of operations for future execution and quickly return.
+This is known as a <em>cold flow</em> property.</p>
 
-<p><em>Collecting the flow</em> means executing all its operations.
-Flow values can be collected in a suspending manner without actual blocking using the <a href="collect.html">collect</a> extension that
-completes normally or exceptionally:</p>
+<p><em>Terminal operators</em> on the flow are either suspending functions such as <a href="collect.html">collect</a>, <a href="../single.html">single</a>, <a href="../reduce.html">reduce</a>, <a href="../to-list.html">toList</a>, etc.
+or <a href="../launch-in.html">launchIn</a> operator that starts collection of the flow in the given scope.
+They are applied to the upstream flow and trigger execution of all operations.
+Execution of the flow is also called <em>collecting the flow</em>  and is always performed in a suspending manner
+without actual blocking. Terminal operator complete normally or exceptionally depending on successful or failed
+execution of all the flow operations in the upstream. The most basic terminal operator is <a href="collect.html">collect</a>, for example:</p>
 
 <pre>try {
     flow.collect { value -&gt;
@@ -55,10 +60,13 @@ completes normally or exceptionally:</p>
 }
 </pre>
 
-<p>Additionally, the library provides a rich set of terminal operators such as <a href="../single.html">single</a>, <a href="../reduce.html">reduce</a> and others.</p>
+<p>By default, flows are <em>sequential</em> and all flow operations are executed sequentially in the same coroutine,
+with an exception for a few operations specifically designed to introduce concurrency into flow
+the execution such a <a href="../buffer.html">buffer</a> and <a href="../flat-map-merge.html">flatMapMerge</a>. See their documentation for details.</p>
 
-<p>Flows don’t carry information whether they are cold streams (which can be collected repeatedly and
-trigger their evaluation every time <a href="collect.html">collect</a> is executed) or hot ones, but, conventionally, they represent cold streams.
+<p>Flow interface does not carry information whether a flow is a truly a cold stream that can be collected repeatedly and
+triggers execution of the same code every time it is collected or if it is a hot stream that emits different
+values from the same running source on each collection. However, conventionally flows represent cold streams.
 Transitions between hot and cold streams are supported via channels and the corresponding API:
 <a href="../channel-flow.html">channelFlow</a>, <a href="../produce-in.html">produceIn</a>, <a href="../broadcast-in.html">broadcastIn</a>.</p>
 
@@ -75,7 +83,20 @@ sequential calls to <a href="../-flow-collector/emit.html">emit</a> function.</l
 potentially concurrent calls to <a href="../../kotlinx.coroutines.channels/-send-channel/send.html">send</a> function.</li>
 </ul>
 
-<h3 id="flow-context">Flow context</h3>
+<h3 id="flow-constraints">Flow constraints</h3>
+
+<p>All implementations of <code>Flow</code> interface must adhere to two key properties that are described in detail below:</p>
+
+<ul>
+  <li>Context preservation.</li>
+  <li>Exception transparency.</li>
+</ul>
+
+<p>These properties ensure the ability to perform local reasoning about the code with flows and modularize the code
+in such a way so that upstream flow emitters can be developed separately from downstream flow collectors.
+A user of the flow does not needs to know implementation details of the upstream flows it uses.</p>
+
+<h3 id="context-preservation">Context preservation</h3>
 
 <p>The flow has a context preservation property: it encapsulates its own execution context and never propagates or leaks
 it downstream, thus making reasoning about the execution context of particular transformations or terminal
@@ -103,7 +124,7 @@ withContext(Dispatchers.Main) {
 }
 </pre>
 
-<p>From the implementation point of view it means that all flow implementations should
+<p>From the implementation point of view, it means that all flow implementations should
 emit only from the same coroutine.
 This constraint is efficiently enforced by the default <a href="#">flow</a> builder.
 The <a href="#">flow</a> builder should be used if flow implementation does not start any coroutines.
@@ -136,8 +157,35 @@ It is possible to use any combination of coroutine builders from within <a href=
   <a href="../flow-on.html">flowOn</a> operator on that flow, which is more efficient.</li>
 </ul>
 
+<h3 id="exception-transparency">Exception transparency</h3>
+
+<p>Flow implementations never catch or handle exceptions that occur in downstream flows. From the implementation standpoint
+it means that calls to <a href="../-flow-collector/emit.html">emit</a> and <a href="../emit-all.html">emitAll</a> shall never be wrapped into
+<code>try { ... } catch { ... }</code> blocks. Exception handling in flows shall be performed with
+<a href="../catch.html">catch</a> operator and it is designed to catch only exception coming from upstream flow while passing
+all the downstream exceptions. Similarly, terminal operators like <a href="collect.html">collect</a>
+throw any unhandled exception that occurs in its code or in upstream flows, for example:</p>
+
+<pre>flow { emitData() }
+    .map { computeOne(it) }
+    .catch { ... } // catches exceptions in emitData and computeOne
+    .map { computeTwo(it) }
+    .collect { process(it) } // throws exceptions from process and computeTwo
+</pre>
+
+<p>The same reasoning can be applied to <a href="../on-completion.html">onCompletion</a> operator that is a declarative replacement for <code>finally</code> block.</p>
+
+<p>Failure to adhere to the exception transparency requirement would result in strange behaviours that would make
+it hard to reason about the code because an exception in the <code>collect { ... }</code> could be somehow “caught”
+by the upstream flow, limiting the ability of local reasoning about the code.</p>
+
+<p>Currently, flow infrastructure does not enforce exception transparency contracts, however, it might be enforced
+in the future either at run time or at compile time.</p>
+
+<h3 id="reactive-streams">Reactive streams</h3>
+
 <p>Flow is <a href="http://www.reactive-streams.org/">Reactive Streams</a> compliant, you can safely interop it with
-reactive streams using <a href="#">Flow.asPublisher</a> and <a href="#">Publisher.asFlow</a> from kotlinx-coroutines-reactive module.</p>
+reactive streams using <a href="#">Flow.asPublisher</a> and <a href="#">Publisher.asFlow</a> from <code>kotlinx-coroutines-reactive</code> module.</p>
 
 <h3 id="functions">Functions</h3>
 
@@ -193,10 +241,30 @@ This method should never be implemented or used directly.</p>
 <tr>
 <td>
 
+        <p><a href="../catch.html">catch</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">catch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="../catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Catches exceptions in the flow completion and calls a specified <a href="../catch.html#kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> with
+the caught exception. This operator is <em>transparent</em> to exceptions that occur
+in downstream flow and does not catch exceptions that are thrown to cancel the flow.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../collect.html">collect</a></p>
 
       </td>
 <td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">collect</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Terminal flow operator that collects the given flow but ignores all emitted values.
+If any exception occurs during collect or in the provided flow, this exception is rethrown from this method.</p>
+
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../collect.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">collect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$collect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.collect.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.collect.T, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../collect.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Terminal flow operator that collects the given flow with a provided <a href="../collect.html#kotlinx.coroutines.flow$collect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.collect.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.collect.T, kotlin.Unit)))/action">action</a>.
@@ -489,7 +557,7 @@ concurrently collected flows.</p>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flowOn</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>The operator that changes the context where this flow is executed to the given <a href="../flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</a>.
+        <p>Changes the context where this flow is executed to the given <a href="../flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</a>.
 This operator is composable and affects only preceding operators that do not have its own context.
 This operator is context preserving: <a href="../flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</a> <strong>does not</strong> leak into the downstream flow.</p>
 
@@ -525,6 +593,20 @@ This operator is context preserving and does not affect the context of the prece
 <tr>
 <td>
 
+        <p><a href="../launch-in.html">launchIn</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../launch-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">launchIn</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$launchIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.launchIn.T)), kotlinx.coroutines.CoroutineScope)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines/-job/index.html"><span class="identifier">Job</span></a></code></div>
+
+        <p>Terminal flow operator that <a href="../../kotlinx.coroutines/launch.html">launches</a> the <a href="../collect.html">collection</a> of the given flow in the <a href="../launch-in.html#kotlinx.coroutines.flow$launchIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.launchIn.T)), kotlinx.coroutines.CoroutineScope)/scope">scope</a>.
+It is a shorthand for <code>scope.launch { flow.collect() }</code>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../map.html">map</a></p>
 
       </td>
@@ -551,6 +633,20 @@ This operator is context preserving and does not affect the context of the prece
 <tr>
 <td>
 
+        <p><a href="../on-completion.html">onCompletion</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../on-completion.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction1((kotlin.Throwable, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../on-completion.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Invokes the given <a href="../on-completion.html#kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction1((kotlin.Throwable, kotlin.Unit)))/action">action</a> when the given flow is completed or cancelled, using
+the exception from the upstream (if any) as cause parameter of <a href="../on-completion.html#kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction1((kotlin.Throwable, kotlin.Unit)))/action">action</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../on-each.html">onEach</a></p>
 
       </td>
@@ -564,14 +660,11 @@ This operator is context preserving and does not affect the context of the prece
 <tr>
 <td>
 
-        <p><a href="../on-error-collect.html">onErrorCollect</a></p>
+        <p><a href="../on-error-resume-next.html">onErrorResumeNext</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../on-error-collect.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onErrorCollect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onErrorCollect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/fallback">fallback</span><span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../on-error-collect.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onErrorCollect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<a href="../-exception-predicate.html"><span class="identifier">ExceptionPredicate</span></a>&nbsp;<span class="symbol">=</span>&nbsp;ALWAYS_TRUE<br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../on-error-collect.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Switches to the <a href="../on-error-collect.html#kotlinx.coroutines.flow$onErrorCollect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/fallback">fallback</a> flow if the original flow throws an exception that matches the <a href="../on-error-collect.html#kotlinx.coroutines.flow$onErrorCollect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorCollect.T)), kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</a>.
-Cancellation exceptions that were caused by the direct <a href="../../kotlinx.coroutines/cancel.html">cancel</a> call are not handled by this operator.</p>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../on-error-resume-next.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">onErrorResumeNext</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$onErrorResumeNext(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorResumeNext.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorResumeNext.T)))/fallback">fallback</span><span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../on-error-resume-next.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../on-error-resume-next.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
       </td>
 </tr>
@@ -582,10 +675,9 @@ Cancellation exceptions that were caused by the direct <a href="../../kotlinx.co
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../on-error-return.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onErrorReturn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onErrorReturn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorReturn.T)), kotlinx.coroutines.flow.onErrorReturn.T, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/fallback">fallback</span><span class="symbol">:</span>&nbsp;<a href="../on-error-return.html#T"><span class="identifier">T</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onErrorReturn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorReturn.T)), kotlinx.coroutines.flow.onErrorReturn.T, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<a href="../-exception-predicate.html"><span class="identifier">ExceptionPredicate</span></a>&nbsp;<span class="symbol">=</span>&nbsp;ALWAYS_TRUE<br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../on-error-return.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../on-error-return.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">onErrorReturn</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$onErrorReturn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorReturn.T)), kotlinx.coroutines.flow.onErrorReturn.T)/fallback">fallback</span><span class="symbol">:</span>&nbsp;<a href="../on-error-return.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../on-error-return.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Emits the <a href="../on-error-return.html#kotlinx.coroutines.flow$onErrorReturn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorReturn.T)), kotlinx.coroutines.flow.onErrorReturn.T, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/fallback">fallback</a> value and finishes successfully if the original flow throws exception that matches the given <a href="../on-error-return.html#kotlinx.coroutines.flow$onErrorReturn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorReturn.T)), kotlinx.coroutines.flow.onErrorReturn.T, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</a>.
-Cancellation exceptions that were caused by the direct <a href="../../kotlinx.coroutines/cancel.html">cancel</a> call are not handled by this operator.</p>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../on-error-return.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">onErrorReturn</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onErrorReturn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorReturn.T)), kotlinx.coroutines.flow.onErrorReturn.T, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/fallback">fallback</span><span class="symbol">:</span>&nbsp;<a href="../on-error-return.html#T"><span class="identifier">T</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onErrorReturn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onErrorReturn.T)), kotlinx.coroutines.flow.onErrorReturn.T, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;{ true }<br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../on-error-return.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
       </td>
 </tr>
@@ -623,11 +715,29 @@ Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unsupported
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../retry.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">retry</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/retries">retries</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Int.MAX_VALUE<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<a href="../-exception-predicate.html"><span class="identifier">ExceptionPredicate</span></a>&nbsp;<span class="symbol">=</span>&nbsp;ALWAYS_TRUE<br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../retry.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../retry.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">retry</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Long, kotlin.SuspendFunction1((kotlin.Throwable, kotlin.Boolean)))/retries">retries</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Long.MAX_VALUE<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Long, kotlin.SuspendFunction1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;{ true }<br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../retry.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Operator that retries <a href="../retry.html#kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/retries">n</a> times to collect the given flow in an exception that matches the given <a href="../retry.html#kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</a> occurs
-in the given flow. Exceptions from collectors of this flow are not retried.
-Cancellation exceptions that were caused by the direct <a href="../../kotlinx.coroutines/cancel.html">cancel</a> call are not handled by this operator.</p>
+        <p>Retries collection of the given flow up to <a href="../retry.html#kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Long, kotlin.SuspendFunction1((kotlin.Throwable, kotlin.Boolean)))/retries">retries</a> times when an exception that matches the
+given <a href="../retry.html#kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Long, kotlin.SuspendFunction1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</a> occurs in the upstream flow. This operator is <em>transparent</em> to exceptions that occur
+in downstream flow and does not retry on exceptions that are thrown to cancel the flow.</p>
+
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../retry.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">retry</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/retries">retries</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Int.MAX_VALUE<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;{ true }<br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../retry.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../retry-when.html">retryWhen</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">retryWhen</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retryWhen(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retryWhen.T)), kotlin.SuspendFunction3((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.retryWhen.T)), kotlin.Throwable, kotlin.Long, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="../retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">attempt</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Retries collection of the given flow when an exception occurs in the upstream flow and the
+<a href="../retry-when.html#kotlinx.coroutines.flow$retryWhen(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retryWhen.T)), kotlin.SuspendFunction3((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.retryWhen.T)), kotlin.Throwable, kotlin.Long, kotlin.Boolean)))/predicate">predicate</a> returns true. The predicate also receives an <code>attempt</code> number as parameter,
+starting from zero on the initial call. This operator is <em>transparent</em> to exceptions that occur
+in downstream flow and does not retry on exceptions that are thrown to cancel the flow.</p>
 
       </td>
 </tr>
@@ -840,8 +950,8 @@ The resulting flow completes as soon as one of the flows completes and cancel is
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractFlow</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../-abstract-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Base class to extend to have a stateful implementation of the flow.
-It tracks all the properties required for context preservation and throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if any of the properties are violated.
-Example of the implementation:</p>
+It tracks all the properties required for context preservation and throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a>
+if any of the properties are violated.</p>
 
       </td>
 </tr>

@@ -33,14 +33,35 @@
 
 <h1 id="collect">collect</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="collect.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">collect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">crossinline</span> <span class="parameterName" id="kotlinx.coroutines.flow$collect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.collect.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.collect.T, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="collect.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/terminal/Collect.kt#L31">(source)</a></div>
+<div class="overload-group">
 
-<p>Terminal flow operator that collects the given flow with a provided <a href="collect.html#kotlinx.coroutines.flow$collect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.collect.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.collect.T, kotlin.Unit)))/action">action</a>.
+  <div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">collect</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/terminal/Collect.kt#L31">(source)</a></div>
+
+  <p>Terminal flow operator that collects the given flow but ignores all emitted values.
 If any exception occurs during collect or in the provided flow, this exception is rethrown from this method.</p>
 
-<p>Example of use:</p>
+  <p>It is a shorthand for <code>collect {}</code>.</p>
 
-<pre>val flow = getMyEvents()
+  <p>This operator is usually used with <a href="on-each.html">onEach</a>, <a href="on-completion.html">onCompletion</a> and <a href="catch.html">catch</a> operators to process all emitted values and
+handle an exception that might occur in the upstream flow or during processing, for example:</p>
+
+  <pre>flow
+    .onEach { value -&gt; process(value) }
+    .catch { e -&gt; handleException(e) }
+    .collect() // trigger collection of the flow
+</pre>
+
+</div>
+<div class="overload-group">
+
+  <div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="collect.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">collect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">crossinline</span> <span class="parameterName" id="kotlinx.coroutines.flow$collect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.collect.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.collect.T, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="collect.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/terminal/Collect.kt#L73">(source)</a></div>
+
+  <p>Terminal flow operator that collects the given flow with a provided <a href="collect.html#kotlinx.coroutines.flow$collect(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.collect.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.collect.T, kotlin.Unit)))/action">action</a>.
+If any exception occurs during collect or in the provided flow, this exception is rethrown from this method.</p>
+
+  <p>Example of use:</p>
+
+  <pre>val flow = getMyEvents()
 try {
     flow.collect { value -&gt;
         println("Received $value")
@@ -50,6 +71,8 @@ try {
     println("Exception from the flow: $e")
 }
 </pre>
+
+</div>
 
       </div>
     </main>

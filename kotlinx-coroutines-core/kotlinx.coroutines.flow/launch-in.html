@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>launchIn - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/launch-in.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.flow</a> / <a href="./launch-in.html">launchIn</a></div>
+
+<h1 id="launchin">launchIn</h1>
+
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="launch-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">launchIn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$launchIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.launchIn.T)), kotlinx.coroutines.CoroutineScope)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../kotlinx.coroutines/-job/index.html"><span class="identifier">Job</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/terminal/Collect.kt#L50">(source)</a></div>
+
+<p>Terminal flow operator that <a href="../kotlinx.coroutines/launch.html">launches</a> the <a href="collect.html">collection</a> of the given flow in the <a href="launch-in.html#kotlinx.coroutines.flow$launchIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.launchIn.T)), kotlinx.coroutines.CoroutineScope)/scope">scope</a>.
+It is a shorthand for <code>scope.launch { flow.collect() }</code>.</p>
+
+<p>This operator is usually used with <a href="on-each.html">onEach</a>, <a href="on-completion.html">onCompletion</a> and <a href="catch.html">catch</a> operators to process all emitted values
+handle an exception that might occur in the upstream flow or during processing, for example:</p>
+
+<pre>flow
+    .onEach { value -&gt; updateUi(value) }
+    .onCompletion { cause -&gt; updateUi(if (cause == null) "Done" else "Failed") }
+    .catch { cause -&gt; LOG.error("Exception: $cause") }
+    .launchIn(uiScope)
+</pre>
+
+<p>Note that resulting value of <a href="./launch-in.md">launchIn</a> is not used the provided scope takes care of cancellation.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+
