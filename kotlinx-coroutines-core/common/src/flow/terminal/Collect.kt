@@ -39,11 +39,8 @@ public suspend fun Flow<*>.collect() = collect(NopCollector)
  * ```
  * flow
  *     .onEach { value -> updateUi(value) }
- *     .onCompletion { cause -> if (cause == null) updateUi("Done") }
- *     .catch { cause ->
- *         updateUi("Failure")
- *         LOG.error("Exception: $cause")
- *     }
+ *     .onCompletion { cause -> updateUi(if (cause == null) "Done" else "Failed") }
+ *     .catch { cause -> LOG.error("Exception: $cause") }
  *     .launchIn(uiScope)
  * ```
  *

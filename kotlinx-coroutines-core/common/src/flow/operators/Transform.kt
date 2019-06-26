@@ -105,7 +105,8 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = flow {
  * Invokes the given [action] when the given flow is completed or cancelled, using
  * the exception from the upstream (if any) as cause parameter of [action].
  *
- * Conceptually, [onCompletion] is similar to wrapping the flow collection into a `finally` block, for example the following imperative snippet:
+ * Conceptually, [onCompletion] is similar to wrapping the flow collection into a `finally` block,
+ * for example the following imperative snippet:
  * ```
  * try {
  *     myFlow.collect { value ->
@@ -121,9 +122,11 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = flow {
  * myFlow
  *     .onEach { println(it) }
  *     .onCompletion { println("Done") }
+ *     .collect()
  * ```
  *
- * This operator is *transparent* to exceptions that occur in downstream flow and does not observe exceptions that are thrown to cancel the flow,
+ * This operator is *transparent* to exceptions that occur in downstream flow
+ * and does not observe exceptions that are thrown to cancel the flow,
  * while any exception from the [action] will be thrown downstream.
  * This behaviour can be demonstrated by the following example:
  * ```
@@ -132,32 +135,18 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = flow {
  *     .onCompletion { println(it) } // Can print exceptions from emitData and computeOne
  *     .map { computeTwo(it) }
  *     .onCompletion { println(it) } // Can print exceptions from emitData, computeOne, onCompletion and computeTwo
+ *     .collect()
  * ```
  */
 @ExperimentalCoroutinesApi // tentatively stable in 1.3.0
 public fun <T> Flow<T>.onCompletion(action: suspend (cause: Throwable?) -> Unit): Flow<T> = flow {
-    // Optimization: this var is used to detect exception from downstream and then as final cause
-    var fromDownstream: Throwable? = null
+    var exception: Throwable? = null
     try {
-        collect {
-            try {
-                emit(it)
-            } catch (e: Throwable) {
-                fromDownstream = e
-                throw e
-            }
-        }
-    } catch (e: Throwable) {
-        // Use only exceptions from the upstream
-        if (e.isSameExceptionAs(fromDownstream) || e.isCancellationCause(coroutineContext)) {
-            fromDownstream = null
-        } else {
-            fromDownstream = e
-        }
-        throw e
+        exception = catchImpl(this)
     } finally {
         // Separate method because of KT-32220
-        invokeSafely(action, fromDownstream)
+        invokeSafely(action, exception)
+        exception?.let { throw it }
     }
 }
 
