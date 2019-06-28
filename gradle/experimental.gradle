@@ -5,6 +5,7 @@
 // For new mpp
 ext.experimentalAnnotations = [
         "kotlin.Experimental",
+        "kotlin.contracts.ExperimentalContracts",
         "kotlin.experimental.ExperimentalTypeInference",
         "kotlin.ExperimentalMultiplatform",
         "kotlinx.coroutines.ExperimentalCoroutinesApi",
