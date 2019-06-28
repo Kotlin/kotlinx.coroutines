@@ -11,6 +11,8 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
@@ -136,6 +138,14 @@ private class LazyDeferredCoroutine<T>(
 public suspend fun <T> withContext(
     context: CoroutineContext,
     block: suspend CoroutineScope.() -> T
+): T {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+    return withContextImpl(context, block)
+}
+
+private suspend inline fun <T> withContextImpl(
+    context: CoroutineContext,
+    noinline block: suspend CoroutineScope.() -> T
 ): T = suspendCoroutineUninterceptedOrReturn sc@ { uCont ->
     // compute new context
     val oldContext = uCont.context
