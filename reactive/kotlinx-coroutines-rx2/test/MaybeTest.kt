@@ -31,7 +31,7 @@ class MaybeTest : TestBase() {
         expect(2)
         maybe.subscribe { value ->
             expect(5)
-            Assert.assertThat(value, IsEqual("OK"))
+            assertThat(value, IsEqual("OK"))
         }
         expect(3)
         yield() // to started coroutine

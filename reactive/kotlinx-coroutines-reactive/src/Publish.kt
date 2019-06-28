@@ -199,17 +199,32 @@ public class PublisherCoroutine<in T>(
                 if (cancelled) {
                     // If the parent had failed to handle our exception, then we must not lose this exception
                     if (cause != null && !handled) handleCoroutineException(context, cause)
-                } else {
-                    try {
-                        if (cause != null && cause !is CancellationException) {
+                    return
+                }
+
+                try {
+                    if (cause != null && cause !is CancellationException) {
+                        /*
+                         * Reactive frameworks have two types of exceptions: regular and fatal.
+                         * Regular are passed to onError.
+                         * Fatal can be passed to onError, but implementation **is free to swallow it** (e.g. see #1297).
+                         * Such behaviour is inconsistent, leads to silent failures and we can't possibly know whether
+                         * the cause will be handled by onError (and moreover, it depends on whether a fatal exception was
+                         * thrown by subscriber or upstream).
+                         * To make behaviour consistent and least surprising, we always handle fatal exceptions
+                         * by coroutines machinery, anyway, they should not be present in regular program flow,
+                         * thus our goal here is just to expose it as soon as possible.
+                         */
+                        if (cause.isFatal()) {
+                            if (!handled) handleCoroutineException(context, cause)
+                        } else {
                             subscriber.onError(cause)
                         }
-                        else {
-                            subscriber.onComplete()
-                        }
-                    } catch (e: Throwable) {
-                        handleCoroutineException(context, e)
+                    } else {
+                        subscriber.onComplete()
                     }
+                } catch (e: Throwable) {
+                    handleCoroutineException(context, e)
                 }
             }
         } finally {
@@ -243,12 +258,12 @@ public class PublisherCoroutine<in T>(
     // assert: isCompleted
     private fun signalCompleted(cause: Throwable?, handled: Boolean) {
         while (true) { // lock-free loop for nRequested
-            val cur = _nRequested.value
-            if (cur == SIGNALLED) return // some other thread holding lock already signalled cancellation/completion
-            check(cur >= 0) // no other thread could have marked it as CLOSED, because onCompleted[Exceptionally] is invoked once
-            if (!_nRequested.compareAndSet(cur, CLOSED)) continue // retry on failed CAS
+            val current = _nRequested.value
+            if (current == SIGNALLED) return // some other thread holding lock already signalled cancellation/completion
+            check(current >= 0) // no other thread could have marked it as CLOSED, because onCompleted[Exceptionally] is invoked once
+            if (!_nRequested.compareAndSet(current, CLOSED)) continue // retry on failed CAS
             // Ok -- marked as CLOSED, now can unlock the mutex if it was locked due to backpressure
-            if (cur == 0L) {
+            if (current == 0L) {
                 doLockedSignalCompleted(cause, handled)
             } else {
                 // otherwise mutex was either not locked or locked in concurrent onNext... try lock it to signal completion
@@ -273,4 +288,6 @@ public class PublisherCoroutine<in T>(
         cancelled = true
         super.cancel(null)
     }
+
+    private fun Throwable.isFatal() = this is VirtualMachineError || this is ThreadDeath || this is LinkageError
 }
