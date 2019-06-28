@@ -36,20 +36,14 @@ internal open class ArrayQueue<T : Any> {
         val currentSize = elements.size
         val newCapacity = currentSize shl 1
         val newElements = arrayOfNulls<Any>(newCapacity)
-        val remaining = elements.size - head
-        arraycopy(
-            source = elements,
-            srcPos = head,
+        elements.copyInto(
             destination = newElements,
-            destinationStart = 0,
-            length = remaining
+            startIndex = head
         )
-        arraycopy(
-            source = elements,
-            srcPos = 0,
+        elements.copyInto(
             destination = newElements,
-            destinationStart = remaining,
-            length = head
+            destinationOffset = elements.size - head,
+            endIndex = head
         )
         elements = newElements
         head = 0
