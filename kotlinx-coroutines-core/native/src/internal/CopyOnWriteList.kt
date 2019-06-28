@@ -24,6 +24,7 @@ internal class CopyOnWriteList<E>(private var array: Array<Any?> = arrayOfNulls(
         arraycopy(array, 0, update, 0, index)
         update[index] = element
         arraycopy(array, index, update, index + 1, _size - index + 1)
+        ++_size
         array = update
     }
 
