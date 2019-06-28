@@ -145,8 +145,20 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         check(i >= 0)
         if (n == 1) return null
         val update = arrayOfNulls<Subscriber<E>>(n - 1)
-        arraycopy(list, 0, update, 0, i)
-        arraycopy(list, i + 1, update, i, n - i - 1)
+        arraycopy(
+            source = list,
+            srcPos = 0,
+            destination = update,
+            destinationStart = 0,
+            length = i
+        )
+        arraycopy(
+            source = list,
+            srcPos = i + 1,
+            destination = update,
+            destinationStart = i,
+            length = n - i - 1
+        )
         return update as Array<Subscriber<E>>
     }
 
