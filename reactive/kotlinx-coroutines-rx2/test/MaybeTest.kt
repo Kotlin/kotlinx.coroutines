@@ -277,4 +277,21 @@ class MaybeTest : TestBase() {
         yield() // run coroutine
         finish(6)
     }
+
+    @Test
+    fun testFatalExceptionInSubscribe() = runTest {
+        GlobalScope.rxMaybe(Dispatchers.Unconfined + CoroutineExceptionHandler{ _, e -> assertTrue(e is LinkageError); expect(2)}) {
+            expect(1)
+            42
+        }.subscribe({ throw LinkageError() })
+        finish(3)
+    }
+
+    @Test
+    fun testFatalExceptionInSingle() = runTest {
+        GlobalScope.rxMaybe(Dispatchers.Unconfined) {
+            throw LinkageError()
+        }.subscribe({ expectUnreached()  }, { expect(1); assertTrue(it is LinkageError) })
+        finish(2)
+    }
 }

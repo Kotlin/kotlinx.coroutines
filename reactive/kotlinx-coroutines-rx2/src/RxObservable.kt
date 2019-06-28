@@ -131,15 +131,19 @@ private class RxObservableCoroutine<T: Any>(
             // to abort the corresponding send/offer invocation. From the standpoint of coroutines machinery,
             // this failure is essentially equivalent to a failure of a child coroutine.
             cancelCoroutine(e)
-            doLockedSignalCompleted(e, false)
+            mutex.unlock()
             throw e
         }
         /*
-           There is no sense to check for `isActive` before doing `unlock`, because cancellation/completion might
-           happen after this check and before `unlock` (see signalCompleted that does not do anything
-           if it fails to acquire the lock that we are still holding).
-           We have to recheck `isCompleted` after `unlock` anyway.
+         * There is no sense to check for `isActive` before doing `unlock`, because cancellation/completion might
+         * happen after this check and before `unlock` (see signalCompleted that does not do anything
+         * if it fails to acquire the lock that we are still holding).
+         * We have to recheck `isCompleted` after `unlock` anyway.
          */
+        unlockAndCheckCompleted()
+    }
+
+    private fun unlockAndCheckCompleted() {
         mutex.unlock()
         // recheck isActive
         if (!isActive && mutex.tryLock())
@@ -148,16 +152,32 @@ private class RxObservableCoroutine<T: Any>(
 
     // assert: mutex.isLocked()
     private fun doLockedSignalCompleted(cause: Throwable?, handled: Boolean) {
-        // todo: handled is ignored here, might need something like in PublisherCoroutine to process
         // cancellation failures
         try {
             if (_signal.value >= CLOSED) {
                 _signal.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
                 try {
-                    if (cause != null && cause !is CancellationException)
-                        subscriber.onError(cause)
-                    else
+                    if (cause != null && cause !is CancellationException) {
+                        /*
+                        * Reactive frameworks have two types of exceptions: regular and fatal.
+                        * Regular are passed to onError.
+                        * Fatal can be passed to onError, but implementation **is free to swallow it** (e.g. see #1297).
+                        * Such behaviour is inconsistent, leads to silent failures and we can't possibly know whether
+                        * the cause will be handled by onError (and moreover, it depends on whether a fatal exception was
+                        * thrown by subscriber or upstream).
+                        * To make behaviour consistent and least surprising, we always handle fatal exceptions
+                        * by coroutines machinery, anyway, they should not be present in regular program flow,
+                        * thus our goal here is just to expose it as soon as possible.
+                        */
+                        if (cause.isFatal()) {
+                            if (!handled) handleCoroutineException(context, cause)
+                        } else {
+                            subscriber.onError(cause)
+                        }
+                    }
+                    else {
                         subscriber.onComplete()
+                    }
                 } catch (e: Throwable) {
                     // Unhandled exception (cannot handle in other way, since we are already complete)
                     handleCoroutineException(context, e)
@@ -182,3 +202,5 @@ private class RxObservableCoroutine<T: Any>(
         signalCompleted(cause, handled)
     }
 }
+
+internal fun Throwable.isFatal() = this is VirtualMachineError || this is ThreadDeath || this is LinkageError
