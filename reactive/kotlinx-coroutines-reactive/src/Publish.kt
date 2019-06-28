@@ -161,11 +161,11 @@ public class PublisherCoroutine<in T>(
         }
         // now update nRequested
         while (true) { // lock-free loop on nRequested
-            val cur = _nRequested.value
-            if (cur < 0) break // closed from inside onNext => unlock
-            if (cur == Long.MAX_VALUE) break // no back-pressure => unlock
-            val upd = cur - 1
-            if (_nRequested.compareAndSet(cur, upd)) {
+            val current = _nRequested.value
+            if (current < 0) break // closed from inside onNext => unlock
+            if (current == Long.MAX_VALUE) break // no back-pressure => unlock
+            val upd = current - 1
+            if (_nRequested.compareAndSet(current, upd)) {
                 if (upd == 0L) {
                     // return to keep locked due to back-pressure
                     return

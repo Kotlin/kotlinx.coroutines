@@ -63,13 +63,21 @@ private class RxMaybeCoroutine<T>(
 ) : AbstractCoroutine<T>(parentContext, true) {
     override fun onCompleted(value: T) {
         if (!subscriber.isDisposed) {
-            if (value == null) subscriber.onComplete() else subscriber.onSuccess(value)
+            try {
+                if (value == null) subscriber.onComplete() else subscriber.onSuccess(value)
+            } catch(e: Throwable) {
+                handleCoroutineException(context, e)
+            }
         }
     }
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
         if (!subscriber.isDisposed) {
-            subscriber.onError(cause)
+            try {
+                subscriber.onError(cause)
+            } catch (e: Throwable) {
+                handleCoroutineException(context, e)
+            }
         } else if (!handled) {
             handleCoroutineException(context, cause)
         }

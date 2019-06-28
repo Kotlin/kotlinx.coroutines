@@ -6,6 +6,7 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.*
+import io.reactivex.functions.*
 import kotlinx.coroutines.*
 import org.hamcrest.core.*
 import org.junit.*
@@ -196,6 +197,26 @@ class SingleTest : TestBase() {
         } catch (e: TestException) {
             assertTrue(e.suppressed[0] is TestException2)
         }
+    }
+
+    @Test
+    fun testFatalExceptionInSubscribe() = runTest {
+        GlobalScope.rxSingle(Dispatchers.Unconfined + CoroutineExceptionHandler { _, e -> assertTrue(e is LinkageError); expect(2) }) {
+            expect(1)
+            42
+        }.subscribe(Consumer {
+            throw LinkageError()
+        })
+        finish(3)
+    }
+
+    @Test
+    fun testFatalExceptionInSingle() = runTest {
+        GlobalScope.rxSingle(Dispatchers.Unconfined) {
+            throw LinkageError()
+        }.subscribe({ _, e ->  assertTrue(e is LinkageError); expect(1) })
+
+        finish(2)
     }
 
     @Test
