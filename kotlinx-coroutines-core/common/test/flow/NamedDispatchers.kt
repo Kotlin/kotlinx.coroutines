@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
 
@@ -55,9 +54,15 @@ private class ArrayStack {
         val currentSize = elements.size
         val newCapacity = currentSize shl 1
         val newElements = arrayOfNulls<String>(newCapacity)
-        val remaining = elements.size - head
-        arraycopy(elements, head, newElements, 0, remaining)
-        arraycopy(elements, 0, newElements, remaining, head)
+        elements.copyInto(
+            destination = newElements,
+            startIndex = head
+        )
+        elements.copyInto(
+            destination = newElements,
+            destinationOffset = elements.size - head,
+            endIndex = head
+        )
         elements = newElements
     }
 }
