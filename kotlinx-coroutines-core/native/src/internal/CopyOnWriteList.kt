@@ -32,6 +32,7 @@ internal class CopyOnWriteList<E>(private var array: Array<Any?> = arrayOfNulls(
             startIndex = index,
             endIndex = _size + 1
         )
+        ++_size
         array = update
     }
 
