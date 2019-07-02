@@ -4,7 +4,16 @@
 
 package kotlinx.coroutines.internal
 
-internal expect open class SynchronizedObject() // marker abstract class
+import kotlinx.coroutines.*
 
-@PublishedApi
-internal expect inline fun <T> synchronized(lock: SynchronizedObject, block: () -> T): T
+/**
+ * @suppress **This an internal API and should not be used from general code.**
+ */
+@InternalCoroutinesApi
+public expect open class SynchronizedObject() // marker abstract class
+
+/**
+ * @suppress **This an internal API and should not be used from general code.**
+ */
+@InternalCoroutinesApi
+public expect inline fun <T> synchronized(lock: SynchronizedObject, block: () -> T): T
