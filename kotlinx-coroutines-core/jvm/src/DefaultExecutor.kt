@@ -9,7 +9,7 @@ import java.util.concurrent.*
 internal actual val DefaultDelay: Delay = DefaultExecutor
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-internal object DefaultExecutor : EventLoopImplBase(), Runnable {
+internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
     const val THREAD_NAME = "kotlinx.coroutines.DefaultExecutor"
 
     init {
