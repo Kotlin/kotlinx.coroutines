@@ -87,7 +87,7 @@ internal class DispatchedContinuation<in T>(
 
     override fun takeState(): Any? {
         val state = _state
-        check(state !== UNDEFINED) // fail-fast if repeatedly invoked
+        assert { state !== UNDEFINED } // fail-fast if repeatedly invoked
         _state = UNDEFINED
         return state
     }

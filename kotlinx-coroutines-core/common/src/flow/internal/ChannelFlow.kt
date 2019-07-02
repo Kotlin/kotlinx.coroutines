@@ -42,8 +42,8 @@ public abstract class ChannelFlow<T>(
             capacity == Channel.CONFLATED -> Channel.CONFLATED
             else -> {
                 // sanity checks
-                check(this.capacity >= 0) { "Unexpected capacity ${this.capacity}" }
-                check(capacity >= 0) { "Unexpected capacity $capacity" }
+                assert { this.capacity >= 0 }
+                assert { capacity >= 0 }
                 // combine capacities clamping to UNLIMITED on overflow
                 val sum = this.capacity + capacity
                 if (sum >= 0) sum else Channel.UNLIMITED // unlimited on int overflow

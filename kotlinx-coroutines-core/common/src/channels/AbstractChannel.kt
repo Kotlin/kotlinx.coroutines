@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -449,7 +449,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
             if (select.trySelect(idempotent)) SELECT_STARTED else null
 
         override fun completeResumeSend(token: Any) {
-            check(token === SELECT_STARTED)
+            assert { token === SELECT_STARTED }
             block.startCoroutine(receiver = channel, completion = select.completion)
         }
 
@@ -474,7 +474,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     ) : LockFreeLinkedListNode(), Send {
         override val pollResult: Any? get() = element
         override fun tryResumeSend(idempotent: Any?): Any? = SEND_RESUMED
-        override fun completeResumeSend(token: Any) { check(token === SEND_RESUMED) }
+        override fun completeResumeSend(token: Any) { assert { token === SEND_RESUMED } }
         override fun resumeSendClosed(closed: Closed<*>) {}
     }
 }
@@ -654,7 +654,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         while (true) {
             val send = takeFirstSendOrPeekClosed() ?: error("Cannot happen")
             if (send is Closed<*>) {
-                check(send === closed)
+                assert { send === closed }
                 return // cleaned
             }
             send.resumeSendClosed(closed)
@@ -1065,10 +1065,10 @@ internal class Closed<in E>(
     override val offerResult get() = this
     override val pollResult get() = this
     override fun tryResumeSend(idempotent: Any?): Any? = CLOSE_RESUMED
-    override fun completeResumeSend(token: Any) { check(token === CLOSE_RESUMED) }
+    override fun completeResumeSend(token: Any) { assert { token === CLOSE_RESUMED } }
     override fun tryResumeReceive(value: E, idempotent: Any?): Any? = CLOSE_RESUMED
-    override fun completeResumeReceive(token: Any) { check(token === CLOSE_RESUMED) }
-    override fun resumeSendClosed(closed: Closed<*>) = error("Should be never invoked")
+    override fun completeResumeReceive(token: Any) { assert { token === CLOSE_RESUMED } }
+    override fun resumeSendClosed(closed: Closed<*>) = assert { false } // "Should be never invoked"
     override fun toString(): String = "Closed[$closeCause]"
 }
 

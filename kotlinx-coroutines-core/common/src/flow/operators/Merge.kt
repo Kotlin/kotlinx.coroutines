@@ -167,7 +167,7 @@ private class ChannelFlowMerge<T>(
     // Fast path in ChannelFlowOperator calls this function (channel was not created yet)
     override suspend fun flowCollect(collector: FlowCollector<T>) {
         // this function should not have been invoked when channel was explicitly requested
-        check(capacity == OPTIONAL_CHANNEL)
+        assert { capacity == OPTIONAL_CHANNEL }
         flowScope {
             mergeImpl(this, collector.asConcurrentFlowCollector())
         }

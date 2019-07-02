@@ -5,6 +5,7 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.*
 
 /**
  * The most abstract operation that can be in process. Other threads observing an instance of this
@@ -40,7 +41,7 @@ public abstract class AtomicOp<in T> : OpDescriptor() {
     val isDecided: Boolean get() = _consensus.value !== NO_DECISION
 
     fun tryDecide(decision: Any?): Boolean {
-        check(decision !== NO_DECISION)
+        assert { decision !== NO_DECISION }
         return _consensus.compareAndSet(NO_DECISION, decision)
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.selects
@@ -234,7 +234,7 @@ internal class SelectBuilderImpl<in R>(
     override val completion: Continuation<R> get() = this
 
     private inline fun doResume(value: () -> Any?, block: () -> Unit) {
-        check(isSelected) { "Must be selected first" }
+        assert { isSelected } // "Must be selected first"
         _result.loop { result ->
             when {
                 result === UNDECIDED -> if (_result.compareAndSet(UNDECIDED, value())) return
@@ -343,7 +343,7 @@ internal class SelectBuilderImpl<in R>(
 
     // it is just like start(), but support idempotent start
     override fun trySelect(idempotent: Any?): Boolean {
-        check(idempotent !is OpDescriptor) { "cannot use OpDescriptor as idempotent marker"}
+        assert { idempotent !is OpDescriptor } // "cannot use OpDescriptor as idempotent marker"
         while (true) { // lock-free loop on state
             val state = this.state
             when {

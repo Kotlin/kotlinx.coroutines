@@ -136,10 +136,9 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     /**
      * Initializes parent job.
      * It shall be invoked at most once after construction after all other initialization.
-     * @suppress **This is unstable API and it is subject to change.**
      */
     internal fun initParentJobInternal(parent: Job?) {
-        check(parentHandle == null)
+        assert { parentHandle == null }
         if (parent == null) {
             parentHandle = NonDisposableHandle
             return
@@ -269,8 +268,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     // fast-path method to finalize normally completed coroutines without children
     private fun tryFinalizeSimpleState(state: Incomplete, update: Any?, mode: Int): Boolean {
-        check(state is Empty || state is JobNode<*>) // only simple state without lists where children can concurrently add
-        check(update !is CompletedExceptionally) // only for normal completion
+        assert { state is Empty || state is JobNode<*> } // only simple state without lists where children can concurrently add
+        assert { update !is CompletedExceptionally } // only for normal completion
         if (!_state.compareAndSet(state, update.boxIncomplete())) return false
         onCancelling(null) // simple state is not a failure
         onCompletionInternal(update)
@@ -397,16 +396,14 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      */
     internal open fun onStartInternal() {}
 
-    public final override fun getCancellationException(): CancellationException {
-        val state = this.state
-        return when (state) {
+    public final override fun getCancellationException(): CancellationException =
+        when (val state = this.state) {
             is Finishing -> state.rootCause?.toCancellationException("$classSimpleName is cancelling")
                 ?: error("Job is still new or active: $this")
             is Incomplete -> error("Job is still new or active: $this")
             is CompletedExceptionally -> state.cause.toCancellationException()
             else -> JobCancellationException("$classSimpleName has completed normally", null, this)
         }
-    }
 
     protected fun Throwable.toCancellationException(message: String? = null): CancellationException =
         this as? CancellationException ?:
@@ -747,8 +744,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     // try make new Cancelling state on the condition that we're still in the expected state
     private fun tryMakeCancelling(state: Incomplete, rootCause: Throwable): Boolean {
-        check(state !is Finishing) // only for non-finishing states
-        check(state.isActive) // only for active states
+        assert { state !is Finishing } // only for non-finishing states
+        assert { state.isActive } // only for active states
         // get state's list or else promote to list to correctly operate on child lists
         val list = getOrPromoteCancellingList(state) ?: return false
         // Create cancelling state (with rootCause!)
@@ -1037,8 +1034,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // Seals current state and returns list of exceptions
         // guarded by `synchronized(this)`
         fun sealLocked(proposedException: Throwable?): List<Throwable> {
-            val eh = _exceptionsHolder // volatile read
-            val list = when(eh) {
+            val list = when(val eh = _exceptionsHolder) { // volatile read
                 null -> allocateList()
                 is Throwable -> allocateList().also { it.add(eh) }
                 is ArrayList<*> -> eh as ArrayList<Throwable>
@@ -1305,14 +1301,15 @@ internal class NodeList : LockFreeLinkedListHead(), Incomplete {
         append("]")
     }
 
-    override fun toString(): String = getString("Active")
+    override fun toString(): String =
+        if (DEBUG) getString("Active") else super.toString()
 }
 
 internal class InactiveNodeList(
     override val list: NodeList
 ) : Incomplete {
     override val isActive: Boolean get() = false
-    override fun toString(): String = list.getString("New")
+    override fun toString(): String = if (DEBUG) list.getString("New") else super.toString()
 }
 
 private class InvokeOnCompletion(
@@ -1337,7 +1334,7 @@ private class ResumeAwaitOnCompletion<T>(
 ) : JobNode<JobSupport>(job) {
     override fun invoke(cause: Throwable?) {
         val state = job.state
-        check(state !is Incomplete)
+        assert { state !is Incomplete }
         if (state is CompletedExceptionally) {
             // Resume with exception in atomic way to preserve exception
             continuation.resumeWithExceptionMode(state.cause, MODE_ATOMIC_DEFAULT)

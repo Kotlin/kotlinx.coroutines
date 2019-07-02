@@ -1,11 +1,15 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+
+// Need InlineOnly for efficient bytecode on Android
+@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
-import kotlin.coroutines.*
+import java.util.concurrent.atomic.*
+import kotlin.internal.InlineOnly
 
 /**
  * Name of the property that controls coroutine debugging. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
@@ -68,10 +72,13 @@ public const val DEBUG_PROPERTY_VALUE_ON = "on"
  */
 public const val DEBUG_PROPERTY_VALUE_OFF = "off"
 
-@JvmField
-internal val DEBUG = systemProp(DEBUG_PROPERTY_NAME).let { value ->
+// @JvmField: Don't use JvmField here to enable R8 optimizations via "assumenosideeffects"
+internal val ASSERTIONS_ENABLED = CoroutineId::class.java.desiredAssertionStatus()
+
+// @JvmField: Don't use JvmField here to enable R8 optimizations via "assumenosideeffects"
+internal actual val DEBUG = systemProp(DEBUG_PROPERTY_NAME).let { value ->
     when (value) {
-        DEBUG_PROPERTY_VALUE_AUTO, null -> CoroutineId::class.java.desiredAssertionStatus()
+        DEBUG_PROPERTY_VALUE_AUTO, null -> ASSERTIONS_ENABLED
         DEBUG_PROPERTY_VALUE_ON, "" -> true
         DEBUG_PROPERTY_VALUE_OFF -> false
         else -> error("System property '$DEBUG_PROPERTY_NAME' has unrecognized value '$value'")
@@ -79,18 +86,19 @@ internal val DEBUG = systemProp(DEBUG_PROPERTY_NAME).let { value ->
 }
 
 // Note: stack-trace recovery is enabled only in debug mode
-@JvmField
-internal actual val RECOVER_STACK_TRACES = DEBUG && systemProp(STACKTRACE_RECOVERY_PROPERTY_NAME, true)
+// @JvmField: Don't use JvmField here to enable R8 optimizations via "assumenosideeffects"
+internal actual val RECOVER_STACK_TRACES =
+    DEBUG && systemProp(STACKTRACE_RECOVERY_PROPERTY_NAME, true)
 
-// internal debugging tools
+// It is used only in debug mode
+internal val COROUTINE_ID = AtomicLong(0)
 
-internal actual val Any.hexAddress: String
-    get() = Integer.toHexString(System.identityHashCode(this))
-
-internal actual fun Continuation<*>.toDebugString(): String = when (this) {
-    is DispatchedContinuation -> toString()
-    // Workaround for #858
-    else -> kotlin.runCatching { "$this@$hexAddress" }.getOrElse { "${this::class.java.name}@$hexAddress" }
+// for tests only
+internal fun resetCoroutineId() {
+    COROUTINE_ID.set(0)
 }
 
-internal actual val Any.classSimpleName: String get() = this::class.java.simpleName
+@InlineOnly
+internal actual inline fun assert(value: () -> Boolean) {
+    if (ASSERTIONS_ENABLED && !value()) throw AssertionError()
+}

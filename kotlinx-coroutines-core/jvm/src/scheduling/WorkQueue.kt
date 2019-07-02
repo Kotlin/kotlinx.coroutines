@@ -5,6 +5,7 @@
 package kotlinx.coroutines.scheduling
 
 import kotlinx.atomicfu.*
+import kotlinx.coroutines.*
 import java.util.concurrent.atomic.*
 
 internal const val BUFFER_CAPACITY_BASE = 7

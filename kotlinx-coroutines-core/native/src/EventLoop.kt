@@ -153,7 +153,7 @@ internal class EventLoopImpl: EventLoop(), Delay {
     }
 
     protected fun closeQueue() {
-        assert(isCompleted)
+        assert { isCompleted }
         _queue.loop { queue ->
             when (queue) {
                 null -> if (_queue.compareAndSet(null, CLOSED_EMPTY)) return

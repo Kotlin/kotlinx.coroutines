@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -104,7 +104,7 @@ internal abstract class EventLoop : CoroutineDispatcher() {
     fun decrementUseCount(unconfined: Boolean = false) {
         useCount -= delta(unconfined)
         if (useCount > 0) return
-        check(useCount == 0L) { "Extra decrementUseCount" }
+        assert { useCount == 0L } // "Extra decrementUseCount"
         if (shared) {
             // shut it down and remove from ThreadLocalEventLoop
             shutdown()
