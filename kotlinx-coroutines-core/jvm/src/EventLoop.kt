@@ -68,13 +68,13 @@ internal abstract class EventLoopImplBase: EventLoop(), Delay {
             }
             val delayed = _delayed.value ?: return Long.MAX_VALUE
             val nextDelayedTask = delayed.peek() ?: return Long.MAX_VALUE
-            return (nextDelayedTask.nanoTime - timeSource.nanoTime()).coerceAtLeast(0)
+            return (nextDelayedTask.nanoTime - nanoTime()).coerceAtLeast(0)
         }
 
     private fun unpark() {
         val thread = thread
         if (Thread.currentThread() !== thread)
-            timeSource.unpark(thread)
+            unpark(thread)
     }
 
     override fun shutdown() {
@@ -99,7 +99,7 @@ internal abstract class EventLoopImplBase: EventLoop(), Delay {
         // queue all delayed tasks that are due to be executed
         val delayed = _delayed.value
         if (delayed != null && !delayed.isEmpty) {
-            val now = timeSource.nanoTime()
+            val now = nanoTime()
             while (true) {
                 // make sure that moving from delayed to queue removes from delayed only after it is added to queue
                 // to make sure that 'isEmpty' and `nextTime` that check both of them
@@ -251,7 +251,7 @@ internal abstract class EventLoopImplBase: EventLoop(), Delay {
         
         override var index: Int = -1
         
-        @JvmField val nanoTime: Long = timeSource.nanoTime() + delayToNanos(timeMillis)
+        @JvmField val nanoTime: Long = nanoTime() + delayToNanos(timeMillis)
 
         override fun compareTo(other: DelayedTask): Int {
             val dTime = nanoTime - other.nanoTime

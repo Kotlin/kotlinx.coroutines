@@ -59,7 +59,7 @@ internal object DefaultExecutor : EventLoopImplBase(), Runnable {
 
     override fun run() {
         ThreadLocalEventLoop.setEventLoop(this)
-        timeSource.registerTimeLoopThread()
+        registerTimeLoopThread()
         try {
             var shutdownNanos = Long.MAX_VALUE
             if (!notifyStartup()) return
@@ -69,7 +69,7 @@ internal object DefaultExecutor : EventLoopImplBase(), Runnable {
                 if (parkNanos == Long.MAX_VALUE) {
                     // nothing to do, initialize shutdown timeout
                     if (shutdownNanos == Long.MAX_VALUE) {
-                        val now = timeSource.nanoTime()
+                        val now = nanoTime()
                         if (shutdownNanos == Long.MAX_VALUE) shutdownNanos = now + KEEP_ALIVE_NANOS
                         val tillShutdown = shutdownNanos - now
                         if (tillShutdown <= 0) return // shut thread down
@@ -80,13 +80,13 @@ internal object DefaultExecutor : EventLoopImplBase(), Runnable {
                 if (parkNanos > 0) {
                     // check if shutdown was requested and bail out in this case
                     if (isShutdownRequested) return
-                    timeSource.parkNanos(this, parkNanos)
+                    parkNanos(this, parkNanos)
                 }
             }
         } finally {
             _thread = null // this thread is dead
             acknowledgeShutdownIfNeeded()
-            timeSource.unregisterTimeLoopThread()
+            unregisterTimeLoopThread()
             // recheck if queues are empty after _thread reference was set to null (!!!)
             if (!isEmpty) thread // recreate thread if it is needed
         }
@@ -126,7 +126,7 @@ internal object DefaultExecutor : EventLoopImplBase(), Runnable {
         if (!isShutdownRequested) debugStatus = SHUTDOWN_REQ
         // loop while there is anything to do immediately or deadline passes
         while (debugStatus != SHUTDOWN_ACK && _thread != null) {
-            _thread?.let { timeSource.unpark(it) } // wake up thread if present
+            _thread?.let { unpark(it) } // wake up thread if present
             val remaining = deadline - System.currentTimeMillis()
             if (remaining <= 0) break
             (this as Object).wait(timeout)

@@ -339,7 +339,7 @@ internal class CoroutineScheduler(
      * @param fair whether the task should be dispatched fairly (strict FIFO) or not (semi-FIFO)
      */
     fun dispatch(block: Runnable, taskContext: TaskContext = NonBlockingContext, fair: Boolean = false) {
-        timeSource.trackTask() // this is needed for virtual time support
+        trackTask() // this is needed for virtual time support
         val task = createTask(block, taskContext)
         // try to submit the task to the local queue and act depending on the result
         when (submitToLocalQueue(task, fair)) {
@@ -596,7 +596,7 @@ internal class CoroutineScheduler(
             val thread = Thread.currentThread()
             thread.uncaughtExceptionHandler.uncaughtException(thread, e)
         } finally {
-            timeSource.unTrackTask()
+            unTrackTask()
         }
     }
 

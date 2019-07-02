@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -80,13 +80,13 @@ private suspend fun fixedPeriodTicker(
     initialDelayMillis: Long,
     channel: SendChannel<Unit>
 ) {
-    var deadline = timeSource.nanoTime() + delayToNanos(initialDelayMillis)
+    var deadline = nanoTime() + delayToNanos(initialDelayMillis)
     delay(initialDelayMillis)
     val delayNs = delayToNanos(delayMillis)
     while (true) {
         deadline += delayNs
         channel.send(Unit)
-        val now = timeSource.nanoTime()
+        val now = nanoTime()
         val nextDelay = (deadline - now).coerceAtLeast(0)
         if (nextDelay == 0L && delayNs != 0L) {
             val adjustedDelay = delayNs - (now - deadline) % delayNs
