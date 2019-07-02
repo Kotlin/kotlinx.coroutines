@@ -5,6 +5,7 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
+import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.atomic.*
 
@@ -207,7 +208,7 @@ internal class LockFreeTaskQueueCore<E : Any>(
     private fun removeSlowPath(oldHead: Int, newHead: Int): Core<E>? {
         _state.loop { state ->
             state.withState { head, _ ->
-                check(head == oldHead) { "This queue can have only one consumer" }
+                assert { head == oldHead } // "This queue can have only one consumer"
                 if (state and FROZEN_MASK != 0L) {
                     // state was already frozen, so removed element was copied to next
                     return next() // continue to correct head in next

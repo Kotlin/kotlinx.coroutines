@@ -1,8 +1,11 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.internal
 
-import kotlinx.atomicfu.AtomicRef
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.loop
+import kotlinx.atomicfu.*
+import kotlinx.coroutines.*
 
 /**
  * Essentially, this segment queue is an infinite array of segments, which is represented as
@@ -133,7 +136,7 @@ internal abstract class Segment<S: Segment<S>>(val id: Long, prev: S?) {
      * logically removed (so [removed] returns `true`) at the point of invocation.
      */
     fun remove() {
-        check(removed) { " The segment should be logically removed at first "}
+        assert { removed } // The segment should be logically removed at first
         // Read `next` and `prev` pointers.
         var next = this._next.value ?: return // tail cannot be removed
         var prev = prev.value ?: return // head cannot be removed

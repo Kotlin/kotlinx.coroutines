@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.scheduling
@@ -7,7 +7,7 @@ package kotlinx.coroutines.scheduling
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import java.io.Closeable
+import java.io.*
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.locks.*
@@ -146,7 +146,7 @@ internal class CoroutineScheduler(
             val index = (top and PARKED_INDEX_MASK).toInt()
             val updVersion = (top + PARKED_VERSION_INC) and PARKED_VERSION_MASK
             val updIndex = worker.indexInArray
-            assert(updIndex != 0) // only this worker can push itself, cannot be terminated
+            assert { updIndex != 0 } // only this worker can push itself, cannot be terminated
             worker.nextParkedWorker = workers[index]
             /*
              * Other thread can be changing this worker's index at this point, but it
@@ -311,7 +311,7 @@ internal class CoroutineScheduler(
                     worker.join(timeout)
                 }
                 val state = worker.state
-                check(state === WorkerState.TERMINATED) { "Expected TERMINATED state, but found $state"}
+                assert { state === WorkerState.TERMINATED } // Expected TERMINATED state
                 worker.localQueue.offloadAllWork(globalQueue)
             }
         }
@@ -325,7 +325,7 @@ internal class CoroutineScheduler(
         // Shutdown current thread
         currentWorker?.tryReleaseCpu(WorkerState.TERMINATED)
         // check & cleanup state
-        assert(cpuPermits.availablePermits() == corePoolSize)
+        assert { cpuPermits.availablePermits() == corePoolSize }
         parkedWorkersStack.value = 0L
         controlState.value = 0L
     }
@@ -664,9 +664,8 @@ internal class CoroutineScheduler(
          * This attempt may fail either because worker terminated itself or because someone else
          * claimed this worker (though this case is rare, because require very bad timings)
          */
-        fun tryForbidTermination(): Boolean {
-            val state = terminationState.value
-            return when (state) {
+        fun tryForbidTermination(): Boolean =
+            when (val state = terminationState.value) {
                 TERMINATED -> false // already terminated
                 FORBIDDEN -> false // already forbidden, someone else claimed this worker
                 ALLOWED -> terminationState.compareAndSet(
@@ -675,7 +674,6 @@ internal class CoroutineScheduler(
                 )
                 else -> error("Invalid terminationState = $state")
             }
-        }
 
         /**
          * Tries to acquire CPU token if worker doesn't have one
@@ -780,7 +778,7 @@ internal class CoroutineScheduler(
                 val currentState = state
                 // Shutdown sequence of blocking dispatcher
                 if (currentState !== WorkerState.TERMINATED) {
-                    assert(currentState == WorkerState.BLOCKING) { "Expected BLOCKING state, but has $currentState" }
+                    assert { currentState == WorkerState.BLOCKING } // "Expected BLOCKING state, but has $currentState"
                     state = WorkerState.RETIRING
                 }
             }
@@ -927,7 +925,7 @@ internal class CoroutineScheduler(
             terminationDeadline = 0L // reset deadline for termination
             lastStealIndex = 0 // reset steal index (next time try random)
             if (state == WorkerState.PARKING) {
-                assert(mode == TaskMode.PROBABLY_BLOCKING)
+                assert { mode == TaskMode.PROBABLY_BLOCKING }
                 state = WorkerState.BLOCKING
                 parkTimeNs = MIN_PARK_TIME_NS
             }

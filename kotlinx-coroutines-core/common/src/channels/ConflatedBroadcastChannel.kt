@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -142,7 +142,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     private fun removeSubscriber(list: Array<Subscriber<E>>, subscriber: Subscriber<E>): Array<Subscriber<E>>? {
         val n = list.size
         val i = list.indexOf(subscriber)
-        check(i >= 0)
+        assert { i >= 0 }
         if (n == 1) return null
         val update = arrayOfNulls<Subscriber<E>>(n - 1)
         list.copyInto(

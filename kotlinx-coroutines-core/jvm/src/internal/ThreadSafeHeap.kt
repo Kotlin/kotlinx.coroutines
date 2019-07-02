@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -75,7 +75,7 @@ public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNod
             false
         } else {
             val index = node.index
-            check(index >= 0)
+            assert { index >= 0 }
             removeAtImpl(index)
             true
         }
@@ -86,7 +86,7 @@ public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNod
 
     @PublishedApi
     internal fun removeAtImpl(index: Int): T {
-        check(size > 0)
+        assert { size > 0 }
         val a = this.a!!
         size--
         if (index < size) {
@@ -100,7 +100,7 @@ public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNod
             }
         }
         val result = a[size]!!
-        check(result.heap === this)
+        assert { result.heap === this }
         result.heap = null
         result.index = -1
         a[size] = null
@@ -109,7 +109,7 @@ public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNod
 
     @PublishedApi
     internal fun addImpl(node: T) {
-        check(node.heap == null)
+        assert { node.heap == null }
         node.heap = this
         val a = realloc()
         val i = size++

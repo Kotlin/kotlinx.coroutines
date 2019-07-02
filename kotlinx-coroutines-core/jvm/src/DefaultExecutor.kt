@@ -104,8 +104,8 @@ internal object DefaultExecutor : EventLoopImplBase(), Runnable {
     // used for tests
     @Synchronized
     internal fun ensureStarted() {
-        assert(_thread == null) // ensure we are at a clean state
-        assert(debugStatus == FRESH || debugStatus == SHUTDOWN_ACK)
+        assert { _thread == null } // ensure we are at a clean state
+        assert { debugStatus == FRESH || debugStatus == SHUTDOWN_ACK }
         debugStatus = FRESH
         createThreadSync() // create fresh thread
         while (debugStatus == FRESH) (this as Object).wait()
