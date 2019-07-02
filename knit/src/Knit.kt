@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 import java.io.*
@@ -228,7 +228,7 @@ fun knit(markdownFile: File): Boolean {
                     }
                 }
                 for (code in codeLines) {
-                    outLines += code.replace("System.currentTimeMillis()", "timeSource.currentTimeMillis()")
+                    outLines += code.replace("System.currentTimeMillis()", "currentTimeMillis()")
                 }
                 codeLines.clear()
                 writeLinesIfNeeded(file, outLines)

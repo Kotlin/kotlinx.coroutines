@@ -69,7 +69,7 @@ private class BlockingCoroutine<T>(
 
     @Suppress("UNCHECKED_CAST")
     fun joinBlocking(): T {
-        timeSource.registerTimeLoopThread()
+        registerTimeLoopThread()
         try {
             eventLoop?.incrementUseCount()
             try {
@@ -79,13 +79,13 @@ private class BlockingCoroutine<T>(
                     val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
                     // note: process next even may loose unpark flag, so check if completed before parking
                     if (isCompleted) break
-                    timeSource.parkNanos(this, parkNanos)
+                    parkNanos(this, parkNanos)
                 }
             } finally { // paranoia
                 eventLoop?.decrementUseCount()
             }
         } finally { // paranoia
-            timeSource.unregisterTimeLoopThread()
+            unregisterTimeLoopThread()
         }
         // now return result
         val state = this.state.unboxState()

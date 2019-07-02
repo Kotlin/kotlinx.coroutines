@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.guide.test
@@ -11,7 +11,7 @@ import org.junit.Assert.*
 import java.io.*
 import java.util.concurrent.*
 
-fun wrapTask(block: Runnable) = timeSource.wrapTask(block)
+fun wrapTask(block: Runnable) = kotlinx.coroutines.wrapTask(block)
 
 // helper function to dump exception to stdout for ease of debugging failed tests
 private inline fun <T> outputException(name: String, block: () -> T): T =
