@@ -121,12 +121,14 @@ private class SemaphoreImpl(
     }
 
     override fun release() {
-        val p = _availablePermits.getAndUpdate { cur ->
-            check(cur < permits) { "The number of acquired permits cannot be greater than `permits`" }
-            cur + 1
-        }
+        val p = incPermits()
         if (p >= 0) return // no waiters
         resumeNextFromQueue()
+    }
+
+    internal fun incPermits() = _availablePermits.getAndUpdate { cur ->
+        check(cur < permits) { "The number of acquired permits cannot be greater than `permits`" }
+        cur + 1
     }
 
     private suspend fun addToQueueAndSuspend() = suspendAtomicCancellableCoroutine<Unit> sc@ { cont ->
@@ -143,37 +145,37 @@ private class SemaphoreImpl(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun resumeNextFromQueue() {
-        val first = this.head
-        val deqIdx = deqIdx.getAndIncrement()
-        val segment = getSegmentAndMoveHead(first, deqIdx / SEGMENT_SIZE) ?: return
-        val i = (deqIdx % SEGMENT_SIZE).toInt()
-        val cont = segment.getAndUpdate(i) {
-            // Cancelled continuation invokes `release`
-            // and resumes next suspended acquirer if needed.
-            if (it === CANCELLED) return
-            RESUMED
+    internal fun resumeNextFromQueue() {
+        try_again@while (true) {
+            val first = this.head
+            val deqIdx = deqIdx.getAndIncrement()
+            val segment = getSegmentAndMoveHead(first, deqIdx / SEGMENT_SIZE) ?: continue@try_again
+            val i = (deqIdx % SEGMENT_SIZE).toInt()
+            val cont = segment.getAndSet(i, RESUMED)
+            if (cont === null) return // just resumed
+            if (cont === CANCELLED) continue@try_again
+            (cont as CancellableContinuation<Unit>).resume(Unit)
+            return
         }
-        if (cont === null) return // just resumed
-        (cont as CancellableContinuation<Unit>).resume(Unit)
     }
 }
 
 private class CancelSemaphoreAcquisitionHandler(
-    private val semaphore: Semaphore,
+    private val semaphore: SemaphoreImpl,
     private val segment: SemaphoreSegment,
     private val index: Int
 ) : CancelHandler() {
     override fun invoke(cause: Throwable?) {
-        segment.cancel(index)
-        semaphore.release()
+        semaphore.incPermits()
+        if (segment.cancel(index)) return
+        semaphore.resumeNextFromQueue()
     }
 
     override fun toString() = "CancelSemaphoreAcquisitionHandler[$semaphore, $segment, $index]"
 }
 
 private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?): Segment<SemaphoreSegment>(id, prev) {
-    private val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
+    val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun get(index: Int): Any? = acquirers[index].value
@@ -181,25 +183,21 @@ private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?): Segment<Semap
     @Suppress("NOTHING_TO_INLINE")
     inline fun cas(index: Int, expected: Any?, value: Any?): Boolean = acquirers[index].compareAndSet(expected, value)
 
-    inline fun getAndUpdate(index: Int, function: (Any?) -> Any?): Any? {
-        while (true) {
-            val cur = acquirers[index].value
-            val upd = function(cur)
-            if (cas(index, cur, upd)) return cur
-        }
-    }
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun getAndSet(index: Int, value: Any?) = acquirers[index].getAndSet(value)
 
     private val cancelledSlots = atomic(0)
     override val removed get() = cancelledSlots.value == SEGMENT_SIZE
 
     // Cleans the acquirer slot located by the specified index
     // and removes this segment physically if all slots are cleaned.
-    fun cancel(index: Int) {
-        // Clean the specified waiter
-        acquirers[index].value = CANCELLED
+    fun cancel(index: Int): Boolean {
+        // Try to cancel the slot
+        val cancelled = getAndSet(index, CANCELLED) !== RESUMED
         // Remove this segment if needed
         if (cancelledSlots.incrementAndGet() == SEGMENT_SIZE)
             remove()
+        return cancelled
     }
 
     override fun toString() = "SemaphoreSegment[id=$id, hashCode=${hashCode()}]"

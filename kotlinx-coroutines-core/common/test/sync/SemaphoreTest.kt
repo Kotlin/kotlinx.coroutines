@@ -102,7 +102,7 @@ class SemaphoreTest : TestBase() {
     }
 
     @Test
-    fun testCancellationReleasesSemaphore() = runTest {
+    fun testCancellationReturnsPermitBack() = runTest {
         val semaphore = Semaphore(1)
         semaphore.acquire()
         assertEquals(0, semaphore.availablePermits)
@@ -115,5 +115,29 @@ class SemaphoreTest : TestBase() {
         assertEquals(0, semaphore.availablePermits)
         semaphore.release()
         assertEquals(1, semaphore.availablePermits)
+    }
+
+    @Test
+    fun testCancellationDoesNotResumeWaitingAcquirers() = runTest {
+        val semaphore = Semaphore(1)
+        semaphore.acquire()
+        val job1 = launch { // 1st job in the waiting queue
+            expect(2)
+            semaphore.acquire()
+            expectUnreached()
+        }
+        val job2 = launch { // 2nd job in the waiting queue
+            expect(3)
+            semaphore.acquire()
+            expectUnreached()
+        }
+        expect(1)
+        yield()
+        expect(4)
+        job2.cancel()
+        yield()
+        expect(5)
+        job1.cancel()
+        finish(6)
     }
 }
