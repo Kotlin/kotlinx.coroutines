@@ -82,7 +82,7 @@ public class TestCoroutineDispatcher(val random: Random? = null, val standardDev
     }
 
     private fun post(block: Runnable) =
-        queue.addLast(TimedRunnable(block, _counter.getAndIncrement()))
+        postDelayed(block, 0)
 
     private fun postDelayed(block: Runnable, delayTime: Long) =
         TimedRunnable(block, _counter.getAndIncrement(), safePlus(currentTime,
