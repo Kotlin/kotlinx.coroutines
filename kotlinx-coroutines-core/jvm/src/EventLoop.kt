@@ -12,6 +12,11 @@ internal actual abstract class EventLoopImplPlatform: EventLoop() {
         if (Thread.currentThread() !== thread)
             unpark(thread)
     }
+
+    protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
+        assert { this !== DefaultExecutor } // otherwise default execution was shutdown with tasks in it (cannot be)
+        DefaultExecutor.schedule(now, delayedTask)
+    }
 }
 
 internal class BlockingEventLoop(

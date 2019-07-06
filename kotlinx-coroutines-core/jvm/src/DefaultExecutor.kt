@@ -55,7 +55,7 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
      * but it's not exposed as public API.
      */
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
-        DelayedRunnableTask(timeMillis, block).also { schedule(it) }
+        scheduleInvokeOnTimeout(timeMillis, block)
 
     override fun run() {
         ThreadLocalEventLoop.setEventLoop(this)

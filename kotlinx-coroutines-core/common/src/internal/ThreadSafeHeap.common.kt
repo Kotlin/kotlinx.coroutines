@@ -21,7 +21,7 @@ public interface ThreadSafeHeapNode {
  * @suppress **This an internal API and should not be used from general code.**
  */
 @InternalCoroutinesApi
-public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNode, T: Comparable<T> {
+public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNode, T: Comparable<T> {
     private var a: Array<T?>? = null
 
     private val _size = atomic(0)
@@ -60,8 +60,9 @@ public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNod
     public fun addLast(node: T) = synchronized(this) { addImpl(node) }
 
     // @Synchronized // NOTE! NOTE! NOTE! inline fun cannot be @Synchronized
-    public inline fun addLastIf(node: T, cond: () -> Boolean): Boolean = synchronized(this) {
-        if (cond()) {
+    // Condition also receives current first node in the heap
+    public inline fun addLastIf(node: T, cond: (T?) -> Boolean): Boolean = synchronized(this) {
+        if (cond(firstImpl())) {
             addImpl(node)
             true
         } else {

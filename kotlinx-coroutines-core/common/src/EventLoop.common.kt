@@ -15,18 +15,18 @@ import kotlin.jvm.*
  *
  * It may optionally implement [Delay] interface and support time-scheduled tasks.
  * It is created or pigged back onto (see [ThreadLocalEventLoop])
- * by [runBlocking] and by [Dispatchers.Unconfined].
+ * by `runBlocking` and by [Dispatchers.Unconfined].
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
 internal abstract class EventLoop : CoroutineDispatcher() {
     /**
-     * Counts the number of nested [runBlocking] and [Dispatchers.Unconfined] that use this event loop.
+     * Counts the number of nested `runBlocking` and [Dispatchers.Unconfined] that use this event loop.
      */
     private var useCount = 0L
 
     /**
-     * Set to true on any use by [runBlocking], because it potentially leaks this loop to other threads, so
+     * Set to true on any use by `runBlocking`, because it potentially leaks this loop to other threads, so
      * this instance must be properly shutdown. We don't need to shutdown event loop that was used solely
      * by [Dispatchers.Unconfined] -- it can be left as [ThreadLocalEventLoop] and reused next time.
      */
@@ -147,6 +147,12 @@ private const val SCHEDULE_DISPOSED = 2
 private const val MS_TO_NS = 1_000_000L
 private const val MAX_MS = Long.MAX_VALUE / MS_TO_NS
 
+/**
+ * First-line overflow protection -- limit maximal delay.
+ * Delays longer than this one (~146 years) are considered to be delayed "forever".
+ */
+private const val MAX_DELAY_NS = Long.MAX_VALUE / 2
+
 internal fun delayToNanos(timeMillis: Long): Long = when {
     timeMillis <= 0 -> 0L
     timeMillis >= MAX_MS -> Long.MAX_VALUE
@@ -162,7 +168,11 @@ private val CLOSED_EMPTY = Symbol("CLOSED_EMPTY")
 private typealias Queue<T> = LockFreeTaskQueueCore<T>
 
 internal expect abstract class EventLoopImplPlatform() : EventLoop {
+    // Called to unpark this event loop's thread
     protected fun unpark()
+
+    // Called to reschedule to DefaultExecutor when this event loop is complete
+    protected fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask)
 }
 
 internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
@@ -170,7 +180,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
     private val _queue = atomic<Any?>(null)
 
     // Allocated only only once
-    private val _delayed = atomic<ThreadSafeHeap<DelayedTask>?>(null)
+    private val _delayed = atomic<DelayedTaskQueue?>(null)
 
     @Volatile
     private var isCompleted = false
@@ -197,8 +207,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
                 queue === CLOSED_EMPTY -> return Long.MAX_VALUE // no more events -- closed
                 else -> return 0 // non-empty queue
             }
-            val delayed = _delayed.value ?: return Long.MAX_VALUE
-            val nextDelayedTask = delayed.peek() ?: return Long.MAX_VALUE
+            val nextDelayedTask = _delayed.value?.peek() ?: return Long.MAX_VALUE
             return (nextDelayedTask.nanoTime - nanoTime()).coerceAtLeast(0)
         }
 
@@ -215,8 +224,28 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         rescheduleAllDelayed()
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
-        schedule(DelayedResumeTask(timeMillis, continuation))
+    public override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+        val timeNanos = delayToNanos(timeMillis)
+        if (timeNanos < MAX_DELAY_NS) {
+            val now = nanoTime()
+            DelayedResumeTask(now + timeNanos, continuation).also { task ->
+                continuation.disposeOnCancellation(task)
+                schedule(now, task)
+            }
+        }
+    }
+
+    protected fun scheduleInvokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+        val timeNanos = delayToNanos(timeMillis)
+        return if (timeNanos < MAX_DELAY_NS) {
+            val now = nanoTime()
+            DelayedRunnableTask(now + timeNanos, block).also { task ->
+                schedule(now, task)
+            }
+        } else {
+            NonDisposableHandle
+        }
+    }
 
     override fun processNextEvent(): Long {
         // unconfined events take priority
@@ -321,10 +350,10 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
 
     }
 
-    public fun schedule(delayedTask: DelayedTask) {
-        when (scheduleImpl(delayedTask)) {
+    public fun schedule(now: Long, delayedTask: DelayedTask) {
+        when (scheduleImpl(now, delayedTask)) {
             SCHEDULE_OK -> if (shouldUnpark(delayedTask)) unpark()
-            SCHEDULE_COMPLETED -> DefaultExecutor.schedule(delayedTask)
+            SCHEDULE_COMPLETED -> reschedule(now, delayedTask)
             SCHEDULE_DISPOSED -> {} // do nothing -- task was already disposed
             else -> error("unexpected result")
         }
@@ -332,13 +361,13 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
 
     private fun shouldUnpark(task: DelayedTask): Boolean = _delayed.value?.peek() === task
 
-    private fun scheduleImpl(delayedTask: DelayedTask): Int {
+    private fun scheduleImpl(now: Long, delayedTask: DelayedTask): Int {
         if (isCompleted) return SCHEDULE_COMPLETED
-        val delayed = _delayed.value ?: run {
-            _delayed.compareAndSet(null, ThreadSafeHeap())
+        val delayedQueue = _delayed.value ?: run {
+            _delayed.compareAndSet(null, DelayedTaskQueue(now))
             _delayed.value!!
         }
-        return delayedTask.schedule(delayed, this)
+        return delayedTask.scheduleTask(now, delayedQueue, this)
     }
 
     // It performs "hard" shutdown for test cleanup purposes
@@ -349,6 +378,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
 
     // This is a "soft" (normal) shutdown
     private fun rescheduleAllDelayed() {
+        val now = nanoTime()
         while (true) {
             /*
              * `removeFirstOrNull` below is the only operation on DelayedTask & ThreadSafeHeap that is not
@@ -358,12 +388,16 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
              * assign "_heap = DISPOSED_TASK", so there cannot be ever a race to _heap reference update.
              */
             val delayedTask = _delayed.value?.removeFirstOrNull() ?: break
-            delayedTask.rescheduleOnShutdown()
+            reschedule(now, delayedTask)
         }
     }
 
     internal abstract class DelayedTask(
-        timeMillis: Long
+        /**
+         * This field can be only modified in [scheduleTask] before putting this DelayedTask
+         * into heap to avoid overflow and corruption of heap data structure.
+         */
+        @JvmField var nanoTime: Long
     ) : Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
         private var _heap: Any? = null // null | ThreadSafeHeap | DISPOSED_TASK
 
@@ -375,8 +409,6 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             }
 
         override var index: Int = -1
-
-        @JvmField val nanoTime: Long = nanoTime() + delayToNanos(timeMillis)
 
         override fun compareTo(other: DelayedTask): Int {
             val dTime = nanoTime - other.nanoTime
@@ -390,20 +422,54 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         fun timeToExecute(now: Long): Boolean = now - nanoTime >= 0L
 
         @Synchronized
-        fun schedule(delayed: ThreadSafeHeap<DelayedTask>, eventLoop: EventLoopImplBase): Int {
+        fun scheduleTask(now: Long, delayed: DelayedTaskQueue, eventLoop: EventLoopImplBase): Int {
             if (_heap === DISPOSED_TASK) return SCHEDULE_DISPOSED // don't add -- was already disposed
-            return if (delayed.addLastIf(this) { !eventLoop.isCompleted }) SCHEDULE_OK else SCHEDULE_COMPLETED
+            delayed.addLastIf(this) { firstTask ->
+                if (eventLoop.isCompleted) return SCHEDULE_COMPLETED // non-local return from scheduleTask
+                /**
+                 * We are about to add new task and we have to make sure that [DelayedTaskQueue]
+                 * invariant is maintained. The code in this lambda is additionally executed under
+                 * the lock of [DelayedTaskQueue] and working with [DelayedTaskQueue.timeNow] here is thread-safe.
+                 */
+                if (firstTask == null) {
+                    /**
+                     * When adding the first delayed task we simply update queue's [DelayedTaskQueue.timeNow] to
+                     * the current now time even if that means "going backwards in time". This makes the structure
+                     * self-correcting in spite of wild jumps in `nanoTime()` measurements once all delayed tasks
+                     * are removed from the delayed queue for execution.
+                     */
+                    delayed.timeNow = now
+                } else {
+                    /**
+                     * Carefully update [DelayedTaskQueue.timeNow] so that it does not sweep past first's tasks time
+                     * and only goes forward in time. We cannot let it go backwards in time or invariant can be
+                     * violated for tasks that were already scheduled.
+                     */
+                    val firstTime = firstTask.nanoTime
+                    // compute min(now, firstTime) using a wrap-safe check
+                    val minTime = if (firstTime - now >= 0) now else firstTime
+                    // update timeNow only when going forward in time
+                    if (minTime - delayed.timeNow > 0) delayed.timeNow = minTime
+                }
+                /**
+                 * Here [DelayedTaskQueue.timeNow] was already modified and we have to double-check that newly added
+                 * task does not violate [DelayedTaskQueue] invariant because of that. Note also that this scheduleTask
+                 * function can be called to reschedule from one queue to another and this might be another reason
+                 * where new task's time might now violate invariant.
+                 * We correct invariant violation (if any) by simply changing this task's time to now.
+                 */
+                if (nanoTime - delayed.timeNow < 0) nanoTime = delayed.timeNow
+                true
+            }
+            return SCHEDULE_OK
         }
-
-        // note: DefaultExecutor.schedule performs `schedule` (above) which does sync & checks for DISPOSED_TASK
-        fun rescheduleOnShutdown() = DefaultExecutor.schedule(this)
 
         @Synchronized
         final override fun dispose() {
             val heap = _heap
             if (heap === DISPOSED_TASK) return // already disposed
             @Suppress("UNCHECKED_CAST")
-            (heap as? ThreadSafeHeap<DelayedTask>)?.remove(this) // remove if it is in heap (first)
+            (heap as? DelayedTaskQueue)?.remove(this) // remove if it is in heap (first)
             _heap = DISPOSED_TASK // never add again to any heap
         }
 
@@ -411,26 +477,39 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
     }
 
     private inner class DelayedResumeTask(
-        timeMillis: Long,
+        nanoTime: Long,
         private val cont: CancellableContinuation<Unit>
-    ) : DelayedTask(timeMillis) {
-        init {
-            // Note that this operation isn't lock-free, but very short
-            cont.disposeOnCancellation(this)
-        }
-
-        override fun run() {
-            with(cont) { resumeUndispatched(Unit) }
-        }
+    ) : DelayedTask(nanoTime) {
+        override fun run() { with(cont) { resumeUndispatched(Unit) } }
+        override fun toString(): String = super.toString() + cont.toString()
     }
 
-    internal class DelayedRunnableTask(
-        time: Long,
+    private class DelayedRunnableTask(
+        nanoTime: Long,
         private val block: Runnable
-    ) : DelayedTask(time) {
+    ) : DelayedTask(nanoTime) {
         override fun run() { block.run() }
         override fun toString(): String = super.toString() + block.toString()
     }
+
+    /**
+     * Delayed task queue maintains stable time-comparision invariant despite potential wraparounds in
+     * long nano time measurements by maintaining last observed [timeNow]. It protects the integrity of the
+     * heap data structure in spite of potential non-monotonicity of `nanoTime()` source.
+     * The invariant is that for every scheduled [DelayedTask]:
+     *
+     * ```
+     * delayedTask.nanoTime - timeNow >= 0
+     * ```
+     *
+     * So the comparison of scheduled tasks via [DelayedTask.compareTo] is always stable as
+     * scheduled [DelayedTask.nanoTime] can be at most [Long.MAX_VALUE] apart. This invariant is maintained when
+     * new tasks are added by [DelayedTask.scheduleTask] function and it cannot be violated when tasks are removed
+     * (so there is nothing special to do there).
+     */
+    internal class DelayedTaskQueue(
+        @JvmField var timeNow: Long
+    ) : ThreadSafeHeap<DelayedTask>()
 }
 
 internal expect fun createEventLoop(): EventLoop
@@ -439,6 +518,5 @@ internal expect fun nanoTime(): Long
 
 internal expect object DefaultExecutor {
     public fun enqueue(task: Runnable)
-    public fun schedule(delayedTask: EventLoopImplBase.DelayedTask)
 }
 

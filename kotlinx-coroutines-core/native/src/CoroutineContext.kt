@@ -18,14 +18,10 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
         takeEventLoop().invokeOnTimeout(timeMillis, block)
 
-    actual fun enqueue(task: Runnable) {
-        error("Cannot execute task because event loop was shut down")
-    }
-
-    actual fun schedule(delayedTask: EventLoopImplBase.DelayedTask) {
-        error("Cannot schedule task because event loop was shut down")
-    }
+    actual fun enqueue(task: Runnable): Unit = loopWasShutDown()
 }
+
+internal fun loopWasShutDown(): Nothing = error("Cannot execute task because event loop was shut down")
 
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
     DefaultExecutor
