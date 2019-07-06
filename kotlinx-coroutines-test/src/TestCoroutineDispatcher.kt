@@ -7,6 +7,8 @@ package kotlinx.coroutines.test
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.*
 import kotlin.math.*
 
@@ -25,7 +27,7 @@ import kotlin.math.*
  * @see DelayController
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayController {
+public class TestCoroutineDispatcher(val random: Random? = null, val standardDeviationNanos: Long? = null): CoroutineDispatcher(), Delay, DelayController {
     private var dispatchImmediately = true
         set(value) {
             field = value
@@ -83,10 +85,30 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
         queue.addLast(TimedRunnable(block, _counter.getAndIncrement()))
 
     private fun postDelayed(block: Runnable, delayTime: Long) =
-        TimedRunnable(block, _counter.getAndIncrement(), safePlus(currentTime, delayTime))
-            .also {
-                queue.addLast(it)
-            }
+        TimedRunnable(block, _counter.getAndIncrement(), safePlus(currentTime,
+                gaussian(delayTime,TimeUnit.MILLISECONDS)))
+                .also {
+                    queue.addLast(it)
+                }
+
+    /**
+     * Introduce error into {@param delay}.
+     *
+     * @param delay is the magnitude of the delay time
+     * @param unit specifies time unit
+     * @return a modified time value in units of {@param unit}
+     */
+    private fun gaussian(delay: Long, unit: TimeUnit): Long =
+        unit.convert(gaussianNanos(unit.toNanos(delay)), TimeUnit.NANOSECONDS)
+
+    /**
+     * Introduce error into {@param delayNanos}
+     *
+     * @param delayNanos is the nanosecond delay
+     * @return a modified time value in units of `NANOSECONDS`
+     */
+    private fun gaussianNanos(delayNanos: Long): Long =
+        ((random?.nextGaussian() ?: 0.0) * (standardDeviationNanos ?: 0)).toLong() + delayNanos
 
     private fun safePlus(currentTime: Long, delayTime: Long): Long {
         check(delayTime >= 0)
