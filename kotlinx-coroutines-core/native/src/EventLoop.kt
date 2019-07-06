@@ -8,11 +8,13 @@ import kotlin.system.*
 
 internal actual abstract class EventLoopImplPlatform: EventLoop() {
     protected actual fun unpark() { /* does nothing */ }
+    protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask): Unit =
+        loopWasShutDown()
 }
 
 internal class EventLoopImpl: EventLoopImplBase() {
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
-        DelayedRunnableTask(timeMillis, block).also { schedule(it) }
+        scheduleInvokeOnTimeout(timeMillis, block)
 }
 
 internal actual fun createEventLoop(): EventLoop = EventLoopImpl()
