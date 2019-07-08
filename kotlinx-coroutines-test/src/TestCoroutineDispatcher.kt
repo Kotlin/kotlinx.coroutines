@@ -27,7 +27,11 @@ import kotlin.math.*
  * @see DelayController
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public class TestCoroutineDispatcher(val random: Random? = null, val standardDeviationNanos: Long? = null): CoroutineDispatcher(), Delay, DelayController {
+public class TestCoroutineDispatcher(
+        val random: Random? = null,
+        val standardDeviation: Long? = null,
+        val standardDeviationUnit: TimeUnit? = null):
+        CoroutineDispatcher(), Delay, DelayController {
     private var dispatchImmediately = true
         set(value) {
             field = value
@@ -45,6 +49,8 @@ public class TestCoroutineDispatcher(val random: Random? = null, val standardDev
 
     // Storing time in nanoseconds internally.
     private val _time = atomic(0L)
+
+    private val standardDeviationNanos: Long = standardDeviationUnit?.toNanos(standardDeviation ?: 0) ?: 0
 
     /** @suppress */
     override fun dispatch(context: CoroutineContext, block: Runnable) {
@@ -86,7 +92,7 @@ public class TestCoroutineDispatcher(val random: Random? = null, val standardDev
 
     private fun postDelayed(block: Runnable, delayTime: Long) =
         TimedRunnable(block, _counter.getAndIncrement(), safePlus(currentTime,
-                gaussian(delayTime,TimeUnit.MILLISECONDS)))
+                max(gaussian(delayTime,TimeUnit.MILLISECONDS), 0)))
                 .also {
                     queue.addLast(it)
                 }
@@ -108,7 +114,7 @@ public class TestCoroutineDispatcher(val random: Random? = null, val standardDev
      * @return a modified time value in units of `NANOSECONDS`
      */
     private fun gaussianNanos(delayNanos: Long): Long =
-        ((random?.nextGaussian() ?: 0.0) * (standardDeviationNanos ?: 0)).toLong() + delayNanos
+        ((random?.nextGaussian() ?: 0.0) * standardDeviationNanos).toLong() + delayNanos
 
     private fun safePlus(currentTime: Long, delayTime: Long): Long {
         check(delayTime >= 0)

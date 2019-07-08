@@ -6,6 +6,7 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.*
 
 /**
@@ -49,9 +50,11 @@ private class TestCoroutineScopeImpl (
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
 public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext,
                               random: Random? = null,
-                              standardDeviationNanos: Long? = null): TestCoroutineScope {
+                              standardDeviation: Long? = null,
+                              standardDeviationUnit: TimeUnit? = null): TestCoroutineScope {
     var safeContext = context
-    if (context[ContinuationInterceptor] == null) safeContext += TestCoroutineDispatcher(random,standardDeviationNanos)
+    if (context[ContinuationInterceptor] == null) safeContext +=
+            TestCoroutineDispatcher(random,standardDeviation,standardDeviationUnit)
     if (context[CoroutineExceptionHandler] == null) safeContext += TestCoroutineExceptionHandler()
     return TestCoroutineScopeImpl(safeContext)
 }
