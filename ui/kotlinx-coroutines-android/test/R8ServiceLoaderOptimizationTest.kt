@@ -13,10 +13,12 @@ import org.jf.util.IndentingWriter
 import org.junit.Test
 import java.io.File
 import java.io.StringWriter
+import java.util.stream.Collectors
 import kotlin.test.assertEquals
 
 class R8ServiceLoaderOptimizationTest {
   private val r8Dex = File(System.getProperty("dexPath")!!).asDexFile()
+  private val r8DexNoOptim = File(System.getProperty("noOptimDexPath")!!).asDexFile()
 
   @Test fun noServiceLoaderCalls() {
     val serviceLoaderInvocations = r8Dex.classes
@@ -26,6 +28,35 @@ class R8ServiceLoaderOptimizationTest {
         }
         .filterValues { it.isNotEmpty() }
     assertEquals(emptyMap(), serviceLoaderInvocations)
+  }
+
+  @Test fun androidDispatcherIsKept() {
+    val hasAndroidDispatcher = r8DexNoOptim.classes.any {
+        it.type == "Lkotlinx/coroutines/android/AndroidDispatcherFactory;"
+    }
+
+    assertEquals(true, hasAndroidDispatcher)
+  }
+
+  @Test fun noOptimRulesMatch() {
+    val paths = listOf(
+            "META-INF/com.android.tools/proguard/coroutines.pro",
+            "META-INF/proguard/coroutines.pro",
+            "META-INF/com.android.tools/r8-max-1.5.999/coroutines.pro"
+    )
+    paths.associate { path ->
+      val ruleSet = javaClass.classLoader.getResourceAsStream(path)!!.bufferedReader().lines().filter { line ->
+        line.isNotBlank() && !line.startsWith("#")
+      }.collect(Collectors.toSet())
+      path to ruleSet
+    }.asSequence().reduce { acc: Map.Entry<String, MutableSet<String>>, entry: Map.Entry<String, MutableSet<String>> ->
+      assertEquals(
+              acc.value,
+              entry.value,
+              "Rule sets between ${acc.key} and ${entry.key} don't match."
+              )
+      entry
+    }
   }
 }
 
