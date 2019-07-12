@@ -4,11 +4,7 @@
 
 package kotlinx.coroutines.android
 
-import org.jf.baksmali.Adaptors.*
-import org.jf.baksmali.*
 import org.jf.dexlib2.*
-import org.jf.dexlib2.iface.*
-import org.jf.util.*
 import org.junit.Test
 import java.io.*
 import java.util.stream.*
@@ -46,12 +42,12 @@ class R8ServiceLoaderOptimizationTest {
                 "META-INF/proguard/coroutines.pro",
                 "META-INF/com.android.tools/r8-max-1.5.999/coroutines.pro"
         )
-        paths.associate { path ->
+        paths.associateWith { path ->
             val ruleSet = javaClass.classLoader.getResourceAsStream(path)!!.bufferedReader().lines().filter { line ->
                 line.isNotBlank() && !line.startsWith("#")
             }.collect(Collectors.toSet())
-            path to ruleSet
-        }.asSequence().reduce { acc: Map.Entry<String, MutableSet<String>>, entry: Map.Entry<String, MutableSet<String>> ->
+            ruleSet
+        }.asSequence().reduce { acc, entry ->
             assertEquals(
                     acc.value,
                     entry.value,
@@ -63,9 +59,3 @@ class R8ServiceLoaderOptimizationTest {
 }
 
 private fun File.asDexFile() = DexFileFactory.loadDexFile(this, null)
-
-private fun ClassDef.toSmali(): String {
-    val stringWriter = StringWriter()
-    ClassDefinition(BaksmaliOptions(), this).writeTo(IndentingWriter(stringWriter))
-    return stringWriter.toString()
-}
