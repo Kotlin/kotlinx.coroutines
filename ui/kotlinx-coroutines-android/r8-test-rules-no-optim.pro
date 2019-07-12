@@ -1,14 +1,4 @@
-# Entry point for retaining MainDispatcherLoader which uses a ServiceLoader.
--keep class kotlinx.coroutines.Dispatchers {
-  ** getMain();
-}
+-include r8-test-common.pro
 
-# Entry point for retaining CoroutineExceptionHandlerImpl.handlers which uses a ServiceLoader.
--keep class kotlinx.coroutines.CoroutineExceptionHandlerKt {
-  void handleCoroutineException(...);
-}
-
+# Include the shrinker config used by legacy versions of AGP and ProGuard
 -include resources/META-INF/com.android.tools/proguard/coroutines.pro
-
-# We are cheating a bit by not having android.jar on R8's library classpath. Ignore those warnings.
--ignorewarnings

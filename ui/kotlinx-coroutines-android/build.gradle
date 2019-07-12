@@ -31,8 +31,17 @@ dependencies {
 
 class RunR8Task extends JavaExec {
 
+    @OutputDirectory
     File outputDex
+
+    @InputFile
     File inputConfig
+
+    @InputFile
+    final File inputConfigCommon = new File('r8-test-common.pro')
+
+    @InputFiles
+    final File jarFile = project.jar.archivePath
 
     @Override
     Task configure(Closure closure) {
@@ -47,7 +56,7 @@ class RunR8Task extends JavaExec {
                 '--pg-conf', inputConfig.absolutePath
         ]
         arguments.addAll(project.configurations.runtimeClasspath.files.collect { it.absolutePath })
-        arguments.addAll(project.jar.archivePath.absolutePath)
+        arguments.addAll(jarFile.absolutePath)
 
         args = arguments
         return this
@@ -81,8 +90,13 @@ test {
     // Ensure the R8-processed dex is built and supply its path as a property to the test.
     dependsOn(runR8)
     dependsOn(runR8NoOptim)
-    systemProperty 'dexPath', new File(optimizedDex, "classes.dex").absolutePath
-    systemProperty 'noOptimDexPath', new File(unOptimizedDex, "classes.dex").absolutePath
+    def dex1 = new File(optimizedDex, "classes.dex")
+    def dex2 = new File(unOptimizedDex, "classes.dex")
+
+    inputs.files(dex1, dex2)
+
+    systemProperty 'dexPath', dex1.absolutePath
+    systemProperty 'noOptimDexPath', dex2.absolutePath
 }
 
 tasks.withType(dokka.getClass()) {
