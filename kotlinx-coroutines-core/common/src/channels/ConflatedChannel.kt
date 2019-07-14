@@ -5,7 +5,6 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.selects.*
-import kotlinx.coroutines.internal.*
 
 /**
  * Channel that buffers at most one element and conflates all subsequent `send` and `offer` invocations,
@@ -18,76 +17,30 @@ import kotlinx.coroutines.internal.*
  *
  * This implementation is fully lock-free.
  */
-internal open class ConflatedChannel<E> : AbstractChannel<E>() {
-    protected final override val isBufferAlwaysEmpty: Boolean get() = true
-    protected final override val isBufferEmpty: Boolean get() = true
-    protected final override val isBufferAlwaysFull: Boolean get() = false
-    protected final override val isBufferFull: Boolean get() = false
-
-    override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
-        @Suppress("UNCHECKED_CAST")
-        (closed.prevNode as? SendBuffered<E>)?.let { lastBuffered ->
-            conflatePreviousSendBuffered(lastBuffered)
-        }
+internal open class ConflatedChannel<E> : BufferedChannel<E>(Channel.UNLIMITED) {
+    override suspend fun send(element: E) {
+        offerConflated(element)
     }
 
-    /**
-     * Queues conflated element, returns null on success or
-     * returns node reference if it was already closed or is waiting for receive.
-     */
-    private fun sendConflated(element: E): ReceiveOrClosed<*>? {
-        val node = SendBuffered(element)
-        queue.addLastIfPrev(node) { prev ->
-            if (prev is ReceiveOrClosed<*>) return@sendConflated prev
-            true
-        }
-        conflatePreviousSendBuffered(node)
-        return null
+    override fun offer(element: E): Boolean {
+        offerConflated(element)
+        return true
     }
 
-    private fun conflatePreviousSendBuffered(node: SendBuffered<E>) {
-        // Conflate all previous SendBuffered, helping other sends to conflate
-        var prev = node.prevNode
-        while (prev is SendBuffered<*>) {
-            if (!prev.remove()) {
-                prev.helpRemove()
-            }
-            prev = prev.prevNode
-        }
+    override fun close(cause: Throwable?): Boolean {
+        return super.cancelImpl(cause)
     }
 
-    // result is always `OFFER_SUCCESS | Closed`
-    protected override fun offerInternal(element: E): Any {
-        while (true) {
-            val result = super.offerInternal(element)
-            when {
-                result === OFFER_SUCCESS -> return OFFER_SUCCESS
-                result === OFFER_FAILED -> { // try to buffer
-                    when (val sendResult = sendConflated(element)) {
-                        null -> return OFFER_SUCCESS
-                        is Closed<*> -> return sendResult
-                    }
-                    // otherwise there was receiver in queue, retry super.offerInternal
-                }
-                result is Closed<*> -> return result
-                else -> error("Invalid offerInternal result $result")
-            }
-        }
+    override val onSend: SelectClause2<E, SendChannel<E>> get() = SelectClause2Impl(
+            objForSelect = this,
+            regFunc = ConflatedChannel<*>::onSendRegFunction as RegistrationFunction,
+            processResFunc = ConflatedChannel<*>::onSendProcessResFunction as ProcessResultFunction
+    )
+
+    private fun onSendRegFunction(select: SelectInstance<*>, element: E) {
+        offerConflated(element)
+        select.selectInRegPhase(Unit)
     }
 
-    // result is always `ALREADY_SELECTED | OFFER_SUCCESS | Closed`.
-    protected override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
-        while (true) {
-            val result = if (hasReceiveOrClosed)
-                super.offerSelectInternal(element, select) else
-                (select.performAtomicTrySelect(describeSendConflated(element)) ?: OFFER_SUCCESS)
-            when {
-                result === ALREADY_SELECTED -> return ALREADY_SELECTED
-                result === OFFER_SUCCESS -> return OFFER_SUCCESS
-                result === OFFER_FAILED -> {} // retry
-                result is Closed<*> -> return result
-                else -> error("Invalid result $result")
-            }
-        }
-    }
+    private fun onSendProcessResFunction(ignoredElement: E, ignoredSelectResult: Any?): Any? = this
 }

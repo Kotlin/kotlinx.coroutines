@@ -57,7 +57,7 @@ private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/o
 private class PublisherCoroutine<in T>(
     parentContext: CoroutineContext,
     private val subscriber: Subscriber<T>
-) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Subscription, SelectClause2<T, SendChannel<T>> {
+) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Subscription {
     override val channel: SendChannel<T> get() = this
 
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
@@ -69,7 +69,6 @@ private class PublisherCoroutine<in T>(
     private var cancelled = false // true when Subscription.cancel() is invoked
 
     override val isClosedForSend: Boolean get() = isCompleted
-    override val isFull: Boolean = mutex.isLocked
     override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
     override fun invokeOnClose(handler: (Throwable?) -> Unit) =
         throw UnsupportedOperationException("PublisherCoroutine doesn't support invokeOnClose")
@@ -92,16 +91,16 @@ private class PublisherCoroutine<in T>(
         doLockedNext(element)
     }
 
-    override val onSend: SelectClause2<T, SendChannel<T>>
-        get() = this
+    override val onSend: SelectClause2<T, SendChannel<T>> get() = SelectClause2Impl(
+        objForSelect = this.mutex,
+            regFunc = this.mutex.onLock.regFunc,
+            processResFunc = PublisherCoroutine<*>::onSendProcessResFunction as ProcessResultFunction
+    )
 
-    // registerSelectSend
-    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
-    override fun <R> registerSelectClause2(select: SelectInstance<R>, element: T, block: suspend (SendChannel<T>) -> R) {
-        mutex.onLock.registerSelectClause2(select, null) {
-            doLockedNext(element)
-            block(this)
-        }
+    private fun onSendProcessResFunction(element: T, selectResult: Any?): Any? {
+        this.mutex.onLock.processResFunc(this.mutex, element, selectResult)
+        doLockedNext(element)
+        return this
     }
 
     /*

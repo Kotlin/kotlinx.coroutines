@@ -69,12 +69,12 @@ public suspend inline fun <T> ObservableSource<T>.collect(action: (T) -> Unit) =
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T> :
-    LinkedListChannel<T>(), Observer<T>, MaybeObserver<T>
+    BufferedChannel<T>(Channel.UNLIMITED), Observer<T>, MaybeObserver<T>
 {
     private val _subscription = atomic<Disposable?>(null)
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
+    override fun onClosed() {
         _subscription.getAndSet(null)?.dispose() // dispose exactly once
     }
 

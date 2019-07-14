@@ -94,12 +94,10 @@ public fun <T> CoroutineScope.async(
 private open class DeferredCoroutine<T>(
     parentContext: CoroutineContext,
     active: Boolean
-) : AbstractCoroutine<T>(parentContext, active), Deferred<T>, SelectClause1<T> {
+) : AbstractCoroutine<T>(parentContext, active), Deferred<T> {
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T
-    override val onAwait: SelectClause1<T> get() = this
-    override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (T) -> R) =
-        registerSelectClause1Internal(select, block)
+    override val onAwait: SelectClause1<T> get() = TODO()
 }
 
 private class LazyDeferredCoroutine<T>(

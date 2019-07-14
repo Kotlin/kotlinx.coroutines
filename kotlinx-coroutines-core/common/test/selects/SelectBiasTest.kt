@@ -7,6 +7,7 @@ package kotlinx.coroutines.selects
 import kotlinx.coroutines.*
 import kotlin.test.*
 
+@Ignore
 class SelectBiasTest : TestBase() {
     val n = 10_000
 

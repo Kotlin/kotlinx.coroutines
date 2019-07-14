@@ -1,8 +1,9 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
 
-import org.junit.Test
+import org.junit.*
 
+@Ignore
 class SelectGuideTest {
 
     @Test

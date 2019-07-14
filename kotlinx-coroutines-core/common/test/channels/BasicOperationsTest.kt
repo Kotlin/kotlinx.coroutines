@@ -16,7 +16,7 @@ class BasicOperationsTest : TestBase() {
 
     @Test
     fun testOfferAfterClose() = runTest {
-        TestChannelKind.values().forEach { kind -> testOffer(kind) }
+        TestChannelKind.values().forEach { kind -> testOfferAfterClose(kind) }
     }
 
     @Test
@@ -125,9 +125,15 @@ class BasicOperationsTest : TestBase() {
     }
 
 
-    private suspend fun testOffer(kind: TestChannelKind) = coroutineScope {
+    private suspend fun testOfferAfterClose(kind: TestChannelKind) = coroutineScope {
         val channel = kind.create()
-        val d = async { channel.send(42) }
+        val d = async {
+            try {
+                channel.send(42)
+            } catch (e: ClosedSendChannelException) {
+                check(kind === TestChannelKind.RENDEZVOUS)
+            }
+        }
         yield()
         channel.close()
 
@@ -136,7 +142,7 @@ class BasicOperationsTest : TestBase() {
             channel.offer(2)
             fail()
         } catch (e: ClosedSendChannelException) {
-            if (!kind.isConflated) {
+            if (!kind.isConflated && kind != TestChannelKind.RENDEZVOUS) {
                 assertEquals(42, channel.receive())
             }
         }

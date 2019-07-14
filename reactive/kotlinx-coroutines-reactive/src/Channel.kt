@@ -43,7 +43,7 @@ public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit) =
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
 private class SubscriptionChannel<T>(
     private val request: Int
-) : LinkedListChannel<T>(), Subscriber<T> {
+) : BufferedChannel<T>(Channel.UNLIMITED), Subscriber<T> {
     init {
         require(request >= 0) { "Invalid request size: $request" }
     }
@@ -78,7 +78,7 @@ private class SubscriptionChannel<T>(
     }
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
+    override fun onClosed() {
         _subscription.getAndSet(null)?.cancel() // cancel exactly once
     }
 

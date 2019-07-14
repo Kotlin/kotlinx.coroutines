@@ -12,6 +12,7 @@ import org.junit.runner.*
 import org.junit.runners.*
 import java.util.concurrent.atomic.*
 
+@Ignore
 @RunWith(Parameterized::class)
 class ChannelSendReceiveStressTest(
     private val kind: TestChannelKind,

@@ -37,13 +37,13 @@ private class SerializingCollector<T>(
 ) : ConcurrentFlowCollector<T> {
     // Let's try to leverage the fact that merge is never contended
     // Should be Any, but KT-30796
-    private val _channel = atomic<ArrayChannel<Any?>?>(null)
+    private val _channel = atomic<BufferedChannel<Any?>?>(null)
     private val inProgressLock = atomic(false)
 
-    private val channel: ArrayChannel<Any?>
+    private val channel: BufferedChannel<Any?>
         get() = _channel.updateAndGet { value ->
             if (value != null) return value
-            ArrayChannel(Channel.CHANNEL_DEFAULT_CAPACITY)
+            BufferedChannel(Channel.CHANNEL_DEFAULT_CAPACITY)
         }!!
 
     public override suspend fun emit(value: T) {

@@ -9,6 +9,7 @@ package kotlinx.coroutines.selects
 import kotlinx.coroutines.*
 import kotlin.test.*
 
+@Ignore
 class SelectDeferredTest : TestBase() {
     @Test
     fun testSimpleReturnsImmediately() = runTest {

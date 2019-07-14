@@ -12,13 +12,13 @@ class ChannelFactoryTest : TestBase() {
 
     @Test
     fun testRendezvousChannel() {
-        assertTrue(Channel<Int>() is RendezvousChannel)
-        assertTrue(Channel<Int>(0) is RendezvousChannel)
+        assertTrue(Channel<Int>() is BufferedChannel)
+        assertTrue(Channel<Int>(0) is BufferedChannel)
     }
 
     @Test
     fun testLinkedListChannel() {
-        assertTrue(Channel<Int>(Channel.UNLIMITED) is LinkedListChannel)
+        assertTrue(Channel<Int>(Channel.UNLIMITED) is BufferedChannel)
     }
 
     @Test
@@ -28,8 +28,8 @@ class ChannelFactoryTest : TestBase() {
 
     @Test
     fun testArrayChannel() {
-        assertTrue(Channel<Int>(1) is ArrayChannel)
-        assertTrue(Channel<Int>(10) is ArrayChannel)
+        assertTrue(Channel<Int>(1) is BufferedChannel)
+        assertTrue(Channel<Int>(10) is BufferedChannel)
     }
 
     @Test

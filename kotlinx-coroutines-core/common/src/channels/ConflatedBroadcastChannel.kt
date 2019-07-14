@@ -95,7 +95,6 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     }
 
     public override val isClosedForSend: Boolean get() = _state.value is Closed
-    public override val isFull: Boolean get() = false
 
     @Suppress("UNCHECKED_CAST")
     public override fun openSubscription(): ReceiveChannel<E> {
@@ -108,7 +107,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
                 }
                 is State<*> -> {
                     if (state.value !== UNDEFINED)
-                        subscriber.offerInternal(state.value as E)
+                        subscriber.offer(state.value as E)
                     val update = State(state.value, addSubscriber((state as State<E>).subscribers, subscriber))
                     if (_state.compareAndSet(state, update))
                         return subscriber
@@ -253,7 +252,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
                             // Note: Using offerInternal here to ignore the case when this subscriber was
                             // already concurrently closed (assume the close had conflated our offer for this
                             // particular subscriber).
-                            state.subscribers?.forEach { it.offerInternal(element) }
+                            state.subscribers?.forEach { it.offer(element) }
                             return null
                         }
                     }
@@ -266,29 +265,14 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     }
 
     public override val onSend: SelectClause2<E, SendChannel<E>>
-        get() = object : SelectClause2<E, SendChannel<E>> {
-            override fun <R> registerSelectClause2(select: SelectInstance<R>, param: E, block: suspend (SendChannel<E>) -> R) {
-                registerSelectSend(select, param, block)
-            }
-        }
-
-    private fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend (SendChannel<E>) -> R) {
-        if (!select.trySelect(null)) return
-        offerInternal(element)?.let {
-            select.resumeSelectCancellableWithException(it.sendException)
-            return
-        }
-        block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
-    }
+        get() = TODO()
 
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>
     ) : ConflatedChannel<E>(), ReceiveChannel<E> {
-        override fun cancelInternal(cause: Throwable?): Boolean =
+        override fun cancelImpl(cause: Throwable?): Boolean =
             close(cause).also { closed ->
                 if (closed) broadcastChannel.closeSubscriber(this)
             }
-
-        public override fun offerInternal(element: E): Any = super.offerInternal(element)
     }
 }

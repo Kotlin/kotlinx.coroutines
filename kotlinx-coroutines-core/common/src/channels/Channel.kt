@@ -30,16 +30,6 @@ public interface SendChannel<in E> {
     public val isClosedForSend: Boolean
 
     /**
-     * Returns `true` if the channel is full (out of capacity) and the [send] attempt will suspend.
-     * This function returns `false` for [isClosedForSend] channel.
-     *
-     * @suppress **Will be removed in next releases, no replacement.**
-     */
-    @ExperimentalCoroutinesApi
-    @Deprecated(level = DeprecationLevel.ERROR, message = "Will be removed in next releases without replacement")
-    public val isFull: Boolean
-
-    /**
      * Adds [element] into to this channel, suspending the caller while the buffer of this channel is full
      * or if it does not exist, or throws exception if the channel [isClosedForSend] (see [close] for details).
      *
@@ -203,7 +193,7 @@ public interface ReceiveChannel<out E> {
      * continue to execute even after it was cancelled from the same thread in the case when this receive operation
      * was already resumed and the continuation was posted for execution to the thread's queue.
      *
-     * Note that this function does not check for cancellation when it is not suspended.
+     * Note, that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
      * This function can be used in [select] invocation with [onReceiveOrNull] clause.
@@ -408,11 +398,9 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
  */
 public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> =
     when (capacity) {
-        RENDEZVOUS -> RendezvousChannel()
-        UNLIMITED -> LinkedListChannel()
         CONFLATED -> ConflatedChannel()
-        BUFFERED -> ArrayChannel(CHANNEL_DEFAULT_CAPACITY)
-        else -> ArrayChannel(capacity)
+        BUFFERED -> BufferedChannel(CHANNEL_DEFAULT_CAPACITY)
+        else -> BufferedChannel(capacity)
     }
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.selects
@@ -8,18 +8,89 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.sync.*
-import kotlin.coroutines.*
-import kotlin.coroutines.intrinsics.*
-import kotlin.jvm.*
+import kotlin.math.*
+
+/**
+ * Waits for the result of multiple suspending functions simultaneously, which are specified using _clauses_
+ * in the [builder] scope of this select invocation. The caller is suspended until one of the clauses
+ * is either _selected_ or _fails_.
+ *
+ * At most one clause is *atomically* selected and its block is executed. The result of the selected clause
+ * becomes the result of the select. If any clause _fails_, then the select invocation produces the
+ * corresponding exception. No clause is selected in this case.
+ *
+ * This select function is _biased_ to the first clause. When multiple clauses can be selected at the same time,
+ * the first one of them gets priority. Use [selectUnbiased] for an unbiased (randomized) selection among
+ * the clauses.
+
+ * There is no `default` clause for select expression. Instead, each selectable suspending function has the
+ * corresponding non-suspending version that can be used with a regular `when` expression to select one
+ * of the alternatives or to perform default (`else`) action if none of them can be immediately selected.
+ *
+ * | **Receiver**     | **Suspending function**                       | **Select clause**                                | **Non-suspending version**
+ * | ---------------- | --------------------------------------------- | ------------------------------------------------ | --------------------------
+ * | [Job]            | [join][Job.join]                              | [onJoin][Job.onJoin]                             | [isCompleted][Job.isCompleted]
+ * | [Deferred]       | [await][Deferred.await]                       | [onAwait][Deferred.onAwait]                      | [isCompleted][Job.isCompleted]
+ * | [SendChannel]    | [send][SendChannel.send]                      | [onSend][SendChannel.onSend]                     | [offer][SendChannel.offer]
+ * | [ReceiveChannel] | [receive][ReceiveChannel.receive]             | [onReceive][ReceiveChannel.onReceive]            | [poll][ReceiveChannel.poll]
+ * | [ReceiveChannel] | [receiveOrNull][ReceiveChannel.receiveOrNull] | [onReceiveOrNull][ReceiveChannel.onReceiveOrNull]| [poll][ReceiveChannel.poll]
+ * | [Mutex]          | [lock][Mutex.lock]                            | [onLock][Mutex.onLock]                           | [tryLock][Mutex.tryLock]
+ * | none             | [delay]                                       | [onTimeout][SelectBuilder.onTimeout]             | none
+ *
+ * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
+ * function is suspended, this function immediately resumes with [CancellationException].
+ *
+ * Atomicity of cancellation depends on the clause: [onSend][SendChannel.onSend], [onReceive][ReceiveChannel.onReceive],
+ * [onReceiveOrNull][ReceiveChannel.onReceiveOrNull], and [onLock][Mutex.onLock] clauses are
+ * *atomically cancellable*. When select throws [CancellationException] it means that those clauses had not performed
+ * their respective operations.
+ * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
+ * continue to execute even after it was cancelled from the same thread in the case when this select operation
+ * was already resumed on atomically cancellable clause and the continuation was posted for execution to the thread's queue.
+ *
+ * Note, that this function does not check for cancellation when it is not suspended.
+ * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
+ */
+public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() -> Unit): R =
+    SelectBuilderImpl<R>().run {
+        builder(this)
+        doSelect()
+    }
+
+/**
+ * Waits for the result of multiple suspending functions simultaneously like [select], but in an _unbiased_
+ * way when multiple clauses are selectable at the same time.
+ *
+ * This unbiased implementation of `select` expression randomly shuffles the clauses before checking
+ * if they are selectable, thus ensuring that there is no statistical bias to the selection of the first
+ * clauses.
+ *
+ * See [select] function description for all the other details.
+ *
+ * @suppress Use [select] with [SelectBuilder.unbiased] option instead.
+ */
+@Deprecated(level = DeprecationLevel.WARNING, message = "Use `select` with `SelectBuilder.unbiased` option instead.")
+public suspend inline fun <R> selectUnbiased(crossinline builder: SelectBuilder<R>.() -> Unit): R =
+    SelectBuilderImpl<R>().run {
+        builder(this)
+        unbiased = true
+        doSelect()
+    }
+
 
 /**
  * Scope for [select] invocation.
  */
 public interface SelectBuilder<in R> {
     /**
-     * Registers a clause in this [select] expression without additional parameters that does not select any value.
+     * If set to `true` this `select` expression randomly shuffles the clauses before checking if they are selectable,
+     * thus ensuring that there is no statistical bias to the selection of the first clauses.
+     */
+    public var unbiased: Boolean
+
+    /**
+     * Registers clause in this [select] expression without additional parameters that does not select any value.
      */
     public operator fun SelectClause0.invoke(block: suspend () -> R)
 
@@ -54,38 +125,49 @@ public interface SelectBuilder<in R> {
 /**
  * Clause for [select] expression without additional parameters that does not select any value.
  */
-public interface SelectClause0 {
-    /**
-     * Registers this clause with the specified [select] instance and [block] of code.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    @InternalCoroutinesApi
-    public fun <R> registerSelectClause0(select: SelectInstance<R>, block: suspend () -> R)
-}
+public interface SelectClause0 : SelectClause
+
+@InternalCoroutinesApi
+public class SelectClause0Impl(
+        override val objForSelect: Any,
+        override val regFunc: RegistrationFunction,
+        override val processResFunc: ProcessResultFunction
+) : SelectClause0
 
 /**
  * Clause for [select] expression without additional parameters that selects value of type [Q].
  */
-public interface SelectClause1<out Q> {
-    /**
-     * Registers this clause with the specified [select] instance and [block] of code.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    @InternalCoroutinesApi
-    public fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (Q) -> R)
-}
+public interface SelectClause1<out Q> : SelectClause
+
+@InternalCoroutinesApi
+public class SelectClause1Impl<Q>(
+        override val objForSelect: Any,
+        override val regFunc: RegistrationFunction,
+        override val processResFunc: ProcessResultFunction
+) : SelectClause1<Q>
 
 /**
  * Clause for [select] expression with additional parameter of type [P] that selects value of type [Q].
  */
-public interface SelectClause2<in P, out Q> {
-    /**
-     * Registers this clause with the specified [select] instance and [block] of code.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    @InternalCoroutinesApi
-    public fun <R> registerSelectClause2(select: SelectInstance<R>, param: P, block: suspend (Q) -> R)
+public interface SelectClause2<in P, out Q> : SelectClause
+
+@InternalCoroutinesApi
+class SelectClause2Impl<P, Q>(
+        override val objForSelect: Any,
+        override val regFunc: RegistrationFunction,
+        override val processResFunc: ProcessResultFunction
+) : SelectClause2<P, Q>
+
+@InternalCoroutinesApi
+public interface SelectClause {
+    val objForSelect: Any
+    val regFunc: RegistrationFunction
+    val processResFunc: ProcessResultFunction
 }
+
+public typealias RegistrationFunction = (objForSelect: Any, select: SelectInstance<*>, param: Any?) -> Unit
+public typealias ProcessResultFunction = (objForSelect: Any, param: Any?, selectResult: Any?) -> Any?
+public typealias OnCompleteAction = () -> Unit
 
 /**
  * Internal representation of select instance. This instance is called _selected_ when
@@ -96,95 +178,35 @@ public interface SelectClause2<in P, out Q> {
 @InternalCoroutinesApi
 public interface SelectInstance<in R> {
     /**
-     * Returns `true` when this [select] statement had already picked a clause to execute.
+     * An unique integer id
      */
-    public val isSelected: Boolean
+    val id: Long
 
     /**
-     * Tries to select this instance.
+     * If this `select` operation is trying to make a rendezvous with another `select` operation which is in the
+     * `WAITING` phase, it should store this another `select` operation into this field. It is required to be able
+     * to find and resolve deadlocks.
      */
-    public fun trySelect(idempotent: Any?): Boolean
+    var waitingFor: SelectInstance<*>?
 
     /**
-     * Performs action atomically with [trySelect].
+     * This function should be called by other operations which are trying to perform a rendezvous with this `select`.
+     * If this another operation is [SelectInstance] then it should be passed as [from] parameter. Returns `true` if
+     * the rendezvous succeeds, `false` otherwise.
      */
-    public fun performAtomicTrySelect(desc: AtomicDesc): Any?
+    fun trySelect(objForSelect: Any, result: Any?, from: SelectInstance<*>? = null): Boolean
 
     /**
-     * Performs action atomically when [isSelected] is `false`.
+     * This function should be called if this `select` is registered as a waiter. A function which removes the waiter
+     * after this `select` is processed should be provided as a parameter.
      */
-    public fun performAtomicIfNotSelected(desc: AtomicDesc): Any?
+    fun invokeOnCompletion(onCompleteAction: () -> Unit)
 
     /**
-     * Returns completion continuation of this select instance.
-     * This select instance must be _selected_ first.
-     * All resumption through this instance happen _directly_ without going through dispatcher ([MODE_DIRECT]).
+     * This function should be called during this `select` registration phase on a successful rendezvous.
      */
-    public val completion: Continuation<R>
-
-    /**
-     * Resumes this instance in a cancellable way ([MODE_CANCELLABLE]).
-     */
-    public fun resumeSelectCancellableWithException(exception: Throwable)
-
-    /**
-     * Disposes the specified handle when this instance is selected.
-     */
-    public fun disposeOnSelect(handle: DisposableHandle)
+    fun selectInRegPhase(selectResult: Any?)
 }
-
-/**
- * Waits for the result of multiple suspending functions simultaneously, which are specified using _clauses_
- * in the [builder] scope of this select invocation. The caller is suspended until one of the clauses
- * is either _selected_ or _fails_.
- *
- * At most one clause is *atomically* selected and its block is executed. The result of the selected clause
- * becomes the result of the select. If any clause _fails_, then the select invocation produces the
- * corresponding exception. No clause is selected in this case.
- *
- * This select function is _biased_ to the first clause. When multiple clauses can be selected at the same time,
- * the first one of them gets priority. Use [selectUnbiased] for an unbiased (randomized) selection among
- * the clauses.
-
- * There is no `default` clause for select expression. Instead, each selectable suspending function has the
- * corresponding non-suspending version that can be used with a regular `when` expression to select one
- * of the alternatives or to perform the default (`else`) action if none of them can be immediately selected.
- *
- * | **Receiver**     | **Suspending function**                       | **Select clause**                                | **Non-suspending version**
- * | ---------------- | --------------------------------------------- | ------------------------------------------------ | --------------------------
- * | [Job]            | [join][Job.join]                              | [onJoin][Job.onJoin]                             | [isCompleted][Job.isCompleted]
- * | [Deferred]       | [await][Deferred.await]                       | [onAwait][Deferred.onAwait]                      | [isCompleted][Job.isCompleted]
- * | [SendChannel]    | [send][SendChannel.send]                      | [onSend][SendChannel.onSend]                     | [offer][SendChannel.offer]
- * | [ReceiveChannel] | [receive][ReceiveChannel.receive]             | [onReceive][ReceiveChannel.onReceive]            | [poll][ReceiveChannel.poll]
- * | [ReceiveChannel] | [receiveOrNull][ReceiveChannel.receiveOrNull] | [onReceiveOrNull][ReceiveChannel.onReceiveOrNull]| [poll][ReceiveChannel.poll]
- * | [Mutex]          | [lock][Mutex.lock]                            | [onLock][Mutex.onLock]                           | [tryLock][Mutex.tryLock]
- * | none             | [delay]                                       | [onTimeout][SelectBuilder.onTimeout]             | none
- *
- * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
- * function is suspended, this function immediately resumes with [CancellationException].
- *
- * Atomicity of cancellation depends on the clause: [onSend][SendChannel.onSend], [onReceive][ReceiveChannel.onReceive],
- * [onReceiveOrNull][ReceiveChannel.onReceiveOrNull], and [onLock][Mutex.onLock] clauses are
- * *atomically cancellable*. When select throws [CancellationException] it means that those clauses had not performed
- * their respective operations.
- * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
- * continue to execute even after it was cancelled from the same thread in the case when this select operation
- * was already resumed on atomically cancellable clause and the continuation was posted for execution to the thread's queue.
- *
- * Note that this function does not check for cancellation when it is not suspended.
- * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
- */
-public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() -> Unit): R =
-    suspendCoroutineUninterceptedOrReturn { uCont ->
-        val scope = SelectBuilderImpl(uCont)
-        try {
-            builder(scope)
-        } catch (e: Throwable) {
-            scope.handleBuilderException(e)
-        }
-        scope.getResult()
-    }
-
 
 @SharedImmutable
 internal val ALREADY_SELECTED: Any = Symbol("ALREADY_SELECTED")
@@ -194,247 +216,184 @@ private val UNDECIDED: Any = Symbol("UNDECIDED")
 private val RESUMED: Any = Symbol("RESUMED")
 
 @PublishedApi
-internal class SelectBuilderImpl<in R>(
-    private val uCont: Continuation<R> // unintercepted delegate continuation
-) : LockFreeLinkedListHead(), SelectBuilder<R>,
-    SelectInstance<R>, Continuation<R>, CoroutineStackFrame {
-    override val callerFrame: CoroutineStackFrame?
-        get() = uCont as? CoroutineStackFrame
+internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
+    lateinit var cont: CancellableContinuation<Any?>
+    override val id = ID_GENERATOR.getAndIncrement()
+    override var waitingFor: SelectInstance<*>? = null
+    override var unbiased: Boolean = false
 
-    override fun getStackTraceElement(): StackTraceElement? = null
+    // TODO bridge with old SelectBuilderImpl (getResult + handleException + constructor) + test
 
-    // selection state is "this" (list of nodes) initially and is replaced by idempotent marker (or null) when selected
-    private val _state = atomic<Any?>(this)
+    // 0: objForSelect
+    // 1: RegistrationFunction
+    // 2: ProcessResultFunction
+    // 3: param
+    // 4: block
+    // 5: onCompleteAction
+    private val alternatives = ArrayList<Any?>(ALTERNATIVE_SIZE * 2) // 2 clauses -- the most common case
 
-    // this is basically our own SafeContinuation
-    private val _result = atomic<Any?>(UNDECIDED)
+    private var resultOrOnCompleteAction: Any? = null
+    private val state = atomic<Any?>(STATE_REG)
 
-    // cancellability support
-    @Volatile
-    private var parentHandle: DisposableHandle? = null
+    override fun invokeOnCompletion(onCompleteAction: () -> Unit) {
+        resultOrOnCompleteAction = onCompleteAction
+    }
 
-    /* Result state machine
+    override fun selectInRegPhase(selectResult: Any?) {
+        state.value = STATE_DONE
+        resultOrOnCompleteAction = selectResult
+    }
 
-        +-----------+   getResult   +---------------------+   resume   +---------+
-        | UNDECIDED | ------------> | COROUTINE_SUSPENDED | ---------> | RESUMED |
-        +-----------+               +---------------------+            +---------+
-              |
-              | resume
-              V
-        +------------+  getResult
-        | value/Fail | -----------+
-        +------------+            |
-              ^                   |
-              |                   |
-              +-------------------+
+    suspend fun doSelect(): R {
+        if (unbiased) shuffleAlternatives()
+        val resumeResult = try {
+            selectAlternative()
+        } catch (e: Throwable) {
+            cleanState()
+            cleanNonSelectedAlternatives(-1)
+            throw e
+        }
+        val i = selectedAlternativeIndex()
+        cleanNonSelectedAlternatives(i)
+        cleanState()
+        val result = processResult(i, resumeResult)
+        return invokeSelectedAlternativeAction(i, result)
+    }
+
+    private fun cleanState() {
+        state.value = STATE_DONE
+    }
+
+    private fun processResult(i: Int, resumeResult: Any?): Any? {
+        val objForSelect = alternatives[i]!!
+        val processResFunc = alternatives[i + 2] as ProcessResultFunction
+        val param = alternatives[i + 3]
+        return processResFunc(objForSelect, param, resumeResult)
+    }
+
+    internal fun addAlternative(objForSelect: Any, regFunc: RegistrationFunction, processResFunc: ProcessResultFunction, param: Any?, block: Any) {
+        alternatives.add(objForSelect)
+        alternatives.add(regFunc)
+        alternatives.add(processResFunc)
+        alternatives.add(param)
+        alternatives.add(block)
+        alternatives.add(null)
+    }
+
+    /**
+     * Shuffles alternatives for the _unbiased_ mode.
      */
-
-    override val context: CoroutineContext get() = uCont.context
-
-    override val completion: Continuation<R> get() = this
-
-    private inline fun doResume(value: () -> Any?, block: () -> Unit) {
-        assert { isSelected } // "Must be selected first"
-        _result.loop { result ->
-            when {
-                result === UNDECIDED -> if (_result.compareAndSet(UNDECIDED, value())) return
-                result === COROUTINE_SUSPENDED -> if (_result.compareAndSet(COROUTINE_SUSPENDED,
-                        RESUMED
-                    )) {
-                    block()
-                    return
-                }
-                else -> throw IllegalStateException("Already resumed")
-            }
-        }
+    private fun shuffleAlternatives() {
+        // TODO implement me
+        // Random.nextInt()
     }
 
-    // Resumes in MODE_DIRECT
-    override fun resumeWith(result: Result<R>) {
-        doResume({ result.toState() }) {
-            if (result.isFailure) {
-                uCont.resumeWithStackTrace(result.exceptionOrNull()!!)
+    suspend fun selectAlternative(): Any? {
+        for (i in 0 until alternatives.size step ALTERNATIVE_SIZE) {
+            val objForSelect = alternatives[i]!!
+            val regFunc = alternatives[i + 1] as RegistrationFunction
+            val param = alternatives[i + 3]
+            regFunc(objForSelect, this, param)
+            if (state.value === STATE_REG) {
+                // successfully registered
+                alternatives[i + 5] = resultOrOnCompleteAction.also { resultOrOnCompleteAction = null }
             } else {
-                uCont.resumeWith(result)
+                state.value = objForSelect
+                // rendezvous happened
+                return resultOrOnCompleteAction.also { resultOrOnCompleteAction = null }
             }
         }
-    }
-
-    // Resumes in MODE_CANCELLABLE
-    override fun resumeSelectCancellableWithException(exception: Throwable) {
-        doResume({ CompletedExceptionally(exception) }) {
-            uCont.intercepted().resumeCancellableWithException(exception)
+        return suspendAtomicCancellableCoroutine { cont ->
+            this.cont = cont
+            this.state.value = STATE_WAITING
         }
     }
 
-    @PublishedApi
-    internal fun getResult(): Any? {
-        if (!isSelected) initCancellability()
-        var result = _result.value // atomic read
-        if (result === UNDECIDED) {
-            if (_result.compareAndSet(UNDECIDED, COROUTINE_SUSPENDED)) return COROUTINE_SUSPENDED
-            result = _result.value // reread volatile var
-        }
-        when {
-            result === RESUMED -> throw IllegalStateException("Already resumed")
-            result is CompletedExceptionally -> throw result.cause
-            else -> return result // either COROUTINE_SUSPENDED or data
+    /**
+     * This function removes this `SelectInstance` from the
+     * waiting queues of other alternatives.
+     */
+    fun cleanNonSelectedAlternatives(selectedIndex: Int) {
+        for (i in 0 until alternatives.size step ALTERNATIVE_SIZE) {
+            if (i / ALTERNATIVE_SIZE == selectedIndex) continue
+            val onCompleteAction = (alternatives[i + 5] as OnCompleteAction?)
+            if (onCompleteAction === null) break // can be null in case this alternative has not been processed
+            onCompleteAction()
         }
     }
-
-    private fun initCancellability() {
-        val parent = context[Job] ?: return
-        val newRegistration = parent.invokeOnCompletion(
-            onCancelling = true, handler = SelectOnCancelling(parent).asHandler)
-        parentHandle = newRegistration
-        // now check our state _after_ registering
-        if (isSelected) newRegistration.dispose()
-    }
-
-    private inner class SelectOnCancelling(job: Job) : JobCancellingNode<Job>(job) {
-        // Note: may be invoked multiple times, but only the first trySelect succeeds anyway
-        override fun invoke(cause: Throwable?) {
-            if (trySelect(null))
-                resumeSelectCancellableWithException(job.getCancellationException())
-        }
-        override fun toString(): String = "SelectOnCancelling[${this@SelectBuilderImpl}]"
-    }
-
-    private val state: Any? get() {
-        _state.loop { state ->
-            if (state !is OpDescriptor) return state
-            state.perform(this)
-        }
-    }
-
-    @PublishedApi
-    internal fun handleBuilderException(e: Throwable) {
-        if (trySelect(null)) {
-            resumeWithException(e)
+    /**
+     * Gets the act function and the block for the selected alternative and invoke it
+     * with the specified result.
+     */
+    suspend fun <R> invokeSelectedAlternativeAction(i: Int, result: Any?): R {
+        val param = alternatives[i + 3]
+        val block = alternatives[i + 4]
+        return if (param === PARAM_CLAUSE_0) {
+            block as suspend () -> R
+            block()
         } else {
-            // Cannot handle this exception -- builder was already resumed with a different exception,
-            // so treat it as "unhandled exception"
-            handleCoroutineException(context, e)
+            block as suspend (Any?) -> R
+            block(result)
         }
     }
 
-    override val isSelected: Boolean get() = state !== this
+    /**
+     * Return an index of the selected alternative in `alternatives` array.
+     */
+    private fun selectedAlternativeIndex(): Int {
+        val objForSelect = state.value!!
+        for (i in 0 until alternatives.size step ALTERNATIVE_SIZE) {
+            if (alternatives[i] === objForSelect) return i
+        }
+        error("Object for select $objForSelect is not found")
+    }
 
-    override fun disposeOnSelect(handle: DisposableHandle) {
-        val node = DisposeNode(handle)
-        while (true) { // lock-free loop on state
-            val state = this.state
-            if (state === this) {
-                if (addLastIf(node, { this.state === this }))
-                    return
-            } else { // already selected
-                handle.dispose()
-                return
+    override fun trySelect(objForSelect: Any, result: Any?, from: SelectInstance<*>?): Boolean {
+        from?.waitingFor = this
+        try {
+            var curState: Any? = this.state.value
+            while (curState === STATE_REG) {
+                // TODO backoff + Thread.onSpinWait
+                // TODO AbstractQueuedSynchronizer?
+                if (from != null && shouldBreakDeadlock(from, from, from.id)) return false
+                curState = this.state.value
             }
+            if (curState != STATE_WAITING) return false
+            if (!state.compareAndSet(STATE_WAITING, objForSelect)) return false
+            val resumeToken = cont.tryResume(result) ?: return false
+            cont.completeResume(resumeToken)
+            return true
+        } finally {
+            from?.waitingFor = null
         }
     }
 
-    private fun doAfterSelect() {
-        parentHandle?.dispose()
-        forEach<DisposeNode> {
-            it.handle.dispose()
-        }
+    private fun shouldBreakDeadlock(start: SelectInstance<*>, cur: SelectInstance<*>, curMin: Long): Boolean {
+        val next = cur.waitingFor ?: return false
+        val newMin = min(curMin, next.id)
+        if (next === start) return newMin == start.id
+        return shouldBreakDeadlock(start, next, newMin)
     }
 
-    // it is just like start(), but support idempotent start
-    override fun trySelect(idempotent: Any?): Boolean {
-        assert { idempotent !is OpDescriptor } // "cannot use OpDescriptor as idempotent marker"
-        while (true) { // lock-free loop on state
-            val state = this.state
-            when {
-                state === this -> {
-                    if (_state.compareAndSet(this, idempotent)) {
-                        doAfterSelect()
-                        return true
-                    }
-                }
-                // otherwise -- already selected
-                idempotent == null -> return false // already selected
-                state === idempotent -> return true // was selected with this marker
-                else -> return false
-            }
-        }
-    }
+    override fun SelectClause0.invoke(block: suspend () -> R) =
+        addAlternative(objForSelect, regFunc, processResFunc, PARAM_CLAUSE_0, block)
 
-    override fun performAtomicTrySelect(desc: AtomicDesc): Any? = AtomicSelectOp(desc, true).perform(null)
-    override fun performAtomicIfNotSelected(desc: AtomicDesc): Any? = AtomicSelectOp(desc, false).perform(null)
+    override fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R) =
+        addAlternative(objForSelect, regFunc, processResFunc, PARAM_CLAUSE_1, block)
 
-    private inner class AtomicSelectOp(
-        @JvmField val desc: AtomicDesc,
-        @JvmField val select: Boolean
-    ) : AtomicOp<Any?>() {
-        override fun prepare(affected: Any?): Any? {
-            // only originator of operation makes preparation move of installing descriptor into this selector's state
-            // helpers should never do it, or risk ruining progress when they come late
-            if (affected == null) {
-                // we are originator (affected reference is not null if helping)
-                prepareIfNotSelected()?.let { return it }
-            }
-            return desc.prepare(this)
-        }
+    override fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) =
+        addAlternative(objForSelect, regFunc, processResFunc, param, block)
 
-        override fun complete(affected: Any?, failure: Any?) {
-            completeSelect(failure)
-            desc.complete(this, failure)
-        }
-
-        fun prepareIfNotSelected(): Any? {
-            _state.loop { state ->
-                when {
-                    state === this@AtomicSelectOp -> return null // already in progress
-                    state is OpDescriptor -> state.perform(this@SelectBuilderImpl) // help
-                    state === this@SelectBuilderImpl -> {
-                        if (_state.compareAndSet(this@SelectBuilderImpl, this@AtomicSelectOp))
-                            return null // success
-                    }
-                    else -> return ALREADY_SELECTED
-                }
-            }
-        }
-
-        private fun completeSelect(failure: Any?) {
-            val selectSuccess = select && failure == null
-            val update = if (selectSuccess) null else this@SelectBuilderImpl
-            if (_state.compareAndSet(this@AtomicSelectOp, update)) {
-                if (selectSuccess)
-                    doAfterSelect()
-            }
-        }
-    }
-
-    override fun SelectClause0.invoke(block: suspend () -> R) {
-        registerSelectClause0(this@SelectBuilderImpl, block)
-    }
-
-    override fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R) {
-        registerSelectClause1(this@SelectBuilderImpl, block)
-    }
-
-    override fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) {
-        registerSelectClause2(this@SelectBuilderImpl, param, block)
-    }
-
-    override fun onTimeout(timeMillis: Long, block: suspend () -> R) {
-        if (timeMillis <= 0L) {
-            if (trySelect(null))
-                block.startCoroutineUnintercepted(completion)
-            return
-        }
-        val action = Runnable {
-            // todo: we could have replaced startCoroutine with startCoroutineUndispatched
-            // But we need a way to know that Delay.invokeOnTimeout had used the right thread
-            if (trySelect(null))
-                block.startCoroutineCancellable(completion) // shall be cancellable while waits for dispatch
-        }
-        disposeOnSelect(context.delay.invokeOnTimeout(timeMillis, action))
-    }
-
-    private class DisposeNode(
-        @JvmField val handle: DisposableHandle
-    ) : LockFreeLinkedListNode()
+    override fun onTimeout(timeMillis: Long, block: suspend () -> R) = TODO("Not supported yet")
 }
+
+private val ID_GENERATOR = atomic(0L)
+// Number of items to be stored for each alternative in the `alternatives` array.
+private const val ALTERNATIVE_SIZE = 6
+
+private val STATE_REG = Symbol("STATE_REG")
+private val STATE_WAITING = Symbol("STATE_WAITING")
+private val STATE_DONE = Symbol("STATE_DONE")
+
+internal val PARAM_CLAUSE_0 = Symbol("PARAM_CLAUSE_0")
+private val PARAM_CLAUSE_1 = Symbol("PARAM_CLAUSE_1")

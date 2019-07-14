@@ -64,7 +64,7 @@ class BroadcastChannelMultiReceiveStressTest(
             println("Launching $name")
             receivers += launch(pool + CoroutineName(name)) {
                 val channel = broadcast.openSubscription()
-                    when (receiverIndex % 5) {
+                    when (receiverIndex % 3) {
                         0 -> doReceive(channel, receiverIndex)
                         1 -> doReceiveOrNull(channel, receiverIndex)
                         2 -> doIterator(channel, receiverIndex)

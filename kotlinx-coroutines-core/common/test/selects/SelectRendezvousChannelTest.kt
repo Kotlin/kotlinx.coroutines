@@ -7,7 +7,6 @@ package kotlinx.coroutines.selects
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.intrinsics.*
 import kotlin.test.*
 
 class SelectRendezvousChannelTest : TestBase() {
@@ -303,12 +302,5 @@ class SelectRendezvousChannelTest : TestBase() {
         expect(7)
         yield() // again
         finish(10)
-    }
-
-    // only for debugging
-    internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {
-        this as SelectBuilderImpl // type assertion
-        if (!trySelect(null)) return
-        block.startCoroutineUnintercepted(this)
     }
 }
