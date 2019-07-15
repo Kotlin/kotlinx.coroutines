@@ -22,14 +22,14 @@ class MonoTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking {
         expect(1)
-        val mono = mono {
+        val mono = mono(currentDispatcher()) {
             expect(4)
             "OK"
         }
         expect(2)
         mono.subscribe { value ->
             expect(5)
-            Assert.assertThat(value, IsEqual("OK"))
+            assertThat(value, IsEqual("OK"))
         }
         expect(3)
         yield() // to started coroutine
@@ -39,7 +39,7 @@ class MonoTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val mono = mono(NonCancellable) {
+        val mono = mono(currentDispatcher()) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -48,8 +48,8 @@ class MonoTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            Assert.assertThat(error, IsInstanceOf(RuntimeException::class.java))
-            Assert.assertThat(error.message, IsEqual("OK"))
+            assertThat(error, IsInstanceOf(RuntimeException::class.java))
+            assertThat(error.message, IsEqual("OK"))
         })
         expect(3)
         yield() // to started coroutine
@@ -59,7 +59,7 @@ class MonoTest : TestBase() {
     @Test
     fun testBasicEmpty() = runBlocking {
         expect(1)
-        val mono = mono {
+        val mono = mono(currentDispatcher()) {
             expect(4)
             null
         }
@@ -75,7 +75,7 @@ class MonoTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val mono = mono {
+        val mono = mono(currentDispatcher()) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
@@ -97,7 +97,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testMonoNoWait() {
-        val mono = GlobalScope.mono {
+        val mono = mono {
             "OK"
         }
 
@@ -113,7 +113,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testMonoEmitAndAwait() {
-        val mono = GlobalScope.mono {
+        val mono = mono {
             Mono.just("O").awaitSingle() + "K"
         }
 
@@ -124,7 +124,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testMonoWithDelay() {
-        val mono = GlobalScope.mono {
+        val mono = mono {
             Flux.just("O").delayElements(ofMillis(50)).awaitSingle() + "K"
         }
 
@@ -135,7 +135,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testMonoException() {
-        val mono = GlobalScope.mono {
+        val mono = mono {
             Flux.just("O", "K").awaitSingle() + "K"
         }
 
@@ -146,7 +146,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testAwaitFirst() {
-        val mono = GlobalScope.mono {
+        val mono = mono {
             Flux.just("O", "#").awaitFirst() + "K"
         }
 
@@ -157,7 +157,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testAwaitLast() {
-        val mono = GlobalScope.mono {
+        val mono = mono {
             Flux.just("#", "O").awaitLast() + "K"
         }
 
@@ -168,7 +168,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testExceptionFromFlux() {
-        val mono = GlobalScope.mono {
+        val mono = mono {
             try {
                 Flux.error<String>(RuntimeException("O")).awaitFirst()
             } catch (e: RuntimeException) {
@@ -183,7 +183,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testExceptionFromCoroutine() {
-        val mono = GlobalScope.mono<String> {
+        val mono = mono<String> {
             throw IllegalStateException(Flux.just("O").awaitSingle() + "K")
         }
 
@@ -194,21 +194,8 @@ class MonoTest : TestBase() {
     }
 
     @Test
-    fun testCancelsParentOnFailure() = runTest(
-        expected = { it is RuntimeException && it.message == "OK" }
-    ) {
-        // has parent, so should cancel it on failure
-        mono<Unit> {
-            throw RuntimeException("OK")
-        }.subscribe(
-            { expectUnreached() },
-            { assert(it is RuntimeException) }
-        )
-    }
-
-    @Test
     fun testSuppressedException() = runTest {
-        val mono = mono(NonCancellable) {
+        val mono = mono(currentDispatcher()) {
             launch(start = CoroutineStart.ATOMIC) {
                 throw TestException() // child coroutine fails
             }
@@ -227,12 +214,14 @@ class MonoTest : TestBase() {
     }
 
     @Test
-    fun testUnhandledException() = runTest(
-        unhandled = listOf { it -> it is TestException }
-    ) {
+    fun testUnhandledException() = runTest {
         expect(1)
         var subscription: Subscription? = null
-        val mono = mono(NonCancellable) {
+        val mono = mono(currentDispatcher() + CoroutineExceptionHandler { _, t ->
+            assertTrue(t is TestException)
+            expect(5)
+
+        }) {
             expect(4)
             subscription!!.cancel() // cancel our own subscription, so that delay will get cancelled
             try {
@@ -252,6 +241,11 @@ class MonoTest : TestBase() {
         })
         expect(3)
         yield() // run coroutine
-        finish(5)
+        finish(6)
+    }
+
+    @Test
+    fun testIllegalArgumentException() {
+        assertFailsWith<IllegalArgumentException> { mono(Job()) { } }
     }
 }

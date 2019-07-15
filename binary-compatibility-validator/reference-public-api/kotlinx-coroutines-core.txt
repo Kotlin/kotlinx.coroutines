@@ -437,6 +437,7 @@ public final class kotlinx/coroutines/NonCancellable : kotlin/coroutines/Abstrac
 	public fun join (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun plus (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
 	public fun start ()Z
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class kotlinx/coroutines/NonDisposableHandle : kotlinx/coroutines/ChildHandle, kotlinx/coroutines/DisposableHandle {
