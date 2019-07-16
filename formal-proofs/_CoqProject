@@ -1,0 +1,11 @@
+-R theories/ SegmentQueue
+./theories/algebra/bounded_pos.v
+./theories/lib/array/array_spec.v
+./theories/lib/array/array_impl.v
+./theories/lib/array/array_proof.v
+./theories/lib/thread_queue/thread_queue.v
+./theories/lib/thread_queue/thread_queue_spec.v
+./theories/lib/semaphore/semaphore_impl.v
+./theories/lib/semaphore/semaphore.v
+./theories/lib/semaphore/semaphore_spec.v
+./theories/util/iPropPow.v
