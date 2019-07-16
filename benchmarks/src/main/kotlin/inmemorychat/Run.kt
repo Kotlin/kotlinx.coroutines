@@ -2,156 +2,76 @@
 
 package inmemorychat
 
-import kotlinx.coroutines.asCoroutineDispatcher
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.*
-import java.util.concurrent.Executors
 import kotlin.collections.ArrayList
-import kotlin.math.floor
+import kotlin.collections.HashMap
 
-@Volatile
-var context = Executors.newFixedThreadPool(10) {
-    val newThread = Executors.defaultThreadFactory().newThread(it)
-    newThread.isDaemon = true
-    newThread
-}.asCoroutineDispatcher()
+var context = DispatcherTypes.FORK_JOIN.create(10)
 
 val propertiesList = createBenchmarkPropertiesList()
 
 //val logger = org.slf4j.LoggerFactory.getLogger("InMemoryChatBenchmark")
 
 fun main() {
-//    logger.debug("Benchmarks count ${propertiesList.size}")
+//    logger.debug("Benchmarks count ${propertiesList.size}, benchmarks total time is ${propertiesList.size * (WARM_UP_ITERATIONS + BENCHMARK_ITERATIONS) * BENCHMARK_TIME_MS} ms")
+    println("Benchmarks count ${propertiesList.size}, benchmarks total time is ${propertiesList.size * (WARM_UP_ITERATIONS + BENCHMARK_ITERATIONS) * BENCHMARK_TIME_MS} ms")
 
+    val file = File(BENCHMARK_OUTPUT_FOLDER)
+    file.mkdir()
+
+    val separator = System.getProperty("file.separator")
+    val classpath = System.getProperty("java.class.path")
+    val javaPath = (System.getProperty("java.home") + separator + "bin" + separator + "java")
+    val className = "inmemorychat.RunBenchmark"
+
+    var benchmarkIteration = 0
     for (properties in propertiesList) {
-        context = Executors.newFixedThreadPool(properties.threads) {
-            val newThread = Executors.defaultThreadFactory().newThread(it)
-            newThread.isDaemon = true
-            newThread
-        }.asCoroutineDispatcher()
+        println("$benchmarkIteration benchmark iteration")
+        benchmarkIteration++
 
-        warmUp(properties)
+        val arrayList = ArrayList<String>()
+        arrayList.add(javaPath)
+        arrayList.add("-verbose:gc -Xms128m -Xmx128m")
+        arrayList.add("-cp")
+        arrayList.add(classpath)
+        arrayList.add(className)
+        arrayList.add(benchmarkIteration.toString())
+        arrayList.addAll(properties.toArray())
 
-        val users = ArrayList<User>()
-        val random = Random(42)
-        val server = Server(properties)
-        var loader : Loader? = null
-        try {
-            createUsers(users, server, random, true, properties)
-            loader = initLoaderIfNeeded(users, properties)
+        val processBuilder = ProcessBuilder(arrayList)
+        val process = processBuilder.inheritIO().start()
 
-            Thread.sleep(TIME_TO_LIVE_MS)
-
-            collectBenchmarkMetrics(users, properties)
-        }
-        finally {
-            loader?.stop()
-            stopUsers(users)
-            context.close()
-            users.clear()
-        }
+        process.waitFor()
     }
 
-    File(BENCHMARK_OUTPUT_FILE).printWriter().use { out ->
+    val result = ArrayList<String>()
+
+    repeat(propertiesList.size) {
+        val pathToOutputFolder = Paths.get(BENCHMARK_OUTPUT_FOLDER)
+        try {
+            val pathToFile = Paths.get("$pathToOutputFolder/$fileName${it + 1}")
+            val lines = Files.lines(pathToFile)
+            lines.forEach {
+                result.add(it)
+            }
+        }
+        catch (ignored : Exception) {}
+    }
+
+    File("$BENCHMARK_OUTPUT_FOLDER/$BENCHMARK_OUTPUT_FILE").printWriter().use { out ->
         out.println(BENCHMARK_PROPERTIES_FIELDS)
-        propertiesList.forEach {
-            out.println(it.toCSV())
-        }
+        result.forEach(out::println)
     }
-}
 
-private fun warmUp(properties: BenchmarkProperties) {
-    val users = ArrayList<User>()
-    val random = Random(42)
-    repeat(WARM_UP_COUNT) {
-        val server = Server(properties)
-        var loader : Loader? = null
+    repeat(propertiesList.size) {
+        val pathToOutputFolder = Paths.get(BENCHMARK_OUTPUT_FOLDER)
         try {
-            createUsers(users, server, random, false, properties)
-            loader = initLoaderIfNeeded(users, properties)
-            Thread.sleep(TIME_TO_WARM_UP_MS)
-//            logger.trace("${it + 1} warm up, ${System.currentTimeMillis()}")
+            val pathToFile = Paths.get("$pathToOutputFolder/$fileName${it + 1}")
+            File(pathToFile.toString()).delete()
         }
-        finally {
-            stopUsers(users)
-            users.clear()
-            loader?.stop()
-        }
+        catch (ignored : Exception) {}
     }
-}
-
-private fun createUsers(users: ArrayList<User>, server: Server, random: Random, shouldCountMetrics : Boolean,
-                        properties : BenchmarkProperties) {
-    repeat(properties.userCount) {
-        val user = server.registerClient(shouldCountMetrics)
-        users.add(user)
-    }
-
-    val friendsCount = (properties.userCount * properties.maxFriendsPercentage).toInt()
-    for (user in users) {
-        val friends = HashSet<Long>()
-        friends.add(user.id)
-
-        repeat(random.nextInt(friendsCount)) {
-            var userNum = random.nextInt(users.size)
-            while (friends.contains(users[userNum].id)) {
-                userNum = random.nextInt(users.size)
-            }
-            friends.add(users[userNum].id)
-        }
-
-        friends.remove(user.id)
-        friends.forEach(user::addFriend)
-    }
-}
-
-private fun initLoaderIfNeeded(users: List<User>, properties : BenchmarkProperties) : Loader? {
-    if (properties.userType != UserType.USER_WITH_TWO_JOBS) {
-        return Loader(users, properties)
-    }
-    return null
-}
-
-private fun collectBenchmarkMetrics(users: ArrayList<User>, properties: BenchmarkProperties) {
-    val sortedLatencies = TreeMap<Long, Int>()
-    for (user in users) {
-        user.shouldCountMetrics = false
-        properties.sentMessages += user.sentMessages
-        properties.receivedMessages += user.receivedMessages
-        for (entry in user.getLatencies()) {
-            sortedLatencies.compute(entry.key) { _, v ->
-                if (v == null) {
-                    entry.value
-                }
-                else {
-                    v + entry.value
-                }
-            }
-        }
-    }
-    // Computing required percentiles
-    val entriesList = ArrayList<Map.Entry<Long, Int>>(sortedLatencies.entries)
-    val latenciesList = ArrayList<Int>()
-    latenciesList.add(0)
-    // Compute cumulative sums of numbers of registered latencies. Thus the last element of list contains the number of
-    // all registered latencies.
-    for (entry in sortedLatencies.entries) {
-        latenciesList.add(latenciesList.last() + entry.value)
-    }
-    // Find required percentiles. If every latency occurred in the latenciesList the number of times this latency
-    // was registered, we could easily find the required latency by finding an element of nth position. But the latenciesList
-    // would contain a lot of elements in this case, so the idea here is to find the closest element to the
-    // (number of registered latencies * required percentile) in the list of cumulative sums.
-    for (percentile in PERCENTILE_TO_OUTPUT) {
-        var insertionPoint = latenciesList.binarySearch(floor(latenciesList.last() * percentile / 100.0).toInt())
-        if (insertionPoint < 0) {
-            insertionPoint = -(insertionPoint + 1)
-        }
-        val latency = entriesList[insertionPoint].key
-        properties.latencies[percentile] = latency
-    }
-}
-
-private fun stopUsers(users: ArrayList<User>) {
-    users.forEach(User::stopUser)
 }
