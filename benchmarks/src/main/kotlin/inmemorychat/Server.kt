@@ -1,31 +1,19 @@
 package inmemorychat
 
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ClosedSendChannelException
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 class Server(private val properties: BenchmarkProperties) {
-    private var idSequence = 0L
-
-    private val userIdToChannel = ConcurrentHashMap<Long, Channel<Message>>()
+    private var idSequence = AtomicLong()
 
     fun registerClient(shouldCountMetrics : Boolean): User {
-        val userId = idSequence++
-        val messagesChannel = Channel<Message>(properties.channelType)
-        userIdToChannel[userId] = messagesChannel
+        val userId = idSequence.incrementAndGet()
+        val messagesChannel = properties.channelType.createChannel<Message>()
 
-        return when (properties.userType) {
-            UserType.USER_WITH_TWO_JOBS -> UserWithTwoJobs(this, userId, messagesChannel, properties, shouldCountMetrics)
-            UserType.USER_WITH_ONE_JOB -> UserWithOneJob(this, userId, messagesChannel, properties, shouldCountMetrics)
-            UserType.USER_WITH_SELECT -> UserWithSelect(this, userId, messagesChannel, Channel(properties.channelType),
+        return when (properties.benchmarkMode) {
+            BenchmarkModes.USER_WITH_TWO_JOBS -> UserWithTwoJobs(userId, messagesChannel, properties, shouldCountMetrics)
+            BenchmarkModes.USER_WITH_ONE_JOB -> UserWithOneJob(userId, messagesChannel, properties, shouldCountMetrics)
+            BenchmarkModes.USER_WITH_SELECT -> UserWithSelect(userId, messagesChannel, properties.channelType.createChannel(),
                     properties, shouldCountMetrics)
         }
-    }
-
-    suspend fun sendMessage(userId: Long, message: Message) {
-        try {
-            userIdToChannel[userId]!!.send(message)
-        }
-        catch (ignored : ClosedSendChannelException) {}
     }
 }

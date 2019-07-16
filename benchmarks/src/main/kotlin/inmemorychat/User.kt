@@ -1,23 +1,21 @@
 package inmemorychat
 
 import kotlinx.coroutines.channels.Channel
-import org.openjdk.jmh.infra.Blackhole
-import java.time.Instant
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ThreadLocalRandom
 import kotlin.collections.ArrayList
 
 /**
  * An abstract class for server-side chat users.
  * Every user has its own channel through which users can get messages from other users [receiveAndProcessMessage],
  * users can send messages to their friends' channels as well [sendMessage].
- * User contains sent and received messages metrics, messages latencies. Message latency is a delay between the time
- * the message was sent and the time the message was received.
+ * User contains sent and received messages metrics.
  * To emulate real world chat servers, some work will be executed on CPU during sending and receiving messages. When user
  * connects to the server, the connection itself consumes some CPU time.
  * At the end of the benchmark execution [stopUser] should be called.
  */
-open class User(private val server: Server, val id: Long, val messagesChannel: Channel<Message>, val properties: BenchmarkProperties,
+open class User(val id: Long, val messagesChannel: Channel<Message>, val properties: BenchmarkProperties,
                 @Volatile var shouldCountMetrics: Boolean) {
     var sentMessages = 0L
         protected set
@@ -25,21 +23,21 @@ open class User(private val server: Server, val id: Long, val messagesChannel: C
     var receivedMessages = 0L
         protected set
 
-    val friends = ArrayList<Long>()
+    val friends = ArrayList<Channel<Message>>()
 
     protected val random = Random(42)
 
-    /**
-     * Latency to the number of times this latency occurred
-     */
-    private val latencies = ConcurrentHashMap<Long, Int>()
-
     private fun doSomeWorkOnCpu() {
-        Blackhole.consumeCPU(properties.tokens)
+        // We use geometric distribution here
+        val p = 1.0 / properties.tokens
+        val r = ThreadLocalRandom.current()
+        while (true) {
+            if (r.nextDouble() < p) break
+        }
     }
 
-    fun addFriend(userId: Long) {
-        friends.add(userId)
+    fun addFriend(userChannel : Channel<Message>) {
+        friends.add(userChannel)
     }
 
     protected suspend fun sendMessage() {
@@ -48,11 +46,13 @@ open class User(private val server: Server, val id: Long, val messagesChannel: C
             return
         }
         val friendNum = random.nextInt(friends.size)
-        val now = Instant.now()
-        server.sendMessage(friends[friendNum], UserMessage(id, now.epochSecond, now.nano))
-        if (shouldCountMetrics) {
-            sentMessages++
-        }
+        val now = System.nanoTime()
+        try {
+            friends[friendNum].send(UserMessage(id, now))
+            if (shouldCountMetrics) {
+                sentMessages++
+            }
+        } catch (ignored : ClosedSendChannelException) {}
         doSomeWorkOnCpu()
     }
 
@@ -62,24 +62,22 @@ open class User(private val server: Server, val id: Long, val messagesChannel: C
         }
         doSomeWorkOnCpu()
         if (shouldCountMetrics) {
-            val receivingInstant = Instant.now()
-            val currentLatencyNs = (receivingInstant.epochSecond - message.seconds) * 1_000_000_000 + (receivingInstant.nano - message.nanos)
-            latencies.compute(currentLatencyNs) { _, v ->
-                if (v == null) {
-                    1
-                }
-                else {
-                    v + 1
-                }
-            }
             receivedMessages++
         }
         doSomeWorkOnCpu()
     }
 
     open fun stopUser() {}
-
-    fun getLatencies() : HashMap<Long, Int> {
-        return HashMap(latencies)
-    }
 }
+
+open class Message
+
+/**
+ * A command that means that a user should send a message to one of user's friends
+ */
+class SendMessage : Message()
+
+/**
+ * A message from one of the users to another one
+ */
+class UserMessage(private val userId : Long, val nanos : Long) : Message()

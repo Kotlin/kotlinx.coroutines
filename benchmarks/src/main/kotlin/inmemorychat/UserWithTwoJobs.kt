@@ -9,13 +9,13 @@ import kotlinx.coroutines.yield
  * An implementation of server-side users.
  * This implementation contains two coroutines. One of them generates flow of messages to random chosen user's friends.
  * The other one listens to messagesChannel and processes messages from other users using [receiveAndProcessMessage].
- * Because of the design of the coroutines tasks scheduler, it is important to call [yield] sometimes to allow other
+ * Because of the design of the coroutines tasks scheduler and channels, it is important to call [yield] sometimes to allow other
  * coroutines to work. This is necessary due to the fact that if a coroutine constantly has some work to do, like in this
  * case if a coroutine has an endless flow of messages, it will work without interruption, and other coroutines will have to
  * wait for this coroutine to end it's execution.
  */
-class UserWithTwoJobs(server: Server, id: Long, messagesChannel: Channel<Message>, properties: BenchmarkProperties,
-                      shouldCountMetrics: Boolean) : User(server, id, messagesChannel, properties, shouldCountMetrics) {
+class UserWithTwoJobs(id: Long, messagesChannel: Channel<Message>, properties: BenchmarkProperties,
+                      shouldCountMetrics: Boolean) : User(id, messagesChannel, properties, shouldCountMetrics) {
     @Volatile
     private var stopped = false
 
