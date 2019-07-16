@@ -307,7 +307,14 @@ internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: In
     val state = takeState()
     val exception = getExceptionalResult(state)
     if (exception != null) {
-        delegate.resumeWithExceptionMode(exception, useMode)
+        /*
+         * Recover stacktrace for non-dispatched tasks.
+         * We usually do not recover stacktrace in a `resume` as all resumes go through `DispatchedTask.run`
+         * and we recover stacktraces there, but this is not the case for a `suspend fun main()` that knows nothing about
+         * kotlinx.coroutines and DispatchedTask
+         */
+        val recovered = if (delegate is DispatchedTask<*>) exception else recoverStackTrace(exception, delegate)
+        delegate.resumeWithExceptionMode(recovered, useMode)
     } else {
         delegate.resumeMode(getSuccessfulResult(state), useMode)
     }
