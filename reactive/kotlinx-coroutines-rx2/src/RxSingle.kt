@@ -31,12 +31,7 @@ public fun <T : Any> rxSingle(
 ): Single<T> {
     require(context[Job] === null) { "Single context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
-    return Single.create { subscriber ->
-        val newContext = GlobalScope.newCoroutineContext(context)
-        val coroutine = RxSingleCoroutine(newContext, subscriber)
-        subscriber.setCancellable(RxCancellable(coroutine))
-        coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
-    }
+    return rxSingleInternal(GlobalScope, context, block)
 }
 
 @Deprecated(
@@ -48,8 +43,14 @@ public fun <T : Any> rxSingle(
 public fun <T : Any> CoroutineScope.rxSingle(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> T
+): Single<T> = rxSingleInternal(this, context, block)
+
+private fun <T : Any> rxSingleInternal(
+    scope: CoroutineScope, // support for legacy rxSingle in scope
+    context: CoroutineContext,
+    block: suspend CoroutineScope.() -> T
 ): Single<T> = Single.create { subscriber ->
-    val newContext = newCoroutineContext(context)
+    val newContext = scope.newCoroutineContext(context)
     val coroutine = RxSingleCoroutine(newContext, subscriber)
     subscriber.setCancellable(RxCancellable(coroutine))
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)

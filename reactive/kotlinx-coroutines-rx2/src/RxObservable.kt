@@ -40,12 +40,7 @@ public fun <T : Any> rxObservable(
 ): Observable<T> {
     require(context[Job] === null) { "Observable context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
-    return Observable.create { subscriber ->
-        val newContext = GlobalScope.newCoroutineContext(context)
-        val coroutine = RxObservableCoroutine(newContext, subscriber)
-        subscriber.setCancellable(RxCancellable(coroutine)) // do it first (before starting coroutine), to await unnecessary suspensions
-        coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
-    }
+    return rxObservableInternal(GlobalScope, context, block)
 }
 
 @Deprecated(
@@ -57,8 +52,14 @@ public fun <T : Any> rxObservable(
 public fun <T : Any> CoroutineScope.rxObservable(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+): Observable<T> = rxObservableInternal(this, context, block)
+
+private fun <T : Any> rxObservableInternal(
+    scope: CoroutineScope, // support for legacy rxObservable in scope
+    context: CoroutineContext,
+    block: suspend ProducerScope<T>.() -> Unit
 ): Observable<T> = Observable.create { subscriber ->
-    val newContext = newCoroutineContext(context)
+    val newContext = scope.newCoroutineContext(context)
     val coroutine = RxObservableCoroutine(newContext, subscriber)
     subscriber.setCancellable(RxCancellable(coroutine)) // do it first (before starting coroutine), to await unnecessary suspensions
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)

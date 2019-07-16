@@ -43,14 +43,7 @@ public fun <T> publish(
 ): Publisher<T> {
     require(context[Job] === null) { "Publisher context cannot contain job in it." +
             "Its lifecycle should be managed via subscription. Had $context" }
-    return Publisher { subscriber ->
-        // specification requires NPE on null subscriber
-        if (subscriber == null) throw NullPointerException("Subscriber cannot be null")
-        val newContext = GlobalScope.newCoroutineContext(context)
-        val coroutine = PublisherCoroutine(newContext, subscriber)
-        subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
-        coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
-    }
+    return publishInternal(GlobalScope, context, block)
 }
 
 @Deprecated(
@@ -62,11 +55,18 @@ public fun <T> publish(
 public fun <T> CoroutineScope.publish(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+): Publisher<T> = publishInternal(this, context, block)
+
+/** @suppress For internal use from other reactive integration modules only */
+@InternalCoroutinesApi
+public fun <T> publishInternal(
+    scope: CoroutineScope, // support for legacy publish in scope
+    context: CoroutineContext,
+    block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> = Publisher { subscriber ->
-    // Note: code is not shared with `publish` deliberately
     // specification requires NPE on null subscriber
     if (subscriber == null) throw NullPointerException("Subscriber cannot be null")
-    val newContext = newCoroutineContext(context)
+    val newContext = scope.newCoroutineContext(context)
     val coroutine = PublisherCoroutine(newContext, subscriber)
     subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)

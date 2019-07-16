@@ -31,12 +31,7 @@ public fun rxCompletable(
 ): Completable {
     require(context[Job] === null) { "Completable context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
-    return Completable.create { subscriber ->
-        val newContext = GlobalScope.newCoroutineContext(context)
-        val coroutine = RxCompletableCoroutine(newContext, subscriber)
-        subscriber.setCancellable(RxCancellable(coroutine))
-        coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
-    }
+    return rxCompletableInternal(GlobalScope, context, block)
 }
 
 @Deprecated(
@@ -48,8 +43,14 @@ public fun rxCompletable(
 public fun CoroutineScope.rxCompletable(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> Unit
+): Completable = rxCompletableInternal(this, context, block)
+
+private fun rxCompletableInternal(
+    scope: CoroutineScope, // support for legacy rxCompletable in scope
+    context: CoroutineContext,
+    block: suspend CoroutineScope.() -> Unit
 ): Completable = Completable.create { subscriber ->
-    val newContext = newCoroutineContext(context)
+    val newContext = scope.newCoroutineContext(context)
     val coroutine = RxCompletableCoroutine(newContext, subscriber)
     subscriber.setCancellable(RxCancellable(coroutine))
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)

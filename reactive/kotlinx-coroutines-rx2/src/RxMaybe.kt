@@ -32,12 +32,7 @@ public fun <T> rxMaybe(
 ): Maybe<T> {
     require(context[Job] === null) { "Maybe context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
-    return Maybe.create { subscriber ->
-        val newContext = GlobalScope.newCoroutineContext(context)
-        val coroutine = RxMaybeCoroutine(newContext, subscriber)
-        subscriber.setCancellable(RxCancellable(coroutine))
-        coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
-    }
+    return rxMaybeInternal(GlobalScope, context, block)
 }
 
 @Deprecated(
@@ -49,8 +44,14 @@ public fun <T> rxMaybe(
 public fun <T> CoroutineScope.rxMaybe(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> T?
+): Maybe<T> = rxMaybeInternal(this, context, block)
+
+private fun <T> rxMaybeInternal(
+    scope: CoroutineScope, // support for legacy rxMaybe in scope
+    context: CoroutineContext,
+    block: suspend CoroutineScope.() -> T?
 ): Maybe<T> = Maybe.create { subscriber ->
-    val newContext = newCoroutineContext(context)
+    val newContext = scope.newCoroutineContext(context)
     val coroutine = RxMaybeCoroutine(newContext, subscriber)
     subscriber.setCancellable(RxCancellable(coroutine))
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)

@@ -40,7 +40,7 @@ public fun <T: Any> rxFlowable(
 ): Flowable<T> {
     require(context[Job] === null) { "Flowable context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
-    return Flowable.fromPublisher(publish(GlobalScope.newCoroutineContext(context), block = block))
+    return Flowable.fromPublisher(publishInternal(GlobalScope, context, block))
 }
 
 @Deprecated(
@@ -52,4 +52,4 @@ public fun <T: Any> rxFlowable(
 public fun <T: Any> CoroutineScope.rxFlowable(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Flowable<T> = Flowable.fromPublisher(publish(newCoroutineContext(context), block = block))
+): Flowable<T> = Flowable.fromPublisher(publishInternal(this, context, block))

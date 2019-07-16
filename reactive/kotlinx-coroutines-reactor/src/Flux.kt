@@ -42,7 +42,7 @@ public fun <T> flux(
 ): Flux<T> {
     require(context[Job] === null) { "Flux context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
-    return Flux.from(publish(GlobalScope.newCoroutineContext(context), block = block))
+    return Flux.from(publishInternal(GlobalScope, context, block))
 }
 
 @Deprecated(
@@ -55,4 +55,4 @@ public fun <T> CoroutineScope.flux(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flux<T> =
-    Flux.from(publish(newCoroutineContext(context), block = block))
+    Flux.from(publishInternal(this, context, block))

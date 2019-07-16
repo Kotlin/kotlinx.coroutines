@@ -34,12 +34,7 @@ public fun <T> mono(
 ): Mono<T> {
     require(context[Job] === null) { "Mono context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
-    return Mono.create { sink ->
-        val newContext = GlobalScope.newCoroutineContext(context)
-        val coroutine = MonoCoroutine(newContext, sink)
-        sink.onDispose(coroutine)
-        coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
-    }
+    return monoInternal(GlobalScope, context, block)
 }
 
 @Deprecated(
@@ -51,8 +46,14 @@ public fun <T> mono(
 public fun <T> CoroutineScope.mono(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> T?
+): Mono<T> = monoInternal(this, context, block)
+
+private fun <T> monoInternal(
+    scope: CoroutineScope, // support for legacy mono in scope
+    context: CoroutineContext,
+    block: suspend CoroutineScope.() -> T?
 ): Mono<T> = Mono.create { sink ->
-    val newContext = newCoroutineContext(context)
+    val newContext = scope.newCoroutineContext(context)
     val coroutine = MonoCoroutine(newContext, sink)
     sink.onDispose(coroutine)
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
