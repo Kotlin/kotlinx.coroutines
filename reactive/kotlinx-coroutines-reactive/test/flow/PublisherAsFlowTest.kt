@@ -17,7 +17,7 @@ class PublisherAsFlowTest : TestBase() {
         var onCancelled = 0
         var onError = 0
 
-        val publisher = publish {
+        val publisher = publish(currentDispatcher()) {
             coroutineContext[Job]?.invokeOnCompletion {
                 if (it is CancellationException) ++onCancelled
             }
@@ -45,7 +45,7 @@ class PublisherAsFlowTest : TestBase() {
 
     @Test
     fun testBufferSize1() = runTest {
-        val publisher = publish {
+        val publisher = publish(currentDispatcher()) {
             expect(1)
             send(3)
 
@@ -66,7 +66,7 @@ class PublisherAsFlowTest : TestBase() {
 
     @Test
     fun testBufferSize10() = runTest {
-        val publisher = publish {
+        val publisher = publish(currentDispatcher()) {
             expect(1)
             send(5)
 
@@ -87,7 +87,7 @@ class PublisherAsFlowTest : TestBase() {
 
     @Test
     fun testConflated() = runTest {
-        val publisher = publish {
+        val publisher = publish(currentDispatcher()) {
             for (i in 1..5) send(i)
         }
         val list = publisher.asFlow().conflate().toList()
@@ -96,7 +96,7 @@ class PublisherAsFlowTest : TestBase() {
 
     @Test
     fun testProduce() = runTest {
-        val flow = publish { repeat(10) { send(it) } }.asFlow()
+        val flow = publish(currentDispatcher()) { repeat(10) { send(it) } }.asFlow()
         check((0..9).toList(), flow.produceIn(this))
         check((0..9).toList(), flow.buffer(2).produceIn(this))
         check((0..9).toList(), flow.buffer(Channel.UNLIMITED).produceIn(this))
@@ -113,7 +113,7 @@ class PublisherAsFlowTest : TestBase() {
     fun testProduceCancellation() = runTest {
         expect(1)
         // publisher is an async coroutine, so it overproduces to the channel, but still gets cancelled
-        val flow = publish {
+        val flow = publish(currentDispatcher()) {
             expect(3)
             repeat(10) { value ->
                 when (value) {

@@ -15,7 +15,7 @@ class FlowableTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking {
         expect(1)
-        val observable = rxFlowable {
+        val observable = rxFlowable(currentDispatcher()) {
             expect(4)
             send("OK")
         }
@@ -32,7 +32,7 @@ class FlowableTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val observable = rxFlowable<String>(NonCancellable) {
+        val observable = rxFlowable<String>(currentDispatcher()) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -52,7 +52,7 @@ class FlowableTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val observable = rxFlowable<String> {
+        val observable = rxFlowable<String>(currentDispatcher()) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
@@ -72,23 +72,10 @@ class FlowableTest : TestBase() {
     }
 
     @Test
-    fun testCancelsParentOnFailure() = runTest(
-        expected = { it is RuntimeException && it.message == "OK" }
-    ) {
-        // has parent, so should cancel it on failure
-        rxFlowable<Unit> {
-            throw RuntimeException("OK")
-        }.subscribe(
-            { expectUnreached() },
-            { assert(it is RuntimeException) }
-        )
-    }
-
-    @Test
     fun testNotifyOnceOnCancellation() = runTest {
         expect(1)
         val observable =
-            rxFlowable {
+            rxFlowable(currentDispatcher()) {
                 expect(5)
                 send("OK")
                 try {
@@ -124,7 +111,7 @@ class FlowableTest : TestBase() {
 
     @Test
     fun testFailingConsumer() = runTest {
-        val pub = rxFlowable {
+        val pub = rxFlowable(currentDispatcher()) {
             repeat(3) {
                 expect(it + 1) // expect(1), expect(2) *should* be invoked
                 send(it)

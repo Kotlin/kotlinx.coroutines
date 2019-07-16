@@ -1,6 +1,8 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+
+@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package kotlinx.coroutines.reactive
 
@@ -11,6 +13,7 @@ import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import org.reactivestreams.*
 import kotlin.coroutines.*
+import kotlin.internal.LowPriorityInOverloadResolution
 
 /**
  * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
@@ -26,25 +29,44 @@ import kotlin.coroutines.*
  * | Normal completion or `close` without cause   | `onComplete`
  * | Failure with exception or `close` with cause | `onError`
  *
- * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
+ * Coroutine context can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
- * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
- * with corresponding [coroutineContext] element.
+ * Method throws [IllegalArgumentException] if provided [context] contains a [Job] instance.
  *
  * **Note: This is an experimental api.** Behaviour of publishers that work as children in a parent scope with respect
  *        to cancellation and error handling may change in the future.
- *
- * @param context context of the coroutine.
- * @param block the coroutine code.
  */
 @ExperimentalCoroutinesApi
+public fun <T> publish(
+    context: CoroutineContext = EmptyCoroutineContext,
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+): Publisher<T> {
+    require(context[Job] === null) { "Publisher context cannot contain job in it." +
+            "Its lifecycle should be managed via subscription. Had $context" }
+    return publishInternal(GlobalScope, context, block)
+}
+
+@Deprecated(
+    message = "CoroutineScope.publish is deprecated in favour of top-level publish",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("publish(context, block)")
+) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0. Binary compatibility with Spring
+@LowPriorityInOverloadResolution
 public fun <T> CoroutineScope.publish(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+): Publisher<T> = publishInternal(this, context, block)
+
+/** @suppress For internal use from other reactive integration modules only */
+@InternalCoroutinesApi
+public fun <T> publishInternal(
+    scope: CoroutineScope, // support for legacy publish in scope
+    context: CoroutineContext,
+    block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> = Publisher { subscriber ->
     // specification requires NPE on null subscriber
     if (subscriber == null) throw NullPointerException("Subscriber cannot be null")
-    val newContext = newCoroutineContext(context)
+    val newContext = scope.newCoroutineContext(context)
     val coroutine = PublisherCoroutine(newContext, subscriber)
     subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)

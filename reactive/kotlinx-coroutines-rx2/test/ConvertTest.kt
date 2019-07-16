@@ -16,7 +16,7 @@ class ConvertTest : TestBase() {
         val job = launch {
             expect(3)
         }
-        val completable = job.asCompletable(coroutineContext)
+        val completable = job.asCompletable(coroutineContext.minusKey(Job))
         completable.subscribe {
             expect(4)
         }
@@ -32,7 +32,7 @@ class ConvertTest : TestBase() {
             expect(3)
             throw RuntimeException("OK")
         }
-        val completable = job.asCompletable(coroutineContext)
+        val completable = job.asCompletable(coroutineContext.minusKey(Job))
         completable.subscribe {
             expect(4)
         }
@@ -140,7 +140,7 @@ class ConvertTest : TestBase() {
             throw TestException("K")
         }
         val observable = c.asObservable(Dispatchers.Unconfined)
-        val single = GlobalScope.rxSingle(Dispatchers.Unconfined) {
+        val single = rxSingle(Dispatchers.Unconfined) {
             var result = ""
             try {
                 observable.consumeEach { result += it }

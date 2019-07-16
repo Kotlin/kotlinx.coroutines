@@ -10,7 +10,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.reactive.*
 import kotlin.coroutines.CoroutineContext
 
-fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = GlobalScope.publish<Int>(context) {
+fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = publish<Int>(context) {
     for (x in start until start + count) { 
         delay(time) // wait before sending each number
         send(x)
