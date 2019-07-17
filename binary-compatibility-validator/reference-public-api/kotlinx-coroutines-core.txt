@@ -202,7 +202,9 @@ public abstract interface class kotlinx/coroutines/CoroutineScope {
 public final class kotlinx/coroutines/CoroutineScopeKt {
 	public static final fun CoroutineScope (Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/CoroutineScope;
 	public static final fun MainScope ()Lkotlinx/coroutines/CoroutineScope;
+	public static final fun cancel (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/String;Ljava/lang/Throwable;)V
 	public static final fun cancel (Lkotlinx/coroutines/CoroutineScope;Ljava/util/concurrent/CancellationException;)V
+	public static synthetic fun cancel$default (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/CoroutineScope;Ljava/util/concurrent/CancellationException;ILjava/lang/Object;)V
 	public static final fun coroutineScope (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun ensureActive (Lkotlinx/coroutines/CoroutineScope;)V
@@ -352,8 +354,10 @@ public final class kotlinx/coroutines/JobKt {
 	public static final synthetic fun cancel (Lkotlin/coroutines/CoroutineContext;)V
 	public static final synthetic fun cancel (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;)Z
 	public static final fun cancel (Lkotlin/coroutines/CoroutineContext;Ljava/util/concurrent/CancellationException;)V
+	public static final fun cancel (Lkotlinx/coroutines/Job;Ljava/lang/String;Ljava/lang/Throwable;)V
 	public static synthetic fun cancel$default (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;ILjava/lang/Object;)Z
 	public static synthetic fun cancel$default (Lkotlin/coroutines/CoroutineContext;Ljava/util/concurrent/CancellationException;ILjava/lang/Object;)V
+	public static synthetic fun cancel$default (Lkotlinx/coroutines/Job;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
 	public static final fun cancelAndJoin (Lkotlinx/coroutines/Job;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final synthetic fun cancelChildren (Lkotlin/coroutines/CoroutineContext;)V
 	public static final synthetic fun cancelChildren (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;)V
