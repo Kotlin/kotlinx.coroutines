@@ -438,3 +438,10 @@ public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = onEach { delay(tim
     replaceWith = ReplaceWith("this.flatMapLatest(transform)")
 )
 public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): Flow<R> = flatMapLatest(transform)
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogues of 'withLatestFrom' is 'withStateOf'",
+    replaceWith = ReplaceWith("this.withStateOf(other, transform)")
+)
+public fun <A, B, R> Flow<A>.withLatestFrom(other: Flow<B>, transform: suspend (A, B) -> R): Flow<R> = noImpl()
