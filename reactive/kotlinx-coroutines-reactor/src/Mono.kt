@@ -53,7 +53,8 @@ private fun <T> monoInternal(
     context: CoroutineContext,
     block: suspend CoroutineScope.() -> T?
 ): Mono<T> = Mono.create { sink ->
-    val newContext = scope.newCoroutineContext(context)
+    val reactorContext = (context[ReactorContext]?.context?.putAll(sink.currentContext()) ?: sink.currentContext()).asCoroutineContext()
+    val newContext = scope.newCoroutineContext(context + reactorContext)
     val coroutine = MonoCoroutine(newContext, sink)
     sink.onDispose(coroutine)
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
@@ -78,7 +79,7 @@ private class MonoCoroutine<in T>(
             handleCoroutineException(context, cause)
         }
     }
-    
+
     override fun dispose() {
         disposed = true
         cancel()
@@ -86,4 +87,3 @@ private class MonoCoroutine<in T>(
 
     override fun isDisposed(): Boolean = disposed
 }
-

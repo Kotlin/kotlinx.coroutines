@@ -19,6 +19,19 @@ public final class kotlinx/coroutines/reactor/MonoKt {
 	public static synthetic fun mono$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lreactor/core/publisher/Mono;
 }
 
+public final class kotlinx/coroutines/reactor/ReactorContext : kotlin/coroutines/AbstractCoroutineContextElement {
+	public static final field Key Lkotlinx/coroutines/reactor/ReactorContext$Key;
+	public fun <init> (Lreactor/util/context/Context;)V
+	public final fun getContext ()Lreactor/util/context/Context;
+}
+
+public final class kotlinx/coroutines/reactor/ReactorContext$Key : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public final class kotlinx/coroutines/reactor/ReactorContextKt {
+	public static final fun asCoroutineContext (Lreactor/util/context/Context;)Lkotlinx/coroutines/reactor/ReactorContext;
+}
+
 public final class kotlinx/coroutines/reactor/SchedulerCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay {
 	public fun <init> (Lreactor/core/scheduler/Scheduler;)V
 	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;

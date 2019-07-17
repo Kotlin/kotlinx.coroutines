@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
@@ -9,6 +10,8 @@ package kotlinx.coroutines.reactor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.reactive.*
+import org.reactivestreams.Publisher
+import reactor.core.CoreSubscriber
 import reactor.core.publisher.*
 import kotlin.coroutines.*
 import kotlin.internal.LowPriorityInOverloadResolution
@@ -41,8 +44,8 @@ public fun <T> flux(
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flux<T> {
     require(context[Job] === null) { "Flux context cannot contain job in it." +
-            "Its lifecycle should be managed via Disposable handle. Had $context" }
-    return Flux.from(publishInternal(GlobalScope, context, block))
+        "Its lifecycle should be managed via Disposable handle. Had $context" }
+    return Flux.from(reactorPublish(GlobalScope, context, block))
 }
 
 @Deprecated(
@@ -55,4 +58,20 @@ public fun <T> CoroutineScope.flux(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flux<T> =
-    Flux.from(publishInternal(this, context, block))
+    Flux.from(reactorPublish(this, context, block))
+
+private fun <T> reactorPublish(
+    scope: CoroutineScope,
+    context: CoroutineContext = EmptyCoroutineContext,
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+): Publisher<T> = Publisher { subscriber ->
+    // specification requires NPE on null subscriber
+    if (subscriber == null) throw NullPointerException("Subscriber cannot be null")
+    require(subscriber is CoreSubscriber) { "Subscriber is not an instance of CoreSubscriber, context can not be extracted." }
+    val currentContext = subscriber.currentContext()
+    val reactorContext = (context[ReactorContext]?.context?.putAll(currentContext) ?: currentContext).asCoroutineContext()
+    val newContext = scope.newCoroutineContext(context + reactorContext)
+    val coroutine = PublisherCoroutine(newContext, subscriber)
+    subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
+    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
+}
