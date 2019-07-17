@@ -7,6 +7,7 @@
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
+import io.reactivex.exceptions.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -159,20 +160,19 @@ private class RxObservableCoroutine<T: Any>(
                 try {
                     if (cause != null && cause !is CancellationException) {
                         /*
-                        * Reactive frameworks have two types of exceptions: regular and fatal.
-                        * Regular are passed to onError.
-                        * Fatal can be passed to onError, but implementation **is free to swallow it** (e.g. see #1297).
-                        * Such behaviour is inconsistent, leads to silent failures and we can't possibly know whether
-                        * the cause will be handled by onError (and moreover, it depends on whether a fatal exception was
-                        * thrown by subscriber or upstream).
-                        * To make behaviour consistent and least surprising, we always handle fatal exceptions
-                        * by coroutines machinery, anyway, they should not be present in regular program flow,
-                        * thus our goal here is just to expose it as soon as possible.
-                        */
-                        if (cause.isFatal()) {
-                            if (!handled) handleCoroutineException(context, cause)
-                        } else {
-                            subscriber.onError(cause)
+                         * Reactive frameworks have two types of exceptions: regular and fatal.
+                         * Regular are passed to onError.
+                         * Fatal can be passed to onError, but even the standard implementations **can just swallow it** (e.g. see #1297).
+                         * Such behaviour is inconsistent, leads to silent failures and we can't possibly know whether
+                         * the cause will be handled by onError (and moreover, it depends on whether a fatal exception was
+                         * thrown by subscriber or upstream).
+                         * To make behaviour consistent and least surprising, we always handle fatal exceptions
+                         * by coroutines machinery, anyway, they should not be present in regular program flow,
+                         * thus our goal here is just to expose it as soon as possible.
+                         */
+                        subscriber.onError(cause)
+                        if (!handled && cause.isFatal()) {
+                            handleCoroutineException(context, cause)
                         }
                     }
                     else {
@@ -203,4 +203,9 @@ private class RxObservableCoroutine<T: Any>(
     }
 }
 
-internal fun Throwable.isFatal() = this is VirtualMachineError || this is ThreadDeath || this is LinkageError
+internal fun Throwable.isFatal() = try {
+    Exceptions.throwIfFatal(this) // Rx-consistent behaviour without hardcode
+    false
+} catch (e: Throwable) {
+    true
+}

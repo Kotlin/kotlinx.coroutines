@@ -143,7 +143,7 @@ class ConvertTest : TestBase() {
         val single = rxSingle(Dispatchers.Unconfined) {
             var result = ""
             try {
-                observable.consumeEach { result += it }
+                observable.collect { result += it }
             } catch(e: Throwable) {
                 check(e is TestException)
                 result += e.message
