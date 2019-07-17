@@ -29,7 +29,7 @@ public final class kotlinx/coroutines/reactor/ReactorContext$Key : kotlin/corout
 }
 
 public final class kotlinx/coroutines/reactor/ReactorContextKt {
-	public static final fun asCoroutineContext (Lreactor/util/context/Context;)Lkotlin/coroutines/CoroutineContext;
+	public static final fun asCoroutineContext (Lreactor/util/context/Context;)Lkotlinx/coroutines/reactor/ReactorContext;
 }
 
 public final class kotlinx/coroutines/reactor/SchedulerCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay {

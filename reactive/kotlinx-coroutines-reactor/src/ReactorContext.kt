@@ -5,33 +5,28 @@ import reactor.util.context.Context
 import kotlin.coroutines.*
 
 /**
- * Marks coroutine context element that contains Reactor's [Context] elements in [context] for seamless integration
- * between [CoroutineContext] and Reactor's [Context].
+ * Wraps Reactor's [Context] into [CoroutineContext] element for seamless integration Reactor and kotlinx.coroutines.
  *
  * [Context.asCoroutineContext] is defined to add Reactor's [Context] elements as part of [CoroutineContext].
  *
- * Reactor builders: [mono], [flux] can extract the reactor context from their coroutine context and
- * pass it on. Modifications of reactor context can be retrieved by `coroutineContext[ReactorContext]`.
+ * Reactor builders [mono] and [flux] use this context element to enhance the resulting `subscriberContext`.
  *
- * Example usage:
- *
+ * ### Usages
  * Passing reactor context from coroutine builder to reactor entity:
- *
  * ```
  * launch(Context.of("key", "value").asCoroutineContext()) {
- *   mono {
- *     assertEquals(coroutineContext[ReactorContext]!!.context.get("key"), "value")
- *   }.subscribe()
+ *     mono {
+ *         println(coroutineContext[ReactorContext]) // Prints { "key": "value" }
+ *     }.subscribe()
  * }
  * ```
  *
- * Accessing modified reactor context enriched from downstream via coroutine context:
- *
+ * Accessing modified reactor context enriched from the downstream:
  * ```
  * launch {
- *   mono {
- *     assertEquals(coroutineContext[ReactorContext]!!.context.get("key"), "value")
- *   }.subscriberContext(Context.of("key", "value"))
+ *     mono {
+ *         println(coroutineContext[ReactorContext]) // Prints { "key": "value" }
+ *     }.subscriberContext(Context.of("key", "value"))
  *    .subscribe()
  * }
  * ```
@@ -41,10 +36,9 @@ public class ReactorContext(val context: Context) : AbstractCoroutineContextElem
     companion object Key : CoroutineContext.Key<ReactorContext>
 }
 
-
 /**
  * Wraps the given [Context] into [ReactorContext], so it can be added to coroutine's context
- * and later retrieved via `coroutineContext[ReactorContext]`.
+ * and later used via `coroutineContext[ReactorContext]`.
  */
 @ExperimentalCoroutinesApi
-public fun Context.asCoroutineContext(): CoroutineContext = ReactorContext(this)
+public fun Context.asCoroutineContext(): ReactorContext = ReactorContext(this)
