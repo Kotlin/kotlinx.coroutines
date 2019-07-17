@@ -76,6 +76,19 @@ public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value
     })
 
 /**
+ * Terminal flow operator that collects the given flow with a provided [action] that takes the index of an element (zero-based) and the element.
+ * If any exception occurs during collect or in the provided flow, this exception is rethrown from this method.
+ *
+ * See also [collect] and [withIndex].
+ */
+@ExperimentalCoroutinesApi
+public suspend inline fun <T> Flow<T>.collectIndexed(crossinline action: suspend (index: Int, value: T) -> Unit): Unit =
+    collect(object : FlowCollector<T> {
+        private var index = 0
+        override suspend fun emit(value: T) = action(checkIndexOverflow(index++), value)
+    })
+
+/**
  * Collects all the values from the given [flow] and emits them to the collector.
  * 
  * It is a shorthand for `flow.collect { value -> emit(value) }`.
