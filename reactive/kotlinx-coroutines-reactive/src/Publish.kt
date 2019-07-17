@@ -164,13 +164,13 @@ public class PublisherCoroutine<in T>(
             val current = _nRequested.value
             if (current < 0) break // closed from inside onNext => unlock
             if (current == Long.MAX_VALUE) break // no back-pressure => unlock
-            val upd = current - 1
-            if (_nRequested.compareAndSet(current, upd)) {
-                if (upd == 0L) {
+            val updated = current - 1
+            if (_nRequested.compareAndSet(current, updated)) {
+                if (updated == 0L) {
                     // return to keep locked due to back-pressure
                     return
                 }
-                break // unlock if upd > 0
+                break // unlock if updated > 0
             }
         }
         unlockAndCheckCompleted()
@@ -207,7 +207,7 @@ public class PublisherCoroutine<in T>(
                         /*
                          * Reactive frameworks have two types of exceptions: regular and fatal.
                          * Regular are passed to onError.
-                         * Fatal can be passed to onError, but implementation **is free to swallow it** (e.g. see #1297).
+                         * Fatal can be passed to onError, but even the standard implementations **can just swallow it** (e.g. see #1297).
                          * Such behaviour is inconsistent, leads to silent failures and we can't possibly know whether
                          * the cause will be handled by onError (and moreover, it depends on whether a fatal exception was
                          * thrown by subscriber or upstream).
@@ -215,10 +215,9 @@ public class PublisherCoroutine<in T>(
                          * by coroutines machinery, anyway, they should not be present in regular program flow,
                          * thus our goal here is just to expose it as soon as possible.
                          */
-                        if (cause.isFatal()) {
-                            if (!handled) handleCoroutineException(context, cause)
-                        } else {
-                            subscriber.onError(cause)
+                        subscriber.onError(cause)
+                        if (!handled && cause.isFatal()) {
+                            handleCoroutineException(context, cause)
                         }
                     } else {
                         subscriber.onComplete()

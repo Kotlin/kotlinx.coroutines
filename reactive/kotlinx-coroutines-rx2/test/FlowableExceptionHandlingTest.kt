@@ -16,9 +16,16 @@ class FlowableExceptionHandlingTest : TestBase() {
         ignoreLostThreads("RxComputationThreadPool-", "RxCachedWorkerPoolEvictor-", "RxSchedulerPurge-")
     }
 
+    private inline fun <reified T : Throwable> ceh(expect: Int) = CoroutineExceptionHandler { _, t ->
+        assertTrue(t is T)
+        expect(expect)
+    }
+
+    private fun cehUnreached() = CoroutineExceptionHandler { _, _ -> expectUnreached() }
+
     @Test
-    fun testException() = runTest(expected = { it is TestException }) {
-        rxFlowable<Int>(Dispatchers.Unconfined) {
+    fun testException() = runTest {
+        rxFlowable<Int>(Dispatchers.Unconfined + cehUnreached()) {
             expect(1)
             throw TestException()
         }.subscribe({
@@ -30,52 +37,21 @@ class FlowableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testFatalException() = runTest(expected = { it is LinkageError }) {
-        rxFlowable<Int>(Dispatchers.Unconfined + CoroutineExceptionHandler { _, _ -> expectUnreached() }) {
+    fun testFatalException() = runTest {
+        rxFlowable<Int>(Dispatchers.Unconfined + ceh<LinkageError>(3)) {
             expect(1)
             throw LinkageError()
         }.subscribe({
             expectUnreached()
         }, {
-            expectUnreached() // Fatal exception is not reported in onError
+            expect(2) // Fatal exception is reported to both onError and CEH
         })
-        finish(2)
+        finish(4)
     }
 
     @Test
-    fun testExceptionWithoutParent() = runTest {
-        GlobalScope.rxFlowable<Int>(Dispatchers.Unconfined + CoroutineExceptionHandler { _, _ -> expectUnreached() }) {
-            expect(1)
-            throw TestException()
-        }.subscribe({
-            expectUnreached()
-        }, {
-            assertTrue(it is TestException)
-            expect(2) // Reported to onError
-        })
-        finish(3)
-    }
-
-    @Test
-    fun testFatalExceptionWithoutParent() = runTest {
-        GlobalScope.rxFlowable<Int>(Dispatchers.Unconfined + CoroutineExceptionHandler { _, e ->
-            assertTrue(e is LinkageError); expect(
-            2
-        )
-        }) {
-            expect(1)
-            throw LinkageError()
-        }.subscribe({
-            expectUnreached()
-        }, {
-            expectUnreached() // Fatal exception is not reported in onError
-        })
-        finish(3)
-    }
-
-    @Test
-    fun testExceptionAsynchronous() = runTest(expected = { it is TestException }) {
-        rxFlowable<Int>(Dispatchers.Unconfined) {
+    fun testExceptionAsynchronous() = runTest {
+        rxFlowable<Int>(Dispatchers.Unconfined + cehUnreached()) {
             expect(1)
             throw TestException()
         }.publish()
@@ -89,8 +65,8 @@ class FlowableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testFatalExceptionAsynchronous() = runTest(expected = { it is LinkageError }) {
-        rxFlowable<Int>(Dispatchers.Unconfined + CoroutineExceptionHandler { _, _ -> expectUnreached() }) {
+    fun testFatalExceptionAsynchronous() = runTest {
+        rxFlowable<Int>(Dispatchers.Unconfined + ceh<LinkageError>(3)) {
             expect(1)
             throw LinkageError()
         }.publish()
@@ -98,58 +74,26 @@ class FlowableExceptionHandlingTest : TestBase() {
             .subscribe({
                 expectUnreached()
             }, {
-                expectUnreached() // Fatal exception is not reported in onError
+                expect(2)
             })
-        finish(2)
+        finish(4)
     }
 
     @Test
-    fun testExceptionAsynchronousWithoutParent() = runTest {
-        GlobalScope.rxFlowable<Int>(Dispatchers.Unconfined + CoroutineExceptionHandler { _, _ -> expectUnreached() }) {
-            expect(1)
-            throw TestException()
-        }.publish()
-            .refCount()
-            .subscribe({
-                expectUnreached()
-            }, {
-                expect(2) // Reported to onError
-            })
-        finish(3)
-    }
-
-    @Test
-    fun testFatalExceptionAsynchronousWithoutParent() = runTest {
-        GlobalScope.rxFlowable<Int>(Dispatchers.Unconfined + CoroutineExceptionHandler { _, e ->
-            assertTrue(e is LinkageError); expect(2)
-        }) {
-            expect(1)
-            throw LinkageError()
-        }.publish()
-            .refCount()
-            .subscribe({
-                expectUnreached()
-            }, {
-                expectUnreached() // Fatal exception is not reported in onError
-            })
-        finish(3)
-    }
-
-    @Test
-    fun testFatalExceptionFromSubscribe() = runTest(expected = { it is LinkageError }) {
-        rxFlowable(Dispatchers.Unconfined) {
+    fun testFatalExceptionFromSubscribe() = runTest {
+        rxFlowable(Dispatchers.Unconfined + ceh<LinkageError>(4)) {
             expect(1)
             send(Unit)
         }.subscribe({
             expect(2)
             throw LinkageError()
-        }, { expectUnreached() }) // Unreached because fatal errors are rethrown
-        finish(3)
+        }, { expect(3) }) // Fatal exception is reported to both onError and CEH
+        finish(5)
     }
 
     @Test
     fun testExceptionFromSubscribe() = runTest {
-        rxFlowable(Dispatchers.Unconfined) {
+        rxFlowable(Dispatchers.Unconfined + cehUnreached()) {
             expect(1)
             send(Unit)
         }.subscribe({
@@ -161,7 +105,7 @@ class FlowableExceptionHandlingTest : TestBase() {
 
     @Test
     fun testAsynchronousExceptionFromSubscribe() = runTest {
-        rxFlowable(Dispatchers.Unconfined) {
+        rxFlowable(Dispatchers.Unconfined + cehUnreached()) {
             expect(1)
             send(Unit)
         }.publish()
@@ -174,8 +118,8 @@ class FlowableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testAsynchronousFatalExceptionFromSubscribe() = runTest(expected = { it is LinkageError }) {
-        rxFlowable(Dispatchers.Unconfined) {
+    fun testAsynchronousFatalExceptionFromSubscribe() = runTest {
+        rxFlowable(Dispatchers.Unconfined + ceh<LinkageError>(3)) {
             expect(1)
             send(Unit)
         }.publish()
@@ -184,38 +128,6 @@ class FlowableExceptionHandlingTest : TestBase() {
                 expect(2)
                 throw LinkageError()
             }, { expectUnreached() })
-        finish(3)
+        finish(4)
     }
-
-    @Test
-    fun testAsynchronousExceptionFromSubscribeWithoutParent() =
-        runTest {
-            GlobalScope.rxFlowable(Dispatchers.Unconfined) {
-                expect(1)
-                send(Unit)
-            }.publish()
-                .refCount()
-                .subscribe({
-                    expect(2)
-                    throw RuntimeException()
-                }, { expect(3) })
-            finish(4)
-        }
-
-    @Test
-    fun testAsynchronousFatalExceptionFromSubscribeWithoutParent() =
-        runTest {
-            GlobalScope.rxFlowable(Dispatchers.Unconfined + CoroutineExceptionHandler { _, e ->
-                assertTrue(e is LinkageError); expect(3)
-            }) {
-                expect(1)
-                send(Unit)
-            }.publish()
-                .refCount()
-                .subscribe({
-                    expect(2)
-                    throw LinkageError()
-                }, { expectUnreached() })
-            finish(4)
-        }
 }
