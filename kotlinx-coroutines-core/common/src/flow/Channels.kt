@@ -11,6 +11,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
+import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlinx.coroutines.flow.unsafeFlow as flow
 
@@ -68,19 +69,65 @@ public suspend fun <T> FlowCollector<T>.emitAll(channel: ReceiveChannel<T>) {
  * [IllegalStateException] when trying to collect it more than once.
  *
  * ### Cancellation semantics
+ *
  * 1) Flow consumer is cancelled when the original channel is cancelled.
  * 2) Flow consumer completes normally when the original channel completes (~is closed) normally.
  * 3) If the flow consumer fails with an exception, channel is cancelled.
  *
+ * ### Operator fusion
+ *
+ * Adjacent applications of [flowOn], [buffer], [conflate], and [produceIn] to the result of `consumeAsFlow` are fused.
+ * In particular, [produceIn] returns the original channel (but throws [IllegalStateException] on repeated calls).
+ * Calls to [flowOn] have generally no effect, unless [buffer] is used to explicitly request buffering.
  */
 @FlowPreview
-public fun <T> ReceiveChannel<T>.consumeAsFlow(): Flow<T> = object : Flow<T> {
-    val collected = atomic(false)
+public fun <T> ReceiveChannel<T>.consumeAsFlow(): Flow<T> = ConsumeAsFlow(this)
+
+/**
+ * Represents an existing [channel] as [ChannelFlow] implementation.
+ * It fuses with subsequent [flowOn] operators, but for the most part ignores the specified context.
+ * However, additional [buffer] calls cause a separate buffering channel to be created and that is where
+ * the context might play a role, because it is used by the producing coroutine.
+ */
+private class ConsumeAsFlow<T>(
+    private val channel: ReceiveChannel<T>,
+    context: CoroutineContext = EmptyCoroutineContext,
+    capacity: Int = Channel.OPTIONAL_CHANNEL
+) : ChannelFlow<T>(context, capacity) {
+    private val consumed = atomic(false)
+
+    private fun markConsumed() =
+        check(!consumed.getAndSet(true)) { "ReceiveChannel.consumeAsFlow can be collected just once" }
+    
+    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
+        ConsumeAsFlow(channel, context, capacity)
+
+    override suspend fun collectTo(scope: ProducerScope<T>) =
+        SendingCollector(scope).emitAll(channel) // use efficient channel receiving code from emitAll
+
+    override fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> {
+        markConsumed() // fail fast on repeated attempt to collect it
+        return super.broadcastImpl(scope, start)
+    }
+
+    override fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> {
+        markConsumed() // fail fast on repeated attempt to collect it
+        return if (capacity == Channel.OPTIONAL_CHANNEL) {
+            channel // direct
+        } else
+            super.produceImpl(scope) // extra buffering channel
+    }
 
     override suspend fun collect(collector: FlowCollector<T>) {
-        check(!collected.getAndSet(true)) { "ReceiveChannel.consumeAsFlow can be collected just once" }
-        collector.emitAll(this@consumeAsFlow)
+        if (capacity == Channel.OPTIONAL_CHANNEL) {
+            markConsumed()
+            collector.emitAll(channel) // direct
+        } else {
+            super.collect(collector) // extra buffering channel, produceImpl will mark it as consumed
+        }
     }
+
+    override fun additionalToStringProps(): String = "channel=$channel, "
 }
 
 /**

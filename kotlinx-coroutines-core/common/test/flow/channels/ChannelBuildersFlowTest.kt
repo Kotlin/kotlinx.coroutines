@@ -50,6 +50,36 @@ class ChannelBuildersFlowTest : TestBase() {
     }
 
     @Test
+    fun testConsumeAsFlowProduceFusing() = runTest {
+        val channel = produce { send("OK") }
+        val flow = channel.consumeAsFlow()
+        assertSame(channel, flow.produceIn(this))
+        assertFailsWith<IllegalStateException> { flow.produceIn(this) }
+        channel.cancel()
+    }
+
+    @Test
+    fun testConsumeAsFlowProduceBuffered() = runTest {
+        expect(1)
+        val channel = produce {
+            expect(3)
+            (1..10).forEach { send(it) }
+            expect(4) // produces everything because of buffering
+        }
+        val flow = channel.consumeAsFlow().buffer() // request buffering
+        expect(2) // producer is not running yet
+        val result = flow.produceIn(this)
+        // run the flow pipeline until it consumes everything into buffer
+        while (!channel.isClosedForReceive) yield()
+        expect(5) // produced had done running (buffered stuff)
+        assertNotSame(channel, result)
+        assertFailsWith<IllegalStateException> { flow.produceIn(this) }
+        // check that we received everything
+        assertEquals((1..10).toList(), result.toList())
+        finish(6)
+    }
+
+    @Test
     fun testBroadcastChannelAsFlow() = runTest {
         val channel = broadcast {
            repeat(10) {

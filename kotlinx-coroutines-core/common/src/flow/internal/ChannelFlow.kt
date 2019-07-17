@@ -64,7 +64,7 @@ public abstract class ChannelFlow<T>(
     private val produceCapacity: Int
         get() = if (capacity == Channel.OPTIONAL_CHANNEL) Channel.BUFFERED else capacity
 
-    fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =
+    open fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =
         scope.broadcast(context, produceCapacity, start, block = collectToFun)
 
     open fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
