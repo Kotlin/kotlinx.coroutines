@@ -27,7 +27,7 @@ public suspend fun <T> Flow<T>.count(): Int  {
  * Returns the number of elements matching the given predicate.
  */
 @ExperimentalCoroutinesApi
-public suspend fun <T> Flow<T>.count(predicate: suspend (T) -> Boolean): Int  {
+public suspend fun <T> Flow<T>.count(predicate: suspend (T) -> Boolean): Int {
     var i = 0
     collect { value ->
         if (predicate(value)) {

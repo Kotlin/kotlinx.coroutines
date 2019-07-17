@@ -44,12 +44,12 @@ import kotlin.jvm.*
  * ```
  * If you want to switch the context of execution of a flow, use the [flowOn] operator.
  */
-@ExperimentalCoroutinesApi
-public fun <T> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
-    return object : Flow<T> {
-        override suspend fun collect(collector: FlowCollector<T>) {
-            SafeCollector(collector, coroutineContext).block()
-        }
+public fun <T> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> = SafeFlow(block)
+
+// Named anonymous object
+private class SafeFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit) : Flow<T> {
+    override suspend fun collect(collector: FlowCollector<T>) {
+        SafeCollector(collector, coroutineContext).block()
     }
 }
 
@@ -90,7 +90,6 @@ public fun <T> (suspend () -> T).asFlow(): Flow<T> = unsafeFlow {
 /**
  * Creates a flow that produces values from the given iterable.
  */
-@ExperimentalCoroutinesApi
 public fun <T> Iterable<T>.asFlow(): Flow<T> = unsafeFlow {
     forEach { value ->
         emit(value)
@@ -100,7 +99,6 @@ public fun <T> Iterable<T>.asFlow(): Flow<T> = unsafeFlow {
 /**
  * Creates a flow that produces values from the given iterable.
  */
-@ExperimentalCoroutinesApi
 public fun <T> Iterator<T>.asFlow(): Flow<T> = unsafeFlow {
     forEach { value ->
         emit(value)
@@ -110,7 +108,6 @@ public fun <T> Iterator<T>.asFlow(): Flow<T> = unsafeFlow {
 /**
  * Creates a flow that produces values from the given sequence.
  */
-@ExperimentalCoroutinesApi
 public fun <T> Sequence<T>.asFlow(): Flow<T> = unsafeFlow {
     forEach { value ->
         emit(value)
@@ -120,7 +117,6 @@ public fun <T> Sequence<T>.asFlow(): Flow<T> = unsafeFlow {
 /**
  * Creates a flow that produces values from the given array of elements.
  */
-@ExperimentalCoroutinesApi
 public fun <T> flowOf(vararg elements: T): Flow<T> = unsafeFlow {
     for (element in elements) {
         emit(element)
@@ -130,7 +126,6 @@ public fun <T> flowOf(vararg elements: T): Flow<T> = unsafeFlow {
 /**
  * Creates flow that produces a given [value].
  */
-@ExperimentalCoroutinesApi
 public fun <T> flowOf(value: T): Flow<T> = unsafeFlow {
     /*
      * Implementation note: this is just an "optimized" overload of flowOf(vararg)
@@ -142,7 +137,6 @@ public fun <T> flowOf(value: T): Flow<T> = unsafeFlow {
 /**
  * Returns an empty flow.
  */
-@ExperimentalCoroutinesApi
 public fun <T> emptyFlow(): Flow<T> = EmptyFlow
 
 private object EmptyFlow : Flow<Nothing> {
@@ -152,7 +146,6 @@ private object EmptyFlow : Flow<Nothing> {
 /**
  * Creates a flow that produces values from the given array.
  */
-@ExperimentalCoroutinesApi
 public fun <T> Array<T>.asFlow(): Flow<T> = unsafeFlow {
     forEach { value ->
         emit(value)
@@ -162,7 +155,6 @@ public fun <T> Array<T>.asFlow(): Flow<T> = unsafeFlow {
 /**
  * Creates flow that produces values from the given array.
  */
-@ExperimentalCoroutinesApi
 public fun IntArray.asFlow(): Flow<Int> = unsafeFlow {
     forEach { value ->
         emit(value)
@@ -172,7 +164,6 @@ public fun IntArray.asFlow(): Flow<Int> = unsafeFlow {
 /**
  * Creates flow that produces values from the given array.
  */
-@ExperimentalCoroutinesApi
 public fun LongArray.asFlow(): Flow<Long> = unsafeFlow {
     forEach { value ->
         emit(value)
@@ -182,7 +173,6 @@ public fun LongArray.asFlow(): Flow<Long> = unsafeFlow {
 /**
  * Creates flow that produces values from the given range.
  */
-@ExperimentalCoroutinesApi
 public fun IntRange.asFlow(): Flow<Int> = unsafeFlow {
     forEach { value ->
         emit(value)
@@ -192,7 +182,6 @@ public fun IntRange.asFlow(): Flow<Int> = unsafeFlow {
 /**
  * Creates flow that produces values from the given range.
  */
-@ExperimentalCoroutinesApi
 public fun LongRange.asFlow(): Flow<Long> = flow {
     forEach { value ->
         emit(value)
