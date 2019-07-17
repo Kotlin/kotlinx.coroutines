@@ -10,6 +10,46 @@ import kotlin.test.*
 
 class ChannelBuildersFlowTest : TestBase() {
     @Test
+    fun testChannelConsumeAsFlow() = runTest {
+        val channel = produce {
+           repeat(10) {
+               send(it + 1)
+           }
+        }
+        val flow = channel.consumeAsFlow()
+        assertEquals(55, flow.sum())
+        assertFailsWith<IllegalStateException> { flow.collect() }
+    }
+
+    @Test
+    fun testConsumeAsFlowCancellation() = runTest {
+        val channel = produce(NonCancellable) { // otherwise failure will cancel scope as well
+            repeat(10) {
+                send(it + 1)
+            }
+            throw TestException()
+        }
+        val flow = channel.consumeAsFlow()
+        assertEquals(15, flow.take(5).sum())
+        // the channel should have been canceled, even though took only 5 elements
+        assertTrue(channel.isClosedForReceive)
+        assertFailsWith<IllegalStateException> { flow.collect() }
+    }
+
+    @Test
+    fun testConsumeAsFlowException() = runTest {
+        val channel = produce(NonCancellable) { // otherwise failure will cancel scope as well
+            repeat(10) {
+                send(it + 1)
+            }
+            throw TestException()
+        }
+        val flow = channel.consumeAsFlow()
+        assertFailsWith<TestException> { flow.sum() }
+        assertFailsWith<IllegalStateException> { flow.collect() }
+    }
+
+    @Test
     fun testBroadcastChannelAsFlow() = runTest {
         val channel = broadcast {
            repeat(10) {

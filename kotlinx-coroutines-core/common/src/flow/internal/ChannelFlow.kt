@@ -72,8 +72,7 @@ public abstract class ChannelFlow<T>(
 
     override suspend fun collect(collector: FlowCollector<T>) =
         coroutineScope {
-            val channel = produceImpl(this)
-            channel.consumeEach { collector.emit(it) }
+            collector.emitAll(produceImpl(this))
         }
 
     // debug toString
