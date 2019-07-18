@@ -8,4 +8,5 @@
 ./theories/lib/semaphore/semaphore_impl.v
 ./theories/lib/semaphore/semaphore.v
 ./theories/lib/semaphore/semaphore_spec.v
+./theories/lib/util/getAndSet.v
 ./theories/util/iPropPow.v
