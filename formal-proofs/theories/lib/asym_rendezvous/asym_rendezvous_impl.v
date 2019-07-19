@@ -13,6 +13,7 @@ Definition await : val :=
   rec: "await" "e" := (match: !"e" with
                          NONE => "await" "e"
                        | SOME "v" => match: "v" with
+                                      (* derefercing NULL for persuasiveness *)
                                       NONE => !#0
                                     | SOME "v'" => "v'"
                                     end
