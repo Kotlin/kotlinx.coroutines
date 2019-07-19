@@ -11,6 +11,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
 import kotlinx.coroutines.flow.internal.*
+import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -54,23 +55,10 @@ private class SafeFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit
 }
 
 /**
- * An analogue of the [flow] builder that does not check the context of execution of the resulting flow.
- * Used in our own operators where we trust the context of invocations.
- */
-@PublishedApi
-internal inline fun <T> unsafeFlow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
-    return object : Flow<T> {
-        override suspend fun collect(collector: FlowCollector<T>) {
-            collector.block()
-        }
-    }
-}
-
-/**
  * Creates a flow that produces a single value from the given functional type.
  */
 @FlowPreview
-public fun <T> (() -> T).asFlow(): Flow<T> = unsafeFlow {
+public fun <T> (() -> T).asFlow(): Flow<T> = flow {
     emit(invoke())
 }
 
@@ -83,14 +71,14 @@ public fun <T> (() -> T).asFlow(): Flow<T> = unsafeFlow {
  * ```
  */
 @FlowPreview
-public fun <T> (suspend () -> T).asFlow(): Flow<T> = unsafeFlow {
+public fun <T> (suspend () -> T).asFlow(): Flow<T> = flow {
     emit(invoke())
 }
 
 /**
  * Creates a flow that produces values from the given iterable.
  */
-public fun <T> Iterable<T>.asFlow(): Flow<T> = unsafeFlow {
+public fun <T> Iterable<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
         emit(value)
     }
@@ -99,7 +87,7 @@ public fun <T> Iterable<T>.asFlow(): Flow<T> = unsafeFlow {
 /**
  * Creates a flow that produces values from the given iterable.
  */
-public fun <T> Iterator<T>.asFlow(): Flow<T> = unsafeFlow {
+public fun <T> Iterator<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
         emit(value)
     }
@@ -108,7 +96,7 @@ public fun <T> Iterator<T>.asFlow(): Flow<T> = unsafeFlow {
 /**
  * Creates a flow that produces values from the given sequence.
  */
-public fun <T> Sequence<T>.asFlow(): Flow<T> = unsafeFlow {
+public fun <T> Sequence<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
         emit(value)
     }
@@ -117,7 +105,7 @@ public fun <T> Sequence<T>.asFlow(): Flow<T> = unsafeFlow {
 /**
  * Creates a flow that produces values from the given array of elements.
  */
-public fun <T> flowOf(vararg elements: T): Flow<T> = unsafeFlow {
+public fun <T> flowOf(vararg elements: T): Flow<T> = flow {
     for (element in elements) {
         emit(element)
     }
@@ -126,7 +114,7 @@ public fun <T> flowOf(vararg elements: T): Flow<T> = unsafeFlow {
 /**
  * Creates flow that produces a given [value].
  */
-public fun <T> flowOf(value: T): Flow<T> = unsafeFlow {
+public fun <T> flowOf(value: T): Flow<T> = flow {
     /*
      * Implementation note: this is just an "optimized" overload of flowOf(vararg)
      * which significantly reduce the footprint of widespread single-value flows.
@@ -146,7 +134,7 @@ private object EmptyFlow : Flow<Nothing> {
 /**
  * Creates a flow that produces values from the given array.
  */
-public fun <T> Array<T>.asFlow(): Flow<T> = unsafeFlow {
+public fun <T> Array<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
         emit(value)
     }
@@ -155,7 +143,7 @@ public fun <T> Array<T>.asFlow(): Flow<T> = unsafeFlow {
 /**
  * Creates flow that produces values from the given array.
  */
-public fun IntArray.asFlow(): Flow<Int> = unsafeFlow {
+public fun IntArray.asFlow(): Flow<Int> = flow {
     forEach { value ->
         emit(value)
     }
@@ -164,7 +152,7 @@ public fun IntArray.asFlow(): Flow<Int> = unsafeFlow {
 /**
  * Creates flow that produces values from the given array.
  */
-public fun LongArray.asFlow(): Flow<Long> = unsafeFlow {
+public fun LongArray.asFlow(): Flow<Long> = flow {
     forEach { value ->
         emit(value)
     }
@@ -173,7 +161,7 @@ public fun LongArray.asFlow(): Flow<Long> = unsafeFlow {
 /**
  * Creates flow that produces values from the given range.
  */
-public fun IntRange.asFlow(): Flow<Int> = unsafeFlow {
+public fun IntRange.asFlow(): Flow<Int> = flow {
     forEach { value ->
         emit(value)
     }

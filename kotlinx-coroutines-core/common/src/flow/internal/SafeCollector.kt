@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
-@PublishedApi
 internal class SafeCollector<T>(
     private val collector: FlowCollector<T>,
     private val collectContext: CoroutineContext
@@ -97,5 +96,18 @@ internal class SafeCollector<T>(
         if (this === collectJob) return this
         if (this !is ScopeCoroutine<*>) return this
         return parent.transitiveCoroutineParent(collectJob)
+    }
+}
+
+/**
+ * An analogue of the [flow] builder that does not check the context of execution of the resulting flow.
+ * Used in our own operators where we trust the context of invocations.
+ */
+@PublishedApi
+internal inline fun <T> unsafeFlow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
+    return object : Flow<T> {
+        override suspend fun collect(collector: FlowCollector<T>) {
+            collector.block()
+        }
     }
 }

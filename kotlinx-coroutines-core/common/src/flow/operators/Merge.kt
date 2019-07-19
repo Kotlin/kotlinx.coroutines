@@ -16,7 +16,7 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.sync.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
+import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
  * Name of the property that defines the value of [DEFAULT_CONCURRENCY].

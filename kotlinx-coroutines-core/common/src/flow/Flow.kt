@@ -194,6 +194,7 @@ public interface Flow<out T> {
  * }
  * ```
  */
+@FlowPreview
 public abstract class AbstractFlow<T> : Flow<T> {
 
     @InternalCoroutinesApi
