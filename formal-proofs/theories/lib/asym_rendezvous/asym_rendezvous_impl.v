@@ -1,6 +1,7 @@
 From iris.heap_lang Require Import proofmode notation lang.
 Require Import SegmentQueue.lib.util.getAndSet.
 Require Import SegmentQueue.lib.util.interruptibly.
+Require Import SegmentQueue.lib.asym_rendezvous.asym_rendezvous_spec.
 
 Definition new_exchange : val :=
   λ: <>, ref NONE.
@@ -16,9 +17,6 @@ Definition await : val :=
                                     | SOME "v'" => "v'"
                                     end
                        end)%E.
-
-Notation CANCELLED := (SOME NONE) (only parsing).
-Notation RESUMED x := (SOME (SOME x)) (only parsing).
 
 Definition await_interruptibly : val :=
   (loop:
