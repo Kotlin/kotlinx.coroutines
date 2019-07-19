@@ -4,6 +4,7 @@
 ./theories/lib/array/array_impl.v
 ./theories/lib/array/array_proof.v
 ./theories/lib/asym_rendezvous/asym_rendezvous_impl.v
+./theories/lib/asym_rendezvous/asym_rendezvous_proof.v
 ./theories/lib/asym_rendezvous/asym_rendezvous_spec.v
 ./theories/lib/thread_queue/thread_queue.v
 ./theories/lib/thread_queue/thread_queue_spec.v

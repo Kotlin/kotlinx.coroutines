@@ -41,20 +41,22 @@ Record asym_rendezvous {Σ} `{heapG Σ} `{interruptiblyG Σ} := Rendezvous {
   await_spec N γ r P:
     {{{ is_asym_rendezvous N γ r P ∗ fetch_permit γ }}}
       await r
-    {{{ sm, RET sm; P sm }}};
+    {{{ sm, RET sm; P sm ∗ passed γ }}};
   await_interruptibly_spec Ni γi handle N γ r P:
     {{{ is_interrupt_handle Ni γi handle ∗
                             is_asym_rendezvous N γ r P ∗
                             fetch_permit γ }}}
       await_interruptibly handle r
-    {{{ sm, RET sm; (∃ v, ⌜sm = (#false, RESUMEDV v)%V⌝ ∧ P v) ∨
-                    (∃ v, ⌜sm = (#true, RESUMEDV v)%V⌝ ∧ P v ∧ interrupted γi) ∨
+    {{{ sm, RET sm; (∃ v, ⌜sm = (#false, RESUMEDV v)%V⌝ ∧ P v ∗ passed γ) ∨
+                    (∃ v, ⌜sm = (#true, RESUMEDV v)%V⌝ ∧ P v ∗ passed γ ∗
+                                                           interrupted γi) ∨
                     (⌜sm = (#true, NONEV)%V⌝ ∧ cancelled γ)
     }}};
   pass_spec N γ r P v:
     {{{ is_asym_rendezvous N γ r P ∗ pass_permit γ ∗ P v }}}
       pass r v
-    {{{ sm, RET sm; ⌜sm = NONEV⌝ ∧ passed γ ∨ ⌜sm = CANCELLEDV⌝ ∧ P v }}}
+    {{{ sm, RET sm; ⌜sm = NONEV⌝ ∧ passed γ ∨
+                                    ⌜sm = CANCELLEDV⌝ ∧ P v ∗ cancelled γ}}}
 }.
 
 Existing Instances is_asym_rendezvous_persistent.
