@@ -27,7 +27,6 @@ import kotlin.jvm.*
  *     .collect() // trigger collection of the flow
  * ```
  */
-@ExperimentalCoroutinesApi // tentatively stable in 1.3.0
 public suspend fun Flow<*>.collect() = collect(NopCollector)
 
 /**
@@ -69,7 +68,6 @@ public fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = scope.launch {
  * }
  * ```
  */
-@ExperimentalCoroutinesApi
 public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value: T) -> Unit): Unit =
     collect(object : FlowCollector<T> {
         override suspend fun emit(value: T) = action(value)

@@ -10,7 +10,7 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
+import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
  * Returns a flow that ignores first [count] elements.

@@ -13,7 +13,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
+import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
  * Emits all elements from the given [channel] to this flow collector and [cancels][cancel] (consumes)

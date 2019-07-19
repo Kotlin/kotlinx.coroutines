@@ -10,7 +10,7 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
+import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 import kotlin.jvm.*
 
 /**
@@ -55,7 +55,6 @@ public suspend inline fun <T, R> Flow<T>.fold(
  * Throws [NoSuchElementException] for empty flow and [IllegalStateException] for flow
  * that contains more than one element.
  */
-@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.single(): T {
     var result: Any? = NULL
     collect { value ->
@@ -72,7 +71,6 @@ public suspend fun <T> Flow<T>.single(): T {
  * The terminal operator, that awaits for one and only one value to be published.
  * Throws [IllegalStateException] for flow that contains more than one element.
  */
-@ExperimentalCoroutinesApi
 public suspend fun <T: Any> Flow<T>.singleOrNull(): T? {
     var result: T? = null
     collect { value ->
@@ -87,7 +85,6 @@ public suspend fun <T: Any> Flow<T>.singleOrNull(): T? {
  * The terminal operator that returns the first element emitted by the flow and then cancels flow's collection.
  * Throws [NoSuchElementException] if the flow was empty.
  */
-@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.first(): T {
     var result: Any? = NULL
     try {
@@ -107,7 +104,6 @@ public suspend fun <T> Flow<T>.first(): T {
  * The terminal operator that returns the first element emitted by the flow matching the given [predicate] and then cancels flow's collection.
  * Throws [NoSuchElementException] if the flow has not contained elements matching the [predicate].
  */
-@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
     var result: Any? = NULL
     try {
