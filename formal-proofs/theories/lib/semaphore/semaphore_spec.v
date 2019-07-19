@@ -38,5 +38,6 @@ Record semaphore {Σ} `{heapG Σ} := Semaphore {
     {{{ RET #(); True }}}
 }.
 
-Existing Instances is_thread_queue_persistent.
-Existing Instances is_thread_queue_ne.
+Existing Instances is_semaphore_persistent.
+Existing Instances permit_timeless.
+Existing Instances is_semaphore_ne.
