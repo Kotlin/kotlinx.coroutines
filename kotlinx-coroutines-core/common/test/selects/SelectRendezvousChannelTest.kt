@@ -305,6 +305,104 @@ class SelectRendezvousChannelTest : TestBase() {
         finish(10)
     }
 
+    @Test
+    fun testSelectReceiveOrClosedWaitClosed() = runTest {
+        expect(1)
+        val channel = Channel<String>(Channel.RENDEZVOUS)
+        launch {
+            expect(3)
+            channel.close()
+            expect(4)
+        }
+        expect(2)
+        select<Unit> {
+            channel.onReceiveOrClosed {
+                expect(5)
+                assertTrue(it.isClosed)
+                assertNull(it.closeCause)
+            }
+        }
+
+        finish(6)
+    }
+
+    @Test
+    fun testSelectReceiveOrClosedWaitClosedWithCause() = runTest {
+        expect(1)
+        val channel = Channel<String>(Channel.RENDEZVOUS)
+        launch {
+            expect(3)
+            channel.close(TestException())
+            expect(4)
+        }
+        expect(2)
+        select<Unit> {
+            channel.onReceiveOrClosed {
+                expect(5)
+                assertTrue(it.isClosed)
+                assertTrue(it.closeCause is TestException)
+            }
+        }
+
+        finish(6)
+    }
+
+    @Test
+    fun testSelectReceiveOrClosed() = runTest {
+        val channel = Channel<Int>(Channel.RENDEZVOUS)
+        val iterations = 10
+        expect(1)
+        val job = launch {
+            repeat(iterations) {
+                select<Unit> {
+                    channel.onReceiveOrClosed { v ->
+                        expect(4 + it * 2)
+                        assertEquals(it, v.value)
+                    }
+                }
+            }
+        }
+
+        expect(2)
+        repeat(iterations) {
+            expect(3 + it * 2)
+            channel.send(it)
+            yield()
+        }
+
+        job.join()
+        finish(3 + iterations * 2)
+    }
+
+    @Test
+    fun testSelectReceiveOrClosedDispatch() = runTest {
+        val c = Channel<Int>(Channel.RENDEZVOUS)
+        expect(1)
+        launch {
+            expect(3)
+            val res = select<String> {
+                c.onReceiveOrClosed { v ->
+                    expect(6)
+                    assertEquals(42, v.value)
+                    yield() // back to main
+                    expect(8)
+                    "OK"
+                }
+            }
+            expect(9)
+            assertEquals("OK", res)
+        }
+        expect(2)
+        yield() // to launch
+        expect(4)
+        c.send(42) // do not suspend
+        expect(5)
+        yield() // to receive
+        expect(7)
+        yield() // again
+        finish(10)
+    }
+
     // only for debugging
     internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {
         this as SelectBuilderImpl // type assertion

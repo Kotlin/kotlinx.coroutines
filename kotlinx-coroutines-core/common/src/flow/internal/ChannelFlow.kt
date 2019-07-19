@@ -42,8 +42,8 @@ public abstract class ChannelFlow<T>(
             capacity == Channel.CONFLATED -> Channel.CONFLATED
             else -> {
                 // sanity checks
-                check(this.capacity >= 0) { "Unexpected capacity ${this.capacity}" }
-                check(capacity >= 0) { "Unexpected capacity $capacity" }
+                assert { this.capacity >= 0 }
+                assert { capacity >= 0 }
                 // combine capacities clamping to UNLIMITED on overflow
                 val sum = this.capacity + capacity
                 if (sum >= 0) sum else Channel.UNLIMITED // unlimited on int overflow
@@ -64,7 +64,7 @@ public abstract class ChannelFlow<T>(
     private val produceCapacity: Int
         get() = if (capacity == Channel.OPTIONAL_CHANNEL) Channel.BUFFERED else capacity
 
-    fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =
+    open fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =
         scope.broadcast(context, produceCapacity, start, block = collectToFun)
 
     open fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
@@ -72,8 +72,7 @@ public abstract class ChannelFlow<T>(
 
     override suspend fun collect(collector: FlowCollector<T>) =
         coroutineScope {
-            val channel = produceImpl(this)
-            channel.consumeEach { collector.emit(it) }
+            collector.emitAll(produceImpl(this))
         }
 
     // debug toString

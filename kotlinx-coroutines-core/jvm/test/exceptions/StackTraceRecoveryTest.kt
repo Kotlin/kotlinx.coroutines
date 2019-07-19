@@ -6,9 +6,11 @@ package kotlinx.coroutines.exceptions
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import org.junit.Test
 import java.util.concurrent.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 /*
@@ -270,5 +272,41 @@ class StackTraceRecoveryTest : TestBase() {
         } catch (e: RecoverableTestException) {
             checkCycles(e)
         }
+    }
+
+
+    private suspend fun throws() {
+        yield() // TCE
+        throw RecoverableTestException()
+    }
+
+    private suspend fun awaiter() {
+        val task = GlobalScope.async(Dispatchers.Default, start = CoroutineStart.LAZY) { throws() }
+        task.await()
+        yield() // TCE
+    }
+
+    @Test
+    fun testNonDispatchedRecovery() {
+        val await = suspend { awaiter() }
+
+        val barrier = CyclicBarrier(2)
+        var exception: Throwable? = null
+        await.startCoroutineUnintercepted(Continuation(EmptyCoroutineContext) {
+            exception = it.exceptionOrNull()
+            barrier.await()
+        })
+
+        barrier.await()
+        val e = exception
+        assertNotNull(e)
+        verifyStackTrace(e, "kotlinx.coroutines.RecoverableTestException\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.throws(StackTraceRecoveryTest.kt:280)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$throws\$1.invokeSuspend(StackTraceRecoveryTest.kt)\n" +
+                "\t(Coroutine boundary)\n" +
+                "\tat kotlinx.coroutines.DeferredCoroutine.await\$suspendImpl(Builders.common.kt:99)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.awaiter(StackTraceRecoveryTest.kt:285)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testNonDispatchedRecovery\$await\$1.invokeSuspend(StackTraceRecoveryTest.kt:291)\n" +
+                "Caused by: kotlinx.coroutines.RecoverableTestException")
     }
 }

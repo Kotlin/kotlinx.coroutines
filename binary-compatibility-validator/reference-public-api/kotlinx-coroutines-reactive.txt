@@ -20,8 +20,28 @@ public final class kotlinx/coroutines/reactive/ConvertKt {
 }
 
 public final class kotlinx/coroutines/reactive/PublishKt {
+	public static final fun publish (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lorg/reactivestreams/Publisher;
 	public static final fun publish (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lorg/reactivestreams/Publisher;
+	public static synthetic fun publish$default (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/reactivestreams/Publisher;
 	public static synthetic fun publish$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/reactivestreams/Publisher;
+	public static final fun publishInternal (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lorg/reactivestreams/Publisher;
+}
+
+public final class kotlinx/coroutines/reactive/PublisherCoroutine : kotlinx/coroutines/AbstractCoroutine, kotlinx/coroutines/channels/ProducerScope, kotlinx/coroutines/selects/SelectClause2, org/reactivestreams/Subscription {
+	public fun <init> (Lkotlin/coroutines/CoroutineContext;Lorg/reactivestreams/Subscriber;)V
+	public fun cancel ()V
+	public fun close (Ljava/lang/Throwable;)Z
+	public fun getChannel ()Lkotlinx/coroutines/channels/SendChannel;
+	public fun getOnSend ()Lkotlinx/coroutines/selects/SelectClause2;
+	public fun invokeOnClose (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public synthetic fun invokeOnClose (Lkotlin/jvm/functions/Function1;)V
+	public fun isClosedForSend ()Z
+	public fun isFull ()Z
+	public fun offer (Ljava/lang/Object;)Z
+	public synthetic fun onCompleted (Ljava/lang/Object;)V
+	public fun registerSelectClause2 (Lkotlinx/coroutines/selects/SelectInstance;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
+	public fun request (J)V
+	public fun send (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/reactive/flow/FlowAsPublisherKt {

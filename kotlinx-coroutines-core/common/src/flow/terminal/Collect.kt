@@ -27,7 +27,6 @@ import kotlin.jvm.*
  *     .collect() // trigger collection of the flow
  * ```
  */
-@ExperimentalCoroutinesApi // tentatively stable in 1.3.0
 public suspend fun Flow<*>.collect() = collect(NopCollector)
 
 /**
@@ -69,10 +68,22 @@ public fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = scope.launch {
  * }
  * ```
  */
-@ExperimentalCoroutinesApi
 public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value: T) -> Unit): Unit =
     collect(object : FlowCollector<T> {
         override suspend fun emit(value: T) = action(value)
+    })
+
+/**
+ * Terminal flow operator that collects the given flow with a provided [action] that takes the index of an element (zero-based) and the element.
+ * If any exception occurs during collect or in the provided flow, this exception is rethrown from this method.
+ *
+ * See also [collect] and [withIndex].
+ */
+@ExperimentalCoroutinesApi
+public suspend inline fun <T> Flow<T>.collectIndexed(crossinline action: suspend (index: Int, value: T) -> Unit): Unit =
+    collect(object : FlowCollector<T> {
+        private var index = 0
+        override suspend fun emit(value: T) = action(checkIndexOverflow(index++), value)
     })
 
 /**

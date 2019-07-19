@@ -15,6 +15,7 @@ import kotlinx.coroutines.channels.Channel.Factory.CHANNEL_DEFAULT_CAPACITY
 import kotlinx.coroutines.internal.systemProp
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
+import kotlin.internal.*
 
 /**
  * Sender's interface to [Channel].
@@ -91,7 +92,8 @@ public interface SendChannel<in E> {
      * on the side of [ReceiveChannel] starts returning `true` only after all previously sent elements
      * are received.
      *
-     * A channel that was closed without a [cause] throws [ClosedSendChannelException] on attempts to send or receive.
+     * A channel that was closed without a [cause] throws [ClosedSendChannelException] on attempts to send
+     * and [ClosedReceiveChannelException] on attempts to receive.
      * A channel that was closed with non-null [cause] is called a _failed_ channel. Attempts to send or
      * receive on a failed channel throw the specified [cause] exception.
      */
@@ -209,24 +211,72 @@ public interface ReceiveChannel<out E> {
      * This function can be used in [select] invocation with [onReceiveOrNull] clause.
      * Use [poll] to try receiving from this channel without waiting.
      *
-     * **Note: This is an obsolete api.**
-     * This function will be replaced with `receiveOrClosed: ReceiveResult<E>` and
-     * extension `suspend fun <E: Any> ReceiveChannel<E>.receiveOrNull(): E?`
-     * It is obsolete because it does not distinguish closed channel and null elements.
+     * @suppress **Deprecated**: in favor of receiveOrClosed and receiveOrNull extension.
      */
     @ObsoleteCoroutinesApi
+    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+    @LowPriorityInOverloadResolution
+    @Deprecated(
+        message = "Deprecated in favor of receiveOrClosed and receiveOrNull extension",
+        level = DeprecationLevel.WARNING,
+        replaceWith = ReplaceWith("receiveOrNull", "kotlinx.coroutines.channels.receiveOrNull")
+    )
     public suspend fun receiveOrNull(): E?
 
     /**
      * Clause for [select] expression of [receiveOrNull] suspending function that selects with the element that
-     * is received from the channel or selects with `null` if if the channel
+     * is received from the channel or selects with `null` if the channel
      * [isClosedForReceive] without cause. The [select] invocation fails with
      * the original [close][SendChannel.close] cause exception if the channel has _failed_.
      *
-     * **Note: This is an experimental api.** This function may be replaced with a better one in the future.
+     * @suppress **Deprecated**: in favor of onReceiveOrClosed and onReceiveOrNull extension.
      */
-    @ExperimentalCoroutinesApi
+    @ObsoleteCoroutinesApi
+    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+    @LowPriorityInOverloadResolution
+    @Deprecated(
+        message = "Deprecated in favor of onReceiveOrClosed and onReceiveOrNull extension",
+        level = DeprecationLevel.WARNING,
+        replaceWith = ReplaceWith("onReceiveOrNull", "kotlinx.coroutines.channels.onReceiveOrNull")
+    )
     public val onReceiveOrNull: SelectClause1<E?>
+
+    /**
+     * Retrieves and removes the element from this channel suspending the caller while this channel [isEmpty].
+     * This method returns [ValueOrClosed] with a value if element was successfully retrieved from the channel
+     * or [ValueOrClosed] with close cause if channel was closed.
+     *
+     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
+     * function is suspended, this function immediately resumes with [CancellationException].
+     *
+     * *Cancellation of suspended receive is atomic* -- when this function
+     * throws [CancellationException] it means that the element was not retrieved from this channel.
+     * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
+     * continue to execute even after it was cancelled from the same thread in the case when this receive operation
+     * was already resumed and the continuation was posted for execution to the thread's queue.
+     *
+     * Note, that this function does not check for cancellation when it is not suspended.
+     * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
+     *
+     * This function can be used in [select] invocation with [onReceiveOrClosed] clause.
+     * Use [poll] to try receiving from this channel without waiting.
+     *
+     * @suppress *This is an internal API, do not use*: Inline classes ABI is not stable yet and
+     *            [KT-27524](https://youtrack.jetbrains.com/issue/KT-27524) needs to be fixed.
+     */
+    @InternalCoroutinesApi // until https://youtrack.jetbrains.com/issue/KT-27524 is fixed
+    public suspend fun receiveOrClosed(): ValueOrClosed<E>
+
+    /**
+     * Clause for [select] expression of [receiveOrClosed] suspending function that selects with the [ValueOrClosed] with a value
+     * that is received from the channel or selects with [ValueOrClosed] with a close cause if the channel
+     * [isClosedForReceive].
+     *
+     * @suppress *This is an internal API, do not use*: Inline classes ABI is not stable yet and
+     *            [KT-27524](https://youtrack.jetbrains.com/issue/KT-27524) needs to be fixed.
+     */
+    @InternalCoroutinesApi // until https://youtrack.jetbrains.com/issue/KT-27524 is fixed
+    public val onReceiveOrClosed: SelectClause1<ValueOrClosed<E>>
 
     /**
      * Retrieves and removes the element from this channel, or returns `null` if this channel is empty
@@ -269,6 +319,107 @@ public interface ReceiveChannel<out E> {
      */
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     public fun cancel(cause: Throwable? = null): Boolean
+}
+
+/**
+ * A discriminated union of [ReceiveChannel.receiveOrClosed] result,
+ * that encapsulates either successfully received element of type [T] from the channel or a close cause.
+ *
+ * :todo: Do not make it public before resolving todos in the code of this class.
+ *
+ * @suppress *This is an internal API, do not use*: Inline classes ABI is not stable yet and
+ *            [KT-27524](https://youtrack.jetbrains.com/issue/KT-27524) needs to be fixed.
+ */
+@Suppress("NON_PUBLIC_PRIMARY_CONSTRUCTOR_OF_INLINE_CLASS")
+@InternalCoroutinesApi // until https://youtrack.jetbrains.com/issue/KT-27524 is fixed
+public inline class ValueOrClosed<out T>
+internal constructor(private val holder: Any?) {
+    /**
+     * Returns `true` if this instance represents received element.
+     * In this case [isClosed] returns `false`.
+     * todo: it is commented for now, because it is not used
+     */
+    //public val isValue: Boolean get() = holder !is Closed
+
+    /**
+     * Returns `true` if this instance represents close cause.
+     * In this case [isValue] returns `false`.
+     */
+    public val isClosed: Boolean get() = holder is Closed
+
+    /**
+     * Returns received value if this instance represents received value or throws [IllegalStateException] otherwise.
+     *
+     * :todo: Decide if it is needed how it shall be named with relation to [valueOrThrow]:
+     *
+     * So we have the following methods on ValueOrClosed: `value`, `valueOrNull`, `valueOrThrow`.
+     * On the other hand, the channel has the following receive variants:
+     *  * `receive` which corresponds to `receiveOrClosed().valueOrThrow`... huh?
+     *  * `receiveOrNull` which corresponds to `receiveOrClosed().valueOrNull`
+     *  * `receiveOrClosed`
+     * For the sake of consider dropping this version of `value` and rename [valueOrThrow] to simply `value`.
+     */
+    @Suppress("UNCHECKED_CAST")
+    public val value: T
+        get() = if (holder is Closed) error(DEFAULT_CLOSE_MESSAGE) else holder as T
+
+    /**
+     * Returns received value if this element represents received value or `null` otherwise.
+     * :todo: Decide if it shall be made into extension that is available only for non-null T.
+     * Note: it might become inconsistent with kotlin.Result
+     */
+    @Suppress("UNCHECKED_CAST")
+    public val valueOrNull: T?
+        get() = if (holder is Closed) null else holder as T
+
+    /**
+     * :todo: Decide if it is needed how it shall be named with relation to [value].
+     * Note, that valueOrThrow rethrows the cause adding no meaningful information about the callsite,
+     * so if one is sure that ValueOrClosed is always value, this very property should be used.
+     * Otherwise, it could be very hard to locate the source of the exception.
+     * todo: it is commented for now, because it is not used
+     */
+    //@Suppress("UNCHECKED_CAST")
+    //public val valueOrThrow: T
+    //    get() = if (holder is Closed) throw holder.exception else holder as T
+
+    /**
+     * Returns close cause of the channel if this instance represents close cause or throws
+     * [IllegalStateException] otherwise.
+     */
+    @Suppress("UNCHECKED_CAST")
+    public val closeCause: Throwable? get() =
+        if (holder is Closed) holder.cause else error("Channel was not closed")
+
+    /**
+     * @suppress
+     */
+    public override fun toString(): String =
+        when (holder) {
+            is Closed -> holder.toString()
+            else -> "Value($holder)"
+    }
+
+    internal class Closed(@JvmField val cause: Throwable?) {
+        // todo: it is commented for now, because it is not used
+        //val exception: Throwable get() = cause ?: ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE)
+        override fun equals(other: Any?): Boolean = other is Closed && cause == other.cause
+        override fun hashCode(): Int = cause.hashCode()
+        override fun toString(): String = "Closed($cause)"
+    }
+
+    /**
+     * todo: consider making value/closed constructors public in the future.
+     */
+    internal companion object {
+        @Suppress("NOTHING_TO_INLINE")
+        internal inline fun <E> value(value: E): ValueOrClosed<E> =
+            ValueOrClosed(value)
+
+        @Suppress("NOTHING_TO_INLINE")
+        internal inline fun <E> closed(cause: Throwable?): ValueOrClosed<E> =
+            ValueOrClosed(Closed(cause))
+    }
 }
 
 /**

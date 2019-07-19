@@ -145,7 +145,7 @@ class ProduceTest : TestBase() {
     fun testAwaitIllegalState() = runTest {
         val channel = produce<Int> {  }
         @Suppress("RemoveExplicitTypeArguments") // KT-31525
-        assertFailsWith<IllegalStateException> { (channel as ProducerScope<*>).awaitClose<Nothing>() }
+        assertFailsWith<IllegalStateException> { (channel as ProducerScope<*>).awaitClose() }
     }
 
     private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {

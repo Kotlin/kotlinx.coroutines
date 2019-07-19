@@ -42,7 +42,7 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
  * ```
  */
 @ExperimentalCoroutinesApi
-public suspend fun <T> ProducerScope<T>.awaitClose(block: () -> Unit = {}) {
+public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
     check(kotlin.coroutines.coroutineContext[Job] === this) { "awaitClose() can be invoke only from the producer context" }
     try {
         suspendCancellableCoroutine<Unit> { cont ->

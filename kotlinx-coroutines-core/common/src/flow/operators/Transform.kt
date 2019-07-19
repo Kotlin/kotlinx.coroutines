@@ -10,73 +10,40 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
-import kotlin.coroutines.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
-
-/**
- * Applies [transform] function to each value of the given flow.
- * [transform] is a generic function that may transform emitted element, skip it or emit it multiple times.
- *
- * This operator is useless by itself, but can be used as a building block of user-specific operators:
- * ```
- * fun Flow<Int>.skipOddAndDuplicateEven(): Flow<Int> = transform { value ->
- *     if (value % 2 == 0) { // Emit only even values, but twice
- *         emit(value)
- *         emit(value)
- *     } // Do nothing if odd
- * }
- * ```
- */
-@ExperimentalCoroutinesApi
-public inline fun <T, R> Flow<T>.transform(@BuilderInference crossinline transform: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> {
-    return flow {
-        collect { value ->
-            // kludge, without it Unit will be returned and TCE won't kick in, KT-28938
-            return@collect transform(value)
-        }
-    }
-}
+import kotlinx.coroutines.flow.internal.unsafeFlow as flow
+import kotlinx.coroutines.flow.unsafeTransform as transform
 
 /**
  * Returns a flow containing only values of the original flow that matches the given [predicate].
  */
-@ExperimentalCoroutinesApi
-public inline fun <T> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolean): Flow<T> = flow {
-    collect { value ->
-        if (predicate(value)) return@collect emit(value)
-    }
+public inline fun <T> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolean): Flow<T> = transform { value ->
+    if (predicate(value)) return@transform emit(value)
 }
 
 /**
  * Returns a flow containing only values of the original flow that do not match the given [predicate].
  */
-@ExperimentalCoroutinesApi
-public inline fun <T> Flow<T>.filterNot(crossinline predicate: suspend (T) -> Boolean): Flow<T> = flow {
-    collect { value ->
-        if (!predicate(value)) return@collect emit(value)
-    }
+public inline fun <T> Flow<T>.filterNot(crossinline predicate: suspend (T) -> Boolean): Flow<T> = transform { value ->
+    if (!predicate(value)) return@transform emit(value)
 }
 
 /**
  * Returns a flow containing only values that are instances of specified type [R].
  */
-@ExperimentalCoroutinesApi
 @Suppress("UNCHECKED_CAST")
 public inline fun <reified R> Flow<*>.filterIsInstance(): Flow<R> = filter { it is R } as Flow<R>
 
 /**
  * Returns a flow containing only values of the original flow that are not null.
  */
-@ExperimentalCoroutinesApi
-public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = flow<T> {
-    collect { value -> if (value != null) return@collect  emit(value) }
+public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = transform<T?, T> { value ->
+    if (value != null) return@transform emit(value)
 }
 
 /**
  * Returns a flow containing the results of applying the given [transform] function to each value of the original flow.
  */
-@ExperimentalCoroutinesApi
 public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -> R): Flow<R> = transform { value ->
    return@transform emit(transform(value))
 }
@@ -84,79 +51,28 @@ public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -
 /**
  * Returns a flow that contains only non-null results of applying the given [transform] function to each value of the original flow.
  */
-@ExperimentalCoroutinesApi
 public inline fun <T, R: Any> Flow<T>.mapNotNull(crossinline transform: suspend (value: T) -> R?): Flow<R> = transform { value ->
     val transformed = transform(value) ?: return@transform
     return@transform emit(transformed)
 }
 
 /**
- * Returns a flow which performs the given [action] on each value of the original flow.
+ * Returns a flow that wraps each element into [IndexedValue], containing value and its index (starting from zero).
  */
 @ExperimentalCoroutinesApi
-public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = flow {
+public fun <T> Flow<T>.withIndex(): Flow<IndexedValue<T>> = flow {
+    var index = 0
     collect { value ->
-        action(value)
-        emit(value)
+        emit(IndexedValue(checkIndexOverflow(index++), value))
     }
 }
 
 /**
- * Invokes the given [action] when the given flow is completed or cancelled, using
- * the exception from the upstream (if any) as cause parameter of [action].
- *
- * Conceptually, [onCompletion] is similar to wrapping the flow collection into a `finally` block,
- * for example the following imperative snippet:
- * ```
- * try {
- *     myFlow.collect { value ->
- *         println(value)
- *     }
- * } finally {
- *     println("Done")
- * }
- * ```
- *
- * can be replaced with a declarative one using [onCompletion]:
- * ```
- * myFlow
- *     .onEach { println(it) }
- *     .onCompletion { println("Done") }
- *     .collect()
- * ```
- *
- * This operator is *transparent* to exceptions that occur in downstream flow
- * and does not observe exceptions that are thrown to cancel the flow,
- * while any exception from the [action] will be thrown downstream.
- * This behaviour can be demonstrated by the following example:
- * ```
- * flow { emitData() }
- *     .map { computeOne(it) }
- *     .onCompletion { println(it) } // Can print exceptions from emitData and computeOne
- *     .map { computeTwo(it) }
- *     .onCompletion { println(it) } // Can print exceptions from emitData, computeOne, onCompletion and computeTwo
- *     .collect()
- * ```
+ * Returns a flow which performs the given [action] on each value of the original flow.
  */
-@ExperimentalCoroutinesApi // tentatively stable in 1.3.0
-public fun <T> Flow<T>.onCompletion(action: suspend (cause: Throwable?) -> Unit): Flow<T> = flow {
-    var exception: Throwable? = null
-    try {
-        exception = catchImpl(this)
-    } finally {
-        // Separate method because of KT-32220
-        invokeSafely(action, exception)
-        exception?.let { throw it }
-    }
-}
-
-private suspend fun invokeSafely(action: suspend (cause: Throwable?) -> Unit, cause: Throwable?) {
-    try {
-        action(cause)
-    } catch (e: Throwable) {
-        if (cause !== null) e.addSuppressedThrowable(cause)
-        throw e
-    }
+public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = transform { value ->
+    action(value)
+    return@transform emit(value)
 }
 
 /**

@@ -1,6 +1,6 @@
 <!--- INCLUDE .*/example-([a-z]+)-([0-9a-z]+)\.kt 
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
@@ -163,7 +163,7 @@ buzz -> 'Buzz!'
 ### Selecting on close
 
 The [onReceive][ReceiveChannel.onReceive] clause in `select` fails when the channel is closed causing the corresponding
-`select` to throw an exception. We can use [onReceiveOrNull][ReceiveChannel.onReceiveOrNull] clause to perform a
+`select` to throw an exception. We can use [onReceiveOrNull][onReceiveOrNull] clause to perform a
 specific action when the channel is closed. The following example also shows that `select` is an expression that returns 
 the result of its selected clause:
 
@@ -188,6 +188,10 @@ suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): St
 ```
 
 </div>
+
+Note that [onReceiveOrNull][onReceiveOrNull] is an extension function defined only 
+for channels with non-nullable elements so that there is no accidental confusion between a closed channel
+and a null value. 
 
 Let's use it with channel `a` that produces "Hello" string four times and 
 channel `b` that produces "World" four times:
@@ -259,7 +263,7 @@ the first one among them gets selected. Here, both channels are constantly produ
 being the first clause in select, wins. However, because we are using unbuffered channel, the `a` gets suspended from
 time to time on its [send][SendChannel.send] invocation and gives a chance for `b` to send, too.
 
-The second observation, is that [onReceiveOrNull][ReceiveChannel.onReceiveOrNull] gets immediately selected when the 
+The second observation, is that [onReceiveOrNull][onReceiveOrNull] gets immediately selected when the 
 channel is already closed.
 
 ### Selecting to send
@@ -433,7 +437,7 @@ Deferred 4 produced answer 'Waited for 128 ms'
 
 Let us write a channel producer function that consumes a channel of deferred string values, waits for each received
 deferred value, but only until the next deferred value comes over or the channel is closed. This example puts together 
-[onReceiveOrNull][ReceiveChannel.onReceiveOrNull] and [onAwait][Deferred.onAwait] clauses in the same `select`:
+[onReceiveOrNull][onReceiveOrNull] and [onAwait][Deferred.onAwait] clauses in the same `select`:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -556,7 +560,7 @@ Channel was closed
 <!--- INDEX kotlinx.coroutines.channels -->
 [ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/receive.html
 [ReceiveChannel.onReceive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/on-receive.html
-[ReceiveChannel.onReceiveOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/on-receive-or-null.html
+[onReceiveOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/on-receive-or-null.html
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/send.html
 [SendChannel.onSend]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/on-send.html
 <!--- INDEX kotlinx.coroutines.selects -->

@@ -13,3 +13,11 @@ tasks.withType(dokka.getClass()) {
         packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
     }
 }
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}

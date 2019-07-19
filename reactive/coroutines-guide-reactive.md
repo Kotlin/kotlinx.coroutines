@@ -1,6 +1,6 @@
 <!--- INCLUDE .*/example-reactive-([a-z]+)-([0-9]+)\.kt 
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
@@ -617,7 +617,7 @@ fun <T, R> Publisher<T>.fusedFilterMap(
     context: CoroutineContext,   // the context to execute this coroutine in
     predicate: (T) -> Boolean,   // the filter predicate
     mapper: (T) -> R             // the mapper function
-) = GlobalScope.publish<R>(context) {
+) = publish<R>(context) {
     collect {                    // collect the source stream 
         if (predicate(it))       // filter part
             send(mapper(it))     // map part
@@ -638,7 +638,7 @@ fun CoroutineScope.range(start: Int, count: Int) = publish<Int> {
 ```kotlin
 fun main() = runBlocking<Unit> {
    range(1, 5)
-       .fusedFilterMap(coroutineContext, { it % 2 == 0}, { "$it is even" })
+       .fusedFilterMap(Dispatchers.Unconfined, { it % 2 == 0}, { "$it is even" })
        .collect { println(it) } // print all the resulting strings
 }
 ```
@@ -673,7 +673,7 @@ import kotlin.coroutines.*
 -->
 
 ```kotlin
-fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = GlobalScope.publish<T>(context) {
+fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = publish<T>(context) {
     this@takeUntil.openSubscription().consume { // explicitly open channel to Publisher<T>
         val current = this
         other.openSubscription().consume { // explicitly open channel to Publisher<U>
@@ -711,7 +711,7 @@ The following code shows how `takeUntil` works:
 fun main() = runBlocking<Unit> {
     val slowNums = rangeWithInterval(200, 1, 10)         // numbers with 200ms interval
     val stop = rangeWithInterval(500, 1, 10)             // the first one after 500ms
-    slowNums.takeUntil(coroutineContext, stop).collect { println(it) } // let's test it
+    slowNums.takeUntil(Dispatchers.Unconfined, stop).collect { println(it) } // let's test it
 }
 ```
 
@@ -742,7 +742,7 @@ import kotlin.coroutines.*
 -->
 
 ```kotlin
-fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = GlobalScope.publish<T>(context) {
+fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = publish<T>(context) {
   collect { pub -> // for each publisher collected
       launch {  // launch a child coroutine
           pub.collect { send(it) } // resend all element from this publisher
@@ -783,7 +783,7 @@ The test code is to use `merge` on `testPub` and to display the results:
 
 ```kotlin
 fun main() = runBlocking<Unit> {
-    testPub().merge(coroutineContext).collect { println(it) } // print the whole stream
+    testPub().merge(Dispatchers.Unconfined).collect { println(it) } // print the whole stream
 }
 ```
 
@@ -865,7 +865,7 @@ import kotlin.coroutines.CoroutineContext
 -->
 
 ```kotlin
-fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = GlobalScope.publish<Int>(context) {
+fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = publish<Int>(context) {
     for (x in start until start + count) { 
         delay(time) // wait before sending each number
         send(x)
@@ -915,7 +915,7 @@ import kotlin.coroutines.CoroutineContext
 -->
 
 ```kotlin
-fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = GlobalScope.publish<Int>(context) {
+fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = publish<Int>(context) {
     for (x in start until start + count) { 
         delay(time) // wait before sending each number
         send(x)
@@ -1067,12 +1067,12 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 [whileSelect]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.selects/while-select.html
 <!--- MODULE kotlinx-coroutines-reactive -->
 <!--- INDEX kotlinx.coroutines.reactive -->
-[publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/kotlinx.coroutines.-coroutine-scope/publish.html
+[publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/publish.html
 [org.reactivestreams.Publisher.collect]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/collect.html
 [org.reactivestreams.Publisher.openSubscription]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/open-subscription.html
 <!--- MODULE kotlinx-coroutines-rx2 -->
 <!--- INDEX kotlinx.coroutines.rx2 -->
-[rxFlowable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/kotlinx.coroutines.-coroutine-scope/rx-flowable.html
+[rxFlowable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/rx-flowable.html
 <!--- END -->
 
 

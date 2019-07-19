@@ -20,7 +20,7 @@ class IntegrationTest(
 ) : TestBase() {
 
     enum class Ctx {
-        MAIN        { override fun invoke(context: CoroutineContext): CoroutineContext = context },
+        MAIN        { override fun invoke(context: CoroutineContext): CoroutineContext = context.minusKey(Job) },
         DEFAULT     { override fun invoke(context: CoroutineContext): CoroutineContext = Dispatchers.Default },
         UNCONFINED  { override fun invoke(context: CoroutineContext): CoroutineContext = Dispatchers.Unconfined };
 
@@ -58,7 +58,7 @@ class IntegrationTest(
 
     @Test
     fun testSingle() = runBlocking {
-        val observable = CoroutineScope(ctx(coroutineContext)).rxObservable {
+        val observable = rxObservable(ctx(coroutineContext)) {
             if (delay) delay(1)
             send("OK")
         }
@@ -101,8 +101,7 @@ class IntegrationTest(
     fun testCancelWithoutValue() = runTest {
         val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
             rxObservable<String> {
-                yield()
-                expectUnreached()
+                hang {  }
             }.awaitFirst()
         }
 

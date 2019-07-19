@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.rx2
@@ -16,7 +16,7 @@ class ConvertTest : TestBase() {
         val job = launch {
             expect(3)
         }
-        val completable = job.asCompletable(coroutineContext)
+        val completable = job.asCompletable(coroutineContext.minusKey(Job))
         completable.subscribe {
             expect(4)
         }
@@ -32,7 +32,7 @@ class ConvertTest : TestBase() {
             expect(3)
             throw RuntimeException("OK")
         }
-        val completable = job.asCompletable(coroutineContext)
+        val completable = job.asCompletable(coroutineContext.minusKey(Job))
         completable.subscribe {
             expect(4)
         }
@@ -140,10 +140,10 @@ class ConvertTest : TestBase() {
             throw TestException("K")
         }
         val observable = c.asObservable(Dispatchers.Unconfined)
-        val single = GlobalScope.rxSingle(Dispatchers.Unconfined) {
+        val single = rxSingle(Dispatchers.Unconfined) {
             var result = ""
             try {
-                observable.consumeEach { result += it }
+                observable.collect { result += it }
             } catch(e: Throwable) {
                 check(e is TestException)
                 result += e.message

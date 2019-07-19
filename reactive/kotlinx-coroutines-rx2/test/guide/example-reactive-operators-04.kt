@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
@@ -10,7 +10,7 @@ import kotlinx.coroutines.reactive.*
 import org.reactivestreams.*
 import kotlin.coroutines.*
 
-fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = GlobalScope.publish<T>(context) {
+fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = publish<T>(context) {
   collect { pub -> // for each publisher collected
       launch {  // launch a child coroutine
           pub.collect { send(it) } // resend all element from this publisher
@@ -33,5 +33,5 @@ fun CoroutineScope.testPub() = publish<Publisher<Int>> {
 }
 
 fun main() = runBlocking<Unit> {
-    testPub().merge(coroutineContext).collect { println(it) } // print the whole stream
+    testPub().merge(Dispatchers.Unconfined).collect { println(it) } // print the whole stream
 }

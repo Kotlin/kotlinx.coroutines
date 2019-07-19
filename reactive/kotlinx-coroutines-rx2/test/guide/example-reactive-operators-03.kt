@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
@@ -12,7 +12,7 @@ import kotlinx.coroutines.selects.*
 import org.reactivestreams.*
 import kotlin.coroutines.*
 
-fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = GlobalScope.publish<T>(context) {
+fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = publish<T>(context) {
     this@takeUntil.openSubscription().consume { // explicitly open channel to Publisher<T>
         val current = this
         other.openSubscription().consume { // explicitly open channel to Publisher<U>
@@ -35,5 +35,5 @@ fun CoroutineScope.rangeWithInterval(time: Long, start: Int, count: Int) = publi
 fun main() = runBlocking<Unit> {
     val slowNums = rangeWithInterval(200, 1, 10)         // numbers with 200ms interval
     val stop = rangeWithInterval(500, 1, 10)             // the first one after 500ms
-    slowNums.takeUntil(coroutineContext, stop).collect { println(it) } // let's test it
+    slowNums.takeUntil(Dispatchers.Unconfined, stop).collect { println(it) } // let's test it
 }

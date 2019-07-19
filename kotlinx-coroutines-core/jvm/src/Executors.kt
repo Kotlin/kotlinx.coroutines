@@ -61,9 +61,9 @@ internal abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispa
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         try {
-            executor.execute(timeSource.wrapTask(block))
+            executor.execute(wrapTask(block))
         } catch (e: RejectedExecutionException) {
-            timeSource.unTrackTask()
+            unTrackTask()
             DefaultExecutor.enqueue(block)
         }
     }

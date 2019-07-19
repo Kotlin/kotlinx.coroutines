@@ -21,9 +21,18 @@ internal class CopyOnWriteList<E>(private var array: Array<Any?> = arrayOfNulls(
     override fun add(index: Int, element: E) {
         rangeCheck(index)
         val update = arrayOfNulls<Any?>(if (array.size == _size) array.size * 2 else array.size)
-        arraycopy(array, 0, update, 0, index)
+        array.copyInto(
+            destination = update,
+            endIndex = index
+        )
         update[index] = element
-        arraycopy(array, index, update, index + 1, _size - index + 1)
+        array.copyInto(
+            destination = update,
+            destinationOffset = index + 1,
+            startIndex = index,
+            endIndex = _size + 1
+        )
+        ++_size
         array = update
     }
 
@@ -43,8 +52,16 @@ internal class CopyOnWriteList<E>(private var array: Array<Any?> = arrayOfNulls(
         val n = array.size
         val element = array[index]
         val update = arrayOfNulls<Any>(n)
-        arraycopy(array, 0, update, 0, index)
-        arraycopy(array, index + 1, update, index, n - index - 1)
+        array.copyInto(
+            destination = update,
+            endIndex = index
+        )
+        array.copyInto(
+            destination = update,
+            destinationOffset = index,
+            startIndex = index + 1,
+            endIndex = n
+        )
         array = update
         --_size
         return element as E
