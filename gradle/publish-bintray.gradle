@@ -7,7 +7,6 @@
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
-apply plugin: 'com.jfrog.artifactory'
 apply plugin: "com.github.johnrengelman.shadow"
 
 apply from: project.rootProject.file('gradle/maven-central.gradle')
@@ -16,6 +15,8 @@ apply from: project.rootProject.file('gradle/maven-central.gradle')
 
 def bUser = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
 def bKey = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+def isMultiplatform = project.name == "kotlinx-coroutines-core"
+def isBom = project.name == "kotlinx-coroutines-bom"
 
 task stubSources(type: Jar) {
     classifier = 'sources'
@@ -32,7 +33,7 @@ task sourcesJar(type: Jar) {
     classifier = 'sources'
     if (project.name == "kotlinx-coroutines-core") {
         from kotlin.sourceSets.commonMain.kotlin
-    } else {
+    } else if (!isBom) {
         from sourceSets.main.allSource
     }
 }
@@ -61,14 +62,19 @@ def configureTransitiveDependencies = { Project project, Publication publication
     }
 }
 
-def isMultiplatform = project.name == "kotlinx-coroutines-core"
-
 publishing {
     repositories {
         maven { url = 'https://kotlin.bintray.com/kotlinx' }
     }
 
-    if (!isMultiplatform) {
+    if (isBom) {
+        publications {
+            mavenBom(MavenPublication) {
+                pom.withXml(configureMavenCentralMetadata)
+            }
+        }
+        return
+    } else if (!isMultiplatform) {
         publications {
             maven(MavenPublication) { publication ->
                 if (project.name == "kotlinx-coroutines-debug") {
@@ -143,27 +149,6 @@ private void disableMetadataPublication() {
         }
     }
 }
-
-// snapshot publication is temporary disabled
-//artifactory {
-//    contextUrl = 'https://oss.jfrog.org/artifactory'
-//    publish {
-//        repository {
-//            repoKey = 'oss-snapshot-local'
-//            username = bUser
-//            password = bKey
-//        }
-//
-//        maven(MavenPublication) { publication ->
-//            preparePublication(publication)
-//        }
-//
-//        defaults {
-//            publications('maven')
-//        }
-//    }
-//}
-
 
 task publishDevelopSnapshot() {
     def branch = System.getenv('currentBranch')
