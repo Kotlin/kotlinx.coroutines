@@ -77,14 +77,15 @@ publishing {
     } else if (!isMultiplatform) {
         publications {
             maven(MavenPublication) { publication ->
-                if (project.name == "kotlinx-coroutines-debug") {
-                    project.shadow.component(publication)
-                } else {
-                    publication.from components.java
-                }
                 publication.artifact javadocJar
                 publication.artifact sourcesJar
                 publication.pom.withXml(configureMavenCentralMetadata)
+                if (project.name == "kotlinx-coroutines-debug") {
+                    project.shadow.component(publication)
+                    publication.pom.withXml(configureMavenDependencies)
+                } else {
+                    publication.from components.java
+                }
             }
         }
 
