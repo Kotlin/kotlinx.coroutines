@@ -188,7 +188,7 @@ Lemma interruptibly_spec : forall γ P Q Q' handle (b h e: val),
     {{{ P }}}
       (b e)%V
     {{{ r, RET r; ⌜r = InjLV #()⌝ ∧ P ∨ (∃ (v: val), ⌜r = InjRV v⌝ ∧ Q v) }}} ∗
-    {{{ P }}}
+    {{{ P ∗ interrupted γ }}}
       (h e)%V
     {{{ (r: val), RET r; Q' r }}}
   }}}
@@ -208,7 +208,7 @@ Proof.
   iDestruct "HP" as "[[% [HP HIntr]] | Hr]".
   - subst. wp_pures.
     wp_bind (h e).
-    wp_apply ("Hhe" with "HP").
+    wp_apply ("Hhe" with "[HP HIntr]"); first by iFrame.
     iIntros (r) "HQ'".
     wp_pures.
     iApply "HPost".

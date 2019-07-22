@@ -12,19 +12,13 @@ Definition init_exchange : val :=
 Definition await : val :=
   rec: "await" "e" := (match: !"e" with
                          NONE => "await" "e"
-                       | SOME "v" => match: "v" with
-                                      (* derefercing NULL for persuasiveness *)
-                                      NONE => !#0
-                                    | SOME "v'" => "v'"
-                                    end
+                       | SOME "v" => if: "v" = #1 then !#0 else #()
                        end)%E.
 
 Definition await_interruptibly : val :=
   (loop:
-    λ: "e", !"e"
+    (λ: "e", !"e")%V
   interrupted:
-    λ: "e", getAndSet "e" CANCELLED)%E.
+    (λ: "e", getAndSet "e" CANCELLED)%V)%E.
 
-Definition pass : val := λ: "e" "r", getAndSet "e" (RESUMED "r").
-
-Definition resume : val := λ: "e", pass "e" #().
+Definition pass : val := λ: "e", getAndSet "e" RESUMEDV.

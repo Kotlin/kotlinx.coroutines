@@ -2,10 +2,10 @@ From iris.heap_lang Require Import proofmode.
 From iris.heap_lang Require Import notation lang.
 Require Export SegmentQueue.lib.util.interruptibly.
 
-Notation CANCELLED := (SOME NONE) (only parsing).
-Notation RESUMED x := (SOME (SOME x)) (only parsing).
-Notation CANCELLEDV := (SOMEV NONEV) (only parsing).
-Notation RESUMEDV x := (SOMEV (SOMEV x)) (only parsing).
+Notation CANCELLED := (SOME #true) (only parsing).
+Notation RESUMED := (SOME #false) (only parsing).
+Notation CANCELLEDV := (SOMEV #true) (only parsing).
+Notation RESUMEDV := (SOMEV #false) (only parsing).
 
 Record asym_rendezvous {Σ} `{heapG Σ} `{interruptiblyG Σ} := Rendezvous {
   (* -- operations -- *)
@@ -19,12 +19,13 @@ Record asym_rendezvous {Σ} `{heapG Σ} `{interruptiblyG Σ} := Rendezvous {
     (N: namespace)
     (γ: asym_rendezvous_names)
     (rendezvous: val)
-    (P : val -> iProp Σ): iProp Σ;
+    (P : iProp Σ): iProp Σ;
   pass_permit (γ: asym_rendezvous_names) : iProp Σ;
   fetch_permit (γ: asym_rendezvous_names) : iProp Σ;
   passed (γ: asym_rendezvous_names) : iProp Σ;
   cancelled (γ: asym_rendezvous_names) : iProp Σ;
   (* -- general properties -- *)
+  is_asym_rendezvous_ne N γ r: NonExpansive (is_asym_rendezvous N γ r);
   is_asym_rendezvous_persistent N γ r P: Persistent (is_asym_rendezvous N γ r P);
   pass_permit_timeless γ: Timeless (pass_permit γ);
   fetch_permit_timeless γ: Timeless (fetch_permit γ);
@@ -41,22 +42,22 @@ Record asym_rendezvous {Σ} `{heapG Σ} `{interruptiblyG Σ} := Rendezvous {
   await_spec N γ r P:
     {{{ is_asym_rendezvous N γ r P ∗ fetch_permit γ }}}
       await r
-    {{{ sm, RET sm; P sm ∗ passed γ }}};
+    {{{ RET #(); P ∗ passed γ }}};
   await_interruptibly_spec Ni γi handle N γ r P:
     {{{ is_interrupt_handle Ni γi handle ∗
                             is_asym_rendezvous N γ r P ∗
                             fetch_permit γ }}}
       await_interruptibly handle r
-    {{{ sm, RET sm; (∃ v, ⌜sm = (#false, RESUMEDV v)%V⌝ ∧ P v ∗ passed γ) ∨
-                    (∃ v, ⌜sm = (#true, RESUMEDV v)%V⌝ ∧ P v ∗ passed γ ∗
-                                                           interrupted γi) ∨
-                    (⌜sm = (#true, NONEV)%V⌝ ∧ cancelled γ)
+    {{{ sm, RET sm; ⌜sm = (#false, RESUMEDV)%V⌝ ∧ P ∗ passed γ ∨
+                    ⌜sm = (#true, RESUMEDV)%V⌝ ∧ ▷P ∗ passed γ ∗ interrupted γi ∨
+                    ⌜sm = (#true, NONEV)%V⌝ ∧ cancelled γ
     }}};
-  pass_spec N γ r P v:
-    {{{ is_asym_rendezvous N γ r P ∗ pass_permit γ ∗ P v }}}
-      pass r v
+  pass_spec N γ r P:
+    Laterable P ->
+    {{{ is_asym_rendezvous N γ r P ∗ pass_permit γ ∗ P }}}
+      pass r
     {{{ sm, RET sm; ⌜sm = NONEV⌝ ∧ passed γ ∨
-                                    ⌜sm = CANCELLEDV⌝ ∧ P v ∗ cancelled γ}}}
+                                    ⌜sm = CANCELLEDV⌝ ∧ P ∗ cancelled γ}}}
 }.
 
 Existing Instances is_asym_rendezvous_persistent.

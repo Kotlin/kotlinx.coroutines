@@ -15,8 +15,8 @@ Section getAndSetProof.
 Context `{heapG} (N: namespace).
 
 Theorem getAndSet_spec (ℓ: loc) (v: val):
-  <<< ∀ k, ℓ ↦ k ∧ ⌜val_is_unboxed k⌝>>>
-    getAndSet #ℓ v @ ⊤ ∖ ↑N
+  <<< ∀ k, ▷ ℓ ↦ k ∧ ⌜val_is_unboxed k⌝>>>
+    getAndSet #ℓ v @ ⊤
   <<< ℓ ↦ v, RET k >>>.
 Proof.
   iIntros (Φ) "AU". iLöb as "IH". wp_lam. wp_pures.
