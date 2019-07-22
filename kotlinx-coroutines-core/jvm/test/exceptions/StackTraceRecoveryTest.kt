@@ -10,6 +10,7 @@ import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import org.junit.Test
 import java.util.concurrent.*
+import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -292,10 +293,13 @@ class StackTraceRecoveryTest : TestBase() {
 
         val barrier = CyclicBarrier(2)
         var exception: Throwable? = null
-        await.startCoroutineUnintercepted(Continuation(EmptyCoroutineContext) {
-            exception = it.exceptionOrNull()
-            barrier.await()
-        })
+
+        thread {
+            await.startCoroutineUnintercepted(Continuation(EmptyCoroutineContext) {
+                exception = it.exceptionOrNull()
+                barrier.await()
+            })
+        }
 
         barrier.await()
         val e = exception
