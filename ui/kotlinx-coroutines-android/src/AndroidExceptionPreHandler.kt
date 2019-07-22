@@ -37,7 +37,7 @@ internal class AndroidExceptionPreHandler :
          */
         val thread = Thread.currentThread()
         if (Build.VERSION.SDK_INT >= 28) {
-            thread.uncaughtExceptionHandler.uncaughtException(thread, exception)
+            thread.uncaughtExceptionHandler?.uncaughtException(thread, exception)
         } else {
             (preHandler?.invoke(null) as? Thread.UncaughtExceptionHandler)
                 ?.uncaughtException(thread, exception)
