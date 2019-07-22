@@ -63,7 +63,7 @@ Proof.
   iDestruct (own_valid_2 with "H1 H2") as %[[_ []] _].
 Qed.
 
-Theorem fetch_permit_exclusve γ: fetch_permit γ -∗ fetch_permit γ -∗ False.
+Theorem fetch_permit_exclusive γ: fetch_permit γ -∗ fetch_permit γ -∗ False.
 Proof.
   iIntros "H1 H2". rewrite /pass_permit.
   iDestruct (own_valid_2 with "H1 H2") as %[[[] _] _].
@@ -488,3 +488,32 @@ Proof.
 Qed.
 
 End asym_rendezvous_proof.
+
+Section spec.
+
+  Context `{heapG Σ}.
+  Context `{interruptiblyG Σ}.
+  Context `{asym_rendezvousG Σ}.
+
+  Canonical Structure asym_rendezvous_sq `{!heapG Σ, !interruptiblyG Σ, !asym_rendezvousG Σ} :=
+    {|
+      asym_rendezvous_spec.is_asym_rendezvous := is_asym_rendezvous;
+      asym_rendezvous_spec.is_asym_rendezvous_ne := is_asym_rendezvous_ne;
+      asym_rendezvous_spec.is_asym_rendezvous_persistent := is_asym_rendezvous_persistent;
+      asym_rendezvous_spec.fetch_permit := fetch_permit;
+      asym_rendezvous_spec.await := await;
+      asym_rendezvous_spec.await_interruptibly := await_interruptibly;
+      asym_rendezvous_spec.fetch_permit_timeless := fetch_permit_timeless;
+      asym_rendezvous_spec.pass_permit_timeless := pass_permit_timeless;
+      asym_rendezvous_spec.cancelled_persistent := cancelled_persistent;
+      asym_rendezvous_spec.passed_persistent := passed_persistent;
+      asym_rendezvous_spec.pass_permit_exclusive := pass_permit_exclusive;
+      asym_rendezvous_spec.cancelled_not_passed := cancelled_not_passed;
+      asym_rendezvous_spec.init_exchange_spec := init_exchange_spec;
+      asym_rendezvous_spec.await_interruptibly_spec := await_interruptibly_spec;
+      asym_rendezvous_spec.await_spec := await_spec;
+      asym_rendezvous_spec.pass_spec := pass_spec;
+      asym_rendezvous_spec.fetch_permit_exclusive := fetch_permit_exclusive;
+    |}.
+
+End spec.

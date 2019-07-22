@@ -29,8 +29,8 @@ Record asym_rendezvous {Σ} `{heapG Σ} `{interruptiblyG Σ} := Rendezvous {
   is_asym_rendezvous_persistent N γ r P: Persistent (is_asym_rendezvous N γ r P);
   pass_permit_timeless γ: Timeless (pass_permit γ);
   fetch_permit_timeless γ: Timeless (fetch_permit γ);
-  pass_permit_exclusve γ: pass_permit γ -∗ pass_permit γ -∗ False;
-  fetch_permit_exclusve γ: fetch_permit γ -∗ fetch_permit γ -∗ False;
+  pass_permit_exclusive γ: pass_permit γ -∗ pass_permit γ -∗ False;
+  fetch_permit_exclusive γ: fetch_permit γ -∗ fetch_permit γ -∗ False;
   passed_persistent γ: Persistent (passed γ);
   cancelled_persistent γ: Persistent (cancelled γ);
   cancelled_not_passed γ: passed γ -∗ cancelled γ -∗ False;
@@ -38,12 +38,13 @@ Record asym_rendezvous {Σ} `{heapG Σ} `{interruptiblyG Σ} := Rendezvous {
   init_exchange_spec N ℓ P:
     {{{ ∃ v, ℓ ↦ v }}}
       init_exchange #ℓ
-    {{{ γ, RET #(); is_asym_rendezvous N γ #ℓ P }}};
+    {{{ γ, RET #(); is_asym_rendezvous N γ #ℓ P
+                                         ∗ fetch_permit γ ∗ pass_permit γ }}};
   await_spec N γ r P:
     {{{ is_asym_rendezvous N γ r P ∗ fetch_permit γ }}}
       await r
     {{{ RET #(); P ∗ passed γ }}};
-  await_interruptibly_spec Ni γi handle N γ r P:
+  await_interruptibly_spec N Ni γi handle γ r P:
     {{{ is_interrupt_handle Ni γi handle ∗
                             is_asym_rendezvous N γ r P ∗
                             fetch_permit γ }}}
@@ -61,6 +62,7 @@ Record asym_rendezvous {Σ} `{heapG Σ} `{interruptiblyG Σ} := Rendezvous {
 }.
 
 Existing Instances is_asym_rendezvous_persistent.
+Existing Instances is_asym_rendezvous_ne.
 Existing Instances pass_permit_timeless.
 Existing Instances fetch_permit_timeless.
 Existing Instances passed_persistent.
