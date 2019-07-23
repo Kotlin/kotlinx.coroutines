@@ -52,4 +52,5 @@ public annotation class ObsoleteCoroutinesApi
  */
 @Retention(value = AnnotationRetention.BINARY)
 @Experimental(level = Experimental.Level.ERROR)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.TYPEALIAS, AnnotationTarget.PROPERTY)
 public annotation class InternalCoroutinesApi

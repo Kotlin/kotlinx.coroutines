@@ -2,7 +2,6 @@
  * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-
 @file:JvmMultifileClass
 @file:JvmName("FlowKt")
 
@@ -11,7 +10,7 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
+import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
  * Returns a flow that ignores first [count] elements.

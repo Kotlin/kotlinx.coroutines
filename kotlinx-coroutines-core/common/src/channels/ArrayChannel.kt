@@ -1,9 +1,10 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
@@ -94,7 +95,7 @@ internal open class ArrayChannel<E>(
                                 this.size = size // restore size
                                 receive = offerOp.result
                                 token = offerOp.resumeToken
-                                check(token != null)
+                                assert { token != null }
                                 return@withLock
                             }
                             failure === OFFER_FAILED -> break@loop // cannot offer -> Ok to queue to buffer
@@ -180,7 +181,7 @@ internal open class ArrayChannel<E>(
                         failure == null -> { // polled successfully
                             send = pollOp.result
                             token = pollOp.resumeToken
-                            check(token != null)
+                            assert { token != null }
                             replacement = send!!.pollResult
                             break@loop
                         }

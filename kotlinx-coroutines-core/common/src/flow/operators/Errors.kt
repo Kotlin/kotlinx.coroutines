@@ -11,7 +11,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
+import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
  * Catches exceptions in the flow completion and calls a specified [action] with

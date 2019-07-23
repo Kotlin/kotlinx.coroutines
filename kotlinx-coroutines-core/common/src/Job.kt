@@ -577,6 +577,12 @@ public fun CoroutineContext.ensureActive(): Unit {
 }
 
 /**
+ * Cancels current job, including all its children with a specified diagnostic error [message].
+ * A [cause] can be specified to provide additional details on a cancellation reason for debugging purposes.
+ */
+public fun Job.cancel(message: String, cause: Throwable? = null): Unit = cancel(CancellationException(message, cause))
+
+/**
  * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [CoroutineContext.cancel].
  */
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")

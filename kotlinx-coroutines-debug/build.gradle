@@ -1,3 +1,5 @@
+import org.w3c.dom.Element
+
 /*
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
@@ -14,6 +16,35 @@ jar {
     manifest {
         attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
         attributes "Can-Redefine-Classes": "true"
+    }
+}
+/*
+ * It is possible to extend a particular configuration with shadow,
+ * but in that case it changes dependency type to "runtime" and resolves it
+ * (so it cannot be further modified). Otherwise, shadow just ignores all dependencies.
+ */
+configurations.shadow.extendsFrom(configurations.compile)
+
+/*
+ * Thus we are rewriting the POM. I am really question my existence at this point.
+ */
+project.ext.configureMavenDependencies = {
+    def root = it.asElement() as Element
+    def dependencies = root.getChildNodes().find { it.nodeName == "dependencies" }.childNodes
+    def childrenToRemove = []
+    for (i in 0..dependencies.length - 1) {
+        def dependency = dependencies.item(i) as Element
+        def scope = dependency.getChildNodes().find { it.nodeName == "scope" } as Element
+        def groupId = dependency.getChildNodes().find { it.nodeName == "groupId" } as Element
+        if (groupId != null && groupId.firstChild.nodeValue == "net.bytebuddy") {
+            childrenToRemove.add(dependency)
+        } else if (scope != null) {
+            scope.firstChild.setNodeValue("compile")
+        }
+    }
+
+    childrenToRemove.each {
+        root.getChildNodes().find { it.nodeName == "dependencies" }.removeChild(it)
     }
 }
 

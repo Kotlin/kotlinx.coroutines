@@ -9,13 +9,6 @@ import kotlinx.coroutines.scheduling.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
-private val COROUTINE_ID = AtomicLong()
-
-// for tests only
-internal fun resetCoroutineId() {
-    COROUTINE_ID.set(0)
-}
-
 internal const val COROUTINES_SCHEDULER_PROPERTY_NAME = "kotlinx.coroutines.scheduler"
 
 internal val useCoroutinesScheduler = systemProp(COROUTINES_SCHEDULER_PROPERTY_NAME).let { value ->

@@ -1,6 +1,8 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+
+@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package kotlinx.coroutines.reactive
 
@@ -11,6 +13,7 @@ import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import org.reactivestreams.*
 import kotlin.coroutines.*
+import kotlin.internal.LowPriorityInOverloadResolution
 
 /**
  * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
@@ -26,25 +29,44 @@ import kotlin.coroutines.*
  * | Normal completion or `close` without cause   | `onComplete`
  * | Failure with exception or `close` with cause | `onError`
  *
- * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
+ * Coroutine context can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
- * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
- * with corresponding [coroutineContext] element.
+ * Method throws [IllegalArgumentException] if provided [context] contains a [Job] instance.
  *
  * **Note: This is an experimental api.** Behaviour of publishers that work as children in a parent scope with respect
  *        to cancellation and error handling may change in the future.
- *
- * @param context context of the coroutine.
- * @param block the coroutine code.
  */
 @ExperimentalCoroutinesApi
+public fun <T> publish(
+    context: CoroutineContext = EmptyCoroutineContext,
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+): Publisher<T> {
+    require(context[Job] === null) { "Publisher context cannot contain job in it." +
+            "Its lifecycle should be managed via subscription. Had $context" }
+    return publishInternal(GlobalScope, context, block)
+}
+
+@Deprecated(
+    message = "CoroutineScope.publish is deprecated in favour of top-level publish",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("publish(context, block)")
+) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0. Binary compatibility with Spring
+@LowPriorityInOverloadResolution
 public fun <T> CoroutineScope.publish(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+): Publisher<T> = publishInternal(this, context, block)
+
+/** @suppress For internal use from other reactive integration modules only */
+@InternalCoroutinesApi
+public fun <T> publishInternal(
+    scope: CoroutineScope, // support for legacy publish in scope
+    context: CoroutineContext,
+    block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> = Publisher { subscriber ->
     // specification requires NPE on null subscriber
     if (subscriber == null) throw NullPointerException("Subscriber cannot be null")
-    val newContext = newCoroutineContext(context)
+    val newContext = scope.newCoroutineContext(context)
     val coroutine = PublisherCoroutine(newContext, subscriber)
     subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
@@ -54,7 +76,8 @@ private const val CLOSED = -1L    // closed, but have not signalled onCompleted/
 private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/onError
 
 @Suppress("CONFLICTING_JVM_DECLARATIONS", "RETURN_TYPE_MISMATCH_ON_INHERITANCE")
-private class PublisherCoroutine<in T>(
+@InternalCoroutinesApi
+public class PublisherCoroutine<in T>(
     parentContext: CoroutineContext,
     private val subscriber: Subscriber<T>
 ) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Subscription, SelectClause2<T, SendChannel<T>> {
@@ -138,16 +161,16 @@ private class PublisherCoroutine<in T>(
         }
         // now update nRequested
         while (true) { // lock-free loop on nRequested
-            val cur = _nRequested.value
-            if (cur < 0) break // closed from inside onNext => unlock
-            if (cur == Long.MAX_VALUE) break // no back-pressure => unlock
-            val upd = cur - 1
-            if (_nRequested.compareAndSet(cur, upd)) {
-                if (upd == 0L) {
+            val current = _nRequested.value
+            if (current < 0) break // closed from inside onNext => unlock
+            if (current == Long.MAX_VALUE) break // no back-pressure => unlock
+            val updated = current - 1
+            if (_nRequested.compareAndSet(current, updated)) {
+                if (updated == 0L) {
                     // return to keep locked due to back-pressure
                     return
                 }
-                break // unlock if upd > 0
+                break // unlock if updated > 0
             }
         }
         unlockAndCheckCompleted()
@@ -176,17 +199,31 @@ private class PublisherCoroutine<in T>(
                 if (cancelled) {
                     // If the parent had failed to handle our exception, then we must not lose this exception
                     if (cause != null && !handled) handleCoroutineException(context, cause)
-                } else {
-                    try {
-                        if (cause != null && cause !is CancellationException) {
-                            subscriber.onError(cause)
+                    return
+                }
+
+                try {
+                    if (cause != null && cause !is CancellationException) {
+                        /*
+                         * Reactive frameworks have two types of exceptions: regular and fatal.
+                         * Regular are passed to onError.
+                         * Fatal can be passed to onError, but even the standard implementations **can just swallow it** (e.g. see #1297).
+                         * Such behaviour is inconsistent, leads to silent failures and we can't possibly know whether
+                         * the cause will be handled by onError (and moreover, it depends on whether a fatal exception was
+                         * thrown by subscriber or upstream).
+                         * To make behaviour consistent and least surprising, we always handle fatal exceptions
+                         * by coroutines machinery, anyway, they should not be present in regular program flow,
+                         * thus our goal here is just to expose it as soon as possible.
+                         */
+                        subscriber.onError(cause)
+                        if (!handled && cause.isFatal()) {
+                            handleCoroutineException(context, cause)
                         }
-                        else {
-                            subscriber.onComplete()
-                        }
-                    } catch (e: Throwable) {
-                        handleCoroutineException(context, e)
+                    } else {
+                        subscriber.onComplete()
                     }
+                } catch (e: Throwable) {
+                    handleCoroutineException(context, e)
                 }
             }
         } finally {
@@ -220,12 +257,12 @@ private class PublisherCoroutine<in T>(
     // assert: isCompleted
     private fun signalCompleted(cause: Throwable?, handled: Boolean) {
         while (true) { // lock-free loop for nRequested
-            val cur = _nRequested.value
-            if (cur == SIGNALLED) return // some other thread holding lock already signalled cancellation/completion
-            check(cur >= 0) // no other thread could have marked it as CLOSED, because onCompleted[Exceptionally] is invoked once
-            if (!_nRequested.compareAndSet(cur, CLOSED)) continue // retry on failed CAS
+            val current = _nRequested.value
+            if (current == SIGNALLED) return // some other thread holding lock already signalled cancellation/completion
+            check(current >= 0) // no other thread could have marked it as CLOSED, because onCompleted[Exceptionally] is invoked once
+            if (!_nRequested.compareAndSet(current, CLOSED)) continue // retry on failed CAS
             // Ok -- marked as CLOSED, now can unlock the mutex if it was locked due to backpressure
-            if (cur == 0L) {
+            if (current == 0L) {
                 doLockedSignalCompleted(cause, handled)
             } else {
                 // otherwise mutex was either not locked or locked in concurrent onNext... try lock it to signal completion
@@ -250,4 +287,6 @@ private class PublisherCoroutine<in T>(
         cancelled = true
         super.cancel(null)
     }
+
+    private fun Throwable.isFatal() = this is VirtualMachineError || this is ThreadDeath || this is LinkageError
 }

@@ -112,4 +112,73 @@ class OnCompletionTest : TestBase() {
             }.collect()
         finish(4)
     }
+
+    @Test
+    fun testEmitExample() = runTest {
+        val flow = flowOf("a", "b", "c")
+            .onCompletion() { emit("Done") }
+        assertEquals(listOf("a", "b", "c", "Done"), flow.toList())
+    }
+
+    sealed class TestData {
+        data class Value(val i: Int) : TestData()
+        data class Done(val e: Throwable?) : TestData() {
+            override fun equals(other: Any?): Boolean =
+                other is Done && other.e?.message == e?.message
+        }
+    }
+
+    @Test
+    fun testCrashedEmit() = runTest {
+        expect(1)
+        val collected = ArrayList<TestData>()
+        assertFailsWith<TestException> {
+            (1..10).asFlow()
+                .map<Int, TestData> { TestData.Value(it) }
+                .onEach { value ->
+                    value as TestData.Value
+                    expect(value.i + 1)
+                    if (value.i == 6) throw TestException("OK")
+                    yield()
+                }
+                .onCompletion { e ->
+                    expect(8)
+                    assertTrue(e is TestException)
+                    emit(TestData.Done(e))
+                }.collect {
+                    collected += it
+                }
+        }
+        val expected = (1..5).map { TestData.Value(it) } + TestData.Done(TestException("OK"))
+        assertEquals(expected, collected)
+        finish(9)
+    }
+
+    @Test
+    fun testCancelledEmit() = runTest {
+        expect(1)
+        val collected = ArrayList<TestData>()
+        assertFailsWith<JobCancellationException> {
+            coroutineScope {
+                (1..10).asFlow()
+                    .map<Int, TestData> { TestData.Value(it) }
+                    .onEach { value ->
+                        value as TestData.Value
+                        expect(value.i + 1)
+                        if (value.i == 6) coroutineContext.cancel()
+                        yield()
+                    }
+                    .onCompletion { e ->
+                        expect(8)
+                        assertNull(e)
+                        emit(TestData.Done(e))
+                    }.collect {
+                        collected += it
+                    }
+            }
+        }
+        val expected = (1..5).map { TestData.Value(it) } + TestData.Done(null)
+        assertEquals(expected, collected)
+        finish(9)
+    }
 }

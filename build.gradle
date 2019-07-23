@@ -8,8 +8,8 @@ apply from: rootProject.file("gradle/experimental.gradle")
 def rootModule = "kotlinx.coroutines"
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
-def sourceless = ['kotlinx.coroutines', 'site']
-def internal = sourceless + ['benchmarks', 'knit', 'js-stub', 'stdlib-stubs', 'binary-compatibility-validator']
+def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom']
+def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'knit', 'js-stub', 'stdlib-stubs', 'binary-compatibility-validator']
 // Not published
 def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js', 'android-unit-tests']
 
@@ -58,12 +58,12 @@ buildscript {
     }
 
     dependencies {
-        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:$artifactory_plugin_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintray_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
+        classpath "io.spring.gradle:dependency-management-plugin:$spring_dependency_management_version"
 
         // JMH plugins
         classpath "com.github.jengelman.gradle.plugins:shadow:4.0.2"
@@ -95,6 +95,8 @@ allprojects {
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         }
     }
+
+    ext.unpublished = unpublished
 }
 
 allprojects {
@@ -123,7 +125,6 @@ allprojects {
     def platform = platformOf(it)
     apply from: rootProject.file("gradle/compile-${platform}.gradle")
 
-
     dependencies {
         // See comment below for rationale, it will be replaced with "project" dependency
         compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
@@ -135,6 +136,7 @@ allprojects {
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
         kotlinOptions.freeCompilerArgs += experimentalAnnotations.collect { "-Xuse-experimental=" + it }
         kotlinOptions.freeCompilerArgs += "-progressive"
+        kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
         // Binary compatibility support
         kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
     }
@@ -201,23 +203,27 @@ def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/$coreModule/"
 def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
-    apply from: rootProject.file('gradle/dokka.gradle')
+    if (it.name != 'kotlinx-coroutines-bom') {
+        apply from: rootProject.file('gradle/dokka.gradle')
+    }
     apply from: rootProject.file('gradle/publish-bintray.gradle')
 }
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
-    if (it.name != coreModule) {
-        dokka.dependsOn project(":$coreModule").dokka
-        tasks.withType(dokka.getClass()) {
-            externalDocumentationLink {
-                url = new URL(core_docs_url)
-                packageListUrl = new URL("file://$core_docs_file")
+    if (it.name != "kotlinx-coroutines-bom") {
+        if (it.name != coreModule) {
+            dokka.dependsOn project(":$coreModule").dokka
+            tasks.withType(dokka.getClass()) {
+                externalDocumentationLink {
+                    url = new URL(core_docs_url)
+                    packageListUrl = new URL("file://$core_docs_file")
+                }
             }
         }
-    }
 
-    if (platformOf(it) == "jvm") {
-        dokkaJavadoc.dependsOn project(":$coreModule").dokka
+        if (platformOf(it) == "jvm") {
+            dokkaJavadoc.dependsOn project(":$coreModule").dokka
+        }
     }
 }
 

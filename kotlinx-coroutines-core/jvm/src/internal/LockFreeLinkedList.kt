@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -315,7 +315,7 @@ public actual open class LockFreeLinkedListNode {
     ) : AbstractAtomicDesc() {
         init {
             // require freshly allocated node here
-            check(node._next.value === node && node._prev.value === node)
+            assert { node._next.value === node && node._prev.value === node }
         }
 
         final override fun takeAffectedNode(op: OpDescriptor): Node {
@@ -390,7 +390,7 @@ public actual open class LockFreeLinkedListNode {
 
         @Suppress("UNCHECKED_CAST")
         final override fun onPrepare(affected: Node, next: Node): Any? {
-            check(affected !is LockFreeLinkedListHead)
+            assert { affected !is LockFreeLinkedListHead }
             if (!validatePrepared(affected as T)) return REMOVE_PREPARED
             // Note: onPrepare must use CAS to make sure the stale invocation is not
             // going to overwrite the previous decision on successful preparation.
@@ -475,8 +475,8 @@ public actual open class LockFreeLinkedListNode {
 
         final override fun complete(op: AtomicOp<*>, failure: Any?) {
             val success = failure == null
-            val affectedNode = affectedNode ?: run { check(!success); return }
-            val originalNext = originalNext ?: run { check(!success); return }
+            val affectedNode = affectedNode ?: run { assert { !success }; return }
+            val originalNext = originalNext ?: run { assert { !success }; return }
             val update = if (success) updatedNext(affectedNode, originalNext) else originalNext
             if (affectedNode._next.compareAndSet(op, update)) {
                 if (success) finishOnSuccess(affectedNode, originalNext)
@@ -564,7 +564,7 @@ public actual open class LockFreeLinkedListNode {
         while (true) {
             if (cur is LockFreeLinkedListHead) return cur
             cur = cur.nextNode
-            check(cur !== this) { "Cannot loop to this while looking for list head" }
+            assert { cur !== this } // "Cannot loop to this while looking for list head"
         }
     }
 
@@ -648,8 +648,8 @@ public actual open class LockFreeLinkedListNode {
     }
 
     internal fun validateNode(prev: Node, next: Node) {
-        check(prev === this._prev.value)
-        check(next === this._next.value)
+        assert { prev === this._prev.value }
+        assert { next === this._next.value }
     }
 
     override fun toString(): String = "${this::class.java.simpleName}@${Integer.toHexString(System.identityHashCode(this))}"

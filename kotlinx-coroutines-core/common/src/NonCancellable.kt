@@ -115,4 +115,9 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      */
     @InternalCoroutinesApi
     override fun attachChild(child: ChildJob): ChildHandle = NonDisposableHandle
+
+    /** @suppress */
+    override fun toString(): String {
+        return "NonCancellable"
+    }
 }

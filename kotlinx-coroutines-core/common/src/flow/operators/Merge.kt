@@ -16,7 +16,7 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.sync.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
+import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
  * Name of the property that defines the value of [DEFAULT_CONCURRENCY].
@@ -125,7 +125,7 @@ public fun <T> Flow<Flow<T>>.flattenMerge(concurrency: Int = DEFAULT_CONCURRENCY
  * ```
  * produces `aa bb b_last`
  */
-@ExperimentalCoroutinesApi
+@FlowPreview
 public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): Flow<R> = scopedFlow { downstream ->
     var previousFlow: Job? = null
     collect { value ->
@@ -167,7 +167,7 @@ private class ChannelFlowMerge<T>(
     // Fast path in ChannelFlowOperator calls this function (channel was not created yet)
     override suspend fun flowCollect(collector: FlowCollector<T>) {
         // this function should not have been invoked when channel was explicitly requested
-        check(capacity == OPTIONAL_CHANNEL)
+        assert { capacity == OPTIONAL_CHANNEL }
         flowScope {
             mergeImpl(this, collector.asConcurrentFlowCollector())
         }

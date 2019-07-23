@@ -4,8 +4,6 @@
 
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.*
-
 /**
  * [FlowCollector] is used as an intermediate or a terminal collector of the flow and represents
  * an entity that accepts values emitted by the [Flow].
@@ -13,7 +11,6 @@ import kotlinx.coroutines.*
  * This interface should usually not be implemented directly, but rather used as a receiver in a [flow] builder when implementing a custom operator.
  * Implementations of this interface are not thread-safe.
  */
-@ExperimentalCoroutinesApi
 public interface FlowCollector<in T> {
 
     /**

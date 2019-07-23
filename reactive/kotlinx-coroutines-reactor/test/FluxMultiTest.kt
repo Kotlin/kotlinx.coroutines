@@ -15,7 +15,7 @@ class FluxMultiTest : TestBase() {
     @Test
     fun testNumbers() {
         val n = 100 * stressTestMultiplier
-        val flux = GlobalScope.flux {
+        val flux = flux {
             repeat(n) { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
@@ -26,7 +26,7 @@ class FluxMultiTest : TestBase() {
     @Test
     fun testConcurrentStress() {
         val n = 10_000 * stressTestMultiplier
-        val flux = GlobalScope.flux {
+        val flux = flux {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch
@@ -45,7 +45,7 @@ class FluxMultiTest : TestBase() {
     @Test
     fun testIteratorResendUnconfined() {
         val n = 10_000 * stressTestMultiplier
-        val flux = GlobalScope.flux(Dispatchers.Unconfined) {
+        val flux = flux(Dispatchers.Unconfined) {
             Flux.range(0, n).collect { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
@@ -56,7 +56,7 @@ class FluxMultiTest : TestBase() {
     @Test
     fun testIteratorResendPool() {
         val n = 10_000 * stressTestMultiplier
-        val flux = GlobalScope.flux {
+        val flux = flux {
             Flux.range(0, n).collect { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
@@ -66,11 +66,11 @@ class FluxMultiTest : TestBase() {
 
     @Test
     fun testSendAndCrash() {
-        val flux = GlobalScope.flux {
+        val flux = flux {
             send("O")
             throw IOException("K")
         }
-        val mono = GlobalScope.mono {
+        val mono = mono {
             var result = ""
             try {
                 flux.consumeEach { result += it }

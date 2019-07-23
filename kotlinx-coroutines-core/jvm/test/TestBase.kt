@@ -9,6 +9,7 @@ import kotlinx.coroutines.scheduling.*
 import org.junit.*
 import java.util.*
 import java.util.concurrent.atomic.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 private val VERBOSE = systemProp("test.verbose", false)
@@ -213,4 +214,6 @@ public actual open class TestBase actual constructor() {
         assertTrue(result.exceptionOrNull() is T, "Expected ${T::class}, but had $result")
         return result.exceptionOrNull()!! as T
     }
+
+    protected suspend fun currentDispatcher() = coroutineContext[ContinuationInterceptor]!!
 }

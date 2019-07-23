@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -20,7 +20,7 @@ internal inline fun withVirtualTimeSource(log: PrintStream? = null, block: () ->
     } finally {
         DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
         testTimeSource.shutdown()
-        timeSource = DefaultTimeSource // restore time source
+        timeSource = null // restore time source
     }
 }
 

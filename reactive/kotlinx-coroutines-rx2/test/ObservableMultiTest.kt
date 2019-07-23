@@ -76,7 +76,7 @@ class ObservableMultiTest : TestBase() {
             send("O")
             throw IOException("K")
         }
-        val single = GlobalScope.rxSingle {
+        val single = rxSingle {
             var result = ""
             try {
                 observable.consumeEach { result += it }
