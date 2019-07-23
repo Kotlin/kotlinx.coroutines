@@ -221,7 +221,8 @@ The `log` function prints the name of the thread in square brackets and you can 
 thread, but the identifier of the currently executing coroutine is appended to it. This identifier 
 is consecutively assigned to all created coroutines when debugging mode is turned on.
 
-You can read more about debugging facilities in the documentation for [newCoroutineContext] function.
+> Debugging mode is also turned on when JVM is run with `-ea` option.
+You can read more about debugging facilities in the documentation for [DEBUG_PROPERTY_NAME] property.
 
 ### Jumping between threads
 
@@ -695,7 +696,7 @@ that should be implemented.
 [ExecutorCoroutineDispatcher.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-executor-coroutine-dispatcher/close.html
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
 [delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html
-[newCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/new-coroutine-context.html
+[DEBUG_PROPERTY_NAME]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-d-e-b-u-g_-p-r-o-p-e-r-t-y_-n-a-m-e.html
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html
 [isActive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/is-active.html
 [CoroutineScope.coroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/coroutine-context.html
