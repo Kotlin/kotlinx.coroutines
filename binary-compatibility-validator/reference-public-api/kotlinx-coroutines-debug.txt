@@ -1,5 +1,6 @@
 public final class kotlinx/coroutines/debug/CoroutineInfo {
 	public final fun component1 ()Lkotlin/coroutines/CoroutineContext;
+	public final fun copy ()Lkotlinx/coroutines/debug/CoroutineInfo;
 	public final fun copy (Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;J)Lkotlinx/coroutines/debug/CoroutineInfo;
 	public static synthetic fun copy$default (Lkotlinx/coroutines/debug/CoroutineInfo;Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;JILjava/lang/Object;)Lkotlinx/coroutines/debug/CoroutineInfo;
 	public fun equals (Ljava/lang/Object;)Z
