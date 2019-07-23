@@ -12,7 +12,26 @@ import java.util.concurrent.atomic.*
 import kotlin.internal.InlineOnly
 
 /**
- * Name of the property that controls coroutine debugging. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
+ * Name of the property that controls coroutine debugging.
+ *
+ * ### Debugging facilities
+ *
+ * In debug mode every coroutine is assigned a unique consecutive identifier.
+ * Every thread that executes a coroutine has its name modified to include the name and identifier of
+ * the currently running coroutine.
+ *
+ * Enable debugging facilities with "`kotlinx.coroutines.debug`" ([DEBUG_PROPERTY_NAME]) system property,
+ * use the following values:
+ *
+ * * "`auto`" (default mode, [DEBUG_PROPERTY_VALUE_AUTO]) -- enabled when assertions are enabled with "`-ea`" JVM option.
+ * * "`on`" ([DEBUG_PROPERTY_VALUE_ON]) or empty string -- enabled.
+ * * "`off`" ([DEBUG_PROPERTY_VALUE_OFF]) -- disabled.
+ *
+ * Coroutine name can be explicitly assigned using [CoroutineName] context element.
+ * The string "coroutine" is used as a default name.
+ *
+ * Debugging facilities are implemented by [newCoroutineContext][CoroutineScope.newCoroutineContext] function that
+ * is used in all coroutine builders to create context of a new coroutine.
  */
 public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
 
@@ -58,17 +77,17 @@ public interface CopyableThrowable<T> where T : Throwable, T : CopyableThrowable
 }
 
 /**
- * Automatic debug configuration value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
+ * Automatic debug configuration value for [DEBUG_PROPERTY_NAME].
  */
 public const val DEBUG_PROPERTY_VALUE_AUTO = "auto"
 
 /**
- * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
+ * Debug turned on value for [DEBUG_PROPERTY_NAME].
  */
 public const val DEBUG_PROPERTY_VALUE_ON = "on"
 
 /**
- * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
+ * Debug turned on value for [DEBUG_PROPERTY_NAME].
  */
 public const val DEBUG_PROPERTY_VALUE_OFF = "off"
 
