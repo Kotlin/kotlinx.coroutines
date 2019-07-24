@@ -8,8 +8,7 @@ import io.reactivex.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.reactive.flow.*
-import org.reactivestreams.*
+import kotlinx.coroutines.reactive.*
 import kotlin.coroutines.*
 
 /**
@@ -82,7 +81,7 @@ public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): 
 
 /**
  * Converts the given flow to a cold observable.
- * The original flow is cancelled if the observable subscriber was disposed.
+ * The original flow is cancelled when the observable subscriber is disposed.
  */
 @JvmName("from")
 @ExperimentalCoroutinesApi
@@ -106,8 +105,8 @@ public fun <T: Any> Flow<T>.asObservable() : Observable<T> = Observable.create {
 }
 
 /**
- * Converts the given flow to a cold observable.
- * The original flow is cancelled if the flowable subscriber was disposed.
+ * Converts the given flow to a cold flowable.
+ * The original flow is cancelled when the flowable subscriber is disposed.
  */
 @JvmName("from")
 @ExperimentalCoroutinesApi

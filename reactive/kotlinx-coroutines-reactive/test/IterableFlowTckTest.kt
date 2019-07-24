@@ -4,7 +4,7 @@
 
 @file:Suppress("UNCHECKED_CAST")
 
-package kotlinx.coroutines.reactive.flow
+package kotlinx.coroutines.reactive
 
 import kotlinx.coroutines.flow.*
 import org.junit.*
