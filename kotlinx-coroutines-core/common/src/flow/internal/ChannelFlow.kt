@@ -68,7 +68,7 @@ public abstract class ChannelFlow<T>(
         scope.broadcast(context, produceCapacity, start, block = collectToFun)
 
     open fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
-        scope.flowProduce(context, produceCapacity, block = collectToFun)
+        scope.produce(context, produceCapacity, block = collectToFun)
 
     override suspend fun collect(collector: FlowCollector<T>) =
         coroutineScope {

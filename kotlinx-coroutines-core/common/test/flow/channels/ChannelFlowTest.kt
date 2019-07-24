@@ -29,7 +29,6 @@ class ChannelFlowTest : TestBase() {
         assertEquals(listOf(1, 2), flow.toList())
     }
 
-    // todo: this is pretty useless behavior
     @Test
     fun testConflated() = runTest {
         val flow = channelFlow {
@@ -114,6 +113,7 @@ class ChannelFlowTest : TestBase() {
     }
 
     @Test
+    @Ignore // #1374
     fun testBufferWithTimeout() = runTest {
         fun Flow<Int>.bufferWithTimeout(): Flow<Int> = channelFlow {
             expect(2)
@@ -138,6 +138,26 @@ class ChannelFlowTest : TestBase() {
         val flow = flowOf(1, 2, 3).bufferWithTimeout()
         expect(1)
         assertFailsWith<TimeoutCancellationException>(flow)
+        finish(6)
+    }
+
+    @Test
+    fun testChildCancellation() = runTest {
+        channelFlow {
+            val job = launch {
+                expect(2)
+                hang { expect(4) }
+            }
+            expect(1)
+            yield()
+            expect(3)
+            job.cancelAndJoin()
+            send(5)
+
+        }.collect {
+            expect(it)
+        }
+
         finish(6)
     }
 }
