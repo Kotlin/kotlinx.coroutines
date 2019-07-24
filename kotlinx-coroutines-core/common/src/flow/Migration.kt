@@ -380,7 +380,7 @@ public fun <T> Flow<T>.concatWith(value: T): Flow<T> = noImpl()
 @Deprecated(
     level = DeprecationLevel.ERROR,
     message = "Flow analogue of 'concatWith' is 'onCompletion'. Use 'onCompletion { emitAll(other) }'",
-    replaceWith = ReplaceWith("onCompletion { emitAkk(other) }")
+    replaceWith = ReplaceWith("onCompletion { emitAll(other) }")
 )
 public fun <T> Flow<T>.concatWith(other: Flow<T>): Flow<T> = noImpl()
 
