@@ -104,7 +104,7 @@ public fun <T> Flow<T>.subscribeOn(context: CoroutineContext): Flow<T> = noImpl(
  * @suppress
  */
 @Deprecated(message = "Use BroadcastChannel.asFlow()", level = DeprecationLevel.ERROR)
-public fun BehaviourSubject(): Any = noImpl()
+public fun BehaviorSubject(): Any = noImpl()
 
 /**
  * `ReplaySubject` is not supported. The closest analogue is buffered [BroadcastChannel][kotlinx.coroutines.channels.BroadcastChannel].
