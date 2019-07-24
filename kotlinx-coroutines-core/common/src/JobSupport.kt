@@ -326,6 +326,9 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * may leak to the [CoroutineExceptionHandler].
      */
     private fun cancelParent(cause: Throwable): Boolean {
+        // Is scoped coroutine -- don't propagate, will be rethrown
+        if (isScopedCoroutine) return true
+
         /* CancellationException is considered "normal" and parent usually is not cancelled when child produces it.
          * This allow parent to cancel its children (normally) without being cancelled itself, unless
          * child crashes and produce some other exception during its completion.
@@ -337,8 +340,6 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             return isCancellation
         }
 
-        // Is scoped coroutine -- don't propagate, will be rethrown
-        if (isScopedCoroutine) return isCancellation
         // Notify parent but don't forget to check cancellation
         return parent.childCancelled(cause) || isCancellation
     }
