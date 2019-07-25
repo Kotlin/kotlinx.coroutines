@@ -91,8 +91,8 @@ internal class SafeCollector<T>(
         }
         if (result != collectContextSize) {
             error(
-                "Flow invariant is violated: flow was collected in $collectContext, but emission happened in $currentContext. " +
-                        "Please refer to 'flow' documentation or use 'flowOn' instead"
+                "Flow invariant is violated: flow was collected in $collectContext, but emission happened in $currentContext." +
+                        "\n\t\tPlease refer to 'flow' documentation or use 'flowOn' instead"
             )
         }
     }

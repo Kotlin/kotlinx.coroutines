@@ -13,6 +13,9 @@
 - md: coroutine-context-and-dispatchers.md
   url: coroutine-context-and-dispatchers.html
   title: Coroutine Context and Dispatchers
+- md: flow.md
+  url: flow.html
+  title: Asynchronous Flow
 - md: channels.md
   url: channels.html
   title: Channels
