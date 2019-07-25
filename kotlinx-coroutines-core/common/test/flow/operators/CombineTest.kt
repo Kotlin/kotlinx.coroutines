@@ -6,12 +6,13 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlin.test.*
-import kotlinx.coroutines.flow.combineLatest as combineLatestOriginal
+import kotlinx.coroutines.flow.combine as combineOriginal
+import kotlinx.coroutines.flow.combineTransform as combineTransformOriginal
 
 /*
  * Replace:  { i, j -> i + j } ->  { i, j -> i + j } as soon as KT-30991 is fixed
  */
-abstract class CombineLatestTestBase : TestBase() {
+abstract class CombineTestBase : TestBase() {
 
     abstract fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R>
 
@@ -239,11 +240,33 @@ abstract class CombineLatestTestBase : TestBase() {
     }
 }
 
-class CombineLatestTest : CombineLatestTestBase() {
-    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = combineLatestOriginal(other, transform)
+class CombineTest : CombineTestBase() {
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = combineOriginal(other, transform)
 }
 
-class CombineLatestVarargAdapterTest : CombineLatestTestBase() {
-    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
-        (this as Flow<*>).combineLatestOriginal(other) { args: Array<Any?> -> transform(args[0] as T1, args[1] as T2) }
+class CombineTransformTest : CombineTestBase() {
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = combineTransformOriginal(other) { a, b ->
+        emit(transform(a, b))
+    }
 }
+
+class CombineVarargAdapterTest : CombineTestBase() {
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
+        combineOriginal(this, other) { args: Array<Any?> -> transform(args[0] as T1, args[1] as T2) }
+}
+
+class CombineIterableTest : CombineTestBase() {
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
+        combineOriginal(listOf(this, other)) { args -> transform(args[0] as T1, args[1] as T2) }
+}
+
+class CombineTransformVarargAdapterTest : CombineTestBase() {
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
+        combineTransformOriginal(this, other) { args: Array<Any?> -> emit(transform(args[0] as T1, args[1] as T2)) }
+}
+
+class CombineTransformIterableTest : CombineTestBase() {
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
+        combineTransformOriginal(listOf(this, other)) { args -> emit(transform(args[0] as T1, args[1] as T2)) }
+}
+
