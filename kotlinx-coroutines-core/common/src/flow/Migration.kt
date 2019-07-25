@@ -100,6 +100,61 @@ public fun <T> Flow<T>.publishOn(context: CoroutineContext): Flow<T> = noImpl()
 public fun <T> Flow<T>.subscribeOn(context: CoroutineContext): Flow<T> = noImpl()
 
 /**
+ * Flow analogue of 'Flowable' is [Flow].
+ * @suppress
+ */
+@Deprecated(
+        message = "Flow analogue of 'Flowable' is Flow",
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("kotlinx.coroutines.flow.Flow")
+)
+public class Flowable private constructor()
+
+/**
+ * Flow analogue of 'Observable' is [Flow].
+ * @suppress
+ */
+@Deprecated(
+        message = "Flow analogue of 'Observable' is Flow",
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("kotlinx.coroutines.flow.Flow")
+)
+public class Observable private constructor()
+
+/**
+ * Flow analogue of 'Single' is [Flow].
+ * @suppress
+ */
+@Deprecated(
+        message = "Flow analogue of 'Single' is Flow",
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("kotlinx.coroutines.flow.Flow")
+)
+public class Single private constructor()
+
+/**
+ * Flow analogue of 'Maybe' is [Flow].
+ * @suppress
+ */
+@Deprecated(
+        message = "Flow analogue of 'Maybe' is Flow",
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("kotlinx.coroutines.flow.Flow")
+)
+public class Maybe private constructor()
+
+/**
+ * Flow analogue of 'Completable' is [Flow].
+ * @suppress
+ */
+@Deprecated(
+        message = "Flow analogue of 'Completable' is Flow",
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("kotlinx.coroutines.flow.Flow")
+)
+public class Completable private constructor()
+
+/**
  * Use [BroadcastChannel][kotlinx.coroutines.channels.BroadcastChannel].asFlow().
  * @suppress
  */
