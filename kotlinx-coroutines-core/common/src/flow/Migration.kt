@@ -364,6 +364,50 @@ public fun <T> Flow<T>.concatWith(value: T): Flow<T> = noImpl()
 )
 public fun <T> Flow<T>.concatWith(other: Flow<T>): Flow<T> = noImpl()
 
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'combineLatest' is 'combine'",
+    replaceWith = ReplaceWith("this.combine(other, transform)")
+)
+public fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
+    combine(this, other, transform)
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'combineLatest' is 'combine'",
+    replaceWith = ReplaceWith("combine(this, other, other2, transform)")
+)
+public inline fun <T1, T2, T3, R> Flow<T1>.combineLatest(
+    other: Flow<T2>,
+    other2: Flow<T3>,
+    crossinline transform: suspend (T1, T2, T3) -> R
+) = combine(this, other, other2, transform)
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'combineLatest' is 'combine'",
+    replaceWith = ReplaceWith("combine(this, other, other2, other3, transform)")
+)
+public inline fun <T1, T2, T3, T4, R> Flow<T1>.combineLatest(
+    other: Flow<T2>,
+    other2: Flow<T3>,
+    other3: Flow<T4>,
+    crossinline transform: suspend (T1, T2, T3, T4) -> R
+) = combine(this, other, other2, other3, transform)
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'combineLatest' is 'combine'",
+    replaceWith = ReplaceWith("combine(this, other, other2, other3, transform)")
+)
+public inline fun <T1, T2, T3, T4, T5, R> Flow<T1>.combineLatest(
+    other: Flow<T2>,
+    other2: Flow<T3>,
+    other3: Flow<T4>,
+    other4: Flow<T5>,
+    crossinline transform: suspend (T1, T2, T3, T4, T5) -> R
+): Flow<R> = combine(this, other, other2, other3, other4, transform)
+
 /**
  * Delays the emission of values from this flow for the given [timeMillis].
  * Use `onStart { delay(timeMillis) }`.
