@@ -19,7 +19,7 @@ class ExceptionsGuideTest {
 
 <!--- TOC -->
 
-* [Exception handling](#exception-handling)
+* [Exception Handling](#exception-handling)
   * [Exception propagation](#exception-propagation)
   * [CoroutineExceptionHandler](#coroutineexceptionhandler)
   * [Cancellation and exceptions](#cancellation-and-exceptions)
@@ -31,7 +31,7 @@ class ExceptionsGuideTest {
 
 <!--- END_TOC -->
 
-## Exception handling
+## Exception Handling
 
 
 This section covers exception handling and cancellation on exceptions.
