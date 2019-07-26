@@ -144,4 +144,31 @@ class ArrayChannelTest : TestBase() {
         channel.cancel(TestCancellationException())
         channel.receiveOrNull()
     }
+
+    @Test
+    fun testBufferSize() = runTest {
+        val capacity = 42
+        val channel = Channel<Int>(capacity)
+        launch {
+            expect(2)
+            repeat(42) {
+                channel.send(it)
+            }
+            expect(3)
+            channel.send(42)
+            expect(5)
+            channel.close()
+        }
+
+        expect(1)
+        yield()
+
+        expect(4)
+        val result = ArrayList<Int>(42)
+        channel.consumeEach {
+            result.add(it)
+        }
+        assertEquals((0..capacity).toList(), result)
+        finish(6)
+    }
 }

@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
+import kotlin.math.*
 
 /**
  * Channel with array buffer of a fixed [capacity].
@@ -29,10 +30,14 @@ internal open class ArrayChannel<E>(
     }
 
     private val lock = ReentrantLock()
-    private val buffer: Array<Any?> = arrayOfNulls<Any?>(capacity)
+    /*
+     * Guarded by lock.
+     * Allocate minimum of capacity and 16 to avoid excess memory pressure for large channels when it's not necessary.
+     */
+    private var buffer: Array<Any?> = arrayOfNulls<Any?>(min(capacity, 16))
     private var head: Int = 0
     @Volatile
-    private var size: Int = 0
+    private var size: Int = 0 // Invariant: size <= capacity
 
     protected final override val isBufferAlwaysEmpty: Boolean get() = false
     protected final override val isBufferEmpty: Boolean get() = size == 0
@@ -64,6 +69,7 @@ internal open class ArrayChannel<E>(
                         }
                     }
                 }
+                ensureCapacity(size)
                 buffer[(head + size) % capacity] = element // actually queue element
                 return OFFER_SUCCESS
             }
@@ -112,6 +118,7 @@ internal open class ArrayChannel<E>(
                     this.size = size // restore size
                     return ALREADY_SELECTED
                 }
+                ensureCapacity(size)
                 buffer[(head + size) % capacity] = element // actually queue element
                 return OFFER_SUCCESS
             }
@@ -121,6 +128,16 @@ internal open class ArrayChannel<E>(
         // breaks here if offer meets receiver
         receive!!.completeResumeReceive(token!!)
         return receive!!.offerResult
+    }
+
+    // Guarded by lock
+    private fun ensureCapacity(currentSize: Int) {
+        if (currentSize == buffer.size) {
+            val newSize = min(buffer.size * 2, capacity)
+            val newBuffer = arrayOfNulls<Any?>(newSize)
+            buffer.copyInto(newBuffer)
+            buffer = newBuffer
+        }
     }
 
     // result is `E | POLL_FAILED | Closed`
