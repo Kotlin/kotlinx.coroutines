@@ -261,6 +261,27 @@ class FlowOnTest : TestBase() {
         finish(3)
     }
 
+    @Test
+    fun testException() = runTest {
+        val flow = flow {
+            emit(314)
+            delay(Long.MAX_VALUE)
+        }.flowOn(NamedDispatchers("upstream"))
+            .map {
+                throw TestException()
+            }
+
+        assertFailsWith<TestException> { flow.single() }
+        assertFailsWith<TestException>(flow)
+        ensureActive()
+    }
+
+    @Test
+    fun testIllegalArgumentException() {
+        val flow = emptyFlow<Int>()
+        assertFailsWith<IllegalArgumentException> { flow.flowOn(Job()) }
+    }
+
     private inner class Source(private val value: Int) {
         public var contextName: String = "unknown"
 
