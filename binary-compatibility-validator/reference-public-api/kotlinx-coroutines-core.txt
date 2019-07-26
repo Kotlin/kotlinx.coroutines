@@ -826,9 +826,6 @@ public abstract interface class kotlinx/coroutines/flow/FlowCollector {
 
 public final class kotlinx/coroutines/flow/FlowKt {
 	public static final field DEFAULT_CONCURRENCY_PROPERTY_NAME Ljava/lang/String;
-	public static final fun BehaviorSubject ()Ljava/lang/Object;
-	public static final fun PublishSubject ()Ljava/lang/Object;
-	public static final fun ReplaySubject ()Ljava/lang/Object;
 	public static final fun asFlow (Ljava/lang/Iterable;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun asFlow (Ljava/util/Iterator;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun asFlow (Lkotlin/jvm/functions/Function0;)Lkotlinx/coroutines/flow/Flow;
