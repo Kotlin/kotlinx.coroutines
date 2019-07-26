@@ -100,29 +100,6 @@ public fun <T> Flow<T>.publishOn(context: CoroutineContext): Flow<T> = noImpl()
 public fun <T> Flow<T>.subscribeOn(context: CoroutineContext): Flow<T> = noImpl()
 
 /**
- * Use [BroadcastChannel][kotlinx.coroutines.channels.BroadcastChannel].asFlow().
- * @suppress
- */
-@Deprecated(message = "Use BroadcastChannel.asFlow()", level = DeprecationLevel.ERROR)
-public fun BehaviorSubject(): Any = noImpl()
-
-/**
- * `ReplaySubject` is not supported. The closest analogue is buffered [BroadcastChannel][kotlinx.coroutines.channels.BroadcastChannel].
- * @suppress
- */
-@Deprecated(
-    message = "ReplaySubject is not supported. The closest analogue is buffered broadcast channel",
-    level = DeprecationLevel.ERROR)
-public fun ReplaySubject(): Any = noImpl()
-
-/**
- * `PublishSubject` is not supported.
- * @suppress
- */
-@Deprecated(message = "PublishSubject is not supported", level = DeprecationLevel.ERROR)
-public fun PublishSubject(): Any = noImpl()
-
-/**
  * Flow analogue of `onErrorXxx` is [catch].
  * Use `catch { emitAll(fallback) }`.
  * @suppress
