@@ -431,3 +431,10 @@ public fun <T> Flow<T>.delayFlow(timeMillis: Long): Flow<T> = onStart { delay(ti
     replaceWith = ReplaceWith("onEach { delay(timeMillis) }")
 )
 public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = onEach { delay(timeMillis) }
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogues of 'switchMap' are 'transformLatest', 'flatMapLatest' and 'mapLatest'",
+    replaceWith = ReplaceWith("this.flatMapLatest(transform)")
+)
+public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): Flow<R> = noImpl()

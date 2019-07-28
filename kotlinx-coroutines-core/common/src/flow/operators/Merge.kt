@@ -10,11 +10,8 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.channels.Channel.Factory.OPTIONAL_CHANNEL
 import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.sync.*
-import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
@@ -106,8 +103,8 @@ public fun <T> Flow<Flow<T>>.flattenMerge(concurrency: Int = DEFAULT_CONCURRENCY
 }
 
 /**
- * Returns a flow that switches to a new flow produced by [transform] function every time the original flow emits a value.
- * When switch on the a flow is performed, the previous one is cancelled.
+ * Returns a flow that produces element by [transform] function every time the original flow emits a value.
+ * When the original flow emits a new value, the previous `transform` block is cancelled, thus the name `transformLatest`.
  *
  * For example, the following flow:
  * ```
@@ -115,75 +112,66 @@ public fun <T> Flow<Flow<T>>.flattenMerge(concurrency: Int = DEFAULT_CONCURRENCY
  *     emit("a")
  *     delay(100)
  *     emit("b")
- * }.switchMap { value ->
+ * }.transformLatest { value ->
+ *     emit(value)
+ *     delay(200)
+ *     emit(value + "_last")
+ * }
+ * ```
+ * produces `a b b_last`.
+ *
+ * This operator is [buffered][buffer] by default and size of its output buffer can be changed by applying subsequent [buffer] operator.
+ */
+@ExperimentalCoroutinesApi
+public fun <T, R> Flow<T>.transformLatest(@BuilderInference transform: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> =
+    ChannelFlowTransformLatest(transform, this)
+
+/**
+ * Returns a flow that switches to a new flow produced by [transform] function every time the original flow emits a value.
+ * When the original flow emits a new value, the previous flow produced by `transform` block is cancelled.
+ *
+ * For example, the following flow:
+ * ```
+ * flow {
+ *     emit("a")
+ *     delay(100)
+ *     emit("b")
+ * }.flatMapLatest { value ->
  *     flow {
- *         emit(value + value)
+ *         emit(value)
  *         delay(200)
  *         emit(value + "_last")
  *     }
  * }
  * ```
- * produces `aa bb b_last`
+ * produces `a b b_last`
+ *
+ * This operator is [buffered][buffer] by default and size of its output buffer can be changed by applying subsequent [buffer] operator.
  */
-@FlowPreview
-public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): Flow<R> = scopedFlow { downstream ->
-    var previousFlow: Job? = null
-    collect { value ->
-        // Linearize calls to emit as alternative to the channel. Bonus points for never-overlapping channels.
-        previousFlow?.cancel(ChildCancelledException())
-        previousFlow?.join()
-        // Undispatched to have better user experience in case of synchronous flows
-        previousFlow = launch(start = CoroutineStart.UNDISPATCHED) {
-            downstream.emitAll(transform(value))
-        }
-    }
-}
+@ExperimentalCoroutinesApi
+public fun <T, R> Flow<T>.flatMapLatest(@BuilderInference transform: (value: T) -> Flow<R>): Flow<R> =
+    transformLatest { emitAll(transform(it)) }
 
-private class ChannelFlowMerge<T>(
-    flow: Flow<Flow<T>>,
-    private val concurrency: Int,
-    context: CoroutineContext = EmptyCoroutineContext,
-    capacity: Int = OPTIONAL_CHANNEL
-) : ChannelFlowOperator<Flow<T>, T>(flow, context, capacity) {
-    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
-        ChannelFlowMerge(flow, concurrency, context, capacity)
-
-    // The actual merge implementation with concurrency limit
-    private suspend fun mergeImpl(scope: CoroutineScope, collector: ConcurrentFlowCollector<T>) {
-        val semaphore = Semaphore(concurrency)
-        val job: Job? = coroutineContext[Job]
-        flow.collect { inner ->
-            /*
-             * We launch a coroutine on each emitted element and the only potential
-             * suspension point in this collector is `semaphore.acquire` that rarely suspends,
-             * so we manually check for cancellation to propagate it to the upstream in time.
-             */
-            job?.ensureActive()
-            semaphore.acquire() // Acquire concurrency permit
-            scope.launch {
-                try {
-                    inner.collect(collector)
-                } finally {
-                    semaphore.release() // Release concurrency permit
-                }
-            }
-        }
-    }
-
-    // Fast path in ChannelFlowOperator calls this function (channel was not created yet)
-    override suspend fun flowCollect(collector: FlowCollector<T>) {
-        // this function should not have been invoked when channel was explicitly requested
-        assert { capacity == OPTIONAL_CHANNEL }
-        flowScope {
-            mergeImpl(this, collector.asConcurrentFlowCollector())
-        }
-    }
-
-    // Slow path when output channel is required (and was created)
-    override suspend fun collectTo(scope: ProducerScope<T>) =
-        mergeImpl(scope, SendingCollector(scope))
-
-    override fun additionalToStringProps(): String =
-        "concurrency=$concurrency, "
-}
-
+/**
+ * Returns a flow that emits elements from the original flow transformed by [transform] function.
+ * When the original flow emits a new value, computation of the [transform] block for previous value is cancelled.
+ *
+ * For example, the following flow:
+ * ```
+ * flow {
+ *     emit("a")
+ *     delay(100)
+ *     emit("b")
+ * }.mapLatest { value ->
+ *     println("Started computing $value")
+ *     delay(200)
+ *     "Computed $value"
+ * }
+ * ```
+ * will print "Started computing 1" and "Started computing 2", but the resulting flow will contain only "Computed 2" value.
+ *
+ * This operator is [buffered][buffer] by default and size of its output buffer can be changed by applying subsequent [buffer] operator.
+ */
+@ExperimentalCoroutinesApi
+public fun <T, R> Flow<T>.mapLatest(@BuilderInference transform: suspend (value: T) -> R): Flow<R> =
+    transformLatest { emit(transform(it)) }
