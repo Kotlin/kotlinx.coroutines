@@ -144,7 +144,7 @@ public actual open class TestBase actual constructor() {
         // onCompletion should not throw exceptions before it finishes all cleanup, so that other tests always
         // start in a clear, restored state
         if (actionIndex.get() != 0 && !finished.get()) {
-            makeError("Expecting that 'finish(...)' was invoked, but it was not")
+            makeError("Expecting that 'finish(${actionIndex.get() + 1})' was invoked, but it was not")
         }
         // Shutdown all thread pools
         shutdownPoolsAfterTest()
