@@ -66,6 +66,9 @@ public fun <T> CoroutineScope.future(
  * When either promise completes with an Exception, it will attempt to synchronously complete its
  * counterpart with the same Exception. This will succeed barring a race with cancellation.
  *
+ * If the [ListenableFuture] completes with a null value, the [Deferred] will complete exceptionally
+ * with a [KotlinNullPointerException].
+ *
  * Cancellation is propagated bidirectionally.
  *
  * When `this` [ListenableFuture] is successfully cancelled - meaning [ListenableFuture.cancel]
@@ -93,7 +96,14 @@ public fun <T> ListenableFuture<T>.asDeferred(): Deferred<T> {
     if (isDone && !isCancelled) {
         return try {
             // getUninterruptibly() avoids one volatile read over Futures.getDone().
-            CompletableDeferred(Uninterruptibles.getUninterruptibly(this))
+            val value = Uninterruptibles.getUninterruptibly(this)
+            if (value == null) {
+                CompletableDeferred<T>().also {
+                    it.completeExceptionally(KotlinNullPointerException())
+                }
+            } else {
+                CompletableDeferred(value)
+            }
         } catch (e: ExecutionException) {
             // ExecutionException is the only kind of exception that can be thrown from a gotten
             // Future. Anything else showing up here indicates a very fundamental bug in a

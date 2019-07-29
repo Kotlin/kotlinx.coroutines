@@ -425,6 +425,22 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
+    fun testFutureCompletedWithNullAsDeferred() = runTest {
+        val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
+        val future = executor.submit(Callable { null })
+        val deferred = GlobalScope.async {
+            future.asDeferred().await()
+        }
+
+        try {
+            deferred.await()
+            expectUnreached()
+        } catch (e: Throwable) {
+            assertTrue(e is KotlinNullPointerException)
+        }
+    }
+
+    @Test
     fun testThrowingFutureAsDeferred() = runTest {
         val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
         val future = executor.submit(Callable { throw TestException() })
