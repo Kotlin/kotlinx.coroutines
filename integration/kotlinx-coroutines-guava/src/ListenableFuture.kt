@@ -31,21 +31,8 @@ import java.lang.IllegalStateException
  * See [newCoroutineContext][CoroutineScope.newCoroutineContext] for a description of debugging
  * facilities.
  *
- * Note that the error semantics of [future] are _subtly different_ than [asListenableFuture].
- * By calling [future], any error that occurs after successfully cancelling the returned
- * [ListenableFuture] will be passed to the [CoroutineExceptionHandler] from the context. The
- * contract of [Future] does not permit it to return an error after it is successfully cancelled.
- *
- * By calling [asListenableFuture] on a [Deferred], any error that occurs after successfully
- * cancelling the [ListenableFuture] representation of the [Deferred] will _not_ be passed to the
- * [CoroutineExceptionHandler]. Cancelling a [Deferred] places that [Deferred] in the
- * cancelling/cancelled states defined by [Job], which _can_ show the error. It's assumed that the
- * [Deferred] pointing to the task will be used to observe any error outcome occurring after
- * cancellation.
- *
- * This may be counterintuitive, but it maintains the error and cancellation contracts of both the
- * [Deferred] and [ListenableFuture] types, while permitting both kinds of promise to point to the
- * same running task.
+ * Note that the error and cancellation semantics of [future] are _subtly different_ than
+ * [asListenableFuture]'s. See [CancellationToCoroutine] for details.
  *
  * @param context added overlaying [CoroutineScope.coroutineContext] to form the new context.
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
@@ -81,7 +68,7 @@ public fun <T> CoroutineScope.future(
  *
  * Cancellation is propagated bidirectionally.
  *
- * When `this` [ListenableFuture is successfully cancelled - meaning [ListenableFuture.cancel]
+ * When `this` [ListenableFuture] is successfully cancelled - meaning [ListenableFuture.cancel]
  * returned `true` - it will synchronously cancel the returned [Deferred]. This can only race with
  * cancellation of the returned `Deferred`, so the `Deferred` will always be put into its
  * "cancelling" state and (barring uncooperative cancellation) _eventually_ reach its "cancelled"
@@ -218,6 +205,22 @@ public suspend fun <T> ListenableFuture<T>.await(): T {
  * Cancels [coroutineToCancel] if [futureToObserve] is successfully cancelled. By documented
  * contract, a [Future] has been cancelled if and only if its `isCancelled()` method returns
  * true.
+ *
+ * Any error that occurs after successfully cancelling a [ListenableFuture] created by submitting
+ * the returned [Runnable] to an `Executor` will be passed to the [CoroutineExceptionHandler]
+ * from the context. The contract of [Future] does not permit it to return an error after it
+ * is successfully cancelled.
+ *
+ * By calling [asListenableFuture] on a [Deferred], any error that occurs after successfully
+ * cancelling the [ListenableFuture] representation of the [Deferred] will _not_ be passed to the
+ * [CoroutineExceptionHandler]. Cancelling a [Deferred] places that [Deferred] in the
+ * cancelling/cancelled states defined by [Job], which _can_ show the error. It's assumed that the
+ * [Deferred] pointing to the task will be used to observe any error outcome occurring after
+ * cancellation.
+ *
+ * This may be counterintuitive, but it maintains the error and cancellation contracts of both the
+ * [Deferred] and [ListenableFuture] types, while permitting both kinds of promise to point to the
+ * same running task.
  */
 private class CancellationToCoroutine(
     val futureToObserve: ListenableFuture<*>,

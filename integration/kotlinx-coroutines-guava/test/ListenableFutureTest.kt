@@ -495,9 +495,9 @@ class ListenableFutureTest : TestBase() {
 
     @Test
     fun testUnhandledExceptionOnExternalCancellation() = runTest(
-      unhandled = listOf(
-        { it -> it is TestException } // exception is unhandled because there is no parent
-      )
+        unhandled = listOf(
+            { it -> it is TestException } // exception is unhandled because there is no parent
+        )
     ) {
         expect(1)
         // No parent here (NonCancellable), so nowhere to propagate exception
