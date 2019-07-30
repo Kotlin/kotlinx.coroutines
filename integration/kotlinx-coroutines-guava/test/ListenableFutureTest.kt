@@ -349,7 +349,7 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testCancelledDeferredAsListenableFutureAsDeferredJoinDoesNotThrow() = runTest {
+    fun testCancelledDeferredAsListenableFutureAsDeferredPassesCancellationAlong() = runTest {
         val deferred = CompletableDeferred<Int>()
         deferred.completeExceptionally(CancellationException())
         val asFuture = deferred.asListenableFuture()
