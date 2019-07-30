@@ -262,6 +262,21 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
+    fun testCancellation() = runTest {
+        val result = flow {
+            emit(1)
+            emit(2)
+            emit(3)
+            expectUnreached()
+            emit(4)
+        }.flowOn(wrapperDispatcher())
+            .buffer(0)
+            .take(2)
+            .toList()
+        assertEquals(listOf(1, 2), result)
+    }
+
+    @Test
     fun testException() = runTest {
         val flow = flow {
             emit(314)
