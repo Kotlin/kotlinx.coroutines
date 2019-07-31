@@ -19,17 +19,23 @@ class UserWithoutFriends(id: Long,
     }
 
     override fun chooseChannelToSend(): Channel<Message>? {
-        val randomDouble = random.nextDouble() * cumSumFriends.last()
-        var insertionPoint = cumSumFriends.binarySearch(randomDouble)
+        var userId = id
+        var user : User? = null
+        while (id == userId) {
+            val randomDouble = random.nextDouble() * cumSumFriends.last()
+            var insertionPoint = cumSumFriends.binarySearch(randomDouble)
 
-        // binary search can return negative values. It indicates the position in the original collection where
-        // the searched element can be inserted
-        if (insertionPoint < 0) {
-            insertionPoint = -(insertionPoint + 1)
+            // binary search can return negative values. It indicates the position in the original collection where
+            // the searched element can be inserted
+            if (insertionPoint < 0) {
+                insertionPoint = -(insertionPoint + 1)
+            }
+
+            // insertionPoint won't be out of bounds because randomDouble is less than or equals to the last number in the
+            // cumSumFriends list
+            user =  users[insertionPoint]
+            userId = user.id
         }
-
-        // insertionPoint won't be out of bounds because randomDouble is less than or equals to the last number in the
-        // cumSumFriends list
-        return users[insertionPoint].messagesChannel
+        return user?.messagesChannel
     }
 }
