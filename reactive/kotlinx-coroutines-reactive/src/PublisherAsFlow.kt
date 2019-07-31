@@ -47,7 +47,9 @@ private class PublisherAsFlow<T : Any>(
         // use another channel for conflation (cannot do openSubscription)
         if (capacity < 0) return super.produceImpl(scope)
         // Open subscription channel directly
-        val channel = publisher.openSubscription(capacity)
+        val channel = publisher
+            .injectCoroutineContext(scope.coroutineContext)
+            .openSubscription(capacity)
         val handle = scope.coroutineContext[Job]?.invokeOnCompletion(onCancelling = true) { cause ->
             channel.cancel(cause?.let {
                 it as? CancellationException ?: CancellationException("Job was cancelled", it)

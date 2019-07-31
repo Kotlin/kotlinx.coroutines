@@ -32,11 +32,6 @@ public final class kotlinx/coroutines/reactor/ReactorContext : kotlin/coroutines
 public final class kotlinx/coroutines/reactor/ReactorContext$Key : kotlin/coroutines/CoroutineContext$Key {
 }
 
-public final class kotlinx/coroutines/reactor/ReactorContextInjector : kotlinx/coroutines/reactive/ContextInjector {
-	public fun <init> ()V
-	public fun injectCoroutineContext (Lorg/reactivestreams/Publisher;Lkotlin/coroutines/CoroutineContext;)Lorg/reactivestreams/Publisher;
-}
-
 public final class kotlinx/coroutines/reactor/ReactorContextKt {
 	public static final fun asCoroutineContext (Lreactor/util/context/Context;)Lkotlinx/coroutines/reactor/ReactorContext;
 }

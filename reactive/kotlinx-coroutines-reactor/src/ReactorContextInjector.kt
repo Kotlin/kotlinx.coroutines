@@ -1,16 +1,12 @@
 package kotlinx.coroutines.reactor
 
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.reactive.ContextInjector
-import org.reactivestreams.Publisher
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
-import reactor.util.context.Context
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.reactive.*
+import org.reactivestreams.*
+import reactor.core.publisher.*
+import reactor.util.context.*
+import kotlin.coroutines.*
 
-/** @suppress */
-@InternalCoroutinesApi
-class ReactorContextInjector : ContextInjector {
+internal class ReactorContextInjector : ContextInjector {
     /**
      * Injects all values from the [ReactorContext] entry of the given coroutine context
      * into the downstream [Context] of Reactor's [Publisher] instances of [Mono] or [Flux].

@@ -1,12 +1,13 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
 import org.junit.Test
 import reactor.core.publisher.*
-import reactor.util.context.Context
-import kotlin.test.assertEquals
-import kotlinx.coroutines.flow.*
+import reactor.util.context.*
+import kotlin.test.*
 
 class ReactorContextTest {
     @Test
@@ -55,7 +56,9 @@ class ReactorContextTest {
     }
 
     @Test
-    fun testFluxAwaitContextPropagation() = runBlocking<Unit>(Context.of(1, "1", 2, "2", 3, "3").asCoroutineContext()) {
+    fun testFluxAwaitContextPropagation() = runBlocking<Unit>(
+        Context.of(1, "1", 2, "2", 3, "3").asCoroutineContext()
+    ) {
         assertEquals(f().awaitFirst(), "1")
         assertEquals(f().awaitFirstOrDefault("noValue"), "1")
         assertEquals(f().awaitFirstOrNull(), "1")
@@ -77,18 +80,32 @@ class ReactorContextTest {
     }
 
     @Test
-    fun testFlowToFluxContextPropagation() = runBlocking(Context.of(1, "1", 2, "2", 3, "3").asCoroutineContext()) {
+    fun testFlowToFluxContextPropagation() = runBlocking(
+        Context.of(1, "1", 2, "2", 3, "3").asCoroutineContext()
+    ) {
         var i = 0
+        // call "collect" on the converted Flow
         bar().collect { str ->
             i++; assertEquals(str, i.toString())
         }
         assertEquals(i, 3)
     }
 
-    suspend fun bar(): Flow<String> {
-        return flux {
-            val ctx = coroutineContext[ReactorContext]!!.context
-            (1..3).forEach { send(ctx.getOrDefault(it, "noValue")) }
-        }.asFlow()
+    @Test
+    fun testFlowToFluxDirectContextPropagation() = runBlocking(
+        Context.of(1, "1", 2, "2", 3, "3").asCoroutineContext()
+    ) {
+        var i = 0
+        // convert resulting flow to channel using "produceIn"
+        val channel = bar().produceIn(this)
+        channel.consumeEach { str ->
+            i++; assertEquals(str, i.toString())
+        }
+        assertEquals(i, 3)
     }
+
+    private fun bar(): Flow<String> = flux {
+        val ctx = coroutineContext[ReactorContext]!!.context
+        (1..3).forEach { send(ctx.getOrDefault(it, "noValue")) }
+    }.asFlow()
 }
