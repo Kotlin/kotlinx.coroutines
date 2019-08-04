@@ -147,12 +147,10 @@ if (build_snapshot_train) {
     allprojects {
         tasks.withType(Test).all {
             exclude '**/*LinearizabilityTest*'
-            exclude '**/*PublicApiTest*' // KT-30956
             exclude '**/*LFTest*'
             exclude '**/*StressTest*'
             exclude '**/*scheduling*'
             exclude '**/*Timeout*'
-            exclude '**/*coroutines/debug*' // Unmute after 1.3.31 where inlining was fixed
             exclude '**/*definitely/not/kotlinx*'
         }
     }
