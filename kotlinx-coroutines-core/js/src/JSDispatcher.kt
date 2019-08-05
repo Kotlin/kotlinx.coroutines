@@ -7,32 +7,45 @@ package kotlinx.coroutines
 import kotlinx.coroutines.internal.*
 import org.w3c.dom.*
 import kotlin.coroutines.*
-import kotlin.js.*
+import kotlin.js.Promise
 
 private const val MAX_DELAY = Int.MAX_VALUE.toLong()
 
 private fun delayToInt(timeMillis: Long): Int =
     timeMillis.coerceIn(0, MAX_DELAY).toInt()
 
-internal object NodeDispatcher : CoroutineDispatcher(), Delay {
-    override fun dispatch(context: CoroutineContext, block: Runnable) = NodeJsMessageQueue.enqueue(block)
+internal sealed class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+        val handle = setTimeout({ block.run() }, delayToInt(timeMillis))
+        return ClearTimeout(handle)
+    }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val handle = setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
         // Actually on cancellation, but clearTimeout is idempotent
         continuation.invokeOnCancellation(handler = ClearTimeout(handle).asHandler)
     }
+}
 
-    private class ClearTimeout(private val handle: Int) : CancelHandler(), DisposableHandle {
-        override fun dispose() { clearTimeout(handle) }
-        override fun invoke(cause: Throwable?) { dispose() }
-        override fun toString(): String = "ClearTimeout[$handle]"
+internal object NodeDispatcher : SetTimeoutBasedDispatcher() {
+    override fun dispatch(context: CoroutineContext, block: Runnable) = NodeJsMessageQueue.enqueue(block)
+}
+
+internal object SetTimeoutDispatcher : SetTimeoutBasedDispatcher() {
+    override fun dispatch(context: CoroutineContext, block: Runnable) = SetTimeoutMessageQueue.enqueue(block)
+}
+
+private class ClearTimeout(private val handle: Int) : CancelHandler(), DisposableHandle {
+
+    override fun dispose() {
+        clearTimeout(handle)
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
-        val handle = setTimeout({ block.run() }, delayToInt(timeMillis))
-        return ClearTimeout(handle)
+    override fun invoke(cause: Throwable?) {
+        dispose()
     }
+
+    override fun toString(): String = "ClearTimeout[$handle]"
 }
 
 internal class WindowDispatcher(private val window: Window) : CoroutineDispatcher(), Delay {
@@ -82,6 +95,16 @@ private object NodeJsMessageQueue : MessageQueue() {
     }
 
     override fun reschedule() {
+        setTimeout({ process() }, 0)
+    }
+}
+
+private object SetTimeoutMessageQueue : MessageQueue() {
+    override fun schedule() = scheduleProcess()
+
+    override fun reschedule() = scheduleProcess()
+
+    private fun scheduleProcess() {
         setTimeout({ process() }, 0)
     }
 }
@@ -136,4 +159,3 @@ internal abstract class MessageQueue : ArrayQueue<Runnable>() {
 // using them via "window" (which only works in browser)
 private external fun setTimeout(handler: dynamic, timeout: Int = definedExternally): Int
 private external fun clearTimeout(handle: Int = definedExternally)
-private external val process: dynamic
