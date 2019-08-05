@@ -7,7 +7,7 @@ package kotlinx.coroutines
 import kotlin.coroutines.*
 
 /**
- * Creates context for the new coroutine. It installs [Dispatchers.Default] when no other dispatcher nor
+ * Creates a context for the new coroutine. It installs [Dispatchers.Default] when no other dispatcher or
  * [ContinuationInterceptor] is specified, and adds optional support for debugging facilities (when turned on).
  */
 public expect fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext

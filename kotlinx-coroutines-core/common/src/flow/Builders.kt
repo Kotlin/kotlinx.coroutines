@@ -20,17 +20,18 @@ import kotlin.jvm.*
  *
  * Example of usage:
  * ```
- * fun fibonacci(): Flow<Long> = flow {
- *     emit(1L)
- *     var f1 = 1L
- *     var f2 = 1L
- *     repeat(100) {
- *         var tmp = f1
- *         f1 = f2
- *         f2 += tmp
- *         emit(f1)
+ * fun fibonacci(): Flow<BigInteger> = flow {
+ *     var x = BigInteger.ZERO
+ *     var y = BigInteger.ONE
+ *     while (true) {
+ *         emit(x)
+ *         x = y.also {
+ *             y += x
+ *         }
  *     }
  * }
+ *
+ * fibonacci().take(100).collect { println(it) }
  * ```
  *
  * `emit` should happen strictly in the dispatchers of the [block] in order to preserve the flow context.
@@ -85,7 +86,7 @@ public fun <T> Iterable<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a flow that produces values from the given iterable.
+ * Creates a flow that produces values from the given iterator.
  */
 public fun <T> Iterator<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
@@ -103,7 +104,12 @@ public fun <T> Sequence<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a flow that produces values from the given array of elements.
+ * Creates a flow that produces values from the specified `vararg`-arguments.
+ *
+ * Example of usage:
+ * ```
+ * flowOf(1, 2, 3)
+ * ```
  */
 public fun <T> flowOf(vararg elements: T): Flow<T> = flow {
     for (element in elements) {
@@ -112,12 +118,12 @@ public fun <T> flowOf(vararg elements: T): Flow<T> = flow {
 }
 
 /**
- * Creates flow that produces a given [value].
+ * Creates flow that produces the given [value].
  */
 public fun <T> flowOf(value: T): Flow<T> = flow {
     /*
      * Implementation note: this is just an "optimized" overload of flowOf(vararg)
-     * which significantly reduce the footprint of widespread single-value flows.
+     * which significantly reduces the footprint of widespread single-value flows.
      */
     emit(value)
 }
@@ -141,7 +147,7 @@ public fun <T> Array<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates flow that produces values from the given array.
+ * Creates a flow that produces values from the array.
  */
 public fun IntArray.asFlow(): Flow<Int> = flow {
     forEach { value ->
@@ -150,7 +156,7 @@ public fun IntArray.asFlow(): Flow<Int> = flow {
 }
 
 /**
- * Creates flow that produces values from the given array.
+ * Creates a flow that produces values from the array.
  */
 public fun LongArray.asFlow(): Flow<Long> = flow {
     forEach { value ->
@@ -159,7 +165,7 @@ public fun LongArray.asFlow(): Flow<Long> = flow {
 }
 
 /**
- * Creates flow that produces values from the given range.
+ * Creates a flow that produces values from the range.
  */
 public fun IntRange.asFlow(): Flow<Int> = flow {
     forEach { value ->
@@ -168,7 +174,7 @@ public fun IntRange.asFlow(): Flow<Int> = flow {
 }
 
 /**
- * Creates flow that produces values from the given range.
+ * Creates a flow that produces values from the range.
  */
 public fun LongRange.asFlow(): Flow<Long> = flow {
     forEach { value ->
@@ -197,20 +203,20 @@ public fun <T> flowViaChannel(
 
 /**
  * Creates an instance of the cold [Flow] with elements that are sent to a [SendChannel]
- * that is provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
- * produced by the code that is running in a different context or running concurrently.
- * The resulting flow is _cold_, which means that [block] is called on each call of a terminal operator
- * on the resulting flow.
+ * provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
+ * produced by code that is running in a different context or concurrently.
+ * The resulting flow is _cold_, which means that [block] is called every time a terminal operator
+ * is applied to the resulting flow.
  *
  * This builder ensures thread-safety and context preservation, thus the provided [ProducerScope] can be used
  * concurrently from different contexts.
- * The resulting flow completes as soon as the code in the [block] and all its children complete.
+ * The resulting flow completes as soon as the code in the [block] and all its children completes.
  * Use [awaitClose] as the last statement to keep it running.
- * For more detailed example please refer to [callbackFlow] documentation.
+ * A more detailed example is provided in the documentation of [callbackFlow].
  *
- * A channel with [default][Channel.BUFFERED] buffer size is used. Use [buffer] operator on the
- * resulting flow to specify a value other than default and to control what happens when data is produced faster
- * than it is consumed, that is to control backpressure behavior.
+ * A channel with the [default][Channel.BUFFERED] buffer size is used. Use the [buffer] operator on the
+ * resulting flow to specify a user-defined value and to control what happens when data is produced faster
+ * than consumed, i.e. to control the back-pressure behavior.
  *
  * Adjacent applications of [channelFlow], [flowOn], [buffer], [produceIn], and [broadcastIn] are
  * always fused so that only one properly configured channel is used for execution.
@@ -245,22 +251,22 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
 
 /**
  * Creates an instance of the cold [Flow] with elements that are sent to a [SendChannel]
- * that is provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
- * produced by the code that is running in a different context or running concurrently.
+ * provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
+ * produced by code that is running in a different context or concurrently.
  *
- * The resulting flow is _cold_, which means that [block] is called on each call of a terminal operator
- * on the resulting flow.
+ * The resulting flow is _cold_, which means that [block] is called every time a terminal operator
+ * is applied to the resulting flow.
  *
  * This builder ensures thread-safety and context preservation, thus the provided [ProducerScope] can be used
- * from any context, e.g. from the callback-based API.
- * The resulting flow completes as soon as the code in the [block] and all its children complete.
+ * from any context, e.g. from a callback-based API.
+ * The resulting flow completes as soon as the code in the [block] and all its children completes.
  * Use [awaitClose] as the last statement to keep it running.
- * [awaitClose] argument is called when either flow consumer cancels flow collection
- * or when callback-based API invokes [SendChannel.close] manually.
+ * The [awaitClose] argument is called either when a flow consumer cancels the flow collection
+ * or when a callback-based API invokes [SendChannel.close] manually.
  *
- * A channel with [default][Channel.BUFFERED] buffer size is used. Use [buffer] operator on the
- * resulting flow to specify a value other than default and to control what happens when data is produced faster
- * than it is consumed, that is to control backpressure behavior.
+ * A channel with the [default][Channel.BUFFERED] buffer size is used. Use the [buffer] operator on the
+ * resulting flow to specify a user-defined value and to control what happens when data is produced faster
+ * than consumed, i.e. to control the back-pressure behavior.
  *
  * Adjacent applications of [callbackFlow], [flowOn], [buffer], [produceIn], and [broadcastIn] are
  * always fused so that only one properly configured channel is used for execution.

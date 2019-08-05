@@ -8,19 +8,19 @@ import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
 /**
- * Scope for [produce][CoroutineScope.produce] coroutine builder.
+ * Scope for the [produce][CoroutineScope.produce] coroutine builder.
  *
- * **Note: This is an experimental api.** Behaviour of producers that work as children in a parent scope with respect
+ * **Note: This is an experimental api.** Behavior of producers that work as children in a parent scope with respect
  *        to cancellation and error handling may change in the future.
  */
 @ExperimentalCoroutinesApi
 public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
     /**
-     * A reference to the channel that this coroutine [sends][send] elements to.
+     * A reference to the channel this coroutine [sends][send] elements to.
      * It is provided for convenience, so that the code in the coroutine can refer
-     * to the channel as `channel` as apposed to `this`.
+     * to the channel as `channel` as opposed to `this`.
      * All the [SendChannel] functions on this interface delegate to
-     * the channel instance returned by this function.
+     * the channel instance returned by this property.
      */
     val channel: SendChannel<E>
 }
@@ -29,9 +29,9 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
  * Suspends the current coroutine until the channel is either [closed][SendChannel.close] or [cancelled][ReceiveChannel.cancel]
  * and invokes the given [block] before resuming the coroutine.
  *
- * Note that when producer channel is cancelled this function resumes with cancellation exception,
- * so putting the code after calling this function would not lead to its execution in case of cancellation.
- * That is why this code takes a lambda parameter.
+ * Note that when the producer channel is cancelled, this function resumes with a cancellation exception.
+ * Therefore, in case of cancellation, no code after the call to this function will be executed.
+ * That's why this function takes a lambda parameter.
  *
  * Example of usage:
  * ```
@@ -43,7 +43,7 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
  */
 @ExperimentalCoroutinesApi
 public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
-    check(kotlin.coroutines.coroutineContext[Job] === this) { "awaitClose() can be invoke only from the producer context" }
+    check(kotlin.coroutines.coroutineContext[Job] === this) { "awaitClose() can only be invoked from the producer context" }
     try {
         suspendCancellableCoroutine<Unit> { cont ->
             invokeOnClose {
@@ -56,28 +56,28 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
 }
 
 /**
- * Launches new coroutine to produce a stream of values by sending them to a channel
+ * Launches a new coroutine to produce a stream of values by sending them to a channel
  * and returns a reference to the coroutine as a [ReceiveChannel]. This resulting
  * object can be used to [receive][ReceiveChannel.receive] elements produced by this coroutine.
  *
- * The scope of the coroutine contains [ProducerScope] interface, which implements
- * both [CoroutineScope] and [SendChannel], so that coroutine can invoke
+ * The scope of the coroutine contains the [ProducerScope] interface, which implements
+ * both [CoroutineScope] and [SendChannel], so that the coroutine can invoke
  * [send][SendChannel.send] directly. The channel is [closed][SendChannel.close]
  * when the coroutine completes.
  * The running coroutine is cancelled when its receive channel is [cancelled][ReceiveChannel.cancel].
  *
- * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
- * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
- * with corresponding [coroutineContext] element.
+ * The coroutine context is inherited from this [CoroutineScope]. Additional context elements can be specified with the [context] argument.
+ * If the context does not have any dispatcher or other [ContinuationInterceptor], then [Dispatchers.Default] is used.
+ * The parent job is inherited from the [CoroutineScope] as well, but it can also be overridden
+ * with a corresponding [coroutineContext] element.
  *
- * Uncaught exceptions in this coroutine close the channel with this exception as a cause and
- * the resulting channel becomes _failed_, so that any attempt to receive from such a channel throws exception.
+ * Any uncaught exception in this coroutine will close the channel with this exception as the cause and
+ * the resulting channel will become _failed_, so that any attempt to receive from it thereafter will throw an exception.
  *
  * The kind of the resulting channel depends on the specified [capacity] parameter.
- * See [Channel] interface documentation for details.
+ * See the [Channel] interface documentation for details.
  *
- * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
+ * See [newCoroutineContext] for a description of debugging facilities available for newly created coroutines.
  *
  * **Note: This is an experimental api.** Behaviour of producers that work as children in a parent scope with respect
  *        to cancellation and error handling may change in the future.
@@ -100,9 +100,9 @@ public fun <E> CoroutineScope.produce(
 }
 
 /**
- * This an internal API and should not be used from general code.**
- * onCompletion parameter will be redesigned.
- * If you have to use `onCompletion` operator, please report to https://github.com/Kotlin/kotlinx.coroutines/issues/.
+ * **This is an internal API and should not be used from general code.**
+ * The `onCompletion` parameter will be redesigned.
+ * If you have to use the `onCompletion` operator, please report to https://github.com/Kotlin/kotlinx.coroutines/issues/.
  * As a temporary solution, [invokeOnCompletion][Job.invokeOnCompletion] can be used instead:
  * ```
  * fun <E> ReceiveChannel<E>.myOperator(): ReceiveChannel<E> = GlobalScope.produce(Dispatchers.Unconfined) {
