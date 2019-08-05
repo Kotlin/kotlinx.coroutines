@@ -34,7 +34,7 @@ internal open class ArrayChannel<E>(
      * Guarded by lock.
      * Allocate minimum of capacity and 16 to avoid excess memory pressure for large channels when it's not necessary.
      */
-    private var buffer: Array<Any?> = arrayOfNulls<Any?>(min(capacity, 16))
+    private var buffer: Array<Any?> = arrayOfNulls<Any?>(min(capacity, 8))
     private var head: Int = 0
     @Volatile
     private var size: Int = 0 // Invariant: size <= capacity
@@ -70,7 +70,7 @@ internal open class ArrayChannel<E>(
                     }
                 }
                 ensureCapacity(size)
-                buffer[(head + size) % capacity] = element // actually queue element
+                buffer[(head + size) % buffer.size] = element // actually queue element
                 return OFFER_SUCCESS
             }
             // size == capacity: full
@@ -119,7 +119,7 @@ internal open class ArrayChannel<E>(
                     return ALREADY_SELECTED
                 }
                 ensureCapacity(size)
-                buffer[(head + size) % capacity] = element // actually queue element
+                buffer[(head + size) % buffer.size] = element // actually queue element
                 return OFFER_SUCCESS
             }
             // size == capacity: full
@@ -132,11 +132,14 @@ internal open class ArrayChannel<E>(
 
     // Guarded by lock
     private fun ensureCapacity(currentSize: Int) {
-        if (currentSize == buffer.size) {
+        if (currentSize >= buffer.size) {
             val newSize = min(buffer.size * 2, capacity)
             val newBuffer = arrayOfNulls<Any?>(newSize)
-            buffer.copyInto(newBuffer)
+            for (i in 0 until currentSize) {
+                newBuffer[i] = buffer[(head + i) % buffer.size]
+            }
             buffer = newBuffer
+            head = 0
         }
     }
 
@@ -166,9 +169,9 @@ internal open class ArrayChannel<E>(
             }
             if (replacement !== POLL_FAILED && replacement !is Closed<*>) {
                 this.size = size // restore size
-                buffer[(head + size) % capacity] = replacement
+                buffer[(head + size) % buffer.size] = replacement
             }
-            head = (head + 1) % capacity
+            head = (head + 1) % buffer.size
         }
         // complete send the we're taken replacement from
         if (token != null)
@@ -220,7 +223,7 @@ internal open class ArrayChannel<E>(
             }
             if (replacement !== POLL_FAILED && replacement !is Closed<*>) {
                 this.size = size // restore size
-                buffer[(head + size) % capacity] = replacement
+                buffer[(head + size) % buffer.size] = replacement
             } else {
                 // failed to poll or is already closed --> let's try to select receiving this element from buffer
                 if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
@@ -229,7 +232,7 @@ internal open class ArrayChannel<E>(
                     return ALREADY_SELECTED
                 }
             }
-            head = (head + 1) % capacity
+            head = (head + 1) % buffer.size
         }
         // complete send the we're taken replacement from
         if (token != null)
@@ -243,7 +246,7 @@ internal open class ArrayChannel<E>(
         lock.withLock {
             repeat(size) {
                 buffer[head] = 0
-                head = (head + 1) % capacity
+                head = (head + 1) % buffer.size
             }
             size = 0
         }
@@ -254,5 +257,5 @@ internal open class ArrayChannel<E>(
     // ------ debug ------
 
     override val bufferDebugString: String
-        get() = "(buffer:capacity=${buffer.size},size=$size)"
+        get() = "(buffer:capacity=$capacity,size=$size)"
 }

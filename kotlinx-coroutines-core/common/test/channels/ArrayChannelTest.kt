@@ -86,7 +86,7 @@ class ArrayChannelTest : TestBase() {
     }
 
     @Test
-    fun testOfferAndPool() = runTest {
+    fun testOfferAndPoll() = runTest {
         val q = Channel<Int>(1)
         assertTrue(q.offer(1))
         expect(1)
@@ -149,6 +149,26 @@ class ArrayChannelTest : TestBase() {
     fun testBufferSize() = runTest {
         val capacity = 42
         val channel = Channel<Int>(capacity)
+        checkBufferChannel(channel, capacity)
+    }
+
+    @Test
+    fun testBufferSizeFromTheMiddle() = runTest {
+        val capacity = 42
+        val channel = Channel<Int>(capacity)
+        repeat(4) {
+            channel.offer(-1)
+        }
+        repeat(4) {
+            channel.receiveOrNull()
+        }
+        checkBufferChannel(channel, capacity)
+    }
+
+    private suspend fun CoroutineScope.checkBufferChannel(
+        channel: Channel<Int>,
+        capacity: Int
+    ) {
         launch {
             expect(2)
             repeat(42) {
