@@ -172,7 +172,7 @@ public interface Flow<out T> {
 }
 
 /**
- * The base class for stateful implementations of `Flow`.
+ * Base class for stateful implementations of `Flow`.
  * It tracks all the properties required for context preservation and throws an [IllegalStateException]
  * if any of the properties are violated.
  * 
