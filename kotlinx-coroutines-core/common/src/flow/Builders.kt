@@ -20,17 +20,18 @@ import kotlin.jvm.*
  *
  * Example of usage:
  * ```
- * fun fibonacci(): Flow<Long> = flow {
- *     emit(1L)
- *     var f1 = 1L
- *     var f2 = 1L
- *     repeat(100) {
- *         var tmp = f1
- *         f1 = f2
- *         f2 += tmp
- *         emit(f1)
+ * fun fibonacci(): Flow<BigInteger> = flow {
+ *     var x = BigInteger.ZERO
+ *     var y = BigInteger.ONE
+ *     while (true) {
+ *         emit(x)
+ *         x = y.also {
+ *             y += x
+ *         }
  *     }
  * }
+ *
+ * fibonacci().take(100).collect { println(it) }
  * ```
  *
  * `emit` should happen strictly in the dispatchers of the [block] in order to preserve the flow context.
