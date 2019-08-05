@@ -15,6 +15,26 @@ private fun delayToInt(timeMillis: Long): Int =
     timeMillis.coerceIn(0, MAX_DELAY).toInt()
 
 internal sealed class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay {
+    inner class ScheduledMessageQueue : MessageQueue() {
+        internal val processQueue: dynamic = { process() }
+
+        override fun schedule() {
+            scheduleQueueProcessing()
+        }
+
+        override fun reschedule() {
+            setTimeout(processQueue, 0)
+        }
+    }
+
+    internal val messageQueue = ScheduledMessageQueue()
+
+    abstract fun scheduleQueueProcessing()
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        messageQueue.enqueue(block)
+    }
+
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
         val handle = setTimeout({ block.run() }, delayToInt(timeMillis))
         return ClearTimeout(handle)
@@ -28,11 +48,15 @@ internal sealed class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay {
 }
 
 internal object NodeDispatcher : SetTimeoutBasedDispatcher() {
-    override fun dispatch(context: CoroutineContext, block: Runnable) = NodeJsMessageQueue.enqueue(block)
+    override fun scheduleQueueProcessing() {
+        process.nextTick(messageQueue.processQueue)
+    }
 }
 
 internal object SetTimeoutDispatcher : SetTimeoutBasedDispatcher() {
-    override fun dispatch(context: CoroutineContext, block: Runnable) = SetTimeoutMessageQueue.enqueue(block)
+    override fun scheduleQueueProcessing() {
+        setTimeout(messageQueue.processQueue, 0)
+    }
 }
 
 private class ClearTimeout(private val handle: Int) : CancelHandler(), DisposableHandle {
@@ -88,27 +112,6 @@ private class WindowMessageQueue(private val window: Window) : MessageQueue() {
     }
 }
 
-private object NodeJsMessageQueue : MessageQueue() {
-    override fun schedule() {
-        // next tick is even faster than resolve
-        process.nextTick({ process() })
-    }
-
-    override fun reschedule() {
-        setTimeout({ process() }, 0)
-    }
-}
-
-private object SetTimeoutMessageQueue : MessageQueue() {
-    override fun schedule() = scheduleProcess()
-
-    override fun reschedule() = scheduleProcess()
-
-    private fun scheduleProcess() {
-        setTimeout({ process() }, 0)
-    }
-}
-
 /**
  * An abstraction over JS scheduling mechanism that leverages micro-batching of [dispatch] blocks without
  * paying the cost of JS callbacks scheduling on every dispatch.
@@ -123,9 +126,8 @@ private object SetTimeoutMessageQueue : MessageQueue() {
  */
 internal abstract class MessageQueue : ArrayQueue<Runnable>() {
     val yieldEvery = 16 // yield to JS macrotask event loop after this many processed messages
-
     private var scheduled = false
-    
+
     abstract fun schedule()
 
     abstract fun reschedule()
