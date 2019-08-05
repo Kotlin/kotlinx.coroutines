@@ -14,7 +14,7 @@ import kotlin.coroutines.jvm.internal.*
  * Class describing coroutine info such as its context, state and stacktrace.
  */
 @ExperimentalCoroutinesApi
-public data class CoroutineInfo internal constructor(
+public class CoroutineInfo internal constructor(
     val context: CoroutineContext,
     private val creationStackBottom: CoroutineStackFrame,
     @JvmField internal val sequenceNumber: Long
@@ -89,6 +89,10 @@ public data class CoroutineInfo internal constructor(
         } else {
             lastObservedThread = null
         }
+    }
+
+    override fun toString(): String {
+        return "CoroutineInfo(state=$state,context=$context)"
     }
 }
 
