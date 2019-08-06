@@ -11,8 +11,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.reactivestreams.*
-import java.util.concurrent.atomic.AtomicLong
-import kotlin.coroutines.*
+import kotlinx.coroutines.intrinsics.*
 
 /**
  * Transforms the given flow to a spec-compliant [Publisher].
@@ -37,12 +36,15 @@ private class FlowAsPublisher<T : Any>(private val flow: Flow<T>) : Publisher<T>
 public class FlowSubscription<T>(
     @JvmField val flow: Flow<T>,
     @JvmField val subscriber: Subscriber<in T>
-) : Subscription {
+) : Subscription, AbstractCoroutine<Unit>(Dispatchers.Unconfined, false) {
     private val requested = atomic(0L)
     private val producer = atomic<CancellableContinuation<Unit>?>(null)
 
-    // This is actually optimizable
-    private val job = GlobalScope.launch(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
+    override fun onStart() {
+        ::flowProcessing.startCoroutineCancellable(this)
+    }
+
+    private suspend fun flowProcessing() {
         try {
             consumeFlow()
             subscriber.onComplete()
@@ -60,6 +62,9 @@ public class FlowSubscription<T>(
         }
     }
 
+    /*
+     * This method has at most one caller at any time (triggered from the `request` method)
+     */
     private suspend fun consumeFlow() {
         flow.collect { value ->
             /*
@@ -67,7 +72,7 @@ public class FlowSubscription<T>(
              * No intermediate "child failed, but flow coroutine is not" states are allowed.
              */
             coroutineContext.ensureActive()
-            if (requested.value == 0L) {
+            if (requested.value <= 0L) {
                 suspendCancellableCoroutine<Unit> {
                     producer.value = it
                     if (requested.value != 0L) it.resumeSafely()
@@ -79,14 +84,14 @@ public class FlowSubscription<T>(
     }
 
     override fun cancel() {
-        job.cancel()
+        cancel(null)
     }
 
     override fun request(n: Long) {
         if (n <= 0) {
             return
         }
-        job.start()
+        start()
         var snapshot: Long
         var newValue: Long
         do {

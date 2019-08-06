@@ -29,7 +29,7 @@ public final class kotlinx/coroutines/reactive/FlowKt {
 	public static final fun asPublisher (Lkotlinx/coroutines/flow/Flow;)Lorg/reactivestreams/Publisher;
 }
 
-public final class kotlinx/coroutines/reactive/FlowSubscription : org/reactivestreams/Subscription {
+public final class kotlinx/coroutines/reactive/FlowSubscription : kotlinx/coroutines/AbstractCoroutine, org/reactivestreams/Subscription {
 	public final field flow Lkotlinx/coroutines/flow/Flow;
 	public final field subscriber Lorg/reactivestreams/Subscriber;
 	public fun <init> (Lkotlinx/coroutines/flow/Flow;Lorg/reactivestreams/Subscriber;)V

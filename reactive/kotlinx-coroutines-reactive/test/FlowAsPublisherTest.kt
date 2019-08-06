@@ -50,7 +50,7 @@ class FlowAsPublisherTest : TestBase() {
     @Test
     fun testCancellationIsNotReported() {
         expect(1)
-        flow {
+        flow<Int>    {
             emit(2)
             hang { expect(3) }
         }.asPublisher().subscribe(object : Subscriber<Int> {
