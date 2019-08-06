@@ -38,13 +38,11 @@ public class FlowSubscription<T>(
     @JvmField val flow: Flow<T>,
     @JvmField val subscriber: Subscriber<in T>
 ) : Subscription {
-    @Volatile
-    private var canceled: Boolean = false
     private val requested = atomic(0L)
     private val producer = atomic<CancellableContinuation<Unit>?>(null)
 
     // This is actually optimizable
-    private var job = GlobalScope.launch(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
+    private val job = GlobalScope.launch(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
         try {
             consumeFlow()
             subscriber.onComplete()
@@ -81,12 +79,11 @@ public class FlowSubscription<T>(
     }
 
     override fun cancel() {
-        canceled = true
         job.cancel()
     }
 
     override fun request(n: Long) {
-        if (n <= 0 || canceled) {
+        if (n <= 0) {
             return
         }
         job.start()
