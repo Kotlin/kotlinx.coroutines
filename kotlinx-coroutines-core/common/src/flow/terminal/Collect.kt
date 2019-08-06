@@ -87,8 +87,44 @@ public suspend inline fun <T> Flow<T>.collectIndexed(crossinline action: suspend
     })
 
 /**
+ * Terminal flow operator that collects the given flow with a provided [action].
+ * The crucial difference from [collect] is that when the original flow emits a new value, [action] block for previous
+ * value is cancelled.
+ * It can be demonstrated by the following example:
+ * ```
+ * flow {
+ *     emit(1)
+ *     delay(50)
+ *     emit(2)
+ * }.collectLatest { value ->
+ *     println("Collecting $value")
+ *     delay(100) // Emulate work
+ *     println("$value collected")
+ * }
+ * ```
+ *
+ * prints "Collecting 1, Collecting 2, 2 collected"
+ */
+@ExperimentalCoroutinesApi
+public suspend fun <T> Flow<T>.collectLatest(action: suspend (value: T) -> Unit) {
+    /*
+     * Implementation note:
+     * buffer(0) is inserted here to fulfil user's expectations in sequential usages, e.g.:
+     * ```
+     * flowOf(1, 2, 3).collectLatest {
+     *     delay(1)
+     *     println(it) // Expect only 3 to be printed
+     * }
+     * ```
+     *
+     * It's not the case for intermediate operators which users mostly use for interactive UI,
+     * where performance of dispatch is more important.
+     */
+    mapLatest(action).buffer(0).collect()
+}
+
+/**
  * Collects all the values from the given [flow] and emits them to the collector.
- * 
  * It is a shorthand for `flow.collect { value -> emit(value) }`.
  */
 @ExperimentalCoroutinesApi
