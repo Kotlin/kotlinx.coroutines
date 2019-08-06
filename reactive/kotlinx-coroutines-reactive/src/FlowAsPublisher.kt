@@ -40,7 +40,7 @@ public class FlowSubscription<T>(
 ) : Subscription {
     @Volatile
     private var canceled: Boolean = false
-    private val requested = AtomicLong(0L)
+    private val requested = atomic(0L)
     private val producer = atomic<CancellableContinuation<Unit>?>(null)
 
     // This is actually optimizable
@@ -69,10 +69,10 @@ public class FlowSubscription<T>(
              * No intermediate "child failed, but flow coroutine is not" states are allowed.
              */
             coroutineContext.ensureActive()
-            if (requested.get() == 0L) {
+            if (requested.value == 0L) {
                 suspendCancellableCoroutine<Unit> {
                     producer.value = it
-                    if (requested.get() != 0L) it.resumeSafely()
+                    if (requested.value != 0L) it.resumeSafely()
                 }
             }
             requested.decrementAndGet()
@@ -93,7 +93,7 @@ public class FlowSubscription<T>(
         var snapshot: Long
         var newValue: Long
         do {
-            snapshot = requested.get()
+            snapshot = requested.value
             newValue = snapshot + n
             if (newValue <= 0L) newValue = Long.MAX_VALUE
         } while (!requested.compareAndSet(snapshot, newValue))
