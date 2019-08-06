@@ -8,14 +8,14 @@ package kotlinx.coroutines.flow.internal
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.internal.Symbol
+import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 
 internal fun getNull(): Symbol = NULL // Workaround for JS BE bug
 
-internal suspend inline fun <T1, T2, R> FlowCollector<R>.combineTransformInternal(
+internal suspend fun <T1, T2, R> FlowCollector<R>.combineTransformInternal(
     first: Flow<T1>, second: Flow<T2>,
-    crossinline transform: suspend FlowCollector<R>.(a: T1, b: T2) -> Unit
+    transform: suspend FlowCollector<R>.(a: T1, b: T2) -> Unit
 ) {
     coroutineScope {
         val firstChannel = asFairChannel(first)
@@ -45,11 +45,11 @@ internal suspend inline fun <T1, T2, R> FlowCollector<R>.combineTransformInterna
 }
 
 @PublishedApi
-internal fun <T, R> combine(
-    vararg flows: Flow<T>,
+internal suspend fun <R, T> FlowCollector<R>.combineInternal(
+    flows: Array<out Flow<T>>,
     arrayFactory: () -> Array<T?>,
     transform: suspend FlowCollector<R>.(Array<T>) -> Unit
-): Flow<R> = flow {
+) {
     coroutineScope {
         val size = flows.size
         val channels =
