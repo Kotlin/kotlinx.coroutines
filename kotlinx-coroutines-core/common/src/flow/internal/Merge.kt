@@ -20,6 +20,7 @@ internal class ChannelFlowTransformLatest<T, R>(
         ChannelFlowTransformLatest(transform, flow, context, capacity)
 
     override suspend fun flowCollect(collector: FlowCollector<R>) {
+        assert { collector is SendingCollector } // So cancellation behaviour is not leaking into the downstream
         flowScope {
             var previousFlow: Job? = null
             flow.collect { value ->

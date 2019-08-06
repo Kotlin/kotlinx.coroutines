@@ -437,4 +437,4 @@ public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = onEach { delay(tim
     message = "Flow analogues of 'switchMap' are 'transformLatest', 'flatMapLatest' and 'mapLatest'",
     replaceWith = ReplaceWith("this.flatMapLatest(transform)")
 )
-public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): Flow<R> = noImpl()
+public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): Flow<R> = flatMapLatest(transform)

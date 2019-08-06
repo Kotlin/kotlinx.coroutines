@@ -24,6 +24,7 @@ import kotlin.jvm.*
  * generic function that may transform emitted element, skip it or emit it multiple times.
  *
  * This operator can be used as a building block for other operators, for example:
+ *
  * ```
  * fun Flow<Int>.skipOddAndDuplicateEven(): Flow<Int> = transform { value ->
  *     if (value % 2 == 0) { // Emit only even values, but twice
