@@ -5,10 +5,6 @@ package chat
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.concurrent.ForkJoinTask
-import kotlin.collections.ArrayList
-
-var context = DispatcherTypes.FORK_JOIN.create(10)
 
 val configurationsList = createBenchmarkConfigurationsList()
 val jvmOptions = listOf<String>(/*"-Xmx64m", "-XX:+PrintGC"*/)

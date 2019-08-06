@@ -11,12 +11,14 @@ import kotlin.collections.ArrayList
 
 const val fileName = "chat_"
 
+var context = DispatcherTypes.FORK_JOIN.create(1)
+
 fun main(args: Array<String>) {
     val benchmarkIteration = args[0].toInt() + 1
     val propsArray = args.drop(1).toTypedArray()
     val properties = BenchmarkConfiguration.parseArray(propsArray)
 
-    val dispatcher = properties.dispatcherType.create(properties.threads)
+    context = properties.dispatcherType.create(properties.threads)
 
     // warming up
     println("Start warming up")
@@ -38,9 +40,10 @@ fun main(args: Array<String>) {
         runBenchmarkIteration(it + 1, mean, properties, true)
     }
 
+    val context = context
     // closing coroutineDispatcher
-    if (dispatcher is Closeable) {
-        dispatcher.close()
+    if (context is Closeable) {
+        context.close()
     }
 
     File("$BENCHMARK_OUTPUT_FOLDER/$fileName$benchmarkIteration").printWriter().use { out ->
@@ -158,8 +161,8 @@ private fun collectBenchmarkMetrics(users: ArrayList<User>, configuration: Bench
         sentMessages += user.sentMessages
         receivedMessages += user.receivedMessages
     }
-    configuration.sentMessagesPerRun.add(sentMessages)
-    configuration.receivedMessagesPerRun.add(receivedMessages)
+    configuration.sentMessagesPerRun.add(sentMessages.toDouble() / BENCHMARK_TIME_MS)
+    configuration.receivedMessagesPerRun.add(receivedMessages.toDouble() / BENCHMARK_TIME_MS)
 }
 
 private fun stopUsers(users: ArrayList<User>) {

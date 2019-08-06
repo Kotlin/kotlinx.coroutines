@@ -14,11 +14,4 @@ class Server(private val configuration: BenchmarkConfiguration) {
             BenchmarkModes.USER_WITHOUT_FRIENDS -> UserWithoutFriends(userId, sendingMessageSpeed, messagesChannel, configuration, shouldCountMetrics)
         }
     }
-
-//    fun <T: User> registerClient(shouldCountMetrics : Boolean, sendingMessageSpeed : Double): T {
-//        val userId = idSequence.incrementAndGet()
-//        val messagesChannel = configuration.channelType.createChannel<Message>()
-//
-//        return UserWithFriends(userId, sendingMessageSpeed, messagesChannel, configuration, shouldCountMetrics)
-//    }
 }

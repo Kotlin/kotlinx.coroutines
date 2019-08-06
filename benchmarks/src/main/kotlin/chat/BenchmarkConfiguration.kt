@@ -79,9 +79,9 @@ class BenchmarkConfiguration(
         var benchmarkMode: BenchmarkModes,
         var dispatcherType: DispatcherTypes
 ) {
-    val sentMessagesPerRun = ArrayList<Long>()
+    val sentMessagesPerRun = ArrayList<Double>()
 
-    val receivedMessagesPerRun = ArrayList<Long>()
+    val receivedMessagesPerRun = ArrayList<Double>()
 
     override fun toString(): String {
         return "BenchmarkConfiguration(threads=$threads, userCount=$userCount, maxFriendsPercentage=$maxFriendsPercentage, channelType=$channelType, averageWork=$averageWork, benchmarkMode=$benchmarkMode, dispatcherType=$dispatcherType, sentMessagesPerRun=$sentMessagesPerRun, receivedMessagesPerRun=$receivedMessagesPerRun)"
