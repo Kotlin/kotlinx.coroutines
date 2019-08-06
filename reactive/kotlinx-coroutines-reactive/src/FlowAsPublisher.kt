@@ -7,10 +7,11 @@
 
 package kotlinx.coroutines.reactive
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.reactivestreams.*
-import java.util.concurrent.atomic.*
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.*
 
 /**
@@ -40,7 +41,7 @@ public class FlowSubscription<T>(
     @Volatile
     private var canceled: Boolean = false
     private val requested = AtomicLong(0L)
-    private val producer: AtomicReference<CancellableContinuation<Unit>?> = AtomicReference()
+    private val producer = atomic<CancellableContinuation<Unit>?>(null)
 
     // This is actually optimizable
     private var job = GlobalScope.launch(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
@@ -48,27 +49,32 @@ public class FlowSubscription<T>(
             consumeFlow()
             subscriber.onComplete()
         } catch (e: Throwable) {
-            // Failed with real exception, not due to cancellation
-            if (!coroutineContext[Job]!!.isCancelled) {
-                subscriber.onError(e)
+            try {
+                if (e is CancellationException) {
+                    subscriber.onComplete()
+                } else {
+                    subscriber.onError(e)
+                }
+            } catch (e: Throwable) {
+                // Last ditch report
+                handleCoroutineException(coroutineContext, e)
             }
         }
     }
 
     private suspend fun consumeFlow() {
         flow.collect { value ->
-            if (!coroutineContext.isActive) {
-                subscriber.onComplete()
-                coroutineContext.ensureActive()
-            }
-
+            /*
+             * Flow is scopeless, thus if it's not active, its subscription was cancelled.
+             * No intermediate "child failed, but flow coroutine is not" states are allowed.
+             */
+            coroutineContext.ensureActive()
             if (requested.get() == 0L) {
                 suspendCancellableCoroutine<Unit> {
-                    producer.set(it)
+                    producer.value = it
                     if (requested.get() != 0L) it.resumeSafely()
                 }
             }
-
             requested.decrementAndGet()
             subscriber.onNext(value)
         }
@@ -80,12 +86,9 @@ public class FlowSubscription<T>(
     }
 
     override fun request(n: Long) {
-        if (n <= 0) {
+        if (n <= 0 || canceled) {
             return
         }
-
-        if (canceled) return
-
         job.start()
         var snapshot: Long
         var newValue: Long
@@ -95,7 +98,7 @@ public class FlowSubscription<T>(
             if (newValue <= 0L) newValue = Long.MAX_VALUE
         } while (!requested.compareAndSet(snapshot, newValue))
 
-        val prev = producer.get()
+        val prev = producer.value
         if (prev == null || !producer.compareAndSet(prev, null)) return
         prev.resumeSafely()
     }
