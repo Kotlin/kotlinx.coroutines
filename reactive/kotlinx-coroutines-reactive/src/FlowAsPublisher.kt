@@ -92,17 +92,12 @@ public class FlowSubscription<T>(
             return
         }
         start()
-        var snapshot: Long
-        var newValue: Long
-        do {
-            snapshot = requested.value
-            newValue = snapshot + n
-            if (newValue <= 0L) newValue = Long.MAX_VALUE
-        } while (!requested.compareAndSet(snapshot, newValue))
-
-        val prev = producer.value
-        if (prev == null || !producer.compareAndSet(prev, null)) return
-        prev.resumeSafely()
+        requested.update { value ->
+            val newValue = value + n
+            if (newValue <= 0L) Long.MAX_VALUE else newValue
+        }
+        val producer = producer.getAndSet(null) ?: return
+        producer.resumeSafely()
     }
 
     private fun CancellableContinuation<Unit>.resumeSafely() {
