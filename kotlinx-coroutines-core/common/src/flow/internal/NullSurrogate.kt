@@ -14,3 +14,11 @@ import kotlin.jvm.*
 @JvmField
 @SharedImmutable
 internal val NULL = Symbol("NULL")
+
+/*
+ * Symbol used to indicate that the flow is complete.
+ * It should never leak to the outside world.
+ */
+@JvmField
+@SharedImmutable
+internal val DONE = Symbol("DONE")
