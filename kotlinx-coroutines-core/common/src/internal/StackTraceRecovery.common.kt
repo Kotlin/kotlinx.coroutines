@@ -42,9 +42,3 @@ internal expect interface CoroutineStackFrame {
     public val callerFrame: CoroutineStackFrame?
     public fun getStackTraceElement(): StackTraceElement?
 }
-
-/**
- * Marker that indicates that stacktrace of the exception should not be recovered.
- * Currently internal, but may become public in the future
- */
-internal interface NonRecoverableThrowable

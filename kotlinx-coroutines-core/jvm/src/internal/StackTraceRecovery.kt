@@ -12,7 +12,7 @@ import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
 internal actual fun <E : Throwable> recoverStackTrace(exception: E): E {
-    if (recoveryDisabled(exception)) return exception
+    if (!RECOVER_STACK_TRACES) return exception
     // No unwrapping on continuation-less path: exception is not reported multiple times via slow paths
     val copy = tryCopyException(exception) ?: return exception
     return copy.sanitizeStackTrace()
@@ -39,7 +39,7 @@ private fun <E : Throwable> E.sanitizeStackTrace(): E {
 }
 
 internal actual fun <E : Throwable> recoverStackTrace(exception: E, continuation: Continuation<*>): E {
-    if (recoveryDisabled(exception) || continuation !is CoroutineStackFrame) return exception
+    if (!RECOVER_STACK_TRACES || continuation !is CoroutineStackFrame) return exception
     return recoverFromStackFrame(exception, continuation)
 }
 
@@ -133,7 +133,7 @@ private fun mergeRecoveredTraces(recoveredStacktrace: Array<StackTraceElement>, 
 
 @Suppress("NOTHING_TO_INLINE")
 internal actual suspend inline fun recoverAndThrow(exception: Throwable): Nothing {
-    if (recoveryDisabled(exception)) throw exception
+    if (!RECOVER_STACK_TRACES) throw exception
     suspendCoroutineUninterceptedOrReturn<Nothing> {
         if (it !is CoroutineStackFrame) throw exception
         throw recoverFromStackFrame(exception, it)
@@ -141,7 +141,7 @@ internal actual suspend inline fun recoverAndThrow(exception: Throwable): Nothin
 }
 
 internal actual fun <E : Throwable> unwrap(exception: E): E {
-    if (recoveryDisabled(exception)) return exception
+    if (!RECOVER_STACK_TRACES) return exception
     val cause = exception.cause
     // Fast-path to avoid array cloning
     if (cause == null || cause.javaClass != exception.javaClass) {
@@ -155,9 +155,6 @@ internal actual fun <E : Throwable> unwrap(exception: E): E {
         return exception
     }
 }
-
-private fun <E : Throwable> recoveryDisabled(exception: E) =
-    !RECOVER_STACK_TRACES || exception is NonRecoverableThrowable
 
 private fun createStackTrace(continuation: CoroutineStackFrame): ArrayDeque<StackTraceElement> {
     val stack = ArrayDeque<StackTraceElement>()
