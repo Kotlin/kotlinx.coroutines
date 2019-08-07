@@ -61,7 +61,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
      */
     protected open fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
         // offer atomically with select
-        val offerOp = describeTryOffer(element)
+        val offerOp = describeTryOffer(element, select)
         val failure = select.performAtomicTrySelect(offerOp)
         if (failure != null) return failure
         val receive = offerOp.result
@@ -322,15 +322,17 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected fun describeTryOffer(element: E): TryOfferDesc<E> = TryOfferDesc(element, queue)
+    protected fun describeTryOffer(element: E, select: SelectInstance<*>): TryOfferDesc<E> =
+        TryOfferDesc(element, select, queue)
 
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
     protected class TryOfferDesc<E>(
         @JvmField val element: E,
+        override val select: SelectInstance<*>,
         queue: LockFreeLinkedListHead
-    ) : RemoveFirstDesc<ReceiveOrClosed<E>>(queue) {
+    ) : RemoveFirstDesc<ReceiveOrClosed<E>>(queue), SelectInstanceDesc {
         @JvmField var resumeToken: Any? = null
 
         override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? {
@@ -521,7 +523,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
      */
     protected open fun pollSelectInternal(select: SelectInstance<*>): Any? {
         // poll atomically with select
-        val pollOp = describeTryPoll()
+        val pollOp = describeTryPoll(select)
         val failure = select.performAtomicTrySelect(pollOp)
         if (failure != null) return failure
         val send = pollOp.result
@@ -650,12 +652,16 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected fun describeTryPoll(): TryPollDesc<E> = TryPollDesc(queue)
+    protected fun describeTryPoll(select: SelectInstance<*>): TryPollDesc<E> =
+        TryPollDesc(select, queue)
 
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected class TryPollDesc<E>(queue: LockFreeLinkedListHead) : RemoveFirstDesc<Send>(queue) {
+    protected class TryPollDesc<E>(
+        override val select: SelectInstance<*>,
+        queue: LockFreeLinkedListHead
+    ) : RemoveFirstDesc<Send>(queue), SelectInstanceDesc {
         @JvmField var resumeToken: Any? = null
         @JvmField var pollResult: E? = null
 

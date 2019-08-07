@@ -466,9 +466,15 @@ public actual open class LockFreeLinkedListNode {
                 val prepareOp = PrepareOp(next as Node, op as AtomicOp<Node>, this)
                 if (affected._next.compareAndSet(next, prepareOp)) {
                     // prepared -- complete preparations
-                    val prepFail = prepareOp.perform(affected)
-                    if (prepFail === REMOVE_PREPARED) continue // retry
-                    return prepFail
+                    try {
+                        val prepFail = prepareOp.perform(affected)
+                        if (prepFail === REMOVE_PREPARED) continue // retry
+                        return prepFail
+                    } catch (e: Throwable) {
+                        // Crashed during preparation (for example IllegalStateExpception) -- undo & rethrow
+                        affected._next.compareAndSet(prepareOp, next)
+                        throw e
+                    }
                 }
             }
         }

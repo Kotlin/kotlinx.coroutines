@@ -409,4 +409,38 @@ class SelectRendezvousChannelTest : TestBase() {
         if (!trySelect(null)) return
         block.startCoroutineUnintercepted(this)
     }
+
+    @Test
+    fun testSelectSendAndReceive() = runTest {
+        val c = Channel<Int>()
+        assertFailsWith<IllegalStateException> {
+            select<Unit> {
+                c.onSend(1) { expectUnreached() }
+                c.onReceive { expectUnreached() }
+            }
+        }
+        checkNotBroken(c)
+    }
+
+    @Test
+    fun testSelectReceiveAndSend() = runTest {
+        val c = Channel<Int>()
+        assertFailsWith<IllegalStateException> {
+            select<Unit> {
+                c.onReceive { expectUnreached() }
+                c.onSend(1) { expectUnreached() }
+            }
+        }
+        checkNotBroken(c)
+    }
+
+    // makes sure the channel is not broken
+    private suspend fun checkNotBroken(c: Channel<Int>) {
+        coroutineScope {
+            launch {
+                c.send(42)
+            }
+            assertEquals(42, c.receive())
+        }
+    }
 }
