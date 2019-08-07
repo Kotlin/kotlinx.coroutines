@@ -308,13 +308,6 @@ internal class SelectBuilderImpl<in R>(
         override fun toString(): String = "SelectOnCancelling[${this@SelectBuilderImpl}]"
     }
 
-    private val state: Any? get() {
-        _state.loop { state ->
-            if (state !is OpDescriptor) return state
-            state.perform(this)
-        }
-    }
-
     @PublishedApi
     internal fun handleBuilderException(e: Throwable) {
         if (trySelect(null)) {
@@ -326,18 +319,24 @@ internal class SelectBuilderImpl<in R>(
         }
     }
 
-    override val isSelected: Boolean get() = state !== this
+    override val isSelected: Boolean get() = _state.loop { state ->
+        when {
+            state === this -> return false
+            state is OpDescriptor -> state.perform(this) // help
+            else -> return true // already selected
+        }
+    }
 
     override fun disposeOnSelect(handle: DisposableHandle) {
         val node = DisposeNode(handle)
-        while (true) { // lock-free loop on state
-            val state = this.state
-            if (state === this) {
-                if (addLastIf(node) { this.state === this })
+        _state.loop { state -> // lock-free loop on state
+            when {
+                state === this -> if (addLastIf(node) { this._state.value === this }) return
+                state is OpDescriptor -> state.perform(this) // help
+                else -> { // already selected
+                    handle.dispose()
                     return
-            } else { // already selected
-                handle.dispose()
-                return
+                }
             }
         }
     }
