@@ -40,7 +40,7 @@ class R8ServiceLoaderOptimizationTest {
         val paths = listOf(
                 "META-INF/com.android.tools/proguard/coroutines.pro",
                 "META-INF/proguard/coroutines.pro",
-                "META-INF/com.android.tools/r8-max-1.5.999/coroutines.pro"
+                "META-INF/com.android.tools/r8-upto-1.6.0/coroutines.pro"
         )
         paths.associateWith { path ->
             val ruleSet = javaClass.classLoader.getResourceAsStream(path)!!.bufferedReader().lines().filter { line ->
