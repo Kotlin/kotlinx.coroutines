@@ -105,7 +105,7 @@ internal class ArrayBroadcastChannel<E>(
             val size = this.size
             if (size >= capacity) return OFFER_FAILED
             // let's try to select sending this element to buffer
-            if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
+            if (!select.trySelect()) { // :todo: move trySelect completion outside of lock
                 return ALREADY_SELECTED
             }
             val tail = this.tail
@@ -299,7 +299,7 @@ internal class ArrayBroadcastChannel<E>(
                     result === POLL_FAILED -> { /* just bail out of lock */ }
                     else -> {
                         // let's try to select receiving this element from buffer
-                        if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
+                        if (!select.trySelect()) { // :todo: move trySelect completion outside of lock
                             result = ALREADY_SELECTED
                         } else {
                             // update subHead after retrieiving element from buffer

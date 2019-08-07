@@ -110,11 +110,10 @@ public actual open class RemoveFirstDesc<T> actual constructor(
     @Suppress("UNCHECKED_CAST")
     public actual val result: T get() = affectedNode as T
     protected override val affectedNode: Node = queue.nextNode
-    protected actual open fun validatePrepared(node: T): Boolean = true
+    protected actual open fun validatePrepared(node: T): Any? = null
     protected actual final override fun onPrepare(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode): Any? {
         @Suppress("UNCHECKED_CAST")
-        validatePrepared(affectedNode as T)
-        return null
+        return validatePrepared(affectedNode as T)
     }
     protected override fun onComplete() { queue.removeFirstOrNull() }
     protected actual override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) = Unit

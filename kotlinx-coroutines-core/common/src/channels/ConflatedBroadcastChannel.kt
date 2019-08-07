@@ -273,7 +273,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         }
 
     private fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend (SendChannel<E>) -> R) {
-        if (!select.trySelect(null)) return
+        if (!select.trySelect()) return
         offerInternal(element)?.let {
             select.resumeSelectCancellableWithException(it.sendException)
             return

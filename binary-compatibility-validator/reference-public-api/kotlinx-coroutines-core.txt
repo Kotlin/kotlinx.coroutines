@@ -1025,7 +1025,9 @@ public final class kotlinx/coroutines/selects/SelectBuilderImpl : kotlinx/corout
 	public fun performAtomicTrySelect (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
 	public fun resumeSelectCancellableWithException (Ljava/lang/Throwable;)V
 	public fun resumeWith (Ljava/lang/Object;)V
-	public fun trySelect (Ljava/lang/Object;)Z
+	public fun toString ()Ljava/lang/String;
+	public fun trySelect ()Z
+	public fun trySelectIdempotent (Ljava/lang/Object;)Ljava/lang/Object;
 }
 
 public abstract interface class kotlinx/coroutines/selects/SelectClause0 {
@@ -1047,11 +1049,16 @@ public abstract interface class kotlinx/coroutines/selects/SelectInstance {
 	public abstract fun performAtomicIfNotSelected (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
 	public abstract fun performAtomicTrySelect (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
 	public abstract fun resumeSelectCancellableWithException (Ljava/lang/Throwable;)V
-	public abstract fun trySelect (Ljava/lang/Object;)Z
+	public abstract fun trySelect ()Z
+	public abstract fun trySelectIdempotent (Ljava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/selects/SelectKt {
 	public static final fun select (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public synthetic class kotlinx/coroutines/selects/SelectKtSelectOpSequenceNumberRefVolatile {
+	public fun <init> (J)V
 }
 
 public final class kotlinx/coroutines/selects/SelectUnbiasedKt {

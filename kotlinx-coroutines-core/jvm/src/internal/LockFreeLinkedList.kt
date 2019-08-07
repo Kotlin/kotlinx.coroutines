@@ -27,8 +27,6 @@ internal val ALREADY_REMOVED: Any = Symbol("ALREADY_REMOVED")
 @PublishedApi
 internal val LIST_EMPTY: Any = Symbol("LIST_EMPTY")
 
-private val REMOVE_PREPARED: Any = Symbol("REMOVE_PREPARED")
-
 /** @suppress **This is unstable API and it is subject to change.** */
 public actual typealias RemoveFirstDesc<T> = LockFreeLinkedListNode.RemoveFirstDesc<T>
 
@@ -379,8 +377,8 @@ public actual open class LockFreeLinkedListNode {
         protected override fun failure(affected: Node, next: Any): Any? =
                 if (affected === queue) LIST_EMPTY else null
 
-        // validate the resulting node (return false if it should be deleted)
-        protected open fun validatePrepared(node: T): Boolean = true // false means remove node & retry
+        // validate the resulting node (return REMOVE_PREPARED if it should be deleted)
+        protected open fun validatePrepared(node: T): Any? = null // Ok by default
 
         final override fun retry(affected: Node, next: Any): Boolean {
             if (next !is Removed) return false
@@ -391,7 +389,7 @@ public actual open class LockFreeLinkedListNode {
         @Suppress("UNCHECKED_CAST")
         final override fun onPrepare(affected: Node, next: Node): Any? {
             assert { affected !is LockFreeLinkedListHead }
-            if (!validatePrepared(affected as T)) return REMOVE_PREPARED
+            validatePrepared(affected as T)?.let { return it }
             // Note: onPrepare must use CAS to make sure the stale invocation is not
             // going to overwrite the previous decision on successful preparation.
             // Result of CAS is irrelevant, but we must ensure that it is set when invoker completes

@@ -88,7 +88,7 @@ internal open class ArrayChannel<E>(
                 // check for receivers that were waiting on empty queue
                 if (size == 0) {
                     loop@ while (true) {
-                        val offerOp = describeTryOffer(element, select)
+                        val offerOp = describeTryOffer(element)
                         val failure = select.performAtomicTrySelect(offerOp)
                         when {
                             failure == null -> { // offered successfully
@@ -108,7 +108,7 @@ internal open class ArrayChannel<E>(
                     }
                 }
                 // let's try to select sending this element to buffer
-                if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
+                if (!select.trySelect()) { // :todo: move trySelect completion outside of lock
                     this.size = size // restore size
                     return ALREADY_SELECTED
                 }
@@ -175,7 +175,7 @@ internal open class ArrayChannel<E>(
             var replacement: Any? = POLL_FAILED
             if (size == capacity) {
                 loop@ while (true) {
-                    val pollOp = describeTryPoll(select)
+                    val pollOp = describeTryPoll()
                     val failure = select.performAtomicTrySelect(pollOp)
                     when {
                         failure == null -> { // polled successfully
@@ -206,7 +206,7 @@ internal open class ArrayChannel<E>(
                 buffer[(head + size) % capacity] = replacement
             } else {
                 // failed to poll or is already closed --> let's try to select receiving this element from buffer
-                if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
+                if (!select.trySelect()) { // :todo: move trySelect completion outside of lock
                     this.size = size // restore size
                     buffer[head] = result // restore head
                     return ALREADY_SELECTED

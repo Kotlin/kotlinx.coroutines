@@ -385,7 +385,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         @JvmField val select: SelectInstance<R>,
         @JvmField val block: suspend (Mutex) -> R
     ) : LockWaiter(owner) {
-        override fun tryResumeLockWaiter(): Any? = if (select.trySelect(null)) SELECT_SUCCESS else null
+        override fun tryResumeLockWaiter(): Any? = if (select.trySelect()) SELECT_SUCCESS else null
         override fun completeResumeLockWaiter(token: Any) {
             assert { token === SELECT_SUCCESS }
             block.startCoroutine(receiver = mutex, completion = select.completion)
