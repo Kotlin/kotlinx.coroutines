@@ -42,18 +42,21 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
     require(timeoutMillis > 0) { "Debounce timeout should be positive" }
     return scopedFlow { downstream ->
-        val values = Channel<Any?>(Channel.CONFLATED) // Actually Any, KT-30796
-        // Channel is not closed deliberately as there is no close with value
-        val collector = async {
-            collect { value -> values.send(value ?: NULL) }
+        // Actually Any, KT-30796
+        val values = produce<Any?>(capacity = Channel.CONFLATED) {
+            collect { value -> send(value ?: NULL) }
         }
-
-        var isDone = false
         var lastValue: Any? = null
-        while (!isDone) {
+        while (lastValue !== DONE) {
             select<Unit> {
-                values.onReceive {
-                    lastValue = it
+                // Should be receiveOrClosed when boxing issues are fixed
+                values.onReceiveOrNull {
+                    if (it == null) {
+                        if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
+                        lastValue = DONE
+                    } else {
+                        lastValue = it
+                    }
                 }
 
                 lastValue?.let { value ->
@@ -62,12 +65,6 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
                         lastValue = null // Consume the value
                         downstream.emit(NULL.unbox(value))
                     }
-                }
-
-                // Close with value 'idiom'
-                collector.onAwait {
-                    if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
-                    isDone = true
                 }
             }
         }
@@ -98,16 +95,14 @@ public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
             // Actually Any, KT-30796
             collect { value -> send(value ?: NULL) }
         }
-
-        var isDone = false
         var lastValue: Any? = null
         val ticker = fixedPeriodTicker(periodMillis)
-        while (!isDone) {
+        while (lastValue !== DONE) {
             select<Unit> {
                 values.onReceiveOrNull {
                     if (it == null) {
                         ticker.cancel(ChildCancelledException())
-                        isDone = true
+                        lastValue = DONE
                     } else {
                         lastValue = it
                     }
