@@ -1,9 +1,6 @@
 package kotlinx.coroutines.sync
 
-import kotlinx.coroutines.TestBase
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -139,5 +136,36 @@ class SemaphoreTest : TestBase() {
         expect(5)
         job1.cancel()
         finish(6)
+    }
+
+    @Test
+    fun testAcquiredPermits() = runTest {
+        val semaphore = Semaphore(5, acquiredPermits = 4)
+        assertEquals(semaphore.availablePermits, 1)
+        semaphore.acquire()
+        assertEquals(semaphore.availablePermits, 0)
+        assertFalse(semaphore.tryAcquire())
+        semaphore.release()
+        assertEquals(semaphore.availablePermits, 1)
+        assertTrue(semaphore.tryAcquire())
+    }
+
+    @Test
+    fun testReleaseAcquiredPermits() = runTest {
+        val semaphore = Semaphore(5, acquiredPermits = 4)
+        assertEquals(semaphore.availablePermits, 1)
+        repeat(4) { semaphore.release() }
+        assertEquals(5, semaphore.availablePermits)
+        assertFailsWith<IllegalStateException> { semaphore.release() }
+        repeat(5) { assertTrue(semaphore.tryAcquire()) }
+        assertFalse(semaphore.tryAcquire())
+    }
+
+    @Test
+    fun testIllegalArguments() {
+        assertFailsWith<IllegalArgumentException> { Semaphore(-1, 0) }
+        assertFailsWith<IllegalArgumentException> { Semaphore(0, 0) }
+        assertFailsWith<IllegalArgumentException> { Semaphore(1, -1) }
+        assertFailsWith<IllegalArgumentException> { Semaphore(1, 2) }
     }
 }

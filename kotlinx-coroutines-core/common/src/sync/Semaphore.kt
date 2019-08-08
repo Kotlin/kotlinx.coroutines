@@ -96,7 +96,7 @@ private class SemaphoreImpl(
      * and the maximum number of waiting acquirers cannot be greater than 2^31 in any
      * real application.
      */
-    private val _availablePermits = atomic(permits)
+    private val _availablePermits = atomic(permits - acquiredPermits)
     override val availablePermits: Int get() = max(_availablePermits.value, 0)
 
     // The queue of waiting acquirers is essentially an infinite array based on `SegmentQueue`;
