@@ -267,7 +267,7 @@ class FlowInvariantsTest : TestBase() {
             return result
         }
 
-        val result = runSuspendFun(::collector)
+        val result = runSuspendFun { collector() }
         assertEquals(2, result)
         finish(3)
     }
