@@ -42,7 +42,6 @@ public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
  * Stacktrace recovery mode wraps every exception into the exception of the same type with original exception
  * as cause, but with stacktrace of the current coroutine.
  * Exception is instantiated using reflection by using no-arg, cause or cause and message constructor.
- * Stacktrace is not recovered if exception is an instance of [CancellationException] or [NonRecoverableThrowable].
  *
  * This mechanism is currently supported for channels, [async], [launch], [coroutineScope], [supervisorScope]
  * and [withContext] builders.
