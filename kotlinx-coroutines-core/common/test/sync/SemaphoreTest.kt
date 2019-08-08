@@ -140,4 +140,16 @@ class SemaphoreTest : TestBase() {
         job1.cancel()
         finish(6)
     }
+
+    @Test
+    fun testAcquiredPermits() = runTest {
+        val semaphore = Semaphore(5, acquiredPermits = 4)
+        assertEquals(semaphore.availablePermits, 1)
+        semaphore.acquire()
+        assertEquals(semaphore.availablePermits, 0)
+        assertFalse(semaphore.tryAcquire())
+        semaphore.release()
+        assertEquals(semaphore.availablePermits, 1)
+        assertTrue(semaphore.tryAcquire())
+    }
 }
