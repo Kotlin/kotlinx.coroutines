@@ -8,6 +8,9 @@
 
 package kotlinx.coroutines.flow
 
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.internal.*
+import kotlinx.coroutines.flow.internal.unsafeFlow
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -98,29 +101,6 @@ public fun <T> Flow<T>.publishOn(context: CoroutineContext): Flow<T> = noImpl()
  */
 @Deprecated(message = "Use flowOn instead", level = DeprecationLevel.ERROR)
 public fun <T> Flow<T>.subscribeOn(context: CoroutineContext): Flow<T> = noImpl()
-
-/**
- * Use [BroadcastChannel][kotlinx.coroutines.channels.BroadcastChannel].asFlow().
- * @suppress
- */
-@Deprecated(message = "Use BroadcastChannel.asFlow()", level = DeprecationLevel.ERROR)
-public fun BehaviourSubject(): Any = noImpl()
-
-/**
- * `ReplaySubject` is not supported. The closest analogue is buffered [BroadcastChannel][kotlinx.coroutines.channels.BroadcastChannel].
- * @suppress
- */
-@Deprecated(
-    message = "ReplaySubject is not supported. The closest analogue is buffered broadcast channel",
-    level = DeprecationLevel.ERROR)
-public fun ReplaySubject(): Any = noImpl()
-
-/**
- * `PublishSubject` is not supported.
- * @suppress
- */
-@Deprecated(message = "PublishSubject is not supported", level = DeprecationLevel.ERROR)
-public fun PublishSubject(): Any = noImpl()
 
 /**
  * Flow analogue of `onErrorXxx` is [catch].
@@ -380,7 +360,81 @@ public fun <T> Flow<T>.concatWith(value: T): Flow<T> = noImpl()
 @Deprecated(
     level = DeprecationLevel.ERROR,
     message = "Flow analogue of 'concatWith' is 'onCompletion'. Use 'onCompletion { emitAll(other) }'",
-    replaceWith = ReplaceWith("onCompletion { emitAkk(other) }")
+    replaceWith = ReplaceWith("onCompletion { emitAll(other) }")
 )
 public fun <T> Flow<T>.concatWith(other: Flow<T>): Flow<T> = noImpl()
 
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'combineLatest' is 'combine'",
+    replaceWith = ReplaceWith("this.combine(other, transform)")
+)
+public fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
+    combine(this, other, transform)
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'combineLatest' is 'combine'",
+    replaceWith = ReplaceWith("combine(this, other, other2, transform)")
+)
+public inline fun <T1, T2, T3, R> Flow<T1>.combineLatest(
+    other: Flow<T2>,
+    other2: Flow<T3>,
+    crossinline transform: suspend (T1, T2, T3) -> R
+) = combine(this, other, other2, transform)
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'combineLatest' is 'combine'",
+    replaceWith = ReplaceWith("combine(this, other, other2, other3, transform)")
+)
+public inline fun <T1, T2, T3, T4, R> Flow<T1>.combineLatest(
+    other: Flow<T2>,
+    other2: Flow<T3>,
+    other3: Flow<T4>,
+    crossinline transform: suspend (T1, T2, T3, T4) -> R
+) = combine(this, other, other2, other3, transform)
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'combineLatest' is 'combine'",
+    replaceWith = ReplaceWith("combine(this, other, other2, other3, transform)")
+)
+public inline fun <T1, T2, T3, T4, T5, R> Flow<T1>.combineLatest(
+    other: Flow<T2>,
+    other2: Flow<T3>,
+    other3: Flow<T4>,
+    other4: Flow<T5>,
+    crossinline transform: suspend (T1, T2, T3, T4, T5) -> R
+): Flow<R> = combine(this, other, other2, other3, other4, transform)
+
+/**
+ * Delays the emission of values from this flow for the given [timeMillis].
+ * Use `onStart { delay(timeMillis) }`.
+ * @suppress
+ */
+@Deprecated(
+    level = DeprecationLevel.WARNING, // since 1.3.0, error in 1.4.0
+    message = "Use 'onStart { delay(timeMillis) }'",
+    replaceWith = ReplaceWith("onStart { delay(timeMillis) }")
+)
+public fun <T> Flow<T>.delayFlow(timeMillis: Long): Flow<T> = onStart { delay(timeMillis) }
+
+/**
+ * Delays each element emitted by the given flow for the given [timeMillis].
+ * Use `onEach { delay(timeMillis) }`.
+ * @suppress
+ */
+@Deprecated(
+    level = DeprecationLevel.WARNING, // since 1.3.0, error in 1.4.0
+    message = "Use 'onEach { delay(timeMillis) }'",
+    replaceWith = ReplaceWith("onEach { delay(timeMillis) }")
+)
+public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = onEach { delay(timeMillis) }
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogues of 'switchMap' are 'transformLatest', 'flatMapLatest' and 'mapLatest'",
+    replaceWith = ReplaceWith("this.flatMapLatest(transform)")
+)
+public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): Flow<R> = flatMapLatest(transform)

@@ -10,8 +10,14 @@ def name = project.name
 dependencyManagement {
     dependencies {
         rootProject.subprojects.each {
-            if (!ext.unpublished.contains(it.name) && it.name != name) {
-                dependency(group: it.group, name: it.name, version: it.version)
+            if (ext.unpublished.contains(it.name)) return
+            if (it.name == name) return
+            if (!it.plugins.hasPlugin('maven-publish')) return
+            evaluationDependsOn(it.path)
+            it.publishing.publications.all {
+                if (it.artifactId.endsWith("-kotlinMultiplatform")) return
+                if (it.artifactId.endsWith("-metadata")) return
+                dependency(group: it.groupId, name: it.artifactId, version: it.version)
             }
         }
     }

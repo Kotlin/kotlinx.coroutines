@@ -7,7 +7,6 @@ package kotlinx.coroutines.reactor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
-import kotlinx.coroutines.reactive.flow.*
 import org.junit.Test
 import reactor.core.publisher.*
 import kotlin.test.*

@@ -80,7 +80,7 @@ internal object DebugProbesImpl {
         check(isInstalled) { "Debug probes are not installed" }
         val jobToStack = capturedCoroutines
             .filter { it.delegate.context[Job] != null }
-            .associateBy({ it.delegate.context[Job]!! }, {it.info})
+            .associateBy({ it.delegate.context[Job]!! }, { it.info })
         return buildString {
             job.build(jobToStack, this, "")
         }
@@ -118,7 +118,7 @@ internal object DebugProbesImpl {
     public fun dumpCoroutinesInfo(): List<CoroutineInfo> {
         check(isInstalled) { "Debug probes are not installed" }
         return capturedCoroutines.asSequence()
-            .map { CoroutineInfo(it.delegate, it.info) }
+            .map { it.info.copy() } // Copy as CoroutineInfo can be mutated concurrently by DebugProbes
             .sortedBy { it.sequenceNumber }
             .toList()
     }
@@ -373,7 +373,7 @@ internal object DebugProbesImpl {
     private fun <T : Throwable> sanitizeStackTrace(throwable: T): List<StackTraceElement> {
         val stackTrace = throwable.stackTrace
         val size = stackTrace.size
-        val probeIndex = stackTrace.indexOfLast { it.className ==  "kotlin.coroutines.jvm.internal.DebugProbesKt" }
+        val probeIndex = stackTrace.indexOfLast { it.className == "kotlin.coroutines.jvm.internal.DebugProbesKt" }
 
         if (!DebugProbes.sanitizeStackTraces) {
             return List(size - probeIndex) {

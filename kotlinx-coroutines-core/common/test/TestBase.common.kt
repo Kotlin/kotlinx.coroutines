@@ -2,11 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("unused")
+
 package kotlinx.coroutines
 
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
-import kotlinx.coroutines.internal.*
 import kotlin.test.*
 
 public expect open class TestBase constructor() {
@@ -56,12 +57,14 @@ public suspend inline fun <reified T : Throwable> assertFailsWith(flow: Flow<*>)
 public suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }
 public suspend fun Flow<Long>.longSum() = fold(0L) { acc, value -> acc + value }
 
-public class TestException(message: String? = null) : Throwable(message), NonRecoverableThrowable
-public class TestException1(message: String? = null) : Throwable(message), NonRecoverableThrowable
-public class TestException2(message: String? = null) : Throwable(message), NonRecoverableThrowable
-public class TestException3(message: String? = null) : Throwable(message), NonRecoverableThrowable
-public class TestCancellationException(message: String? = null) : CancellationException(message), NonRecoverableThrowable
-public class TestRuntimeException(message: String? = null) : RuntimeException(message), NonRecoverableThrowable
+
+// data is added to avoid stacktrace recovery because CopyableThrowable is not accessible from common modules
+public class TestException(message: String? = null, private val data: Any? = null) : Throwable(message)
+public class TestException1(message: String? = null, private val data: Any? = null) : Throwable(message)
+public class TestException2(message: String? = null, private val data: Any? = null) : Throwable(message)
+public class TestException3(message: String? = null, private val data: Any? = null) : Throwable(message)
+public class TestCancellationException(message: String? = null, private val data: Any? = null) : CancellationException(message)
+public class TestRuntimeException(message: String? = null, private val data: Any? = null) : RuntimeException(message)
 public class RecoverableTestException(message: String? = null) : RuntimeException(message)
 public class RecoverableTestCancellationException(message: String? = null) : CancellationException(message)
 

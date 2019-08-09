@@ -2,7 +2,7 @@
  * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.reactive.flow
+package kotlinx.coroutines.reactive
 
 import org.junit.*
 import org.reactivestreams.example.unicast.AsyncIterablePublisher

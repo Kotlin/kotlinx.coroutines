@@ -238,7 +238,7 @@ public fun <T> Flow<T>.flowOn(context: CoroutineContext): Flow<T> {
  * 4) It can be confused with [flowOn] operator, though [flowWith] is much rarer.
  */
 @FlowPreview
-@Deprecated(message = "flowWith is deprecated without replacement, please refer to its KDoc for an explanation", level = DeprecationLevel.WARNING) // Error in beta release, removal in 1.4
+@Deprecated(message = "flowWith is deprecated without replacement, please refer to its KDoc for an explanation", level = DeprecationLevel.ERROR) // Error in beta release, removal in 1.4
 public fun <T, R> Flow<T>.flowWith(
     flowContext: CoroutineContext,
     bufferSize: Int = BUFFERED,

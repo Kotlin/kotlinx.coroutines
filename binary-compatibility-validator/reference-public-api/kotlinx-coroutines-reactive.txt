@@ -14,9 +14,27 @@ public final class kotlinx/coroutines/reactive/ChannelKt {
 	public static synthetic fun openSubscription$default (Lorg/reactivestreams/Publisher;IILjava/lang/Object;)Lkotlinx/coroutines/channels/ReceiveChannel;
 }
 
+public abstract interface class kotlinx/coroutines/reactive/ContextInjector {
+	public abstract fun injectCoroutineContext (Lorg/reactivestreams/Publisher;Lkotlin/coroutines/CoroutineContext;)Lorg/reactivestreams/Publisher;
+}
+
 public final class kotlinx/coroutines/reactive/ConvertKt {
 	public static final fun asPublisher (Lkotlinx/coroutines/channels/ReceiveChannel;Lkotlin/coroutines/CoroutineContext;)Lorg/reactivestreams/Publisher;
 	public static synthetic fun asPublisher$default (Lkotlinx/coroutines/channels/ReceiveChannel;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lorg/reactivestreams/Publisher;
+}
+
+public final class kotlinx/coroutines/reactive/FlowKt {
+	public static final fun asFlow (Lorg/reactivestreams/Publisher;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun asFlow (Lorg/reactivestreams/Publisher;I)Lkotlinx/coroutines/flow/Flow;
+	public static final fun asPublisher (Lkotlinx/coroutines/flow/Flow;)Lorg/reactivestreams/Publisher;
+}
+
+public final class kotlinx/coroutines/reactive/FlowSubscription : kotlinx/coroutines/AbstractCoroutine, org/reactivestreams/Subscription {
+	public final field flow Lkotlinx/coroutines/flow/Flow;
+	public final field subscriber Lorg/reactivestreams/Subscriber;
+	public fun <init> (Lkotlinx/coroutines/flow/Flow;Lorg/reactivestreams/Subscriber;)V
+	public fun cancel ()V
+	public fun request (J)V
 }
 
 public final class kotlinx/coroutines/reactive/PublishKt {
@@ -42,14 +60,5 @@ public final class kotlinx/coroutines/reactive/PublisherCoroutine : kotlinx/coro
 	public fun registerSelectClause2 (Lkotlinx/coroutines/selects/SelectInstance;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
 	public fun request (J)V
 	public fun send (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-}
-
-public final class kotlinx/coroutines/reactive/flow/FlowAsPublisherKt {
-	public static final fun from (Lkotlinx/coroutines/flow/Flow;)Lorg/reactivestreams/Publisher;
-}
-
-public final class kotlinx/coroutines/reactive/flow/PublisherAsFlowKt {
-	public static final fun from (Lorg/reactivestreams/Publisher;)Lkotlinx/coroutines/flow/Flow;
-	public static final fun from (Lorg/reactivestreams/Publisher;I)Lkotlinx/coroutines/flow/Flow;
 }
 

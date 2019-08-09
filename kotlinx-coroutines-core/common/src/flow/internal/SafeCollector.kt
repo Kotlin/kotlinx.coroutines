@@ -81,7 +81,13 @@ internal class SafeCollector<T>(
                             "FlowCollector is not thread-safe and concurrent emissions are prohibited. To mitigate this restriction please use 'channelFlow' builder instead of 'flow'"
                 )
             }
-            count + 1
+
+            /*
+             * If collect job is null (-> EmptyCoroutineContext, probably run from `suspend fun main`), then invariant is maintained
+             * (common transitive parent is "null"), but count check will fail, so just do not count job context element when
+             * flow is collected from EmptyCoroutineContext
+             */
+            if (collectJob == null) count else count + 1
         }
         if (result != collectContextSize) {
             error(

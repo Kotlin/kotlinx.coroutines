@@ -5,6 +5,10 @@ public final class kotlinx/coroutines/reactor/ConvertKt {
 	public static final fun asMono (Lkotlinx/coroutines/Job;Lkotlin/coroutines/CoroutineContext;)Lreactor/core/publisher/Mono;
 }
 
+public final class kotlinx/coroutines/reactor/FlowKt {
+	public static final fun asFlux (Lkotlinx/coroutines/flow/Flow;)Lreactor/core/publisher/Flux;
+}
+
 public final class kotlinx/coroutines/reactor/FluxKt {
 	public static final fun flux (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lreactor/core/publisher/Flux;
 	public static final fun flux (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lreactor/core/publisher/Flux;

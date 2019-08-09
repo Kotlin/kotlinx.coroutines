@@ -1,5 +1,33 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.3.0-RC2
+
+### Flow improvements
+* Operators for UI programming are reworked for the sake of consistency, naming scheme for operator overloads is introduced:
+   * `combineLatest` is deprecated in the favor of `combine`.
+   * `combineTransform` operator for non-trivial transformations (#1224).
+   * Top-level `combine` and `combineTransform` overloads for multiple flows (#1262). 
+   * `switchMap` is deprecated. `flatMapLatest`, `mapLatest` and `transformLatest` are introduced instead (#1335).
+   * `collectLatest` terminal operator (#1269).
+
+* Improved cancellation support in `flattenMerge` (#1392).
+* `channelFlow` cancellation does not leak to the parent (#1334).
+* Fixed flow invariant enforcement for `suspend fun main` (#1421).
+* `delayEach` and `delayFlow` are deprecated (#1429).
+
+### General changes
+* Integration with Reactor context
+    * Propagation of the coroutine context of `await` calls into Mono/Flux builder.
+    * Publisher.asFlow propagates coroutine context from `collect` call to the Publisher.
+    * New `Flow.asFlux ` builder.
+
+* ServiceLoader-code is adjusted to avoid I/O on the Main thread on newer (3.6.0+) Android toolchain.
+* Stacktrace recovery support for minified builds on Android (#1416).
+* Guava version in `kotlinx-coroutines-guava` updated to `28.0`.
+* `setTimeout`-based JS dispatcher for platforms where `process` is unavailable (#1404).
+* Native, JS and common modules are added to `kotlinx-coroutines-bom`.
+* Fixed bug with ignored `acquiredPermits` in `Semaphore` (#1423).
+
 ## Version 1.3.0-RC
 
 ### Flow

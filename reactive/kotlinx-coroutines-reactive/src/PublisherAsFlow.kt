@@ -2,14 +2,17 @@
  * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.reactive.flow
+@file:JvmMultifileClass
+@file:JvmName("FlowKt")
+
+package kotlinx.coroutines.reactive
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.internal.*
-import kotlinx.coroutines.reactive.*
 import org.reactivestreams.*
+import java.util.*
 import kotlin.coroutines.*
 
 /**
@@ -21,13 +24,11 @@ import kotlin.coroutines.*
  * If any of the resulting flow transformations fails, subscription is immediately cancelled and all in-flights elements
  * are discarded.
  */
-@JvmName("from")
 @ExperimentalCoroutinesApi
 public fun <T : Any> Publisher<T>.asFlow(): Flow<T> =
     PublisherAsFlow(this, 1)
 
 @FlowPreview
-@JvmName("from")
 @Deprecated(
     message = "batchSize parameter is deprecated, use .buffer() instead to control the backpressure",
     level = DeprecationLevel.ERROR,
@@ -46,7 +47,9 @@ private class PublisherAsFlow<T : Any>(
         // use another channel for conflation (cannot do openSubscription)
         if (capacity < 0) return super.produceImpl(scope)
         // Open subscription channel directly
-        val channel = publisher.openSubscription(capacity)
+        val channel = publisher
+            .injectCoroutineContext(scope.coroutineContext)
+            .openSubscription(capacity)
         val handle = scope.coroutineContext[Job]?.invokeOnCompletion(onCancelling = true) { cause ->
             channel.cancel(cause?.let {
                 it as? CancellationException ?: CancellationException("Job was cancelled", it)
@@ -70,7 +73,7 @@ private class PublisherAsFlow<T : Any>(
 
     override suspend fun collect(collector: FlowCollector<T>) {
         val subscriber = ReactiveSubscriber<T>(capacity, requestSize)
-        publisher.subscribe(subscriber)
+        publisher.injectCoroutineContext(coroutineContext).subscribe(subscriber)
         try {
             var consumed = 0L
             while (true) {
@@ -127,3 +130,11 @@ private class ReactiveSubscriber<T : Any>(
         subscription.cancel()
     }
 }
+
+// ContextInjector service is implemented in `kotlinx-coroutines-reactor` module only.
+// If `kotlinx-coroutines-reactor` module is not included, the list is empty.
+private val contextInjectors: List<ContextInjector> =
+    ServiceLoader.load(ContextInjector::class.java, ContextInjector::class.java.classLoader).toList()
+
+private fun <T> Publisher<T>.injectCoroutineContext(coroutineContext: CoroutineContext) =
+    contextInjectors.fold(this) { pub, contextInjector -> contextInjector.injectCoroutineContext(pub, coroutineContext) }
