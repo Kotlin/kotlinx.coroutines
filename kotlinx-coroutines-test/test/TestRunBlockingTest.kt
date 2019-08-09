@@ -274,7 +274,7 @@ class TestRunBlockingTest {
     }
 
     @Test(expected = UncompletedCoroutinesError::class)
-    fun whenACoroutineLeaks_errorIsThrown() = runBlockingTest(waitConfig = SingleDispatcherWaitConfig) {
+    fun whenACoroutineLeaks_errorIsThrown() = runBlockingTest(waitForOtherDispatchers = 0L) {
         val uncompleted = CompletableDeferred<Unit>()
         launch {
             uncompleted.await()
