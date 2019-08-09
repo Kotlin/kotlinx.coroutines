@@ -25,6 +25,10 @@ import kotlin.math.max
  * not execute until a call to [DelayController.runCurrent] or the virtual clock-time has been advanced via one of the
  * methods on [DelayController].
  *
+ * While in immediate mode [TestCoroutineDispatcher] behaves similar to [Dispatchers.Unconfined]. When resuming from
+ * another thread it will *not* switch threads. When in lazy mode, [TestCoroutineDispatcher] will enqueue all
+ * dispatches and whatever thread calls an [advanceUntilIdle], [advanceTimeBy], or [runCurrent] will continue execution.
+ *
  * @see DelayController
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
