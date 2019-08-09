@@ -94,6 +94,9 @@ public interface DelayController {
      *
      * This is useful when testing functions that start a coroutine. By pausing the dispatcher assertions or
      * setup may be done between the time the coroutine is created and started.
+     *
+     * While in the paused block, the dispatcher will queue all dispatched coroutines and they will be resumed on
+     * whatever thread calls [advanceUntilIdle], [advanceTimeBy], or [runCurrent].
      */
     @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
     public suspend fun pauseDispatcher(block: suspend () -> Unit)
@@ -103,6 +106,9 @@ public interface DelayController {
      *
      * When paused, the dispatcher will not execute any coroutines automatically, and you must call [runCurrent] or
      * [advanceTimeBy], or [advanceUntilIdle] to execute coroutines.
+     *
+     * While paused, the dispatcher will queue all dispatched coroutines and they will be resumed on whatever thread
+     * calls [advanceUntilIdle], [advanceTimeBy], or [runCurrent].
      */
     @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
     public fun pauseDispatcher()
@@ -114,8 +120,9 @@ public interface DelayController {
      * time and execute coroutines scheduled in the future use, one of [advanceTimeBy],
      * or [advanceUntilIdle].
      *
-     * When the dispatcher is resumed, all execution be immediate in the thread that triggered it. This means
-     * that the following code will not switch back from Dispatchers.IO after `withContext`
+     * When the dispatcher is resumed, all execution be immediate in the thread that triggered it similar to
+     * [Dispatchers.Unconfined]. This means that the following code will not switch back from Dispatchers.IO after
+     * `withContext`
      *
      * ```
      * runBlockingTest {
@@ -125,7 +132,7 @@ public interface DelayController {
      * ```
      *
      * For tests that need accurate threading behavior, [pauseDispatcher] will ensure that the following test dispatches
-     * on the correct thread.
+     * on a controlled thread.
      *
      * ```
      * runBlockingTest {
