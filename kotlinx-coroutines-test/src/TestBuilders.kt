@@ -5,87 +5,11 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.selects.select
-import java.lang.StringBuilder
 import kotlin.coroutines.*
 
-private const val DEFAULT_TEST_TIMEOUT = 30_000L
-
-/**
- * A strategy for waiting on coroutines executed on other dispatchers inside a [runBlockingTest].
- *
- * Most tests should use [MultiDispatcherWaitConfig]. As an optimization, a test that executes coroutines only on a
- * [TestCoroutineDispatcher] and never interacts with other dispatchers may use [SingleDispatcherWaitConfig].
- *
- * A test may subclass this to customize the wait in advanced cases.
- */
-interface WaitConfig {
-    /**
-     * How long (in wall-clock time) to wait for other Dispatchers to complete coroutines during a [runBlockingTest].
-     *
-     * This delay is not related to the virtual time of a [TestCoroutineDispatcher], but is how long a test should allow
-     * another dispatcher, like Dispatchers.IO, to perform a time consuming activity such as reading from a database.
-     */
-    val wait: Long
-}
-
-/**
- * Do not wait for coroutines executing on another [Dispatcher] in [runBlockingTest].
-
- * Always fails with an uncompleted coroutine when any coroutine in the test executes on any other dispatcher (including
- * calls to [withContext]). It should not be used for most tests, instead use the default value of
- * [MultiDispatcherWaitConfig].
- *
- * This configuration should only be used as an optimization for tests that intentionally create an uncompleted
- * coroutine and execute all coroutines on the [TestCoroutineDispatcher] used by [runBlockingTest].
- *
- * If in doubt, prefer [MultiDispatcherWaitConfig].
- */
-object SingleDispatcherWaitConfig : WaitConfig {
-    /**
-     * This value is ignored by [runBlockingTest] on [SingleDispatcherWaitConfig]
-     */
-    override val wait = 0L
-
-    override fun toString() = "SingleDispatcherWaitConfig"
-}
-
-/**
- * Wait up to 30 seconds for any coroutines running on another [Dispatcher] to complete in [runBlockingTest].
- *
- * This is the default value for [runBlockingTest] and the recommendation for most tests. This configuration will allow
- * for coroutines to be launched on another dispatcher inside the test (e.g. calls to `withContext(Dispatchers.IO)`).
- *
- * This allows for code like the following to be tested correctly using [runBlockingTest]:
- *
- * ```
- * suspend fun delayOnDefault() = withContext(Dispatchers.Default) {
- *      // this delay does not use the virtual-time of runBlockingTest since it's executing on Dispatchers.Default
- *     delay(50)
- * }
- *
- * runBlockingTest {
- *     // Note: This test takes at least 50ms (real time) to run
- *
- *     // delayOnDefault will suspend the runBlockingTest coroutine for 50ms      [real-time: 0; virtual-time: 0]
- *     delayOnDefault()
- *     // runBlockingTest resumes 50ms later (real time)                          [real-time: 50; virtual-time: 0]
- *
- *     delay(10)
- *     //this delay will auto-progress since it's in runBlockingTest              [real-time: 50; virtual-time: 10]
- * }
- * ```
- */
-object MultiDispatcherWaitConfig: WaitConfig {
-    /**
-     * Default wait is 30 seconds.
-     *
-     * {@inheritDoc}
-     */
-    override val wait = DEFAULT_TEST_TIMEOUT
-
-    override fun toString() = "MultiDispatcherWaitConfig[wait = 30s]"
-}
+private const val DEFAULT_WAIT_FOR_OTHER_DISPATCHERS = 30_000L
 
 /**
  * Executes a [testBody] inside an immediate execution dispatcher.
@@ -119,14 +43,14 @@ object MultiDispatcherWaitConfig: WaitConfig {
  *
  * @param context additional context elements. If [context] contains [CoroutineDispatcher] or [CoroutineExceptionHandler],
  * then they must implement [DelayController] and [TestCoroutineExceptionHandler] respectively.
- * @param waitConfig strategy for waiting on other dispatchers to complete during the test. [SingleDispatcherWaitConfig]
- * will never wait, other values will wait for [WaitConfig.wait]ms.
+ * @param waitForOtherDispatchers how long to wait for other dispatchers to execute tasks asynchronously, default 30
+ * seconds
  * @param testBody The code of the unit-test.
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
 public fun runBlockingTest(
         context: CoroutineContext = EmptyCoroutineContext,
-        waitConfig: WaitConfig = MultiDispatcherWaitConfig,
+        waitForOtherDispatchers: Long = DEFAULT_WAIT_FOR_OTHER_DISPATCHERS,
         testBody: suspend TestCoroutineScope.() -> Unit
 ) {
     val (safeContext, dispatcher) = context.checkArguments()
@@ -140,7 +64,7 @@ public fun runBlockingTest(
         localTestScope.testBody()
     }
 
-    val didTimeout = deferred.waitForCompletion(waitConfig, dispatcher)
+    val didTimeout = deferred.waitForCompletion(waitForOtherDispatchers, dispatcher, dispatcher as IdleWaiter)
 
     if (deferred.isCompleted) {
         deferred.getCompletionExceptionOrNull()?.let {
@@ -154,66 +78,41 @@ public fun runBlockingTest(
     // TODO: should these be separate exceptions to allow for tests to detect difference?
     if (didTimeout) {
         val message = """
-            runBlockingTest timed out after waiting ${waitConfig.wait}ms for coroutines to complete due waitConfig = $waitConfig. 
+            runBlockingTest timed out after waiting ${waitForOtherDispatchers}ms for coroutines to complete.
             Active jobs after test (may be empty): $endingJobs
             """.trimIndent()
         throw UncompletedCoroutinesError(message)
     } else if ((endingJobs - startingJobs).isNotEmpty()) {
-        val message = StringBuilder("Test finished with active jobs: ")
-        message.append(endingJobs)
-        if (waitConfig == SingleDispatcherWaitConfig) {
-            message.append("""
-
-            Note: runBlockingTest did not wait for other dispatchers due to argument waitConfig = $waitConfig
-            
-            Tip: If this runBlockingTest starts any code on another dispatcher (such as Dispatchers.Default, 
-            Dispatchers.IO, etc) in any of the functions it calls it will never pass when configured with 
-            SingleDispatcherWaitConfig. Please update your test to use the default value of MultiDispatcherWaitConfig
-            like:
-            
-                runBlockingTest { }
-            
-            """.trimIndent())
-        }
-        throw UncompletedCoroutinesError(message.toString())
+        throw UncompletedCoroutinesError("Test finished with active jobs: $endingJobs ")
     }
 }
 
-private fun Deferred<Unit>.waitForCompletion(waitConfig: WaitConfig, dispatcher: DelayController): Boolean {
+private fun Deferred<Unit>.waitForCompletion(wait: Long, delayController: DelayController, park: IdleWaiter): Boolean {
     var didTimeout = false
-    when (waitConfig) {
-        SingleDispatcherWaitConfig -> dispatcher.advanceUntilIdle()
-        else -> {
-            runBlocking {
-                val subscription = dispatcher.queueState.openSubscription()
-                dispatcher.advanceUntilIdle()
 
-                var finished = false
-                try {
-                    while (!finished) {
-                        finished = select {
-                            this@waitForCompletion.onAwait {
-                                true
-                            }
-                            onTimeout(waitConfig.wait) {
-                                didTimeout = true
-                                true
-                            }
-                            subscription.onReceive { queueState ->
-                                when (queueState) {
-                                    DelayController.QueueState.Idle -> Unit
-                                    else -> dispatcher.advanceUntilIdle()
-                                }
-                                false
-                            }
-                        }
+    runBlocking {
+        val unparkChannel = Channel<Unit>(1)
+        val job = launch {
+            while(true) {
+                park.suspendUntilNextDispatch()
+                unparkChannel.send(Unit)
+            }
+        }
+
+        try {
+            withTimeout(wait) {
+                while(!isCompleted) {
+                    delayController.advanceUntilIdle()
+                    select<Unit> {
+                        onAwait { Unit }
+                        unparkChannel.onReceive { Unit }
                     }
-                } finally {
-                    subscription.cancel()
                 }
             }
-
+        } catch (exception: TimeoutCancellationException) {
+            didTimeout = true
         }
+        job.cancel()
     }
     return didTimeout
 }
@@ -227,18 +126,19 @@ private fun CoroutineContext.activeJobs(): Set<Job> {
  */
 // todo: need documentation on how this extension is supposed to be used
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public fun TestCoroutineScope.runBlockingTest(configuration: WaitConfig = MultiDispatcherWaitConfig, block: suspend TestCoroutineScope.() -> Unit) = runBlockingTest(coroutineContext, configuration, block)
+public fun TestCoroutineScope.runBlockingTest(waitForOtherDispatchers: Long = DEFAULT_WAIT_FOR_OTHER_DISPATCHERS, block: suspend TestCoroutineScope.() -> Unit) = runBlockingTest(coroutineContext, waitForOtherDispatchers, block)
 
 /**
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineDispatcher].
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public fun TestCoroutineDispatcher.runBlockingTest(configuration: WaitConfig = MultiDispatcherWaitConfig, block: suspend TestCoroutineScope.() -> Unit) = runBlockingTest(this, configuration, block)
+public fun TestCoroutineDispatcher.runBlockingTest(waitForOtherDispatchers: Long = DEFAULT_WAIT_FOR_OTHER_DISPATCHERS, block: suspend TestCoroutineScope.() -> Unit) = runBlockingTest(this, waitForOtherDispatchers, block)
 
 private fun CoroutineContext.checkArguments(): Pair<CoroutineContext, DelayController> {
     // TODO optimize it
     val dispatcher = get(ContinuationInterceptor).run {
         this?.let { require(this is DelayController) { "Dispatcher must implement DelayController: $this" } }
+        this?.let { require(this is IdleWaiter) { "Dispatcher must implement IdleWaiter" } }
         this ?: TestCoroutineDispatcher()
     }
 

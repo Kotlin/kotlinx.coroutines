@@ -113,7 +113,7 @@ class TestRunBlockingOrderTest : TestBase() {
         val uncompleted = CompletableDeferred<Unit>()
         val result = runCatching {
             expect(1)
-            runBlockingTest(waitConfig = SingleDispatcherWaitConfig) {
+            runBlockingTest(waitForOtherDispatchers = 0L) {
                 expect(2)
                 uncompleted.await()
             }
@@ -230,44 +230,19 @@ class TestRunBlockingOrderTest : TestBase() {
         finish(max + 2)
     }
 
-    object OneMillisecondWaitConfig : WaitConfig {
-        override val wait = 1L
-
-        override fun toString() = "OneMillisecondWaitConfig"
-    }
-
     @Test
     fun whenWaitConfig_timesOut_getExceptionWithMessage() {
         expect(1)
         val uncompleted = CompletableDeferred<Unit>()
         val result = runCatching {
-            runBlockingTest(waitConfig = OneMillisecondWaitConfig) {
+            runBlockingTest(waitForOtherDispatchers = 1L) {
                 withContext(Dispatchers.IO) {
-                    expect(2)
+                    finish(2)
                     uncompleted.await()
                 }
             }
         }
-        finish(3)
         val hasDetailedError = result.exceptionOrNull()?.message?.contains("may be empty")
-        assertEquals(true, hasDetailedError)
-        uncompleted.cancel()
-    }
-
-    @Test
-    fun whenWaitConfig_isSingleThreaded_hasDetailedErrorMessage() {
-        expect(1)
-        val uncompleted = CompletableDeferred<Unit>()
-        val result = runCatching {
-            runBlockingTest(waitConfig = SingleDispatcherWaitConfig) {
-                launch {
-                    expect(2)
-                    uncompleted.await()
-                }
-            }
-        }
-        finish(3)
-        val hasDetailedError = result.exceptionOrNull()?.message?.contains("Please update your test to use the default value of MultiDispatcherWaitConfig")
         assertEquals(true, hasDetailedError)
         uncompleted.cancel()
     }
@@ -308,13 +283,33 @@ class TestRunBlockingOrderTest : TestBase() {
         runBlockingTest {
             resumeDispatcher()
             withContext(Dispatchers.IO) {
-                thread = Thread.currentThread()
                 expect(1)
                 delay(1)
                 expect(2)
+                thread = Thread.currentThread()
             }
             assertEquals(thread, Thread.currentThread())
             finish(3)
+        }
+    }
+
+    @Test
+    fun whenDispatcherRunning_doesntProgressDelays_inLaunchBody() {
+        var state = 0
+        fun CoroutineScope.subject() = launch {
+            state = 1
+            delay(1000)
+            state = 2
+        }
+
+        runBlockingTest {
+            subject()
+
+            assertEquals(1, state)
+
+            advanceTimeBy(1000)
+
+            assertEquals(2, state)
         }
     }
 }

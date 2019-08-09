@@ -7,10 +7,9 @@ package kotlinx.coroutines.test
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.internal.ThreadSafeHeap
 import kotlinx.coroutines.internal.ThreadSafeHeapNode
-import kotlinx.coroutines.test.DelayController.QueueState.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 
@@ -29,7 +28,7 @@ import kotlin.math.max
  * @see DelayController
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayController {
+public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayController, IdleWaiter {
     private var dispatchImmediately = true
         set(value) {
             field = value
@@ -48,11 +47,12 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     // Storing time in nanoseconds internally.
     private val _time = atomic(0L)
 
-    override val queueState = ConflatedBroadcastChannel<DelayController.QueueState>(Idle)
-        
+    private val waitLock = Channel<Unit>(capacity = 1)
+
     /** @suppress */
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         if (dispatchImmediately) {
+            unpark()
             block.run()
         } else {
             post(block)
@@ -76,7 +76,6 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
         return object : DisposableHandle {
             override fun dispose() {
                 queue.remove(node)
-                updateQueueObservers()
             }
         }
     }
@@ -88,14 +87,14 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
 
     private fun post(block: Runnable) {
         queue.addLast(TimedRunnable(block, _counter.getAndIncrement()))
-        updateQueueObservers()
+        unpark()
     }
 
     private fun postDelayed(block: Runnable, delayTime: Long): TimedRunnable {
         return TimedRunnable(block, _counter.getAndIncrement(), safePlus(currentTime, delayTime))
                 .also {
                     queue.addLast(it)
-                    updateQueueObservers()
+                    unpark()
                 }
     }
 
@@ -122,7 +121,6 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     override fun advanceTimeBy(delayTimeMillis: Long): Long {
         val oldTime = currentTime
         advanceUntilTime(oldTime + delayTimeMillis)
-        updateQueueObservers()
         return currentTime - oldTime
     }
 
@@ -134,7 +132,6 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     private fun advanceUntilTime(targetTime: Long) {
         doActionsUntil(targetTime)
         _time.update { currentValue -> max(currentValue, targetTime) }
-        updateQueueObservers()
     }
 
     /** @suppress */
@@ -146,14 +143,12 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
             advanceUntilTime(next.time)
         }
 
-        updateQueueObservers()
         return currentTime - oldTime
     }
 
     /** @suppress */
     override fun runCurrent() {
         doActionsUntil(currentTime)
-        updateQueueObservers()
     }
 
     /** @suppress */
@@ -179,9 +174,9 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
 
     /** @suppress */
     override fun cleanupTestCoroutines() {
+        unpark()
         // process any pending cancellations or completions, but don't advance time
         doActionsUntil(currentTime)
-        updateQueueObservers()
 
         // run through all pending tasks, ignore any submitted coroutines that are not active
         val pendingTasks = mutableListOf<TimedRunnable>()
@@ -201,23 +196,12 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
         }
     }
 
-    private fun updateQueueObservers() {
-        // note: this will be called from any thread, and is safe lock-free in runBlockingTest but to guard against
-        // third party code code updating this will use a lock
-        synchronized(queue) {
-            val next = queue.peek()
-            when {
-                next == null-> queueState.offerIfChanged(Idle)
-                next.time <= currentTime -> queueState.offerIfChanged(HasCurrentTask)
-                next.time > currentTime -> queueState.offerIfChanged(HasDelayedTask)
-            }
-        }
+    override suspend fun suspendUntilNextDispatch() {
+        waitLock.receive()
     }
 
-    private fun ConflatedBroadcastChannel<DelayController.QueueState>.offerIfChanged(element: DelayController.QueueState) {
-        if (valueOrNull != element) {
-            offer(element)
-        }
+    private fun unpark() {
+        waitLock.offer(Unit)
     }
 }
 
@@ -250,4 +234,21 @@ private class TimedRunnable(
     }
 
     override fun toString() = "TimedRunnable(time=$time, run=$runnable)"
+}
+
+/**
+ * Alternative implementations of [TestCoroutineDispatcher] must implement this interface in order to be supported by
+ * [runBlockingTest].
+ *
+ * This interface allows external code to suspend itself until the next dispatch is received. This is similar to park in
+ * a normal event loop, but doesn't require that [TestCoroutineDispatcher] block a thread while parked.
+ */
+interface IdleWaiter {
+    /**
+     * Attempt to suspend until the next dispatch is received.
+     *
+     * This method may resume immediately if any dispatch was received since the last time it was called. This ensures
+     * that dispatches won't be dropped if they happen just before calling [suspendUntilNextDispatch].
+     */
+    public suspend fun suspendUntilNextDispatch()
 }
