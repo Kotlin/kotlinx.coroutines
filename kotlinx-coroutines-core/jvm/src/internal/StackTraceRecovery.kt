@@ -11,6 +11,21 @@ import java.util.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
+/*
+ * `Class.forName(name).canonicalName` instead of plain `name` is required to properly handle
+ * Android's minifier that renames these classes and breaks our recovery heuristic without such lookup.
+ */
+private const val baseContinuationImplClass = "kotlin.coroutines.jvm.internal.BaseContinuationImpl"
+private const val stackTraceRecoveryClass = "kotlinx.coroutines.internal.StackTraceRecoveryKt"
+
+private val baseContinuationImplClassName = runCatching {
+    Class.forName(baseContinuationImplClass).canonicalName
+}.getOrElse { baseContinuationImplClass }
+
+private val stackTraceRecoveryClassName = runCatching {
+    Class.forName(stackTraceRecoveryClass).canonicalName
+}.getOrElse { stackTraceRecoveryClass }
+
 internal actual fun <E : Throwable> recoverStackTrace(exception: E): E {
     if (recoveryDisabled(exception)) return exception
     // No unwrapping on continuation-less path: exception is not reported multiple times via slow paths
@@ -21,10 +36,9 @@ internal actual fun <E : Throwable> recoverStackTrace(exception: E): E {
 private fun <E : Throwable> E.sanitizeStackTrace(): E {
     val stackTrace = stackTrace
     val size = stackTrace.size
-
-    val lastIntrinsic = stackTrace.frameIndex("kotlinx.coroutines.internal.StackTraceRecoveryKt")
+    val lastIntrinsic = stackTrace.frameIndex(stackTraceRecoveryClassName)
     val startIndex = lastIntrinsic + 1
-    val endIndex = stackTrace.frameIndex("kotlin.coroutines.jvm.internal.BaseContinuationImpl")
+    val endIndex = stackTrace.frameIndex(baseContinuationImplClassName)
     val adjustment = if (endIndex == -1) 0 else size - endIndex
     val trace = Array(size - lastIntrinsic - adjustment) {
         if (it == 0) {
@@ -83,7 +97,7 @@ private fun <E : Throwable> recoverFromStackFrame(exception: E, continuation: Co
 private fun <E : Throwable> createFinalException(cause: E, result: E, resultStackTrace: ArrayDeque<StackTraceElement>): E {
     resultStackTrace.addFirst(artificialFrame("Coroutine boundary"))
     val causeTrace = cause.stackTrace
-    val size = causeTrace.frameIndex("kotlin.coroutines.jvm.internal.BaseContinuationImpl")
+    val size = causeTrace.frameIndex(baseContinuationImplClassName)
     if (size == -1) {
         result.stackTrace = resultStackTrace.toTypedArray()
         return result
