@@ -72,6 +72,9 @@ Definition segment_remove : val :=
 Definition segment_cutoff : val :=
   λ: "seg", (segment_prev "seg") <- NONE.
 
+Definition segment_cancel_cell : val :=
+  λ: "seg", FAA (segment_cancelled "seg") #-1.
+
 Definition cell_ref_loc : val :=
   λ: "c", let: "seg" := Fst !"c" in
           let: "idx" := Snd !"c" in
@@ -112,19 +115,17 @@ Definition find_segment : val :=
 
 End impl.
 
-From iris.algebra Require Import cmra auth list agree csum.
+From iris.algebra Require Import cmra auth list agree csum excl gset frac.
 
 Section proof.
 
-Notation cancellable_cell_algebra := (prodUR (optionUR (agreeR locO))
-                                             (optionUR (csumR (agreeR unitO)
-                                                              positiveR
-                                     ))).
+Notation cell_algebra := (optionUR (csumR (agreeR unitO) fracR)).
 
-Notation cell_algebra := (prodUR cancellable_cell_algebra
-                                 (optionUR (agreeR gnameO))).
-
-Notation segment_algebra := (prodUR cancellable_cell_algebra
+Notation segment_algebra := (prodUR (prodUR (optionUR (agreeR locO))
+                                            (optionUR (csumR (agreeR unitO)
+                                                             positiveR
+                                            ))
+                                    )
                                     (listUR cell_algebra)).
 
 Notation algebra := (authUR (listUR segment_algebra)).
@@ -143,17 +144,23 @@ Variable (N: namespace).
 Variable segment_size : positive.
 Variable cell_is_done: nat -> iProp.
 Variable cell_is_done_persistent: forall n, Persistent (cell_is_done n).
+Variable cell_invariant: nat -> loc -> iProp.
+Variable cell_invariant_persistent: forall ℓ n, Persistent (cell_invariant n ℓ).
 
 Definition ias_segment_info (id: nat) (s: segment_algebra):
   listUR segment_algebra :=
   replicate (id * Pos.to_nat segment_size) (None, None, nil) ++ [s].
 
+Definition ias_cell_info' (id_seg id_cell: nat) (c: cell_algebra):
+  listUR segment_algebra :=
+  ias_segment_info id_seg (None, None, replicate id_cell None ++ [c]).
+
 Definition ias_cell_info (id: nat) (c: cell_algebra): listUR segment_algebra :=
   let ns := (id `div` Pos.to_nat segment_size)%nat in
   let nc := (id `mod` Pos.to_nat segment_size)%nat in
-  ias_segment_info ns (None, None, replicate nc (None, None, None) ++ [c]).
+  ias_cell_info' ns nc c.
 
-Theorem list_core_id' {A: ucmraT} (l: listUR A) :
+Global Instance list_core_id' {A: ucmraT} (l: listUR A) :
   (forall x, x ∈ l -> CoreId x) -> CoreId l.
 Proof.
   intros Hyp. constructor. apply list_equiv_lookup=> i.
@@ -164,7 +171,7 @@ Proof.
   eapply elem_of_list_lookup; by eauto.
 Qed.
 
-Theorem ias_segment_info_core_id (id: nat) (s: segment_algebra):
+Global Instance ias_segment_info_core_id (id: nat) (s: segment_algebra):
   CoreId s -> CoreId (ias_segment_info id s).
 Proof.
   intro SegHyp.
@@ -178,36 +185,104 @@ Proof.
     by apply IHn.
 Qed.
 
-Theorem ias_cell_info_core_id (id: nat) (c: cell_algebra):
-  CoreId c -> CoreId (ias_cell_info id c).
+Global Instance ias_cell_info_core_id (ids idc: nat) (c: cell_algebra):
+  CoreId c -> CoreId (ias_cell_info' ids idc c).
 Proof.
   intro CellHyp.
   rewrite /ias_cell_info.
   apply ias_segment_info_core_id.
   apply pair_core_id; first by apply _.
   apply list_core_id'.
-  induction (id `mod` Pos.to_nat segment_size)%nat; intros ? HElemOf; simpl in *.
+  induction idc; intros ? HElemOf; simpl in *.
   - inversion HElemOf; first by apply _.
     exfalso. by eapply not_elem_of_nil.
   - inversion HElemOf; first by apply _.
-    by apply IHn.
+    by apply IHidc.
 Qed.
 
-Definition array_mapsto γ (n: nat) (ℓ: loc): iProp :=
-  own γ (◯ (ias_cell_info n (Some (to_agree ℓ), None, None))).
-
-Theorem array_mapsto_persistent γ n ℓ: Persistent (array_mapsto γ n ℓ).
+Theorem ias_cell_info__ias_cell_info' ns nc n s:
+  (nc < Pos.to_nat segment_size)%nat ->
+  n = (nc + ns * Pos.to_nat segment_size)%nat ->
+  ias_cell_info' ns nc s = ias_cell_info n s.
 Proof.
-  apply own_core_persistent.
-  apply auth_frag_core_id.
-  apply ias_cell_info_core_id.
-  apply pair_core_id; apply _.
+  rewrite /ias_cell_info /ias_cell_info'.
+  intros Hlt Heq.
+  subst.
+  replace ((nc + ns * Pos.to_nat segment_size) `div` Pos.to_nat segment_size)%nat
+    with ns.
+  replace ((nc + ns * Pos.to_nat segment_size) `mod` Pos.to_nat segment_size)%nat
+    with nc.
+  done.
+  {
+    rewrite Nat.mod_add.
+    by rewrite Nat.mod_small.
+    assert (O < Pos.to_nat segment_size)%nat by apply Pos2Nat.is_pos; lia.
+  }
+  {
+    rewrite Nat.div_add.
+    by rewrite Nat.div_small.
+    assert (O < Pos.to_nat segment_size)%nat by apply Pos2Nat.is_pos; lia.
+  }
 Qed.
+
+Definition array_mapsto' γ ns nc ℓ: iProp :=
+  ((∃ (dℓ: loc), ⌜ℓ = dℓ +ₗ Z.of_nat nc⌝ ∧
+                 own γ (◯ (ias_segment_info
+                             ns ((Some (to_agree dℓ)), None, nil)))))%I.
+
+Global Instance array_mapsto'_persistent γ ns nc ℓ:
+  Persistent (array_mapsto' γ ns nc ℓ).
+Proof.
+  apply bi.exist_persistent; intros;
+    apply bi.and_persistent; first by apply _.
+  apply own_core_persistent; apply auth_frag_core_id;
+    apply ias_segment_info_core_id; apply pair_core_id; apply _.
+Qed.
+
+Definition array_mapsto γ (id: nat) (ℓ: loc): iProp :=
+  let ns := (id `div` Pos.to_nat segment_size)%nat in
+  let nc := (id `mod` Pos.to_nat segment_size)%nat in
+  array_mapsto' γ ns nc ℓ.
+
+Theorem array_mapsto'_agree γ (ns nc: nat) (ℓ ℓ': loc):
+  array_mapsto' γ ns nc ℓ -∗ array_mapsto' γ ns nc ℓ' -∗ ⌜ℓ = ℓ'⌝.
+Proof.
+  rewrite /array_mapsto'.
+  iIntros "Ham Ham'".
+  iDestruct "Ham" as (dℓ) "[% Ham]".
+  iDestruct "Ham'" as (dℓ') "[% Ham']".
+  subst.
+  iDestruct (own_valid_2 with "Ham Ham'") as %Hv.
+  rewrite /ias_segment_info -auth_frag_op in Hv.
+  assert (forall (A: ucmraT) (a: A), ✓ (◯ a) -> ✓a) as Hauth_frag_valid.
+  { by intros; apply auth_frag_valid. }
+  apply Hauth_frag_valid in Hv. clear Hauth_frag_valid.
+  assert (forall (i: nat) (A: ucmraT) (l: list A), ✓ l -> ✓ (l !! i)) as Hlist_valid.
+  { by intros; apply list_lookup_valid. }
+  remember (ns * Pos.to_nat segment_size)%nat as k.
+  apply (Hlist_valid k) in Hv. clear Hlist_valid.
+  assert (forall A k (a: A) c, (replicate k c ++ [a]) !! k = Some a) as Hrep.
+  { clear. intros. induction k; auto. }
+  rewrite list_lookup_op in Hv.
+  rewrite Hrep in Hv.
+  rewrite Hrep in Hv.
+  destruct Hv as [[Hp _] _]; simpl in *.
+  compute in Hp.
+  specialize (Hp O dℓ dℓ').
+  rewrite Hp; eauto; repeat constructor.
+Qed.
+
+Theorem array_mapsto_agree γ n (ℓ ℓ': loc):
+  array_mapsto γ n ℓ -∗ array_mapsto γ n ℓ' -∗ ⌜ℓ = ℓ'⌝.
+Proof. apply array_mapsto'_agree. Qed.
+
+Global Instance array_mapsto_persistent γ n ℓ: Persistent (array_mapsto γ n ℓ).
+Proof. apply _. Qed.
 
 Definition segment_is_cancelled γ (n: nat): iProp :=
   own γ (◯ (ias_segment_info n (None, Some (Cinl (to_agree tt)), nil))).
 
-Theorem segment_is_cancelled_persistent γ n:
+Global Instance segment_is_cancelled_persistent γ n:
   Persistent (segment_is_cancelled γ n).
 Proof.
   apply own_core_persistent.
@@ -217,89 +292,191 @@ Proof.
 Qed.
 
 Definition cell_is_cancelled γ (n: nat): iProp :=
-  own γ (◯ (ias_cell_info n (None, Some (Cinl (to_agree tt)), None))).
+  own γ (◯ (ias_cell_info n (Some (Cinl (to_agree tt))))).
 
-Theorem cell_is_cancelled_persistent γ n:
+Global Instance cell_is_cancelled_persistent γ n:
   Persistent (cell_is_cancelled γ n).
+Proof. apply _. Qed.
+
+Definition segments_mapto γ (locs: list loc): iProp :=
+  own γ (◯ ((fun ℓ => (Some (to_agree ℓ), None, nil)) <$> locs)).
+
+Global Instance segments_mapto_persistent γ locs:
+  Persistent (segments_mapto γ locs).
 Proof.
   apply own_core_persistent.
   apply auth_frag_core_id.
-  apply ias_cell_info_core_id.
-  apply pair_core_id; apply _.
+  apply list_core_id'.
+  intros ? Hel.
+  destruct x as [[RLoc RCanc] RNil].
+  assert (RNil = [] /\ RCanc = None) as [HRNil HRCanc].
+  { induction locs; inversion Hel; auto. }
+  subst.
+  apply _.
 Qed.
-
-Definition segments_mapto (locs: list loc): listUR segment_algebra :=
-  (fun ℓ => (Some (to_agree ℓ), None, nil)) <$> locs.
-
-Definition ias_segment_contains_cells (id: nat)
-           (locs: vec loc (Pos.to_nat segment_size)): listUR segment_algebra :=
-  ias_segment_info id (None, None,
-                   (fun ℓ => (Some (to_agree ℓ), None, None)) <$> vec_to_list locs).
 
 Definition is_valid_prev γ (id: nat) (pl: val): iProp :=
   (⌜pl = NONEV⌝ ∧
    ([∗ list] j ∈ seq 0 (id * Pos.to_nat segment_size),
     cell_is_cancelled γ j ∨ cell_is_done j) ∨
    ∃ (segment_locs: list loc),
-     own γ (◯ (segments_mapto segment_locs)) ∗
+     segments_mapto γ segment_locs ∗
    ∃ (pid: nat),
      ⌜Some pl = option_map (LitV ∘ LitLoc) (segment_locs !! pid)⌝ ∧
      ⌜pid < id⌝ ∧
      [∗ list] j ∈ seq (S pid) id, segment_is_cancelled γ j)%I.
 
+Global Instance is_valid_prev_persistent γ id pl:
+  Persistent (is_valid_prev γ id pl).
+Proof. apply _. Qed.
+
 Definition is_valid_next γ (id: nat) (nl: val): iProp :=
-  (∃ (segment_locs: list loc),
-     own γ (◯ (segments_mapto segment_locs)) ∗
+  (∃ (segment_locs: list loc), segments_mapto γ segment_locs ∗
    ∃ (nid: nat),
       ⌜Some nl = option_map (fun x => LitV (LitLoc x)) (segment_locs !! nid)⌝ ∧
       ⌜id < nid⌝ ∧
       [∗ list] j ∈ seq (S id) nid, segment_is_cancelled γ j)%I.
 
-Definition ias_cell_is_cancelled (cell: cell_algebra) :=
-    exists t, cell.1.2 = Some (Cinl t).
+Global Instance is_valid_next_persistent γ id pl:
+  Persistent (is_valid_prev γ id pl).
+Proof. apply _. Qed.
 
-Instance cell_is_cancelled_dec : forall (cell: cell_algebra),
-    Decision (ias_cell_is_cancelled cell).
+Definition is_segment γ (id: nat) (ℓ: loc) (pl nl: val) : iProp :=
+  (∃ cancelled,
+      (∃ (cells: vec bool (Pos.to_nat segment_size)),
+          ⌜cancelled = length (List.filter (fun i => i) (vec_to_list cells))⌝ ∗
+          let uncancelled := (Pos.to_nat segment_size - cancelled)%nat in
+          own γ (◯ (ias_segment_info
+                      id
+                      (None,
+                        Some (if Nat.eqb uncancelled O
+                              then Cinl (to_agree tt)
+                              else Cinr (Pos.of_nat uncancelled)),
+                        map (fun (c: bool) =>
+                              (Some (if c
+                                      then Cinl (to_agree tt)
+                                      else Cinr (1/4)%Qp)))
+                            (vec_to_list cells)))))
+        ∗ (∃ (dℓ: loc), ℓ ↦ (((#id, #cancelled), #dℓ), (pl, nl)) ∗
+                          ([∗ list] i ∈ seq 0 (Pos.to_nat segment_size),
+                           cell_invariant (id*Pos.to_nat segment_size+i)%nat
+                                          (dℓ +ₗ Z.of_nat i)))
+        ∗ is_valid_prev γ id pl)%I.
+
+Definition is_normal_segment γ (ℓ: loc) (id: nat): iProp :=
+  (∃ pl nl, is_segment γ id ℓ pl nl ∗ is_valid_next γ id nl)%I.
+
+Definition is_tail_segment γ (ℓ: loc) (id: nat): iProp :=
+  (∃ pl, is_segment γ id ℓ pl NONEV)%I.
+
+Definition is_infinite_array γ : iProp :=
+  (∃ segments, ([∗ list] i ↦ ℓ ∈ segments, is_normal_segment γ ℓ i)
+                 ∗ (∃ ℓ, is_tail_segment γ ℓ (length segments))
+                 ∗ (∃ segments', ⌜S (length segments) = length segments'⌝ ∧
+                                 own γ (● segments')))%I.
+
+Definition does_point_to_segment γ ℓ id: iProp :=
+  own γ (◯ (ias_segment_info id (Some (to_agree ℓ), None, nil))).
+
+Global Instance does_point_to_segment_persistent γ ℓ id:
+  Persistent (does_point_to_segment γ ℓ id).
 Proof.
-  intros.
-  rewrite /ias_cell_is_cancelled.
-  destruct cell as [[tmp1 cancelled_info] tmp2].
-  simpl.
-  destruct cancelled_info as [cancelled_info|].
-  1: destruct cancelled_info; simpl.
-  1: left; by eauto.
-  all: right; intro Contra; destruct Contra as [t HContra]; discriminate.
+  apply own_core_persistent.
+  apply auth_frag_core_id.
+  apply ias_segment_info_core_id.
+  apply pair_core_id; apply _.
 Qed.
 
-Definition is_segment γ (id: nat)
-           (cancelled: nat) (ℓ: loc) (pl nl: val) : iProp :=
-  ((⌜cancelled = Pos.to_nat segment_size⌝ ∧
-    segment_is_cancelled γ id ∨
-    ⌜cancelled < Pos.to_nat segment_size⌝ ∧
-    ∃ (cells: listUR cell_algebra),
-      own γ (◯ (ias_segment_info id (None, None, cells)))
-          ∗ ⌜length (filter ias_cell_is_cancelled cells) = cancelled⌝)
-     ∗ (∃ (dℓ: loc) (locs: vec loc (Pos.to_nat segment_size)),
-           own γ (◯ (ias_segment_contains_cells id locs)) ∗
-           ℓ ↦ (((#id, #cancelled), #dℓ), (pl, nl)) ∗
-             dℓ ↦∗ map (LitV ∘ LitLoc) (vec_to_list locs))
-     ∗ is_valid_prev γ id pl)%I.
+Theorem segment_id_spec γ id (ℓ: loc):
+  <<< ∀ pl nl, is_segment γ id ℓ pl nl >>>
+    segment_id #ℓ @ ⊤
+  <<< is_segment γ id ℓ pl nl, RET #id >>>.
+Proof.
+  iIntros (Φ) "AU". wp_lam.
+  wp_bind (!_)%E. iMod "AU" as (pl nl) "[HIsSeg [_ HClose]]".
+  iDestruct "HIsSeg" as (cancelled) "[HCanc [HMem #HValidPrev]]".
+  iDestruct "HMem" as (dℓ) "[Hℓ #HCells]".
+  wp_load.
+  iMod ("HClose" with "[HCanc Hℓ]") as "HΦ".
+  { rewrite /is_segment; by eauto 10 with iFrame. }
+  iModIntro.
+  by wp_pures.
+Qed.
 
-Definition is_normal_segment γ (ℓ: loc) (id: nat)
-           (cancelled: nat)
-           (pl nl: val): iProp :=
-  (is_segment γ id cancelled ℓ pl nl ∗ is_valid_next γ id nl)%I.
+Theorem segment_prev_spec γ id (ℓ: loc):
+  <<< ∀ pl nl, is_segment γ id ℓ pl nl >>>
+    segment_prev #ℓ @ ⊤
+  <<< is_segment γ id ℓ pl nl ∗ is_valid_prev γ id pl, RET pl >>>.
+Proof.
+  iIntros (Φ) "AU". wp_lam.
+  wp_bind (!_)%E. iMod "AU" as (pl nl) "[HIsSeg [_ HClose]]".
+  iDestruct "HIsSeg" as (cancelled) "[HCanc [HMem #HValidPrev]]".
+  iDestruct "HMem" as (dℓ) "[Hℓ #HCells]".
+  wp_load.
+  iMod ("HClose" with "[HCanc Hℓ]") as "HΦ".
+  { rewrite /is_segment; by eauto 10 with iFrame. }
+  iModIntro.
+  by wp_pures.
+Qed.
 
-Definition is_tail_segment γ (ℓ: loc) (id: nat)
-           (cancelled: nat) (pl: val): iProp :=
-  is_segment γ id cancelled ℓ pl NONEV.
+Theorem segment_next_spec γ id (ℓ: loc):
+  <<< ∀ pl nl, is_segment γ id ℓ pl nl >>>
+    segment_next #ℓ @ ⊤
+  <<< is_segment γ id ℓ pl nl, RET nl >>>.
+Proof.
+  iIntros (Φ) "AU". wp_lam.
+  wp_bind (!_)%E. iMod "AU" as (pl nl) "[HIsSeg [_ HClose]]".
+  iDestruct "HIsSeg" as (cancelled) "[HCanc [HMem #HValidPrev]]".
+  iDestruct "HMem" as (dℓ) "[Hℓ #HCells]".
+  wp_load.
+  iMod ("HClose" with "[HCanc Hℓ]") as "HΦ".
+  { rewrite /is_segment; by eauto 10 with iFrame. }
+  iModIntro.
+  by wp_pures.
+Qed.
 
-(*)
-Definition is_infinite_array γ
-      (∃ (relevant_locs : list loc) (pl nl : val),
-      own γ (map_to relevant_locs nil) ∗
-      ∧
-      is_segment id locs ℓ pl nl)
+Theorem segment_data_at_spec γ id (ℓ: loc) (ix: nat):
+  ⌜ix < Pos.to_nat segment_size⌝ -∗
+  <<< ∀ pl nl, is_segment γ id ℓ pl nl >>>
+    segment_data_at #ℓ #ix @ ⊤
+  <<< ∃ (v: loc), is_segment γ id ℓ pl nl
+                             ∗ array_mapsto' γ id ix v
+                             ∗ cell_invariant (id * Pos.to_nat segment_size + ix)%nat v, RET #v >>>.
+Proof.
+  iIntros "%". iIntros (Φ) "AU". wp_lam. wp_pures.
+  wp_bind (!_)%E. iMod "AU" as (pl nl) "[HIsSeg [_ HClose]]".
+  iDestruct "HIsSeg" as (cancelled) "[HCanc [HMem #HValidPrev]]".
+  iDestruct "HMem" as (dℓ) "[Hℓ #HCells]".
+  wp_load.
+  iSpecialize ("HClose" $! (dℓ +ₗ ix)).
+  iMod ("HClose" with "[HCanc Hℓ]") as "HΦ".
+  { rewrite /is_segment.
+    iAssert (cell_invariant (id * Pos.to_nat segment_size + ix)%nat
+                            (dℓ +ₗ ix)) as "#HCellInv".
+    {
+      iApply (big_sepL_elem_of with "HCells").
+      apply elem_of_list_In.
+      apply in_seq.
+      lia.
+    }
+    iSplitL.
+    2: {
+      iSplitL.
+      2: by iApply "HCellInv".
+      rewrite /array_mapsto'.
+      iExists _.
+      iSplitL; eauto.
+      admit.
+    }
+    admit.
+  }
+  iModIntro.
+  by wp_pures.
+Abort.
+
+(*
+Definition segment_cancelled : val :=
+  λ: "seg", Snd (Fst (Fst !"seg")).
 *)
 
 End proof.
