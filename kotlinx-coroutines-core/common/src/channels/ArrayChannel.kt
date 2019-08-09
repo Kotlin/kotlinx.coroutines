@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
+import kotlin.math.*
 
 /**
  * Channel with array buffer of a fixed [capacity].
@@ -29,10 +30,14 @@ internal open class ArrayChannel<E>(
     }
 
     private val lock = ReentrantLock()
-    private val buffer: Array<Any?> = arrayOfNulls<Any?>(capacity)
+    /*
+     * Guarded by lock.
+     * Allocate minimum of capacity and 16 to avoid excess memory pressure for large channels when it's not necessary.
+     */
+    private var buffer: Array<Any?> = arrayOfNulls<Any?>(min(capacity, 8))
     private var head: Int = 0
     @Volatile
-    private var size: Int = 0
+    private var size: Int = 0 // Invariant: size <= capacity
 
     protected final override val isBufferAlwaysEmpty: Boolean get() = false
     protected final override val isBufferEmpty: Boolean get() = size == 0
@@ -64,7 +69,8 @@ internal open class ArrayChannel<E>(
                         }
                     }
                 }
-                buffer[(head + size) % capacity] = element // actually queue element
+                ensureCapacity(size)
+                buffer[(head + size) % buffer.size] = element // actually queue element
                 return OFFER_SUCCESS
             }
             // size == capacity: full
@@ -112,7 +118,8 @@ internal open class ArrayChannel<E>(
                     this.size = size // restore size
                     return ALREADY_SELECTED
                 }
-                buffer[(head + size) % capacity] = element // actually queue element
+                ensureCapacity(size)
+                buffer[(head + size) % buffer.size] = element // actually queue element
                 return OFFER_SUCCESS
             }
             // size == capacity: full
@@ -121,6 +128,19 @@ internal open class ArrayChannel<E>(
         // breaks here if offer meets receiver
         receive!!.completeResumeReceive(token!!)
         return receive!!.offerResult
+    }
+
+    // Guarded by lock
+    private fun ensureCapacity(currentSize: Int) {
+        if (currentSize >= buffer.size) {
+            val newSize = min(buffer.size * 2, capacity)
+            val newBuffer = arrayOfNulls<Any?>(newSize)
+            for (i in 0 until currentSize) {
+                newBuffer[i] = buffer[(head + i) % buffer.size]
+            }
+            buffer = newBuffer
+            head = 0
+        }
     }
 
     // result is `E | POLL_FAILED | Closed`
@@ -149,9 +169,9 @@ internal open class ArrayChannel<E>(
             }
             if (replacement !== POLL_FAILED && replacement !is Closed<*>) {
                 this.size = size // restore size
-                buffer[(head + size) % capacity] = replacement
+                buffer[(head + size) % buffer.size] = replacement
             }
-            head = (head + 1) % capacity
+            head = (head + 1) % buffer.size
         }
         // complete send the we're taken replacement from
         if (token != null)
@@ -203,7 +223,7 @@ internal open class ArrayChannel<E>(
             }
             if (replacement !== POLL_FAILED && replacement !is Closed<*>) {
                 this.size = size // restore size
-                buffer[(head + size) % capacity] = replacement
+                buffer[(head + size) % buffer.size] = replacement
             } else {
                 // failed to poll or is already closed --> let's try to select receiving this element from buffer
                 if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
@@ -212,7 +232,7 @@ internal open class ArrayChannel<E>(
                     return ALREADY_SELECTED
                 }
             }
-            head = (head + 1) % capacity
+            head = (head + 1) % buffer.size
         }
         // complete send the we're taken replacement from
         if (token != null)
@@ -226,7 +246,7 @@ internal open class ArrayChannel<E>(
         lock.withLock {
             repeat(size) {
                 buffer[head] = 0
-                head = (head + 1) % capacity
+                head = (head + 1) % buffer.size
             }
             size = 0
         }
@@ -237,5 +257,5 @@ internal open class ArrayChannel<E>(
     // ------ debug ------
 
     override val bufferDebugString: String
-        get() = "(buffer:capacity=${buffer.size},size=$size)"
+        get() = "(buffer:capacity=$capacity,size=$size)"
 }
