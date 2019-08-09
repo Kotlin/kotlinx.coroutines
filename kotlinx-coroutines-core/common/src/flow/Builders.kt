@@ -67,7 +67,7 @@ public fun <T> (() -> T).asFlow(): Flow<T> = flow {
  * Example of usage:
  * ```
  * suspend fun remoteCall(): R = ...
- * suspend fun remoteCallFlow(): Flow<R> = ::remoteCall.asFlow()
+ * fun remoteCallFlow(): Flow<R> = ::remoteCall.asFlow()
  * ```
  */
 @FlowPreview
