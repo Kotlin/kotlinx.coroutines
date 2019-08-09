@@ -33,7 +33,7 @@
 
 <h1 id="channel">Channel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L359">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L510">(source)</a></div>
 
 <p>Channel is a non-blocking primitive for communication between sender using <a href="../-send-channel/index.html">SendChannel</a> and receiver using <a href="../-receive-channel/index.html">ReceiveChannel</a>.
 Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
@@ -131,22 +131,6 @@ This function returns <code>false</code> for <a href="../-receive-channel/is-clo
 is received from the channel.
 The <a href="../../kotlinx.coroutines.selects/select.html">select</a> invocation fails with exception if the channel
 <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a> (see <a href="../-send-channel/close.html">close</a> for details).</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../-receive-channel/on-receive-or-null.html">onReceiveOrNull</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">onReceiveOrNull</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.selects/-select-clause1.html"><span class="identifier">SelectClause1</span></a><span class="symbol">&lt;</span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span><span class="symbol">&gt;</span></code></div>
-
-        <p>Clause for <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of <a href="../-receive-channel/receive-or-null.html">receiveOrNull</a> suspending function that selects with the element that
-is received from the channel or selects with <code>null</code> if if the channel
-<a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a> without cause. The <a href="../../kotlinx.coroutines.selects/select.html">select</a> invocation fails with
-the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
 
       </td>
 </tr>
@@ -276,21 +260,6 @@ It throws the original <a href="../-send-channel/close.html">close</a> cause exc
 or throws <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a> if the channel <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a>.
 If the channel was closed because of the exception, it is called a <em>failed</em> channel and this function
 throws the original <a href="../-send-channel/close.html">close</a> cause exception.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../-receive-channel/receive-or-null.html">receiveOrNull</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code></div>
-
-        <p>Retrieves and removes the element from this channel suspending the caller while this channel is empty,
-or returns <code>null</code> if the channel is <a href="../-receive-channel/is-closed-for-receive.html">closed</a> without cause
-or throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
 
       </td>
 </tr>
@@ -512,6 +481,21 @@ provided by <a href="../associate-to.html#kotlinx.coroutines.channels$associateT
 
         <p>Makes sure that the given <a href="../consume.html#kotlinx.coroutines.channels$consume(kotlinx.coroutines.channels.ReceiveChannel((kotlinx.coroutines.channels.consume.E)), kotlin.Function1((kotlinx.coroutines.channels.ReceiveChannel((kotlinx.coroutines.channels.consume.E)), kotlinx.coroutines.channels.consume.R)))/block">block</a> consumes all elements from the given channel
 by always invoking <a href="../-receive-channel/cancel.html">cancel</a> after the execution of the block.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../../kotlinx.coroutines.flow/consume-as-flow.html">consumeAsFlow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.flow/consume-as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeAsFlow</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.flow/-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.flow/consume-as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Represents the given receive channel as a hot flow and <a href="../consume.html">consumes</a> the channel
+on the first collection from this flow. The resulting flow can be collected just once and throws
+<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> when trying to collect it more than once.</p>
 
       </td>
 </tr>
@@ -1180,6 +1164,22 @@ and appends the results to the given <a href="../map-to.html#kotlinx.coroutines.
 <tr>
 <td>
 
+        <p><a href="../on-receive-or-null.html">onReceiveOrNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../on-receive-or-null.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onReceiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.selects/-select-clause1.html"><span class="identifier">SelectClause1</span></a><span class="symbol">&lt;</span><a href="../on-receive-or-null.html#E"><span class="identifier">E</span></a><span class="symbol">?</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Clause for <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of <a href="../receive-or-null.html">receiveOrNull</a> suspending function that selects with the element that
+is received from the channel or selects with <code>null</code> if the channel
+<a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a> without cause. The <a href="../../kotlinx.coroutines.selects/select.html">select</a> invocation fails with
+the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../partition.html">partition</a></p>
 
       </td>
@@ -1189,6 +1189,20 @@ and appends the results to the given <a href="../map-to.html#kotlinx.coroutines.
         <p>Splits the original channel into pair of lists,
 where <em>first</em> list contains elements for which <a href="../partition.html#kotlinx.coroutines.channels$partition(kotlinx.coroutines.channels.ReceiveChannel((kotlinx.coroutines.channels.partition.E)), kotlin.Function1((kotlinx.coroutines.channels.partition.E, kotlin.Boolean)))/predicate">predicate</a> yielded <code>true</code>,
 while <em>second</em> list contains elements for which <a href="../partition.html#kotlinx.coroutines.channels$partition(kotlinx.coroutines.channels.ReceiveChannel((kotlinx.coroutines.channels.partition.E)), kotlin.Function1((kotlinx.coroutines.channels.partition.E, kotlin.Boolean)))/predicate">predicate</a> yielded <code>false</code>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../receive-or-null.html">receiveOrNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../receive-or-null.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../receive-or-null.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code></div>
+
+        <p>Retrieves and removes the element from this channel suspending the caller while this channel <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/is-empty.html">isEmpty</a>
+or returns <code>null</code> if the channel is <a href="../-receive-channel/is-closed-for-receive.html">closed</a>.</p>
 
       </td>
 </tr>

@@ -33,14 +33,14 @@
 
 <h1 id="collect">collect</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">collect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow.Flow$collect(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.Flow.T)))/collector">collector</span><span class="symbol">:</span>&nbsp;<a href="../-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Flow.kt#L172">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">collect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow.Flow$collect(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.Flow.T)))/collector">collector</span><span class="symbol">:</span>&nbsp;<a href="../-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Flow.kt#L171">(source)</a></div>
 
 <p>Accepts the given <a href="collect.html#kotlinx.coroutines.flow.Flow$collect(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.Flow.T)))/collector">collector</a> and <a href="../-flow-collector/emit.html">emits</a> values into it.
 This method should never be implemented or used directly.</p>
 
-<p>The only way to implement flow interface directly is to extend <a href="../-abstract-flow/index.html">AbstractFlow</a>.
-To collect it into the specific collector, either <code>collector.emitAll(flow)</code> or <code>collect { ... }</code> extension
-should be used. Such limitation ensures that context preservation property is not violated and prevents most
+<p>The only way to implement the <code>Flow</code> interface directly is to extend <a href="../-abstract-flow/index.html">AbstractFlow</a>.
+To collect it into a specific collector, either <code>collector.emitAll(flow)</code> or <code>collect { ... }</code> extension
+should be used. Such limitation ensures that the context preservation property is not violated and prevents most
 of the developer mistakes related to concurrency, inconsistent flow dispatchers and cancellation.</p>
 
 

@@ -33,41 +33,10 @@
 
 <h1 id="rxcompletable">rxCompletable</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">rxCompletable</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxCompletable(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxCompletable(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://reactivex.io/RxJava/javadoc/io/reactivex/Completable.html"><span class="identifier">Completable</span></a></code></div>
+<div class="signature"><code><span class="keyword">fun </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><s><span class="identifier">rxCompletable</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxCompletable(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxCompletable(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://reactivex.io/RxJava/javadoc/io/reactivex/Completable.html"><span class="identifier">Completable</span></a></code></div>
 
-<p>Creates cold <a href="http://reactivex.io/RxJava/javadoc/io/reactivex/Completable.html">Completable</a> that runs a given <a href="rx-completable.html#kotlinx.coroutines.rx2$rxCompletable(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/block">block</a> in a coroutine.
-Every time the returned completable is subscribed, it starts a new coroutine.
-Unsubscribing cancels running coroutine.</p>
+<p><strong>Deprecated:</strong> CoroutineScope.rxCompletable is deprecated in favour of top-level rxCompletable</p>
 
-<table>
-  <thead>
-    <tr>
-      <th><strong>Coroutine action</strong></th>
-      <th><strong>Signal to subscriber</strong></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Completes successfully</td>
-      <td><code>onCompleted</code></td>
-    </tr>
-    <tr>
-      <td>Failure with exception or unsubscribe</td>
-      <td><code>onError</code></td>
-    </tr>
-  </tbody>
-</table>
-
-<p>Coroutine context is inherited from a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>, additional context elements can be specified with <a href="rx-completable.html#kotlinx.coroutines.rx2$rxCompletable(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/context">context</a> argument.
-If the context does not have any dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a>, then <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html">Dispatchers.Default</a> is used.
-The parent job is inherited from a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a> as well, but it can also be overridden
-with corresponding <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html">coroutineContext</a> element.</p>
-
-<h3 id="parameters">Parameters</h3>
-
-<p><code>context</code> - context of the coroutine.</p>
-
-<p><code>block</code> - the coroutine code.</p>
 
       </div>
     </main>

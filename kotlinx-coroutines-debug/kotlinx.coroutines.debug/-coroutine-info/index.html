@@ -33,7 +33,7 @@
 
 <h1 id="coroutineinfo">CoroutineInfo</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">data</span> <span class="keyword">class </span><span class="identifier">CoroutineInfo</span></code></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">class </span><span class="identifier">CoroutineInfo</span></code></div>
 
 <p>Class describing coroutine info such as its context, state and stacktrace.</p>
 
@@ -102,6 +102,17 @@ May be later used in <a href="../-debug-probes/print-job.html">DebugProbes.print
 <tr>
 <td>
 
+        <p><a href="copy.html">copy</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">copy</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">CoroutineInfo</span></a></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="last-observed-stack-trace.html">lastObservedStackTrace</a></p>
 
       </td>
@@ -111,6 +122,17 @@ May be later used in <a href="../-debug-probes/print-job.html">DebugProbes.print
         <p>Last observed stacktrace of the coroutine captured on its suspension or resumption point.
 It means that for <a href="../-state/-r-u-n-n-i-n-g.html">running</a> coroutines resulting stacktrace is inaccurate and
 reflects stacktrace of the resumption point, not the actual current stacktrace.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="to-string.html">toString</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
 
       </td>
 </tr>

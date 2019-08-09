@@ -33,7 +33,7 @@
 
 <h1 id="close">close</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L98">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L100">(source)</a></div>
 
 <p>Closes this channel.
 This is an idempotent operation – subsequent invocations of this function have no effect and return <code>false</code>.
@@ -44,7 +44,8 @@ Conceptually, its sends a special “close token” over this channel.</p>
 on the side of <a href="../-receive-channel/index.html">ReceiveChannel</a> starts returning <code>true</code> only after all previously sent elements
 are received.</p>
 
-<p>A channel that was closed without a <a href="close.html#kotlinx.coroutines.channels.SendChannel$close(kotlin.Throwable)/cause">cause</a> throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a> on attempts to send or receive.
+<p>A channel that was closed without a <a href="close.html#kotlinx.coroutines.channels.SendChannel$close(kotlin.Throwable)/cause">cause</a> throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a> on attempts to send
+and <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a> on attempts to receive.
 A channel that was closed with non-null <a href="close.html#kotlinx.coroutines.channels.SendChannel$close(kotlin.Throwable)/cause">cause</a> is called a <em>failed</em> channel. Attempts to send or
 receive on a failed channel throw the specified <a href="close.html#kotlinx.coroutines.channels.SendChannel$close(kotlin.Throwable)/cause">cause</a> exception.</p>
 

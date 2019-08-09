@@ -35,11 +35,13 @@
 
 <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Semaphore</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/sync/Semaphore.kt#L19">(source)</a></div>
 
-<p>A counting semaphore for coroutines. It maintains a number of available permits.
-Each <a href="acquire.html">acquire</a> suspends if necessary until a permit is available, and then takes it.
-Each <a href="release.html">release</a> adds a permit, potentially releasing a suspended acquirer.</p>
+<p>A counting semaphore for coroutines that logically maintains a number of available permits.
+Each <a href="acquire.html">acquire</a> takes a single permit or suspends until it is available.
+Each <a href="release.html">release</a> adds a permit, potentially releasing a suspended acquirer.
+Semaphore is fair and maintains a FIFO order of acquirers.</p>
 
-<p>Semaphore with <code>permits = 1</code> is essentially a <a href="../-mutex/index.html">Mutex</a>.</p>
+<p>Semaphores are mostly used to limit the number of coroutines that have an access to particular resource.
+Semaphore with <code>permits = 1</code> is essentially a <a href="../-mutex/index.html">Mutex</a>.</p>
 
 <h3 id="properties">Properties</h3>
 
@@ -90,8 +92,7 @@ All suspending acquirers are processed in first-in-first-out (FIFO) order.</p>
 
         <p>Releases a permit, returning it into this semaphore. Resumes the first
 suspending acquirer if there is one at the point of invocation.
-Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if there is no acquired permit
-at the point of invocation.</p>
+Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the number of <a href="release.html">release</a> invocations is greater than the number of preceding <a href="acquire.html">acquire</a>.</p>
 
       </td>
 </tr>

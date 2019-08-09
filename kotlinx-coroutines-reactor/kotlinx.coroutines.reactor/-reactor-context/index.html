@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReactorContext - kotlinx-coroutines-reactor</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/-reactor-context/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-reactor</a> / <a href="../index.html">kotlinx.coroutines.reactor</a> / <a href="./index.html">ReactorContext</a></div>
+
+<h1 id="reactorcontext">ReactorContext</h1>
+
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">class </span><span class="identifier">ReactorContext</span></code></div>
+
+<p>Wraps Reactor’s <a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/util/context/Context.html">Context</a> into <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> element for seamless integration Reactor and kotlinx.coroutines.</p>
+
+<p><a href="../reactor.util.context.-context/as-coroutine-context.html">Context.asCoroutineContext</a> is defined to add Reactor’s <a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/util/context/Context.html">Context</a> elements as part of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>.</p>
+
+<p>Reactor builders <a href="../mono.html">mono</a> and <a href="../flux.html">flux</a> use this context element to enhance the resulting <code>subscriberContext</code>.</p>
+
+<h3 id="usages">Usages</h3>
+
+<p>Passing reactor context from coroutine builder to reactor entity:</p>
+
+<pre>launch(Context.of("key", "value").asCoroutineContext()) {
+    mono {
+        println(coroutineContext[ReactorContext]) // Prints { "key": "value" }
+    }.subscribe()
+}
+</pre>
+
+<p>Accessing modified reactor context enriched from the downstream:</p>
+
+<pre>launch {
+    mono {
+        println(coroutineContext[ReactorContext]) // Prints { "key": "value" }
+    }.subscriberContext(Context.of("key", "value"))
+   .subscribe()
+}
+</pre>
+
+<p><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> of a suspendable function that awaits a value from <a href="#">Mono</a> or <a href="#">Flux</a> instance
+is propagated into <a href="../mono.html">mono</a> and <a href="../flux.html">flux</a> Reactor builders:</p>
+
+<pre>launch(Context.of("key", "value").asCoroutineContext()) {
+  assertEquals(bar().awaitFirst(), "value")
+}
+
+fun bar(): Mono&lt;String&gt; = mono {
+  coroutineContext[ReactorContext]!!.context.get("key")
+}
+</pre>
+
+<h3 id="types">Types</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-key.html">Key</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">companion</span> <span class="keyword">object </span><span class="identifier">Key</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html"><span class="identifier">Key</span></a><span class="symbol">&lt;</span><a href="./index.md"><span class="identifier">ReactorContext</span></a><span class="symbol">&gt;</span></code></div>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="constructors">Constructors</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-init-.html">&lt;init&gt;</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="identifier">ReactorContext</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.reactor.ReactorContext$&lt;init&gt;(reactor.util.context.Context)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/util/context/Context.html"><span class="identifier">Context</span></a><span class="symbol">)</span></code></div>
+
+        <p>Wraps Reactor’s <a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/util/context/Context.html">Context</a> into <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> element for seamless integration Reactor and kotlinx.coroutines.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="properties">Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="context.html">context</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">context</span><span class="symbol">: </span><a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/util/context/Context.html"><span class="identifier">Context</span></a></code></div>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

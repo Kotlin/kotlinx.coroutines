@@ -61,9 +61,10 @@
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Semaphore</span></code></div>
 
-        <p>A counting semaphore for coroutines. It maintains a number of available permits.
-Each <a href="-semaphore/acquire.html">acquire</a> suspends if necessary until a permit is available, and then takes it.
-Each <a href="-semaphore/release.html">release</a> adds a permit, potentially releasing a suspended acquirer.</p>
+        <p>A counting semaphore for coroutines that logically maintains a number of available permits.
+Each <a href="-semaphore/acquire.html">acquire</a> takes a single permit or suspends until it is available.
+Each <a href="-semaphore/release.html">release</a> adds a permit, potentially releasing a suspended acquirer.
+Semaphore is fair and maintains a FIFO order of acquirers.</p>
 
       </td>
 </tr>

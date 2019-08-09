@@ -87,8 +87,8 @@ of the alternatives or to perform the default (<code>else</code>) action if none
     </tr>
     <tr>
       <td><a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a></td>
-      <td><a href="../kotlinx.coroutines.channels/-receive-channel/receive-or-null.html">receiveOrNull</a></td>
-      <td><a href="../kotlinx.coroutines.channels/-receive-channel/on-receive-or-null.html">onReceiveOrNull</a></td>
+      <td><a href="#">receiveOrNull</a></td>
+      <td><a href="#">onReceiveOrNull</a></td>
       <td><a href="../kotlinx.coroutines.channels/-receive-channel/poll.html">poll</a></td>
     </tr>
     <tr>
@@ -110,7 +110,7 @@ of the alternatives or to perform the default (<code>else</code>) action if none
 function is suspended, this function immediately resumes with <a href="../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.</p>
 
 <p>Atomicity of cancellation depends on the clause: <a href="../kotlinx.coroutines.channels/-send-channel/on-send.html">onSend</a>, <a href="../kotlinx.coroutines.channels/-receive-channel/on-receive.html">onReceive</a>,
-<a href="../kotlinx.coroutines.channels/-receive-channel/on-receive-or-null.html">onReceiveOrNull</a>, and <a href="../kotlinx.coroutines.sync/-mutex/on-lock.html">onLock</a> clauses are
+<a href="#">onReceiveOrNull</a>, and <a href="../kotlinx.coroutines.sync/-mutex/on-lock.html">onLock</a> clauses are
 <em>atomically cancellable</em>. When select throws <a href="../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a> it means that those clauses had not performed
 their respective operations.
 As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may

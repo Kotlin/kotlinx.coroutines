@@ -33,7 +33,7 @@
 
 <h1 id="acquire">acquire</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">acquire</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/sync/Semaphore.kt#L40">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">acquire</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/sync/Semaphore.kt#L41">(source)</a></div>
 
 <p>Acquires a permit from this semaphore, suspending until one is available.
 All suspending acquirers are processed in first-in-first-out (FIFO) order.</p>
@@ -41,11 +41,12 @@ All suspending acquirers are processed in first-in-first-out (FIFO) order.</p>
 <p>This suspending function is cancellable. If the <a href="../../kotlinx.coroutines/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this
 function is suspended, this function immediately resumes with <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.</p>
 
-<p><em>Cancellation of suspended semaphore acquisition` is atomic</em> – when this function
+<p><em>Cancellation of suspended semaphore acquisition is atomic</em> – when this function
 throws <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a> it means that the semaphore was not acquired.</p>
 
-<p>Note, that this function does not check for cancellation when it is not suspended.
-Use <a href="../../kotlinx.coroutines/yield.html">yield</a> or <a href="../../kotlinx.coroutines/is-active.html">CoroutineScope.isActive</a> to periodically check for cancellation in tight loops if needed.</p>
+<p>Note, that this function does not check for cancellation when it does not suspend.
+Use <a href="../../kotlinx.coroutines/is-active.html">CoroutineScope.isActive</a> or <a href="../../kotlinx.coroutines/ensure-active.html">CoroutineScope.ensureActive</a> to periodically
+check for cancellation in tight loops if needed.</p>
 
 <p>Use <a href="try-acquire.html">tryAcquire</a> to try acquire a permit of this semaphore without suspension.</p>
 

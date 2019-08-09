@@ -41,8 +41,8 @@
       </td>
 <td>
 
-        <p>Base class to extend to have a stateful implementation of the flow.
-It tracks all the properties required for context preservation and throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a>
+        <p>Base class for stateful implementations of <code>Flow</code>.
+It tracks all the properties required for context preservation and throws an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a>
 if any of the properties are violated.</p>
 
       </td>
@@ -594,9 +594,10 @@ so they cannot be deprecated right away.</p>
       </td>
 <td>
 
-        <p>A counting semaphore for coroutines. It maintains a number of available permits.
-Each <a href="../kotlinx.coroutines.sync/-semaphore/acquire.html">acquire</a> suspends if necessary until a permit is available, and then takes it.
-Each <a href="../kotlinx.coroutines.sync/-semaphore/release.html">release</a> adds a permit, potentially releasing a suspended acquirer.</p>
+        <p>A counting semaphore for coroutines that logically maintains a number of available permits.
+Each <a href="../kotlinx.coroutines.sync/-semaphore/acquire.html">acquire</a> takes a single permit or suspends until it is available.
+Each <a href="../kotlinx.coroutines.sync/-semaphore/release.html">release</a> adds a permit, potentially releasing a suspended acquirer.
+Semaphore is fair and maintains a FIFO order of acquirers.</p>
 
       </td>
 </tr>

@@ -33,10 +33,21 @@
 
 <h1 id="distinctuntilchanged">distinctUntilChanged</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">distinctUntilChanged</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Distinct.kt#L19">(source)</a></div>
+<div class="overload-group">
 
-<p>Returns flow where all subsequent repetitions of the same value are filtered out.</p>
+  <div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">distinctUntilChanged</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Distinct.kt#L19">(source)</a></div>
 
+  <p>Returns flow where all subsequent repetitions of the same value are filtered out.</p>
+
+</div>
+<div class="overload-group">
+
+  <div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">distinctUntilChanged</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$distinctUntilChanged(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.distinctUntilChanged.T)), kotlin.Function2((kotlinx.coroutines.flow.distinctUntilChanged.T, , kotlin.Boolean)))/areEquivalent">areEquivalent</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">old</span><span class="symbol">:</span>&nbsp;<a href="distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">new</span><span class="symbol">:</span>&nbsp;<a href="distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Distinct.kt#L26">(source)</a></div>
+
+  <p>Returns flow where all subsequent repetitions of the same value are filtered out, when compared
+with each other via the provided <a href="distinct-until-changed.html#kotlinx.coroutines.flow$distinctUntilChanged(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.distinctUntilChanged.T)), kotlin.Function2((kotlinx.coroutines.flow.distinctUntilChanged.T, , kotlin.Boolean)))/areEquivalent">areEquivalent</a> function.</p>
+
+</div>
 
       </div>
     </main>

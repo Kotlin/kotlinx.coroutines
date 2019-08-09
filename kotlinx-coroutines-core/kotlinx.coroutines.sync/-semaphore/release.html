@@ -37,8 +37,7 @@
 
 <p>Releases a permit, returning it into this semaphore. Resumes the first
 suspending acquirer if there is one at the point of invocation.
-Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if there is no acquired permit
-at the point of invocation.</p>
+Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the number of <a href="./release.md">release</a> invocations is greater than the number of preceding <a href="acquire.html">acquire</a>.</p>
 
 
       </div>

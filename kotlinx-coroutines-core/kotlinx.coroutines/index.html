@@ -501,7 +501,7 @@ so they cannot be deprecated right away.</p>
 <td>
         <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">DEBUG_PROPERTY_NAME</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
 
-        <p>Name of the property that controls coroutine debugging. See <a href="new-coroutine-context.html">newCoroutineContext</a>.</p>
+        <p>Name of the property that controls coroutine debugging.</p>
 
       </td>
 </tr><tr data-platform="JVM"><td>
@@ -512,7 +512,7 @@ so they cannot be deprecated right away.</p>
 <td>
         <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">DEBUG_PROPERTY_VALUE_AUTO</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
 
-        <p>Automatic debug configuration value for <a href="-d-e-b-u-g_-p-r-o-p-e-r-t-y_-n-a-m-e.html">DEBUG_PROPERTY_NAME</a>. See <a href="new-coroutine-context.html">newCoroutineContext</a>.</p>
+        <p>Automatic debug configuration value for <a href="-d-e-b-u-g_-p-r-o-p-e-r-t-y_-n-a-m-e.html">DEBUG_PROPERTY_NAME</a>.</p>
 
       </td>
 </tr><tr data-platform="JVM"><td>
@@ -523,7 +523,7 @@ so they cannot be deprecated right away.</p>
 <td>
         <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">DEBUG_PROPERTY_VALUE_OFF</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
 
-        <p>Debug turned on value for <a href="-d-e-b-u-g_-p-r-o-p-e-r-t-y_-n-a-m-e.html">DEBUG_PROPERTY_NAME</a>. See <a href="new-coroutine-context.html">newCoroutineContext</a>.</p>
+        <p>Debug turned on value for <a href="-d-e-b-u-g_-p-r-o-p-e-r-t-y_-n-a-m-e.html">DEBUG_PROPERTY_NAME</a>.</p>
 
       </td>
 </tr><tr data-platform="JVM"><td>
@@ -534,7 +534,7 @@ so they cannot be deprecated right away.</p>
 <td>
         <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">DEBUG_PROPERTY_VALUE_ON</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
 
-        <p>Debug turned on value for <a href="-d-e-b-u-g_-p-r-o-p-e-r-t-y_-n-a-m-e.html">DEBUG_PROPERTY_NAME</a>. See <a href="new-coroutine-context.html">newCoroutineContext</a>.</p>
+        <p>Debug turned on value for <a href="-d-e-b-u-g_-p-r-o-p-e-r-t-y_-n-a-m-e.html">DEBUG_PROPERTY_NAME</a>.</p>
 
       </td>
 </tr><tr data-platform="JVM"><td>
@@ -733,6 +733,17 @@ complete exceptionally including cancellation.</p>
 A cause can be used to specify an error message or to provide other details on
 a cancellation reason for debugging purposes.
 Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the scope does not have a job in it.</p>
+
+        <div class="signature"><code><span class="keyword">fun </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, kotlin.String, kotlin.Throwable)/message">message</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, kotlin.String, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Cancels this scope, including its job and all its children with a specified diagnostic error <a href="cancel.html#kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, kotlin.String, kotlin.Throwable)/message">message</a>.
+A <a href="cancel.html#kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, kotlin.String, kotlin.Throwable)/cause">cause</a> can be specified to provide additional details on a cancellation reason for debugging purposes.
+Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the scope does not have a job in it.</p>
+
+        <div class="signature"><code><span class="keyword">fun </span><a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlinx.coroutines.Job, kotlin.String, kotlin.Throwable)/message">message</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlinx.coroutines.Job, kotlin.String, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Cancels current job, including all its children with a specified diagnostic error <a href="cancel.html#kotlinx.coroutines$cancel(kotlinx.coroutines.Job, kotlin.String, kotlin.Throwable)/message">message</a>.
+A <a href="cancel.html#kotlinx.coroutines$cancel(kotlinx.coroutines.Job, kotlin.String, kotlin.Throwable)/cause">cause</a> can be specified to provide additional details on a cancellation reason for debugging purposes.</p>
 
       </td>
 </tr>

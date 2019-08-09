@@ -145,6 +145,12 @@ A cause can be used to specify an error message or to provide other details on
 a cancellation reason for debugging purposes.
 Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the scope does not have a job in it.</p>
 
+        <div class="signature"><code><span class="keyword">fun </span><a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, kotlin.String, kotlin.Throwable)/message">message</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, kotlin.String, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Cancels this scope, including its job and all its children with a specified diagnostic error <a href="../cancel.html#kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, kotlin.String, kotlin.Throwable)/message">message</a>.
+A <a href="../cancel.html#kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, kotlin.String, kotlin.Throwable)/cause">cause</a> can be specified to provide additional details on a cancellation reason for debugging purposes.
+Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the scope does not have a job in it.</p>
+
       </td>
 </tr>
 <tr>

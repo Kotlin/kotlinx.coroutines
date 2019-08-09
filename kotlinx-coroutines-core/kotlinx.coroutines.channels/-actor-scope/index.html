@@ -132,22 +132,6 @@ The <a href="../../kotlinx.coroutines.selects/select.html">select</a> invocation
 
       </td>
 </tr>
-<tr>
-<td>
-
-        <p><a href="../-receive-channel/on-receive-or-null.html">onReceiveOrNull</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">onReceiveOrNull</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.selects/-select-clause1.html"><span class="identifier">SelectClause1</span></a><span class="symbol">&lt;</span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span><span class="symbol">&gt;</span></code></div>
-
-        <p>Clause for <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of <a href="../-receive-channel/receive-or-null.html">receiveOrNull</a> suspending function that selects with the element that
-is received from the channel or selects with <code>null</code> if if the channel
-<a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a> without cause. The <a href="../../kotlinx.coroutines.selects/select.html">select</a> invocation fails with
-the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
-
-      </td>
-</tr>
 </tbody>
 </table>
 
@@ -212,21 +196,6 @@ It throws the original <a href="../-send-channel/close.html">close</a> cause exc
 or throws <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a> if the channel <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a>.
 If the channel was closed because of the exception, it is called a <em>failed</em> channel and this function
 throws the original <a href="../-send-channel/close.html">close</a> cause exception.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../-receive-channel/receive-or-null.html">receiveOrNull</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code></div>
-
-        <p>Retrieves and removes the element from this channel suspending the caller while this channel is empty,
-or returns <code>null</code> if the channel is <a href="../-receive-channel/is-closed-for-receive.html">closed</a> without cause
-or throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
 
       </td>
 </tr>

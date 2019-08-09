@@ -33,11 +33,32 @@
 
 <h1 id="debug_property_name">DEBUG_PROPERTY_NAME</h1>
 
-<div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">DEBUG_PROPERTY_NAME</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/Debug.kt#L13">(source)</a></div>
+<div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">DEBUG_PROPERTY_NAME</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/Debug.kt#L36">(source)</a></div>
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
-<p>Name of the property that controls coroutine debugging. See <a href="new-coroutine-context.html">newCoroutineContext</a>.</p>
+<p>Name of the property that controls coroutine debugging.</p>
+
+<h3 id="debugging-facilities">Debugging facilities</h3>
+
+<p>In debug mode every coroutine is assigned a unique consecutive identifier.
+Every thread that executes a coroutine has its name modified to include the name and identifier of
+the currently running coroutine.</p>
+
+<p>Enable debugging facilities with “<code>kotlinx.coroutines.debug</code>” (<a href="./-d-e-b-u-g_-p-r-o-p-e-r-t-y_-n-a-m-e.md">DEBUG_PROPERTY_NAME</a>) system property,
+use the following values:</p>
+
+<ul>
+  <li>“<code>auto</code>” (default mode, <a href="-d-e-b-u-g_-p-r-o-p-e-r-t-y_-v-a-l-u-e_-a-u-t-o.html">DEBUG_PROPERTY_VALUE_AUTO</a>) – enabled when assertions are enabled with “<code>-ea</code>” JVM option.</li>
+  <li>“<code>on</code>” (<a href="-d-e-b-u-g_-p-r-o-p-e-r-t-y_-v-a-l-u-e_-o-n.html">DEBUG_PROPERTY_VALUE_ON</a>) or empty string – enabled.</li>
+  <li>“<code>off</code>” (<a href="-d-e-b-u-g_-p-r-o-p-e-r-t-y_-v-a-l-u-e_-o-f-f.html">DEBUG_PROPERTY_VALUE_OFF</a>) – disabled.</li>
+</ul>
+
+<p>Coroutine name can be explicitly assigned using <a href="-coroutine-name/index.html">CoroutineName</a> context element.
+The string “coroutine” is used as a default name.</p>
+
+<p>Debugging facilities are implemented by <a href="new-coroutine-context.html">newCoroutineContext</a> function that
+is used in all coroutine builders to create context of a new coroutine.</p>
 
 
       </div>
