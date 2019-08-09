@@ -30,6 +30,18 @@ import kotlin.coroutines.*
  *    .subscribe()
  * }
  * ```
+ *
+ * [CoroutineContext] of a suspendable function that awaits a value from [Mono] or [Flux] instance
+ * is propagated into [mono] and [flux] Reactor builders:
+ * ```
+ * launch(Context.of("key", "value").asCoroutineContext()) {
+ *   assertEquals(bar().awaitFirst(), "value")
+ * }
+ *
+ * fun bar(): Mono<String> = mono {
+ *   coroutineContext[ReactorContext]!!.context.get("key")
+ * }
+ * ```
  */
 @ExperimentalCoroutinesApi
 public class ReactorContext(val context: Context) : AbstractCoroutineContextElement(ReactorContext) {

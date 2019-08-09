@@ -12,7 +12,8 @@ import kotlin.coroutines.intrinsics.*
  * Use this function to start coroutine in a cancellable way, so that it can be cancelled
  * while waiting to be dispatched.
  */
-internal fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>) = runSafely(completion) {
+@InternalCoroutinesApi
+public fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>) = runSafely(completion) {
     createCoroutineUnintercepted(completion).intercepted().resumeCancellable(Unit)
 }
 
