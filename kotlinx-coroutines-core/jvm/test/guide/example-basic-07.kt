@@ -8,7 +8,6 @@ package kotlinx.coroutines.guide.basic07
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
-//sampleStart
     GlobalScope.launch {
         repeat(1000) { i ->
             println("I'm sleeping $i ...")
@@ -16,5 +15,4 @@ fun main() = runBlocking {
         }
     }
     delay(1300L) // just quit after delay
-//sampleEnd    
 }

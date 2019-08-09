@@ -36,6 +36,9 @@ const val INDEX_DIRECTIVE = "INDEX"
 const val CODE_START = "```kotlin"
 const val CODE_END = "```"
 
+const val SAMPLE_START = "//sampleStart"
+const val SAMPLE_END = "//sampleEnd"
+
 const val TEST_START = "```text"
 const val TEST_END = "```"
 
@@ -183,7 +186,9 @@ fun knit(markdownFile: File): Boolean {
             if (inLine.startsWith(CODE_START)) {
                 require(testOut == null || testLines.isEmpty()) { "Previous test was not emitted with $TEST_DIRECTIVE" }
                 codeLines += ""
-                readUntilTo(CODE_END, codeLines)
+                readUntilTo(CODE_END, codeLines) { line ->
+                    !line.startsWith(SAMPLE_START) && !line.startsWith(SAMPLE_END)
+                }
                 continue@mainLoop
             }
             if (inLine.startsWith(TEST_START)) {
@@ -328,11 +333,11 @@ private fun flushTestOut(parentDir: File?, testOut: String?, testOutLines: Mutab
 private fun MarkdownTextReader.readUntil(marker: String): List<String> =
     arrayListOf<String>().also { readUntilTo(marker, it) }
 
-private fun MarkdownTextReader.readUntilTo(marker: String, list: MutableList<String>) {
+private fun MarkdownTextReader.readUntilTo(marker: String, list: MutableList<String>, linePredicate: (String) -> Boolean = { true }) {
     while (true) {
         val line = readLine() ?: break
         if (line.startsWith(marker)) break
-        list += line
+        if (linePredicate(line)) list += line
     }
 }
 

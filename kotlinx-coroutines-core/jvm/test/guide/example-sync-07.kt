@@ -40,7 +40,6 @@ fun CoroutineScope.counterActor() = actor<CounterMsg> {
     }
 }
 
-//sampleStart
 fun main() = runBlocking {
     val counter = counterActor() // create the actor
     withContext(Dispatchers.Default) {
@@ -54,4 +53,3 @@ fun main() = runBlocking {
     println("Counter = ${response.await()}")
     counter.close() // shutdown the actor
 }
-//sampleEnd    
