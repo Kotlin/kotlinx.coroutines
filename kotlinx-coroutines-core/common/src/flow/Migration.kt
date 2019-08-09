@@ -8,6 +8,9 @@
 
 package kotlinx.coroutines.flow
 
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.internal.*
+import kotlinx.coroutines.flow.internal.unsafeFlow
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -361,3 +364,26 @@ public fun <T> Flow<T>.concatWith(value: T): Flow<T> = noImpl()
 )
 public fun <T> Flow<T>.concatWith(other: Flow<T>): Flow<T> = noImpl()
 
+/**
+ * Delays the emission of values from this flow for the given [timeMillis].
+ * Use `onStart { delay(timeMillis) }`.
+ * @suppress
+ */
+@Deprecated(
+    level = DeprecationLevel.WARNING, // since 1.3.0, error in 1.4.0
+    message = "Use 'onStart { delay(timeMillis) }'",
+    replaceWith = ReplaceWith("onStart { delay(timeMillis) }")
+)
+public fun <T> Flow<T>.delayFlow(timeMillis: Long): Flow<T> = onStart { delay(timeMillis) }
+
+/**
+ * Delays each element emitted by the given flow for the given [timeMillis].
+ * Use `onEach { delay(timeMillis) }`.
+ * @suppress
+ */
+@Deprecated(
+    level = DeprecationLevel.WARNING, // since 1.3.0, error in 1.4.0
+    message = "Use 'onEach { delay(timeMillis) }'",
+    replaceWith = ReplaceWith("onEach { delay(timeMillis) }")
+)
+public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = onEach { delay(timeMillis) }

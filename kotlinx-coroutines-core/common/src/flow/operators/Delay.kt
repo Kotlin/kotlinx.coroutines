@@ -15,26 +15,6 @@ import kotlin.jvm.*
 import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
- * Delays the emission of values from this flow for the given [timeMillis].
- */
-@ExperimentalCoroutinesApi
-public fun <T> Flow<T>.delayFlow(timeMillis: Long): Flow<T> = flow {
-    delay(timeMillis)
-    collect(this@flow)
-}
-
-/**
- * Delays each element emitted by the given flow for the given [timeMillis].
- */
-@ExperimentalCoroutinesApi
-public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = flow {
-    collect { value ->
-        delay(timeMillis)
-        emit(value)
-    }
-}
-
-/**
  * Returns a flow that mirrors the original flow, but filters out values
  * that are followed by the newer values within the given [timeout][timeoutMillis].
  * The latest value is always emitted.
