@@ -91,9 +91,7 @@ public class CoroutineInfo internal constructor(
         }
     }
 
-    override fun toString(): String {
-        return "CoroutineInfo(state=$state,context=$context)"
-    }
+    override fun toString(): String = "CoroutineInfo(state=$state,context=$context)"
 }
 
 /**
