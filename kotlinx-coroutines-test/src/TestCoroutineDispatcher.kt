@@ -56,8 +56,8 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     /** @suppress */
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         if (dispatchImmediately) {
-            unpark()
             block.run()
+            unpark()
         } else {
             post(block)
         }
