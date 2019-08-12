@@ -521,6 +521,8 @@ Proof. iIntros "HLoc1 HLoc2".
   by apply agree_op_invL'.
 Qed.
 
+End locations.
+
 Definition cancelled_cells γ id (cells: vec bool (Pos.to_nat segment_size)) :=
   (own γ (◯ (ias_segment_info
                id (ε,
@@ -784,10 +786,5 @@ Proof.
   iSplitL. 2: done.
   rewrite /array.
 Abort.
-
-(*
-Definition segment_cancelled : val :=
-  λ: "seg", Snd (Fst (Fst !"seg")).
-*)
 
 End proof.
