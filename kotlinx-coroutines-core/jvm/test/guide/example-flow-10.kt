@@ -17,7 +17,6 @@ fun numbers(): Flow<Int> = flow {
     } finally {
         println("Finally in numbers")
     }
-
 }
 
 fun main() = runBlocking<Unit> {

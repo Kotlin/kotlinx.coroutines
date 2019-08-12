@@ -223,7 +223,7 @@ thread is blocked in this case.
 ### Flows are cold
 
 Flows are _cold_ streams similarly to sequences &mdash; the code inside a [flow] builder does not
-run until the flow is collected. This becomes clears in the following example:
+run until the flow is collected. This becomes clear in the following example:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -274,8 +274,8 @@ Flow started
 <!--- TEST -->
  
 That is a key reason why the `foo()` function (which returns a flow) is not marked with `suspend` modifier.
-By itself `foo()` returns quickly and does not wait for anything. The flow starts every time it is collected,
-that is why we see that when we call `collect` again we get "Flow started" printed again.
+By itself, `foo()` returns quickly and does not wait for anything. The flow starts every time it is collected,
+that is why we see that when we call `collect` again, we get "Flow started" printed again.
 
 ### Flow cancellation
 
@@ -363,15 +363,15 @@ fun main() = runBlocking<Unit> {
 ### Intermediate flow operators
 
 Flows can be transformed with operators similarly to collections and sequences. 
-Intermediate operators are applied to an upstream flow and return an downstream flow. 
-These operators are cold just like flows. A call to such an operator is not
-a suspending function itself. It works quickly, returning definition of a new transformed flow. 
+Intermediate operators are applied to an upstream flow and return a downstream flow. 
+These operators are cold just like flows are. A call to such an operator is not
+a suspending function itself. It works quickly, returning the definition of a new transformed flow. 
 
-The basic operators have the familiar names like [map] and [filter]. 
+The basic operators have familiar names like [map] and [filter]. 
 The important difference from sequences is that blocks of 
 code inside those operators can call suspending functions. 
 
-For example, an incoming flow of requests can be
+For example, a flow of incoming requests can be
 mapped to results with the [map] operator even when performing a request is a long-running
 operation that is implemented by a suspending function:   
 
@@ -411,9 +411,9 @@ response 3
 
 #### Transform operator
 
-Among the flow transformation operators the most general one is called [transform]. It can be used to imitate
+Among the flow transformation operators, the most general one is called [transform]. It can be used to imitate
 simple transformations like [map] and [filter] as well as implement more complex transformations. 
-Using `transform` operator you can [emit][FlowCollector.emit] arbitrary values arbitrary number of times.
+Using `transform` operator, you can [emit][FlowCollector.emit] arbitrary values arbitrary number of times.
 
 For example, using `transform` we can emit a string before performing a long-running asynchronous request 
 and follow it with a response:
@@ -480,7 +480,6 @@ fun numbers(): Flow<Int> = flow {
     } finally {
         println("Finally in numbers")
     }
-
 }
 
 fun main() = runBlocking<Unit> {
@@ -508,7 +507,7 @@ Finally in numbers
 
 ### Terminal flow operators
 
-Terminal operators on flows are _suspending functions_ that start collection of a flow.
+Terminal operators on flows are _suspending functions_ that start a collection of the flow.
 The [collect] operator is the most basic one, but there are other terminal operators for 
 convenience:
 
@@ -548,8 +547,8 @@ Prints a single number:
 
 ### Flows are sequential
 
-Each individual collection of a flow is performed sequentially, unless special operators that operate
-on multiple flows are used. Collection works directly in the coroutine that calls a terminal operator. 
+Each individual collection of a flow is performed sequentially unless special operators that operate
+on multiple flows are used. The collection works directly in the coroutine that calls a terminal operator. 
 No new coroutines are launched by default. 
 Each emitted value is processed by all intermediate operators from 
 upstream to downstream and is delivered to the terminal operator after that. 
@@ -675,8 +674,8 @@ produces compilation error to prevent us from running into this problem.
 
 #### flowOn operator
    
-The exceptions refers to [flowOn] function that shall be used to change context of flow emission.
-The correct way of changing context of a flow is shown in the below example, which also prints 
+The exception refers to [flowOn] function that shall be used to change the context of flow emission.
+The correct way of changing the context of a flow is shown in the below example, which also prints 
 names of the corresponding threads to show how it all works:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
@@ -827,9 +826,9 @@ but here we explicitly request buffering without changing execution context.
 
 #### Conflation
 
-When flow represents partial results of some operation or operation status updates it may not be necessarily
+When flow represents partial results of some operation or operation status updates, it may not be necessary
 to process each value, but only to process the most recent ones. In this case [conflate] operator can be used to skip
-intermediate value when collector is too slow to process them. Building on the previous example:
+intermediate values when a collector is too slow to process them. Building on the previous example:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -972,7 +971,7 @@ This example prints:
 When flow represents the most recent value of some variable or operation (see also a related 
 section on [conflation](#conflation)) it might be needed to perform a computation that depends on
 the most recent values of the corresponding flows and to recompute it whenever any of upstream
-flows emit a value. The corresponding family of operators are called [combine].
+flows emit a value. The corresponding family of operators is called [combine].
 
 For example, if the numbers in the previous example update every 300ms, but strings update every 400 ms, 
 then zipping them using [zip] operator would still produce the same result, 
@@ -1081,7 +1080,7 @@ Now if we have a flow of three integers and call `requestFlow` for each of them 
 
 Then we end up with a flow of flows (`Flow<Flow<String>>`) that needs to be _flattened_ into a single flow for 
 further processing. Collections and sequences have [flatten][Sequence.flatten] and [flatMap][Sequence.flatMap]
-operators for this purpose. However, asynchronous nature of flows calls for different _modes_ of flattening, 
+operators for this purpose. However, the asynchronous nature of flows calls for different _modes_ of flattening 
 thus there is a family of flattening operators on flows.
 
 #### flatMapConcat
@@ -1230,13 +1229,13 @@ The output of this example speaks for the way [flatMapLatest] works:
 
 <!--- TEST ARBITRARY_TIME -->
   
-> Note that [flatMapLatest] cancels all the code in its block (`{ requestFlow(it) }` in this example) on new value. 
+> Note that [flatMapLatest] cancels all the code in its block (`{ requestFlow(it) }` in this example) on a new value. 
 It makes no difference in this particular example, because the call to `requestFlow` itself is fast, not-suspending,
 and cannot be cancelled. However, it would show up if we were to use suspending functions like `delay` in there.
 
 ### Flow exceptions
 
-Flow collection can complete with exception when emitter or any code inside any of the operators throws an exception. 
+Flow collection can complete with an exception when emitter or any code inside any of the operators throw an exception. 
 There are several ways to handle these exceptions.
 
 #### Collector try and catch
@@ -1290,7 +1289,7 @@ Caught java.lang.IllegalStateException: Collected 2
 #### Everything is caught
 
 The previous example actually catches any exception happening in emitter or in any intermediate or terminal operators.
-For example, let us change the code so that emitted values are [mapped][map] to strings
+For example, let us change the code so that emitted values are [mapped][map] to strings,
 but the corresponding code produces an exception:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
@@ -1345,11 +1344,11 @@ Flows must be _transparent to exceptions_ and it is a violation of exception tra
 `flow { ... }` builder from inside of `try/catch` block. This guarantees that a collector throwing an exception
 can always catch it using `try/catch` as in the previous example.
 
-Emitter can use [catch] operator that preserves this exception transparency and allows encapsulation
+The emitter can use [catch] operator that preserves this exception transparency and allows encapsulation
 of its exception handling. The body of the `catch` operator can analyze an exception
 and react to it in different ways depending on which exception was caught:
 
-* Exceptions can be rethrow using `throw`.
+* Exceptions can be rethrown using `throw`.
 * Exceptions can be turned into emission of values using [emit][FlowCollector.emit] from the body of [catch].
 * Exceptions can be ignored, logged, or processed by some other code.
 
@@ -1398,7 +1397,7 @@ Caught java.lang.IllegalStateException: Crashed on 2
 #### Exception transparency
 
 The [catch] intermediate operator, honoring exception transparency, catches only exceptions in its upstream flows.
-If the block in `collect { ... }` downstream of `catch` throws an exception then in escapes:  
+If the block in `collect { ... }` downstream of `catch` throws an exception then it escapes:  
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -1443,7 +1442,7 @@ Exception in thread "main" java.lang.IllegalStateException: Collected 2
 
 We can combine a declarative nature of [catch] operator with a desire to handle all exceptions by moving the body
 of [collect] operator into [onEach] and putting it before the `catch` operator. Collection of this flow must
-be triggered by an call to `collect()` without parameters:
+be triggered by a call to `collect()` without parameters:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
