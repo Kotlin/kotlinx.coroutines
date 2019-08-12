@@ -311,10 +311,17 @@ internal class SelectBuilderImpl<in R>(
     internal fun handleBuilderException(e: Throwable) {
         if (trySelect(null)) {
             resumeWithException(e)
-        } else {
-            // Cannot handle this exception -- builder was already resumed with a different exception,
-            // so treat it as "unhandled exception"
-            handleCoroutineException(context, e)
+        } else if (e !is CancellationException) {
+            /*
+             * Cannot handle this exception -- builder was already resumed with a different exception,
+             * so treat it as "unhandled exception". But only if  it is not the completion reason
+             *  and it's not the cancellation. Otherwise, in the face of structured concurrency
+             * the same exception will be reported to theglobal exception handler.
+             */
+            val result = getResult()
+            if (result !is CompletedExceptionally || unwrap(result.cause) !== unwrap(e)) {
+                handleCoroutineException(context, e)
+            }
         }
     }
 
