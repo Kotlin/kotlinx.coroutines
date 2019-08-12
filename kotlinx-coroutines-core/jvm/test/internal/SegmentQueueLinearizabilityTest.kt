@@ -8,7 +8,7 @@ import com.devexperts.dxlab.lincheck.strategy.stress.StressCTest
 import org.junit.Test
 
 @StressCTest
-class SegmentQueueLFTest {
+class SegmentQueueLinearizabilityTest {
     private val q = SegmentBasedQueue<Int>()
 
     @Operation
@@ -21,6 +21,6 @@ class SegmentQueueLFTest {
 
     @Test
     fun test() {
-        LinChecker.check(SegmentQueueLFTest::class.java)
+        LinChecker.check(SegmentQueueLinearizabilityTest::class.java)
     }
 }
