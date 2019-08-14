@@ -50,8 +50,9 @@ class FlowGuideTest {
     * [Collector try and catch](#collector-try-and-catch)
     * [Everything is caught](#everything-is-caught)
   * [Exception transparency](#exception-transparency)
-    * [Exception transparency](#exception-transparency)
+    * [Transparent catch](#transparent-catch)
     * [Catching declaratively](#catching-declaratively)
+  * [Launching flow](#launching-flow)
 
 <!--- END_TOC -->
 
@@ -1438,10 +1439,11 @@ Emitting 2
 Caught java.lang.IllegalStateException: Crashed on 2
 -->
 
-#### Exception transparency
+#### Transparent catch
 
-The [catch] intermediate operator, honoring exception transparency, catches only exceptions in its upstream flows.
-If the block in `collect { ... }` downstream of `catch` throws an exception then it escapes:  
+The [catch] intermediate operator, honoring exception transparency, catches only upstream exceptions
+(that is exception from all the operators above `catch`, but not below it).
+If the block in `collect { ... }` (placed below `catch`) throws an exception then it escapes:  
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -1528,6 +1530,63 @@ Emitting 2
 Caught java.lang.IllegalStateException: Collected 2
 -->
 
+### Launching flow
+
+It is convenient to use flows to represents asynchronous events that are coming from some source.
+In this case we need an analogue of `addEventListener` function that registers a piece of code with reaction
+on incoming events and continues further work. That is where [launchIn] operator comes in handy
+together with [onEach] operator that we've seen previously.
+
+Consider the following example:
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+//sampleStart
+// Imitate a flow of events
+fun events(): Flow<Int> = (1..3).asFlow().onEach { delay(100) }
+
+fun main() = runBlocking<Unit> {
+    events()
+        .onEach { event ->
+            println("Event: $event") 
+        }
+        .launchIn(this)
+}            
+//sampleEnd
+```  
+
+</div>
+
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-31.kt). 
+  
+It prints:
+
+```text 
+Event: 1
+Event: 2
+Event: 3
+```    
+
+<!--- TEST -->
+
+In this example the body of `onEach { ... }` operator works as an event listener. However, [onEach] operator
+is intermediate and calling this operator by itself does not have any effect. A terminal operator is needed
+to collect the flow and [launchIn] serves this purpose. The required parameter to `launchIn` must specify
+a [CoroutineScope] in which this flow is collected. In the above example this scope comes from [runBlocking]
+coroutine builder, so while the flow is not over, the [runBlocking] waits and keeps the main function from 
+returning and terminating this example. In real applications a scope is going to come from some entity with a limited 
+lifetime and as soon as the lifetime of this entity is terminated the corresponding scope is cancelled, cancelling
+collection of the corresponding flow. This way the pair of `onEach { ... }.collectIn` calls works
+like `addEventListener`, but there is no need for a corresponding `removeEventListener` function, as cancellation and
+structured concurrency serve this purpose.
+
+Note, that [launchIn] also returns a [Job] which can be used to [cancel][Job.cancel] the corresponding flow collection
+only without cancelling the whole scope. 
+ 
 <!-- stdlib references -->
 
 [collections]: https://kotlinlang.org/docs/reference/collections-overview.html 
@@ -1548,6 +1607,10 @@ Caught java.lang.IllegalStateException: Collected 2
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html
 [kotlinx.coroutines.withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html
 [CoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html
+[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
+[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
+[Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
+[Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html
 <!--- INDEX kotlinx.coroutines.flow -->
 [Flow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html
 [flow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/flow.html
@@ -1578,4 +1641,5 @@ Caught java.lang.IllegalStateException: Collected 2
 [DEFAULT_CONCURRENCY]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-d-e-f-a-u-l-t_-c-o-n-c-u-r-r-e-n-c-y.html
 [flatMapLatest]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/flat-map-latest.html
 [catch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/catch.html
+[launchIn]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/launch-in.html
 <!--- END -->

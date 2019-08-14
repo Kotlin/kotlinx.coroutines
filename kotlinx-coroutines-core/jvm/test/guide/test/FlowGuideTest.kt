@@ -320,4 +320,13 @@ class FlowGuideTest {
             "Caught java.lang.IllegalStateException: Collected 2"
         )
     }
+
+    @Test
+    fun testKotlinxCoroutinesGuideFlow31() {
+        test("KotlinxCoroutinesGuideFlow31") { kotlinx.coroutines.guide.flow31.main() }.verifyLines(
+            "Event: 1",
+            "Event: 2",
+            "Event: 3"
+        )
+    }
 }
