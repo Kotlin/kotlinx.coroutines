@@ -135,14 +135,28 @@ class FlowGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideFlow13() {
-        test("KotlinxCoroutinesGuideFlow13") { kotlinx.coroutines.guide.flow13.main() }.also { lines ->
-            check(lines[0].startsWith("Exception in thread \"main\" java.lang.IllegalStateException: Flow invariant is violated: flow was collected in [CoroutineId(1), \"coroutine#1\":BlockingCoroutine{Active}@") && lines[1] == "\t\tPlease refer to 'flow' documentation or use 'flowOn' instead")
-        }
+        test("KotlinxCoroutinesGuideFlow13") { kotlinx.coroutines.guide.flow13.main() }.verifyLines(
+            "[main @coroutine#1] Started foo flow",
+            "[main @coroutine#1] Collected 1",
+            "[main @coroutine#1] Collected 2",
+            "[main @coroutine#1] Collected 3"
+        )
     }
 
     @Test
     fun testKotlinxCoroutinesGuideFlow14() {
-        test("KotlinxCoroutinesGuideFlow14") { kotlinx.coroutines.guide.flow14.main() }.verifyLinesFlexibleThread(
+        test("KotlinxCoroutinesGuideFlow14") { kotlinx.coroutines.guide.flow14.main() }.verifyExceptions(
+            "Exception in thread \"main\" java.lang.IllegalStateException: Flow invariant is violated:",
+            "		Flow was collected in [CoroutineId(1), \"coroutine#1\":BlockingCoroutine{Active}@5511c7f8, BlockingEventLoop@2eac3323],",
+            "		but emission happened in [CoroutineId(1), \"coroutine#1\":DispatchedCoroutine{Active}@2dae0000, DefaultDispatcher].",
+            "		Please refer to 'flow' documentation or use 'flowOn' instead",
+            "	at ..."
+        )
+    }
+
+    @Test
+    fun testKotlinxCoroutinesGuideFlow15() {
+        test("KotlinxCoroutinesGuideFlow15") { kotlinx.coroutines.guide.flow15.main() }.verifyLinesFlexibleThread(
             "[DefaultDispatcher-worker-1 @coroutine#2] Emitting 1",
             "[main @coroutine#1] Collected 1",
             "[DefaultDispatcher-worker-1 @coroutine#2] Emitting 2",
@@ -153,8 +167,8 @@ class FlowGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideFlow15() {
-        test("KotlinxCoroutinesGuideFlow15") { kotlinx.coroutines.guide.flow15.main() }.verifyLinesArbitraryTime(
+    fun testKotlinxCoroutinesGuideFlow16() {
+        test("KotlinxCoroutinesGuideFlow16") { kotlinx.coroutines.guide.flow16.main() }.verifyLinesArbitraryTime(
             "1",
             "2",
             "3",
@@ -163,8 +177,8 @@ class FlowGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideFlow16() {
-        test("KotlinxCoroutinesGuideFlow16") { kotlinx.coroutines.guide.flow16.main() }.verifyLinesArbitraryTime(
+    fun testKotlinxCoroutinesGuideFlow17() {
+        test("KotlinxCoroutinesGuideFlow17") { kotlinx.coroutines.guide.flow17.main() }.verifyLinesArbitraryTime(
             "1",
             "2",
             "3",
@@ -173,8 +187,8 @@ class FlowGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideFlow17() {
-        test("KotlinxCoroutinesGuideFlow17") { kotlinx.coroutines.guide.flow17.main() }.verifyLinesArbitraryTime(
+    fun testKotlinxCoroutinesGuideFlow18() {
+        test("KotlinxCoroutinesGuideFlow18") { kotlinx.coroutines.guide.flow18.main() }.verifyLinesArbitraryTime(
             "1",
             "3",
             "Collected in 758 ms"
@@ -182,8 +196,8 @@ class FlowGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideFlow18() {
-        test("KotlinxCoroutinesGuideFlow18") { kotlinx.coroutines.guide.flow18.main() }.verifyLinesArbitraryTime(
+    fun testKotlinxCoroutinesGuideFlow19() {
+        test("KotlinxCoroutinesGuideFlow19") { kotlinx.coroutines.guide.flow19.main() }.verifyLinesArbitraryTime(
             "Collecting 1",
             "Collecting 2",
             "Collecting 3",
@@ -193,8 +207,8 @@ class FlowGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideFlow19() {
-        test("KotlinxCoroutinesGuideFlow19") { kotlinx.coroutines.guide.flow19.main() }.verifyLines(
+    fun testKotlinxCoroutinesGuideFlow20() {
+        test("KotlinxCoroutinesGuideFlow20") { kotlinx.coroutines.guide.flow20.main() }.verifyLines(
             "1 -> one",
             "2 -> two",
             "3 -> three"
@@ -202,8 +216,8 @@ class FlowGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideFlow20() {
-        test("KotlinxCoroutinesGuideFlow20") { kotlinx.coroutines.guide.flow20.main() }.verifyLinesArbitraryTime(
+    fun testKotlinxCoroutinesGuideFlow21() {
+        test("KotlinxCoroutinesGuideFlow21") { kotlinx.coroutines.guide.flow21.main() }.verifyLinesArbitraryTime(
             "1 -> one at 437 ms from start",
             "2 -> two at 837 ms from start",
             "3 -> three at 1243 ms from start"
@@ -211,8 +225,8 @@ class FlowGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideFlow21() {
-        test("KotlinxCoroutinesGuideFlow21") { kotlinx.coroutines.guide.flow21.main() }.verifyLinesArbitraryTime(
+    fun testKotlinxCoroutinesGuideFlow22() {
+        test("KotlinxCoroutinesGuideFlow22") { kotlinx.coroutines.guide.flow22.main() }.verifyLinesArbitraryTime(
             "1 -> one at 452 ms from start",
             "2 -> one at 651 ms from start",
             "2 -> two at 854 ms from start",
@@ -222,8 +236,8 @@ class FlowGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideFlow22() {
-        test("KotlinxCoroutinesGuideFlow22") { kotlinx.coroutines.guide.flow22.main() }.verifyLinesArbitraryTime(
+    fun testKotlinxCoroutinesGuideFlow23() {
+        test("KotlinxCoroutinesGuideFlow23") { kotlinx.coroutines.guide.flow23.main() }.verifyLinesArbitraryTime(
             "1: First at 121 ms from start",
             "1: Second at 622 ms from start",
             "2: First at 727 ms from start",
@@ -234,8 +248,8 @@ class FlowGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideFlow23() {
-        test("KotlinxCoroutinesGuideFlow23") { kotlinx.coroutines.guide.flow23.main() }.verifyLinesArbitraryTime(
+    fun testKotlinxCoroutinesGuideFlow24() {
+        test("KotlinxCoroutinesGuideFlow24") { kotlinx.coroutines.guide.flow24.main() }.verifyLinesArbitraryTime(
             "1: First at 136 ms from start",
             "2: First at 231 ms from start",
             "3: First at 333 ms from start",
@@ -246,8 +260,8 @@ class FlowGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideFlow24() {
-        test("KotlinxCoroutinesGuideFlow24") { kotlinx.coroutines.guide.flow24.main() }.verifyLinesArbitraryTime(
+    fun testKotlinxCoroutinesGuideFlow25() {
+        test("KotlinxCoroutinesGuideFlow25") { kotlinx.coroutines.guide.flow25.main() }.verifyLinesArbitraryTime(
             "1: First at 142 ms from start",
             "2: First at 322 ms from start",
             "3: First at 425 ms from start",
@@ -256,23 +270,13 @@ class FlowGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideFlow25() {
-        test("KotlinxCoroutinesGuideFlow25") { kotlinx.coroutines.guide.flow25.main() }.verifyLines(
+    fun testKotlinxCoroutinesGuideFlow26() {
+        test("KotlinxCoroutinesGuideFlow26") { kotlinx.coroutines.guide.flow26.main() }.verifyLines(
             "Emitting 1",
             "1",
             "Emitting 2",
             "2",
             "Caught java.lang.IllegalStateException: Collected 2"
-        )
-    }
-
-    @Test
-    fun testKotlinxCoroutinesGuideFlow26() {
-        test("KotlinxCoroutinesGuideFlow26") { kotlinx.coroutines.guide.flow26.main() }.verifyLines(
-            "Emitting 1",
-            "string 1",
-            "Emitting 2",
-            "Caught java.lang.IllegalStateException: Crashed on 2"
         )
     }
 
@@ -288,7 +292,17 @@ class FlowGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideFlow28() {
-        test("KotlinxCoroutinesGuideFlow28") { kotlinx.coroutines.guide.flow28.main() }.verifyExceptions(
+        test("KotlinxCoroutinesGuideFlow28") { kotlinx.coroutines.guide.flow28.main() }.verifyLines(
+            "Emitting 1",
+            "string 1",
+            "Emitting 2",
+            "Caught java.lang.IllegalStateException: Crashed on 2"
+        )
+    }
+
+    @Test
+    fun testKotlinxCoroutinesGuideFlow29() {
+        test("KotlinxCoroutinesGuideFlow29") { kotlinx.coroutines.guide.flow29.main() }.verifyExceptions(
             "Emitting 1",
             "1",
             "Emitting 2",
@@ -298,8 +312,8 @@ class FlowGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideFlow29() {
-        test("KotlinxCoroutinesGuideFlow29") { kotlinx.coroutines.guide.flow29.main() }.verifyExceptions(
+    fun testKotlinxCoroutinesGuideFlow30() {
+        test("KotlinxCoroutinesGuideFlow30") { kotlinx.coroutines.guide.flow30.main() }.verifyExceptions(
             "Emitting 1",
             "1",
             "Emitting 2",

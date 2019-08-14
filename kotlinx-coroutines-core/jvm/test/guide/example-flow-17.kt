@@ -19,7 +19,7 @@ fun foo(): Flow<Int> = flow {
 fun main() = runBlocking<Unit> { 
     val time = measureTimeMillis {
         foo()
-            .conflate() // conflate emissions, don't process each one
+            .buffer() // buffer emissions, don't wait
             .collect { value -> 
                 delay(300) // pretend we are processing it for 300 ms
                 println(value) 

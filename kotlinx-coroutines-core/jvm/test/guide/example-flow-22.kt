@@ -8,16 +8,11 @@ package kotlinx.coroutines.guide.flow22
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun requestFlow(i: Int): Flow<String> = flow {
-    emit("$i: First") 
-    delay(500) // wait 500 ms
-    emit("$i: Second")    
-}
-
 fun main() = runBlocking<Unit> { 
+    val nums = (1..3).asFlow().onEach { delay(300) } // numbers 1..3 every 300 ms
+    val strs = flowOf("one", "two", "three").onEach { delay(400) } // strings every 400 ms          
     val startTime = currentTimeMillis() // remember the start time 
-    (1..3).asFlow().onEach { delay(100) } // a number every 100 ms 
-        .flatMapConcat { requestFlow(it) }                                                                           
+    nums.combine(strs) { a, b -> "$a -> $b" } // compose a single string with "combine"
         .collect { value -> // collect and print 
             println("$value at ${currentTimeMillis() - startTime} ms from start") 
         } 

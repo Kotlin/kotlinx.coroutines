@@ -21,7 +21,9 @@ fun foo(): Flow<String> =
     }
 
 fun main() = runBlocking<Unit> {
-    foo()
-        .catch { e -> emit("Caught $e") } // emit on exception
-        .collect { value -> println(value) }
+    try {
+        foo().collect { value -> println(value) }
+    } catch (e: Throwable) {
+        println("Caught $e")
+    } 
 }            

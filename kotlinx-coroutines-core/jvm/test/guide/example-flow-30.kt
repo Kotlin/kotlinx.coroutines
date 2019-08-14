@@ -3,7 +3,7 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.flow26
+package kotlinx.coroutines.guide.flow30
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -11,17 +11,16 @@ import kotlinx.coroutines.flow.*
 fun foo(): Flow<Int> = flow {
     for (i in 1..3) {
         println("Emitting $i")
-        emit(i) // emit next value
+        emit(i)
     }
 }
 
 fun main() = runBlocking<Unit> {
-    try {
-        foo().collect { value ->         
-            println(value)
-            check(value <= 1) { "Collected $value" }
+    foo()
+        .onEach { value ->
+            check(value <= 1) { "Collected $value" }                 
+            println(value) 
         }
-    } catch (e: Throwable) {
-        println("Caught $e")
-    } 
+        .catch { e -> println("Caught $e") }
+        .collect()
 }            

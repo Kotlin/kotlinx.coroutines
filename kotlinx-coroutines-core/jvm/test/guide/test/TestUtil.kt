@@ -132,6 +132,7 @@ private fun sanitize(s: String, mode: SanitizeMode): String {
             res = res.replace(Regex("DefaultDispatcher-worker-[0-9]+"), "DefaultDispatcher")
             res = res.replace(Regex("RxComputationThreadPool-[0-9]+"), "RxComputationThreadPool")
             res = res.replace(Regex("Test( worker)?"), "main")
+            res = res.replace(Regex("@[0-9a-f]+"), "") // drop hex address
         }
         SanitizeMode.NONE -> {}
     }
@@ -180,8 +181,17 @@ fun List<String>.verifyLinesStartUnordered(vararg expected: String) = verify {
 }
 
 fun List<String>.verifyExceptions(vararg expected: String) {
-    val actual = filter { !it.startsWith("\tat ") }
-
+    val original = this
+    val actual = ArrayList<String>().apply {
+        var except = false
+        for (line in original) {
+            when {
+                !except && line.startsWith("\tat") -> except = true
+                except && !line.startsWith("\t") && !line.startsWith("Caused by: ") -> except = false
+            }
+            if (!except) add(line)
+        }
+    }
     val n = minOf(actual.size, expected.size)
     for (i in 0 until n) {
         val exp = sanitize(expected[i], SanitizeMode.FLEXIBLE_THREAD)

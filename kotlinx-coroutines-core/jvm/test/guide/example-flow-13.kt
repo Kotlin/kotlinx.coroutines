@@ -7,17 +7,16 @@ package kotlinx.coroutines.guide.flow13
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-                      
+
+fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
+           
 fun foo(): Flow<Int> = flow {
-    // WRONG way to change context for CPU-consuming code in flow builder
-    kotlinx.coroutines.withContext(Dispatchers.Default) {
-        for (i in 1..3) {
-            Thread.sleep(100) // pretend we are computing it in CPU-consuming way
-            emit(i) // emit next value
-        }
+    log("Started foo flow")
+    for (i in 1..3) {
+        emit(i)
     }
-}
+}  
 
 fun main() = runBlocking<Unit> {
-    foo().collect { value -> println(value) } 
+    foo().collect { value -> log("Collected $value") } 
 }            

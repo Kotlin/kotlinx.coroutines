@@ -6,7 +6,7 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.$$1$$2
 -->
-<!--- KNIT     ../kotlinx-coroutines-core/jvm/test/guide/.*\.kt -->
+<!--- KNIT     ../kotlinx-coroutines-core/jvm/test/guide/.*-##\.kt -->
 <!--- TEST_OUT ../kotlinx-coroutines-core/jvm/test/guide/test/FlowGuideTest.kt
 // This file was automatically generated from flow.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
@@ -622,7 +622,49 @@ withContext(context) {
 This property of a flow is called _context preservation_.
 
 So, by default, code in the `flow { ... }` builder runs in the context that is provided by a collector
-of the corresponding flow. This is a perfect default for fast-running or asynchronous code. 
+of the corresponding flow. For example, consider implementation of `foo` that prints the thread
+it is called on and emits three numbers:
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
+           
+//sampleStart
+fun foo(): Flow<Int> = flow {
+    log("Started foo flow")
+    for (i in 1..3) {
+        emit(i)
+    }
+}  
+
+fun main() = runBlocking<Unit> {
+    foo().collect { value -> log("Collected $value") } 
+}            
+//sampleEnd
+```                
+
+</div>
+
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-13.kt).
+
+Running this code produces:
+
+```text  
+[main @coroutine#1] Started foo flow
+[main @coroutine#1] Collected 1
+[main @coroutine#1] Collected 2
+[main @coroutine#1] Collected 3
+```
+
+<!--- TEST -->
+
+Since `foo().collect` is called from the main thread, the body of `foo`'s flow is also called in the main thread.
+This is a perfect default for fast-running or asynchronous code that does not care about the execution context and
+does not block the caller. 
 
 #### Wrong emission withContext
 
@@ -658,12 +700,14 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-13.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-14.kt).
 
 This code produces the following exception:
 
-<!--- TEST lines[0].startsWith("Exception in thread \"main\" java.lang.IllegalStateException: Flow invariant is violated: flow was collected in [CoroutineId(1), \"coroutine#1\":BlockingCoroutine{Active}@") && lines[1] == "\t\tPlease refer to 'flow' documentation or use 'flowOn' instead" -->
-Exception in thread "main" java.lang.IllegalStateException: Flow invariant is violated: flow was collected in [CoroutineId(1), "coroutine#1":BlockingCoroutine{Active}@705b000d, BlockingEventLoop@2adcee9f], but emission happened in [CoroutineId(1), "coroutine#1":DispatchedCoroutine{Active}@860a7ac, DefaultDispatcher].
+<!--- TEST EXCEPTION
+Exception in thread "main" java.lang.IllegalStateException: Flow invariant is violated:
+		Flow was collected in [CoroutineId(1), "coroutine#1":BlockingCoroutine{Active}@5511c7f8, BlockingEventLoop@2eac3323],
+		but emission happened in [CoroutineId(1), "coroutine#1":DispatchedCoroutine{Active}@2dae0000, DefaultDispatcher].
 		Please refer to 'flow' documentation or use 'flowOn' instead
 	at ...
 -->
@@ -705,7 +749,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-14.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-15.kt).
   
 Notice how `flow { ... }` works in the background thread, while collection happens in the main thread:   
   
@@ -759,7 +803,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-15.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-16.kt).
 
 It produces something like this, the whole collection taking around 1200 ms (three numbers times 400 ms each):
 
@@ -806,7 +850,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-16.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-17.kt).
 
 It produces the same numbers faster, as we have effectively created a processing pipeline,
 only having to wait 100 ms for the first number and then spending only 300 ms to process
@@ -861,7 +905,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-17.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-18.kt).
 
 We see that while the first number was being processed the second and the third ones were already produced, so
 the second one was _conflated_ and only the most recent (the third one) was delivered to the collector:
@@ -912,7 +956,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-18.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-19.kt).
  
 Since the body of [collectLatest] takes 300 ms, but new values are emitted every 100 ms, we see that the block
 is run on every value, but completes only for the last value:
@@ -954,7 +998,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-19.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-20.kt).
 
 This example prints:
 
@@ -1001,7 +1045,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-20.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-21.kt).
 
 <!--- TEST ARBITRARY_TIME
 1 -> one at 437 ms from start
@@ -1032,7 +1076,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-21.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-22.kt).
 
 We get quite a different output, where a line is printed at each emission from either `nums` or `strs` flows:
 
@@ -1115,7 +1159,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-22.kt).            
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-23.kt).            
 
 The sequential nature of [flatMapConcat] is clearly seen in the output:
 
@@ -1164,7 +1208,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-23.kt).            
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-24.kt).            
 
 The concurrent nature of [flatMapMerge] is obvious:
 
@@ -1216,7 +1260,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-24.kt).            
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-25.kt).            
 
 The output of this example speaks for the way [flatMapLatest] works:
 
@@ -1271,7 +1315,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-25.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-26.kt).
 
 This code successfully catches an exception in [collect] terminal operator and, 
 as you can see, no more values are emitted after that:
@@ -1323,7 +1367,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-26.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-27.kt).
 
 This exception is still caught and collection is stopped:
 
@@ -1383,7 +1427,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-27.kt). 
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-28.kt). 
  
 The output of the example is the same, even though we do not have `try/catch` around the code anymore. 
 
@@ -1426,7 +1470,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-28.kt). 
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-29.kt). 
  
 The "Caught ..." message is not printed despite the `catch` operator: 
 
@@ -1472,7 +1516,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-29.kt). 
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-30.kt). 
  
 Now we can see that "Caught ..." message is printed and thus we can catch all exceptions without explicitly
 using a `try/catch` block: 

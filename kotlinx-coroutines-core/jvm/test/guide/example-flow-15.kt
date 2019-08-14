@@ -7,21 +7,19 @@ package kotlinx.coroutines.guide.flow15
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlin.system.*
 
+fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
+           
 fun foo(): Flow<Int> = flow {
     for (i in 1..3) {
-        delay(100) // pretend we are asynchronously waiting 100 ms
+        Thread.sleep(100) // pretend we are computing it in CPU-consuming way
+        log("Emitting $i")
         emit(i) // emit next value
     }
-}
+}.flowOn(Dispatchers.Default) // RIGHT way to change context for CPU-consuming code in flow builder
 
-fun main() = runBlocking<Unit> { 
-    val time = measureTimeMillis {
-        foo().collect { value -> 
-            delay(300) // pretend we are processing it for 300 ms
-            println(value) 
-        } 
-    }   
-    println("Collected in $time ms")
-}
+fun main() = runBlocking<Unit> {
+    foo().collect { value ->
+        log("Collected $value") 
+    } 
+}            

@@ -8,20 +8,17 @@ package kotlinx.coroutines.guide.flow25
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun foo(): Flow<Int> = flow {
-    for (i in 1..3) {
-        println("Emitting $i")
-        emit(i) // emit next value
-    }
+fun requestFlow(i: Int): Flow<String> = flow {
+    emit("$i: First") 
+    delay(500) // wait 500 ms
+    emit("$i: Second")    
 }
 
-fun main() = runBlocking<Unit> {
-    try {
-        foo().collect { value ->         
-            println(value)
-            check(value <= 1) { "Collected $value" }
-        }
-    } catch (e: Throwable) {
-        println("Caught $e")
-    } 
-}            
+fun main() = runBlocking<Unit> { 
+    val startTime = currentTimeMillis() // remember the start time 
+    (1..3).asFlow().onEach { delay(100) } // a number every 100 ms 
+        .flatMapLatest { requestFlow(it) }                                                                           
+        .collect { value -> // collect and print 
+            println("$value at ${currentTimeMillis() - startTime} ms from start") 
+        } 
+}
