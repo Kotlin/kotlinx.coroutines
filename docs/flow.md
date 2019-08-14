@@ -661,7 +661,7 @@ Running this code produces:
 [main @coroutine#1] Collected 3
 ```
 
-<!--- TEST -->
+<!--- TEST FLEXIBLE_THREAD -->
 
 Since `foo().collect` is called from the main thread, the body of `foo`'s flow is also called in the main thread.
 This is a perfect default for fast-running or asynchronous code that does not care about the execution context and
@@ -1532,12 +1532,13 @@ Caught java.lang.IllegalStateException: Collected 2
 
 ### Launching flow
 
-It is convenient to use flows to represents asynchronous events that are coming from some source.
+It is convenient to use flows to represent asynchronous events that are coming from some source.
 In this case we need an analogue of `addEventListener` function that registers a piece of code with reaction
-on incoming events and continues further work. That is where [launchIn] operator comes in handy
-together with [onEach] operator that we've seen previously.
-
-Consider the following example:
+on incoming events and continues further work. The [onEach] operator can serve this role. 
+However, `onEach` is an intermediate operator. We also need a terminal operator to collect the flow. 
+Otherwise, just calling `onEach` has no effect.
+ 
+If we use [collect] terminal operator after `oneEach` then code after it waits until the flow is collected:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -1551,10 +1552,9 @@ fun events(): Flow<Int> = (1..3).asFlow().onEach { delay(100) }
 
 fun main() = runBlocking<Unit> {
     events()
-        .onEach { event ->
-            println("Event: $event") 
-        }
-        .launchIn(this)
+        .onEach { event -> println("Event: $event") }
+        .collect() // <--- Collecting the flow waits
+    println("Done")
 }            
 //sampleEnd
 ```  
@@ -1563,9 +1563,48 @@ fun main() = runBlocking<Unit> {
 
 > You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-31.kt). 
   
-It prints:
+As you can see, it prints:
 
 ```text 
+Event: 1
+Event: 2
+Event: 3
+Done
+```    
+
+<!--- TEST -->
+ 
+Here [launchIn] terminal operator comes in handy. Replacing `collect` with `launchIn` we can
+launch collection of the flow in a separate coroutine, so that execution of further code 
+immediately continues:
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+// Imitate a flow of events
+fun events(): Flow<Int> = (1..3).asFlow().onEach { delay(100) }
+
+//sampleStart
+fun main() = runBlocking<Unit> {
+    events()
+        .onEach { event -> println("Event: $event") }
+        .launchIn(this) // <--- Launching the flow in a separate coroutine
+    println("Done")
+}            
+//sampleEnd
+```  
+
+</div>
+
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-32.kt). 
+  
+It prints:
+
+```text          
+Done
 Event: 1
 Event: 2
 Event: 3
@@ -1573,19 +1612,19 @@ Event: 3
 
 <!--- TEST -->
 
-In this example the body of `onEach { ... }` operator works as an event listener. However, [onEach] operator
-is intermediate and calling this operator by itself does not have any effect. A terminal operator is needed
-to collect the flow and [launchIn] serves this purpose. The required parameter to `launchIn` must specify
-a [CoroutineScope] in which this flow is collected. In the above example this scope comes from [runBlocking]
-coroutine builder, so while the flow is not over, the [runBlocking] waits and keeps the main function from 
-returning and terminating this example. In real applications a scope is going to come from some entity with a limited 
-lifetime and as soon as the lifetime of this entity is terminated the corresponding scope is cancelled, cancelling
-collection of the corresponding flow. This way the pair of `onEach { ... }.collectIn` calls works
-like `addEventListener`, but there is no need for a corresponding `removeEventListener` function, as cancellation and
-structured concurrency serve this purpose.
+The required parameter to `launchIn` must specify a [CoroutineScope] in which the coroutine to collect the flow is 
+launched. In the above example this scope comes from [runBlocking]
+coroutine builder, so while the flow is running this [runBlocking] scope waits for completion of its child coroutine
+and keeps the main function from returning and terminating this example. 
+
+In real applications a scope is going to come from some entity with a limited 
+lifetime. As soon as the lifetime of this entity is terminated the corresponding scope is cancelled, cancelling
+collection of the corresponding flow. This way the pair of `onEach { ... }.collectIn(scope)` works
+like `addEventListener`. However, there is no need for the corresponding `removeEventListener` function, 
+as cancellation and structured concurrency serve this purpose.
 
 Note, that [launchIn] also returns a [Job] which can be used to [cancel][Job.cancel] the corresponding flow collection
-only without cancelling the whole scope. 
+coroutine only without cancelling the whole scope. 
  
 <!-- stdlib references -->
 

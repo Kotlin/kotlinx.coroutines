@@ -135,7 +135,7 @@ class FlowGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideFlow13() {
-        test("KotlinxCoroutinesGuideFlow13") { kotlinx.coroutines.guide.flow13.main() }.verifyLines(
+        test("KotlinxCoroutinesGuideFlow13") { kotlinx.coroutines.guide.flow13.main() }.verifyLinesFlexibleThread(
             "[main @coroutine#1] Started foo flow",
             "[main @coroutine#1] Collected 1",
             "[main @coroutine#1] Collected 2",
@@ -324,6 +324,17 @@ class FlowGuideTest {
     @Test
     fun testKotlinxCoroutinesGuideFlow31() {
         test("KotlinxCoroutinesGuideFlow31") { kotlinx.coroutines.guide.flow31.main() }.verifyLines(
+            "Event: 1",
+            "Event: 2",
+            "Event: 3",
+            "Done"
+        )
+    }
+
+    @Test
+    fun testKotlinxCoroutinesGuideFlow32() {
+        test("KotlinxCoroutinesGuideFlow32") { kotlinx.coroutines.guide.flow32.main() }.verifyLines(
+            "Done",
             "Event: 1",
             "Event: 2",
             "Event: 3"
