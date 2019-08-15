@@ -46,7 +46,7 @@ The main coroutines guide has moved to the [docs folder](docs/coroutines-guide.m
   * <a name='coroutineexceptionhandler'></a>[CoroutineExceptionHandler](docs/exception-handling.md#coroutineexceptionhandler)
   * <a name='cancellation-and-exceptions'></a>[Cancellation and exceptions](docs/exception-handling.md#cancellation-and-exceptions)
   * <a name='exceptions-aggregation'></a>[Exceptions aggregation](docs/exception-handling.md#exceptions-aggregation)
-* <a name='supervision'></a>[Supervision](docs/exception-handling.md#supervision)
+  * <a name='supervision'></a>[Supervision](docs/exception-handling.md#supervision)
   * <a name='supervision-job'></a>[Supervision job](docs/exception-handling.md#supervision-job)
   * <a name='supervision-scope'></a>[Supervision scope](docs/exception-handling.md#supervision-scope)
   * <a name='exceptions-in-supervised-coroutines'></a>[Exceptions in supervised coroutines](docs/exception-handling.md#exceptions-in-supervised-coroutines)
