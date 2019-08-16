@@ -72,7 +72,7 @@ const val BENCHMARK_CONFIGURATION_FIELDS = "threads,userCount,maxFriendsPercenta
  */
 class BenchmarkConfiguration(
         var threads: Int,
-        var userCount: Int,
+        var users: Int,
         var maxFriendsPercentage: Double,
         var channelType: ChannelType,
         var averageWork: Int,
@@ -84,11 +84,11 @@ class BenchmarkConfiguration(
     val receivedMessagesPerRun = ArrayList<Double>()
 
     override fun toString(): String {
-        return "BenchmarkConfiguration(threads=$threads, userCount=$userCount, maxFriendsPercentage=$maxFriendsPercentage, channelType=$channelType, averageWork=$averageWork, benchmarkMode=$benchmarkMode, dispatcherType=$dispatcherType, sentMessagesPerRun=$sentMessagesPerRun, receivedMessagesPerRun=$receivedMessagesPerRun)"
+        return "BenchmarkConfiguration(threads=$threads, users=$users, maxFriendsPercentage=$maxFriendsPercentage, channelType=$channelType, averageWork=$averageWork, benchmarkMode=$benchmarkMode, dispatcherType=$dispatcherType, sentMessagesPerRun=$sentMessagesPerRun, receivedMessagesPerRun=$receivedMessagesPerRun)"
     }
 
     fun configurationToString() : String {
-        return "BenchmarkConfiguration(threads=$threads, userCount=$userCount, maxFriendsPercentage=$maxFriendsPercentage, channelType=$channelType, averageWork=$averageWork, benchmarkMode=$benchmarkMode, dispatcherType=$dispatcherType)"
+        return "BenchmarkConfiguration(threads=$threads, users=$users, maxFriendsPercentage=$maxFriendsPercentage, channelType=$channelType, averageWork=$averageWork, benchmarkMode=$benchmarkMode, dispatcherType=$dispatcherType)"
     }
 
     fun toCSV(): String {
@@ -96,11 +96,11 @@ class BenchmarkConfiguration(
         val avgReceivedMessages = receivedMessagesPerRun.sum() / receivedMessagesPerRun.size.toDouble()
         val stdSentMessages = sqrt(sentMessagesPerRun.map { count -> (count - avgSentMessages).pow(2)  }.sum() / sentMessagesPerRun.size)
         val stdReceivedMessages = sqrt(receivedMessagesPerRun.map { count -> (count - avgReceivedMessages).pow(2)  }.sum() / receivedMessagesPerRun.size)
-        return "$threads,$userCount,$maxFriendsPercentage,$channelType,$averageWork,$benchmarkMode,$dispatcherType,%.2f,%.2f,%.2f,%.2f".format(avgSentMessages, stdSentMessages, avgReceivedMessages, stdReceivedMessages)
+        return "$threads,$users,$maxFriendsPercentage,$channelType,$averageWork,$benchmarkMode,$dispatcherType,%.2f,%.2f,%.2f,%.2f".format(avgSentMessages, stdSentMessages, avgReceivedMessages, stdReceivedMessages)
     }
 
     fun toArray() : Array<String> {
-        return arrayOf(threads.toString(), userCount.toString(), maxFriendsPercentage.toString(), channelType.toString(), averageWork.toString(), benchmarkMode.toString(), dispatcherType.toString())
+        return arrayOf(threads.toString(), users.toString(), maxFriendsPercentage.toString(), channelType.toString(), averageWork.toString(), benchmarkMode.toString(), dispatcherType.toString())
     }
 
     companion object {

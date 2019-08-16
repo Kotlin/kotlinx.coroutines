@@ -3,11 +3,10 @@ package chat
 import kotlinx.coroutines.channels.Channel
 
 class UserWithoutFriends(id: Long,
-                         sendingMessageSpeed: Double,
-                         messagesChannel: Channel<Message>,
-                         configuration: BenchmarkConfiguration,
-                         shouldCountMetrics: Boolean)
-    : User(id, sendingMessageSpeed, messagesChannel, configuration, shouldCountMetrics) {
+                         activity: Double,
+                         messageChannel: Channel<Message>,
+                         configuration: BenchmarkConfiguration)
+    : User(id, activity, messageChannel, configuration) {
 
     private lateinit var users: List<User>
 
@@ -36,6 +35,6 @@ class UserWithoutFriends(id: Long,
             user =  users[insertionPoint]
             userId = user.id
         }
-        return user?.messagesChannel
+        return user?.messageChannel
     }
 }

@@ -19,10 +19,9 @@ import java.util.concurrent.ThreadLocalRandom
  * At the end of the benchmark execution [stopUser] should be called.
  */
 abstract class User(val id: Long,
-                    val sendingMessageSpeed : Double,
-                    val messagesChannel: Channel<Message>,
-                    private val configuration: BenchmarkConfiguration,
-                    @Volatile var shouldCountMetrics: Boolean) {
+                    val activity : Double,
+                    val messageChannel: Channel<Message>,
+                    private val configuration: BenchmarkConfiguration) {
     var sentMessages = 0L
         protected set
 
@@ -36,8 +35,8 @@ abstract class User(val id: Long,
     @Volatile
     private var stopped = false
 
-    fun startUserScenario() {
-        messagesToSent += sendingMessageSpeed
+    fun startUser() {
+        messagesToSent += activity
         var count = 0L
         CoroutineScope(context).launch {
             while (messagesToSent >= 1 && !stopped) {
@@ -48,8 +47,8 @@ abstract class User(val id: Long,
                 }
             }
             while (!stopped) {
-                val message = messagesChannel.receiveOrClosed().valueOrNull ?: break
-                messagesToSent += sendingMessageSpeed
+                val message = messageChannel.receiveOrClosed().valueOrNull ?: break
+                messagesToSent += activity
                 receiveAndProcessMessage(message)
                 while (messagesToSent >= 1) {
                     sendMessage()
@@ -77,7 +76,7 @@ abstract class User(val id: Long,
         val now = System.nanoTime()
         try {
             select<Unit> {
-                messagesChannel.onReceiveOrClosed { message ->
+                messageChannel.onReceiveOrClosed { message ->
                     run {
                         if (!message.isClosed) {
                             receiveAndProcessMessage(message.value)
@@ -85,18 +84,18 @@ abstract class User(val id: Long,
                     }
                 }
                 userChannelToSend.onSend(Message(id, now)) {
-                    if (shouldCountMetrics) {
+                    if (!stopped) {
                         sentMessages++
                     }
                     doSomeWorkOnCpu()
                 }
             }
         } catch (ignored : ClosedSendChannelException) {}
+          catch (ignored : IllegalStateException) {}
     }
 
     private fun receiveAndProcessMessage(message : Message) {
-        doSomeWorkOnCpu()
-        if (shouldCountMetrics) {
+        if (!stopped) {
             receivedMessages++
         }
         doSomeWorkOnCpu()
@@ -104,7 +103,7 @@ abstract class User(val id: Long,
 
     fun stopUser() {
         stopped = true
-        messagesChannel.close()
+        messageChannel.close()
     }
 
     abstract fun chooseChannelToSend() : Channel<Message>?
