@@ -86,7 +86,7 @@ public fun <T> Iterable<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a flow that produces values from the given iterable.
+ * Creates a flow that produces values from the given iterator.
  */
 public fun <T> Iterator<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
@@ -104,7 +104,12 @@ public fun <T> Sequence<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a flow that produces values from the given array of elements.
+ * Creates a flow that produces values from the specified `vararg`-arguments.
+ *
+ * Example of usage:
+ * ```
+ * flowOf(1, 2, 3)
+ * ```
  */
 public fun <T> flowOf(vararg elements: T): Flow<T> = flow {
     for (element in elements) {
@@ -113,12 +118,12 @@ public fun <T> flowOf(vararg elements: T): Flow<T> = flow {
 }
 
 /**
- * Creates flow that produces a given [value].
+ * Creates flow that produces the given [value].
  */
 public fun <T> flowOf(value: T): Flow<T> = flow {
     /*
      * Implementation note: this is just an "optimized" overload of flowOf(vararg)
-     * which significantly reduce the footprint of widespread single-value flows.
+     * which significantly reduces the footprint of widespread single-value flows.
      */
     emit(value)
 }
@@ -142,7 +147,7 @@ public fun <T> Array<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates flow that produces values from the given array.
+ * Creates a flow that produces values from the array.
  */
 public fun IntArray.asFlow(): Flow<Int> = flow {
     forEach { value ->
@@ -151,7 +156,7 @@ public fun IntArray.asFlow(): Flow<Int> = flow {
 }
 
 /**
- * Creates flow that produces values from the given array.
+ * Creates a flow that produces values from the array.
  */
 public fun LongArray.asFlow(): Flow<Long> = flow {
     forEach { value ->
@@ -160,7 +165,7 @@ public fun LongArray.asFlow(): Flow<Long> = flow {
 }
 
 /**
- * Creates flow that produces values from the given range.
+ * Creates a flow that produces values from the range.
  */
 public fun IntRange.asFlow(): Flow<Int> = flow {
     forEach { value ->
@@ -169,7 +174,7 @@ public fun IntRange.asFlow(): Flow<Int> = flow {
 }
 
 /**
- * Creates flow that produces values from the given range.
+ * Creates a flow that produces values from the range.
  */
 public fun LongRange.asFlow(): Flow<Long> = flow {
     forEach { value ->
