@@ -7,7 +7,6 @@ package kotlinx.coroutines.flow.internal
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.channels.ArrayChannel
 import kotlinx.coroutines.flow.*
 
 internal fun <T> FlowCollector<T>.asConcurrentFlowCollector(): ConcurrentFlowCollector<T> =

@@ -9,8 +9,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
-import kotlin.jvm.*
-import kotlin.math.min
 
 /**
  * This is a common implementation for both rendezvous and buffered channels.
@@ -41,7 +39,9 @@ import kotlin.math.min
  * `receivers` and `bufferEnd` counters. If [receive] suspends, than it just moves the buffer forward,
  * while on making a rendezvous it
  */
-internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
+internal open class BufferedChannel<E>(capacity: Int) : Channel<E>, SegmentQueue<BCSegment>() {
+    override fun newSegment(id: Long, prev: BCSegment?) = BCSegment(id, prev)
+
     init {
         require(capacity >= 0) { "Invalid channel capacity: $capacity, should be >=0" }
     }
@@ -62,7 +62,7 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     protected open fun onReceiveDequeued() {}
 
     /**
-     * Invoked when channel is closed as the last action of [close] invocation.
+     * Invoked when channel is closed as the last action of [closeQueue] invocation.
      * This method should be idempotent and can be called multiple times.
      */
     protected open fun onClosed() {}
@@ -71,333 +71,86 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     // ## Indices Maintenance ##
     // #########################
 
-    // [       1       ] [2   --   22] [23   --   43] [44  --  64]
-    //   "closed" flag     lBufferEnd    lReceivers     lSenders
-    private val lowest = atomic((capacity.toLong() % OVERFLOWED_COUNTER_MIN_VALUE) shl (TWO_COUNTER_OFFSETS))
-    private @Volatile var hSenders = 0L
-    private @Volatile var hReceivers = 0L
-    private @Volatile var hBufferEnd = capacity.toLong() / OVERFLOWED_COUNTER_MIN_VALUE
-    // number of readers + write lock is held if >= WRITE_LOCK_ACQUIRED
-    private val lock = atomic(0)
+    private val senders = atomic(0L)
+    private val receivers = atomic(0L)
+    private val bufferEnd = atomic(capacity.toLong())
+    private val closed = atomic(false)
 
-    private inline fun acquireReadLock() {
-        var l = this.lock.incrementAndGet() // increment the number of readers
-        while (l > WRITE_LOCK_ACQUIRED) l = this.lock.value // wait until the write lock is releasуed
-    }
-
-    private inline fun releaseReadLock() {
-        this.lock.decrementAndGet() // decrement the number of readers
-    }
-
-    private inline fun tryAcquireWriteLock(): Boolean {
-        // check if either read or write lock is acquired
-        if (this.lock.value > 0) return false
-        // try to acquire the write lock if there is no reader
-        return this.lock.compareAndSet(0, WRITE_LOCK_ACQUIRED)
-    }
-
-    private inline fun releaseWriteLock() {
-        this.lock.addAndGet(-WRITE_LOCK_ACQUIRED)
-    }
-
-    private fun fixOverflow(lowest: Long, hSenders: Long, hReceivers: Long, hBufferEnd: Long) {
-        val fixSenders = (lowest and COUNTER_MASK) >= OVERFLOWED_COUNTER_MIN_VALUE
-        val fixReceivers = ((lowest shr COUNTER_OFFSET) and COUNTER_MASK) >= OVERFLOWED_COUNTER_MIN_VALUE
-        val fixBufferEnd = ((lowest shr TWO_COUNTER_OFFSETS) and COUNTER_MASK) >= OVERFLOWED_COUNTER_MIN_VALUE
-        while (needToFixOverflow(fixSenders, fixReceivers, fixBufferEnd, hSenders, hReceivers, hBufferEnd)) {
-            if (tryAcquireWriteLock()) {
-                if (fixSenders && this.hSenders == hSenders) {
-                    this.lowest.value -= OVERFLOWED_COUNTER_MIN_VALUE
-                    this.hSenders++
-                }
-                if (fixReceivers && this.hReceivers == hReceivers) {
-                    this.lowest.value -= OVERFLOWED_COUNTER_MIN_VALUE shl COUNTER_OFFSET
-                    this.hReceivers++
-                }
-                if (fixBufferEnd && this.hBufferEnd == hBufferEnd) {
-                    this.lowest.value -= OVERFLOWED_COUNTER_MIN_VALUE shl TWO_COUNTER_OFFSETS
-                    this.hBufferEnd++
-                }
-                releaseWriteLock()
-                break
-            }
-        }
-
-    }
-
-    private fun needToFixOverflow(fixSenders: Boolean, fixReceivers: Boolean, fixBufferEnd: Boolean,
-                                  hSenders: Long, hReceivers: Long, hBufferEnd: Long): Boolean {
-        if (fixSenders && this.hSenders == hSenders) return true
-        if (fixReceivers && this.hReceivers == hReceivers) return true
-        if (fixBufferEnd && this.hBufferEnd == hBufferEnd) return true
-        return false
-    }
-
-    private inline fun countCounters(
-        lowest: Long, hSenders: Long, hReceivers: Long, hBufferEnd: Long,
-        block: (senders: Long, receivers: Long, bufferEnd: Long, closed: Boolean) -> Unit
-    ) {
-        val closed = isClosed(lowest)
-        val senders = (lowest and COUNTER_MASK) + (hSenders shl (COUNTER_OFFSET - 1))
-        val receivers = ((lowest shr COUNTER_OFFSET) and COUNTER_MASK) + (hReceivers shl (COUNTER_OFFSET - 1))
-        val bufferEnd = ((lowest shr TWO_COUNTER_OFFSETS) and COUNTER_MASK) + (hBufferEnd shl (COUNTER_OFFSET - 1))
-        block(senders, receivers, bufferEnd, closed)
-    }
-
-    private inline fun modifyCounters(
-        lowestModification: () -> Long,
-        action: (senders: Long, receivers: Long, bufferEnd: Long, closed: Boolean) -> Unit
-    ) {
-        // Do the modification
-        acquireReadLock()
-        val l = lowestModification()
-        val hSenders = this.hSenders
-        val hReceivers = this.hReceivers
-        val hBufferEnd = this.hBufferEnd
-        releaseReadLock()
-        fixOverflow(l, hSenders, hReceivers, hBufferEnd)
-        // Count counters and invoke the action
-        countCounters(l, hSenders, hReceivers, hBufferEnd) { senders, receivers, bufferEnd, closed ->
-            action(senders, receivers, bufferEnd, closed)
-        }
-    }
-
-    private inline fun incSenders(block: (senders: Long, receivers: Long, bufferEnd: Long, closed: Boolean) -> Unit) {
-        modifyCounters({ this.lowest.addAndGet(SEND_INC) }, block)
-    }
-
-    private inline fun incReceivers(block: (senders: Long, receivers: Long, bufferEnd: Long, closed: Boolean) -> Unit) {
-        modifyCounters({ this.lowest.addAndGet(1L shl COUNTER_OFFSET) }, block)
-    }
-
-    private inline fun incBufferEnd(block: (senders: Long, receivers: Long, bufferEnd: Long, closed: Boolean) -> Unit) {
-        modifyCounters({ this.lowest.addAndGet(BUFFER_END_INC) }, block)
-    }
-
-    private inline fun incReceiversAndBufferEnd(block: (senders: Long, receivers: Long, bufferEnd: Long, closed: Boolean) -> Unit) {
-        modifyCounters({ this.lowest.addAndGet(RECEIVE_INC + BUFFER_END_INC) }, block)
-    }
-
-    private inline fun incCountersWithCondition(
-        condition: (senders: Long, receivers: Long, bufferEnd: Long) -> Boolean,
-        lowestModification: (curLowest: Long) -> Boolean,
-        action: (success: Boolean, senders: Long, receivers: Long, bufferEnd: Long, closed: Boolean) -> Unit
-    ) {
-        acquireReadLock()
-        while (true) {
-            val hSenders = this.hSenders
-            val hReceivers = this.hReceivers
-            val hBufferEnd = this.hBufferEnd
-            val l = this.lowest.value
-            countCounters(l, hSenders, hReceivers, hBufferEnd) { senders, receivers, bufferEnd, closed ->
-                if (!condition(senders, receivers, bufferEnd)) {
-                    releaseReadLock()
-                    action(false, -1, -1, -1, closed)
-                    return
-                }
-                if (lowestModification(l)) {
-                    releaseReadLock()
-                    fixOverflow(l, hSenders, hReceivers, hBufferEnd)
-                    action(true, senders, receivers, bufferEnd, closed)
-                    return
-                }
-            }
-        }
-    }
-
-    private inline fun tryIncSenders(block: (success: Boolean, senders: Long, receivers: Long, bufferEnd: Long, closed: Boolean) -> Unit) {
-        incCountersWithCondition(
-            { senders, receivers, bufferEnd -> unlimited || senders < receivers || senders < bufferEnd},
-            { curLowest -> this.lowest.compareAndSet(curLowest, curLowest + SEND_INC) },
-            { success, senders, receivers, bufferEnd, closed -> block(success, senders + 1, receivers, bufferEnd, closed) }
-        )
-    }
-
-    private inline fun tryIncReceivers(block: (success: Boolean, senders: Long, receivers: Long, bufferEnd: Long, closed: Boolean) -> Unit) {
-        incCountersWithCondition(
-            { senders, receivers, bufferEnd -> receivers < senders },
-            { curLowest -> this.lowest.compareAndSet(curLowest, curLowest + RECEIVE_INC) },
-            { success, senders, receivers, bufferEnd, closed -> block(success, senders, receivers + 1, bufferEnd, closed) }
-        )
-    }
-
-    private inline fun tryIncReceiversAndBufferEnd(block: (success: Boolean, senders: Long, receivers: Long, bufferEnd: Long, closed: Boolean) -> Unit) {
-        incCountersWithCondition(
-            { senders, receivers, bufferEnd -> receivers < senders },
-            { curLowest -> this.lowest.compareAndSet(curLowest, curLowest + RECEIVE_INC + BUFFER_END_INC) },
-            { success, senders, receivers, bufferEnd, closed -> block(success, senders, receivers + 1, bufferEnd + 1, closed) }
-        )
-    }
-
-    private inline fun isClosed(lowest: Long) = (lowest and CLOSED_FLAG) != 0L
-    private val closed: Boolean get() = isClosed(this.lowest.value)
-    private fun setClosedFlag(action: () -> Unit) {
-        acquireReadLock()
-        try {
-            val lowest = this.lowest.updateAndGet { curLowest -> curLowest or CLOSED_FLAG }
-            countCounters(lowest, hSenders, hReceivers, hBufferEnd) { _, _, _, _ -> action() }
-        } finally {
-            releaseReadLock()
-        }
-    }
-
-    private companion object {
-        private const val WRITE_LOCK_ACQUIRED = Int.MAX_VALUE / 2
-        private val COUNTER_OFFSET = systemProp("kotlinx.coroutines.bufferedChannel.counterOffset",
-                                     defaultValue = 21, minValue = 2, maxValue = 21)
-        private val TWO_COUNTER_OFFSETS = COUNTER_OFFSET * 2
-        private val COUNTER_MASK = (1L shl COUNTER_OFFSET) - 1L
-        private val SEND_INC = 1L
-        private val RECEIVE_INC = 1L shl COUNTER_OFFSET
-        private val BUFFER_END_INC = 1L shl TWO_COUNTER_OFFSETS
-        private val OVERFLOWED_COUNTER_MIN_VALUE = 1L shl (COUNTER_OFFSET - 1)
-        private const val CLOSED_FLAG = 1L shl 63
-    }
-
-
-    // #####################
-    // ## Waiters Storage ##
-    // #####################
-
-    // The waiters storage is represented as a Michael-Scott queue of segments.
-    // These `head` and `tail` pointers reference the first and the last segments in the queue.
-    // The only difference is that the first segment is not sentinel in our structure.
-    //
-    // See `Segment` class as well, which contains a segment removing algorithm.
-    private val head: AtomicRef<Segment>
-    private val tail: AtomicRef<Segment>
-
-    init {
-        // Initialize queue with empty node similar to MS queue
-        // algorithm, but this node is just empty, not sentinel.
-        val emptyNode = Segment(0, null)
-        emptyNode.setCont(0, CONT_CLEANED)
-        head = atomic(emptyNode)
-        tail = atomic(emptyNode)
-    }
-
-    /**
-     * Finds or creates segment similarly to [findOrCreateSegment],
-     * but updates the [head] reference to the found segment as well.
-     */
-    private fun getHeadAndUpdate(id: Long, headOrOutdated: Segment): Segment? {
-        // Check whether the provided segment has the required `id`
-        // and just return it in this case.
-        if (headOrOutdated.id == id) {
-            return headOrOutdated
-        }
-        // Find (or even create) the required segment
-        // and update the `head` pointer.
-        val head = findOrCreateSegment(id, headOrOutdated) ?: return null
-        moveHeadForward(head)
-        // We should clean `prev` references on `head` updates,
-        // so they do not reference to the old segments. However,
-        // it is fine to clean the `prev` reference of the new head only.
-        // The previous "chain" of segments becomes no longer available from
-        // segment queue structure and can be collected by GC.
-        //
-        // Note, that in practice it would be better to clean `next` references as well,
-        // since it helps some GC (on JVM). However, this breaks the algorithm.
-        head.prev.value = null
-        return head
-    }
-
-    /**
-     * Finds or creates a segment with the specified [id] if it exists,
-     * or with a minimal but greater than the specified `id`
-     * (`segment.id >= id`) if the required segment was removed
-     * This method starts search from the provided [cur] segment,
-     * going by `next` references. Returns `null` if this channels is closed
-     * and a new segment should be added.
-     */
-    private fun findOrCreateSegment(id: Long, cur: Segment): Segment? {
-        if (cur.id > id) return null
-        // This method goes through `next` references and
-        // adds new segments if needed, similarly to the `push` in
-        // the Michael-Scott queue algorithm.
-        var cur = cur
-        while (cur.id < id) {
-            var curNext = cur.readNext { n, last -> if (last) return null else n }
-            if (curNext == null) {
-                // Add a new segment.
-                val newTail = Segment(cur.id + 1, cur)
-                curNext = if (cur.setNext(newTail)) {
-                    if (cur.removed) {
-                        cur.remove()
-                    }
-                    moveTailForward(newTail)
-                    newTail
-                } else {
-                    cur.readNext { n, last -> if (last) return null else n!! }
-                }
-            }
-            cur = curNext
-        }
-        return cur
-    }
-
-    /**
-     * Updates [head] to the specified segment
-     * if its `id` is greater.
-     */
-    private fun moveHeadForward(new: Segment) {
-        while (true) {
-            val cur = head.value
-            if (cur.id > new.id) return
-            if (this.head.compareAndSet(cur, new)) return
-        }
-    }
-
-    /**
-     * Updates [tail] to the specified segment
-     * if its `id` is greater.
-     */
-    private fun moveTailForward(new: Segment) {
-        while (true) {
-            val cur = this.tail.value
-            if (cur.id > new.id) return
-            if (this.tail.compareAndSet(cur, new)) return
-        }
-    }
-
+    @ExperimentalCoroutinesApi
+    override val isEmpty: Boolean
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
 
     // ######################
     // ## Send and Receive ##
     // ######################
 
     override fun offer(element: E): Boolean {
-        if (unlimited) {
-            sendUnlimited(element)
-            return true
-        }
+        TODO()
+    }
 
-        if (closed) throw sendException
-        while (true) {
-            val head = this.head.value
-            val tail = this.tail.value
-            tryIncSenders { success, senders, receivers, bufferEnd, closed ->
-                if (!success) {
-                    if (closed && closeCause.value != null) throw sendException
-                    return false
-                }
-                if (senders <= receivers) {
-                    if (resumeWaiter(element, head, senders) != FAILED) {
-                        onReceiveDequeued()
-                        return true
+    protected fun offerConflated(element: E) {
+        offer(element)
+        // TODO
+//        val senders = sendUnlimited(element)
+//        if (senders == -1L) return
+//
+//        val firstSegmentId = senders / SEGMENT_SIZE
+//        var curSegment = findOrCreateSegment(senders / SEGMENT_SIZE, this.head.value)
+//        while (curSegment !== null) {
+//            val maxIndex = if (curSegment.id == firstSegmentId) ((senders - 1) % SEGMENT_SIZE).toInt() else (SEGMENT_SIZE - 1)
+//            for (i in maxIndex downTo 0) {
+//                var waiter = curSegment.getCont(i)
+//                while (waiter === null) waiter = curSegment.getCont(i)
+//                if (waiter === CONT_BUFFERED) curSegment.clean(i)
+//            }
+//            curSegment = curSegment.prev.value
+//        }
+    }
+
+    override suspend fun send(element: E) {
+        try_again@while (true) {
+            if (closed.value) throw sendException
+            val h = this.head
+            val t = this.tail
+            val s = senders.getAndIncrement()
+            val b = bufferEnd.value
+            val id = s / SEGMENT_SIZE
+            val i = (s % SEGMENT_SIZE).toInt()
+            if (s < b) { // rendezvous or buffering
+                val a = getSegmentAndMoveHead(h, id) ?: continue@try_again
+                a.setElementLazy(i, element)
+                val old = a.getAndSetWaiterConditionally(i, BUFFERED_OR_DONE) { it !== BROKEN }
+                if (old === FAILED_RESULT) continue@try_again
+                when (old) {
+                    is CancellableContinuation<*> -> {
+                        if (old.tryResume()) return
+                        else a.setElementLazy(i, null)
                     }
-                } else if (unlimited || senders <= bufferEnd) {
-                    if (!storeWaiter(CONT_BUFFERED, element, tail, senders)) throw sendException
-                    return true
-                } else error("WTF???")
+                    is SelectInstance<*> -> { // rendezvous
+                        a.setElementLazy(i, null)
+                        if (old.trySelect(this, element)) return
+                    }
+                    else -> return
+                }
+            } else {
+                val a = getSegment(t, id) ?: continue@try_again
+                a.setElementLazy(i, element)
+                if (sendSuspend(a, i)) return
             }
         }
+    }
+
+    private suspend fun sendSuspend(a: BCSegment, i: Int) = suspendAtomicCancellableCoroutine<Boolean> { cont ->
+        val old = a.getAndSetWaiterConditionally(i, cont) { it !== BROKEN }
+        if (old === BROKEN) cont.resume(false)
+        if (old === BUFFERING) cont.resume(true) // already resumed, buffered by race
     }
 
     override fun poll(): E? {
         val result = pollInternal()
         when {
-            result === FAILED -> return null
-            result === CLOSED -> {
+            result === FAILED_RESULT -> return null
+            result === CLOSED_RESULT -> {
                 val closeCause = closeCause.value ?: return null
                 throw closeCause as Throwable
             }
@@ -406,155 +159,12 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     }
 
     private fun pollInternal(): Any? {
-        val startHead = this.head.value
-        var startBufferEnd = -1L
-        tryIncReceiversAndBufferEnd { success, senders, receivers, bufferEnd, closed ->
-            if (!success) return if (closed) CLOSED else FAILED
-            val resumeResult = resumeWaiter(Unit, startHead, receivers, closed = closed)
-            if (resumeResult != FAILED) {
-                if (senders >= bufferEnd) resumeNextWaitingSend(startHead, bufferEnd)
-                return resumeResult
-            } else {
-                startBufferEnd = bufferEnd
-            }
-        }
-
-        while (true) {
-            val head = this.head.value
-            tryIncReceivers { success, senders, receivers, bufferEnd, closed ->
-                if (!success) return if (closed) CLOSED else FAILED
-                val resumeResult = resumeWaiter(Unit, head, receivers, closed = closed)
-                if (resumeResult != FAILED) {
-                    if (senders >= startBufferEnd) resumeNextWaitingSend(startHead, bufferEnd)
-                    return resumeResult
-                }
-            }
-        }
-    }
-
-    private fun resumeNextWaitingSend(startHead: Segment, startBufferEnd: Long) {
-        if (unlimited || rendezvous) return
-        val segment = findOrCreateSegment(startBufferEnd / SEGMENT_SIZE, startHead) ?: return
-        val i = (startBufferEnd % SEGMENT_SIZE).toInt()
-        if (makeBuffered(segment, i)) return
-        resumeNextWaitingSend()
-    }
-
-    // return true if we should finish
-    private fun makeBuffered(segment: Segment, index: Int): Boolean {
-        val waiter = segment.readContBlocking(index, CONT_RESUMING)
-        if (segment.getElement(index) === RECEIVER_ELEMENT) return true
-        if (waiter === CONT_DONE || waiter === CONT_CLEANED || waiter === CONT_BUFFERED) return true
-        when (waiter) {
-            is CancellableContinuation<*> -> {
-                waiter as CancellableContinuation<Unit>
-                val token = waiter.tryResume(Unit)
-                if (token !== null) {
-                    waiter.completeResume(token)
-                    segment.setCont(index, CONT_BUFFERED)
-                    return true
-                } else {
-                    segment.setCont(index, CONT_CLEANED)
-                }
-            }
-            is SelectInstance<*> -> {
-                if (waiter.trySelect(this@BufferedChannel, Unit)) {
-                    segment.setCont(index, CONT_BUFFERED)
-                    return true
-                } else {
-                    segment.setCont(index, CONT_CLEANED)
-                }
-            }
-        }
-        return false
-    }
-
-    private fun resumeNextWaitingSend() {
-        if (unlimited || rendezvous) return
-        var segment = this.head.value
-        while (true) {
-            incBufferEnd { senders, receivers, bufferEnd, closed ->
-                if (senders < bufferEnd) return
-                segment = findOrCreateSegment(bufferEnd / SEGMENT_SIZE, segment) ?: return
-                val i = (bufferEnd % SEGMENT_SIZE).toInt()
-                if (makeBuffered(segment, i)) return
-            }
-        }
-    }
-
-    protected fun offerConflated(element: E) {
-        val senders = sendUnlimited(element)
-        if (senders == -1L) return
-
-        val firstSegmentId = senders / SEGMENT_SIZE
-        var curSegment = findOrCreateSegment(senders / SEGMENT_SIZE, this.head.value)
-        while (curSegment !== null) {
-            val maxIndex = if (curSegment.id == firstSegmentId) ((senders - 1) % SEGMENT_SIZE).toInt() else (SEGMENT_SIZE - 1)
-            for (i in maxIndex downTo 0) {
-                var waiter = curSegment.getCont(i)
-                while (waiter === null) waiter = curSegment.getCont(i)
-                if (waiter === CONT_BUFFERED) curSegment.clean(i)
-            }
-            curSegment = curSegment.prev.value
-        }
-    }
-
-    private fun sendUnlimited(element: E): Long {
-        if (closed) throw sendException
-
-        while (true) {
-            val head = this.head.value
-            val tail = this.tail.value
-
-            incSenders { senders, receivers, bufferEnd, closed ->
-                if (closed) {
-                    storeWaiter(CONT_CLEANED, null, tail, senders)
-                    throw sendException
-                }
-                if (senders <= receivers) {
-                    if (resumeWaiter(element, head, senders) != FAILED) {
-                        onReceiveDequeued()
-                        return -1
-                    }
-                } else {
-                    if (!storeWaiter(CONT_BUFFERED, element, tail, senders)) throw sendException
-                    return senders
-                }
-            }
-        }
-    }
-
-    override suspend fun send(element: E) {
-        if (closed) throw sendException
-
-        while (true) {
-            val head = this.head.value
-            val tail = this.tail.value
-
-            incSenders { senders, receivers, bufferEnd, closed ->
-                if (closed) {
-                    storeWaiter(CONT_CLEANED, null, tail, senders)
-                    throw sendException
-                }
-                if (senders <= receivers) {
-                    if (resumeWaiter(element, head, senders) != FAILED) {
-                        onReceiveDequeued()
-                        return
-                    }
-                } else if (unlimited || senders <= bufferEnd) {
-                    if (!storeWaiter(CONT_BUFFERED, element, tail, senders)) throw sendException
-                    return
-                } else {
-                    storeCurContinuationAsWaiter<Unit>(element, tail, senders)
-                    return
-                }
-            }
-        }
+        TODO()
     }
 
     override suspend fun receive(): E {
         val result = receiveInternal()
-        if (result === CLOSED) {
+        if (result === CLOSED_RESULT) {
             throw this.receiveException
         }
         return result as E
@@ -562,151 +172,95 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
 
     override suspend fun receiveOrNull(): E? {
         val result = receiveInternal()
-        if (result === CLOSED) {
+        if (result === CLOSED_RESULT) {
             val closeCause = closeCause.value ?: return null
             throw closeCause as Throwable
         }
         return result as E
     }
 
-
-    // TODO cancel (а может и close) сейчас нелинеаризуем
     private suspend fun receiveInternal(): Any? {
-        val startHead = this.head.value
-        val startTail = this.tail.value
-        var startBufferEnd = -1L
-        incReceiversAndBufferEnd { senders, receivers, bufferEnd, closed ->
-            if (receivers <= senders) {
-                val resumeResult = resumeWaiter(Unit, startHead, receivers, closed = closed)
-                if (resumeResult != FAILED) {
-                    if (senders >= bufferEnd) resumeNextWaitingSend(startHead, bufferEnd)
-                    return resumeResult
-                } else {
-                    startBufferEnd = bufferEnd
+        expandBuffer()
+        try_again@while (true) {
+            val h = this.head
+            val t = this.tail
+            val r = this.receivers.getAndIncrement()
+            val s = this.senders.value
+            val id = r / SEGMENT_SIZE
+            val i = (r % SEGMENT_SIZE).toInt()
+            if (r < s) {
+                val a = getSegmentAndMoveHead(h, id) ?: continue@try_again
+                var w: Any?
+                read_waiter@while (true) {
+                    w = a.getWaiter(i)
+                    when {
+                        w === null || w === BUFFERING -> continue@read_waiter
+                        w === BROKEN -> continue@try_again
+                        else -> if (a.casWaiter(i, w, BUFFERED_OR_DONE)) break@read_waiter
+                    }
+                }
+                val res = a.getElement(i) as E
+                a.setElementLazy(i, null)
+                when {
+                    w === BUFFERED_OR_DONE -> return res // buffered
+                    w is CancellableContinuation<*> -> {
+                        if (w.tryResume()) return res
+                    }
+                    w is SelectInstance<*> -> {
+                        if (w.trySelect(this, null)) return res
+                    }
+                    else -> error("Unexpected waiter: $w")
                 }
             } else {
-                if (closed) return CLOSED
-                return storeCurContinuationAsWaiter(RECEIVER_ELEMENT, startTail!!, receivers)
+                val a = getSegment(t, id) ?: return CLOSED_RESULT
+                val res = receiveSuspend(a, i)
+                if (res === FAILED_RESULT) continue@try_again
+                return res
             }
         }
+    }
 
-        while (true) {
-            val head = this.head.value
-            val tail = this.tail.value
-            incReceivers { senders, receivers, bufferEnd, closed ->
-                if (receivers <= senders) {
-                    val resumeResult = resumeWaiter(Unit, head, receivers, closed = closed)
-                    if (resumeResult != FAILED) {
-                        if (senders >= startBufferEnd) resumeNextWaitingSend(startHead, startBufferEnd)
-                        return resumeResult
+    private suspend fun receiveSuspend(a: BCSegment, i: Int) = suspendAtomicCancellableCoroutine<Any?> { cont ->
+        update_waiter@while (true) {
+            val w = a.getWaiter(i)
+            when {
+                w === null -> if (a.casWaiter(i, w, cont)) break@update_waiter
+                w === BUFFERED_OR_DONE -> {
+                    val res = a.getElement(i)
+                    if (a.getWaiter(i) === BUFFERED_OR_DONE) cont.resume(res)
+                    else cont.resume(CLOSED_RESULT)
+                    break@update_waiter
+                }
+                w === BROKEN -> FAILED_RESULT
+                w === BUFFERING -> continue@update_waiter
+                else -> error("Unexpected waiter: $w")
+            }
+        }
+    }
+
+    private fun expandBuffer() {
+        try_again@while (true) {
+            val h = this.head // TODO special pointer for bufferEnd
+            val b = this.bufferEnd.getAndIncrement()
+            val s = this.senders.value
+            if (s <= b) return
+            val id = b / SEGMENT_SIZE
+            val i = (b % SEGMENT_SIZE).toInt()
+            val a = getSegment(h, id) ?: continue
+            while (true) {
+                val w = a.getWaiter(i)
+                when {
+                    w === null -> if (a.casWaiter(i, null, BUFFERING)) return
+                    w === BROKEN -> continue@try_again
+                    w === BUFFERED_OR_DONE -> return
+                    else -> if (a.casWaiter(i, w, BUFFERING)) when (w) {
+                        is CancellableContinuation<*> -> if (w.tryResume()) { a.setWaiter(i, BUFFERED_OR_DONE); return }
+                        is SelectInstance<*> -> if (w.trySelect(this, null)) { a.setWaiter(i, BUFFERED_OR_DONE); return }
                     }
-                } else {
-                    if (closed) return CLOSED
-                    if (senders >= startBufferEnd) resumeNextWaitingSend(startHead, startBufferEnd)
-                    return storeCurContinuationAsWaiter(RECEIVER_ELEMENT, tail!!, receivers)
                 }
             }
         }
-//
-//        resumeNextWaitingSend()
-//        try_again@ while (true) {
-//            val head = this.head.value
-//            val tail = this.tail.value
-//            incReceivers { senders, receivers, bufferEnd, closed ->
-//                if (receivers <= senders) {
-//                    val resumeResult = resumeWaiter(Unit, head, receivers, closed = closed)
-//                    if (resumeResult != FAILED) {
-//                        return resumeResult
-//                    }
-//                } else {
-//                    if (closed) return CLOSED
-//                    return storeCurContinuationAsWaiter(RECEIVER_ELEMENT, tail!!, receivers)
-//                }
-//            }
-//        }
     }
-
-    private fun resumeWaiter(result: Any?, curHead: Segment, counter: Long,
-                             curSelect: SelectInstance<*>? = null, closed: Boolean = false): Any?
-    {
-        val head = getHeadAndUpdate(counter / SEGMENT_SIZE, curHead) ?: return FAILED
-        val i = (counter % SEGMENT_SIZE).toInt()
-        val waiter = head.readContBlocking(i, CONT_DONE)
-        val element = head.getElement(i)
-        head.setElementLazy(i, null)
-        when {
-            waiter === CONT_CLEANED -> return FAILED
-            waiter === CONT_BUFFERED -> return element
-            waiter is CancellableContinuation<*> -> {
-                waiter as CancellableContinuation<in Any?>
-                return if (closed) {
-                    if (element === RECEIVER_ELEMENT)
-                        waiter.resume(CLOSED)
-                    else waiter.resumeWithException(sendException)
-                    FAILED
-                } else {
-                    val resumeToken = waiter.tryResume(result, this) ?: return FAILED
-                    waiter.completeResume(resumeToken)
-                    element
-                }
-            }
-            waiter is SelectInstance<*> -> {
-                return if (waiter.trySelect(this, result, curSelect))
-                    element
-                else
-                    FAILED
-            }
-            else -> error("Invalid continuation: $waiter")
-        }
-    }
-
-    /**
-     * Invokes [suspendAtomicCancellableCoroutine] and stores a new [CancellableContinuation] as a waiter
-     * via [storeWaiter] function. Resumes this continuation with an exception if the channel is closed.
-     *
-     * TODO: move this logic into [send] and [receive] functions when "[KT-28938] Coroutine tail call optimization
-     * TODO: does not work for generic returns that had instantiated to Unit" issue is fixed.
-     */
-    private suspend fun <RESULT> storeCurContinuationAsWaiter(element: Any?, curTail: Segment, cellId: Long) =
-        suspendAtomicCancellableCoroutine<RESULT> sc@{ curCont ->
-            val successful = storeWaiter(curCont, element, curTail, cellId)
-            if (successful) {
-                if (element == RECEIVER_ELEMENT) onReceiveEnqueued()
-            } else { // closed
-                if (element === RECEIVER_ELEMENT) {
-                    curCont as CancellableContinuation<in Any>
-                    curCont.resume(CLOSED)
-                } else {
-                    curCont.resumeWithException(sendException)
-                }
-            }
-        }
-
-    /**
-     * Stores the specified pair of waiter and element into the cell with [cellId] id.
-     * The provided [curTail] is the tail segment pointer before the incrementing the corresponding
-     * (`senders` or `receivers`) counter, it is used to find the required segment using [findOrCreateSegment]
-     * function. Returns `true` if the storing is successful, or `false` if this channel is closed.
-     */
-    private fun storeWaiter(waiter: Any, element: Any?, curTail: Segment, cellId: Long): Boolean {
-        val segment = findOrCreateSegment(cellId / SEGMENT_SIZE, curTail) ?: return false
-        val position = (cellId % SEGMENT_SIZE).toInt()
-        segment.setElementLazy(position, element)
-        if (!segment.casCont(position, null, waiter)) {
-            segment.setElementLazy(position, null)
-            return false
-        }
-        when (waiter) {
-            is CancellableContinuation<*> -> {
-                waiter.cleanOnCancellation(segment, position)
-            }
-            is SelectInstance<*> -> {
-               waiter.invokeOnCompletion { segment.clean(position) }
-            }
-        }
-        return true
-    }
-
 
     // #######################
     // ## Select Expression ##
@@ -731,109 +285,23 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     )
 
     private fun registerSelectForSend(select: SelectInstance<*>, element: Any?) {
-        element as E
-        if (closed) throw sendException
-
-        while (true) {
-            val head = this.head.value
-            val tail = this.tail.value
-
-            incSenders { senders, receivers, bufferEnd, closed ->
-                if (closed) {
-                    storeWaiter(CONT_CLEANED, null, tail, senders)
-                    throw sendException
-                }
-                if (senders <= receivers) {
-                    if (resumeWaiter(element, head, senders) != FAILED) {
-                        onReceiveDequeued()
-                        select.selectInRegPhase(Unit)
-                        return
-                    }
-                } else if (unlimited || senders <= bufferEnd) {
-                    if (!storeWaiter(CONT_BUFFERED, element, tail, senders)) throw sendException
-                    select.selectInRegPhase(Unit)
-                    return
-                } else {
-                    val successful = storeWaiter(select, element, tail, senders)
-                    if (!successful) { // closed
-                        throw sendException
-                    }
-                    return
-                }
-            }
-        }
+        // TODO
     }
 
     private fun registerSelectForReceive(select: SelectInstance<*>, ignoredParam: Any?) {
-        val startHead = this.head.value
-        val startTail = this.tail.value
-        var startBufferEnd = -1L
-        incReceiversAndBufferEnd { senders, receivers, bufferEnd, closed ->
-            if (receivers <= senders) {
-                val resumeResult = resumeWaiter(Unit, startHead, receivers, closed = closed)
-                if (resumeResult != FAILED) {
-                    if (senders >= bufferEnd) resumeNextWaitingSend(startHead, bufferEnd)
-                    select.selectInRegPhase(resumeResult)
-                    return
-                } else {
-                    startBufferEnd = bufferEnd
-                }
-            } else {
-                if (closed) {
-                    select.selectInRegPhase(CLOSED)
-                    return
-                }
-                val successful = storeWaiter(select, RECEIVER_ELEMENT, startTail, receivers)
-                if (successful) {
-                    onReceiveEnqueued()
-                    return
-                } else { // closed
-                    select.selectInRegPhase(CLOSED)
-                    return
-                }
-            }
-        }
-
-        while (true) {
-            val head = this.head.value
-            val tail = this.tail.value
-            incReceivers { senders, receivers, bufferEnd, closed ->
-                if (receivers <= senders) {
-                    val resumeResult = resumeWaiter(Unit, head, receivers, closed = closed)
-                    if (resumeResult != FAILED) {
-                        if (senders >= startBufferEnd) resumeNextWaitingSend(startHead, startBufferEnd)
-                        select.selectInRegPhase(resumeResult)
-                        return
-                    }
-                } else {
-                    if (closed) {
-                        select.selectInRegPhase(CLOSED)
-                        return
-                    }
-                    val successful = storeWaiter(select, RECEIVER_ELEMENT, tail, receivers)
-                    if (successful) {
-                        if (senders >= startBufferEnd) resumeNextWaitingSend(startHead, startBufferEnd)
-                        onReceiveEnqueued()
-                        return
-                    } else { // closed
-                        select.selectInRegPhase(CLOSED)
-                        return
-                    }
-                }
-            }
-        }
+       // TODO
     }
 
     private fun processResultSelectSend(ignoredParam: Any?, selectResult: Any?): Any? =
-            if (selectResult === CLOSED) throw sendException
+            if (selectResult === CLOSED_RESULT) throw sendException
             else this
 
     private fun processResultSelectReceive(ignoredParam: Any?, selectResult: Any?): Any? =
-            if (selectResult === CLOSED) throw receiveException
+            if (selectResult === CLOSED_RESULT) throw receiveException
             else selectResult
 
     private fun processResultSelectReceiveOrNull(ignoredParam: Any?, selectResult: Any?): Any? =
-            if (selectResult === CLOSED) {
+            if (selectResult === CLOSED_RESULT) {
                 if (closeCause.value !== null) throw receiveException
                 null
             } else selectResult
@@ -845,32 +313,14 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
 
 
     @ExperimentalCoroutinesApi
-    override val isClosedForSend: Boolean
-        get() = isClosed(this.lowest.value).also { if (it) removeWaitingRequests(false) }
+    override val isClosedForSend: Boolean get() = closed.value
 
     @ExperimentalCoroutinesApi
     override val isClosedForReceive: Boolean get() {
-        val closed = isClosedForSend
-        if (!closed) return false
-        removeWaitingRequests(false)
-        val tail = this.tail.value
-        var head = this.head.value
-
-        while (true) {
-            incCountersWithCondition(
-                sc@ { senders, receivers, bufferEnd ->
-                    val r = receivers + 1
-                    head = findOrCreateSegment(r / SEGMENT_SIZE, head) ?: return true.also { releaseReadLock(); }
-                    if (r > senders) { releaseReadLock(); return true }
-                    if (r > (tail.id + 1) * SEGMENT_SIZE) { releaseReadLock(); return true }
-                    val waiter = head.getCont((r % SEGMENT_SIZE).toInt())
-                    if (waiter === CONT_BUFFERED) { releaseReadLock(); return false }
-                    true
-                },
-                { curLowest -> this.lowest.compareAndSet(curLowest, curLowest + RECEIVE_INC) },
-                {_, _, _, _, _ -> }
-            )
-        }
+        if (!isClosedForSend) return false
+        removeWaitingRequests()
+        // try to find a buffered element
+        return isEmpty
     }
 
     /**
@@ -891,63 +341,13 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
 
     override fun close(cause: Throwable?): Boolean {
         val closedByThisOperation = closeCause.compareAndSet(NO_CLOSE_CAUSE, cause)
-        setClosedFlag {
-            removeWaitingRequests(false)
-        }
+        closed.value = true
+        removeWaitingRequests()
         return if (closedByThisOperation) {
             onClosed()
             invokeCloseHandler()
             true
         } else false
-    }
-
-    private fun removeWaitingRequests(removeBuffered: Boolean) {
-        var curTail: Segment? = markTailAsClosed()
-        remove@while (curTail != null) {
-            cancel_waiter@ for (i in SEGMENT_SIZE - 1 downTo 0) {
-                cancel_cur_waiter@ while (true) {
-                    // TODO CONT_RESUMING
-                    val cont = curTail.getCont(i)
-                    if (cont === CONT_DONE) break@remove
-                    if (!removeBuffered && cont === CONT_BUFFERED) continue@cancel_waiter
-                    if (cont === CONT_CLEANED) continue@cancel_waiter
-                    if (!curTail.casCont(i, cont, CONT_CLEANED)) continue@cancel_cur_waiter
-                    if (cont === null) break
-                    val el = curTail.getElement(i)
-                    when (cont) {
-                        is CancellableContinuation<*> -> {
-                            if (el === RECEIVER_ELEMENT) {
-                                cont as CancellableContinuation<in Any>
-                                cont.resume(CLOSED)
-                            } else {
-                                println(el)
-                                cont.resumeWithException(sendException)
-                            }
-                        }
-                        is SelectInstance<*> -> {
-                            cont.trySelect(this, CLOSED)
-                        }
-                        //                        else -> error("Unknown continuation type: $cont")
-                    }
-                    break
-                }
-            }
-            curTail = curTail.prev.value
-        }
-    }
-
-    private fun markTailAsClosed(): Segment {
-        tail.loop { curTail ->
-            curTail.readNext { next, last ->
-                if (last) return curTail
-                if (next === null) {
-                    if (curTail.next.compareAndSet(null, CLOSED))
-                        return curTail
-                } else {
-                    moveTailForward(next)
-                }
-            }
-        }
     }
 
     private fun invokeCloseHandler() {
@@ -968,8 +368,7 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         // Either handler was set already or this channel is cancelled.
         // Read the value of [closeHandler] and either throw [IllegalStateException]
         // or invoke the handler respectively.
-        val curHandler = closeHandler.value
-        when (curHandler) {
+        when (val curHandler = closeHandler.value) {
             CLOSE_HANDLER_CLOSED -> {
                 // In order to be sure that our handler is the only one, we have to change the
                 // [closeHandler] value to `INVOKED`. If this CAS fails, another handler has been
@@ -989,23 +388,49 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         }
     }
 
-
     final override fun cancel(cause: Throwable?): Boolean = cancelImpl(cause)
     final override fun cancel() { cancelImpl(null) }
     final override fun cancel(cause: CancellationException?) { cancelImpl(cause) }
 
     protected open fun cancelImpl(cause: Throwable?): Boolean {
-        val closedByThisOperation = closeCause.compareAndSet(NO_CLOSE_CAUSE, cause)
-        setClosedFlag {
-            removeWaitingRequests(true)
-        }
-        return if (closedByThisOperation) {
-            onClosed()
-            invokeCloseHandler()
-            true
-        } else false
+        val closedByThisOperation = close(cause)
+        removeRemainingBufferedElements()
+        return closedByThisOperation
     }
 
+    private fun removeRemainingBufferedElements() {
+        var cur: BCSegment? = tail
+        while (cur !== null) {
+            for (i in SEGMENT_SIZE - 1 downTo 0) {
+                cur.setWaiterConditionally(i, BROKEN) { it !== BROKEN }
+                cur.onSlotCleaned()
+            }
+            cur = cur.prev.value
+        }
+    }
+
+    private fun removeWaitingRequests() {
+        closeQueue()
+        var cur: BCSegment? = tail
+        while (cur != null) {
+            for (i in SEGMENT_SIZE - 1 downTo 0) {
+                val w = cur.getAndSetWaiterConditionally(i, BROKEN) { it !== BUFFERED_OR_DONE && it !== BROKEN }
+                if (w === FAILED_RESULT || w === null) continue
+                when (w) {
+                    is CancellableContinuation<*> -> {
+                        w as CancellableContinuation<Unit>
+                        cur.setElementLazy(i, CLOSED_RESULT)
+                        w.resume(Unit)
+                    }
+                    is SelectInstance<*> -> {
+                        w.trySelect(this, CLOSED_RESULT)
+                    }
+                    else -> error("Unknown waiter type: $w")
+                }
+            }
+            cur = cur.prev.value
+        }
+    }
 
     // ######################
     // ## Iterator Support ##
@@ -1020,7 +445,7 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             // receiving fails in order to process further [hasNext]
             // and [next] invocations properly.
             result = receiveInternal() // todo: tail call optimization?
-            return if (result == CLOSED) {
+            return if (result == CLOSED_RESULT) {
                 if (closeCause.value == null) {
                     false
                 } else {
@@ -1030,7 +455,7 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         }
 
         private fun checkNotClosed(result: Any?): Boolean {
-            return if (result === CLOSED) {
+            return if (result === CLOSED_RESULT) {
                 if (closeCause.value != null) throw (closeCause.value as Throwable)
                 false
             } else true
@@ -1043,7 +468,7 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                 // Rare case -- [hasNext] has not been invoked, invoke [receive] directly.
                 NO_RESULT -> error("[hasNext] has not been invoked")
                 // Channel is closed, throw the cause exception.
-                CLOSED -> throw receiveException
+                CLOSED_RESULT -> throw receiveException
                 // An element has been received successfully.
                 else -> {
                     // Reset the [result] field and return the element.
@@ -1059,152 +484,78 @@ internal open class BufferedChannel<E>(capacity: Int) : Channel<E> {
  * Each segment has its own [id], which increase from the beginning. These [id]s help
  * to update [BufferedChannel.head] and [BufferedChannel.tail] correctly
  */
-private class Segment(@JvmField val id: Long) {
-    constructor(id: Long, prev: Segment?) : this(id) {
-        this.prev.value = prev
-    }
+internal class BCSegment(id: Long, prev: BCSegment?): Segment<BCSegment>(id, prev) {
+    private val slots = atomicArrayOfNulls<Any?>(SEGMENT_SIZE * 2) // 2 registers per slot
+    private val cleanedSlots = atomic(0)
 
-    // == Waiters Array ==
-    private val waiters = atomicArrayOfNulls<Any?>(SEGMENT_SIZE * 2)
-
-    inline fun getElement(index: Int): Any? = waiters[index * 2].value
-    inline fun setElement(index: Int, value: Any?) {
-        waiters[index * 2].value = value
-    }
+    inline fun getElement(index: Int): Any? = slots[index * 2].value
     inline fun setElementLazy(index: Int, value: Any?) {
-        waiters[index * 2].lazySet(value)
+        slots[index * 2].lazySet(value)
     }
 
-    inline fun getCont(index: Int): Any? = waiters[index * 2 + 1].value
-    inline fun setCont(index: Int, value: Any?) {
-        waiters[index * 2 + 1].value = value
+    inline fun getWaiter(index: Int): Any? = slots[index * 2 + 1].value
+    inline fun setWaiter(index: Int, value: Any?) {
+        slots[index * 2 + 1].value = value
     }
-    inline fun setContLazy(index: Int, value: Any?) {
-        waiters[index * 2 + 1].lazySet(value)
+    inline fun setWaiterLazy(index: Int, value: Any?) {
+        slots[index * 2 + 1].lazySet(value)
     }
-    inline fun casCont(index: Int, from: Any?, to: Any?) = waiters[index * 2 + 1].compareAndSet(from, to)
-
-    fun readContBlocking(index: Int, replacement: Any): Any {
-        read_cont@while (true) {
-            val cont = getCont(index)
-            when {
-                cont === null || cont === CONT_RESUMING -> continue@read_cont
-                cont === CONT_DONE || cont === CONT_CLEANED -> return cont
-                else -> if (casCont(index, cont, replacement)) return cont
-            }
+    inline fun casWaiter(index: Int, from: Any?, to: Any?) = slots[index * 2 + 1].compareAndSet(from, to)
+    inline fun getAndSetWaiter(index: Int, value: Any?) = slots[index * 2 + 1].getAndSet(value)
+    inline fun setWaiterConditionally(index: Int, value: Any?, condition: (current: Any?) -> Boolean): Boolean {
+        slots[index * 2 + 1].loop { cur ->
+            if (!condition(cur)) return false
+            if (slots[index * 2 + 1].compareAndSet(cur, value)) return true
+        }
+    }
+    inline fun getAndSetWaiterConditionally(index: Int, value: Any?, condition: (current: Any?) -> Boolean): Any? {
+        slots[index * 2 + 1].loop { cur ->
+            if (!condition(cur)) return FAILED_RESULT
+            if (slots[index * 2 + 1].compareAndSet(cur, value)) return cur
         }
     }
 
-    // == Michael-Scott Queue + Fast Removing from the Middle ==
-
-    // Pointer to the next segments, updates
-    // similarly to the Michael-Scott queue algorithm.
-    val next = atomic<Any?>(null) // null (not set) | Segment | CLOSED
-    // Pointer to the previous non-empty segment (can be null!),
-    // updates lazily (see `remove()` function).
-    val prev = atomic<Segment?>(null)
-    // Number of cleaned waiters in this segment.
-    private val cleaned = atomic(0)
-    val removed get() = cleaned.value == SEGMENT_SIZE
-
-    inline fun setNext(segment: Segment) = this.next.compareAndSet(null, segment)
-    inline fun <T> readNext(action: (next: Segment?, last: Boolean) -> T): T {
-        val n = next.value
-        return when {
-            n === CLOSED -> action(null, true)
-            else -> action(n as Segment?, false)
-        }
-    }
+    override val removed: Boolean
+        get() = cleanedSlots.value == SEGMENT_SIZE
 
     /**
      * Cleans the waiter located by the specified index in this segment.
      */
-    fun clean(index: Int) {
-        // Clean the specified waiter and
-        // check if all node items are cleaned.
-        val cont = getCont(index)
-        if (cont == CONT_CLEANED) return // already cleaned
-        if (!casCont(index, cont, CONT_CLEANED)) return // already cleaned
-        setElement(index, null) // clean the element
-        if (cleaned.incrementAndGet() < SEGMENT_SIZE) return
-        // Remove this node
+    fun onSlotCleaned() {
+        // Increment the number of cleaned slots and remove this segment if needed
+        if (cleanedSlots.incrementAndGet() < SEGMENT_SIZE) return
         remove()
-    }
-
-    /**
-     * Removes this node from the waiting queue and cleans all references to it.
-     */
-    fun remove() {
-        var next = readNext { n, last -> if (last || n == null) return else n } // tail can't be removed
-        // Find the first non-removed node (tail is always non-removed)
-        while (next.removed) {
-            next = readNext { n, last -> if (last || n == null) return else n }
-        }
-        // Find the first non-removed `prev` and remove this node
-        var prev = prev.value
-        while (true) {
-            if (prev == null) {
-                next.prev.value = null
-                return
-            }
-            if (prev.removed) {
-                prev = prev.prev.value
-                continue
-            }
-            next.movePrevToLeft(prev)
-            prev.movePrevNextToRight(next)
-            if (next.removed || !prev.removed) return
-            prev = prev.prev.value
-        }
-    }
-
-    /**
-     * Update [Segment.next] pointer to the specified one if
-     * the `id` of the specified segment is greater.
-     */
-    private fun movePrevNextToRight(next: Segment) {
-        while (true) {
-            val curNext = this.next.value as Segment
-            if (next.id <= curNext.id) return
-            if (this.next.compareAndSet(curNext, next)) return
-        }
-    }
-
-    /**
-     * Update [Segment.prev] pointer to the specified segment if
-     * its `id` is lower.
-     */
-    private fun movePrevToLeft(prev: Segment) {
-        while (true) {
-            val curPrev = this.prev.value ?: return
-            if (curPrev.id <= prev.id) return
-            if (this.prev.compareAndSet(curPrev, prev)) return
-        }
     }
 }
 
+private fun CancellableContinuation<*>.tryResume(): Boolean {
+    this as CancellableContinuation<Unit>
+    val token = tryResume(Unit) ?: return false
+    completeResume(token)
+    return true
+}
 
 // Number of waiters in each segment
 private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.bufferedChannel.segmentSize", 32)
 
-private fun <T> CancellableContinuation<T>.cleanOnCancellation(segment: Segment, position: Int) =
-    invokeOnCancellation { segment.clean(position) }
+private fun <T> CancellableContinuation<T>.cleanOnCancellation(segment: BCSegment, position: Int) =
+    invokeOnCancellation {
+        segment.setWaiterLazy(position, BROKEN)
+        segment.onSlotCleaned()
+    }
 
-// Special continuation value for buffered elements
-private val CONT_BUFFERED = Symbol("CONT_BUFFERED")
-private val CONT_RESUMING = Symbol("CONT_RESUMING")
-private val CONT_CLEANED = Symbol("CONT_CLEANED")
-private val CONT_DONE = Symbol("CONT_DONE")
+// Special continuation values
+private val BUFFERING = Symbol("BUFFERING")
+private val BROKEN = Symbol("BROKEN")
+private val BUFFERED_OR_DONE = Symbol("BUFFERED_OR_DONE")
+
 // Special values for `CLOSE_HANDLER`
 private val CLOSE_HANDLER_CLOSED = Symbol("CLOSE_HANDLER_CLOSED")
 private val CLOSE_HANDLER_INVOKED = Symbol("CLOSE_HANDLER_INVOKED")
 // Specifies the absence of close cause
 private val NO_CLOSE_CAUSE = Symbol("NO_CLOSE_CAUSE")
-// Result if the channel is closed
-private val CLOSED = Symbol("CLOSED")
-// For iterator
+
+// Special return values
+private val CLOSED_RESULT = Symbol("CLOSED")
 private val NO_RESULT = Symbol("NO_RESULT")
-
-private val FAILED = Symbol("FAILED")
-
-private val RECEIVER_ELEMENT = Symbol("RECEIVER_ELEMENT")
+private val FAILED_RESULT = Symbol("FAILED")

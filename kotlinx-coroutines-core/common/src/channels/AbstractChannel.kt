@@ -393,7 +393,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     // ------ ReceiveChannel ------
 
     public final override val isClosedForReceive: Boolean get() = closedForReceive != null && isBufferEmpty
-    private val isEmpty: Boolean get() = queue.nextNode !is Send && isBufferEmpty
+    override val isEmpty: Boolean get() = queue.nextNode !is Send && isBufferEmpty
 
     @Suppress("UNCHECKED_CAST")
     public final override suspend fun receive(): E {

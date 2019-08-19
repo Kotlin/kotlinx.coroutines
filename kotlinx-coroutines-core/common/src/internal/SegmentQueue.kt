@@ -12,7 +12,7 @@ import kotlinx.coroutines.*
  * a Michael-Scott queue of them. All segments are instances of [Segment] class and
  * follow in natural order (see [Segment.id]) in the queue.
  */
-internal abstract class SegmentQueue<S: Segment<S>>() {
+internal abstract class SegmentQueue<S: Segment<S>> {
     private val _head: AtomicRef<S>
     /**
      * Returns the first segment in the queue.
@@ -82,6 +82,13 @@ internal abstract class SegmentQueue<S: Segment<S>>() {
         return s
     }
 
+    protected fun closeQueue() {
+        this._tail.loop { t ->
+            if (t.markClosed()) return
+            else moveTailForward(t.next!!)
+        }
+    }
+
     /**
      * Updates [head] to the specified segment
      * if its `id` is greater.
@@ -115,8 +122,8 @@ internal abstract class SegmentQueue<S: Segment<S>>() {
  */
 internal abstract class Segment<S: Segment<S>>(val id: Long, prev: S?) {
     // Pointer to the next segment, updates similarly to the Michael-Scott queue algorithm.
-    private val _next = atomic<S?>(null)
-    val next: S? get() = _next.value
+    private val _next = atomic<Any?>(null)
+    val next: S? get() = _next.value.run { if (this === CLOSED) null else this as S? }
     fun casNext(expected: S?, value: S?): Boolean = _next.compareAndSet(expected, value)
     // Pointer to the previous segment, updates in [remove] function.
     val prev = atomic<S?>(null)
@@ -131,6 +138,14 @@ internal abstract class Segment<S: Segment<S>>(val id: Long, prev: S?) {
         this.prev.value = prev
     }
 
+    fun markClosed(): Boolean {
+        _next.loop { n ->
+            if (n === CLOSED) return true
+            if (n !== null) return false
+            if (_next.compareAndSet(null, CLOSED)) return true
+        }
+    }
+
     /**
      * Removes this segment physically from the segment queue. The segment should be
      * logically removed (so [removed] returns `true`) at the point of invocation.
@@ -138,7 +153,7 @@ internal abstract class Segment<S: Segment<S>>(val id: Long, prev: S?) {
     fun remove() {
         assert { removed } // The segment should be logically removed at first
         // Read `next` and `prev` pointers.
-        var next = this._next.value ?: return // tail cannot be removed
+        var next = this.next ?: return // tail cannot be removed
         var prev = prev.value ?: return // head cannot be removed
         // Link `next` and `prev`.
         prev.moveNextToRight(next)
@@ -177,3 +192,6 @@ internal abstract class Segment<S: Segment<S>>(val id: Long, prev: S?) {
         }
     }
 }
+
+@SharedImmutable
+private val CLOSED = Symbol("CLOSED")
