@@ -73,7 +73,7 @@ Definition segment_cutoff : val :=
   λ: "seg", (segment_prev "seg") <- NONE.
 
 Definition segment_cancel_cell : val :=
-  λ: "seg", FAA (segment_cancelled "seg") #-1.
+  λ: "seg", FAA (segment_cancelled "seg") #1.
 
 Definition cell_ref_loc : val :=
   λ: "c", let: "seg" := Fst !"c" in
@@ -144,6 +144,8 @@ Variable (N: namespace).
 Variable segment_size : positive.
 Variable cell_is_done: nat -> iProp.
 Variable cell_is_done_persistent: forall n, Persistent (cell_is_done n).
+Variable cell_is_processed: nat -> iProp.
+Variable cell_is_processed_persistent: forall n, Persistent (cell_is_processed n).
 Variable cell_invariant: nat -> loc -> iProp.
 Variable cell_invariant_persistent: forall ℓ n, Persistent (cell_invariant n ℓ).
 
@@ -451,6 +453,10 @@ Definition cell_is_cancelled' γ (ns nc: nat): iProp :=
   own γ (◯ (ias_cell_info' ns nc (Some (Cinl (to_agree tt))))).
 Definition cell_is_cancelled γ := ias_cell_info_view (cell_is_cancelled' γ).
 
+Global Instance cell_is_cancelled_timeless γ j:
+  Timeless (cell_is_cancelled γ j).
+Proof. apply _. Qed.
+
 Global Instance cell_is_cancelled'_persistent γ ns nc:
   Persistent (cell_is_cancelled' γ ns nc).
 Proof. apply _. Qed.
@@ -459,8 +465,16 @@ Definition cells_are_cancelled γ id (cells: vec bool (Pos.to_nat segment_size))
   ([∗ list] i ↦ v ∈ vec_to_list cells,
    if (v: bool) then cell_is_cancelled' γ id i else True)%I.
 
+Global Instance cells_are_cancelled_timeless γ id cells:
+  Timeless (cells_are_cancelled γ id cells).
+Proof. apply big_sepL_timeless. destruct x; apply _. Qed.
+
 Definition segment_is_cancelled γ id :=
   cells_are_cancelled γ id (Vector.const true _).
+
+Global Instance segment_is_cancelled_timeless γ j:
+  Timeless (segment_is_cancelled γ j).
+Proof. apply big_sepL_timeless. destruct x; apply _. Qed.
 
 Global Instance cells_are_cancelled_persistent γ id cells:
   Persistent (cells_are_cancelled γ id cells).
@@ -489,11 +503,9 @@ Definition is_valid_prev γ (id: nat) (pl: val): iProp :=
   (⌜pl = NONEV⌝ ∧
    ([∗ list] j ∈ seq 0 (id * Pos.to_nat segment_size),
     cell_is_cancelled γ j ∨ cell_is_done j) ∨
-   ∃ (segment_locs: list loc),
-     segments_mapto γ segment_locs ∗
-   ∃ (pid: nat),
-     ⌜Some pl = option_map (LitV ∘ LitLoc) (segment_locs !! pid)⌝ ∧
-     ⌜pid < id⌝ ∧
+   ∃ (pid: nat) (prevℓ: loc),
+     ⌜pid < id⌝ ∧ ⌜pl = SOMEV #prevℓ⌝ ∧
+     segment_location γ pid prevℓ ∗
      [∗ list] j ∈ seq (S pid) id, segment_is_cancelled γ j)%I.
 
 Global Instance is_valid_prev_persistent γ id pl:
@@ -501,10 +513,9 @@ Global Instance is_valid_prev_persistent γ id pl:
 Proof. apply _. Qed.
 
 Definition is_valid_next γ (id: nat) (nl: val): iProp :=
-  (∃ (segment_locs: list loc), segments_mapto γ segment_locs ∗
-   ∃ (nid: nat),
-      ⌜Some nl = option_map (fun x => LitV (LitLoc x)) (segment_locs !! nid)⌝ ∧
-      ⌜id < nid⌝ ∧
+  (∃ (nid: nat) (nextℓ: loc),
+      ⌜id < nid⌝ ∧ ⌜nl = SOMEV #nextℓ⌝ ∧
+      segment_location γ nid nextℓ ∗
       [∗ list] j ∈ seq (S id) nid, segment_is_cancelled γ j)%I.
 
 Global Instance is_valid_next_persistent γ id pl:
@@ -533,7 +544,6 @@ Definition is_segment γ (id: nat) (ℓ: loc) (pl nl: val) : iProp :=
                   ∗ segment_locations γ id (ℓ, (dℓ, cℓ), (pℓ, nℓ)) ∗
       (∃ (cells: vec bool (Pos.to_nat segment_size)),
           ⌜cancelled = length (List.filter (fun i => i) (vec_to_list cells))⌝ ∗
-          let uncancelled := (Pos.to_nat segment_size - cancelled)%nat in
           cells_are_cancelled γ id cells ∗ cell_cancellation_parts γ id cells))%I.
 
 Definition is_normal_segment γ (ℓ: loc) (id: nat): iProp :=
@@ -549,15 +559,15 @@ Definition is_infinite_array γ : iProp :=
                                  own γ (● segments')))%I.
 
 Ltac iDestructHIsSeg :=
-  iDestruct "HIsSeg" as (dℓ cℓ pℓ nℓ cancelled) "[HIsSeg [#HLocs HCanc]]";
+  iDestruct "HIsSeg" as (dℓ cℓ pℓ nℓ cancelled) "[HIsSeg [>#HLocs HCanc]]";
   iDestruct "HIsSeg" as "[[[Hpℓ Hnℓ] [Hℓ Hcℓ]] [#HCells #HValidPrev]]";
-  iDestruct "HCanc" as (cancelled_cells) "[-> [#HCanc HCancParts]]".
+  iDestruct "HCanc" as (cancelled_cells) "[>-> [>#HCanc HCancParts]]".
 
 Ltac iCloseHIsSeg := iMod ("HClose" with "[-]") as "HΦ";
   first by (rewrite /is_segment /is_segment'; eauto 20 with iFrame).
 
 Theorem segment_id_spec γ id (ℓ: loc):
-  <<< ∀ pl nl, is_segment γ id ℓ pl nl >>>
+  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     segment_id #ℓ @ ⊤
   <<< is_segment γ id ℓ pl nl, RET #id >>>.
 Proof.
@@ -571,7 +581,7 @@ Proof.
 Qed.
 
 Theorem segment_prev_spec γ id (ℓ: loc):
-  <<< ∀ pl nl, is_segment γ id ℓ pl nl >>>
+  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     segment_prev #ℓ @ ⊤
     <<< ∃ (pℓ: loc),
           is_segment γ id ℓ pl nl ∗ segment_prev_location γ id pℓ, RET #pℓ >>>.
@@ -585,7 +595,7 @@ Proof.
 Qed.
 
 Theorem segment_prev_read_spec γ id (ℓ pℓ: loc):
-  <<< ∀ pl nl, is_segment γ id ℓ pl nl ∗ segment_prev_location γ id pℓ >>>
+  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl ∗ segment_prev_location γ id pℓ >>>
     ! #pℓ @ ⊤
   <<< is_segment γ id ℓ pl nl ∗ is_valid_prev γ id pl, RET pl >>>.
 Proof.
@@ -601,7 +611,7 @@ Qed.
 
 Theorem segment_prev_write_spec γ id (ℓ pℓ: loc) (pl: val):
   <<< ∀ pl' nl,
-      is_segment γ id ℓ pl' nl ∗
+      ▷ is_segment γ id ℓ pl' nl ∗
                  segment_prev_location γ id pℓ ∗
                  is_valid_prev γ id pl
   >>>
@@ -619,7 +629,7 @@ Proof.
 Qed.
 
 Theorem segment_next_spec γ id (ℓ: loc):
-  <<< ∀ pl nl, is_segment γ id ℓ pl nl >>>
+  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     segment_next #ℓ @ ⊤
     <<< ∃ (nℓ: loc),
           is_segment γ id ℓ pl nl ∗ segment_next_location γ id nℓ, RET #nℓ >>>.
@@ -634,7 +644,7 @@ Proof.
 Qed.
 
 Theorem segment_next_read_spec γ id (ℓ nℓ: loc):
-  <<< ∀ pl nl, is_segment γ id ℓ pl nl ∗ segment_next_location γ id nℓ >>>
+  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl ∗ segment_next_location γ id nℓ >>>
     ! #nℓ @ ⊤
   <<< is_segment γ id ℓ pl nl, RET nl >>>.
 Proof.
@@ -649,7 +659,7 @@ Proof.
 Qed.
 
 Theorem segment_next_write_spec γ id (ℓ nℓ: loc) (nl: val):
-  <<< ∀ pl nl', is_segment γ id ℓ pl nl' ∗ segment_next_location γ id nℓ >>>
+  <<< ∀ pl nl', ▷ is_segment γ id ℓ pl nl' ∗ segment_next_location γ id nℓ >>>
     #nℓ <- nl @ ⊤
   <<< is_segment γ id ℓ pl nl, RET #() >>>.
 Proof.
@@ -663,7 +673,7 @@ Proof.
 Qed.
 
 Theorem segment_canc_spec γ id (ℓ: loc):
-  <<< ∀ pl nl, is_segment γ id ℓ pl nl >>>
+  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     segment_cancelled #ℓ @ ⊤
     <<< ∃ (cℓ: loc),
           is_segment γ id ℓ pl nl ∗ segment_canc_location γ id cℓ, RET #cℓ >>>.
@@ -678,7 +688,7 @@ Proof.
 Qed.
 
 Theorem segment_canc_read_spec γ id (ℓ cℓ: loc):
-  <<< ∀ pl nl, is_segment γ id ℓ pl nl ∗ segment_canc_location γ id cℓ >>>
+  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl ∗ segment_canc_location γ id cℓ >>>
     ! #cℓ @ ⊤
   <<< ∃ (cancelled: nat), is_segment γ id ℓ pl nl ∗
       (∃ cells,
@@ -794,7 +804,7 @@ Qed.
 
 Theorem segment_canc_incr_spec γ id cid (ℓ cℓ: loc) segments:
   (cid < Pos.to_nat segment_size)%nat ->
-  <<< ∀ pl nl, is_segment γ id ℓ pl nl ∗ segment_canc_location γ id cℓ ∗
+  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl ∗ segment_canc_location γ id cℓ ∗
                               cell_cancellation_handle' γ id cid ∗
                               own γ (● segments) >>>
     FAA #cℓ #1 @ ⊤
@@ -820,17 +830,23 @@ Proof.
   }
   1: {
     rewrite /cells_are_cancelled.
-    iDestruct (big_sepL_lookup with "[]") as "HCidCanc".
-    all: try done. 1: apply _.
-    simpl. rewrite /cell_is_cancelled'.
+    iAssert (▷ cell_is_cancelled' γ id cid)%I as ">HCidCanc". {
+      iApply bi.later_mono. iIntros "HCanc".
+      2: by iApply "HCanc".
+      iDestruct big_sepL_lookup as "HH".
+      2: done.
+      2: iSpecialize ("HH" with "HCanc").
+      apply _. done.
+    }
+    rewrite /cell_is_cancelled'.
     iDestruct (own_valid_2 with "HCancHandle HCidCanc") as %HContra.
     exfalso. move: HContra. rewrite -auth_frag_op -ias_cell_info'_op -Some_op.
     rewrite auth_frag_valid ias_cell_info'_valid. by case.
   }
   remember (VectorDef.replace_order cancelled_cells HCid true) as cancelled_cells'.
-  iAssert (own γ (◯ ias_cell_info' id cid (Some (Cinr (1 / 4)%Qp)))
-          ∗ cell_cancellation_parts γ id cancelled_cells')%I
-          with "[HCancParts]" as "[HCancMain HCancParts']".
+  iAssert (▷ (own γ (◯ ias_cell_info' id cid (Some (Cinr (1 / 4)%Qp)))
+          ∗ cell_cancellation_parts γ id cancelled_cells'))%I
+          with "[HCancParts]" as "[>HCancMain HCancParts']".
   { rewrite /cell_cancellation_parts.
     subst.
     rewrite VectorDef_replace_order_list_alter.
@@ -929,7 +945,7 @@ Qed.
 
 Theorem segment_data_at_spec γ id (ℓ: loc) (ix: nat):
   ⌜ix < Pos.to_nat segment_size⌝ -∗
-  <<< ∀ pl nl, is_segment γ id ℓ pl nl >>>
+  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     segment_data_at #ℓ #ix @ ⊤
   <<< ∃ (v: loc), is_segment γ id ℓ pl nl
                              ∗ array_mapsto' γ id ix v
@@ -959,6 +975,9 @@ Theorem new_segment_spec γ (id: nat) pl :
   {{{ is_valid_prev γ id pl }}}
     (new_segment segment_size) #id pl
   {{{ (ℓ dℓ cℓ pℓ nℓ: loc) nl, RET #ℓ;
+      ([∗ list] i ∈ seq O (Pos.to_nat segment_size),
+       ((dℓ +ₗ Z.of_nat i) ↦ InjLV #())
+         -∗ cell_invariant (id * Pos.to_nat segment_size + i)%nat (dℓ +ₗ i)) -∗
       is_segment' γ id O ℓ dℓ cℓ pℓ nℓ pl nl }}}.
 Proof.
   iIntros (Φ) "#HValidPrev HPost". wp_lam. wp_pures.
@@ -972,10 +991,195 @@ Proof.
   wp_alloc ℓ as "Hℓ".
   iApply "HPost".
   rewrite /is_segment'.
+  iIntros "HCInv".
   iSplitL "Hpℓ Hnℓ Hℓ Hcℓ".
   { iSplitR "Hℓ Hcℓ"; iFrame. }
   iSplitL. 2: done.
   rewrite /array.
-Abort.
+  replace (Z.to_nat (Z.pos segment_size)) with (Pos.to_nat segment_size) by auto.
+  remember (id * Pos.to_nat segment_size)%nat as k. clear Heqk.
+  assert ((fun (i: nat) v => (dℓ +ₗ i) ↦ v) = fun (i: nat) v => (dℓ +ₗ (O + i)) ↦ v)%I as -> by auto.
+  remember O as z. clear Heqz.
+  remember (Pos.to_nat segment_size) as y. clear Heqy.
+  iInduction (y) as [|y'] "IH" forall (z). all: simpl; auto.
+  iDestruct "HCInv" as "[HCCur HCInv]". iDestruct "Hdℓ" as "[HdℓCur Hdℓ]".
+  rewrite Z.add_0_r.
+  iSpecialize ("HCCur" with "HdℓCur").
+  iFrame.
+  iApply ("IH" $! (S z) with "[Hdℓ]"); auto.
+  iApply big_sepL_mono. 2: done.
+  simpl. intros k' ? ?. replace (z + S k') with (S z + k') by lia.
+  done.
+Qed.
+
+Definition is_segment_queue_inv γ tl : iProp :=
+  (is_infinite_array γ ∗ ∃ id ℓ,
+        ([∗ list] j ∈ seq 0 (id * Pos.to_nat segment_size),
+         cell_is_processed j) ∗
+        segment_location γ id ℓ ∗ tl ↦ #ℓ)%I.
+
+Definition is_segment_queue γ v: iProp :=
+  (∃ (tl: loc), ⌜v = #tl⌝ ∗ inv N (is_segment_queue_inv γ tl))%I.
+
+Theorem is_segment_queue_persistent γ v: Persistent (is_segment_queue γ v).
+Proof. apply _. Qed.
+
+Lemma segment_by_location γ id ℓ:
+  is_infinite_array γ -∗ segment_location γ id ℓ -∗
+  ((is_normal_segment γ ℓ id ∗ (is_normal_segment γ ℓ id -∗ is_infinite_array γ)) ∨
+   (is_tail_segment γ ℓ id ∗ (is_tail_segment γ ℓ id -∗ is_infinite_array γ))).
+Proof.
+  iIntros "HInfArr #HSegLoc".
+  iDestruct "HInfArr" as (segments) "[HNormSegs [HTailSeg HAuth]]".
+  iDestruct "HAuth" as (segments') "[% HAuth]".
+  destruct (le_lt_dec (length segments) id).
+  { inversion l; subst.
+    2: {
+      rewrite /segment_location /segment_locations.
+      iDestruct "HSegLoc" as (? ? ? ?) "#HSeg".
+      iDestruct (own_valid_2 with "HAuth HSeg")
+        as %[HValid _]%auth_both_valid.
+      exfalso. revert HValid. rewrite list_lookup_included.
+      intro HValid. specialize (HValid (S m)).
+      rewrite ias_segment_info_lookup in HValid.
+      assert (length segments' <= S m)%nat as HIsNil by lia.
+      apply lookup_ge_None in HIsNil. rewrite HIsNil in HValid.
+      apply option_included in HValid.
+      destruct HValid as [[=]|[a [b [_ [[=] _]]]]].
+    }
+    iDestruct "HTailSeg" as (ℓ' pl) "HIsSeg".
+    destruct (decide (ℓ = ℓ')); subst.
+    2: {
+      iDestruct "HIsSeg" as (? ? ? ? ?) "[_ [HLocs _]]".
+      iAssert (segment_location γ (length segments) ℓ') as "#HLoc";
+        first by eauto 6.
+      iDestruct (segment_location_agree with "HSegLoc HLoc") as %->.
+      contradiction.
+    }
+    iRight.
+    iSplitL "HIsSeg"; first by rewrite /is_tail_segment; eauto with iFrame.
+    iIntros "HTailSeg". rewrite /is_infinite_array.
+    iExists segments. iFrame. iSplitR "HAuth"; eauto 10 with iFrame.
+  }
+  apply lookup_lt_is_Some_2 in l. destruct l as [x Hx].
+  iDestruct (big_sepL_lookup_acc with "[HNormSegs]") as "[HIsSeg HRestSegs]".
+  2: by iApply "HNormSegs".
+  apply Hx.
+  simpl.
+  iLeft.
+  destruct (decide (ℓ = x)); subst.
+  2: {
+    iDestruct "HIsSeg" as (pl nl) "[HIsSeg #HValNext]".
+    iDestruct "HIsSeg" as (? ? ? ? ?) "[_ [HLocs _]]".
+    iAssert (segment_location γ id x) as "#HLoc";
+      first by eauto 6.
+    iDestruct (segment_location_agree with "HSegLoc HLoc") as %->.
+    contradiction.
+  }
+  iFrame.
+  iIntros "HNormSeg". rewrite /is_infinite_array.
+  iExists segments. iFrame. iSplitR "HAuth".
+  { by iApply "HRestSegs". }
+  eauto 10 with iFrame.
+Qed.
+
+Lemma is_segment_by_location γ id ℓ:
+  is_infinite_array γ -∗ segment_location γ id ℓ -∗
+  ∃ pl nl, is_segment γ id ℓ pl nl ∗
+                      (is_segment γ id ℓ pl nl -∗ is_infinite_array γ).
+Proof.
+  iIntros "HInfArr #HSegLoc".
+  iDestruct (segment_by_location with "HInfArr HSegLoc")
+    as "[[HNorm HRest]|[HTail HRest]]".
+  1: iDestruct "HNorm" as (pl nl) "[HIsSeg #HValNext]".
+  2: iDestruct "HTail" as (pl) "HIsSeg".
+  all: iExists _; iExists _; iSplitL "HIsSeg"; try done.
+  all: iIntros "HSeg"; rewrite /is_segment_queue_inv; iApply "HRest".
+  { rewrite /is_normal_segment. eauto 10 with iFrame. }
+  { rewrite /is_tail_segment. eauto 10 with iFrame. }
+Qed.
+
+Theorem move_tail_forward_spec γ v id ℓ:
+  {{{ is_segment_queue γ v ∗ segment_location γ id ℓ ∗
+      [∗ list] j ∈ seq 0 (id * Pos.to_nat segment_size), cell_is_processed j
+  }}}
+    move_tail_forward v #ℓ
+  {{{ RET #(); True }}}.
+Proof.
+  iIntros (Φ) "[#HIsSegQ [#HSegLoc #HProc]] HPost". rewrite /is_segment_queue.
+  iDestruct "HIsSegQ" as (tl) "[% HSeqInv]"; subst. wp_lam.
+  rewrite /array_tail. wp_pures.
+  iLöb as "IH".
+  wp_bind (!_)%E.
+  iInv N as "[HIsInf Htl]" "HClose".
+  iDestruct "Htl" as (id' ℓ') "[HProcOld [#HLoc Htl]]".
+  wp_load.
+  iMod ("HClose" with "[HIsInf HProcOld Htl HLoc]") as "_".
+  { rewrite /is_segment_queue_inv. eauto 10 with iFrame. }
+  iModIntro. wp_pures.
+  wp_bind (segment_id #ℓ').
+  awp_apply segment_id_spec without "HPost". iInv N as "[HIsInf Htl]".
+  iDestruct (bi.later_mono _ _ (is_segment_by_location γ id' ℓ')) as "HSeg".
+  rewrite bi.later_wand.
+  iDestruct ("HSeg" with "HIsInf HLoc") as (? ?) "[HIsSeg HArrRestore]".
+  iAaccIntro with "HIsSeg"; iFrame; iIntros "HIsSeg"; iModIntro.
+  1: by iApply "HArrRestore".
+  iSplitL. by iApply "HArrRestore".
+  iIntros "HPost". iClear "HSeg".
+  awp_apply segment_id_spec without "HPost". iInv N as "[HIsInf Htl]".
+  iDestruct (bi.later_mono _ _ (is_segment_by_location γ id ℓ)) as "HSeg".
+  rewrite bi.later_wand.
+  iDestruct ("HSeg" with "HIsInf HSegLoc") as (? ?) "[HIsSeg HArrRestore]".
+  iAaccIntro with "HIsSeg"; iFrame; iIntros "HIsSeg"; iModIntro.
+  1: by iApply "HArrRestore".
+  iSplitL. by iApply "HArrRestore".
+  iIntros "HPost". iClear "HSeg".
+  wp_pures.
+  destruct (bool_decide (id <= id')); wp_pures.
+  1: by iApply "HPost".
+  wp_bind (CmpXchg _ _ _).
+  iInv N as "[HIsInf Htl]" "HClose".
+  iDestruct "Htl" as (id'' ℓ'') "[#HProc' [#HLocs Htl]]".
+  destruct (decide (ℓ'' = ℓ')); subst.
+  {
+    wp_cmpxchg_suc.
+    iMod ("HClose" with "[HIsInf Htl]") as "_".
+    { iFrame. iExists id. iExists ℓ. eauto 10 with iFrame. }
+    iModIntro. wp_pures. by iApply "HPost".
+  }
+  {
+    wp_cmpxchg_fail.
+    iMod ("HClose" with "[HIsInf Htl]") as "_".
+    { iFrame. iExists id''. iExists ℓ''. eauto 10 with iFrame. }
+    iModIntro. wp_pures. wp_lam. wp_pures.
+    rewrite /array_tail. wp_pures.
+    iApply ("IH" with "HPost").
+  }
+Qed.
+
+Theorem move_head_forward_spec γ id (ℓ: loc):
+  ([∗ list] j ∈ seq 0 (id * Pos.to_nat segment_size),
+    (cell_is_cancelled γ j ∨ cell_is_done j))%I -∗
+  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
+    segment_cutoff #ℓ @ ⊤
+  <<< is_segment γ id ℓ (InjLV #()) nl, RET #() >>>.
+Proof.
+  iIntros "#HDone". iIntros (Φ) "AU". wp_lam.
+  rewrite /segment_prev. wp_pures.
+  wp_bind (! #ℓ)%E.
+  iMod "AU" as (pl nl) "[HIsSeg [HClose _]]".
+  iDestructHIsSeg. wp_load. iCloseHIsSeg.
+  iModIntro. wp_pures.
+  iMod "HΦ" as (pl' nl') "[HIsSeg [_ HClose]]".
+  iDestruct "HIsSeg" as (dℓ' cℓ' pℓ' nℓ' cancelled_cells')
+                          "[HIsSeg [>#HLocs' HCanc']]".
+  iDestruct "HIsSeg" as "[[[HH HH'''] HH''] [HH' HHVP]]".
+  iDestruct (segment_locations_agree with "HLocs HLocs'") as %HH.
+  revert HH. intros [=]. subst. wp_store.
+  iMod ("HClose" with "[-]") as "HPost".
+  { rewrite /is_segment /is_segment' /is_valid_prev.
+    eauto 20 with iFrame. }
+  done.
+Qed.
 
 End proof.
