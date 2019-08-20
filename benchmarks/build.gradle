@@ -77,3 +77,8 @@ dependencies {
     // add jmh dependency on main
     jmh sourceSets.main.runtimeClasspath
 }
+
+task runBfsChannelBenchmark(type : JavaExec) {
+    main = 'bfschannel.BfsChannelBenchmark'
+    classpath sourceSets.main.runtimeClasspath
+}
