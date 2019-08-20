@@ -75,3 +75,8 @@ dependencies {
     compile 'com.typesafe.akka:akka-actor_2.12:2.5.0'
     compile project(':kotlinx-coroutines-core')
 }
+
+task runBfsChannelBenchmark(type : JavaExec) {
+    main = 'bfschannel.BfsChannelBenchmark'
+    classpath sourceSets.main.runtimeClasspath
+}
