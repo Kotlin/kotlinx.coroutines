@@ -58,10 +58,10 @@ public abstract class ChannelFlow<T>(
     protected abstract suspend fun collectTo(scope: ProducerScope<T>)
 
     // shared code to create a suspend lambda from collectTo function in one place
-    private val collectToFun: suspend (ProducerScope<T>) -> Unit
+    internal val collectToFun: suspend (ProducerScope<T>) -> Unit
         get() = { collectTo(it) }
 
-    private val produceCapacity: Int
+    internal val produceCapacity: Int
         get() = if (capacity == Channel.OPTIONAL_CHANNEL) Channel.BUFFERED else capacity
 
     open fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =

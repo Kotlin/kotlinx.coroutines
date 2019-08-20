@@ -46,6 +46,10 @@ internal class ChannelFlowMerge<T>(
     override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
         ChannelFlowMerge(flow, concurrency, context, capacity)
 
+    override fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> {
+        return scope.flowProduce(context, produceCapacity, block = collectToFun)
+    }
+
     // The actual merge implementation with concurrency limit
     private suspend fun mergeImpl(scope: CoroutineScope, collector: ConcurrentFlowCollector<T>) {
         val semaphore = Semaphore(concurrency)
