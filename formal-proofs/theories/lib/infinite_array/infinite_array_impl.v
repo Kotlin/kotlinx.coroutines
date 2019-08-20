@@ -51,12 +51,12 @@ Definition segment_move_prev_to_left : val :=
                               then #() else "loop" "seg" "prev".
 
 Definition segment_remove : val :=
-  λ: "seg", let: "next" := ref !(segment_next "seg") in
-            let: "prev" := ref !(segment_prev "seg") in
-            if: "next" = NONEV
+  λ: "seg", let: "prev" := ref !(segment_prev "seg") in
+            let: "next" := ref !(segment_next "seg") in
+            if: !"next" = NONEV
               then NONE else
             (rec: "loop" <>:=
-              if: "prev" = NONEV
+              if: !"prev" = NONEV
                 then #() else
               segment_move_next_to_right "prev" "next" ;;
               if: segment_is_removed "prev"
@@ -73,7 +73,7 @@ Definition segment_remove : val :=
                 segment_move_prev_to_left "next" "prev" ;;
                 "loop" #()
             ) #() ;;
-            SOME ("prev", "next").
+            SOME (!"prev", !"next").
 
 Definition segment_cutoff : val :=
   λ: "seg", (segment_prev "seg") <- NONE.
@@ -604,11 +604,13 @@ Proof.
 Qed.
 
 Theorem segment_prev_read_spec γ id (ℓ pℓ: loc):
-  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl ∗ segment_prev_location γ id pℓ >>>
+  segment_prev_location γ id pℓ -∗
+  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     ! #pℓ @ ⊤
   <<< is_segment γ id ℓ pl nl ∗ is_valid_prev γ id pl, RET pl >>>.
 Proof.
-  iIntros (Φ) "AU". iMod "AU" as (pl nl) "[[HIsSeg #HIsPrevLoc] [_ HClose]]".
+  iIntros "#HIsPrevLoc". iIntros (Φ) "AU".
+  iMod "AU" as (pl nl) "[HIsSeg [_ HClose]]".
   rename pℓ into pℓ'. iDestructHIsSeg.
   iAssert (segment_prev_location γ id pℓ) as "#HPrevLoc"; first by eauto 6.
   iDestruct (segment_prev_location_agree with "HIsPrevLoc HPrevLoc") as %->.
@@ -619,16 +621,13 @@ Proof.
 Qed.
 
 Theorem segment_prev_write_spec γ id (ℓ pℓ: loc) (pl: val):
-  <<< ∀ pl' nl,
-      ▷ is_segment γ id ℓ pl' nl ∗
-                 segment_prev_location γ id pℓ ∗
-                 is_valid_prev γ id pl
-  >>>
+  segment_prev_location γ id pℓ -∗ is_valid_prev γ id pl -∗
+  <<< ∀ pl' nl, ▷ is_segment γ id ℓ pl' nl >>>
   #pℓ <- pl @ ⊤
   <<< is_segment γ id ℓ pl nl, RET #() >>>.
 Proof.
-  iIntros (Φ) "AU".
-  iMod "AU" as (pl' nl) "[[HIsSeg [#HIsPrevLoc #HIsValidPrev]] [_ HClose]]".
+  iIntros "#HIsPrevLoc #HIsValidPrev". iIntros (Φ) "AU".
+  iMod "AU" as (pl' nl) "[HIsSeg [_ HClose]]".
   rename pℓ into pℓ'. iDestructHIsSeg.
   iAssert (segment_prev_location γ id pℓ) as "#HPrevLoc"; first by eauto 6.
   iDestruct (segment_prev_location_agree with "HIsPrevLoc HPrevLoc") as %->.
@@ -640,8 +639,8 @@ Qed.
 Theorem segment_next_spec γ id (ℓ: loc):
   <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     segment_next #ℓ @ ⊤
-    <<< ∃ (nℓ: loc),
-          is_segment γ id ℓ pl nl ∗ segment_next_location γ id nℓ, RET #nℓ >>>.
+  <<< ∃ (nℓ: loc),
+        is_segment γ id ℓ pl nl ∗ segment_next_location γ id nℓ, RET #nℓ >>>.
 Proof.
   iIntros (Φ) "AU". wp_lam.
   wp_bind (!_)%E. iMod "AU" as (pl nl) "[HIsSeg [_ HClose]]".
@@ -653,11 +652,13 @@ Proof.
 Qed.
 
 Theorem segment_next_read_spec γ id (ℓ nℓ: loc):
-  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl ∗ segment_next_location γ id nℓ >>>
+  segment_next_location γ id nℓ -∗
+  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     ! #nℓ @ ⊤
   <<< is_segment γ id ℓ pl nl, RET nl >>>.
 Proof.
-  iIntros (Φ) "AU". iMod "AU" as (pl nl) "[[HIsSeg #HIsNextLoc] [_ HClose]]".
+  iIntros "#HIsNextLoc".
+  iIntros (Φ) "AU". iMod "AU" as (pl nl) "[HIsSeg [_ HClose]]".
   rename nℓ into nℓ'. iDestructHIsSeg.
   iAssert (segment_next_location γ id nℓ) as "#HNextLoc"; first by eauto 6.
   iDestruct (segment_next_location_agree with "HIsNextLoc HNextLoc") as %->.
@@ -668,11 +669,13 @@ Proof.
 Qed.
 
 Theorem segment_next_write_spec γ id (ℓ nℓ: loc) (nl: val):
-  <<< ∀ pl nl', ▷ is_segment γ id ℓ pl nl' ∗ segment_next_location γ id nℓ >>>
+  segment_next_location γ id nℓ -∗
+  <<< ∀ pl nl', ▷ is_segment γ id ℓ pl nl' >>>
     #nℓ <- nl @ ⊤
   <<< is_segment γ id ℓ pl nl, RET #() >>>.
 Proof.
-  iIntros (Φ) "AU". iMod "AU" as (pl nl') "[[HIsSeg #HIsNextLoc] [_ HClose]]".
+  iIntros "#HIsNextLoc".
+  iIntros (Φ) "AU". iMod "AU" as (pl nl') "[HIsSeg [_ HClose]]".
   rename nℓ into nℓ'. iDestructHIsSeg.
   iAssert (segment_next_location γ id nℓ) as "#HNextLoc"; first by eauto 6.
   iDestruct (segment_next_location_agree with "HIsNextLoc HNextLoc") as %->.
@@ -697,7 +700,8 @@ Proof.
 Qed.
 
 Theorem segment_canc_read_spec γ id (ℓ cℓ: loc):
-  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl ∗ segment_canc_location γ id cℓ >>>
+  segment_canc_location γ id cℓ -∗
+  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     ! #cℓ @ ⊤
   <<< ∃ (cancelled: nat), is_segment γ id ℓ pl nl ∗
       (∃ cells,
@@ -705,7 +709,8 @@ Theorem segment_canc_read_spec γ id (ℓ cℓ: loc):
           ∗ ⌜cancelled = length (List.filter (fun i => i) (vec_to_list cells))⌝),
       RET #cancelled >>>.
 Proof.
-  iIntros (Φ) "AU". iMod "AU" as (pl nl) "[[HIsSeg #HIsCancLoc] [_ HClose]]".
+  iIntros "#HIsCancLoc".
+  iIntros (Φ) "AU". iMod "AU" as (pl nl) "[HIsSeg [_ HClose]]".
   rename cℓ into cℓ'. iDestructHIsSeg.
   iAssert (segment_canc_location γ id cℓ) as "#HCancLoc"; first by eauto 6.
   iDestruct (segment_canc_location_agree with "HIsCancLoc HCancLoc") as %->.
@@ -813,7 +818,8 @@ Qed.
 
 Theorem segment_canc_incr_spec γ id cid (ℓ cℓ: loc) segments:
   (cid < Pos.to_nat segment_size)%nat ->
-  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl ∗ segment_canc_location γ id cℓ ∗
+  segment_canc_location γ id cℓ -∗
+  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl ∗
                               cell_cancellation_handle' γ id cid ∗
                               own γ (● segments) >>>
     FAA #cℓ #1 @ ⊤
@@ -825,8 +831,8 @@ Theorem segment_canc_incr_spec γ id cid (ℓ cℓ: loc) segments:
     (∃ segments', own γ (● segments')),
     RET #cancelled >>>.
 Proof.
-  iIntros (HCid Φ) "AU".
-  iMod "AU" as (pl nl) "[[HIsSeg [#HIsCancLoc [HCancHandle HAuth]]] [_ HClose]]".
+  iIntros (HCid) "#HIsCancLoc". iIntros (Φ) "AU".
+  iMod "AU" as (pl nl) "[[HIsSeg [HCancHandle HAuth]] [_ HClose]]".
   rename cℓ into cℓ'. iDestructHIsSeg.
   iAssert (segment_canc_location γ id cℓ) as "#HCancLoc"; first by eauto 6.
   iDestruct (segment_canc_location_agree with "HIsCancLoc HCancLoc") as %->.
@@ -1221,15 +1227,13 @@ Proof.
   iIntros (nℓ) "[HIsSeg #HNextLoc] !>".
   iSplitL. { rewrite /is_normal_segment. eauto with iFrame. }
   iIntros "AU !>".
-  awp_apply segment_next_read_spec.
+  awp_apply segment_next_read_spec; first done.
   iApply (aacc_aupd_abort with "AU"); first done.
   iIntros "[HIsSeg HInfArr]".
   iDestruct "HIsSeg" as (pl' nl') "[HIsSeg >#[HValidNext' #HNotTail']]".
-  iCombine "HIsSeg" "HNextLoc" as "HEv".
-  iAaccIntro with "HEv"; iFrame.
-  { iIntros "[HIsSeg _] !>". rewrite /is_normal_segment.
-    iSplitL; eauto 6 with iFrame. }
-  iIntros "HIsSeg !>". iSplitL.
+  iAaccIntro with "HIsSeg"; iFrame; iIntros "HIsSeg !>".
+  { rewrite /is_normal_segment. iSplitL; eauto 6 with iFrame. }
+  iSplitL.
   { rewrite /is_normal_segment. eauto 6 with iFrame. }
   iIntros "AU !>". wp_pures.
   iDestruct "HValidNext'" as (nid nextℓ)
@@ -1319,9 +1323,10 @@ Proof.
   iIntros (? ?) "[HSeg HInfArr]". iAaccIntro with "HSeg"; iFrame.
   1: by eauto 10 with iFrame.
   iIntros (?) "[$ #HPrevLoc] !> AU !>".
-  awp_apply segment_prev_read_spec. iApply (aacc_aupd with "AU"); first done.
-  iIntros (? ?) "[HSeg HInfArr]". iCombine "HSeg" "HPrevLoc" as "HEv".
-  iAaccIntro with "HEv"; iFrame. { iIntros "[HIsSeg _]". eauto 10 with iFrame. }
+  awp_apply segment_prev_read_spec; first done.
+  iApply (aacc_aupd with "AU"); first done.
+  iIntros (? ?) "[HSeg HInfArr]".
+  iAaccIntro with "HSeg"; iFrame; first by eauto 10 with iFrame.
   iIntros "[HIsSeg #HValidPrev] !>".
   iDestruct "HValidPrev" as "[[-> HCanc]|#HValidPrev']".
   { iRight. iExists _. iFrame. iIntros "HΦ !>". by wp_pures. }
@@ -1464,6 +1469,86 @@ Proof.
   iSpecialize ("HRestSegs" with "HNormSeg").
   eauto 10 with iFrame.
 Qed.
+
+Theorem remove_segment_spec γ id (ℓ: loc):
+  segment_location γ id ℓ -∗
+  <<< ▷ is_infinite_array γ >>>
+    (segment_remove segment_size) #ℓ @ ⊤
+  <<< ∃ v, ▷ is_infinite_array γ ∗ (⌜v = NONEV⌝ ∨
+                                    ∃ p n, ⌜v = SOMEV (p, n)⌝),
+    RET v >>>.
+Proof.
+  iIntros "#HSegLoc". iIntros (Φ) "AU". wp_lam.
+
+  awp_apply segment_prev_spec. iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros "HInfArr". iDestruct (is_segment_by_location with "HInfArr") as "HLoc".
+  iDestruct (bi.later_wand with "HLoc HSegLoc") as (? ?) "[HIsSeg HArrRestore]".
+  iAaccIntro with "HIsSeg".
+  { iIntros "HIsSeg". iSpecialize ("HArrRestore" with "HIsSeg").
+    by eauto with iFrame. }
+  iIntros (?) "[HIsSeg #HPrevLoc]".
+  iDestruct (bi.later_wand with "HArrRestore HIsSeg") as "HInfArr"; iFrame.
+  iIntros "!> AU !>".
+
+  awp_apply segment_prev_read_spec; first done.
+  iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros "HInfArr". iDestruct (is_segment_by_location with "HInfArr") as "HLoc".
+  iDestruct (bi.later_wand with "HLoc HSegLoc") as (? ?) "[HIsSeg HArrRestore]".
+  iAaccIntro with "HIsSeg".
+  { iIntros "HIsSeg". iSpecialize ("HArrRestore" with "HIsSeg").
+    by eauto with iFrame. }
+  iIntros "[HIsSeg #HValidPrev]".
+  iDestruct (bi.later_wand with "HArrRestore HIsSeg") as "HInfArr"; iFrame.
+  iIntros "!> AU !>".
+
+  wp_alloc plℓ as "Hplℓ". wp_pures.
+
+  awp_apply segment_next_spec. iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros "HInfArr". iDestruct (is_segment_by_location with "HInfArr") as "HLoc".
+  iDestruct (bi.later_wand with "HLoc HSegLoc") as (? ?) "[HIsSeg HArrRestore]".
+  iAaccIntro with "HIsSeg".
+  { iIntros "HIsSeg". iSpecialize ("HArrRestore" with "HIsSeg").
+    by eauto with iFrame. }
+  iIntros (?) "[HIsSeg #HNextLoc]".
+  iDestruct (bi.later_wand with "HArrRestore HIsSeg") as "HInfArr"; iFrame.
+  iIntros "!> AU !>".
+
+  awp_apply segment_next_read_spec without "Hplℓ"; first done.
+  iApply (aacc_aupd with "AU"); first done.
+  iIntros "HInfArr". iDestruct (segment_by_location with "HInfArr") as "HLoc".
+  iDestruct (bi.later_wand with "HLoc HSegLoc")
+    as "[[HIsNSeg HArrRestore]|[HIsTSeg HArrRestore]]".
+  2: {
+    iDestruct "HIsTSeg" as (pl) "HIsSeg".
+    iAaccIntro with "HIsSeg". all: iIntros "HIsSeg !>".
+    { iSplitL; eauto. iApply "HArrRestore".
+      rewrite /is_tail_segment. by eauto with iFrame. }
+    iRight. iExists _. iSplitL. iSplitL.
+    { iApply "HArrRestore". rewrite /is_tail_segment. eauto with iFrame. }
+    { iLeft; done. }
+    iIntros "HΦ !> Hplℓ". wp_bind (ref _)%E. wp_alloc nlℓ as "Hnlℓ". wp_pures.
+    wp_load. wp_pures. done.
+  }
+
+  iDestruct "HIsNSeg" as (? ?) "(HIsSeg & #HValidNext & #HNotTail)".
+  iAaccIntro with "HIsSeg"; iIntros "HIsSeg !>".
+  { iSplitL; eauto. iApply "HArrRestore". rewrite /is_normal_segment.
+    iExists _, _. iFrame "HIsSeg". eauto with iFrame. }
+  iLeft. iSplitL.
+  { iApply "HArrRestore". rewrite /is_normal_segment. iExists _, _.
+    iFrame "HIsSeg". eauto with iFrame. }
+  iIntros "AU".
+  iIntros "!> Hplℓ".
+  wp_alloc nlℓ as "Hnlℓ".
+  (*
+  iMod (inv_alloc N _ (plℓ ↦ H3 ∗ nlℓ ↦ H8)%I with "[Hplℓ Hnlℓ]") as "#HHinv";
+    first by iFrame.
+  *)
+  wp_pures. wp_load.
+  iDestruct "HValidNext" as (nid nl) "(% & -> & #HNextSegLoc & #HNextCanc)".
+  wp_pures.
+
+Abort.
 
 Theorem find_segment_spec γ v (ℓ: loc) fid:
   {{{ is_segment_queue γ v ∗ segment_location γ fid ℓ ∗
