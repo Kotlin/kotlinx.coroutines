@@ -3,10 +3,8 @@
 package bfschannel
 
 
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStreamReader
@@ -15,14 +13,25 @@ import java.net.URL
 import java.nio.channels.Channels
 import java.nio.file.Paths
 import java.util.*
-import java.util.concurrent.Phaser
+import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPInputStream
 import kotlin.collections.ArrayList
+import kotlin.math.pow
+import kotlin.math.sqrt
 
-val GRAPH_FILES = listOf(Triple("RAND-1M-10M", "rand", "1000000 10000000"), // 1M nodes and 10M edges
-                    Triple("USA-DISTANCE", "gr gz", "http://www.dis.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.USA.gr.gz"),
-                    Triple("LIVE-JOURNAL", "txt gz", "https://snap.stanford.edu/data/soc-LiveJournal1.txt.gz"))
+val GRAPH_FILES = listOf(
+        Triple("RAND-1M-10M", "rand", "1000000 10000000"), // 1M nodes and 10M edges
+        Triple("USA-DISTANCE", "gr gz", "http://www.dis.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.USA.gr.gz"),
+        Triple("LIVE-JOURNAL", "txt gz", "https://snap.stanford.edu/data/soc-LiveJournal1.txt.gz"))
+/**
+ * Iterations count for each graph
+ */
+const val GRAPH_BSF_ITERATIONS = 5
+/**
+ * Number of coroutines that are used to execute bfs in parallel
+ */
+val WORKERS = listOf(1, 4, 8, 16)
 
 /**
  * This benchmark tests channel as a working queue, as a queue under contention.
@@ -37,18 +46,49 @@ fun main() {
         val nodes = graph.size
         val startNode = graph[0]
 
-        val parallelBfsStartTime = System.nanoTime()
-        val parallelDistance = bfsParallel(startNode, nodes)
-        val parallelBfsEndTime = System.nanoTime()
-        val sequentialDistance = bfsSequential(startNode, nodes)
-        val sequentialBfsEndTime = System.nanoTime()
-        check(parallelDistance == sequentialDistance)
+        for (threads in WORKERS) {
+            // warm up
+            runGraphBfs(startNode, nodes, threads)
 
-        val parallelExecutionTimes = parallelBfsEndTime - parallelBfsStartTime
-        val sequentialExecutionTimes = sequentialBfsEndTime - parallelBfsEndTime
+            // benchmark iterations
+            val parallelExecutionTimes = ArrayList<Long>()
+            val sequentialExecutionTimes = ArrayList<Long>()
+            repeat(GRAPH_BSF_ITERATIONS) {
+                val (parallelExecutionTime, sequentialExecutionTime) = runGraphBfs(startNode, nodes, threads)
+                parallelExecutionTimes += parallelExecutionTime
+                sequentialExecutionTimes += sequentialExecutionTime
+            }
 
-        println("Parallel execution time = ${parallelExecutionTimes / 1_000_000}ms, sequential execution time = ${sequentialExecutionTimes / 1_000_000}ms")
+            println("parallel workers count = $threads, parallel execution time = ${parallelExecutionTimes.average() / 1_000_000}ms std = ${computeStandardDeviation(parallelExecutionTimes) / 1_000_000}ms, sequential execution time = ${sequentialExecutionTimes.average() / 1_000_000}ms std = ${computeStandardDeviation(sequentialExecutionTimes) / 1_000_000}ms")
+        }
     }
+}
+
+fun computeStandardDeviation(list : List<Long>) : Double {
+    var sum = 0.0
+    var standardDeviation = 0.0
+    for (num in list) {
+        sum += num
+    }
+    val mean = sum / list.size
+    for (num in list) {
+        standardDeviation += (num - mean).pow(2.0)
+    }
+    return sqrt(standardDeviation / list.size)
+}
+
+private fun runGraphBfs(startNode: Node, nodes: Int, parallelism: Int) : Pair<Long, Long> {
+    val parallelBfsStartTime = System.nanoTime()
+    val parallelDistance = bfsParallel(startNode, nodes, parallelism)
+    val parallelBfsEndTime = System.nanoTime()
+    val sequentialDistance = bfsSequential(startNode, nodes)
+    val sequentialBfsEndTime = System.nanoTime()
+    check(parallelDistance == sequentialDistance)
+
+    val parallelExecutionTime = parallelBfsEndTime - parallelBfsStartTime
+    val sequentialExecutionTime = sequentialBfsEndTime - parallelBfsEndTime
+
+    return Pair(parallelExecutionTime, sequentialExecutionTime)
 }
 
 fun bfsSequential(startNode: Node, nodes: Int): List<Long> {
@@ -72,38 +112,39 @@ fun bfsSequential(startNode: Node, nodes: Int): List<Long> {
     return distances.toList()
 }
 
-fun bfsParallel(start: Node, nodes: Int, parallelism: Int = 0): List<Long> {
-    val workers = if (parallelism != 0) parallelism else Runtime.getRuntime().availableProcessors()
+fun bfsParallel(start: Node, nodes: Int, workers: Int): List<Long> {
     val distances = Array(nodes) { AtomicLong(Long.MAX_VALUE) }
     // The distance to the start node is `0`
     distances[start.id].set(0)
 
     val queue : Channel<Node> = UnlimitedChannel(workers)
-    runBlocking {
-        queue.send(start)
-    }
+    queue.offer(start)
     // Run worker threads and wait until the total work is done
-    val onFinish = Phaser(workers + 1) // `arrive()` should be invoked at the end by each worker
+    val jobs = ArrayList<Job>()
+    val list = ConcurrentSkipListSet<Int>()
     repeat(workers) {
-        GlobalScope.launch {
-            try {
-                while (true) {
-                    val currentNode = queue.receiveOrClosed().valueOrNull ?: break
-                    for (edge in currentNode.outgoingEdges) {
-                        processEdge(distances, currentNode, edge.to, queue)
-                    }
+        jobs += GlobalScope.launch {
+            while (true) {
+                val currentNode = queue.receiveOrClosed().valueOrNull ?: break
+                for (edge in currentNode.outgoingEdges) {
+                    processEdge(distances, currentNode, edge.to, queue)
                 }
-            } finally {
-                onFinish.arrive()
+                list.add(currentNode.id)
             }
         }
     }
-    onFinish.arriveAndAwaitAdvance()
+
+    runBlocking {
+        for (job in jobs) {
+            job.join()
+        }
+        queue.close()
+    }
     // Return the result
     return distances.map { long -> long.toLong() }
 }
 
-private suspend fun processEdge(distances: Array<AtomicLong>, currentNode: Node, nextNode: Node, queue: Channel<Node>) {
+private fun processEdge(distances: Array<AtomicLong>, currentNode: Node, nextNode: Node, queue: Channel<Node>) {
     val newDistance = distances[currentNode.id].get() + 1
     // try to compare and set if new distance is less than the old one
     while (true) {
@@ -112,7 +153,7 @@ private suspend fun processEdge(distances: Array<AtomicLong>, currentNode: Node,
             return
         }
         if (distances[nextNode.id].compareAndSet(toDistance, newDistance)) {
-            queue.send(nextNode)
+            queue.offer(nextNode)
             return
         }
     }
