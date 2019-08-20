@@ -54,7 +54,7 @@ Definition segment_remove : val :=
   λ: "seg", let: "next" := ref !(segment_next "seg") in
             let: "prev" := ref !(segment_prev "seg") in
             if: "next" = NONEV
-              then ("prev", "next") else
+              then NONE else
             (rec: "loop" <>:=
               if: "prev" = NONEV
                 then #() else
@@ -73,7 +73,7 @@ Definition segment_remove : val :=
                 segment_move_prev_to_left "next" "prev" ;;
                 "loop" #()
             ) #() ;;
-            ("prev", "next").
+            SOME ("prev", "next").
 
 Definition segment_cutoff : val :=
   λ: "seg", (segment_prev "seg") <- NONE.
@@ -552,8 +552,11 @@ Definition is_segment γ (id: nat) (ℓ: loc) (pl nl: val) : iProp :=
           ⌜cancelled = length (List.filter (fun i => i) (vec_to_list cells))⌝ ∗
           cells_are_cancelled γ id cells ∗ cell_cancellation_parts γ id cells))%I.
 
+Definition can_not_be_tail γ id := own γ (◯ (ias_segment_info (S id) ε)).
+
 Definition is_normal_segment γ (ℓ: loc) (id: nat): iProp :=
-  (∃ pl nl, is_segment γ id ℓ pl nl ∗ is_valid_next γ id nl)%I.
+  (∃ pl nl, is_segment γ id ℓ pl nl ∗ is_valid_next γ id nl ∗
+                       can_not_be_tail γ id)%I.
 
 Definition is_tail_segment γ (ℓ: loc) (id: nat): iProp :=
   (∃ pl, is_segment γ id ℓ pl NONEV)%I.
@@ -1221,13 +1224,13 @@ Proof.
   awp_apply segment_next_read_spec.
   iApply (aacc_aupd_abort with "AU"); first done.
   iIntros "[HIsSeg HInfArr]".
-  iDestruct "HIsSeg" as (pl' nl') "[HIsSeg >#HValidNext']".
+  iDestruct "HIsSeg" as (pl' nl') "[HIsSeg >#[HValidNext' #HNotTail']]".
   iCombine "HIsSeg" "HNextLoc" as "HEv".
   iAaccIntro with "HEv"; iFrame.
   { iIntros "[HIsSeg _] !>". rewrite /is_normal_segment.
-    iSplitL; eauto with iFrame. }
+    iSplitL; eauto 6 with iFrame. }
   iIntros "HIsSeg !>". iSplitL.
-  { rewrite /is_normal_segment. eauto with iFrame. }
+  { rewrite /is_normal_segment. eauto 6 with iFrame. }
   iIntros "AU !>". wp_pures.
   iDestruct "HValidNext'" as (nid nextℓ)
                               "(% & -> & #HNextSegLoc & HCanc)".
@@ -1426,6 +1429,42 @@ Proof.
     }
 Qed.
 
+Lemma normal_segment_by_location γ id ℓ:
+  is_infinite_array γ -∗ segment_location γ id ℓ -∗ can_not_be_tail γ id -∗
+  (is_normal_segment γ ℓ id ∗ (is_normal_segment γ ℓ id -∗ is_infinite_array γ)).
+Proof.
+  iIntros "HInfArr #HSegLoc #HNotTail".
+  iDestruct "HInfArr" as (segments) "[HNormSegs [HTail HAuth]]".
+  iDestruct "HAuth" as (segments') "[% HAuth]".
+  destruct (le_lt_dec (length segments) id).
+  {
+    iDestruct (own_valid_2 with "HAuth HNotTail") as %HContra.
+    exfalso. move: HContra.
+    rewrite auth_both_valid; case. rewrite list_lookup_included.
+    intros HContra _. specialize (HContra (S id)). revert HContra.
+    rewrite ias_segment_info_lookup.
+    assert (length segments' <= S id)%nat as HIsNil by lia.
+    apply lookup_ge_None in HIsNil. rewrite HIsNil.
+    rewrite option_included. intros HValid.
+    destruct HValid as [[=]|[a [b [_ [[=] _]]]]].
+  }
+  apply lookup_lt_is_Some_2 in l. destruct l as [x Hx].
+  iDestruct (big_sepL_lookup_acc with "[HNormSegs]") as "[HIsSeg HRestSegs]".
+  by apply Hx. done. simpl. destruct (decide (ℓ = x)); subst.
+  2: {
+    iDestruct "HIsSeg" as (pl nl) "[HIsSeg #HValNext]".
+    iDestruct "HIsSeg" as (? ? ? ? ?) "[_ [HLocs _]]".
+    iAssert (segment_location γ id x) as "#HLoc";
+      first by eauto 6.
+    iDestruct (segment_location_agree with "HSegLoc HLoc") as %->.
+    contradiction.
+  }
+  iFrame.
+  iIntros "HNormSeg". rewrite /is_infinite_array.
+  iSpecialize ("HRestSegs" with "HNormSeg").
+  eauto 10 with iFrame.
+Qed.
+
 Theorem find_segment_spec γ v (ℓ: loc) fid:
   {{{ is_segment_queue γ v ∗ segment_location γ fid ℓ ∗
       [∗ list] j ∈ seq 0 (fid * Pos.to_nat segment_size), cell_is_processed j
@@ -1453,5 +1492,6 @@ Proof.
   iDestruct (bi.later_mono _ _ (is_segment_by_location γ fid ℓ)) as "HSeg".
   iSpecialize ("HSeg" with "HIsInf").
   iDestruct (bi.later_wand with "HSeg") as "HSeg".
+Abort.
 
 End proof.
