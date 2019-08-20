@@ -324,6 +324,43 @@ class FlowGuideTest {
     @Test
     fun testKotlinxCoroutinesGuideFlow31() {
         test("KotlinxCoroutinesGuideFlow31") { kotlinx.coroutines.guide.flow31.main() }.verifyLines(
+            "Emitting 1",
+            "Collected 1",
+            "Emitting 2",
+            "Collected 2",
+            "Emitting 3",
+            "Collected 3",
+            "Done"
+        )
+    }
+
+    @Test
+    fun testKotlinxCoroutinesGuideFlow32() {
+        test("KotlinxCoroutinesGuideFlow32") { kotlinx.coroutines.guide.flow32.main() }.verifyLines(
+            "Emitting 1",
+            "Collected 1",
+            "Emitting 2",
+            "Collected 2",
+            "Emitting 3",
+            "Collected 3",
+            "Done"
+        )
+    }
+
+    @Test
+    fun testKotlinxCoroutinesGuideFlow33() {
+        test("KotlinxCoroutinesGuideFlow33") { kotlinx.coroutines.guide.flow33.main() }.verifyLines(
+            "Emitting 1",
+            "Collected 1",
+            "Emitting 2",
+            "Flow completed exceptionally",
+            "Caught exception"
+        )
+    }
+
+    @Test
+    fun testKotlinxCoroutinesGuideFlow34() {
+        test("KotlinxCoroutinesGuideFlow34") { kotlinx.coroutines.guide.flow34.main() }.verifyLines(
             "Event: 1",
             "Event: 2",
             "Event: 3",
@@ -332,8 +369,8 @@ class FlowGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideFlow32() {
-        test("KotlinxCoroutinesGuideFlow32") { kotlinx.coroutines.guide.flow32.main() }.verifyLines(
+    fun testKotlinxCoroutinesGuideFlow35() {
+        test("KotlinxCoroutinesGuideFlow35") { kotlinx.coroutines.guide.flow35.main() }.verifyLines(
             "Done",
             "Event: 1",
             "Event: 2",

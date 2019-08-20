@@ -3,22 +3,17 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.flow32
+package kotlinx.coroutines.guide.flow34
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun foo(): Flow<Int> = flow {
-    for (i in 1..3) {
-        println("Emitting $i")
-        emit(i)
-    }
-}
+// Imitate a flow of events
+fun events(): Flow<Int> = (1..3).asFlow().onEach { delay(100) }
 
 fun main() = runBlocking<Unit> {
-    foo()
-        .onCompletion { println("Done") }
-        .collect { value ->
-            println("Collected $value") 
-        }
+    events()
+        .onEach { event -> println("Event: $event") }
+        .collect() // <--- Collecting the flow waits
+    println("Done")
 }            

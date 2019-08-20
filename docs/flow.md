@@ -52,6 +52,10 @@ class FlowGuideTest {
   * [Exception transparency](#exception-transparency)
     * [Transparent catch](#transparent-catch)
     * [Catching declaratively](#catching-declaratively)
+  * [Flow completion](#flow-completion)
+    * [Imperative finally block](#imperative-finally-block)
+    * [Declarative handling](#declarative-handling)
+    * [Imperative versus declarative](#imperative-versus-declarative)
   * [Launching flow](#launching-flow)
 
 <!--- END_TOC -->
@@ -1530,6 +1534,151 @@ Emitting 2
 Caught java.lang.IllegalStateException: Collected 2
 -->
 
+### Flow completion
+
+When flow collection completes (normally or exceptionally) it may be needed to execute some action. 
+As you might have already noticed, it also can be done in two ways: imperative and declarative.
+
+#### Imperative finally block
+
+In addition to `try`/`catch`, a collector can also use `finally` block to execute an action 
+upon `collect` completion.
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+//sampleStart
+fun foo(): Flow<Int> = flow {
+    for (i in 1..3) {
+        println("Emitting $i")
+        emit(i)
+    }
+}
+
+fun main() = runBlocking<Unit> {
+    try {
+        foo().collect { value ->
+            println("Collected $value") 
+        }
+    } finally {
+        println("Done")
+    }
+}            
+//sampleEnd
+```  
+
+</div>
+
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-31.kt). 
+
+<!--- TEST 
+Emitting 1
+Collected 1
+Emitting 2
+Collected 2
+Emitting 3
+Collected 3
+Done
+-->
+
+#### Declarative handling
+
+For declarative approach, flow has [onCompletion] intermediate operator that is invoked
+when the flow is completely collected.
+
+The previous example can be rewritten using [onCompletion] operator:
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+//sampleStart
+fun foo(): Flow<Int> = flow {
+    for (i in 1..3) {
+        println("Emitting $i")
+        emit(i)
+    }
+}
+
+fun main() = runBlocking<Unit> {
+    foo()
+        .onCompletion { println("Done") }
+        .collect { value ->
+            println("Collected $value") 
+        }
+}            
+//sampleEnd
+```
+</div>
+
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-32.kt). 
+
+<!--- TEST 
+Emitting 1
+Collected 1
+Emitting 2
+Collected 2
+Emitting 3
+Collected 3
+Done
+-->
+
+
+The key advantage of [onCompletion] is a nullable `Throwable` parameter of the lambda that can be used
+to determine whether flow collection was completed normally or exceptionally.
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+//sampleStart
+fun foo(): Flow<Int> = flow {
+    println("Emitting 1")
+    emit(1)
+    println("Emitting 2")
+    throw RuntimeException()
+}
+
+fun main() = runBlocking<Unit> {
+    foo()
+        .onCompletion { cause -> if (cause != null) println("Flow completed exceptionally") }
+        .catch { cause -> println("Caught exception") }
+        .collect { value ->
+            println("Collected $value") 
+        }
+}            
+//sampleEnd
+```
+</div>
+
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-33.kt). 
+
+As you may expect, it will print
+```text
+Emitting 1
+Collected 1
+Emitting 2
+Flow completed exceptionally
+Caught exception
+```
+<!--- TEST --> 
+
+[onCompletion] operator, unlike [catch], receives exceptions not only from the upstream, 
+but from the downstream as well. For example, any exception from the `collect` body will be passed
+as `cause` to preceding [onCompletion] block.
+
+#### Imperative versus declarative
+
+Now we know how to collect flow, handle its completion and exceptions in both imperative and declarative ways.
+The natural question here is which approach should be preferred and why.
+As a library, we do not advocate for any particular approach and believe that both options
+are valid and should be selected according to your own preferences and code style. 
+
 ### Launching flow
 
 It is convenient to use flows to represent asynchronous events that are coming from some source.
@@ -1561,7 +1710,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-31.kt). 
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-34.kt). 
   
 As you can see, it prints:
 
@@ -1599,7 +1748,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-32.kt). 
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-35.kt). 
   
 It prints:
 
@@ -1624,7 +1773,7 @@ like `addEventListener`. However, there is no need for the corresponding `remove
 as cancellation and structured concurrency serve this purpose.
 
 Note, that [launchIn] also returns a [Job] which can be used to [cancel][Job.cancel] the corresponding flow collection
-coroutine only without cancelling the whole scope. 
+coroutine only without cancelling the whole scope or to [join][Job.join] it.
  
 <!-- stdlib references -->
 
@@ -1650,6 +1799,7 @@ coroutine only without cancelling the whole scope.
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
 [Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
 [Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html
+[Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/join.html
 <!--- INDEX kotlinx.coroutines.flow -->
 [Flow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html
 [flow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/flow.html
@@ -1680,5 +1830,6 @@ coroutine only without cancelling the whole scope.
 [DEFAULT_CONCURRENCY]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-d-e-f-a-u-l-t_-c-o-n-c-u-r-r-e-n-c-y.html
 [flatMapLatest]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/flat-map-latest.html
 [catch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/catch.html
+[onCompletion]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/on-completion.html
 [launchIn]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/launch-in.html
 <!--- END -->

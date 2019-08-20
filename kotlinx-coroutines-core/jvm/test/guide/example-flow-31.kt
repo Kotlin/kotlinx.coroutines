@@ -8,12 +8,19 @@ package kotlinx.coroutines.guide.flow31
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-// Imitate a flow of events
-fun events(): Flow<Int> = (1..3).asFlow().onEach { delay(100) }
+fun foo(): Flow<Int> = flow {
+    for (i in 1..3) {
+        println("Emitting $i")
+        emit(i)
+    }
+}
 
 fun main() = runBlocking<Unit> {
-    events()
-        .onEach { event -> println("Event: $event") }
-        .collect() // <--- Collecting the flow waits
-    println("Done")
+    try {
+        foo().collect { value ->
+            println("Collected $value") 
+        }
+    } finally {
+        println("Done")
+    }
 }            

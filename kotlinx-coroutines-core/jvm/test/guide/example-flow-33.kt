@@ -3,21 +3,22 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.flow32
+package kotlinx.coroutines.guide.flow33
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 fun foo(): Flow<Int> = flow {
-    for (i in 1..3) {
-        println("Emitting $i")
-        emit(i)
-    }
+    println("Emitting 1")
+    emit(1)
+    println("Emitting 2")
+    throw RuntimeException()
 }
 
 fun main() = runBlocking<Unit> {
     foo()
-        .onCompletion { println("Done") }
+        .onCompletion { cause -> if (cause != null) println("Flow completed exceptionally") }
+        .catch { cause -> println("Caught exception") }
         .collect { value ->
             println("Collected $value") 
         }
