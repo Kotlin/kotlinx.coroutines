@@ -104,7 +104,7 @@ public interface SendChannel<in E> {
     /**
      * Registers a `handler` which is synchronously invoked once the channel is [closed][close]
      * or the receiving side of this channel is [cancelled][ReceiveChannel.cancel].
-     * Only one handler can be attached to the channel during the channel's lifetime.
+     * Only one handler can be attached to a channel during its lifetime.
      * The `handler` is invoked when [isClosedForSend] starts to return `true`.
      * If the channel is closed already, the handler is invoked immediately.
      *
