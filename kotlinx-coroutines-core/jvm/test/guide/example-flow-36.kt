@@ -3,7 +3,7 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.flow35
+package kotlinx.coroutines.guide.flow36
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -14,6 +14,6 @@ fun events(): Flow<Int> = (1..3).asFlow().onEach { delay(100) }
 fun main() = runBlocking<Unit> {
     events()
         .onEach { event -> println("Event: $event") }
-        .collect() // <--- Collecting the flow waits
+        .launchIn(this) // <--- Launching the flow in a separate coroutine
     println("Done")
 }            

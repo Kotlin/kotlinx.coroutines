@@ -55,7 +55,8 @@ class FlowGuideTest {
   * [Flow completion](#flow-completion)
     * [Imperative finally block](#imperative-finally-block)
     * [Declarative handling](#declarative-handling)
-    * [Imperative versus declarative](#imperative-versus-declarative)
+    * [Upstream exceptions only](#upstream-exceptions-only)
+  * [Imperative versus declarative](#imperative-versus-declarative)
   * [Launching flow](#launching-flow)
 
 <!--- END_TOC -->
@@ -1551,18 +1552,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 //sampleStart
-fun foo(): Flow<Int> = flow {
-    for (i in 1..3) {
-        println("Emitting $i")
-        emit(i)
-    }
-}
+fun foo(): Flow<Int> = (1..3).asFlow()
 
 fun main() = runBlocking<Unit> {
     try {
-        foo().collect { value ->
-            println("Collected $value") 
-        }
+        foo().collect { value -> println(value) }
     } finally {
         println("Done")
     }
@@ -1574,62 +1568,55 @@ fun main() = runBlocking<Unit> {
 
 > You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-31.kt). 
 
-<!--- TEST 
-Emitting 1
-Collected 1
-Emitting 2
-Collected 2
-Emitting 3
-Collected 3
+This code prints three numbers produced by the `foo()` flow followed by "Done" string:
+
+```text
+1
+2
+3
 Done
--->
+```
+
+<!--- TEST  -->
 
 #### Declarative handling
 
 For declarative approach, flow has [onCompletion] intermediate operator that is invoked
 when the flow is completely collected.
 
-The previous example can be rewritten using [onCompletion] operator:
+The previous example can be rewritten using [onCompletion] operator and produces the same output:
+
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-//sampleStart
-fun foo(): Flow<Int> = flow {
-    for (i in 1..3) {
-        println("Emitting $i")
-        emit(i)
-    }
-}
+fun foo(): Flow<Int> = (1..3).asFlow()
 
 fun main() = runBlocking<Unit> {
+//sampleStart
     foo()
         .onCompletion { println("Done") }
-        .collect { value ->
-            println("Collected $value") 
-        }
-}            
+        .collect { value -> println(value) }
 //sampleEnd
+}            
 ```
 </div>
 
 > You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-32.kt). 
 
 <!--- TEST 
-Emitting 1
-Collected 1
-Emitting 2
-Collected 2
-Emitting 3
-Collected 3
+1
+2
+3
 Done
 -->
 
-
 The key advantage of [onCompletion] is a nullable `Throwable` parameter of the lambda that can be used
-to determine whether flow collection was completed normally or exceptionally.
+to determine whether flow collection was completed normally or exceptionally. In the following
+example `foo()` flow throws exception after emitting number 1:
+
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
@@ -1638,9 +1625,7 @@ import kotlinx.coroutines.flow.*
 
 //sampleStart
 fun foo(): Flow<Int> = flow {
-    println("Emitting 1")
     emit(1)
-    println("Emitting 2")
     throw RuntimeException()
 }
 
@@ -1648,9 +1633,7 @@ fun main() = runBlocking<Unit> {
     foo()
         .onCompletion { cause -> if (cause != null) println("Flow completed exceptionally") }
         .catch { cause -> println("Caught exception") }
-        .collect { value ->
-            println("Collected $value") 
-        }
+        .collect { value -> println(value) }
 }            
 //sampleEnd
 ```
@@ -1658,21 +1641,60 @@ fun main() = runBlocking<Unit> {
 
 > You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-33.kt). 
 
-As you may expect, it will print
+As you may expect, it prints:
+
 ```text
-Emitting 1
-Collected 1
-Emitting 2
+1
 Flow completed exceptionally
 Caught exception
 ```
-<!--- TEST --> 
 
-[onCompletion] operator, unlike [catch], receives exceptions not only from the upstream, 
-but from the downstream as well. For example, any exception from the `collect` body will be passed
-as `cause` to preceding [onCompletion] block.
+<!--- TEST -->
 
-#### Imperative versus declarative
+[onCompletion] operator, unlike [catch], does not handle the exception. As we can see from the above
+example code, the exception still flows downstream. It will be delivered to further `onCompletion` operators
+and can be handled with `catch` operator. 
+
+#### Upstream exceptions only
+
+Just like [catch] operator, [onCompletion] sees only exception coming from upstream and does not
+see downstream exceptions. For example, run the following code:
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+//sampleStart
+fun foo(): Flow<Int> = (1..3).asFlow()
+
+fun main() = runBlocking<Unit> {
+    foo()
+        .onCompletion { cause -> println("Flow completed with $cause") }
+        .collect { value ->
+            check(value <= 1) { "Collected $value" }                 
+            println(value) 
+        }
+}
+//sampleEnd
+```
+
+</div>
+
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-34.kt). 
+
+And you can see the completion cause is null, yet collection failed with exception:
+
+```text 
+1
+Flow completed with null
+Exception in thread "main" java.lang.IllegalStateException: Collected 2
+```
+
+<!--- TEST EXCEPTION -->
+
+### Imperative versus declarative
 
 Now we know how to collect flow, handle its completion and exceptions in both imperative and declarative ways.
 The natural question here is which approach should be preferred and why.
@@ -1710,7 +1732,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-34.kt). 
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-35.kt). 
   
 As you can see, it prints:
 
@@ -1748,7 +1770,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-35.kt). 
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-36.kt). 
   
 It prints:
 

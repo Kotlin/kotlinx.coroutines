@@ -324,12 +324,9 @@ class FlowGuideTest {
     @Test
     fun testKotlinxCoroutinesGuideFlow31() {
         test("KotlinxCoroutinesGuideFlow31") { kotlinx.coroutines.guide.flow31.main() }.verifyLines(
-            "Emitting 1",
-            "Collected 1",
-            "Emitting 2",
-            "Collected 2",
-            "Emitting 3",
-            "Collected 3",
+            "1",
+            "2",
+            "3",
             "Done"
         )
     }
@@ -337,12 +334,9 @@ class FlowGuideTest {
     @Test
     fun testKotlinxCoroutinesGuideFlow32() {
         test("KotlinxCoroutinesGuideFlow32") { kotlinx.coroutines.guide.flow32.main() }.verifyLines(
-            "Emitting 1",
-            "Collected 1",
-            "Emitting 2",
-            "Collected 2",
-            "Emitting 3",
-            "Collected 3",
+            "1",
+            "2",
+            "3",
             "Done"
         )
     }
@@ -350,9 +344,7 @@ class FlowGuideTest {
     @Test
     fun testKotlinxCoroutinesGuideFlow33() {
         test("KotlinxCoroutinesGuideFlow33") { kotlinx.coroutines.guide.flow33.main() }.verifyLines(
-            "Emitting 1",
-            "Collected 1",
-            "Emitting 2",
+            "1",
             "Flow completed exceptionally",
             "Caught exception"
         )
@@ -360,7 +352,16 @@ class FlowGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideFlow34() {
-        test("KotlinxCoroutinesGuideFlow34") { kotlinx.coroutines.guide.flow34.main() }.verifyLines(
+        test("KotlinxCoroutinesGuideFlow34") { kotlinx.coroutines.guide.flow34.main() }.verifyExceptions(
+            "1",
+            "Flow completed with null",
+            "Exception in thread \"main\" java.lang.IllegalStateException: Collected 2"
+        )
+    }
+
+    @Test
+    fun testKotlinxCoroutinesGuideFlow35() {
+        test("KotlinxCoroutinesGuideFlow35") { kotlinx.coroutines.guide.flow35.main() }.verifyLines(
             "Event: 1",
             "Event: 2",
             "Event: 3",
@@ -369,8 +370,8 @@ class FlowGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideFlow35() {
-        test("KotlinxCoroutinesGuideFlow35") { kotlinx.coroutines.guide.flow35.main() }.verifyLines(
+    fun testKotlinxCoroutinesGuideFlow36() {
+        test("KotlinxCoroutinesGuideFlow36") { kotlinx.coroutines.guide.flow36.main() }.verifyLines(
             "Done",
             "Event: 1",
             "Event: 2",

@@ -8,18 +8,11 @@ package kotlinx.coroutines.guide.flow31
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun foo(): Flow<Int> = flow {
-    for (i in 1..3) {
-        println("Emitting $i")
-        emit(i)
-    }
-}
+fun foo(): Flow<Int> = (1..3).asFlow()
 
 fun main() = runBlocking<Unit> {
     try {
-        foo().collect { value ->
-            println("Collected $value") 
-        }
+        foo().collect { value -> println(value) }
     } finally {
         println("Done")
     }
