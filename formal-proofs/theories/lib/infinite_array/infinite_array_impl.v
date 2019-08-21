@@ -512,7 +512,7 @@ Definition is_valid_prev γ (id: nat) (pl: val): iProp :=
    ∃ (pid: nat) (prevℓ: loc),
      ⌜pid < id⌝ ∧ ⌜pl = SOMEV #prevℓ⌝ ∧
      segment_location γ pid prevℓ ∗
-     [∗ list] j ∈ seq (S pid) id, segment_is_cancelled γ j)%I.
+     [∗ list] j ∈ seq (S pid) (id - S pid), segment_is_cancelled γ j)%I.
 
 Global Instance is_valid_prev_persistent γ id pl:
   Persistent (is_valid_prev γ id pl).
@@ -522,7 +522,7 @@ Definition is_valid_next γ (id: nat) (nl: val): iProp :=
   (∃ (nid: nat) (nextℓ: loc),
       ⌜id < nid⌝ ∧ ⌜nl = SOMEV #nextℓ⌝ ∧
       segment_location γ nid nextℓ ∗
-      [∗ list] j ∈ seq (S id) nid, segment_is_cancelled γ j)%I.
+      [∗ list] j ∈ seq (S id) (nid - S id), segment_is_cancelled γ j)%I.
 
 Global Instance is_valid_next_persistent γ id pl:
   Persistent (is_valid_prev γ id pl).
@@ -1470,7 +1470,69 @@ Proof.
   eauto 10 with iFrame.
 Qed.
 
+Lemma seq_add: forall m n k,
+    seq n (m + k)%nat = seq n m ++ seq (n + m)%nat k.
+Proof.
+  induction m; simpl; intros; first by rewrite Nat.add_0_r.
+  congr (cons n). replace (n + S m)%nat with (S n + m)%nat by lia.
+  by apply IHm.
+Qed.
+
+Lemma seq_app: forall m n k, (m <= k)%nat ->
+    seq n m ++ seq (n + m)%nat (k - m)%nat = seq n k.
+Proof.
+  intros m n k HLt.
+  replace k with (m + (k - m))%nat by lia.
+  rewrite seq_add. replace (m + (k - m) - m)%nat with (k - m)%nat by lia.
+  done.
+Qed.
+
+Lemma segment_cancelled__cells_cancelled γ id:
+  segment_is_cancelled γ id -∗
+  [∗ list] id ∈ seq (id * Pos.to_nat segment_size)%nat (Pos.to_nat segment_size),
+                       cell_is_cancelled γ id.
+Proof.
+  rewrite /segment_is_cancelled /cells_are_cancelled.
+  iIntros "#HOld".
+  iAssert ([∗ list] i ↦ v ∈ Vector.const true (Pos.to_nat segment_size),
+           cell_is_cancelled' γ id i)%I with "[HOld]" as "#HOld'".
+  {
+    iApply big_sepL_mono. 2: done.
+    iIntros (k y HEl). replace y with true. done.
+    revert HEl. rewrite -vlookup_lookup'.
+    case. intros ?. by rewrite Vector.const_nth.
+  }
+  rewrite big_sepL_forall.
+  rewrite big_sepL_forall.
+  iIntros (k x) "%".
+  assert (k < Pos.to_nat segment_size)%nat as HKLt. {
+    remember (seq _ _) as K. replace (Pos.to_nat segment_size) with (length K).
+    apply lookup_lt_is_Some_1; by eauto.
+    subst. by rewrite seq_length.
+  }
+  rewrite /cell_is_cancelled -(ias_cell_info_view_eq id k); try assumption.
+  { iApply "HOld'". iPureIntro.
+    rewrite -vlookup_lookup'. exists HKLt. done. }
+  rewrite Nat.add_comm. rewrite -(@seq_nth (Pos.to_nat segment_size) _ _ O).
+  2: by eauto.
+  Search _ nth lookup.
+  apply nth_lookup_Some with (d := O) in a.
+  done.
+Qed.
+
+Lemma seq_bind n m k:
+  seq n m ≫= (fun x => seq (x * k) k) = seq (n * k) (m * k).
+Proof.
+  unfold mbind.
+  generalize dependent n.
+  induction m; simpl; first done.
+  intros. rewrite seq_add IHm. simpl.
+  replace (k + n * k)%nat with (n * k + k)%nat by lia.
+  done.
+Qed.
+
 Theorem remove_segment_spec γ id (ℓ: loc):
+  segment_is_cancelled γ id -∗
   segment_location γ id ℓ -∗
   <<< ▷ is_infinite_array γ >>>
     (segment_remove segment_size) #ℓ @ ⊤
@@ -1478,7 +1540,7 @@ Theorem remove_segment_spec γ id (ℓ: loc):
                                     ∃ p n, ⌜v = SOMEV (p, n)⌝),
     RET v >>>.
 Proof.
-  iIntros "#HSegLoc". iIntros (Φ) "AU". wp_lam.
+  iIntros "#HSegCanc #HSegLoc". iIntros (Φ) "AU". wp_lam.
 
   awp_apply segment_prev_spec. iApply (aacc_aupd_abort with "AU"); first done.
   iIntros "HInfArr". iDestruct (is_segment_by_location with "HInfArr") as "HLoc".
@@ -1540,12 +1602,61 @@ Proof.
   iIntros "AU".
   iIntros "!> Hplℓ".
   wp_alloc nlℓ as "Hnlℓ".
-  (*
-  iMod (inv_alloc N _ (plℓ ↦ H3 ∗ nlℓ ↦ H8)%I with "[Hplℓ Hnlℓ]") as "#HHinv";
-    first by iFrame.
-  *)
-  wp_pures. wp_load.
-  iDestruct "HValidNext" as (nid nl) "(% & -> & #HNextSegLoc & #HNextCanc)".
+  iMod (inv_alloc N _ (∃ nℓ nid,
+    segment_location γ nid nℓ ∗
+    nlℓ ↦ SOMEV #nℓ ∗
+    ((plℓ ↦ NONEV ∗ ([∗ list] j ∈ seq 0 (nid * Pos.to_nat segment_size)%nat,
+      cell_is_cancelled γ j ∨ cell_is_done j)) ∨
+     (∃ pℓ pid, segment_location γ pid pℓ ∗
+                plℓ ↦ SOMEV #pℓ ∗
+                ⌜pid < nid⌝ ∗
+                ([∗ list] j ∈ seq (S pid) (nid - S pid),
+                  segment_is_cancelled γ j))))%I
+    with "[Hplℓ Hnlℓ]") as "#RemoveInv".
+  { iDestruct "HValidNext"
+      as (nid nextℓ) "(% & -> & #HNextSegLoc & HNextSegCanc)".
+    iExists nextℓ, nid. iFrame "HNextSegLoc". iFrame.
+    iDestruct "HValidPrev" as "[(-> & #HPrevCanc)|HH]".
+    { iLeft. iFrame.
+      replace (seq O (nid * Pos.to_nat segment_size)%nat) with
+          (seq O (id * Pos.to_nat segment_size)%nat ++
+               seq (O + id * Pos.to_nat segment_size)%nat
+               ((nid - id) * Pos.to_nat segment_size)%nat).
+      2: {
+        rewrite Nat.mul_sub_distr_r. apply seq_app.
+        apply mult_le_compat_r; lia.
+      }
+      rewrite big_sepL_app.
+      iFrame "HPrevCanc". simpl.
+      iApply (big_sepL_mono (fun k n => cell_is_cancelled γ n)); first by eauto.
+      replace (nid - id)%nat with (S (nid - S id)) by lia.
+      rewrite /= seq_add big_sepL_app.
+      iSplitL.
+      1: by iApply segment_cancelled__cells_cancelled.
+      Search _ big_opL bi_sep.
+      Print big_sepL_mono.
+      iDestruct (big_sepL_mono with "HNextSegCanc") as "HNextSegCanc'".
+      { iIntros (? ?) "_". iApply segment_cancelled__cells_cancelled. }
+      rewrite /= -big_sepL_bind. rewrite seq_bind.
+      simpl.
+      rewrite Nat.add_comm. done.
+    }
+    {
+      iDestruct "HH" as (pid prevℓ) "(% & -> & #HPrevSegLoc & #HPrevSegCanc)".
+      iRight. iExists _, _. iFrame "Hplℓ HPrevSegLoc".
+      iSplitR. by iPureIntro; lia.
+      rewrite -(seq_app (id - S pid) _ (nid - S pid)%nat).
+      2: by lia.
+      rewrite big_sepL_app; iFrame "HPrevSegCanc".
+      replace (S pid + (id - S pid))%nat with id by lia.
+      replace (nid - S pid - (id - S pid))%nat with (nid - id)%nat by lia.
+      rewrite -(seq_app 1%nat id).
+      2: by lia.
+      simpl. iFrame "HSegCanc". rewrite Nat.add_1_r.
+      replace (nid - id - 1)%nat with (nid - S id)%nat by lia.
+      done.
+    }
+  }
   wp_pures.
 
 Abort.
