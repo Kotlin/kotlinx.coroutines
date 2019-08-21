@@ -112,9 +112,10 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         queue: LockFreeLinkedListHead,
         element: E
     ) : AddLastDesc<SendBuffered<E>>(queue, SendBuffered(element)) {
-        override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? {
-            if (affected is ReceiveOrClosed<*>) return OFFER_FAILED
-            return null
+        override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? = when (affected) {
+            is Closed<*> -> affected
+            is ReceiveOrClosed<*> -> OFFER_FAILED
+            else -> null
         }
     }
 
@@ -332,10 +333,10 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     ) : RemoveFirstDesc<ReceiveOrClosed<E>>(queue) {
         @JvmField var resumeToken: Any? = null
 
-        override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? {
-            if (affected !is ReceiveOrClosed<*>) return OFFER_FAILED
-            if (affected is Closed<*>) return affected
-            return null
+        override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? = when (affected) {
+            is Closed<*> -> affected
+            !is ReceiveOrClosed<*> -> OFFER_FAILED
+            else -> null
         }
 
         override fun validatePrepared(node: ReceiveOrClosed<E>): Boolean {
@@ -633,10 +634,10 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         @JvmField var resumeToken: Any? = null
         @JvmField var pollResult: E? = null
 
-        override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? {
-            if (affected is Closed<*>) return affected
-            if (affected !is Send) return POLL_FAILED
-            return null
+        override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? = when (affected) {
+            is Closed<*> -> affected
+            !is Send -> POLL_FAILED
+            else -> null
         }
 
         @Suppress("UNCHECKED_CAST")
