@@ -47,7 +47,7 @@ public fun Executor.asCoroutineDispatcher(): CoroutineDispatcher =
 /**
  * Converts an instance of [CoroutineDispatcher] to an implementation of [Executor].
  *
- * It returns an original executor when used on the result of [Executor.asCoroutineDispatcher] extensions.
+ * It returns the original executor when used on the result of [Executor.asCoroutineDispatcher] extensions.
  */
 public fun CoroutineDispatcher.asExecutor(): Executor =
     (this as? ExecutorCoroutineDispatcher)?.executor ?: DispatcherExecutor(this)
