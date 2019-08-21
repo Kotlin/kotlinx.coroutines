@@ -52,12 +52,12 @@ class ExecutorsTest : TestBase() {
 
     @Test
     fun testDefaultDispatcherToExecutor() {
-        val latch = CountDownLatch(2)
+        val latch = CountDownLatch(1)
         Dispatchers.Default.asExecutor().execute {
             checkThreadName("DefaultDispatcher")
             latch.countDown()
         }
-        latch.countDown()
+        latch.await()
     }
 
     @Test
