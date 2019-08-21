@@ -15,10 +15,14 @@ class RendezvousChannelStressTest : TestBase() {
         val valueReceived = AtomicBoolean(false)
         try {
             thread {
-                var i = 0L
-                while (!valueReceived.get()) {
-                    i++
-                    channel.offer(i)
+                try {
+                    var i = 0L
+                    while (!valueReceived.get()) {
+                        i++
+                        channel.offer(i)
+                    }
+                } catch (e: ClosedSendChannelException) {
+
                 }
             }
 
@@ -35,10 +39,14 @@ class RendezvousChannelStressTest : TestBase() {
         val valueReceived = AtomicBoolean(false)
         try {
             thread {
-                var i = 0L
-                while (!valueReceived.get()) {
-                    i++
-                    channel.offer(i)
+                try {
+                    var i = 0L
+                    while (!valueReceived.get()) {
+                        i++
+                        channel.offer(i)
+                    }
+                } catch (e: ClosedSendChannelException){
+
                 }
             }
 
