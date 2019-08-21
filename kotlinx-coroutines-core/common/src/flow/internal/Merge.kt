@@ -38,11 +38,11 @@ internal class ChannelFlowTransformLatest<T, R>(
 }
 
 internal class ChannelFlowMerge<T>(
-    flow: Flow<Flow<T>>,
+    private val flow: Flow<Flow<T>>,
     private val concurrency: Int,
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = Channel.BUFFERED
-) : ChannelFlowOperator<Flow<T>, T>(flow, context, capacity) {
+) : ChannelFlow<T>(context, capacity) {
     override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
         ChannelFlowMerge(flow, concurrency, context, capacity)
 
@@ -50,9 +50,9 @@ internal class ChannelFlowMerge<T>(
         return scope.flowProduce(context, capacity, block = collectToFun)
     }
 
-    // The actual merge implementation with concurrency limit
-    private suspend fun mergeImpl(scope: CoroutineScope, collector: SendingCollector<T>) {
+    override suspend fun collectTo(scope: ProducerScope<T>) {
         val semaphore = Semaphore(concurrency)
+        val collector = SendingCollector(scope)
         val job: Job? = coroutineContext[Job]
         flow.collect { inner ->
             /*
@@ -71,22 +71,6 @@ internal class ChannelFlowMerge<T>(
             }
         }
     }
-
-    override suspend fun flowCollect(collector: FlowCollector<T>) {
-        assert { collector !is SendingCollector<*> }
-        coroutineScope {
-            val output = produce<T>(capacity = capacity) {
-                mergeImpl(this, SendingCollector(this))
-            }
-            output.consumeEach {
-                collector.emit(it)
-            }
-        }
-    }
-
-    // Slow path when output channel is required (and was created)
-    override suspend fun collectTo(scope: ProducerScope<T>) =
-        mergeImpl(scope, SendingCollector(scope))
 
     override fun additionalToStringProps(): String =
         "concurrency=$concurrency, "
