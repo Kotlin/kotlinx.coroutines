@@ -203,20 +203,20 @@ public fun <T> flowViaChannel(
 
 /**
  * Creates an instance of the cold [Flow] with elements that are sent to a [SendChannel]
- * that is provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
- * produced by the code that is running in a different context or running concurrently.
- * The resulting flow is _cold_, which means that [block] is called on each call of a terminal operator
- * on the resulting flow.
+ * provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
+ * produced by code that is running in a different context or concurrently.
+ * The resulting flow is _cold_, which means that [block] is called every time a terminal operator
+ * is applied to the resulting flow.
  *
  * This builder ensures thread-safety and context preservation, thus the provided [ProducerScope] can be used
  * concurrently from different contexts.
- * The resulting flow completes as soon as the code in the [block] and all its children complete.
+ * The resulting flow completes as soon as the code in the [block] and all its children completes.
  * Use [awaitClose] as the last statement to keep it running.
- * For more detailed example please refer to [callbackFlow] documentation.
+ * A more detailed example is provided in the documentation of [callbackFlow].
  *
- * A channel with [default][Channel.BUFFERED] buffer size is used. Use [buffer] operator on the
- * resulting flow to specify a value other than default and to control what happens when data is produced faster
- * than it is consumed, that is to control backpressure behavior.
+ * A channel with the [default][Channel.BUFFERED] buffer size is used. Use the [buffer] operator on the
+ * resulting flow to specify a user-defined value and to control what happens when data is produced faster
+ * than consumed, i.e. to control the back-pressure behavior.
  *
  * Adjacent applications of [channelFlow], [flowOn], [buffer], [produceIn], and [broadcastIn] are
  * always fused so that only one properly configured channel is used for execution.
@@ -251,22 +251,22 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
 
 /**
  * Creates an instance of the cold [Flow] with elements that are sent to a [SendChannel]
- * that is provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
- * produced by the code that is running in a different context or running concurrently.
+ * provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
+ * produced by code that is running in a different context or concurrently.
  *
- * The resulting flow is _cold_, which means that [block] is called on each call of a terminal operator
- * on the resulting flow.
+ * The resulting flow is _cold_, which means that [block] is called every time a terminal operator
+ * is applied to the resulting flow.
  *
  * This builder ensures thread-safety and context preservation, thus the provided [ProducerScope] can be used
- * from any context, e.g. from the callback-based API.
- * The resulting flow completes as soon as the code in the [block] and all its children complete.
+ * from any context, e.g. from a callback-based API.
+ * The resulting flow completes as soon as the code in the [block] and all its children completes.
  * Use [awaitClose] as the last statement to keep it running.
- * [awaitClose] argument is called when either flow consumer cancels flow collection
- * or when callback-based API invokes [SendChannel.close] manually.
+ * The [awaitClose] argument is called either when a flow consumer cancels the flow collection
+ * or when a callback-based API invokes [SendChannel.close] manually.
  *
- * A channel with [default][Channel.BUFFERED] buffer size is used. Use [buffer] operator on the
- * resulting flow to specify a value other than default and to control what happens when data is produced faster
- * than it is consumed, that is to control backpressure behavior.
+ * A channel with the [default][Channel.BUFFERED] buffer size is used. Use the [buffer] operator on the
+ * resulting flow to specify a user-defined value and to control what happens when data is produced faster
+ * than consumed, i.e. to control the back-pressure behavior.
  *
  * Adjacent applications of [callbackFlow], [flowOn], [buffer], [produceIn], and [broadcastIn] are
  * always fused so that only one properly configured channel is used for execution.
