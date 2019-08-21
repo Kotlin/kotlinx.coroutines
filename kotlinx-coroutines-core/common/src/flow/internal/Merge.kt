@@ -37,7 +37,7 @@ internal class ChannelFlowTransformLatest<T, R>(
     }
 }
 
-internal class ChannelFlowMerge<T>  (
+internal class ChannelFlowMerge<T>(
     flow: Flow<Flow<T>>,
     private val concurrency: Int,
     context: CoroutineContext = EmptyCoroutineContext,
