@@ -419,7 +419,7 @@ response 3
 
 Among the flow transformation operators, the most general one is called [transform]. It can be used to imitate
 simple transformations like [map] and [filter] as well as implement more complex transformations. 
-Using `transform` operator, you can [emit][FlowCollector.emit] arbitrary values arbitrary number of times.
+Using `transform` operator, you can [emit][FlowCollector.emit] arbitrary values an arbitrary number of times.
 
 For example, using `transform` we can emit a string before performing a long-running asynchronous request 
 and follow it with a response:
@@ -607,15 +607,14 @@ Filter 5
 ### Flow context
 
 Collection of a flow always happens in the context of the calling coroutine. For example, if there is 
-a function `foo()` that returns a flow, then the following code runs in the context specified
-by the author of this code, regardless of implementation details of the flow returned
-by `foo()`:
+a `foo` flow, then the following code runs in the context specified
+by the author of this code, regardless of implementation details of the `foo` flow:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 withContext(context) {
-    foo().collect { value ->
+    foo.collect { value ->
         println(value) // run in the specified context 
     }
 }
@@ -718,7 +717,7 @@ Exception in thread "main" java.lang.IllegalStateException: Flow invariant is vi
 	at ...
 -->
    
-> Note that we had to use a fully qualified name of [kotlinx.coroutines.withContext] function in this example to 
+> Note that we had to use a fully qualified name of [kotlinx.coroutines.withContext][withContext] function in this example to 
 demonstrate this exception. A short name of `withContext` would have resolved to a special stub function that
 produces compilation error to prevent us from running into this problem.   
 
@@ -1402,7 +1401,7 @@ and react to it in different ways depending on which exception was caught:
 * Exceptions can be turned into emission of values using [emit][FlowCollector.emit] from the body of [catch].
 * Exceptions can be ignored, logged, or processed by some other code.
 
-For example, let us emit a text of cathing an exception:
+For example, let us emit a text on catching an exception:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -1709,7 +1708,7 @@ on incoming events and continues further work. The [onEach] operator can serve t
 However, `onEach` is an intermediate operator. We also need a terminal operator to collect the flow. 
 Otherwise, just calling `onEach` has no effect.
  
-If we use [collect] terminal operator after `oneEach` then code after it waits until the flow is collected:
+If we use [collect] terminal operator after `onEach` then code after it waits until the flow is collected:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -1790,7 +1789,7 @@ and keeps the main function from returning and terminating this example.
 
 In real applications a scope is going to come from some entity with a limited 
 lifetime. As soon as the lifetime of this entity is terminated the corresponding scope is cancelled, cancelling
-collection of the corresponding flow. This way the pair of `onEach { ... }.collectIn(scope)` works
+collection of the corresponding flow. This way the pair of `onEach { ... }.launchIn(scope)` works
 like `addEventListener`. However, there is no need for the corresponding `removeEventListener` function, 
 as cancellation and structured concurrency serve this purpose.
 
@@ -1815,7 +1814,6 @@ coroutine only without cancelling the whole scope or to [join][Job.join] it.
 [Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
 [Dispatchers.Main]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html
-[kotlinx.coroutines.withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html
 [CoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
