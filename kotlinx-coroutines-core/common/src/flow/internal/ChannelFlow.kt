@@ -58,7 +58,7 @@ public abstract class ChannelFlow<T>(
     protected abstract suspend fun collectTo(scope: ProducerScope<T>)
 
     // shared code to create a suspend lambda from collectTo function in one place
-    private val collectToFun: suspend (ProducerScope<T>) -> Unit
+    internal val collectToFun: suspend (ProducerScope<T>) -> Unit
         get() = { collectTo(it) }
 
     private val produceCapacity: Int
@@ -140,13 +140,11 @@ internal class ChannelFlowOperatorImpl<T>(
 private fun <T> FlowCollector<T>.withUndispatchedContextCollector(emitContext: CoroutineContext): FlowCollector<T> = when (this) {
     // SendingCollector & NopCollector do not care about the context at all and can be used as is
     is SendingCollector, is NopCollector -> this
-    // Original collector is concurrent, so wrap into ConcurrentUndispatchedContextCollector (also concurrent)
-    is ConcurrentFlowCollector -> ConcurrentUndispatchedContextCollector(this, emitContext)
     // Otherwise just wrap into UndispatchedContextCollector interface implementation
     else -> UndispatchedContextCollector(this, emitContext)
 }
 
-private open class UndispatchedContextCollector<T>(
+private class UndispatchedContextCollector<T>(
     downstream: FlowCollector<T>,
     private val emitContext: CoroutineContext
 ) : FlowCollector<T> {
@@ -156,12 +154,6 @@ private open class UndispatchedContextCollector<T>(
     override suspend fun emit(value: T): Unit =
         withContextUndispatched(emitContext, countOrElement, emitRef, value)
 }
-
-// named class for a combination of UndispatchedContextCollector & ConcurrentFlowCollector interface
-private class ConcurrentUndispatchedContextCollector<T>(
-    downstream: ConcurrentFlowCollector<T>,
-    emitContext: CoroutineContext
-) : UndispatchedContextCollector<T>(downstream, emitContext), ConcurrentFlowCollector<T>
 
 // Efficiently computes block(value) in the newContext
 private suspend fun <T, V> withContextUndispatched(
