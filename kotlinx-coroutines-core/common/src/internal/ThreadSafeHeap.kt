@@ -33,7 +33,7 @@ public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHe
     public val isEmpty: Boolean get() = size == 0
 
     public fun clear() = synchronized(this) {
-        a?.let { clear(it) }
+        a?.fill(null)
         _size.value = 0
     }
 
@@ -157,5 +157,3 @@ public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHe
         nj.index = j
     }
 }
-
-internal expect fun <T> clear(a: Array<T?>)
