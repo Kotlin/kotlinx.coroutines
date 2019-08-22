@@ -9,7 +9,7 @@ This package provides testing utilities for effectively testing coroutines.
 Add `kotlinx-coroutines-test` to your project test dependencies:
 ```
 dependencies {
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.3.0-RC'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.3.0-RC2'
 }
 ```
 
