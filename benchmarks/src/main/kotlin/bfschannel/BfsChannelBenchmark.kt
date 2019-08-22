@@ -20,18 +20,18 @@ import kotlin.collections.ArrayList
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-val GRAPH_FILES = listOf(
+private val GRAPH_FILES = listOf(
         Triple("RAND-1M-10M", "rand", "1000000 10000000"), // 1M nodes and 10M edges
         Triple("USA-DISTANCE", "gr gz", "http://www.dis.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.USA.gr.gz"),
         Triple("LIVE-JOURNAL", "txt gz", "https://snap.stanford.edu/data/soc-LiveJournal1.txt.gz"))
 /**
  * Iterations count for each graph
  */
-const val GRAPH_BSF_ITERATIONS = 5
+private const val ITERATIONS = 5
 /**
  * Number of coroutines that are used to execute bfs in parallel
  */
-val WORKERS = listOf(1, 4, 8, 16)
+private val WORKERS = listOf(1, 4, 8, 16)
 
 /**
  * This benchmark tests channel as a working queue, as a queue under contention.
@@ -46,20 +46,24 @@ fun main() {
         val nodes = graph.size
         val startNode = graph[0]
 
-        for (threads in WORKERS) {
-            // warm up
-            runGraphBfs(startNode, nodes, threads)
+        // warmup
+        val (_, sequentialDistances) = runSequentialBfs(startNode, nodes)
+
+        // benchmark iterations
+        val sequentialExecutionTimes = (1..ITERATIONS).map { runSequentialBfs(startNode, nodes).first }.toList()
+
+        for (workers in WORKERS) {
+            // warmup
+            runParallelBfs(startNode, nodes, workers)
 
             // benchmark iterations
-            val parallelExecutionTimes = ArrayList<Long>()
-            val sequentialExecutionTimes = ArrayList<Long>()
-            repeat(GRAPH_BSF_ITERATIONS) {
-                val (parallelExecutionTime, sequentialExecutionTime) = runGraphBfs(startNode, nodes, threads)
-                parallelExecutionTimes += parallelExecutionTime
-                sequentialExecutionTimes += sequentialExecutionTime
-            }
+            val parallelExecutionTimes = (1..ITERATIONS).map {
+                val (executionTime, parallelDistances) = runParallelBfs(startNode, nodes, workers)
+                check(parallelDistances == sequentialDistances)
+                executionTime
+            }.toList()
 
-            println("parallel workers count = $threads, parallel execution time = ${parallelExecutionTimes.average() / 1_000_000}ms std = ${computeStandardDeviation(parallelExecutionTimes) / 1_000_000}ms, sequential execution time = ${sequentialExecutionTimes.average() / 1_000_000}ms std = ${computeStandardDeviation(sequentialExecutionTimes) / 1_000_000}ms")
+            println("parallel workers count = $workers, parallel execution time = ${parallelExecutionTimes.average() / 1_000_000}ms std = ${computeStandardDeviation(parallelExecutionTimes) / 1_000_000}ms, sequential execution time = ${sequentialExecutionTimes.average() / 1_000_000}ms std = ${computeStandardDeviation(sequentialExecutionTimes) / 1_000_000}ms")
         }
     }
 }
@@ -77,18 +81,20 @@ fun computeStandardDeviation(list : List<Long>) : Double {
     return sqrt(standardDeviation / list.size)
 }
 
-private fun runGraphBfs(startNode: Node, nodes: Int, parallelism: Int) : Pair<Long, Long> {
-    val parallelBfsStartTime = System.nanoTime()
-    val parallelDistance = bfsParallel(startNode, nodes, parallelism)
-    val parallelBfsEndTime = System.nanoTime()
-    val sequentialDistance = bfsSequential(startNode, nodes)
-    val sequentialBfsEndTime = System.nanoTime()
-    check(parallelDistance == sequentialDistance)
+private fun runParallelBfs(startNode: Node, nodes: Int, workers: Int) : Pair<Long, List<Long>> {
+    val start = System.nanoTime()
+    val parallelDistances = bfsParallel(startNode, nodes, workers)
+    val end = System.nanoTime()
 
-    val parallelExecutionTime = parallelBfsEndTime - parallelBfsStartTime
-    val sequentialExecutionTime = sequentialBfsEndTime - parallelBfsEndTime
+    return Pair(end - start, parallelDistances)
+}
 
-    return Pair(parallelExecutionTime, sequentialExecutionTime)
+private fun runSequentialBfs(startNode: Node, nodes: Int) : Pair<Long, List<Long>> {
+    val start = System.nanoTime()
+    val sequentialDistances = bfsSequential(startNode, nodes)
+    val end = System.nanoTime()
+
+    return Pair(end - start, sequentialDistances)
 }
 
 fun bfsSequential(startNode: Node, nodes: Int): List<Long> {
@@ -117,11 +123,10 @@ fun bfsParallel(start: Node, nodes: Int, workers: Int): List<Long> {
     // The distance to the start node is `0`
     distances[start.id].set(0)
 
-    val queue : Channel<Node> = UnlimitedChannel(workers)
+    val queue : Channel<Node> = SelfClosingChannel(workers)
     queue.offer(start)
     // Run worker threads and wait until the total work is done
     val jobs = ArrayList<Job>()
-    val list = ConcurrentSkipListSet<Int>()
     repeat(workers) {
         jobs += GlobalScope.launch {
             while (true) {
@@ -129,7 +134,6 @@ fun bfsParallel(start: Node, nodes: Int, workers: Int): List<Long> {
                 for (edge in currentNode.outgoingEdges) {
                     processEdge(distances, currentNode, edge.to, queue)
                 }
-                list.add(currentNode.id)
             }
         }
     }
@@ -138,7 +142,6 @@ fun bfsParallel(start: Node, nodes: Int, workers: Int): List<Long> {
         for (job in jobs) {
             job.join()
         }
-        queue.close()
     }
     // Return the result
     return distances.map { long -> long.toLong() }
@@ -169,13 +172,13 @@ class Node(val id: Int) {
 }
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
-internal class UnlimitedChannel<E>(private val workers : Int) : LinkedListChannel<E>() {
+internal class SelfClosingChannel<E>(private val maximumEnqueuedCoroutines : Int) : LinkedListChannel<E>() {
     private val counter = AtomicLong(0)
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onReceiveEnqueued() {
-        val incrementAndGet = counter.incrementAndGet()
-        if (incrementAndGet >= workers) {
+        val enqueuedCoroutines = counter.incrementAndGet()
+        if (enqueuedCoroutines >= maximumEnqueuedCoroutines) {
             close()
         }
     }
