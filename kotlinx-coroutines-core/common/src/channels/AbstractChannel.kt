@@ -172,16 +172,20 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         loop@ while (true) {
             if (full) {
                 val send = SendElement(element, cont)
-                when (val enqueueResult = enqueueSend(send)) {
-                    null -> { // enqueued successfully
+                val enqueueResult = enqueueSend(send)
+                when {
+                    enqueueResult == null -> { // enqueued successfully
                         cont.removeOnCancellation(send)
                         return@sc
                     }
-                    is Closed<*> -> {
+                    enqueueResult is Closed<*> -> {
                         helpClose(enqueueResult)
                         cont.resumeWithException(enqueueResult.sendException)
                         return@sc
                     }
+                    enqueueResult === ENQUEUE_FAILED -> {} // try to offer instead
+                    enqueueResult is Receive<*> -> {} // try to offer instead
+                    else -> error("enqueueSend returned $enqueueResult")
                 }
             }
             // hm... receiver is waiting or buffer is not full. try to offer
@@ -360,15 +364,19 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
             if (select.isSelected) return
             if (full) {
                 val node = SendSelect(element, this, select, block)
-                when (val enqueueResult = enqueueSend(node)) {
-                    null -> { // enqueued successfully
+                val enqueueResult = enqueueSend(node)
+                when {
+                    enqueueResult == null -> { // enqueued successfully
                         select.disposeOnSelect(node)
                         return
                     }
-                    is Closed<*> -> {
+                    enqueueResult is Closed<*> -> {
                         helpClose(enqueueResult)
                         throw recoverStackTrace(enqueueResult.sendException)
                     }
+                    enqueueResult === ENQUEUE_FAILED -> {} // try to offer
+                    enqueueResult is Receive<*> -> {} // try to offer
+                    else -> error("enqueueSend returned $enqueueResult ")
                 }
             }
             // hm... receiver is waiting or buffer is not full. try to offer
@@ -870,7 +878,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                 else -> cont.resumeWithException(closed.receiveException)
             }
         }
-        override fun toString(): String = "ReceiveElement[$cont,receiveMode=$receiveMode]"
+        override fun toString(): String = "ReceiveElement[receiveMode=$receiveMode]"
     }
 
     private class ReceiveHasNext<E>(
@@ -910,7 +918,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                 cont.completeResume(token)
             }
         }
-        override fun toString(): String = "ReceiveHasNext[$cont]"
+        override fun toString(): String = "ReceiveHasNext"
     }
 
     private class ReceiveSelect<R, E>(
@@ -1028,7 +1036,7 @@ internal class SendElement(
     override fun tryResumeSend(idempotent: Any?): Any? = cont.tryResume(Unit, idempotent)
     override fun completeResumeSend(token: Any) = cont.completeResume(token)
     override fun resumeSendClosed(closed: Closed<*>) = cont.resumeWithException(closed.sendException)
-    override fun toString(): String = "SendElement($pollResult)[$cont]"
+    override fun toString(): String = "SendElement($pollResult)"
 }
 
 /**
