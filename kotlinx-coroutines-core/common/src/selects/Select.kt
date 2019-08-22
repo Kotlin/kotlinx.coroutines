@@ -111,11 +111,6 @@ public interface SelectInstance<in R> {
     public fun performAtomicTrySelect(desc: AtomicDesc): Any?
 
     /**
-     * Performs action atomically when [isSelected] is `false`.
-     */
-    public fun performAtomicIfNotSelected(desc: AtomicDesc): Any?
-
-    /**
      * Returns completion continuation of this select instance.
      * This select instance must be _selected_ first.
      * All resumption through this instance happen _directly_ without going through dispatcher ([MODE_DIRECT]).
@@ -129,6 +124,7 @@ public interface SelectInstance<in R> {
 
     /**
      * Disposes the specified handle when this instance is selected.
+     * Note, that [DisposableHandle.dispose] could be called multiple times.
      */
     public fun disposeOnSelect(handle: DisposableHandle)
 }
@@ -329,16 +325,14 @@ internal class SelectBuilderImpl<in R>(
 
     override fun disposeOnSelect(handle: DisposableHandle) {
         val node = DisposeNode(handle)
-        while (true) { // lock-free loop on state
-            val state = this.state
-            if (state === this) {
-                if (addLastIf(node, { this.state === this }))
-                    return
-            } else { // already selected
-                handle.dispose()
-                return
-            }
+        // check-add-check pattern is Ok here since handle.dispose() is safe to be called multiple times
+        if (!isSelected) {
+            addLast(node) // add handle to list
+            // double-check node after adding
+            if (!isSelected) return // all ok - still not selected
         }
+        // already selected
+        handle.dispose()
     }
 
     private fun doAfterSelect() {
@@ -368,12 +362,11 @@ internal class SelectBuilderImpl<in R>(
         }
     }
 
-    override fun performAtomicTrySelect(desc: AtomicDesc): Any? = AtomicSelectOp(desc, true).perform(null)
-    override fun performAtomicIfNotSelected(desc: AtomicDesc): Any? = AtomicSelectOp(desc, false).perform(null)
+    override fun performAtomicTrySelect(desc: AtomicDesc): Any? =
+        AtomicSelectOp(desc).perform(null)
 
     private inner class AtomicSelectOp(
-        @JvmField val desc: AtomicDesc,
-        @JvmField val select: Boolean
+        @JvmField val desc: AtomicDesc
     ) : AtomicOp<Any?>() {
         override fun prepare(affected: Any?): Any? {
             // only originator of operation makes preparation move of installing descriptor into this selector's state
@@ -405,7 +398,7 @@ internal class SelectBuilderImpl<in R>(
         }
 
         private fun completeSelect(failure: Any?) {
-            val selectSuccess = select && failure == null
+            val selectSuccess = failure == null
             val update = if (selectSuccess) null else this@SelectBuilderImpl
             if (_state.compareAndSet(this@AtomicSelectOp, update)) {
                 if (selectSuccess)

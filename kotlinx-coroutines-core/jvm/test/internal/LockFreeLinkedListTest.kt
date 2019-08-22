@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -48,29 +48,6 @@ class LockFreeLinkedListTest {
     }
 
     @Test
-    fun testRemoveTwoAtomic() {
-        val list = LockFreeLinkedListHead()
-        val n1 = IntNode(1).apply { list.addLast(this) }
-        val n2 = IntNode(2).apply { list.addLast(this) }
-        assertContents(list, 1, 2)
-        assertFalse(n1.isRemoved)
-        assertFalse(n2.isRemoved)
-        val remove1Desc = n1.describeRemove()!!
-        val remove2Desc = n2.describeRemove()!!
-        val operation = object : AtomicOp<Any?>() {
-            override fun prepare(affected: Any?): Any? = remove1Desc.prepare(this) ?: remove2Desc.prepare(this)
-            override fun complete(affected: Any?, failure: Any?) {
-                remove1Desc.complete(this, failure)
-                remove2Desc.complete(this, failure)
-            }
-        }
-        assertTrue(operation.perform(null) == null)
-        assertTrue(n1.isRemoved)
-        assertTrue(n2.isRemoved)
-        assertContents(list)
-    }
-
-    @Test
     fun testAtomicOpsSingle() {
         val list = LockFreeLinkedListHead()
         assertContents(list)
@@ -82,16 +59,6 @@ class LockFreeLinkedListTest {
         assertContents(list, 1, 2, 3)
         val n4 = IntNode(4).also { single(list.describeAddLast(it)) }
         assertContents(list, 1, 2, 3, 4)
-        single(n3.describeRemove()!!)
-        assertContents(list, 1, 2, 4)
-        assertTrue(n3.describeRemove() == null)
-        single(list.describeRemoveFirst())
-        assertContents(list, 2, 4)
-        assertTrue(n1.describeRemove() == null)
-        assertTrue(n2.remove())
-        assertContents(list, 4)
-        assertTrue(n4.remove())
-        assertContents(list)
     }
 
     private fun single(part: AtomicDesc) {

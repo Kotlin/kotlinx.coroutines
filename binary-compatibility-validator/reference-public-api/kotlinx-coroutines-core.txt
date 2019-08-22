@@ -1046,7 +1046,6 @@ public final class kotlinx/coroutines/selects/SelectBuilderImpl : kotlinx/corout
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
 	public fun isSelected ()Z
 	public fun onTimeout (JLkotlin/jvm/functions/Function1;)V
-	public fun performAtomicIfNotSelected (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
 	public fun performAtomicTrySelect (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
 	public fun resumeSelectCancellableWithException (Ljava/lang/Throwable;)V
 	public fun resumeWith (Ljava/lang/Object;)V
@@ -1069,7 +1068,6 @@ public abstract interface class kotlinx/coroutines/selects/SelectInstance {
 	public abstract fun disposeOnSelect (Lkotlinx/coroutines/DisposableHandle;)V
 	public abstract fun getCompletion ()Lkotlin/coroutines/Continuation;
 	public abstract fun isSelected ()Z
-	public abstract fun performAtomicIfNotSelected (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
 	public abstract fun performAtomicTrySelect (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
 	public abstract fun resumeSelectCancellableWithException (Ljava/lang/Throwable;)V
 	public abstract fun trySelect (Ljava/lang/Object;)Z
