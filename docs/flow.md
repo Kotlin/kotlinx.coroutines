@@ -132,7 +132,7 @@ This code outputs the same numbers, but it waits 100ms before printing each one.
 
 However, this computation blocks the main thread that is running the code. 
 When those values are computed by an asynchronous code we can mark function `foo` with a `suspend` modifier,
-so that it can perform its work without blocking and return result as a list:
+so that it can perform its work without blocking and return the result as a list:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -287,7 +287,7 @@ that is why we see that when we call `collect` again, we get "Flow started" prin
 
 Flow adheres to general cooperative cancellation of coroutines. However, flow infrastructure does not introduce
 additional cancellation points. It is fully transparent for cancellation. As usual, flow collection can be 
-cancelled when flow is suspended in a cancellable suspending function (like [delay]) and cannot be cancelled otherwise.
+cancelled when the flow is suspended in a cancellable suspending function (like [delay]) and cannot be cancelled otherwise.
 
 The following example shows how the flow gets cancelled on timeout when running in [withTimeoutOrNull] block 
 and stops executing its code:
@@ -370,7 +370,7 @@ fun main() = runBlocking<Unit> {
 
 Flows can be transformed with operators similarly to collections and sequences. 
 Intermediate operators are applied to an upstream flow and return a downstream flow. 
-These operators are cold just like flows are. A call to such an operator is not
+These operators are cold, just like flows are. A call to such an operator is not
 a suspending function itself. It works quickly, returning the definition of a new transformed flow. 
 
 The basic operators have familiar names like [map] and [filter]. 
@@ -627,7 +627,7 @@ withContext(context) {
 This property of a flow is called _context preservation_.
 
 So, by default, code in the `flow { ... }` builder runs in the context that is provided by a collector
-of the corresponding flow. For example, consider implementation of `foo` that prints the thread
+of the corresponding flow. For example, consider the implementation of `foo` that prints the thread
 it is called on and emits three numbers:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
@@ -673,7 +673,7 @@ does not block the caller.
 
 #### Wrong emission withContext
 
-However, long-running CPU-consuming code might need to be executed in the context of [Dispatchers.Default] and UI-updating
+However, the long-running CPU-consuming code might need to be executed in the context of [Dispatchers.Default] and UI-updating
 code might need to be executed in the context of [Dispatchers.Main]. Usually, [withContext] is used
 to change the context in code using Kotlin coroutines, but code in the `flow { ... }` builder has to honor context
 preservation property and is not allowed to [emit][FlowCollector.emit] from a different context. 
@@ -876,7 +876,7 @@ but here we explicitly request buffering without changing execution context.
 #### Conflation
 
 When flow represents partial results of some operation or operation status updates, it may not be necessary
-to process each value, but only to process the most recent ones. In this case [conflate] operator can be used to skip
+to process each value, but only to process the most recent ones. In this case, [conflate] operator can be used to skip
 intermediate values when a collector is too slow to process them. Building on the previous example:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
@@ -1446,7 +1446,7 @@ Caught java.lang.IllegalStateException: Crashed on 2
 #### Transparent catch
 
 The [catch] intermediate operator, honoring exception transparency, catches only upstream exceptions
-(that is exception from all the operators above `catch`, but not below it).
+(that is an exception from all the operators above `catch`, but not below it).
 If the block in `collect { ... }` (placed below `catch`) throws an exception then it escapes:  
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
@@ -1703,12 +1703,12 @@ are valid and should be selected according to your own preferences and code styl
 ### Launching flow
 
 It is convenient to use flows to represent asynchronous events that are coming from some source.
-In this case we need an analogue of `addEventListener` function that registers a piece of code with reaction
+In this case, we need an analogue of `addEventListener` function that registers a piece of code with a reaction
 on incoming events and continues further work. The [onEach] operator can serve this role. 
 However, `onEach` is an intermediate operator. We also need a terminal operator to collect the flow. 
 Otherwise, just calling `onEach` has no effect.
  
-If we use [collect] terminal operator after `onEach` then code after it waits until the flow is collected:
+If we use [collect] terminal operator after `onEach`, then code after it waits until the flow is collected:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
