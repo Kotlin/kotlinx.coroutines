@@ -293,6 +293,7 @@ public abstract class kotlinx/coroutines/ExecutorCoroutineDispatcher : kotlinx/c
 }
 
 public final class kotlinx/coroutines/ExecutorsKt {
+	public static final fun asExecutor (Lkotlinx/coroutines/CoroutineDispatcher;)Ljava/util/concurrent/Executor;
 	public static final fun from (Ljava/util/concurrent/Executor;)Lkotlinx/coroutines/CoroutineDispatcher;
 	public static final fun from (Ljava/util/concurrent/ExecutorService;)Lkotlinx/coroutines/ExecutorCoroutineDispatcher;
 }
