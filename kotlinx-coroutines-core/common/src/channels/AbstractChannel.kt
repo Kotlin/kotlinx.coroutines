@@ -169,17 +169,19 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     }
 
     private suspend fun sendSuspend(element: E): Unit = suspendAtomicCancellableCoroutine sc@ { cont ->
-        val send = SendElement(element, cont)
         loop@ while (true) {
-            when (val enqueueResult = enqueueSend(send)) {
-                null -> { // enqueued successfully
-                    cont.removeOnCancellation(send)
-                    return@sc
-                }
-                is Closed<*> -> {
-                    helpClose(enqueueResult)
-                    cont.resumeWithException(enqueueResult.sendException)
-                    return@sc
+            if (full) {
+                val send = SendElement(element, cont)
+                when (val enqueueResult = enqueueSend(send)) {
+                    null -> { // enqueued successfully
+                        cont.removeOnCancellation(send)
+                        return@sc
+                    }
+                    is Closed<*> -> {
+                        helpClose(enqueueResult)
+                        cont.resumeWithException(enqueueResult.sendException)
+                        return@sc
+                    }
                 }
             }
             // hm... receiver is waiting or buffer is not full. try to offer
@@ -378,7 +380,10 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
                     block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
                     return
                 }
-                offerResult is Closed<*> -> throw recoverStackTrace(offerResult.sendException)
+                offerResult is Closed<*> -> {
+                    helpClose(offerResult)
+                    throw recoverStackTrace(offerResult.sendException)
+                }
                 else -> error("offerSelectInternal returned $offerResult")
             }
         }
@@ -531,8 +536,8 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     }
 
     @Suppress("UNCHECKED_CAST")
-    private suspend fun <R> receiveSuspend(onClose: Int): R = suspendAtomicCancellableCoroutine sc@ { cont ->
-        val receive = ReceiveElement<E>(cont as CancellableContinuation<Any?>, onClose)
+    private suspend fun <R> receiveSuspend(receiveMode: Int): R = suspendAtomicCancellableCoroutine sc@ { cont ->
+        val receive = ReceiveElement<E>(cont as CancellableContinuation<Any?>, receiveMode)
         while (true) {
             if (enqueueReceive(receive)) {
                 removeReceiveOnCancel(cont, receive)
@@ -746,7 +751,8 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     }
 
     private fun <R> enqueueReceiveSelect(
-        select: SelectInstance<R>, block: suspend (Any?) -> R,
+        select: SelectInstance<R>,
+        block: suspend (Any?) -> R,
         receiveMode: Int
     ): Boolean {
         val node = ReceiveSelect(this, select, block, receiveMode)
