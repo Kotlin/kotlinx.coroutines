@@ -9,12 +9,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     val producer = produceNumbers()
     repeat(5) { launchProcessor(it, producer) }
     delay(950)
     producer.cancel() // cancel producer coroutine and thus kill them all
-//sampleEnd
 }
 
 fun CoroutineScope.produceNumbers() = produce<Int> {

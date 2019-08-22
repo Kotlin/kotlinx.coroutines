@@ -20,7 +20,7 @@ class BasicsGuideTest {
 
 <!--- TOC -->
 
-* [Coroutine basics](#coroutine-basics)
+* [Coroutine Basics](#coroutine-basics)
   * [Your first coroutine](#your-first-coroutine)
   * [Bridging blocking and non-blocking worlds](#bridging-blocking-and-non-blocking-worlds)
   * [Waiting for a job](#waiting-for-a-job)
@@ -33,7 +33,7 @@ class BasicsGuideTest {
 <!--- END_TOC -->
 
 
-## Coroutine basics
+## Coroutine Basics
 
 This section covers basic coroutine concepts.
 

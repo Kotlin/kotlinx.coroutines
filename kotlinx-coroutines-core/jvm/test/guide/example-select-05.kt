@@ -36,7 +36,6 @@ fun CoroutineScope.asyncString(str: String, time: Long) = async {
 }
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     val chan = Channel<Deferred<String>>() // the channel for test
     launch { // launch printing coroutine
         for (s in switchMapDeferreds(chan)) 
@@ -52,5 +51,4 @@ fun main() = runBlocking<Unit> {
     delay(1000) // give it time to process
     chan.close() // close the channel ... 
     delay(500) // and wait some time to let it finish
-//sampleEnd
 }

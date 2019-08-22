@@ -19,7 +19,7 @@ class CancellationTimeOutsGuideTest {
 
 <!--- TOC -->
 
-* [Cancellation and timeouts](#cancellation-and-timeouts)
+* [Cancellation and Timeouts](#cancellation-and-timeouts)
   * [Cancelling coroutine execution](#cancelling-coroutine-execution)
   * [Cancellation is cooperative](#cancellation-is-cooperative)
   * [Making computation code cancellable](#making-computation-code-cancellable)
@@ -29,7 +29,7 @@ class CancellationTimeOutsGuideTest {
 
 <!--- END_TOC -->
 
-## Cancellation and timeouts
+## Cancellation and Timeouts
 
 This section covers coroutine cancellation and timeouts.
 

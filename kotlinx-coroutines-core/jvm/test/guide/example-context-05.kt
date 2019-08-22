@@ -8,7 +8,5 @@ package kotlinx.coroutines.guide.context05
 import kotlinx.coroutines.*
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     println("My job is ${coroutineContext[Job]}")
-//sampleEnd    
 }

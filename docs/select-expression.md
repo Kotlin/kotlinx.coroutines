@@ -21,7 +21,7 @@ class SelectGuideTest {
 
 <!--- TOC -->
 
-* [Select expression (experimental)](#select-expression-experimental)
+* [Select Expression (experimental)](#select-expression-experimental)
   * [Selecting from channels](#selecting-from-channels)
   * [Selecting on close](#selecting-on-close)
   * [Selecting to send](#selecting-to-send)
@@ -32,7 +32,7 @@ class SelectGuideTest {
 
 
 
-## Select expression (experimental)
+## Select Expression (experimental)
 
 Select expression makes it possible to await multiple suspending functions simultaneously and _select_
 the first one that becomes available.

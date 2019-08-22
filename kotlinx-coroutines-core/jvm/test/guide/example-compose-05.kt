@@ -9,12 +9,10 @@ import kotlinx.coroutines.*
 import kotlin.system.*
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     val time = measureTimeMillis {
         println("The answer is ${concurrentSum()}")
     }
     println("Completed in $time ms")
-//sampleEnd    
 }
 
 suspend fun concurrentSum(): Int = coroutineScope {

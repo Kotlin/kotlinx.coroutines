@@ -26,7 +26,6 @@ suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): St
     }
     
 fun main() = runBlocking<Unit> {
-//sampleStart
     val a = produce<String> {
         repeat(4) { send("Hello $it") }
     }
@@ -37,5 +36,4 @@ fun main() = runBlocking<Unit> {
         println(selectAorB(a, b))
     }
     coroutineContext.cancelChildren()  
-//sampleEnd      
 }    
