@@ -106,7 +106,12 @@ public fun <T1, T2, R> combineTransform(
     flow: Flow<T1>,
     flow2: Flow<T2>,
     @BuilderInference transform: suspend FlowCollector<R>.(a: T1, b: T2) -> Unit
-): Flow<R> = combineTransform(flow, flow2, transform)
+): Flow<R> = combineTransform(flow, flow2) { args: Array<*> ->
+    transform(
+        args[0] as T1,
+        args[1] as T2
+    )
+}
 
 /**
  * Returns a [Flow] whose values are generated with [transform] function by combining
