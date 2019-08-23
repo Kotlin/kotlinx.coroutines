@@ -4,17 +4,15 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher
+import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation
 import java.util.concurrent.ForkJoinPool
-import kotlin.collections.ArrayList
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 // Benchmarks configuration to monitor
 
 /**
  * Underlying thread pool size for coroutines.
  */
-val THREADS = listOf(1, 4, 8, 16)
+val THREADS = listOf(4, 8, 16, 1)
 /**
  * Chat users count.
  */
@@ -26,7 +24,7 @@ val MAX_FRIENDS_PERCENTAGE = listOf(0.2)
 /**
  * Coroutines channels type.
  */
-val CHANNEL_TYPES = listOf(ChannelType.BUFFERED_DEFAULT, ChannelType.RENDEZVOUS, ChannelType.UNLIMITED, ChannelType.BUFFERED_1, ChannelType.BUFFERED_16, ChannelType.BUFFERED_256)
+val CHANNEL_TYPES = listOf(ChannelType.UNLIMITED, ChannelType.RENDEZVOUS, ChannelType.BUFFERED_1, ChannelType.BUFFERED_16, ChannelType.BUFFERED_256)
 /**
  * The average amount work that will be executed on CPU.
  */
@@ -38,7 +36,7 @@ val BENCHMARK_MODE = listOf(BenchmarkModes.USER_WITH_FRIENDS, BenchmarkModes.USE
 /**
  * Coroutines dispatcher types
  */
-val DISPATCHER_TYPES = listOf(DispatcherTypes.FORK_JOIN, DispatcherTypes.EXPERIMENTAL)
+val DISPATCHER_TYPES = listOf(DispatcherTypes.EXPERIMENTAL, DispatcherTypes.FORK_JOIN)
 
 // Benchmark configuration that are not shown in the output file
 
@@ -88,14 +86,15 @@ class BenchmarkConfiguration(
     }
 
     fun configurationToString() : String {
-        return "BenchmarkConfiguration(threads=$threads, users=$users, maxFriendsPercentage=$maxFriendsPercentage, channelType=$channelType, averageWork=$averageWork, benchmarkMode=$benchmarkMode, dispatcherType=$dispatcherType)"
+        return "[threads=$threads, users=$users, maxFriendsPercentage=$maxFriendsPercentage, channelType=$channelType, averageWork=$averageWork, benchmarkMode=$benchmarkMode, dispatcherType=$dispatcherType]"
     }
 
     fun toCSV(): String {
-        val avgSentMessages = sentMessagesPerRun.sum() / sentMessagesPerRun.size.toDouble()
-        val avgReceivedMessages = receivedMessagesPerRun.sum() / receivedMessagesPerRun.size.toDouble()
-        val stdSentMessages = sqrt(sentMessagesPerRun.map { count -> (count - avgSentMessages).pow(2)  }.sum() / sentMessagesPerRun.size)
-        val stdReceivedMessages = sqrt(receivedMessagesPerRun.map { count -> (count - avgReceivedMessages).pow(2)  }.sum() / receivedMessagesPerRun.size)
+        val standardDeviation = StandardDeviation()
+        val avgSentMessages = sentMessagesPerRun.average()
+        val avgReceivedMessages = receivedMessagesPerRun.average()
+        val stdSentMessages = standardDeviation.evaluate(sentMessagesPerRun.toDoubleArray())
+        val stdReceivedMessages = standardDeviation.evaluate(receivedMessagesPerRun.toDoubleArray())
         return "$threads,$users,$maxFriendsPercentage,$channelType,$averageWork,$benchmarkMode,$dispatcherType,%.2f,%.2f,%.2f,%.2f".format(avgSentMessages, stdSentMessages, avgReceivedMessages, stdReceivedMessages)
     }
 
@@ -116,7 +115,7 @@ class BenchmarkConfiguration(
         }
 
         fun defaultConfiguration() : BenchmarkConfiguration {
-            return BenchmarkConfiguration(10, 1000, 0.2, ChannelType.RENDEZVOUS,
+            return BenchmarkConfiguration(4, 10000, 0.2, ChannelType.UNLIMITED,
                     80, BenchmarkModes.USER_WITHOUT_FRIENDS, DispatcherTypes.FORK_JOIN)
         }
     }
@@ -136,11 +135,6 @@ enum class ChannelType {
     UNLIMITED {
         override fun <T> createChannel(): Channel<T> {
             return Channel(Channel.UNLIMITED)
-        }
-    },
-    BUFFERED_DEFAULT {
-        override fun <T> createChannel(): Channel<T> {
-            return Channel(Channel.BUFFERED)
         }
     },
     BUFFERED_1 {

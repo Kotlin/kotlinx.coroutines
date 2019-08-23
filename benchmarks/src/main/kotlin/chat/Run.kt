@@ -26,7 +26,7 @@ fun main() {
     val className = "chat.RunBenchmark"
 
     for ((benchmark, configuration) in configurationsList.withIndex()) {
-        println("${round(benchmark / configurationsList.size.toDouble() * 10000) / 100}%, running ${benchmark + 1} benchmark with configuration ${configuration.configurationToString()}")
+        println("${round(benchmark / configurationsList.size.toDouble() * 10000) / 100}% done, running benchmark #${benchmark + 1} with configuration ${configuration.configurationToString()}")
 
         val run = ArrayList<String>()
         run.add(javaPath)

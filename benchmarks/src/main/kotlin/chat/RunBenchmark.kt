@@ -4,6 +4,7 @@
 package chat
 
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.runBlocking
 import org.apache.commons.math3.distribution.PoissonDistribution
 import java.io.Closeable
 import java.io.FileOutputStream
@@ -12,53 +13,44 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.collections.ArrayList
 
 var context = DispatcherTypes.FORK_JOIN.create(1)
-const val shouldPrintDebugOutput = false
+const val shouldPrintDebugOutput = true
 
 fun main(args: Array<String>) {
-    val propsArray = args.drop(1).toTypedArray()
-    val properties = BenchmarkConfiguration.parseArray(propsArray)
-
-    context = properties.dispatcherType.create(properties.threads)
+    val configuration = BenchmarkConfiguration.defaultConfiguration()
 
     // warming up
     println("Start warming up")
     val mean = 100.0
 
     repeat(WARM_UP_ITERATIONS) {
-        runBenchmarkIteration(it + 1, mean, properties, true)
+        runBenchmarkIteration(it + 1, mean, configuration, true)
     }
 
     if (shouldPrintDebugOutput) {
         println("Warming up results were:")
         repeat(BENCHMARK_ITERATIONS) {
-            println("${it + 1} run sentMessages ${properties.sentMessagesPerRun[it]}, receivedMessages ${properties.receivedMessagesPerRun[it]}")
+            println("${it + 1} run sentMessages ${configuration.sentMessagesPerRun[it]}, receivedMessages ${configuration.receivedMessagesPerRun[it]}")
         }
     }
 
-    properties.sentMessagesPerRun.clear()
-    properties.receivedMessagesPerRun.clear()
+    configuration.sentMessagesPerRun.clear()
+    configuration.receivedMessagesPerRun.clear()
 
     // running benchmark
     println("Start running benchmark")
     repeat(BENCHMARK_ITERATIONS) {
-        runBenchmarkIteration(it + 1, mean, properties, true)
-    }
-
-    val context = context
-    // closing coroutineDispatcher
-    if (context is Closeable) {
-        context.close()
+        runBenchmarkIteration(it + 1, mean, configuration, true)
     }
 
     FileOutputStream("$BENCHMARK_OUTPUT_FOLDER/$BENCHMARK_OUTPUT_FILE", true).bufferedWriter().use { writer ->
-        writer.append(properties.toCSV())
+        writer.append(configuration.toCSV())
         writer.newLine()
     }
 
     if (shouldPrintDebugOutput) {
         println("Benchmark results were:")
         repeat(BENCHMARK_ITERATIONS) {
-            println("${it + 1} run sentMessages ${properties.sentMessagesPerRun[it]}, receivedMessages ${properties.receivedMessagesPerRun[it]}")
+            println("${it + 1} run sentMessages ${configuration.sentMessagesPerRun[it]}, receivedMessages ${configuration.receivedMessagesPerRun[it]}")
         }
     }
 }
@@ -67,6 +59,8 @@ private fun runBenchmarkIteration(iteration: Int,
                                   mean: Double,
                                   configuration: BenchmarkConfiguration,
                                   shouldCountMetrics: Boolean) {
+    context = configuration.dispatcherType.create(configuration.threads)
+
     if (shouldPrintDebugOutput) {
         println("$iteration iteration")
     }
@@ -81,6 +75,7 @@ private fun runBenchmarkIteration(iteration: Int,
         Thread.sleep(BENCHMARK_TIME_MS)
 
         stopUsers(users)
+        waitForCoroutines(users)
         usersStopped = true
         if (shouldCountMetrics) {
             collectBenchmarkMetrics(users, configuration)
@@ -88,6 +83,21 @@ private fun runBenchmarkIteration(iteration: Int,
     } finally {
         if (!usersStopped) {
             stopUsers(users)
+            waitForCoroutines(users)
+        }
+    }
+
+    val context = context
+    // closing coroutineDispatcher
+    if (context is Closeable) {
+        context.close()
+    }
+}
+
+private fun waitForCoroutines(users : ArrayList<User>) {
+    runBlocking {
+        for (user in users) {
+            user.runCoroutine.join()
         }
     }
 }

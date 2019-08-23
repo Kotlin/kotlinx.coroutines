@@ -1,6 +1,7 @@
 package chat
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.launch
@@ -17,9 +18,13 @@ import java.util.concurrent.ThreadLocalRandom
  * To emulate real world chat servers, some work will be executed on CPU during sending and receiving messages. When user
  * connects to the server, the connection itself consumes some CPU time.
  * At the end of the benchmark execution [stopUser] should be called.
+ * Because of the design of the coroutines tasks scheduler and channels, it is important to call [yield] sometimes to allow other
+ * coroutines to work. This is necessary due to the fact that if a coroutine constantly has some work to do, like in this
+ * case if a coroutine has an endless flow of messages, it will work without interruption, and other coroutines will have to
+ * wait for this coroutine to end it's execution.
  */
 abstract class User(val id: Long,
-                    val activity : Double,
+                    val activity: Double,
                     val messageChannel: Channel<Message>,
                     private val configuration: BenchmarkConfiguration) {
     var sentMessages = 0L
@@ -30,30 +35,32 @@ abstract class User(val id: Long,
 
     protected val random = Random(id)
 
-    private var messagesToSent : Double = 0.0
+    private var messagesToSent: Double = 0.0
 
     @Volatile
     private var stopped = false
 
+    lateinit var runCoroutine: Job
+
     fun startUser() {
         messagesToSent += activity
         var count = 0L
-        CoroutineScope(context).launch {
-            while (messagesToSent >= 1 && !stopped) {
-                sendMessage()
-                messagesToSent--
-                if (count++ % 61 == 5L) {
-                    yield()
-                }
-            }
+        runCoroutine = CoroutineScope(context).launch {
             while (!stopped) {
-                val message = messageChannel.receiveOrClosed().valueOrNull ?: break
-                messagesToSent += activity
-                receiveAndProcessMessage(message)
-                while (messagesToSent >= 1) {
+                // receive messages while can
+                while (true) {
+                    val message = messageChannel.poll() ?: break
+                    receiveAndProcessMessage(message)
+                }
+                // if we can send a message, send it, otherwise wait on receive and receive a message
+                if (messagesToSent >= 1) {
                     sendMessage()
                     messagesToSent--
+                } else {
+                    val message = messageChannel.receiveOrClosed().valueOrNull ?: break
+                    receiveAndProcessMessage(message)
                 }
+                // hint described in the class' comment section
                 if (count++ % 61 == 5L) {
                     yield()
                 }
@@ -72,29 +79,28 @@ abstract class User(val id: Long,
 
     private suspend fun sendMessage() {
         val userChannelToSend = chooseChannelToSend() ?: return
-
         val now = System.nanoTime()
         try {
             select<Unit> {
-                messageChannel.onReceiveOrClosed { message ->
-                    run {
-                        if (!message.isClosed) {
-                            receiveAndProcessMessage(message.value)
-                        }
-                    }
-                }
                 userChannelToSend.onSend(Message(id, now)) {
                     if (!stopped) {
                         sentMessages++
                     }
                     doSomeWorkOnCpu()
                 }
+                messageChannel.onReceiveOrClosed { message ->
+                    if (!message.isClosed) {
+                        receiveAndProcessMessage(message.value)
+                    }
+                }
             }
-        } catch (ignored : ClosedSendChannelException) {}
-          catch (ignored : IllegalStateException) {}
+        } catch (ignored: ClosedSendChannelException) {
+        } catch (ignored: IllegalStateException) {
+        }
     }
 
-    private fun receiveAndProcessMessage(message : Message) {
+    private fun receiveAndProcessMessage(message: Message) {
+        messagesToSent += activity
         if (!stopped) {
             receivedMessages++
         }
@@ -106,10 +112,10 @@ abstract class User(val id: Long,
         messageChannel.close()
     }
 
-    abstract fun chooseChannelToSend() : Channel<Message>?
+    abstract fun chooseChannelToSend(): Channel<Message>?
 }
 
 /**
  * A message from one of the users to another one
  */
-class Message(private val userId : Long, val nanos : Long)
+class Message(private val userId: Long, val nanos: Long)

@@ -43,11 +43,6 @@ task removeRedundantFiles(type: Delete) {
     delete "$buildDir/classes/kotlin/jmh/benchmarks/flow/misc/Numbers\$\$special\$\$inlined\$filter\$1\$1.class"
 }
 
-task runInMemoryChatBenchmark(type : JavaExec) {
-    main = 'chat.InMemoryChatBenchmark'
-    classpath sourceSets.main.runtimeClasspath
-}
-
 jmhRunBytecodeGenerator.dependsOn(removeRedundantFiles)
 
 // It is better to use the following to run benchmarks, otherwise you may get unexpected errors:
@@ -82,4 +77,9 @@ dependencies {
     compile project(':kotlinx-coroutines-core')
     // add jmh dependency on main
     jmh sourceSets.main.runtimeClasspath
+}
+
+task runInMemoryChatBenchmark(type : JavaExec) {
+    main = 'chat.InMemoryChatBenchmark'
+    classpath sourceSets.main.runtimeClasspath
 }

@@ -41,11 +41,11 @@ def draw(data, benchMode, avgWork, users, maxFriends, sentAx, receivedAx):
         for dispatcherType in data.dispatcherType.unique():
             genColour = next(colourGen)
             genMarker = next(markerGen)
-            res = data[(data.benchmarkMode == benchMode) & (data.averageWork == avgWork) & (data.userCount == users) & (data.maxFriendsPercentage == maxFriends) & (data.channelType == channelType) & (data.dispatcherType == dispatcherType)]
-            sentAx.plot(res.threads, res.avgSentMessages, label="channel={},dispatcher={}".format(channelType, dispatcherType), color=genColour)
-            sentAx.errorbar(x=res.threads, y=res.avgSentMessages, yerr=res.stdSentMessages, solid_capstyle='projecting', capsize=5)
-            receivedAx.plot(res.threads, res.avgReceivedMessages, label="channel={},dispatcher={}".format(channelType, dispatcherType), color=genColour)
-            receivedAx.errorbar(x=res.threads, y=res.avgReceivedMessages, yerr=res.stdReceivedMessages, solid_capstyle='projecting', capsize=5)
+            res = data[(data.benchmarkMode == benchMode) & (data.averageWork == avgWork) & (data.userCount == users) & (data.maxFriendsPercentage == maxFriends) & (data.channelType == channelType) & (data.dispatcherType == dispatcherType)].sort_values(by=['threads'])
+            sentAx.plot(res.threads, res.avgSentMessages, label="channel={},dispatcher={}".format(channelType, dispatcherType), color=genColour, marker=genMarker)
+#             sentAx.errorbar(x=res.threads, y=res.avgSentMessages, yerr=res.stdSentMessages, solid_capstyle='projecting', capsize=5)
+            receivedAx.plot(res.threads, res.avgReceivedMessages, label="channel={},dispatcher={}".format(channelType, dispatcherType), color=genColour, marker=genMarker)
+#             receivedAx.errorbar(x=res.threads, y=res.avgReceivedMessages, yerr=res.stdReceivedMessages, solid_capstyle='projecting', capsize=5)
 
 def genFile(pdf):
     data = pd.read_table(inputFile, sep=",")
