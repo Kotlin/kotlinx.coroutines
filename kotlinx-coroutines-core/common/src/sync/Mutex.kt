@@ -246,16 +246,11 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                 }
                 is LockedQueue -> {
                     check(state.owner !== owner) { "Already locked by $owner" }
-                    val enqueueOp = TryEnqueueLockDesc(this, owner, state, select, block)
-                    val failure = select.performAtomicIfNotSelected(enqueueOp)
-                    when {
-                        failure == null -> { // successfully enqueued
-                            select.disposeOnSelect(enqueueOp.node)
-                            return
-                        }
-                        failure === ALREADY_SELECTED -> return // already selected -- bail out
-                        failure === ENQUEUE_FAIL -> {} // retry
-                        else -> error("performAtomicIfNotSelected(TryEnqueueLockDesc) returned $failure")
+                    val node = LockSelect(owner, this, select, block)
+                    if (state.addLastIf(node) { _state.value === state }) {
+                        // successfully enqueued
+                        select.disposeOnSelect(node)
+                        return
                     }
                 }
                 is OpDescriptor -> state.perform(this) // help
@@ -288,19 +283,6 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                 if (owner == null) EMPTY_LOCKED else Empty(owner)
             }
             mutex._state.compareAndSet(op, update)
-        }
-    }
-
-    private class TryEnqueueLockDesc<R>(
-        @JvmField val mutex: MutexImpl,
-        owner: Any?,
-        queue: LockedQueue,
-        select: SelectInstance<R>,
-        block: suspend (Mutex) -> R
-    ) : AddLastDesc<LockSelect<R>>(queue, LockSelect(owner, mutex, select, block)) {
-        override fun onPrepare(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode): Any? {
-            if (mutex._state.value !== queue) return ENQUEUE_FAIL
-            return super.onPrepare(affected, next)
         }
     }
 

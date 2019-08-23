@@ -8,7 +8,6 @@ package kotlinx.coroutines.guide.context01
 import kotlinx.coroutines.*
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     launch { // context of the parent, main runBlocking coroutine
         println("main runBlocking      : I'm working in thread ${Thread.currentThread().name}")
     }
@@ -21,5 +20,4 @@ fun main() = runBlocking<Unit> {
     launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread
         println("newSingleThreadContext: I'm working in thread ${Thread.currentThread().name}")
     }
-//sampleEnd    
 }

@@ -403,6 +403,29 @@ class SelectRendezvousChannelTest : TestBase() {
         finish(10)
     }
 
+    @Test
+    fun testSelectSendWhenClosed() = runTest {
+        expect(1)
+        val c = Channel<Int>(Channel.RENDEZVOUS)
+        val sender = launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            c.send(1) // enqueue sender
+            expectUnreached()
+        }
+        c.close() // then close
+        assertFailsWith<ClosedSendChannelException> {
+            // select sender should fail
+            expect(3)
+            select {
+                c.onSend(2) {
+                    expectUnreached()
+                }
+            }
+        }
+        sender.cancel()
+        finish(4)
+    }
+
     // only for debugging
     internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {
         this as SelectBuilderImpl // type assertion

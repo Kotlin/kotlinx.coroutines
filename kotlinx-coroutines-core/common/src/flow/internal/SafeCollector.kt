@@ -77,8 +77,11 @@ internal class SafeCollector<T>(
              */
             if (emissionParentJob !== collectJob) {
                 error(
-                    "Flow invariant is violated: emission from another coroutine is detected (child of $emissionParentJob, expected child of $collectJob). " +
-                            "FlowCollector is not thread-safe and concurrent emissions are prohibited. To mitigate this restriction please use 'channelFlow' builder instead of 'flow'"
+                    "Flow invariant is violated:\n" +
+                        "\t\tEmission from another coroutine is detected.\n" +
+                        "\t\tChild of $emissionParentJob, expected child of $collectJob.\n" +
+                        "\t\tFlowCollector is not thread-safe and concurrent emissions are prohibited.\n" +
+                        "\t\tTo mitigate this restriction please use 'channelFlow' builder instead of 'flow'"
                 )
             }
 
@@ -91,8 +94,10 @@ internal class SafeCollector<T>(
         }
         if (result != collectContextSize) {
             error(
-                "Flow invariant is violated: flow was collected in $collectContext, but emission happened in $currentContext. " +
-                        "Please refer to 'flow' documentation or use 'flowOn' instead"
+                "Flow invariant is violated:\n" +
+                    "\t\tFlow was collected in $collectContext,\n" +
+                    "\t\tbut emission happened in $currentContext.\n" +
+                    "\t\tPlease refer to 'flow' documentation or use 'flowOn' instead"
             )
         }
     }

@@ -530,7 +530,7 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
         /**
          * Requests buffered channel with a default buffer capacity in `Channel(...)` factory function --
          * the `ArrayChannel` gets created with a default capacity.
-         * This capacity is equal to 16 by default and can be overridden by setting
+         * This capacity is equal to 64 by default and can be overridden by setting
          * [DEFAULT_BUFFER_PROPERTY_NAME] on JVM.
          */
         public const val BUFFERED = -2
@@ -545,7 +545,7 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
         public const val DEFAULT_BUFFER_PROPERTY_NAME = "kotlinx.coroutines.channels.defaultBuffer"
 
         internal val CHANNEL_DEFAULT_CAPACITY = systemProp(DEFAULT_BUFFER_PROPERTY_NAME,
-            16, 1, UNLIMITED - 1
+            64, 1, UNLIMITED - 1
         )
     }
 }

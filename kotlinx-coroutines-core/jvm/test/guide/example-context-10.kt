@@ -28,7 +28,6 @@ class Activity : CoroutineScope by CoroutineScope(Dispatchers.Default) {
 } // class Activity ends
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     val activity = Activity()
     activity.doSomething() // run test function
     println("Launched coroutines")
@@ -36,5 +35,4 @@ fun main() = runBlocking<Unit> {
     println("Destroying activity!")
     activity.destroy() // cancels all coroutines
     delay(1000) // visually confirm that they don't work
-//sampleEnd    
 }

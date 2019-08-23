@@ -8,7 +8,6 @@ package kotlinx.coroutines.guide.compose04
 import kotlinx.coroutines.*
 import kotlin.system.*
 
-//sampleStart
 // note that we don't have `runBlocking` to the right of `main` in this example
 fun main() {
     val time = measureTimeMillis {
@@ -23,7 +22,6 @@ fun main() {
     }
     println("Completed in $time ms")
 }
-//sampleEnd
 
 fun somethingUsefulOneAsync() = GlobalScope.async {
     doSomethingUsefulOne()

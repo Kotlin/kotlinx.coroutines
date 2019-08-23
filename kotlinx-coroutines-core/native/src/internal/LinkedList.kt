@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -127,13 +127,13 @@ public actual abstract class AbstractAtomicDesc : AtomicDesc() {
     actual final override fun prepare(op: AtomicOp<*>): Any? {
         val affected = affectedNode
         val next = affected._next
-        val failure = failure(affected, next)
+        val failure = failure(affected)
         if (failure != null) return failure
         return onPrepare(affected, next)
     }
 
     actual final override fun complete(op: AtomicOp<*>, failure: Any?) = onComplete()
-    protected actual open fun failure(affected: LockFreeLinkedListNode, next: Any): Any? = null // Never fails by default
+    protected actual open fun failure(affected: LockFreeLinkedListNode): Any? = null // Never fails by default
     protected actual open fun retry(affected: LockFreeLinkedListNode, next: Any): Boolean = false // Always succeeds
     protected actual abstract fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)
 }

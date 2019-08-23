@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -35,15 +35,27 @@ public abstract class ExecutorCoroutineDispatcher: CoroutineDispatcher(), Closea
  */
 @JvmName("from") // this is for a nice Java API, see issue #255
 public fun ExecutorService.asCoroutineDispatcher(): ExecutorCoroutineDispatcher =
-    // we know that an implementation of Executor.asCoroutineDispatcher actually returns a closeable one
-    (this as Executor).asCoroutineDispatcher() as ExecutorCoroutineDispatcher
+    ExecutorCoroutineDispatcherImpl(this)
 
 /**
  * Converts an instance of [Executor] to an implementation of [CoroutineDispatcher].
  */
 @JvmName("from") // this is for a nice Java API, see issue #255
 public fun Executor.asCoroutineDispatcher(): CoroutineDispatcher =
-    ExecutorCoroutineDispatcherImpl(this)
+    (this as? DispatcherExecutor)?.dispatcher ?: ExecutorCoroutineDispatcherImpl(this)
+
+/**
+ * Converts an instance of [CoroutineDispatcher] to an implementation of [Executor].
+ *
+ * It returns the original executor when used on the result of [Executor.asCoroutineDispatcher] extensions.
+ */
+public fun CoroutineDispatcher.asExecutor(): Executor =
+    (this as? ExecutorCoroutineDispatcher)?.executor ?: DispatcherExecutor(this)
+
+private class DispatcherExecutor(@JvmField val dispatcher: CoroutineDispatcher) : Executor {
+    override fun execute(block: Runnable) = dispatcher.dispatch(EmptyCoroutineContext, block)
+    override fun toString(): String = dispatcher.toString()
+}
 
 private class ExecutorCoroutineDispatcherImpl(override val executor: Executor) : ExecutorCoroutineDispatcherBase() {
     init {

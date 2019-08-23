@@ -3,7 +3,7 @@
  */
 
 
-package benchmarks.flow.misc
+package benchmarks.flow
 
 import benchmarks.flow.scrabble.flow
 import io.reactivex.*
@@ -35,7 +35,7 @@ import java.util.concurrent.*
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
-open class Numbers {
+open class NumbersBenchmark {
 
     companion object {
         private const val primes = 100

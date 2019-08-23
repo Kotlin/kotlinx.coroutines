@@ -20,7 +20,7 @@ class DispatchersGuideTest {
 
 <!--- TOC -->
 
-* [Coroutine context and dispatchers](#coroutine-context-and-dispatchers)
+* [Coroutine Context and Dispatchers](#coroutine-context-and-dispatchers)
   * [Dispatchers and threads](#dispatchers-and-threads)
   * [Unconfined vs confined dispatcher](#unconfined-vs-confined-dispatcher)
   * [Debugging coroutines and threads](#debugging-coroutines-and-threads)
@@ -35,7 +35,7 @@ class DispatchersGuideTest {
 
 <!--- END_TOC -->
 
-## Coroutine context and dispatchers
+## Coroutine Context and Dispatchers
 
 Coroutines always execute in some context represented by a value of the 
 [CoroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/) 

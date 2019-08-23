@@ -254,26 +254,6 @@ public actual open class LockFreeLinkedListNode {
         finishRemove(removed.ref)
     }
 
-    public open fun describeRemove() : AtomicDesc? {
-        if (isRemoved) return null // fast path if was already removed
-        return object : AbstractAtomicDesc() {
-            private val _originalNext = atomic<Node?>(null)
-            override val affectedNode: Node? get() = this@LockFreeLinkedListNode
-            override val originalNext get() = _originalNext.value
-            override fun failure(affected: Node, next: Any): Any? =
-                if (next is Removed) ALREADY_REMOVED else null
-            override fun onPrepare(affected: Node, next: Node): Any? {
-                // Note: onPrepare must use CAS to make sure the stale invocation is not
-                // going to overwrite the previous decision on successful preparation.
-                // Result of CAS is irrelevant, but we must ensure that it is set when invoker completes
-                _originalNext.compareAndSet(null, next)
-                return null // always success
-            }
-            override fun updatedNext(affected: Node, next: Node) = next.removed()
-            override fun finishOnSuccess(affected: Node, next: Node) = finishRemove(next)
-        }
-    }
-
     public actual fun removeFirstOrNull(): Node? {
         while (true) { // try to linearize
             val first = next as Node
@@ -376,7 +356,7 @@ public actual open class LockFreeLinkedListNode {
         final override val originalNext: Node? get() = _originalNext.value
 
         // check node predicates here, must signal failure if affect is not of type T
-        protected override fun failure(affected: Node, next: Any): Any? =
+        protected override fun failure(affected: Node): Any? =
                 if (affected === queue) LIST_EMPTY else null
 
         // validate the resulting node (return false if it should be deleted)
@@ -408,7 +388,7 @@ public actual open class LockFreeLinkedListNode {
         protected abstract val affectedNode: Node?
         protected abstract val originalNext: Node?
         protected open fun takeAffectedNode(op: OpDescriptor): Node = affectedNode!!
-        protected open fun failure(affected: Node, next: Any): Any? = null // next: Node | Removed
+        protected open fun failure(affected: Node): Any? = null // next: Node | Removed
         protected open fun retry(affected: Node, next: Any): Boolean = false // next: Node | Removed
         protected abstract fun onPrepare(affected: Node, next: Node): Any? // non-null on failure
         protected abstract fun updatedNext(affected: Node, next: Node): Any
@@ -460,7 +440,7 @@ public actual open class LockFreeLinkedListNode {
                     continue // and retry
                 }
                 // next: Node | Removed
-                val failure = failure(affected, next)
+                val failure = failure(affected)
                 if (failure != null) return failure // signal failure
                 if (retry(affected, next)) continue // retry operation
                 val prepareOp = PrepareOp(next as Node, op as AtomicOp<Node>, this)
@@ -683,8 +663,6 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
 
     // just a defensive programming -- makes sure that list head sentinel is never removed
     public actual final override fun remove(): Boolean = throw UnsupportedOperationException()
-
-    public final override fun describeRemove(): Nothing = throw UnsupportedOperationException()
 
     internal fun validate() {
         var prev: Node = this

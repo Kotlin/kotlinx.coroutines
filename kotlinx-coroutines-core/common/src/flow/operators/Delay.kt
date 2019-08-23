@@ -23,13 +23,13 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * ```
  * flow {
  *     emit(1)
- *     delay(99)
+ *     delay(90)
  *     emit(2)
- *     delay(99)
+ *     delay(90)
  *     emit(3)
- *     delay(1001)
+ *     delay(1010)
  *     emit(4)
- *     delay(1001)
+ *     delay(1010)
  *     emit(5)
  * }.debounce(1000)
  * ```

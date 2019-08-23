@@ -9,7 +9,6 @@ import kotlinx.coroutines.*
 import kotlin.system.*
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     val time = measureTimeMillis {
         val one = async(start = CoroutineStart.LAZY) { doSomethingUsefulOne() }
         val two = async(start = CoroutineStart.LAZY) { doSomethingUsefulTwo() }
@@ -19,7 +18,6 @@ fun main() = runBlocking<Unit> {
         println("The answer is ${one.await() + two.await()}")
     }
     println("Completed in $time ms")
-//sampleEnd    
 }
 
 suspend fun doSomethingUsefulOne(): Int {

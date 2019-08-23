@@ -1,11 +1,13 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
-import org.junit.Test
-import java.util.concurrent.Executors
+import org.junit.*
+import org.junit.Assert.*
+import java.util.concurrent.*
+import kotlin.coroutines.*
 
 class ExecutorsTest : TestBase() {
     private fun checkThreadName(prefix: String) {
@@ -32,12 +34,47 @@ class ExecutorsTest : TestBase() {
     }
 
     @Test
-    fun testToExecutor() {
+    fun testExecutorToDispatcher() {
         val executor = Executors.newSingleThreadExecutor { r -> Thread(r, "TestExecutor") }
         runBlocking(executor.asCoroutineDispatcher()) {
             checkThreadName("TestExecutor")
         }
         executor.shutdown()
+    }
+
+    @Test
+    fun testConvertedDispatcherToExecutor() {
+        val executor: ExecutorService = Executors.newSingleThreadExecutor { r -> Thread(r, "TestExecutor") }
+        val dispatcher: CoroutineDispatcher = executor.asCoroutineDispatcher()
+        assertSame(executor, dispatcher.asExecutor())
+        executor.shutdown()
+    }
+
+    @Test
+    fun testDefaultDispatcherToExecutor() {
+        val latch = CountDownLatch(1)
+        Dispatchers.Default.asExecutor().execute {
+            checkThreadName("DefaultDispatcher")
+            latch.countDown()
+        }
+        latch.await()
+    }
+
+    @Test
+    fun testCustomDispatcherToExecutor() {
+        expect(1)
+        val dispatcher = object : CoroutineDispatcher() {
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                expect(2)
+                block.run()
+            }
+        }
+        val executor = dispatcher.asExecutor()
+        assertSame(dispatcher, executor.asCoroutineDispatcher())
+        executor.execute {
+            expect(3)
+        }
+        finish(4)
     }
 
     @Test

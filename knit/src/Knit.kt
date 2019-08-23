@@ -28,6 +28,9 @@ const val INCLUDE_DIRECTIVE = "INCLUDE"
 const val CLEAR_DIRECTIVE = "CLEAR"
 const val TEST_DIRECTIVE = "TEST"
 
+const val KNIT_AUTONUMBER_PLACEHOLDER = '#'
+const val KNIT_AUTONUMBER_REGEX = "([0-9a-z]+)"
+
 const val TEST_OUT_DIRECTIVE = "TEST_OUT"
 
 const val MODULE_DIRECTIVE = "MODULE"
@@ -35,6 +38,9 @@ const val INDEX_DIRECTIVE = "INDEX"
 
 const val CODE_START = "```kotlin"
 const val CODE_END = "```"
+
+const val SAMPLE_START = "//sampleStart"
+const val SAMPLE_END = "//sampleEnd"
 
 const val TEST_START = "```text"
 const val TEST_END = "```"
@@ -73,6 +79,9 @@ fun knit(markdownFile: File): Boolean {
     println("*** Reading $markdownFile")
     val tocLines = arrayListOf<String>()
     var knitRegex: Regex? = null
+    var knitAutonumberGroup = 0
+    var knitAutonumberDigits = 0
+    var knitAutonumberIndex = 1
     val includes = arrayListOf<Include>()
     val codeLines = arrayListOf<String>()
     val testLines = arrayListOf<String>()
@@ -122,7 +131,18 @@ fun knit(markdownFile: File): Boolean {
                     requireSingleLine(directive)
                     require(!directive.param.isEmpty()) { "$KNIT_DIRECTIVE directive must include regex parameter" }
                     require(knitRegex == null) { "Only one KNIT directive is supported"}
-                    knitRegex = Regex("\\((" + directive.param + ")\\)")
+                    var str = directive.param
+                    val i = str.indexOf(KNIT_AUTONUMBER_PLACEHOLDER)
+                    if (i >= 0) {
+                        val j = str.lastIndexOf(KNIT_AUTONUMBER_PLACEHOLDER)
+                        knitAutonumberDigits = j - i + 1
+                        require(str.substring(i, j + 1) == KNIT_AUTONUMBER_PLACEHOLDER.toString().repeat(knitAutonumberDigits)) {
+                            "$KNIT_DIRECTIVE can only use a contiguous range of '$KNIT_AUTONUMBER_PLACEHOLDER' for auto-numbering"
+                        }
+                        knitAutonumberGroup = str.substring(0, i).count { it == '(' } + 2 // note: it does not understand escaped open braces
+                        str = str.substring(0, i) + KNIT_AUTONUMBER_REGEX + str.substring(j + 1)
+                    }
+                    knitRegex = Regex("\\((" + str + ")\\)")
                     continue@mainLoop
                 }
                 INCLUDE_DIRECTIVE -> {
@@ -183,7 +203,9 @@ fun knit(markdownFile: File): Boolean {
             if (inLine.startsWith(CODE_START)) {
                 require(testOut == null || testLines.isEmpty()) { "Previous test was not emitted with $TEST_DIRECTIVE" }
                 codeLines += ""
-                readUntilTo(CODE_END, codeLines)
+                readUntilTo(CODE_END, codeLines) { line ->
+                    !line.startsWith(SAMPLE_START) && !line.startsWith(SAMPLE_END)
+                }
                 continue@mainLoop
             }
             if (inLine.startsWith(TEST_START)) {
@@ -212,8 +234,19 @@ fun knit(markdownFile: File): Boolean {
                     remainingApiRefNames += apiRef.name
                 }
             }
-            knitRegex?.find(inLine)?.let { knitMatch ->
+            knitRegex?.find(inLine)?.let knitRegexMatch@{ knitMatch ->
                 val fileName = knitMatch.groups[1]!!.value
+                if (knitAutonumberDigits != 0) {
+                    val numGroup = knitMatch.groups[knitAutonumberGroup]!!
+                    val num = knitAutonumberIndex.toString().padStart(knitAutonumberDigits, '0')
+                    if (numGroup.value != num) { // update and retry with this line if a different number
+                        val r = numGroup.range
+                        val newLine = inLine.substring(0, r.first) + num + inLine.substring(r.last + 1)
+                        updateLineAndRetry(newLine)
+                        return@knitRegexMatch
+                    }
+                }
+                knitAutonumberIndex++
                 val file = File(markdownFile.parentFile, fileName)
                 require(files.add(file)) { "Duplicate file: $file"}
                 println("Knitting $file ...")
@@ -328,11 +361,11 @@ private fun flushTestOut(parentDir: File?, testOut: String?, testOutLines: Mutab
 private fun MarkdownTextReader.readUntil(marker: String): List<String> =
     arrayListOf<String>().also { readUntilTo(marker, it) }
 
-private fun MarkdownTextReader.readUntilTo(marker: String, list: MutableList<String>) {
+private fun MarkdownTextReader.readUntilTo(marker: String, list: MutableList<String>, linePredicate: (String) -> Boolean = { true }) {
     while (true) {
         val line = readLine() ?: break
         if (line.startsWith(marker)) break
-        list += line
+        if (linePredicate(line)) list += line
     }
 }
 
@@ -402,6 +435,12 @@ class MarkdownTextReader(r: Reader) : LineNumberReader(r) {
         if (!skip && markdownPart != MarkdownPart.TOC)
             outText += line
         return line
+    }
+
+    fun updateLineAndRetry(line: String) {
+        outText.removeAt(outText.lastIndex)
+        outText += line
+        putBackLine = line
     }
 
     fun replaceUntilNextDirective(lines: List<String>): Boolean {
