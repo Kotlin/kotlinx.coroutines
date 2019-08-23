@@ -81,21 +81,19 @@
 
 <p>Given the following functions defined in some Java API:</p>
 
-<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="n">CompletableFuture</span><span class="o">&lt;</span><span class="n">Image</span><span class="o">&gt;</span> <span class="nf">loadImageAsync</span><span class="o">(</span><span class="n">String</span> <span class="n">name</span><span class="o">);</span> <span class="c1">// starts async image loading</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="n">CompletableFuture</span><span class="o">&lt;</span><span class="n">Image</span><span class="o">&gt;</span> <span class="nf">loadImageAsync</span><span class="o">(</span><span class="n">String</span> <span class="n">name</span><span class="o">);</span> <span class="c1">// starts async image loading</span>
 <span class="kd">public</span> <span class="n">Image</span> <span class="nf">combineImages</span><span class="o">(</span><span class="n">Image</span> <span class="n">image1</span><span class="o">,</span> <span class="n">Image</span> <span class="n">image2</span><span class="o">);</span> <span class="c1">// synchronously combines two images using some algorithm</span>
-</code></pre>
-</div>
+</code></pre></div></div>
 
 <p>We can consume this API from Kotlin coroutine to load two images and combine then asynchronously. 
 The resulting function returns <code>CompletableFuture&lt;Image&gt;</code> for ease of use back from Java.</p>
 
-<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="k">fun</span> <span class="nf">combineImagesAsync</span><span class="p">(</span><span class="n">name1</span><span class="p">:</span> <span class="n">String</span><span class="p">,</span> <span class="n">name2</span><span class="p">:</span> <span class="n">String</span><span class="p">):</span> <span class="n">CompletableFuture</span><span class="p">&lt;</span><span class="n">Image</span><span class="p">&gt;</span> <span class="p">=</span> <span class="n">future</span> <span class="p">{</span>
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">fun</span> <span class="nf">combineImagesAsync</span><span class="p">(</span><span class="n">name1</span><span class="p">:</span> <span class="n">String</span><span class="p">,</span> <span class="n">name2</span><span class="p">:</span> <span class="n">String</span><span class="p">):</span> <span class="n">CompletableFuture</span><span class="p">&lt;</span><span class="n">Image</span><span class="p">&gt;</span> <span class="p">=</span> <span class="n">future</span> <span class="p">{</span>
     <span class="kd">val</span> <span class="py">future1</span> <span class="p">=</span> <span class="n">loadImageAsync</span><span class="p">(</span><span class="n">name1</span><span class="p">)</span> <span class="c1">// start loading first image
 </span>    <span class="kd">val</span> <span class="py">future2</span> <span class="p">=</span> <span class="n">loadImageAsync</span><span class="p">(</span><span class="n">name2</span><span class="p">)</span> <span class="c1">// start loading second image
 </span>    <span class="n">combineImages</span><span class="p">(</span><span class="n">future1</span><span class="p">.</span><span class="n">await</span><span class="p">(),</span> <span class="n">future2</span><span class="p">.</span><span class="n">await</span><span class="p">())</span> <span class="c1">// wait for both, combine, and return result
 </span><span class="p">}</span>
-</code></pre>
-</div>
+</code></pre></div></div>
 
 <p>Note that this module should be used only for integration with existing Java APIs based on <code>CompletableFuture</code>. 
 Writing pure-Kotlin code that uses <code>CompletableFuture</code> is highly not recommended, since the resulting APIs based

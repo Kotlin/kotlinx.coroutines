@@ -35,13 +35,12 @@
 
 <p>Add <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-slf4j/kotlinx.coroutines.slf4j/-m-d-c-context/index.html">MDCContext</a> to the coroutine context so that the SLF4J MDC context is captured and passed into the coroutine.</p>
 
-<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">MDC</span><span class="p">.</span><span class="n">put</span><span class="p">(</span><span class="s">"kotlin"</span><span class="p">,</span> <span class="s">"rocks"</span><span class="p">)</span> <span class="c1">// put a value into the MDC context
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">MDC</span><span class="p">.</span><span class="n">put</span><span class="p">(</span><span class="s">"kotlin"</span><span class="p">,</span> <span class="s">"rocks"</span><span class="p">)</span> <span class="c1">// put a value into the MDC context
 </span>
 <span class="n">launch</span><span class="p">(</span><span class="n">MDCContext</span><span class="p">())</span> <span class="p">{</span>
    <span class="n">logger</span><span class="p">.</span><span class="n">info</span> <span class="p">{</span> <span class="s">"..."</span> <span class="p">}</span>   <span class="c1">// the MDC context will contain the mapping here
 </span><span class="p">}</span>
-</code></pre>
-</div>
+</code></pre></div></div>
 
 <h3 id="packages">Packages</h3>
 

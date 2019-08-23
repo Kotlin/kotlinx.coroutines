@@ -56,7 +56,7 @@
 
 <p>Using Firebase APIs becomes simple:</p>
 
-<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">FirebaseAuth</span><span class="p">.</span><span class="n">getInstance</span><span class="p">().</span><span class="n">signInAnonymously</span><span class="p">().</span><span class="n">await</span><span class="p">()</span>
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">FirebaseAuth</span><span class="p">.</span><span class="n">getInstance</span><span class="p">().</span><span class="n">signInAnonymously</span><span class="p">().</span><span class="n">await</span><span class="p">()</span>
 <span class="kd">val</span> <span class="py">snapshot</span> <span class="p">=</span> <span class="k">try</span> <span class="p">{</span>
     <span class="n">FirebaseFirestore</span><span class="p">.</span><span class="n">getInstance</span><span class="p">().</span><span class="n">document</span><span class="p">(</span><span class="s">"users/$id"</span><span class="p">).</span><span class="k">get</span><span class="p">().</span><span class="n">await</span><span class="p">()</span> <span class="c1">// Cancellable await
 </span><span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="n">FirebaseFirestoreException</span><span class="p">)</span> <span class="p">{</span>
@@ -65,8 +65,7 @@
 <span class="p">}</span>
 
 <span class="c1">// Do stuff
-</span></code></pre>
-</div>
+</span></code></pre></div></div>
 
 <h3 id="packages">Packages</h3>
 
