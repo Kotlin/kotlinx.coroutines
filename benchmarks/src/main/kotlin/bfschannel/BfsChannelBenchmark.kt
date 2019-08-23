@@ -3,8 +3,12 @@
 package bfschannel
 
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStreamReader
@@ -13,12 +17,9 @@ import java.net.URL
 import java.nio.channels.Channels
 import java.nio.file.Paths
 import java.util.*
-import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPInputStream
 import kotlin.collections.ArrayList
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 private val GRAPH_FILES = listOf(
         Triple("RAND-1M-10M", "rand", "1000000 10000000"), // 1M nodes and 10M edges
@@ -31,14 +32,23 @@ private const val ITERATIONS = 5
 /**
  * Number of coroutines that are used to execute bfs in parallel
  */
-private val WORKERS = listOf(1, 4, 8, 16)
+private val COROUTINES = listOf(1, 4, 8, 16)
+/**
+ * Output file for the benchmark results
+ */
+private val RESULT_FILE = "src/main/kotlin/bfschannel/results.csv"
 
 /**
  * This benchmark tests channel as a working queue, as a queue under contention.
  * The benchmark creates or downloads graphs, then executes parallel BFS using channel as a queue, executes sequential BFS,
  * compares the results and computes execution times.
+ *
+ * NB: this benchmark works painfully slow without syncronization on methods [kotlinx.coroutines.internal.LockFreeLinkedListNode.remove]
+ * and [kotlinx.coroutines.internal.LockFreeLinkedListNode.helpDelete] (or other channels fixes).
  */
 fun main() {
+    val standardDeviation = StandardDeviation()
+    val results = ArrayList<String>()
     for ((graphName, graphType, graphUrl) in GRAPH_FILES) {
         println("=== $graphName ===")
         val graph = downloadOrCreateAndParseGraph(graphName, graphType, graphUrl)
@@ -47,55 +57,58 @@ fun main() {
         val startNode = graph[0]
 
         // warmup
-        val (_, sequentialDistances) = runSequentialBfs(startNode, nodes)
+        val sequentialResults = runSequentialBfs(startNode, nodes)
 
         // benchmark iterations
-        val sequentialExecutionTimes = (1..ITERATIONS).map { runSequentialBfs(startNode, nodes).first }.toList()
+        val sequentialExecutionTimes = (1..ITERATIONS).map { runSequentialBfs(startNode, nodes).executionTime.toDouble() }.toDoubleArray()
 
-        for (workers in WORKERS) {
+        results += "$graphName,0,${sequentialExecutionTimes.average() / 1_000_000},${standardDeviation.evaluate(sequentialExecutionTimes) / 1_000_000}"
+
+        for (coroutines in COROUTINES) {
             // warmup
-            runParallelBfs(startNode, nodes, workers)
+            runParallelBfs(startNode, nodes, coroutines)
 
             // benchmark iterations
             val parallelExecutionTimes = (1..ITERATIONS).map {
-                val (executionTime, parallelDistances) = runParallelBfs(startNode, nodes, workers)
-                check(parallelDistances == sequentialDistances)
-                executionTime
-            }.toList()
+                val parallelResults = runParallelBfs(startNode, nodes, coroutines)
+                check(parallelResults.distances == sequentialResults.distances)
+                parallelResults.executionTime.toDouble()
+            }.toDoubleArray()
 
-            println("parallel workers count = $workers, parallel execution time = ${parallelExecutionTimes.average() / 1_000_000}ms std = ${computeStandardDeviation(parallelExecutionTimes) / 1_000_000}ms, sequential execution time = ${sequentialExecutionTimes.average() / 1_000_000}ms std = ${computeStandardDeviation(sequentialExecutionTimes) / 1_000_000}ms")
+            results += "$graphName,$coroutines,${parallelExecutionTimes.average() / 1_000_000}," +
+                    "${standardDeviation.evaluate(parallelExecutionTimes) / 1_000_000}"
+            println("coroutines count = $coroutines, " +
+                    "parallel execution time = ${parallelExecutionTimes.average() / 1_000_000}ms " +
+                    "std = ${standardDeviation.evaluate(parallelExecutionTimes) / 1_000_000}ms, " +
+                    "sequential execution time = ${sequentialExecutionTimes.average() / 1_000_000}ms " +
+                    "std = ${standardDeviation.evaluate(sequentialExecutionTimes) / 1_000_000}ms")
+        }
+    }
+    PrintWriter(RESULT_FILE).use { writer ->
+        writer.println("graphName,coroutines,executionTimeAvgMs,executionTimeStdMs")
+        for (result in results) {
+            writer.println(result)
         }
     }
 }
 
-fun computeStandardDeviation(list : List<Long>) : Double {
-    var sum = 0.0
-    var standardDeviation = 0.0
-    for (num in list) {
-        sum += num
-    }
-    val mean = sum / list.size
-    for (num in list) {
-        standardDeviation += (num - mean).pow(2.0)
-    }
-    return sqrt(standardDeviation / list.size)
-}
-
-private fun runParallelBfs(startNode: Node, nodes: Int, workers: Int) : Pair<Long, List<Long>> {
+private fun runParallelBfs(startNode: Node, nodes: Int, coroutines: Int) : ExecutionResults {
     val start = System.nanoTime()
-    val parallelDistances = bfsParallel(startNode, nodes, workers)
+    val distances = bfsParallel(startNode, nodes, coroutines)
     val end = System.nanoTime()
 
-    return Pair(end - start, parallelDistances)
+    return ExecutionResults(end - start, distances)
 }
 
-private fun runSequentialBfs(startNode: Node, nodes: Int) : Pair<Long, List<Long>> {
+private fun runSequentialBfs(startNode: Node, nodes: Int) : ExecutionResults {
     val start = System.nanoTime()
-    val sequentialDistances = bfsSequential(startNode, nodes)
+    val distances = bfsSequential(startNode, nodes)
     val end = System.nanoTime()
 
-    return Pair(end - start, sequentialDistances)
+    return ExecutionResults(end - start, distances)
 }
+
+class ExecutionResults(val executionTime : Long, val distances : List<Long>)
 
 fun bfsSequential(startNode: Node, nodes: Int): List<Long> {
     val distances = Array(nodes) { Long.MAX_VALUE }
@@ -118,21 +131,21 @@ fun bfsSequential(startNode: Node, nodes: Int): List<Long> {
     return distances.toList()
 }
 
-fun bfsParallel(start: Node, nodes: Int, workers: Int): List<Long> {
+fun bfsParallel(start: Node, nodes: Int, coroutines: Int): List<Long> {
     val distances = Array(nodes) { AtomicLong(Long.MAX_VALUE) }
     // The distance to the start node is `0`
     distances[start.id].set(0)
 
-    val queue : Channel<Node> = SelfClosingChannel(workers)
+    val queue : Channel<Node> = SelfClosingChannel(coroutines)
     queue.offer(start)
     // Run worker threads and wait until the total work is done
     val jobs = ArrayList<Job>()
-    repeat(workers) {
+    repeat(coroutines) {
         jobs += GlobalScope.launch {
             while (true) {
                 val currentNode = queue.receiveOrClosed().valueOrNull ?: break
                 for (edge in currentNode.outgoingEdges) {
-                    processEdge(distances, currentNode, edge.to, queue)
+                    relaxEdge(distances, currentNode, edge.to, queue)
                 }
             }
         }
@@ -147,7 +160,7 @@ fun bfsParallel(start: Node, nodes: Int, workers: Int): List<Long> {
     return distances.map { long -> long.toLong() }
 }
 
-private fun processEdge(distances: Array<AtomicLong>, currentNode: Node, nextNode: Node, queue: Channel<Node>) {
+private fun relaxEdge(distances: Array<AtomicLong>, currentNode: Node, nextNode: Node, queue: Channel<Node>) {
     val newDistance = distances[currentNode.id].get() + 1
     // try to compare and set if new distance is less than the old one
     while (true) {
@@ -171,6 +184,11 @@ class Node(val id: Int) {
     }
 }
 
+data class Edge(val to: Node)
+
+/**
+ * Channel that closes itself if specified amount of coroutines start waiting on receive
+ */
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
 internal class SelfClosingChannel<E>(private val maximumEnqueuedCoroutines : Int) : LinkedListChannel<E>() {
     private val counter = AtomicLong(0)
@@ -189,21 +207,19 @@ internal class SelfClosingChannel<E>(private val maximumEnqueuedCoroutines : Int
     }
 }
 
-data class Edge(val to: Node, val weight: Int)
-
-fun randomConnectedGraph(nodes: Int, edges: Int, maxWeight: Int = 100): List<Node> {
+fun randomConnectedGraph(nodes: Int, edges: Int): List<Node> {
     require(edges >= nodes - 1)
     // always use the same seed
     val random = Random(0)
     val nodesList = List(nodes) { Node(it + 1) }
     // generate a random connected graph with `nodes-1` edges
-    createGraphStructure(nodesList, random, maxWeight)
+    createGraphStructure(nodesList, random)
     // add `edges - nodes + 1` random edges
-    addEdges(edges - nodes + 1, nodes, nodesList, random, maxWeight)
+    addEdges(edges - nodes + 1, nodes, nodesList, random)
     return nodesList
 }
 
-private fun createGraphStructure(nodesList: List<Node>, random: Random, maxWeight: Int) {
+private fun createGraphStructure(nodesList: List<Node>, random: Random) {
     val nodesToConnect = ArrayList(nodesList)
     var currentNode = nodesToConnect.removeAt(random.nextInt(nodesToConnect.size))
     val visitedNodes = mutableSetOf(currentNode)
@@ -211,24 +227,22 @@ private fun createGraphStructure(nodesList: List<Node>, random: Random, maxWeigh
     while (nodesToConnect.isNotEmpty()) {
         val neighbor = nodesToConnect.removeAt(random.nextInt(nodesToConnect.size))
         if (visitedNodes.add(neighbor)) {
-            val weight = random.nextInt(maxWeight)
-            currentNode.addEdge(Edge(neighbor, weight))
-            neighbor.addEdge(Edge(currentNode, weight))
+            currentNode.addEdge(Edge(neighbor))
+            neighbor.addEdge(Edge(currentNode))
         }
         currentNode = neighbor
     }
 }
 
-private fun addEdges(edgesToAdd: Int, nodes: Int, nodesList: List<Node>, random: Random, maxWeight: Int) {
+private fun addEdges(edgesToAdd: Int, nodes: Int, nodesList: List<Node>, random: Random) {
     repeat(edgesToAdd) {
         while (true) {
             val first = nodesList[random.nextInt(nodes)]
             val second = nodesList[random.nextInt(nodes)]
             if (first.id == second.id) continue
             if (first.outgoingEdges.any { e -> e.to == second }) continue
-            val weight = random.nextInt(maxWeight)
-            first.addEdge(Edge(second, weight))
-            second.addEdge(Edge(first, weight))
+            first.addEdge(Edge(second))
+            second.addEdge(Edge(first))
             break
         }
     }
@@ -269,7 +283,7 @@ fun writeGeneratedGraphToGrFile(filename: String, graphNodes: List<Node>) {
         pw.println("p sp ${graphNodes.size} $edges")
         graphNodes.forEach { from ->
             from.outgoingEdges.forEach { e ->
-                pw.println("a ${from.id} ${e.to.id} ${e.weight}")
+                pw.println("a ${from.id} ${e.to.id} 1")
             }
         }
     }
@@ -289,8 +303,7 @@ fun parseGrFile(filename: String, gziped: Boolean): List<Node> {
                 val parts = line.split(" ")
                 val from = nodes[parts[1].toInt() - 1]
                 val to = nodes[parts[2].toInt() - 1]
-                val w = parts[3].toInt()
-                from.addEdge(Edge(to, w))
+                from.addEdge(Edge(to))
             }
         }
     }
@@ -299,7 +312,6 @@ fun parseGrFile(filename: String, gziped: Boolean): List<Node> {
 }
 
 fun parseTxtFile(filename: String, gziped: Boolean): List<Node> {
-    val rand = Random(0)
     val nodes = ArrayList<Node>()
     val inputStream = if (gziped) GZIPInputStream(FileInputStream(filename)) else FileInputStream(filename)
     InputStreamReader(inputStream).buffered().useLines { it.forEach { line ->
@@ -309,9 +321,8 @@ fun parseTxtFile(filename: String, gziped: Boolean): List<Node> {
                 val parts = line.split(" ", "\t")
                 val from = parts[0].toInt()
                 val to   = parts[1].toInt()
-                val w    = rand.nextInt(100)
                 while (nodes.size <= from || nodes.size <= to) nodes.add(Node(nodes.size))
-                nodes[from].addEdge(Edge(nodes[to], w))
+                nodes[from].addEdge(Edge(nodes[to]))
             }
         }
     }
