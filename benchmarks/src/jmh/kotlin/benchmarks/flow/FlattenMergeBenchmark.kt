@@ -1,11 +1,10 @@
 package benchmarks.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.consumesAll
 import kotlinx.coroutines.flow.*
 import org.openjdk.jmh.annotations.*
-import org.openjdk.jmh.infra.Blackhole
 import java.util.concurrent.TimeUnit
+import kotlin.math.ceil
 
 /**
  * This benchmark can be considered as a macro benchmark for the [kotlinx.coroutines.sync.Semaphore]
@@ -18,6 +17,10 @@ import java.util.concurrent.TimeUnit
 @Fork(1)
 open class FlattenMergeBenchmark {
 
+    /**
+     * Number of flows that are merged in this benchmark. Negative number means that number of flows
+     * will be computed as -([flows] * [concurrency]), positive number will be chosen as number of flows.
+     */
     @Param("-10", "-1", "100", "500")
     private var flows: Int = 0
 
@@ -30,16 +33,16 @@ open class FlattenMergeBenchmark {
 
     @Setup
     fun setup() {
-        val flowsCount = if (flows < 0) {
+        val flowsNumber = if (flows < 0) {
             -flows * concurrency
         }
         else {
             flows
         }
 
-        flow = (1..flowsCount).asFlow().map {
+        flow = (1..flowsNumber).asFlow().map {
             flow {
-                repeat(ELEMENTS / flowsCount) {
+                repeat(ceil(ELEMENTS / flowsNumber.toDouble()).toInt()) {
                     emit(it)
                 }
             }
@@ -52,4 +55,4 @@ open class FlattenMergeBenchmark {
     }
 }
 
-private const val ELEMENTS = 100
+private const val ELEMENTS = 10_000
