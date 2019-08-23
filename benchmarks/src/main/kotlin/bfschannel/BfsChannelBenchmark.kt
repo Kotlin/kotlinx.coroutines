@@ -21,10 +21,10 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPInputStream
 import kotlin.collections.ArrayList
 
-private val GRAPH_FILES = listOf(
-        Triple("RAND-1M-10M", "rand", "1000000 10000000"), // 1M nodes and 10M edges
-        Triple("USA-DISTANCE", "gr gz", "http://www.dis.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.USA.gr.gz"),
-        Triple("LIVE-JOURNAL", "txt gz", "https://snap.stanford.edu/data/soc-LiveJournal1.txt.gz"))
+private val GRAPH_CREATORS = listOf(
+        RandomGraphCreator("RAND-1M-10M", 1_000_000,10_000_000),
+        ExistingGraphCreator("USA-DISTANCE", "gr gz", "http://www.dis.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.USA.gr.gz"),
+        ExistingGraphCreator("LIVE-JOURNAL", "txt gz", "https://snap.stanford.edu/data/soc-LiveJournal1.txt.gz"))
 /**
  * Iterations count for each graph
  */
@@ -49,9 +49,10 @@ private val RESULT_FILE = "src/main/kotlin/bfschannel/results.csv"
 fun main() {
     val standardDeviation = StandardDeviation()
     val results = ArrayList<String>()
-    for ((graphName, graphType, graphUrl) in GRAPH_FILES) {
+    for (graphCreator in GRAPH_CREATORS) {
+        val graphName = graphCreator.name
         println("=== $graphName ===")
-        val graph = downloadOrCreateAndParseGraph(graphName, graphType, graphUrl)
+        val graph = graphCreator.getGraph()
 
         val nodes = graph.size
         val startNode = graph[0]
@@ -207,6 +208,65 @@ internal class SelfClosingChannel<E>(private val maximumEnqueuedCoroutines : Int
     }
 }
 
+abstract class GraphCreator(val name: String) {
+    fun getGraph() : List<Node> {
+        val graphFile = getGraphFile()
+        if (!Paths.get(graphFile).toFile().exists()) {
+            generateGraphFile(graphFile)
+        }
+        return parseGraphFile(graphFile)
+    }
+
+    abstract fun getGraphFile() : String
+
+    abstract fun generateGraphFile(filename: String)
+
+    abstract fun parseGraphFile(graphFile: String) : List<Node>
+}
+
+class RandomGraphCreator(name: String, private val nodes : Int, private val edges : Int) : GraphCreator(name) {
+    override fun generateGraphFile(filename: String) {
+        println("Generating $filename as a random graph with $nodes nodes and $edges edges")
+        val graphNodes = randomConnectedGraph(nodes, edges)
+        writeGeneratedGraphToGrFile(filename, graphNodes)
+        println("Generated $filename")
+    }
+
+    override fun getGraphFile(): String {
+        return "out/$name.gr"
+    }
+
+    override fun parseGraphFile(graphFile: String) : List<Node> {
+        return parseGrFile(graphFile, false)
+    }
+}
+
+class ExistingGraphCreator(name: String, private val type: String, private val url : String) : GraphCreator(name) {
+    override fun getGraphFile(): String {
+        val gz = type.endsWith("gz")
+        val ext = type.split(" ")[0]
+        return "out/$name.$ext" + (if (gz) ".gz" else "")
+    }
+
+    override fun generateGraphFile(filename: String) {
+        println("Downloading $filename from $url")
+        val input = Channels.newChannel(URL(url).openStream())
+        val output = FileOutputStream(filename)
+        output.channel.transferFrom(input, 0, Long.MAX_VALUE)
+        println("Downloaded $filename")
+    }
+
+    override fun parseGraphFile(graphFile: String): List<Node> {
+        val gz = type.endsWith("gz")
+        val ext = type.split(" ")[0]
+        return when (ext) {
+            "gr" -> parseGrFile(graphFile, gz)
+            "txt" -> parseTxtFile(graphFile, gz)
+            else -> error("Unknown graph type: $ext")
+        }
+    }
+}
+
 fun randomConnectedGraph(nodes: Int, edges: Int): List<Node> {
     require(edges >= nodes - 1)
     // always use the same seed
@@ -248,34 +308,6 @@ private fun addEdges(edgesToAdd: Int, nodes: Int, nodesList: List<Node>, random:
     }
 }
 
-fun downloadOrCreateAndParseGraph(name: String, type: String, url: String): List<Node> {
-    val gz = type.endsWith("gz")
-    val ext = type.split(" ")[0]
-    val graphFile = "out/$name." + (if (ext == "rand") "gr" else ext) + (if (gz) ".gz" else "")
-    if (!Paths.get(graphFile).toFile().exists()) {
-        if (ext == "rand") {
-            val parts = url.split(" ")
-            val nodes = parts[0].toInt()
-            val edges = parts[1].toInt()
-            println("Generating $graphFile as a random graph with $nodes nodes and $edges edges")
-            val graphNodes = randomConnectedGraph(nodes, edges)
-            writeGeneratedGraphToGrFile(graphFile, graphNodes)
-            println("Generated $graphFile")
-        } else {
-            println("Downloading $graphFile from $url")
-            val input = Channels.newChannel(URL(url).openStream())
-            val output = FileOutputStream(graphFile)
-            output.channel.transferFrom(input, 0, Long.MAX_VALUE)
-            println("Downloaded $graphFile")
-        }
-    }
-    return when (ext) {
-        "rand", "gr" -> parseGrFile(graphFile, gz)
-        "txt" -> parseTxtFile(graphFile, gz)
-        else -> error("Unknown graph type: $ext")
-    }
-}
-
 fun writeGeneratedGraphToGrFile(filename: String, graphNodes: List<Node>) {
     var edges = 0
     graphNodes.forEach { node -> edges += node.outgoingEdges.size }
@@ -283,7 +315,7 @@ fun writeGeneratedGraphToGrFile(filename: String, graphNodes: List<Node>) {
         pw.println("p sp ${graphNodes.size} $edges")
         graphNodes.forEach { from ->
             from.outgoingEdges.forEach { e ->
-                pw.println("a ${from.id} ${e.to.id} 1")
+                pw.println("a ${from.id} ${e.to.id}")
             }
         }
     }
