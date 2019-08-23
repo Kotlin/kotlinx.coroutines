@@ -1,5 +1,25 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.3.0
+
+### Flow
+
+This version is the first stable release with [`Flow`](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html) API.
+
+All `Flow` API not marked with `@FlowPreview` or `@ExperimentalCoroutinesApi` annotations are stable and here to stay.
+Flow declarations marked with `@ExperimentalCoroutinesApi` have [the same guarantees](/docs/compatibility.md#experimental-api) as regular experimental API.
+Please note that API marked with `@FlowPreview` have [weak guarantees](/docs/compatibility.md#flow-preview-api) on source, binary and semantic compatibility.
+
+### Changelog
+
+* A new [guide section](/docs/flow.md) about Flow.
+* `CoroutineDispatcher.asExecutor` extension (#1450).
+* Fixed bug when `select` statement could report the same exception twice (#1433).
+* Fixed context preservation in `flatMapMerge` in a case when collected values were immediately emitted to another flow (#1440).
+* Reactive Flow integrations enclosing files are renamed for better interoperability with Java.
+* Default buffer size in all Flow operators is increased to 64.
+* Kotlin updated to 1.3.50.
+
 ## Version 1.3.0-RC2
 
 ### Flow improvements
