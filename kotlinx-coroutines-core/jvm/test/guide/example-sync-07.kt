@@ -40,7 +40,7 @@ fun CoroutineScope.counterActor() = actor<CounterMsg> {
     }
 }
 
-fun main() = runBlocking {
+fun main() = runBlocking<Unit> {
     val counter = counterActor() // create the actor
     withContext(Dispatchers.Default) {
         massiveRun {

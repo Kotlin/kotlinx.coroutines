@@ -77,7 +77,7 @@ The main coroutines guide has moved to the [docs folder](docs/coroutines-guide.m
     * <a name='imperative-finally-block'></a>[Imperative finally block](docs/flow.md#imperative-finally-block)
     * <a name='declarative-handling'></a>[Declarative handling](docs/flow.md#declarative-handling)
     * <a name='upstream-exceptions-only'></a>[Upstream exceptions only](docs/flow.md#upstream-exceptions-only)
-    * <a name='imperative-versus-declarative'></a>[Imperative versus declarative](docs/flow.md#imperative-versus-declarative)
+  * <a name='imperative-versus-declarative'></a>[Imperative versus declarative](docs/flow.md#imperative-versus-declarative)
   * <a name='launching-flow'></a>[Launching flow](docs/flow.md#launching-flow)
 <!--- TOC_REF docs/channels.md -->
 * <a name='channels'></a>[Channels](docs/channels.md#channels)
