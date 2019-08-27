@@ -22,7 +22,7 @@ import java.util.zip.GZIPInputStream
 import kotlin.collections.ArrayList
 
 private val GRAPHS = listOf(
-        RandomGraphCreator("RAND-1M-10M", 1_000_000,10_000_000),
+        RandomGraphCreator("RAND-1M-10M", 1_000_000, 10_000_000),
         DownloadingGraphCreator("USA-DISTANCE", GraphType.GR_GZ, "http://www.dis.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.USA.gr.gz"),
         DownloadingGraphCreator("LIVE-JOURNAL", GraphType.TXT_GZ, "https://snap.stanford.edu/data/soc-LiveJournal1.txt.gz"))
 /**
@@ -61,7 +61,10 @@ fun main() {
         // benchmark iterations
         val sequentialExecutionTimes = (1..ITERATIONS).map { runSequentialBfs(startNode, graph).executionTime }
 
-        results += "$graphName,0,${sequentialExecutionTimes.average() / 1_000_000},${ sequentialExecutionTimes.standardDeviation() / 1_000_000}"
+        results += "$graphName,0,${sequentialExecutionTimes.average() / 1_000_000},${sequentialExecutionTimes.standardDeviation() / 1_000_000}"
+
+        println("sequential execution time = ${sequentialExecutionTimes.average() / 1_000_000}ms " +
+                "std = ${sequentialExecutionTimes.standardDeviation() / 1_000_000}ms")
 
         for (coroutines in COROUTINES) {
             // warmup
@@ -73,9 +76,6 @@ fun main() {
                 check(parallelResults.distances.contentEquals(sequentialResults.distances)) { "Results found using parallel and sequential bfs are not the same" }
                 parallelResults.executionTime
             }
-
-            println("sequential execution time = ${sequentialExecutionTimes.average() / 1_000_000}ms " +
-                    "std = ${sequentialExecutionTimes.standardDeviation() / 1_000_000}ms")
 
             results += "$graphName,$coroutines,${parallelExecutionTimes.average() / 1_000_000}," +
                     "${parallelExecutionTimes.standardDeviation() / 1_000_000}"
@@ -92,7 +92,7 @@ fun main() {
     }
 }
 
-private fun runParallelBfs(startNode: Node, graph: List<Node>, coroutines: Int) : ExecutionResults {
+private fun runParallelBfs(startNode: Node, graph: List<Node>, coroutines: Int): ExecutionResults {
     val start = System.nanoTime()
     val distances = bfsParallel(startNode, graph, coroutines)
     val end = System.nanoTime()
@@ -100,7 +100,7 @@ private fun runParallelBfs(startNode: Node, graph: List<Node>, coroutines: Int) 
     return ExecutionResults(end - start, distances)
 }
 
-private fun runSequentialBfs(startNode: Node, graph: List<Node>) : ExecutionResults {
+private fun runSequentialBfs(startNode: Node, graph: List<Node>): ExecutionResults {
     val start = System.nanoTime()
     val distances = bfsSequential(startNode, graph)
     val end = System.nanoTime()
@@ -108,9 +108,9 @@ private fun runSequentialBfs(startNode: Node, graph: List<Node>) : ExecutionResu
     return ExecutionResults(end - start, distances)
 }
 
-class ExecutionResults(val executionTime : Long, val distances : Array<Long>)
+class ExecutionResults(val executionTime: Long, val distances: Array<Long>)
 
-fun bfsSequential(start: Node, graph : List<Node>): Array<Long> {
+fun bfsSequential(start: Node, graph: List<Node>): Array<Long> {
     // The distance to the start node is `0`
     start.distance.set(0)
 
@@ -130,11 +130,11 @@ fun bfsSequential(start: Node, graph : List<Node>): Array<Long> {
     return Array(graph.size) { graph[it].distance.get() }
 }
 
-fun bfsParallel(start: Node, graph : List<Node>, coroutines: Int): Array<Long> = runBlocking {
+fun bfsParallel(start: Node, graph: List<Node>, coroutines: Int): Array<Long> = runBlocking {
     // The distance to the start node is `0`
     start.distance.set(0)
 
-    val queue : Channel<Node> = SelfClosingChannel(coroutines)
+    val queue: Channel<Node> = SelfClosingChannel(coroutines)
     queue.offer(start)
     // Run worker threads and wait until the total work is done
     val jobs = ArrayList<Job>()
@@ -182,7 +182,7 @@ class Node(val id: Int) {
  * This channel implementation does not suspend on sends and closes itself if the number of waiting receivers exceeds [maxWaitingReceivers].
  */
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
-internal class SelfClosingChannel<E>(private val maxWaitingReceivers : Int) : LinkedListChannel<E>() {
+internal class SelfClosingChannel<E>(private val maxWaitingReceivers: Int) : LinkedListChannel<E>() {
     private val waitingReceivers = AtomicLong(0)
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
@@ -192,25 +192,27 @@ internal class SelfClosingChannel<E>(private val maxWaitingReceivers : Int) : Li
     }
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    override fun onReceiveDequeued() = waitingReceivers.decrementAndGet()
+    override fun onReceiveDequeued() {
+        waitingReceivers.decrementAndGet()
+    }
 }
 
 abstract class GraphCreator(val name: String) {
-    fun getGraph() : List<Node> {
+    fun getGraph(): List<Node> {
         if (!Paths.get(graphFileName).toFile().exists()) {
             generateOrDownloadGraphFile(graphFileName)
         }
         return parseGraphFile(graphFileName)
     }
 
-    abstract val graphFileName : String
+    abstract val graphFileName: String
 
     abstract fun generateOrDownloadGraphFile(graphFileName: String)
 
-    abstract fun parseGraphFile(graphFileName: String) : List<Node>
+    abstract fun parseGraphFile(graphFileName: String): List<Node>
 }
 
-class RandomGraphCreator(name: String, private val nodes : Int, private val edges : Int) : GraphCreator(name) {
+class RandomGraphCreator(name: String, private val nodes: Int, private val edges: Int) : GraphCreator(name) {
     override fun generateOrDownloadGraphFile(graphFileName: String) {
         println("Generating $graphFileName as a random graph with $nodes nodes and $edges edges")
         val graphNodes = randomConnectedGraph(nodes, edges)
@@ -221,12 +223,12 @@ class RandomGraphCreator(name: String, private val nodes : Int, private val edge
     override val graphFileName: String
         get() = "out/$name.gr"
 
-    override fun parseGraphFile(graphFileName: String) : List<Node> = parseGrFile(graphFileName, false)
+    override fun parseGraphFile(graphFileName: String): List<Node> = parseGrFile(graphFileName, false)
 }
 
-class DownloadingGraphCreator(name: String, private val type: GraphType, private val url : String) : GraphCreator(name) {
+class DownloadingGraphCreator(name: String, private val type: GraphType, private val url: String) : GraphCreator(name) {
     override val graphFileName: String
-        get() ="out/$name.${type.ext()}.${if (type.gzipped()) "gz" else ""}"
+        get() = "out/$name.${type.ext()}.${if (type.gzipped()) "gz" else ""}"
 
     override fun generateOrDownloadGraphFile(graphFileName: String) {
         println("Downloading $graphFileName from $url")
@@ -254,8 +256,8 @@ enum class GraphType {
         override fun gzipped(): Boolean = true
     };
 
-    abstract fun ext() : String
-    abstract fun gzipped() : Boolean
+    abstract fun ext(): String
+    abstract fun gzipped(): Boolean
 }
 
 fun randomConnectedGraph(nodes: Int, edges: Int): List<Node> {
@@ -315,21 +317,22 @@ fun parseGrFile(filename: String, gzipped: Boolean): List<Node> {
     val nodes = mutableListOf<Node>()
     val inputStream = if (gzipped) GZIPInputStream(FileInputStream(filename)) else FileInputStream(filename)
     inputStream.use { input ->
-        InputStreamReader(input).buffered().useLines { it.forEach { line ->
-            when {
-                line.startsWith("c ") -> {} // just ignore
-                line.startsWith("p sp ") -> {
-                    val n = line.split(" ")[2].toInt()
-                    repeat(n) { nodes.add(Node(it)) }
-                }
-                line.startsWith("a ") -> {
-                    val parts = line.split(" ")
-                    val from = nodes[parts[1].toInt() - 1]
-                    val to = nodes[parts[2].toInt() - 1]
-                    from.addNeighbour(to)
+        InputStreamReader(input).buffered().useLines {
+            it.forEach { line ->
+                when {
+                    line.startsWith("c ") -> {} // just ignore
+                    line.startsWith("p sp ") -> {
+                        val n = line.split(" ")[2].toInt()
+                        repeat(n) { nodes.add(Node(it)) }
+                    }
+                    line.startsWith("a ") -> {
+                        val parts = line.split(" ")
+                        val from = nodes[parts[1].toInt() - 1]
+                        val to = nodes[parts[2].toInt() - 1]
+                        from.addNeighbour(to)
+                    }
                 }
             }
-        }
         }
     }
     return nodes
