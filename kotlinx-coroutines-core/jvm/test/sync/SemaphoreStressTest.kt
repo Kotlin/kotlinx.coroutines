@@ -2,9 +2,17 @@ package kotlinx.coroutines.sync
 
 import kotlinx.coroutines.*
 import org.junit.Test
+import org.junit.After
 import kotlin.test.assertEquals
 
 class SemaphoreStressTest : TestBase() {
+
+    private val pool = newSingleThreadContext("SemaphoreStressTest")
+
+    @After
+    fun tearDown() {
+        pool.close()
+    }
 
     @Test
     fun stressTestAsMutex() = runTest {
@@ -57,4 +65,36 @@ class SemaphoreStressTest : TestBase() {
         semaphore.release()
         assertEquals(1, semaphore.availablePermits)
     }
+
+    @Test
+    fun stressReleaseCancellation() = runTest {
+        val n = 10_000 * stressTestMultiplier
+        val semaphore = Semaphore(1, 1)
+        repeat (n) {
+            assertEquals(0, semaphore.availablePermits)
+
+            var shared = false
+
+            val job1 = launch(pool) {
+                semaphore.acquire()
+                shared = true
+                semaphore.release()
+            }
+
+            assertEquals(false, shared)
+
+            val job2 = launch(pool) {
+                semaphore.release()
+            }
+
+            job1.cancelAndJoin()
+            job2.join()
+
+            assertEquals(1, semaphore.availablePermits)
+            semaphore.acquire()
+        }
+
+        pool.close()
+    }
+
 }
