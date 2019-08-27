@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -17,7 +17,6 @@ class ChannelReceiveOrClosedTest : TestBase() {
         }
 
         val element = channel.receiveOrClosed()
-        assertTrue(element.isValue)
         assertTrue(element.value is TestException1)
         assertTrue(element.valueOrNull is TestException1)
 
@@ -42,7 +41,6 @@ class ChannelReceiveOrClosedTest : TestBase() {
 
         expect(1)
         val element = channel.receiveOrClosed()
-        assertTrue(element.isValue)
         assertEquals(1, element.value)
         assertEquals(1, element.valueOrNull)
         assertEquals("Value(1)", element.toString())
@@ -50,7 +48,6 @@ class ChannelReceiveOrClosedTest : TestBase() {
 
         expect(4)
         val nullElement = channel.receiveOrClosed()
-        assertTrue(nullElement.isValue)
         assertNull(nullElement.value)
         assertNull(nullElement.valueOrNull)
         assertEquals("Value(null)", nullElement.toString())
@@ -62,7 +59,7 @@ class ChannelReceiveOrClosedTest : TestBase() {
 
         val closed2 = channel.receiveOrClosed()
         assertTrue(closed2.isClosed)
-        assertTrue(closed2.closeCause is ClosedReceiveChannelException)
+        assertNull(closed2.closeCause)
         finish(7)
     }
 
@@ -100,7 +97,6 @@ class ChannelReceiveOrClosedTest : TestBase() {
         expect(1)
         val closed = channel.receiveOrClosed()
         assertTrue(closed.isClosed)
-        assertTrue(closed.closeCause is ClosedReceiveChannelException)
         finish(3)
     }
 
@@ -115,17 +111,14 @@ class ChannelReceiveOrClosedTest : TestBase() {
         }
 
         val intResult = channel.receiveOrClosed()
-        assertTrue(intResult.isValue)
         assertEquals(1u, intResult.value.value)
 
         val closeCauseResult = channel.receiveOrClosed()
-        assertTrue(closeCauseResult.isValue)
         assertTrue(closeCauseResult.value.closeCause is TestException1)
 
         val closeCause = channel.receiveOrClosed()
         assertTrue(closeCause.isClosed)
         assertTrue(closeCause.closeCause is TestException2)
-        assertFailsWith<TestException2> { closeCause.valueOrThrow }
     }
 
     @Test
