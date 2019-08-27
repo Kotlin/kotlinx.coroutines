@@ -125,10 +125,11 @@ class ChannelReceiveOrClosedTest : TestBase() {
     fun testToString() = runTest {
         val channel = Channel<String>(1)
         channel.send("message")
-        channel.close(TestException1())
+        channel.close(TestException1("OK"))
         assertEquals("Value(message)", channel.receiveOrClosed().toString())
         // toString implementation for exception differs on every platform
         val str = channel.receiveOrClosed().toString()
-        assertTrue(str.matches("Closed\\(.*TestException1\\)".toRegex()))
+        if (!str.matches("Closed\\(.*TestException1: OK\\)".toRegex()))
+            error("Unexpected string: '$str'")
     }
 }
