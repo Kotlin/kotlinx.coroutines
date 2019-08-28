@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.future
@@ -124,9 +124,12 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
     val result = CompletableDeferred<T>()
     whenComplete { value, exception ->
         if (exception == null) {
+            // the future has completed normally
             result.complete(value)
         } else {
-            result.completeExceptionally(exception)
+            // the future has completed with an exception, unwrap it consistently with fast path
+            // Note: In the fast-path the implementation of CompletableFuture.get() does unwrapping
+            result.completeExceptionally((exception as? CompletionException)?.cause ?: exception)
         }
     }
     if (this is Future<*>) result.cancelFutureOnCompletion(this)
@@ -171,7 +174,7 @@ private class ContinuationConsumer<T>(
     override fun accept(result: T?, exception: Throwable?) {
         val cont = this.cont ?: return // atomically read current value unless null
         if (exception == null) {
-            // the future has been completed normally
+            // the future has completed normally
             cont.resume(result as T)
         } else {
             // the future has completed with an exception, unwrap it to provide consistent view of .await() result and to propagate only original exception

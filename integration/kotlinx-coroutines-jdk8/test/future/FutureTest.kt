@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.future
@@ -264,11 +264,9 @@ class FutureTest : TestBase() {
         try {
             deferred.await()
             fail("deferred.await() should throw an exception")
-        } catch (e: CompletionException) {
+        } catch (e: TestException) {
             assertTrue(deferred.isCancelled)
-            val cause = e.cause?.cause!! // Stacktrace augmentation
-            assertTrue(cause is TestException)
-            assertEquals("something went wrong", cause.message)
+            assertEquals("something went wrong", e.message)
         }
     }
 
@@ -435,6 +433,45 @@ class FutureTest : TestBase() {
                 }
             }
         }
+    }
+
+    /**
+     * Tests that both [CompletionStage.await] and [CompletionStage.asDeferred] consistently unwrap
+     * [CompletionException] both in their slow and fast paths.
+     * See [issue #1479](https://github.com/Kotlin/kotlinx.coroutines/issues/1479).
+     */
+    @Test
+    fun testConsistentExceptionUnwrapping() = runTest {
+        expect(1)
+        // Check the fast path
+        val fFast = CompletableFuture.supplyAsync {
+            expect(2)
+            throw TestException()
+        }
+        fFast.checkFutureException<TestException>() // wait until it completes
+        // Fast path in await and asDeferred.await() shall produce TestException
+        expect(3)
+        val dFast = fFast.asDeferred()
+        assertFailsWith<TestException> { fFast.await() }
+        assertFailsWith<TestException> { dFast.await() }
+        // Same test, but future has not completed yet, check the slow path
+        expect(4)
+        val barrier = CyclicBarrier(2)
+        val fSlow = CompletableFuture.supplyAsync {
+            barrier.await()
+            expect(6)
+            throw TestException()
+        }
+        val dSlow = fSlow.asDeferred()
+        launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(5)
+            // Slow path on await shall produce TestException, too
+            assertFailsWith<TestException> { fSlow.await() } // will suspend here
+            assertFailsWith<TestException> { dSlow.await() }
+            finish(7)
+        }
+        barrier.await()
+        fSlow.checkFutureException<TestException>() // now wait until it completes
     }
 
     private inline fun <reified T: Throwable> CompletableFuture<*>.checkFutureException(vararg suppressed: KClass<out Throwable>) {
