@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("unused")
 
@@ -19,7 +19,7 @@ internal data class Snapshot(val elements: List<Int>, val isClosed: Boolean) {
 
 @OpGroupConfig.OpGroupConfigs(OpGroupConfig(name = "consumer", nonParallel = true))
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
-class LockFreeTaskQueueLinearizabilityTestSC : LockFreeTaskQueueLinearizabilityTestBase() {
+class SCLockFreeTaskQueueLCStressTest : LockFreeTaskQueueLCTestBase() {
     private val q: LockFreeTaskQueue<Int> = LockFreeTaskQueue(singleConsumer = true)
 
     @Operation
@@ -42,7 +42,7 @@ class LockFreeTaskQueueLinearizabilityTestSC : LockFreeTaskQueueLinearizabilityT
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as LockFreeTaskQueueLinearizabilityTestSC
+        other as SCLockFreeTaskQueueLCStressTest
 
         return Snapshot(q) == Snapshot(other.q)
     }
@@ -51,7 +51,7 @@ class LockFreeTaskQueueLinearizabilityTestSC : LockFreeTaskQueueLinearizabilityT
 }
 
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
-class LockFreeTaskQueueLinearizabilityTestMC : LockFreeTaskQueueLinearizabilityTestBase() {
+class MCLockFreeTaskQueueLCStressTest : LockFreeTaskQueueLCTestBase() {
     private val q: LockFreeTaskQueue<Int> = LockFreeTaskQueue(singleConsumer = false)
 
     @Operation
@@ -74,7 +74,7 @@ class LockFreeTaskQueueLinearizabilityTestMC : LockFreeTaskQueueLinearizabilityT
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as LockFreeTaskQueueLinearizabilityTestMC
+        other as MCLockFreeTaskQueueLCStressTest
 
         return Snapshot(q) == Snapshot(other.q)
     }
@@ -82,7 +82,7 @@ class LockFreeTaskQueueLinearizabilityTestMC : LockFreeTaskQueueLinearizabilityT
     override fun hashCode(): Int = Snapshot(q).hashCode()
 }
 
-open class LockFreeTaskQueueLinearizabilityTestBase : TestBase() {
+open class LockFreeTaskQueueLCTestBase : TestBase() {
     fun linTest() {
         val options = StressOptions()
             .iterations(100 * stressTestMultiplierSqrt)

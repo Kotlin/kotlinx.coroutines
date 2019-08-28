@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("unused")
 
@@ -14,7 +14,7 @@ import kotlinx.coroutines.internal.*
 import kotlin.test.*
 
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
-class LockFreeListLinearizabilityTest : TestBase() {
+class LockFreeListLCStressTest : TestBase() {
     class Node(val value: Int): LockFreeLinkedListNode()
 
     private val q: LockFreeLinkedListHead = LockFreeLinkedListHead()
@@ -49,7 +49,7 @@ class LockFreeListLinearizabilityTest : TestBase() {
             .iterations(100 * stressTestMultiplierSqrt)
             .invocationsPerIteration(1000 * stressTestMultiplierSqrt)
             .threads(3)
-        LinChecker.check(LockFreeListLinearizabilityTest::class.java, options)
+        LinChecker.check(LockFreeListLCStressTest::class.java, options)
     }
 
     private var _curElements: ArrayList<Int>? = null
@@ -62,7 +62,7 @@ class LockFreeListLinearizabilityTest : TestBase() {
     }
 
     override fun equals(other: Any?): Boolean {
-        other as LockFreeListLinearizabilityTest
+        other as LockFreeListLCStressTest
         return curElements == other.curElements
     }
 

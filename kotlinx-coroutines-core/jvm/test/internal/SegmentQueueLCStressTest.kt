@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.internal
 
 import com.devexperts.dxlab.lincheck.LinChecker
@@ -8,7 +12,7 @@ import com.devexperts.dxlab.lincheck.strategy.stress.StressCTest
 import org.junit.Test
 
 @StressCTest
-class SegmentQueueLinearizabilityTest {
+class SegmentQueueLCStressTest {
     private val q = SegmentBasedQueue<Int>()
 
     @Operation
@@ -21,6 +25,6 @@ class SegmentQueueLinearizabilityTest {
 
     @Test
     fun test() {
-        LinChecker.check(SegmentQueueLinearizabilityTest::class.java)
+        LinChecker.check(SegmentQueueLCStressTest::class.java)
     }
 }
