@@ -505,7 +505,7 @@ data class ApiIndexKey(
 
 val apiIndexCache: MutableMap<ApiIndexKey, Map<String, List<String>>> = HashMap()
 
-val REF_LINE_REGEX = Regex("<a href=\"([a-z_/.\\-]+)\">([a-zA-z.]+)</a>")
+val REF_LINE_REGEX = Regex("<a href=\"([a-z0-9_/.\\-]+)\">([a-zA-z0-9.]+)</a>")
 val INDEX_HTML = "/index.html"
 val INDEX_MD = "/index.md"
 val FUNCTIONS_SECTION_HEADER = "### Functions"
@@ -526,33 +526,41 @@ fun loadApiIndex(
     pkg: String,
     namePrefix: String = ""
 ): Map<String, MutableList<String>>? {
-    val fileName = docsRoot + "/" + path + INDEX_MD
+    val fileName = "$docsRoot/$path$INDEX_MD"
     val visited = mutableSetOf<String>()
     val map = HashMap<String, MutableList<String>>()
     var inFunctionsSection = false
-    File(fileName).withLineNumberReader<LineNumberReader>(::LineNumberReader) {
+    File(fileName).withLineNumberReader(::LineNumberReader) {
         while (true) {
             val line = readLine() ?: break
             if (line == FUNCTIONS_SECTION_HEADER) inFunctionsSection = true
             val result = REF_LINE_REGEX.matchEntire(line) ?: continue
             val link = result.groups[1]!!.value
             if (link.startsWith("..")) continue // ignore cross-references
-            val absLink = path + "/" + link
+            val absLink = "$path/$link"
             var name = result.groups[2]!!.value
             // a special disambiguation fix for pseudo-constructor functions
             if (inFunctionsSection && name[0] in 'A'..'Z') name += "()"
             val refName = namePrefix + name
-            val fqName = pkg + "." + refName
-            // Put short names for extensions on 3rd party classes (prefix is FQname of those classes)
-            if (namePrefix != "" && namePrefix[0] in 'a'..'z') map.putUnambiguous(name, absLink)
+            val fqName = "$pkg.$refName"
+            // Put shorter names for extensions on 3rd party classes (prefix is FQname of those classes)
+            if (namePrefix != "" && namePrefix[0] in 'a'..'z') {
+                val i = namePrefix.dropLast(1).lastIndexOf('.')
+                if (i >= 0) map.putUnambiguous(namePrefix.substring(i + 1) + name, absLink)
+                map.putUnambiguous(name, absLink)
+            }
+            // Disambiguate lower-case names with leading underscore (e.g. Flow class vs flow builder ambiguity)
+            if (namePrefix == "" && name[0] in 'a'..'z') {
+                map.putUnambiguous("_$name", absLink)
+            }
             // Always put fully qualified names
             map.putUnambiguous(refName, absLink)
             map.putUnambiguous(fqName, absLink)
             if (link.endsWith(INDEX_HTML)) {
                 if (visited.add(link)) {
                     val path2 = path + "/" + link.substring(0, link.length - INDEX_HTML.length)
-                    map += loadApiIndex(docsRoot, path2, pkg, refName + ".")
-                        ?: throw IllegalArgumentException("Failed to parse ${docsRoot + "/" + path2}")
+                    map += loadApiIndex(docsRoot, path2, pkg, "$refName.")
+                        ?: throw IllegalArgumentException("Failed to parse $docsRoot/$path2")
                 }
             }
         }
