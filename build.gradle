@@ -8,7 +8,7 @@ apply from: rootProject.file("gradle/experimental.gradle")
 def rootModule = "kotlinx.coroutines"
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
-def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom']
+def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom', 'knit']
 def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'knit', 'js-stub', 'stdlib-stubs']
 // Not published
 def unpublished = internal + ['example-frontend-js', 'android-unit-tests']
@@ -41,7 +41,15 @@ buildscript {
         }
     }
 
-    if (build_snapshot_train || atomicfu_version.endsWith("-SNAPSHOT")) {
+    ext.using_snapshot_version=build_snapshot_train
+    rootProject.properties.each { key, value ->
+        if (key.endsWith("_version") && value instanceof String && value.endsWith("-SNAPSHOT")) {
+            println("NOTE: USING SNAPSHOT VERSION: $key=$value")
+            ext.using_snapshot_version=true
+        }
+    }
+
+    if (using_snapshot_version) {
         repositories {
             mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
@@ -67,6 +75,7 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
+        classpath "org.jetbrains.kotlinx:kotlinx-knit:$knit_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
         classpath "org.jetbrains.kotlinx:binary-compatibility-validator:$binary_compatibility_validator_version"
 
@@ -102,7 +111,7 @@ allprojects {
         kotlin_version = rootProject.properties['kotlin_snapshot_version']
     }
 
-    if (build_snapshot_train || atomicfu_version.endsWith("-SNAPSHOT") || lincheck_version.endsWith("-SNAPSHOT")) {
+    if (using_snapshot_version) {
         repositories {
             mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
@@ -136,9 +145,7 @@ allprojects {
          * google should be first in the repository list because some of the play services
          * transitive dependencies was removed from jcenter, thus breaking gradle dependency resolution
          */
-        if (projectName == "kotlinx-coroutines-play-services") {
-            google()
-        }
+        google()
         jcenter()
         maven {
             url "https://kotlin.bintray.com/kotlin-dev"

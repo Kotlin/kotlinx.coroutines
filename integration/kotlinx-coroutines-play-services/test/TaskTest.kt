@@ -61,7 +61,7 @@ class TaskTest : TestBase() {
 
     @Test
     fun testThrowingAsTask() {
-        val deferred = GlobalScope.async {
+        val deferred = GlobalScope.async<Int> {
             throw TestException("Fail")
         }
 

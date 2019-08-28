@@ -3,7 +3,7 @@
  */
 
 // This file was automatically generated from coroutines-guide-ui.md by Knit tool. Do not edit.
-package kotlinx.coroutines.javafx.guide.basic03
+package kotlinx.coroutines.javafx.guide.exampleUiBasic03
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*

@@ -1,26 +1,13 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-apply plugin: "application"
+apply plugin: 'base'
+apply plugin: 'kotlinx-knit'
 
-sourceSets {
-    main.kotlin.srcDirs = ['src']
-    main.java.srcDirs = ['src']
-    main.resources.srcDirs = ['resources']
+knit {
+    siteRoot = "https://kotlin.github.io/kotlinx.coroutines"
+    moduleRoots = [".", "integration", "reactive", "ui"]
 }
 
-FileTree mdFiles = fileTree(project.rootDir) {
-    include '**/*.md'
-    exclude '**/build/**'
-    exclude '**/.gradle/**'
-    exclude '**/node_modules/**'
-}
-
-mainClassName = "KnitKt"
-
-run.dependsOn rootProject.getTasksByName("dokka", true)
-run.args = mdFiles
-run.workingDir = project.rootDir
-
-task knit(dependsOn: run)
+knitPrepare.dependsOn rootProject.getTasksByName("dokka", true)

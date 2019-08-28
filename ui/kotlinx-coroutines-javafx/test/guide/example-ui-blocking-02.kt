@@ -3,7 +3,7 @@
  */
 
 // This file was automatically generated from coroutines-guide-ui.md by Knit tool. Do not edit.
-package kotlinx.coroutines.javafx.guide.blocking02
+package kotlinx.coroutines.javafx.guide.exampleUiBlocking02
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*

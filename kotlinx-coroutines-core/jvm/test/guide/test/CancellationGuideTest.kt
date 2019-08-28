@@ -1,13 +1,16 @@
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
+/*
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+// This file was automatically generated from cancellation-and-timeouts.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
 
 import org.junit.Test
 
-class CancellationTimeOutsGuideTest {
-
+class CancellationGuideTest {
     @Test
-    fun testKotlinxCoroutinesGuideCancel01() {
-        test("KotlinxCoroutinesGuideCancel01") { kotlinx.coroutines.guide.cancel01.main() }.verifyLines(
+    fun testExampleCancel01() {
+        test("ExampleCancel01") { kotlinx.coroutines.guide.exampleCancel01.main() }.verifyLines(
             "job: I'm sleeping 0 ...",
             "job: I'm sleeping 1 ...",
             "job: I'm sleeping 2 ...",
@@ -17,8 +20,8 @@ class CancellationTimeOutsGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideCancel02() {
-        test("KotlinxCoroutinesGuideCancel02") { kotlinx.coroutines.guide.cancel02.main() }.verifyLines(
+    fun testExampleCancel02() {
+        test("ExampleCancel02") { kotlinx.coroutines.guide.exampleCancel02.main() }.verifyLines(
             "job: I'm sleeping 0 ...",
             "job: I'm sleeping 1 ...",
             "job: I'm sleeping 2 ...",
@@ -30,8 +33,8 @@ class CancellationTimeOutsGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideCancel03() {
-        test("KotlinxCoroutinesGuideCancel03") { kotlinx.coroutines.guide.cancel03.main() }.verifyLines(
+    fun testExampleCancel03() {
+        test("ExampleCancel03") { kotlinx.coroutines.guide.exampleCancel03.main() }.verifyLines(
             "job: I'm sleeping 0 ...",
             "job: I'm sleeping 1 ...",
             "job: I'm sleeping 2 ...",
@@ -41,8 +44,8 @@ class CancellationTimeOutsGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideCancel04() {
-        test("KotlinxCoroutinesGuideCancel04") { kotlinx.coroutines.guide.cancel04.main() }.verifyLines(
+    fun testExampleCancel04() {
+        test("ExampleCancel04") { kotlinx.coroutines.guide.exampleCancel04.main() }.verifyLines(
             "job: I'm sleeping 0 ...",
             "job: I'm sleeping 1 ...",
             "job: I'm sleeping 2 ...",
@@ -53,8 +56,8 @@ class CancellationTimeOutsGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideCancel05() {
-        test("KotlinxCoroutinesGuideCancel05") { kotlinx.coroutines.guide.cancel05.main() }.verifyLines(
+    fun testExampleCancel05() {
+        test("ExampleCancel05") { kotlinx.coroutines.guide.exampleCancel05.main() }.verifyLines(
             "job: I'm sleeping 0 ...",
             "job: I'm sleeping 1 ...",
             "job: I'm sleeping 2 ...",
@@ -66,8 +69,8 @@ class CancellationTimeOutsGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideCancel06() {
-        test("KotlinxCoroutinesGuideCancel06") { kotlinx.coroutines.guide.cancel06.main() }.verifyLinesStartWith(
+    fun testExampleCancel06() {
+        test("ExampleCancel06") { kotlinx.coroutines.guide.exampleCancel06.main() }.verifyLinesStartWith(
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",
@@ -76,8 +79,8 @@ class CancellationTimeOutsGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideCancel07() {
-        test("KotlinxCoroutinesGuideCancel07") { kotlinx.coroutines.guide.cancel07.main() }.verifyLines(
+    fun testExampleCancel07() {
+        test("ExampleCancel07") { kotlinx.coroutines.guide.exampleCancel07.main() }.verifyLines(
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",
