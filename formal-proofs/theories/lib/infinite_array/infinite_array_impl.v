@@ -269,7 +269,7 @@ Proof.
   rewrite /ias_cell_info'.
   rewrite -ias_segment_info_op.
   congr (ias_segment_info ns).
-  rewrite pair_op.
+  rewrite -pair_op.
   replace ((replicate nc ε ++ [s]) ⋅ (replicate nc ε ++ [s']))
           with (replicate nc ε ++ [s ⋅ s']).
   remember (_ ++ _) as k; by compute.
@@ -836,7 +836,7 @@ Proof.
       (own γ (◯ ias_segment_info id (ε, replicate (S k) ε ++ l)) ∗
        own γ (◯ ias_cell_info' id k a))%I) as ->.
   {
-    rewrite -own_op /ias_cell_info' -auth_frag_op -ias_segment_info_op pair_op.
+    rewrite -own_op /ias_cell_info' -auth_frag_op -ias_segment_info_op -pair_op.
     rewrite ucmra_unit_left_id.
     assert (((replicate (S k) ε ++ l) ⋅ (replicate k ε ++ [a])) ≡
             replicate k ε ++ a :: l) as ->.
@@ -912,7 +912,7 @@ Proof.
     by iApply "HOwnFr".
   }
   iCombine "HCancMain" "HCancHandle" as "HCancPermit".
-  rewrite -ias_cell_info'_op -Some_op Cinr_op.
+  rewrite -ias_cell_info'_op -Some_op -Cinr_op.
   replace ((1/4) ⋅ (3/4))%Qp with 1%Qp
     by (symmetry; apply Qp_quarter_three_quarter).
   iMod (own_update_2 with "HAuth HCancPermit") as "[HAuth HSeg]".
@@ -2123,39 +2123,52 @@ Lemma replicate_op {A: ucmraT} (a b: A) n:
 Proof. apply list_eq. induction n; simpl. done. case; done. Qed.
 
 Lemma pair_op_2 {A: ucmraT} {B: cmraT} (b b': B):
-  ((ε: A), b) ⋅ (ε, b') ≡ (ε, b ⋅ b').
-Proof. by rewrite pair_op ucmra_unit_left_id. Qed.
+  (ε, b ⋅ b') ≡ ((ε: A), b) ⋅ (ε, b').
+Proof. by rewrite -pair_op ucmra_unit_left_id. Qed.
 
-Lemma big_sepL_irrelevant_element
-      {A: Type} n (P: nat -> iProp) (l: list A):
-  ([∗ list] i ↦ k ∈ l, P (n+i)%nat)%I ≡
-  ([∗ list] i ∈ seq n (length l), P i%nat)%I.
+Lemma big_opL_forall' {M: ofeT} {o: M -> M -> M} {H': Monoid o} {A B: Type}
+      R f g (l: list A) (l': list B):
+  Reflexive R ->
+  Proper (R ==> R ==> R) o ->
+  length l = length l' ->
+  (forall k y y', l !! k = Some y -> l' !! k = Some y' -> R (f k y) (g k y')) ->
+  R ([^o list] k ↦ y ∈ l, f k y) ([^o list] k ↦ y ∈ l', g k y).
 Proof.
-  generalize dependent n.
-  induction l; simpl. done.
-  intros n. rewrite -plus_n_O.
-  specialize (IHl (S n)).
-  rewrite -IHl.
-  simpl.
-  rewrite (big_opL_proper _ (fun i _ => P (S (n + i))%nat)).
-  done.
-  intros.
-  by rewrite plus_n_Sm.
+  intros ??. revert l' f g. induction l as [|x l IH]=> l' f g HLen HHyp //=.
+  all: destruct l'; inversion HLen; eauto.
+  simpl. f_equiv; eauto.
 Qed.
 
-Lemma big_opL_replicate_irrelevant (M: ofeT) (o: M -> M -> M) (H': Monoid o)
+Lemma big_opL_irrelevant_element (M: ofeT) (o: M -> M -> M) (H': Monoid o)
+      {A: Type} n (P: nat -> M) (l: list A):
+  ([^o list] i ↦ _ ∈ l, P (n+i)%nat)%I =
+  ([^o list] i ∈ seq n (length l), P i%nat)%I.
+Proof.
+  assert (length l = length (seq n (length l))) as HSeqLen
+      by (rewrite seq_length; auto).
+  apply big_opL_forall'; try apply _. done.
+  intros ? ? ? _ HElem.
+  assert (k < length l)%nat as HKLt.
+  { rewrite HSeqLen. apply lookup_lt_is_Some. by eexists. }
+  apply nth_lookup_Some with (d:=O) in HElem.
+  rewrite seq_nth in HElem; subst; done.
+Qed.
+
+Lemma big_opL_replicate_irrelevant_element
+      (M: ofeT) (o: M -> M -> M) (H': Monoid o)
       {A: Type} (P: nat -> A -> M) (a: A) n:
-  ([^o list] i ↦ k ∈ replicate n a, P i k)%I ≡
+  ([^o list] i ↦ k ∈ replicate n a, P i k)%I =
   ([^o list] i ↦ _ ∈ replicate n a, P i a)%I.
 Proof.
-  apply big_opL_proper. intros ? ? HEl. apply lookup_replicate in HEl.
-  destruct HEl as [[=] _]. by subst.
+  apply big_opL_forall; try apply _.
+  intros ? ?; rewrite lookup_replicate; case; by intros ->.
 Qed.
 
-Lemma big_sepL_irrelevant_element'
-      {A: Type} (P: nat -> iProp) (l: list A):
-  ([∗ list] i ↦ k ∈ l, P i)%I ≡ ([∗ list] i ∈ seq 0 (length l), P i%nat)%I.
-Proof. by rewrite -big_sepL_irrelevant_element. Qed.
+Lemma big_opL_irrelevant_element'
+      (M: ofeT) (o: M -> M -> M) (H': Monoid o)
+      {A: Type} (P: nat -> M) (l: list A):
+  ([^o list] i ↦ k ∈ l, P i)%I = ([^o list] i ∈ seq 0 (length l), P i%nat)%I.
+Proof. by rewrite -big_opL_irrelevant_element. Qed.
 
 Lemma segment_info_to_cell_info l γ id:
   own γ (◯ ias_segment_info id (ε, l)) ≡
@@ -2216,7 +2229,7 @@ Proof.
   iDestruct "HFrag" as "[HSegLoc HCanc]".
   rewrite /segment_locations. iFrame "HSegLoc".
   replace (1%Qp) with ((1/4)%Qp ⋅ (3/4)%Qp) by apply Qp_quarter_three_quarter.
-  rewrite -Cinr_op Some_op replicate_op -pair_op_2 ias_segment_info_op auth_frag_op own_op.
+  rewrite Cinr_op Some_op replicate_op pair_op_2 ias_segment_info_op auth_frag_op own_op.
   iDestruct "HCanc" as "[HCancParts HCancHandles]".
   iSplitL "HCancParts".
   {
@@ -2232,18 +2245,18 @@ Proof.
       subst.
       iIntros "HOk". iApply "HOk".
     }
-    rewrite big_sepL_irrelevant_element'.
+    rewrite big_opL_irrelevant_element'.
     rewrite segment_info_to_cell_info.
     rewrite vec_to_list_length.
     iDestruct "HCancParts" as "[HLst _]".
-    rewrite big_opL_replicate_irrelevant.
-    rewrite big_sepL_irrelevant_element'.
+    rewrite big_opL_replicate_irrelevant_element.
+    rewrite big_opL_irrelevant_element'.
     by rewrite replicate_length.
   }
   rewrite segment_info_to_cell_info /cell_cancellation_handle'.
   iDestruct "HCancHandles" as "[HCancHandles _]".
-  rewrite big_opL_replicate_irrelevant.
-  rewrite big_sepL_irrelevant_element'.
+  rewrite big_opL_replicate_irrelevant_element.
+  rewrite big_opL_irrelevant_element'.
   by rewrite replicate_length.
 Qed.
 
@@ -2266,7 +2279,7 @@ Proof.
     first by eauto 10 with iFrame.
 
   iCombine "Hdℓ" "HCancHandles" as "HCellInfo".
-  rewrite /array big_opL_replicate_irrelevant big_sepL_irrelevant_element'.
+  rewrite /array big_opL_replicate_irrelevant_element big_opL_irrelevant_element'.
   rewrite replicate_length Z2Nat.inj_pos -big_sepL_sep.
   iAssert ([∗ list] x ∈ seq 0 (Pos.to_nat segment_size),
            |==> cell_invariant γ (length segments * Pos.to_nat segment_size + x) (dℓ +ₗ x))%I
