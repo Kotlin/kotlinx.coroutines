@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("unused")
 
@@ -15,10 +15,15 @@ import org.junit.*
 import java.io.*
 
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
-class ChannelIsClosedLinearizabilityTest : TestBase() {
+class ChannelLCStressTest : TestBase() {
+
+    private companion object {
+        // Emulating ctor argument for lincheck
+        var capacity = 0
+    }
 
     private val lt = LinTesting()
-    private val channel = Channel<Int>()
+    private var channel: Channel<Int> = Channel(capacity)
 
     @Operation(runOnce = true)
     fun send1(@Param(name = "value") value: Int) = lt.run("send1") { channel.send(value) }
@@ -36,19 +41,33 @@ class ChannelIsClosedLinearizabilityTest : TestBase() {
     fun close1() = lt.run("close1") { channel.close(IOException("close1")) }
 
     @Operation(runOnce = true)
-    fun isClosedForReceive() = lt.run("isClosedForReceive") { channel.isClosedForReceive }
-
-    @Operation(runOnce = true)
-    fun isClosedForSend() = lt.run("isClosedForSend") { channel.isClosedForSend }
+    fun close2() = lt.run("close2") { channel.close(IOException("close2")) }
 
     @Test
-    fun testLinearizability() {
+    fun testRendezvousChannelLinearizability() {
+        runTest(0)
+    }
+
+    @Test
+    fun testArrayChannelLinearizability() {
+        for (i in listOf(1, 2, 16)) {
+            runTest(i)
+        }
+    }
+
+    @Test
+    fun testConflatedChannelLinearizability() = runTest(Channel.CONFLATED)
+
+    @Test
+    fun testUnlimitedChannelLinearizability() = runTest(Channel.UNLIMITED)
+
+    private fun runTest(capacity: Int) {
+        ChannelLCStressTest.capacity = capacity
         val options = StressOptions()
-            .iterations(100 * stressTestMultiplierSqrt)
-            .invocationsPerIteration(1000 * stressTestMultiplierSqrt)
+            .iterations(50 * stressTestMultiplierSqrt)
+            .invocationsPerIteration(500 * stressTestMultiplierSqrt)
             .threads(3)
             .verifier(LinVerifier::class.java)
-
-        LinChecker.check(ChannelIsClosedLinearizabilityTest::class.java, options)
+        LinChecker.check(ChannelLCStressTest::class.java, options)
     }
 }

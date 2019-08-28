@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -16,8 +16,8 @@ import java.util.concurrent.atomic.AtomicReference
  * This stress test has 4 threads adding randomly to the list and them immediately undoing
  * this addition by remove, and 4 threads trying to remove nodes from two lists simultaneously (atomically).
  */
-class LockFreeLinkedListAtomicStressLFTest : TestBase() {
-    private val env = LockFreedomTestEnvironment("LockFreeLinkedListAtomicStressLFTest")
+class LockFreeLinkedListAtomicLFStressTest : TestBase() {
+    private val env = LockFreedomTestEnvironment("LockFreeLinkedListAtomicLFStressTest")
 
     data class IntNode(val i: Int) : LockFreeLinkedListNode()
 
