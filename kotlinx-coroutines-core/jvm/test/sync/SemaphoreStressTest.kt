@@ -59,47 +59,37 @@ class SemaphoreStressTest : TestBase() {
         assertEquals(1, semaphore.availablePermits)
     }
 
-    /* This checks if repeated releases that race with cancellations put
-       the semaphore into an incorrect state where permits are leaked. */
+    /**
+     * This checks if repeated releases that race with cancellations put
+     * the semaphore into an incorrect state where permits are leaked.
+     */
     @Test
-    fun stressReleaseCancellation() = runTest {
+    fun stressReleaseCancelRace() = runTest {
         val n = 10_000 * stressTestMultiplier
         val semaphore = Semaphore(1, 1)
-
         newSingleThreadContext("SemaphoreStressTest").use { pool ->
-
             repeat (n) {
                 /* Initially, we hold the permit and no one else can `acquire`,
                    otherwise it's a bug. */
                 assertEquals(0, semaphore.availablePermits)
-
                 var job1_entered_critical_section = false
-
-                val job1 = launch {
+                val job1 = launch(start = CoroutineStart.UNDISPATCHED) {
                     semaphore.acquire()
                     job1_entered_critical_section = true
                     semaphore.release()
                 }
-
-                // Let `job1` run and sleep in `acquire`
-                yield()
-
+                // check that `job1` didn't finish the call to `acquire()`
                 assertEquals(false, job1_entered_critical_section)
-
                 val job2 = launch(pool) {
                     semaphore.release()
                 }
-
                 /* Because `job2` executes in a separate thread, this
                    cancellation races with the call to `release()`. */
                 job1.cancelAndJoin()
-
                 job2.join()
-
                 assertEquals(1, semaphore.availablePermits)
                 semaphore.acquire()
             }
-
         }
     }
 
