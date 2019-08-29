@@ -80,7 +80,7 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = transform 
  * Note that initial value should be immutable (or should not be mutated) as it is shared between different collectors.
  * For example:
  * ```
- * flowOf(1, 2, 3).accumulate(emptyList<Int>()) { acc, value -> acc + value }.toList()
+ * flowOf(1, 2, 3).scan(emptyList<Int>()) { acc, value -> acc + value }.toList()
  * ```
  * will produce `[], [1], [1, 2], [1, 2, 3]]`.
  */
@@ -101,7 +101,7 @@ public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend 
  *
  * For example:
  * ```
- * flowOf(1, 2, 3, 4).scan { (v1, v2) -> v1 + v2 }.toList()
+ * flowOf(1, 2, 3, 4).scanReduce { (v1, v2) -> v1 + v2 }.toList()
  * ```
  * will produce `[1, 3, 6, 10]`
  */
