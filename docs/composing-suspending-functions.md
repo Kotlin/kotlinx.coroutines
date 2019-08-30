@@ -20,7 +20,7 @@ class ComposingGuideTest {
 
 <!--- TOC -->
 
-* [Composing suspending functions](#composing-suspending-functions)
+* [Composing Suspending Functions](#composing-suspending-functions)
   * [Sequential by default](#sequential-by-default)
   * [Concurrent using async](#concurrent-using-async)
   * [Lazily started async](#lazily-started-async)
@@ -29,7 +29,7 @@ class ComposingGuideTest {
 
 <!--- END_TOC -->
 
-## Composing suspending functions
+## Composing Suspending Functions
 
 This section covers various approaches to composition of suspending functions.
 

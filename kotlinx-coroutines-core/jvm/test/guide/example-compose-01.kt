@@ -9,14 +9,12 @@ import kotlinx.coroutines.*
 import kotlin.system.*
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     val time = measureTimeMillis {
         val one = doSomethingUsefulOne()
         val two = doSomethingUsefulTwo()
         println("The answer is ${one + two}")
     }
     println("Completed in $time ms")
-//sampleEnd    
 }
 
 suspend fun doSomethingUsefulOne(): Int {

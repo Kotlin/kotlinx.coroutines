@@ -72,23 +72,23 @@ jvmTest {
     maxHeapSize = '1g'
     enableAssertions = true
     systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
-    exclude '**/*LFTest.*'
+    exclude '**/*LFStressTest.*'
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
 }
 
 task lockFreedomTest(type: Test, dependsOn: compileTestKotlinJvm) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
-    include '**/*LFTest.*'
+    include '**/*LFStressTest.*'
 }
 
 task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
     executable = "$System.env.JDK_16/bin/java"
-    exclude '**/*LinearizabilityTest*.*'
-    exclude '**/*LFTest.*'
-    exclude '**/exceptions/**'
+    exclude '**/*LFStressTest.*' // lock-freedom tests use LockFreedomTestEnvironment which needs JDK8
+    exclude '**/*LCStressTest.*' // lic-check tests use LinChecker which needs JDK8
+    exclude '**/exceptions/**'   // exceptions tests check suppressed exception which needs JDK8
     exclude '**/ExceptionsGuideTest.*'
 }
 

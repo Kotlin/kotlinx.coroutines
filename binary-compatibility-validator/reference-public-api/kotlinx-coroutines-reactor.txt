@@ -36,6 +36,10 @@ public final class kotlinx/coroutines/reactor/ReactorContextKt {
 	public static final fun asCoroutineContext (Lreactor/util/context/Context;)Lkotlinx/coroutines/reactor/ReactorContext;
 }
 
+public final class kotlinx/coroutines/reactor/ReactorFlowKt {
+	public static final fun asFlux (Lkotlinx/coroutines/flow/Flow;)Lreactor/core/publisher/Flux;
+}
+
 public final class kotlinx/coroutines/reactor/SchedulerCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay {
 	public fun <init> (Lreactor/core/scheduler/Scheduler;)V
 	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;

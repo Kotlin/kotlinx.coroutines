@@ -260,6 +260,11 @@ class CombineIterableTest : CombineTestBase() {
         combineOriginal(listOf(this, other)) { args -> transform(args[0] as T1, args[1] as T2) }
 }
 
+class CombineTransformAdapterTest : CombineTestBase() {
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
+        combineTransformOriginal(flow = this, flow2 = other) { a1, a2 -> emit(transform(a1, a2)) }
+}
+
 class CombineTransformVarargAdapterTest : CombineTestBase() {
     override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
         combineTransformOriginal(this, other) { args: Array<Any?> -> emit(transform(args[0] as T1, args[1] as T2)) }

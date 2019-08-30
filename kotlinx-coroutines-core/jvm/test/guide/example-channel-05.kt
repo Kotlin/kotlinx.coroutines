@@ -9,7 +9,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 
 fun main() = runBlocking {
-//sampleStart
     var cur = numbersFrom(2)
     for (i in 1..10) {
         val prime = cur.receive()
@@ -17,7 +16,6 @@ fun main() = runBlocking {
         cur = filter(cur, prime)
     }
     coroutineContext.cancelChildren() // cancel all children to let main finish
-//sampleEnd    
 }
 
 fun CoroutineScope.numbersFrom(start: Int) = produce<Int> {

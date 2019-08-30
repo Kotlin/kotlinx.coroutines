@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -66,7 +66,7 @@ public expect open class RemoveFirstDesc<T>(queue: LockFreeLinkedListNode): Abst
 public expect abstract class AbstractAtomicDesc : AtomicDesc {
     final override fun prepare(op: AtomicOp<*>): Any?
     final override fun complete(op: AtomicOp<*>, failure: Any?)
-    protected open fun failure(affected: LockFreeLinkedListNode, next: Any): Any?
+    protected open fun failure(affected: LockFreeLinkedListNode): Any?
     protected open fun retry(affected: LockFreeLinkedListNode, next: Any): Boolean
     protected abstract fun onPrepare(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode): Any? // non-null on failure
     protected abstract fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)

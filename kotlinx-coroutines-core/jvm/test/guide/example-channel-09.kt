@@ -8,7 +8,6 @@ package kotlinx.coroutines.guide.channel09
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 
-//sampleStart
 data class Ball(var hits: Int)
 
 fun main() = runBlocking {
@@ -28,4 +27,3 @@ suspend fun player(name: String, table: Channel<Ball>) {
         table.send(ball) // send the ball back
     }
 }
-//sampleEnd

@@ -26,7 +26,7 @@ private const val SHUTDOWN_TIMEOUT = 5000L // 5 sec at most to wait
 private val OUT_ENABLED = systemProp("guide.tests.sout", false)
 
 @Suppress("DEPRECATION")
-fun test(name: String, block: () -> Unit): List<String> = outputException(name) {
+fun <R> test(name: String, block: () -> R): List<String> = outputException(name) {
     val sout = System.out
     val oldOut = if (OUT_ENABLED) System.out else NullOut
     val oldErr = System.err
@@ -45,7 +45,8 @@ fun test(name: String, block: () -> Unit): List<String> = outputException(name) 
     var bytes = ByteArray(0)
     withVirtualTimeSource(oldOut) {
         try {
-            block()
+            val result = block()
+            require(result === Unit) { "Test 'main' shall return Unit" }
         } catch (e: Throwable) {
             System.err.print("Exception in thread \"main\" ")
             e.printStackTrace()
@@ -132,6 +133,7 @@ private fun sanitize(s: String, mode: SanitizeMode): String {
             res = res.replace(Regex("DefaultDispatcher-worker-[0-9]+"), "DefaultDispatcher")
             res = res.replace(Regex("RxComputationThreadPool-[0-9]+"), "RxComputationThreadPool")
             res = res.replace(Regex("Test( worker)?"), "main")
+            res = res.replace(Regex("@[0-9a-f]+"), "") // drop hex address
         }
         SanitizeMode.NONE -> {}
     }
@@ -180,8 +182,17 @@ fun List<String>.verifyLinesStartUnordered(vararg expected: String) = verify {
 }
 
 fun List<String>.verifyExceptions(vararg expected: String) {
-    val actual = filter { !it.startsWith("\tat ") }
-
+    val original = this
+    val actual = ArrayList<String>().apply {
+        var except = false
+        for (line in original) {
+            when {
+                !except && line.startsWith("\tat") -> except = true
+                except && !line.startsWith("\t") && !line.startsWith("Caused by: ") -> except = false
+            }
+            if (!except) add(line)
+        }
+    }
     val n = minOf(actual.size, expected.size)
     for (i in 0 until n) {
         val exp = sanitize(expected[i], SanitizeMode.FLEXIBLE_THREAD)

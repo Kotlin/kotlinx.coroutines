@@ -24,7 +24,6 @@ suspend fun massiveRun(action: suspend () -> Unit) {
     println("Completed ${n * k} actions in $time ms")    
 }
 
-//sampleStart
 val mutex = Mutex()
 var counter = 0
 
@@ -39,4 +38,3 @@ fun main() = runBlocking {
     }
     println("Counter = $counter")
 }
-//sampleEnd    

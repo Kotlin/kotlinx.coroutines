@@ -19,19 +19,19 @@ class ExceptionsGuideTest {
 
 <!--- TOC -->
 
-* [Exception handling](#exception-handling)
+* [Exception Handling](#exception-handling)
   * [Exception propagation](#exception-propagation)
   * [CoroutineExceptionHandler](#coroutineexceptionhandler)
   * [Cancellation and exceptions](#cancellation-and-exceptions)
   * [Exceptions aggregation](#exceptions-aggregation)
-* [Supervision](#supervision)
-  * [Supervision job](#supervision-job)
-  * [Supervision scope](#supervision-scope)
-  * [Exceptions in supervised coroutines](#exceptions-in-supervised-coroutines)
+  * [Supervision](#supervision)
+    * [Supervision job](#supervision-job)
+    * [Supervision scope](#supervision-scope)
+    * [Exceptions in supervised coroutines](#exceptions-in-supervised-coroutines)
 
 <!--- END_TOC -->
 
-## Exception handling
+## Exception Handling
 
 
 This section covers exception handling and cancellation on exceptions.
@@ -355,7 +355,7 @@ Caught original java.io.IOException
 ```
 <!--- TEST-->
 
-## Supervision
+### Supervision
 
 As we have studied before, cancellation is a bidirectional relationship propagating through the whole
 coroutines hierarchy. But what if unidirectional cancellation is required? 
@@ -367,7 +367,7 @@ but if UI component is destroyed (and its job is cancelled), then it is necessar
 Another example is a server process that spawns several children jobs and needs to _supervise_
 their execution, tracking their failures and restarting just those children jobs that had failed.
 
-### Supervision job
+#### Supervision job
 
 For these purposes [SupervisorJob][SupervisorJob()] can be used. It is similar to a regular [Job][Job()] with the only exception that cancellation is propagated
 only downwards. It is easy to demonstrate with an example:
@@ -421,7 +421,7 @@ Second child is cancelled because supervisor is cancelled
 <!--- TEST-->
 
 
-### Supervision scope
+#### Supervision scope
 
 For *scoped* concurrency [supervisorScope] can be used instead of [coroutineScope] for the same purpose. It propagates cancellation 
 only in one direction and cancels all children only if it has failed itself. It also waits for all children before completion
@@ -469,7 +469,7 @@ Caught assertion error
 ```
 <!--- TEST-->
 
-### Exceptions in supervised coroutines
+#### Exceptions in supervised coroutines
 
 Another crucial difference between regular and supervisor jobs is exception handling.
 Every child should handle its exceptions by itself via exception handling mechanisms.

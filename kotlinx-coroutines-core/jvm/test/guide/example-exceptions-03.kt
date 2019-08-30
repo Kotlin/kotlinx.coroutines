@@ -8,7 +8,6 @@ package kotlinx.coroutines.guide.exceptions03
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
-//sampleStart
     val job = launch {
         val child = launch {
             try {
@@ -25,5 +24,4 @@ fun main() = runBlocking {
         println("Parent is not cancelled")
     }
     job.join()
-//sampleEnd    
 }
