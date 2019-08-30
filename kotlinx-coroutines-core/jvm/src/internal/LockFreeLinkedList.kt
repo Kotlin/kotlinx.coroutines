@@ -22,12 +22,7 @@ internal const val FAILURE = 2
 internal val CONDITION_FALSE: Any = Symbol("CONDITION_FALSE")
 
 @PublishedApi
-internal val ALREADY_REMOVED: Any = Symbol("ALREADY_REMOVED")
-
-@PublishedApi
 internal val LIST_EMPTY: Any = Symbol("LIST_EMPTY")
-
-private val REMOVE_PREPARED: Any = Symbol("REMOVE_PREPARED")
 
 /** @suppress **This is unstable API and it is subject to change.** */
 public actual typealias RemoveFirstDesc<T> = LockFreeLinkedListNode.RemoveFirstDesc<T>
@@ -37,6 +32,9 @@ public actual typealias AddLastDesc<T> = LockFreeLinkedListNode.AddLastDesc<T>
 
 /** @suppress **This is unstable API and it is subject to change.** */
 public actual typealias AbstractAtomicDesc = LockFreeLinkedListNode.AbstractAtomicDesc
+
+/** @suppress **This is unstable API and it is subject to change.** */
+public actual typealias PrepareOp = LockFreeLinkedListNode.PrepareOp
 
 /**
  * Doubly-linked concurrent list node with remove support.
@@ -298,13 +296,16 @@ public actual open class LockFreeLinkedListNode {
             assert { node._next.value === node && node._prev.value === node }
         }
 
-        final override fun takeAffectedNode(op: OpDescriptor): Node {
+        // Returns null when atomic op got into deadlock trying to help operation that started later
+        final override fun takeAffectedNode(op: OpDescriptor): Node? {
             while (true) {
                 val prev = queue._prev.value as Node // this sentinel node is never removed
                 val next = prev._next.value
                 if (next === queue) return prev // all is good -> linked properly
                 if (next === op) return prev // all is good -> our operation descriptor is already there
                 if (next is OpDescriptor) { // some other operation descriptor -> help & retry
+                    if (op.isEarlierThan(next))
+                        return null // RETRY_ATOMIC
                     next.perform(prev)
                     continue
                 }
@@ -321,12 +322,11 @@ public actual open class LockFreeLinkedListNode {
 
         override fun retry(affected: Node, next: Any): Boolean = next !== queue
 
-        protected override fun onPrepare(affected: Node, next: Node): Any? {
+        override fun finishPrepare(prepareOp: PrepareOp) {
             // Note: onPrepare must use CAS to make sure the stale invocation is not
             // going to overwrite the previous decision on successful preparation.
             // Result of CAS is irrelevant, but we must ensure that it is set when invoker completes
-            _affectedNode.compareAndSet(null, affected)
-            return null // always success
+            _affectedNode.compareAndSet(null, prepareOp.affected)
         }
 
         override fun updatedNext(affected: Node, next: Node): Any {
@@ -351,7 +351,18 @@ public actual open class LockFreeLinkedListNode {
         @Suppress("UNCHECKED_CAST")
         public val result: T get() = affectedNode!! as T
 
-        final override fun takeAffectedNode(op: OpDescriptor): Node = queue.next as Node
+        final override fun takeAffectedNode(op: OpDescriptor): Node? {
+            queue._next.loop { next ->
+                if (next is OpDescriptor) {
+                    if (op.isEarlierThan(next))
+                        return null // RETRY_ATOMIC
+                    next.perform(queue)
+                } else {
+                    return next as Node
+                }
+            }
+        }
+
         final override val affectedNode: Node? get() = _affectedNode.value
         final override val originalNext: Node? get() = _originalNext.value
 
@@ -359,83 +370,94 @@ public actual open class LockFreeLinkedListNode {
         protected override fun failure(affected: Node): Any? =
                 if (affected === queue) LIST_EMPTY else null
 
-        // validate the resulting node (return false if it should be deleted)
-        protected open fun validatePrepared(node: T): Boolean = true // false means remove node & retry
-
         final override fun retry(affected: Node, next: Any): Boolean {
             if (next !is Removed) return false
             affected.helpDelete() // must help delete, or loose lock-freedom
             return true
         }
 
-        @Suppress("UNCHECKED_CAST")
-        final override fun onPrepare(affected: Node, next: Node): Any? {
-            assert { affected !is LockFreeLinkedListHead }
-            if (!validatePrepared(affected as T)) return REMOVE_PREPARED
-            // Note: onPrepare must use CAS to make sure the stale invocation is not
+        override fun finishPrepare(prepareOp: PrepareOp) {
+            // Note: finishPrepare must use CAS to make sure the stale invocation is not
             // going to overwrite the previous decision on successful preparation.
             // Result of CAS is irrelevant, but we must ensure that it is set when invoker completes
-            _affectedNode.compareAndSet(null, affected)
-            _originalNext.compareAndSet(null, next)
-            return null // ok
+            _affectedNode.compareAndSet(null, prepareOp.affected)
+            _originalNext.compareAndSet(null, prepareOp.next)
         }
 
         final override fun updatedNext(affected: Node, next: Node): Any = next.removed()
         final override fun finishOnSuccess(affected: Node, next: Node) = affected.finishRemove(next)
     }
 
+    // This is Harris's RDCSS (Restricted Double-Compare Single Swap) operation
+    // It inserts "op" descriptor of when "op" status is still undecided (rolls back otherwise)
+    public class PrepareOp(
+        @JvmField val affected: Node,
+        @JvmField val next: Node,
+        @JvmField val desc: AbstractAtomicDesc
+    ) : OpDescriptor() {
+        override val atomicOp: AtomicOp<*> get() = desc.atomicOp
+
+        // Returns REMOVE_PREPARED or null (it makes decision on any failure)
+        override fun perform(affected: Any?): Any? {
+            assert(affected === this.affected)
+            affected as Node // type assertion
+            val decision = desc.onPrepare(this)
+            if (decision === REMOVE_PREPARED) {
+                // remove element on failure -- do not mark as decided, will try another one
+                val removed = next.removed()
+                if (affected._next.compareAndSet(this, removed)) {
+                    affected.helpDelete()
+                }
+                return REMOVE_PREPARED
+            }
+            val isDecided = if (decision != null) {
+                // some other logic failure, including RETRY_ATOMIC -- reach consensus on decision fail reason ASAP
+                atomicOp.decide(decision)
+                true // atomicOp.isDecided will be true as a result
+            } else {
+                atomicOp.isDecided // consult with current decision status like in Harris DCSS
+            }
+            val update: Any = if (isDecided) next else atomicOp // restore if decision was already reached
+            affected._next.compareAndSet(this, update)
+            return null
+        }
+
+        public fun finishPrepare() = desc.finishPrepare(this)
+
+        override fun toString(): String = "PrepareOp(op=$atomicOp)"
+    }
+
     public abstract class AbstractAtomicDesc : AtomicDesc() {
         protected abstract val affectedNode: Node?
         protected abstract val originalNext: Node?
-        protected open fun takeAffectedNode(op: OpDescriptor): Node = affectedNode!!
+        protected open fun takeAffectedNode(op: OpDescriptor): Node? = affectedNode!! // null for RETRY_ATOMIC
         protected open fun failure(affected: Node): Any? = null // next: Node | Removed
         protected open fun retry(affected: Node, next: Any): Boolean = false // next: Node | Removed
-        protected abstract fun onPrepare(affected: Node, next: Node): Any? // non-null on failure
         protected abstract fun updatedNext(affected: Node, next: Node): Any
         protected abstract fun finishOnSuccess(affected: Node, next: Node)
 
-        // This is Harris's RDCSS (Restricted Double-Compare Single Swap) operation
-        // It inserts "op" descriptor of when "op" status is still undecided (rolls back otherwise)
-        private class PrepareOp(
-            @JvmField val next: Node,
-            @JvmField val op: AtomicOp<Node>,
-            @JvmField val desc: AbstractAtomicDesc
-        ) : OpDescriptor() {
-            override fun perform(affected: Any?): Any? {
-                affected as Node // type assertion
-                val decision = desc.onPrepare(affected, next)
-                if (decision != null) {
-                    if (decision === REMOVE_PREPARED) {
-                        // remove element on failure
-                        val removed = next.removed()
-                        if (affected._next.compareAndSet(this, removed)) {
-                            affected.helpDelete()
-                        }
-                    } else {
-                        // some other failure -- mark as decided
-                        op.tryDecide(decision)
-                        // undo preparations
-                        affected._next.compareAndSet(this, next)
-                    }
-                    return decision
-                }
-                val update: Any = if (op.isDecided) next else op // restore if decision was already reached
-                affected._next.compareAndSet(this, update)
-                return null // ok
-            }
+        public abstract fun finishPrepare(prepareOp: PrepareOp)
+
+        // non-null on failure
+        public open fun onPrepare(prepareOp: PrepareOp): Any? {
+            finishPrepare(prepareOp)
+            return null
         }
 
         @Suppress("UNCHECKED_CAST")
         final override fun prepare(op: AtomicOp<*>): Any? {
             while (true) { // lock free loop on next
-                val affected = takeAffectedNode(op)
+                val affected = takeAffectedNode(op) ?: return RETRY_ATOMIC
                 // read its original next pointer first
                 val next = affected._next.value
                 // then see if already reached consensus on overall operation
                 if (next === op) return null // already in process of operation -- all is good
                 if (op.isDecided) return null // already decided this operation -- go to next desc
                 if (next is OpDescriptor) {
-                    // some other operation is in process -- help it
+                    // some other operation is in process
+                    // if operation in progress (preparing or prepared) has higher sequence number -- abort our preparations
+                    if (op.isEarlierThan(next))
+                        return RETRY_ATOMIC
                     next.perform(affected)
                     continue // and retry
                 }
@@ -443,12 +465,19 @@ public actual open class LockFreeLinkedListNode {
                 val failure = failure(affected)
                 if (failure != null) return failure // signal failure
                 if (retry(affected, next)) continue // retry operation
-                val prepareOp = PrepareOp(next as Node, op as AtomicOp<Node>, this)
+                val prepareOp = PrepareOp(affected, next as Node, this)
                 if (affected._next.compareAndSet(next, prepareOp)) {
                     // prepared -- complete preparations
-                    val prepFail = prepareOp.perform(affected)
-                    if (prepFail === REMOVE_PREPARED) continue // retry
-                    return prepFail
+                    try {
+                        val prepFail = prepareOp.perform(affected)
+                        if (prepFail === REMOVE_PREPARED) continue // retry
+                        assert { prepFail == null }
+                        return null
+                    } catch (e: Throwable) {
+                        // Crashed during preparation (for example IllegalStateExpception) -- undo & rethrow
+                        affected._next.compareAndSet(prepareOp, next)
+                        throw e
+                    }
                 }
             }
         }
