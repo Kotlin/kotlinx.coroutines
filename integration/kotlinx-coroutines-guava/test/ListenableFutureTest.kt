@@ -128,6 +128,17 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
+    fun testFutureLazyStartThrows() {
+        expect(1)
+        val e = assertFailsWith<IllegalArgumentException> {
+            GlobalScope.future(start = CoroutineStart.LAZY) {}
+        }
+
+        assertThat(e.message, IsEqual("LAZY start is not supported"))
+        finish(2)
+    }
+
+    @Test
     fun testCompletedDeferredAsListenableFuture() = runBlocking {
         expect(1)
         val deferred = async(start = CoroutineStart.UNDISPATCHED) {
