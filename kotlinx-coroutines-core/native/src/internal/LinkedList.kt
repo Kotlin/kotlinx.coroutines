@@ -94,48 +94,57 @@ public actual open class AddLastDesc<T : Node> actual constructor(
     actual val queue: Node,
     actual val node: T
 ) : AbstractAtomicDesc() {
-    protected override val affectedNode: Node get() = queue._prev
-    protected actual override fun onPrepare(affected: Node, next: Node): Any? = null
-    protected override fun onComplete() = queue.addLast(node)
-    protected actual override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) = Unit
+    override val affectedNode: Node get() = queue._prev
+    actual override fun finishPrepare(prepareOp: PrepareOp) {}
+    override fun onComplete() = queue.addLast(node)
+    actual override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) = Unit
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */
 public actual open class RemoveFirstDesc<T> actual constructor(
     actual val queue: LockFreeLinkedListNode
 ) : AbstractAtomicDesc() {
-
     @Suppress("UNCHECKED_CAST")
-    public actual val result: T get() = affectedNode as T
-    protected override val affectedNode: Node = queue.nextNode
-    protected actual open fun validatePrepared(node: T): Boolean = true
-    protected actual final override fun onPrepare(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode): Any? {
-        @Suppress("UNCHECKED_CAST")
-        validatePrepared(affectedNode as T)
-        return null
-    }
-    protected override fun onComplete() { queue.removeFirstOrNull() }
-    protected actual override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) = Unit
+    actual val result: T get() = affectedNode as T
+    override val affectedNode: Node = queue.nextNode
+    actual override fun finishPrepare(prepareOp: PrepareOp) {}
+    override fun onComplete() { queue.removeFirstOrNull() }
+    actual override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) = Unit
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */
 public actual abstract class AbstractAtomicDesc : AtomicDesc() {
     protected abstract val affectedNode: Node
-    protected actual abstract fun onPrepare(affected: Node, next: Node): Any?
+    actual abstract fun finishPrepare(prepareOp: PrepareOp)
     protected abstract fun onComplete()
+
+    actual open fun onPrepare(prepareOp: PrepareOp): Any? {
+        finishPrepare(prepareOp)
+        return null
+    }
 
     actual final override fun prepare(op: AtomicOp<*>): Any? {
         val affected = affectedNode
-        val next = affected._next
         val failure = failure(affected)
         if (failure != null) return failure
-        return onPrepare(affected, next)
+        @Suppress("UNCHECKED_CAST")
+        return onPrepare(PrepareOp(affected, this, op))
     }
 
     actual final override fun complete(op: AtomicOp<*>, failure: Any?) = onComplete()
     protected actual open fun failure(affected: LockFreeLinkedListNode): Any? = null // Never fails by default
     protected actual open fun retry(affected: LockFreeLinkedListNode, next: Any): Boolean = false // Always succeeds
     protected actual abstract fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)
+}
+
+/** @suppress **This is unstable API and it is subject to change.** */
+public actual class PrepareOp(
+    actual val affected: LockFreeLinkedListNode,
+    actual val desc: AbstractAtomicDesc,
+    actual override val atomicOp: AtomicOp<*>
+): OpDescriptor() {
+    override fun perform(affected: Any?): Any? = null
+    actual fun finishPrepare() {}
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */

@@ -1050,7 +1050,9 @@ public final class kotlinx/coroutines/selects/SelectBuilderImpl : kotlinx/corout
 	public fun performAtomicTrySelect (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
 	public fun resumeSelectCancellableWithException (Ljava/lang/Throwable;)V
 	public fun resumeWith (Ljava/lang/Object;)V
-	public fun trySelect (Ljava/lang/Object;)Z
+	public fun toString ()Ljava/lang/String;
+	public fun trySelect ()Z
+	public fun trySelectOther (Lkotlinx/coroutines/internal/LockFreeLinkedListNode$PrepareOp;)Ljava/lang/Object;
 }
 
 public abstract interface class kotlinx/coroutines/selects/SelectClause0 {
@@ -1071,7 +1073,8 @@ public abstract interface class kotlinx/coroutines/selects/SelectInstance {
 	public abstract fun isSelected ()Z
 	public abstract fun performAtomicTrySelect (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
 	public abstract fun resumeSelectCancellableWithException (Ljava/lang/Throwable;)V
-	public abstract fun trySelect (Ljava/lang/Object;)Z
+	public abstract fun trySelect ()Z
+	public abstract fun trySelectOther (Lkotlinx/coroutines/internal/LockFreeLinkedListNode$PrepareOp;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/selects/SelectKt {

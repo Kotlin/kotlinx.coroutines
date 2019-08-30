@@ -63,6 +63,9 @@ class LockFreeLinkedListTest {
 
     private fun single(part: AtomicDesc) {
         val operation = object : AtomicOp<Any?>() {
+            init {
+                part.atomicOp = this
+            }
             override fun prepare(affected: Any?): Any? = part.prepare(this)
             override fun complete(affected: Any?, failure: Any?) = part.complete(this, failure)
         }

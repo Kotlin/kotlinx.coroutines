@@ -87,6 +87,10 @@ public interface SelectClause2<in P, out Q> {
     public fun <R> registerSelectClause2(select: SelectInstance<R>, param: P, block: suspend (Q) -> R)
 }
 
+@JvmField
+@SharedImmutable
+internal val SELECT_STARTED: Any = Symbol("SELECT_STARTED")
+
 /**
  * Internal representation of select instance. This instance is called _selected_ when
  * the clause to execute is already picked.
@@ -101,12 +105,23 @@ public interface SelectInstance<in R> {
     public val isSelected: Boolean
 
     /**
-     * Tries to select this instance.
+     * Tries to select this instance. Returns `true` on success.
      */
-    public fun trySelect(idempotent: Any?): Boolean
+    public fun trySelect(): Boolean
+
+    /**
+     * Tries to select this instance. Returns:
+     * * [SELECT_STARTED] on success,
+     * * [RETRY_ATOMIC] on deadlock (needs retry, it is only possible when [otherOp] is not `null`)
+     * * `null` on failure to select (already selected).
+     * [otherOp] is not null when trying to rendezvous with this select from inside of another select.
+     * In this case, [PrepareOp.finishPrepare] must be called before deciding on any value other than [RETRY_ATOMIC].
+     */
+    public fun trySelectOther(otherOp: PrepareOp?): Any?
 
     /**
      * Performs action atomically with [trySelect].
+     * May return [RETRY_ATOMIC], caller shall retry with **fresh instance of desc**.
      */
     public fun performAtomicTrySelect(desc: AtomicDesc): Any?
 
@@ -189,11 +204,22 @@ private val UNDECIDED: Any = Symbol("UNDECIDED")
 @SharedImmutable
 private val RESUMED: Any = Symbol("RESUMED")
 
+// Global counter of all atomic select operations for their deadlock resolution
+// The separate internal class is work-around for Atomicfu's current implementation that creates public classes
+// for static atomics
+internal class SeqNumber {
+    private val number = atomic(1L)
+    fun next() = number.incrementAndGet()
+}
+
+private val selectOpSequenceNumber = SeqNumber()
+
 @PublishedApi
 internal class SelectBuilderImpl<in R>(
     private val uCont: Continuation<R> // unintercepted delegate continuation
 ) : LockFreeLinkedListHead(), SelectBuilder<R>,
-    SelectInstance<R>, Continuation<R>, CoroutineStackFrame {
+    SelectInstance<R>, Continuation<R>, CoroutineStackFrame
+{
     override val callerFrame: CoroutineStackFrame?
         get() = uCont as? CoroutineStackFrame
 
@@ -234,9 +260,7 @@ internal class SelectBuilderImpl<in R>(
         _result.loop { result ->
             when {
                 result === UNDECIDED -> if (_result.compareAndSet(UNDECIDED, value())) return
-                result === COROUTINE_SUSPENDED -> if (_result.compareAndSet(COROUTINE_SUSPENDED,
-                        RESUMED
-                    )) {
+                result === COROUTINE_SUSPENDED -> if (_result.compareAndSet(COROUTINE_SUSPENDED, RESUMED)) {
                     block()
                     return
                 }
@@ -290,29 +314,22 @@ internal class SelectBuilderImpl<in R>(
     private inner class SelectOnCancelling(job: Job) : JobCancellingNode<Job>(job) {
         // Note: may be invoked multiple times, but only the first trySelect succeeds anyway
         override fun invoke(cause: Throwable?) {
-            if (trySelect(null))
+            if (trySelect())
                 resumeSelectCancellableWithException(job.getCancellationException())
         }
         override fun toString(): String = "SelectOnCancelling[${this@SelectBuilderImpl}]"
     }
 
-    private val state: Any? get() {
-        _state.loop { state ->
-            if (state !is OpDescriptor) return state
-            state.perform(this)
-        }
-    }
-
     @PublishedApi
     internal fun handleBuilderException(e: Throwable) {
-        if (trySelect(null)) {
+        if (trySelect()) {
             resumeWithException(e)
         } else if (e !is CancellationException) {
             /*
              * Cannot handle this exception -- builder was already resumed with a different exception,
              * so treat it as "unhandled exception". But only if  it is not the completion reason
              *  and it's not the cancellation. Otherwise, in the face of structured concurrency
-             * the same exception will be reported to theglobal exception handler.
+             * the same exception will be reported to the global exception handler.
              */
             val result = getResult()
             if (result !is CompletedExceptionally || unwrap(result.cause) !== unwrap(e)) {
@@ -321,7 +338,13 @@ internal class SelectBuilderImpl<in R>(
         }
     }
 
-    override val isSelected: Boolean get() = state !== this
+    override val isSelected: Boolean get() = _state.loop { state ->
+        when {
+            state === this -> return false
+            state is OpDescriptor -> state.perform(this) // help
+            else -> return true // already selected
+        }
+    }
 
     override fun disposeOnSelect(handle: DisposableHandle) {
         val node = DisposeNode(handle)
@@ -342,40 +365,209 @@ internal class SelectBuilderImpl<in R>(
         }
     }
 
-    // it is just like start(), but support idempotent start
-    override fun trySelect(idempotent: Any?): Boolean {
-        assert { idempotent !is OpDescriptor } // "cannot use OpDescriptor as idempotent marker"
-        while (true) { // lock-free loop on state
-            val state = this.state
+    override fun trySelect(): Boolean {
+        val result = trySelectOther(null)
+        return when {
+            result === SELECT_STARTED -> true
+            result == null -> false
+            else -> error("Unexpected trySelectIdempotent result $result")
+        }
+    }
+
+    /*
+       Diagram for rendezvous between two select operations:
+
+       +---------+         +------------------------+ state(c)
+       | Channel |         |  SelectBuilderImpl(1)  | -----------------------------------+
+       +---------+         +------------------------+                                    |
+            | queue                   ^                                                  |
+            V                         | select                                           |
+       +---------+  next   +------------------------+  next   +--------------+           |
+       | LLHead  | ------> |  Send/ReceiveSelect(3) | -+----> | NextNode ... |           |
+       +---------+         +------------------------+  |      +--------------+           |
+            ^                              ^           | next(b)     ^                   |
+            |                     affected |           V             |                   |
+            |                          +-----------------+  next     |                   V
+            |                          | PrepareOp(6)    | ----------+           +-----------------+
+            |                          +-----------------+ <-------------------- | PairSelectOp(7) |
+            |                                 | desc                             +-----------------+
+            |                                 V
+            |                  queue   +----------------------+
+            +------------------------- | TryPoll/OfferDesc(5) |
+                                       +----------------------+
+                                     atomicOp |    ^
+                                              V    | desc
+       +----------------------+  impl  +---------------------+
+       | SelectBuilderImpl(2) | <----- |  AtomicSelectOp(4)  |
+       +----------------------+        +---------------------+
+                    | state(a)                   ^
+                    |                            |
+                    +----------------------------+
+
+
+       0. The first select operation SelectBuilderImpl(1) had already registered Send/ReceiveSelect(3) node
+          in the channel.
+       1. The second select operation SelectBuilderImpl(2) is trying to rendezvous calling
+          performAtomicTrySelect(TryPoll/TryOfferDesc).
+       2. A linked pair of AtomicSelectOp(4) and TryPoll/OfferDesc(5) is created to initiate this operation.
+       3. AtomicSelectOp.prepareSelectOp installs a reference to AtomicSelectOp(4) in SelectBuilderImpl(2).state(a)
+          field. STARTING AT THIS MOMENT CONCURRENT HELPERS CAN DISCOVER AND TRY TO HELP PERFORM THIS OPERATION.
+       4. Then TryPoll/OfferDesc.prepare discovers "affectedNode" for this operation as Send/ReceiveSelect(3) and
+          creates PrepareOp(6) that references it. It installs reference to PrepareOp(6) in Send/ReceiveSelect(3).next(b)
+          instead of its original next pointer that was stored in PrepareOp(6).next.
+       5. PrepareOp(6).perform calls TryPoll/OfferDesc(5).onPrepare which validates that PrepareOp(6).affected node
+          is of the correct type and tries to secure ability to resume it by calling affected.tryResumeSend/Receive.
+          Note, that different PrepareOp instances can be repeatedly created for different candidate nodes. If node is
+          found to be be resumed/selected, then REMOVE_PREPARED result causes Send/ReceiveSelect(3).next change to
+          undone and new PrepareOp is created with a different candidate node. Different concurrent helpers may end up
+          creating different PrepareOp instances, so it is important that they ultimately come to consensus about
+          node on which perform operation upon.
+       6. Send/ReceiveSelect(3).affected.tryResumeSend/Receive forwards this call to SelectBuilderImpl.trySelectOther,
+          passing it a reference to PrepareOp(6) as an indication of the other select instance rendezvous.
+       7. SelectBuilderImpl.trySelectOther creates PairSelectOp(7) and installs it as SelectBuilderImpl(1).state(c)
+          to secure the state of the first builder and commit ability to make it selected for this operation.
+       8. NOW THE RENDEZVOUS IS FULLY PREPARED via descriptors installed at
+          - SelectBuilderImpl(2).state(a)
+          - Send/ReceiveSelect(3).next(b)
+          - SelectBuilderImpl(1).state(c)
+          Any concurrent operation that is trying to access any of the select instances or the queue is going to help.
+          Any helper that helps AtomicSelectOp(4) calls TryPoll/OfferDesc(5).prepare which tries to determine
+          "affectedNode" but is bound to discover the same Send/ReceiveSelect(3) node that cannot become
+          non-first node until this operation completes (there are no insertions to the head of the queue!)
+          We have not yet decided to complete this operation, but we cannot ever decide to complete this operation
+          on any other node but Send/ReceiveSelect(3), so it is now safe to perform the next step.
+       9. PairSelectOp(7).perform calls PrepareOp(6).finishPrepare which copies PrepareOp(6).affected and PrepareOp(6).next
+          to the corresponding TryPoll/OfferDesc(5) fields.
+       10. PairSelectOp(7).perform calls AtomicSelect(4).decide to reach consensus on successful completion of this
+          operation. This consensus is important in light of dead-lock resolution algorithm, because a stale helper
+          could have stumbled upon a higher-numbered atomic operation and had decided to abort this atomic operation,
+          reaching decision on RETRY_ATOMIC status of it. We cannot proceed with completion in this case and must abort,
+          all objects including AtomicSelectOp(4) will be dropped, reverting all the three updated pointers to
+          their original values and atomic operation will retry from scratch.
+       11. NOW WITH SUCCESSFUL UPDATE OF AtomicSelectOp(4).consensus to null THE RENDEZVOUS IS COMMITTED. The rest
+           of the code proceeds to update:
+           - SelectBuilderImpl(1).state to TryPoll/OfferDesc(5) so that late helpers would know that we have
+             already successfully completed rendezvous.
+           - Send/ReceiveSelect(3).next to Removed(next) so that this node becomes marked as removed.
+           - SelectBuilderImpl(2).state to null to mark this select instance as selected.
+
+       Note, that very late helper may try to perform this AtomicSelectOp(4) when it is already completed.
+       It can proceed as far as finding affected node, creating PrepareOp, installing this new PrepareOp into the
+       node's next pointer, but PrepareOp.perform checks that AtomicSelectOp(4) is already decided and undoes all
+       the preparations.
+     */
+
+    // it is just like plain trySelect, but support idempotent start
+    // Returns SELECT_STARTED | RETRY_ATOMIC | null (when already selected)
+    override fun trySelectOther(otherOp: PrepareOp?): Any? {
+        _state.loop { state -> // lock-free loop on state
             when {
+                // Found initial state (not selected yet) -- try to make it selected
                 state === this -> {
-                    if (_state.compareAndSet(this, idempotent)) {
-                        doAfterSelect()
-                        return true
+                    if (otherOp == null) {
+                        // regular trySelect -- just mark as select
+                        if (!_state.compareAndSet(this, null)) return@loop
+                    } else {
+                        // Rendezvous with another select instance -- install PairSelectOp
+                        val pairSelectOp = PairSelectOp(otherOp)
+                        if (!_state.compareAndSet(this, pairSelectOp)) return@loop
+                        val decision = pairSelectOp.perform(this)
+                        if (decision !== null) return decision
                     }
+                    doAfterSelect()
+                    return SELECT_STARTED
+                }
+                state is OpDescriptor -> { // state is either AtomicSelectOp or PairSelectOp
+                    // Found descriptor of ongoing operation while working in the context of other select operation
+                    if (otherOp != null) {
+                        val otherAtomicOp = otherOp.atomicOp
+                        when {
+                            // It is the same select instance
+                            otherAtomicOp is AtomicSelectOp && otherAtomicOp.impl === this -> {
+                                /*
+                                 * We cannot do state.perform(this) here and "help" it since it is the same
+                                 * select and we'll get StackOverflowError.
+                                 * See https://github.com/Kotlin/kotlinx.coroutines/issues/1411
+                                 * We cannot support this because select { ... } is an expression and its clauses
+                                 * have a result that shall be returned from the select.
+                                 */
+                                error("Cannot use matching select clauses on the same object")
+                            }
+                            // The other select (that is trying to proceed) had started earlier
+                            otherAtomicOp.isEarlierThan(state) -> {
+                                /**
+                                 * Abort to prevent deadlock by returning a failure to it.
+                                 * See https://github.com/Kotlin/kotlinx.coroutines/issues/504
+                                 * The other select operation will receive a failure and will restart itself with a
+                                 * larger sequence number. This guarantees obstruction-freedom of this algorithm.
+                                 */
+                                return RETRY_ATOMIC
+                            }
+                        }
+                    }
+                    // Otherwise (not a special descriptor)
+                    state.perform(this) // help it
                 }
                 // otherwise -- already selected
-                idempotent == null -> return false // already selected
-                state === idempotent -> return true // was selected with this marker
-                else -> return false
+                otherOp == null -> return null // already selected
+                state === otherOp.desc -> return SELECT_STARTED // was selected with this marker
+                else -> return null // selected with different marker
             }
         }
     }
 
-    override fun performAtomicTrySelect(desc: AtomicDesc): Any? =
-        AtomicSelectOp(desc).perform(null)
+    // The very last step of rendezvous between two select operations
+    private class PairSelectOp(
+        @JvmField val otherOp: PrepareOp
+    ) : OpDescriptor() {
+        override fun perform(affected: Any?): Any? {
+            val impl = affected as SelectBuilderImpl<*>
+            // here we are definitely not going to RETRY_ATOMIC, so
+            // we must finish preparation of another operation before attempting to reach decision to select
+            otherOp.finishPrepare()
+            val decision = otherOp.atomicOp.decide(null) // try decide for success of operation
+            val update: Any = if (decision == null) otherOp.desc else impl
+            impl._state.compareAndSet(this, update)
+            return decision
+        }
 
-    private inner class AtomicSelectOp(
+        override val atomicOp: AtomicOp<*>?
+            get() = otherOp.atomicOp
+    }
+
+    override fun performAtomicTrySelect(desc: AtomicDesc): Any? =
+        AtomicSelectOp(this, desc).perform(null)
+
+    override fun toString(): String {
+        val state = _state.value
+        return "SelectInstance(state=${if (state === this) "this" else state.toString()}, result=${_result.value})"
+    }
+
+    private class AtomicSelectOp(
+        @JvmField val impl: SelectBuilderImpl<*>,
         @JvmField val desc: AtomicDesc
     ) : AtomicOp<Any?>() {
+        // all select operations are totally ordered by their creating time using selectOpSequenceNumber
+        override val opSequence = selectOpSequenceNumber.next()
+
+        init {
+            desc.atomicOp = this
+        }
+
         override fun prepare(affected: Any?): Any? {
             // only originator of operation makes preparation move of installing descriptor into this selector's state
             // helpers should never do it, or risk ruining progress when they come late
             if (affected == null) {
                 // we are originator (affected reference is not null if helping)
-                prepareIfNotSelected()?.let { return it }
+                prepareSelectOp()?.let { return it }
             }
-            return desc.prepare(this)
+            try {
+                return desc.prepare(this)
+            } catch (e: Throwable) {
+                // undo prepareSelectedOp on crash (for example if IllegalStateException is thrown)
+                if (affected == null) undoPrepare()
+                throw e
+            }
         }
 
         override fun complete(affected: Any?, failure: Any?) {
@@ -383,13 +575,13 @@ internal class SelectBuilderImpl<in R>(
             desc.complete(this, failure)
         }
 
-        fun prepareIfNotSelected(): Any? {
-            _state.loop { state ->
+        private fun prepareSelectOp(): Any? {
+            impl._state.loop { state ->
                 when {
-                    state === this@AtomicSelectOp -> return null // already in progress
-                    state is OpDescriptor -> state.perform(this@SelectBuilderImpl) // help
-                    state === this@SelectBuilderImpl -> {
-                        if (_state.compareAndSet(this@SelectBuilderImpl, this@AtomicSelectOp))
+                    state === this -> return null // already in progress
+                    state is OpDescriptor -> state.perform(impl) // help
+                    state === impl -> {
+                        if (impl._state.compareAndSet(impl, this))
                             return null // success
                     }
                     else -> return ALREADY_SELECTED
@@ -397,14 +589,21 @@ internal class SelectBuilderImpl<in R>(
             }
         }
 
+        // reverts the change done by prepareSelectedOp
+        private fun undoPrepare() {
+            impl._state.compareAndSet(this, impl)
+        }
+
         private fun completeSelect(failure: Any?) {
             val selectSuccess = failure == null
-            val update = if (selectSuccess) null else this@SelectBuilderImpl
-            if (_state.compareAndSet(this@AtomicSelectOp, update)) {
+            val update = if (selectSuccess) null else impl
+            if (impl._state.compareAndSet(this, update)) {
                 if (selectSuccess)
-                    doAfterSelect()
+                    impl.doAfterSelect()
             }
         }
+
+        override fun toString(): String = "AtomicSelectOp(sequence=$opSequence)"
     }
 
     override fun SelectClause0.invoke(block: suspend () -> R) {
@@ -421,14 +620,14 @@ internal class SelectBuilderImpl<in R>(
 
     override fun onTimeout(timeMillis: Long, block: suspend () -> R) {
         if (timeMillis <= 0L) {
-            if (trySelect(null))
+            if (trySelect())
                 block.startCoroutineUnintercepted(completion)
             return
         }
         val action = Runnable {
             // todo: we could have replaced startCoroutine with startCoroutineUndispatched
             // But we need a way to know that Delay.invokeOnTimeout had used the right thread
-            if (trySelect(null))
+            if (trySelect())
                 block.startCoroutineCancellable(completion) // shall be cancellable while waits for dispatch
         }
         disposeOnSelect(context.delay.invokeOnTimeout(timeMillis, action))

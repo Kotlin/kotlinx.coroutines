@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -105,7 +105,7 @@ internal class ArrayBroadcastChannel<E>(
             val size = this.size
             if (size >= capacity) return OFFER_FAILED
             // let's try to select sending this element to buffer
-            if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
+            if (!select.trySelect()) { // :todo: move trySelect completion outside of lock
                 return ALREADY_SELECTED
             }
             val tail = this.tail
@@ -163,7 +163,7 @@ internal class ArrayBroadcastChannel<E>(
                     while (true) {
                         send = takeFirstSendOrPeekClosed() ?: break // when when no sender
                         if (send is Closed<*>) break // break when closed for send
-                        token = send!!.tryResumeSend(idempotent = null)
+                        token = send!!.tryResumeSend(null)
                         if (token != null) {
                             // put sent element to the buffer
                             buffer[(tail % capacity).toInt()] = (send as Send).pollResult
@@ -242,7 +242,7 @@ internal class ArrayBroadcastChannel<E>(
                     // find a receiver for an element
                     receive = takeFirstReceiveOrPeekClosed() ?: break // break when no one's receiving
                     if (receive is Closed<*>) break // noting more to do if this sub already closed
-                    token = receive.tryResumeReceive(result as E, idempotent = null)
+                    token = receive.tryResumeReceive(result as E, null)
                     if (token == null) continue // bail out here to next iteration (see for next receiver)
                     val subHead = this.subHead
                     this.subHead = subHead + 1 // retrieved element for this subscriber
@@ -296,7 +296,7 @@ internal class ArrayBroadcastChannel<E>(
                     result === POLL_FAILED -> { /* just bail out of lock */ }
                     else -> {
                         // let's try to select receiving this element from buffer
-                        if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
+                        if (!select.trySelect()) { // :todo: move trySelect completion outside of lock
                             result = ALREADY_SELECTED
                         } else {
                             // update subHead after retrieiving element from buffer

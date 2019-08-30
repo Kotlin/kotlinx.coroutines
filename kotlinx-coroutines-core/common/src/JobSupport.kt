@@ -553,7 +553,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             if (select.isSelected) return
             if (state !is Incomplete) {
                 // already complete -- select result
-                if (select.trySelect(null)) {
+                if (select.trySelect()) {
                     block.startCoroutineUnintercepted(select.completion)
                 }
                 return
@@ -1181,7 +1181,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             if (select.isSelected) return
             if (state !is Incomplete) {
                 // already complete -- select result
-                if (select.trySelect(null)) {
+                if (select.trySelect()) {
                     if (state is CompletedExceptionally) {
                         select.resumeSelectCancellableWithException(state.cause)
                     }
@@ -1362,7 +1362,7 @@ private class SelectJoinOnCompletion<R>(
     private val block: suspend () -> R
 ) : JobNode<JobSupport>(job) {
     override fun invoke(cause: Throwable?) {
-        if (select.trySelect(null))
+        if (select.trySelect())
             block.startCoroutineCancellable(select.completion)
     }
     override fun toString(): String = "SelectJoinOnCompletion[$select]"
@@ -1374,7 +1374,7 @@ private class SelectAwaitOnCompletion<T, R>(
     private val block: suspend (T) -> R
 ) : JobNode<JobSupport>(job) {
     override fun invoke(cause: Throwable?) {
-        if (select.trySelect(null))
+        if (select.trySelect())
             job.selectAwaitCompletion(select, block)
     }
     override fun toString(): String = "SelectAwaitOnCompletion[$select]"

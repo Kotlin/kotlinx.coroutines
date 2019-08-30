@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 
 /**
@@ -51,6 +52,7 @@ internal open class LinkedListChannel<E> : AbstractChannel<E>() {
                 result === ALREADY_SELECTED -> return ALREADY_SELECTED
                 result === OFFER_SUCCESS -> return OFFER_SUCCESS
                 result === OFFER_FAILED -> {} // retry
+                result === RETRY_ATOMIC -> {} // retry
                 result is Closed<*> -> return result
                 else -> error("Invalid result $result")
             }
