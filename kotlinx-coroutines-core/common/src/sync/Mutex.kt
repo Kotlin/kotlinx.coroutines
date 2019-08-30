@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.sync
@@ -206,7 +206,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                 is LockedQueue -> {
                     val curOwner = state.owner
                     check(curOwner !== owner) { "Already locked by $owner" }
-                    if (state.addLastIf(waiter, { _state.value === state })) {
+                    if (state.addLastIf(waiter) { _state.value === state }) {
                         // added to waiter list!
                         cont.removeOnCancellation(waiter)
                         return@sc
@@ -226,8 +226,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     override fun <R> registerSelectClause2(select: SelectInstance<R>, owner: Any?, block: suspend (Mutex) -> R) {
         while (true) { // lock-free loop on state
             if (select.isSelected) return
-            val state = _state.value
-            when (state) {
+            when (val state = _state.value) {
                 is Empty -> {
                     if (state.locked !== UNLOCKED) { // try upgrade to queue & retry
                         _state.compareAndSet(state, LockedQueue(state.locked))
@@ -247,16 +246,11 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                 }
                 is LockedQueue -> {
                     check(state.owner !== owner) { "Already locked by $owner" }
-                    val enqueueOp = TryEnqueueLockDesc(this, owner, state, select, block)
-                    val failure = select.performAtomicIfNotSelected(enqueueOp)
-                    when {
-                        failure == null -> { // successfully enqueued
-                            select.disposeOnSelect(enqueueOp.node)
-                            return
-                        }
-                        failure === ALREADY_SELECTED -> return // already selected -- bail out
-                        failure === ENQUEUE_FAIL -> {} // retry
-                        else -> error("performAtomicIfNotSelected(TryEnqueueLockDesc) returned $failure")
+                    val node = LockSelect(owner, this, select, block)
+                    if (state.addLastIf(node) { _state.value === state }) {
+                        // successfully enqueued
+                        select.disposeOnSelect(node)
+                        return
                     }
                 }
                 is OpDescriptor -> state.perform(this) // help
@@ -289,19 +283,6 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                 if (owner == null) EMPTY_LOCKED else Empty(owner)
             }
             mutex._state.compareAndSet(op, update)
-        }
-    }
-
-    private class TryEnqueueLockDesc<R>(
-        @JvmField val mutex: MutexImpl,
-        owner: Any?,
-        queue: LockedQueue,
-        select: SelectInstance<R>,
-        block: suspend (Mutex) -> R
-    ) : AddLastDesc<LockSelect<R>>(queue, LockSelect(owner, mutex, select, block)) {
-        override fun onPrepare(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode): Any? {
-            if (mutex._state.value !== queue) return ENQUEUE_FAIL
-            return super.onPrepare(affected, next)
         }
     }
 
@@ -388,7 +369,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     ) : LockWaiter(owner) {
         override fun tryResumeLockWaiter(): Any? = if (select.trySelect(null)) SELECT_SUCCESS else null
         override fun completeResumeLockWaiter(token: Any) {
-            check(token === SELECT_SUCCESS)
+            assert { token === SELECT_SUCCESS }
             block.startCoroutine(receiver = mutex, completion = select.completion)
         }
         override fun toString(): String = "LockSelect[$owner, $mutex, $select]"

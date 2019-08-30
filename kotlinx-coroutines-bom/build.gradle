@@ -1,0 +1,24 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+plugins {
+    id 'io.spring.dependency-management'
+}
+
+def name = project.name
+
+dependencyManagement {
+    dependencies {
+        rootProject.subprojects.each {
+            if (ext.unpublished.contains(it.name)) return
+            if (it.name == name) return
+            if (!it.plugins.hasPlugin('maven-publish')) return
+            evaluationDependsOn(it.path)
+            it.publishing.publications.all {
+                if (it.artifactId.endsWith("-kotlinMultiplatform")) return
+                if (it.artifactId.endsWith("-metadata")) return
+                dependency(group: it.groupId, name: it.artifactId, version: it.version)
+            }
+        }
+    }
+}

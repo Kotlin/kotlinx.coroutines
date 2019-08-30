@@ -22,13 +22,13 @@ class ArrayChannelStressTest(private val capacity: Int) : TestBase() {
     fun testStress() = runTest {
         val n = 100_000 * stressTestMultiplier
         val q = Channel<Int>(capacity)
-        val sender = launch(coroutineContext) {
+        val sender = launch {
             for (i in 1..n) {
                 q.send(i)
             }
             expect(2)
         }
-        val receiver = launch(coroutineContext) {
+        val receiver = launch {
             for (i in 1..n) {
                 val next = q.receive()
                 check(next == i)
@@ -39,5 +39,26 @@ class ArrayChannelStressTest(private val capacity: Int) : TestBase() {
         sender.join()
         receiver.join()
         finish(4)
+    }
+
+    @Test
+    fun testBurst() = runTest {
+        Assume.assumeTrue(capacity < 100_000)
+        repeat(10_000 * stressTestMultiplier) {
+            val channel = Channel<Int>(capacity)
+            val sender = launch(Dispatchers.Default) {
+                for (i in 1..capacity * 2) {
+                    channel.send(i)
+                }
+            }
+            val receiver = launch(Dispatchers.Default) {
+                for (i in 1..capacity * 2) {
+                    val next = channel.receive()
+                    check(next == i)
+                }
+            }
+            sender.join()
+            receiver.join()
+        }
     }
 }

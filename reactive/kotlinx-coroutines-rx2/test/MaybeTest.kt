@@ -24,14 +24,14 @@ class MaybeTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking {
         expect(1)
-        val maybe = rxMaybe {
+        val maybe = rxMaybe(currentDispatcher()) {
             expect(4)
             "OK"
         }
         expect(2)
         maybe.subscribe { value ->
             expect(5)
-            Assert.assertThat(value, IsEqual("OK"))
+            assertThat(value, IsEqual("OK"))
         }
         expect(3)
         yield() // to started coroutine
@@ -41,7 +41,7 @@ class MaybeTest : TestBase() {
     @Test
     fun testBasicEmpty() = runBlocking {
         expect(1)
-        val maybe = rxMaybe {
+        val maybe = rxMaybe(currentDispatcher()) {
             expect(4)
             null
         }
@@ -57,7 +57,7 @@ class MaybeTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val maybe = rxMaybe(NonCancellable) {
+        val maybe = rxMaybe(currentDispatcher()) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -78,7 +78,7 @@ class MaybeTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val maybe = rxMaybe {
+        val maybe = rxMaybe(currentDispatcher()) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
@@ -100,7 +100,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testMaybeNoWait() {
-        val maybe = GlobalScope.rxMaybe {
+        val maybe = rxMaybe {
             "OK"
         }
 
@@ -121,7 +121,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testMaybeEmitAndAwait() {
-        val maybe = GlobalScope.rxMaybe {
+        val maybe = rxMaybe {
             Maybe.just("O").await() + "K"
         }
 
@@ -132,7 +132,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testMaybeWithDelay() {
-        val maybe = GlobalScope.rxMaybe {
+        val maybe = rxMaybe {
             Observable.timer(50, TimeUnit.MILLISECONDS).map { "O" }.awaitSingle() + "K"
         }
 
@@ -143,7 +143,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testMaybeException() {
-        val maybe = GlobalScope.rxMaybe {
+        val maybe = rxMaybe {
             Observable.just("O", "K").awaitSingle() + "K"
         }
 
@@ -154,7 +154,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testAwaitFirst() {
-        val maybe = GlobalScope.rxMaybe {
+        val maybe = rxMaybe {
             Observable.just("O", "#").awaitFirst() + "K"
         }
 
@@ -165,7 +165,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testAwaitLast() {
-        val maybe = GlobalScope.rxMaybe {
+        val maybe = rxMaybe {
             Observable.just("#", "O").awaitLast() + "K"
         }
 
@@ -176,7 +176,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testExceptionFromObservable() {
-        val maybe = GlobalScope.rxMaybe {
+        val maybe = rxMaybe {
             try {
                 Observable.error<String>(RuntimeException("O")).awaitFirst()
             } catch (e: RuntimeException) {
@@ -191,7 +191,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testExceptionFromCoroutine() {
-        val maybe = GlobalScope.rxMaybe<String> {
+        val maybe = rxMaybe<String> {
             throw IllegalStateException(Observable.just("O").awaitSingle() + "K")
         }
 
@@ -202,22 +202,9 @@ class MaybeTest : TestBase() {
     }
 
     @Test
-    fun testCancelsParentOnFailure() = runTest(
-        expected = { it is RuntimeException && it.message == "OK" }
-    ) {
-        // has parent, so should cancel it on failure
-        rxMaybe<Unit> {
-            throw RuntimeException("OK")
-        }.subscribe(
-            { expectUnreached() },
-            { assert(it is RuntimeException) }
-        )
-    }
-
-    @Test
     fun testCancelledConsumer() = runTest {
         expect(1)
-        val maybe = rxMaybe<Int> {
+        val maybe = rxMaybe<Int>(currentDispatcher()) {
             expect(4)
             try {
                 delay(Long.MAX_VALUE)
@@ -242,7 +229,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testSuppressedException() = runTest {
-        val maybe = rxMaybe(NonCancellable) {
+        val maybe = rxMaybe(currentDispatcher()) {
             launch(start = CoroutineStart.ATOMIC) {
                 throw TestException() // child coroutine fails
             }
@@ -261,12 +248,14 @@ class MaybeTest : TestBase() {
     }
 
     @Test
-    fun testUnhandledException() = runTest(
-        unhandled = listOf { it -> it is TestException }
-    ) {
+    fun testUnhandledException() = runTest {
         expect(1)
         var disposable: Disposable? = null
-        val maybe = rxMaybe(NonCancellable) {
+        val eh = CoroutineExceptionHandler { _, t ->
+            assertTrue(t is TestException)
+            expect(5)
+        }
+        val maybe = rxMaybe(currentDispatcher() + eh) {
             expect(4)
             disposable!!.dispose() // cancel our own subscription, so that delay will get cancelled
             try {
@@ -286,6 +275,23 @@ class MaybeTest : TestBase() {
         })
         expect(3)
         yield() // run coroutine
-        finish(5)
+        finish(6)
+    }
+
+    @Test
+    fun testFatalExceptionInSubscribe() = runTest {
+        GlobalScope.rxMaybe(Dispatchers.Unconfined + CoroutineExceptionHandler{ _, e -> assertTrue(e is LinkageError); expect(2)}) {
+            expect(1)
+            42
+        }.subscribe({ throw LinkageError() })
+        finish(3)
+    }
+
+    @Test
+    fun testFatalExceptionInSingle() = runTest {
+        GlobalScope.rxMaybe(Dispatchers.Unconfined) {
+            throw LinkageError()
+        }.subscribe({ expectUnreached()  }, { expect(1); assertTrue(it is LinkageError) })
+        finish(2)
     }
 }

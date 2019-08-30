@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -297,7 +297,7 @@ internal open class CancellableContinuationImpl<in T>(
                 }
                 is CompletedIdempotentResult -> {
                     return if (state.idempotentResume === idempotent) {
-                        check(state.result === value) { "Non-idempotent resume" }
+                        assert { state.result === value } // "Non-idempotent resume"
                         state.token
                     } else {
                         null

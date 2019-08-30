@@ -21,7 +21,7 @@ import kotlin.coroutines.*
  * @param context -- the coroutine context from which the resulting observable is going to be signalled
  */
 @ObsoleteCoroutinesApi
-public fun <T> ReceiveChannel<T>.asPublisher(context: CoroutineContext = EmptyCoroutineContext): Publisher<T> = GlobalScope.publish(context) {
+public fun <T> ReceiveChannel<T>.asPublisher(context: CoroutineContext = EmptyCoroutineContext): Publisher<T> = publish(context) {
     for (t in this@asPublisher)
         send(t)
 }

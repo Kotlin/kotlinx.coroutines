@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
@@ -9,7 +9,6 @@ import kotlinx.coroutines.*
 import java.io.*
 
 fun main() = runBlocking {
-//sampleStart
     val handler = CoroutineExceptionHandler { _, exception ->
         println("Caught original $exception")
     }
@@ -29,5 +28,4 @@ fun main() = runBlocking {
         }
     }
     job.join()
-//sampleEnd    
 }

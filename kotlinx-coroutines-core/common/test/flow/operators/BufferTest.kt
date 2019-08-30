@@ -11,7 +11,7 @@ import kotlin.test.*
 
 class BufferTest : TestBase() {
     private val n = 50 // number of elements to emit for test
-    private val defaultBufferSize = 16 // expected default buffer size (per docs)
+    private val defaultBufferSize = 64 // expected default buffer size (per docs)
 
     // Use capacity == -1 to check case of "no buffer"
     private fun checkBuffer(capacity: Int, op: suspend Flow<Int>.() -> Flow<Int>) = runTest {
@@ -182,6 +182,20 @@ class BufferTest : TestBase() {
                 }
             }
         finish(n + 4)
+    }
+
+    @Test
+    fun testCancellation() = runTest {
+        val result = flow {
+            emit(1)
+            emit(2)
+            emit(3)
+            expectUnreached()
+            emit(4)
+        }.buffer(0)
+            .take(2)
+            .toList()
+        assertEquals(listOf(1, 2), result)
     }
 }
 

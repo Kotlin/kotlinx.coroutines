@@ -203,6 +203,13 @@ public fun CoroutineScope.cancel(cause: CancellationException? = null) {
 }
 
 /**
+ * Cancels this scope, including its job and all its children with a specified diagnostic error [message].
+ * A [cause] can be specified to provide additional details on a cancellation reason for debugging purposes.
+ * Throws [IllegalStateException] if the scope does not have a job in it.
+ */
+public fun CoroutineScope.cancel(message: String, cause: Throwable? = null): Unit = cancel(CancellationException(message, cause))
+
+/**
  * Ensures that current scope is [active][CoroutineScope.isActive].
  * Throws [IllegalStateException] if the context does not have a job in it.
  *

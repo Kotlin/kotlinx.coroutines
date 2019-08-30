@@ -151,7 +151,7 @@ public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> {
 public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
 
 /**
- * The operator that changes the context where this flow is executed to the given [context].
+ * Changes the context where this flow is executed to the given [context].
  * This operator is composable and affects only preceding operators that do not have its own context.
  * This operator is context preserving: [context] **does not** leak into the downstream flow.
  *
@@ -238,7 +238,7 @@ public fun <T> Flow<T>.flowOn(context: CoroutineContext): Flow<T> {
  * 4) It can be confused with [flowOn] operator, though [flowWith] is much rarer.
  */
 @FlowPreview
-@Deprecated(message = "flowWith is deprecated without replacement, please refer to its KDoc for an explanation", level = DeprecationLevel.WARNING) // Error in beta release, removal in 1.4
+@Deprecated(message = "flowWith is deprecated without replacement, please refer to its KDoc for an explanation", level = DeprecationLevel.ERROR) // Error in beta release, removal in 1.4
 public fun <T, R> Flow<T>.flowWith(
     flowContext: CoroutineContext,
     bufferSize: Int = BUFFERED,
@@ -265,4 +265,3 @@ private fun checkFlowContext(context: CoroutineContext) {
         "Flow context cannot contain job in it. Had $context"
     }
 }
-

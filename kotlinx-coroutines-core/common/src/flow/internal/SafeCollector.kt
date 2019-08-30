@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
-@PublishedApi
 internal class SafeCollector<T>(
     private val collector: FlowCollector<T>,
     private val collectContext: CoroutineContext
@@ -78,16 +77,27 @@ internal class SafeCollector<T>(
              */
             if (emissionParentJob !== collectJob) {
                 error(
-                    "Flow invariant is violated: emission from another coroutine is detected (child of $emissionParentJob, expected child of $collectJob). " +
-                            "FlowCollector is not thread-safe and concurrent emissions are prohibited. To mitigate this restriction please use 'flowChannel' builder instead of 'flow'"
+                    "Flow invariant is violated:\n" +
+                        "\t\tEmission from another coroutine is detected.\n" +
+                        "\t\tChild of $emissionParentJob, expected child of $collectJob.\n" +
+                        "\t\tFlowCollector is not thread-safe and concurrent emissions are prohibited.\n" +
+                        "\t\tTo mitigate this restriction please use 'channelFlow' builder instead of 'flow'"
                 )
             }
-            count + 1
+
+            /*
+             * If collect job is null (-> EmptyCoroutineContext, probably run from `suspend fun main`), then invariant is maintained
+             * (common transitive parent is "null"), but count check will fail, so just do not count job context element when
+             * flow is collected from EmptyCoroutineContext
+             */
+            if (collectJob == null) count else count + 1
         }
         if (result != collectContextSize) {
             error(
-                "Flow invariant is violated: flow was collected in $collectContext, but emission happened in $currentContext. " +
-                        "Please refer to 'flow' documentation or use 'flowOn' instead"
+                "Flow invariant is violated:\n" +
+                    "\t\tFlow was collected in $collectContext,\n" +
+                    "\t\tbut emission happened in $currentContext.\n" +
+                    "\t\tPlease refer to 'flow' documentation or use 'flowOn' instead"
             )
         }
     }
@@ -97,5 +107,18 @@ internal class SafeCollector<T>(
         if (this === collectJob) return this
         if (this !is ScopeCoroutine<*>) return this
         return parent.transitiveCoroutineParent(collectJob)
+    }
+}
+
+/**
+ * An analogue of the [flow] builder that does not check the context of execution of the resulting flow.
+ * Used in our own operators where we trust the context of invocations.
+ */
+@PublishedApi
+internal inline fun <T> unsafeFlow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
+    return object : Flow<T> {
+        override suspend fun collect(collector: FlowCollector<T>) {
+            collector.block()
+        }
     }
 }

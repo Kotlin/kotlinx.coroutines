@@ -9,73 +9,41 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.internal.NULL
+import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
-
-/**
- * Applies [transform] function to each value of the given flow.
- * [transform] is a generic function that may transform emitted element, skip it or emit it multiple times.
- *
- * This operator is useless by itself, but can be used as a building block of user-specific operators:
- * ```
- * fun Flow<Int>.skipOddAndDuplicateEven(): Flow<Int> = transform { value ->
- *     if (value % 2 == 0) { // Emit only even values, but twice
- *         emit(value)
- *         emit(value)
- *     } // Do nothing if odd
- * }
- * ```
- */
-@ExperimentalCoroutinesApi
-public inline fun <T, R> Flow<T>.transform(@BuilderInference crossinline transform: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> {
-    return flow {
-        collect { value ->
-            // kludge, without it Unit will be returned and TCE won't kick in, KT-28938
-            return@collect transform(value)
-        }
-    }
-}
+import kotlinx.coroutines.flow.internal.unsafeFlow as flow
+import kotlinx.coroutines.flow.unsafeTransform as transform
 
 /**
  * Returns a flow containing only values of the original flow that matches the given [predicate].
  */
-@ExperimentalCoroutinesApi
-public inline fun <T> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolean): Flow<T> = flow {
-    collect { value ->
-        if (predicate(value)) return@collect emit(value)
-    }
+public inline fun <T> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolean): Flow<T> = transform { value ->
+    if (predicate(value)) return@transform emit(value)
 }
 
 /**
  * Returns a flow containing only values of the original flow that do not match the given [predicate].
  */
-@ExperimentalCoroutinesApi
-public inline fun <T> Flow<T>.filterNot(crossinline predicate: suspend (T) -> Boolean): Flow<T> = flow {
-    collect { value ->
-        if (!predicate(value)) return@collect emit(value)
-    }
+public inline fun <T> Flow<T>.filterNot(crossinline predicate: suspend (T) -> Boolean): Flow<T> = transform { value ->
+    if (!predicate(value)) return@transform emit(value)
 }
 
 /**
  * Returns a flow containing only values that are instances of specified type [R].
  */
-@ExperimentalCoroutinesApi
 @Suppress("UNCHECKED_CAST")
 public inline fun <reified R> Flow<*>.filterIsInstance(): Flow<R> = filter { it is R } as Flow<R>
 
 /**
  * Returns a flow containing only values of the original flow that are not null.
  */
-@ExperimentalCoroutinesApi
-public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = flow<T> {
-    collect { value -> if (value != null) return@collect  emit(value) }
+public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = transform<T?, T> { value ->
+    if (value != null) return@transform emit(value)
 }
 
 /**
  * Returns a flow containing the results of applying the given [transform] function to each value of the original flow.
  */
-@ExperimentalCoroutinesApi
 public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -> R): Flow<R> = transform { value ->
    return@transform emit(transform(value))
 }
@@ -83,21 +51,28 @@ public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -
 /**
  * Returns a flow that contains only non-null results of applying the given [transform] function to each value of the original flow.
  */
-@ExperimentalCoroutinesApi
 public inline fun <T, R: Any> Flow<T>.mapNotNull(crossinline transform: suspend (value: T) -> R?): Flow<R> = transform { value ->
     val transformed = transform(value) ?: return@transform
     return@transform emit(transformed)
 }
 
 /**
- * Returns a flow which performs the given [action] on each value of the original flow.
+ * Returns a flow that wraps each element into [IndexedValue], containing value and its index (starting from zero).
  */
 @ExperimentalCoroutinesApi
-public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = flow {
+public fun <T> Flow<T>.withIndex(): Flow<IndexedValue<T>> = flow {
+    var index = 0
     collect { value ->
-        action(value)
-        emit(value)
+        emit(IndexedValue(checkIndexOverflow(index++), value))
     }
+}
+
+/**
+ * Returns a flow which performs the given [action] on each value of the original flow.
+ */
+public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = transform { value ->
+    action(value)
+    return@transform emit(value)
 }
 
 /**

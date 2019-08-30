@@ -8,8 +8,7 @@ import io.reactivex.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.reactive.flow.*
-import org.reactivestreams.*
+import kotlinx.coroutines.reactive.*
 import kotlin.coroutines.*
 
 /**
@@ -25,7 +24,7 @@ import kotlin.coroutines.*
  * @param context -- the coroutine context from which the resulting completable is going to be signalled
  */
 @ExperimentalCoroutinesApi
-public fun Job.asCompletable(context: CoroutineContext): Completable = GlobalScope.rxCompletable(context) {
+public fun Job.asCompletable(context: CoroutineContext): Completable = rxCompletable(context) {
     this@asCompletable.join()
 }
 
@@ -42,7 +41,7 @@ public fun Job.asCompletable(context: CoroutineContext): Completable = GlobalSco
  * @param context -- the coroutine context from which the resulting maybe is going to be signalled
  */
 @ExperimentalCoroutinesApi
-public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T> = GlobalScope.rxMaybe(context) {
+public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T> = rxMaybe(context) {
     this@asMaybe.await()
 }
 
@@ -59,7 +58,7 @@ public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T> = Globa
  * @param context -- the coroutine context from which the resulting single is going to be signalled
  */
 @ExperimentalCoroutinesApi
-public fun <T : Any> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = GlobalScope.rxSingle(context) {
+public fun <T : Any> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = rxSingle(context) {
     this@asSingle.await()
 }
 
@@ -75,14 +74,14 @@ public fun <T : Any> Deferred<T>.asSingle(context: CoroutineContext): Single<T> 
  * @param context -- the coroutine context from which the resulting observable is going to be signalled
  */
 @ObsoleteCoroutinesApi
-public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = GlobalScope.rxObservable(context) {
+public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = rxObservable(context) {
     for (t in this@asObservable)
         send(t)
 }
 
 /**
  * Converts the given flow to a cold observable.
- * The original flow is cancelled if the observable subscriber was disposed.
+ * The original flow is cancelled when the observable subscriber is disposed.
  */
 @JvmName("from")
 @ExperimentalCoroutinesApi
@@ -106,8 +105,8 @@ public fun <T: Any> Flow<T>.asObservable() : Observable<T> = Observable.create {
 }
 
 /**
- * Converts the given flow to a cold observable.
- * The original flow is cancelled if the flowable subscriber was disposed.
+ * Converts the given flow to a cold flowable.
+ * The original flow is cancelled when the flowable subscriber is disposed.
  */
 @JvmName("from")
 @ExperimentalCoroutinesApi

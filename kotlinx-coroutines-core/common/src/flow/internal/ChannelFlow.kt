@@ -15,8 +15,13 @@ import kotlin.jvm.*
 internal fun <T> Flow<T>.asChannelFlow(): ChannelFlow<T> =
     this as? ChannelFlow ?: ChannelFlowOperatorImpl(this)
 
-// Operators that use channels extend this ChannelFlow and are always fused with each other
-internal abstract class ChannelFlow<T>(
+/**
+ * Operators that use channels extend this ChannelFlow and are always fused with each other.
+ *
+ * @suppress **This an internal API and should not be used from general code.**
+ */
+@InternalCoroutinesApi
+public abstract class ChannelFlow<T>(
     // upstream context
     @JvmField val context: CoroutineContext,
     // buffer capacity between upstream and downstream context
@@ -37,8 +42,8 @@ internal abstract class ChannelFlow<T>(
             capacity == Channel.CONFLATED -> Channel.CONFLATED
             else -> {
                 // sanity checks
-                check(this.capacity >= 0) { "Unexpected capacity ${this.capacity}" }
-                check(capacity >= 0) { "Unexpected capacity $capacity" }
+                assert { this.capacity >= 0 }
+                assert { capacity >= 0 }
                 // combine capacities clamping to UNLIMITED on overflow
                 val sum = this.capacity + capacity
                 if (sum >= 0) sum else Channel.UNLIMITED // unlimited on int overflow
@@ -53,22 +58,21 @@ internal abstract class ChannelFlow<T>(
     protected abstract suspend fun collectTo(scope: ProducerScope<T>)
 
     // shared code to create a suspend lambda from collectTo function in one place
-    private val collectToFun: suspend (ProducerScope<T>) -> Unit
+    internal val collectToFun: suspend (ProducerScope<T>) -> Unit
         get() = { collectTo(it) }
 
     private val produceCapacity: Int
         get() = if (capacity == Channel.OPTIONAL_CHANNEL) Channel.BUFFERED else capacity
 
-    fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =
+    open fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =
         scope.broadcast(context, produceCapacity, start, block = collectToFun)
 
-    fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
-        scope.flowProduce(context, produceCapacity, block = collectToFun)
+    open fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
+        scope.produce(context, produceCapacity, block = collectToFun)
 
     override suspend fun collect(collector: FlowCollector<T>) =
         coroutineScope {
-            val channel = produceImpl(this)
-            channel.consumeEach { collector.emit(it) }
+            collector.emitAll(produceImpl(this))
         }
 
     // debug toString
@@ -134,15 +138,13 @@ internal class ChannelFlowOperatorImpl<T>(
 // Now if the underlying collector was accepting concurrent emits, then this one is too
 // todo: we might need to generalize this pattern for "thread-safe" operators that can fuse with channels
 private fun <T> FlowCollector<T>.withUndispatchedContextCollector(emitContext: CoroutineContext): FlowCollector<T> = when (this) {
-    // SendingCollector does not care about the context at all so can be used as it
-    is SendingCollector -> this
-    // Original collector is concurrent, so wrap into ConcurrentUndispatchedContextCollector (also concurrent)
-    is ConcurrentFlowCollector -> ConcurrentUndispatchedContextCollector(this, emitContext)
+    // SendingCollector & NopCollector do not care about the context at all and can be used as is
+    is SendingCollector, is NopCollector -> this
     // Otherwise just wrap into UndispatchedContextCollector interface implementation
     else -> UndispatchedContextCollector(this, emitContext)
 }
 
-private open class UndispatchedContextCollector<T>(
+private class UndispatchedContextCollector<T>(
     downstream: FlowCollector<T>,
     private val emitContext: CoroutineContext
 ) : FlowCollector<T> {
@@ -152,12 +154,6 @@ private open class UndispatchedContextCollector<T>(
     override suspend fun emit(value: T): Unit =
         withContextUndispatched(emitContext, countOrElement, emitRef, value)
 }
-
-// named class for a combination of UndispatchedContextCollector & ConcurrentFlowCollector interface
-private class ConcurrentUndispatchedContextCollector<T>(
-    downstream: ConcurrentFlowCollector<T>,
-    emitContext: CoroutineContext
-) : UndispatchedContextCollector<T>(downstream, emitContext), ConcurrentFlowCollector<T>
 
 // Efficiently computes block(value) in the newContext
 private suspend fun <T, V> withContextUndispatched(

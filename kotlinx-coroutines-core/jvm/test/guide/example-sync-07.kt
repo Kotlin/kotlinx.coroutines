@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
@@ -40,8 +40,7 @@ fun CoroutineScope.counterActor() = actor<CounterMsg> {
     }
 }
 
-//sampleStart
-fun main() = runBlocking {
+fun main() = runBlocking<Unit> {
     val counter = counterActor() // create the actor
     withContext(Dispatchers.Default) {
         massiveRun {
@@ -54,4 +53,3 @@ fun main() = runBlocking {
     println("Counter = ${response.await()}")
     counter.close() // shutdown the actor
 }
-//sampleEnd    

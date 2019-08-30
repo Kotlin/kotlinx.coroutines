@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
@@ -8,7 +8,6 @@ package kotlinx.coroutines.guide.context02
 import kotlinx.coroutines.*
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     launch(Dispatchers.Unconfined) { // not confined -- will work with main thread
         println("Unconfined      : I'm working in thread ${Thread.currentThread().name}")
         delay(500)
@@ -19,5 +18,4 @@ fun main() = runBlocking<Unit> {
         delay(1000)
         println("main runBlocking: After delay in thread ${Thread.currentThread().name}")
     }
-//sampleEnd    
 }

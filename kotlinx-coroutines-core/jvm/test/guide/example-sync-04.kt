@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
@@ -23,7 +23,6 @@ suspend fun massiveRun(action: suspend () -> Unit) {
     println("Completed ${n * k} actions in $time ms")    
 }
 
-//sampleStart
 val counterContext = newSingleThreadContext("CounterContext")
 var counter = 0
 
@@ -38,4 +37,3 @@ fun main() = runBlocking {
     }
     println("Counter = $counter")
 }
-//sampleEnd      

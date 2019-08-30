@@ -70,6 +70,7 @@ class RunningThreadStackMergeTest : DebugTestBase() {
     fun testStackMergeEscapeSuspendMethod() = runTest {
         launchEscapingCoroutine()
         awaitCoroutineStarted()
+        Thread.sleep(10)
         verifyDump(
             "Coroutine \"coroutine#1\":BlockingCoroutine{Active}@62230679", // <- this one is ignored
             "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@3aea3c67, state: RUNNING\n" +
@@ -165,5 +166,16 @@ class RunningThreadStackMergeTest : DebugTestBase() {
     private suspend fun nestedSuspensionPoint() {
         yield()
         assertTrue(true)
+    }
+
+    @Test
+    fun testActiveThread() = runBlocking<Unit> {
+        launchCoroutine()
+        awaitCoroutineStarted()
+        val info = DebugProbes.dumpCoroutinesInfo().find { it.state == State.RUNNING }
+        assertNotNull(info)
+        @Suppress("INVISIBLE_MEMBER") // IDEA bug
+        assertNotNull(info.lastObservedThread)
+        coroutineBlocker.await()
     }
 }

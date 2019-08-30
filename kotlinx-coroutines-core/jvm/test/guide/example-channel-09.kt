@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
@@ -8,7 +8,6 @@ package kotlinx.coroutines.guide.channel09
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 
-//sampleStart
 data class Ball(var hits: Int)
 
 fun main() = runBlocking {
@@ -28,4 +27,3 @@ suspend fun player(name: String, table: Channel<Ball>) {
         table.send(ball) // send the ball back
     }
 }
-//sampleEnd

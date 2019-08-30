@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.guide.test
@@ -11,7 +11,7 @@ import org.junit.Assert.*
 import java.io.*
 import java.util.concurrent.*
 
-fun wrapTask(block: Runnable) = timeSource.wrapTask(block)
+fun wrapTask(block: Runnable) = kotlinx.coroutines.wrapTask(block)
 
 // helper function to dump exception to stdout for ease of debugging failed tests
 private inline fun <T> outputException(name: String, block: () -> T): T =
@@ -132,6 +132,7 @@ private fun sanitize(s: String, mode: SanitizeMode): String {
             res = res.replace(Regex("DefaultDispatcher-worker-[0-9]+"), "DefaultDispatcher")
             res = res.replace(Regex("RxComputationThreadPool-[0-9]+"), "RxComputationThreadPool")
             res = res.replace(Regex("Test( worker)?"), "main")
+            res = res.replace(Regex("@[0-9a-f]+"), "") // drop hex address
         }
         SanitizeMode.NONE -> {}
     }
@@ -180,8 +181,17 @@ fun List<String>.verifyLinesStartUnordered(vararg expected: String) = verify {
 }
 
 fun List<String>.verifyExceptions(vararg expected: String) {
-    val actual = filter { !it.startsWith("\tat ") }
-
+    val original = this
+    val actual = ArrayList<String>().apply {
+        var except = false
+        for (line in original) {
+            when {
+                !except && line.startsWith("\tat") -> except = true
+                except && !line.startsWith("\t") && !line.startsWith("Caused by: ") -> except = false
+            }
+            if (!except) add(line)
+        }
+    }
     val n = minOf(actual.size, expected.size)
     for (i in 0 until n) {
         val exp = sanitize(expected[i], SanitizeMode.FLEXIBLE_THREAD)

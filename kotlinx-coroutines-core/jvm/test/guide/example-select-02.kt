@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
@@ -26,7 +26,6 @@ suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): St
     }
     
 fun main() = runBlocking<Unit> {
-//sampleStart
     val a = produce<String> {
         repeat(4) { send("Hello $it") }
     }
@@ -37,5 +36,4 @@ fun main() = runBlocking<Unit> {
         println(selectAorB(a, b))
     }
     coroutineContext.cancelChildren()  
-//sampleEnd      
 }    

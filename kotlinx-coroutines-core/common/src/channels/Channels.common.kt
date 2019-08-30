@@ -8,6 +8,7 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -31,6 +32,49 @@ public inline fun <E, R> BroadcastChannel<E>.consume(block: ReceiveChannel<E>.()
     } finally {
         channel.cancel()
     }
+}
+
+/**
+ * Retrieves and removes the element from this channel suspending the caller while this channel [isEmpty]
+ * or returns `null` if the channel is [closed][Channel.isClosedForReceive].
+ *
+ * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
+ * function is suspended, this function immediately resumes with [CancellationException].
+ *
+ * *Cancellation of suspended receive is atomic* -- when this function
+ * throws [CancellationException] it means that the element was not retrieved from this channel.
+ * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
+ * continue to execute even after it was cancelled from the same thread in the case when this receive operation
+ * was already resumed and the continuation was posted for execution to the thread's queue.
+ *
+ * Note, that this function does not check for cancellation when it is not suspended.
+ * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
+ *
+ * This extension is defined only for channels on non-null types, so that generic functions defined using
+ * these extensions do not accidentally confuse `null` value and a normally closed channel, leading to hard
+ * to find bugs.
+ */
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+@ExperimentalCoroutinesApi // since 1.3.0, tentatively stable in 1.4.0
+public suspend fun <E : Any> ReceiveChannel<E>.receiveOrNull(): E? {
+    @Suppress("DEPRECATION", "UNCHECKED_CAST")
+    return (this as ReceiveChannel<E?>).receiveOrNull()
+}
+
+/**
+ * Clause for [select] expression of [receiveOrNull] suspending function that selects with the element that
+ * is received from the channel or selects with `null` if the channel
+ * [isClosedForReceive][ReceiveChannel.isClosedForReceive] without cause. The [select] invocation fails with
+ * the original [close][SendChannel.close] cause exception if the channel has _failed_.
+ *
+ * This extension is defined only for channels on non-null types, so that generic functions defined using
+ * these extensions do not accidentally confuse `null` value and a normally closed channel, leading to hard
+ * to find bugs.
+ **/
+@ExperimentalCoroutinesApi // since 1.3.0, tentatively stable in 1.4.0
+public fun <E : Any> ReceiveChannel<E>.onReceiveOrNull(): SelectClause1<E?> {
+    @Suppress("DEPRECATION", "UNCHECKED_CAST")
+    return (this as ReceiveChannel<E?>).onReceiveOrNull
 }
 
 /**

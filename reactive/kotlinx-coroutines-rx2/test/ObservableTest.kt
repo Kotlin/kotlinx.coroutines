@@ -14,7 +14,7 @@ class ObservableTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking {
         expect(1)
-        val observable = rxObservable {
+        val observable = rxObservable(currentDispatcher()) {
             expect(4)
             send("OK")
         }
@@ -31,7 +31,7 @@ class ObservableTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val observable = rxObservable<String>(NonCancellable) {
+        val observable = rxObservable<String>(currentDispatcher()) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -51,7 +51,7 @@ class ObservableTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val observable = rxObservable<String> {
+        val observable = rxObservable<String>(currentDispatcher()) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
@@ -71,23 +71,10 @@ class ObservableTest : TestBase() {
     }
 
     @Test
-    fun testCancelsParentOnFailure() = runTest(
-        expected = { it is RuntimeException && it.message == "OK" }
-    ) {
-        // has parent, so should cancel it on failure
-        rxObservable<Unit> {
-            throw RuntimeException("OK")
-        }.subscribe(
-            { expectUnreached() },
-            { assert(it is RuntimeException) }
-        )
-    }
-
-    @Test
     fun testNotifyOnceOnCancellation() = runTest {
         expect(1)
         val observable =
-            rxObservable {
+            rxObservable(currentDispatcher()) {
                 expect(5)
                 send("OK")
                 try {
@@ -124,7 +111,7 @@ class ObservableTest : TestBase() {
     @Test
     fun testFailingConsumer() = runTest {
         expect(1)
-        val pub = rxObservable {
+        val pub = rxObservable(currentDispatcher()) {
             expect(2)
             send("OK")
             try {

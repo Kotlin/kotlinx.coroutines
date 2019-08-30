@@ -7,7 +7,6 @@
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.internal.sanitize
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.*
 
@@ -15,7 +14,7 @@ import kotlin.coroutines.jvm.internal.*
  * Class describing coroutine info such as its context, state and stacktrace.
  */
 @ExperimentalCoroutinesApi
-public data class CoroutineInfo internal constructor(
+public class CoroutineInfo internal constructor(
     val context: CoroutineContext,
     private val creationStackBottom: CoroutineStackFrame,
     @JvmField internal val sequenceNumber: Long
@@ -45,14 +44,10 @@ public data class CoroutineInfo internal constructor(
     @JvmField
     internal var lastObservedFrame: CoroutineStackFrame? = null
 
-    // Copy constructor
-    internal constructor(coroutine: Continuation<*>, state: CoroutineInfo) : this(
-        coroutine.context,
-        state.creationStackBottom,
-        state.sequenceNumber
-    ) {
-        _state = state.state
-        this.lastObservedFrame = state.lastObservedFrame
+    public fun copy(): CoroutineInfo = CoroutineInfo(context, creationStackBottom, sequenceNumber).also {
+        it._state = _state
+        it.lastObservedFrame = lastObservedFrame
+        it.lastObservedThread = lastObservedThread
     }
 
     /**
@@ -64,7 +59,7 @@ public data class CoroutineInfo internal constructor(
         var frame: CoroutineStackFrame? = lastObservedFrame ?: return emptyList()
         val result = ArrayList<StackTraceElement>()
         while (frame != null) {
-            frame.getStackTraceElement()?.let { result.add(sanitize(it)) }
+            frame.getStackTraceElement()?.let { result.add(it) }
             frame = frame.callerFrame
         }
         return result
@@ -95,6 +90,8 @@ public data class CoroutineInfo internal constructor(
             lastObservedThread = null
         }
     }
+
+    override fun toString(): String = "CoroutineInfo(state=$state,context=$context)"
 }
 
 /**

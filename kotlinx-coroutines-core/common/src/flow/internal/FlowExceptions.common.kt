@@ -16,3 +16,12 @@ internal expect class AbortFlowException() : CancellationException
  * Exception used to cancel child of [scopedFlow] without cancelling the whole scope.
  */
 internal expect class ChildCancelledException() : CancellationException
+
+@Suppress("NOTHING_TO_INLINE")
+@PublishedApi
+internal inline fun checkIndexOverflow(index: Int): Int {
+    if (index < 0) {
+        throw ArithmeticException("Index overflow has happened")
+    }
+    return index
+}

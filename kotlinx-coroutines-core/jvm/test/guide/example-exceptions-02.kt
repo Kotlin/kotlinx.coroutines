@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
@@ -8,7 +8,6 @@ package kotlinx.coroutines.guide.exceptions02
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
-//sampleStart
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("Caught $exception") 
     }
@@ -19,5 +18,4 @@ fun main() = runBlocking {
         throw ArithmeticException() // Nothing will be printed, relying on user to call deferred.await()
     }
     joinAll(job, deferred)
-//sampleEnd    
 }

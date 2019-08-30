@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.selects
@@ -111,11 +111,6 @@ public interface SelectInstance<in R> {
     public fun performAtomicTrySelect(desc: AtomicDesc): Any?
 
     /**
-     * Performs action atomically when [isSelected] is `false`.
-     */
-    public fun performAtomicIfNotSelected(desc: AtomicDesc): Any?
-
-    /**
      * Returns completion continuation of this select instance.
      * This select instance must be _selected_ first.
      * All resumption through this instance happen _directly_ without going through dispatcher ([MODE_DIRECT]).
@@ -129,6 +124,7 @@ public interface SelectInstance<in R> {
 
     /**
      * Disposes the specified handle when this instance is selected.
+     * Note, that [DisposableHandle.dispose] could be called multiple times.
      */
     public fun disposeOnSelect(handle: DisposableHandle)
 }
@@ -234,7 +230,7 @@ internal class SelectBuilderImpl<in R>(
     override val completion: Continuation<R> get() = this
 
     private inline fun doResume(value: () -> Any?, block: () -> Unit) {
-        check(isSelected) { "Must be selected first" }
+        assert { isSelected } // "Must be selected first"
         _result.loop { result ->
             when {
                 result === UNDECIDED -> if (_result.compareAndSet(UNDECIDED, value())) return
@@ -311,10 +307,17 @@ internal class SelectBuilderImpl<in R>(
     internal fun handleBuilderException(e: Throwable) {
         if (trySelect(null)) {
             resumeWithException(e)
-        } else {
-            // Cannot handle this exception -- builder was already resumed with a different exception,
-            // so treat it as "unhandled exception"
-            handleCoroutineException(context, e)
+        } else if (e !is CancellationException) {
+            /*
+             * Cannot handle this exception -- builder was already resumed with a different exception,
+             * so treat it as "unhandled exception". But only if  it is not the completion reason
+             *  and it's not the cancellation. Otherwise, in the face of structured concurrency
+             * the same exception will be reported to theglobal exception handler.
+             */
+            val result = getResult()
+            if (result !is CompletedExceptionally || unwrap(result.cause) !== unwrap(e)) {
+                handleCoroutineException(context, e)
+            }
         }
     }
 
@@ -322,16 +325,14 @@ internal class SelectBuilderImpl<in R>(
 
     override fun disposeOnSelect(handle: DisposableHandle) {
         val node = DisposeNode(handle)
-        while (true) { // lock-free loop on state
-            val state = this.state
-            if (state === this) {
-                if (addLastIf(node, { this.state === this }))
-                    return
-            } else { // already selected
-                handle.dispose()
-                return
-            }
+        // check-add-check pattern is Ok here since handle.dispose() is safe to be called multiple times
+        if (!isSelected) {
+            addLast(node) // add handle to list
+            // double-check node after adding
+            if (!isSelected) return // all ok - still not selected
         }
+        // already selected
+        handle.dispose()
     }
 
     private fun doAfterSelect() {
@@ -343,7 +344,7 @@ internal class SelectBuilderImpl<in R>(
 
     // it is just like start(), but support idempotent start
     override fun trySelect(idempotent: Any?): Boolean {
-        check(idempotent !is OpDescriptor) { "cannot use OpDescriptor as idempotent marker"}
+        assert { idempotent !is OpDescriptor } // "cannot use OpDescriptor as idempotent marker"
         while (true) { // lock-free loop on state
             val state = this.state
             when {
@@ -361,12 +362,11 @@ internal class SelectBuilderImpl<in R>(
         }
     }
 
-    override fun performAtomicTrySelect(desc: AtomicDesc): Any? = AtomicSelectOp(desc, true).perform(null)
-    override fun performAtomicIfNotSelected(desc: AtomicDesc): Any? = AtomicSelectOp(desc, false).perform(null)
+    override fun performAtomicTrySelect(desc: AtomicDesc): Any? =
+        AtomicSelectOp(desc).perform(null)
 
     private inner class AtomicSelectOp(
-        @JvmField val desc: AtomicDesc,
-        @JvmField val select: Boolean
+        @JvmField val desc: AtomicDesc
     ) : AtomicOp<Any?>() {
         override fun prepare(affected: Any?): Any? {
             // only originator of operation makes preparation move of installing descriptor into this selector's state
@@ -398,7 +398,7 @@ internal class SelectBuilderImpl<in R>(
         }
 
         private fun completeSelect(failure: Any?) {
-            val selectSuccess = select && failure == null
+            val selectSuccess = failure == null
             val update = if (selectSuccess) null else this@SelectBuilderImpl
             if (_state.compareAndSet(this@AtomicSelectOp, update)) {
                 if (selectSuccess)

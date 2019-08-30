@@ -1,6 +1,6 @@
 <!--- INCLUDE .*/example-([a-z]+)-([0-9a-z]+)\.kt 
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
@@ -20,7 +20,7 @@ class BasicsGuideTest {
 
 <!--- TOC -->
 
-* [Coroutine basics](#coroutine-basics)
+* [Coroutine Basics](#coroutine-basics)
   * [Your first coroutine](#your-first-coroutine)
   * [Bridging blocking and non-blocking worlds](#bridging-blocking-and-non-blocking-worlds)
   * [Waiting for a job](#waiting-for-a-job)
@@ -33,7 +33,7 @@ class BasicsGuideTest {
 <!--- END_TOC -->
 
 
-## Coroutine basics
+## Coroutine Basics
 
 This section covers basic coroutine concepts.
 
@@ -326,7 +326,7 @@ World!
 
 
 But what if the extracted function contains a coroutine builder which is invoked on the current scope?
-In this case `suspend` modifier on the extracted function is not enough. Making `doWorld` extension
+In this case `suspend` modifier on the extracted function is not enough. Making `doWorld` an extension
 method on `CoroutineScope` is one of the solutions, but it may not always be applicable as it does not make API clearer.
 The idiomatic solution is to have either an explicit `CoroutineScope` as a field in a class containing the target function
 or an implicit one when the outer class implements `CoroutineScope`.

@@ -83,7 +83,7 @@ class CallbackFlowTest : TestBase() {
             }
         }
 
-        val flow = channelFlow<Int> {
+        val flow = callbackFlow<Int>() {
             api.start(channel)
             awaitClose {
                 api.stop()
@@ -118,7 +118,7 @@ class CallbackFlowTest : TestBase() {
         }
     }
 
-    private fun Flow<Int>.merge(other: Flow<Int>): Flow<Int> = channelFlow {
+    private fun Flow<Int>.merge(other: Flow<Int>): Flow<Int> = callbackFlow {
         launch {
             collect { send(it) }
         }

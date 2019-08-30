@@ -53,7 +53,7 @@ class ScanTest : TestBase() {
             expect(value) // 2
             latch.receive()
             throw TestException()
-        }.onErrorCollect(emptyFlow())
+        }.catch { /* ignore */ }
 
         assertEquals(1, flow.single())
         finish(4)

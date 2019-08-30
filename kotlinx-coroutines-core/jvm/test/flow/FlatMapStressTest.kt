@@ -5,6 +5,7 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.scheduling.*
 import org.junit.Assume.*
 import org.junit.Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
@@ -10,7 +10,6 @@ import kotlinx.coroutines.*
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
 fun main() = runBlocking(CoroutineName("main")) {
-//sampleStart
     log("Started main coroutine")
     // run two background value computations
     val v1 = async(CoroutineName("v1coroutine")) {
@@ -24,5 +23,4 @@ fun main() = runBlocking(CoroutineName("main")) {
         6
     }
     log("The answer for v1 / v2 = ${v1.await() / v2.await()}")
-//sampleEnd    
 }

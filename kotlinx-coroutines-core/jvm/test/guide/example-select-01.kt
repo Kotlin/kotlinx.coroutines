@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
@@ -35,12 +35,10 @@ suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<St
 }
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     val fizz = fizz()
     val buzz = buzz()
     repeat(7) {
         selectFizzBuzz(fizz, buzz)
     }
     coroutineContext.cancelChildren() // cancel fizz & buzz coroutines
-//sampleEnd        
 }
