@@ -9,7 +9,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
                       
 fun foo(): Flow<Int> = flow {
-    // WRONG way to change context for CPU-consuming code in flow builder
+    // The WRONG way to change context for CPU-consuming code in flow builder
     kotlinx.coroutines.withContext(Dispatchers.Default) {
         for (i in 1..3) {
             Thread.sleep(100) // pretend we are computing it in CPU-consuming way
