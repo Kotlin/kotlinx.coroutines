@@ -61,7 +61,6 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
-        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintray_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
         classpath "io.spring.gradle:dependency-management-plugin:$spring_dependency_management_version"
 
@@ -70,6 +69,13 @@ buildscript {
         classpath "me.champeau.gradle:jmh-gradle-plugin:0.4.7"
         classpath "net.ltgt.gradle:gradle-apt-plugin:0.10"
     }
+}
+
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+
+// todo:KLUDGE: This is needed to workaround dependency resolution between Java and MPP modules
+def configureKotlinJvmPlatform(configuration) {
+    configuration.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
 }
 
 allprojects {
@@ -227,10 +233,6 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
                 }
             }
         }
-
-        if (platformOf(it) == "jvm") {
-            dokkaJavadoc.dependsOn project(":$coreModule").dokka
-        }
     }
 }
 
@@ -238,7 +240,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
 
 // --------------- Configure sub-projects that are published ---------------
-task deploy(dependsOn: getTasksByName("bintrayUpload", true) + getTasksByName("publishNpm", true))
+task deploy(dependsOn: getTasksByName("publish", true) + getTasksByName("publishNpm", true))
 
 apply plugin: 'base'
 

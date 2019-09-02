@@ -42,6 +42,10 @@ kotlin {
     }
 }
 
+configurations {
+    configureKotlinJvmPlatform(kotlinCompilerPluginClasspath)
+}
+
 kotlin.sourceSets {
     jvmTest.dependencies {
         api "com.devexperts.lincheck:lincheck:$lincheck_version"
