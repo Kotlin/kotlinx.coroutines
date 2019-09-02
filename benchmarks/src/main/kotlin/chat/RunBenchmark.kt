@@ -3,7 +3,6 @@
 
 package chat
 
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.math3.distribution.PoissonDistribution
 import java.io.Closeable
@@ -107,6 +106,7 @@ private fun createUsers(users: ArrayList<User>,
                         poissonDistribution: PoissonDistribution,
                         random: Random,
                         configuration: BenchmarkConfiguration) {
+    require(configuration.users > 3) { "User number should be more than 3" }
     val first = System.currentTimeMillis()
     var sumPoissonDistribution = 0L
     val idSequence = AtomicLong()
@@ -164,25 +164,31 @@ fun registerClient(idSequence : AtomicLong, configuration: BenchmarkConfiguratio
     }
 }
 
-private fun addFriendsToUsers(configuration: BenchmarkConfiguration, users: List<UserWithFriends>, random: Random) {
+private fun addFriendsToUsers(configuration: BenchmarkConfiguration, users: List<User>, random: Random) {
     val friendsCount = (configuration.users * configuration.maxFriendsPercentage).toInt()
 
     for ((userIndex, user) in users.withIndex()) {
+        user as UserWithFriends
         val randomAmountOfFriends = random.nextInt(friendsCount) + 1
-        val friends = HashSet<Int>(randomAmountOfFriends * 2 + 1)
-        friends.add(userIndex)
+        if (randomAmountOfFriends > 0.6 * users.size) {
+            user.setFriends(users.shuffled().take(randomAmountOfFriends))
+            continue
+        }
+
+        val friendsNums = HashSet<Int>(randomAmountOfFriends * 2 + 1)
+        friendsNums.add(userIndex)
         repeat(randomAmountOfFriends) {
             var userNum = random.nextInt(users.size)
-            while (!friends.add(userNum)) {
+            while (!friendsNums.add(userNum)) {
                 userNum = random.nextInt(users.size)
             }
         }
-        friends.remove(userIndex)
-        val friendsChannels = ArrayList<Channel<Message>>(randomAmountOfFriends)
-        for (userNum in friends) {
-            friendsChannels.add(users[userNum].messageChannel)
+        friendsNums.remove(userIndex)
+        val friends = ArrayList<User>(randomAmountOfFriends)
+        for (userNum in friendsNums) {
+            friends.add(users[userNum])
         }
-        user.setFriends(friendsChannels)
+        user.setFriends(friends)
     }
 }
 

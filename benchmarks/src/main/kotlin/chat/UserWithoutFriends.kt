@@ -17,10 +17,9 @@ class UserWithoutFriends(id: Long,
         this.cumSumFriends = cumSumFriends
     }
 
-    override fun chooseChannelToSend(): Channel<Message>? {
-        var userId = id
-        var user : User? = null
-        while (id == userId) {
+    override fun chooseUserToSend(): User {
+        var user : User = this
+        while (this == user) {
             val randomDouble = random.nextDouble() * cumSumFriends.last()
             var insertionPoint = cumSumFriends.binarySearch(randomDouble)
 
@@ -33,8 +32,7 @@ class UserWithoutFriends(id: Long,
             // insertionPoint won't be out of bounds because randomDouble is less than or equals to the last number in the
             // cumSumFriends list
             user =  users[insertionPoint]
-            userId = user.id
         }
-        return user?.messageChannel
+        return user
     }
 }

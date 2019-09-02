@@ -55,7 +55,6 @@ abstract class User(val id: Long,
                 // if we can send a message, send it, otherwise wait on receive and receive a message
                 if (messagesToSent >= 1) {
                     sendMessage()
-                    messagesToSent--
                 } else {
                     val message = messageChannel.receiveOrClosed().valueOrNull ?: break
                     receiveAndProcessMessage(message)
@@ -78,11 +77,12 @@ abstract class User(val id: Long,
     }
 
     private suspend fun sendMessage() {
-        val userChannelToSend = chooseChannelToSend() ?: return
+        val userChannelToSend = chooseUserToSend().messageChannel
         val now = System.nanoTime()
         try {
             select<Unit> {
                 userChannelToSend.onSend(Message(id, now)) {
+                    messagesToSent--
                     if (!stopped) {
                         sentMessages++
                     }
@@ -112,7 +112,7 @@ abstract class User(val id: Long,
         messageChannel.close()
     }
 
-    abstract fun chooseChannelToSend(): Channel<Message>?
+    abstract fun chooseUserToSend(): User
 }
 
 /**
