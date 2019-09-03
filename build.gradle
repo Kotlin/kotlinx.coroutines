@@ -98,6 +98,14 @@ allprojects {
     }
 
     ext.unpublished = unpublished
+
+    // This project property is set during nightly stress test
+    def stressTest = project.properties['stressTest']
+
+    // Copy it to all test tasks
+    tasks.withType(Test) {
+        systemProperty 'stressTest', stressTest
+    }
 }
 
 allprojects {
