@@ -80,6 +80,8 @@ task lockFreedomTest(type: Test, dependsOn: compileTestKotlinJvm) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
     include '**/*LFStressTest.*'
+    enableAssertions = true
+    testLogging.showStandardStreams = true
 }
 
 task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
