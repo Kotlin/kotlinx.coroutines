@@ -54,7 +54,7 @@ Existing Instance cell_is_processed_persistent.
 
 Context `{iArrayG Σ}.
 
-Notation algebra := (authR (gset_disjUR nat)).
+Notation algebra := (authR (prodUR (gset_disjUR nat) mnatUR)).
 
 Class iteratorG Σ := IIteratorG { iterator_inG :> inG Σ algebra }.
 Definition iteratorΣ : gFunctors := #[GFunctor algebra].
@@ -66,7 +66,7 @@ Context `{iteratorG Σ}.
 Notation iProp := (iProp Σ).
 
 Definition is_iterator γa γ fℓ ℓ: iProp :=
-  (∃ (n: nat), fℓ ↦ #n ∗ own γ (● (GSet (set_seq 0 n))) ∗
+  (∃ (n: nat), fℓ ↦ #n ∗ own γ (● (GSet (set_seq 0 n), n: mnatUR)) ∗
                   ∃ (id: nat), ⌜(id * Pos.to_nat segment_size <= n)%nat⌝ ∗
                                 (∃ (ℓ': loc), segment_location γa id ℓ'
                                                                ∗ ℓ ↦ #ℓ'))%I.
@@ -92,22 +92,27 @@ Theorem iterator_step_spec γa γ (ℓ fℓ: loc):
       ▷ is_infinite_array ap γa ∗ is_iterator γa γ fℓ ℓ ∗
       ∃ (id: nat) (n: nat),
       ⌜(ix < Pos.to_nat segment_size)%nat⌝ ∗
-      ⌜(id * Pos.to_nat segment_size <= n)%nat⌝ ∗
       segment_location γa id sℓ ∗
-      own γ (◯ (GSet {[ n ]})) ∗
-      (∃ ℓ, p_cell_invariant ap γa (id * Pos.to_nat segment_size + ix) ℓ) ∗
-      (⌜n = (id * Pos.to_nat segment_size + ix)%nat⌝ ∨ cell_is_cancelled' γa id ix),
-           RET (#sℓ, #ix) >>>.
+      own γ (◯ (GSet {[ n ]}, S n: mnatUR)) ∗
+      (∃ ℓ, ▷ p_cell_invariant ap γa n ℓ ∗ array_mapsto ap γa n ℓ) ∗
+      (⌜n = (id * Pos.to_nat segment_size + ix)%nat⌝ ∨
+       cell_is_cancelled ap γa n), RET (#sℓ, #ix) >>>.
 Proof.
   iIntros "#HCellInit".
   iIntros (Φ) "AU". wp_lam. wp_pures.
 
   wp_bind (!_)%E.
   iMod "AU" as "[[HInfArr HIsIter] [HClose _]]".
-  iDestruct "HIsIter" as (?) "(Hfℓ & HAuth & HSeg)".
+  iDestruct "HIsIter" as (n') "(Hfℓ & HAuth & HSeg)".
   iDestruct "HSeg" as (? ? ?) "(#HSegLoc & Hℓ)".
   wp_load.
-  iMod ("HClose" with "[-]") as "AU". {
+  iMod (own_update with "HAuth") as "[HAuth HSent]". {
+    apply auth_update_core_id with (b := (ε, n': mnatUR)).
+    apply _.
+    rewrite prod_included /=; split; rewrite //.
+    apply gset_disj_included. done.
+  }
+  iMod ("HClose" with "[- HSent]") as "AU". {
     rewrite /is_iterator. repeat (iFrame; iExists _).
     iSplitR. 2: by iExists _; iFrame. done.
   }
@@ -117,13 +122,22 @@ Proof.
   iMod "AU" as "[[HInfArr HIsIter] [HClose _]]".
   iDestruct "HIsIter" as (n) "(Hfℓ & HAuth & HSeg)".
   iDestruct "HSeg" as (? ? ?) "(#HSegLoc' & Hℓ)".
+  destruct (le_lt_dec n' n).
+  2: {
+    iDestruct (own_valid_2 with "HAuth HSent") as %HContra.
+    exfalso. move: HContra.
+    rewrite auth_both_valid prod_included mnat_included /=.
+    lia.
+  }
   wp_faa.
   iMod (own_update with "HAuth") as "[HAuth HFrag]".
-  { apply auth_update_alloc.
+  { apply auth_update_alloc. apply prod_local_update'.
     eapply (gset_disj_alloc_empty_local_update _ {[ n ]}).
-    apply (set_seq_S_end_disjoint 0). }
+    apply (set_seq_S_end_disjoint 0).
+    apply mnat_local_update. Existential 2 := (S n). lia.
+  }
   rewrite -(set_seq_S_end_union_L 0).
-  iMod ("HClose" with "[-]") as "AU". {
+  iMod ("HClose" with "[-HFrag HSent]") as "AU". {
     rewrite /is_iterator. iFrame; repeat (iExists _; iFrame).
     replace (n + 1%nat) with (Z.of_nat (S n)) by lia. iFrame.
     iExists _; iFrame.
@@ -144,6 +158,63 @@ Proof.
 
   iIntros (? ?) "(HInfArr & HSegInv & #HSegLoc'' & HFindSegRet)".
 
+  iExists (n `mod` Pos.to_nat segment_size)%nat, _. iFrame.
+  iSplitL.
+  2: {
+    iIntros "!> HΦ !>". wp_pures.
+    destruct (Pos.to_nat segment_size) as [|o'] eqn:HC.
+    exfalso; lia. rewrite rem_of_nat; done. }
+  iExists _, _. iFrame. iFrame "HSegLoc''".
+  iSplitR. iPureIntro; apply Nat.mod_upper_bound; lia.
+  iSplitL "HSegInv".
+  { iDestruct (cell_invariant_by_segment_invariant with "HSegInv")
+      as (cℓ) "[HCellInv >HArrMapsto]".
+    by eapply Nat.mod_upper_bound; lia.
+    iExists _. iModIntro.
+    rewrite /array_mapsto /ias_cell_info_view /segment_size.
+    iFrame "HArrMapsto".
+    rewrite Nat.mul_comm -Nat.div_mod. done. lia. }
+
   iDestruct "HFindSegRet" as "[[% ->]|(% & % & #HCanc)]".
+
+  {
+    assert (a = n `div` Pos.to_nat segment_size)%nat as ->. {
+      assert (a * Pos.to_nat segment_size <= n)%nat as HC by lia.
+      rewrite (Nat.div_mod n (Pos.to_nat segment_size)) in HC.
+      2: lia.
+      remember (n `div` Pos.to_nat segment_size)%nat as k.
+      remember (Pos.to_nat segment_size) as m.
+      assert (m > 0)%nat as MGt0 by lia.
+      assert (k ≤ a)%nat as HC' by lia.
+      revert MGt0 HC HC'. clear. intros.
+      rewrite Nat.mul_comm in HC.
+      assert ((a - k) * m <= n `mod` m)%nat by (rewrite Nat.mul_sub_distr_r; lia).
+      assert (n `mod` m < m)%nat by (apply Nat.mod_upper_bound; lia).
+      assert ((a - k) * m < m)%nat as HC'' by lia.
+      destruct (a - k)%nat eqn:E; simpl in *; lia.
+    }
+
+    iLeft. iPureIntro.
+    rewrite Nat.mul_comm -Nat.div_mod /= //.
+    lia.
+  }
+
+  destruct (decide (a = n `div` Pos.to_nat segment_size)%nat); subst.
+  {
+    iLeft. iPureIntro.
+    rewrite Nat.mul_comm -Nat.div_mod /= //.
+    lia.
+  }
+
+  iRight. iModIntro.
+
+  iDestruct (segments_cancelled__cells_cancelled with "HCanc") as "HCanc'".
+  iApply (big_sepL_lookup _ _ (n `mod` Pos.to_nat segment_size)%nat with "HCanc'").
+  rewrite seq_lookup.
+  - rewrite /segment_size Nat.mul_comm -Nat.div_mod. done. lia.
+  - apply Nat.lt_le_trans with (m := (1 * Pos.to_nat segment_size)%nat).
+    by rewrite Nat.mul_1_l; apply Nat.mod_upper_bound; lia.
+    by apply mult_le_compat_r; lia.
+Qed.
 
 Abort.

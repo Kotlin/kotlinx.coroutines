@@ -346,6 +346,19 @@ Ltac cell_info_persistent :=
   apply own_core_persistent; apply auth_frag_core_id;
   apply ias_cell_info'_core_id; repeat apply pair_core_id; try apply _.
 
+Definition segment_exists γ id := own γ (◯ (ias_segment_info id ε)).
+
+Global Instance segment_exists_persistent γ id: Persistent (segment_exists γ id).
+Proof. apply _. Qed.
+
+Theorem segment_exists_from_segment_info γ id p:
+  own γ (◯ (ias_segment_info id p)) -∗
+      own γ (◯ (ias_segment_info id p)) ∗ segment_exists γ id.
+Proof.
+  rewrite /segment_exists -own_op -auth_frag_op -ias_segment_info_op.
+  rewrite ucmra_unit_right_id. done.
+Qed.
+
 Section locations.
 
 Definition segment_locations γ id ℓs: iProp :=
@@ -1075,63 +1088,92 @@ Proof.
   done.
 Qed.
 
+Lemma segment_by_location' γ id hid:
+  ⌜(id ≤ hid)%nat⌝ -∗ segment_exists γ hid -∗ is_infinite_array γ -∗
+  (∃ ℓ, (is_normal_segment γ ℓ id ∗ (is_normal_segment γ ℓ id -∗ is_infinite_array γ)) ∨
+   (is_tail_segment γ ℓ id ∗ (is_tail_segment γ ℓ id -∗ is_infinite_array γ))).
+Proof.
+  iIntros (HLt) "#HSegExists HInfArr".
+  iDestruct "HInfArr" as (segments) "[HNormSegs [HTailSeg HAuth]]".
+  iDestruct "HAuth" as (segments') "[% HAuth]".
+  destruct (le_lt_dec (length segments) id).
+  { inversion l; subst.
+    2: {
+      iDestruct (own_valid_2 with "HAuth HSegExists")
+        as %[HValid _]%auth_both_valid.
+      exfalso. revert HValid. rewrite list_lookup_included.
+      intro HValid. specialize (HValid hid).
+      rewrite ias_segment_info_lookup in HValid.
+      assert (length segments' <= hid)%nat as HIsNil by lia.
+      apply lookup_ge_None in HIsNil. rewrite HIsNil in HValid.
+      apply option_included in HValid.
+      destruct HValid as [[=]|[a [b [_ [[=] _]]]]].
+    }
+    iDestruct "HTailSeg" as (ℓ pl) "HIsSeg".
+    iExists _. iRight.
+    iSplitL "HIsSeg"; first by rewrite /is_tail_segment; eauto with iFrame.
+    iIntros "HTailSeg". rewrite /is_infinite_array.
+    iExists segments. iFrame. iSplitR "HAuth"; eauto 10 with iFrame.
+  }
+  apply lookup_lt_is_Some_2 in l. destruct l as [ℓ Hℓ].
+  iDestruct (big_sepL_lookup_acc with "[HNormSegs]") as "[HIsSeg HRestSegs]".
+  by apply Hℓ.
+  by iApply "HNormSegs".
+  simpl. iExists ℓ. iLeft. iFrame "HIsSeg".
+  iIntros "HNormSeg". rewrite /is_infinite_array.
+  iExists segments. iFrame "HTailSeg". iSplitR "HAuth".
+  by iApply "HRestSegs".
+  by eauto 10 with iFrame.
+Qed.
+
+Lemma segment_exists_from_location γ id ℓ:
+  segment_location γ id ℓ -∗ segment_exists γ id.
+Proof.
+  iIntros "HSegLoc".
+  iDestruct "HSegLoc" as (? ? ? ?) "HSegLocs". rewrite /segment_locations.
+  iDestruct (segment_exists_from_segment_info with "HSegLocs") as "[_ $]".
+Qed.
+
+Lemma segment_location_from_segment γ id ℓ pl nl:
+  is_segment γ id ℓ pl nl -∗ segment_location γ id ℓ.
+Proof.
+  iIntros "HIsSeg". rewrite /segment_location.
+  iDestruct "HIsSeg" as (? ? ? ? ?) "(_ & HLocs & _)"; eauto.
+Qed.
+
 Lemma segment_by_location γ id ℓ:
   segment_location γ id ℓ -∗ is_infinite_array γ -∗
   ((is_normal_segment γ ℓ id ∗ (is_normal_segment γ ℓ id -∗ is_infinite_array γ)) ∨
    (is_tail_segment γ ℓ id ∗ (is_tail_segment γ ℓ id -∗ is_infinite_array γ))).
 Proof.
   iIntros "#HSegLoc HInfArr".
-  iDestruct "HInfArr" as (segments) "[HNormSegs [HTailSeg HAuth]]".
-  iDestruct "HAuth" as (segments') "[% HAuth]".
-  destruct (le_lt_dec (length segments) id).
-  { inversion l; subst.
-    2: {
-      rewrite /segment_location /segment_locations.
-      iDestruct "HSegLoc" as (? ? ? ?) "#HSeg".
-      iDestruct (own_valid_2 with "HAuth HSeg")
-        as %[HValid _]%auth_both_valid.
-      exfalso. revert HValid. rewrite list_lookup_included.
-      intro HValid. specialize (HValid (S m)).
-      rewrite ias_segment_info_lookup in HValid.
-      assert (length segments' <= S m)%nat as HIsNil by lia.
-      apply lookup_ge_None in HIsNil. rewrite HIsNil in HValid.
-      apply option_included in HValid.
-      destruct HValid as [[=]|[a [b [_ [[=] _]]]]].
-    }
-    iDestruct "HTailSeg" as (ℓ' pl) "HIsSeg".
-    destruct (decide (ℓ = ℓ')); subst.
-    2: {
-      iDestruct "HIsSeg" as (? ? ? ? ?) "[_ [HLocs _]]".
-      iAssert (segment_location γ (length segments) ℓ') as "#HLoc";
-        first by eauto 6.
-      iDestruct (segment_location_agree with "HSegLoc HLoc") as %->.
-      contradiction.
-    }
-    iRight.
-    iSplitL "HIsSeg"; first by rewrite /is_tail_segment; eauto with iFrame.
-    iIntros "HTailSeg". rewrite /is_infinite_array.
-    iExists segments. iFrame. iSplitR "HAuth"; eauto 10 with iFrame.
+  iDestruct (segment_exists_from_location with "HSegLoc") as "#HSegExists".
+  iDestruct (segment_by_location' with "[% //] HSegExists HInfArr") as (ℓ') "HH".
+  iAssert (segment_location γ id ℓ') as "#HSegLoc'".
+  {
+    iDestruct "HH" as "[[HNormSeg _]|[HTailSeg _]]".
+    1: iDestruct "HNormSeg" as (? ?) "[HIsSeg _]".
+    2: iDestruct "HTailSeg" as (?) "HIsSeg".
+    all: iApply segment_location_from_segment; done.
   }
-  apply lookup_lt_is_Some_2 in l. destruct l as [x Hx].
-  iDestruct (big_sepL_lookup_acc with "[HNormSegs]") as "[HIsSeg HRestSegs]".
-  2: by iApply "HNormSegs".
-  apply Hx.
-  simpl.
-  iLeft.
-  destruct (decide (ℓ = x)); subst.
-  2: {
-    iDestruct "HIsSeg" as (pl nl) "[HIsSeg #HValNext]".
-    iDestruct "HIsSeg" as (? ? ? ? ?) "[_ [HLocs _]]".
-    iAssert (segment_location γ id x) as "#HLoc";
-      first by eauto 6.
-    iDestruct (segment_location_agree with "HSegLoc HLoc") as %->.
-    contradiction.
-  }
-  iFrame.
-  iIntros "HNormSeg". rewrite /is_infinite_array.
-  iExists segments. iFrame. iSplitR "HAuth".
-  { by iApply "HRestSegs". }
-  eauto 10 with iFrame.
+  iDestruct (segment_location_agree with "HSegLoc' HSegLoc") as %->.
+  done.
+Qed.
+
+Lemma is_segment_by_location_prev' γ id hid:
+  ⌜(id <= hid)%nat⌝ -∗ segment_exists γ hid -∗ is_infinite_array γ -∗
+  ∃ ℓ nl, (∃ pl, is_segment γ id ℓ pl nl) ∗
+                      (∀ pl, is_segment γ id ℓ pl nl -∗ is_infinite_array γ).
+Proof.
+  iIntros (HLt) "#HSegLoc HInfArr".
+  iDestruct (segment_by_location' with "[% //] HSegLoc HInfArr")
+    as (ℓ) "[[HNorm HRest]|[HTail HRest]]".
+  1: iDestruct "HNorm" as (pl nl) "[HIsSeg #HValNext]".
+  2: iDestruct "HTail" as (pl) "HIsSeg".
+  all: iExists ℓ, _; iSplitL "HIsSeg"; try (iExists _; eauto).
+  all: iIntros (?) "HSeg"; iApply "HRest".
+  { rewrite /is_normal_segment. eauto 10 with iFrame. }
+  { rewrite /is_tail_segment. eauto 10 with iFrame. }
 Qed.
 
 Lemma is_segment_by_location_prev γ id ℓ:
@@ -1140,14 +1182,14 @@ Lemma is_segment_by_location_prev γ id ℓ:
                       (∀ pl, is_segment γ id ℓ pl nl -∗ is_infinite_array γ).
 Proof.
   iIntros "#HSegLoc HInfArr".
-  iDestruct (segment_by_location with "HSegLoc HInfArr")
-    as "[[HNorm HRest]|[HTail HRest]]".
-  1: iDestruct "HNorm" as (pl nl) "[HIsSeg #HValNext]".
-  2: iDestruct "HTail" as (pl) "HIsSeg".
-  all: iExists _; iSplitL "HIsSeg"; try by eauto 10.
-  all: iIntros (?) "HSeg"; iApply "HRest".
-  { rewrite /is_normal_segment. eauto 10 with iFrame. }
-  { rewrite /is_tail_segment. eauto 10 with iFrame. }
+  iDestruct (segment_exists_from_location with "HSegLoc") as "#HSegExists".
+  iDestruct (is_segment_by_location_prev' with "[% //] HSegExists HInfArr")
+    as (ℓ') "HH".
+  iAssert (segment_location γ id ℓ') as "#HSegLoc'".
+  { iDestruct ("HH") as (?) "[HH _]". iDestruct "HH" as (?) "HIsSeg".
+    iApply (segment_location_from_segment with "HIsSeg"). }
+  iDestruct (segment_location_agree with "HSegLoc HSegLoc'") as %->.
+  done.
 Qed.
 
 Lemma is_segment_by_location γ id ℓ:
@@ -2462,10 +2504,10 @@ Theorem find_segment_spec γ (ℓ: loc) (id fid: nat):
   <<< ▷ is_infinite_array γ >>>
     (find_segment segment_size) #ℓ #fid @ ⊤
   <<< ∃ (id': nat) (ℓ': loc), ▷ is_infinite_array γ ∗
-        segment_invariant γ id ∗
+        ▷ segment_invariant γ fid ∗
         segment_location γ id' ℓ' ∗
         ((⌜fid <= id⌝ ∧ ⌜id = id'⌝) ∨
-         ⌜id <= fid⌝ ∧ ⌜fid <= id'⌝ ∗
+         ⌜id < fid⌝ ∧ ⌜fid <= id'⌝ ∗
           [∗ list] i ∈ seq fid (id' - fid), segment_is_cancelled γ i),
       RET #ℓ' >>>.
 Proof.
@@ -2475,16 +2517,31 @@ Proof.
 
   awp_apply segment_id_spec. iApply (aacc_aupd with "AU"); first done.
   iIntros "HInfArr".
+
+  iAssert (▷ [∗ list] i ∈ seq 0 (S id), segment_invariant γ i)%I as "#HSegInv".
+  {
+    iApply big_opL_commute. iApply big_sepL_forall.
+    iIntros (k x HEl).
+    apply seq_lookup' in HEl. simpl in *. destruct HEl as [<- HEl].
+
+    iDestruct (segment_exists_from_location with "HHeadLoc") as "HSegExists".
+    iDestruct (is_segment_by_location_prev' with "[%] HSegExists HInfArr")
+      as (? ?) "[HH _]".
+    2: by iDestruct "HH" as (? ? ? ? ? ?) "(_ & _ & $ & _)".
+    lia.
+  }
+
   iDestruct (is_segment_by_location with "HHeadLoc HInfArr")
     as (? ?) "[HIsSeg HArrRestore]".
   iAaccIntro with "HIsSeg"; iIntros "HIsSeg".
   { iDestruct ("HArrRestore" with "HIsSeg") as "$". by eauto with iFrame. }
-  iAssert (segment_invariant γ id) as "#HSegInv".
-  { iDestruct "HIsSeg" as (? ? ? ? ?) "(_ & _ & $ & _)". }
+
   iDestruct (bi.later_wand with "HArrRestore HIsSeg") as "$".
   destruct (decide (fid <= id)) eqn:E.
   { iRight. iModIntro. iExists _, _. iFrame "HHeadLoc".
-    iSplit. iSplit. done. iLeft; repeat iSplit; by iPureIntro.
+    iSplit. iSplit.
+    { iApply (big_sepL_lookup with "HSegInv"). rewrite seq_lookup; auto. lia. }
+    iLeft; repeat iSplit; by iPureIntro.
     iIntros "HΦ !>". wp_pures. rewrite bool_decide_decide E. by wp_pures. }
   iLeft. iIntros "!> AU !>". wp_pures. rewrite bool_decide_decide E. wp_pures.
 
@@ -2502,10 +2559,10 @@ Proof.
   iAssert (□ ∀ v, ▷ is_valid_next γ id v -∗
     AU << ▷ is_infinite_array γ >> @ ⊤, ∅
        << ∃ (id': nat) (ℓ': loc), ▷ is_infinite_array γ ∗
-          segment_invariant γ id ∗
+          ▷ segment_invariant γ fid ∗
           segment_location γ id' ℓ' ∗
           ((⌜fid <= id⌝ ∧ ⌜id = id'⌝) ∨
-            ⌜id <= fid⌝ ∧ ⌜fid <= id'⌝ ∗
+            ⌜id < fid⌝ ∧ ⌜fid <= id'⌝ ∗
             [∗ list] i ∈ seq fid (id' - fid), segment_is_cancelled γ i),
           COMM Φ #ℓ' >> -∗
       WP ((find_segment segment_size) (from_some v)) #fid {{ v, Φ v }})%I as "#IH'".
