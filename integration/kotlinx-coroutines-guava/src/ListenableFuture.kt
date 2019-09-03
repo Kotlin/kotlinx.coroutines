@@ -46,14 +46,14 @@ public fun <T> CoroutineScope.future(
 ): ListenableFuture<T> {
     require(!start.isLazy) { "$start start is not supported" }
     val newContext = newCoroutineContext(context)
-    // TODO: It'd be nice not to leak this SettableFuture reference, which is easily blind-cast.
     val future = SettableFuture.create<T>()
     val coroutine = ListenableFutureCoroutine(newContext, future)
     future.addListener(
       coroutine,
       MoreExecutors.directExecutor())
     coroutine.start(start, coroutine, block)
-    return future
+    // Return hides the SettableFuture. This should prevent casting.
+    return object: ListenableFuture<T> by future {}
 }
 
 /**
