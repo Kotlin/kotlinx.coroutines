@@ -69,8 +69,8 @@ class SemaphoreStressTest : TestBase() {
         val semaphore = Semaphore(1, 1)
         newSingleThreadContext("SemaphoreStressTest").use { pool ->
             repeat (n) {
-                /* Initially, we hold the permit and no one else can `acquire`,
-                   otherwise it's a bug. */
+                // Initially, we hold the permit and no one else can `acquire`,
+                // otherwise it's a bug.
                 assertEquals(0, semaphore.availablePermits)
                 var job1_entered_critical_section = false
                 val job1 = launch(start = CoroutineStart.UNDISPATCHED) {
@@ -83,8 +83,8 @@ class SemaphoreStressTest : TestBase() {
                 val job2 = launch(pool) {
                     semaphore.release()
                 }
-                /* Because `job2` executes in a separate thread, this
-                   cancellation races with the call to `release()`. */
+                // Because `job2` executes in a separate thread, this
+                // cancellation races with the call to `release()`.
                 job1.cancelAndJoin()
                 job2.join()
                 assertEquals(1, semaphore.availablePermits)
