@@ -166,7 +166,8 @@ private class CancelSemaphoreAcquisitionHandler(
     private val index: Int
 ) : CancelHandler() {
     override fun invoke(cause: Throwable?) {
-        semaphore.incPermits()
+        val p = semaphore.incPermits()
+        if (p >= 0) return
         if (segment.cancel(index)) return
         semaphore.resumeNextFromQueue()
     }
