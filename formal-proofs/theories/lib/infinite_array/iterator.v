@@ -17,8 +17,8 @@ Definition increase_value_to: val :=
   (λ: "loc" "val",
      let: "tmp" := ref !"loc" in
     (rec: "loop" <> :=
-       if: "tmp" < "val"
-       then if: CAS "loc" "tmp" "val" then #()
+       if: ! "tmp" < "val"
+       then if: CAS "loc" ! "tmp" "val" then #()
             else "tmp" <- !"loc" ;; "loop" #()
        else #()) #()
   ).
@@ -65,8 +65,11 @@ Context `{iteratorG Σ}.
 
 Notation iProp := (iProp Σ).
 
+Definition iterator_counter γ fℓ (n: nat): iProp :=
+  (fℓ ↦ #n ∗ own γ (● (GSet (set_seq 0 n), n: mnatUR)))%I.
+
 Definition is_iterator γa γ fℓ ℓ: iProp :=
-  (∃ (n: nat), fℓ ↦ #n ∗ own γ (● (GSet (set_seq 0 n), n: mnatUR)) ∗
+  (∃ (n: nat), iterator_counter γ fℓ n ∗
                   ∃ (id: nat), ⌜(id * Pos.to_nat segment_size <= n)%nat⌝ ∗
                                 (∃ (ℓ': loc), segment_location γa id ℓ'
                                                                ∗ ℓ ↦ #ℓ'))%I.
@@ -103,7 +106,7 @@ Proof.
 
   wp_bind (!_)%E.
   iMod "AU" as "[[HInfArr HIsIter] [HClose _]]".
-  iDestruct "HIsIter" as (n') "(Hfℓ & HAuth & HSeg)".
+  iDestruct "HIsIter" as (n') "([Hfℓ HAuth] & HSeg)".
   iDestruct "HSeg" as (? ? ?) "(#HSegLoc & Hℓ)".
   wp_load.
   iMod (own_update with "HAuth") as "[HAuth HSent]". {
@@ -120,7 +123,7 @@ Proof.
 
   wp_bind (FAA _ _)%E.
   iMod "AU" as "[[HInfArr HIsIter] [HClose _]]".
-  iDestruct "HIsIter" as (n) "(Hfℓ & HAuth & HSeg)".
+  iDestruct "HIsIter" as (n) "([Hfℓ HAuth] & HSeg)".
   iDestruct "HSeg" as (? ? ?) "(#HSegLoc' & Hℓ)".
   destruct (le_lt_dec n' n).
   2: {
@@ -217,4 +220,88 @@ Proof.
     by apply mult_le_compat_r; lia.
 Qed.
 
-Abort.
+Theorem increase_value_to_spec γ (fℓ: loc) (n: nat):
+  <<< ∀ m, iterator_counter γ fℓ m >>>
+    (increase_value_to #fℓ #n) @ ⊤
+  <<< own γ (◯ (GSet (set_seq m (n-m)%nat), n: mnatUR)) ∗
+      (⌜m >= n⌝ ∧ iterator_counter γ fℓ m ∨
+       ⌜m < n⌝ ∧ iterator_counter γ fℓ n), RET #() >>>.
+Proof.
+  iIntros (Φ) "AU". wp_lam. wp_pures. wp_bind (!_)%E.
+  iMod "AU" as (m) "[[Hfℓ HAuth] HClose]". wp_load.
+  destruct (decide (m < n)) eqn:E.
+
+  2: {
+    iMod (own_update with "HAuth") as "[HAuth HOk]".
+    { apply auth_update_core_id with (b := (ε, n: mnatUR)).
+      by apply _.
+      rewrite prod_included. split; simpl.
+      by apply gset_disj_included.
+      apply mnat_included. lia.
+    }
+    iMod ("HClose" with "[-]") as "HΦ".
+    { replace (n - m)%nat with O by lia. simpl.
+      iFrame "HOk". iLeft. iSplitR. by iPureIntro; lia. iFrame. }
+    iModIntro. wp_alloc tℓ as "Htℓ". wp_pures. wp_load. wp_pures.
+    rewrite bool_decide_decide E. wp_pures. done.
+  }
+
+  iDestruct "HClose" as "[HClose _]"; iMod ("HClose" with "[$]") as "AU".
+  iModIntro. wp_alloc tℓ as "Htℓ". wp_pures. wp_load. wp_pures.
+  rewrite bool_decide_decide E. wp_pures. clear E.
+
+  iLöb as "IH" forall (m l).
+
+  wp_load. wp_bind (CmpXchg _ _ _). iMod "AU" as (m') "[[Hfℓ HAuth] HClose]".
+  destruct (decide (m' = m)); subst.
+  {
+    wp_cmpxchg_suc.
+    iMod (own_update with "HAuth") as "[HAuth HOk]".
+    { apply auth_update_alloc. apply prod_local_update'.
+      - apply (gset_disj_alloc_empty_local_update
+                 _ (set_seq (O + m)%nat (n - m)%nat)).
+        symmetry. apply set_seq_plus_disjoint.
+      - apply mnat_local_update.
+        assert (m <= n)%nat as HP by lia. apply HP.
+    }
+    iMod ("HClose" with "[-Htℓ]") as "HΦ".
+    { simpl. iFrame "HOk".
+      rewrite union_comm_L -set_seq_plus_L.
+      iRight.
+      replace (m + (n - m))%nat with n by lia.
+      iFrame.
+      by iPureIntro. }
+    iModIntro. by wp_pures.
+  }
+  {
+    wp_cmpxchg_fail.
+    { case. intros HContra. apply Nat2Z.inj in HContra. contradiction. }
+    iDestruct "HClose" as "[HClose _]". iMod ("HClose" with "[$]") as "AU".
+
+    iModIntro. wp_pures. wp_bind (!_)%E.
+    iMod "AU" as (m'') "[[Hfℓ HAuth] HClose]". wp_load.
+
+    destruct (decide (m'' < n)) eqn:E.
+
+    2: {
+      iMod (own_update with "HAuth") as "[HAuth HOk]".
+      { apply auth_update_core_id with (b := (ε, n: mnatUR)).
+        by apply _.
+        rewrite prod_included. split; simpl.
+        by apply gset_disj_included.
+        apply mnat_included. lia.
+      }
+      iMod ("HClose" with "[-Htℓ]") as "HΦ".
+      { replace (n - m'')%nat with O by lia. simpl.
+        iFrame "HOk". iLeft. iSplitR. by iPureIntro; lia. iFrame. }
+      iModIntro. wp_store. wp_pures. wp_load. wp_pures.
+      rewrite bool_decide_decide E. wp_pures. done.
+    }
+
+    iDestruct "HClose" as "[HClose _]". iMod ("HClose" with "[$]") as "AU".
+    iModIntro. wp_store. wp_pures. wp_load. wp_pures.
+    rewrite bool_decide_decide E. wp_pures.
+
+    by iApply ("IH" with "[%] AU Htℓ").
+  }
+Qed.
