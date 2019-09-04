@@ -1,5 +1,18 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.3.1
+
+This is a minor update with various fixes:
+* Flow: Fix recursion in combineTransform<T1, T2, R> (#1466).
+* Fixed race in the Semaphore (#1477).
+* Repaired some of ListenableFuture.kt's cancellation corner cases (#1441).
+* Consistently unwrap exception in slow path of CompletionStage.asDeferred (#1479).
+* Various fixes in documentation (#1496, #1476, #1470, #1468).
+* Various cleanups and additions in tests.
+
+Note: Kotlin/Native artifacts are now published with Gradle metadata format version 1.0, so you will need 
+Gradle version 5.3 or later to use this version of kotlinx.coroutines in your Kotlin/Native project.
+
 ## Version 1.3.0
 
 ### Flow
