@@ -41,7 +41,7 @@ This operator has a sibling with initial value – <a href="scan.html">scan</a>.
 
 <p>For example:</p>
 
-<pre>flowOf(1, 2, 3, 4).scan { (v1, v2) -&gt; v1 + v2 }.toList()
+<pre>flowOf(1, 2, 3, 4).scanReduce { (v1, v2) -&gt; v1 + v2 }.toList()
 </pre>
 
 <p>will produce <code>[1, 3, 6, 10]</code></p>

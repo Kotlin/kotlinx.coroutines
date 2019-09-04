@@ -35,8 +35,23 @@
 
 <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="https://google.github.io/guava/releases/28.0-jre/api/docs/com/google/common/util/concurrent/ListenableFuture.html"><span class="identifier">ListenableFuture</span></a><span class="symbol">&lt;</span><a href="as-deferred.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asDeferred</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><a href="as-deferred.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-<p>Converts this listenable future to an instance of <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html">Deferred</a>.
-It is cancelled when the resulting deferred is cancelled.</p>
+<p>Returns a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html">Deferred</a> that is completed or failed by <code>this</code> <a href="https://google.github.io/guava/releases/28.0-jre/api/docs/com/google/common/util/concurrent/ListenableFuture.html">ListenableFuture</a>.</p>
+
+<p>Completion is non-atomic between the two promises.</p>
+
+<p>Cancellation is propagated bidirectionally.</p>
+
+<p>When <code>this</code> <code>ListenableFuture</code> completes (either successfully or exceptionally) it will try to
+complete the returned <code>Deferred</code> with the same value or exception. This will succeed, barring a
+race with cancellation of the <code>Deferred</code>.</p>
+
+<p>When <code>this</code> <code>ListenableFuture</code> is <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html#cancel(boolean)">successfully cancelled</a>,
+it will cancel the returned <code>Deferred</code>.</p>
+
+<p>When the returned <code>Deferred</code> is <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html">cancelled</a>, it will try to propagate the
+cancellation to <code>this</code> <code>ListenableFuture</code>. Propagation will succeed, barring a race with the
+<code>ListenableFuture</code> completing normally. This is the only case in which the returned <code>Deferred</code>
+will complete with a different outcome than <code>this</code> <code>ListenableFuture</code>.</p>
 
 
       </div>

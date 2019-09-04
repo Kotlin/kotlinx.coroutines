@@ -39,7 +39,7 @@
 Note that initial value should be immutable (or should not be mutated) as it is shared between different collectors.
 For example:</p>
 
-<pre>flowOf(1, 2, 3).accumulate(emptyList&lt;Int&gt;()) { acc, value -&gt; acc + value }.toList()
+<pre>flowOf(1, 2, 3).scan(emptyList&lt;Int&gt;()) { acc, value -&gt; acc + value }.toList()
 </pre>
 
 <p>will produce <code>[], [1], [1, 2], [1, 2, 3]]</code>.</p>

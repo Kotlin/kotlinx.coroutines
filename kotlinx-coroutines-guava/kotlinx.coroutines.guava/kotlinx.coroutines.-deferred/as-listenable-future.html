@@ -35,8 +35,33 @@
 
 <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><a href="as-listenable-future.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asListenableFuture</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://google.github.io/guava/releases/28.0-jre/api/docs/com/google/common/util/concurrent/ListenableFuture.html"><span class="identifier">ListenableFuture</span></a><span class="symbol">&lt;</span><a href="as-listenable-future.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-<p>Converts this deferred value to the instance of <a href="https://google.github.io/guava/releases/28.0-jre/api/docs/com/google/common/util/concurrent/ListenableFuture.html">ListenableFuture</a>.
-The deferred value is cancelled when the resulting future is cancelled or otherwise completed.</p>
+<p>Returns a <a href="https://google.github.io/guava/releases/28.0-jre/api/docs/com/google/common/util/concurrent/ListenableFuture.html">ListenableFuture</a> that is completed or failed by <code>this</code> <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html">Deferred</a>.</p>
+
+<p>Completion is non-atomic between the two promises.</p>
+
+<p>When either promise successfully completes, it will attempt to synchronously complete its
+counterpart with the same value. This will succeed barring a race with cancellation.</p>
+
+<p>When either promise completes with an Exception, it will attempt to synchronously complete its
+counterpart with the same Exception. This will succeed barring a race with cancellation.</p>
+
+<p>Cancellation is propagated bidirectionally.</p>
+
+<p>When the returned <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html">Future</a> is successfully cancelled - meaning <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html#cancel(boolean)">Future.cancel</a> returned true -
+<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html">Deferred.cancel</a> will be synchronously called on <code>this</code> <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html">Deferred</a>. This will attempt to cancel
+the <code>Deferred</code>, though cancellation may not succeed and the <code>Deferred</code> may complete in a
+non-cancelled terminal state.</p>
+
+<p>When <code>this</code> <code>Deferred</code> reaches its “cancelled” state with a successful cancellation - meaning it
+completes with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-cancellation-exception.html">kotlinx.coroutines.CancellationException</a> - <code>this</code> <code>Deferred</code> will synchronously
+cancel the returned <code>Future</code>. This can only race with cancellation of the returned <code>Future</code>, so
+the returned <code>Future</code> will always <em>eventually</em> reach its cancelled state when either promise is
+successfully cancelled, for their different meanings of “successfully cancelled”.</p>
+
+<p>This is inherently a race. See <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html#cancel(boolean)">Future.cancel</a> for a description of <code>Future</code> cancellation
+semantics. See <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> for a description of coroutine cancellation semantics. See
+<a href="#">DeferredListenableFuture.cancel</a> for greater detail on the overlapped cancellation semantics and
+corner cases of this method.</p>
 
 
       </div>
