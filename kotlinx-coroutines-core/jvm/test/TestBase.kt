@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -37,7 +37,7 @@ public actual open class TestBase actual constructor() {
     /**
      * Is `true` when running in a nightly stress test mode.
      */
-    public actual val isStressTest = System.getProperty("stressTest") != null
+    public actual val isStressTest = System.getProperty("stressTest")?.toBoolean() ?: false
 
     public val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
 
