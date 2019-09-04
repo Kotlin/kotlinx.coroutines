@@ -160,12 +160,22 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         val result = offerInternal(element)
         return when {
             result === OFFER_SUCCESS -> true
-            // We should check for closed token on offer as well, otherwise offer won't be linearizable
-            // in the face of concurrent close()
-            result === OFFER_FAILED -> throw closedForSend?.sendException?.let { recoverStackTrace(it) } ?: return false
-            result is Closed<*> -> throw recoverStackTrace(result.sendException)
+            result === OFFER_FAILED -> {
+                // We should check for closed token on offer as well, otherwise offer won't be linearizable
+                // in the face of concurrent close()
+                // See https://github.com/Kotlin/kotlinx.coroutines/issues/359
+                throw recoverStackTrace(helpCloseAndGetSendException(closedForSend ?: return false))
+            }
+            result is Closed<*> -> throw recoverStackTrace(helpCloseAndGetSendException(result))
             else -> error("offerInternal returned $result")
         }
+    }
+
+    private fun helpCloseAndGetSendException(closed: Closed<*>): Throwable {
+        // To ensure linearizablity we must ALWAYS help close the channel when we observe that it was closed
+        // See https://github.com/Kotlin/kotlinx.coroutines/issues/1419
+        helpClose(closed)
+        return closed.sendException
     }
 
     private suspend fun sendSuspend(element: E): Unit = suspendAtomicCancellableCoroutine sc@ { cont ->
@@ -179,8 +189,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
                         return@sc
                     }
                     enqueueResult is Closed<*> -> {
-                        helpClose(enqueueResult)
-                        cont.resumeWithException(enqueueResult.sendException)
+                        cont.helpCloseAndResumeWithSendException(enqueueResult)
                         return@sc
                     }
                     enqueueResult === ENQUEUE_FAILED -> {} // try to offer instead
@@ -197,13 +206,17 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
                 }
                 offerResult === OFFER_FAILED -> continue@loop
                 offerResult is Closed<*> -> {
-                    helpClose(offerResult)
-                    cont.resumeWithException(offerResult.sendException)
+                    cont.helpCloseAndResumeWithSendException(offerResult)
                     return@sc
                 }
                 else -> error("offerInternal returned $offerResult")
             }
         }
+    }
+
+    private fun Continuation<*>.helpCloseAndResumeWithSendException(closed: Closed<*>) {
+        helpClose(closed)
+        resumeWithException(closed.sendException)
     }
 
     /**
@@ -230,23 +243,17 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
 
     public override fun close(cause: Throwable?): Boolean {
         val closed = Closed<E>(cause)
-
         /*
          * Try to commit close by adding a close token to the end of the queue.
          * Successful -> we're now responsible for closing receivers
          * Not successful -> help closing pending receivers to maintain invariant
          * "if (!close()) next send will throw"
          */
-        val closeAdded = queue.addLastIfPrev(closed, { it !is Closed<*> })
-        if (!closeAdded) {
-            val actualClosed = queue.prevNode as Closed<*>
-            helpClose(actualClosed)
-            return false
-        }
-
-        helpClose(closed)
-        invokeOnCloseHandler(cause)
-        return true
+        val closeAdded = queue.addLastIfPrev(closed) { it !is Closed<*> }
+        val actuallyClosed = if (closeAdded) closed else queue.prevNode as Closed<*>
+        helpClose(actuallyClosed)
+        if (closeAdded) invokeOnCloseHandler(cause)
+        return closeAdded // true if we have closed
     }
 
     private fun invokeOnCloseHandler(cause: Throwable?) {
@@ -370,10 +377,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
                         select.disposeOnSelect(node)
                         return
                     }
-                    enqueueResult is Closed<*> -> {
-                        helpClose(enqueueResult)
-                        throw recoverStackTrace(enqueueResult.sendException)
-                    }
+                    enqueueResult is Closed<*> -> throw recoverStackTrace(helpCloseAndGetSendException(enqueueResult))
                     enqueueResult === ENQUEUE_FAILED -> {} // try to offer
                     enqueueResult is Receive<*> -> {} // try to offer
                     else -> error("enqueueSend returned $enqueueResult ")
@@ -388,10 +392,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
                     block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
                     return
                 }
-                offerResult is Closed<*> -> {
-                    helpClose(offerResult)
-                    throw recoverStackTrace(offerResult.sendException)
-                }
+                offerResult is Closed<*> -> throw recoverStackTrace(helpCloseAndGetSendException(offerResult))
                 else -> error("offerSelectInternal returned $offerResult")
             }
         }
@@ -432,7 +433,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
 
     private class SendSelect<E, R>(
         override val pollResult: Any?,
-        @JvmField val channel: SendChannel<E>,
+        @JvmField val channel: AbstractSendChannel<E>,
         @JvmField val select: SelectInstance<R>,
         @JvmField val block: suspend (SendChannel<E>) -> R
     ) : Send(), DisposableHandle {
