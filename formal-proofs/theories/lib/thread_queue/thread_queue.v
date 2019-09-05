@@ -1,160 +1,140 @@
-From iris.base_logic.lib Require Export invariants.
-From iris.proofmode Require Import tactics.
-From iris.heap_lang Require Import proofmode notation lang.
-From iris.program_logic Require Export weakestpre atomic.
-From iris.algebra Require Import cmra.
-Require Import thread_queue_spec.
-Set Default Proof Using "Type".
+From iris.heap_lang Require Import notation.
 
-(*
-From iris.heap_lang Require Import notation lang proofmode.
+Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
+Require Import SegmentQueue.lib.infinite_array.iterator.
+Require Import SegmentQueue.lib.util.getAndSet.
+Require Import SegmentQueue.lib.util.interruptibly.
 
-Record threadQueue {Σ} `{heapG Σ} := ThreadQueue {
-  (* -- operations -- *)
-  new_thread_queue: val;
-  add_to_queue_and_suspend: val;
-  resume_next_from_queue: val;
-  (* -- predicates -- *)
-  thread_queue_name: Type;
-  is_thread_queue
-    (N: namespace)
-    (γ: thread_queue_name)
-    (queue: val)
-    (Q: iProp Σ) : iProp Σ;
-  (* -- general properties -- *)
-  is_thread_queue_persistent N γ queue Q : Persistent (is_thread_queue N γ queue Q);
-  is_thread_queue_ne N γ queue : NonExpansive (is_thread_queue N γ queue);
-  (* -- operation specs -- *)
-  new_thread_queue_spec N Q:
-    {{{ True }}} new_thread_queue #() {{{ l γ, RET l; is_thread_queue N γ l Q }}};
-  add_to_queue_and_suspend_spec N γ l Q:
-    {{{ is_thread_queue N γ l Q }}}
-      add_to_queue_and_suspend l
-    {{{ RET #(); Q }}};
-  resume_next_from_queue_spec N γ l Q:
-    {{{ is_thread_queue N γ l Q ∗ Q }}}
-      resume_next_from_queue l
-    {{{ RET #(); True }}}
-}.
+Section impl.
 
-Existing Instances is_thread_queue_persistent.
-Existing Instances is_thread_queue_ne.
- *)
+Variable segment_size: positive.
 
-Section exchange.
+Notation RESUMEDV := (SOMEV #0).
+Notation CANCELLEDV := (SOMEV #1).
 
-  Definition new_exchange : val :=
-    λ: <>, ref NONE.
+Definition cancel_cell: val :=
+  λ: "cell'",
+  let: "cell" := cell_ref_loc "cell'" in
+  if: getAndSet "cell" CANCELLEDV = RESUMEDV
+  then segment_cancel_cell (Fst "cell")
+  else #().
 
-  Definition await_on (f : expr) r :=
-    (match: !"e" with
-       NONE => f "e"
-     | SOME "v" => r "v"
-     end)%E.
+Definition move_ptr_forward : val :=
+  rec: "loop" "ptr" "seg" := let: "curSeg" := !"ptr" in
+                             if: segment_id "seg" ≤ segment_id "curSeg"
+                             then #() else
+                               if: CAS "ptr" "curSeg" "seg"
+                               then #() else "loop" "ptr" "seg".
 
-  Definition await : val :=
-    rec: "await" "e" := await_on "await"%E id.
+Definition park: val :=
+  λ: "cancellationHandler" "cancHandle" "threadHandle",
+  let: "r" := (loop: (λ: "c", ! "c")%V
+               interrupted: "cancellationHandler") in
+  "threadHandle" <- NONEV ;;
+  "r".
 
-  Definition await_interruptibly : val :=
-    rec: "await" "h" "e" :=
-      if: !"h" = #0
-      then await_on ("await_int" "h") (fun x => SOME x)
-      else NONE.
+Definition unpark: val :=
+  λ: "threadHandle", "threadHandle" <- SOMEV #().
 
-  Definition pass : val := λ: "e" "v", "e" <- SOME "v".
+Definition suspend: val :=
+  λ: "handler" "cancHandle" "threadHandle" "tail" "enqIdx",
+  let: "cell'" := (iterator_step segment_size) "tail" "enqIdx" in
+  move_ptr_forward "tail" (Fst "cell'") ;;
+  let: "cell" := cell_ref_loc "cell'" in
+  if: getAndSet "cell" (InjL "threadHandle") = RESUMEDV
+  then #()
+  else park ("handler" (cancel_cell "cell'")) "cancHandle" "threadHandle".
 
-End exchange.
+Definition resume: val :=
+  rec: "resume" "head" "deqIdx" :=
+    let: "cell'" := (iterator_step_skipping_cancelled segment_size)
+                      "head" "deqIdx" in
+    segment_cutoff (Fst "cell'") ;;
+    move_ptr_forward "head" (Fst "cell'") ;;
+    let: "cell" := cell_ref_loc "cell'" in
+    let: "p" := getAndSet "cell" RESUMEDV in
+    match: "p" with
+        InjL "x" => if: "x" = #() then #() else unpark "x"
+      | InjR "x" => "resume" "head" "deqIdx"
+    end.
 
-(*
-Section thread_queue.
+End impl.
 
-  Definition new_thread_queue_sq : val :=
-    λ: "id", ref (ref #0, ref #0, new_infinite_array new_exchange)%E.
-
-  Definition add_to_queue_and_suspend_sq : val :=
-    λ: "q", let: "enqIdx" := Fst (Fst (!"q")) in
-            let: "array" := Snd (!"q") in
-            let: "tail" := infinite_array_tail "array" in
-            let: "i" := FAA "enqIdx" 1 in
-            let: "ex" := infinite_array_get "array" "tail" "i" in
-            await "ex".
-
-  Definition resume_next_from_queue_sq : val :=
-    λ: "q", let: "deqIdx" := Snd (Fst (!"q")) in
-            let: "array" := Snd (!"q") in
-            let: "head" := infinite_array_head "array" in
-            let: "i" := FAA "deqIdx" 1 in
-            let: "ex" := infinite_array_get_pop "array" "head" "i" in
-            pass "ex" #().
-
-End thread_queue.
-
-Section semaphore.
-
-  Context `{heapG Σ} (N : namespace).
-  Notation iProp := (iProp Σ).
-  Variable q : threadQueue.
-
-  Definition new_semaphore_sq : val := λ: "k",
-                                       ref (ref "k", new_thread_queue q #())%E.
-  Definition acquire_sq : val := λ: "s", let: "p" := FAA (Fst !"s") #(-1) in
-                                         let: "q" := Snd !"s" in
-                                         if: #0 < "p"
-                                           then #()
-                                           else add_to_queue_and_suspend q "q".
-  Definition release_sq : val := λ: "s", let: "p" := FAA (Fst !"s") #1 in
-                                         let: "q" := Snd !"s" in
-                                         if: #0 ≤ "p"
-                                           then #()
-                                           else resume_next_from_queue q "q".
-End semaphore.
+From iris.heap_lang Require Import proofmode.
 
 Section proof.
 
-  Class mSemaphoreG Σ := MSemaphoreG { msemaphore_inG :> inG Σ boundedPosR }.
-  Definition mSemaphoreΣ : gFunctors := #[GFunctor boundedPosR].
-  Instance subG_msemaphoreΣ {Σ} : subG mSemaphoreΣ Σ -> mSemaphoreG Σ.
-  Proof. solve_inG. Qed.
+Context `{heapG Σ}.
 
-  Context `{mSemaphoreG Σ}.
-  Context `{heapG Σ}.
-  Notation iProp := (iProp Σ).
+Variable cell_is_processed: nat -> iProp Σ.
 
-  Variable tq : threadQueue.
-  Variable (N: namespace).
+Variable ap: @infinite_array_parameters Σ.
 
-  Definition permit_sq (γ: gname) (perms : nat) :=
-    own γ (bpos 1 (Pos.of_nat (1 + perms))).
+Let segment_size := p_segment_size ap.
 
-  Definition semaphore_inv γ (z : val) (ℓ pℓ : loc) (perms : nat) (R : iProp) : iProp :=
-    (∃ (p : Z), ℓ ↦ z ∗ pℓ ↦ #p ∗
-                ((∃ n, ⌜p = (1 + Z.of_nat n)%Z⌝ ∧
-                       iPropPow (S n) R ∗ iPropPow (S n) (own γ (bpos 1 (Pos.of_nat (S perms))))) ∨
-                 ⌜(p <= 0)%Z⌝))%I.
+Context `{iArrayG Σ}.
 
-  Definition is_semaphore_sq
-             (N : namespace)
-             (γ: gname)
-             (semaphore: val)
-             (perms: nat)
-             (R: iProp) :=
-    (∃ (ℓ pℓ: loc) (q : val), ⌜semaphore = #ℓ⌝ ∧
-                           (∃ γ', is_thread_queue tq N γ' q (permit_sq γ perms ∗ R)) ∧
-                           inv N (semaphore_inv γ (#pℓ, q) ℓ pℓ perms R))%I.
+Theorem move_ptr_forward_spec γ (v: loc) id ℓ:
+  segment_location γ id ℓ -∗
+  ([∗ list] j ∈ seq 0 (id * Pos.to_nat segment_size), cell_is_processed j) -∗
+  <<< ∀ (id': nat) (ℓ': loc), ▷ is_infinite_array ap γ ∗ v ↦ #ℓ' ∗
+                                         segment_location γ id' ℓ' >>>
+    move_ptr_forward #v #ℓ @ ⊤
+  <<< ▷ is_infinite_array ap γ ∗ (⌜id > id'⌝ ∗ v ↦ #ℓ ∨ ⌜id <= id'⌝ ∗ v ↦ #ℓ'),
+  RET #() >>>.
+Proof.
+  iIntros "#HSegLoc HProc" (Φ) "AU". wp_lam. wp_pures. iLöb as "IH".
+  wp_bind (!_)%E.
+  iMod "AU" as (id' ℓ') "[[HIsInf [Htl #HLoc]] [HClose _]]".
+  wp_load.
+  iMod ("HClose" with "[HIsInf Htl HLoc]") as "AU"; first by iFrame.
+  iModIntro. wp_pures.
+  wp_bind (segment_id #ℓ').
 
-  Global Instance is_semaphore_persistent_sq γ sem p R:
-    Persistent (is_semaphore_sq N γ sem p R).
-  Proof. apply _. Qed.
+  awp_apply segment_id_spec without "HProc".
+  iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros (? ?) "[HIsInf HTl]".
+  iDestruct (is_segment_by_location with "HLoc HIsInf")
+    as (? ?) "[HIsSeg HArrRestore]".
+  iAaccIntro with "HIsSeg"; iFrame; iIntros "HIsSeg"; iModIntro;
+    iDestruct (bi.later_wand with "HArrRestore HIsSeg") as "$".
+  by eauto.
 
-  Global Instance permit_timeless_sq γ p : Timeless (permit_sq γ p).
-  Proof. apply _. Qed.
+  iIntros "AU !> HProc".
 
-  Global Instance iPropPow_ne Σ n: NonExpansive (@iPropPow Σ n).
-  Proof. induction n; solve_proper. Qed.
+  awp_apply segment_id_spec without "HProc".
+  iApply (aacc_aupd with "AU"); first done.
+  iIntros (? ?) "[HIsInf HTl]".
+  iDestruct (is_segment_by_location with "HSegLoc HIsInf")
+    as (? ?) "[HIsSeg HArrRestore]".
+  iAaccIntro with "HIsSeg"; iFrame; iIntros "HIsSeg"; iModIntro;
+    iDestruct (bi.later_wand with "HArrRestore HIsSeg") as "$".
+  by eauto.
 
-  Global Instance semaphore_inv_ne γ z ℓ pℓ perms: NonExpansive (semaphore_inv γ z ℓ pℓ perms).
-  Proof. solve_proper. Qed.
+  destruct (decide (id <= id')) eqn:E.
+  {
+    iRight. iSplitL.
+    { iDestruct "HTl" as "[HTl HLoc']". iRight. iFrame. admit. }
+    iIntros "HΦ !> HProc". wp_pures. rewrite bool_decide_decide E. by wp_pures.
+  }
+  iLeft. iFrame. iIntros "AU !> HProc". wp_pures. rewrite bool_decide_decide E.
+  wp_pures.
 
-  Global Instance is_semaphore_ne_sq N γ sem p: NonExpansive (is_semaphore_sq N γ sem p).
-  Proof. solve_proper. Qed.
-*)
+  wp_bind (CmpXchg _ _ _).
+  iMod "AU" as (id'' ℓ'') "[[HIsInf [Htl #HLocs]] HClose]".
+
+  destruct (decide (ℓ'' = ℓ')); subst.
+  {
+    wp_cmpxchg_suc.
+    iMod ("HClose" with "[HIsInf Htl]") as "HΦ".
+    { iFrame. iLeft. iFrame. iPureIntro. admit. }
+    iModIntro. by wp_pures.
+  }
+  {
+    wp_cmpxchg_fail.
+    iDestruct "HClose" as "[HClose _]".
+    iMod ("HClose" with "[HIsInf Htl]") as "AU"; first by iFrame.
+    iModIntro. wp_pures. wp_lam. wp_pures.
+    iApply ("IH" with "HProc AU").
+  }
+Qed.

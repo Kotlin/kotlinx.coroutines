@@ -305,3 +305,5 @@ Proof.
     by iApply ("IH" with "[%] AU Htℓ").
   }
 Qed.
+
+End proof.

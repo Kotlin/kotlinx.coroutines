@@ -7,6 +7,7 @@
 ./theories/lib/asym_rendezvous/asym_rendezvous_proof.v
 ./theories/lib/asym_rendezvous/asym_rendezvous_spec.v
 ./theories/lib/infinite_array/infinite_array_impl.v
+./theories/lib/infinite_array/iterator.v
 ./theories/lib/thread_queue/thread_queue.v
 ./theories/lib/thread_queue/thread_queue_spec.v
 ./theories/lib/semaphore/semaphore_impl.v
