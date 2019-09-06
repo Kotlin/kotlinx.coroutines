@@ -1,4 +1,4 @@
-package chat
+package benchmarks.chat
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -18,15 +18,17 @@ import java.util.concurrent.ThreadLocalRandom
  * To emulate real world chat servers, some work will be executed on CPU during sending and receiving messages. When user
  * connects to the server, the connection itself consumes some CPU time.
  * At the end of the benchmark execution [stopUser] should be called.
+ *
  * Because of the design of the coroutines tasks scheduler and channels, it is important to call [yield] sometimes to allow other
  * coroutines to work. This is necessary due to the fact that if a coroutine constantly has some work to do, like in this
  * case if a coroutine has an endless flow of messages, it will work without interruption, and other coroutines will have to
  * wait for this coroutine to end it's execution.
+ * todo: remove the call of yield when this bug is fixed
  */
-abstract class User(val id: Long,
+abstract class User(private val id: Long,
                     val activity: Double,
-                    val messageChannel: Channel<Message>,
-                    private val configuration: BenchmarkConfiguration) {
+                    private val messageChannel: Channel<Message>,
+                    private val averageWork: Int) {
     var sentMessages = 0L
         protected set
 
@@ -35,16 +37,12 @@ abstract class User(val id: Long,
 
     protected val random = Random(id)
 
-    private var messagesToSent: Double = 0.0
-
-    @Volatile
-    private var stopped = false
+    private var messagesToSent: Double = activity
 
     lateinit var runCoroutine: Job
 
     fun startUser() {
-        messagesToSent += activity
-        var count = 0L
+        var yieldLoopCounter = 0L
         runCoroutine = CoroutineScope(context).launch {
             while (!stopped) {
                 // receive messages while can
@@ -60,7 +58,7 @@ abstract class User(val id: Long,
                     receiveAndProcessMessage(message)
                 }
                 // hint described in the class' comment section
-                if (count++ % 61 == 5L) {
+                if (yieldLoopCounter++ % 61 == 5L) {
                     yield()
                 }
             }
@@ -69,7 +67,7 @@ abstract class User(val id: Long,
 
     private fun doSomeWorkOnCpu() {
         // We use geometric distribution here
-        val p = 1.0 / configuration.averageWork
+        val p = 1.0 / averageWork
         val r = ThreadLocalRandom.current()
         while (true) {
             if (r.nextDouble() < p) break
@@ -83,9 +81,7 @@ abstract class User(val id: Long,
             select<Unit> {
                 userChannelToSend.onSend(Message(id, now)) {
                     messagesToSent--
-                    if (!stopped) {
-                        sentMessages++
-                    }
+                    sentMessages++
                     doSomeWorkOnCpu()
                 }
                 messageChannel.onReceiveOrClosed { message ->
@@ -101,14 +97,11 @@ abstract class User(val id: Long,
 
     private fun receiveAndProcessMessage(message: Message) {
         messagesToSent += activity
-        if (!stopped) {
-            receivedMessages++
-        }
+        receivedMessages++
         doSomeWorkOnCpu()
     }
 
     fun stopUser() {
-        stopped = true
         messageChannel.close()
     }
 

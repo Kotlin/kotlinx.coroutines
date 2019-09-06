@@ -1,7 +1,6 @@
 @file:JvmName("RunBenchmark")
-@file:Suppress("ConstantConditionIf")
 
-package chat
+package benchmarks.chat
 
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.math3.distribution.PoissonDistribution
@@ -12,79 +11,74 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.collections.ArrayList
 
 var context = DispatcherTypes.FORK_JOIN.create(1)
-const val shouldPrintDebugOutput = true
+private const val SHOULD_PRINT_DEBUG_OUTPUT = true
 
+@Volatile
+var stopped = false
+
+@Suppress("ConstantConditionIf")
 fun main(args: Array<String>) {
-    val configuration = BenchmarkConfiguration.defaultConfiguration()
+    val configuration = BenchmarkConfiguration.parseBenchmarkArgs(args)
 
     // warming up
     println("Start warming up")
     val mean = 100.0
 
+    var benchmarkResults = BenchmarkResults()
     repeat(WARM_UP_ITERATIONS) {
-        runBenchmarkIteration(it + 1, mean, configuration, true)
+        runBenchmarkIteration(it + 1, mean, configuration, benchmarkResults)
     }
 
-    if (shouldPrintDebugOutput) {
+    if (SHOULD_PRINT_DEBUG_OUTPUT) {
         println("Warming up results were:")
-        repeat(BENCHMARK_ITERATIONS) {
-            println("${it + 1} run sentMessages ${configuration.sentMessagesPerRun[it]}, receivedMessages ${configuration.receivedMessagesPerRun[it]}")
+        repeat(WARM_UP_ITERATIONS) {
+            println("${it + 1} run sentMessages ${benchmarkResults.sentMessagesPerRun[it]}, receivedMessages ${benchmarkResults.receivedMessagesPerRun[it]}")
         }
     }
 
-    configuration.sentMessagesPerRun.clear()
-    configuration.receivedMessagesPerRun.clear()
-
+    benchmarkResults = BenchmarkResults()
     // running benchmark
     println("Start running benchmark")
-    repeat(BENCHMARK_ITERATIONS) {
-        runBenchmarkIteration(it + 1, mean, configuration, true)
+    repeat(ITERATIONS) {
+        runBenchmarkIteration(it + 1, mean, configuration, benchmarkResults)
     }
 
     FileOutputStream("$BENCHMARK_OUTPUT_FOLDER/$BENCHMARK_OUTPUT_FILE", true).bufferedWriter().use { writer ->
-        writer.append(configuration.toCSV())
+        writer.append("${configuration.toCSV()},${benchmarkResults.toCSV()}")
         writer.newLine()
     }
 
-    if (shouldPrintDebugOutput) {
+    if (SHOULD_PRINT_DEBUG_OUTPUT) {
         println("Benchmark results were:")
-        repeat(BENCHMARK_ITERATIONS) {
-            println("${it + 1} run sentMessages ${configuration.sentMessagesPerRun[it]}, receivedMessages ${configuration.receivedMessagesPerRun[it]}")
+        repeat(ITERATIONS) {
+            println("${it + 1} run sentMessages ${benchmarkResults.sentMessagesPerRun[it]}, receivedMessages ${benchmarkResults.receivedMessagesPerRun[it]}")
         }
     }
 }
 
+@Suppress("ConstantConditionIf")
 private fun runBenchmarkIteration(iteration: Int,
                                   mean: Double,
                                   configuration: BenchmarkConfiguration,
-                                  shouldCountMetrics: Boolean) {
+                                  benchmarkResults : BenchmarkResults) {
+    stopped = false
     context = configuration.dispatcherType.create(configuration.threads)
 
-    if (shouldPrintDebugOutput) {
+    if (SHOULD_PRINT_DEBUG_OUTPUT) {
         println("$iteration iteration")
     }
 
     val poissonDistribution = PoissonDistribution(mean)
     poissonDistribution.reseedRandomGenerator(42)
     val users = ArrayList<User>()
-    var usersStopped = false
-    try {
-        createUsers(users, mean, poissonDistribution, Random(42), configuration)
 
-        Thread.sleep(BENCHMARK_TIME_MS)
+    createUsers(users, mean, poissonDistribution, Random(42), configuration)
 
-        stopUsers(users)
-        waitForCoroutines(users)
-        usersStopped = true
-        if (shouldCountMetrics) {
-            collectBenchmarkMetrics(users, configuration)
-        }
-    } finally {
-        if (!usersStopped) {
-            stopUsers(users)
-            waitForCoroutines(users)
-        }
-    }
+    Thread.sleep(BENCHMARK_TIME_MS)
+
+    stopUsers(users)
+    waitForCoroutines(users)
+    collectBenchmarkMetrics(users, benchmarkResults)
 
     val context = context
     // closing coroutineDispatcher
@@ -101,31 +95,28 @@ private fun waitForCoroutines(users : ArrayList<User>) {
     }
 }
 
+@Suppress("ConstantConditionIf")
 private fun createUsers(users: ArrayList<User>,
                         mean: Double,
                         poissonDistribution: PoissonDistribution,
                         random: Random,
                         configuration: BenchmarkConfiguration) {
     require(configuration.users > 3) { "User number should be more than 3" }
-    val first = System.currentTimeMillis()
-    var sumPoissonDistribution = 0L
     val idSequence = AtomicLong()
+    val startCreatingUsers = System.currentTimeMillis()
     repeat(configuration.users) {
-        val ctm1 = System.currentTimeMillis()
         val sample = poissonDistribution.sample()
-        val ctm2 = System.currentTimeMillis()
-        sumPoissonDistribution += ctm2 - ctm1
         val activity = sample / mean
-        val user = registerClient(idSequence, configuration, activity)
+        val user = createUser(idSequence, configuration, activity)
         users.add(user)
     }
-    val second = System.currentTimeMillis()
+    val endCreatingUsers = System.currentTimeMillis()
 
     when (configuration.benchmarkMode) {
-        BenchmarkModes.USER_WITH_FRIENDS -> {
+        BenchmarkModes.CHOOSE_RANDOM_FRIEND -> {
             addFriendsToUsers(configuration, users.map { user -> user as UserWithFriends }.toList(), random)
         }
-        BenchmarkModes.USER_WITHOUT_FRIENDS -> {
+        BenchmarkModes.CHOOSE_BASED_ON_ACTIVITY -> {
             val cumSumFriends = ArrayList<Double>(users.size)
             for (i in 0 until users.size) {
                 if (cumSumFriends.isEmpty()) {
@@ -141,49 +132,47 @@ private fun createUsers(users: ArrayList<User>,
         }
     }
 
-    val third = System.currentTimeMillis()
+    val endAddingContacts = System.currentTimeMillis()
 
     for (user in users) {
         user.startUser()
     }
 
-    val fourth = System.currentTimeMillis()
-
-    if (shouldPrintDebugOutput) {
-        println("Creating users : ${second - first}, adding contacts : ${third - second}, starting scenarios : ${fourth - third}, using poisson distribution time $sumPoissonDistribution")
+    if (SHOULD_PRINT_DEBUG_OUTPUT) {
+        println("Creating users : ${endCreatingUsers - startCreatingUsers}, adding contacts : ${endAddingContacts - endCreatingUsers}")
     }
 }
 
-fun registerClient(idSequence : AtomicLong, configuration: BenchmarkConfiguration, activity : Double): User {
+fun createUser(idSequence : AtomicLong, configuration: BenchmarkConfiguration, activity : Double): User {
     val userId = idSequence.incrementAndGet()
-    val messageChannel = configuration.channelType.createChannel<Message>()
+    val messageChannel = configuration.channelCreator.create<Message>()
 
     return when (configuration.benchmarkMode) {
-        BenchmarkModes.USER_WITH_FRIENDS -> UserWithFriends(userId, activity, messageChannel, configuration)
-        BenchmarkModes.USER_WITHOUT_FRIENDS -> UserWithoutFriends(userId, activity, messageChannel, configuration)
+        BenchmarkModes.CHOOSE_RANDOM_FRIEND -> UserWithFriends(userId, activity, messageChannel, configuration.averageWork)
+        BenchmarkModes.CHOOSE_BASED_ON_ACTIVITY -> UserWithoutFriends(userId, activity, messageChannel, configuration.averageWork)
     }
 }
 
 private fun addFriendsToUsers(configuration: BenchmarkConfiguration, users: List<User>, random: Random) {
     val friendsCount = (configuration.users * configuration.maxFriendsPercentage).toInt()
 
-    for ((userIndex, user) in users.withIndex()) {
+    for (user in users) {
         user as UserWithFriends
         val randomAmountOfFriends = random.nextInt(friendsCount) + 1
+        // if the number of friends is too big, use not that fast but stable method. If we manually
+        // add friends it will be painfully slow
         if (randomAmountOfFriends > 0.6 * users.size) {
             user.setFriends(users.shuffled().take(randomAmountOfFriends))
             continue
         }
 
         val friendsNums = HashSet<Int>(randomAmountOfFriends * 2 + 1)
-        friendsNums.add(userIndex)
         repeat(randomAmountOfFriends) {
             var userNum = random.nextInt(users.size)
             while (!friendsNums.add(userNum)) {
                 userNum = random.nextInt(users.size)
             }
         }
-        friendsNums.remove(userIndex)
         val friends = ArrayList<User>(randomAmountOfFriends)
         for (userNum in friendsNums) {
             friends.add(users[userNum])
@@ -192,17 +181,18 @@ private fun addFriendsToUsers(configuration: BenchmarkConfiguration, users: List
     }
 }
 
-private fun collectBenchmarkMetrics(users: ArrayList<User>, configuration: BenchmarkConfiguration) {
+private fun collectBenchmarkMetrics(users: ArrayList<User>, results: BenchmarkResults) {
     var sentMessages = 0L
     var receivedMessages = 0L
     for (user in users) {
         sentMessages += user.sentMessages
         receivedMessages += user.receivedMessages
     }
-    configuration.sentMessagesPerRun.add(sentMessages.toDouble() / BENCHMARK_TIME_MS)
-    configuration.receivedMessagesPerRun.add(receivedMessages.toDouble() / BENCHMARK_TIME_MS)
+    results.sentMessagesPerRun.add(sentMessages.toDouble() / BENCHMARK_TIME_MS)
+    results.receivedMessagesPerRun.add(receivedMessages.toDouble() / BENCHMARK_TIME_MS)
 }
 
 private fun stopUsers(users: ArrayList<User>) {
+    stopped = true
     users.forEach(User::stopUser)
 }

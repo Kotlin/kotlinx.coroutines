@@ -1,12 +1,12 @@
-package chat
+package benchmarks.chat
 
 import kotlinx.coroutines.channels.Channel
 
 class UserWithFriends(id: Long,
                       activity : Double,
                       messageChannel: Channel<Message>,
-                      configuration: BenchmarkConfiguration)
-    : User(id, activity, messageChannel, configuration) {
+                      averageWork: Int)
+    : User(id, activity, messageChannel, averageWork) {
     private lateinit var friends : List<User>
 
     fun setFriends(friends : List<User>) {

@@ -1,12 +1,12 @@
-package chat
+package benchmarks.chat
 
 import kotlinx.coroutines.channels.Channel
 
 class UserWithoutFriends(id: Long,
                          activity: Double,
                          messageChannel: Channel<Message>,
-                         configuration: BenchmarkConfiguration)
-    : User(id, activity, messageChannel, configuration) {
+                         averageWork: Int)
+    : User(id, activity, messageChannel, averageWork) {
 
     private lateinit var users: List<User>
 
@@ -25,9 +25,7 @@ class UserWithoutFriends(id: Long,
 
             // binary search can return negative values. It indicates the position in the original collection where
             // the searched element can be inserted
-            if (insertionPoint < 0) {
-                insertionPoint = -(insertionPoint + 1)
-            }
+            if (insertionPoint < 0) insertionPoint = -(insertionPoint + 1)
 
             // insertionPoint won't be out of bounds because randomDouble is less than or equals to the last number in the
             // cumSumFriends list
