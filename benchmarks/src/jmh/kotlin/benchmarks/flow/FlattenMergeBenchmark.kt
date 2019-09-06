@@ -1,8 +1,10 @@
 package benchmarks.flow
 
+import benchmarks.doWork
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.openjdk.jmh.annotations.*
+import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 import kotlin.math.ceil
 
@@ -33,16 +35,13 @@ open class FlattenMergeBenchmark {
 
     @Setup
     fun setup() {
-        val flowsNumber = if (flows < 0) {
-            -flows * concurrency
-        }
-        else {
-            flows
-        }
+        val flowsNumber = if (flows >= 0) flows else -(flows * concurrency)
+        val flowElementsToProcess = ceil(ELEMENTS / flowsNumber.toDouble())
 
         flow = (1..flowsNumber).asFlow().map {
             flow {
-                repeat(ceil(ELEMENTS / flowsNumber.toDouble()).toInt()) {
+                repeat(flowElementsToProcess.toInt()) {
+                    doWork(WORK)
                     emit(it)
                 }
             }
@@ -55,4 +54,5 @@ open class FlattenMergeBenchmark {
     }
 }
 
-private const val ELEMENTS = 10_000
+private const val ELEMENTS = 100_000
+private const val WORK = 80

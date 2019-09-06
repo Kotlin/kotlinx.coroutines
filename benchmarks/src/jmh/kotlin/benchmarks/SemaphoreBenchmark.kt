@@ -83,7 +83,7 @@ enum class SemaphoreBenchDispatcherCreator(val create: (parallelism: Int) -> Cor
     EXPERIMENTAL({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
 }
 
-private fun doWork(work: Int) {
+fun doWork(work: Int) {
     // We use geometric distribution here
     val p = 1.0 / work
     val r = ThreadLocalRandom.current()
