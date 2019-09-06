@@ -119,6 +119,7 @@ public final class kotlinx/coroutines/CompletableDeferredKt {
 	public static final fun CompletableDeferred (Ljava/lang/Object;)Lkotlinx/coroutines/CompletableDeferred;
 	public static final fun CompletableDeferred (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/CompletableDeferred;
 	public static synthetic fun CompletableDeferred$default (Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/CompletableDeferred;
+	public static final fun completeWith (Lkotlinx/coroutines/CompletableDeferred;Ljava/lang/Object;)Z
 }
 
 public abstract interface class kotlinx/coroutines/CompletableJob : kotlinx/coroutines/Job {
