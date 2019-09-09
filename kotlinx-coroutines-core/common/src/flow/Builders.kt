@@ -291,6 +291,9 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  *     awaitClose { api.unregister(callback) }
  * }
  * ```
+ *
+ * This function is an alias for [channelFlow], it has a separate name to reflect
+ * the intent of the usage (integration with a callback-based API) better.
  */
 @Suppress("NOTHING_TO_INLINE")
 @ExperimentalCoroutinesApi
