@@ -73,14 +73,13 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  * Example of use:
  * ```
  * class MyAndroidActivity {
- *   private val scope = MainScope()
+ *     private val scope = MainScope()
  *
- *   override fun onDestroy() {
- *     super.onDestroy()
- *     scope.cancel()
- *   }
+ *     override fun onDestroy() {
+ *         super.onDestroy()
+ *         scope.cancel()
+ *     }
  * }
- *
  * ```
  *
  * The resulting scope has [SupervisorJob] and [Dispatchers.Main] context elements.
@@ -128,7 +127,6 @@ public val CoroutineScope.isActive: Boolean
  *         send(Math.sqrt(number))
  *     }
  * }
- *
  * ```
  */
 public object GlobalScope : CoroutineScope {
@@ -151,16 +149,15 @@ public object GlobalScope : CoroutineScope {
  *
  * ```
  * suspend fun showSomeData() = coroutineScope {
- *
- *   val data = async(Dispatchers.IO) { // <- extension on current scope
+ *     val data = async(Dispatchers.IO) { // <- extension on current scope
  *      ... load some UI data for the Main thread ...
- *   }
+ *     }
  *
- *   withContext(Dispatchers.Main) {
- *     doSomeWork()
- *     val result = data.await()
- *     display(result)
- *   }
+ *     withContext(Dispatchers.Main) {
+ *         doSomeWork()
+ *         val result = data.await()
+ *         display(result)
+ *     }
  * }
  * ```
  *
