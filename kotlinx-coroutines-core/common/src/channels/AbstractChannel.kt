@@ -304,8 +304,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
          * Now if T2's close resumes T1's receive_2 then it's receive gets "closed for receive" exception, but
          * its subsequent attempt to send successfully rendezvous with receive_1, producing non-linearizable execution.
          */
-        var closedNode: Receive<E>? = null // used when one node was closed to avoid extra memory allocation
-        var closedList: ArrayList<Receive<E>>? = null // used when more nodes were closed
+        var closedList = InlineList<Receive<E>>()
         while (true) {
             // Break when channel is empty or has no receivers
             @Suppress("UNCHECKED_CAST")
@@ -316,19 +315,14 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
                 previous.helpRemove() // make sure remove is complete before continuing
                 continue
             }
-            // add removed nodes to a separate list 
-            if (closedNode == null) {
-                closedNode = previous
-            } else {
-                val list = closedList ?: ArrayList<Receive<E>>().also { closedList = it }
-                list += previous
-            }
+            // add removed nodes to a separate list
+            closedList += previous
         }
-        // now notify all removed nodes that the channel was closed
-        if (closedNode != null) {
-            closedNode.resumeReceiveClosed(closed)
-            closedList?.forEach { it.resumeReceiveClosed(closed) }
-        }
+        /*
+         * Now notify all removed nodes that the channel was closed
+         * in the order they were added to the channel
+         */
+        closedList.forEachReversed { it.resumeReceiveClosed(closed) }
         // and do other post-processing
         onClosedIdempotent(closed)
     }
