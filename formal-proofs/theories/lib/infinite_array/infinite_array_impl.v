@@ -1,6 +1,5 @@
 From iris.heap_lang Require Import proofmode notation lang.
 Require Import SegmentQueue.lib.util.getAndSet.
-Require Import SegmentQueue.lib.util.interruptibly.
 
 Section impl.
 
@@ -84,8 +83,13 @@ Definition segment_remove : val :=
 Definition segment_cutoff : val :=
   λ: "seg", (segment_prev "seg") <- NONE.
 
-Definition segment_cancel_cell : val :=
+Definition segment_cancel_single_cell : val :=
   λ: "seg", FAA (segment_cancelled "seg") #1.
+
+Definition segment_cancell_cell: val :=
+  λ: "seg", if: FAA (segment_cancelled "seg") #1 = #(Zpos segment_size)
+            then segment_remove "seg"
+            else #().
 
 Definition cell_ref_loc : val :=
   λ: "c", let: "seg" := Fst !"c" in
