@@ -54,9 +54,9 @@ public expect object Dispatchers {
      *
      * For example, the following code:
      * ```
-     * withContext(Dispatcher.Unconfined) {
+     * withContext(Dispatchers.Unconfined) {
      *    println(1)
-     *    withContext(Dispatcher.Unconfined) { // Nested unconfined
+     *    withContext(Dispatchers.Unconfined) { // Nested unconfined
      *        println(2)
      *    }
      *    println(3)
