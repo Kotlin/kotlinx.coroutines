@@ -1,0 +1,48 @@
+buildscript {
+    ext {
+        gradleProperties = new Properties()
+        gradleProperties.load(new FileInputStream("$projectDir/../gradle.properties"))
+        kotlinVersion = gradleProperties."kotlin_version"
+        kotlinCompilerRepo = gradleProperties."kotlinCompilerRepo"
+    }
+
+    repositories {
+        jcenter()
+        maven { url "https://kotlin.bintray.com/kotlinx" }
+        maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven { url "https://kotlin.bintray.com/kotlin-eap" }
+        maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url kotlinCompilerRepo }
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_snapshot_version"
+    }
+}
+
+
+
+apply plugin: 'kotlin'
+
+// We reuse the source code from the Project in buildSrc.
+sourceSets.main.kotlin.srcDirs = ["src/main/kotlin"]
+
+repositories {
+    jcenter()
+    maven { url "https://kotlin.bintray.com/kotlinx" }
+    maven { url "https://kotlin.bintray.com/kotlin-dev" }
+    maven { url "https://kotlin.bintray.com/kotlin-eap" }
+    maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
+    maven { url "https://plugins.gradle.org/m2/" }
+    maven { url kotlinCompilerRepo }
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_snapshot_version"
+    compile "org.jetbrains.kotlin:kotlin-native-utils:$kotlin_snapshot_version"
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
