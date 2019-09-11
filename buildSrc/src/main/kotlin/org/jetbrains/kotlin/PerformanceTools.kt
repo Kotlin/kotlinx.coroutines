@@ -20,7 +20,7 @@ fun getCompileTime(tasksNames: Iterable<String>, success: Boolean): String {
         status = tasksNames.map { TaskTimerListener.tasksTimes.containsKey(it) }.reduce { a, b -> a && b }
         status = status && success
     }
-    return "${if(status) "PASSED" else "FAILED"} $time"
+    return "${if (status) "PASSED" else "FAILED"} $time"
 }
 
 
