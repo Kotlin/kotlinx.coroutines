@@ -7,6 +7,7 @@
 
 package org.jetbrains.kotlin
 
+import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskState
@@ -20,9 +21,13 @@ fun getCompileTime(tasksNames: Iterable<String>, success: Boolean): String {
         status = tasksNames.map { TaskTimerListener.tasksTimes.containsKey(it) }.reduce { a, b -> a && b }
         status = status && success
     }
-    return "${if (status) "PASSED" else "FAILED"} $time"
+    return "${ if (status) "PASSED" else "FAILED" }\nCOMPILE_TIME $time"
 }
 
+fun getCodeSize(filePath: String): String? {
+    val file = File(filePath)
+    return if (file.exists()) return "CODE_SIZE ${file.length()}" else null
+}
 
 // Class time tracker for all tasks.
 class TaskTimerListener: TaskExecutionListener {

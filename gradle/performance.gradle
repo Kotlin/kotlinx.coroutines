@@ -6,9 +6,13 @@ import org.jetbrains.kotlin.PerformanceTools
 
 PerformanceTools.addTimeListener(project)
 
-def createReport(linkTaskName, status, target) {
+def createReport(linkTaskName, status, target, codeSize = null) {
     def compileTime = PerformanceTools.getCompileTime(["compileKotlin${target}".toString(), linkTaskName], status)
-    new File(buildDir, nativeReport).write("kotlinx.coroutines\ncompileTime $compileTime")
+    def reportFile = new File(buildDir, nativeReport)
+    reportFile.write("kotlinx.coroutines\n$compileTime")
+    if (codeSize != null) {
+        reportFile.append(codeSize)
+    }
 }
 
 kotlin.targets.each {
@@ -27,7 +31,8 @@ kotlin.targets.each {
             task.group = "Kotlin/Native Benchmarking"
             task.description = "Report results of compile time benchmarks for Kotlin/Native."
             doLast {
-                createReport(linkTask.name, perfRun.state.failure == null, target)
+                createReport(linkTask.name, perfRun.state.failure == null, target,
+                        PerformanceTools.getCodeSize(it.binaries.getTest("DEBUG").outputFile.absolutePath))
             }
             perfRun.finalizedBy(task)
         }
