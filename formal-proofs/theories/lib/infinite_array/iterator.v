@@ -44,8 +44,8 @@ Section proof.
 
 Context `{heapG Σ}.
 
+Variable segment_size: positive.
 Variable ap: @infinite_array_parameters Σ.
-Let segment_size := p_segment_size ap.
 
 Variable cell_is_processed: nat -> iProp Σ.
 Variable cell_is_processed_persistent:
@@ -68,11 +68,21 @@ Notation iProp := (iProp Σ).
 Definition iterator_counter γ fℓ (n: nat): iProp :=
   (fℓ ↦ #n ∗ own γ (● (GSet (set_seq 0 n), n: mnatUR)))%I.
 
+Definition iterator_counter_at_least γ (n: nat): iProp :=
+  own γ (◯ (ε, n: mnatUR)).
+
+Lemma iterator_counter_at_least_persistent γ n:
+  Persistent (iterator_counter_at_least γ n).
+Proof. apply _. Qed.
+
+Definition iterator_points_to γa γ fℓ ℓ n: iProp :=
+  (iterator_counter γ fℓ n ∗
+                    ∃ (id: nat), ⌜(id * Pos.to_nat segment_size <= n)%nat⌝ ∗
+                                  (∃ (ℓ': loc), segment_location γa id ℓ'
+                                                                 ∗ ℓ ↦ #ℓ'))%I.
+
 Definition is_iterator γa γ fℓ ℓ: iProp :=
-  (∃ (n: nat), iterator_counter γ fℓ n ∗
-                  ∃ (id: nat), ⌜(id * Pos.to_nat segment_size <= n)%nat⌝ ∗
-                                (∃ (ℓ': loc), segment_location γa id ℓ'
-                                                               ∗ ℓ ↦ #ℓ'))%I.
+  (∃ n, iterator_points_to γa γ fℓ ℓ n)%I.
 
 Lemma quot_of_nat n m:
   Z.of_nat n `quot` Z.of_nat m = Z.of_nat (n `div` m).
@@ -88,18 +98,18 @@ Proof.
 Qed.
 
 Theorem iterator_step_spec γa γ (ℓ fℓ: loc):
-  cell_init ap -∗
-  <<< ▷ is_infinite_array ap γa ∗ is_iterator γa γ fℓ ℓ >>>
-    (iterator_step segment_size) #ℓ #fℓ @ ⊤
-    <<< ∃ (ix: nat) (sℓ: loc),
-      ▷ is_infinite_array ap γa ∗ is_iterator γa γ fℓ ℓ ∗
-      ∃ (id: nat) (n: nat),
-      ⌜(ix < Pos.to_nat segment_size)%nat⌝ ∗
-      segment_location γa id sℓ ∗
-      own γ (◯ (GSet {[ n ]}, S n: mnatUR)) ∗
-      (∃ ℓ, ▷ p_cell_invariant ap γa n ℓ ∗ array_mapsto ap γa n ℓ) ∗
-      (⌜n = (id * Pos.to_nat segment_size + ix)%nat⌝ ∨
-       cell_is_cancelled ap γa n), RET (#sℓ, #ix) >>>.
+  cell_init segment_size ap ∅ -∗
+  <<< ▷ is_infinite_array segment_size ap γa ∗ is_iterator γa γ fℓ ℓ >>>
+     (iterator_step segment_size) #ℓ #fℓ @ ⊤
+  <<< ∃ (ix: nat) (sℓ: loc),
+    ▷ is_infinite_array segment_size ap γa ∗ is_iterator γa γ fℓ ℓ ∗
+    ∃ (id: nat) (n: nat),
+    ⌜(ix < Pos.to_nat segment_size)%nat⌝ ∗
+    segment_location γa id sℓ ∗
+    own γ (◯ (GSet {[ n ]}, S n: mnatUR)) ∗
+    (∃ ℓ, ▷ p_cell_invariant ap γa n ℓ ∗ array_mapsto segment_size γa n ℓ) ∗
+    (⌜n = (id * Pos.to_nat segment_size + ix)%nat⌝ ∨
+      cell_is_cancelled segment_size γa n), RET (#sℓ, #ix) >>>.
 Proof.
   iIntros "#HCellInit".
   iIntros (Φ) "AU". wp_lam. wp_pures.
@@ -174,7 +184,7 @@ Proof.
       as (cℓ) "[HCellInv >HArrMapsto]".
     by eapply Nat.mod_upper_bound; lia.
     iExists _. iModIntro.
-    rewrite /array_mapsto /ias_cell_info_view /segment_size.
+    rewrite /array_mapsto /ias_cell_info_view.
     iFrame "HArrMapsto".
     rewrite Nat.mul_comm -Nat.div_mod. done. lia. }
 
@@ -214,7 +224,7 @@ Proof.
   iDestruct (segments_cancelled__cells_cancelled with "HCanc") as "HCanc'".
   iApply (big_sepL_lookup _ _ (n `mod` Pos.to_nat segment_size)%nat with "HCanc'").
   rewrite seq_lookup.
-  - rewrite /segment_size Nat.mul_comm -Nat.div_mod. done. lia.
+  - rewrite Nat.mul_comm -Nat.div_mod. done. lia.
   - apply Nat.lt_le_trans with (m := (1 * Pos.to_nat segment_size)%nat).
     by rewrite Nat.mul_1_l; apply Nat.mod_upper_bound; lia.
     by apply mult_le_compat_r; lia.

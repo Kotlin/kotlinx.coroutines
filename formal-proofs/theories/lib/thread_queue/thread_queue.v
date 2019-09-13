@@ -58,20 +58,27 @@ Definition resume: val :=
       | InjR "x" => "resume" "head" "deqIdx"
     end.
 
+Definition new_thread_queue: val :=
+  λ: <>, let: "arr" := new_infinite_array segment_size #() in
+         let: "hd" := ref "arr" in
+         let: "tl" := ref "tl" in
+         let: "enqIdx" := ref #0 in
+         let: "deqIdx" := ref #0 in
+         (("hd", "enqIdx"), ("tl", "deqIdx")).
+
 End impl.
 
 From iris.heap_lang Require Import proofmode.
 From iris.algebra Require Import auth.
 
-Section proof.
+Section moving_pointers.
 
 Context `{heapG Σ}.
 
 Variable cell_is_processed: nat -> iProp Σ.
 
+Variable segment_size: positive.
 Variable ap: @infinite_array_parameters Σ.
-
-Let segment_size := p_segment_size ap.
 
 Context `{iArrayG Σ}.
 
@@ -88,9 +95,11 @@ Definition ptr_points_to_segment γa γ ℓ id :=
 Theorem move_ptr_forward_spec γa γ (v: loc) id ℓ:
   segment_location γa id ℓ -∗
   ([∗ list] j ∈ seq 0 (id * Pos.to_nat segment_size), cell_is_processed j) -∗
-  <<< ∀ (id': nat), ▷ is_infinite_array ap γa ∗ ptr_points_to_segment γa γ v id' >>>
+  <<< ∀ (id': nat), ▷ is_infinite_array segment_size ap γa ∗
+                      ptr_points_to_segment γa γ v id' >>>
     move_ptr_forward #v #ℓ @ ⊤
-    <<< ▷ is_infinite_array ap γa ∗ ptr_points_to_segment γa γ v (id `max` id'),
+    <<< ▷ is_infinite_array segment_size ap γa ∗
+      ptr_points_to_segment γa γ v (id `max` id'),
   RET #() >>>.
 Proof.
   iIntros "#HSegLoc HProc" (Φ) "AU". wp_lam. wp_pures. iLöb as "IH".
@@ -164,8 +173,70 @@ Proof.
   }
 Qed.
 
+End moving_pointers.
+
+From iris.algebra Require Import list gset excl.
+
+Section proof.
+
 Notation iteratorUR := (prodUR (optionUR positiveR) mnatUR).
 Notation deqIteratorUR := iteratorUR.
 Notation enqIteratorUR := iteratorUR.
+
+Inductive cellState :=
+  | cellExchanged
+  | cellCancelled
+  | cellFilled
+  | cellAbandoned.
+
+Notation cellStateUR := (prodUR (optionUR (agreeR cellState))
+                                (prodUR (optionUR (exclR Qp))
+                                        (optionUR (exclR unitO)))).
+
+Notation queueContentsUR := (authUR (listUR cellStateUR)).
+
+Notation enqueueUR := (prodUR (optionUR positiveR) (gset_disjUR nat)).
+Notation algebra := enqueueUR.
+
+Class threadQueueG Σ := ThreadQueueG { thread_queue_inG :> inG Σ algebra }.
+Definition threadQueueΣ : gFunctors := #[GFunctor algebra].
+Instance subG_threadQueueΣ {Σ} : subG threadQueueΣ Σ -> threadQueueG Σ.
+Proof. solve_inG. Qed.
+
+Context `{heapG Σ} `{iArrayG Σ} `{iteratorG Σ} (N: namespace).
+Notation iProp := (iProp Σ).
+
+Variable segment_size: positive.
+
+Definition cell_invariant (γtq γa: gname) (n: nat) (ℓ: loc): iProp :=
+  (cell_cancellation_handle segment_size γa n ∗ ℓ ↦ NONEV ∨
+   True
+  )%I.
+
+Lemma cell_invariant_persistent:
+  forall γtq γ n ℓ, Persistent (inv N (cell_invariant γtq γ n ℓ)).
+Proof. apply _. Qed.
+
+Definition tq_ap (γtq γe: gname) :=
+  {|
+    p_cell_is_done_persistent := iterator_counter_at_least_persistent γe;
+    p_cell_invariant_persistent := cell_invariant_persistent γtq;
+  |}.
+
+Theorem cell_init γtq γ id ℓ:
+  cell_cancellation_handle segment_size γ id -∗ ℓ ↦ InjLV #()
+  ={∅}=∗ inv N (cell_invariant γtq γ id ℓ).
+Proof.
+  rewrite /cell_init /=. iIntros "HCancHandle Hℓ".
+  iMod (inv_alloc N _ (cell_invariant γtq γ id ℓ) with "[-]") as "#HInv".
+  { iModIntro. rewrite /cell_invariant. iLeft; iFrame. }
+  iModIntro. iApply "HInv".
+Qed.
+
+Definition is_thread_queue γa γtq γe γd eℓ epℓ dℓ dpℓ :=
+  let ap := tq_ap γtq γe in
+  (is_infinite_array segment_size ap γa ∗
+   is_iterator segment_size γa γe eℓ epℓ ∗
+   is_iterator segment_size γa γd dℓ dpℓ)%I.
 
 End proof.

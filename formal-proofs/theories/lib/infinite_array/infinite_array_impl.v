@@ -147,13 +147,14 @@ Notation algebra := (authUR (listUR segment_algebra)).
 
 Context `{heapG Σ}.
 
+Variable segment_size: positive.
+
 Record infinite_array_parameters :=
   InfiniteArrayParameters {
-    p_segment_size : positive;
     p_cell_is_done: nat -> iProp Σ;
     p_cell_is_done_persistent: forall n, Persistent (p_cell_is_done n);
     p_cell_invariant: gname -> nat -> loc -> iProp Σ;
-    p_cell_invariant_persistent: forall γ ℓ n, Persistent (p_cell_invariant γ n ℓ);
+    p_cell_invariant_persistent: forall γ n ℓ, Persistent (p_cell_invariant γ n ℓ);
   }.
 
 Class iArrayG Σ := IArrayG { iarray_inG :> inG Σ algebra }.
@@ -167,7 +168,6 @@ Variable (N: namespace).
 
 Variable array_parameters : infinite_array_parameters.
 
-Let segment_size := p_segment_size array_parameters.
 Let cell_is_done:= p_cell_is_done array_parameters.
 Let cell_is_done_persistent := p_cell_is_done_persistent array_parameters.
 Let cell_invariant:= p_cell_invariant array_parameters.
@@ -1289,9 +1289,9 @@ Proof.
   iDestruct (HPf with "HInfArr HSegLoc1 HSegLoc2") as %[]; lia.
 Qed.
 
-Definition cell_init : iProp :=
-  (□ (∀ γ id ℓ, cell_cancellation_handle γ id -∗ ℓ ↦ NONEV -∗
-                                         |==> cell_invariant γ id ℓ))%I.
+Definition cell_init (E: coPset) : iProp :=
+  (□ (∀ γ id ℓ, cell_cancellation_handle γ id -∗ ℓ ↦ NONEV
+                                         ={E}=∗ cell_invariant γ id ℓ))%I.
 
 Lemma local_update_refl {A: cmraT}: forall (a b: A),
   (a, b) ~l~> (a, b).
@@ -2250,8 +2250,8 @@ Qed.
 Global Instance bupd_homomorphism :
   MonoidHomomorphism bi_sep bi_sep (flip (⊢)) (bupd (PROP:=iProp)).
 Proof. split; [split|]; try apply _. apply bupd_sep. apply bupd_intro. Qed.
-Lemma big_sepL_bupd {A} (Φ : nat → A → iProp) l :
-  ([∗ list] k↦x ∈ l, |==> Φ k x) ⊢ |==> [∗ list] k↦x ∈ l, Φ k x.
+Lemma big_sepL_bupd {A} (Φ : nat → A → iProp) E l:
+  ([∗ list] k↦x ∈ l, |={E}=> Φ k x) ⊢ |={E}=> [∗ list] k↦x ∈ l, Φ k x.
 Proof. by rewrite (big_opL_commute _). Qed.
 
 Lemma algebra_append_new_segment p γ segments:
@@ -2325,13 +2325,13 @@ Proof.
   by rewrite replicate_length.
 Qed.
 
-Lemma alloc_tail γ ℓ dℓ cℓ pℓ nℓ pl segments:
-  cell_init ∗
+Lemma alloc_tail (E: coPset) γ ℓ dℓ cℓ pℓ nℓ pl segments:
+  cell_init E ∗
   own γ (● segments) ∗
   nℓ ↦ NONEV ∗ pℓ ↦ pl ∗ is_valid_prev γ (length segments) pl ∗
   dℓ ↦∗ replicate (Z.to_nat (Z.pos segment_size)) NONEV ∗
   cℓ ↦ #0 ∗ ℓ ↦ (#(length segments), #cℓ, #dℓ, (#pℓ, #nℓ))
-  ==∗
+  ={E}=∗
   ∃ z, own γ (● (segments ++ [z])) ∗ segment_location γ (length segments) ℓ ∗
            is_tail_segment γ ℓ (length segments).
 Proof.
@@ -2347,7 +2347,7 @@ Proof.
   rewrite /array big_opL_replicate_irrelevant_element big_opL_irrelevant_element'.
   rewrite replicate_length Z2Nat.inj_pos -big_sepL_sep.
   iAssert ([∗ list] x ∈ seq 0 (Pos.to_nat segment_size),
-           |==> cell_invariant γ (length segments * Pos.to_nat segment_size + x) (dℓ +ₗ x))%I
+           |={E}=> cell_invariant γ (length segments * Pos.to_nat segment_size + x) (dℓ +ₗ x))%I
     with "[HCellInfo]" as "HCellInfo".
   {
     iApply (big_sepL_impl with "HCellInfo").
@@ -2387,7 +2387,7 @@ Proof.
 Qed.
 
 Theorem initial_segment_spec:
-  {{{ cell_init }}}
+  {{{ cell_init ⊤ }}}
     (new_segment segment_size) #O NONEV
   {{{ γ (ℓ: loc), RET #ℓ; is_infinite_array γ ∗ segment_location γ O ℓ }}}.
 Proof.
@@ -2523,18 +2523,19 @@ Proof.
   - iExists _; iSplit; done.
 Qed.
 
-Theorem find_segment_spec γ (ℓ: loc) (id fid: nat):
-  cell_init -∗
+Theorem find_segment_spec Ec γ (ℓ: loc) (id fid: nat):
+  cell_init Ec -∗
   segment_location γ id ℓ -∗
-  <<< ▷ is_infinite_array γ >>>
-    (find_segment segment_size) #ℓ #fid @ ⊤
-  <<< ∃ (id': nat) (ℓ': loc), ▷ is_infinite_array γ ∗
-        ▷ segment_invariant γ fid ∗
-        segment_location γ id' ℓ' ∗
-        ((⌜fid <= id⌝ ∧ ⌜id = id'⌝) ∨
-         ⌜id < fid⌝ ∧ ⌜fid <= id'⌝ ∗
-          [∗ list] i ∈ seq fid (id' - fid), segment_is_cancelled γ i),
-      RET #ℓ' >>>.
+  ∀ Φ,
+    AU << ▷ is_infinite_array γ >> @ ⊤, Ec
+       << ∃ (id': nat) (ℓ': loc), ▷ is_infinite_array γ ∗
+          ▷ segment_invariant γ fid ∗
+          segment_location γ id' ℓ' ∗
+          ((⌜fid <= id⌝ ∧ ⌜id = id'⌝) ∨
+            ⌜id < fid⌝ ∧ ⌜fid <= id'⌝ ∗
+            [∗ list] i ∈ seq fid (id' - fid), segment_is_cancelled γ i),
+          COMM Φ #ℓ' >> -∗
+  WP ((find_segment segment_size) #ℓ) #fid {{ v, Φ v }}.
 Proof.
   iIntros "#HCellInit #HHeadLoc". iIntros (Φ) "AU".
 
@@ -2582,7 +2583,7 @@ Proof.
   iIntros "AU !>".
 
   iAssert (□ ∀ v, ▷ is_valid_next γ id v -∗
-    AU << ▷ is_infinite_array γ >> @ ⊤, ∅
+    AU << ▷ is_infinite_array γ >> @ ⊤, Ec
        << ∃ (id': nat) (ℓ': loc), ▷ is_infinite_array γ ∗
           ▷ segment_invariant γ fid ∗
           segment_location γ id' ℓ' ∗
