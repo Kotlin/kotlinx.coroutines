@@ -5,12 +5,11 @@
 package kotlinx.coroutines.guava
 
 import com.google.common.util.concurrent.*
-import com.google.common.util.concurrent.internal.InternalFutureFailureAccess
-import com.google.common.util.concurrent.internal.InternalFutures
-import java.util.concurrent.*
-import kotlin.coroutines.*
+import com.google.common.util.concurrent.internal.*
 import kotlinx.coroutines.*
+import java.util.concurrent.*
 import java.util.concurrent.CancellationException
+import kotlin.coroutines.*
 
 /**
  * Starts [block] in a new coroutine and returns a [ListenableFuture] pointing to its result.
@@ -120,14 +119,7 @@ public fun <T> ListenableFuture<T>.asDeferred(): Deferred<T> {
     // handle interruption.
     if (isDone) {
         return try {
-            val value = Uninterruptibles.getUninterruptibly(this)
-            if (value == null) {
-                CompletableDeferred<T>().also {
-                    it.completeExceptionally(KotlinNullPointerException())
-                }
-            } else {
-                CompletableDeferred(value)
-            }
+            CompletableDeferred(Uninterruptibles.getUninterruptibly(this))
         } catch (e: CancellationException) {
             CompletableDeferred<T>().also { it.cancel(e) }
         } catch (e: ExecutionException) {
@@ -142,7 +134,9 @@ public fun <T> ListenableFuture<T>.asDeferred(): Deferred<T> {
     val deferred = CompletableDeferred<T>()
     Futures.addCallback(this, object : FutureCallback<T> {
         override fun onSuccess(result: T?) {
-            deferred.complete(result!!)
+            // Here we work with flexible types, so we unchecked cast to trick the type system
+            @Suppress("UNCHECKED_CAST")
+            deferred.complete(result as T)
         }
 
         override fun onFailure(t: Throwable) {

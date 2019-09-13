@@ -436,31 +436,36 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testFutureCompletedWithNullAsDeferred() = runTest {
+    fun testFutureCompletedWithNullFastPathAsDeferred() = runTest {
         val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
-        val future = executor.submit(Callable { null })
-        val deferred = GlobalScope.async {
+        val future = executor.submit(Callable<Int> { null }).also { it.get() }
+        assertNull(future.asDeferred().await())
+    }
+
+    @Test
+    fun testFutureCompletedWithNullSlowPathAsDeferred() = runTest {
+        val latch = CountDownLatch(1)
+        val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
+
+        val future = executor.submit(Callable<Int> {
+            latch.await()
+            null
+        })
+
+        val awaiter = async(start = CoroutineStart.UNDISPATCHED) {
             future.asDeferred().await()
         }
 
-        try {
-            deferred.await()
-            expectUnreached()
-        } catch (e: Throwable) {
-            assertTrue(e is KotlinNullPointerException)
-        }
+        latch.countDown()
+        assertNull(awaiter.await())
     }
 
     @Test
     fun testThrowingFutureAsDeferred() = runTest {
         val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
         val future = executor.submit(Callable { throw TestException() })
-        val deferred = GlobalScope.async {
-            future.asDeferred().await()
-        }
-
         try {
-            deferred.await()
+            future.asDeferred().await()
             expectUnreached()
         } catch (e: Throwable) {
             assertTrue(e is TestException)
