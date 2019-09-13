@@ -163,7 +163,7 @@ internal class ArrayBroadcastChannel<E>(
                     while (true) {
                         send = takeFirstSendOrPeekClosed() ?: break // when when no sender
                         if (send is Closed<*>) break // break when closed for send
-                        token = send!!.tryResumeSend(null)
+                        token = send!!.tryResumeSend(idempotent = null)
                         if (token != null) {
                             // put sent element to the buffer
                             buffer[(tail % capacity).toInt()] = (send as Send).pollResult
@@ -245,7 +245,7 @@ internal class ArrayBroadcastChannel<E>(
                     // find a receiver for an element
                     receive = takeFirstReceiveOrPeekClosed() ?: break // break when no one's receiving
                     if (receive is Closed<*>) break // noting more to do if this sub already closed
-                    token = receive.tryResumeReceive(result as E, null)
+                    token = receive.tryResumeReceive(result as E, idempotent = null)
                     if (token == null) continue // bail out here to next iteration (see for next receiver)
                     val subHead = this.subHead
                     this.subHead = subHead + 1 // retrieved element for this subscriber

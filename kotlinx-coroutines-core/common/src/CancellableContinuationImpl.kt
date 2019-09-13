@@ -285,19 +285,21 @@ internal open class CancellableContinuationImpl<in T>(
         }
     }
 
-    override fun tryResume(value: T, idempotent: Any?): Any? {
+    override fun tryResume(value: T, idempotent: IdempotentOp?): Any? {
         _state.loop { state ->
             when (state) {
                 is NotCompleted -> {
                     val update: Any? = if (idempotent == null) value else
-                        CompletedIdempotentResult(idempotent, value, state)
+                        ResumeIdempotent(idempotent, value, state)
                     if (!_state.compareAndSet(state, update)) return@loop // retry on cas failure
+                    if (update is ResumeIdempotent) update.finishPrepare()
                     disposeParentHandle()
                     return state
                 }
-                is CompletedIdempotentResult -> {
-                    return if (state.idempotentResume === idempotent) {
+                is ResumeIdempotent -> {
+                    return if (state.idempotent === idempotent) {
                         assert { state.result === value } // "Non-idempotent resume"
+                        state.finishPrepare()
                         state.token
                     } else {
                         null
@@ -306,6 +308,11 @@ internal open class CancellableContinuationImpl<in T>(
                 else -> return null // cannot resume -- not active anymore
             }
         }
+    }
+
+    private fun ResumeIdempotent.finishPrepare() {
+        idempotent.finishPrepare(token)
+        _state.compareAndSet(this, result)
     }
 
     override fun tryResumeWithException(exception: Throwable): Any? {
@@ -340,7 +347,7 @@ internal open class CancellableContinuationImpl<in T>(
     @Suppress("UNCHECKED_CAST")
     override fun <T> getSuccessfulResult(state: Any?): T =
         when (state) {
-            is CompletedIdempotentResult -> state.result as T
+            is ResumeIdempotent -> state.result as T
             is CompletedWithCancellation -> state.result as T
             else -> state as T
         }
@@ -373,12 +380,12 @@ private class InvokeOnCancel( // Clashes with InvokeOnCancellation
     override fun toString() = "InvokeOnCancel[${handler.classSimpleName}@$hexAddress]"
 }
 
-private class CompletedIdempotentResult(
-    @JvmField val idempotentResume: Any?,
+private class ResumeIdempotent(
+    @JvmField val idempotent: IdempotentOp,
     @JvmField val result: Any?,
     @JvmField val token: NotCompleted
 ) {
-    override fun toString(): String = "CompletedIdempotentResult[$result]"
+    override fun toString(): String = "ResumeIdempotent[$result]"
 }
 
 private class CompletedWithCancellation(

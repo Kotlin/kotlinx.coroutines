@@ -62,7 +62,7 @@ internal open class ArrayChannel<E>(
                             this.size = size // restore size
                             return receive!!
                         }
-                        token = receive!!.tryResumeReceive(element, null)
+                        token = receive!!.tryResumeReceive(element, idempotent = null)
                         if (token != null) {
                             this.size = size // restore size
                             return@withLock
@@ -161,7 +161,7 @@ internal open class ArrayChannel<E>(
             if (size == capacity) {
                 loop@ while (true) {
                     send = takeFirstSendOrPeekClosed() ?: break
-                    token = send!!.tryResumeSend(null)
+                    token = send!!.tryResumeSend(idempotent = null)
                     if (token != null) {
                         replacement = send!!.pollResult
                         break@loop
@@ -215,7 +215,7 @@ internal open class ArrayChannel<E>(
                         }
                         failure is Closed<*> -> {
                             send = failure
-                            token = failure.tryResumeSend(null)
+                            token = failure.tryResumeSend(idempotent = null)
                             replacement = failure
                             break@loop
                         }

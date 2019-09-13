@@ -108,6 +108,16 @@ public abstract class AtomicDesc {
 }
 
 /**
+ * Last (necessarily idempotent) step of multi-step atomic operation.
+ *
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+public abstract class IdempotentOp : OpDescriptor() {
+    public abstract override val atomicOp: AtomicOp<*>
+    public abstract fun finishPrepare(token: Any?)
+}
+
+/**
  * It is returned as an error by [AtomicOp] implementations when they detect potential deadlock
  * using [AtomicOp.opSequence] numbers.
  */

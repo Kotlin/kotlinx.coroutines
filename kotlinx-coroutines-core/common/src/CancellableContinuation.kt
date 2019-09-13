@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -70,13 +70,18 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * or `null` otherwise (it was already resumed or cancelled). When a non-null object is returned,
      * [completeResume] must be invoked with it.
      *
+     * :TODO: UPDATE DOCS
      * When [idempotent] is not `null`, this function performs an _idempotent_ operation, so that
      * further invocations with the same non-null reference produce the same result.
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
     @InternalCoroutinesApi
-    public fun tryResume(value: T, idempotent: Any? = null): Any?
+    public fun tryResume(value: T, idempotent: IdempotentOp? = null): Any?
+
+    /** @suppress **/
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
+    public fun tryResume(value: T, idempotent: Any? = null): Any? = tryResume(value, idempotent as IdempotentOp?)
 
     /**
      * Tries to resume this continuation with the specified [exception] and returns a non-null object token if successful,

@@ -97,7 +97,7 @@ public actual open class AddLastDesc<T : Node> actual constructor(
     actual val node: T
 ) : AbstractAtomicDesc() {
     override val affectedNode: Node get() = queue._prev
-    actual override fun finishPrepare(prepareOp: PrepareOp) {}
+    actual override fun finishPrepare(prepareOp: PrepareOp, token: Any?) {}
     override fun onComplete() = queue.addLast(node)
     actual override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) = Unit
 }
@@ -109,7 +109,7 @@ public actual open class RemoveFirstDesc<T> actual constructor(
     @Suppress("UNCHECKED_CAST")
     actual val result: T get() = affectedNode as T
     override val affectedNode: Node = queue.nextNode
-    actual override fun finishPrepare(prepareOp: PrepareOp) {}
+    actual override fun finishPrepare(prepareOp: PrepareOp, token: Any?) {}
     override fun onComplete() { queue.removeFirstOrNull() }
     actual override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) = Unit
 }
@@ -117,11 +117,11 @@ public actual open class RemoveFirstDesc<T> actual constructor(
 /** @suppress **This is unstable API and it is subject to change.** */
 public actual abstract class AbstractAtomicDesc : AtomicDesc() {
     protected abstract val affectedNode: Node
-    actual abstract fun finishPrepare(prepareOp: PrepareOp)
+    actual abstract fun finishPrepare(prepareOp: PrepareOp, token: Any?)
     protected abstract fun onComplete()
 
     actual open fun onPrepare(prepareOp: PrepareOp): Any? {
-        finishPrepare(prepareOp)
+        finishPrepare(prepareOp, null)
         return null
     }
 
@@ -144,9 +144,9 @@ public actual class PrepareOp(
     actual val affected: LockFreeLinkedListNode,
     actual val desc: AbstractAtomicDesc,
     actual override val atomicOp: AtomicOp<*>
-): OpDescriptor() {
+): IdempotentOp() {
     override fun perform(affected: Any?): Any? = null
-    actual fun finishPrepare() {}
+    actual override fun finishPrepare(token: Any?) {}
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */

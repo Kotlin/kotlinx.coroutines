@@ -87,10 +87,6 @@ public interface SelectClause2<in P, out Q> {
     public fun <R> registerSelectClause2(select: SelectInstance<R>, param: P, block: suspend (Q) -> R)
 }
 
-@JvmField
-@SharedImmutable
-internal val SELECT_STARTED: Any = Symbol("SELECT_STARTED")
-
 /**
  * Internal representation of select instance. This instance is called _selected_ when
  * the clause to execute is already picked.
@@ -111,13 +107,14 @@ public interface SelectInstance<in R> {
 
     /**
      * Tries to select this instance. Returns:
-     * * [SELECT_STARTED] on success,
-     * * [RETRY_ATOMIC] on deadlock (needs retry, it is only possible when [otherOp] is not `null`)
+     * * `token` on success,
      * * `null` on failure to select (already selected).
+     * * [RETRY_ATOMIC] on deadlock (needs retry, it is only possible when [otherOp] is not `null`).
+     * 
      * [otherOp] is not null when trying to rendezvous with this select from inside of another select.
-     * In this case, [PrepareOp.finishPrepare] must be called before deciding on any value other than [RETRY_ATOMIC].
+     * In this case, [IdempotentOp.finishPrepare] must be called before deciding on any value other than [RETRY_ATOMIC].
      */
-    public fun trySelectOther(otherOp: PrepareOp?): Any?
+    public fun trySelectOther(otherOp: IdempotentOp?, token: Any?): Any?
 
     /**
      * Performs action atomically with [trySelect].
@@ -197,10 +194,17 @@ public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() ->
     }
 
 
+@JvmField
+@SharedImmutable
+internal val SELECT_STARTED: Any = Symbol("SELECT_STARTED")
+
+@JvmField
 @SharedImmutable
 internal val ALREADY_SELECTED: Any = Symbol("ALREADY_SELECTED")
+
 @SharedImmutable
 private val UNDECIDED: Any = Symbol("UNDECIDED")
+
 @SharedImmutable
 private val RESUMED: Any = Symbol("RESUMED")
 
@@ -359,7 +363,7 @@ internal class SelectBuilderImpl<in R>(
     }
 
     override fun trySelect(): Boolean {
-        val result = trySelectOther(null)
+        val result = trySelectOther(null, SELECT_STARTED)
         return when {
             result === SELECT_STARTED -> true
             result == null -> false
@@ -451,8 +455,8 @@ internal class SelectBuilderImpl<in R>(
      */
 
     // it is just like plain trySelect, but support idempotent start
-    // Returns SELECT_STARTED | RETRY_ATOMIC | null (when already selected)
-    override fun trySelectOther(otherOp: PrepareOp?): Any? {
+    // Returns token | null (when already selected) | RETRY_ATOMIC
+    override fun trySelectOther(otherOp: IdempotentOp?, token: Any?): Any? {
         _state.loop { state -> // lock-free loop on state
             when {
                 // Found initial state (not selected yet) -- try to make it selected
@@ -462,21 +466,20 @@ internal class SelectBuilderImpl<in R>(
                         if (!_state.compareAndSet(this, null)) return@loop
                     } else {
                         // Rendezvous with another select instance -- install PairSelectOp
-                        val pairSelectOp = PairSelectOp(otherOp)
+                        val pairSelectOp = PairSelectOp(otherOp, token)
                         if (!_state.compareAndSet(this, pairSelectOp)) return@loop
                         val decision = pairSelectOp.perform(this)
                         if (decision !== null) return decision
                     }
                     doAfterSelect()
-                    return SELECT_STARTED
+                    return token
                 }
                 state is OpDescriptor -> { // state is either AtomicSelectOp or PairSelectOp
                     // Found descriptor of ongoing operation while working in the context of other select operation
                     if (otherOp != null) {
-                        val otherAtomicOp = otherOp.atomicOp
                         when {
                             // It is the same select instance
-                            otherAtomicOp is AtomicSelectOp && otherAtomicOp.impl === this -> {
+                            (otherOp.atomicOp as? AtomicSelectOp)?.impl === this -> {
                                 /*
                                  * We cannot do state.perform(this) here and "help" it since it is the same
                                  * select and we'll get StackOverflowError.
@@ -487,7 +490,7 @@ internal class SelectBuilderImpl<in R>(
                                 error("Cannot use matching select clauses on the same object")
                             }
                             // The other select (that is trying to proceed) had started earlier
-                            otherAtomicOp.isEarlierThan(state) -> {
+                            otherOp.isEarlierThan(state) -> {
                                 /**
                                  * Abort to prevent deadlock by returning a failure to it.
                                  * See https://github.com/Kotlin/kotlinx.coroutines/issues/504
@@ -502,24 +505,23 @@ internal class SelectBuilderImpl<in R>(
                     state.perform(this) // help it
                 }
                 // otherwise -- already selected
-                otherOp == null -> return null // already selected
-                state === otherOp.desc -> return SELECT_STARTED // was selected with this marker
-                else -> return null // selected with different marker
+                else -> return null // already selected
             }
         }
     }
 
     // The very last step of rendezvous between two select operations
     private class PairSelectOp(
-        @JvmField val otherOp: PrepareOp
+        private val otherOp: IdempotentOp,
+        private val token: Any?
     ) : OpDescriptor() {
         override fun perform(affected: Any?): Any? {
             val impl = affected as SelectBuilderImpl<*>
             // here we are definitely not going to RETRY_ATOMIC, so
             // we must finish preparation of another operation before attempting to reach decision to select
-            otherOp.finishPrepare()
+            otherOp.finishPrepare(token)
             val decision = otherOp.atomicOp.decide(null) // try decide for success of operation
-            val update: Any = if (decision == null) otherOp.desc else impl
+            val update: Any? = if (decision == null) null else impl
             impl._state.compareAndSet(this, update)
             return decision
         }

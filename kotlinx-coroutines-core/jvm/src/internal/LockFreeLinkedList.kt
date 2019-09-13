@@ -322,7 +322,7 @@ public actual open class LockFreeLinkedListNode {
 
         override fun retry(affected: Node, next: Any): Boolean = next !== queue
 
-        override fun finishPrepare(prepareOp: PrepareOp) {
+        override fun finishPrepare(prepareOp: PrepareOp, token: Any?) {
             // Note: onPrepare must use CAS to make sure the stale invocation is not
             // going to overwrite the previous decision on successful preparation.
             // Result of CAS is irrelevant, but we must ensure that it is set when invoker completes
@@ -376,7 +376,7 @@ public actual open class LockFreeLinkedListNode {
             return true
         }
 
-        override fun finishPrepare(prepareOp: PrepareOp) {
+        override fun finishPrepare(prepareOp: PrepareOp, token: Any?) {
             // Note: finishPrepare must use CAS to make sure the stale invocation is not
             // going to overwrite the previous decision on successful preparation.
             // Result of CAS is irrelevant, but we must ensure that it is set when invoker completes
@@ -394,7 +394,7 @@ public actual open class LockFreeLinkedListNode {
         @JvmField val affected: Node,
         @JvmField val next: Node,
         @JvmField val desc: AbstractAtomicDesc
-    ) : OpDescriptor() {
+    ) : IdempotentOp() {
         override val atomicOp: AtomicOp<*> get() = desc.atomicOp
 
         // Returns REMOVE_PREPARED or null (it makes decision on any failure)
@@ -422,7 +422,7 @@ public actual open class LockFreeLinkedListNode {
             return null
         }
 
-        public fun finishPrepare() = desc.finishPrepare(this)
+        public override fun finishPrepare(token: Any?) = desc.finishPrepare(this, token)
 
         override fun toString(): String = "PrepareOp(op=$atomicOp)"
     }
@@ -436,11 +436,11 @@ public actual open class LockFreeLinkedListNode {
         protected abstract fun updatedNext(affected: Node, next: Node): Any
         protected abstract fun finishOnSuccess(affected: Node, next: Node)
 
-        public abstract fun finishPrepare(prepareOp: PrepareOp)
+        public abstract fun finishPrepare(prepareOp: PrepareOp, token: Any?)
 
         // non-null on failure
         public open fun onPrepare(prepareOp: PrepareOp): Any? {
-            finishPrepare(prepareOp)
+            finishPrepare(prepareOp, null)
             return null
         }
 

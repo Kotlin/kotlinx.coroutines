@@ -51,7 +51,7 @@ public expect open class AddLastDesc<T : LockFreeLinkedListNode>(
 ) : AbstractAtomicDesc {
     val queue: LockFreeLinkedListNode
     val node: T
-    override fun finishPrepare(prepareOp: PrepareOp)
+    override fun finishPrepare(prepareOp: PrepareOp, token: Any?)
     override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)
 }
 
@@ -59,7 +59,7 @@ public expect open class AddLastDesc<T : LockFreeLinkedListNode>(
 public expect open class RemoveFirstDesc<T>(queue: LockFreeLinkedListNode): AbstractAtomicDesc {
     val queue: LockFreeLinkedListNode
     public val result: T
-    override fun finishPrepare(prepareOp: PrepareOp)
+    override fun finishPrepare(prepareOp: PrepareOp, token: Any?)
     final override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)
 }
 
@@ -69,17 +69,17 @@ public expect abstract class AbstractAtomicDesc : AtomicDesc {
     final override fun complete(op: AtomicOp<*>, failure: Any?)
     protected open fun failure(affected: LockFreeLinkedListNode): Any?
     protected open fun retry(affected: LockFreeLinkedListNode, next: Any): Boolean
-    public abstract fun finishPrepare(prepareOp: PrepareOp) // non-null on failure
+    public abstract fun finishPrepare(prepareOp: PrepareOp, token: Any?) // non-null on failure
     public open fun onPrepare(prepareOp: PrepareOp): Any? // non-null on failure
     protected abstract fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */
-public expect class PrepareOp: OpDescriptor {
+public expect class PrepareOp: IdempotentOp {
     val affected: LockFreeLinkedListNode
     override val atomicOp: AtomicOp<*>
     val desc: AbstractAtomicDesc
-    fun finishPrepare()
+    override fun finishPrepare(token: Any?)
 }
 
 @JvmField
