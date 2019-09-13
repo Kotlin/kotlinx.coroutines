@@ -36,7 +36,6 @@ public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) =
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  * Cancels subscription if any exception happens during collect.
  */
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
 public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit) =
     openSubscription().consumeEach(action)
 
