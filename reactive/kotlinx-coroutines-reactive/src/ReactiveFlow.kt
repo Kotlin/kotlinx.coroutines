@@ -23,14 +23,12 @@ import kotlin.coroutines.*
  * If any of the resulting flow transformations fails, subscription is immediately cancelled and all in-flights elements
  * are discarded.
  */
-@ExperimentalCoroutinesApi
 public fun <T : Any> Publisher<T>.asFlow(): Flow<T> =
     PublisherAsFlow(this, 1)
 
 /**
  * Transforms the given flow to a spec-compliant [Publisher].
  */
-@ExperimentalCoroutinesApi
 public fun <T : Any> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
 
 private class PublisherAsFlow<T : Any>(
