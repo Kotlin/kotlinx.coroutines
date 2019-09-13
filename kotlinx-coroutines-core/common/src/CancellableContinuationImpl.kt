@@ -78,10 +78,32 @@ internal open class CancellableContinuationImpl<in T>(
         // This method does nothing. Leftover for binary compatibility with old compiled code
     }
 
-    // It is only invoked from an internal getResult function, so we can be sure it is not invoked twice
-    private fun installParentCancellationHandler() {
-        if (isCompleted) return // fast path 1 -- don't need to do anything if already completed
-        val parent = delegate.context[Job] ?: return // fast path 2 -- don't do anything without parent
+    private fun invalidateReusability() {
+        if (resumeMode != MODE_ATOMIC_DEFAULT) return
+        (delegate as? DispatchedContinuation<*>)?.makeCancellationNonReusable()
+    }
+
+    private fun isReusable(): Boolean = delegate is DispatchedContinuation<*> && delegate.isReusable
+
+    /**
+     * Resets cancellability state in order to [suspendAtomicCancellableCoroutineReusable] to work.
+     * Invariant: used only by [suspendAtomicCancellableCoroutineReusable] in [REUSABLE_CLAIMED] state.
+     */
+    internal fun resetState() {
+        assert { parentHandle !== NonDisposableHandle }
+        assert { _state.value !is NotCompleted }
+        _decision.value = UNDECIDED
+        _state.value = Active
+    }
+
+    /**
+     * Setups parent cancellation and checks for postponed cancellation in the case of reusable continuations.
+     * It is only invoked from an internal [getResult] function.
+     */
+    private fun setupCancellation() {
+        if (checkCompleted()) return
+        if (parentHandle !== null) return // fast path 2 -- was already initialized
+        val parent = delegate.context[Job] ?: return // fast path 3 -- don't do anything without parent
         parent.start() // make sure the parent is started
         val handle = parent.invokeOnCompletion(
             onCancelling = true,
@@ -89,10 +111,23 @@ internal open class CancellableContinuationImpl<in T>(
         )
         parentHandle = handle
         // now check our state _after_ registering (could have completed while we were registering)
-        if (isCompleted) {
+        // Also note that we do not dispose parent for reusable continuations, dispatcher will do that for us
+        if (isCompleted && !isReusable()) {
             handle.dispose() // it is Ok to call dispose twice -- here and in disposeParentHandle
             parentHandle = NonDisposableHandle // release it just in case, to aid GC
         }
+    }
+
+    private fun checkCompleted(): Boolean {
+        val completed = isCompleted
+        if (resumeMode != MODE_ATOMIC_DEFAULT) return completed // Do not check postponed cancellation for non-reusable continuations
+        val dispatched = delegate as? DispatchedContinuation<*> ?: return completed
+        val cancelled = dispatched.checkPostponedCancellation(this) ?: return completed
+        if (!completed) {
+            // Note: this cancel may fail if one more concurrent cancel is currently being invoked
+            cancel(cancelled.cause)
+        }
+        return true
     }
 
     public override val callerFrame: CoroutineStackFrame?
@@ -110,7 +145,24 @@ internal open class CancellableContinuationImpl<in T>(
         }
     }
 
+    /*
+     * Attempt to postpone cancellation for reusable cancellable continuation
+     */
+    private fun cancelLater(cancelled: CancelledContinuation): Boolean {
+        if (resumeMode != MODE_ATOMIC_DEFAULT) return false
+        val dispatched = (delegate as? DispatchedContinuation<*>) ?: return false
+        return dispatched.postponeCancellation(cancelled)
+    }
+
     public override fun cancel(cause: Throwable?): Boolean {
+        if (cancelLater(CancelledContinuation(this, cause, handled = state is CancelHandler))) {
+            /*
+             * Here we can't reliably say whether postponed cancellation will be successful, but as it's internal API
+             * and we do not rely on return value, we are free to return `true`.
+             */
+            return true
+        }
+
         _state.loop { state ->
             if (state !is NotCompleted) return false // false if already complete or cancelling
             // Active -- update to final state
@@ -165,7 +217,7 @@ internal open class CancellableContinuationImpl<in T>(
 
     @PublishedApi
     internal fun getResult(): Any? {
-        installParentCancellationHandler()
+        setupCancellation()
         if (trySuspend()) return COROUTINE_SUSPENDED
         // otherwise, onCompletionInternal was already invoked & invoked tryResume, and the result is in the state
         val state = this.state
@@ -279,13 +331,30 @@ internal open class CancellableContinuationImpl<in T>(
 
     // Unregister from parent job
     private fun disposeParentHandle() {
+        // If instance is reusable, do not detach on every reuse, #releaseInterceptedContinuation
+        // will do it for us in the end
+        if (isReusable()) return
         parentHandle?.let { // volatile read parentHandle (once)
             it.dispose()
             parentHandle = NonDisposableHandle // release it just in case, to aid GC
         }
     }
 
+    /**
+     * Detaches from the parent.
+     * Invariant: used used from [CoroutineDispatcher.releaseInterceptedContinuation] iff [isReusable] is `true`
+     */
+    internal fun detachChild() {
+        val handle = parentHandle
+        handle?.dispose()
+        parentHandle = NonDisposableHandle
+    }
+
     override fun tryResume(value: T, idempotent: Any?): Any? {
+        // Important invariant: if idempotent tryResume is used, then regular resume cannot be used, since the
+        // thread that invokes this tryResume install its descriptor into the pointer to the corresponding node first,
+        // so no other thread can find it and invoke resume.
+        if (idempotent != null) invalidateReusability()
         _state.loop { state ->
             when (state) {
                 is NotCompleted -> {
