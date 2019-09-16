@@ -123,16 +123,21 @@ internal object DebugProbesImpl {
             .toList()
     }
 
-    public fun dumpCoroutines(out: PrintStream) {
-        // Avoid inference with other out/err invocations by creating a string first
-        dumpCoroutines().let { out.println(it) }
+    public fun dumpCoroutines(out: PrintStream) = synchronized(out) {
+        /*
+         * This method synchronizes both on `out` and `this` for a reason:
+         * 1) Synchronization on `this` is required to have a consistent snapshot of coroutines.
+         * 2) Synchronization on `out` is not required, but prohibits interleaving with any other
+         *    (asynchronous) attempt to write to this `out` (System.out by default).
+         * Yet this prevents the progress of coroutines until they are fully dumped to the out which we find acceptable compromise.
+         */
+        dumpCoroutinesSynchronized(out)
     }
 
     @Synchronized
-    private fun dumpCoroutines(): String = buildString {
+    private fun dumpCoroutinesSynchronized(out: PrintStream) {
         check(isInstalled) { "Debug probes are not installed" }
-        // Synchronization window can be reduce even more, but no need to do it here
-        append("Coroutines dump ${dateFormat.format(System.currentTimeMillis())}")
+        out.print("Coroutines dump ${dateFormat.format(System.currentTimeMillis())}")
         capturedCoroutines
             .asSequence()
             .sortedBy { it.info.sequenceNumber }
@@ -145,14 +150,20 @@ internal object DebugProbesImpl {
                 else
                     info.state.toString()
 
-                append("\n\nCoroutine ${owner.delegate}, state: $state")
+                out.print("\n\nCoroutine ${owner.delegate}, state: $state")
                 if (observedStackTrace.isEmpty()) {
-                    append("\n\tat ${createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE)}")
-                    printStackTrace(info.creationStackTrace)
+                    out.print("\n\tat ${createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE)}")
+                    printStackTrace(out, info.creationStackTrace)
                 } else {
-                    printStackTrace(enhancedStackTrace)
+                    printStackTrace(out, enhancedStackTrace)
                 }
             }
+    }
+
+    private fun printStackTrace(out: PrintStream, frames: List<StackTraceElement>) {
+        frames.forEach { frame ->
+            out.print("\n\tat $frame")
+        }
     }
 
     /**
@@ -246,12 +257,6 @@ internal object DebugProbesImpl {
             it.fileName == continuationFrame.fileName &&
                     it.className == continuationFrame.className &&
                     it.methodName == continuationFrame.methodName
-        }
-    }
-
-    private fun StringBuilder.printStackTrace(frames: List<StackTraceElement>) {
-        frames.forEach { frame ->
-            append("\n\tat $frame")
         }
     }
 
