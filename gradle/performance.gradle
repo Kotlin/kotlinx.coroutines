@@ -11,7 +11,7 @@ def createReport(linkTaskName, status, target, codeSize = null) {
     def reportFile = new File(buildDir, nativeReport)
     reportFile.write("kotlinx.coroutines\n$compileTime")
     if (codeSize != null) {
-        reportFile.append(codeSize)
+        reportFile.append("\n$codeSize")
     }
 }
 
@@ -21,6 +21,7 @@ kotlin.targets.each {
         it.konanTarget.name.split("_").each { word -> target += word.capitalize() }
         def linkTask = it.binaries.getTest("DEBUG").linkTask
         def compilationTask = it.compilations.main.compileKotlinTask
+        def binary = it.binaries.getTest("DEBUG").outputFile.absolutePath
 
         def perfRun = tasks.create("perfDebug$target") { task ->
             task.dependsOn(linkTask)
@@ -32,7 +33,7 @@ kotlin.targets.each {
             task.description = "Report results of compile time benchmarks for Kotlin/Native."
             doLast {
                 createReport(linkTask.name, perfRun.state.failure == null, target,
-                        PerformanceTools.getCodeSize(it.binaries.getTest("DEBUG").outputFile.absolutePath))
+                        PerformanceTools.getCodeSize(binary))
             }
             perfRun.finalizedBy(task)
         }
