@@ -84,6 +84,9 @@ Definition iterator_points_to γa γ fℓ ℓ n: iProp :=
 Definition is_iterator γa γ fℓ ℓ: iProp :=
   (∃ n, iterator_points_to γa γ fℓ ℓ n)%I.
 
+Definition iterator_issued γ n :=
+  own γ (◯ (GSet {[ n ]}, S n: mnatUR)).
+
 Lemma quot_of_nat n m:
   Z.of_nat n `quot` Z.of_nat m = Z.of_nat (n `div` m).
 Proof.
@@ -106,7 +109,7 @@ Theorem iterator_step_spec γa γ (ℓ fℓ: loc):
     ∃ (id: nat) (n: nat),
     ⌜(ix < Pos.to_nat segment_size)%nat⌝ ∗
     segment_location γa id sℓ ∗
-    own γ (◯ (GSet {[ n ]}, S n: mnatUR)) ∗
+    iterator_issued γ n ∗
     (∃ ℓ, ▷ p_cell_invariant ap γa n ℓ ∗ array_mapsto segment_size γa n ℓ) ∗
     (⌜n = (id * Pos.to_nat segment_size + ix)%nat⌝ ∨
       cell_is_cancelled segment_size γa n), RET (#sℓ, #ix) >>>.
