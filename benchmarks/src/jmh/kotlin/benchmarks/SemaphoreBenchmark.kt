@@ -1,5 +1,6 @@
 package benchmarks
 
+import doWork
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher
@@ -7,7 +8,6 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.ForkJoinPool
-import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 
 @Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MICROSECONDS)
@@ -83,15 +83,7 @@ enum class SemaphoreBenchDispatcherCreator(val create: (parallelism: Int) -> Cor
     EXPERIMENTAL({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
 }
 
-fun doWork(work: Int) {
-    // We use geometric distribution here
-    val p = 1.0 / work
-    val r = ThreadLocalRandom.current()
-    while (true) {
-        if (r.nextDouble() < p) break
-    }
-}
-
 private const val WORK_INSIDE = 80
 private const val WORK_OUTSIDE = 40
+// If you change this variable please be sure that you change variable elements in the corresponding python script as well
 private const val BATCH_SIZE = 1000000

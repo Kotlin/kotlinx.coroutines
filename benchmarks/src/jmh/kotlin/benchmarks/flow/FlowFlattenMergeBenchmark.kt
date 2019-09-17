@@ -1,23 +1,18 @@
 package benchmarks.flow
 
-import benchmarks.doWork
-import kotlinx.coroutines.*
+import doWork
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.runBlocking
 import org.openjdk.jmh.annotations.*
-import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
-import kotlin.math.ceil
 
-/**
- * This benchmark can be considered as a macro benchmark for the [kotlinx.coroutines.sync.Semaphore]
- */
-@Warmup(iterations = 5)
+@Warmup(iterations = 3)
 @Measurement(iterations = 10)
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
 @Fork(1)
-open class FlattenMergeBenchmark {
+open class FlowFlattenMergeBenchmark {
 
     /**
      * Number of flows that are merged in this benchmark. Negative number means that number of flows
@@ -27,7 +22,6 @@ open class FlattenMergeBenchmark {
     private var flows: Int = 0
 
     @Param("1", "2", "4") // local machine
-//    @Param("1", "2", "4", "8", "16", "32", "64", "128", "144") // dasquad
 //    @Param("1", "2", "4", "8", "16", "32", "64", "96") // Google Cloud
     private var concurrency: Int = 0
 
@@ -35,12 +29,12 @@ open class FlattenMergeBenchmark {
 
     @Setup
     fun setup() {
-        val flowsNumber = if (flows >= 0) flows else -(flows * concurrency)
-        val flowElementsToProcess = ceil(ELEMENTS / flowsNumber.toDouble())
+        val n = if (flows >= 0) flows else -(flows * concurrency)
+        val flowElementsToProcess = ELEMENTS / n
 
-        flow = (1..flowsNumber).asFlow().map {
+        flow = (1..n).asFlow().map {
             flow {
-                repeat(flowElementsToProcess.toInt()) {
+                repeat(flowElementsToProcess) {
                     doWork(WORK)
                     emit(it)
                 }
