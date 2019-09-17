@@ -55,15 +55,21 @@ public fun <T> Flow<T>.take(count: Int): Flow<T> {
         var consumed = 0
         try {
             collect { value ->
-                emit(value)
-                if (++consumed == count) {
-                    throw AbortFlowException()
+                if (++consumed < count) {
+                    return@collect emit(value)
+                } else {
+                    return@collect emitAbort(value)
                 }
             }
         } catch (e: AbortFlowException) {
             // Nothing, bail out
         }
     }
+}
+
+private suspend fun <T> FlowCollector<T>.emitAbort(value: T) {
+    emit(value)
+    throw AbortFlowException()
 }
 
 /**
