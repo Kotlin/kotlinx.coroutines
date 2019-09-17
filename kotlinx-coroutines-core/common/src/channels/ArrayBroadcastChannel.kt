@@ -208,15 +208,12 @@ internal class ArrayBroadcastChannel<E>(
         override val isBufferAlwaysFull: Boolean get() = error("Should not be used")
         override val isBufferFull: Boolean get() = error("Should not be used")
 
-        override fun cancelInternal(cause: Throwable?): Boolean =
-            close(cause).also { closed ->
-                if (closed) broadcastChannel.updateHead(removeSub = this)
-                clearBuffer()
-            }
-
-        private fun clearBuffer() {
-            subLock.withLock {
-                subHead = broadcastChannel.tail
+        override fun onCancelIdempotent(wasClosed: Boolean) {
+            if (wasClosed) {
+                broadcastChannel.updateHead(removeSub = this)
+                subLock.withLock {
+                    subHead = broadcastChannel.tail
+                }
             }
         }
 

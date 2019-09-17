@@ -14,7 +14,7 @@ import kotlinx.coroutines.channels.*
 import org.junit.*
 
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
-class ChannelCancelLinearizabilityTest : TestBase() {
+class ChannelCancelLinearizabilityStressTest : TestBase() {
 
     private companion object {
         // Emulating ctor argument for lincheck
@@ -59,12 +59,12 @@ class ChannelCancelLinearizabilityTest : TestBase() {
     fun testUnlimitedChannelLinearizability() = runTest(Channel.UNLIMITED)
 
     private fun runTest(capacity: Int) {
-        ChannelCancelLinearizabilityTest.capacity = capacity
+        ChannelCancelLinearizabilityStressTest.capacity = capacity
         val options = StressOptions()
             .iterations(50 * stressTestMultiplierSqrt)
             .invocationsPerIteration(500 * stressTestMultiplierSqrt)
             .threads(3)
             .verifier(LinVerifier::class.java)
-        LinChecker.check(ChannelCancelLinearizabilityTest::class.java, options)
+        LinChecker.check(ChannelCancelLinearizabilityStressTest::class.java, options)
     }
 }

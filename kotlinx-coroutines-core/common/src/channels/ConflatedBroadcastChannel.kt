@@ -284,10 +284,13 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>
     ) : ConflatedChannel<E>(), ReceiveChannel<E> {
-        override fun cancelInternal(cause: Throwable?): Boolean =
-            close(cause).also { closed ->
-                if (closed) broadcastChannel.closeSubscriber(this)
+
+        override fun onCancelIdempotent(wasClosed: Boolean) {
+            if (wasClosed) {
+                // TODO here we actually could help close, but it (almost) has no observable effects
+                broadcastChannel.closeSubscriber(this)
             }
+        }
 
         public override fun offerInternal(element: E): Any = super.offerInternal(element)
     }

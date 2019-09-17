@@ -624,13 +624,16 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     }
 
     // It needs to be internal to support deprecated cancel(Throwable?) API
-    internal open fun cancelInternal(cause: Throwable?): Boolean =
+    internal fun cancelInternal(cause: Throwable?): Boolean =
         close(cause).also {
-            cleanupSendQueueOnCancel()
+            onCancelIdempotent(it)
         }
 
-    // Note: this function is invoked when channel is already closed
-    protected open fun cleanupSendQueueOnCancel() {
+    /**
+     * Method that is invoked right after [close] in [cancel] sequence.
+     * [wasClosed] is directly mapped to the value returned by [close].
+     */
+    protected open fun onCancelIdempotent(wasClosed: Boolean) {
         val closed = closedForSend ?: error("Cannot happen")
         while (true) {
             val send = takeFirstSendOrPeekClosed() ?: error("Cannot happen")
