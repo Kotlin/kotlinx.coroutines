@@ -31,11 +31,10 @@ class ChannelCancelLinearizabilityStressTest : TestBase() {
     fun receive() = lt.run("receive") { channel.receive() }
 
     @Operation(runOnce = true)
-    fun send2(@Param(name = "value") value: Int) = lt.run("send") { channel.send(value) }
+    fun send2(@Param(name = "value") value: Int) = lt.run("send2") { channel.send(value) }
 
     @Operation(runOnce = true)
     fun receive2() = lt.run("receive2") { channel.receive() }
-
 
     @Operation(runOnce = true)
     fun cancel() = lt.run("cancel") { channel.cancel() }
