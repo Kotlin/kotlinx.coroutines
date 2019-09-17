@@ -31,8 +31,7 @@ Its usage is better demonstrated by the example (runnable code is [here](test/Te
  
 ```kotlin
 class TestRuleExample {
-    @Rule
-    @JvmField
+    @get:Rule
     public val timeout = CoroutinesTimeout.seconds(1)
 
     private suspend fun someFunctionDeepInTheStack() {
