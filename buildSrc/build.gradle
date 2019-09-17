@@ -1,9 +1,6 @@
 buildscript {
     ext {
         gradleProperties = new Properties()
-        gradleProperties.load(new FileInputStream("$projectDir/../gradle.properties"))
-        kotlinVersion = gradleProperties."kotlin_version"
-        kotlinCompilerRepo = gradleProperties."kotlinCompilerRepo"
     }
 
     repositories {
