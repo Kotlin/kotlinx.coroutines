@@ -21,17 +21,15 @@ import java.util.concurrent.*
  * Example of usage:
  * ```
  * class HangingTest {
+ *     @get:Rule
+ *     val timeout = CoroutinesTimeout.seconds(5)
  *
- *   @Rule
- *   @JvmField
- *   val timeout = CoroutinesTimeout.seconds(5)
- *
- *   @Test
- *   fun testThatHangs() = runBlocking {
- *     ...
- *     delay(Long.MAX_VALUE) // somewhere deep in the stack
- *     ...
- *   }
+ *     @Test
+ *     fun testThatHangs() = runBlocking {
+ *          ...
+ *          delay(Long.MAX_VALUE) // somewhere deep in the stack
+ *          ...
+ *     }
  * }
  * ```
  */
@@ -42,6 +40,11 @@ public class CoroutinesTimeout(
 
     init {
         require(testTimeoutMs > 0) { "Expected positive test timeout, but had $testTimeoutMs" }
+        /*
+         * Install probes in the constructor, so all the coroutines launched from within
+         * target test constructor will be captured
+         */
+        DebugProbes.install()
     }
 
     companion object {
