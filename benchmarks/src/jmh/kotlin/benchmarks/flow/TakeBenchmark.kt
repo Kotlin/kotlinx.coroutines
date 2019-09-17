@@ -47,7 +47,6 @@ open class TakeBenchmark {
         (0L..Long.MAX_VALUE).asFlow().mergedStateMachineTake(size).consume()
     }
 
-
     internal class StacklessCancellationException() : CancellationException() {
         override fun fillInStackTrace(): Throwable = this
     }
@@ -68,14 +67,12 @@ open class TakeBenchmark {
         }
     }
 
+    private suspend fun <T> FlowCollector<T>.emitAbort(value: T) {
+        emit(value)
+        throw StacklessCancellationException()
+    }
 
     public fun <T> Flow<T>.fastPathTake(count: Int): Flow<T> {
-
-        suspend fun FlowCollector<T>.emitAbort(value: T) {
-            emit(value)
-            throw StacklessCancellationException()
-        }
-
         return unsafeFlow {
             var consumed = 0
             try {

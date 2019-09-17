@@ -51,12 +51,6 @@ public fun <T> Flow<T>.dropWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
 @ExperimentalCoroutinesApi
 public fun <T> Flow<T>.take(count: Int): Flow<T> {
     require(count > 0) { "Requested element count $count should be positive" }
-
-    suspend fun <T> FlowCollector<T>.emitAbort(value: T) {
-        emit(value)
-        throw AbortFlowException()
-    }
-
     return flow {
         var consumed = 0
         try {
@@ -71,6 +65,11 @@ public fun <T> Flow<T>.take(count: Int): Flow<T> {
             // Nothing, bail out
         }
     }
+}
+
+private suspend fun <T> FlowCollector<T>.emitAbort(value: T) {
+    emit(value)
+    throw AbortFlowException()
 }
 
 /**
