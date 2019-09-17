@@ -27,6 +27,15 @@ internal fun <R, T> (suspend (R) -> T).startCoroutineCancellable(receiver: R, co
     }
 
 /**
+ * Similar to [startCoroutineCancellable], but for already created coroutine.
+ * [fatalCompletion] is used only when interception machinery throws an exception
+ */
+internal fun Continuation<Unit>.startCoroutineCancellable(fatalCompletion: Continuation<*>) =
+    runSafely(fatalCompletion) {
+        intercepted().resumeCancellable(Unit)
+    }
+
+/**
  * Runs given block and completes completion with its exception if it occurs.
  * Rationale: [startCoroutineCancellable] is invoked when we are about to run coroutine asynchronously in its own dispatcher.
  * Thus if dispatcher throws an exception during coroutine start, coroutine never completes, so we should treat dispatcher exception

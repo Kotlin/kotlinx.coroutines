@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 /**
  * Broadcasts all elements of the channel.
@@ -124,7 +125,7 @@ private class LazyBroadcastCoroutine<E>(
     channel: BroadcastChannel<E>,
     block: suspend ProducerScope<E>.() -> Unit
 ) : BroadcastCoroutine<E>(parentContext, channel, active = false) {
-    private var block: (suspend ProducerScope<E>.() -> Unit)? = block
+    private val continuation = block.createCoroutineUnintercepted(this, this)
 
     override fun openSubscription(): ReceiveChannel<E> {
         // open subscription _first_
@@ -135,8 +136,6 @@ private class LazyBroadcastCoroutine<E>(
     }
 
     override fun onStart() {
-        val block = checkNotNull(this.block) { "Already started" }
-        this.block = null
-        block.startCoroutineCancellable(this, this)
+        continuation.startCoroutineCancellable(this)
     }
 }

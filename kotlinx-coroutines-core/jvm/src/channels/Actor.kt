@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 /**
  * Scope for [actor][GlobalScope.actor] coroutine builder.
@@ -143,11 +144,14 @@ private open class ActorCoroutine<E>(
 private class LazyActorCoroutine<E>(
     parentContext: CoroutineContext,
     channel: Channel<E>,
-    private val block: suspend ActorScope<E>.() -> Unit
+    block: suspend ActorScope<E>.() -> Unit
 ) : ActorCoroutine<E>(parentContext, channel, active = false),
     SelectClause2<E, SendChannel<E>> {
+
+    private var continuation = block.createCoroutineUnintercepted(this, this)
+
     override fun onStart() {
-        block.startCoroutineCancellable(this, this)
+        continuation.startCoroutineCancellable(this)
     }
 
     override suspend fun send(element: E) {
