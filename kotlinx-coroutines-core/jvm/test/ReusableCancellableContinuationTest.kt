@@ -60,14 +60,30 @@ class ReusableCancellableContinuationTest : TestBase() {
     }
 
     @Test
-    fun testNotCancelledOnClaimedResume() = runTest {
+    fun testNotCancelledOnClaimedResume() = runTest({ it is CancellationException }) {
         expect(1)
+        // Bind child at first
+        var continuation: Continuation<*>? = null
         suspendAtomicCancellableCoroutineReusable<Unit> {
-            it.cancel()
+            expect(2)
+            continuation = it
+            launch {
+                expect(3)
+                it.resume(Unit)
+            }
+        }
+        println("1")
+        expect(4)
+        ensureActive()
+        // Verify child was bound
+        assertNotNull(FieldWalker.walk(coroutineContext[Job]!!).single { it === continuation })
+        suspendAtomicCancellableCoroutineReusable<Unit> {
+            expect(5)
+            coroutineContext[Job]!!.cancel()
             it.resume(Unit)
         }
-        ensureActive()
-        finish(2)
+        assertFalse(isActive)
+        finish(6)
     }
 
     @Test

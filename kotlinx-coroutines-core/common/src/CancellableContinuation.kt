@@ -239,7 +239,6 @@ internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): 
     if (delegate !is DispatchedContinuation<T>) {
         return CancellableContinuationImpl(delegate, resumeMode = MODE_ATOMIC_DEFAULT)
     }
-
     /*
      * Attempt to claim reusable instance.
      *
@@ -254,9 +253,8 @@ internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): 
      *    thus leaking CC instance for indefinite time.
      * 2) Continuation was cancelled. Then we should prevent any further reuse and bail out.
      */
-    val claimed = delegate.claimReusableCancellableContinuation() ?: return CancellableContinuationImpl(delegate, MODE_ATOMIC_DEFAULT)
-    claimed.resetState()
-    return claimed
+    return delegate.claimReusableCancellableContinuation()?.apply { resetState() }
+        ?: return CancellableContinuationImpl(delegate, MODE_ATOMIC_DEFAULT)
 }
 
 /**

@@ -47,7 +47,7 @@ internal class DispatchedContinuation<in T>(
      *    }
      *    // state == CC
      *    ```
-     * 4) [CancelledContinuation] continuation was cancelled while being in [suspendAtomicCancellableCoroutineReusable],
+     * 4) [Throwable] continuation was cancelled with this cause while being in [suspendAtomicCancellableCoroutineReusable],
      *    [CancellableContinuationImpl.getResult] will check for cancellation later.
      * 5) [NON_REUSABLE]. CC was cancelled at least once, thus cannot be longer reused.
      *
@@ -84,18 +84,21 @@ internal class DispatchedContinuation<in T>(
          * 3) `NON_REUSABLE` -> nothing, proceed, caller will instantiate CC instance
          */
         _reusableCancellableContinuation.loop { state ->
-            when (state) {
-                null -> {
-                    if (_reusableCancellableContinuation.compareAndSet(null, REUSABLE_CLAIMED)) {
-                        return null
-                    }
+            when {
+                state === null -> {
+                    /*
+                     * null -> CC was not yet published -> we do not compete with cancel
+                     * -> can use plain store instead of CAS
+                     */
+                    _reusableCancellableContinuation.value = REUSABLE_CLAIMED
+                    return null
                 }
-                is CancellableContinuationImpl<*> -> {
+                state is CancellableContinuationImpl<*> -> {
                     if (_reusableCancellableContinuation.compareAndSet(state, REUSABLE_CLAIMED)) {
                         return state as CancellableContinuationImpl<T>
                     }
                 }
-                NON_REUSABLE -> return null
+                state === NON_REUSABLE -> return null
                 else ->  error("Inconsistent state $state")
             }
         }
@@ -103,7 +106,7 @@ internal class DispatchedContinuation<in T>(
 
     /**
      * Checks whether there were any attempts to cancel reusable CC while it was in [REUSABLE_CLAIMED] state
-     * and returns [CancelledContinuation] if so, `null` otherwise.
+     * and returns cancellation cause if so, `null` otherwise.
      * If continuation was cancelled, it becomes non-reusable.
      *
      * ```
@@ -115,13 +118,13 @@ internal class DispatchedContinuation<in T>(
      *
      * See [CancellableContinuationImpl.getResult].
      */
-    fun checkPostponedCancellation(continuation: CancellableContinuation<*>): CancelledContinuation? {
+    fun checkPostponedCancellation(continuation: CancellableContinuation<*>): Throwable? {
         _reusableCancellableContinuation.loop { state ->
             // not when(state) to avoid Intrinsics.equals call
             when {
                 state === REUSABLE_CLAIMED -> if (_reusableCancellableContinuation.compareAndSet(REUSABLE_CLAIMED, continuation)) return null
                 state === null -> return null
-                state is CancelledContinuation -> {
+                state is Throwable -> {
                     require(_reusableCancellableContinuation.compareAndSet(state, NON_REUSABLE))
                     return state
                 }
@@ -134,7 +137,7 @@ internal class DispatchedContinuation<in T>(
         _reusableCancellableContinuation.loop { state ->
             when (state) {
                 // Do not overwrite cancellation (cancelled CC can't be reused anyway)
-                is CancelledContinuation -> return
+                is Throwable -> return
                 else -> if (_reusableCancellableContinuation.compareAndSet(state, NON_REUSABLE)) return
             }
         }
@@ -144,14 +147,14 @@ internal class DispatchedContinuation<in T>(
      * Tries to postpone cancellation if reusable CC is currently in [REUSABLE_CLAIMED] state.
      * Returns `true` if cancellation is (or previously was) postponed, `false` otherwise.
      */
-    fun postponeCancellation(cancelled: CancelledContinuation): Boolean {
+    fun postponeCancellation(cause: Throwable): Boolean {
         _reusableCancellableContinuation.loop { state ->
             when (state) {
                 REUSABLE_CLAIMED -> {
-                    if (_reusableCancellableContinuation.compareAndSet(REUSABLE_CLAIMED, cancelled))
+                    if (_reusableCancellableContinuation.compareAndSet(REUSABLE_CLAIMED, cause))
                         return true
                 }
-                is CancelledContinuation -> return true
+                is Throwable -> return true
                 else -> {
                     if (_reusableCancellableContinuation.compareAndSet(state, NON_REUSABLE))
                         return false
