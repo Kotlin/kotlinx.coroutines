@@ -137,7 +137,9 @@ private class SemaphoreImpl(
         require(permits > 0) { "The number of released permits must be greater than 0" }
         val p = incPermits(permits)
         if (p >= 0) return // no waiters
-        resumeNextFromQueue()
+        repeat(permits) {
+            resumeNextFromQueue()
+        }
     }
 
     fun incPermits(delta: Int = 1) = _availablePermits.getAndUpdate { cur ->

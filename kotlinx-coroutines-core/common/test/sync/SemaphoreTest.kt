@@ -115,6 +115,34 @@ class SemaphoreTest : TestBase() {
     }
 
     @Test
+    fun testMultipleReleasesResumeMultipleAcquirers() = runTest {
+        val permits = 5
+        val semaphore = Semaphore(permits)
+        semaphore.acquire(permits)
+        assertEquals(0, semaphore.availablePermits)
+        val jobs = mutableListOf<Deferred<Boolean>>()
+        for (i in 0 until permits) {
+            jobs += async {
+                expect(2 + i)
+                assertFalse(semaphore.tryAcquire())
+                semaphore.acquire()
+                expect(2 + permits + i)
+                return@async true
+            }
+        }
+        expect(1)
+        yield()
+        semaphore.release(permits)
+        jobs.forEach {
+            assertTrue(it.await())
+        }
+        assertEquals(0, semaphore.availablePermits)
+        semaphore.release(permits)
+        assertEquals(permits, semaphore.availablePermits)
+        finish(1 + permits + permits + 1) // first + two iterations + last
+    }
+
+    @Test
     fun testCancellationDoesNotResumeWaitingAcquirers() = runTest {
         val semaphore = Semaphore(1)
         semaphore.acquire()
