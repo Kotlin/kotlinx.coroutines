@@ -39,6 +39,8 @@ public interface Semaphore {
      * Use [tryAcquire] to try acquire the given number of permits of this semaphore without suspension.
      *
      * @param permits the number of permits to acquire
+     *
+     * @throws [IllegalArgumentException] if [permits] is less than or equal to zero.
      */
     public suspend fun acquire(permits: Int = 1)
 
@@ -47,14 +49,18 @@ public interface Semaphore {
      *
      * @param permits the number of permits to acquire
      * @return `true` if all permits were acquired, `false` otherwise.
+     *
+     * @throws [IllegalArgumentException] if [permits] is less than or equal to zero.
      */
     public fun tryAcquire(permits: Int = 1): Boolean
 
     /**
      * Releases the given number of permits, returning them into this semaphore. Resumes the first
-     * suspending acquirer if there is one at the point of invocation and the requested number of permits are available.
+     * suspending acquirer if there is one at the point of invocation and the requested number of permits is available.
      *
      * @param permits the number of permits to release
+     *
+     * @throws [IllegalArgumentException] if [permits] is less than or equal to zero.
      * @throws [IllegalStateException] if the number of [release] invocations is greater than the number of preceding [acquire].
      */
     public fun release(permits: Int = 1)
@@ -113,6 +119,7 @@ private class SemaphoreImpl(
     private val deqIdx = atomic(0L)
 
     override fun tryAcquire(permits: Int): Boolean {
+        require(permits > 0) { "The number of acquired permits must be greater than 0" }
         _availablePermits.loop { p ->
             if (p < permits) return false
             if (_availablePermits.compareAndSet(p, p - permits)) return true
@@ -120,12 +127,14 @@ private class SemaphoreImpl(
     }
 
     override suspend fun acquire(permits: Int) {
+        require(permits > 0) { "The number of acquired permits must be greater than 0" }
         val p = _availablePermits.getAndAdd(-permits)
         if (p > 0) return // permit acquired
         addToQueueAndSuspend()
     }
 
     override fun release(permits: Int) {
+        require(permits > 0) { "The number of released permits must be greater than 0" }
         val p = incPermits(permits)
         if (p >= 0) return // no waiters
         resumeNextFromQueue()

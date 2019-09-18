@@ -185,10 +185,14 @@ class SemaphoreTest : TestBase() {
     }
 
     @Test
-    fun testIllegalArguments() {
+    fun testIllegalArguments() = runTest {
         assertFailsWith<IllegalArgumentException> { Semaphore(-1, 0) }
         assertFailsWith<IllegalArgumentException> { Semaphore(0, 0) }
         assertFailsWith<IllegalArgumentException> { Semaphore(1, -1) }
         assertFailsWith<IllegalArgumentException> { Semaphore(1, 2) }
+        val semaphore = Semaphore(1)
+        assertFailsWith<IllegalArgumentException> { semaphore.acquire(-1) }
+        assertFailsWith<IllegalArgumentException> { semaphore.tryAcquire(-1) }
+        assertFailsWith<IllegalArgumentException> { semaphore.release(-1) }
     }
 }
