@@ -2,10 +2,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 
-inputFile = "jmh-result.csv"
-outputFile = "flow-flatten-merge.svg"
+input_file = "jmh-result.csv"
+output_file = "flow-flatten-merge.svg"
 elements = 100000
-benchmarkName="benchmarks.flow.FlowFlattenMergeBenchmark.flattenMerge"
+benchmark_name = "benchmarks.flow.FlowFlattenMergeBenchmark.flattenMerge"
+csv_columns = ["Benchmark", "Score", "Score Error (99.9%)", "Unit", "Param: concurrency", "Param: flows"]
+rename_columns = {"Benchmark": "benchmark", "Score" : "score", "Score Error (99.9%)" : "score_error", "Unit" : "unit",
+                  "Param: concurrency" : "concurrency", "Param: flows" : "flows"}
 
 markers = ['.', 'v', '^', '1', '2', '8', 'p', 'P', 'x', 'D', 'd', 's']
 colours = ['black', 'silver', 'red', 'gold', 'sienna', 'olivedrab', 'lightseagreen', 'navy', 'blue', 'm', 'crimson', 'yellow', 'orangered', 'slateblue', 'aqua']
@@ -23,8 +26,6 @@ def next_marker():
         i += 1
 
 def draw(data, plt):
-    data = data[(data.benchmark == benchmarkName)]
-
     plt.xscale('log', basex=2)
     plt.gca().xaxis.set_major_formatter(FormatStrFormatter('%0.f'))
     plt.grid(linewidth='0.5', color='lightgray')
@@ -32,18 +33,20 @@ def draw(data, plt):
     plt.xlabel('concurrency')
     plt.xticks(data.concurrency.unique())
 
-    colourGen = next_colour()
-    markerGen = next_marker()
+    colour_gen = next_colour()
+    marker_gen = next_marker()
     for flows in data.flows.unique():
-        genColour = next(colourGen)
-        genMarker = next(markerGen)
+        gen_colour = next(colour_gen)
+        gen_marker = next(marker_gen)
         res = data[(data.flows == flows)]
-        plt.plot(res.concurrency, res.score*elements, label="flows={}".format(flows), color=genColour, marker=genMarker)
-        plt.errorbar(x=res.concurrency, y=res.score*elements, yerr=res.scoreError*elements, solid_capstyle='projecting', capsize=5)
+        plt.plot(res.concurrency, res.score*elements, label="flows={}".format(flows), color=gen_colour, marker=gen_marker)
+        plt.errorbar(x=res.concurrency, y=res.score*elements, yerr=res.score_error*elements, solid_capstyle='projecting', capsize=5)
 
-data = pd.read_table(inputFile, sep=",", skiprows=1, names=["benchmark","mode","threads","samples","score","scoreError","unit","concurrency","flows"])
+data = pd.read_table(input_file, sep=",")
+data = data[csv_columns].rename(columns=rename_columns)
+data = data[(data.benchmark == benchmark_name)]
 plt.figure(figsize=(20, 20))
 draw(data, plt)
 plt.legend(loc='upper center', borderpad=0, ncol=4, frameon=False, borderaxespad=4, prop={'size': 8})
 plt.tight_layout(pad=12, w_pad=2, h_pad=1)
-plt.savefig(outputFile, bbox_inches='tight')
+plt.savefig(output_file, bbox_inches='tight')
