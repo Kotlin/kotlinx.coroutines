@@ -23,7 +23,7 @@ public interface Semaphore {
     public val availablePermits: Int
 
     /**
-     * Acquires a permit from this semaphore, suspending until one is available.
+     * Acquires the given number of permits from this semaphore, suspending until ones are available.
      * All suspending acquirers are processed in first-in-first-out (FIFO) order.
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
@@ -36,23 +36,28 @@ public interface Semaphore {
      * Use [CoroutineScope.isActive] or [CoroutineScope.ensureActive] to periodically
      * check for cancellation in tight loops if needed.
      *
-     * Use [tryAcquire] to try acquire a permit of this semaphore without suspension.
-     */
-    public suspend fun acquire()
-
-    /**
-     * Tries to acquire a permit from this semaphore without suspension.
+     * Use [tryAcquire] to try acquire the given number of permits of this semaphore without suspension.
      *
-     * @return `true` if a permit was acquired, `false` otherwise.
+     * @param permits the number of permits to acquire
      */
-    public fun tryAcquire(): Boolean
+    public suspend fun acquire(permits: Int = 1)
 
     /**
-     * Releases a permit, returning it into this semaphore. Resumes the first
-     * suspending acquirer if there is one at the point of invocation.
-     * Throws [IllegalStateException] if the number of [release] invocations is greater than the number of preceding [acquire].
+     * Tries to acquire the given number of permits from this semaphore without suspension.
+     *
+     * @param permits the number of permits to acquire
+     * @return `true` if all permits were acquired, `false` otherwise.
      */
-    public fun release()
+    public fun tryAcquire(permits: Int = 1): Boolean
+
+    /**
+     * Releases the given number of permits, returning them into this semaphore. Resumes the first
+     * suspending acquirer if there is one at the point of invocation and the requested number of permits are available.
+     *
+     * @param permits the number of permits to release
+     * @throws [IllegalStateException] if the number of [release] invocations is greater than the number of preceding [acquire].
+     */
+    public fun release(permits: Int = 1)
 }
 
 /**
@@ -107,28 +112,28 @@ private class SemaphoreImpl(
     private val enqIdx = atomic(0L)
     private val deqIdx = atomic(0L)
 
-    override fun tryAcquire(): Boolean {
+    override fun tryAcquire(permits: Int): Boolean {
         _availablePermits.loop { p ->
-            if (p <= 0) return false
-            if (_availablePermits.compareAndSet(p, p - 1)) return true
+            if (p < permits) return false
+            if (_availablePermits.compareAndSet(p, p - permits)) return true
         }
     }
 
-    override suspend fun acquire() {
-        val p = _availablePermits.getAndDecrement()
+    override suspend fun acquire(permits: Int) {
+        val p = _availablePermits.getAndAdd(-permits)
         if (p > 0) return // permit acquired
         addToQueueAndSuspend()
     }
 
-    override fun release() {
-        val p = incPermits()
+    override fun release(permits: Int) {
+        val p = incPermits(permits)
         if (p >= 0) return // no waiters
         resumeNextFromQueue()
     }
 
-    fun incPermits() = _availablePermits.getAndUpdate { cur ->
-        check(cur < permits) { "The number of released permits cannot be greater than $permits" }
-        cur + 1
+    fun incPermits(delta: Int = 1) = _availablePermits.getAndUpdate { cur ->
+        check(cur + delta <= permits) { "The number of released permits cannot be greater than $permits" }
+        cur + delta
     }
 
     private suspend fun addToQueueAndSuspend() = suspendAtomicCancellableCoroutine<Unit> sc@ { cont ->

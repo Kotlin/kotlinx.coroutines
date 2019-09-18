@@ -151,6 +151,18 @@ class SemaphoreTest : TestBase() {
     }
 
     @Test
+    fun testMultipleAcquiredPermits() = runTest {
+        val semaphore = Semaphore(5, acquiredPermits = 1)
+        assertEquals(semaphore.availablePermits, 4)
+        semaphore.acquire(4)
+        assertEquals(semaphore.availablePermits, 0)
+        assertFalse(semaphore.tryAcquire())
+        semaphore.release()
+        assertEquals(semaphore.availablePermits, 1)
+        assertTrue(semaphore.tryAcquire())
+    }
+
+    @Test
     fun testReleaseAcquiredPermits() = runTest {
         val semaphore = Semaphore(5, acquiredPermits = 4)
         assertEquals(semaphore.availablePermits, 1)
@@ -158,6 +170,17 @@ class SemaphoreTest : TestBase() {
         assertEquals(5, semaphore.availablePermits)
         assertFailsWith<IllegalStateException> { semaphore.release() }
         repeat(5) { assertTrue(semaphore.tryAcquire()) }
+        assertFalse(semaphore.tryAcquire())
+    }
+
+    @Test
+    fun testReleaseMultipleAcquiredPermits() = runTest {
+        val semaphore = Semaphore(5, acquiredPermits = 4)
+        assertEquals(semaphore.availablePermits, 1)
+        semaphore.release(2)
+        assertEquals(3, semaphore.availablePermits)
+        assertFailsWith<IllegalStateException> { semaphore.release(3) }
+        repeat(3) { assertTrue(semaphore.tryAcquire()) }
         assertFalse(semaphore.tryAcquire())
     }
 
