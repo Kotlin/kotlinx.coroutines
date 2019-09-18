@@ -287,7 +287,6 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
 
         override fun onCancelIdempotent(wasClosed: Boolean) {
             if (wasClosed) {
-                // TODO here we actually could help close, but it (almost) has no observable effects
                 broadcastChannel.closeSubscriber(this)
             }
         }
