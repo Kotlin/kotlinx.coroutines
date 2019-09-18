@@ -241,17 +241,19 @@ internal open class ArrayChannel<E>(
     }
 
     // Note: this function is invoked when channel is already closed
-    override fun cleanupSendQueueOnCancel() {
-        // clear buffer first
-        lock.withLock {
-            repeat(size) {
-                buffer[head] = 0
-                head = (head + 1) % buffer.size
+    override fun onCancelIdempotent(wasClosed: Boolean) {
+        // clear buffer first, but do not wait for it in helpers
+        if (wasClosed) {
+            lock.withLock {
+                repeat(size) {
+                    buffer[head] = 0
+                    head = (head + 1) % buffer.size
+                }
+                size = 0
             }
-            size = 0
         }
         // then clean all queued senders
-        super.cleanupSendQueueOnCancel()
+        super.onCancelIdempotent(wasClosed)
     }
 
     // ------ debug ------

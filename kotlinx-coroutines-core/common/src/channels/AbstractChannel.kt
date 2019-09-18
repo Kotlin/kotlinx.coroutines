@@ -624,22 +624,36 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     }
 
     // It needs to be internal to support deprecated cancel(Throwable?) API
-    internal open fun cancelInternal(cause: Throwable?): Boolean =
+    internal fun cancelInternal(cause: Throwable?): Boolean =
         close(cause).also {
-            cleanupSendQueueOnCancel()
+            onCancelIdempotent(it)
         }
 
-    // Note: this function is invoked when channel is already closed
-    protected open fun cleanupSendQueueOnCancel() {
+    /**
+     * Method that is invoked right after [close] in [cancel] sequence.
+     * [wasClosed] is directly mapped to the value returned by [close].
+     */
+    protected open fun onCancelIdempotent(wasClosed: Boolean) {
+        /*
+         * See the comment to helpClose, all these machinery (reversed order of iteration, postponed resume)
+         * has the same rationale.
+         */
         val closed = closedForSend ?: error("Cannot happen")
+        var list = InlineList<Send>()
         while (true) {
-            val send = takeFirstSendOrPeekClosed() ?: error("Cannot happen")
-            if (send is Closed<*>) {
-                assert { send === closed }
-                return // cleaned
+            val previous = closed.prevNode
+            if (previous is LockFreeLinkedListHead) {
+                break
             }
-            send.resumeSendClosed(closed)
+            assert { previous is Send }
+            if (!previous.remove()) {
+                previous.helpRemove() // make sure remove is complete before continuing
+                continue
+            }
+            // Add to the list only **after** successful removal
+            list += previous as Send
         }
+        list.forEachReversed { it.resumeSendClosed(closed) }
     }
 
     public final override fun iterator(): ChannelIterator<E> = Itr(this)
