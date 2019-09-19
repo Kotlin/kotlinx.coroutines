@@ -8,9 +8,10 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import java.io.*
-import java.util.*
 import java.util.concurrent.*
+import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
+import kotlin.random.Random
 
 /**
  * Coroutine scheduler (pool of shared threads) which primary target is to distribute dispatched coroutines over worker threads,
@@ -223,7 +224,7 @@ internal class CoroutineScheduler(
      * workers are 1-indexed, code path in [Worker.trySteal] is a bit faster and index swap during termination
      * works properly
      */
-    private val workers: Array<Worker?> = arrayOfNulls(maxPoolSize + 1)
+    private val workers = AtomicReferenceArray<Worker?>(maxPoolSize + 1)
 
     /**
      * Long describing state of workers in this pool.
@@ -244,11 +245,9 @@ internal class CoroutineScheduler(
     private inline fun incrementBlockingWorkers() { controlState.addAndGet(1L shl BLOCKING_SHIFT) }
     private inline fun decrementBlockingWorkers() { controlState.addAndGet(-(1L shl BLOCKING_SHIFT)) }
 
-    private val random = Random()
-
     // This is used a "stop signal" for close and shutdown functions
-    private val _isTerminated = atomic(0) // todo: replace with atomic boolean on new versions of atomicFu
-    private val isTerminated: Boolean get() = _isTerminated.value != 0
+    private val _isTerminated = atomic(false)
+    private val isTerminated: Boolean get() = _isTerminated.value
 
     companion object {
         private val MAX_SPINS = systemProp("kotlinx.coroutines.scheduler.spins", 1000, minValue = 1)
@@ -297,7 +296,7 @@ internal class CoroutineScheduler(
     // Shuts down current scheduler and waits until all work is done and all threads are stopped.
     fun shutdown(timeout: Long) {
         // atomically set termination flag which is checked when workers are added or removed
-        if (!_isTerminated.compareAndSet(0, 1)) return
+        if (!_isTerminated.compareAndSet(false, true)) return
         // make sure we are not waiting for the current thread
         val currentWorker = currentWorker()
         // Capture # of created workers that cannot change anymore (mind the synchronized block!)
@@ -550,8 +549,8 @@ internal class CoroutineScheduler(
         var retired = 0
         var terminated = 0
         val queueSizes = arrayListOf<String>()
-        for (worker in workers) {
-            if (worker == null) continue
+        for (index in 0 until workers.length()) {
+            val worker = workers[index] ?: continue
             val queueSize = worker.localQueue.size()
             when (worker.state) {
                 WorkerState.PARKING -> ++parkedWorkers
@@ -714,7 +713,7 @@ internal class CoroutineScheduler(
         // Note: it is concurrently reset by idleResetBeforeUnpark
         private var parkTimeNs = MIN_PARK_TIME_NS
 
-        private var rngState = random.nextInt()
+        private var rngState = Random.nextInt()
         private var lastStealIndex = 0 // try in order repeated, reset when unparked
 
         override fun run() {

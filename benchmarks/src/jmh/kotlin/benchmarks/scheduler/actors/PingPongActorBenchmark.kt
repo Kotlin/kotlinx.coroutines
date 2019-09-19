@@ -2,14 +2,14 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package benchmarks.actors
+package benchmarks.scheduler.actors
 
 import benchmarks.*
+import benchmarks.akka.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
-import kotlin.coroutines.*
 
 /*
  * Benchmark                                   (dispatcher)  Mode  Cnt    Score    Error  Units
@@ -34,7 +34,7 @@ import kotlin.coroutines.*
 open class PingPongActorBenchmark : ParametrizedDispatcherBase() {
     data class Letter(val message: Any?, val sender: SendChannel<Letter>)
 
-    @Param("experimental", "fjp", "ftp_1", "ftp_8")
+    @Param("scheduler", "fjp", "ftp_1")
     override var dispatcher: String = "fjp"
 
     @Benchmark

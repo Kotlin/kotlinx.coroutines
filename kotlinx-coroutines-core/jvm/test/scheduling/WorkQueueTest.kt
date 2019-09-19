@@ -54,55 +54,6 @@ class WorkQueueTest : TestBase() {
     }
 
     @Test
-    fun testTimelyStealing() {
-        val victim = WorkQueue()
-        val globalQueue = GlobalQueue()
-
-        (1L..96L).forEach { victim.add(task(it), globalQueue) }
-
-        timeSource.step()
-        timeSource.step(2)
-
-        val stealer = WorkQueue()
-        require(stealer.trySteal(victim, globalQueue))
-        assertEquals(arrayListOf(2L, 1L), stealer.drain())
-
-        require(!stealer.trySteal(victim, globalQueue))
-        assertEquals(emptyList(), stealer.drain())
-
-        timeSource.step(3)
-        require(stealer.trySteal(victim, globalQueue))
-        assertEquals(arrayListOf(5L, 3L, 4L), stealer.drain())
-        require(globalQueue.isEmpty)
-        assertEquals((6L..96L).toSet(), victim.drain().toSet())
-    }
-
-    @Test
-    fun testStealingBySize() {
-        val victim = WorkQueue()
-        val globalQueue = GlobalQueue()
-
-        (1L..110L).forEach { victim.add(task(it), globalQueue) }
-        val stealer = WorkQueue()
-        require(stealer.trySteal(victim, globalQueue))
-        assertEquals((1L..13L).toSet(), stealer.drain().toSet())
-
-        require(!stealer.trySteal(victim, globalQueue))
-        require(stealer.drain().isEmpty())
-
-
-        timeSource.step()
-        timeSource.step(13)
-        require(!stealer.trySteal(victim, globalQueue))
-        require(stealer.drain().isEmpty())
-
-        timeSource.step(1)
-        require(stealer.trySteal(victim, globalQueue))
-        assertEquals(arrayListOf(14L), stealer.drain())
-
-    }
-
-    @Test
     fun testStealingFromHead() {
         val victim = WorkQueue()
         val globalQueue = GlobalQueue()

@@ -60,10 +60,9 @@ internal class WorkQueue {
 
     /**
      * Retrieves and removes task from the head of the queue
-     * Invariant: this method is called only by the owner of the queue ([pollExternal] is not)
+     * Invariant: this method is called only by the owner of the queue ([stealBatch] is not)
      */
-    fun poll(): Task? =
-        lastScheduledTask.getAndSet(null) ?: pollExternal()
+    fun poll(): Task? = lastScheduledTask.getAndSet(null) ?: pollBuffer()
 
     /**
      * Invariant: this method is called only by the owner of the queue
@@ -97,31 +96,18 @@ internal class WorkQueue {
      * @return whether any task was stolen
      */
     fun trySteal(victim: WorkQueue, globalQueue: GlobalQueue): Boolean {
-        val time = schedulerTimeSource.nanoTime()
-        val bufferSize = victim.bufferSize
-        if (bufferSize == 0) return tryStealLastScheduled(time, victim, globalQueue)
-        /*
-         * Invariant: time is monotonically increasing (thanks to nanoTime), so we can stop as soon as we find the first task not satisfying a predicate.
-         * If queue size is larger than QUEUE_SIZE_OFFLOAD_THRESHOLD then unconditionally steal tasks over this limit to prevent possible queue overflow
-         */
-        var wasStolen = false
-        repeat(((bufferSize / 2).coerceAtLeast(1))) {
-            val task = victim.pollExternal { task ->
-                time - task.submissionTime >= WORK_STEALING_TIME_RESOLUTION_NS || victim.bufferSize > QUEUE_SIZE_OFFLOAD_THRESHOLD
-            }
-                    ?: return wasStolen // non-local return from trySteal as we're done
-            wasStolen = true
-            add(task, globalQueue)
+        if (victim.stealBatch { task -> add(task, globalQueue) }) {
+            return true
         }
-        return wasStolen
+        return tryStealLastScheduled(victim, globalQueue)
     }
 
     private fun tryStealLastScheduled(
-        time: Long,
         victim: WorkQueue,
         globalQueue: GlobalQueue
     ): Boolean {
         val lastScheduled = victim.lastScheduledTask.value ?: return false
+        val time = schedulerTimeSource.nanoTime()
         if (time - lastScheduled.submissionTime < WORK_STEALING_TIME_RESOLUTION_NS) {
             return false
         }
@@ -139,42 +125,60 @@ internal class WorkQueue {
      * Offloads half of the current buffer to [globalQueue]
      */
     private fun offloadWork(globalQueue: GlobalQueue) {
-        repeat((bufferSize / 2).coerceAtLeast(1)) {
-            val task = pollExternal() ?: return
-            addToGlobalQueue(globalQueue, task)
-        }
+        stealBatchTo(globalQueue)
     }
 
-    private fun addToGlobalQueue(globalQueue: GlobalQueue, task: Task) {
+    private fun GlobalQueue.add(task: Task) {
         /*
          * globalQueue is closed as the very last step in the shutdown sequence when all worker threads had
          * been already shutdown (with the only exception of the last worker thread that might be performing
          * shutdown procedure itself). As a consistency check we do a [cheap!] check that it is not closed here yet.
          */
-        check(globalQueue.addLast(task)) { "GlobalQueue could not be closed yet" }
+        val added = addLast(task)
+        assert { added }
     }
 
     internal fun offloadAllWork(globalQueue: GlobalQueue) {
-        lastScheduledTask.getAndSet(null)?.let { addToGlobalQueue(globalQueue, it) }
-        while (true) {
-            addToGlobalQueue(globalQueue, pollExternal() ?: return)
+        lastScheduledTask.getAndSet(null)?.let { globalQueue.add(it) }
+        while (stealBatchTo(globalQueue)) {
+            // Steal everything
         }
     }
 
     /**
-     * [poll] for external (not owning this queue) workers
+     * Method that is invoked by external workers to steal work.
+     * Half of the buffer (at least 1) is stolen, returns `true` if at least one task was stolen.
      */
-    private inline fun pollExternal(predicate: (Task) -> Boolean = { true }): Task? {
+    private inline fun stealBatch(consumer: (Task) -> Unit): Boolean {
+        val size = bufferSize
+        if (size == 0) return false
+        var toSteal = (size / 2).coerceAtLeast(1)
+        var wasStolen = false
+        while (toSteal-- > 0) {
+            val tailLocal = consumerIndex.value
+            if (tailLocal - producerIndex.value == 0) return false
+            val index = tailLocal and MASK
+            val element = buffer[index] ?: continue
+            if (consumerIndex.compareAndSet(tailLocal, tailLocal + 1)) {
+                // 1) Help GC 2) Signal producer that this slot is consumed and may be used
+                consumer(element)
+                buffer[index] = null
+                wasStolen = true
+            }
+        }
+        return wasStolen
+    }
+
+    private fun stealBatchTo(queue: GlobalQueue): Boolean {
+        return stealBatch { queue.add(it) }
+    }
+
+    private fun pollBuffer(): Task? {
         while (true) {
             val tailLocal = consumerIndex.value
             if (tailLocal - producerIndex.value == 0) return null
             val index = tailLocal and MASK
-            val element = buffer[index] ?: continue
-            if (!predicate(element)) {
-                return null
-            }
             if (consumerIndex.compareAndSet(tailLocal, tailLocal + 1)) {
-                // 1) Help GC 2) Signal producer that this slot is consumed and may be used
                 return buffer.getAndSet(index, null)
             }
         }

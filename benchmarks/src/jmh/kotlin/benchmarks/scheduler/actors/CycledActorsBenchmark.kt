@@ -2,10 +2,11 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package benchmarks.actors
+package benchmarks.scheduler.actors
 
 import benchmarks.*
-import benchmarks.actors.PingPongActorBenchmark.*
+import benchmarks.akka.*
+import benchmarks.scheduler.actors.PingPongActorBenchmark.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.openjdk.jmh.annotations.*
@@ -39,7 +40,7 @@ open class CycledActorsBenchmark : ParametrizedDispatcherBase() {
         val NO_CHANNEL = Channel<Letter>(0)
     }
 
-    @Param("fjp", "ftp_1", "experimental")
+    @Param("fjp", "ftp_1", "scheduler")
     override var dispatcher: String = "fjp"
 
     @Param("524288")
