@@ -11,12 +11,6 @@ import kotlin.jvm.*
 
 @SharedImmutable
 private val UNDEFINED = Symbol("UNDEFINED")
-
-// Internal to avoid synthetic accessors
-@SharedImmutable
-@JvmField
-internal val NON_REUSABLE = Symbol("NON_REUSABLE")
-
 @SharedImmutable
 @JvmField
 internal val REUSABLE_CLAIMED = Symbol("REUSABLE_CLAIMED")
@@ -36,7 +30,8 @@ internal class DispatchedContinuation<in T>(
     /**
      * Possible states of reusability:
      *
-     * 1) `null`. Cancellable continuation wasn't yet attempted to be reused.
+     * 1) `null`. Cancellable continuation wasn't yet attempted to be reused or
+     *     way used and then invalidated (e.g. because of the cancellation).
      * 2) [CancellableContinuation]. Continuation to be/that is being reused.
      * 3) [REUSABLE_CLAIMED]. CC is currently being reused and its owner executes `suspend` block:
      *    ```
@@ -49,7 +44,6 @@ internal class DispatchedContinuation<in T>(
      *    ```
      * 4) [Throwable] continuation was cancelled with this cause while being in [suspendAtomicCancellableCoroutineReusable],
      *    [CancellableContinuationImpl.getResult] will check for cancellation later.
-     * 5) [NON_REUSABLE]. CC was cancelled at least once, thus cannot be longer reused.
      *
      * [REUSABLE_CLAIMED] state is required to prevent the lost resume in the channel.
      * AbstractChannel.receive method relies on the fact that the following pattern
@@ -69,7 +63,7 @@ internal class DispatchedContinuation<in T>(
         get() = _reusableCancellableContinuation.value as? CancellableContinuationImpl<*>
 
     public val isReusable: Boolean
-        get() = _reusableCancellableContinuation.value.let { it != null && it != NON_REUSABLE }
+        get() = _reusableCancellableContinuation.value != null
 
     /**
      * Claims the continuation for [suspendAtomicCancellableCoroutineReusable] block,
@@ -81,7 +75,6 @@ internal class DispatchedContinuation<in T>(
          * Transitions:
          * 1) `null` -> claimed, caller will instantiate CC instance
          * 2) `CC` -> claimed, caller will reuse CC instance
-         * 3) `NON_REUSABLE` -> nothing, proceed, caller will instantiate CC instance
          */
         _reusableCancellableContinuation.loop { state ->
             when {
@@ -98,7 +91,6 @@ internal class DispatchedContinuation<in T>(
                         return state as CancellableContinuationImpl<T>
                     }
                 }
-                state === NON_REUSABLE -> return null
                 else ->  error("Inconsistent state $state")
             }
         }
@@ -125,20 +117,10 @@ internal class DispatchedContinuation<in T>(
                 state === REUSABLE_CLAIMED -> if (_reusableCancellableContinuation.compareAndSet(REUSABLE_CLAIMED, continuation)) return null
                 state === null -> return null
                 state is Throwable -> {
-                    require(_reusableCancellableContinuation.compareAndSet(state, NON_REUSABLE))
+                    require(_reusableCancellableContinuation.compareAndSet(state, null))
                     return state
                 }
                 else -> return null // Is not reusable
-            }
-        }
-    }
-
-    fun makeCancellationNonReusable() {
-        _reusableCancellableContinuation.loop { state ->
-            when (state) {
-                // Do not overwrite cancellation (cancelled CC can't be reused anyway)
-                is Throwable -> return
-                else -> if (_reusableCancellableContinuation.compareAndSet(state, NON_REUSABLE)) return
             }
         }
     }
@@ -156,7 +138,8 @@ internal class DispatchedContinuation<in T>(
                 }
                 is Throwable -> return true
                 else -> {
-                    if (_reusableCancellableContinuation.compareAndSet(state, NON_REUSABLE))
+                    // Invalidate
+                    if (_reusableCancellableContinuation.compareAndSet(state, null))
                         return false
                 }
             }

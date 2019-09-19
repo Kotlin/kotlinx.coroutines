@@ -78,22 +78,23 @@ internal open class CancellableContinuationImpl<in T>(
         // This method does nothing. Leftover for binary compatibility with old compiled code
     }
 
-    private fun invalidateReusability() {
-        if (resumeMode != MODE_ATOMIC_DEFAULT) return
-        (delegate as? DispatchedContinuation<*>)?.makeCancellationNonReusable()
-    }
-
     private fun isReusable(): Boolean = delegate is DispatchedContinuation<*> && delegate.isReusable
 
     /**
      * Resets cancellability state in order to [suspendAtomicCancellableCoroutineReusable] to work.
      * Invariant: used only by [suspendAtomicCancellableCoroutineReusable] in [REUSABLE_CLAIMED] state.
      */
-    internal fun resetState() {
+    internal fun resetState(): Boolean {
         assert { parentHandle !== NonDisposableHandle }
-        assert { _state.value !is NotCompleted }
+        val state = _state.value
+        assert { state !is NotCompleted }
+        if (state is CompletedIdempotentResult) {
+            detachChild()
+            return false
+        }
         _decision.value = UNDECIDED
         _state.value = Active
+        return true
     }
 
     /**
@@ -170,12 +171,10 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     internal fun parentCancelled(cause: Throwable) {
-        /*
-         * Here we can't reliably say whether postponed cancellation will be successful, but as it's internal API
-         * and we do not rely on return value, we are free to return `true`.
-         */
         if (cancelLater(cause)) return
         cancel(cause)
+        // Even if cancellation has failed, we should detach child to avoid potential leak
+        detachChildIfNonResuable()
     }
 
     private inline fun invokeHandlerSafely(block: () -> Unit) {
@@ -347,10 +346,6 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     override fun tryResume(value: T, idempotent: Any?): Any? {
-        // Important invariant: if idempotent tryResume is used, then regular resume cannot be used, since the
-        // thread that invokes this tryResume install its descriptor into the pointer to the corresponding node first,
-        // so no other thread can find it and invoke resume.
-        if (idempotent != null) invalidateReusability()
         _state.loop { state ->
             when (state) {
                 is NotCompleted -> {

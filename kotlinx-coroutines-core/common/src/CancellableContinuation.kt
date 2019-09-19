@@ -253,7 +253,7 @@ internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): 
      *    thus leaking CC instance for indefinite time.
      * 2) Continuation was cancelled. Then we should prevent any further reuse and bail out.
      */
-    return delegate.claimReusableCancellableContinuation()?.apply { resetState() }
+    return delegate.claimReusableCancellableContinuation()?.takeIf { it.resetState() }
         ?: return CancellableContinuationImpl(delegate, MODE_ATOMIC_DEFAULT)
 }
 

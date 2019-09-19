@@ -5,6 +5,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.selects.*
 import org.junit.Test
 import kotlin.coroutines.*
 import kotlin.test.*
@@ -67,12 +68,11 @@ class ReusableCancellableContinuationTest : TestBase() {
         suspendAtomicCancellableCoroutineReusable<Unit> {
             expect(2)
             continuation = it
-            launch {
+            launch {  // Attach to the parent, avoid fast path
                 expect(3)
                 it.resume(Unit)
             }
         }
-        println("1")
         expect(4)
         ensureActive()
         // Verify child was bound
@@ -105,7 +105,7 @@ class ReusableCancellableContinuationTest : TestBase() {
     fun testResumeRegularDoesntPreservesReference() = runTest {
         expect(1)
         var cont: Continuation<Unit>? = null
-        launch {
+        launch { // Attach to the parent, avoid fast path
             cont!!.resumeWith(Result.success(Unit))
         }
         suspendAtomicCancellableCoroutine<Unit> {
@@ -130,5 +130,66 @@ class ReusableCancellableContinuationTest : TestBase() {
             assertFalse { FieldWalker.walk(coroutineContext[Job]!!).contains(cont!!) }
             finish(2)
         }
+    }
+
+    @Test
+    fun testPropagatedCancel() = runTest({it is CancellationException}) {
+        val currentJob = coroutineContext[Job]!!
+        expect(1)
+        // Bind child at first
+        suspendAtomicCancellableCoroutineReusable<Unit> {
+            expect(2)
+            // Attach to the parent, avoid fast path
+            launch {
+                expect(3)
+                it.resume(Unit)
+            }
+        }
+        expect(4)
+        ensureActive()
+        // Verify child was bound
+        assertEquals(1, FieldWalker.walk(currentJob).count { it is CancellableContinuation<*> })
+        currentJob.cancel()
+        assertFalse(isActive)
+        // Child detached
+        assertEquals(0, FieldWalker.walk(currentJob).count { it is CancellableContinuation<*> })
+        suspendAtomicCancellableCoroutineReusable<Unit> { it.resume(Unit) }
+        suspendAtomicCancellableCoroutineReusable<Unit> { it.resume(Unit) }
+        assertEquals(0, FieldWalker.walk(currentJob).count { it is CancellableContinuation<*> })
+
+        try {
+            suspendAtomicCancellableCoroutineReusable<Unit> {}
+        } catch (e: CancellationException) {
+            assertEquals(0, FieldWalker.walk(currentJob).count { it is CancellableContinuation<*> })
+            finish(5)
+        }
+    }
+
+    @Test
+    fun testChannelMemoryLeak() = runTest {
+        val iterations = 100
+        val channel = Channel<Unit>()
+        launch {
+            repeat(iterations) {
+                select {
+                    channel.onSend(Unit) {}
+                }
+            }
+        }
+
+        val receiver = launch {
+            repeat(iterations) {
+                channel.receive()
+            }
+            expect(2)
+            val job = coroutineContext[Job]!!
+            // 1 for reusable CC, another one for outer joiner
+            assertEquals(2, FieldWalker.walk(job).count { it is CancellableContinuation<*> })
+        }
+        expect(1)
+        receiver.join()
+        // Reference should be claimed at this point
+        assertEquals(0, FieldWalker.walk(receiver).count { it is CancellableContinuation<*> })
+        finish(3)
     }
 }
