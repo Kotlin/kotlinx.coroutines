@@ -150,7 +150,7 @@ class CompletableTest : TestBase() {
 
     @Test
     fun testFatalExceptionInSubscribe() = runTest {
-        GlobalScope.rxCompletable(Dispatchers.Unconfined + CoroutineExceptionHandler{ _, e -> assertTrue(e is LinkageError); expect(2)}) {
+        rxCompletable(Dispatchers.Unconfined + CoroutineExceptionHandler{ _, e -> assertTrue(e is LinkageError); expect(2)}) {
             expect(1)
             42
         }.subscribe({ throw LinkageError() })
@@ -159,7 +159,7 @@ class CompletableTest : TestBase() {
 
     @Test
     fun testFatalExceptionInSingle() = runTest {
-        GlobalScope.rxCompletable(Dispatchers.Unconfined) {
+        rxCompletable(Dispatchers.Unconfined) {
             throw LinkageError()
         }.subscribe({ expectUnreached()  }, { expect(1); assertTrue(it is LinkageError) })
         finish(2)

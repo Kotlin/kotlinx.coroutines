@@ -20,7 +20,6 @@ import org.reactivestreams.*
  * @param request how many items to request from publisher in advance (optional, one by default).
  */
 @ObsoleteCoroutinesApi
-@Suppress("CONFLICTING_OVERLOADS")
 public fun <T> Publisher<T>.openSubscription(request: Int = 1): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>(request)
     subscribe(channel)
@@ -28,7 +27,7 @@ public fun <T> Publisher<T>.openSubscription(request: Int = 1): ReceiveChannel<T
 }
 
 // Will be promoted to error in 1.3.0, removed in 1.4.0
-@Deprecated(message = "Use collect instead", level = DeprecationLevel.WARNING, replaceWith = ReplaceWith("this.collect(action)"))
+@Deprecated(message = "Use collect instead", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("this.collect(action)"))
 public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) =
     openSubscription().consumeEach(action)
 
@@ -36,7 +35,6 @@ public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) =
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  * Cancels subscription if any exception happens during collect.
  */
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
 public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit) =
     openSubscription().consumeEach(action)
 

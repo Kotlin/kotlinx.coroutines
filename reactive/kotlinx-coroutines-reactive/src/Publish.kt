@@ -48,7 +48,7 @@ public fun <T> publish(
 
 @Deprecated(
     message = "CoroutineScope.publish is deprecated in favour of top-level publish",
-    level = DeprecationLevel.WARNING,
+    level = DeprecationLevel.ERROR,
     replaceWith = ReplaceWith("publish(context, block)")
 ) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0. Binary compatibility with Spring
 @LowPriorityInOverloadResolution

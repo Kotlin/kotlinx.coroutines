@@ -201,7 +201,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testFatalExceptionInSubscribe() = runTest {
-        GlobalScope.rxSingle(Dispatchers.Unconfined + CoroutineExceptionHandler { _, e -> assertTrue(e is LinkageError); expect(2) }) {
+        rxSingle(Dispatchers.Unconfined + CoroutineExceptionHandler { _, e -> assertTrue(e is LinkageError); expect(2) }) {
             expect(1)
             42
         }.subscribe(Consumer {
@@ -212,7 +212,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testFatalExceptionInSingle() = runTest {
-        GlobalScope.rxSingle(Dispatchers.Unconfined) {
+        rxSingle(Dispatchers.Unconfined) {
             throw LinkageError()
         }.subscribe({ _, e ->  assertTrue(e is LinkageError); expect(1) })
 
