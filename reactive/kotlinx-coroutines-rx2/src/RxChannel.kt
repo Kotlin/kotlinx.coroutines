@@ -7,7 +7,6 @@ package kotlinx.coroutines.rx2
 import io.reactivex.*
 import io.reactivex.disposables.*
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 
@@ -15,10 +14,10 @@ import kotlinx.coroutines.internal.*
  * Subscribes to this [MaybeSource] and returns a channel to receive elements emitted by it.
  * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this source.
  *
- * **Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.**
- *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
+ * This API is deprecated in the favour of [Flow].
+ * [MaybeSource] doesn't have a corresponding [Flow] adapter, so it should be transformed to [Observable] first.
  */
-@ObsoleteCoroutinesApi
+@Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.WARNING) // Will be hidden in 1.4
 public fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     subscribe(channel)
@@ -29,10 +28,10 @@ public fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
  * Subscribes to this [ObservableSource] and returns a channel to receive elements emitted by it.
  * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this source.
  *
- * **Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.**
- *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
+ * This API is deprecated in the favour of [Flow].
+ * [ObservableSource] doesn't have a corresponding [Flow] adapter, so it should be transformed to [Observable] first.
  */
-@ObsoleteCoroutinesApi
+@Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.WARNING) // Will be hidden in 1.4
 public fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     subscribe(channel)

@@ -4,14 +4,22 @@ Utilities for [Reactor](https://projectreactor.io).
 
 Coroutine builders:
 
-| **Name**        | **Result**                            | **Scope**        | **Description**
-| --------------- | -------------------------------------- | ---------------- | ---------------
-| [mono]          | `Mono`                                 | [CoroutineScope] | Cold mono that starts coroutine on subscribe
-| [flux]          | `Flux`                                 | [CoroutineScope] | Cold flux that starts coroutine on subscribe
+| **Name**        | **Result**  | **Scope**        | **Description**
+| --------------- | ------------| ---------------- | ---------------
+| [mono]          | `Mono`      | [CoroutineScope] | Cold mono that starts coroutine on subscribe
+| [flux]          | `Flux`      | [CoroutineScope] | Cold flux that starts coroutine on subscribe
 
 Note that `Mono` and `Flux` are a subclass of [Reactive Streams](https://www.reactive-streams.org)
 `Publisher` and extensions for it are covered by
 [kotlinx-coroutines-reactive](../kotlinx-coroutines-reactive) module.
+
+Integration with [Flow]:
+
+| **Name**        | **Result**     | **Description**
+| --------------- | -------------- | ---------------
+| [Flow.asFlux]   | `Flux`         | Converts the given flow to the TCK-compliant Flux.
+
+This adapter is integrated with Reactor's `Context` and coroutines [ReactiveContext].
 
 Conversion functions:
 
@@ -31,6 +39,7 @@ Conversion functions:
 <!--- INDEX kotlinx.coroutines.reactor -->
 [mono]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/mono.html
 [flux]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/flux.html
+[Flow.asFlux]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/kotlinx.coroutines.flow.-flow/as-flux.html
 [kotlinx.coroutines.Job.asMono]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/kotlinx.coroutines.-job/as-mono.html
 [kotlinx.coroutines.Deferred.asMono]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/kotlinx.coroutines.-deferred/as-mono.html
 [kotlinx.coroutines.channels.ReceiveChannel.asFlux]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/kotlinx.coroutines.channels.-receive-channel/as-flux.html

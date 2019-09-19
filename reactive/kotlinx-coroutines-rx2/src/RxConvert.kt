@@ -67,13 +67,11 @@ public fun <T : Any> Deferred<T>.asSingle(context: CoroutineContext): Single<T> 
  *
  * Every subscriber receives values from this channel in **fan-out** fashion. If the are multiple subscribers,
  * they'll receive values in round-robin way.
- *
- * **Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.**
- *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
- *
- * @param context -- the coroutine context from which the resulting observable is going to be signalled
  */
-@ObsoleteCoroutinesApi
+@Deprecated(
+    message = "Deprecated in the favour of Flow",
+    level = DeprecationLevel.WARNING, replaceWith = ReplaceWith("this.consumeAsFlow().asObservable()")
+)
 public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = rxObservable(context) {
     for (t in this@asObservable)
         send(t)

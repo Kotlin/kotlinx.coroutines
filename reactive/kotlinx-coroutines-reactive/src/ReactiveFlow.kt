@@ -17,17 +17,23 @@ import kotlin.coroutines.*
 /**
  * Transforms the given reactive [Publisher] into [Flow].
  * Use [buffer] operator on the resulting flow to specify the size of the backpressure.
- * More precisely, to it specifies the value of the subscription's [request][Subscription.request].
+ * More precisely, it specifies the value of the subscription's [request][Subscription.request].
  * `1` is used by default.
  *
  * If any of the resulting flow transformations fails, subscription is immediately cancelled and all in-flights elements
  * are discarded.
+ *
+ * This function is integrated with `ReactorContext` from `kotlinx-coroutines-reactor` module,
+ * see its documentation for additional details.
  */
 public fun <T : Any> Publisher<T>.asFlow(): Flow<T> =
     PublisherAsFlow(this, 1)
 
 /**
- * Transforms the given flow to a spec-compliant [Publisher].
+ * Transforms the given flow to a reactive specification compliant [Publisher].
+ *
+ * This function is integrated with `ReactorContext` from `kotlinx-coroutines-reactor` module,
+ * see its documentation for additional details.
  */
 public fun <T : Any> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
 
