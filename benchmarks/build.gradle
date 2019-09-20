@@ -80,7 +80,7 @@ dependencies {
 }
 
 task runBfsChannelBenchmark(type : JavaExec) {
-    main = 'bfschannel.BfsChannelBenchmark'
+    main = 'benchmarks.bfschannel.BfsChannelBenchmark'
     jvmArgs '-Xmx10G'
     classpath sourceSets.main.runtimeClasspath
 }
