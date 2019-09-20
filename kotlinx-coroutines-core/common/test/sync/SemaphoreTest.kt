@@ -144,36 +144,59 @@ class SemaphoreTest : TestBase() {
 
     @Test
     fun testSingleReleaseDoesNotResumeMultipleAcquirers() = runTest {
+        val acquires = 5
         val permits = 5
         val semaphore = Semaphore(permits, permits)
         assertEquals(0, semaphore.availablePermits)
-        var criticalSection = false
-        val job = launch {
-            semaphore.acquire(permits)
-            criticalSection = true
+        val criticalSections = Array(acquires) { false }
+        val jobs = mutableListOf<Job>()
+        repeat(acquires) { i ->
+            jobs += launch {
+                expect(2 + i)
+                semaphore.acquire(permits)
+                criticalSections[i] = true
+                expect(2 + i + acquires)
+            }
         }
+        expect(1)
+        yield()
         assertEquals(0, semaphore.availablePermits)
-        repeat(permits - 1) {
+        fun testFairness(i: Int) {
+            for (k in 0 until i) {
+                assertEquals(true, criticalSections[k])
+            }
+            for (k in i + 1 until acquires) {
+                assertEquals(false, criticalSections[k])
+            }
+        }
+        repeat(acquires) { i ->
+            repeat(permits - 1) {
+                semaphore.release()
+                testFairness(i)
+                assertEquals(0, semaphore.availablePermits)
+            }
             semaphore.release()
-            assertEquals(false, criticalSection)
-            assertEquals(it + 1, semaphore.availablePermits)
+            jobs[i].join()
+            testFairness(i)
+            assertEquals(0, semaphore.availablePermits)
         }
-        semaphore.release()
-        job.join()
-        assertEquals(true, criticalSection)
-        assertEquals(0, semaphore.availablePermits)
+        semaphore.release(permits)
+        assertEquals(permits, semaphore.availablePermits)
+        finish(1 + acquires + acquires + 1)
     }
 
     @Test
     fun testCancellationDoesNotResumeWaitingAcquirers() = runTest {
         val semaphore = Semaphore(1)
         semaphore.acquire()
-        val job1 = launch { // 1st job in the waiting queue
+        val job1 = launch {
+            // 1st job in the waiting queue
             expect(2)
             semaphore.acquire()
             expectUnreached()
         }
-        val job2 = launch { // 2nd job in the waiting queue
+        val job2 = launch {
+            // 2nd job in the waiting queue
             expect(3)
             semaphore.acquire()
             expectUnreached()
