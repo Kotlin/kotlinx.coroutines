@@ -107,8 +107,8 @@ private class SemaphoreImpl(
      * and the maximum number of waiting acquirers cannot be greater than 2^31 in any
      * real application.
      */
-    private val _availablePermits = atomic(permits - acquiredPermits)
-    override val availablePermits: Int get() = max(_availablePermits.value, 0)
+    private val permitsBalance = atomic(permits - acquiredPermits)
+    override val availablePermits: Int get() = max(permitsBalance.value, 0)
 
     // The queue of waiting acquirers is essentially an infinite array based on `SegmentQueue`;
     // each segment contains a fixed number of slots. To determine a slot for each enqueue
@@ -118,11 +118,16 @@ private class SemaphoreImpl(
     private val enqIdx = atomic(0L)
     private val deqIdx = atomic(0L)
 
+    /**
+     * The remaining permits from release operations, which could not be spent, because the next slot was not defined
+     */
+    internal val accumulator = atomic(0)
+
     override fun tryAcquire(permits: Int): Boolean {
         require(permits > 0) { "The number of acquired permits must be greater than 0" }
-        _availablePermits.loop { p ->
+        permitsBalance.loop { p ->
             if (p < permits) return false
-            if (_availablePermits.compareAndSet(p, p - permits)) return true
+            if (permitsBalance.compareAndSet(p, p - permits)) return true
         }
     }
 
@@ -142,12 +147,13 @@ private class SemaphoreImpl(
         }
     }
 
-    fun incPermits(delta: Int = 1) = _availablePermits.getAndUpdate { cur ->
+    internal fun incPermits(delta: Int = 1) = permitsBalance.getAndUpdate { cur ->
+        assert { delta >= 1 }
         check(cur + delta <= permits) { "The number of released permits cannot be greater than $permits" }
         cur + delta
     }
 
-    private suspend fun addToQueueAndSuspend() = suspendAtomicCancellableCoroutine<Unit> sc@ { cont ->
+    private suspend fun tryToAddToQueue(permits: Int) = suspendAtomicCancellableCoroutine<Unit> sc@{ cont ->
         val last = this.tail
         val enqIdx = enqIdx.getAndIncrement()
         val segment = getSegment(last, enqIdx / SEGMENT_SIZE)

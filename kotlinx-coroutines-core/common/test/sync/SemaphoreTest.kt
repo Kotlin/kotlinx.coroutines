@@ -143,6 +143,28 @@ class SemaphoreTest : TestBase() {
     }
 
     @Test
+    fun testSingleReleaseDoesNotResumeMultipleAcquirers() = runTest {
+        val permits = 5
+        val semaphore = Semaphore(permits, permits)
+        assertEquals(0, semaphore.availablePermits)
+        var criticalSection = false
+        val job = launch {
+            semaphore.acquire(permits)
+            criticalSection = true
+        }
+        assertEquals(0, semaphore.availablePermits)
+        repeat(permits - 1) {
+            semaphore.release()
+            assertEquals(false, criticalSection)
+            assertEquals(it + 1, semaphore.availablePermits)
+        }
+        semaphore.release()
+        job.join()
+        assertEquals(true, criticalSection)
+        assertEquals(0, semaphore.availablePermits)
+    }
+
+    @Test
     fun testCancellationDoesNotResumeWaitingAcquirers() = runTest {
         val semaphore = Semaphore(1)
         semaphore.acquire()
