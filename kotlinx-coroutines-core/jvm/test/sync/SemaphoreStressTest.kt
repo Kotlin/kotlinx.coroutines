@@ -2,13 +2,12 @@ package kotlinx.coroutines.sync
 
 import kotlinx.coroutines.*
 import org.junit.Test
-import org.junit.After
 import kotlin.test.assertEquals
 
 class SemaphoreStressTest : TestBase() {
 
     @Test
-    fun stressTestAsMutex() = runTest {
+    fun stressTestAsMutex() = runBlocking(Dispatchers.Default) {
         val n = 10_000 * stressTestMultiplier
         val k = 100
         var shared = 0
@@ -27,7 +26,7 @@ class SemaphoreStressTest : TestBase() {
     }
 
     @Test
-    fun stressTest() = runTest {
+    fun stressTest() = runBlocking(Dispatchers.Default) {
         val n = 10_000 * stressTestMultiplier
         val k = 100
         val semaphore = Semaphore(10)
@@ -43,7 +42,7 @@ class SemaphoreStressTest : TestBase() {
     }
 
     @Test
-    fun stressCancellation() = runTest {
+    fun stressCancellation() = runBlocking(Dispatchers.Default) {
         val n = 10_000 * stressTestMultiplier
         val semaphore = Semaphore(1)
         semaphore.acquire()
