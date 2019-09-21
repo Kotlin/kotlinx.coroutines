@@ -4,7 +4,6 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
-import kotlin.jvm.*
 import kotlin.math.*
 
 /**
@@ -162,8 +161,11 @@ private class SemaphoreImpl(
             cont.resume(Unit)
         } else {
             val slotId = (enqueueId % SEGMENT_SIZE).toInt()
-            val prevSlot = segment.slots[slotId].getAndSet(Slot(State.SUSPEND, permits, cont))
-            // The assertion is true, cause [RESUMED] can be set up only after [SUSPEND]
+            val prevCont = segment.continuations[slotId].getAndSet(cont)
+            // It is safe to set continuation, because this slot is not defined yet, so another threads can not use it
+            assert { prevCont == null }
+            val prevSlot = segment.slots[slotId].getAndSet(permits)
+            // The assertion is true, cause [RESUMED] can be set up only after [SUSPENDED]
             // and [CANCELLED] can be set up only in the handler, which will be added next
             assert { prevSlot == null }
             cont.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(this, segment, slotId, permits).asHandler)
@@ -173,10 +175,10 @@ private class SemaphoreImpl(
     }
 
     internal fun tryToResumeFromQueue(permits: Int) {
-        accumulator.getAndAdd(permits)  // add thread permits to common accumulator
-        var remain = accumulator.getAndSet(0) // try to take possession of all the accumulated permits at the moment
+        val accumulated = accumulator.getAndSet(0) // try to take possession of all the accumulated permits at the moment
+        var remain = permits + accumulated
         if (remain == 0) {
-            // another thread stole permits
+            // The accumulator had not any permits or the another thread stole permits. Also this method called with zero permits.
             return
         }
         try_again@ while (true) {
@@ -197,7 +199,7 @@ private class SemaphoreImpl(
                 accumulator.addAndGet(remain)
                 return
             }
-            if (slot.state == State.CANCELLED) {
+            if (slot == CANCELLED) {
                 // The slot was cancelled in the another thread
                 // Try to help to increment [deqIdx] once, because multiple threads can increment the [deqIdx] in parallel otherwise
                 if (deqIdx.compareAndSet(dequeueId, dequeueId + 1)) {
@@ -205,24 +207,21 @@ private class SemaphoreImpl(
                 }
                 continue@try_again
             }
-            if (slot.state == State.RESUMED) {
-                assert { slot.permits == 0 }
+            if (slot == RESUMED) {
                 // The slot was updated in the another thread
                 // The another thread was supposed to increment [deqIdx]
                 continue@try_again
             }
-            val diff = min(slot.permits, remain) // How many permits we can spent for the slot at most
-            val newPermits = slot.permits - diff
-            val newState = if (newPermits == 0) State.RESUMED else slot.state
-            val newSlot = Slot(newState, newPermits, slot.cont)
+            val diff = min(slot, remain) // How many permits we can spent for the slot at most
+            val newSlot = slot - diff
             if (!segment.slots[slotId].compareAndSet(slot, newSlot)) {
                 // The slot was updated in another thread, let's try again
-                continue
+                continue@try_again
             }
             // Here we successfully updated the slot
             remain -= diff // remove spent permits
-            if (newState == State.RESUMED) {
-                slot.cont.resume(Unit)
+            if (newSlot == RESUMED) {
+                segment.continuations[slotId].value!!.resume(Unit)
                 removeSegmentIfNeeded(segment, deqIdx.incrementAndGet())
             }
             if (remain == 0) {
@@ -251,30 +250,6 @@ private class SemaphoreImpl(
     }
 }
 
-private enum class State {
-    SUSPEND,
-    RESUMED,
-    CANCELLED
-}
-
-private data class Slot(
-        val state: State,
-        /**
-         * Remaining permits to resume slot
-         */
-        val permits: Int,
-        val cont: CancellableContinuation<Unit>
-) {
-    init {
-        assert { permits >= 0 }
-        assert { permits != 0 || state == State.RESUMED }
-    }
-
-    override fun toString(): String {
-        return "Slot($state, $permits)"
-    }
-}
-
 /**
  *  Cleans the acquirer slot located by the specified index and removes this segment physically if all slots are cleaned.
  */
@@ -285,23 +260,23 @@ private class CancelSemaphoreAcquisitionHandler(
         private val permits: Int
 ) : CancelHandler() {
     override fun invoke(cause: Throwable?) {
-        // Don't wait and use [prevSlot.permits] to handle permits, because it start races with release (see StressTest)
+        // Don't wait and use [prevSlot] to handle permits, because it starts races with release (see StressTest)
         val p = semaphore.incPermits(permits)
         if (p >= 0) return
         // Copy [slotId] to local variable to prevent exception:
         // "Complex data flow is not allowed for calculation of an array element index at the point of loading the reference to this element."
         val temp = slotId
-        val prevSlot = segment.slots[temp].getAndUpdate { Slot(State.CANCELLED, it!!.permits, it.cont) }
-        // The assertion is true, cause the slot has [SUSPEND] state at least
+        val prevSlot = segment.slots[temp].getAndSet(CANCELLED)
+        // The assertion is true, cause the slot has [SUSPENDED] state at least
         assert { prevSlot != null }
 
         // Remove this segment if needed
         if (segment.cancelledSlots.incrementAndGet() == SEGMENT_SIZE) {
             segment.remove()
         }
-        if (prevSlot!!.state == State.RESUMED) {
-            // The slot has already resumed, so return free permits to semaphore
-            semaphore.tryToResumeFromQueue(prevSlot.permits)
+        if (prevSlot == RESUMED) {
+            // The slot has already resumed, so return free permits to the semaphore
+            semaphore.tryToResumeFromQueue(prevSlot)
         }
     }
 
@@ -309,7 +284,15 @@ private class CancelSemaphoreAcquisitionHandler(
 }
 
 private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?) : Segment<SemaphoreSegment>(id, prev) {
-    val slots = atomicArrayOfNulls<Slot>(SEGMENT_SIZE)
+    val continuations = atomicArrayOfNulls<CancellableContinuation<Unit>>(SEGMENT_SIZE)
+    /**
+     * Each slot can contain one of following values:
+     * 1. A number greater than zero. It is [SUSPENDED] state;
+     * 2. Zero. It is [RESUMED] state;
+     * 3. "-1". It is [CANCELLED] state;
+     * 4. "null". The slot is not defined yet.
+     */
+    val slots = atomicArrayOfNulls<Int>(SEGMENT_SIZE)
     val cancelledSlots = atomic(0)
     override val removed get() = cancelledSlots.value == SEGMENT_SIZE
 
@@ -319,4 +302,8 @@ private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?) : Segment<Sema
 }
 
 @SharedImmutable
-private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.semaphore.segmentSize", 16)
+private val RESUMED = 0
+@SharedImmutable
+private val CANCELLED = -1
+@SharedImmutable
+private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.semaphore.segmentSize", 1)
