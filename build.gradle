@@ -62,7 +62,6 @@ buildscript {
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
-        classpath "io.spring.gradle:dependency-management-plugin:$spring_dependency_management_version"
 
         // JMH plugins
         classpath "com.github.jengelman.gradle.plugins:shadow:5.1.0"
