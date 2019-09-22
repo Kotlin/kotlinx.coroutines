@@ -143,7 +143,6 @@ internal class ArrayBroadcastChannel<E>(
     private tailrec fun updateHead(addSub: Subscriber<E>? = null, removeSub: Subscriber<E>? = null) {
         // update head in a tail rec loop
         var send: Send? = null
-        var token: Any? = null
         bufferLock.withLock {
             if (addSub != null) {
                 addSub.subHead = tail // start from last element
@@ -172,8 +171,9 @@ internal class ArrayBroadcastChannel<E>(
                     while (true) {
                         send = takeFirstSendOrPeekClosed() ?: break // when when no sender
                         if (send is Closed<*>) break // break when closed for send
-                        token = send!!.tryResumeSend(null)
+                        val token = send!!.tryResumeSend(null)
                         if (token != null) {
+                            assert { token === RESUME_TOKEN }
                             // put sent element to the buffer
                             buffer[(tail % capacity).toInt()] = (send as Send).pollResult
                             this.size = size + 1
@@ -186,7 +186,7 @@ internal class ArrayBroadcastChannel<E>(
             return // done updating here -> return
         }
         // we only get out of the lock normally when there is a sender to resume
-        send!!.completeResumeSend(token!!)
+        send!!.completeResumeSend()
         // since we've just sent an element, we might need to resume some receivers
         checkSubOffers()
         // tailrec call to recheck
@@ -239,9 +239,9 @@ internal class ArrayBroadcastChannel<E>(
                 // it means that `checkOffer` must be retried after every `unlock`
                 if (!subLock.tryLock()) break
                 val receive: ReceiveOrClosed<E>?
-                val token: Any?
+                var result: Any?
                 try {
-                    val result = peekUnderLock()
+                    result = peekUnderLock()
                     when {
                         result === POLL_FAILED -> continue@loop // must retest `needsToCheckOfferWithoutLock` outside of the lock
                         result is Closed<*> -> {
@@ -252,15 +252,15 @@ internal class ArrayBroadcastChannel<E>(
                     // find a receiver for an element
                     receive = takeFirstReceiveOrPeekClosed() ?: break // break when no one's receiving
                     if (receive is Closed<*>) break // noting more to do if this sub already closed
-                    token = receive.tryResumeReceive(result as E, null)
-                    if (token == null) continue // bail out here to next iteration (see for next receiver)
+                    val token = receive.tryResumeReceive(result as E, null) ?: continue
+                    assert { token === RESUME_TOKEN }
                     val subHead = this.subHead
                     this.subHead = subHead + 1 // retrieved element for this subscriber
                     updated = true
                 } finally {
                     subLock.unlock()
                 }
-                receive!!.completeResumeReceive(token!!)
+                receive!!.completeResumeReceive(result as E)
             }
             // do close outside of lock if needed
             closed?.also { close(cause = it.closeCause) }
