@@ -87,10 +87,6 @@ public interface SelectClause2<in P, out Q> {
     public fun <R> registerSelectClause2(select: SelectInstance<R>, param: P, block: suspend (Q) -> R)
 }
 
-@JvmField
-@SharedImmutable
-internal val SELECT_STARTED: Any = Symbol("SELECT_STARTED")
-
 /**
  * Internal representation of select instance. This instance is called _selected_ when
  * the clause to execute is already picked.
@@ -111,7 +107,7 @@ public interface SelectInstance<in R> {
 
     /**
      * Tries to select this instance. Returns:
-     * * [SELECT_STARTED] on success,
+     * * [RESUME_TOKEN] on success,
      * * [RETRY_ATOMIC] on deadlock (needs retry, it is only possible when [otherOp] is not `null`)
      * * `null` on failure to select (already selected).
      * [otherOp] is not null when trying to rendezvous with this select from inside of another select.
@@ -370,7 +366,7 @@ internal class SelectBuilderImpl<in R>(
     override fun trySelect(): Boolean {
         val result = trySelectOther(null)
         return when {
-            result === SELECT_STARTED -> true
+            result === RESUME_TOKEN -> true
             result == null -> false
             else -> error("Unexpected trySelectIdempotent result $result")
         }
@@ -460,7 +456,7 @@ internal class SelectBuilderImpl<in R>(
      */
 
     // it is just like plain trySelect, but support idempotent start
-    // Returns SELECT_STARTED | RETRY_ATOMIC | null (when already selected)
+    // Returns RESUME_TOKEN | RETRY_ATOMIC | null (when already selected)
     override fun trySelectOther(otherOp: PrepareOp?): Any? {
         _state.loop { state -> // lock-free loop on state
             when {
@@ -477,7 +473,7 @@ internal class SelectBuilderImpl<in R>(
                         if (decision !== null) return decision
                     }
                     doAfterSelect()
-                    return SELECT_STARTED
+                    return RESUME_TOKEN
                 }
                 state is OpDescriptor -> { // state is either AtomicSelectOp or PairSelectOp
                     // Found descriptor of ongoing operation while working in the context of other select operation
@@ -512,7 +508,7 @@ internal class SelectBuilderImpl<in R>(
                 }
                 // otherwise -- already selected
                 otherOp == null -> return null // already selected
-                state === otherOp.desc -> return SELECT_STARTED // was selected with this marker
+                state === otherOp.desc -> return RESUME_TOKEN // was selected with this marker
                 else -> return null // selected with different marker
             }
         }
