@@ -2,23 +2,37 @@
  * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 plugins {
-    id 'io.spring.dependency-management'
+    id 'java-platform'
 }
 
 def name = project.name
 
-dependencyManagement {
-    dependencies {
+dependencies {
+    constraints {
         rootProject.subprojects.each {
-            if (ext.unpublished.contains(it.name)) return
+            if (rootProject.ext.unpublished.contains(it.name)) return
             if (it.name == name) return
             if (!it.plugins.hasPlugin('maven-publish')) return
             evaluationDependsOn(it.path)
             it.publishing.publications.all {
                 if (it.artifactId.endsWith("-kotlinMultiplatform")) return
                 if (it.artifactId.endsWith("-metadata")) return
-                dependency(group: it.groupId, name: it.artifactId, version: it.version)
+                // Skip platform artifacts (like *-linuxx64, *-macosx64)
+                // It leads to inconsistent bom when publishing from different platforms
+                // (e.g. on linux it will include only linuxx64 artifacts and no macosx64)
+                // It shouldn't be a problem as usually consumers need to use generic *-native artifact
+                // Gradle will choose correct variant by using metadata attributes
+                if (it.artifacts.any { it.extension == 'klib' }) return
+                api(group: it.groupId, name: it.artifactId, version: it.version)
             }
+        }
+    }
+}
+
+publishing {
+    publications {
+        mavenBom(MavenPublication) {
+            from components.javaPlatform
         }
     }
 }
