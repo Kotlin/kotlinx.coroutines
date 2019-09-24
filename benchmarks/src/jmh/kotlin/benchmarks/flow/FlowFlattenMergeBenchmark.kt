@@ -1,15 +1,23 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
 package benchmarks.flow
 
-import doWork
+import doGeomDistrWork
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.TimeUnit
 
-@Warmup(iterations = 3)
-@Measurement(iterations = 10)
+/**
+ * Benchmark to measure performance of [kotlinx.coroutines.flow.FlowKt.flattenMerge].
+ * In addition to that, it can be considered as a macro benchmark for the [kotlinx.coroutines.sync.Semaphore]
+ */
+@Warmup(iterations = 3, time = 1)
+@Measurement(iterations = 10, time = 1)
 @BenchmarkMode(Mode.Throughput)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Benchmark)
 @Fork(1)
 open class FlowFlattenMergeBenchmark {
@@ -35,7 +43,7 @@ open class FlowFlattenMergeBenchmark {
         flow = (1..n).asFlow().map {
             flow {
                 repeat(flowElementsToProcess) {
-                    doWork(WORK)
+                    doGeomDistrWork(WORK)
                     emit(it)
                 }
             }
@@ -43,10 +51,11 @@ open class FlowFlattenMergeBenchmark {
     }
 
     @Benchmark
-    fun flattenMerge() = runBlocking {
+    fun flattenMerge() = runBlocking(Dispatchers.Default) {
         flow.flattenMerge(concurrency = concurrency).collect()
     }
 }
 
+// If you change this variable please be sure that you change variable elements in the corresponding python script as well
 private const val ELEMENTS = 100_000
 private const val WORK = 80

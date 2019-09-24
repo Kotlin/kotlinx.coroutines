@@ -4,7 +4,7 @@
 
 import java.util.concurrent.ThreadLocalRandom
 
-fun doWork(work: Int) {
+fun doGeomDistrWork(work: Int) {
     // We use geometric distribution here
     val p = 1.0 / work
     val r = ThreadLocalRandom.current()

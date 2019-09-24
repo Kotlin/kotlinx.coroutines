@@ -40,7 +40,7 @@ def draw(data, plt):
         gen_marker = next(marker_gen)
         res = data[(data.flows == flows)]
         plt.plot(res.concurrency, res.score*elements, label="flows={}".format(flows), color=gen_colour, marker=gen_marker)
-        plt.errorbar(x=res.concurrency, y=res.score*elements, yerr=res.score_error*elements, solid_capstyle='projecting', capsize=5)
+        plt.errorbar(x=res.concurrency, y=res.score*elements, yerr=res.score_error*elements, solid_capstyle='projecting', capsize=5, color=gen_colour)
 
 data = pd.read_table(input_file, sep=",")
 data = data[csv_columns].rename(columns=rename_columns)

@@ -1,6 +1,6 @@
 package benchmarks
 
-import doWork
+import doGeomDistrWork
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher
@@ -50,9 +50,9 @@ open class SemaphoreBenchmark {
             jobs += GlobalScope.launch {
                 repeat(n) {
                     semaphore.withPermit {
-                        doWork(WORK_INSIDE)
+                        doGeomDistrWork(WORK_INSIDE)
                     }
-                    doWork(WORK_OUTSIDE)
+                    doGeomDistrWork(WORK_OUTSIDE)
                 }
             }
         }
@@ -68,9 +68,9 @@ open class SemaphoreBenchmark {
             jobs += GlobalScope.launch {
                 repeat(n) {
                     semaphore.send(Unit) // acquire
-                    doWork(WORK_INSIDE)
+                    doGeomDistrWork(WORK_INSIDE)
                     semaphore.receive() // release
-                    doWork(WORK_OUTSIDE)
+                    doGeomDistrWork(WORK_OUTSIDE)
                 }
             }
         }
@@ -85,5 +85,4 @@ enum class SemaphoreBenchDispatcherCreator(val create: (parallelism: Int) -> Cor
 
 private const val WORK_INSIDE = 80
 private const val WORK_OUTSIDE = 40
-// If you change this variable please be sure that you change variable elements in the corresponding python script as well
 private const val BATCH_SIZE = 1000000
