@@ -7,6 +7,7 @@ package kotlinx.coroutines
 import java.lang.reflect.*
 import java.util.*
 import java.util.Collections.*
+import kotlin.collections.ArrayList
 
 object FieldWalker {
 
@@ -22,12 +23,6 @@ object FieldWalker {
             val element = stack.removeLast()
             val type = element.javaClass
             type.visit(element, result, stack)
-
-            var superclass = type.superclass
-            while (superclass != Any::class.java && superclass != null) {
-                superclass.visit(element, result, stack)
-                superclass = superclass.superclass
-            }
         }
         return result
     }
@@ -56,9 +51,65 @@ object FieldWalker {
         }
     }
 
-    private fun Class<*>.fields() = declaredFields.filter {
-        !it.type.isPrimitive
-                && !Modifier.isStatic(it.modifiers)
-                && !(it.type.isArray && it.type.componentType.isPrimitive)
+    private fun Class<*>.fields(): List<Field> {
+        val result = ArrayList<Field>()
+        var type = this
+        while (type != Any::class.java) {
+            val fields = type.declaredFields.filter {
+                !it.type.isPrimitive
+                        && !Modifier.isStatic(it.modifiers)
+                        && !(it.type.isArray && it.type.componentType.isPrimitive)
+            }
+            result.addAll(fields)
+            type = type.superclass
+        }
+
+        return result
+    }
+
+    // Debugging-only
+    @Suppress("UNUSED")
+    fun printPath(from: Any, to: Any) {
+        val pathNodes = ArrayList<String>()
+        val visited = newSetFromMap<Any>(IdentityHashMap())
+        visited.add(from)
+        if (findPath(from, to, visited, pathNodes)) {
+            pathNodes.reverse()
+            println(pathNodes.joinToString(" -> ", from.javaClass.simpleName + " -> ", "-> " + to.javaClass.simpleName))
+        } else {
+            println("Path from $from to $to not found")
+        }
+    }
+
+    private fun findPath(from: Any, to: Any, visited: MutableSet<Any>, pathNodes: MutableList<String>): Boolean {
+        if (from === to) {
+            return true
+        }
+
+        val type = from.javaClass
+        if (type.isArray) {
+            if (type.componentType.isPrimitive) return false
+            val array = from as Array<Any?>
+            array.filterNotNull().forEach {
+                if (findPath(it, to, visited, pathNodes)) {
+                    return true
+                }
+            }
+            return false
+        }
+
+        val fields = type.fields()
+        fields.forEach {
+            it.isAccessible = true
+            val value = it.get(from) ?: return@forEach
+            if (!visited.add(value)) return@forEach
+            val found = findPath(value, to, visited, pathNodes)
+            if (found) {
+                pathNodes += from.javaClass.simpleName + ":" + it.name
+                return true
+            }
+        }
+
+        return false
     }
 }

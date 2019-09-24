@@ -31,7 +31,7 @@ internal class DispatchedContinuation<in T>(
      * Possible states of reusability:
      *
      * 1) `null`. Cancellable continuation wasn't yet attempted to be reused or
-     *     way used and then invalidated (e.g. because of the cancellation).
+     *     was used and then invalidated (e.g. because of the cancellation).
      * 2) [CancellableContinuation]. Continuation to be/that is being reused.
      * 3) [REUSABLE_CLAIMED]. CC is currently being reused and its owner executes `suspend` block:
      *    ```
@@ -91,7 +91,7 @@ internal class DispatchedContinuation<in T>(
                         return state as CancellableContinuationImpl<T>
                     }
                 }
-                else ->  error("Inconsistent state $state")
+                else -> error("Inconsistent state $state")
             }
         }
     }
@@ -114,13 +114,15 @@ internal class DispatchedContinuation<in T>(
         _reusableCancellableContinuation.loop { state ->
             // not when(state) to avoid Intrinsics.equals call
             when {
-                state === REUSABLE_CLAIMED -> if (_reusableCancellableContinuation.compareAndSet(REUSABLE_CLAIMED, continuation)) return null
+                state === REUSABLE_CLAIMED -> {
+                    if (_reusableCancellableContinuation.compareAndSet(REUSABLE_CLAIMED, continuation)) return null
+                }
                 state === null -> return null
                 state is Throwable -> {
                     require(_reusableCancellableContinuation.compareAndSet(state, null))
                     return state
                 }
-                else -> return null // Is not reusable
+                else -> error("Inconsistent state $state")
             }
         }
     }
