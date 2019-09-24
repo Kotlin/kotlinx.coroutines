@@ -4,10 +4,10 @@
 
 package kotlinx.coroutines.channels
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
-import kotlin.jvm.*
 
 /**
  * Broadcast channel with array buffer of a fixed [capacity].
@@ -44,12 +44,21 @@ internal class ArrayBroadcastChannel<E>(
 
     // head & tail are Long (64 bits) and we assume that they never wrap around
     // head, tail, and size are guarded by bufferLock
-    @Volatile
-    private var head: Long = 0 // do modulo on use of head
-    @Volatile
-    private var tail: Long = 0 // do modulo on use of tail
-    @Volatile
-    private var size: Int = 0
+
+    private val _head = atomic(0L)
+    private var head: Long // do modulo on use of head
+        get() = _head.value
+        set(value) { _head.value = value }
+
+    private val _tail = atomic(0L)
+    private var tail: Long // do modulo on use of tail
+        get() = _tail.value
+        set(value) { _tail.value = value }
+    
+    private val _size = atomic(0)
+    private var size: Int
+        get() = _size.value
+        set(value) { _size.value = value }
 
     private val subscribers = subscriberList<Subscriber<E>>()
 
@@ -199,9 +208,10 @@ internal class ArrayBroadcastChannel<E>(
     ) : AbstractChannel<E>(), ReceiveChannel<E> {
         private val subLock = ReentrantLock()
 
-        @Volatile
-        @JvmField
-        var subHead: Long = 0 // guarded by subLock
+        private val _subHead = atomic(0L)
+        var subHead: Long // guarded by subLock
+            get() = _subHead.value
+            set(value) { _subHead.value = value }
 
         override val isBufferAlwaysEmpty: Boolean get() = false
         override val isBufferEmpty: Boolean get() = subHead >= broadcastChannel.tail

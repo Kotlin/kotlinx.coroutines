@@ -4,10 +4,10 @@
 
 package kotlinx.coroutines.channels
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
-import kotlin.jvm.*
 import kotlin.math.*
 
 /**
@@ -36,8 +36,11 @@ internal open class ArrayChannel<E>(
      */
     private var buffer: Array<Any?> = arrayOfNulls<Any?>(min(capacity, 8))
     private var head: Int = 0
-    @Volatile
-    private var size: Int = 0 // Invariant: size <= capacity
+
+    private val _size = atomic(0)
+    private var size: Int // Invariant: size <= capacity
+        get() = _size.value
+        set(value) { _size.value = value }
 
     protected final override val isBufferAlwaysEmpty: Boolean get() = false
     protected final override val isBufferEmpty: Boolean get() = size == 0
