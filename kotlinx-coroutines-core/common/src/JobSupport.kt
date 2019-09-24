@@ -127,9 +127,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // Note: use shared objects while we have no listeners
     private val _state = atomic<Any?>(if (active) EMPTY_ACTIVE else EMPTY_NEW)
 
-    @Volatile
-    @JvmField
-    internal var parentHandle: ChildHandle? = null
+    private val _parentHandle = atomic<ChildHandle?>(null)
+    internal var parentHandle: ChildHandle?
+        get() = _parentHandle.value
+        set(value) { _parentHandle.value = value }
 
     // ------------ initialization ------------
 
@@ -1019,23 +1020,33 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     @Suppress("UNCHECKED_CAST")
     private class Finishing(
         override val list: NodeList,
-        @Volatile
-        @JvmField var isCompleting: Boolean,
-        @Volatile
-        @JvmField var rootCause: Throwable? // NOTE: rootCause is kept even when SEALED
+        isCompleting: Boolean,
+        rootCause: Throwable?
     ) : SynchronizedObject(), Incomplete {
-        @Volatile
-        private var _exceptionsHolder: Any? = null // Contains null | Throwable | ArrayList | SEALED
+        private val _isCompleting = atomic(isCompleting)
+        var isCompleting: Boolean
+            get() = _isCompleting.value
+            set(value) { _isCompleting.value = value }
+
+        private val _rootCause = atomic(rootCause)
+        var rootCause: Throwable? // NOTE: rootCause is kept even when SEALED
+            get() = _rootCause.value
+            set(value) { _rootCause.value = value }
+
+        private val _exceptionsHolder = atomic<Any?>(null)
+        private var exceptionsHolder: Any? // Contains null | Throwable | ArrayList | SEALED
+            get() = _exceptionsHolder.value
+            set(value) { _exceptionsHolder.value = value }
 
         // NotE: cannot be modified when sealed
-        val isSealed: Boolean get() = _exceptionsHolder === SEALED
+        val isSealed: Boolean get() = exceptionsHolder === SEALED
         val isCancelling: Boolean get() = rootCause != null
         override val isActive: Boolean get() = rootCause == null // !isCancelling
 
         // Seals current state and returns list of exceptions
         // guarded by `synchronized(this)`
         fun sealLocked(proposedException: Throwable?): List<Throwable> {
-            val list = when(val eh = _exceptionsHolder) { // volatile read
+            val list = when(val eh = exceptionsHolder) { // volatile read
                 null -> allocateList()
                 is Throwable -> allocateList().also { it.add(eh) }
                 is ArrayList<*> -> eh as ArrayList<Throwable>
@@ -1044,7 +1055,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             val rootCause = this.rootCause // volatile read
             rootCause?.let { list.add(0, it) } // note -- rootCause goes to the beginning
             if (proposedException != null && proposedException != rootCause) list.add(proposedException)
-            _exceptionsHolder = SEALED
+            exceptionsHolder = SEALED
             return list
         }
 
@@ -1056,11 +1067,11 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                 return
             }
             if (exception === rootCause) return // nothing to do
-            when (val eh = _exceptionsHolder) { // volatile read
-                null -> _exceptionsHolder = exception
+            when (val eh = exceptionsHolder) { // volatile read
+                null -> exceptionsHolder = exception
                 is Throwable -> {
                     if (exception === eh) return // nothing to do
-                    _exceptionsHolder = allocateList().apply {
+                    exceptionsHolder = allocateList().apply {
                         add(eh)
                         add(exception)
 
@@ -1074,7 +1085,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         private fun allocateList() = ArrayList<Throwable>(4)
 
         override fun toString(): String =
-            "Finishing[cancelling=$isCancelling, completing=$isCompleting, rootCause=$rootCause, exceptions=$_exceptionsHolder, list=$list]"
+            "Finishing[cancelling=$isCancelling, completing=$isCompleting, rootCause=$rootCause, exceptions=$exceptionsHolder, list=$list]"
     }
 
     private val Incomplete.isCancelling: Boolean

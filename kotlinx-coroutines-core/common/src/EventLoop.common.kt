@@ -182,15 +182,16 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
     // Allocated only only once
     private val _delayed = atomic<DelayedTaskQueue?>(null)
 
-    @Volatile
-    private var isCompleted = false
+    private val _isCompleted = atomic(false)
+    private var isCompleted
+        get() = _isCompleted.value
+        set(value) { _isCompleted.value = value }
 
     override val isEmpty: Boolean get() {
         if (!isUnconfinedQueueEmpty) return false
         val delayed = _delayed.value
         if (delayed != null && !delayed.isEmpty) return false
-        val queue = _queue.value
-        return when (queue) {
+        return when (val queue = _queue.value) {
             null -> true
             is Queue<*> -> queue.isEmpty
             else -> queue === CLOSED_EMPTY

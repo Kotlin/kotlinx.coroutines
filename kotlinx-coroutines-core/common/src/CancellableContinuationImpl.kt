@@ -63,8 +63,10 @@ internal open class CancellableContinuationImpl<in T>(
      */
     private val _state = atomic<Any?>(Active)
 
-    @Volatile
-    private var parentHandle: DisposableHandle? = null
+    private val _parentHandle = atomic<DisposableHandle?>(null)
+    private var parentHandle: DisposableHandle?
+        get() = _parentHandle.value
+        set(value) { _parentHandle.value = value }
 
     internal val state: Any? get() = _state.value
 
