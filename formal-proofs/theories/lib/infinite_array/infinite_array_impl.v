@@ -92,12 +92,12 @@ Definition segment_cancell_cell: val :=
             else #().
 
 Definition cell_ref_loc : val :=
-  λ: "c", let: "seg" := Fst !"c" in
-          let: "idx" := Snd !"c" in
+  λ: "c", let: "seg" := Fst "c" in
+          let: "idx" := Snd "c" in
           segment_data_at "seg" "idx".
 
 Definition cell_ref_cutoff : val :=
-  λ: "c", segment_cutoff (Fst !"c").
+  λ: "c", segment_cutoff (Fst "c").
 
 Definition new_infinite_array : val :=
   λ: <>, let: "initialSegment" := new_segment #O NONE in
