@@ -4,9 +4,6 @@
 
 package kotlinx.coroutines
 
-import kotlin.coroutines.*
-import kotlin.coroutines.intrinsics.*
-
 @PublishedApi internal const val MODE_ATOMIC_DEFAULT = 0 // schedule non-cancellable dispatch for suspendCoroutine
 @PublishedApi internal const val MODE_CANCELLABLE = 1    // schedule cancellable dispatch for suspendCancellableCoroutine
 @PublishedApi internal const val MODE_DIRECT = 2         // when the context is right just invoke the delegate continuation direct
@@ -14,43 +11,3 @@ import kotlin.coroutines.intrinsics.*
 
 internal val Int.isCancellableMode get() = this == MODE_CANCELLABLE
 internal val Int.isDispatchedMode get() = this == MODE_ATOMIC_DEFAULT || this == MODE_CANCELLABLE
-
-internal fun <T> Continuation<T>.resumeMode(value: T, mode: Int) {
-    when (mode) {
-        MODE_ATOMIC_DEFAULT -> resume(value)
-        MODE_CANCELLABLE -> resumeCancellable(value)
-        MODE_DIRECT -> resumeDirect(value)
-        MODE_UNDISPATCHED -> (this as DispatchedContinuation).resumeUndispatched(value)
-        else -> error("Invalid mode $mode")
-    }
-}
-
-internal fun <T> Continuation<T>.resumeWithExceptionMode(exception: Throwable, mode: Int) {
-    when (mode) {
-        MODE_ATOMIC_DEFAULT -> resumeWithException(exception)
-        MODE_CANCELLABLE -> resumeCancellableWithException(exception)
-        MODE_DIRECT -> resumeDirectWithException(exception)
-        MODE_UNDISPATCHED -> (this as DispatchedContinuation).resumeUndispatchedWithException(exception)
-        else -> error("Invalid mode $mode")
-    }
-}
-
-internal fun <T> Continuation<T>.resumeUninterceptedMode(value: T, mode: Int) {
-    when (mode) {
-        MODE_ATOMIC_DEFAULT -> intercepted().resume(value)
-        MODE_CANCELLABLE -> intercepted().resumeCancellable(value)
-        MODE_DIRECT -> resume(value)
-        MODE_UNDISPATCHED -> withCoroutineContext(context, null) { resume(value) }
-        else -> error("Invalid mode $mode")
-    }
-}
-
-internal fun <T> Continuation<T>.resumeUninterceptedWithExceptionMode(exception: Throwable, mode: Int) {
-    when (mode) {
-        MODE_ATOMIC_DEFAULT -> intercepted().resumeWithException(exception)
-        MODE_CANCELLABLE -> intercepted().resumeCancellableWithException(exception)
-        MODE_DIRECT -> resumeWithException(exception)
-        MODE_UNDISPATCHED -> withCoroutineContext(context, null) { resumeWithException(exception) }
-        else -> error("Invalid mode $mode")
-    }
-}

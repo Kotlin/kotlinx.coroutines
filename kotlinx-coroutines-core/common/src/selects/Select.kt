@@ -285,7 +285,7 @@ internal class SelectBuilderImpl<in R>(
     // Resumes in MODE_CANCELLABLE
     override fun resumeSelectCancellableWithException(exception: Throwable) {
         doResume({ CompletedExceptionally(exception) }) {
-            uCont.intercepted().resumeCancellableWithException(exception)
+            uCont.intercepted().resumeCancellableWith(Result.failure(exception))
         }
     }
 

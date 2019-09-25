@@ -6,6 +6,7 @@ package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
 
 /**
@@ -25,10 +26,16 @@ internal open class ScopeCoroutine<in T>(
 
     @Suppress("UNCHECKED_CAST")
     override fun afterCompletionInternal(state: Any?, mode: Int) {
-        if (state is CompletedExceptionally) {
-            uCont.resumeUninterceptedWithExceptionMode(recoverStackTrace(state.cause, uCont), mode)
-        } else {
-            uCont.resumeUninterceptedMode(state as T, mode)
+        val result = if (state is CompletedExceptionally)
+            Result.failure(recoverStackTrace(state.cause, uCont))
+        else
+            Result.success(state as T)
+        when (mode) {
+            MODE_ATOMIC_DEFAULT -> uCont.intercepted().resumeWith(result)
+            MODE_CANCELLABLE -> uCont.intercepted().resumeCancellableWith(result)
+            MODE_DIRECT -> uCont.resumeWith(result)
+            MODE_UNDISPATCHED -> withCoroutineContext(uCont.context, null) { uCont.resumeWith(result) }
+            else -> error("Invalid mode $mode")
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -80,24 +80,10 @@ private fun <U, T: U> setupTimeout(
 
 private open class TimeoutCoroutine<U, in T: U>(
     @JvmField val time: Long,
-    @JvmField val uCont: Continuation<U> // unintercepted continuation
-) : AbstractCoroutine<T>(uCont.context, active = true), Runnable, Continuation<T>, CoroutineStackFrame {
-    override val defaultResumeMode: Int get() = MODE_DIRECT
-    override val callerFrame: CoroutineStackFrame? get() = (uCont as? CoroutineStackFrame)
-    override fun getStackTraceElement(): StackTraceElement? = null
-    override val isScopedCoroutine: Boolean get() = true
-
-    @Suppress("LeakingThis", "Deprecation")
+    uCont: Continuation<U> // unintercepted continuation
+) : ScopeCoroutine<T>(uCont.context, uCont), Runnable {
     override fun run() {
         cancelCoroutine(TimeoutCancellationException(time, this))
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    override fun afterCompletionInternal(state: Any?, mode: Int) {
-        if (state is CompletedExceptionally)
-            uCont.resumeUninterceptedWithExceptionMode(state.cause, mode)
-        else
-            uCont.resumeUninterceptedMode(state as T, mode)
     }
 
     override fun nameString(): String =
