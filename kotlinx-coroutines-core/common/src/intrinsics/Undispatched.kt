@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.intrinsics
@@ -112,7 +112,6 @@ private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
     } catch (e: Throwable) {
         CompletedExceptionally(e)
     }
-
     /*
      * We're trying to complete our undispatched block here and have three code-paths:
      * 1) Suspended.
@@ -127,20 +126,16 @@ private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
      * If timeout is exceeded, but withTimeout() block was not suspended, we would like to return block value,
      * not a timeout exception.
      */
-    return when {
-        result === COROUTINE_SUSPENDED -> COROUTINE_SUSPENDED
-        makeCompletingOnce(result, MODE_IGNORE) -> {
-            val state = state
-            if (state is CompletedExceptionally) {
-                when {
-                    shouldThrow(state.cause) -> throw tryRecover(state.cause)
-                    result is CompletedExceptionally -> throw tryRecover(result.cause)
-                    else -> result
-                }
-            } else {
-                state.unboxState()
-            }
+    if (result === COROUTINE_SUSPENDED) return COROUTINE_SUSPENDED
+    val state = makeCompletingOnce(result)
+    if (state === COMPLETING_WAITING_CHILDREN) return COROUTINE_SUSPENDED
+    return if (state is CompletedExceptionally) {
+        when {
+            shouldThrow(state.cause) -> throw tryRecover(state.cause)
+            result is CompletedExceptionally -> throw tryRecover(result.cause)
+            else -> result
         }
-        else -> COROUTINE_SUSPENDED
+    } else {
+        state.unboxState()
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -26,8 +26,7 @@ internal open class ScopeCoroutine<in T>(
     @Suppress("UNCHECKED_CAST")
     override fun afterCompletionInternal(state: Any?, mode: Int) {
         if (state is CompletedExceptionally) {
-            val exception = if (mode == MODE_IGNORE) state.cause else recoverStackTrace(state.cause, uCont)
-            uCont.resumeUninterceptedWithExceptionMode(exception, mode)
+            uCont.resumeUninterceptedWithExceptionMode(recoverStackTrace(state.cause, uCont), mode)
         } else {
             uCont.resumeUninterceptedMode(state as T, mode)
         }
