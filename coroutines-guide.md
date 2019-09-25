@@ -79,6 +79,7 @@ The main coroutines guide has moved to the [docs folder](docs/coroutines-guide.m
     * <a name='upstream-exceptions-only'></a>[Upstream exceptions only](docs/flow.md#upstream-exceptions-only)
   * <a name='imperative-versus-declarative'></a>[Imperative versus declarative](docs/flow.md#imperative-versus-declarative)
   * <a name='launching-flow'></a>[Launching flow](docs/flow.md#launching-flow)
+  * <a name='flow-and-reactive-streams'></a>[Flow and Reactive Streams](docs/flow.md#flow-and-reactive-streams)
 <!--- TOC_REF docs/channels.md -->
 * <a name='channels'></a>[Channels](docs/channels.md#channels)
   * <a name='channel-basics'></a>[Channel basics](docs/channels.md#channel-basics)

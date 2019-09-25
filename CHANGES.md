@@ -1,5 +1,14 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.3.2
+
+This is a maintenance release that does not include any new features or bug fixes.
+
+* Reactive integrations for `Flow` are promoted to stable API.
+* Obsolete reactive API is deprecated.
+* Deprecation level for API deprecated in 1.3.0 is increased.
+* Various documentation improvements.
+
 ## Version 1.3.1
 
 This is a minor update with various fixes:

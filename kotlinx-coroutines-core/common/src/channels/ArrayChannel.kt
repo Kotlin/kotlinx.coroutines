@@ -4,10 +4,10 @@
 
 package kotlinx.coroutines.channels
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
-import kotlin.jvm.*
 import kotlin.math.*
 
 /**
@@ -36,8 +36,11 @@ internal open class ArrayChannel<E>(
      */
     private var buffer: Array<Any?> = arrayOfNulls<Any?>(min(capacity, 8))
     private var head: Int = 0
-    @Volatile
-    private var size: Int = 0 // Invariant: size <= capacity
+
+    private val _size = atomic(0)
+    private var size: Int // Invariant: size <= capacity
+        get() = _size.value
+        set(value) { _size.value = value }
 
     protected final override val isBufferAlwaysEmpty: Boolean get() = false
     protected final override val isBufferEmpty: Boolean get() = size == 0
@@ -62,7 +65,7 @@ internal open class ArrayChannel<E>(
                             this.size = size // restore size
                             return receive!!
                         }
-                        token = receive!!.tryResumeReceive(element, idempotent = null)
+                        token = receive!!.tryResumeReceive(element, null)
                         if (token != null) {
                             this.size = size // restore size
                             return@withLock
@@ -105,6 +108,7 @@ internal open class ArrayChannel<E>(
                                 return@withLock
                             }
                             failure === OFFER_FAILED -> break@loop // cannot offer -> Ok to queue to buffer
+                            failure === RETRY_ATOMIC -> {} // retry
                             failure === ALREADY_SELECTED || failure is Closed<*> -> {
                                 this.size = size // restore size
                                 return failure
@@ -114,7 +118,7 @@ internal open class ArrayChannel<E>(
                     }
                 }
                 // let's try to select sending this element to buffer
-                if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
+                if (!select.trySelect()) { // :todo: move trySelect completion outside of lock
                     this.size = size // restore size
                     return ALREADY_SELECTED
                 }
@@ -160,7 +164,7 @@ internal open class ArrayChannel<E>(
             if (size == capacity) {
                 loop@ while (true) {
                     send = takeFirstSendOrPeekClosed() ?: break
-                    token = send!!.tryResumeSend(idempotent = null)
+                    token = send!!.tryResumeSend(null)
                     if (token != null) {
                         replacement = send!!.pollResult
                         break@loop
@@ -206,6 +210,7 @@ internal open class ArrayChannel<E>(
                             break@loop
                         }
                         failure === POLL_FAILED -> break@loop // cannot poll -> Ok to take from buffer
+                        failure === RETRY_ATOMIC -> {} // retry
                         failure === ALREADY_SELECTED -> {
                             this.size = size // restore size
                             buffer[head] = result // restore head
@@ -213,7 +218,7 @@ internal open class ArrayChannel<E>(
                         }
                         failure is Closed<*> -> {
                             send = failure
-                            token = failure.tryResumeSend(idempotent = null)
+                            token = failure.tryResumeSend(null)
                             replacement = failure
                             break@loop
                         }
@@ -226,7 +231,7 @@ internal open class ArrayChannel<E>(
                 buffer[(head + size) % buffer.size] = replacement
             } else {
                 // failed to poll or is already closed --> let's try to select receiving this element from buffer
-                if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
+                if (!select.trySelect()) { // :todo: move trySelect completion outside of lock
                     this.size = size // restore size
                     buffer[head] = result // restore head
                     return ALREADY_SELECTED

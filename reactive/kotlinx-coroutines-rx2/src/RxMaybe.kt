@@ -37,7 +37,7 @@ public fun <T> rxMaybe(
 
 @Deprecated(
     message = "CoroutineScope.rxMaybe is deprecated in favour of top-level rxMaybe",
-    level = DeprecationLevel.WARNING,
+    level = DeprecationLevel.ERROR,
     replaceWith = ReplaceWith("rxMaybe(context, block)")
 ) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
 @LowPriorityInOverloadResolution

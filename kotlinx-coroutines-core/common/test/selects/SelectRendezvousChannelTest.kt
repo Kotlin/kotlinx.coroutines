@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
 
@@ -429,7 +429,41 @@ class SelectRendezvousChannelTest : TestBase() {
     // only for debugging
     internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {
         this as SelectBuilderImpl // type assertion
-        if (!trySelect(null)) return
+        if (!trySelect()) return
         block.startCoroutineUnintercepted(this)
+    }
+
+    @Test
+    fun testSelectSendAndReceive() = runTest {
+        val c = Channel<Int>()
+        assertFailsWith<IllegalStateException> {
+            select<Unit> {
+                c.onSend(1) { expectUnreached() }
+                c.onReceive { expectUnreached() }
+            }
+        }
+        checkNotBroken(c)
+    }
+
+    @Test
+    fun testSelectReceiveAndSend() = runTest {
+        val c = Channel<Int>()
+        assertFailsWith<IllegalStateException> {
+            select<Unit> {
+                c.onReceive { expectUnreached() }
+                c.onSend(1) { expectUnreached() }
+            }
+        }
+        checkNotBroken(c)
+    }
+
+    // makes sure the channel is not broken
+    private suspend fun checkNotBroken(c: Channel<Int>) {
+        coroutineScope {
+            launch {
+                c.send(42)
+            }
+            assertEquals(42, c.receive())
+        }
     }
 }

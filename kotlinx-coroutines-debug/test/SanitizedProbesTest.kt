@@ -68,7 +68,7 @@ class SanitizedProbesTest : DebugTestBase() {
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.access\$createActiveDeferred(SanitizedProbesTest.kt:16)\n" +
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$testCoroutinesDump\$1.invokeSuspend(SanitizedProbesTest.kt:57)\n" +
                     "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n" +
-                    "\tat kotlinx.coroutines.DispatchedTask.run(Dispatched.kt:237)\n" +
+                    "\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:237)\n" +
                     "\tat kotlinx.coroutines.TestBase.runTest\$default(TestBase.kt:141)\n" +
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.testCoroutinesDump(SanitizedProbesTest.kt:56)"
         )
@@ -96,7 +96,7 @@ class SanitizedProbesTest : DebugTestBase() {
                 "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.access\$launchSelector(SanitizedProbesTest.kt:16)\n" +
                 "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$testSelectBuilder\$1.invokeSuspend(SanitizedProbesTest.kt:89)\n" +
                 "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n" +
-                "\tat kotlinx.coroutines.DispatchedTask.run(Dispatched.kt:233)\n" +
+                "\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:233)\n" +
                 "\tat kotlinx.coroutines.TestBase.runTest\$default(TestBase.kt:154)\n" +
                 "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.testSelectBuilder(SanitizedProbesTest.kt:88)")
         finish(4)

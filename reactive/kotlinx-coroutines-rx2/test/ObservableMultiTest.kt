@@ -18,7 +18,7 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testNumbers() {
         val n = 100 * stressTestMultiplier
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             repeat(n) { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
@@ -30,7 +30,7 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testConcurrentStress() {
         val n = 10_000 * stressTestMultiplier
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             newCoroutineContext(coroutineContext)
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
@@ -51,7 +51,7 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testIteratorResendUnconfined() {
         val n = 10_000 * stressTestMultiplier
-        val observable = GlobalScope.rxObservable(Dispatchers.Unconfined) {
+        val observable = rxObservable(Dispatchers.Unconfined) {
             Observable.range(0, n).collect { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
@@ -62,7 +62,7 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testIteratorResendPool() {
         val n = 10_000 * stressTestMultiplier
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             Observable.range(0, n).collect { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
@@ -72,14 +72,14 @@ class ObservableMultiTest : TestBase() {
 
     @Test
     fun testSendAndCrash() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             send("O")
             throw IOException("K")
         }
         val single = rxSingle {
             var result = ""
             try {
-                observable.consumeEach { result += it }
+                observable.collect { result += it }
             } catch(e: IOException) {
                 result += e.message
             }
