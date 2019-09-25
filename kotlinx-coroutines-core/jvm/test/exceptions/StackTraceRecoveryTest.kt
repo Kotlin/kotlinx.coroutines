@@ -102,8 +102,7 @@ class StackTraceRecoveryTest : TestBase() {
                         "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testReceiveFromChannel\$1.invokeSuspend(StackTraceRecoveryTest.kt:89)",
                 "Caused by: java.lang.IllegalArgumentException\n" +
                         "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testReceiveFromChannel\$1\$job\$1.invokeSuspend(StackTraceRecoveryTest.kt:93)\n" +
-                        "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n" +
-                        "\tat kotlinx.coroutines.DispatchedTask.run(Dispatched.kt:152)")
+                        "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n")
         expect(3)
         job.join()
         finish(4)

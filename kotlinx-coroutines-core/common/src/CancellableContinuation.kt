@@ -224,6 +224,40 @@ public suspend inline fun <T> suspendAtomicCancellableCoroutine(
     }
 
 /**
+ *  Suspends coroutine similar to [suspendAtomicCancellableCoroutine], but an instance of [CancellableContinuationImpl] is reused if possible.
+ */
+internal suspend inline fun <T> suspendAtomicCancellableCoroutineReusable(
+    crossinline block: (CancellableContinuation<T>) -> Unit
+): T = suspendCoroutineUninterceptedOrReturn { uCont ->
+        val cancellable = getOrCreateCancellableContinuation(uCont.intercepted())
+        block(cancellable)
+        cancellable.getResult()
+    }
+
+internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): CancellableContinuationImpl<T> {
+    // If used outside of our dispatcher
+    if (delegate !is DispatchedContinuation<T>) {
+        return CancellableContinuationImpl(delegate, resumeMode = MODE_ATOMIC_DEFAULT)
+    }
+    /*
+     * Attempt to claim reusable instance.
+     *
+     * suspendAtomicCancellableCoroutineReusable { // <- claimed
+     *     // Any asynchronous cancellation is "postponed" while this block
+     *     // is being executed
+     * } // postponed cancellation is checked here.
+     *
+     * Claim can fail for the following reasons:
+     * 1) Someone tried to make idempotent resume.
+     *    Idempotent resume is internal (used only by us) and is used only in `select`,
+     *    thus leaking CC instance for indefinite time.
+     * 2) Continuation was cancelled. Then we should prevent any further reuse and bail out.
+     */
+    return delegate.claimReusableCancellableContinuation()?.takeIf { it.resetState() }
+        ?: return CancellableContinuationImpl(delegate, MODE_ATOMIC_DEFAULT)
+}
+
+/**
  * @suppress **Deprecated**
  */
 @Deprecated(

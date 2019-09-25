@@ -187,7 +187,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         return lockSuspend(owner)
     }
 
-    private suspend fun lockSuspend(owner: Any?) = suspendAtomicCancellableCoroutine<Unit> sc@ { cont ->
+    private suspend fun lockSuspend(owner: Any?) = suspendAtomicCancellableCoroutineReusable<Unit> sc@ { cont ->
         val waiter = LockCont(owner, cont)
         _state.loop { state ->
             when (state) {
