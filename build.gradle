@@ -11,7 +11,7 @@ def coreModule = "kotlinx-coroutines-core"
 def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom']
 def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'knit', 'js-stub', 'stdlib-stubs', 'binary-compatibility-validator']
 // Not published
-def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js', 'android-unit-tests']
+def unpublished = internal + ['example-frontend-js', 'android-unit-tests']
 
 static def platformOf(project) {
     def name = project.name

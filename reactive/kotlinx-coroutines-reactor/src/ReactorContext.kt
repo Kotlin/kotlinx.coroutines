@@ -3,48 +3,48 @@ package kotlinx.coroutines.reactor
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import reactor.util.context.Context
 import kotlin.coroutines.*
+import kotlinx.coroutines.reactive.*
 
 /**
  * Wraps Reactor's [Context] into [CoroutineContext] element for seamless integration Reactor and kotlinx.coroutines.
- *
  * [Context.asCoroutineContext] is defined to add Reactor's [Context] elements as part of [CoroutineContext].
+ * Coroutine context element that propagates information about Reactor's [Context] through coroutines.
  *
- * Reactor builders [mono] and [flux] use this context element to enhance the resulting `subscriberContext`.
+ * This context element is implicitly propagated through subscriber's context by all Reactive integrations, such as [mono], [flux],
+ * [Publisher.asFlow][asFlow], [Flow.asPublisher][asPublisher] and [Flow.asFlux][asFlux].
+ * Functions that subscribe to the reactive stream (e.g. [Publisher.awaitFirst][awaitFirst]) also propagate [ReactorContext] to the
+ * subscriber's [Context].
+ **
+ * ### Examples of Reactive context integration.
  *
- * ### Usages
- * Passing reactor context from coroutine builder to reactor entity:
+ * #### Propagating ReactorContext to Reactor's Context
  * ```
- * launch(Context.of("key", "value").asCoroutineContext()) {
- *     mono {
- *         println(coroutineContext[ReactorContext]) // Prints { "key": "value" }
- *     }.subscribe()
+ * val flux = myDatabaseService.getUsers()
+ *     .subscriberContext() { ctx -> println(ctx); ctx }
+ * flux.await() // Will print "null"
+ *
+ * // Now add ReactorContext
+ * withContext(Context.of("answer", "42").asCoroutineContext()) {
+ *    flux.await() // Will print "Context{'key'='value'}"
  * }
  * ```
  *
- * Accessing modified reactor context enriched from the downstream:
+ * #### Propagating subscriber's Context to ReactorContext:
  * ```
- * launch {
- *     mono {
- *         println(coroutineContext[ReactorContext]) // Prints { "key": "value" }
- *     }.subscriberContext(Context.of("key", "value"))
- *    .subscribe()
+ * val flow = flow {
+ *     println("Reactor context in Flow: " + coroutineContext[ReactorContext])
  * }
- * ```
- *
- * [CoroutineContext] of a suspendable function that awaits a value from [Mono] or [Flux] instance
- * is propagated into [mono] and [flux] Reactor builders:
- * ```
- * launch(Context.of("key", "value").asCoroutineContext()) {
- *   assertEquals(bar().awaitFirst(), "value")
- * }
- *
- * fun bar(): Mono<String> = mono {
- *   coroutineContext[ReactorContext]!!.context.get("key")
- * }
+ * // No context
+ * flow.asFlux()
+ *     .subscribe() // Will print 'Reactor context in Flow: null'
+ * // Add subscriber's context
+ * flow.asFlux()
+ *     .subscriberContext { ctx -> ctx.put("answer", 42) }
+ *     .subscribe() // Will print "Reactor context in Flow: Context{'answer'=42}"
  * ```
  */
 @ExperimentalCoroutinesApi
-public class ReactorContext(val context: Context) : AbstractCoroutineContextElement(ReactorContext) {
+public class ReactorContext(public val context: Context) : AbstractCoroutineContextElement(ReactorContext) {
     companion object Key : CoroutineContext.Key<ReactorContext>
 }
 

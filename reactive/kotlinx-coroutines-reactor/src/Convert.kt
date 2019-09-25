@@ -43,13 +43,11 @@ public fun <T> Deferred<T?>.asMono(context: CoroutineContext): Mono<T> = mono(co
  *
  * Every subscriber receives values from this channel in **fan-out** fashion. If the are multiple subscribers,
  * they'll receive values in round-robin way.
- *
- * **Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.**
- *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
- *
  * @param context -- the coroutine context from which the resulting flux is going to be signalled
  */
-@ObsoleteCoroutinesApi
+@Deprecated(message = "Deprecated in the favour of consumeAsFlow()",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("this.consumeAsFlow().asFlux()"))
 public fun <T> ReceiveChannel<T>.asFlux(context: CoroutineContext = EmptyCoroutineContext): Flux<T> = flux(context) {
     for (t in this@asFlux)
         send(t)

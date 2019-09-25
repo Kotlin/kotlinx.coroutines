@@ -5,21 +5,28 @@
 package kotlinx.coroutines.reactive
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import org.reactivestreams.*
 
 /**
  * Subscribes to this [Publisher] and returns a channel to receive elements emitted by it.
  * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this publisher.
- *
- * **Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.**
- *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
- *
+
  * @param request how many items to request from publisher in advance (optional, one by default).
+ *
+ * This method is deprecated in the favor of [Flow].
+ * Instead of iterating over the resulting channel please use [collect][Flow.collect]:
+ * ```
+ * asFlow().collect { value ->
+ *     // process value
+ * }
+ * ```
  */
-@ObsoleteCoroutinesApi
+@Deprecated(
+    message = "Transforming publisher to channel is deprecated, use asFlow() instead",
+    level = DeprecationLevel.WARNING) // Will be error in 1.4
 public fun <T> Publisher<T>.openSubscription(request: Int = 1): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>(request)
     subscribe(channel)
