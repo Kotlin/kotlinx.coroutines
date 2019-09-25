@@ -33,15 +33,14 @@
 
 <h1 id="asflux">asFlux</h1>
 
-<div class="signature"><code><span class="identifier">@ObsoleteCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="as-flux.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asFlux</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactor$asFlux(kotlinx.coroutines.channels.ReceiveChannel((kotlinx.coroutines.reactor.asFlux.T)), kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/core/publisher/Flux.html"><span class="identifier">Flux</span></a><span class="symbol">&lt;</span><a href="as-flux.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="as-flux.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">asFlux</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactor$asFlux(kotlinx.coroutines.channels.ReceiveChannel((kotlinx.coroutines.reactor.asFlux.T)), kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/core/publisher/Flux.html"><span class="identifier">Flux</span></a><span class="symbol">&lt;</span><a href="as-flux.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+<p><strong>Deprecated:</strong> Deprecated in the favour of consumeAsFlow()</p>
 
 <p>Converts a stream of elements received from the channel to the hot reactive flux.</p>
 
 <p>Every subscriber receives values from this channel in <strong>fan-out</strong> fashion. If the are multiple subscribers,
 they’ll receive values in round-robin way.</p>
-
-<p><strong>Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.</strong>
-    See <a href="https://github.com/Kotlin/kotlinx.coroutines/issues/254">issue #254</a>.</p>
 
 <h3 id="parameters">Parameters</h3>
 

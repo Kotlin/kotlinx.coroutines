@@ -52,6 +52,33 @@
   </tbody>
 </table>
 
+<p>Integration with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Name</strong></th>
+      <th><strong>Result</strong></th>
+      <th><strong>Description</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/as-flow.html">Publisher.asFlow</a></td>
+      <td><code>Flow</code></td>
+      <td>Converts the given publisher to flow</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/kotlinx.coroutines.flow.-flow/as-publisher.html">Flow.asPublisher</a></td>
+      <td><code>Publisher</code></td>
+      <td>Converts the given flow to the TCK-compliant publisher</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>If these adapters are used along with <code>kotlinx-coroutines-reactor</code> in the classpath, then Reactor’s <code>Context</code> is properly
+propagated as coroutine context element (<code>ReactorContext</code>) and vice versa.</p>
+
 <p>Suspending extension functions and suspending iteration:</p>
 
 <table>
@@ -85,27 +112,6 @@
     <tr>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/await-single.html">Publisher.awaitSingle</a></td>
       <td>Returns the single value from the given publisher</td>
-    </tr>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/open-subscription.html">Publisher.openSubscription</a></td>
-      <td>Subscribes to publisher and returns <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a></td>
-    </tr>
-  </tbody>
-</table>
-
-<p>Conversion functions:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th><strong>Name</strong></th>
-      <th><strong>Description</strong></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/kotlinx.coroutines.channels.-receive-channel/as-publisher.html">ReceiveChannel.asPublisher</a></td>
-      <td>Converts streaming channel to hot publisher</td>
     </tr>
   </tbody>
 </table>

@@ -33,17 +33,26 @@
 
 <h1 id="opensubscription">openSubscription</h1>
 
-<div class="signature"><code><span class="identifier">@ObsoleteCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="open-subscription.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">openSubscription</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactive$openSubscription(org.reactivestreams.Publisher((kotlinx.coroutines.reactive.openSubscription.T)), kotlin.Int)/request">request</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;1<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="open-subscription.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="open-subscription.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">openSubscription</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactive$openSubscription(org.reactivestreams.Publisher((kotlinx.coroutines.reactive.openSubscription.T)), kotlin.Int)/request">request</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;1<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="open-subscription.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+<p><strong>Deprecated:</strong> Transforming publisher to channel is deprecated, use asFlow() instead</p>
 
 <p>Subscribes to this <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a> and returns a channel to receive elements emitted by it.
 The resulting channel shall be <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/cancel.html">cancelled</a> to unsubscribe from this publisher.</p>
 
-<p><strong>Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.</strong>
-    See <a href="https://github.com/Kotlin/kotlinx.coroutines/issues/254">issue #254</a>.</p>
-
 <h3 id="parameters">Parameters</h3>
 
-<p><code>request</code> - how many items to request from publisher in advance (optional, one by default).</p>
+<p><code>request</code> -</p>
+
+<p>how many items to request from publisher in advance (optional, one by default).</p>
+
+<p>This method is deprecated in the favor of <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>.
+Instead of iterating over the resulting channel please use <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/collect.html">collect</a>:</p>
+
+<pre>asFlow().collect { value -&gt;
+    // process value
+}
+</pre>
 
       </div>
     </main>

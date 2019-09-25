@@ -49,9 +49,9 @@ unconfined coroutine.</p>
 
 <p>For example, the following code:</p>
 
-<pre>withContext(Dispatcher.Unconfined) {
+<pre>withContext(Dispatchers.Unconfined) {
    println(1)
-   withContext(Dispatcher.Unconfined) { // Nested unconfined
+   withContext(Dispatchers.Unconfined) { // Nested unconfined
        println(2)
    }
    println(3)

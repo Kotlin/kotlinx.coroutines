@@ -44,10 +44,11 @@ internals and its contract with the rest of API is an implementation detail.</p>
 <p>UI dispatchers <em>should not</em> override <code>isDispatchNeeded</code>, but leave a default implementation that
 returns <code>true</code>. To understand the rationale beyond this recommendation, consider the following code:</p>
 
-<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">fun</span> <span class="nf">asyncUpdateUI</span><span class="p">()</span> <span class="p">=</span> <span class="n">async</span><span class="p">(</span><span class="n">Dispatchers</span><span class="p">.</span><span class="n">Main</span><span class="p">)</span> <span class="p">{</span>
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="k">fun</span> <span class="nf">asyncUpdateUI</span><span class="p">()</span> <span class="p">=</span> <span class="n">async</span><span class="p">(</span><span class="n">Dispatchers</span><span class="p">.</span><span class="n">Main</span><span class="p">)</span> <span class="p">{</span>
     <span class="c1">// do something here that updates something in UI
 </span><span class="p">}</span>
-</code></pre></div></div>
+</code></pre>
+</div>
 
 <p>When you invoke <code>asyncUpdateUI</code> in some background thread, it immediately continues to the next
 line, while UI update happens asynchronously in the UI thread. However, if you invoke

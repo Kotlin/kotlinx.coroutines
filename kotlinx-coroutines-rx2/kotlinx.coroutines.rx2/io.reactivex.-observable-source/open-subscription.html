@@ -33,13 +33,15 @@
 
 <h1 id="opensubscription">openSubscription</h1>
 
-<div class="signature"><code><span class="identifier">@ObsoleteCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/javadoc/io/reactivex/ObservableSource.html"><span class="identifier">ObservableSource</span></a><span class="symbol">&lt;</span><a href="open-subscription.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">openSubscription</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="open-subscription.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/javadoc/io/reactivex/ObservableSource.html"><span class="identifier">ObservableSource</span></a><span class="symbol">&lt;</span><a href="open-subscription.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">openSubscription</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="open-subscription.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+<p><strong>Deprecated:</strong> Deprecated in the favour of Flow</p>
 
 <p>Subscribes to this <a href="http://reactivex.io/RxJava/javadoc/io/reactivex/ObservableSource.html">ObservableSource</a> and returns a channel to receive elements emitted by it.
 The resulting channel shall be <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/cancel.html">cancelled</a> to unsubscribe from this source.</p>
 
-<p><strong>Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.</strong>
-    See <a href="https://github.com/Kotlin/kotlinx.coroutines/issues/254">issue #254</a>.</p>
+<p>This API is deprecated in the favour of <a href="#">Flow</a>.
+<a href="http://reactivex.io/RxJava/javadoc/io/reactivex/ObservableSource.html">ObservableSource</a> doesn’t have a corresponding <a href="#">Flow</a> adapter, so it should be transformed to <a href="http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html">Observable</a> first.</p>
 
 
       </div>
