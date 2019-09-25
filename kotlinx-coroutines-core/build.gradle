@@ -76,16 +76,19 @@ jvmTest {
     maxHeapSize = '1g'
     enableAssertions = true
     systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
-    exclude '**/*LFStressTest.*'
+    exclude '**/*StressTest.*'
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
 }
 
-task lockFreedomTest(type: Test, dependsOn: compileTestKotlinJvm) {
+task stressTest(type: Test, dependsOn: compileTestKotlinJvm) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
-    include '**/*LFStressTest.*'
+    minHeapSize = '1g'
+    maxHeapSize = '1g'
+    include '**/*StressTest.*'
     enableAssertions = true
     testLogging.showStandardStreams = true
+    systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
 }
 
 task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
@@ -102,7 +105,7 @@ task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
 jdk16Test.onlyIf { project.properties['stressTest'] != null }
 
 // Always run those tests
-task moreTest(dependsOn: [lockFreedomTest, jdk16Test])
+task moreTest(dependsOn: [stressTest, jdk16Test])
 build.dependsOn moreTest
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {
