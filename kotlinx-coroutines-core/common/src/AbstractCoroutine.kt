@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("DEPRECATION_ERROR")
 
@@ -108,7 +108,9 @@ public abstract class AbstractCoroutine<in T>(
      * Completes execution of this with coroutine with the specified result.
      */
     public final override fun resumeWith(result: Result<T>) {
-        makeCompletingOnce(result.toState(), defaultResumeMode)
+        val state = makeCompletingOnce(result.toState())
+        if (state === COMPLETING_WAITING_CHILDREN) return
+        afterCompletionInternal(state, defaultResumeMode)
     }
 
     internal final override fun handleOnCompletionException(exception: Throwable) {

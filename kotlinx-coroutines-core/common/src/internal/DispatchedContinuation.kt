@@ -175,32 +175,16 @@ internal class DispatchedContinuation<in T>(
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
-    inline fun resumeCancellable(value: T) {
+    inline fun resumeCancellableWith(result: Result<T>) {
+        val state = result.toState()
         if (dispatcher.isDispatchNeeded(context)) {
-            _state = value
-            resumeMode = MODE_CANCELLABLE
-            dispatcher.dispatch(context, this)
-        } else {
-            executeUnconfined(value, MODE_CANCELLABLE) {
-                if (!resumeCancelled()) {
-                    resumeUndispatched(value)
-                }
-            }
-        }
-    }
-
-    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
-    inline fun resumeCancellableWithException(exception: Throwable) {
-        val context = continuation.context
-        val state = CompletedExceptionally(exception)
-        if (dispatcher.isDispatchNeeded(context)) {
-            _state = CompletedExceptionally(exception)
+            _state = state
             resumeMode = MODE_CANCELLABLE
             dispatcher.dispatch(context, this)
         } else {
             executeUnconfined(state, MODE_CANCELLABLE) {
                 if (!resumeCancelled()) {
-                    resumeUndispatchedWithException(exception)
+                    resumeUndispatchedWith(result)
                 }
             }
         }
@@ -218,16 +202,9 @@ internal class DispatchedContinuation<in T>(
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
-    inline fun resumeUndispatched(value: T) {
+    inline fun resumeUndispatchedWith(result: Result<T>) {
         withCoroutineContext(context, countOrElement) {
-            continuation.resume(value)
-        }
-    }
-
-    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
-    inline fun resumeUndispatchedWithException(exception: Throwable) {
-        withCoroutineContext(context, countOrElement) {
-            continuation.resumeWithStackTrace(exception)
+            continuation.resumeWith(result)
         }
     }
 
@@ -241,6 +218,12 @@ internal class DispatchedContinuation<in T>(
 
     override fun toString(): String =
         "DispatchedContinuation[$dispatcher, ${continuation.toDebugString()}]"
+}
+
+@Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
+internal inline fun <T> Continuation<T>.resumeCancellableWith(result: Result<T>) = when (this) {
+    is DispatchedContinuation -> resumeCancellableWith(result)
+    else -> resumeWith(result)
 }
 
 internal fun DispatchedContinuation<Unit>.yieldUndispatched(): Boolean =
