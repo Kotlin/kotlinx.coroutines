@@ -36,7 +36,7 @@ public fun <T : Any> rxSingle(
 
 @Deprecated(
     message = "CoroutineScope.rxSingle is deprecated in favour of top-level rxSingle",
-    level = DeprecationLevel.WARNING,
+    level = DeprecationLevel.ERROR,
     replaceWith = ReplaceWith("rxSingle(context, block)")
 ) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
 @LowPriorityInOverloadResolution

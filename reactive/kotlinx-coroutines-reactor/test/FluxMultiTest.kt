@@ -73,7 +73,7 @@ class FluxMultiTest : TestBase() {
         val mono = mono {
             var result = ""
             try {
-                flux.consumeEach { result += it }
+                flux.collect { result += it }
             } catch(e: IOException) {
                 result += e.message
             }
