@@ -142,20 +142,20 @@ public suspend fun <T> withContext(
     newContext.checkCompletion()
     // FAST PATH #1 -- new context is the same as the old one
     if (newContext === oldContext) {
-        val coroutine = ScopeCoroutine(newContext, uCont) // MODE_DIRECT
+        val coroutine = ScopeCoroutine(newContext, uCont)
         return@sc coroutine.startUndispatchedOrReturn(coroutine, block)
     }
     // FAST PATH #2 -- the new dispatcher is the same as the old one (something else changed)
     // `equals` is used by design (see equals implementation is wrapper context like ExecutorCoroutineDispatcher)
     if (newContext[ContinuationInterceptor] == oldContext[ContinuationInterceptor]) {
-        val coroutine = UndispatchedCoroutine(newContext, uCont) // MODE_UNDISPATCHED
+        val coroutine = UndispatchedCoroutine(newContext, uCont)
         // There are changes in the context, so this thread needs to be updated
         withCoroutineContext(newContext, null) {
             return@sc coroutine.startUndispatchedOrReturn(coroutine, block)
         }
     }
     // SLOW PATH -- use new dispatcher
-    val coroutine = DispatchedCoroutine(newContext, uCont) // MODE_CANCELLABLE
+    val coroutine = DispatchedCoroutine(newContext, uCont)
     coroutine.initParentJob()
     block.startCoroutineCancellable(coroutine, coroutine)
     coroutine.getResult()
