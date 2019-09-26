@@ -30,11 +30,11 @@ Definition park: val :=
   λ: "cancellationHandler" "cancHandle" "threadHandle",
   let: "r" := (loop: (λ: "c", ! "c")%V
                interrupted: "cancellationHandler") in
-  "threadHandle" <- NONEV ;;
+  "threadHandle" <- #true ;;
   "r".
 
 Definition unpark: val :=
-  λ: "threadHandle", "threadHandle" <- SOMEV #().
+  λ: "threadHandle", "threadHandle" <- #false.
 
 Definition suspend: val :=
   λ: "handler" "cancHandle" "threadHandle" "tail" "enqIdx",
@@ -70,6 +70,61 @@ End impl.
 
 From iris.heap_lang Require Import proofmode.
 From iris.algebra Require Import auth.
+
+Section parking.
+
+Notation algebra := (authUR (optionUR
+                               (prodR fracR (agreeR boolO)))).
+
+Class parkingG Σ := ParkingG { parking_inG :> inG Σ algebra }.
+Definition parkingΣ : gFunctors := #[GFunctor algebra].
+Instance subG_parkingΣ {Σ} : subG parkingΣ Σ -> parkingG Σ.
+Proof. solve_inG. Qed.
+
+Context `{heapG Σ} `{parkingG Σ} `{interruptiblyG Σ}.
+
+Definition thread_handle_in_state (γ: gname) (v: loc) (x: bool): iProp Σ :=
+  (v ↦ #x ∗ own γ (● (Some (1%Qp, to_agree x))))%I.
+
+Definition is_thread_handle (γ: gname) (v: val) :=
+  (∃ (ℓ: loc) x, ⌜v = #ℓ⌝ ∗ thread_handle_in_state γ ℓ x)%I.
+
+Definition thread_handler (γ: gname) (q: Qp) (x: bool): iProp Σ :=
+  own γ (◯ (Some (q, to_agree x))).
+
+Theorem thread_update_state γ (ℓ: loc) (x'': bool):
+  <<< ∀ x', ▷ is_thread_handle γ #ℓ ∗ ▷ thread_handler γ 1 x' >>>
+    #ℓ <- #x'' @ ⊤
+  <<< thread_handle_in_state γ ℓ x'' ∗ thread_handler γ 1 x'', RET #() >>>.
+Proof.
+  iIntros (Φ) "AU".
+  iMod "AU" as (x') "[[HIsHandle HFrag] [_ HClose]]".
+  iDestruct "HIsHandle" as (? ?) "[>% [HLoc HAuth]]". simplify_eq.
+  wp_store.
+  iMod (own_update_2 with "HAuth HFrag") as "[HAuth HFrag]".
+  { by apply auth_update, option_local_update,
+      (exclusive_local_update _ (1%Qp, to_agree x'')). }
+  iMod ("HClose" with "[HLoc HAuth HFrag]") as "HΦ".
+  by iFrame.
+  by iModIntro.
+Qed.
+
+Definition thread_has_permit γ := thread_handler γ 1 false.
+Definition thread_doesnt_have_permits γ := thread_handler γ 1 true.
+
+Theorem unpark_spec γ (ℓ: loc):
+  <<< ▷ is_thread_handle γ #ℓ ∗ ▷ thread_doesnt_have_permits γ >>>
+      unpark #ℓ @ ⊤
+  <<< thread_handle_in_state γ ℓ false ∗ thread_has_permit γ, RET #() >>>.
+Proof.
+  iIntros (Φ) "AU". wp_lam.
+  awp_apply thread_update_state. iApply (aacc_aupd_commit with "AU"); first done.
+  iIntros "H".
+  iAaccIntro with "H"; first by iIntros "[$ $] !> AU".
+  by iIntros "[$ $] !> $ !>".
+Qed.
+
+End parking.
 
 Section moving_pointers.
 
@@ -373,10 +428,13 @@ Definition cell_list_contents (S R: iProp) γa γtq γe γd
 
 Definition suspension_permit γtq := own γtq (◯ (Some (1%positive), ε, ε)).
 
+Definition exists_list_element γtq (n: nat) :=
+  own γtq (◯ (ε, replicate n ε ++ [ε])).
+
 Lemma cell_list_contents_append E R γa γtq γe γd l deqFront:
   E -∗ cell_list_contents E R γa γtq γe γd l deqFront ==∗
   (suspension_permit γtq ∗
-  own γtq (◯ (ε, replicate (length l) ε ++ [ε]))) ∗
+  exists_list_element γtq (length l)) ∗
   cell_list_contents E R γa γtq γe γd (l ++ [None]) deqFront.
 Proof.
   rewrite /suspension_permit -own_op -auth_frag_op
@@ -403,7 +461,7 @@ Proof.
   split. done. change (S (S (length l))) with (1 + S (length l))%nat.
   by rewrite Nat2Pos.inj_add // Some_op HEq ucmra_unit_left_id.
 
-  rewrite map_app. simpl.
+  rewrite map_app.
   replace (length l) with (length (map cell_state_to_RA l)).
   apply list_append_local_update. intros.
   apply list_lookup_validN. simpl. destruct i; done.
@@ -625,6 +683,40 @@ Proof.
     iDestruct (big_sepL_mono with "HLst") as "$".
     iIntros (? ? ?) "HAp". by rewrite -plus_n_Sm.
 Qed.
+
+Theorem inhabit_cell_spec N' E R γa γtq γe γd i ptr th:
+  iterator_issued γe i -∗
+  exists_list_element γtq i -∗
+  array_mapsto segment_size γa i ptr -∗
+  inv N' (cell_invariant γtq γa i ptr) -∗
+  <<< ∀ l deqFront, ▷ cell_list_contents E R γa γtq γe γd l deqFront >>>
+    getAndSet #ptr (InjLV th) @ ⊤ ∖ ↑N'
+  <<< cell_list_contents E R γa γtq γe γd l deqFront, RET NONEV >>>.
+Proof.
+  iIntros "HIsSus #HExistsEl #HArrMapsto #HCellInv" (Φ) "AU".
+  wp_lam. wp_pures.
+
+  wp_bind (!_)%E.
+  iInv "HCellInv" as "[[HCancHandle Hℓ]|HCellInit]".
+  { (* We need to initialize the cell in the list. *)
+    wp_load.
+    iMod "AU" as (l deqFront) "[(>% & >HAuth & HEs & HRs & HCellRRs) [HClose _]]".
+    iAssert (⌜(i < length l)%nat⌝)%I as %HIsLess.
+    {
+      iDestruct (own_valid_2 with "HAuth HExistsEl")
+        as %[[_ HH]%prod_included _]%auth_both_valid.
+      simpl in *. iPureIntro.
+      revert HH. rewrite list_lookup_included=> HH.
+      specialize (HH i). move: HH. rewrite option_included.
+      case. intros HH; exfalso; by induction i.
+      intros (a & b & _ & HH & _).
+      replace (length l) with (length (map cell_state_to_RA l)).
+      by apply lookup_lt_is_Some; eexists.
+      by rewrite map_length.
+    }
+    admit.
+  }
+Abort.
 
 Theorem cancel_cell_spec E R γa γtq γe γd i ptr:
   rendezvous_inhabited γtq i -∗
