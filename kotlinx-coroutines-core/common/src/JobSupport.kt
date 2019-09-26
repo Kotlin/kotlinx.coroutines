@@ -269,7 +269,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     // fast-path method to finalize normally completed coroutines without children
-    // returns true if complete, and afterCompletionInternal(update, mode) shall be called
+    // returns true if complete, and afterCompletion(update) shall be called
     private fun tryFinalizeSimpleState(state: Incomplete, update: Any?): Boolean {
         assert { state is Empty || state is JobNode<*> } // only simple state without lists where children can concurrently add
         assert { update !is CompletedExceptionally } // only for normal completion
@@ -653,7 +653,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             finalState === COMPLETING_WAITING_CHILDREN -> true
             finalState === TOO_LATE_TO_CANCEL -> false
             else -> {
-                afterCompletionInternal(finalState, MODE_ATOMIC_DEFAULT)
+                afterCompletion(finalState)
                 true
             }
         }
@@ -663,7 +663,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // It contains a loop and never returns COMPLETING_RETRY, can return
     // COMPLETING_ALREADY -- if already completed/completing
     // COMPLETING_WAITING_CHILDREN -- if started waiting for children
-    // final state -- when completed, for call to afterCompletionInternal
+    // final state -- when completed, for call to afterCompletion
     private fun cancelMakeCompleting(cause: Any?): Any? {
         loopOnState { state ->
             if (state !is Incomplete || state is Finishing && state.isCompleting) {
@@ -703,7 +703,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // COMPLETING_ALREADY -- if already completing or successfully made cancelling, added exception
     // COMPLETING_WAITING_CHILDREN -- if started waiting for children, added exception
     // TOO_LATE_TO_CANCEL -- too late to cancel, did not add exception
-    // final state -- when completed, for call to afterCompletionInternal
+    // final state -- when completed, for call to afterCompletion
     private fun makeCancelling(cause: Any?): Any? {
         var causeExceptionCache: Throwable? = null // lazily init result of createCauseException(cause)
         loopOnState { state ->
@@ -786,7 +786,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                 finalState === COMPLETING_WAITING_CHILDREN -> return true
                 finalState === COMPLETING_RETRY -> return@loopOnState
                 else -> {
-                    afterCompletionInternal(finalState, MODE_ATOMIC_DEFAULT)
+                    afterCompletion(finalState)
                     return true
                 }
             }
@@ -798,7 +798,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * It throws [IllegalStateException] on repeated invocation (when this job is already completing).
      * Returns:
      * * [COMPLETING_WAITING_CHILDREN] if started waiting for children.
-     * * Final state otherwise (caller should do [afterCompletionInternal])
+     * * Final state otherwise (caller should do [afterCompletion])
      */
     internal fun makeCompletingOnce(proposedUpdate: Any?): Any? {
         loopOnState { state ->
@@ -819,7 +819,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // COMPLETING_ALREADY -- when already complete or completing
     // COMPLETING_RETRY -- when need to retry due to interference
     // COMPLETING_WAITING_CHILDREN -- when made completing and is waiting for children
-    // final state -- when completed, for call to afterCompletionInternal
+    // final state -- when completed, for call to afterCompletion
     private fun tryMakeCompleting(state: Any?, proposedUpdate: Any?): Any? {
         if (state !is Incomplete)
             return COMPLETING_ALREADY
@@ -844,7 +844,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // COMPLETING_ALREADY -- when already complete or completing
     // COMPLETING_RETRY -- when need to retry due to interference
     // COMPLETING_WAITING_CHILDREN -- when made completing and is waiting for children
-    // final state -- when completed, for call to afterCompletionInternal
+    // final state -- when completed, for call to afterCompletion
     private fun tryMakeCompletingSlowPath(state: Incomplete, proposedUpdate: Any?): Any? {
         // get state's list or else promote to list to correctly operate on child lists
         val list = getOrPromoteCancellingList(state) ?: return COMPLETING_RETRY
@@ -910,7 +910,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         if (waitChild != null && tryWaitForChild(state, waitChild, proposedUpdate)) return // waiting for next child
         // no more children to wait -- try update state
         val finalState = tryFinalizeFinishingState(state, proposedUpdate)
-        afterCompletionInternal(finalState, MODE_ATOMIC_DEFAULT)
+        afterCompletion(finalState)
     }
 
     private fun LockFreeLinkedListNode.nextChild(): ChildHandleNode? {
@@ -1014,14 +1014,13 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     protected open fun onCompletionInternal(state: Any?) {}
 
     /**
-     * Override for the very last action on job's completion to resume the rest of the code in scoped coroutines.
-     *
-     * @param state the final state.
-     * @param mode completion mode.
+     * Override for the very last action on job's completion to resume the rest of the code in
+     * scoped coroutines. It is called when this job is externally completed in an unknown
+     * context and thus should resume with a default mode.
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected open fun afterCompletionInternal(state: Any?, mode: Int) {}
+    protected open fun afterCompletion(state: Any?) {}
 
     // for nicer debugging
     public override fun toString(): String =
