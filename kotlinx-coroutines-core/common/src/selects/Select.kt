@@ -93,7 +93,7 @@ public interface SelectClause2<in P, out Q> {
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
-@InternalCoroutinesApi
+@InternalCoroutinesApi // todo: sealed interface https://youtrack.jetbrains.com/issue/KT-22286
 public interface SelectInstance<in R> {
     /**
      * Returns `true` when this [select] statement had already picked a clause to execute.
@@ -112,6 +112,10 @@ public interface SelectInstance<in R> {
      * * `null` on failure to select (already selected).
      * [otherOp] is not null when trying to rendezvous with this select from inside of another select.
      * In this case, [PrepareOp.finishPrepare] must be called before deciding on any value other than [RETRY_ATOMIC].
+     *
+     * Note, that this method's actual return type is `Symbol?` but we cannot declare it as such, because this
+     * member is public, but [Symbol] is internal. When [SelectInstance] becomes a `sealed interface`
+     * (see KT-222860) we can declare this method as internal.
      */
     public fun trySelectOther(otherOp: PrepareOp?): Any?
 

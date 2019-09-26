@@ -450,8 +450,8 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         @JvmField val select: SelectInstance<R>,
         @JvmField val block: suspend (SendChannel<E>) -> R
     ) : Send(), DisposableHandle {
-        override fun tryResumeSend(otherOp: PrepareOp?): Any? =
-            select.trySelectOther(otherOp)
+        override fun tryResumeSend(otherOp: PrepareOp?): Symbol? =
+            select.trySelectOther(otherOp) as Symbol? // must return symbol
 
         override fun completeResumeSend() {
             block.startCoroutine(receiver = channel, completion = select.completion)
@@ -473,7 +473,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         @JvmField val element: E
     ) : Send() {
         override val pollResult: Any? get() = element
-        override fun tryResumeSend(otherOp: PrepareOp?): Any?  = RESUME_TOKEN.also { otherOp?.finishPrepare() }
+        override fun tryResumeSend(otherOp: PrepareOp?): Symbol? = RESUME_TOKEN.also { otherOp?.finishPrepare() }
         override fun completeResumeSend() {}
         override fun resumeSendClosed(closed: Closed<*>) {}
     }
@@ -898,9 +898,11 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         }
 
         @Suppress("IMPLICIT_CAST_TO_ANY")
-        override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Any? {
+        override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol? {
             otherOp?.finishPrepare()
-            return cont.tryResume(resumeValue(value), otherOp?.desc)
+            val token = cont.tryResume(resumeValue(value), otherOp?.desc) ?: return null
+            assert { token === RESUME_TOKEN } // the only other possible result
+            return RESUME_TOKEN
         }
 
         override fun completeResumeReceive(value: E) = cont.completeResume(RESUME_TOKEN)
@@ -919,9 +921,11 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         @JvmField val iterator: Itr<E>,
         @JvmField val cont: CancellableContinuation<Boolean>
     ) : Receive<E>() {
-        override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Any? {
+        override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol? {
             otherOp?.finishPrepare()
-            return cont.tryResume(true, otherOp?.desc)
+            val token = cont.tryResume(true, otherOp?.desc) ?: return null
+            assert { token === RESUME_TOKEN } // the only other possible result
+            return RESUME_TOKEN
         }
 
         override fun completeResumeReceive(value: E) {
@@ -953,8 +957,8 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         @JvmField val block: suspend (Any?) -> R,
         @JvmField val receiveMode: Int
     ) : Receive<E>(), DisposableHandle {
-        override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Any? =
-            select.trySelectOther(otherOp)
+        override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol? =
+            select.trySelectOther(otherOp) as Symbol?
 
         @Suppress("UNCHECKED_CAST")
         override fun completeResumeReceive(value: E) {
@@ -1019,7 +1023,7 @@ internal abstract class Send : LockFreeLinkedListNode() {
     //          RETRY_ATOMIC for retry (only when otherOp != null),
     //          RESUME_TOKEN on success (call completeResumeSend)
     // Must call otherOp?.finishPrepare() before deciding on result other than RETRY_ATOMIC
-    abstract fun tryResumeSend(otherOp: PrepareOp?): Any?
+    abstract fun tryResumeSend(otherOp: PrepareOp?): Symbol?
     abstract fun completeResumeSend()
     abstract fun resumeSendClosed(closed: Closed<*>)
 }
@@ -1033,7 +1037,7 @@ internal interface ReceiveOrClosed<in E> {
     //          RETRY_ATOMIC for retry (only when otherOp != null),
     //          RESUME_TOKEN on success (call completeResumeReceive)
     // Must call otherOp?.finishPrepare() before deciding on result other than RETRY_ATOMIC
-    fun tryResumeReceive(value: E, otherOp: PrepareOp?): Any?
+    fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol?
     fun completeResumeReceive(value: E)
 }
 
@@ -1045,9 +1049,11 @@ internal class SendElement(
     override val pollResult: Any?,
     @JvmField val cont: CancellableContinuation<Unit>
 ) : Send() {
-    override fun tryResumeSend(otherOp: PrepareOp?): Any? {
+    override fun tryResumeSend(otherOp: PrepareOp?): Symbol? {
         otherOp?.finishPrepare()
-        return cont.tryResume(Unit, otherOp?.desc)
+        val token = cont.tryResume(Unit, otherOp?.desc)
+        assert { token === RESUME_TOKEN } // the only other possible result
+        return RESUME_TOKEN
     }
     override fun completeResumeSend() = cont.completeResume(RESUME_TOKEN)
     override fun resumeSendClosed(closed: Closed<*>) = cont.resumeWithException(closed.sendException)
@@ -1065,9 +1071,9 @@ internal class Closed<in E>(
 
     override val offerResult get() = this
     override val pollResult get() = this
-    override fun tryResumeSend(otherOp: PrepareOp?): Any? = RESUME_TOKEN.also { otherOp?.finishPrepare() }
+    override fun tryResumeSend(otherOp: PrepareOp?): Symbol? = RESUME_TOKEN.also { otherOp?.finishPrepare() }
     override fun completeResumeSend() {}
-    override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Any? = RESUME_TOKEN.also { otherOp?.finishPrepare() }
+    override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol? = RESUME_TOKEN.also { otherOp?.finishPrepare() }
     override fun completeResumeReceive(value: E) {}
     override fun resumeSendClosed(closed: Closed<*>) = assert { false } // "Should be never invoked"
     override fun toString(): String = "Closed[$closeCause]"
