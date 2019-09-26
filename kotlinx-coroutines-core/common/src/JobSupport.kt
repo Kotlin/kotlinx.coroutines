@@ -194,16 +194,16 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // Finalizes Finishing -> Completed (terminal state) transition.
     // ## IMPORTANT INVARIANT: Only one thread can be concurrently invoking this method.
     // Returns final state that was created and updated to
-    private fun tryFinalizeFinishingState(state: Finishing, proposedUpdate: Any?): Any? {
+    private fun finalizeFinishingState(state: Finishing, proposedUpdate: Any?): Any? {
         /*
          * Note: proposed state can be Incomplete, e.g.
          * async {
          *     something.invokeOnCompletion {} // <- returns handle which implements Incomplete under the hood
          * }
          */
-        require(this.state === state) // consistency check -- it cannot change
-        require(!state.isSealed) // consistency check -- cannot be sealed yet
-        require(state.isCompleting) // consistency check -- must be marked as completing
+        assert { this.state === state } // consistency check -- it cannot change
+        assert { !state.isSealed } // consistency check -- cannot be sealed yet
+        assert { state.isCompleting } // consistency check -- must be marked as completing
         val proposedException = (proposedUpdate as? CompletedExceptionally)?.cause
         // Create the final exception and seal the state so that no more exceptions can be added
         var wasCancelling = false // KLUDGE: we cannot have contract for our own expect fun synchronized
@@ -233,7 +233,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         if (!wasCancelling) onCancelling(finalException)
         onCompletionInternal(finalState)
         // Then CAS to completed state -> it must succeed
-        require(_state.compareAndSet(state, finalState.boxIncomplete())) { "Unexpected state: ${_state.value}, expected: $state, update: $finalState" }
+        val casSuccess = _state.compareAndSet(state, finalState.boxIncomplete())
+        assert { casSuccess }
         // And process all post-completion actions
         completeStateFinalization(state, finalState)
         return finalState
@@ -269,7 +270,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     // fast-path method to finalize normally completed coroutines without children
-    // returns true if complete, and afterCompletionInternal(update, mode) shall be called
+    // returns true if complete, and afterCompletion(update) shall be called
     private fun tryFinalizeSimpleState(state: Incomplete, update: Any?): Boolean {
         assert { state is Empty || state is JobNode<*> } // only simple state without lists where children can concurrently add
         assert { update !is CompletedExceptionally } // only for normal completion
@@ -495,10 +496,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     private fun makeNode(handler: CompletionHandler, onCancelling: Boolean): JobNode<*> {
         return if (onCancelling)
-            (handler as? JobCancellingNode<*>)?.also { require(it.job === this) }
+            (handler as? JobCancellingNode<*>)?.also { assert { it.job === this } }
                 ?: InvokeOnCancelling(this, handler)
         else
-            (handler as? JobNode<*>)?.also { require(it.job === this && it !is JobCancellingNode) }
+            (handler as? JobNode<*>)?.also { assert { it.job === this && it !is JobCancellingNode } }
                 ?: InvokeOnCompletion(this, handler)
     }
 
@@ -653,7 +654,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             finalState === COMPLETING_WAITING_CHILDREN -> true
             finalState === TOO_LATE_TO_CANCEL -> false
             else -> {
-                afterCompletionInternal(finalState, MODE_ATOMIC_DEFAULT)
+                afterCompletion(finalState)
                 true
             }
         }
@@ -663,7 +664,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // It contains a loop and never returns COMPLETING_RETRY, can return
     // COMPLETING_ALREADY -- if already completed/completing
     // COMPLETING_WAITING_CHILDREN -- if started waiting for children
-    // final state -- when completed, for call to afterCompletionInternal
+    // final state -- when completed, for call to afterCompletion
     private fun cancelMakeCompleting(cause: Any?): Any? {
         loopOnState { state ->
             if (state !is Incomplete || state is Finishing && state.isCompleting) {
@@ -703,7 +704,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // COMPLETING_ALREADY -- if already completing or successfully made cancelling, added exception
     // COMPLETING_WAITING_CHILDREN -- if started waiting for children, added exception
     // TOO_LATE_TO_CANCEL -- too late to cancel, did not add exception
-    // final state -- when completed, for call to afterCompletionInternal
+    // final state -- when completed, for call to afterCompletion
     private fun makeCancelling(cause: Any?): Any? {
         var causeExceptionCache: Throwable? = null // lazily init result of createCauseException(cause)
         loopOnState { state ->
@@ -786,7 +787,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                 finalState === COMPLETING_WAITING_CHILDREN -> return true
                 finalState === COMPLETING_RETRY -> return@loopOnState
                 else -> {
-                    afterCompletionInternal(finalState, MODE_ATOMIC_DEFAULT)
+                    afterCompletion(finalState)
                     return true
                 }
             }
@@ -798,7 +799,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * It throws [IllegalStateException] on repeated invocation (when this job is already completing).
      * Returns:
      * * [COMPLETING_WAITING_CHILDREN] if started waiting for children.
-     * * Final state otherwise (caller should do [afterCompletionInternal])
+     * * Final state otherwise (caller should do [afterCompletion])
      */
     internal fun makeCompletingOnce(proposedUpdate: Any?): Any? {
         loopOnState { state ->
@@ -819,7 +820,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // COMPLETING_ALREADY -- when already complete or completing
     // COMPLETING_RETRY -- when need to retry due to interference
     // COMPLETING_WAITING_CHILDREN -- when made completing and is waiting for children
-    // final state -- when completed, for call to afterCompletionInternal
+    // final state -- when completed, for call to afterCompletion
     private fun tryMakeCompleting(state: Any?, proposedUpdate: Any?): Any? {
         if (state !is Incomplete)
             return COMPLETING_ALREADY
@@ -844,7 +845,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // COMPLETING_ALREADY -- when already complete or completing
     // COMPLETING_RETRY -- when need to retry due to interference
     // COMPLETING_WAITING_CHILDREN -- when made completing and is waiting for children
-    // final state -- when completed, for call to afterCompletionInternal
+    // final state -- when completed, for call to afterCompletion
     private fun tryMakeCompletingSlowPath(state: Incomplete, proposedUpdate: Any?): Any? {
         // get state's list or else promote to list to correctly operate on child lists
         val list = getOrPromoteCancellingList(state) ?: return COMPLETING_RETRY
@@ -866,7 +867,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                 if (!_state.compareAndSet(state, finishing)) return COMPLETING_RETRY
             }
             // ## IMPORTANT INVARIANT: Only one thread (that had set isCompleting) can go past this point
-            require(!finishing.isSealed) // cannot be sealed
+            assert { !finishing.isSealed } // cannot be sealed
             // add new proposed exception to the finishing state
             val wasCancelling = finishing.isCancelling
             (proposedUpdate as? CompletedExceptionally)?.let { finishing.addExceptionLocked(it.cause) }
@@ -880,7 +881,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         if (child != null && tryWaitForChild(finishing, child, proposedUpdate))
             return COMPLETING_WAITING_CHILDREN
         // otherwise -- we have not children left (all were already cancelled?)
-        return tryFinalizeFinishingState(finishing, proposedUpdate)
+        return finalizeFinishingState(finishing, proposedUpdate)
     }
 
     private val Any?.exceptionOrNull: Throwable?
@@ -903,14 +904,14 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     // ## IMPORTANT INVARIANT: Only one thread can be concurrently invoking this method.
     private fun continueCompleting(state: Finishing, lastChild: ChildHandleNode, proposedUpdate: Any?) {
-        require(this.state === state) // consistency check -- it cannot change while we are waiting for children
+        assert { this.state === state } // consistency check -- it cannot change while we are waiting for children
         // figure out if we need to wait for next child
         val waitChild = lastChild.nextChild()
         // try wait for next child
         if (waitChild != null && tryWaitForChild(state, waitChild, proposedUpdate)) return // waiting for next child
         // no more children to wait -- try update state
-        val finalState = tryFinalizeFinishingState(state, proposedUpdate)
-        afterCompletionInternal(finalState, MODE_ATOMIC_DEFAULT)
+        val finalState = finalizeFinishingState(state, proposedUpdate)
+        afterCompletion(finalState)
     }
 
     private fun LockFreeLinkedListNode.nextChild(): ChildHandleNode? {
@@ -1014,14 +1015,13 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     protected open fun onCompletionInternal(state: Any?) {}
 
     /**
-     * Override for the very last action on job's completion to resume the rest of the code in scoped coroutines.
-     *
-     * @param state the final state.
-     * @param mode completion mode.
+     * Override for the very last action on job's completion to resume the rest of the code in
+     * scoped coroutines. It is called when this job is externally completed in an unknown
+     * context and thus should resume with a default mode.
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected open fun afterCompletionInternal(state: Any?, mode: Int) {}
+    protected open fun afterCompletion(state: Any?) {}
 
     // for nicer debugging
     public override fun toString(): String =

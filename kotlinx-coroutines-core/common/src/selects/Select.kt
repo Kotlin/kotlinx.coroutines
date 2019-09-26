@@ -128,7 +128,7 @@ public interface SelectInstance<in R> {
     /**
      * Returns completion continuation of this select instance.
      * This select instance must be _selected_ first.
-     * All resumption through this instance happen _directly_ without going through dispatcher ([MODE_DIRECT]).
+     * All resumption through this instance happen _directly_ without going through dispatcher.
      */
     public val completion: Continuation<R>
 
@@ -271,7 +271,7 @@ internal class SelectBuilderImpl<in R>(
         }
     }
 
-    // Resumes in MODE_DIRECT
+    // Resumes in direct mode, without going through dispatcher. Should be called in the same context.
     override fun resumeWith(result: Result<R>) {
         doResume({ result.toState() }) {
             if (result.isFailure) {
@@ -282,7 +282,7 @@ internal class SelectBuilderImpl<in R>(
         }
     }
 
-    // Resumes in MODE_CANCELLABLE
+    // Resumes in MODE_CANCELLABLE, can be called from an arbitrary context
     override fun resumeSelectCancellableWithException(exception: Throwable) {
         doResume({ CompletedExceptionally(exception) }) {
             uCont.intercepted().resumeCancellableWith(Result.failure(exception))
