@@ -2,6 +2,7 @@ public abstract class kotlinx/coroutines/AbstractCoroutine : kotlinx/coroutines/
 	protected final field parentContext Lkotlin/coroutines/CoroutineContext;
 	public fun <init> (Lkotlin/coroutines/CoroutineContext;Z)V
 	public synthetic fun <init> (Lkotlin/coroutines/CoroutineContext;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	protected fun afterResume (Ljava/lang/Object;)V
 	public final fun getContext ()Lkotlin/coroutines/CoroutineContext;
 	public fun getCoroutineContext ()Lkotlin/coroutines/CoroutineContext;
 	public fun isActive ()Z
@@ -380,7 +381,7 @@ public final class kotlinx/coroutines/JobKt {
 
 public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlinx/coroutines/Job, kotlinx/coroutines/ParentJob, kotlinx/coroutines/selects/SelectClause0 {
 	public fun <init> (Z)V
-	protected fun afterCompletionInternal (Ljava/lang/Object;I)V
+	protected fun afterCompletion (Ljava/lang/Object;)V
 	public final fun attachChild (Lkotlinx/coroutines/ChildJob;)Lkotlinx/coroutines/ChildHandle;
 	public synthetic fun cancel ()V
 	public synthetic fun cancel (Ljava/lang/Throwable;)Z

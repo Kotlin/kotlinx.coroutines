@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -142,20 +142,20 @@ public suspend fun <T> withContext(
     newContext.checkCompletion()
     // FAST PATH #1 -- new context is the same as the old one
     if (newContext === oldContext) {
-        val coroutine = ScopeCoroutine(newContext, uCont) // MODE_DIRECT
+        val coroutine = ScopeCoroutine(newContext, uCont)
         return@sc coroutine.startUndispatchedOrReturn(coroutine, block)
     }
     // FAST PATH #2 -- the new dispatcher is the same as the old one (something else changed)
     // `equals` is used by design (see equals implementation is wrapper context like ExecutorCoroutineDispatcher)
     if (newContext[ContinuationInterceptor] == oldContext[ContinuationInterceptor]) {
-        val coroutine = UndispatchedCoroutine(newContext, uCont) // MODE_UNDISPATCHED
+        val coroutine = UndispatchedCoroutine(newContext, uCont)
         // There are changes in the context, so this thread needs to be updated
         withCoroutineContext(newContext, null) {
             return@sc coroutine.startUndispatchedOrReturn(coroutine, block)
         }
     }
     // SLOW PATH -- use new dispatcher
-    val coroutine = DispatchedCoroutine(newContext, uCont) // MODE_CANCELLABLE
+    val coroutine = DispatchedCoroutine(newContext, uCont)
     coroutine.initParentJob()
     block.startCoroutineCancellable(coroutine, coroutine)
     coroutine.getResult()
@@ -200,7 +200,13 @@ private class UndispatchedCoroutine<in T>(
     context: CoroutineContext,
     uCont: Continuation<T>
 ) : ScopeCoroutine<T>(context, uCont) {
-    override val defaultResumeMode: Int get() = MODE_UNDISPATCHED
+    override fun afterResume(state: Any?) {
+        // resume undispatched -- update context by stay on the same dispatcher
+        val result = recoverResult(state, uCont)
+        withCoroutineContext(uCont.context, null) {
+            uCont.resumeWith(result)
+        }
+    }
 }
 
 private const val UNDECIDED = 0
@@ -212,8 +218,6 @@ private class DispatchedCoroutine<in T>(
     context: CoroutineContext,
     uCont: Continuation<T>
 ) : ScopeCoroutine<T>(context, uCont) {
-    override val defaultResumeMode: Int get() = MODE_CANCELLABLE
-
     // this is copy-and-paste of a decision state machine inside AbstractionContinuation
     // todo: we may some-how abstract it via inline class
     private val _decision = atomic(UNDECIDED)
@@ -238,10 +242,16 @@ private class DispatchedCoroutine<in T>(
         }
     }
 
-    override fun afterCompletionInternal(state: Any?, mode: Int) {
+    override fun afterCompletion(state: Any?) {
+        // Call afterResume from afterCompletion and not vice-versa, because stack-size is more
+        // important for afterResume implementation
+        afterResume(state)
+    }
+
+    override fun afterResume(state: Any?) {
         if (tryResume()) return // completed before getResult invocation -- bail out
-        // otherwise, getResult has already commenced, i.e. completed later or in other thread
-        super.afterCompletionInternal(state, mode)
+        // Resume in a cancellable way because we have to switch back to the original dispatcher
+        uCont.intercepted().resumeCancellableWith(recoverResult(state, uCont))
     }
 
     fun getResult(): Any? {

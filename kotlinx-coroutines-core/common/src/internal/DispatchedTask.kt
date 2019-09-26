@@ -8,6 +8,13 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
+@PublishedApi internal const val MODE_ATOMIC_DEFAULT = 0 // schedule non-cancellable dispatch for suspendCoroutine
+@PublishedApi internal const val MODE_CANCELLABLE = 1    // schedule cancellable dispatch for suspendCancellableCoroutine
+@PublishedApi internal const val MODE_UNDISPATCHED = 2   // when the thread is right, but need to mark it with current coroutine
+
+internal val Int.isCancellableMode get() = this == MODE_CANCELLABLE
+internal val Int.isDispatchedMode get() = this == MODE_ATOMIC_DEFAULT || this == MODE_CANCELLABLE
+
 internal abstract class DispatchedTask<in T>(
     @JvmField public var resumeMode: Int
 ) : SchedulerTask() {
@@ -89,7 +96,7 @@ internal abstract class DispatchedTask<in T>(
     }
 }
 
-internal fun <T> DispatchedTask<T>.dispatch(mode: Int = MODE_CANCELLABLE) {
+internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
     val delegate = this.delegate
     if (mode.isDispatchedMode && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {
         // dispatch directly using this instance's Runnable implementation
@@ -125,7 +132,6 @@ internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: In
     when (useMode) {
         MODE_ATOMIC_DEFAULT -> delegate.resumeWith(result)
         MODE_CANCELLABLE -> delegate.resumeCancellableWith(result)
-        MODE_DIRECT -> ((delegate as? DispatchedContinuation)?.continuation ?: delegate).resumeWith(result)
         MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatchedWith(result)
         else -> error("Invalid mode $useMode")
     }

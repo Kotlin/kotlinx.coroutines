@@ -102,16 +102,16 @@ public abstract class AbstractCoroutine<in T>(
             onCompleted(state as T)
     }
 
-    internal open val defaultResumeMode: Int get() = MODE_ATOMIC_DEFAULT
-
     /**
      * Completes execution of this with coroutine with the specified result.
      */
     public final override fun resumeWith(result: Result<T>) {
         val state = makeCompletingOnce(result.toState())
         if (state === COMPLETING_WAITING_CHILDREN) return
-        afterCompletionInternal(state, defaultResumeMode)
+        afterResume(state)
     }
+
+    protected open fun afterResume(state: Any?) = afterCompletion(state)
 
     internal final override fun handleOnCompletionException(exception: Throwable) {
         handleCoroutineException(context, exception)

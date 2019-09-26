@@ -20,23 +20,16 @@ internal open class ScopeCoroutine<in T>(
     final override fun getStackTraceElement(): StackTraceElement? = null
     final override val isScopedCoroutine: Boolean get() = true
 
-    override val defaultResumeMode: Int get() = MODE_DIRECT
-
     internal val parent: Job? get() = parentContext[Job]
 
-    @Suppress("UNCHECKED_CAST")
-    override fun afterCompletionInternal(state: Any?, mode: Int) {
-        val result = if (state is CompletedExceptionally)
-            Result.failure(recoverStackTrace(state.cause, uCont))
-        else
-            Result.success(state as T)
-        when (mode) {
-            MODE_ATOMIC_DEFAULT -> uCont.intercepted().resumeWith(result)
-            MODE_CANCELLABLE -> uCont.intercepted().resumeCancellableWith(result)
-            MODE_DIRECT -> uCont.resumeWith(result)
-            MODE_UNDISPATCHED -> withCoroutineContext(uCont.context, null) { uCont.resumeWith(result) }
-            else -> error("Invalid mode $mode")
-        }
+    override fun afterCompletion(state: Any?) {
+        // Resume in a cancellable way by default when resuming from another context
+        uCont.intercepted().resumeCancellableWith(recoverResult(state, uCont))
+    }
+
+    override fun afterResume(state: Any?) {
+        // Resume direct because scope is already in the correct context
+        uCont.resumeWith(recoverResult(state, uCont))
     }
 }
 
