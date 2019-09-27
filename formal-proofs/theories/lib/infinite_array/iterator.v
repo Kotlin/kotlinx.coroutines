@@ -87,6 +87,19 @@ Definition is_iterator γa γ fℓ ℓ: iProp :=
 Definition iterator_issued γ n :=
   own γ (◯ (GSet {[ n ]}, S n: mnatUR)).
 
+Theorem iterator_issued_timeless γ n: Timeless (iterator_issued γ n).
+Proof. apply _. Qed.
+
+Theorem iterator_issued_exclusive γ n:
+  iterator_issued γ n -∗ iterator_issued γ n -∗ False.
+Proof.
+  iIntros "HIss HIss'".
+  iDestruct (own_valid_2 with "HIss HIss'") as %HContra.
+  exfalso. revert HContra. clear. rewrite -auth_frag_op -pair_op.
+  case; simpl. rewrite gset_disj_valid_op. rewrite disjoint_singleton_l.
+  case. rewrite elem_of_singleton. done.
+Qed.
+
 Lemma quot_of_nat n m:
   Z.of_nat n `quot` Z.of_nat m = Z.of_nat (n `div` m).
 Proof.

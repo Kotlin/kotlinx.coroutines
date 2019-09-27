@@ -484,6 +484,9 @@ Proof. apply array_mapsto'_agree. Qed.
 Global Instance array_mapsto_persistent γ ns nc ℓ: Persistent (array_mapsto' γ ns nc ℓ).
 Proof. apply _. Qed.
 
+Global Instance array_mapsto_timeless γ ns nc ℓ: Timeless (array_mapsto' γ ns nc ℓ).
+Proof. apply _. Qed.
+
 End array_mapsto.
 
 Section cancellation.
