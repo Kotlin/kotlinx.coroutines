@@ -1051,7 +1051,7 @@ internal class SendElement(
 ) : Send() {
     override fun tryResumeSend(otherOp: PrepareOp?): Symbol? {
         otherOp?.finishPrepare()
-        val token = cont.tryResume(Unit, otherOp?.desc)
+        val token = cont.tryResume(Unit, otherOp?.desc) ?: return null
         assert { token === RESUME_TOKEN } // the only other possible result
         return RESUME_TOKEN
     }
