@@ -5,7 +5,7 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.LockFreedomTestEnvironment
-import kotlinx.coroutines.TestBase
+import kotlinx.coroutines.stressTestMultiplier
 import org.junit.Assert.*
 import org.junit.Test
 import java.util.*
@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference
  * This stress test has 4 threads adding randomly to the list and them immediately undoing
  * this addition by remove, and 4 threads trying to remove nodes from two lists simultaneously (atomically).
  */
-class LockFreeLinkedListAtomicLFStressTest : TestBase() {
+class LockFreeLinkedListAtomicLFStressTest {
     private val env = LockFreedomTestEnvironment("LockFreeLinkedListAtomicLFStressTest")
 
     data class IntNode(val i: Int) : LockFreeLinkedListNode()
