@@ -10,10 +10,10 @@ import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-public expect open class TestBase constructor() {
-    public val isStressTest: Boolean
-    public val stressTestMultiplier: Int
+public expect val isStressTest: Boolean
+public expect val stressTestMultiplier: Int
 
+public expect open class TestBase constructor() {
     public fun error(message: Any, cause: Throwable? = null): Nothing
     public fun expect(index: Int)
     public fun expectUnreached()
