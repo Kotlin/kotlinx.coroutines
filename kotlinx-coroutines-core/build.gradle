@@ -80,7 +80,7 @@ jvmTest {
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
 }
 
-task stressTest(type: Test, dependsOn: compileTestKotlinJvm) {
+task jvmStressTest(type: Test, dependsOn: compileTestKotlinJvm) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
     minHeapSize = '1g'
@@ -105,7 +105,7 @@ task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
 jdk16Test.onlyIf { project.properties['stressTest'] != null }
 
 // Always run those tests
-task moreTest(dependsOn: [stressTest, jdk16Test])
+task moreTest(dependsOn: [jvmStressTest, jdk16Test])
 build.dependsOn moreTest
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {
