@@ -2549,7 +2549,7 @@ Proof.
 
   iAssert (▷ [∗ list] i ∈ seq 0 (S id), segment_invariant γ i)%I as "#HSegInv".
   {
-    iApply big_opL_commute. iApply big_sepL_forall.
+    rewrite big_opL_commute. iApply big_sepL_forall.
     iIntros (k x HEl).
     apply seq_lookup' in HEl. simpl in *. destruct HEl as [<- HEl].
 

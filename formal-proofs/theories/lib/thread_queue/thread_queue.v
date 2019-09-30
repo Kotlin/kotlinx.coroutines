@@ -241,6 +241,7 @@ Notation enqIteratorUR := iteratorUR.
 Inductive cellTerminalState :=
 | cellCancelled
 | cellResumed
+| cellFilled
 | cellAbandoned.
 
 Notation cellProgressUR := mnatUR (only parsing).
@@ -251,7 +252,7 @@ Notation cellDoneO := (3%nat: mnatUR) (only parsing).
 
 Canonical Structure cellTerminalStateO := leibnizO cellTerminalState.
 
-Notation cellStateUR := (prodUR cellProgressUR
+Notation cellStateUR := (prodUR (prodUR (optionUR (exclR unitO)) cellProgressUR)
                                 (optionUR (agreeR cellTerminalStateO))).
 
 Notation queueContentsUR := (listUR cellStateUR).
@@ -273,14 +274,18 @@ Variable segment_size: positive.
 Definition rendezvous_state γtq i (r: cellStateUR) :=
   own γtq (◯ (ε, replicate i ε ++ [r])).
 
+Global Instance rendezvous_state_persistent γtq i (r: cellStateUR):
+  CoreId r -> Persistent (rendezvous_state γtq i r).
+Proof. apply _. Qed.
+
 Definition rendezvous_resumed (γtq: gname) (i: nat): iProp :=
   rendezvous_state γtq i (ε, Some (to_agree cellResumed)).
 Definition rendezvous_cancelled (γtq: gname) (i: nat): iProp :=
   rendezvous_state γtq i (ε, Some (to_agree cellCancelled)).
 Definition rendezvous_initialized γtq i :=
-  rendezvous_state γtq i (cellInitializedO, ε).
+  rendezvous_state γtq i (ε, cellInitializedO, ε).
 Definition rendezvous_inhabited γtq i :=
-  rendezvous_state γtq i (cellInhabitedO, ε).
+  rendezvous_state γtq i (ε, cellInhabitedO, ε).
 
 Definition cell_invariant (γtq γa: gname) (n: nat) (ℓ: loc): iProp :=
   (cell_cancellation_handle segment_size γa n ∗ ℓ ↦ NONEV ∨
@@ -392,14 +397,44 @@ Definition still_present (k: option cellState): bool :=
 
 Definition cell_state_to_RA (k: option cellState) :=
   match k with
-    | None => (cellUninitializedO, None)
+    | None => (None, cellUninitializedO, None)
     | Some s => match s with
-               | cellInhabited => (cellInhabitedO, None)
-               | cellDone d => (cellDoneO, Some (to_agree d))
+               | cellInhabited => (Excl' (), cellInhabitedO, None)
+               | cellDone d => (match d with
+                               | cellCancelled => None
+                               (* Must give up the token to cancel the cell *)
+                               | cellFilled => None
+                               (* The cell is never inhabited *)
+                               | _ => Excl' ()
+                               end, cellDoneO, Some (to_agree d))
                end
   end.
 
-Definition cell_resources S R γa γe γd i k :=
+Definition inhabitant_token γtq i :=
+  rendezvous_state γtq i (Excl' (), ε, ε).
+
+Lemma inhabitant_token_exclusive γtq i:
+  inhabitant_token γtq i -∗ inhabitant_token γtq i -∗ False.
+Proof.
+  iIntros "H H'".
+  iDestruct (own_valid_2 with "H H'") as %HValid.
+  iPureIntro. move: HValid.
+  rewrite -auth_frag_op auth_frag_valid -pair_op pair_valid.
+  case; intros _.
+  rewrite list_lookup_valid. intros HValid.
+  specialize (HValid i). move: HValid.
+  rewrite list_lookup_op.
+
+  rewrite lookup_app_r. all: rewrite replicate_length. 2: done.
+  rewrite minus_diag. simpl.
+
+  rewrite -Some_op -pair_op Some_valid pair_valid. case.
+  intros HH _. revert HH. rewrite -pair_op pair_valid. case.
+  intros HH _. revert HH. rewrite -Some_op Some_valid.
+  apply exclusive_l. apply excl_exclusive.
+Qed.
+
+Definition cell_resources S R γtq γa γe γd i k :=
   (match k with
    | None => True
    | Some cellState => ∃ ℓ, array_mapsto segment_size γa i ℓ ∗
@@ -410,18 +445,23 @@ Definition cell_resources S R γa γe γd i k :=
         | cellDone cd => match cd with
           | cellAbandoned => cell_cancellation_handle segment_size γa i ∗
                             iterator_issued γe i ∗
+                            inhabitant_token γtq i ∗
                             (iterator_issued γd i ∨ (∃ th, ℓ ↦ InjLV th) ∗ S)
           | cellCancelled => iterator_issued γe i ∗ (ℓ ↦ CANCELLEDV ∨ ℓ ↦ RESUMEDV)
+          | cellFilled => iterator_issued γd i ∗
+                          cell_cancellation_handle segment_size γa i ∗
+                          (iterator_issued γe i ∨ ℓ ↦ RESUMEDV ∗ R)
           | cellResumed => iterator_issued γd i ∗
                           cell_cancellation_handle segment_size γa i ∗
-                           (iterator_issued γe i ∨ ℓ ↦ RESUMEDV ∗ R)
+                          iterator_issued γe i ∗
+                           (inhabitant_token γtq i ∨ ℓ ↦ RESUMEDV ∗ R)
           end
         end
   end)%I.
 
-Theorem cell_resources_timeless S R γa γe γd i k :
+Theorem cell_resources_timeless S R γtq γa γe γd i k :
   Timeless R -> Timeless S ->
-  Timeless (cell_resources S R γa γe γd i k).
+  Timeless (cell_resources S R γtq γa γe γd i k).
 Proof. destruct k; try apply _. destruct c; try apply _.
        destruct c; apply _.
 Qed.
@@ -439,7 +479,7 @@ Definition cell_list_contents (S R: iProp) γa γtq γe γd
    ⌜deqFront <= length l⌝ ∗
    own γtq (● cell_list_contents_auth_ra nDeq l deqFront) ∗
        ([∗ list] s ∈ replicate nEnq S, s) ∗ ([∗ list] r ∈ replicate nDeq R, r) ∗
-       ([∗ list] i ↦ k ∈ l, cell_resources S R γa γe γd i k))%I.
+       ([∗ list] i ↦ k ∈ l, cell_resources S R γtq γa γe γd i k))%I.
 
 Definition suspension_permit γtq := own γtq (◯ (Some (1%positive), ε, ε)).
 
@@ -663,8 +703,8 @@ Proof. apply _. Qed.
 
 Lemma cell_list_contents_lookup_acc i E R γa γtq γe γd l deqFront:
   cell_list_contents E R γa γtq γe γd l deqFront -∗
-  cell_resources E R γa γe γd i (mjoin (l !! i)) ∗
-  (cell_resources E R γa γe γd i (mjoin (l !! i)) -∗
+  cell_resources E R γtq γa γe γd i (mjoin (l !! i)) ∗
+  (cell_resources E R γtq γa γe γd i (mjoin (l !! i)) -∗
    cell_list_contents E R γa γtq γe γd l deqFront).
 Proof.
   iIntros "(% & HAuth & HEs & HRs & HCellResources)".
@@ -698,8 +738,8 @@ Proof.
     iIntros (? ? ?) "HAp". by rewrite -plus_n_Sm.
 Qed.
 
-Lemma cell_resources_conflict_invariant E R γa γe γd i c ptr:
-  cell_resources E R γa γe γd i (Some c) -∗
+Lemma cell_resources_conflict_invariant E R γtq γa γe γd i c ptr:
+  cell_resources E R γtq γa γe γd i (Some c) -∗
   array_mapsto segment_size γa i ptr -∗
   cell_cancellation_handle segment_size γa i -∗
   ptr ↦ - -∗ False.
@@ -725,6 +765,8 @@ Proof.
     * iDestruct "HR" as "(_ & [HPtr'|HPtr'])"; iApply "HContra"; eauto.
     * iDestruct "HR" as "(_ & HCancHandle' & _)".
       iApply (cell_cancellation_handle'_exclusive with "HCancHandle HCancHandle'").
+    * iDestruct "HR" as "(_ & HCancHandle' & _)".
+      iApply (cell_cancellation_handle'_exclusive with "HCancHandle HCancHandle'").
     * iDestruct "HR" as "(HCancHandle' & _)".
       iApply (cell_cancellation_handle'_exclusive with "HCancHandle HCancHandle'").
 Qed.
@@ -732,11 +774,11 @@ Qed.
 Lemma enquirer_not_present_means_filled_if_initialized
       E R γtq γa γe γd i c v l d:
   l !! i = Some c ->
-  cell_resources E R γa γe γd i c -∗
+  cell_resources E R γtq γa γe γd i c -∗
   own γtq (● cell_list_contents_auth_ra v l d) -∗
   rendezvous_initialized γtq i -∗
   iterator_issued γe i -∗
-  ⌜c = Some (cellDone cellResumed)⌝.
+  ⌜c = Some (cellDone cellFilled)⌝.
 Proof.
   iIntros (HIsSome) "HCellRes HAuth HCellInit HIsSus".
   destruct c.
@@ -750,10 +792,11 @@ Proof.
     revert HContra.
     revert HIsSome. clear. revert i. induction l. done.
     case; simpl in *; auto.
-    intros HH. simplify_eq.
+    intros HH. simplify_eq. simpl.
     rewrite /= Some_included prod_included /=. case.
-    by case.
-    case; rewrite mnat_included; lia.
+    by repeat case.
+    case. rewrite prod_included. simpl. case.
+    rewrite mnat_included; lia.
   }
   destruct c; simpl.
   {
@@ -762,7 +805,8 @@ Proof.
   }
   destruct c; simpl; auto; iExFalso.
   1: iDestruct "HCellRes" as (?) "(_ & HIsSus' & _)".
-  2: iDestruct "HCellRes" as (?) "(_ & _ & HIsSus' & _)".
+  2: iDestruct "HCellRes" as (?) "(_ & _ & _ & HIsSus' & _)".
+  3: iDestruct "HCellRes" as (?) "(_ & _ & HIsSus' & _)".
   all: iDestruct (iterator_issued_exclusive with "HIsSus HIsSus'") as %[].
 Qed.
 
@@ -778,9 +822,10 @@ Theorem inhabit_cell_spec N' E R γa γtq γe γd i ptr th:
     getAndSet #ptr (InjLV th) @ ⊤ ∖ ↑N'
   <<< ∃ r, ⌜l !! i = Some None⌝ ∧
            ⌜r = InjLV #()⌝ ∧
+           inhabitant_token γtq i ∗
            ▷ cell_list_contents E R γa γtq γe γd
              (alter (fun _ => Some cellInhabited) i l) deqFront ∨
-           ⌜l !! i = Some (Some (cellDone cellResumed))⌝ ∧
+           ⌜l !! i = Some (Some (cellDone cellFilled))⌝ ∧
            ⌜r = RESUMEDV⌝ ∧
            ▷ R ∗
            ▷ cell_list_contents E R γa γtq γe γd l deqFront , RET r >>>.
@@ -855,8 +900,9 @@ Proof.
     iMod (own_update _ _ ((● cell_list_contents_auth_ra
                                (count_matching still_present (take deqFront l'))
                                l' deqFront
-                               ⋅ ◯ (ε, replicate i ε ++ [(2%nat: mnatUR, None)]))
-                         ) with "HAuth") as "[HAuth #HFrag]".
+                               ⋅ ◯ (ε, replicate i ε ++
+                                                 [(Excl' (), 2%nat: mnatUR, None)]))
+                         ) with "HAuth") as "[HAuth HFrag]".
     { simpl. apply auth_update_alloc.
       rewrite /cell_list_contents_auth_ra.
       destruct l as [|x l]; simpl. by inversion HIsSome.
@@ -889,29 +935,41 @@ Proof.
               rewrite -Some_op ucmra_unit_left_id //. }
             by apply IHl.
     }
-    iAssert (own γtq (◯ (ε, replicate i ε ++ [(1%nat: mnatUR, None)])))
-      with "[]" as "HInit".
+    iAssert (own γtq (◯ (ε, replicate i ε ++ [(ε, 1%nat: mnatUR, None)])))
+      with "[-]" as "#HInit".
     {
-      remember (◯ (_, _ ++ [(2%nat: mnatUR, _)])) as K.
-      remember (◯ (_, _ ++ [(1%nat: mnatUR, _)])) as K'.
+      remember (◯ (_, _ ++ [(_, 2%nat: mnatUR, _)])) as K.
+      remember (◯ (_, _ ++ [(_, 1%nat: mnatUR, _)])) as K'.
       assert (K' ≼ K) as HLt.
       { subst. rewrite auth_included. simpl; split; try done.
         rewrite prod_included. simpl; split; try done.
         rewrite list_lookup_included. clear.
         induction i; case; simpl; try done.
         apply Some_included; right. rewrite prod_included.
-        split; try done. simpl. rewrite mnat_included. lia. }
+        split; try done. simpl. rewrite prod_included. simpl. split.
+        apply ucmra_unit_least. rewrite mnat_included. lia. }
       inversion HLt as [? ->]. rewrite own_op.
       iDestruct "HFrag" as "[$ _]". }
     iFrame.
 
     iMod ("HClose" with "[-]") as "$".
-    2: done.
+    2: by iFrame "HInit".
 
     iLeft.
     unfold cell_list_contents. iFrame.
     iSplitR; first by iPureIntro.
     iSplitR; first by iPureIntro.
+    iSplitL "HFrag". {
+      rewrite /inhabitant_token /rendezvous_state.
+      iApply own_mono. 2: iApply "HFrag".
+      apply auth_included. split; try done. simpl.
+      apply prod_included. split; try done. simpl.
+      apply list_lookup_included. clear.
+      induction i; case; simpl; try done.
+      { apply Some_included. right. apply prod_included; split; try done; simpl.
+        rewrite prod_included. split; try done; simpl.
+        apply ucmra_unit_least. }
+    }
     iSplitR; first by iPureIntro; lia.
     by rewrite big_sepL_later.
   }
@@ -927,7 +985,7 @@ Proof.
       as "[HCellR HCellRRsRestore]".
     done.
 
-    iAssert (▷ ⌜cr = Some (cellDone cellResumed)⌝)%I with "[-]" as "#>->".
+    iAssert (▷ ⌜cr = Some (cellDone cellFilled)⌝)%I with "[-]" as "#>->".
     by iApply (enquirer_not_present_means_filled_if_initialized
                  with "HCellR [HAuth] [HCellInit] [HIsSus]"); done.
 
@@ -959,17 +1017,54 @@ Proof.
   }
 Qed.
 
+Lemma inhabited_cell_states γtq i v l deqFront:
+  own γtq (● cell_list_contents_auth_ra v l deqFront) -∗
+  inhabitant_token γtq i -∗
+  ⌜l !! i = Some (Some cellInhabited)⌝ ∨
+  ⌜l !! i = Some (Some (cellDone cellResumed))⌝ ∨
+  ⌜l !! i = Some (Some (cellDone cellAbandoned))⌝.
+Proof.
+  iIntros "HAuth HInhToken". rewrite /cell_list_contents_auth_ra.
+  iDestruct (own_valid_2 with "HAuth HInhToken") as
+      %[[_ HValid]%prod_included _]%auth_both_valid.
+  simpl in *.
+  iPureIntro.
+  move: HValid. rewrite list_lookup_included. intros HValid.
+  specialize (HValid i). move: HValid.
+  rewrite map_lookup lookup_app_r.
+  all: rewrite replicate_length. 2: done.
+  rewrite minus_diag /= option_included. case; first done.
+  intros (a & b & ? & HContent & HH). simplify_eq.
+  destruct (l !! i) as [o|]; simpl in *.
+  2: done.
+  simplify_eq.
+  revert HH. repeat rewrite prod_included /=.
+  rewrite option_included.
+  destruct o as [c|]; simpl in *.
+  destruct c as [|cd]; first by eauto.
+  destruct cd; eauto.
+  all: case; first by case; case; intros HH; inversion HH.
+  all: case; case; case; try done; by intros (? & ? & ? & HH & _).
+Qed.
+
 Theorem cancel_cell_spec E R γa γtq γe γd i ptr:
-  rendezvous_inhabited γtq i -∗
+  inhabitant_token γtq i -∗
   is_cell_pointer γa i ptr -∗
   let ap := tq_ap γtq γe in
   <<< ∀ l deqFront, ▷ is_infinite_array segment_size ap γa ∗
       ▷ cell_list_contents E R γa γtq γe γd l deqFront >>>
     cancel_cell ptr @ ⊤
-  <<< is_infinite_array segment_size ap γa ∗
-    cell_list_contents E R γa γtq γe γd l deqFront, RET #true >>>.
+  <<< ∃ v, ▷ is_infinite_array segment_size ap γa ∗
+    (⌜l !! i = Some (Some (cellDone cellResumed))⌝ ∧
+     ⌜v = #false⌝ ∧
+     ▷ cell_list_contents E R γa γtq γe γd l deqFront ∧ ▷ R ∨
+     ⌜l !! i = Some (Some cellInhabited)⌝ ∧
+     ⌜v = #true⌝ ∧
+     cell_list_contents E R γa γtq γe γd
+      (alter (fun _ => Some (cellDone cellCancelled)) i l) deqFront)
+  , RET v >>>.
 Proof.
-  iIntros "#HRInh HCellPtr" (Φ) "AU". wp_lam. wp_lam.
+  iIntros "HInhToken HCellPtr" (Φ) "AU". wp_lam. wp_lam.
   iDestruct "HCellPtr" as (sℓ) "[#HSegLoc ->]". wp_pures.
 
   wp_bind (segment_data_at _ _).
@@ -995,42 +1090,50 @@ Proof.
   iIntros (l deqFront) "[HInfArr HCellList]".
   iDestruct "HCellList" as "(>% & >HAuth & HEs & HRs & HCellResources)".
 
-  iAssert (⌜l !! i = Some (Some cellInhabited) \/
-           exists c, l !! i = Some (Some (cellDone c))⌝)%I as %HH.
-  { rewrite /rendezvous_inhabited /rendezvous_state.
-    iDestruct (own_valid_2 with "HAuth HRInh")
-      as %[[_ HValid]%prod_included _]%auth_both_valid. simpl in *.
-    iPureIntro.
-    revert HValid.
-    rewrite list_lookup_included.
-    intros HOk. specialize (HOk i).
-    assert (forall A i (x: A) v, (replicate i x ++ [v]) !! i = Some v) as HEq.
-    { clear; induction i; auto. }
-    rewrite HEq in HOk. revert HOk. clear. rewrite option_included.
-    case; first done.
-    intros (? & ? & ? & HLen & HLt).
-    rewrite map_lookup in HLen.
-    destruct (l !! i). 2: done.
-    simpl in *. simplify_eq. destruct HLt.
-    {
-      left.
-      destruct o; try done; simpl in *. destruct c; try done.
-      all: inversion H; simpl in *; done.
-    }
-    {
-      revert H. rewrite prod_included. simpl. case.
-      rewrite mnat_included. intros H _.
-      destruct o; simpl in *; try lia.
-      destruct c; simpl in *; eauto; try lia.
-    }
+  iDestruct (inhabited_cell_states with "HAuth HInhToken")
+    as %[HInh|[HRes|HAb]].
+
+  3: {
+    iDestruct (big_sepL_lookup_acc with "HCellResources") as "[HC HH]".
+    eassumption.
+    simpl.
+    iDestruct "HC" as (?) "(_ & _ & _ & HInhToken' & _)".
+    iDestruct (inhabitant_token_exclusive with "HInhToken HInhToken'")
+      as ">[]".
   }
 
-  destruct HH as [HH|[cs HH]].
-  {
-    admit.
+  2: {
+    iDestruct (big_sepL_lookup_acc with "HCellResources") as "[HC HH]".
+    eassumption.
+    simpl.
+    iDestruct "HC" as (?) "(>HArrMapsto' & HIsRes & HCancHandle & HIsSus & HRes)".
+    iDestruct "HRes" as "[HInhToken'|[Hℓ HR]]".
+    by iDestruct (inhabitant_token_exclusive with "HInhToken HInhToken'")
+      as ">[]".
+
+    iDestruct (array_mapsto'_agree with "HArrMapsto HArrMapsto'") as %<-.
+
+    iAssert (▷ dataℓ ↦ RESUMEDV ∧ ⌜val_is_unboxed RESUMEDV⌝)%I
+      with "[Hℓ]" as "HAacc"; first by iFrame.
+
+    iAaccIntro with "HAacc".
+    { iIntros "[Hℓ _]". iModIntro.
+      iDestruct (bi.later_wand with "HH
+          [HArrMapsto' HIsRes HCancHandle HIsSus HR Hℓ]") as "$".
+      by eauto with iFrame.
+      iFrame. iSplitR. iPureIntro; done.
+      iIntros "$". done. }
+    iIntros "Hℓ".
+    iDestruct (bi.later_wand with "HH
+        [HArrMapsto' HIsRes HCancHandle HIsSus HInhToken]") as "HCellRRs".
+    by eauto with iFrame.
+    iModIntro.
+    iFrame "HInfArr". iExists _. iSplitR "Hℓ HArrMapsto".
+    { iLeft. iFrame. eauto. }
+
+    iIntros "HΦ !>". by wp_pures.
   }
-  iDestruct (big_sepL_lookup_acc with "HCellResources") as "[HC HH]".
-  by eauto.
+
 
 Abort.
 
