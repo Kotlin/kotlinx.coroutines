@@ -4,11 +4,10 @@
 
 package kotlinx.coroutines.scheduling
 
-import kotlinx.coroutines.TestBase
-import org.junit.Test
+import kotlinx.coroutines.*
+import org.junit.*
 import java.lang.Runnable
 import java.util.concurrent.*
-import java.util.concurrent.CountDownLatch
 import kotlin.coroutines.*
 
 class CoroutineSchedulerTest : TestBase() {

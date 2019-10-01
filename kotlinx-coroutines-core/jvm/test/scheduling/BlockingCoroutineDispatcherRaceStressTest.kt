@@ -6,7 +6,9 @@ package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.*
 import org.junit.*
+import org.junit.Test
 import java.util.concurrent.atomic.*
+import kotlin.test.*
 
 class BlockingCoroutineDispatcherRaceStressTest : SchedulerTestBase() {
     private val concurrentWorkers = AtomicInteger(0)
@@ -33,10 +35,8 @@ class BlockingCoroutineDispatcherRaceStressTest : SchedulerTestBase() {
                     }
                 }
             }
-
             tasks.forEach { it.await() }
         }
-
         checkPoolThreadsCreated(2..4)
     }
 
@@ -44,19 +44,18 @@ class BlockingCoroutineDispatcherRaceStressTest : SchedulerTestBase() {
     fun testPingPongThreadsCount() = runBlocking {
         corePoolSize = CORES_COUNT
         val iterations = 100_000 * stressTestMultiplier
-        // Stress test for specific case (race #2 from LimitingDispatcher). Shouldn't hang.
+        val completed = AtomicInteger(0)
         for (i in 1..iterations) {
             val tasks = (1..2).map {
                 async(dispatcher) {
                     // Useless work
                     concurrentWorkers.incrementAndGet()
                     concurrentWorkers.decrementAndGet()
+                    completed.incrementAndGet()
                 }
             }
-
             tasks.forEach { it.await() }
         }
-
-        checkPoolThreadsCreated(CORES_COUNT)
+        assertEquals(2 * iterations, completed.get())
     }
 }

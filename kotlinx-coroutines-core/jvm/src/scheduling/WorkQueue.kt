@@ -12,6 +12,9 @@ internal const val BUFFER_CAPACITY_BASE = 7
 internal const val BUFFER_CAPACITY = 1 shl BUFFER_CAPACITY_BASE
 internal const val MASK = BUFFER_CAPACITY - 1 // 128 by default
 
+internal const val TASK_STOLEN = -1L
+internal const val NOTHING_TO_STEAL = -2L
+
 /**
  * Tightly coupled with [CoroutineScheduler] queue of pending tasks, but extracted to separate file for simplicity.
  * At any moment queue is used only by [CoroutineScheduler.Worker] threads, has only one producer (worker owning this queue)
@@ -49,10 +52,7 @@ internal class WorkQueue {
      * This is in general harmless because steal will be blocked by timer
      */
     internal val bufferSize: Int get() = producerIndex.value - consumerIndex.value
-
-    // TODO replace with inlined array when atomicfu will support it
     private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
-
     private val lastScheduledTask = atomic<Task?>(null)
 
     private val producerIndex = atomic(0)
@@ -93,30 +93,43 @@ internal class WorkQueue {
     /**
      * Tries stealing from [victim] queue into this queue, using [globalQueue] to offload stolen tasks in case of current queue overflow.
      *
-     * @return whether any task was stolen
+     * Returns [NOTHING_TO_STEAL] if queue has nothing to steal, [TASK_STOLEN] if at least task was stolen
+     * or positive value of how many nanoseconds should pass until the head of this queue will be available to steal.
      */
-    fun trySteal(victim: WorkQueue, globalQueue: GlobalQueue): Boolean {
+    fun trySteal(victim: WorkQueue, globalQueue: GlobalQueue): Long {
         if (victim.stealBatch { task -> add(task, globalQueue) }) {
-            return true
+            return TASK_STOLEN
         }
         return tryStealLastScheduled(victim, globalQueue)
     }
 
+    /**
+     * Contract on return value is the same as for [trySteal]
+     */
     private fun tryStealLastScheduled(
         victim: WorkQueue,
         globalQueue: GlobalQueue
-    ): Boolean {
-        val lastScheduled = victim.lastScheduledTask.value ?: return false
-        val time = schedulerTimeSource.nanoTime()
-        if (time - lastScheduled.submissionTime < WORK_STEALING_TIME_RESOLUTION_NS) {
-            return false
+    ): Long {
+        while (true) {
+            val lastScheduled = victim.lastScheduledTask.value ?: return NOTHING_TO_STEAL
+            // TODO time wraparound ?
+            val time = schedulerTimeSource.nanoTime()
+            val staleness = time - lastScheduled.submissionTime
+            if (staleness < WORK_STEALING_TIME_RESOLUTION_NS) {
+                return WORK_STEALING_TIME_RESOLUTION_NS - staleness
+            }
+
+            /*
+             * If CAS has failed, either someone else had stolen this task or the owner executed this task
+             * and dispatched another one. In the latter case we should retry to avoid missing task.
+             */
+            if (victim.lastScheduledTask.compareAndSet(lastScheduled, null)) {
+                add(lastScheduled, globalQueue)
+                return TASK_STOLEN
+            }
+            continue
         }
 
-        if (victim.lastScheduledTask.compareAndSet(lastScheduled, null)) {
-            add(lastScheduled, globalQueue)
-            return true
-        }
-        return false
     }
 
     internal fun size(): Int = if (lastScheduledTask.value != null) bufferSize + 1 else bufferSize

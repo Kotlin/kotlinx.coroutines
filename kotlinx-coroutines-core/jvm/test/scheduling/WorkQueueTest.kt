@@ -62,10 +62,10 @@ class WorkQueueTest : TestBase() {
         timeSource.step(3)
 
         val stealer = WorkQueue()
-        require(stealer.trySteal(victim, globalQueue))
+        assertEquals(TASK_STOLEN, stealer.trySteal(victim, globalQueue))
         assertEquals(arrayListOf(1L), stealer.drain())
 
-        require(stealer.trySteal(victim, globalQueue))
+        assertEquals(TASK_STOLEN, stealer.trySteal(victim, globalQueue))
         assertEquals(arrayListOf(2L), stealer.drain())
     }
 }

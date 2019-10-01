@@ -91,7 +91,7 @@ class WorkQueueStressTest : TestBase() {
             val myQueue = WorkQueue()
             startLatch.await()
             while (stolen.size != offerIterations) {
-                if (!myQueue.trySteal(producerQueue, stolen)) {
+                if (myQueue.trySteal(producerQueue, stolen) != NOTHING_TO_STEAL) {
                     stolen.addAll(myQueue.drain().map { task(it) })
                 }
             }
