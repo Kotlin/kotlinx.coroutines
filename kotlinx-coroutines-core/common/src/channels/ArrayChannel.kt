@@ -43,7 +43,7 @@ internal open class ArrayChannel<E>(
         set(value) { _size.value = value }
 
     protected final override val isBufferAlwaysEmpty: Boolean get() = false
-    protected final override val isBufferEmpty: Boolean get() = size == 0
+    protected final override val isBufferEmpty: Boolean get() = lock.withLock { size == 0 }
     protected final override val isBufferAlwaysFull: Boolean get() = false
     protected final override val isBufferFull: Boolean get() = size == capacity
 
