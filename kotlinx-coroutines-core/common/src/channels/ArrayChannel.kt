@@ -36,16 +36,12 @@ internal open class ArrayChannel<E>(
      */
     private var buffer: Array<Any?> = arrayOfNulls<Any?>(min(capacity, 8))
     private var head: Int = 0
-
-    private val _size = atomic(0)
-    private var size: Int // Invariant: size <= capacity
-        get() = _size.value
-        set(value) { _size.value = value }
+    private var size = 0 // Invariant: size <= capacity
 
     protected final override val isBufferAlwaysEmpty: Boolean get() = false
     protected final override val isBufferEmpty: Boolean get() = lock.withLock { size == 0 }
     protected final override val isBufferAlwaysFull: Boolean get() = false
-    protected final override val isBufferFull: Boolean get() = size == capacity
+    protected final override val isBufferFull: Boolean get() = lock.withLock { size == capacity }
 
     // result is `OFFER_SUCCESS | OFFER_FAILED | Closed`
     protected override fun offerInternal(element: E): Any {
