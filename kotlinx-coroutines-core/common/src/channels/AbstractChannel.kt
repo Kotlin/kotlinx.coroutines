@@ -466,7 +466,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
                 select.resumeSelectCancellableWithException(closed.sendException)
         }
 
-        override fun toString(): String = "SendSelect($pollResult)[$channel, $select]"
+        override fun toString(): String = "SendSelect@$hexAddress($pollResult)[$channel, $select]"
     }
 
     internal class SendBuffered<out E>(
@@ -476,6 +476,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         override fun tryResumeSend(otherOp: PrepareOp?): Symbol? = RESUME_TOKEN.also { otherOp?.finishPrepare() }
         override fun completeResumeSend() {}
         override fun resumeSendClosed(closed: Closed<*>) {}
+        override fun toString(): String = "SendBuffered@$hexAddress($element)"
     }
 }
 
@@ -899,9 +900,10 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
 
         @Suppress("IMPLICIT_CAST_TO_ANY")
         override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol? {
-            otherOp?.finishPrepare()
             val token = cont.tryResume(resumeValue(value), otherOp?.desc) ?: return null
             assert { token === RESUME_TOKEN } // the only other possible result
+            // We can call finishPrepare only after successful tryResume, so that only good affected node is saved
+            otherOp?.finishPrepare()
             return RESUME_TOKEN
         }
 
@@ -914,7 +916,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                 else -> cont.resumeWithException(closed.receiveException)
             }
         }
-        override fun toString(): String = "ReceiveElement[receiveMode=$receiveMode]"
+        override fun toString(): String = "ReceiveElement@$hexAddress[receiveMode=$receiveMode]"
     }
 
     private class ReceiveHasNext<E>(
@@ -922,9 +924,10 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         @JvmField val cont: CancellableContinuation<Boolean>
     ) : Receive<E>() {
         override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol? {
-            otherOp?.finishPrepare()
             val token = cont.tryResume(true, otherOp?.desc) ?: return null
             assert { token === RESUME_TOKEN } // the only other possible result
+            // We can call finishPrepare only after successful tryResume, so that only good affected node is saved
+            otherOp?.finishPrepare()
             return RESUME_TOKEN
         }
 
@@ -948,7 +951,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                 cont.completeResume(token)
             }
         }
-        override fun toString(): String = "ReceiveHasNext"
+        override fun toString(): String = "ReceiveHasNext@$hexAddress"
     }
 
     private class ReceiveSelect<R, E>(
@@ -983,7 +986,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                 channel.onReceiveDequeued() // notify cancellation of receive
         }
 
-        override fun toString(): String = "ReceiveSelect[$select,receiveMode=$receiveMode]"
+        override fun toString(): String = "ReceiveSelect@$hexAddress[$select,receiveMode=$receiveMode]"
     }
 }
 
@@ -1022,7 +1025,7 @@ internal abstract class Send : LockFreeLinkedListNode() {
     // Returns: null - failure,
     //          RETRY_ATOMIC for retry (only when otherOp != null),
     //          RESUME_TOKEN on success (call completeResumeSend)
-    // Must call otherOp?.finishPrepare() before deciding on result other than RETRY_ATOMIC
+    // Must call otherOp?.finishPrepare() after deciding on result other than RETRY_ATOMIC
     abstract fun tryResumeSend(otherOp: PrepareOp?): Symbol?
     abstract fun completeResumeSend()
     abstract fun resumeSendClosed(closed: Closed<*>)
@@ -1036,7 +1039,7 @@ internal interface ReceiveOrClosed<in E> {
     // Returns: null - failure,
     //          RETRY_ATOMIC for retry (only when otherOp != null),
     //          RESUME_TOKEN on success (call completeResumeReceive)
-    // Must call otherOp?.finishPrepare() before deciding on result other than RETRY_ATOMIC
+    // Must call otherOp?.finishPrepare() after deciding on result other than RETRY_ATOMIC
     fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol?
     fun completeResumeReceive(value: E)
 }
@@ -1050,14 +1053,15 @@ internal class SendElement(
     @JvmField val cont: CancellableContinuation<Unit>
 ) : Send() {
     override fun tryResumeSend(otherOp: PrepareOp?): Symbol? {
-        otherOp?.finishPrepare()
         val token = cont.tryResume(Unit, otherOp?.desc) ?: return null
         assert { token === RESUME_TOKEN } // the only other possible result
+        // We can call finishPrepare only after successful tryResume, so that only good affected node is saved
+        otherOp?.finishPrepare() // finish preparations
         return RESUME_TOKEN
     }
     override fun completeResumeSend() = cont.completeResume(RESUME_TOKEN)
     override fun resumeSendClosed(closed: Closed<*>) = cont.resumeWithException(closed.sendException)
-    override fun toString(): String = "SendElement($pollResult)"
+    override fun toString(): String = "SendElement@$hexAddress($pollResult)"
 }
 
 /**
@@ -1076,7 +1080,7 @@ internal class Closed<in E>(
     override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol? = RESUME_TOKEN.also { otherOp?.finishPrepare() }
     override fun completeResumeReceive(value: E) {}
     override fun resumeSendClosed(closed: Closed<*>) = assert { false } // "Should be never invoked"
-    override fun toString(): String = "Closed[$closeCause]"
+    override fun toString(): String = "Closed@$hexAddress[$closeCause]"
 }
 
 private abstract class Receive<in E> : LockFreeLinkedListNode(), ReceiveOrClosed<E> {
