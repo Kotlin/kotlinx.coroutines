@@ -399,7 +399,7 @@ public actual open class LockFreeLinkedListNode {
 
         // Returns REMOVE_PREPARED or null (it makes decision on any failure)
         override fun perform(affected: Any?): Any? {
-            assert(affected === this.affected)
+            assert { affected === this.affected }
             affected as Node // type assertion
             val decision = desc.onPrepare(this)
             if (decision === REMOVE_PREPARED) {
