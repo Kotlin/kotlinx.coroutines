@@ -194,7 +194,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // Finalizes Finishing -> Completed (terminal state) transition.
     // ## IMPORTANT INVARIANT: Only one thread can be concurrently invoking this method.
     // Returns final state that was created and updated to
-    private fun tryFinalizeFinishingState(state: Finishing, proposedUpdate: Any?): Any? {
+    private fun finalizeFinishingState(state: Finishing, proposedUpdate: Any?): Any? {
         /*
          * Note: proposed state can be Incomplete, e.g.
          * async {
@@ -881,7 +881,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         if (child != null && tryWaitForChild(finishing, child, proposedUpdate))
             return COMPLETING_WAITING_CHILDREN
         // otherwise -- we have not children left (all were already cancelled?)
-        return tryFinalizeFinishingState(finishing, proposedUpdate)
+        return finalizeFinishingState(finishing, proposedUpdate)
     }
 
     private val Any?.exceptionOrNull: Throwable?
@@ -910,7 +910,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // try wait for next child
         if (waitChild != null && tryWaitForChild(state, waitChild, proposedUpdate)) return // waiting for next child
         // no more children to wait -- try update state
-        val finalState = tryFinalizeFinishingState(state, proposedUpdate)
+        val finalState = finalizeFinishingState(state, proposedUpdate)
         afterCompletion(finalState)
     }
 
