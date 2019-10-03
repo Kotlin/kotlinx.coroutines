@@ -201,9 +201,9 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          *     something.invokeOnCompletion {} // <- returns handle which implements Incomplete under the hood
          * }
          */
-        require(this.state === state) // consistency check -- it cannot change
-        require(!state.isSealed) // consistency check -- cannot be sealed yet
-        require(state.isCompleting) // consistency check -- must be marked as completing
+        assert { this.state === state } // consistency check -- it cannot change
+        assert { !state.isSealed } // consistency check -- cannot be sealed yet
+        assert { state.isCompleting } // consistency check -- must be marked as completing
         val proposedException = (proposedUpdate as? CompletedExceptionally)?.cause
         // Create the final exception and seal the state so that no more exceptions can be added
         var wasCancelling = false // KLUDGE: we cannot have contract for our own expect fun synchronized
@@ -233,7 +233,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         if (!wasCancelling) onCancelling(finalException)
         onCompletionInternal(finalState)
         // Then CAS to completed state -> it must succeed
-        require(_state.compareAndSet(state, finalState.boxIncomplete())) { "Unexpected state: ${_state.value}, expected: $state, update: $finalState" }
+        val casSuccess = _state.compareAndSet(state, finalState.boxIncomplete())
+        assert { casSuccess }
         // And process all post-completion actions
         completeStateFinalization(state, finalState)
         return finalState
@@ -495,10 +496,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     private fun makeNode(handler: CompletionHandler, onCancelling: Boolean): JobNode<*> {
         return if (onCancelling)
-            (handler as? JobCancellingNode<*>)?.also { require(it.job === this) }
+            (handler as? JobCancellingNode<*>)?.also { assert { it.job === this } }
                 ?: InvokeOnCancelling(this, handler)
         else
-            (handler as? JobNode<*>)?.also { require(it.job === this && it !is JobCancellingNode) }
+            (handler as? JobNode<*>)?.also { assert { it.job === this && it !is JobCancellingNode } }
                 ?: InvokeOnCompletion(this, handler)
     }
 
@@ -866,7 +867,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                 if (!_state.compareAndSet(state, finishing)) return COMPLETING_RETRY
             }
             // ## IMPORTANT INVARIANT: Only one thread (that had set isCompleting) can go past this point
-            require(!finishing.isSealed) // cannot be sealed
+            assert { !finishing.isSealed } // cannot be sealed
             // add new proposed exception to the finishing state
             val wasCancelling = finishing.isCancelling
             (proposedUpdate as? CompletedExceptionally)?.let { finishing.addExceptionLocked(it.cause) }
@@ -903,7 +904,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     // ## IMPORTANT INVARIANT: Only one thread can be concurrently invoking this method.
     private fun continueCompleting(state: Finishing, lastChild: ChildHandleNode, proposedUpdate: Any?) {
-        require(this.state === state) // consistency check -- it cannot change while we are waiting for children
+        assert { this.state === state } // consistency check -- it cannot change while we are waiting for children
         // figure out if we need to wait for next child
         val waitChild = lastChild.nextChild()
         // try wait for next child
