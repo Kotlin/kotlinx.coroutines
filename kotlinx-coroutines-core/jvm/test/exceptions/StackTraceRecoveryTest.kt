@@ -8,7 +8,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
+import org.junit.*
 import org.junit.Test
+import org.junit.rules.*
 import java.util.concurrent.*
 import kotlin.concurrent.*
 import kotlin.coroutines.*
@@ -80,55 +82,6 @@ class StackTraceRecoveryTest : TestBase() {
             deferred.await()
             expectUnreached()
         } catch (e: ExecutionException) {
-            verifyStackTrace(e, *traces)
-        }
-    }
-
-    @Test
-    fun testReceiveFromChannel() = runTest {
-        val channel = Channel<Int>()
-        val job = launch {
-            expect(2)
-            channel.close(IllegalArgumentException())
-        }
-
-        expect(1)
-        channelNestedMethod(
-            channel,
-                "java.lang.IllegalArgumentException\n" +
-                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testReceiveFromChannel\$1\$job\$1.invokeSuspend(StackTraceRecoveryTest.kt:93)\n" +
-                        "\t(Coroutine boundary)\n" +
-                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.channelNestedMethod(StackTraceRecoveryTest.kt:110)\n" +
-                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testReceiveFromChannel\$1.invokeSuspend(StackTraceRecoveryTest.kt:89)",
-                "Caused by: java.lang.IllegalArgumentException\n" +
-                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testReceiveFromChannel\$1\$job\$1.invokeSuspend(StackTraceRecoveryTest.kt:93)\n" +
-                        "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n")
-        expect(3)
-        job.join()
-        finish(4)
-    }
-
-    @Test
-    fun testReceiveFromClosedChannel() = runTest {
-        val channel = Channel<Int>()
-        channel.close(IllegalArgumentException())
-        channelNestedMethod(
-            channel,
-                "java.lang.IllegalArgumentException\n" +
-                        "\t(Coroutine boundary)\n" +
-                        "\tat kotlinx.coroutines.channels.AbstractChannel.receiveResult(AbstractChannel.kt:574)\n" +
-                        "\tat kotlinx.coroutines.channels.AbstractChannel.receive(AbstractChannel.kt:567)\n" +
-                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.channelNestedMethod(StackTraceRecoveryTest.kt:117)\n" +
-                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testReceiveFromClosedChannel\$1.invokeSuspend(StackTraceRecoveryTest.kt:111)\n",
-                "Caused by: java.lang.IllegalArgumentException\n" +
-                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testReceiveFromClosedChannel\$1.invokeSuspend(StackTraceRecoveryTest.kt:110)")
-    }
-
-    private suspend fun channelNestedMethod(channel: Channel<Int>, vararg traces: String) {
-        try {
-            channel.receive()
-            expectUnreached()
-        } catch (e: IllegalArgumentException) {
             verifyStackTrace(e, *traces)
         }
     }
@@ -311,5 +264,33 @@ class StackTraceRecoveryTest : TestBase() {
                 "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.awaiter(StackTraceRecoveryTest.kt:285)\n" +
                 "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testNonDispatchedRecovery\$await\$1.invokeSuspend(StackTraceRecoveryTest.kt:291)\n" +
                 "Caused by: kotlinx.coroutines.RecoverableTestException")
+    }
+
+    private class Callback(val cont: CancellableContinuation<*>)
+
+    @Test
+    fun testCancellableContinuation() = runTest {
+        val channel = Channel<Callback>(1)
+        launch {
+            try {
+                awaitCallback(channel)
+            } catch (e: Throwable) {
+                verifyStackTrace(e, "kotlinx.coroutines.RecoverableTestException\n" +
+                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCancellableContinuation\$1.invokeSuspend(StackTraceRecoveryTest.kt:329)\n" +
+                        "\t(Coroutine boundary)\n" +
+                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.awaitCallback(StackTraceRecoveryTest.kt:348)\n" +
+                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCancellableContinuation\$1\$1.invokeSuspend(StackTraceRecoveryTest.kt:322)\n" +
+                        "Caused by: kotlinx.coroutines.RecoverableTestException\n" +
+                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCancellableContinuation\$1.invokeSuspend(StackTraceRecoveryTest.kt:329)")
+            }
+        }
+        val callback = channel.receive()
+        callback.cont.resumeWithException(RecoverableTestException())
+    }
+
+    private suspend fun awaitCallback(channel: Channel<Callback>) {
+        suspendCancellableCoroutine<Unit> { cont ->
+            channel.offer(Callback(cont))
+        }
     }
 }

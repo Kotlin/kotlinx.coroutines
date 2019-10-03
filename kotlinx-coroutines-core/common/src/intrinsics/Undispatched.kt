@@ -85,7 +85,7 @@ private inline fun <T> startDirect(completion: Continuation<T>, block: (Continua
  * First, this function initializes the parent job from the `parentContext` of this coroutine that was passed to it
  * during construction. Second, it starts the coroutine using [startCoroutineUninterceptedOrReturn].
  */
-internal fun <T, R> AbstractCoroutine<T>.startUndispatchedOrReturn(receiver: R, block: suspend R.() -> T): Any? {
+internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturn(receiver: R, block: suspend R.() -> T): Any? {
     initParentJob()
     return undispatchedResult({ true }) {
         block.startCoroutineUninterceptedOrReturn(receiver, this)
@@ -95,7 +95,7 @@ internal fun <T, R> AbstractCoroutine<T>.startUndispatchedOrReturn(receiver: R, 
 /**
  * Same as [startUndispatchedOrReturn], but ignores [TimeoutCancellationException] on fast-path.
  */
-internal fun <T, R> AbstractCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
+internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
     receiver: R, block: suspend R.() -> T): Any? {
     initParentJob()
     return undispatchedResult({ e -> !(e is TimeoutCancellationException && e.coroutine === this) }) {
@@ -103,7 +103,7 @@ internal fun <T, R> AbstractCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
     }
 }
 
-private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
+private inline fun <T> ScopeCoroutine<T>.undispatchedResult(
     shouldThrow: (Throwable) -> Boolean,
     startBlock: () -> Any?
 ): Any? {
@@ -129,8 +129,8 @@ private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
     if (state === COMPLETING_WAITING_CHILDREN) return COROUTINE_SUSPENDED // (2)
     return if (state is CompletedExceptionally) { // (3)
         when {
-            shouldThrow(state.cause) -> throw tryRecover(state.cause)
-            result is CompletedExceptionally -> throw tryRecover(result.cause)
+            shouldThrow(state.cause) -> throw recoverStackTrace(state.cause, uCont)
+            result is CompletedExceptionally -> throw recoverStackTrace(result.cause, uCont)
             else -> result
         }
     } else {

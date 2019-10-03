@@ -52,7 +52,7 @@ internal abstract class DispatchedTask<in T>(
                     cancelResult(state, cause)
                     continuation.resumeWithStackTrace(cause)
                 } else {
-                    if (exception != null) continuation.resumeWithStackTrace(exception)
+                    if (exception != null) continuation.resumeWithException(exception)
                     else continuation.resume(getSuccessfulResult(state))
                 }
             }
@@ -116,19 +116,8 @@ internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
 internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: Int) {
     // slow-path - use delegate
     val state = takeState()
-    val exception = getExceptionalResult(state)?.let {
-        /*
-         * Recover stacktrace for non-dispatched tasks.
-         * We usually do not recover stacktrace in a `resume` as all resumes go through `DispatchedTask.run`
-         * and we recover stacktraces there, but this is not the case for a `suspend fun main()` that knows nothing about
-         * kotlinx.coroutines and DispatchedTask
-         */
-        if (delegate is DispatchedTask<*>) it else recoverStackTrace(it, delegate)
-    }
-    val result = if (exception != null)
-        Result.failure(exception)
-    else
-        Result.success(state as T)
+    val exception = getExceptionalResult(state)?.let { recoverStackTrace(it, delegate) }
+    val result = if (exception != null) Result.failure(exception) else Result.success(state as T)
     when (useMode) {
         MODE_ATOMIC_DEFAULT -> delegate.resumeWith(result)
         MODE_CANCELLABLE -> delegate.resumeCancellableWith(result)

@@ -144,13 +144,13 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
 
     public final override suspend fun send(element: E) {
         // fast path -- try offer non-blocking
-        if (offer(element)) return
-        // slow-path does suspend
+        if (offerInternal(element) === OFFER_SUCCESS) return
+        // slow-path does suspend or throws exception
         return sendSuspend(element)
     }
 
     internal suspend fun sendFair(element: E) {
-        if (offer(element)) {
+        if (offerInternal(element) === OFFER_SUCCESS) {
             yield() // Works only on fast path to properly work in sequential use-cases
             return
         }
@@ -547,7 +547,11 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     public final override suspend fun receive(): E {
         // fast path -- try poll non-blocking
         val result = pollInternal()
-        if (result !== POLL_FAILED) return receiveResult(result)
+        /*
+         * If result is Closed -- go to tail-call slow-path that will allow us to
+         * properly recover stacktrace without paying a performance cost on fast path.
+         */
+        if (result !== POLL_FAILED && result !is Closed<*>) return receiveResult(result)
         // slow-path does suspend
         return receiveSuspend(RECEIVE_THROWS_ON_CLOSE)
     }
