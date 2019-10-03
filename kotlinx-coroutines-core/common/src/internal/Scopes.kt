@@ -33,11 +33,6 @@ internal open class ScopeCoroutine<in T>(
     }
 }
 
-internal fun AbstractCoroutine<*>.tryRecover(exception: Throwable): Throwable {
-    val cont = (this as? ScopeCoroutine<*>)?.uCont ?: return exception
-    return recoverStackTrace(exception, cont)
-}
-
 internal class ContextScope(context: CoroutineContext) : CoroutineScope {
     override val coroutineContext: CoroutineContext = context
 }

@@ -9,8 +9,10 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
-internal fun <T> Result<T>.toState(): Any? =
-    if (isSuccess) getOrThrow() else CompletedExceptionally(exceptionOrNull()!!) // todo: need to do it better
+internal fun <T> Result<T>.toState(): Any? = fold({ it }, { CompletedExceptionally(it) })
+
+internal fun <T> Result<T>.toState(caller: CancellableContinuation<*>): Any? = fold({ it },
+    { CompletedExceptionally(recoverStackTrace(it, caller)) })
 
 @Suppress("RESULT_CLASS_IN_RETURN_TYPE", "UNCHECKED_CAST")
 internal fun <T> recoverResult(state: Any?, uCont: Continuation<T>): Result<T> =

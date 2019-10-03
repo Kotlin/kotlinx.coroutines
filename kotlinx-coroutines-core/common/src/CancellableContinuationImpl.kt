@@ -244,7 +244,7 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     override fun resumeWith(result: Result<T>) {
-        resumeImpl(result.toState(), resumeMode)
+        resumeImpl(result.toState(this), resumeMode)
     }
 
     override fun resume(value: T, onCancellation: (cause: Throwable) -> Unit) {
