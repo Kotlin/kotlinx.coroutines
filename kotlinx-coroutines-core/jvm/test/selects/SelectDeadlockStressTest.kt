@@ -7,8 +7,6 @@ package kotlinx.coroutines.selects
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.junit.*
-import org.junit.Test
-import kotlin.test.*
 
 /**
  * A simple stress-test that does select sending/receiving into opposite channels to ensure that they
@@ -16,7 +14,7 @@ import kotlin.test.*
  */
 class SelectDeadlockStressTest : TestBase() {
     private val pool = newFixedThreadPoolContext(2, "SelectDeadlockStressTest")
-    private val nSeconds = 3 * stressTestMultiplier
+    private val nSeconds = 30 * stressTestMultiplier
 
     @After
     fun tearDown() {
@@ -25,15 +23,17 @@ class SelectDeadlockStressTest : TestBase() {
 
     @Test
     fun testStress() = runTest {
-        val c1 = Channel<Long>()
-        val c2 = Channel<Long>()
-        val s1 = Stats()
-        val s2 = Stats()
-        launchSendReceive(c1, c2, s1)
-        launchSendReceive(c2, c1, s2)
+        val c1 = Channel<Long>(1)
+        val c2 = Channel<Long>(1)
+        val s = Array(4) { Stats() }
+        launchSendReceive(c1, c2, s[0])
+        launchSendReceive(c2, c1, s[1])
+        launchSendReceive(c1, c2, s[2])
+        launchSendReceive(c2, c1, s[3])
         for (i in 1..nSeconds) {
             delay(1000)
-            println("$i: First: $s1; Second: $s2")
+            val text = s.withIndex().joinToString("; ") { "#${it.index + 1} ${it.value}" }
+            println("$i: $text")
         }
         coroutineContext.cancelChildren()
     }
@@ -53,7 +53,7 @@ class SelectDeadlockStressTest : TestBase() {
                     s.sendIndex++
                 }
                 c2.onReceive { i ->
-                    assertEquals(s.receiveIndex, i)
+//                    assertEquals(s.receiveIndex, i)
                     s.receiveIndex++
                 }
             }
