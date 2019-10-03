@@ -114,22 +114,20 @@ private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
     }
     /*
      * We're trying to complete our undispatched block here and have three code-paths:
-     * 1) Suspended.
-     *
-     * Or we are completing our block (and its job).
-     * 2) If we can't complete it, we suspend, probably waiting for children (2)
-     * 3) If we have successfully completed the whole coroutine here in an undispatched manner,
-     *    we should decide which result to return. We have two options: either return proposed update or actual final state.
-     *    But if fact returning proposed value is not an option, otherwise we will ignore possible cancellation or child failure.
+     * (1) Coroutine is suspended.
+     * Otherwise, coroutine had returned result, so we are completing our block (and its job).
+     * (2) If we can't complete it or started waiting for children, we suspend.
+     * (3) If we have successfully completed the coroutine state machine here,
+     *     then we take the actual final state of the coroutine from makeCompletingOnce and return it.
      *
      * shouldThrow parameter is a special code path for timeout coroutine:
      * If timeout is exceeded, but withTimeout() block was not suspended, we would like to return block value,
      * not a timeout exception.
      */
-    if (result === COROUTINE_SUSPENDED) return COROUTINE_SUSPENDED
+    if (result === COROUTINE_SUSPENDED) return COROUTINE_SUSPENDED // (1)
     val state = makeCompletingOnce(result)
-    if (state === COMPLETING_WAITING_CHILDREN) return COROUTINE_SUSPENDED
-    return if (state is CompletedExceptionally) {
+    if (state === COMPLETING_WAITING_CHILDREN) return COROUTINE_SUSPENDED // (2)
+    return if (state is CompletedExceptionally) { // (3)
         when {
             shouldThrow(state.cause) -> throw tryRecover(state.cause)
             result is CompletedExceptionally -> throw tryRecover(result.cause)
