@@ -257,9 +257,6 @@ internal open class CancellableContinuationImpl<in T>(
         }
     }
 
-    internal fun resumeWithExceptionMode(exception: Throwable, mode: Int) =
-        resumeImpl(CompletedExceptionally(exception), mode)
-
     public override fun invokeOnCancellation(handler: CompletionHandler) {
         var handleCache: CancelHandler? = null
         _state.loop { state ->

@@ -3,6 +3,7 @@ public abstract class kotlinx/coroutines/AbstractCoroutine : kotlinx/coroutines/
 	public fun <init> (Lkotlin/coroutines/CoroutineContext;Z)V
 	public synthetic fun <init> (Lkotlin/coroutines/CoroutineContext;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	protected fun afterResume (Ljava/lang/Object;)V
+	protected fun cancellationExceptionMessage ()Ljava/lang/String;
 	public final fun getContext ()Lkotlin/coroutines/CoroutineContext;
 	public fun getCoroutineContext ()Lkotlin/coroutines/CoroutineContext;
 	public fun isActive ()Z
@@ -264,6 +265,10 @@ public final class kotlinx/coroutines/DelayKt {
 	public static final fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class kotlinx/coroutines/DispatchedContinuationKt {
+	public static final fun resumeCancellableWith (Lkotlin/coroutines/Continuation;Ljava/lang/Object;)V
+}
+
 public final class kotlinx/coroutines/Dispatchers {
 	public static final field INSTANCE Lkotlinx/coroutines/Dispatchers;
 	public static final fun getDefault ()Lkotlinx/coroutines/CoroutineDispatcher;
@@ -387,7 +392,8 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public synthetic fun cancel (Ljava/lang/Throwable;)Z
 	public fun cancel (Ljava/util/concurrent/CancellationException;)V
 	public final fun cancelCoroutine (Ljava/lang/Throwable;)Z
-	public fun cancelInternal (Ljava/lang/Throwable;)Z
+	public fun cancelInternal (Ljava/lang/Throwable;)V
+	protected fun cancellationExceptionMessage ()Ljava/lang/String;
 	public fun childCancelled (Ljava/lang/Throwable;)Z
 	public fun fold (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
@@ -1049,7 +1055,7 @@ public final class kotlinx/coroutines/selects/SelectBuilderImpl : kotlinx/corout
 	public fun isSelected ()Z
 	public fun onTimeout (JLkotlin/jvm/functions/Function1;)V
 	public fun performAtomicTrySelect (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
-	public fun resumeSelectCancellableWithException (Ljava/lang/Throwable;)V
+	public fun resumeSelectWithException (Ljava/lang/Throwable;)V
 	public fun resumeWith (Ljava/lang/Object;)V
 	public fun toString ()Ljava/lang/String;
 	public fun trySelect ()Z
@@ -1073,7 +1079,7 @@ public abstract interface class kotlinx/coroutines/selects/SelectInstance {
 	public abstract fun getCompletion ()Lkotlin/coroutines/Continuation;
 	public abstract fun isSelected ()Z
 	public abstract fun performAtomicTrySelect (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
-	public abstract fun resumeSelectCancellableWithException (Ljava/lang/Throwable;)V
+	public abstract fun resumeSelectWithException (Ljava/lang/Throwable;)V
 	public abstract fun trySelect ()Z
 	public abstract fun trySelectOther (Lkotlinx/coroutines/internal/LockFreeLinkedListNode$PrepareOp;)Ljava/lang/Object;
 }

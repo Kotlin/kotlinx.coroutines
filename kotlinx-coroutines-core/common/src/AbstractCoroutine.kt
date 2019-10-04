@@ -94,6 +94,8 @@ public abstract class AbstractCoroutine<in T>(
      */
     protected open fun onCancelled(cause: Throwable, handled: Boolean) {}
 
+    override fun cancellationExceptionMessage(): String = "$classSimpleName was cancelled"
+
     @Suppress("UNCHECKED_CAST")
     protected final override fun onCompletionInternal(state: Any?) {
         if (state is CompletedExceptionally)

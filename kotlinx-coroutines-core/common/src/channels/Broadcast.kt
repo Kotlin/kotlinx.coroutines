@@ -97,17 +97,18 @@ private open class BroadcastCoroutine<E>(
         get() = this
 
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
-    final override fun cancel(cause: Throwable?): Boolean =
-        cancelInternal(cause)
-
-    final override fun cancel(cause: CancellationException?) {
-        cancelInternal(cause)
+    final override fun cancel(cause: Throwable?): Boolean {
+        cancelInternal(cause ?: defaultCancellationException())
+        return true
     }
 
-    override fun cancelInternal(cause: Throwable?): Boolean {
-        _channel.cancel(cause?.toCancellationException()) // cancel the channel
+    final override fun cancel(cause: CancellationException?) {
+        cancelInternal(cause ?: defaultCancellationException())
+    }
+
+    override fun cancelInternal(cause: Throwable) {
+        _channel.cancel(cause.toCancellationException()) // cancel the channel
         cancelCoroutine(cause) // cancel the job
-        return true // does not matter - result is used in DEPRECATED functions only
     }
 
     override fun onCompleted(value: Unit) {

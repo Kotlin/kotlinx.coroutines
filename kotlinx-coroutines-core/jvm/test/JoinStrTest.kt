@@ -55,11 +55,10 @@ class JoinStressTest : TestBase() {
     @Test
     fun testExceptionalJoinWithMultipleCancellations() = runBlocking {
         val results = IntArray(2)
-        var successfulCancellations = 0
 
         repeat(iterations) {
             val barrier = CyclicBarrier(4)
-            val exceptionalJob = async(pool + NonCancellable) {
+            val exceptionalJob = async<Unit>(pool + NonCancellable) {
                 barrier.await()
                 throw TestException()
             }
@@ -68,6 +67,7 @@ class JoinStressTest : TestBase() {
                 barrier.await()
                 try {
                     exceptionalJob.await()
+                    2
                 } catch (e: TestException) {
                     0
                 } catch (e: TestException1) {
@@ -83,19 +83,11 @@ class JoinStressTest : TestBase() {
 
             barrier.await()
             val awaiterResult = awaiterJob.await()
-            val cancellerResult = canceller.await()
-            if (awaiterResult == 1) {
-                assertTrue(cancellerResult)
-            }
+            canceller.await()
             ++results[awaiterResult]
-
-            if (cancellerResult) {
-                ++successfulCancellations
-            }
         }
 
         assertTrue(results[0] > 0, results.toList().toString())
         assertTrue(results[1] > 0, results.toList().toString())
-        require(successfulCancellations > 0) { "Cancellation never succeeds, something wrong with stress test infra" }
     }
 }
