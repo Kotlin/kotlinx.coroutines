@@ -277,10 +277,13 @@ Global Instance rendezvous_state_persistent γtq i (r: cellStateUR):
   CoreId r -> Persistent (rendezvous_state γtq i r).
 Proof. apply _. Qed.
 
+Definition rendezvous_done γtq i (c: cellTerminalState) :=
+  rendezvous_state γtq i ((ε, cellDoneO), Some (to_agree c)).
+
 Definition rendezvous_resumed (γtq: gname) (i: nat): iProp :=
-  rendezvous_state γtq i (ε, Some (to_agree cellResumed)).
+  rendezvous_done γtq i cellResumed.
 Definition rendezvous_cancelled (γtq: gname) (i: nat): iProp :=
-  rendezvous_state γtq i (ε, Some (to_agree cellCancelled)).
+  rendezvous_done γtq i cellCancelled.
 Definition rendezvous_initialized γtq i :=
   rendezvous_state γtq i (ε, cellInitializedO, ε).
 Definition rendezvous_inhabited γtq i :=
@@ -779,9 +782,12 @@ Definition is_thread_queue (S R: iProp) γa γtq γe γd eℓ epℓ dℓ dpℓ l
    ∃ (enqIdx deqIdx: nat),
    iterator_points_to segment_size γa γe eℓ epℓ enqIdx ∗
    iterator_points_to segment_size γa γd dℓ dpℓ deqIdx ∗
-   ([∗ list] i ∈ seq 0 deqIdx,
-    awakening_permit γtq ∨ rendezvous_resumed γtq i ∨
-    iterator_issued γd i ∗ rendezvous_cancelled γtq i) ∗
+   ([∗ list] i ∈ seq 0 deqIdx, awakening_permit γtq) ∗
+   ([∗ list] i ↦ b ∈ l, match b with
+                        | Some (cellDone cellCancelled) =>
+                          awakening_permit γtq ∨ iterator_issued γd i
+                        | _ => True
+                        end) ∗
    ⌜deqIdx <= deqFront <= length l⌝ ∧ ⌜enqIdx <= length l⌝
   )%I.
 
@@ -1163,6 +1169,15 @@ Proof.
   all: case; case; case; try done; by intros (? & ? & ? & HH & _).
 Qed.
 
+Lemma drop_alter' {A} (f: A -> A) n i (l: list A):
+  drop n (alter f (n+i)%nat l) = alter f i (drop n l).
+Proof.
+  revert n.
+  induction l; first by case.
+  case; first done.
+  auto.
+Qed.
+
 Theorem cancel_rendezvous_spec E R γa γtq γe γd i ℓ:
   inv N (cell_invariant γtq γa i ℓ) -∗
   array_mapsto segment_size γa i ℓ -∗
@@ -1172,10 +1187,12 @@ Theorem cancel_rendezvous_spec E R γa γtq γe γd i ℓ:
     getAndSet #ℓ CANCELLEDV = RESUMEDV @ ⊤
   <<< ∃ v, (⌜l !! i = Some (Some (cellDone cellResumed))⌝ ∧
      ⌜v = #true⌝ ∧
-     ▷ cell_list_contents E R γa γtq γe γd l deqFront ∧ ▷ R ∨
+     ▷ cell_list_contents E R γa γtq γe γd l deqFront ∗ ▷ R ∨
      ⌜l !! i = Some (Some cellInhabited)⌝ ∧
      ⌜v = #false⌝ ∧
      cell_cancellation_handle segment_size γa i ∗ ▷ E ∗
+     (⌜i < deqFront⌝ ∧ ▷ R ∨ ⌜i >= deqFront⌝ ∧ awakening_permit γtq) ∗
+     rendezvous_cancelled γtq i ∗
      ▷ cell_list_contents E R γa γtq γe γd
       (alter (fun _ => Some (cellDone cellCancelled)) i l) deqFront)
   , RET v >>>.
@@ -1310,8 +1327,132 @@ Proof.
     iDestruct "HEs" as "($ & $ & $)".
   }
 
-  iSplitR.
+  iAssert (⌜deqFront <= length K⌝)%I as "$".
   { iPureIntro. subst. rewrite alter_length. done. }
-Abort.
+
+  rewrite /cell_list_contents_auth_ra.
+  replace (length K) with (length l). 2: by subst; rewrite alter_length.
+
+  assert (forall l i, l !! i = Some (Some cellInhabited) ->
+                  (map cell_state_to_RA l, replicate i ε ++ [(Excl' (), ε, ε)]) ~l~>
+                  (map cell_state_to_RA
+                       (alter (fun _ => Some (cellDone cellCancelled)) i l),
+                   replicate i ε ++ [(ε, (3%nat: mnatUR), Some (to_agree cellCancelled))])
+          ) as Hupdate_ra_map.
+  { clear.
+    intros l i HInh.
+    apply list_lookup_local_update.
+    generalize dependent i.
+
+    induction l; first done. case; simpl.
+    { intros ?. simplify_eq. simpl. case; try done. simpl.
+      apply option_local_update, prod_local_update; simpl.
+      2: by apply alloc_option_local_update.
+      apply prod_local_update; simpl.
+      by apply delete_option_local_update, excl_exclusive.
+      by apply mnat_local_update; lia. }
+    intros i HInh. case; try done. simpl. intros i'. eauto.
+  }
+
+  destruct (decide (i < deqFront)) as [HLt|HGt].
+  {
+    replace (take deqFront l)
+      with (take i (take deqFront l) ++
+                 Some cellInhabited :: drop (S i) (take deqFront l)).
+    2: {
+      rewrite take_drop_middle. done.
+      rewrite lookup_take. done.
+      lia.
+    }
+    rewrite count_matching_app replicate_plus big_sepL_app /=.
+    iDestruct "HRs" as "(HRs1 & HR & HRs2)".
+    iSplitL "HR".
+    { iLeft. iFrame. done. }
+
+    iMod (own_update_2 with "HAuth HInhToken") as "[HAuth HIsCanc]".
+    2: iFrame "HIsCanc HAuth".
+    {
+      apply auth_update.
+      replace (drop deqFront K) with (drop deqFront l).
+      2: { subst. rewrite drop_alter. auto. lia. }
+      apply prod_local_update_2.
+      subst.
+      by apply Hupdate_ra_map.
+    }
+
+    replace (take deqFront K)
+      with (take i (take deqFront l) ++
+                Some (cellDone cellCancelled) :: drop (S i) (take deqFront l)).
+    2: {
+      replace (take i (take deqFront l)) with (take i (take deqFront K)).
+      2: {
+        repeat rewrite take_take.
+        replace (i `min` deqFront)%nat with i by lia.
+        subst.
+        by rewrite take_alter.
+      }
+      replace (drop (S i) (take deqFront l)) with (drop (S i) (take deqFront K)).
+      2: {
+        assert (S i <= deqFront)%nat as HLe by lia.
+        revert HLe. rewrite nat_le_sum. case. intros c ->.
+        repeat rewrite -take_drop_commute. subst.
+        rewrite drop_alter. done. lia.
+      }
+      rewrite take_drop_middle. done.
+      rewrite lookup_take. 2: lia.
+      subst.
+      rewrite list_lookup_alter HInh //.
+    }
+    rewrite count_matching_app replicate_plus big_sepL_app /=.
+    repeat rewrite -big_sepL_later.
+    iFrame.
+    iApply "HCellRRsRestore". iFrame "HIsSus". iExists _. iFrame.
+    done.
+  }
+  replace (take deqFront K) with (take deqFront l).
+  2: { subst. rewrite take_alter; auto. lia. }
+  repeat rewrite -big_sepL_later.
+  iFrame "HRs".
+  iDestruct ("HCellRRsRestore" with "[HArrMapsto' HIsSus Hℓ]") as "$".
+  by iExists ℓ; iFrame.
+
+  replace (count_matching (fun b => not (still_present b)) (drop deqFront K)) with
+      (S (count_matching (fun b => not (still_present b)) (drop deqFront l))).
+  2: {
+    subst.
+    assert (deqFront <= i)%nat as HLe by lia.
+    revert HLe. rewrite nat_le_sum. case. intros c ->.
+    rewrite drop_alter'. erewrite count_matching_alter.
+    2: by rewrite lookup_drop.
+    by rewrite /= -minus_n_O Nat.add_1_r.
+  }
+  iMod (own_update_2 with "HAuth HInhToken") as "[HAuth HFrag]".
+  1: apply auth_update.
+  2: iFrame "HAuth".
+  {
+    apply prod_local_update'; simpl.
+    { apply prod_local_update_2, prod_local_update_1, nat_local_update.
+      remember (count_matching _ _) as X. rewrite /ε /nat_unit.
+      rewrite -plus_n_O plus_assoc_reverse.
+      replace (S X) with (X + 1)%nat by lia.
+      done. }
+    subst.
+    by eapply Hupdate_ra_map.
+  }
+  revert HGt.
+  clear.
+  intros HGt.
+
+  remember (own _ _) as X.
+  iAssert (⌜X ≡ (awakening_permit γtq ∗ rendezvous_cancelled γtq i)⌝)%I as %->.
+  {
+    iPureIntro.
+    subst. rewrite /awakening_permit /rendezvous_cancelled /rendezvous_done.
+    rewrite /rendezvous_state.
+    rewrite -own_op -auth_frag_op -pair_op. auto.
+  }
+  iDestruct "HFrag" as "[HAw $]".
+  iRight. auto.
+Qed.
 
 End proof.
