@@ -133,9 +133,10 @@ public interface SelectInstance<in R> {
     public val completion: Continuation<R>
 
     /**
-     * Resumes this instance in a cancellable way ([MODE_CANCELLABLE]).
+     * Resumes this instance in a dispatched way with exception.
+     * This method can be called from any context.
      */
-    public fun resumeSelectCancellableWithException(exception: Throwable)
+    public fun resumeSelectWithException(exception: Throwable)
 
     /**
      * Disposes the specified handle when this instance is selected.
@@ -282,10 +283,10 @@ internal class SelectBuilderImpl<in R>(
         }
     }
 
-    // Resumes in MODE_CANCELLABLE, can be called from an arbitrary context
-    override fun resumeSelectCancellableWithException(exception: Throwable) {
-        doResume({ CompletedExceptionally(exception) }) {
-            uCont.intercepted().resumeCancellableWith(Result.failure(exception))
+    // Resumes in dispatched way so that it can be called from an arbitrary context
+    override fun resumeSelectWithException(exception: Throwable) {
+        doResume({ CompletedExceptionally(recoverStackTrace(exception, uCont)) }) {
+            uCont.intercepted().resumeWith(Result.failure(exception))
         }
     }
 
@@ -317,7 +318,7 @@ internal class SelectBuilderImpl<in R>(
         // Note: may be invoked multiple times, but only the first trySelect succeeds anyway
         override fun invoke(cause: Throwable?) {
             if (trySelect())
-                resumeSelectCancellableWithException(job.getCancellationException())
+                resumeSelectWithException(job.getCancellationException())
         }
         override fun toString(): String = "SelectOnCancelling[${this@SelectBuilderImpl}]"
     }

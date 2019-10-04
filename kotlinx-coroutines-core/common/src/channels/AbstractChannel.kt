@@ -463,7 +463,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
 
         override fun resumeSendClosed(closed: Closed<*>) {
             if (select.trySelect())
-                select.resumeSelectCancellableWithException(closed.sendException)
+                select.resumeSelectWithException(closed.sendException)
         }
 
         override fun toString(): String = "SendSelect@$hexAddress($pollResult)[$channel, $select]"
@@ -550,16 +550,12 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         /*
          * If result is Closed -- go to tail-call slow-path that will allow us to
          * properly recover stacktrace without paying a performance cost on fast path.
+         * We prefer to recover stacktrace using suspending path to have a more precise stacktrace.
          */
-        if (result !== POLL_FAILED && result !is Closed<*>) return receiveResult(result)
+        @Suppress("UNCHECKED_CAST")
+        if (result !== POLL_FAILED && result !is Closed<*>) return result as E
         // slow-path does suspend
         return receiveSuspend(RECEIVE_THROWS_ON_CLOSE)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun receiveResult(result: Any?): E {
-        if (result is Closed<*>) throw recoverStackTrace(result.receiveException)
-        return result as E
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -975,12 +971,12 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         override fun resumeReceiveClosed(closed: Closed<*>) {
             if (!select.trySelect()) return
             when (receiveMode) {
-                RECEIVE_THROWS_ON_CLOSE -> select.resumeSelectCancellableWithException(closed.receiveException)
+                RECEIVE_THROWS_ON_CLOSE -> select.resumeSelectWithException(closed.receiveException)
                 RECEIVE_RESULT -> block.startCoroutine(ValueOrClosed.closed<R>(closed.closeCause), select.completion)
                 RECEIVE_NULL_ON_CLOSE -> if (closed.closeCause == null) {
                     block.startCoroutine(null, select.completion)
                 } else {
-                    select.resumeSelectCancellableWithException(closed.receiveException)
+                    select.resumeSelectWithException(closed.receiveException)
                 }
             }
         }

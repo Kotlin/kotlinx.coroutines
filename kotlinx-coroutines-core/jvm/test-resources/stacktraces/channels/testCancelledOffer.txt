@@ -4,11 +4,6 @@ kotlinx.coroutines.JobCancellationException: Job was cancelled; job=JobImpl{Canc
 	at kotlinx.coroutines.channels.ChannelCoroutine.offer(ChannelCoroutine.kt)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testCancelledOffer$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt:153)
 Caused by: kotlinx.coroutines.JobCancellationException: Job was cancelled; job=JobImpl{Cancelling}@2a06d350
-	at kotlinx.coroutines.JobSupport.createJobCancellationException(JobSupport.kt:680)
-	at kotlinx.coroutines.JobSupport.createCauseException(JobSupport.kt:696)
-	at kotlinx.coroutines.JobSupport.cancelMakeCompleting(JobSupport.kt:673)
-	at kotlinx.coroutines.JobSupport.cancelImpl$kotlinx_coroutines_core(JobSupport.kt:645)
-	at kotlinx.coroutines.JobSupport.cancelInternal(JobSupport.kt:611)
 	at kotlinx.coroutines.JobSupport.cancel(JobSupport.kt:599)
 	at kotlinx.coroutines.Job$DefaultImpls.cancel$default(Job.kt:164)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testCancelledOffer$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt:151)

@@ -182,33 +182,6 @@ class StackTraceRecoveryTest : TestBase() {
     }
 
     @Test
-    fun testSelect() = runTest {
-        expect(1)
-        val result = runCatching { doSelect() }
-        expect(3)
-        verifyStackTrace(result.exceptionOrNull()!!,
-            "kotlinx.coroutines.RecoverableTestException\n" +
-                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$doSelect\$\$inlined\$select\$lambda\$1.invokeSuspend(StackTraceRecoveryTest.kt:211)\n" +
-                "\t(Coroutine boundary)\n" +
-                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testSelect\$1.invokeSuspend(StackTraceRecoveryTest.kt:199)\n" +
-                "Caused by: kotlinx.coroutines.RecoverableTestException\n" +
-                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$doSelect\$\$inlined\$select\$lambda\$1.invokeSuspend(StackTraceRecoveryTest.kt:211)\n" +
-                "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)")
-        finish(4)
-    }
-
-    private suspend fun doSelect(): Int {
-        val job = CompletableDeferred(Unit)
-        return select {
-            job.onJoin {
-                yield()
-                expect(2)
-                throw RecoverableTestException()
-            }
-        }
-    }
-
-    @Test
     fun testSelfSuppression() = runTest {
         try {
             runBlocking {

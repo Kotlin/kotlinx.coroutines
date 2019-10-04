@@ -174,7 +174,9 @@ internal class DispatchedContinuation<in T>(
         }
     }
 
-    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
+    // We inline it to save an entry on the stack in cases where it shows (unconfined dispatcher)
+    // It is used only in Continuation<T>.resumeCancellableWith
+    @Suppress("NOTHING_TO_INLINE")
     inline fun resumeCancellableWith(result: Result<T>) {
         val state = result.toState()
         if (dispatcher.isDispatchNeeded(context)) {
@@ -220,8 +222,14 @@ internal class DispatchedContinuation<in T>(
         "DispatchedContinuation[$dispatcher, ${continuation.toDebugString()}]"
 }
 
-@Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
-internal inline fun <T> Continuation<T>.resumeCancellableWith(result: Result<T>) = when (this) {
+/**
+ * It is not inline to save bytecode (it is pretty big and used in many places)
+ * and we leave it public so that its name is not mangled in use stack traces if it shows there.
+ * It may appear in stack traces when coroutines are started/resumed with unconfined dispatcher.
+ * @suppress **This an internal API and should not be used from general code.**
+ */
+@InternalCoroutinesApi
+public fun <T> Continuation<T>.resumeCancellableWith(result: Result<T>) = when (this) {
     is DispatchedContinuation -> resumeCancellableWith(result)
     else -> resumeWith(result)
 }

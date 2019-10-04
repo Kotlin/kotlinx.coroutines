@@ -244,7 +244,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // A case of no exceptions
         if (exceptions.isEmpty()) {
             // materialize cancellation exception if it was not materialized yet
-            if (state.isCancelling) return createJobCancellationException()
+            if (state.isCancelling) return defaultCancellationException()
             return null
         }
         // Take either the first real exception (not a cancellation) or just the first exception
@@ -406,8 +406,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         }
 
     protected fun Throwable.toCancellationException(message: String? = null): CancellationException =
-        this as? CancellationException ?:
-            JobCancellationException(message ?: "$classSimpleName was cancelled", this, this@JobSupport)
+        this as? CancellationException ?: defaultCancellationException(message, this)
 
     /**
      * Returns the cause that signals the completion of this job -- it returns the original
@@ -597,19 +596,23 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     // external cancel with cause, never invoked implicitly from internal machinery
     public override fun cancel(cause: CancellationException?) {
-        cancelInternal(cause) // must delegate here, because some classes override cancelInternal(x)
+        cancelInternal(cause ?: defaultCancellationException())
     }
+
+    protected open fun cancellationExceptionMessage(): String = "Job was cancelled"
 
     // HIDDEN in Job interface. Invoked only by legacy compiled code.
     // external cancel with (optional) cause, never invoked implicitly from internal machinery
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Added since 1.2.0 for binary compatibility with versions <= 1.1.x")
-    public override fun cancel(cause: Throwable?): Boolean =
-        cancelInternal(cause)
+    public override fun cancel(cause: Throwable?): Boolean {
+        cancelInternal(cause?.toCancellationException() ?: defaultCancellationException())
+        return true
+    }
 
     // It is overridden in channel-linked implementation
-    // Note: Boolean result is used only in HIDDEN DEPRECATED functions that were public in versions <= 1.1.x
-    public open fun cancelInternal(cause: Throwable?): Boolean =
-        cancelImpl(cause) && handlesException
+    public open fun cancelInternal(cause: Throwable) {
+        cancelImpl(cause)
+    }
 
     // Parent is cancelling child
     public final override fun parentCancelled(parentJob: ParentJob) {
@@ -677,8 +680,9 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         }
     }
 
-    private fun createJobCancellationException() =
-        JobCancellationException("Job was cancelled", null, this)
+    @Suppress("NOTHING_TO_INLINE") // Save a stack frame
+    internal inline fun defaultCancellationException(message: String? = null, cause: Throwable? = null) =
+        JobCancellationException(message ?: cancellationExceptionMessage(), cause, this)
 
     override fun getChildJobCancellationCause(): CancellationException {
         // determine root cancellation cause of this job (why is it cancelling its children?)
@@ -694,7 +698,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     // cause is Throwable or ParentJob when cancelChild was invoked
     private fun createCauseException(cause: Any?): Throwable = when (cause) {
-        is Throwable? -> cause ?: createJobCancellationException()
+        is Throwable? -> cause ?: defaultCancellationException()
         else -> (cause as ParentJob).getChildJobCancellationCause()
     }
 
@@ -1225,7 +1229,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                 // already complete -- select result
                 if (select.trySelect()) {
                     if (state is CompletedExceptionally) {
-                        select.resumeSelectCancellableWithException(state.cause)
+                        select.resumeSelectWithException(state.cause)
                     }
                     else {
                         block.startCoroutineUnintercepted(state.unboxState() as T, select.completion)
@@ -1249,7 +1253,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         val state = this.state
         // Note: await is non-atomic (can be cancelled while dispatched)
         if (state is CompletedExceptionally)
-            select.resumeSelectCancellableWithException(state.cause)
+            select.resumeSelectWithException(state.cause)
         else
             block.startCoroutineCancellable(state.unboxState() as T, select.completion)
     }
@@ -1384,8 +1388,8 @@ private class ResumeAwaitOnCompletion<T>(
         val state = job.state
         assert { state !is Incomplete }
         if (state is CompletedExceptionally) {
-            // Resume with exception in atomic way to preserve exception
-            continuation.resumeWithExceptionMode(state.cause, MODE_ATOMIC_DEFAULT)
+            // Resume with with the corresponding exception to preserve it
+            continuation.resumeWithException(state.cause)
         } else {
             // Resuming with value in a cancellable way (AwaitContinuation is configured for this mode).
             @Suppress("UNCHECKED_CAST")
