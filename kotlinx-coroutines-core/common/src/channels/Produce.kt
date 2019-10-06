@@ -69,7 +69,7 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  * The coroutine context is inherited from this [CoroutineScope]. Additional context elements can be specified with the [context] argument.
  * If the context does not have any dispatcher or other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from the [CoroutineScope] as well, but it can also be overridden
- * with a corresponding [coroutineContext] element.
+ * with a corresponding [context] element.
  *
  * Any uncaught exception in this coroutine will close the channel with this exception as the cause and
  * the resulting channel will become _failed_, so that any attempt to receive from it thereafter will throw an exception.
