@@ -45,7 +45,7 @@ fun <E> ReceiveChannel<E>.broadcast(
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
- * with corresponding [coroutineContext] element.
+ * with corresponding [context] element.
  *
  * Uncaught exceptions in this coroutine close the channel with this exception as a cause and
  * the resulting channel becomes _failed_, so that any attempt to receive from such a channel throws exception.
