@@ -293,7 +293,6 @@ The following example shows how the flow gets cancelled on a timeout when runnin
 and stops executing its code:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -382,7 +381,6 @@ mapped to the results with the [map] operator, even when performing a request is
 operation that is implemented by a suspending function:   
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -425,7 +423,6 @@ For example, using `transform` we can emit a string before performing a long-run
 and follow it with a response:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -471,7 +468,6 @@ is reached. Cancellation in coroutines is always performed by throwing an except
 functions (like `try { ... } finally { ... }` blocks) operate normally in case of cancellation:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -561,7 +557,6 @@ upstream to downstream and is then delivered to the terminal operator after.
 See the following example that filters the even integers and maps them to strings:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -610,7 +605,6 @@ a `foo` flow, then the following code runs in the context specified
 by the author of this code, regardless of the implementation details of the `foo` flow:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
-
 ```kotlin
 withContext(context) {
     foo.collect { value ->
@@ -630,7 +624,6 @@ of the corresponding flow. For example, consider the implementation of `foo` tha
 it is called on and emits three numbers:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -680,7 +673,6 @@ preservation property and is not allowed to [emit][FlowCollector.emit] from a di
 Try running the following code:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -729,7 +721,6 @@ The correct way to change the context of a flow is shown in the example below, w
 names of the corresponding threads to show how it all works:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -781,7 +772,6 @@ the emission by `foo()` flow is slow, taking 100 ms to produce an element; and c
 taking 300 ms to process an element. Let's see how long it takes to collect such a flow with three numbers:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -826,7 +816,6 @@ We can use a [buffer] operator on a flow to run emitting code of `foo()` concurr
 as opposed to running them sequentially:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -881,7 +870,6 @@ to process each value, but instead, only most recent ones. In this case, the [co
 intermediate values when a collector is too slow to process them. Building on the previous example:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -932,7 +920,6 @@ a family of `xxxLatest` operators that perform the same essential logic of a `xx
 code in their block on a new value. Let's try changing [conflate] to [collectLatest] in the previous example:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -987,7 +974,6 @@ Just like the [Sequence.zip] extension function in the Kotlin standard library,
 flows have a [zip] operator that combines the corresponding values of two flows:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1031,7 +1017,6 @@ albeit results that are printed every 400 ms:
 that emits sample flows more declarative and shorter.
  
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1062,7 +1047,6 @@ fun main() = runBlocking<Unit> {
 However, when using a [combine] operator here instead of a [zip]:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1103,7 +1087,6 @@ each value triggers a request for another sequence of values. For example, we ca
 function that returns a flow of two strings 500 ms apart:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
-
 ```kotlin
 fun requestFlow(i: Int): Flow<String> = flow {
     emit("$i: First") 
@@ -1119,7 +1102,6 @@ fun requestFlow(i: Int): Flow<String> = flow {
 Now if we have a flow of three integers and call `requestFlow` for each of them like this:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
-
 ```kotlin
 (1..3).asFlow().map { requestFlow(it) }
 ``` 
@@ -1140,7 +1122,6 @@ analogues of the corresponding sequence operators. They wait for the inner flow 
 starting to collect the next one as the following example shows:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1189,7 +1170,6 @@ It is implemented by [flatMapMerge] and [flattenMerge] operators. They both acce
 (it is equal to [DEFAULT_CONCURRENCY] by default). 
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1241,7 +1221,6 @@ flattening mode where a collection of the previous flow is cancelled as soon as 
 It is implemented by the [flatMapLatest] operator.
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1293,7 +1272,6 @@ There are several ways to handle these exceptions.
 A collector can use Kotlin's [`try/catch`][exceptions] block to handle exceptions: 
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1343,7 +1321,6 @@ For example, let's change the code so that emitted values are [mapped][map] to s
 but the corresponding code produces an exception:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1405,7 +1382,6 @@ and react to it in different ways depending on which exception was caught:
 For example, let us emit the text on catching an exception:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1451,7 +1427,6 @@ The [catch] intermediate operator, honoring exception transparency, catches only
 If the block in `collect { ... }` (placed below `catch`) throws an exception then it escapes:  
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1496,7 +1471,6 @@ of the [collect] operator into [onEach] and putting it before the `catch` operat
 be triggered by a call to `collect()` without parameters:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1546,7 +1520,6 @@ In addition to `try`/`catch`, a collector can also use a `finally` block to exec
 upon `collect` completion.
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1587,7 +1560,6 @@ when the flow has completely collected.
 The previous example can be rewritten using an [onCompletion] operator and produces the same output:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1618,7 +1590,6 @@ to determine whether the flow collection was completed normally or exceptionally
 example the `foo()` flow throws an exception after emitting the number 1:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1661,7 +1632,6 @@ Just like the [catch] operator, [onCompletion] only sees exceptions coming from 
 see downstream exceptions. For example, run the following code:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1712,7 +1682,6 @@ Otherwise, just calling `onEach` has no effect.
 If we use the [collect] terminal operator after `onEach`, then the code after it will wait until the flow is collected:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -1750,7 +1719,6 @@ launch a collection of the flow in a separate coroutine, so that execution of fu
 immediately continues:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
