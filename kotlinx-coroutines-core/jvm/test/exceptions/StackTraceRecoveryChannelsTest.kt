@@ -37,6 +37,12 @@ class StackTraceRecoveryChannelsTest : TestBase() {
         channelReceive(channel)
     }
 
+    @Test
+    fun testReceiveOrNullFromClosedChannel() = runTest {
+        val channel = Channel<Int>()
+        channel.close(RecoverableTestException())
+        channelReceiveOrNull(channel)
+    }
 
     @Test
     fun testSendToClosedChannel() = runTest {
@@ -60,10 +66,13 @@ class StackTraceRecoveryChannelsTest : TestBase() {
         finish(4)
     }
 
-    private suspend fun channelReceive(channel: Channel<Int>) {
+    private suspend fun channelReceive(channel: Channel<Int>) = channelOp { channel.receive() }
+    private suspend fun channelReceiveOrNull(channel: Channel<Int>) = channelOp { channel.receiveOrNull() }
+
+    private suspend inline fun channelOp(block: () -> Unit) {
         try {
             yield()
-            channel.receive()
+            block()
             expectUnreached()
         } catch (e: RecoverableTestException) {
             verifyStackTrace("channels/${name.methodName}", e)

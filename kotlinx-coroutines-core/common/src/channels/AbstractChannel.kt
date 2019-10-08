@@ -590,7 +590,8 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     public final override suspend fun receiveOrNull(): E? {
         // fast path -- try poll non-blocking
         val result = pollInternal()
-        if (result !== POLL_FAILED) return receiveOrNullResult(result)
+        @Suppress("UNCHECKED_CAST")
+        if (result !== POLL_FAILED && result !is Closed<*>) return result as E
         // slow-path does suspend
         return receiveSuspend(RECEIVE_NULL_ON_CLOSE)
     }
