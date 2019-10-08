@@ -747,7 +747,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                         }
                     }
                     else -> {
-                        // selected successfully
+                        // selected successfully, pollSelectInternal is responsible for the select
                         block.startCoroutineUnintercepted(pollResult as E, select.completion)
                         return
                     }
@@ -776,10 +776,12 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                     pollResult === POLL_FAILED -> {} // retry
                     pollResult === RETRY_ATOMIC -> {} // retry
                     pollResult is Closed<*> -> {
-                        block.startCoroutineUnintercepted(ValueOrClosed.closed(pollResult.closeCause), select.completion)
+                        if (select.trySelect())
+                            block.startCoroutineUnintercepted(ValueOrClosed.closed(pollResult.closeCause), select.completion)
+                        return
                     }
                     else -> {
-                        // selected successfully
+                        // selected successfully, pollSelectInternal is responsible for the select
                         block.startCoroutineUnintercepted(ValueOrClosed.value(pollResult as E), select.completion)
                         return
                     }
