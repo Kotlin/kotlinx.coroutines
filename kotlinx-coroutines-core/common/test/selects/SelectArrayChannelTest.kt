@@ -388,4 +388,35 @@ class SelectArrayChannelTest : TestBase() {
         if (!trySelect()) return
         block.startCoroutineUnintercepted(this)
     }
+
+    @Test
+    fun testSelectReceiveOrClosedForClosedChannel() = runTest {
+        val channel = Channel<Int>(1)
+        channel.close()
+        expect(1)
+        select<Unit> {
+            expect(2)
+            channel.onReceiveOrClosed {
+                assertTrue(it.isClosed)
+                assertNull(it.closeCause)
+                finish(3)
+            }
+        }
+    }
+
+    @Test
+    fun testSelectReceiveOrClosedForClosedChannelWithValue() = runTest {
+        val channel = Channel<Int>(1)
+        channel.send(42)
+        channel.close()
+        expect(1)
+        select<Unit> {
+            expect(2)
+            channel.onReceiveOrClosed {
+                assertFalse(it.isClosed)
+                assertEquals(42, it.value)
+                finish(3)
+            }
+        }
+    }
 }
