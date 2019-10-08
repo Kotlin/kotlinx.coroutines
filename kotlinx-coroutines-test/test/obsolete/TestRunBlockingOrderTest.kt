@@ -2,125 +2,17 @@
  * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.test
+package kotlinx.coroutines.test.obsolete
 
-import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.test.*
 import org.junit.*
-import java.util.concurrent.Executors
-import kotlin.concurrent.thread
+import java.util.concurrent.*
+import kotlin.concurrent.*
 
 class TestRunBlockingOrderTest : TestBase() {
-    @Test
-    fun testLaunchImmediate() = runBlockingTest {
-        expect(1)
-        launch {
-            expect(2)
-        }
-        finish(3)
-    }
-
-    @Test
-    fun testYield() = runBlockingTest {
-        expect(1)
-        launch {
-            expect(2)
-            yield()
-            finish(4)
-        }
-        expect(3)
-    }
-
-    @Test
-    fun testLaunchWithDelayCompletes() = runBlockingTest {
-        expect(1)
-        launch {
-            delay(100)
-            finish(3)
-        }
-        expect(2)
-    }
-
-    @Test
-    fun testLaunchDelayOrdered() = runBlockingTest {
-        expect(1)
-        launch {
-            delay(200) // long delay
-            finish(4)
-        }
-        launch  {
-            delay(100) // shorter delay
-            expect(3)
-        }
-        expect(2)
-    }
-
-    @Test
-    fun testInfiniteDelay() = runBlockingTest {
-        expect(1)
-        delay(100) // move time forward a bit some that naive time + delay gives an overflow
-        launch {
-            delay(Long.MAX_VALUE) // infinite delay
-            finish(4)
-        }
-        launch  {
-            delay(100) // short delay
-            expect(3)
-        }
-        expect(2)
-    }
-
-    @Test
-    fun testNewThread_inSuspendCancellableCoroutine() = runBlockingTest {
-        expect(1)
-        suspendCancellableCoroutine<Unit> { cont ->
-            expect(2)
-            thread {
-                expect(3)
-                cont.resume(Unit) { Unit }
-            }
-        }
-        finish(4)
-    }
-
-    @Test
-    fun testWithDelayInOtherDispatcher_passesWhenDelayIsShort() = runBlockingTest {
-        expect(1)
-        withContext(Dispatchers.IO) {
-            delay(1)
-            expect(2)
-        }
-        finish(3)
-    }
-
-    @Test
-    fun testThrows_throws() {
-        val expected = IllegalStateException("expected")
-        val result = runCatching {
-            expect(1)
-            runBlockingTest {
-                expect(2)
-                throw expected
-            }
-        }
-        finish(3)
-        assertEquals(expected, result.exceptionOrNull())
-    }
-
-    @Test
-    fun testSuspendForever_fails() {
-        val uncompleted = CompletableDeferred<Unit>()
-        val result = runCatching {
-            expect(1)
-            runBlockingTest(waitForOtherDispatchers = 0L) {
-                expect(2)
-                uncompleted.await()
-            }
-        }
-        finish(3)
-        assertEquals(true, result.isFailure)
-    }
 
     @Test
     fun testAdvanceUntilIdle_inRunBlocking() = runBlockingTest {
@@ -221,7 +113,7 @@ class TestRunBlockingOrderTest : TestBase() {
                 numbersFromOtherDispatcherWithDelays.collect { value ->
                     expect(value)
                     delay(1)
-                    expect (value + 1)
+                    expect(value + 1)
                 }
                 delay(1)
                 expect(max + 1)
@@ -304,11 +196,8 @@ class TestRunBlockingOrderTest : TestBase() {
 
         runBlockingTest {
             subject()
-
             assertEquals(1, state)
-
             advanceTimeBy(1000)
-
             assertEquals(2, state)
         }
     }
