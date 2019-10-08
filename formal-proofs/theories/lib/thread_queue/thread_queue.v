@@ -1494,16 +1494,21 @@ Theorem resume_rendezvous_spec E R γa γtq γe γd i ℓ:
              (alter (fun _ => Some (cellDone cellFilled)) i l) deqFront ∨
 
            ⌜l !! i = Some (Some cellInhabited)⌝ ∧
+           ⌜∃ (th: loc), v = InjLV #th⌝ ∧
            rendezvous_resumed γtq i ∗
            ▷ E ∗
            ▷ cell_list_contents E R γa γtq γe γd
              (alter (fun _ => Some (cellDone cellResumed)) i l) deqFront ∨
 
            ⌜l !! i = Some (Some (cellDone cellCancelled))⌝ ∧
+           (⌜v = RESUMEDV⌝ ∨ (* can't actually happen, but it's hard to prove
+                                it. *)
+            ⌜v = CANCELLEDV⌝) ∧
            iterator_issued γd i ∗
            ▷ cell_list_contents E R γa γtq γe γd l deqFront ∨
 
            ⌜l !! i = Some (Some (cellDone cellAbandoned))⌝ ∧
+           ⌜∃ (th: loc), v = InjLV #th⌝ ∧
            ▷ E ∗
              ▷ cell_list_contents E R γa γtq γe γd l deqFront,
         RET v >>>.
@@ -1664,6 +1669,194 @@ Proof.
     by iFrame.
   }
 
-Abort.
+  iDestruct (deq_front_at_least__cell_list_contents
+                with "HDeqFrontLb HAuth") as %HDeqFront.
+
+  destruct c.
+  {
+    iDestruct (big_sepL_lookup_alter_abort
+                 i O (fun _ => Some (cellDone cellResumed))
+                 with "[HCellResources]")
+      as "[HR HCellRRsRestore]"; simpl; try done.
+    simpl.
+    (* remember (alter (fun _ => Some (cellDone cellResumed)) i l) as l'. *)
+    iDestruct "HR" as (ℓ') "(>HArrMapsto' & HThread & HIsSus & HCancHandle)".
+    iDestruct (array_mapsto_agree with "HArrMapsto' HArrMapsto") as %->.
+    iDestruct "HThread" as (th) "Hℓ".
+    iAssert (▷ ℓ ↦ InjLV #th ∧ ⌜val_is_unboxed (InjLV #th)⌝)%I
+      with "[Hℓ]" as "HAacc".
+    by iFrame.
+
+    iAaccIntro with "HAacc".
+    {
+      repeat rewrite -big_sepL_later.
+      iDestruct "HCellRRsRestore" as "[HCellRRsRestore _]".
+      iIntros "[Hℓ _] !>". iFrame.
+      iSplitL.
+      {
+        iSplitR; first done.
+        iApply "HCellRRsRestore".
+        iExists ℓ. iFrame. eauto.
+      }
+      by iIntros "$ !>".
+    }
+    iDestruct "HCellRRsRestore" as "[_ HCellRRsRestore]".
+
+    iIntros "Hℓ". iExists _.
+    iSplitR "HInv".
+    2: iFrame; by iIntros "!> $ !>".
+    iRight. iLeft.
+
+    iSplitR; first done.
+    rewrite /cell_list_contents alter_length.
+    iAssert (⌜deqFront <= length l⌝)%I as "$". done.
+    replace (alter (fun _ => Some (cellDone cellResumed)) i l) with
+      (alter (fun _ => Some (cellDone cellResumed)) (length (take i l) + O)%nat l).
+    2: rewrite -plus_n_O take_length_le; first done.
+    2: lia.
+    remember (_ + _)%nat as K.
+    replace l with (take i l ++ Some cellInhabited :: drop (S i) l).
+    2: by rewrite take_drop_middle. subst.
+    rewrite alter_app_r.
+    repeat rewrite take_app_ge.
+    all: rewrite take_length_le; try lia.
+    destruct (deqFront - i)%nat eqn:Z. lia.
+    repeat rewrite count_matching_app. repeat rewrite replicate_plus.
+    repeat rewrite big_sepL_app. simpl.
+    iDestruct "HEs" as "(HEsH & $ & HEsT)".
+    iDestruct "HRs" as "(HRsH & HR & HRsT)".
+    iDestruct ("HCellRRsRestore" with "[HIsRes HArrMapsto' HIsSus HCancHandle Hℓ HR]")
+      as "(HCellRRsH & HCellR & HCellRRsT)".
+    { iExists _. iFrame "HArrMapsto' HIsRes HCancHandle HIsSus". iRight. iFrame. }
+    repeat rewrite -big_sepL_later.
+    iFrame.
+    unfold cell_list_contents_auth_ra.
+    rewrite /rendezvous_resumed /rendezvous_done /rendezvous_state.
+    iSplitR; first (iExists _; done).
+    iMod (own_update with "HAuth") as "[HAuth HFrag]".
+    2: by iFrame "HFrag HAuth".
+
+    apply auth_update_alloc, prod_local_update'.
+    {
+      repeat rewrite app_length /=.
+      apply prod_local_update_2.
+      repeat rewrite drop_app_ge.
+      all: rewrite take_length_le; try lia.
+      rewrite Z. simpl.
+      done.
+    }
+
+    repeat rewrite -fmap_is_map. repeat rewrite fmap_app. simpl.
+    assert (i < length l)%nat as HLt by lia.
+    apply list_lookup_local_update. intros i'.
+    destruct (decide (i' < i)%nat) as [HLti'|HGei'].
+    - repeat rewrite lookup_app_l. rewrite lookup_nil.
+      rewrite list_lookup_fmap. rewrite lookup_take.
+      rewrite lookup_replicate_2.
+      all: try rewrite replicate_length.
+      all: try rewrite fmap_length take_length_le.
+      all: try lia.
+      assert (i' < length l)%nat as HLti'_len by lia.
+      revert HLti'_len. rewrite -lookup_lt_is_Some.
+      case. intros ? HEl. rewrite HEl. simpl.
+      apply option_local_update'. done.
+    - repeat rewrite lookup_app_r.
+      all: try rewrite replicate_length.
+      all: try rewrite fmap_length take_length_le.
+      all: try lia.
+      destruct (decide (i' = i)); subst.
+      2: {
+        destruct (i' - i)%nat eqn:Y. lia.
+        simpl. by repeat rewrite lookup_nil.
+      }
+      rewrite minus_diag. simpl. rewrite lookup_nil.
+      apply option_local_update'.
+      apply prod_local_update'; simpl.
+      2: by apply alloc_option_local_update.
+      apply prod_local_update_2, mnat_local_update. lia.
+  }
+
+  iDestruct (big_sepL_lookup_acc with "[HCellResources]")
+    as "[HR HCellRRsRestore]"; simpl; try done.
+  simpl.
+
+  repeat rewrite -big_sepL_later.
+  destruct c; simpl.
+  2: {
+    iDestruct "HR" as (?) "(_ & >HIsRes' & _)".
+    iDestruct (iterator_issued_exclusive with "HIsRes HIsRes'") as %[].
+  }
+  2: {
+    iDestruct "HR" as (?) "(_ & >HIsRes' & _)".
+    iDestruct (iterator_issued_exclusive with "HIsRes HIsRes'") as %[].
+  }
+
+  {
+    iDestruct "HR" as (ℓ') "(>HArrMapsto' & HIsSus & HVal)".
+    iDestruct (array_mapsto_agree with "HArrMapsto' HArrMapsto") as %->.
+    iAssert (∃ v, (⌜v = CANCELLEDV \/ v = RESUMEDV⌝) ∧ ▷ ℓ ↦ v)%I
+            with "[HVal]" as (v HVal) "Hℓ".
+    {
+      iDestruct "HVal" as "[HVal|HVal]"; iExists _; iFrame; iPureIntro; auto.
+    }
+    iAssert (▷ ℓ ↦ v ∧ ⌜val_is_unboxed v⌝)%I with "[Hℓ]" as "HAacc".
+    { iFrame. iPureIntro. destruct HVal; subst; done. }
+    iAaccIntro with "HAacc".
+
+    {
+      iIntros "[Hℓ _]". iSplitR "HInv HIsRes". iFrame.
+      iSplitR; first done. iApply "HCellRRsRestore".
+      { iExists _. iFrame "HArrMapsto'". iFrame.
+        destruct HVal; subst; eauto. }
+      iIntros "!> $ !>"; iFrame.
+    }
+
+    iIntros "Hℓ !>". iExists v. iSplitR "HInv".
+    2: by iIntros "$ !>".
+    iRight. iRight. iLeft.
+
+    iSplitR; first done.
+    iSplitR.
+    { iPureIntro. destruct HVal; auto. }
+    iFrame.
+    iSplitR; first done.
+    iApply "HCellRRsRestore".
+    iExists _; iFrame "HArrMapsto'". iFrame.
+  }
+
+  iDestruct "HR" as (?) "(>HArrMapsto' & HCancHandle & HIsSus & HInh & HH)".
+  iDestruct "HH" as "[>HIsRes'|[HThread HE]]".
+  by iDestruct (iterator_issued_exclusive with "HIsRes HIsRes'") as %[].
+  iDestruct (array_mapsto_agree with "HArrMapsto' HArrMapsto") as %->.
+  iDestruct "HThread" as (v) "Hℓ".
+
+  iAssert (▷ ℓ ↦ InjLV #v ∧ ⌜val_is_unboxed (InjLV #v)⌝)%I
+    with "[Hℓ]" as "HAacc".
+  by iFrame.
+
+  iAaccIntro with "HAacc".
+  {
+    iIntros "[Hℓ _] !>".
+    iSplitR "HInv HIsRes".
+    {
+      iFrame. iSplitR; first done. iApply "HCellRRsRestore".
+      iExists _; iFrame "HArrMapsto'"; iFrame.
+      iRight. iFrame. by iExists _.
+    }
+    iIntros "$ !>". iFrame.
+  }
+
+  iIntros "Hℓ !>". iExists _.
+  iSplitR "HInv".
+  2: by iIntros "$ !>".
+  repeat iRight.
+
+  iSplitR; first done.
+  iSplitR; first by eauto.
+  iFrame.
+  iSplitR; first done.
+  iApply "HCellRRsRestore".
+  iExists _; iFrame "HArrMapsto'". iFrame.
+Qed.
 
 End proof.
