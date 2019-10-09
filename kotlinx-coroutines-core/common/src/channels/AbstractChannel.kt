@@ -692,100 +692,71 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
 
     final override val onReceive: SelectClause1<E>
         get() = object : SelectClause1<E> {
+            @Suppress("UNCHECKED_CAST")
             override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (E) -> R) {
-                registerSelectReceive(select, block)
+                registerSelectReceiveMode(select, RECEIVE_THROWS_ON_CLOSE, block as suspend (Any?) -> R)
             }
         }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun <R> registerSelectReceive(select: SelectInstance<R>, block: suspend (E) -> R) {
-        while (true) {
-            if (select.isSelected) return
-            if (isEmpty) {
-                if (enqueueReceiveSelect(select, block as suspend (Any?) -> R, RECEIVE_THROWS_ON_CLOSE)) return
-            } else {
-                val pollResult = pollSelectInternal(select)
-                when {
-                    pollResult === ALREADY_SELECTED -> return
-                    pollResult === POLL_FAILED -> {} // retry
-                    pollResult === RETRY_ATOMIC -> {} // retry
-                    pollResult is Closed<*> -> throw recoverStackTrace(pollResult.receiveException)
-                    else -> {
-                        block.startCoroutineUnintercepted(pollResult as E, select.completion)
-                        return
-                    }
-                }
-            }
-        }
-    }
 
     final override val onReceiveOrNull: SelectClause1<E?>
         get() = object : SelectClause1<E?> {
+            @Suppress("UNCHECKED_CAST")
             override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (E?) -> R) {
-                registerSelectReceiveOrNull(select, block)
+                registerSelectReceiveMode(select, RECEIVE_NULL_ON_CLOSE, block as suspend (Any?) -> R)
             }
         }
 
-    @Suppress("UNCHECKED_CAST")
-    private fun <R> registerSelectReceiveOrNull(select: SelectInstance<R>, block: suspend (E?) -> R) {
+    final override val onReceiveOrClosed: SelectClause1<ValueOrClosed<E>>
+        get() = object : SelectClause1<ValueOrClosed<E>> {
+            @Suppress("UNCHECKED_CAST")
+            override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (ValueOrClosed<E>) -> R) {
+                registerSelectReceiveMode(select, RECEIVE_RESULT, block as suspend (Any?) -> R)
+            }
+        }
+
+    private fun <R> registerSelectReceiveMode(select: SelectInstance<R>, receiveMode: Int, block: suspend (Any?) -> R) {
         while (true) {
             if (select.isSelected) return
             if (isEmpty) {
-                if (enqueueReceiveSelect(select, block as suspend (Any?) -> R, RECEIVE_NULL_ON_CLOSE)) return
+                if (enqueueReceiveSelect(select, block, receiveMode)) return
             } else {
                 val pollResult = pollSelectInternal(select)
                 when {
                     pollResult === ALREADY_SELECTED -> return
                     pollResult === POLL_FAILED -> {} // retry
                     pollResult === RETRY_ATOMIC -> {} // retry
-                    pollResult is Closed<*> -> {
-                        if (pollResult.closeCause == null) {
-                            if (select.trySelect())
-                                block.startCoroutineUnintercepted(null, select.completion)
-                            return
-                        } else {
-                            throw recoverStackTrace(pollResult.closeCause)
-                        }
-                    }
-                    else -> {
-                        // selected successfully, pollSelectInternal is responsible for the select
-                        block.startCoroutineUnintercepted(pollResult as E, select.completion)
-                        return
-                    }
+                    else -> block.tryStartBlockUnintercepted(select, receiveMode, pollResult)
                 }
             }
         }
     }
 
-    override val onReceiveOrClosed: SelectClause1<ValueOrClosed<E>>
-        get() = object : SelectClause1<ValueOrClosed<E>> {
-            override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (ValueOrClosed<E>) -> R) {
-                registerSelectReceiveOrClosed(select, block)
+    private fun <R> (suspend (Any?) -> R).tryStartBlockUnintercepted(select: SelectInstance<R>, receiveMode: Int, value: Any?) {
+        when (value) {
+            is Closed<*> -> {
+                when (receiveMode) {
+                    RECEIVE_THROWS_ON_CLOSE -> {
+                        throw recoverStackTrace(value.receiveException)
+                    }
+                    RECEIVE_RESULT -> {
+                        if (!select.trySelect()) return
+                        startCoroutineUnintercepted(ValueOrClosed.closed<Any>(value.closeCause), select.completion)
+                    }
+                    RECEIVE_NULL_ON_CLOSE -> {
+                        if (value.closeCause == null) {
+                            if (!select.trySelect()) return
+                            startCoroutineUnintercepted(null, select.completion)
+                        } else {
+                            throw recoverStackTrace(value.receiveException)
+                        }
+                    }
+                }
             }
-        }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun <R> registerSelectReceiveOrClosed(select: SelectInstance<R>, block: suspend (ValueOrClosed<E>) -> R) {
-        while (true) {
-            if (select.isSelected) return
-            if (isEmpty) {
-                if (enqueueReceiveSelect(select, block as suspend (Any?) -> R, RECEIVE_RESULT)) return
-            } else {
-                val pollResult = pollSelectInternal(select)
-                when {
-                    pollResult === ALREADY_SELECTED -> return
-                    pollResult === POLL_FAILED -> {} // retry
-                    pollResult === RETRY_ATOMIC -> {} // retry
-                    pollResult is Closed<*> -> {
-                        if (select.trySelect())
-                            block.startCoroutineUnintercepted(ValueOrClosed.closed(pollResult.closeCause), select.completion)
-                        return
-                    }
-                    else -> {
-                        // selected successfully, pollSelectInternal is responsible for the select
-                        block.startCoroutineUnintercepted(ValueOrClosed.value(pollResult as E), select.completion)
-                        return
-                    }
+            else -> {
+                if (receiveMode == RECEIVE_RESULT) {
+                    startCoroutineUnintercepted(value.toResult<Any>(), select.completion)
+                } else {
+                    startCoroutineUnintercepted(value, select.completion)
                 }
             }
         }
