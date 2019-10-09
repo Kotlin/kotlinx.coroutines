@@ -71,7 +71,7 @@ public suspend fun <T> FlowCollector<T>.emitAll(channel: ReceiveChannel<T>) {
  * ### Cancellation semantics
  *
  * 1) Flow consumer is cancelled when the original channel is cancelled.
- * 2) Flow consumer completes normally when the original channel completes (~is closed) normally.
+ * 2) Flow consumer completes normally when the original channel was closed normally and then fully consumed.
  * 3) If the flow consumer fails with an exception, channel is cancelled.
  *
  * ### Operator fusion
