@@ -251,8 +251,14 @@ World!
 ### Scope builder
 In addition to the coroutine scope provided by different builders, it is possible to declare your own scope using
 [coroutineScope] builder. It creates a coroutine scope and does not complete until all launched children
-complete. The main difference between [runBlocking] and [coroutineScope] is that the latter does not block the current thread 
-while waiting for all children to complete.
+complete. 
+
+[runBlocking] and [coroutineScope] may look similar because they both wait for its body and all its children to complete.
+The main difference between these two is that the [runBlocking] method _blocks_ the current thread for waiting,
+while [coroutineScope] just suspends, releasing the underlying thread for other usages.
+Because of that difference, [runBlocking] is a regular function and [coroutineScope] is a suspending function.
+
+It can be demonstrated by the following example:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -289,6 +295,9 @@ Task from runBlocking
 Task from nested launch
 Coroutine scope is over
 -->
+
+Note that right after "Task from coroutine scope" message, while waiting for nested launch,
+ "Task from runBlocking" is executed and printed, though coroutineScope is not completed yet. 
 
 ### Extract function refactoring
 
