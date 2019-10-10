@@ -76,7 +76,10 @@ jvmTest {
     maxHeapSize = '1g'
     enableAssertions = true
     systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
-    exclude '**/*StressTest.*'
+    // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
+    if (!project.ext.ideaActive && rootProject.properties['stress'] == null) {
+        exclude '**/*StressTest.*'
+    }
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
 }
 
