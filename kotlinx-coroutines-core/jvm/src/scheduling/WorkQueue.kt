@@ -52,6 +52,7 @@ internal class WorkQueue {
      * This is in general harmless because steal will be blocked by timer
      */
     internal val bufferSize: Int get() = producerIndex.value - consumerIndex.value
+    internal val size: Int get() = if (lastScheduledTask.value != null) bufferSize + 1 else bufferSize
     private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
     private val lastScheduledTask = atomic<Task?>(null)
 
@@ -65,51 +66,53 @@ internal class WorkQueue {
     fun poll(): Task? = lastScheduledTask.getAndSet(null) ?: pollBuffer()
 
     /**
-     * Invariant: this method is called only by the owner of the queue
-     *
-     * @param task task to put into local queue
-     * @param globalQueue fallback queue which is used when the local queue is overflown
-     * @return true if no offloading happened, false otherwise
+     * Invariant: Called only by the owner of the queue, returns
+     * `null` if task was added, task that wasn't added otherwise.
      */
-    fun add(task: Task, globalQueue: GlobalQueue): Boolean {
-        val previous = lastScheduledTask.getAndSet(task) ?: return true
-        return addLast(previous, globalQueue)
-    }
-
-    // Called only by the owner, returns true if no offloading happened, false otherwise
-    fun addLast(task: Task, globalQueue: GlobalQueue): Boolean {
-        var noOffloadingHappened = true
-        /*
-         * We need the loop here because race possible not only on full queue,
-         * but also on queue with one element during stealing
-         */
-        while (!tryAddLast(task)) {
-            offloadWork(globalQueue)
-            noOffloadingHappened = false
-        }
-        return noOffloadingHappened
+    fun add(task: Task): Task? {
+        val previous = lastScheduledTask.getAndSet(task) ?: return null
+        return addLast(previous)
     }
 
     /**
-     * Tries stealing from [victim] queue into this queue, using [globalQueue] to offload stolen tasks in case of current queue overflow.
+     * Invariant: Called only by the owner of the queue, returns
+     * `null` if task was added, task that wasn't added otherwise.
+     */
+    fun addLast(task: Task): Task? {
+        if (bufferSize == BUFFER_CAPACITY - 1) return task
+        val headLocal = producerIndex.value
+        val nextIndex = headLocal and MASK
+
+        /*
+         * If current element is not null then we're racing with consumers for the tail. If we skip this check then
+         * the consumer can null out current element and it will be lost. If we're racing for tail then
+         * the queue is close to overflowing => return task
+         */
+        if (buffer[nextIndex] != null) {
+            return task
+        }
+        buffer.lazySet(nextIndex, task)
+        producerIndex.incrementAndGet()
+        return null
+    }
+
+    /**
+     * Tries stealing from [victim] queue into this queue.
      *
      * Returns [NOTHING_TO_STEAL] if queue has nothing to steal, [TASK_STOLEN] if at least task was stolen
      * or positive value of how many nanoseconds should pass until the head of this queue will be available to steal.
      */
-    fun trySteal(victim: WorkQueue, globalQueue: GlobalQueue): Long {
-        if (victim.stealBatch { task -> add(task, globalQueue) }) {
+    fun tryStealFrom(victim: WorkQueue): Long {
+        if (victim.stealBatch { task -> add(task) }) {
             return TASK_STOLEN
         }
-        return tryStealLastScheduled(victim, globalQueue)
+        return tryStealLastScheduled(victim)
     }
 
     /**
-     * Contract on return value is the same as for [trySteal]
+     * Contract on return value is the same as for [tryStealFrom]
      */
-    private fun tryStealLastScheduled(
-        victim: WorkQueue,
-        globalQueue: GlobalQueue
-    ): Long {
+    private fun tryStealLastScheduled(victim: WorkQueue): Long {
         while (true) {
             val lastScheduled = victim.lastScheduledTask.value ?: return NOTHING_TO_STEAL
             // TODO time wraparound ?
@@ -124,21 +127,11 @@ internal class WorkQueue {
              * and dispatched another one. In the latter case we should retry to avoid missing task.
              */
             if (victim.lastScheduledTask.compareAndSet(lastScheduled, null)) {
-                add(lastScheduled, globalQueue)
+                add(lastScheduled)
                 return TASK_STOLEN
             }
             continue
         }
-
-    }
-
-    internal fun size(): Int = if (lastScheduledTask.value != null) bufferSize + 1 else bufferSize
-
-    /**
-     * Offloads half of the current buffer to [globalQueue]
-     */
-    private fun offloadWork(globalQueue: GlobalQueue) {
-        stealBatchTo(globalQueue)
     }
 
     private fun GlobalQueue.add(task: Task) {
@@ -169,7 +162,7 @@ internal class WorkQueue {
         var wasStolen = false
         while (toSteal-- > 0) {
             val tailLocal = consumerIndex.value
-            if (tailLocal - producerIndex.value == 0) return false
+            if (tailLocal - producerIndex.value == 0) return wasStolen
             val index = tailLocal and MASK
             val element = buffer[index] ?: continue
             if (consumerIndex.compareAndSet(tailLocal, tailLocal + 1)) {
@@ -195,25 +188,5 @@ internal class WorkQueue {
                 return buffer.getAndSet(index, null)
             }
         }
-    }
-
-    // Called only by the owner
-    private fun tryAddLast(task: Task): Boolean {
-        if (bufferSize == BUFFER_CAPACITY - 1) return false
-        val headLocal = producerIndex.value
-        val nextIndex = headLocal and MASK
-
-        /*
-         * If current element is not null then we're racing with consumers for the tail. If we skip this check then
-         * the consumer can null out current element and it will be lost. If we're racing for tail then
-         * the queue is close to overflowing => it's fine to offload work to global queue
-         */
-        if (buffer[nextIndex] != null) {
-            return false
-        }
-
-        buffer.lazySet(nextIndex, task)
-        producerIndex.incrementAndGet()
-        return true
     }
 }

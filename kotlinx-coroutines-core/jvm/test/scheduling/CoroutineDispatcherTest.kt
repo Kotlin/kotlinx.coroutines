@@ -78,27 +78,6 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     }
 
     @Test
-    fun testNoStealing() = runBlocking {
-        corePoolSize = CORES_COUNT
-        schedulerTimeSource = TestTimeSource(0L)
-        withContext(dispatcher) {
-            val thread = Thread.currentThread()
-            val job = async(dispatcher) {
-                assertEquals(thread, Thread.currentThread())
-                val innerJob = async(dispatcher) {
-                    assertEquals(thread, Thread.currentThread())
-                }
-                innerJob.await()
-            }
-
-            job.await()
-            assertEquals(thread, Thread.currentThread())
-        }
-
-        checkPoolThreadsCreated(1..2)
-    }
-
-    @Test
     fun testDelay() = runBlocking {
         corePoolSize = 2
         withContext(dispatcher) {
@@ -106,7 +85,6 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
             delay(10)
             expect(2)
         }
-
         finish(3)
         checkPoolThreadsCreated(2)
     }
@@ -129,11 +107,9 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
                     yield()
                 }
             }
-
             assertNull(nullResult)
             finish(4)
         }
-
         checkPoolThreadsCreated(1..CORES_COUNT)
     }
 
@@ -164,7 +140,6 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
             expect(4)
             innerJob.join()
         }
-
         outerJob.join()
         finish(5)
     }
@@ -183,6 +158,5 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
                 .count { it is CoroutineScheduler.Worker && it.name.contains("SomeTestName") }
             assertEquals(1, count)
         }
-
     }
 }

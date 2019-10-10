@@ -7,7 +7,6 @@ package kotlinx.coroutines.scheduling
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
-import java.util.*
 import java.util.concurrent.*
 import kotlin.concurrent.*
 import kotlin.test.*
@@ -45,7 +44,7 @@ class WorkQueueStressTest : TestBase() {
                     Thread.yield()
                 }
 
-                producerQueue.add(task(i.toLong()), globalQueue)
+                producerQueue.add(task(i.toLong()))?.let { globalQueue.addLast(it) }
             }
 
             producerFinished = true
@@ -55,12 +54,16 @@ class WorkQueueStressTest : TestBase() {
             threads += thread(name = "stealer $i") {
                 val myQueue = WorkQueue()
                 startLatch.await()
-                while (!producerFinished || producerQueue.size() != 0) {
-                    myQueue.trySteal(producerQueue, stolenTasks[i])
+                while (!producerFinished || producerQueue.size != 0) {
+                    if (myQueue.size > 100) {
+                        stolenTasks[i].addAll(myQueue.drain().map { task(it) })
+                    }
+                    myQueue.tryStealFrom(victim = producerQueue)
                 }
 
                 // Drain last element which is not counted in buffer
-                myQueue.trySteal(producerQueue, stolenTasks[i])
+                stolenTasks[i].addAll(myQueue.drain().map { task(it) })
+                myQueue.tryStealFrom(producerQueue)
                 stolenTasks[i].addAll(myQueue.drain().map { task(it) })
             }
         }
@@ -73,7 +76,6 @@ class WorkQueueStressTest : TestBase() {
     @Test
     fun testSingleProducerSingleStealer() {
         val startLatch = CountDownLatch(1)
-        val fakeQueue = Queue()
         threads += thread(name = "producer") {
             startLatch.await()
             for (i in 1..offerIterations) {
@@ -82,7 +84,7 @@ class WorkQueueStressTest : TestBase() {
                 }
 
                 // No offloading to global queue here
-                producerQueue.add(task(i.toLong()), fakeQueue)
+                producerQueue.add(task(i.toLong()))
             }
         }
 
@@ -91,7 +93,7 @@ class WorkQueueStressTest : TestBase() {
             val myQueue = WorkQueue()
             startLatch.await()
             while (stolen.size != offerIterations) {
-                if (myQueue.trySteal(producerQueue, stolen) != NOTHING_TO_STEAL) {
+                if (myQueue.tryStealFrom(producerQueue) != NOTHING_TO_STEAL) {
                     stolen.addAll(myQueue.drain().map { task(it) })
                 }
             }

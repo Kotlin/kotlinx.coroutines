@@ -26,46 +26,45 @@ class WorkQueueTest : TestBase() {
     @Test
     fun testLastScheduledComesFirst() {
         val queue = WorkQueue()
-        val globalQueue = GlobalQueue()
-        (1L..4L).forEach { queue.add(task(it), globalQueue) }
+        (1L..4L).forEach { queue.add(task(it)) }
         assertEquals(listOf(4L, 1L, 2L, 3L), queue.drain())
     }
 
     @Test
-    fun testWorkOffload() {
+    fun testAddWithOffload() {
         val queue = WorkQueue()
-        val globalQueue = GlobalQueue()
-        (1L..130L).forEach { queue.add(task(it), globalQueue) }
+        val size = 130L
+        val offload = GlobalQueue()
+        (0 until size).forEach { queue.add(task(it))?.let { t -> offload.addLast(t) } }
 
-        val expectedLocalResults = (64L..129L).toMutableList()
-        expectedLocalResults.add(0, 130L)
-        assertEquals(expectedLocalResults, queue.drain())
-        assertEquals((1L..63L).toList(), globalQueue.asTimeList())
+        val expectedResult = listOf(129L) + (0L..126L).toList()
+        val actualResult = queue.drain()
+        assertEquals(expectedResult, actualResult)
+        assertEquals((0L until size).toSet().minus(expectedResult), offload.drain().toSet())
     }
 
     @Test
     fun testWorkOffloadPrecision() {
         val queue = WorkQueue()
         val globalQueue = GlobalQueue()
-        repeat(128) { require(queue.add(task(0), globalQueue)) }
-        require(globalQueue.isEmpty)
-        require(!queue.add(task(0), globalQueue))
-        require(globalQueue.size == 63)
+        repeat(128) { assertNull(queue.add(task(it.toLong()))) }
+        assertTrue(globalQueue.isEmpty)
+        assertEquals(127L, queue.add(task(0))?.submissionTime)
     }
 
     @Test
     fun testStealingFromHead() {
         val victim = WorkQueue()
-        val globalQueue = GlobalQueue()
-        (1L..2L).forEach { victim.add(task(it), globalQueue) }
+        victim.add(task(1L))
+        victim.add(task(2L))
         timeSource.step()
         timeSource.step(3)
 
         val stealer = WorkQueue()
-        assertEquals(TASK_STOLEN, stealer.trySteal(victim, globalQueue))
+        assertEquals(TASK_STOLEN, stealer.tryStealFrom(victim))
         assertEquals(arrayListOf(1L), stealer.drain())
 
-        assertEquals(TASK_STOLEN, stealer.trySteal(victim, globalQueue))
+        assertEquals(TASK_STOLEN, stealer.tryStealFrom(victim))
         assertEquals(arrayListOf(2L), stealer.drain())
     }
 }
@@ -90,6 +89,15 @@ internal fun WorkQueue.drain(): List<Long> {
         result += task.submissionTime
         task = poll()
     }
+    return result
+}
 
+internal fun GlobalQueue.drain(): List<Long> {
+    var task: Task? = removeFirstOrNull()
+    val result = arrayListOf<Long>()
+    while (task != null) {
+        result += task.submissionTime
+        task = removeFirstOrNull()
+    }
     return result
 }
