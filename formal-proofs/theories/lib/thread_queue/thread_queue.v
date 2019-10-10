@@ -1859,4 +1859,198 @@ Proof.
   iExists _; iFrame "HArrMapsto'". iFrame.
 Qed.
 
+Lemma list_lookup_local_update' {A: ucmraT}:
+  forall (x y x' y': list A),
+    (forall i, (x !! i, y !! i) ~l~> (x' !! i, y' !! i)) ->
+    (x, y) ~l~> (x', y').
+Proof.
+  intros x y x' y' Hup.
+  apply local_update_unital=> n z Hxv Hx.
+  unfold local_update in Hup.
+  simpl in *.
+  assert (forall i, ✓{n} (x' !! i) /\ x' !! i ≡{n}≡ (y' ⋅ z) !! i) as Hup'.
+  { intros i. destruct (Hup i n (Some (z !! i))); simpl in *.
+    - by apply list_lookup_validN.
+    - rewrite -list_lookup_op.
+      by apply list_dist_lookup.
+    - rewrite list_lookup_op. split; done.
+  }
+  split; [apply list_lookup_validN | apply list_dist_lookup].
+  all: intros i; by destruct (Hup' i).
+Qed.
+
+Lemma list_validN_app {A: ucmraT} (x y : list A) (n: nat):
+  ✓{n} (x ++ y) <-> ✓{n} x ∧ ✓{n} y.
+Proof. apply Forall_app. Qed.
+
+Lemma list_app_local_update {A: ucmraT}:
+  forall (x y y' z: list A),
+    (y, ε) ~l~> (y', z) ->
+    (x ++ y, ε) ~l~> (x ++ y', (replicate (length x) ε) ++ z).
+Proof.
+  intros ? ? ? ? HUp.
+  apply local_update_unital=> n mz Hxv Hx.
+  unfold local_update in HUp. simpl in *.
+  specialize (HUp n (Some y)).
+  simpl in *.
+  move: HUp Hx.
+  repeat rewrite ucmra_unit_left_id.
+  move=> HUp <-.
+  apply list_validN_app in Hxv. destruct Hxv as [Hxv Hyv].
+  specialize (HUp Hyv).
+  rewrite list_validN_app.
+  destruct HUp as [Hy'v Hy'eq].
+  auto.
+  repeat split; try done.
+  rewrite Hy'eq.
+  apply list_dist_lookup.
+  intros i.
+  rewrite list_lookup_op.
+  destruct (decide (i < length x)%nat) as [HLt|HGe].
+  {
+    repeat rewrite lookup_app_l.
+    all: (try rewrite replicate_length); try lia.
+    2: assumption. (* why doesn't lia work ??? *)
+    rewrite lookup_replicate_2; try lia.
+    apply lookup_lt_is_Some in HLt.
+    destruct HLt as (? & HEl).
+    by rewrite HEl -Some_op ucmra_unit_left_id.
+  }
+  {
+    assert (length x <= i)%nat as HLe by lia.
+    repeat rewrite lookup_app_r.
+    all: try rewrite replicate_length.
+    all: try lia.
+    2: assumption.
+    remember (i - length _)%nat as K. clear.
+    by rewrite list_lookup_op.
+  }
+Qed.
+
+Theorem abandon_rendezvous E R γa γtq γe γd l deqFront i:
+  deq_front_at_least γtq (S i) -∗
+  inhabitant_token γtq i -∗
+  cell_list_contents E R γa γtq γe γd l deqFront ==∗
+  (⌜l !! i = Some (Some cellInhabited)⌝ ∧
+  cell_list_contents E R γa γtq γe γd
+      (alter (fun _ => Some (cellDone cellAbandoned)) i l) deqFront ∨
+  ⌜l !! i = Some (Some (cellDone cellResumed))⌝ ∧
+  cell_list_contents E R γa γtq γe γd l deqFront) ∗ R.
+Proof.
+  iIntros "#HDeqFront HInhToken HContents".
+  rewrite /cell_list_contents.
+  iDestruct "HContents" as (HDfLeLL) "(HAuth & HEs & HRs & HRRs)".
+  rewrite alter_length.
+  iDestruct (deq_front_at_least__cell_list_contents with "HDeqFront HAuth")
+            as %HLb.
+  assert (i < length l)%nat as HLt by lia.
+  apply lookup_lt_is_Some in HLt. destruct HLt as [v HEl].
+  iAssert (⌜v = Some cellInhabited \/ v = Some (cellDone cellResumed)
+           \/ v = Some (cellDone cellAbandoned)⌝)%I
+    with "[HAuth HInhToken]" as %HV.
+  {
+    iDestruct (own_valid_2 with "HAuth HInhToken")
+      as %[[_ HValid]%prod_included _]%auth_both_valid.
+    simpl in *.
+    iPureIntro. move: HValid. rewrite list_lookup_included.
+    intros HValid. specialize (HValid i). move: HValid.
+    rewrite map_lookup HEl /=.
+    remember (_, ε) as K. replace (_ !! i) with (Some K); subst.
+    2: clear; by induction i.
+    rewrite Some_included_total prod_included /=. case.
+    intros HValid _. move: HValid. rewrite prod_included /=. case.
+    intros HValid _.
+    assert ((cell_state_to_RA v).1.1 = None -> False) as HH.
+    {
+      move: HValid.
+      rewrite option_included; case; first done.
+      intros (a & b & HV1 & HV2 & HV3). rewrite HV2.
+      discriminate.
+    }
+
+    destruct v as [v'|]; simpl in *.
+    2: contradiction.
+    destruct v' as [|v'']; simpl in *; first by auto.
+    destruct v''; simpl in *; try contradiction.
+    all: by auto.
+  }
+
+  destruct HV as [HV|[HV|HV]]; subst.
+  {
+    remember (alter _ i l) as K.
+    replace (take deqFront K)
+      with (take deqFront
+                 (take i K ++ Some (cellDone cellAbandoned) :: drop (S i) K)).
+    2: {
+      rewrite take_drop_middle; first done. subst.
+      by rewrite list_lookup_alter HEl.
+    }
+    replace (take deqFront l) with (take deqFront (take i l ++ Some cellInhabited :: drop (S i) l)).
+    2: by rewrite take_drop_middle.
+    subst.
+    repeat rewrite take_app_ge take_length_le; try lia.
+    all: try by (rewrite alter_length; lia).
+    destruct (deqFront - i)%nat eqn:X. lia.
+    rewrite take_alter. 2: done. rewrite drop_alter. 2: lia.
+    simpl. repeat rewrite count_matching_app replicate_plus /=.
+    iDestruct "HRs" as "($ & $ & $)".
+
+    iLeft. repeat (iSplitR; first by iPureIntro).
+
+    replace l with (take i l ++ Some cellInhabited :: drop (S i) l).
+    2: by rewrite take_drop_middle.
+
+    rewrite alter_app_r_alt take_length_le.
+    all: try lia.
+    repeat rewrite minus_diag.
+
+    repeat rewrite count_matching_app replicate_plus big_sepL_app.
+    iDestruct "HEs" as "($ & HE & $)".
+    iDestruct "HRRs" as "($ & HRr & $)".
+
+    rewrite take_length_le; try lia.
+    rewrite -plus_n_O. simpl.
+
+    iDestruct "HRr" as (?) "(HArrMapsto & HLoc & $ & $)".
+
+    iSplitL "HAuth".
+    2: iExists _; iFrame "HArrMapsto HInhToken"; iRight; by iFrame.
+
+    iMod (own_update with "HAuth") as "[HAuth HFrag]".
+    2: iFrame "HAuth".
+
+      apply auth_update_alloc, prod_local_update'; simpl.
+      {
+        repeat rewrite app_length /=. apply prod_local_update_2; simpl.
+        apply prod_local_update_1.
+        repeat rewrite drop_app_ge.
+        all: rewrite take_length_le; try lia.
+        by rewrite X /=.
+      }
+
+      repeat rewrite map_app. simpl.
+      apply list_app_local_update.
+
+    admit.
+  }
+  {
+    iDestruct (big_sepL_lookup_acc with "HRRs") as "[HR HRRs]"; first done.
+    simpl.
+    iDestruct "HR" as (?) "(HArrMapsto & HIsRes & HCancHandle & HIsSus & HH)".
+    iDestruct "HH" as "[HInhToken'|[Hℓ HR']]".
+    by iDestruct (inhabitant_token_exclusive with "HInhToken HInhToken'") as %[].
+    iFrame "HR'".
+    iRight. repeat (iSplitR; first by iPureIntro).
+    iFrame.
+    iApply "HRRs". iExists _; by iFrame.
+  }
+  {
+    iExFalso.
+    iDestruct (big_sepL_lookup_acc with "HRRs") as "[HR HRRs]"; first done.
+    simpl.
+    iDestruct "HR" as (?) "(_ & _ & _ & HInhToken' & _)".
+    by iDestruct (inhabitant_token_exclusive with "HInhToken HInhToken'") as %[].
+  }
+Qed.
+
 End proof.
