@@ -1883,7 +1883,7 @@ Lemma list_validN_app {A: ucmraT} (x y : list A) (n: nat):
   ✓{n} (x ++ y) <-> ✓{n} x ∧ ✓{n} y.
 Proof. apply Forall_app. Qed.
 
-Lemma list_app_local_update {A: ucmraT}:
+Lemma list_app_l_local_update {A: ucmraT}:
   forall (x y y' z: list A),
     (y, ε) ~l~> (y', z) ->
     (x ++ y, ε) ~l~> (x ++ y', (replicate (length x) ε) ++ z).
@@ -1927,13 +1927,45 @@ Proof.
   }
 Qed.
 
+Lemma list_app_r_local_update {A: ucmraT}:
+  forall (x x' y y': list A),
+    length x = length x' ->
+    (x, ε) ~l~> (x', y') ->
+    (x ++ y, ε) ~l~> (x' ++ y, y').
+Proof.
+  intros ? ? ? ? HLen HUp.
+  apply local_update_unital=> n mz Hxv.
+  rewrite ucmra_unit_left_id. move=> <-.
+  specialize (HUp n (Some x)); simpl in *.
+  apply list_validN_app in Hxv. destruct Hxv as [Hxv Hyv].
+  destruct HUp as [Hx'v Hx'Eq]; auto.
+  split.
+  by apply list_validN_app.
+  rewrite Hx'Eq.
+  assert (length y' <= length x)%nat as Hy'Len.
+  {
+    assert (length x = length (y' ⋅ x)) as ->.
+    by rewrite -Hx'Eq.
+    rewrite list_op_length.
+    lia.
+  }
+  symmetry.
+  rewrite mixin_cmra_comm.
+  rewrite list_op_app_le.
+  rewrite mixin_cmra_comm.
+  all: try done.
+  apply list_cmra_mixin.
+  apply list_cmra_mixin.
+Qed.
+
 Theorem abandon_rendezvous E R γa γtq γe γd l deqFront i:
   deq_front_at_least γtq (S i) -∗
   inhabitant_token γtq i -∗
   cell_list_contents E R γa γtq γe γd l deqFront ==∗
   (⌜l !! i = Some (Some cellInhabited)⌝ ∧
   cell_list_contents E R γa γtq γe γd
-      (alter (fun _ => Some (cellDone cellAbandoned)) i l) deqFront ∨
+                    (alter (fun _ => Some (cellDone cellAbandoned)) i l) deqFront ∗
+                    rendezvous_abandoned γtq i ∨
   ⌜l !! i = Some (Some (cellDone cellResumed))⌝ ∧
   cell_list_contents E R γa γtq γe γd l deqFront) ∗ R.
 Proof.
@@ -1995,7 +2027,8 @@ Proof.
     simpl. repeat rewrite count_matching_app replicate_plus /=.
     iDestruct "HRs" as "($ & $ & $)".
 
-    iLeft. repeat (iSplitR; first by iPureIntro).
+    iLeft. iSplitR; first by iPureIntro.
+    iAssert (⌜deqFront <= length l⌝)%I as "$"; first by iPureIntro; lia.
 
     replace l with (take i l ++ Some cellInhabited :: drop (S i) l).
     2: by rewrite take_drop_middle.
@@ -2013,25 +2046,37 @@ Proof.
 
     iDestruct "HRr" as (?) "(HArrMapsto & HLoc & $ & $)".
 
-    iSplitL "HAuth".
-    2: iExists _; iFrame "HArrMapsto HInhToken"; iRight; by iFrame.
-
     iMod (own_update with "HAuth") as "[HAuth HFrag]".
-    2: iFrame "HAuth".
+    2: iFrame "HAuth HInhToken HFrag".
+    2: iExists _; iFrame "HArrMapsto"; iRight; by iFrame.
 
-      apply auth_update_alloc, prod_local_update'; simpl.
-      {
-        repeat rewrite app_length /=. apply prod_local_update_2; simpl.
-        apply prod_local_update_1.
-        repeat rewrite drop_app_ge.
-        all: rewrite take_length_le; try lia.
-        by rewrite X /=.
-      }
+    apply auth_update_alloc, prod_local_update'; simpl.
+    {
+      repeat rewrite app_length /=. apply prod_local_update_2; simpl.
+      apply prod_local_update_1.
+      repeat rewrite drop_app_ge.
+      all: rewrite take_length_le; try lia.
+      by rewrite X /=.
+    }
 
-      repeat rewrite map_app. simpl.
-      apply list_app_local_update.
+    repeat rewrite map_app. simpl.
+    remember (map _ _) as K.
+    replace i with (length K).
+    2: subst; rewrite map_length take_length_le; lia.
+    apply list_app_l_local_update.
+    clear HeqK.
 
-    admit.
+    remember (map _ _) as K'. clear HeqK'.
+    apply list_lookup_local_update; case; simpl.
+    2: by intros; rewrite lookup_nil.
+
+    apply option_local_update'.
+    apply prod_local_update'.
+    2: by apply alloc_option_local_update.
+    apply prod_local_update'.
+    done.
+    apply mnat_local_update.
+    lia.
   }
   {
     iDestruct (big_sepL_lookup_acc with "HRRs") as "[HR HRRs]"; first done.
