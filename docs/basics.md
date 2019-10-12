@@ -27,7 +27,7 @@ class BasicsGuideTest {
   * [Structured concurrency](#structured-concurrency)
   * [Scope builder](#scope-builder)
   * [Extract function refactoring](#extract-function-refactoring)
-  * [Coroutines ARE light-weight](#coroutines-are-light-weight)
+  * [Coroutines are light-weight](#coroutines-are-light-weight)
   * [Global coroutines are like daemon threads](#global-coroutines-are-like-daemon-threads)
 
 <!--- END_TOC -->
@@ -333,7 +333,7 @@ or an implicit one when the outer class implements `CoroutineScope`.
 As a last resort, [CoroutineScope(coroutineContext)][CoroutineScope()] can be used, but such approach is structurally unsafe 
 because you no longer have control on the scope of execution of this method. Only private APIs can use this builder.
 
-### Coroutines ARE light-weight
+### Coroutines are light-weight
 
 Run the following code:
 
