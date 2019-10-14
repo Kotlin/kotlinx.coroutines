@@ -271,7 +271,7 @@ Notation iProp := (iProp Σ).
 Variable segment_size: positive.
 
 Definition rendezvous_state γtq i (r: cellStateUR) :=
-  own γtq (◯ (ε, replicate i ε ++ [r])).
+  own γtq (◯ (ε, {[ i := r ]})).
 
 Global Instance rendezvous_state_persistent γtq i (r: cellStateUR):
   CoreId r -> Persistent (rendezvous_state γtq i r).
@@ -2097,5 +2097,90 @@ Proof.
     by iDestruct (inhabitant_token_exclusive with "HInhToken HInhToken'") as %[].
   }
 Qed.
+
+(*)
+Definition is_thread_queue (S R: iProp) γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront :=
+
+  let ap := tq_ap γtq γe in
+  (is_infinite_array segment_size ap γa ∗
+   cell_list_contents S R γa γtq γe γd l deqFront ∗
+   ∃ (enqIdx deqIdx: nat),
+   iterator_points_to segment_size γa γe eℓ epℓ enqIdx ∗
+   iterator_points_to segment_size γa γd dℓ dpℓ deqIdx ∗
+   ([∗ list] i ∈ seq 0 deqIdx, awakening_permit γtq) ∗
+   ([∗ list] i ↦ b ∈ l, match b with
+                        | Some (cellDone cellCancelled) =>
+                          awakening_permit γtq ∨ iterator_issued γd i
+                        | _ => True
+                        end) ∗
+   ⌜deqIdx <= deqFront <= length l⌝ ∧ ⌜enqIdx <= length l⌝
+  )%I.
+*)
+
+Lemma iterator_counter_is_at_least γ ℓ n:
+  iterator_counter γ ℓ n ==∗ iterator_counter γ ℓ n ∗ iterator_counter_at_least γ n.
+Proof.
+  iIntros "($ & HAuth)". rewrite /iterator_counter_at_least.
+  iMod (own_update with "HAuth") as "[$ $]".
+  2: done.
+  apply auth_update_core_id.
+  by apply _.
+  rewrite prod_included; simpl.
+  split.
+  by apply ucmra_unit_least.
+  apply mnat_included; lia.
+Qed.
+
+Lemma read_iterator γa γ ℓ pℓ v:
+  iterator_points_to segment_size γa γ ℓ pℓ v ==∗
+  ∃ (id: nat) (ℓ': loc), ⌜(id * Pos.to_nat segment_size <= v)%nat⌝ ∗ pℓ ↦ #ℓ' ∗
+                          segment_location γa id ℓ' ∗
+                          iterator_counter_at_least γ v ∗
+                          (pℓ ↦ #ℓ' -∗ iterator_points_to segment_size γa γ ℓ pℓ v).
+Proof.
+  iIntros "(HCounter & HSeg)".
+  iDestruct "HSeg" as (id HLe ℓ') "(#HSegLoc & Hpℓ)".
+  iExists id, ℓ'. iFrame "Hpℓ".
+  iSplitR; first done. iFrame "HSegLoc".
+  iMod (iterator_counter_is_at_least with "HCounter") as "[$ $]".
+  iIntros "!> Hpℓ". iExists id.
+  iSplitR; first done. iExists _; iFrame "HSegLoc Hpℓ".
+Qed.
+
+Theorem increase_deqIdx S R γa γtq γe γd (eℓ epℓ dℓ dpℓ: loc):
+  <<< ∀ l deqFront, is_thread_queue S R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>>
+    iterator_step_skipping_cancelled segment_size #dpℓ #dℓ @ ⊤
+  <<< is_thread_queue S R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront, RET #() >>>.
+Proof.
+  iIntros (Φ) "AU". iLöb as "IH".
+
+  wp_lam. wp_pures. wp_bind (!_)%E.
+
+  iMod "AU" as (? ?) "[(HInfArr & HListContents & HRest) [HClose _]]".
+  iDestruct "HRest" as (? deqIdx) "(HEnqIt & HDeqIt & HRest)".
+  iMod (read_iterator with "HDeqIt") as
+      (hId hℓ Hhl) "(Hpℓ & #HSegLoc & #HCounter & HRestore)".
+  wp_load.
+  iMod ("HClose" with "[-]") as "AU".
+  { iFrame "HInfArr HListContents".
+    iDestruct ("HRestore" with "Hpℓ") as "HIterator".
+    iExists _, deqIdx. by iFrame.
+  }
+
+  iModIntro. wp_pures.
+  wp_bind (FAA _ _).
+  awp_apply iterator_value_faa. iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros (? ?) "(HInfArr & HListContents & HRest)".
+  iDestruct "HRest" as (? deqIdx') "(HEnqIt & HDeqIt & HRest)".
+  iAaccIntro with "HDeqIt"; iFrame "HInfArr HListContents".
+  { iIntros "HIsIter". iSplitL.
+    by eauto with iFrame.
+    by iIntros "!> $". }
+  iIntros "[HIsIter HPerms]".
+  simpl.
+  iSplitR "HPerms".
+  { iExists _, _. iFrame.
+
+Abort.
 
 End proof.

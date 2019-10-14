@@ -113,6 +113,50 @@ Proof.
   rewrite Z2Nat_inj_mod; apply Z.rem_mod_nonneg; lia.
 Qed.
 
+Lemma iterator_value_increase (n m: nat):
+  ● (GSet (set_seq 0 n), n: mnatUR) ~~>
+  ● (GSet (set_seq 0 (n + m)%nat), (n + m)%nat: mnatUR) ⋅
+  ◯ (GSet (set_seq n m), (n + m)%nat: mnatUR).
+Proof.
+  apply auth_update_alloc, prod_local_update'.
+  2: by apply mnat_local_update; lia.
+  eapply transitivity.
+  apply (gset_disj_alloc_empty_local_update
+            _ (set_seq (O + n)%nat m)).
+  by symmetry; simpl; apply set_seq_plus_disjoint.
+  by rewrite /= union_comm_L -set_seq_plus_L.
+Qed.
+
+Theorem iterator_value_faa γa γ (fℓ ℓ: loc) (m: nat):
+  <<< ∀ (n: nat), iterator_points_to γa γ fℓ ℓ n >>>
+    FAA #fℓ #m @ ⊤
+  <<< iterator_points_to γa γ fℓ ℓ (n+m)%nat ∗
+    own γ (◯ (GSet (set_seq n m), (n + m)%nat: mnatUR)), RET #n >>>.
+Proof.
+  iIntros (Φ) "AU".
+
+  iMod "AU" as (n) "[([Hfℓ HAuth] & HSeg) [_ HClose]]".
+  iDestruct "HSeg" as (? ? ?) "(#HSegLoc' & Hℓ)".
+  wp_faa.
+  iMod (own_update with "HAuth") as "[HAuth HFrag]".
+  by apply iterator_value_increase.
+  iApply "HClose".
+  iFrame "HAuth". rewrite Nat2Z.inj_add. iFrame "Hfℓ HFrag".
+  iExists _. iSplitR.
+  2: iExists _; by iFrame "Hℓ".
+  iPureIntro. lia.
+Qed.
+
+Lemma iterator_points_to_at_least γ ℓ n m:
+    iterator_counter_at_least γ n -∗
+    iterator_counter γ ℓ m -∗
+    ⌜(n <= m)%nat⌝.
+Proof.
+  iIntros "HLeast [_ HAuth]".
+  by iDestruct (own_valid_2 with "HAuth HLeast")
+    as %[[_ HValid%mnat_included]%prod_included _]%auth_both_valid.
+Qed.
+
 Theorem iterator_step_spec γa γ (ℓ fℓ: loc):
   cell_init segment_size ap ∅ -∗
   <<< ▷ is_infinite_array segment_size ap γa ∗ is_iterator γa γ fℓ ℓ >>>
@@ -147,32 +191,21 @@ Proof.
   }
   iModIntro. wp_pures.
 
-  wp_bind (FAA _ _)%E.
-  iMod "AU" as "[[HInfArr HIsIter] [HClose _]]".
-  iDestruct "HIsIter" as (n) "([Hfℓ HAuth] & HSeg)".
-  iDestruct "HSeg" as (? ? ?) "(#HSegLoc' & Hℓ)".
-  destruct (le_lt_dec n' n).
-  2: {
-    iDestruct (own_valid_2 with "HAuth HSent") as %HContra.
-    exfalso. move: HContra.
-    rewrite auth_both_valid prod_included mnat_included /=.
-    lia.
+  awp_apply (iterator_value_faa). iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros "[HInfArray HIsIter]".
+  iDestruct "HIsIter" as (n) "HIsIter".
+  iDestruct (iterator_points_to_at_least with "HSent [HIsIter]") as %Hn'LNp1.
+  by iDestruct "HIsIter" as "[$ _]".
+  iAaccIntro with "HIsIter".
+  {
+    iIntros "HIsIter !>". iSplitR "HSent".
+    iFrame "HInfArray"; iExists _; iFrame "HIsIter".
+    iIntros "$". iFrame "HSent". done.
   }
-  wp_faa.
-  iMod (own_update with "HAuth") as "[HAuth HFrag]".
-  { apply auth_update_alloc. apply prod_local_update'.
-    eapply (gset_disj_alloc_empty_local_update _ {[ n ]}).
-    apply (set_seq_S_end_disjoint 0).
-    apply mnat_local_update. Existential 2 := (S n). lia.
-  }
-  rewrite -(set_seq_S_end_union_L 0).
-  iMod ("HClose" with "[-HFrag HSent]") as "AU". {
-    rewrite /is_iterator. iFrame; repeat (iExists _; iFrame).
-    replace (n + 1%nat) with (Z.of_nat (S n)) by lia. iFrame.
-    iExists _; iFrame.
-    iSplitR. 2: by iExists _; iFrame. iPureIntro. lia.
-  }
-  iModIntro. wp_pures.
+  iIntros "[HIsIter HPerms]".
+  iFrame "HInfArray". iSplitL "HIsIter".
+  { iExists _. auto. }
+  iIntros "!> AU !>". wp_pures.
 
   wp_bind (find_segment _ _ _).
   replace (Z.of_nat n `quot` Z.of_nat (Pos.to_nat segment_size)) with
@@ -193,8 +226,10 @@ Proof.
     iIntros "!> HΦ !>". wp_pures.
     destruct (Pos.to_nat segment_size) as [|o'] eqn:HC.
     exfalso; lia. rewrite rem_of_nat; done. }
-  iExists _, _. iFrame. iFrame "HSegLoc''".
+  iExists _, _. iFrame "HSegLoc''".
   iSplitR. iPureIntro; apply Nat.mod_upper_bound; lia.
+  iSplitL "HPerms".
+  by rewrite /= union_empty_r_L Nat.add_1_r /iterator_issued.
   iSplitL "HSegInv".
   { iDestruct (cell_invariant_by_segment_invariant with "HSegInv")
       as (cℓ) "[HCellInv >HArrMapsto]".
@@ -282,21 +317,13 @@ Proof.
   destruct (decide (m' = m)); subst.
   {
     wp_cmpxchg_suc.
+    assert (exists k, n = (m + k)%nat) as [? ->].
+    by rewrite -nat_le_sum; lia.
     iMod (own_update with "HAuth") as "[HAuth HOk]".
-    { apply auth_update_alloc. apply prod_local_update'.
-      - apply (gset_disj_alloc_empty_local_update
-                 _ (set_seq (O + m)%nat (n - m)%nat)).
-        symmetry. apply set_seq_plus_disjoint.
-      - apply mnat_local_update.
-        assert (m <= n)%nat as HP by lia. apply HP.
-    }
+    by apply iterator_value_increase.
     iMod ("HClose" with "[-Htℓ]") as "HΦ".
-    { simpl. iFrame "HOk".
-      rewrite union_comm_L -set_seq_plus_L.
-      iRight.
-      replace (m + (n - m))%nat with n by lia.
-      iFrame.
-      by iPureIntro. }
+    { simpl. replace (m + x - m)%nat with x by lia. iFrame "HOk".
+      iRight. iFrame. by iPureIntro. }
     iModIntro. by wp_pures.
   }
   {
