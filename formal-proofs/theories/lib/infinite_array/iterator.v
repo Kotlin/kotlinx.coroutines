@@ -157,6 +157,23 @@ Proof.
     as %[[_ HValid%mnat_included]%prod_included _]%auth_both_valid.
 Qed.
 
+Lemma find_segment_id_bound a p n n':
+  (p > 0)%nat -> (a * p <= n')%nat -> (n' <= n)%nat ->
+  (n `div` p <= a)%nat -> (a = n `div` p)%nat.
+Proof.
+  intros.
+  assert (a * p <= n)%nat as HC by lia.
+  rewrite (Nat.div_mod n p) in HC.
+  2: lia.
+  remember (n `div` p)%nat as k.
+  assert (k ≤ a)%nat as HC' by lia.
+  rewrite Nat.mul_comm in HC.
+  assert ((a - k) * p <= n `mod` p)%nat by (rewrite Nat.mul_sub_distr_r; lia).
+  assert (n `mod` p < p)%nat; first by (apply Nat.mod_upper_bound; lia).
+  assert ((a - k) * p < p)%nat as HC'' by lia.
+  destruct (a - k)%nat eqn:E; simpl in *; lia.
+Qed.
+
 Theorem iterator_step_spec γa γ (ℓ fℓ: loc):
   cell_init segment_size ap ∅ -∗
   <<< ▷ is_infinite_array segment_size ap γa ∗ is_iterator γa γ fℓ ℓ >>>
@@ -218,7 +235,7 @@ Proof.
   iAaccIntro with "HInfArr".
   { iIntros "HInfArr". iFrame. eauto. }
 
-  iIntros (? ?) "(HInfArr & HSegInv & #HSegLoc'' & HFindSegRet)".
+  iIntros (? ?) "(HInfArr & HSegInv & #HSegLoc'' & #HFindSegRet)".
 
   iExists (n `mod` Pos.to_nat segment_size)%nat, _. iFrame.
   iSplitL.
@@ -231,7 +248,15 @@ Proof.
   iSplitL "HPerms".
   by rewrite /= union_empty_r_L Nat.add_1_r /iterator_issued.
   iSplitL "HSegInv".
-  { iDestruct (cell_invariant_by_segment_invariant with "HSegInv")
+  {
+    iAssert (⌜seq O (S a) !! _ =
+             Some (O + n `div` Pos.to_nat segment_size)%nat⌝)%I as %HEl.
+    {
+      iDestruct "HFindSegRet" as "[[% ->]|(% & % & #HCanc)]";
+        iPureIntro; apply seq_lookup; lia.
+    }
+    iDestruct (big_sepL_lookup with "HSegInv") as "HSegInv"; first done.
+    iDestruct (cell_invariant_by_segment_invariant with "HSegInv")
       as (cℓ) "[HCellInv >HArrMapsto]".
     by eapply Nat.mod_upper_bound; lia.
     iExists _. iModIntro.
@@ -243,19 +268,7 @@ Proof.
 
   {
     assert (a = n `div` Pos.to_nat segment_size)%nat as ->. {
-      assert (a * Pos.to_nat segment_size <= n)%nat as HC by lia.
-      rewrite (Nat.div_mod n (Pos.to_nat segment_size)) in HC.
-      2: lia.
-      remember (n `div` Pos.to_nat segment_size)%nat as k.
-      remember (Pos.to_nat segment_size) as m.
-      assert (m > 0)%nat as MGt0 by lia.
-      assert (k ≤ a)%nat as HC' by lia.
-      revert MGt0 HC HC'. clear. intros.
-      rewrite Nat.mul_comm in HC.
-      assert ((a - k) * m <= n `mod` m)%nat by (rewrite Nat.mul_sub_distr_r; lia).
-      assert (n `mod` m < m)%nat by (apply Nat.mod_upper_bound; lia).
-      assert ((a - k) * m < m)%nat as HC'' by lia.
-      destruct (a - k)%nat eqn:E; simpl in *; lia.
+      eapply find_segment_id_bound; try lia. done.
     }
 
     iLeft. iPureIntro.

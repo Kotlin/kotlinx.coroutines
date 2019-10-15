@@ -2147,21 +2147,67 @@ Proof.
   iSplitR; first done. iExists _; iFrame "HSegLoc Hpℓ".
 Qed.
 
-Theorem increase_deqIdx S R γa γtq γe γd (eℓ epℓ dℓ dpℓ: loc):
-  <<< ∀ l deqFront, is_thread_queue S R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>>
-    iterator_step_skipping_cancelled segment_size #dpℓ #dℓ @ ⊤
-  <<< is_thread_queue S R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront, RET #() >>>.
+Lemma cancelled_cell_is_cancelled_rendezvous S R γa γtq γe γd ℓ i l deqFront:
+  cell_invariant γtq γa i ℓ -∗ cell_list_contents S R γa γtq γe γd l deqFront -∗
+  array_mapsto segment_size γa i ℓ -∗
+  cell_is_cancelled segment_size γa i -∗
+  ⌜l !! i = Some (Some (cellDone cellCancelled))⌝.
 Proof.
-  iIntros (Φ) "AU". iLöb as "IH".
+  iIntros "HCellInv HListContents HArrMapsto HCanc".
+  iDestruct "HCellInv" as "[[HCancHandle _]|HInit]".
+  by iDestruct (cell_cancellation_handle'_not_cancelled with "HCancHandle HCanc")
+    as %[].
+  rewrite /cell_list_contents /rendezvous_initialized.
+  iDestruct "HListContents" as "(_ & HOwn & _ & _ & HRRs)".
+  iDestruct (own_valid_2 with "HOwn HInit")
+    as %[[_ HValid]%prod_included _]%auth_both_valid.
+  simpl in *.
+  move: HValid. rewrite list_lookup_included. move=> HValid.
+  specialize (HValid i).
+  rewrite list_lookup_singletonM in HValid.
+  rewrite map_lookup in HValid.
+  destruct (l !! i) as [s|] eqn:Z.
+  2: {
+    move: HValid. rewrite option_included. case; first done.
+    intros (? & ? & _ & HContra & _).
+    discriminate.
+  }
+  destruct s as [s'|].
+  2: {
+    simpl in *. move: HValid. rewrite Some_included_total prod_included.
+    rewrite prod_included mnat_included.
+    case; intros [_ HValid] _. simpl in *.
+    lia.
+  }
+  iDestruct (big_sepL_lookup with "HRRs") as "HR"; first done.
+  simpl.
+  iDestruct "HR" as (?) "[_ HR]".
+  destruct s'.
+  1: iDestruct "HR" as "(_ & _ & HCancHandle)".
+  2: destruct c; auto.
+  2: iDestruct "HR" as "(_ & HCancHandle & _)".
+  3: iDestruct "HR" as "(_ & HCancHandle & _)".
+  4: iDestruct "HR" as "(HCancHandle & _)".
+  all: by iDestruct (cell_cancellation_handle'_not_cancelled with "HCancHandle HCanc")
+      as %[].
+Qed.
+
+Theorem increase_deqIdx E R γa γtq γe γd (eℓ epℓ dℓ dpℓ: loc):
+  awakening_permit γtq -∗
+  <<< ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>>
+    iterator_step_skipping_cancelled segment_size #dpℓ #dℓ @ ⊤
+  <<< ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront, RET #() >>>.
+Proof.
+  iIntros "HAwaken" (Φ) "AU". iLöb as "IH".
 
   wp_lam. wp_pures. wp_bind (!_)%E.
 
   iMod "AU" as (? ?) "[(HInfArr & HListContents & HRest) [HClose _]]".
-  iDestruct "HRest" as (? deqIdx) "(HEnqIt & HDeqIt & HRest)".
+  iDestruct "HRest" as (? deqIdx) "(HEnqIt & >HDeqIt & HRest)".
   iMod (read_iterator with "HDeqIt") as
       (hId hℓ Hhl) "(Hpℓ & #HSegLoc & #HCounter & HRestore)".
   wp_load.
-  iMod ("HClose" with "[-]") as "AU".
+  iMod ("HClose" with "[HInfArr HListContents HEnqIt HRest Hpℓ HRestore]") as "AU".
   { iFrame "HInfArr HListContents".
     iDestruct ("HRestore" with "Hpℓ") as "HIterator".
     iExists _, deqIdx. by iFrame.
@@ -2170,16 +2216,150 @@ Proof.
   iModIntro. wp_pures.
   wp_bind (FAA _ _).
   awp_apply iterator_value_faa. iApply (aacc_aupd_abort with "AU"); first done.
-  iIntros (? ?) "(HInfArr & HListContents & HRest)".
-  iDestruct "HRest" as (? deqIdx') "(HEnqIt & HDeqIt & HRest)".
-  iAaccIntro with "HDeqIt"; iFrame "HInfArr HListContents".
-  { iIntros "HIsIter". iSplitL.
+  iIntros (? deqFront) "(HInfArr & HListContents & HRest)".
+  iDestruct "HRest" as (? deqIdx') "(HEnqIt & >HDeqIt & HRest)".
+  iDestruct (iterator_points_to_at_least with "HCounter [HDeqIt]") as %HLet.
+  by iDestruct "HDeqIt" as "[$ _]".
+  iAaccIntro with "HDeqIt".
+  { iIntros "HIsIter". iFrame "HInfArr HListContents".
+    iSplitL "HEnqIt HRest HIsIter".
     by eauto with iFrame.
     by iIntros "!> $". }
   iIntros "[HIsIter HPerms]".
-  simpl.
+  rewrite /= union_empty_r_L.
+  replace (own γd _) with (iterator_issued γd deqIdx') by
+      rewrite Nat.add_1_r //.
+  (* Here I must prove that deqIdx' + 1 <= deqFront *)
+  iFrame "HInfArr HListContents".
   iSplitR "HPerms".
   { iExists _, _. iFrame.
+    rewrite seq_add big_sepL_app.
+    iDestruct "HRest" as "($ & $ & >[% %] & >%)".
+    simpl.
+    iFrame.
+    iPureIntro.
+    repeat split; try done.
+    admit.
+  }
+  iIntros "!> AU !>".
+
+  wp_pures. wp_bind (find_segment _ _ _).
+  remember (Z.quot _ _) as K.
+  replace K with (Z.of_nat (deqIdx' `div` Pos.to_nat segment_size)%nat).
+  2: subst; by rewrite quot_of_nat.
+  awp_apply find_segment_spec; try done; first by iApply tq_cell_init.
+  iApply (aacc_aupd_abort with "AU"); first done.
+  clear K HeqK.
+  iIntros (? ?) "(HInfArr & HRest)".
+  iAaccIntro with "HInfArr"; iFrame "HRest".
+  by iIntros "$ !> $ !>".
+  iIntros (tId ?) "($ & #(HSegInv & HSegLoc' & HH)) !> AU !>".
+
+  wp_pures. awp_apply segment_id_spec. iApply (aacc_aupd with "AU"); first done.
+  iIntros (? ?) "(HInfArr & HRest)".
+  iDestruct (is_segment_by_location with "HSegLoc' HInfArr")
+    as (? ?) "[HIsSeg HInfArrRestore]".
+  iAaccIntro with "HIsSeg"; iFrame "HRest".
+  {
+    iIntros "HIsSeg". iDestruct ("HInfArrRestore" with "HIsSeg") as "$".
+    by iIntros "!> $ !>".
+  }
+  iIntros "HIsSeg". iDestruct (bi.later_wand with "HInfArrRestore HIsSeg") as "$".
+
+  iDestruct "HH" as "[(% & <-)|(% & % & HCanc)]".
+  {
+    assert (hId = deqIdx' `div` Pos.to_nat segment_size)%nat as ->.
+    { eapply find_segment_id_bound; try lia. done. }
+    iRight. iIntros "!> HΦ !>". wp_pures. rewrite bool_decide_eq_true_2 //.
+    wp_pures.
+    (* I need to provide proper return predicates. *)
+    admit.
+  }
+
+  destruct (decide (tId = (deqIdx' `div` Pos.to_nat segment_size)%nat)).
+  {
+    iRight. iIntros "!> HΦ !>". wp_pures. rewrite bool_decide_eq_true_2.
+    2: by subst.
+    wp_pures.
+    admit.
+  }
+
+  iLeft. iIntros "!> AU !>". wp_pures. rewrite bool_decide_eq_false_2.
+  2: {
+    intros HContra. inversion HContra as [HContra'].
+    apply Nat2Z.inj in HContra'. subst. lia.
+  }
+  wp_pures.
+
+  awp_apply segment_id_spec. iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros (? ?) "(HInfArr & HRest)".
+  iDestruct (is_segment_by_location with "HSegLoc' HInfArr")
+    as (? ?) "[HIsSeg HInfArrRestore]".
+  iAaccIntro with "HIsSeg"; iFrame "HRest".
+  {
+    iIntros "HIsSeg". iDestruct ("HInfArrRestore" with "HIsSeg") as "$".
+    by iIntros "!> $ !>".
+  }
+  iIntros "HIsSeg". iDestruct (bi.later_wand with "HInfArrRestore HIsSeg") as "$".
+  iIntros "!> AU !>".
+
+  wp_pures. rewrite -Nat2Z.inj_mul.
+  awp_apply increase_value_to_spec. iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros (l ?) "(HInfArr & HListContents & HRest)".
+  iDestruct "HRest" as (? ?) "(HEnqIt & >HDeqIt & HRest)".
+  iDestruct "HDeqIt" as "[HDeqCounter HDeqLoc]".
+  iAaccIntro with "HDeqCounter".
+  {
+    iFrame "HPerms".
+    iIntros "HDeqCounter !>". iSplitL.
+    * iFrame "HInfArr HListContents".
+      iExists _, _. iFrame "HEnqIt HRest". by iFrame.
+    * by iIntros "$".
+  }
+
+  iIntros "[HPerms' HV]". iFrame "HInfArr".
+  rewrite segments_cancelled__cells_cancelled.
+  (* I need to get my acquire permit back from the cancelled segment. *)
+  (* First, I need to learn that my cell is truly cancelled. *)
+
+  repeat rewrite big_sepL_forall.
+  iAssert (|={↑N}=> ∀ k: nat,
+              ⌜deqIdx' <= k < tId ->
+              l !! k = Some (Some (cellDone cellCancelled))⌝)%I as "HH".
+  {
+    iIntros (k HH).
+    iSpecialize ("HSegInv" $! (k `div` Pos.to_nat segment_size)%nat _).
+    iDestruct ("HSegInv" with "[]") as "HSegInv'".
+    { iPureIntro. apply seq_lookup. destruct HH as [_ HH].
+      revert HH. clear. intros HH.
+      assert (k `div` Pos.to_nat segment_size <= k)%nat
+        as HTmp.
+      {
+        apply Nat.div_le_upper_bound; try lia.
+        edestruct (mult_O_le k (Pos.to_nat segment_size)).
+        lia.
+        done.
+      }
+      lia.
+    }
+    iDestruct (cell_invariant_by_segment_invariant with "HSegInv'") as (?) "#[HCellInv HArrMapsto]".
+    { apply Nat.mod_upper_bound. intros HContra. lia. }
+
+    simpl.
+    iInv N as "HOpen" "HClose".
+
+    iDestruct (cancelled_cell_is_cancelled_rendezvous with "HOpen") as "HH".
+    admit.
+  }
+  (*)
+  cell_invariant γtq γa i ℓ -∗ cell_list_contents S R γa γtq γe γd l deqFront -∗
+  array_mapsto segment_size γa i ℓ -∗
+  cell_is_cancelled segment_size γa i -∗
+  ⌜l !! i = Some (Some (cellDone cellCancelled))⌝.
+  Locate "|={".
+*)
+
+  admit.
 
 Abort.
 

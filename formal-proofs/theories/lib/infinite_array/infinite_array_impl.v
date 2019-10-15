@@ -2532,7 +2532,7 @@ Theorem find_segment_spec Ec γ (ℓ: loc) (id fid: nat):
   ∀ Φ,
     AU << ▷ is_infinite_array γ >> @ ⊤, Ec
        << ∃ (id': nat) (ℓ': loc), ▷ is_infinite_array γ ∗
-          ▷ segment_invariant γ fid ∗
+          ([∗ list] i ∈ seq 0 (S id'), ▷ segment_invariant γ i) ∗
           segment_location γ id' ℓ' ∗
           ((⌜fid <= id⌝ ∧ ⌜id = id'⌝) ∨
             ⌜id < fid⌝ ∧ ⌜fid <= id'⌝ ∗
@@ -2569,7 +2569,7 @@ Proof.
   destruct (decide (fid <= id)) eqn:E.
   { iRight. iModIntro. iExists _, _. iFrame "HHeadLoc".
     iSplit. iSplit.
-    { iApply (big_sepL_lookup with "HSegInv"). rewrite seq_lookup; auto. lia. }
+    { rewrite big_sepL_later. by iFrame "HSegInv". }
     iLeft; repeat iSplit; by iPureIntro.
     iIntros "HΦ !>". wp_pures. rewrite bool_decide_decide E. by wp_pures. }
   iLeft. iIntros "!> AU !>". wp_pures. rewrite bool_decide_decide E. wp_pures.
@@ -2588,7 +2588,7 @@ Proof.
   iAssert (□ ∀ v, ▷ is_valid_next γ id v -∗
     AU << ▷ is_infinite_array γ >> @ ⊤, Ec
        << ∃ (id': nat) (ℓ': loc), ▷ is_infinite_array γ ∗
-          ▷ segment_invariant γ fid ∗
+          ([∗ list] i ∈ seq 0 (S id'), ▷ segment_invariant γ i) ∗
           segment_location γ id' ℓ' ∗
           ((⌜fid <= id⌝ ∧ ⌜id = id'⌝) ∨
             ⌜id < fid⌝ ∧ ⌜fid <= id'⌝ ∗
@@ -2611,15 +2611,14 @@ Proof.
     iDestruct "HH" as "[(% & <-)|(% & % & #HCanc')]".
     2: by eauto.
     iSplit; try done.
-    repeat rewrite big_sepL_forall.
+    iApply big_sepL_forall.
     iIntros (k ? HLt).
     apply seq_lookup' in HLt. inversion HLt; subst.
-    iApply ("HSegCanc" $! (fid + k - S id)%nat).
-    iPureIntro.
-    replace (Some (fid + k)%nat) with (Some (S id + ((fid + k - S id))))%nat.
-    2: by congr Some; lia.
-    apply seq_lookup.
-    lia.
+    eassert (seq (S id) (nnid - S id) !! (fid + k - S id)%nat = Some _).
+    by apply seq_lookup; lia.
+    iDestruct (big_sepL_lookup with "HSegCanc") as "#HCanc". eassumption.
+    replace ((S id + ((fid + k - S id))))%nat with (fid + k)%nat by lia.
+    done.
   }
 
   awp_apply segment_next_read_spec; first done.
