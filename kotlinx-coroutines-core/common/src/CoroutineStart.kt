@@ -75,44 +75,6 @@ public enum class CoroutineStart {
     UNDISPATCHED;
 
     /**
-     * Starts the corresponding block as a coroutine with this coroutine's start strategy.
-     *
-     * * [DEFAULT] uses [startCoroutineCancellable].
-     * * [ATOMIC] uses [startCoroutine].
-     * * [UNDISPATCHED] uses [startCoroutineUndispatched].
-     * * [LAZY] does nothing.
-     *
-     * @suppress **This an internal API and should not be used from general code.**
-     */
-    @InternalCoroutinesApi
-    public operator fun <T> invoke(block: suspend () -> T, completion: Continuation<T>) =
-        when (this) {
-            CoroutineStart.DEFAULT -> block.startCoroutineCancellable(completion)
-            CoroutineStart.ATOMIC -> block.startCoroutine(completion)
-            CoroutineStart.UNDISPATCHED -> block.startCoroutineUndispatched(completion)
-            CoroutineStart.LAZY -> Unit // will start lazily
-        }
-
-    /**
-     * Starts the corresponding block with receiver as a coroutine with this coroutine start strategy.
-     *
-     * * [DEFAULT] uses [startCoroutineCancellable].
-     * * [ATOMIC] uses [startCoroutine].
-     * * [UNDISPATCHED] uses [startCoroutineUndispatched].
-     * * [LAZY] does nothing.
-     *
-     * @suppress **This an internal API and should not be used from general code.**
-     */
-    @InternalCoroutinesApi
-    public operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>) =
-        when (this) {
-            CoroutineStart.DEFAULT -> block.startCoroutineCancellable(receiver, completion)
-            CoroutineStart.ATOMIC -> block.startCoroutine(receiver, completion)
-            CoroutineStart.UNDISPATCHED -> block.startCoroutineUndispatched(receiver, completion)
-            CoroutineStart.LAZY -> Unit // will start lazily
-        }
-
-    /**
      * Returns `true` when [LAZY].
      *
      * @suppress **This an internal API and should not be used from general code.**

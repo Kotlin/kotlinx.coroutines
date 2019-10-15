@@ -184,16 +184,23 @@ You can also use [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotli
 [`kotlinx-coroutines-core-native`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-native/1.3.3/jar)
 (follow the link to get the dependency declaration snippet).
 
-Only single-threaded code (JS-style) on Kotlin/Native is currently supported. 
-Kotlin/Native supports only Gradle version 4.10 and you need to enable Gradle metadata in your
-`settings.gradle` file:
+Kotlin/Native uses Gradle metadata and needs Gradle version 5.3 or later
+See [Gradle Metadata 1.0 announcement](https://blog.gradle.org/gradle-metadata-1.0) for more details.
 
-```groovy
-enableFeaturePreview('GRADLE_METADATA')
-```
+Kotlin/Native does not generally provide binary compatibility between versions. 
+You should use the same version of Kotlin/Native compiler as was used to build `kotlinx.coroutines`.
 
-Since Kotlin/Native does not generally provide binary compatibility between versions, 
-you should use the same version of Kotlin/Native compiler as was used to build `kotlinx.coroutines`. 
+Kotlin/Native does not support free sharing of mutable objects between threads as on JVM, so several 
+limitations apply to using coroutines on Kotlin/Native. 
+See [Sharing and background threads on Kotlin/Native](kotlin-native-sharing.md) for details.
+
+Some functions like [newSingleThreadContext] and [runBlocking] are available only for Kotlin/JVM and Kotlin/Native 
+and are not available on Kotlin/JS. In order to access them from the code that is shared between JVM and Native 
+you need to enable granular metadata (aka HMPP) in your `gradle.properties` file:
+
+```properties
+kotlin.mpp.enableGranularSourceSetsMetadata=true
+``` 
 
 ## Building 
 
@@ -241,6 +248,8 @@ The `develop` branch is pushed to `master` during release.
 [Promise.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/kotlin.js.-promise/await.html
 [promise]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/promise.html
 [Window.asCoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/org.w3c.dom.-window/as-coroutine-dispatcher.html
+[newSingleThreadContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/new-single-thread-context.html
+[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
 <!--- INDEX kotlinx.coroutines.flow -->
 [Flow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html
 [_flow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/flow.html

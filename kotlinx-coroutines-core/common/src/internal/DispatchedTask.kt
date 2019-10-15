@@ -35,7 +35,7 @@ internal abstract class DispatchedTask<in T>(
         val taskContext = this.taskContext
         var fatalException: Throwable? = null
         try {
-            val delegate = delegate as DispatchedContinuation<T>
+            val delegate = delegate.useLocal() as DispatchedContinuation<T> // cast must succeed
             val continuation = delegate.continuation
             val context = continuation.context
             val state = takeState() // NOTE: Must take state in any case, even if cancelled
@@ -96,25 +96,24 @@ internal abstract class DispatchedTask<in T>(
     }
 }
 
-internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
+internal fun <T> CancellableContinuationImpl<T>.dispatch(mode: Int) {
     val delegate = this.delegate
-    if (mode.isDispatchedMode && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {
+    val local = delegate.asLocalOrNull() // go to shareableResume when called from wrong worker
+    if (mode.isDispatchedMode && local is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {
         // dispatch directly using this instance's Runnable implementation
-        val dispatcher = delegate.dispatcher
-        val context = delegate.context
+        val dispatcher = local.dispatcher
+        val context = local.context
         if (dispatcher.isDispatchNeeded(context)) {
             dispatcher.dispatch(context, this)
         } else {
             resumeUnconfined()
         }
     } else {
-        resume(delegate, mode)
+        shareableResume(delegate, mode)
     }
 }
 
-@Suppress("UNCHECKED_CAST")
-internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: Int) {
-    // slow-path - use delegate
+internal fun <T> CancellableContinuationImpl<T>.resumeImpl(delegate: Continuation<T>, useMode: Int) {
     val state = takeState()
     val exception = getExceptionalResult(state)?.let { recoverStackTrace(it, delegate) }
     val result = if (exception != null) Result.failure(exception) else Result.success(state as T)
@@ -126,7 +125,7 @@ internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: In
     }
 }
 
-private fun DispatchedTask<*>.resumeUnconfined() {
+private fun <T> CancellableContinuationImpl<T>.resumeUnconfined() {
     val eventLoop = ThreadLocalEventLoop.eventLoop
     if (eventLoop.isUnconfinedLoopActive) {
         // When unconfined loop is active -- dispatch continuation for execution to avoid stack overflow
@@ -134,7 +133,7 @@ private fun DispatchedTask<*>.resumeUnconfined() {
     } else {
         // Was not active -- run event loop until all unconfined tasks are executed
         runUnconfinedEventLoop(eventLoop) {
-            resume(delegate, MODE_UNDISPATCHED)
+            resumeImpl(delegate.useLocal(), MODE_UNDISPATCHED)
         }
     }
 }

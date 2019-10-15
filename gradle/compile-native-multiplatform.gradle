@@ -10,7 +10,9 @@ kotlin {
 
     targets {
         if (project.ext.ideaActive) {
-            fromPreset(project.ext.ideaPreset, 'native')
+            // todo: This is IDEA kludge, without "fromPresent" the code does not resolve properly
+            //fromPreset(project.ext.ideaPreset, 'native')
+            addTarget(project.ext.ideaPreset)
         } else {
             addTarget(presets.linuxX64)
             addTarget(presets.iosArm64)
@@ -28,17 +30,9 @@ kotlin {
 
     sourceSets {
         nativeMain { dependsOn commonMain }
-        // Empty source set is required in order to have native tests task
-        nativeTest {}
+        nativeTest { dependsOn commonTest }
 
-        if (!project.ext.ideaActive) {
-            configure(nativeMainSets) {
-                dependsOn nativeMain
-            }
-
-            configure(nativeTestSets) {
-                dependsOn nativeTest
-            }
-        }
+        configure(nativeMainSets) { dependsOn nativeMain }
+        configure(nativeTestSets) { dependsOn nativeTest }
     }
 }

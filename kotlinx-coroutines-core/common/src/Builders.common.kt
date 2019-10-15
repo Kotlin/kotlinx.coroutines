@@ -106,10 +106,10 @@ private class LazyDeferredCoroutine<T>(
     parentContext: CoroutineContext,
     block: suspend CoroutineScope.() -> T
 ) : DeferredCoroutine<T>(parentContext, active = false) {
-    private val continuation = block.createCoroutineUnintercepted(this, this)
+    private val saved = saveLazyCoroutine(this, this, block)
 
     override fun onStart() {
-        continuation.startCoroutineCancellable(this)
+        startLazyCoroutine(saved, this, this)
     }
 }
 
@@ -157,7 +157,7 @@ public suspend fun <T> withContext(
     // SLOW PATH -- use new dispatcher
     val coroutine = DispatchedCoroutine(newContext, uCont)
     coroutine.initParentJob()
-    block.startCoroutineCancellable(coroutine, coroutine)
+    startCoroutine(CoroutineStart.DEFAULT, coroutine, coroutine, block)
     coroutine.getResult()
 }
 
@@ -171,6 +171,45 @@ public suspend fun <T> withContext(
 public suspend inline operator fun <T> CoroutineDispatcher.invoke(
     noinline block: suspend CoroutineScope.() -> T
 ): T = withContext(this, block)
+
+internal fun <T, R> startCoroutineImpl(
+    start: CoroutineStart,
+    coroutine: AbstractCoroutine<T>,
+    receiver: R,
+    block: suspend R.() -> T
+) = when (start) {
+    CoroutineStart.DEFAULT -> block.startCoroutineCancellable(receiver, coroutine)
+    CoroutineStart.ATOMIC -> block.startCoroutine(receiver, coroutine)
+    CoroutineStart.UNDISPATCHED -> block.startCoroutineUndispatched(receiver, coroutine)
+    CoroutineStart.LAZY -> Unit // will start lazily
+}
+
+// --------------- Kotlin/Native specialization hooks ---------------
+
+// todo: impl a separate startCoroutineCancellable as a fast-path for startCoroutine(DEFAULT, ...)
+internal expect fun <T, R> startCoroutine(
+    start: CoroutineStart,
+    coroutine: AbstractCoroutine<T>,
+    receiver: R,
+    block: suspend R.() -> T
+)
+
+/**
+ * On JVM & JS lazy coroutines are eagerly started (to record creation trace), the started later.
+ * On Native the block is saved so that it can be shared with another worker, the created and started later.
+ */
+internal expect fun <T, R> saveLazyCoroutine(
+    coroutine: AbstractCoroutine<T>,
+    receiver: R,
+    block: suspend R.() -> T
+): Any
+
+// saved == result of saveLazyCoroutine that was stored in LazyXxxCoroutine class
+internal expect fun <T, R> startLazyCoroutine(
+    saved: Any,
+    coroutine: AbstractCoroutine<T>,
+    receiver: R
+)
 
 // --------------- implementation ---------------
 
@@ -188,10 +227,9 @@ private class LazyStandaloneCoroutine(
     parentContext: CoroutineContext,
     block: suspend CoroutineScope.() -> Unit
 ) : StandaloneCoroutine(parentContext, active = false) {
-    private val continuation = block.createCoroutineUnintercepted(this, this)
-
+    private val saved = saveLazyCoroutine(this, this, block)
     override fun onStart() {
-        continuation.startCoroutineCancellable(this)
+        startLazyCoroutine(saved, this, this)
     }
 }
 
@@ -214,7 +252,7 @@ private const val SUSPENDED = 1
 private const val RESUMED = 2
 
 // Used by withContext when context dispatcher changes
-private class DispatchedCoroutine<in T>(
+internal class DispatchedCoroutine<in T>(
     context: CoroutineContext,
     uCont: Continuation<T>
 ) : ScopeCoroutine<T>(context, uCont) {
@@ -251,11 +289,13 @@ private class DispatchedCoroutine<in T>(
     override fun afterResume(state: Any?) {
         if (tryResume()) return // completed before getResult invocation -- bail out
         // Resume in a cancellable way because we have to switch back to the original dispatcher
-        uCont.intercepted().resumeCancellableWith(recoverResult(state, uCont))
+        uCont.shareableInterceptedResumeCancellableWith(recoverResult(state, uCont))
     }
 
     fun getResult(): Any? {
         if (trySuspend()) return COROUTINE_SUSPENDED
+        // When scope coroutine does not suspend on Kotlin/Native it shall dispose its continuation which it will not use
+        disposeContinuation { uCont }
         // otherwise, onCompletionInternal was already invoked & invoked tryResume, and the result is in the state
         val state = this.state.unboxState()
         if (state is CompletedExceptionally) throw state.cause

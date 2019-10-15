@@ -5,8 +5,12 @@
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
+import kotlin.native.concurrent.*
 
 internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) {
     // log exception
-    exception.printStackTrace()
+//    println("Exception in \"${Worker.current}\"")
+//    exception.printStackTrace()
+// todo: printing exception does not make it easy to debug (no source location), so let it crash instead
+    throw exception
 }

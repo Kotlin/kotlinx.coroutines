@@ -77,7 +77,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
      * Returns non-null closed token if it is last in the queue.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected val closedForSend: Closed<*>? get() = (queue.prevNode as? Closed<*>)?.also { helpClose(it) }
+    protected val closedForSend: Closed<*>? get() = (queueTail() as? Closed<*>)?.also { helpClose(it) }
 
     /**
      * Returns non-null closed token if it is first in the queue.
@@ -114,9 +114,9 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         queue: LockFreeLinkedListHead,
         element: E
     ) : AddLastDesc<SendBuffered<E>>(queue, SendBuffered(element)) {
-        override fun failure(affected: LockFreeLinkedListNode): Any? = when (affected) {
+        override fun failure(affected: LockFreeLinkedListNode?): Any? = when (affected) {
             is Closed<*> -> affected
-            is ReceiveOrClosed<*> -> OFFER_FAILED
+            is ReceiveOrClosed<*>? -> OFFER_FAILED // must fail on null for unlinked nodes on K/N
             else -> null
         }
     }
@@ -252,7 +252,8 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
          * "if (!close()) next send will throw"
          */
         val closeAdded = queue.addLastIfPrev(closed) { it !is Closed<*> }
-        val actuallyClosed = if (closeAdded) closed else queue.prevNode as Closed<*>
+        val actuallyClosed = if (closeAdded) closed else queueTail() as Closed<*>
+        disposeLockFreeLinkedList { closed.takeUnless { closeAdded } }
         helpClose(actuallyClosed)
         if (closeAdded) invokeOnCloseHandler(cause)
         return closeAdded // true if we have closed
@@ -327,6 +328,12 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         closedList.forEachReversed { it.resumeReceiveClosed(closed) }
         // and do other post-processing
         onClosedIdempotent(closed)
+        // dispose on Kotlin/Native if closed is the only element in the queue now
+        disposeQueue { closed }
+    }
+
+    internal inline fun disposeQueue(closed: () -> Closed<*>?) {
+        disposeLockFreeLinkedList { queue.takeIf { it.nextNode === closed() } }
     }
 
     /**
@@ -356,9 +363,9 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         @JvmField val element: E,
         queue: LockFreeLinkedListHead
     ) : RemoveFirstDesc<ReceiveOrClosed<E>>(queue) {
-        override fun failure(affected: LockFreeLinkedListNode): Any? = when (affected) {
+        override fun failure(affected: LockFreeLinkedListNode?): Any? = when (affected) {
             is Closed<*> -> affected
-            !is ReceiveOrClosed<*> -> OFFER_FAILED
+            !is ReceiveOrClosed<*> -> OFFER_FAILED // must fail on null for unlinked nodes on K/N
             else -> null
         }
 
@@ -427,13 +434,20 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
                 is Send -> "SendQueued"
                 else -> "UNEXPECTED:$head" // should not happen
             }
-            val tail = queue.prevNode
+            val tail = queueTail()
             if (tail !== head) {
                 result += ",queueSize=${countQueueSize()}"
                 if (tail is Closed<*>) result += ",closedForSend=$tail"
             }
             return result
         }
+
+    private fun queueTail(): LockFreeLinkedListNode {
+        // Backwards links can be already unlinked on Kotlin/Native when it was closed and only
+        // a closed node remains in it. queue.prevNode returns queue in this case
+        val tail = queue.prevNode
+        return if (tail === queue) queue.nextNode else tail
+    }
 
     private fun countQueueSize(): Int {
         var size = 0
@@ -509,6 +523,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     protected open fun pollInternal(): Any? {
         while (true) {
             val send = takeFirstSendOrPeekClosed() ?: return POLL_FAILED
+            disposeQueue { send as? Closed<*> }
             val token = send.tryResumeSend(null)
             if (token != null) {
                 assert { token === RESUME_TOKEN }
@@ -633,6 +648,8 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     internal fun cancelInternal(cause: Throwable?): Boolean =
         close(cause).also {
             onCancelIdempotent(it)
+            // dispose on Kotlin/Native if closed is the only element in the queue now
+            disposeQueue { closedForSend }
         }
 
     /**
@@ -648,9 +665,8 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         var list = InlineList<Send>()
         while (true) {
             val previous = closed.prevNode
-            if (previous is LockFreeLinkedListHead) {
-                break
-            }
+            // It could be already unlinked on Kotlin/Native and close.prevNode === closed
+            if (previous is LockFreeLinkedListHead || previous === closed) break
             assert { previous is Send }
             if (!previous.remove()) {
                 previous.helpRemove() // make sure remove is complete before continuing
@@ -675,9 +691,9 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
      * @suppress **This is unstable API and it is subject to change.**
      */
     protected class TryPollDesc<E>(queue: LockFreeLinkedListHead) : RemoveFirstDesc<Send>(queue) {
-        override fun failure(affected: LockFreeLinkedListNode): Any? = when (affected) {
+        override fun failure(affected: LockFreeLinkedListNode?): Any? = when (affected) {
             is Closed<*> -> affected
-            !is Send -> POLL_FAILED
+            !is Send -> POLL_FAILED // must fail on null for unlinked nodes on K/N
             else -> null
         }
 
@@ -807,7 +823,10 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     }
 
     private class Itr<E>(val channel: AbstractChannel<E>) : ChannelIterator<E> {
-        var result: Any? = POLL_FAILED // E | POLL_FAILED | Closed
+        private val _result = atomic<Any?>(POLL_FAILED) // E | POLL_FAILED | Closed
+        var result: Any?
+            get() = _result.value
+            set(value) { _result.value = value }
 
         override suspend fun hasNext(): Boolean {
             // check for repeated hasNext

@@ -11,11 +11,6 @@ import kotlin.concurrent.withLock as withLockJvm
 
 internal actual fun <E> subscriberList(): SubscribersList<E> = CopyOnWriteArrayList<E>()
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
-internal actual typealias ReentrantLock = java.util.concurrent.locks.ReentrantLock
-
-internal actual inline fun <T> ReentrantLock.withLock(action: () -> T) = this.withLockJvm(action)
-
 internal actual fun <E> identitySet(expectedSize: Int): MutableSet<E> = Collections.newSetFromMap(IdentityHashMap(expectedSize))
 
 private val REMOVE_FUTURE_ON_CANCEL: Method? = try {

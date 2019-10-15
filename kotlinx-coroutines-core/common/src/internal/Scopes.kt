@@ -14,9 +14,11 @@ import kotlin.jvm.*
  */
 internal open class ScopeCoroutine<in T>(
     context: CoroutineContext,
-    @JvmField val uCont: Continuation<T> // unintercepted continuation
+    uCont: Continuation<T>
 ) : AbstractCoroutine<T>(context, true), CoroutineStackFrame {
-    final override val callerFrame: CoroutineStackFrame? get() = uCont as CoroutineStackFrame?
+    @JvmField
+    val uCont: Continuation<T> = uCont.asShareable() // unintercepted continuation, shareable
+    final override val callerFrame: CoroutineStackFrame? get() = uCont.asLocal() as CoroutineStackFrame?
     final override fun getStackTraceElement(): StackTraceElement? = null
     final override val isScopedCoroutine: Boolean get() = true
 
@@ -24,7 +26,7 @@ internal open class ScopeCoroutine<in T>(
 
     override fun afterCompletion(state: Any?) {
         // Resume in a cancellable way by default when resuming from another context
-        uCont.intercepted().resumeCancellableWith(recoverResult(state, uCont))
+        uCont.shareableInterceptedResumeCancellableWith(recoverResult(state, uCont))
     }
 
     override fun afterResume(state: Any?) {

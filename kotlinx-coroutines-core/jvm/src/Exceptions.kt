@@ -29,8 +29,9 @@ public actual fun CancellationException(message: String?, cause: Throwable?) : C
 internal actual class JobCancellationException public actual constructor(
     message: String,
     cause: Throwable?,
-    @JvmField internal actual val job: Job
+    job: Job
 ) : CancellationException(message), CopyableThrowable<JobCancellationException> {
+    @JvmField internal actual val job: Job? = job
 
     init {
         if (cause != null) initCause(cause)
@@ -51,7 +52,7 @@ internal actual class JobCancellationException public actual constructor(
 
     override fun createCopy(): JobCancellationException? {
         if (DEBUG) {
-            return JobCancellationException(message!!, this, job)
+            return JobCancellationException(message!!, this, job!!)
         }
 
         /*

@@ -26,9 +26,9 @@ class CoroutinesDumpTest : DebugTestBase() {
                 "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.sleepingNestedMethod(CoroutinesDumpTest.kt:95)\n" +
                 "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.sleepingOuterMethod(CoroutinesDumpTest.kt:88)\n" +
             "\t(Coroutine creation stacktrace)\n" +
-                "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
-                "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
-                "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n")
+                "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n" +
+                "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt)\n"
+        )
 
         val found = DebugProbes.dumpCoroutinesInfo().single { it.job === deferred }
         assertSame(deferred, found.job)
@@ -46,15 +46,16 @@ class CoroutinesDumpTest : DebugTestBase() {
         verifyDump(
             "Coroutine \"coroutine#1\":DeferredCoroutine{Active}@227d9994, state: RUNNING (Last suspension stacktrace, not an actual stacktrace)\n" +
             "\t(Coroutine creation stacktrace)\n" +
-                    "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
-                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
-                    "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n" +
-                    "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:148)\n" +
-                    "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt)\n" +
-                    "\tat kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
-                    "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt)\n" +
-                    "\tat kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
-                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.testRunningCoroutine(CoroutinesDumpTest.kt:49)")
+                "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n" +
+                "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt)\n" +
+                "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.startCoroutineImpl(Builders.common.kt)\n" +
+                "\tat kotlinx.coroutines.BuildersKt.startCoroutineImpl(Unknown Source)\n" +
+                "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt)\n" +
+                "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt)\n" +
+                "\tat kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
+                "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt)\n" +
+                "\tat kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
+                "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.testRunningCoroutine(CoroutinesDumpTest.kt)")
         runBlocking { deferred.cancelAndJoin() }
     }
 
@@ -72,16 +73,17 @@ class CoroutinesDumpTest : DebugTestBase() {
                 "\tat java.lang.Thread.sleep(Native Method)\n" +
                 "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.nestedActiveMethod(CoroutinesDumpTest.kt:111)\n" +
                 "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.activeMethod(CoroutinesDumpTest.kt:106)\n" +
-                "\t(Coroutine creation stacktrace)\n" +
-                "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
-                "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
-                "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n" +
-                "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:148)\n" +
+            "\t(Coroutine creation stacktrace)\n" +
+                "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n" +
+                "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt)\n" +
+                "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.startCoroutineImpl(Builders.common.kt)\n" +
+                "\tat kotlinx.coroutines.BuildersKt.startCoroutineImpl(Unknown Source)\n" +
+                "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt)\n" +
                 "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt)\n" +
                 "\tat kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
                 "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt)\n" +
                 "\tat kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
-                "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.testRunningCoroutineWithSuspensionPoint(CoroutinesDumpTest.kt:71)"
+                "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.testRunningCoroutineWithSuspensionPoint(CoroutinesDumpTest.kt)"
         )
         runBlocking { deferred.cancelAndJoin() }
     }
@@ -101,16 +103,18 @@ class CoroutinesDumpTest : DebugTestBase() {
 
         runBlocking { deferred.cancelAndJoin() }
 
-        val expected = ("kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
-                "kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
-                "kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:109)\n" +
-                "kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:160)\n" +
-                "kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt:88)\n" +
-                "kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
-                "kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt:81)\n" +
-                "kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
-                "kotlinx.coroutines.debug.CoroutinesDumpTest.testCreationStackTrace(CoroutinesDumpTest.kt:109)").trimStackTrace()
-        assertTrue(result.startsWith(expected))
+        val expected =
+            "kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n" +
+            "kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt)\n" +
+            "kotlinx.coroutines.BuildersKt__Builders_commonKt.startCoroutineImpl(Builders.common.kt)\n" +
+            "kotlinx.coroutines.BuildersKt.startCoroutineImpl(Unknown Source)\n" +
+            "kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt)\n" +
+            "kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt)\n" +
+            "kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
+            "kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt)\n" +
+            "kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
+            "kotlinx.coroutines.debug.CoroutinesDumpTest.testCreationStackTrace(CoroutinesDumpTest.kt)"
+        assertStartsWith(expected, result)
     }
 
     @Test
@@ -156,6 +160,17 @@ class CoroutinesDumpTest : DebugTestBase() {
         synchronized(monitor) {
             coroutineStarted = true
             (monitor as Object).notifyAll()
+        }
+    }
+
+    private fun assertStartsWith(expected: String, actual: String) {
+        if (!actual.startsWith(expected)) {
+            println("----- Expected prefix")
+            println(expected)
+            println("----- Actual")
+            println(actual)
+            println("-----")
+            assertEquals(expected, actual)
         }
     }
 }

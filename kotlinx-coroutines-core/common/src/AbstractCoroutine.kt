@@ -130,23 +130,6 @@ public abstract class AbstractCoroutine<in T>(
      *
      * First, this function initializes parent job from the `parentContext` of this coroutine that was passed to it
      * during construction. Second, it starts the coroutine based on [start] parameter:
-     *
-     * * [DEFAULT] uses [startCoroutineCancellable].
-     * * [ATOMIC] uses [startCoroutine].
-     * * [UNDISPATCHED] uses [startCoroutineUndispatched].
-     * * [LAZY] does nothing.
-     */
-    public fun start(start: CoroutineStart, block: suspend () -> T) {
-        initParentJob()
-        start(block, this)
-    }
-
-    /**
-     * Starts this coroutine with the given code [block] and [start] strategy.
-     * This function shall be invoked at most once on this coroutine.
-     *
-     * First, this function initializes parent job from the `parentContext` of this coroutine that was passed to it
-     * during construction. Second, it starts the coroutine based on [start] parameter:
      * 
      * * [DEFAULT] uses [startCoroutineCancellable].
      * * [ATOMIC] uses [startCoroutine].
@@ -155,6 +138,6 @@ public abstract class AbstractCoroutine<in T>(
      */
     public fun <R> start(start: CoroutineStart, receiver: R, block: suspend R.() -> T) {
         initParentJob()
-        start(block, receiver, this)
+        startCoroutine(start, this, receiver, block)
     }
 }

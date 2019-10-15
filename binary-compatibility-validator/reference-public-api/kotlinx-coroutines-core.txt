@@ -13,7 +13,6 @@ public abstract class kotlinx/coroutines/AbstractCoroutine : kotlinx/coroutines/
 	protected fun onStart ()V
 	public final fun resumeWith (Ljava/lang/Object;)V
 	public final fun start (Lkotlinx/coroutines/CoroutineStart;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
-	public final fun start (Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function1;)V
 }
 
 public final class kotlinx/coroutines/AwaitKt {
@@ -80,10 +79,8 @@ public class kotlinx/coroutines/CancellableContinuationImpl : kotlin/coroutines/
 
 public final class kotlinx/coroutines/CancellableContinuationKt {
 	public static final fun disposeOnCancellation (Lkotlinx/coroutines/CancellableContinuation;Lkotlinx/coroutines/DisposableHandle;)V
-	public static final fun suspendAtomicCancellableCoroutine (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun suspendAtomicCancellableCoroutine (ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun suspendAtomicCancellableCoroutine$default (ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-	public static final fun suspendCancellableCoroutine (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public abstract interface class kotlinx/coroutines/ChildHandle : kotlinx/coroutines/DisposableHandle {
@@ -155,7 +152,7 @@ public abstract class kotlinx/coroutines/CoroutineDispatcher : kotlin/coroutines
 	public abstract fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun dispatchYield (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
-	public final fun interceptContinuation (Lkotlin/coroutines/Continuation;)Lkotlin/coroutines/Continuation;
+	public fun interceptContinuation (Lkotlin/coroutines/Continuation;)Lkotlin/coroutines/Continuation;
 	public fun isDispatchNeeded (Lkotlin/coroutines/CoroutineContext;)Z
 	public fun minusKey (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
 	public final fun plus (Lkotlinx/coroutines/CoroutineDispatcher;)Lkotlinx/coroutines/CoroutineDispatcher;
@@ -220,8 +217,6 @@ public final class kotlinx/coroutines/CoroutineStart : java/lang/Enum {
 	public static final field DEFAULT Lkotlinx/coroutines/CoroutineStart;
 	public static final field LAZY Lkotlinx/coroutines/CoroutineStart;
 	public static final field UNDISPATCHED Lkotlinx/coroutines/CoroutineStart;
-	public final fun invoke (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)V
-	public final fun invoke (Lkotlin/jvm/functions/Function2;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)V
 	public final fun isLazy ()Z
 	public static fun valueOf (Ljava/lang/String;)Lkotlinx/coroutines/CoroutineStart;
 	public static fun values ()[Lkotlinx/coroutines/CoroutineStart;
@@ -486,6 +481,11 @@ public final class kotlinx/coroutines/SupervisorKt {
 	public static synthetic fun SupervisorJob$default (Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/CompletableJob;
 	public static synthetic fun SupervisorJob$default (Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
 	public static final fun supervisorScope (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/SuspendCancellableCoroutineKt {
+	public static final fun suspendAtomicCancellableCoroutine (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun suspendCancellableCoroutine (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public abstract interface class kotlinx/coroutines/ThreadContextElement : kotlin/coroutines/CoroutineContext$Element {

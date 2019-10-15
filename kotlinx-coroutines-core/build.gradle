@@ -10,15 +10,70 @@ apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
 apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
 apply from: rootProject.file('gradle/publish-npm-js.gradle')
 
+void defineSourceSet(newName, dependsOn, includedInPred) {
+    for (suffix in ["Main", "Test"]) {
+        def newSS = kotlin.sourceSets.maybeCreate(newName + suffix)
+        for (dep in dependsOn) {
+            newSS.dependsOn(kotlin.sourceSets[dep + suffix])
+        }
+        for (curSS in kotlin.sourceSets) {
+            def curName = curSS.name
+            if (curName.endsWith(suffix)) {
+                def prefix = curName.substring(0, curName.length() - suffix.length())
+                if (includedInPred(prefix)) curSS.dependsOn(newSS)
+            }
+        }
+    }
+}
+
+boolean isNativeDarwin(String name) { return ["ios", "macos", "tvos", "watchos"].any { name.startsWith(it) } }
+boolean isNativeOther(String name) { return ["linux", "mingw"].any { name.startsWith(it) } }
+
+/* TARGETS:
+     js -----------------------------------------------------+
+                                                             |
+                                                             V
+     jvm -------------------------------> concurrent ---> common
+                                              ^
+     ios     \                                |
+     macos   | ---> nativeDarwin ---> native --+
+     tvos    |                         ^
+     watchos /                         |
+                                       |
+     linux  \  ---> nativeOther -------+
+     mingw  /
+ */
+
+defineSourceSet("concurrent", ["common"]) { it in ["jvm", "native"] }
+defineSourceSet("nativeDarwin", ["native"]) { isNativeDarwin(it) }
+defineSourceSet("nativeOther", ["native"]) { isNativeOther(it) }
+
+// todo: This is IDEA kludge, without "fromPresent" the code does not resolve properly
+if (project.ext.ideaActive && isNativeDarwin(project.ext.ideaPreset.name)) {
+    kotlin.targets {
+        fromPreset(project.ext.ideaPreset, 'nativeDarwin')
+    }
+}
+
 /*
  * All platform plugins and configuration magic happens here instead of build.gradle
  * because JMV-only projects depend on core, thus core should always be initialized before configuration.
  */
 kotlin {
+    sourceSets {
+        commonMain {
+            dependencies {
+                // todo: we should not need it
+                // todo: it must be compileOnly or JVM is spoiled !!!
+                implementation "org.jetbrains.kotlinx:atomicfu-common:$atomicfu_version"
+            }
+        }
+    }
+
     configure(sourceSets) {
         def srcDir = name.endsWith('Main') ? 'src' : 'test'
         def platform = name[0..-5]
-        kotlin.srcDir "$platform/$srcDir"
+        kotlin.srcDirs = ["$platform/$srcDir"]
         if (name == "jvmMain") {
             resources.srcDirs = ["$platform/resources"]
         } else if (name == "jvmTest") {
@@ -27,6 +82,23 @@ kotlin {
         languageSettings {
             progressiveMode = true
             experimentalAnnotations.each { useExperimentalAnnotation(it) }
+        }
+    }
+
+    configure(targets) {
+        // "Main" native targets -- one for each OS
+        if (["macos", "linux", "mingw"].any { name.startsWith(it) }) {
+            binaries {
+                // Test for memory leaks using a special entry point that does not exit but returns from main
+                binaries.getTest("DEBUG").freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
+                // Configure a separate test where code runs in background
+                test("background", [org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType.DEBUG]) {
+                    freeCompilerArgs += ["-e", "kotlinx.coroutines.mainBackground"]
+                }
+            }
+            testRuns {
+                background { setExecutionSourceFrom(binaries.backgroundDebugTest) }
+            }
         }
     }
 
