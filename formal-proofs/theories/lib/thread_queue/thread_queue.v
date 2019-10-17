@@ -2403,7 +2403,37 @@ Proof.
   }
 
   assert (deqIdx' < deqIdx'')%nat as HL by lia.
-  apply nat_lt_sum in HL. destruct HL as (? & ->).
+  apply nat_lt_sum in HL. destruct HL as (d & ->).
+
+  iAssert ([∗ list] i ∈ seq (deqIdx' + S d)
+                    (tId * Pos.to_nat segment_size - (deqIdx' + S d)),
+           iterator_issued γd i)%I with "[HPerms']" as "HIsss".
+  {
+    iClear "IH HSegLoc HCounter HSegLoc' HEv".
+    remember (tId * Pos.to_nat segment_size - (deqIdx' + S d))%nat as Y.
+    change (deqIdx' + S d)%nat with ((O + O) + (deqIdx' + S d))%nat.
+    change (tId * Pos.to_nat segment_size)%nat with
+        (tId * Pos.to_nat segment_size)%nat.
+    remember (O + O)%nat as start.
+    assert (start + Y <= tId * Pos.to_nat segment_size - (deqIdx' + S d)) as HStartInv.
+    by subst; lia. clear Heqstart HeqY.
+    iInduction Y as [|ih] "IH" forall (start HStartInv); simpl.
+    done.
+    remember (tId * Pos.to_nat segment_size)%nat as X.
+    assert (X = (max (S (start + (deqIdx' + S d))) X)%nat) as HEqX
+        by (subst; lia).
+    rewrite HEqX.
+    rewrite -mnat_op_max -gset_disj_union.
+    2: by apply set_seq_S_start_disjoint.
+    rewrite pair_op auth_frag_op own_op.
+    iDestruct "HPerms'" as "[$ HRec]".
+    change (S (start + (deqIdx' + S d)))%nat with
+        ((1 + start) + (deqIdx' + S d))%nat.
+    iApply ("IH" with "[] [HRec]").
+    2: by rewrite mnat_op_max /= -HEqX.
+    iPureIntro.
+    simpl. lia.
+  }
 
   admit.
 Abort.
