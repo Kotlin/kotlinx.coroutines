@@ -69,17 +69,6 @@ class WorkQueueTest : TestBase() {
     }
 }
 
-internal fun GlobalQueue.asTimeList(): List<Long> {
-    val result = mutableListOf<Long>()
-    var next = removeFirstOrNull()
-    while (next != null) {
-        result += next.submissionTime
-        next = removeFirstOrNull()
-    }
-
-    return result
-}
-
 internal fun task(n: Long) = TaskImpl(Runnable {}, n, NonBlockingContext)
 
 internal fun WorkQueue.drain(): List<Long> {

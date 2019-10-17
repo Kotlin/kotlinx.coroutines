@@ -16,8 +16,8 @@ class WorkQueueStressTest : TestBase() {
     private val threads = mutableListOf<Thread>()
     private val offerIterations = 100_000 * stressTestMultiplierSqrt // memory pressure, not CPU time
     private val stealersCount = 6
-    private val stolenTasks = Array(stealersCount) { Queue() }
-    private val globalQueue = Queue() // only producer will use it
+    private val stolenTasks = Array(stealersCount) { GlobalQueue() }
+    private val globalQueue = GlobalQueue() // only producer will use it
     private val producerQueue = WorkQueue()
 
     @Volatile
@@ -55,9 +55,7 @@ class WorkQueueStressTest : TestBase() {
                 val myQueue = WorkQueue()
                 startLatch.await()
                 while (!producerFinished || producerQueue.size != 0) {
-                    if (myQueue.size > 100) {
-                        stolenTasks[i].addAll(myQueue.drain().map { task(it) })
-                    }
+                    stolenTasks[i].addAll(myQueue.drain().map { task(it) })
                     myQueue.tryStealFrom(victim = producerQueue)
                 }
 
@@ -88,7 +86,7 @@ class WorkQueueStressTest : TestBase() {
             }
         }
 
-        val stolen = Queue()
+        val stolen = GlobalQueue()
         threads += thread(name = "stealer") {
             val myQueue = WorkQueue()
             startLatch.await()
@@ -116,10 +114,8 @@ class WorkQueueStressTest : TestBase() {
         val expected = (1L..offerIterations).toSet()
         assertEquals(expected, result, "Following elements are missing: ${(expected - result)}")
     }
-}
 
-internal class Queue : GlobalQueue() {
-    fun addAll(tasks: Collection<Task>) {
+    private fun GlobalQueue.addAll(tasks: Collection<Task>) {
         tasks.forEach { addLast(it) }
     }
 }

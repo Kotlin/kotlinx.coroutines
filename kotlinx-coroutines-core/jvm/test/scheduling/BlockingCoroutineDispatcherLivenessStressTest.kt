@@ -10,7 +10,11 @@ import org.junit.Test
 import java.util.concurrent.atomic.*
 import kotlin.test.*
 
-class BlockingCoroutineDispatcherRaceStressTest : SchedulerTestBase() {
+/**
+ * Test that ensures implementation correctness of [LimitingDispatcher] and
+ * designed to stress its particular implementation details.
+ */
+class BlockingCoroutineDispatcherLivenessStressTest : SchedulerTestBase() {
     private val concurrentWorkers = AtomicInteger(0)
 
     @Before
@@ -29,7 +33,7 @@ class BlockingCoroutineDispatcherRaceStressTest : SchedulerTestBase() {
                 async(limitingDispatcher) {
                     try {
                         val currentlyExecuting = concurrentWorkers.incrementAndGet()
-                        require(currentlyExecuting == 1)
+                        assertEquals(1, currentlyExecuting)
                     } finally {
                         concurrentWorkers.decrementAndGet()
                     }
@@ -37,7 +41,6 @@ class BlockingCoroutineDispatcherRaceStressTest : SchedulerTestBase() {
             }
             tasks.forEach { it.await() }
         }
-        checkPoolThreadsCreated(2..4)
     }
 
     @Test

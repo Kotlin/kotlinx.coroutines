@@ -37,8 +37,8 @@ class CoroutineSchedulerStressTest : TestBase() {
 
     @Test
     fun testInternalTasksSubmissionProgress() {
-        /*
-       * Run 2 million tasks and validate that
+      /*
+       * Run a lot of tasks and validate that
        * 1) All of them are completed successfully
        * 2) Every thread executed task at least once
        */
@@ -75,21 +75,19 @@ class CoroutineSchedulerStressTest : TestBase() {
                     Thread.yield()
                 }
             }
-
             // Block current thread
             finishLatch.await()
         })
 
         finishLatch.await()
 
-        require(!observedThreads.containsKey(blockingThread!!))
+        assertFalse(observedThreads.containsKey(blockingThread!!))
         validateResults()
     }
 
     private fun processTask() {
         val counter = observedThreads[Thread.currentThread()] ?: 0L
         observedThreads[Thread.currentThread()] = counter + 1
-
         if (processed.incrementAndGet() == tasksNum) {
             finishLatch.countDown()
         }

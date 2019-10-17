@@ -26,15 +26,13 @@ internal const val NOTHING_TO_STEAL = -2L
  * that these two (current one and submitted) are communicating and sharing state thus making such communication extremely fast.
  * E.g. submitted jobs [1, 2, 3, 4] will be executed in [4, 1, 2, 3] order.
  *
- * ### Work offloading
- * 
- * When the queue is full, half of existing tasks are offloaded to global queue which is regularly polled by other pool workers.
- * Offloading occurs in LIFO order for the sake of implementation simplicity: offloads should be extremely rare and occurs only in specific use-cases
- * (e.g. when coroutine starts heavy fork-join-like computation), so fairness is not important.
- * As an alternative, offloading directly to some [CoroutineScheduler.Worker] may be used, but then the strategy of selecting any idle worker
- * should be implemented and implementation should be aware multiple producers.
- *
- * @suppress **This is unstable API and it is subject to change.**
+ * ### Algorithm and implementation details
+ * This is a regular SPMC bounded queue with the additional property that tasks can be removed from the middle of the queue
+ * (scheduler workers without a CPU permit steal blocking tasks via this mechanism). Such property enforces us to use CAS in
+ * order to properly claim value from the buffer.
+ * Moreover, [Task] objects are reusable, so it may seem that this queue is prone to ABA problem.
+ * Indeed it formally has ABA-problem, but the whole processing logic is written in the way that such ABA is harmless.
+ * "I have discovered a truly marvelous proof of this, which this margin is too narrow to contain"
  */
 internal class WorkQueue {
 
@@ -58,10 +56,12 @@ internal class WorkQueue {
 
     private val producerIndex = atomic(0)
     private val consumerIndex = atomic(0)
+    // Shortcut to avoid scanning queue without blocking tasks
+    private val blockingTasksInBuffer = atomic(0)
 
     /**
      * Retrieves and removes task from the head of the queue
-     * Invariant: this method is called only by the owner of the queue ([stealBatch] is not)
+     * Invariant: this method is called only by the owner of the queue.
      */
     fun poll(): Task? = lastScheduledTask.getAndSet(null) ?: pollBuffer()
 
@@ -69,7 +69,8 @@ internal class WorkQueue {
      * Invariant: Called only by the owner of the queue, returns
      * `null` if task was added, task that wasn't added otherwise.
      */
-    fun add(task: Task): Task? {
+    fun add(task: Task, fair: Boolean = false): Task? {
+        if (fair) return addLast(task)
         val previous = lastScheduledTask.getAndSet(task) ?: return null
         return addLast(previous)
     }
@@ -78,18 +79,20 @@ internal class WorkQueue {
      * Invariant: Called only by the owner of the queue, returns
      * `null` if task was added, task that wasn't added otherwise.
      */
-    fun addLast(task: Task): Task? {
+    private fun addLast(task: Task): Task? {
+        if (task.isBlocking) blockingTasksInBuffer.incrementAndGet()
         if (bufferSize == BUFFER_CAPACITY - 1) return task
-        val headLocal = producerIndex.value
-        val nextIndex = headLocal and MASK
-
+        val nextIndex = producerIndex.value and MASK
         /*
-         * If current element is not null then we're racing with consumers for the tail. If we skip this check then
-         * the consumer can null out current element and it will be lost. If we're racing for tail then
-         * the queue is close to overflowing => return task
+         * If current element is not null then we're racing with a really slow consumer that committed the consumer index,
+         * but hasn't yet nulled out the slot, effectively preventing us from using it.
+         * Such situations are very rare in practise (although possible) and we decided to give up a progress guarantee
+         * to have a stronger invariant "add to queue with bufferSize == 0 is always successful".
+         * This algorithm can still be wait-free for add, but if and only if tasks are not reusable, otherwise
+         * nulling out the buffer wouldn't be possible.
          */
-        if (buffer[nextIndex] != null) {
-            return task
+        while (buffer[nextIndex] != null) {
+            Thread.yield()
         }
         buffer.lazySet(nextIndex, task)
         producerIndex.incrementAndGet()
@@ -103,18 +106,52 @@ internal class WorkQueue {
      * or positive value of how many nanoseconds should pass until the head of this queue will be available to steal.
      */
     fun tryStealFrom(victim: WorkQueue): Long {
-        if (victim.stealBatch { task -> add(task) }) {
+        assert { bufferSize == 0 }
+        val task  = victim.pollBuffer()
+        if (task != null) {
+            val notAdded = add(task)
+            assert { notAdded == null }
             return TASK_STOLEN
         }
-        return tryStealLastScheduled(victim)
+        return tryStealLastScheduled(victim, blockingOnly = false)
+    }
+
+    fun tryStealBlockingFrom(victim: WorkQueue): Long {
+        assert { bufferSize == 0 }
+        var start = victim.consumerIndex.value
+        val end = victim.producerIndex.value
+        val buffer = victim.buffer
+
+        while (start != end) {
+            val index = start and MASK
+            if (victim.blockingTasksInBuffer.value == 0) break
+            val value = buffer[index]
+            if (value != null && value.isBlocking && buffer.compareAndSet(index, value, null)) {
+                victim.blockingTasksInBuffer.decrementAndGet()
+                add(value)
+                return TASK_STOLEN
+            } else {
+                ++start
+            }
+        }
+        return tryStealLastScheduled(victim, blockingOnly = true)
+    }
+
+    fun offloadAllWorkTo(globalQueue: GlobalQueue) {
+        lastScheduledTask.getAndSet(null)?.let { globalQueue.add(it) }
+        while (pollTo(globalQueue)) {
+            // Steal everything
+        }
     }
 
     /**
      * Contract on return value is the same as for [tryStealFrom]
      */
-    private fun tryStealLastScheduled(victim: WorkQueue): Long {
+    private fun tryStealLastScheduled(victim: WorkQueue, blockingOnly: Boolean): Long {
         while (true) {
             val lastScheduled = victim.lastScheduledTask.value ?: return NOTHING_TO_STEAL
+            if (blockingOnly && !lastScheduled.isBlocking) return NOTHING_TO_STEAL
+
             // TODO time wraparound ?
             val time = schedulerTimeSource.nanoTime()
             val staleness = time - lastScheduled.submissionTime
@@ -134,49 +171,10 @@ internal class WorkQueue {
         }
     }
 
-    private fun GlobalQueue.add(task: Task) {
-        /*
-         * globalQueue is closed as the very last step in the shutdown sequence when all worker threads had
-         * been already shutdown (with the only exception of the last worker thread that might be performing
-         * shutdown procedure itself). As a consistency check we do a [cheap!] check that it is not closed here yet.
-         */
-        val added = addLast(task)
-        assert { added }
-    }
-
-    internal fun offloadAllWork(globalQueue: GlobalQueue) {
-        lastScheduledTask.getAndSet(null)?.let { globalQueue.add(it) }
-        while (stealBatchTo(globalQueue)) {
-            // Steal everything
-        }
-    }
-
-    /**
-     * Method that is invoked by external workers to steal work.
-     * Half of the buffer (at least 1) is stolen, returns `true` if at least one task was stolen.
-     */
-    private inline fun stealBatch(consumer: (Task) -> Unit): Boolean {
-        val size = bufferSize
-        if (size == 0) return false
-        var toSteal = (size / 2).coerceAtLeast(1)
-        var wasStolen = false
-        while (toSteal-- > 0) {
-            val tailLocal = consumerIndex.value
-            if (tailLocal - producerIndex.value == 0) return wasStolen
-            val index = tailLocal and MASK
-            val element = buffer[index] ?: continue
-            if (consumerIndex.compareAndSet(tailLocal, tailLocal + 1)) {
-                // 1) Help GC 2) Signal producer that this slot is consumed and may be used
-                consumer(element)
-                buffer[index] = null
-                wasStolen = true
-            }
-        }
-        return wasStolen
-    }
-
-    private fun stealBatchTo(queue: GlobalQueue): Boolean {
-        return stealBatch { queue.add(it) }
+    private fun pollTo(queue: GlobalQueue): Boolean {
+        val task = pollBuffer() ?: return false
+        queue.add(task)
+        return true
     }
 
     private fun pollBuffer(): Task? {
@@ -185,8 +183,28 @@ internal class WorkQueue {
             if (tailLocal - producerIndex.value == 0) return null
             val index = tailLocal and MASK
             if (consumerIndex.compareAndSet(tailLocal, tailLocal + 1)) {
-                return buffer.getAndSet(index, null)
+                // Nulls are allowed when blocking tasks are stolen from the middle of the queue.
+                val value = buffer.getAndSet(index, null) ?: continue
+                value.decrementIfBlocking()
+                return value
             }
         }
     }
+
+    private fun Task?.decrementIfBlocking() {
+        if (this != null && isBlocking) {
+            val value = blockingTasksInBuffer.decrementAndGet()
+            assert { value >= 0 }
+        }
+    }
+}
+
+private fun GlobalQueue.add(task: Task) {
+    /*
+     * globalQueue is closed as the very last step in the shutdown sequence when all worker threads had
+     * been already shutdown (with the only exception of the last worker thread that might be performing
+     * shutdown procedure itself). As a consistency check we do a [cheap!] check that it is not closed here yet.
+     */
+    val added = addLast(task)
+    assert { added }
 }

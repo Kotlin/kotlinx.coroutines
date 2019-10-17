@@ -54,12 +54,9 @@ internal open class LockFreeTaskQueue<E : Any>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun removeFirstOrNull(): E? = removeFirstOrNullIf { true }
-
-    @Suppress("UNCHECKED_CAST")
-    inline fun removeFirstOrNullIf(predicate: (E) -> Boolean): E? {
+    fun removeFirstOrNull(): E? {
         _cur.loop { cur ->
-            val result = cur.removeFirstOrNullIf(predicate)
+            val result = cur.removeFirstOrNull()
             if (result !== Core.REMOVE_FROZEN) return result as E?
             _cur.compareAndSet(cur, cur.next())
         }
@@ -164,10 +161,7 @@ internal class LockFreeTaskQueueCore<E : Any>(
     }
 
     // REMOVE_FROZEN | null (EMPTY) | E (SUCCESS)
-    fun removeFirstOrNull(): Any? = removeFirstOrNullIf { true }
-
-    // REMOVE_FROZEN | null (EMPTY) | E (SUCCESS)
-    inline fun removeFirstOrNullIf(predicate: (E) -> Boolean): Any? {
+    fun removeFirstOrNull(): Any? {
         _state.loop { state ->
             if (state and FROZEN_MASK != 0L) return REMOVE_FROZEN // frozen -- cannot modify
             state.withState { head, tail ->
@@ -182,8 +176,6 @@ internal class LockFreeTaskQueueCore<E : Any>(
                 // element == Placeholder can only be when add has not finished yet
                 if (element is Placeholder) return null // consider it not added yet
                 // now we tentative know element to remove -- check predicate
-                @Suppress("UNCHECKED_CAST")
-                if (!predicate(element as E)) return null
                 // we cannot put null into array here, because copying thread could replace it with Placeholder and that is a disaster
                 val newHead = (head + 1) and MAX_CAPACITY_MASK
                 if (_state.compareAndSet(state, state.updateHead(newHead))) {

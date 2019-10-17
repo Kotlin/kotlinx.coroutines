@@ -20,11 +20,6 @@ internal val WORK_STEALING_TIME_RESOLUTION_NS = systemProp(
 )
 
 @JvmField
-internal val QUEUE_SIZE_OFFLOAD_THRESHOLD = systemProp(
-    "kotlinx.coroutines.scheduler.offload.threshold", 96, maxValue = BUFFER_CAPACITY
-)
-
-@JvmField
 internal val BLOCKING_DEFAULT_PARALLELISM = systemProp(
     "kotlinx.coroutines.scheduler.blocking.parallelism", 16
 )
@@ -50,7 +45,7 @@ internal val MAX_POOL_SIZE = systemProp(
 
 @JvmField
 internal val IDLE_WORKER_KEEP_ALIVE_NS = TimeUnit.SECONDS.toNanos(
-    systemProp("kotlinx.coroutines.scheduler.keep.alive.sec", 5L)
+    systemProp("kotlinx.coroutines.scheduler.keep.alive.sec", 100000L)
 )
 
 @JvmField
@@ -87,8 +82,10 @@ internal abstract class Task(
     @JvmField var taskContext: TaskContext
 ) : Runnable {
     constructor() : this(0, NonBlockingContext)
-    val mode: TaskMode get() = taskContext.taskMode
+    inline val mode: TaskMode get() = taskContext.taskMode
 }
+
+internal inline val Task.isBlocking get() = taskContext.taskMode == TaskMode.PROBABLY_BLOCKING
 
 // Non-reusable Task implementation to wrap Runnable instances that do not otherwise implement task
 internal class TaskImpl(
@@ -109,10 +106,7 @@ internal class TaskImpl(
 }
 
 // Open for tests
-internal open class GlobalQueue : LockFreeTaskQueue<Task>(singleConsumer = false) {
-    public fun removeFirstWithModeOrNull(mode: TaskMode): Task? =
-        removeFirstOrNullIf { it.mode == mode }
-}
+internal class GlobalQueue : LockFreeTaskQueue<Task>(singleConsumer = false)
 
 internal abstract class TimeSource {
     abstract fun nanoTime(): Long
