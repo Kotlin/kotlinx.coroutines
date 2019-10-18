@@ -835,20 +835,20 @@ Lemma pair_op_1 {A: ucmraT} {B: cmraT} (b b': B):
   (b ⋅ b', ε) ≡ (b, (ε: A)) ⋅ (b', (ε: A)).
 Proof. by rewrite -pair_op ucmra_unit_left_id. Qed.
 
-Lemma awakening_permit_implies_bound (E R: iProp) γtq γa γd γe dℓ l deqFront i deqIdx:
-  (deqIdx <= deqFront)%nat ->
+Lemma awakening_permit_implies_bound i (E R: iProp) γtq γa γd γe dℓ l deqFront deqIdx:
+  ⌜(deqIdx <= deqFront)%nat⌝ -∗
   ([∗ list] i ∈ seq 0 i, awakening_permit γtq) -∗
   iterator_counter γd dℓ deqIdx -∗
+   ([∗ list] i ∈ seq 0 deqIdx, awakening_permit γtq) -∗
   cell_list_contents E R γa γtq γe γd l deqFront -∗
    ([∗ list] i ↦ b ∈ l, match b with
                         | Some (cellDone cellCancelled) =>
                           awakening_permit γtq ∨ iterator_issued γd i
                         | _ => True
                         end) -∗
-   ([∗ list] i ∈ seq 0 deqIdx, awakening_permit γtq) -∗
    ⌜deqIdx + i <= deqFront⌝.
 Proof.
-  iIntros (HLt) "HCAwaks HCounter HCellResources HCancAwaks HDeqAwaks".
+  iIntros (HLt) "HCAwaks HCounter HDeqAwaks HCellResources HCancAwaks".
   iDestruct "HCellResources" as "(% & HAuth & _ & _ & HRRs)".
   replace l with (take deqFront l ++ drop deqFront l).
   2: by rewrite take_drop.
@@ -2377,12 +2377,22 @@ Proof.
   wp_bind (FAA _ _).
   awp_apply iterator_value_faa. iApply (aacc_aupd_abort with "AU"); first done.
   iIntros (? deqFront) "(HInfArr & HListContents & HCancA & HRest)".
-  iDestruct "HRest" as (? deqIdx') "(HEnqIt & >HDeqIt & HRest)".
+  iDestruct "HRest" as (? deqIdx') "(HEnqIt & >HDeqIt & >HRest)".
   iDestruct (iterator_points_to_at_least with "HCounter [HDeqIt]") as %HLet.
   by iDestruct "HDeqIt" as "[$ _]".
+  (* Here I must prove that deqIdx' + 1 <= deqFront *)
+  iDestruct "HRest" as "[HRest HRest']".
+
+  iDestruct (awakening_permit_implies_bound 1
+               with "[HRest'] [HAwaken] [HDeqIt] HRest HListContents HCancA")
+    as "#>%".
+  by iDestruct "HRest'" as "%"; iPureIntro; lia.
+  by iFrame.
+  by iDestruct "HDeqIt" as "[$ _]".
+
   iAaccIntro with "HDeqIt".
   { iIntros "HIsIter". iFrame "HInfArr HListContents HCancA".
-    iSplitL "HEnqIt HRest HIsIter".
+    iSplitL "HEnqIt HRest HRest' HIsIter".
     by eauto with iFrame.
     by iIntros "!> $". }
   iIntros "[HIsIter HPerms]".
@@ -2394,20 +2404,17 @@ Proof.
   rewrite /= union_empty_r_L.
   replace (own γd _) with (iterator_issued γd deqIdx') by
       rewrite Nat.add_1_r //.
-  (* Here I must prove that deqIdx' + 1 <= deqFront *)
-
-  
 
   iFrame "HInfArr HListContents HCancA".
   iSplitR "HPerms".
   { iExists _, _. iFrame.
     rewrite seq_add big_sepL_app.
-    iDestruct "HRest" as "($ & >[% %] & >%)".
+    iDestruct "HRest'" as "([% %] & %)".
     simpl.
     iFrame.
     iPureIntro.
     repeat split; try done.
-    admit.
+    lia.
   }
   iIntros "!> AU !>".
 
