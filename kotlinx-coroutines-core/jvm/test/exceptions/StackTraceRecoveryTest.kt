@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.exceptions
@@ -7,10 +7,7 @@ package kotlinx.coroutines.exceptions
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.intrinsics.*
-import kotlinx.coroutines.selects.*
-import org.junit.*
 import org.junit.Test
-import org.junit.rules.*
 import java.util.concurrent.*
 import kotlin.concurrent.*
 import kotlin.coroutines.*
@@ -265,5 +262,6 @@ class StackTraceRecoveryTest : TestBase() {
         suspendCancellableCoroutine<Unit> { cont ->
             channel.offer(Callback(cont))
         }
+        yield() // nop to make sure it is not a tail call
     }
 }
