@@ -90,7 +90,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
        |  while still performing all the notifications in this order.
 
          + Job object is created
-       ## NEW: state == EMPTY_ACTIVE | is InactiveNodeList
+       ## NEW: state == EMPTY_NEW | is InactiveNodeList
          + initParentJob / initParentJobInternal (invokes attachChild on its parent, initializes parentHandle)
          ~ waits for start
          >> start / join / await invoked
