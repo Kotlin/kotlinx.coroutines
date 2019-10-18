@@ -145,8 +145,7 @@ Caught java.lang.AssertionError
 Cancellation is tightly bound with exceptions. Coroutines internally use `CancellationException` for cancellation, these
 exceptions are ignored by all handlers, so they should be used only as the source of additional debug information, which can
 be obtained by `catch` block.
-When a coroutine is cancelled using [Job.cancel] without a cause, it terminates, but it does not cancel its parent.
-Cancelling without cause is a mechanism for parent to cancel its children without cancelling itself. 
+When a coroutine is cancelled using [Job.cancel], it terminates, but it does not cancel its parent.
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
