@@ -169,7 +169,7 @@ public inline fun <T, R> Flow<T>.flatMapLatest(@BuilderInference crossinline tra
  *     "Computed $value"
  * }
  * ```
- * will print "Started computing 1" and "Started computing 2", but the resulting flow will contain only "Computed 2" value.
+ * will print "Started computing a" and "Started computing b", but the resulting flow will contain only "Computed b" value.
  *
  * This operator is [buffered][buffer] by default and size of its output buffer can be changed by applying subsequent [buffer] operator.
  */
