@@ -114,7 +114,7 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
          * Invariant: this clause is invoked only when all elements from the channel were processed (=> rendezvous restriction).
          */
         (second as SendChannel<*>).invokeOnClose {
-            if (!first.isClosedForReceive) first.cancel(AbortFlowException())
+            if (!first.isClosedForReceive) first.cancel(AbortFlowException(this@unsafeFlow))
         }
 
         val otherIterator = second.iterator()
@@ -126,9 +126,9 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
                 emit(transform(NULL.unbox(value), NULL.unbox(otherIterator.next())))
             }
         } catch (e: AbortFlowException) {
-            // complete
+            e.checkOwnership(owner = this@unsafeFlow)
         } finally {
-            if (!second.isClosedForReceive) second.cancel(AbortFlowException())
+            if (!second.isClosedForReceive) second.cancel(AbortFlowException(this@unsafeFlow))
         }
     }
 }

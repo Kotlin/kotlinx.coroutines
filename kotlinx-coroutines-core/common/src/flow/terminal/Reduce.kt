@@ -90,7 +90,7 @@ public suspend fun <T> Flow<T>.first(): T {
     try {
         collect { value ->
             result = value
-            throw AbortFlowException()
+            throw AbortFlowException(NopCollector)
         }
     } catch (e: AbortFlowException) {
         // Do nothing
@@ -110,7 +110,7 @@ public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
         collect { value ->
             if (predicate(value)) {
                 result = value
-                throw AbortFlowException()
+                throw AbortFlowException(NopCollector)
             }
         }
     } catch (e: AbortFlowException) {
