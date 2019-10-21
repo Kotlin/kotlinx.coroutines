@@ -20,13 +20,11 @@ internal object MainDispatcherLoader {
     private fun loadMainDispatcher(): MainCoroutineDispatcher {
         return try {
             val factories = if (FAST_SERVICE_LOADER_ENABLED) {
-                MainDispatcherFactory::class.java.let { clz ->
-                    FastServiceLoader.load(clz, clz.classLoader)
-                }
+                FastServiceLoader.loadMainDispatcherFactory()
             } else {
-                //We are explicitly using the
-                //`ServiceLoader.load(MyClass::class.java, MyClass::class.java.classLoader).iterator()`
-                //form of the ServiceLoader call to enable R8 optimization when compiled on Android.
+                // We are explicitly using the
+                // `ServiceLoader.load(MyClass::class.java, MyClass::class.java.classLoader).iterator()`
+                // form of the ServiceLoader call to enable R8 optimization when compiled on Android.
                 ServiceLoader.load(
                         MainDispatcherFactory::class.java,
                         MainDispatcherFactory::class.java.classLoader

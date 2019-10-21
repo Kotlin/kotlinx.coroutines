@@ -5,6 +5,12 @@ import java.net.*
 import java.util.*
 import java.util.jar.*
 import java.util.zip.*
+import kotlin.collections.ArrayList
+
+/**
+ * Don't use JvmField here to enable R8 optimizations via "assumenosideeffects"
+ */
+internal val ANDROID_DETECTED = runCatching { Class.forName("android.os.Build") }.isSuccess
 
 /**
  * A simplified version of [ServiceLoader].
@@ -20,7 +26,59 @@ import java.util.zip.*
 internal object FastServiceLoader {
     private const val PREFIX: String = "META-INF/services/"
 
-    internal fun <S> load(service: Class<S>, loader: ClassLoader): List<S> {
+    /**
+     * This method attempts to load [MainDispatcherFactory] in Android-friendly way.
+     *
+     * If we are not on Android, this method fallbacks to a regular service loading,
+     * else we attempt to do `Class.forName` lookup for
+     * `AndroidDispatcherFactory` and `TestMainDispatcherFactory`.
+     * If lookups are successful, we return resultinAg instances because we know that
+     * `MainDispatcherFactory` API is internal and this is the only possible classes of `MainDispatcherFactory` Service on Android.
+     *
+     * Such intricate dance is required to avoid calls to `ServiceLoader.load` for multiple reasons:
+     * 1) It eliminates disk lookup on potentially slow devices on the Main thread.
+     * 2) Various Android toolchain versions by various vendors don't tend to handle ServiceLoader calls properly.
+     *    Sometimes META-INF is removed from the resulting APK, sometimes class names are mangled, etc.
+     *    While it is not the problem of `kotlinx.coroutines`, it significantly worsens user experience, thus we are workarounding it.
+     *    Examples of such issues are #932, #1072, #1557, #1567
+     *
+     * We also use SL for [CoroutineExceptionHandler], but we do not experience the same problems and CEH is a public API
+     * that may already be injected vis SL, so we are not using the same technique for it.
+     */
+    internal fun loadMainDispatcherFactory(): List<MainDispatcherFactory> {
+        val clz = MainDispatcherFactory::class.java
+        if (!ANDROID_DETECTED) {
+            return load(clz, clz.classLoader)
+        }
+
+        return try {
+            val result = ArrayList<MainDispatcherFactory>(2)
+            createInstanceOf(clz, "kotlinx.coroutines.android.AndroidDispatcherFactory")?.apply { result.add(this) }
+            createInstanceOf(clz, "kotlinx.coroutines.test.internal.TestMainDispatcherFactory")?.apply { result.add(this) }
+            result
+        } catch (e: Throwable) {
+            // Fallback to the regular SL in case of any unexpected exception
+            load(clz, clz.classLoader)
+        }
+    }
+
+    /*
+     * This method is inline to have a direct Class.forName("string literal") in the byte code to avoid weird interactions with ProGuard/R8.
+     */
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun createInstanceOf(
+        baseClass: Class<MainDispatcherFactory>,
+        serviceClass: String
+    ): MainDispatcherFactory? {
+        return try {
+            val clz = Class.forName(serviceClass, true, baseClass.classLoader)
+            baseClass.cast(clz.getDeclaredConstructor().newInstance())
+        } catch (e: ClassNotFoundException) { // Do not fail if TestMainDispatcherFactory is not found
+            null
+        }
+    }
+
+    private fun <S> load(service: Class<S>, loader: ClassLoader): List<S> {
         return try {
             loadProviders(service, loader)
         } catch (e: Throwable) {
