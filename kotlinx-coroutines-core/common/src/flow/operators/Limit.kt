@@ -62,14 +62,14 @@ public fun <T> Flow<T>.take(count: Int): Flow<T> {
                 }
             }
         } catch (e: AbortFlowException) {
-            // Nothing, bail out
+            e.checkOwnership(owner = this)
         }
     }
 }
 
 private suspend fun <T> FlowCollector<T>.emitAbort(value: T) {
     emit(value)
-    throw AbortFlowException()
+    throw AbortFlowException(this)
 }
 
 /**
@@ -80,9 +80,9 @@ public fun <T> Flow<T>.takeWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
     try {
         collect { value ->
             if (predicate(value)) emit(value)
-            else throw AbortFlowException()
+            else throw AbortFlowException(this)
         }
     } catch (e: AbortFlowException) {
-        // Nothing, bail out
+        e.checkOwnership(owner = this)
     }
 }
