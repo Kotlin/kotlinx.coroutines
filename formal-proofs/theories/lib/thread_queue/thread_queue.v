@@ -2307,15 +2307,12 @@ Proof.
   split; case; intros ? ->; eexists; by rewrite -plus_n_Sm.
 Qed.
 
-Lemma cancelled_cell_is_cancelled_rendezvous S R γa γtq γe γd ℓ i l deqFront:
+Lemma cancelled_cell_is_cancelled_rendezvous' S R γa γtq γe γd i l deqFront:
   cell_is_cancelled segment_size γa i -∗
-  cell_invariant γtq γa i ℓ -∗ cell_list_contents S R γa γtq γe γd l deqFront -∗
+  rendezvous_initialized γtq i -∗ cell_list_contents S R γa γtq γe γd l deqFront -∗
   ⌜l !! i = Some (Some (cellDone cellCancelled))⌝.
 Proof.
-  iIntros "HCanc HCellInv HListContents".
-  iDestruct "HCellInv" as "[[HCancHandle _]|HInit]".
-  by iDestruct (cell_cancellation_handle'_not_cancelled with "HCancHandle HCanc")
-    as %[].
+  iIntros "HCanc HInit HListContents".
   rewrite /cell_list_contents /rendezvous_initialized.
   iDestruct "HListContents" as "(_ & HOwn & _ & _ & HRRs)".
   iDestruct (own_valid_2 with "HOwn HInit")
@@ -2349,6 +2346,18 @@ Proof.
   4: iDestruct "HR" as "(HCancHandle & _)".
   all: by iDestruct (cell_cancellation_handle'_not_cancelled with "HCancHandle HCanc")
       as %[].
+Qed.
+
+Lemma cancelled_cell_is_cancelled_rendezvous S R γa γtq γe γd ℓ i l deqFront:
+  cell_is_cancelled segment_size γa i -∗
+  cell_invariant γtq γa i ℓ -∗ cell_list_contents S R γa γtq γe γd l deqFront -∗
+  ⌜l !! i = Some (Some (cellDone cellCancelled))⌝.
+Proof.
+  iIntros "HCanc HCellInv HListContents".
+  iDestruct "HCellInv" as "[[HCancHandle _]|HInit]".
+  by iDestruct (cell_cancellation_handle'_not_cancelled with "HCancHandle HCanc")
+    as %[].
+  by iApply (cancelled_cell_is_cancelled_rendezvous' with "HCanc HInit").
 Qed.
 
 Theorem increase_deqIdx E R γa γtq γe γd (eℓ epℓ dℓ dpℓ: loc):
@@ -2614,7 +2623,136 @@ Proof.
     simpl. lia.
   }
 
-  admit.
+  iAssert (□ ∀ k, ⌜(deqIdx' <= k < tId * Pos.to_nat segment_size)%nat⌝ ={↑N}=∗
+                        cell_is_cancelled segment_size γa k ∗
+                                          rendezvous_initialized γtq k)%I
+    as "#HEv'".
+  {
+    iIntros "!>" (k [HH HH']).
+    iSpecialize ("HEv" $! (k - deqIdx')%nat).
+    iDestruct ("HEv" with "[-]") as "[HInv HCanc]".
+    {
+      iPureIntro.
+      rewrite seq_lookup.
+      by eauto.
+      lia.
+    }
+    iDestruct "HInv" as (?) "#HInv".
+    iInv N as ">HOpen" "HClose".
+    iDestruct "HOpen" as "[[HCancHandle _]|#HH]".
+    by iDestruct (cell_cancellation_handle'_not_cancelled
+                    with "HCancHandle HCanc") as %[].
+    replace (deqIdx' + (k - deqIdx'))%nat with k by lia.
+    iFrame "HCanc HH".
+    by iMod ("HClose" with "[$]").
+  }
+
+  iAssert (|={↑N}=> ▷ rendezvous_initialized γtq
+                     (tId * Pos.to_nat segment_size - 1))%I
+    as ">>HInitialized".
+  {
+    iSpecialize ("HEv'" $! (tId * Pos.to_nat segment_size - 1)%nat).
+    iMod ("HEv'" with "[-]") as "[_ $]".
+    2: done.
+    iPureIntro; lia.
+  }
+
+  iAssert (□ ∀ k, ⌜(deqIdx' <= k < tId * Pos.to_nat segment_size)%nat⌝
+                   -∗ |={↑N}=> ⌜l !! k = Some (cellDone cellCancelled)⌝)%I as "#HH".
+  {
+    iIntros (k [HH HH']).
+    iAssert (▷ (cell_is_cancelled segment_size γa k ∗ rendezvous_initialized γtq k) -∗
+            ▷⌜l !! k = Some (cellDone cellCancelled)⌝)%I with "[HListContents]" as "HH".
+    {
+      iIntros "[>HCellCanc >HRInit]".
+      iApply (cancelled_cell_is_cancelled_rendezvous' with "HCellCanc HRInit HListContents").
+      admit.
+    }
+    admit.
+  }
+
+  iDestruct "HListContents" as "(HLC1 & >HAuth & HLC2)".
+
+  iDestruct (own_valid_2 with "HAuth HInitialized")
+    as %[[_ HValid]%prod_included _]%auth_both_valid.
+  simpl in *.
+  move: HValid.
+  rewrite list_lookup_included.
+  move=> HValid.
+  remember (tId * Pos.to_nat segment_size - 1)%nat as ix.
+  specialize (HValid ix).
+  rewrite list_lookup_singletonM map_lookup in HValid.
+  destruct (l !! ix) eqn:Z.
+  2: {
+    simpl in *. exfalso.
+    move: HValid. clear.
+    rewrite option_included.
+    case.
+    done.
+    by intros (? & ? & _ & HContra & _).
+  }
+  assert (ix < length l)%nat.
+  by apply lookup_lt_is_Some_1; eauto.
+
+  iAssert (▷(([∗ list] i ∈ seq (deqIdx' + S d)
+                     (tId * Pos.to_nat segment_size - (deqIdx' + S d)),
+            awakening_permit γtq) ∗
+           ([∗ list] i ↦ b ∈ l, match b with
+                                 | Some (cellDone cellCancelled) =>
+                                   awakening_permit γtq ∨ iterator_issued γd i
+                                 | _ => True
+                                 end)))%I
+  with "[HCancA HIsss]" as "[>HAwaks $]".
+  {
+    iClear "IH HEv HSegLoc HCounter HSegLoc'".
+    replace l with (take (deqIdx' + S d)%nat l ++ drop (deqIdx' + S d)%nat l).
+    2: by rewrite take_drop.
+    rewrite big_sepL_app.
+    iDestruct "HCancA" as "[$ HCancA]".
+    replace (drop (deqIdx' + S d) l) with
+        (take (tId * Pos.to_nat segment_size - (deqIdx' + S d))
+              (drop (deqIdx' + S d) l)
+       ++ drop (tId * Pos.to_nat segment_size - (deqIdx' + S d))
+              (drop (deqIdx' + S d) l)
+        ).
+    2: by rewrite take_drop.
+    rewrite big_sepL_app.
+    iDestruct "HCancA" as "[HCancA $]".
+
+    rewrite big_sepL_later.
+    remember (tId * Pos.to_nat segment_size - (deqIdx' + S d))%nat as len.
+    remember (deqIdx' + S d)%nat as start.
+    assert (start + len <= length l) as HOk.
+    by subst; lia.
+    move: HOk.
+    clear.
+    intros HOk.
+
+    rewrite take_length_le. 2: lia.
+
+    remember (drop start l) as l'.
+    assert (len <= length l')%nat as HOk'.
+    by subst; rewrite drop_length; lia.
+
+    clear HOk Heql' l.
+
+    iInduction len as [|len'] "IH" forall (l' HOk' start); simpl in *.
+    done.
+    destruct l' as [|x l']; first by inversion HOk'. simpl in *.
+    iDestruct "HCancA" as "[HR HCancA]".
+    iDestruct "HIsss" as "[HItIss HIsss]".
+    iDestruct ("IH" with "[] [HCancA] HIsss") as "[$ HHH']".
+    2: {
+      iApply (big_sepL_mono with "HCancA").
+      iIntros (k y HTake) "HV".
+      by rewrite -plus_n_Sm.
+    }
+    by iPureIntro; lia.
+    iDestruct (big_sepL_mono with "HHH'") as "$".
+    { intros. iIntros "HH". by rewrite -plus_n_Sm. }
+    iClear "IH".
+    admit.
+  }
 Abort.
 
 End proof.
