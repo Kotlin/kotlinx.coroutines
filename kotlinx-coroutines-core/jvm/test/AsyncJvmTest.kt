@@ -4,42 +4,32 @@
 
 package kotlinx.coroutines
 
+import kotlin.coroutines.*
 import kotlin.test.*
 
 class AsyncJvmTest : TestBase() {
     // This must be a common test but it fails on JS because of KT-21961
-    @Test
-    fun testAsyncWithFinally() = runTest {
-        expect(1)
+    suspend fun test() {
+        println("test.begin")
+        delay(5000)
+        println("test.end")
+    }
 
-        @Suppress("UNREACHABLE_CODE")
-        val d = async {
-            expect(3)
-            try {
-                yield() // to main, will cancel
-            } finally {
-                expect(6) // will go there on await
-                return@async "Fail" // result will not override cancellation
+    suspend fun proxy() {
+        println("?")
+        test()
+        println("?")
+    }
+
+//    @Test
+    fun main() {
+        println("AA")
+        runBlocking {
+            withTimeout(100) {
+                proxy()
+                println()
             }
-            expectUnreached()
-            "Fail2"
+            println()
         }
-        expect(2)
-        yield() // to async
-        expect(4)
-        check(d.isActive && !d.isCompleted && !d.isCancelled)
-        d.cancel()
-        check(!d.isActive && !d.isCompleted && d.isCancelled)
-        check(!d.isActive && !d.isCompleted && d.isCancelled)
-        expect(5)
-        try {
-            d.await() // awaits
-            expectUnreached() // does not complete normally
-        } catch (e: Throwable) {
-            expect(7)
-            check(e is CancellationException)
-        }
-        check(!d.isActive && d.isCompleted && d.isCancelled)
-        finish(8)
     }
 }

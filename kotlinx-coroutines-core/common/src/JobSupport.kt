@@ -247,8 +247,22 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             if (state.isCancelling) return defaultCancellationException()
             return null
         }
-        // Take either the first real exception (not a cancellation) or just the first exception
-        return exceptions.firstOrNull { it !is CancellationException } ?: exceptions[0]
+        /*
+         * 1) If we have non-CE, use it as root cause
+         * 2) If our original cause was TCE, use *non-original* TCE because of the special nature of TCE
+         *    * It is a CE, so it's not reported by children
+         *    * The first instance (cancellation cause) is created by timeout coroutine and has no meaningful stacktrace
+         *    * The potential second instance is thrown by withTimeout lexical block itself, then it has recovered stacktrace
+         * 3) Just return the very first CE
+         */
+        val firstNonCancellation = exceptions.firstOrNull { it !is CancellationException }
+        if (firstNonCancellation != null) return firstNonCancellation
+        val first = exceptions[0]
+        if (first is TimeoutCancellationException) {
+            val detailedTimeoutException = exceptions.firstOrNull { it !== first && it is TimeoutCancellationException }
+            if (detailedTimeoutException != null) return detailedTimeoutException
+        }
+        return first
     }
 
     private fun addSuppressedExceptions(rootCause: Throwable, exceptions: List<Throwable>) {
@@ -1073,7 +1087,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             get() = _exceptionsHolder.value
             set(value) { _exceptionsHolder.value = value }
 
-        // NotE: cannot be modified when sealed
+        // Note: cannot be modified when sealed
         val isSealed: Boolean get() = exceptionsHolder === SEALED
         val isCancelling: Boolean get() = rootCause != null
         override val isActive: Boolean get() = rootCause == null // !isCancelling

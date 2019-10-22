@@ -512,7 +512,9 @@ public final class kotlinx/coroutines/ThreadPoolDispatcherKt {
 	public static final fun newSingleThreadContext (Ljava/lang/String;)Lkotlinx/coroutines/ExecutorCoroutineDispatcher;
 }
 
-public final class kotlinx/coroutines/TimeoutCancellationException : java/util/concurrent/CancellationException {
+public final class kotlinx/coroutines/TimeoutCancellationException : java/util/concurrent/CancellationException, kotlinx/coroutines/CopyableThrowable {
+	public synthetic fun createCopy ()Ljava/lang/Throwable;
+	public fun createCopy ()Lkotlinx/coroutines/TimeoutCancellationException;
 }
 
 public final class kotlinx/coroutines/TimeoutKt {
