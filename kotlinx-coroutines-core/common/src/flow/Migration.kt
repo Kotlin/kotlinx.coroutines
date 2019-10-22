@@ -127,14 +127,6 @@ public fun <T> Flow<T>.onErrorResume(fallback: Flow<T>): Flow<T> = noImpl()
 public fun <T> Flow<T>.onErrorResumeNext(fallback: Flow<T>): Flow<T> = noImpl()
 
 /**
- * Self-explanatory, the reason of deprecation is "context preservation" property (you can read more in [Flow] documentation)
- * @suppress
- **/
-@Suppress("UNUSED_PARAMETER", "UNUSED", "DeprecatedCallableAddReplaceWith")
-@Deprecated(message = "withContext in flow body is deprecated, use flowOn instead", level = DeprecationLevel.ERROR)
-public fun <T, R> FlowCollector<T>.withContext(context: CoroutineContext, block: suspend () -> R): Unit = noImpl()
-
-/**
  * `subscribe` is Rx-specific API that has no direct match in flows.
  * One can use [launchIn] instead, for example the following:
  * ```
