@@ -21,7 +21,7 @@ public fun verifyStackTrace(e: Throwable, vararg traces: String) {
 }
 
 public fun verifyStackTrace(path: String, e: Throwable) {
-    val resource = Job.javaClass.classLoader.getResourceAsStream("stacktraces/$path.txt")
+    val resource = Job::class.java.classLoader.getResourceAsStream("stacktraces/$path.txt")
     val lines = resource.reader().readLines()
     verifyStackTrace(e, *lines.toTypedArray())
 }
