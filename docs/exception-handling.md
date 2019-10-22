@@ -189,7 +189,7 @@ Parent is not cancelled
 
 <!--- TEST-->
 
-If a coroutine encounters exception other than `CancellationException`, it cancels its parent with that exception. 
+If a coroutine encounters an exception other than `CancellationException`, it cancels its parent with that exception. 
 This behaviour cannot be overridden and is used to provide stable coroutines hierarchies for
 [structured concurrency](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/composing-suspending-functions.md#structured-concurrency-with-async) which do not depend on 
 [CoroutineExceptionHandler] implementation.
