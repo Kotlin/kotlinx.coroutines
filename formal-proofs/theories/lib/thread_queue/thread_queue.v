@@ -2699,6 +2699,19 @@ Proof.
   rewrite -big_sepL_later.
   iDestruct "HEv''" as ">HEv''".
 
+  iDestruct "HRest" as "(HRest' & >%)".
+
+  iDestruct (big_sepL_lookup _ _ O with "HEv''") as %HEl.
+  by apply seq_lookup; lia.
+  rewrite -plus_n_O in HEl.
+
+  iDestruct (big_sepL_lookup_acc _ _ deqIdx' with "HCancA")
+    as "[HXCanc HCancRestore]".
+  eassumption.
+  simpl. iDestruct "HXCanc" as "[HAwak|>HIsSus']".
+  2: by iDestruct (iterator_issued_exclusive with "HPerms HIsSus'") as %[].
+  iDestruct ("HCancRestore" with "[HPerms]") as "HCancA"; first by eauto.
+
   iAssert (▷(([∗ list] i ∈ seq (deqIdx' + S d)
                      (tId * Pos.to_nat segment_size - (deqIdx' + S d)),
             awakening_permit γtq) ∗
@@ -2815,6 +2828,11 @@ Proof.
     done.
   }
 
+  iSplitR "HAwak".
+  2: {
+    iIntros "!> AU !>". wp_pures.
+    iApply ("IH" with "HAwak AU").
+  }
 
 Abort.
 
