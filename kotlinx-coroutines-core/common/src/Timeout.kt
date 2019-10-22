@@ -78,7 +78,7 @@ private fun <U, T: U> setupTimeout(
     return coroutine.startUndispatchedOrReturnIgnoreTimeout(coroutine, block)
 }
 
-private open class TimeoutCoroutine<U, in T: U>(
+private class TimeoutCoroutine<U, in T: U>(
     @JvmField val time: Long,
     uCont: Continuation<U> // unintercepted continuation
 ) : ScopeCoroutine<T>(uCont.context, uCont), Runnable {
@@ -96,13 +96,17 @@ private open class TimeoutCoroutine<U, in T: U>(
 public class TimeoutCancellationException internal constructor(
     message: String,
     @JvmField internal val coroutine: Job?
-) : CancellationException(message) {
+) : CancellationException(message), CopyableThrowable<TimeoutCancellationException> {
     /**
      * Creates a timeout exception with the given message.
      * This constructor is needed for exception stack-traces recovery.
      */
     @Suppress("UNUSED")
     internal constructor(message: String) : this(message, null)
+
+    // message is never null in fact
+    override fun createCopy(): TimeoutCancellationException? =
+        TimeoutCancellationException(message ?: "", coroutine).also { it.initCause(this) }
 }
 
 @Suppress("FunctionName")

@@ -20,3 +20,6 @@ internal actual interface CoroutineStackFrame {
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias StackTraceElement = Any
+
+internal actual fun Throwable.initCause(cause: Throwable) {
+}
