@@ -159,10 +159,17 @@ class TestConcurrentCounterTest {
         val N = 100
 
         repeat(N) {
+
             // lock the PRNG down to a value that always passes
-            val random = createRandom(418_996_022_289_704L, false)
+//            val random = createRandom(418_996_022_289_704L, false)
+
+            // lock the PRNG down to a value that always FAILS
+            val random = createRandom(420_864_149_765_280L, false)
+
             // alternately, have createRandom() use a new seed derived from the system clock
+            // this is useful for exploring various interleavings
 //            val random = createRandom(418_996_022_289_704L, true)
+
             val testCoroutineScope =
                     TestCoroutineScope(
                             random = random,
@@ -171,10 +178,8 @@ class TestConcurrentCounterTest {
             testCoroutineScope.runBlockingTest {
                 pauseDispatcher() {
                     if (deterministicTestOnce(readChannel, writeChannel)) {
-                        if (deterministicTestOnce(readChannel, writeChannel)) {
-                            successes++
-                            println("success!")
-                        }
+                        successes++
+                        println("success!")
                     }
                 }
             }
