@@ -251,8 +251,18 @@ Notation cellDoneO := (3%nat: mnatUR) (only parsing).
 
 Canonical Structure cellTerminalStateO := leibnizO cellTerminalState.
 
-Notation cellStateUR := (prodUR (prodUR (optionUR (exclR unitO)) cellProgressUR)
-                                (optionUR (agreeR cellTerminalStateO))).
+Notation cellInhabitantPassR := (optionUR (exclR unitO)).
+Notation cellInhabitantThreadR := (optionUR (agreeR (prodO gnameO locO))).
+Notation cellInhabitantUR := (prodUR cellInhabitantPassR cellInhabitantThreadR).
+
+Notation cellResumerPassUR := (optionUR (exclR unitO)).
+Notation cellResumerUR := cellResumerPassUR.
+
+Notation cellTerminalStateUR := (optionUR (agreeR cellTerminalStateO)).
+
+Notation cellStateUR := (prodUR (prodUR (prodUR cellInhabitantUR cellResumerUR)
+                                        cellProgressUR)
+                                cellTerminalStateUR).
 
 Notation queueContentsUR := (listUR cellStateUR).
 
@@ -265,7 +275,8 @@ Definition threadQueueΣ : gFunctors := #[GFunctor algebra].
 Instance subG_threadQueueΣ {Σ} : subG threadQueueΣ Σ -> threadQueueG Σ.
 Proof. solve_inG. Qed.
 
-Context `{heapG Σ} `{iArrayG Σ} `{iteratorG Σ} `{threadQueueG Σ} (N: namespace).
+Context `{heapG Σ} `{iArrayG Σ} `{iteratorG Σ} `{threadQueueG Σ} `{parkingG Σ}.
+Variable (N: namespace).
 Notation iProp := (iProp Σ).
 
 Variable segment_size: positive.
@@ -384,13 +395,13 @@ Proof.
 Qed.
 
 Inductive cellState :=
-| cellInhabited
+| cellInhabited: gname -> loc -> cellState
 | cellDone: cellTerminalState -> cellState.
 
 Definition cellStateProgress (k: option cellState): cellProgressUR :=
   match k with
   | None => cellUninitializedO
-  | Some cellInhabited => cellInhabitedO
+  | Some (cellInhabited _ _) => cellInhabitedO
   | Some (cellDone _) => cellDoneO
   end.
 
@@ -401,23 +412,37 @@ Definition still_present (k: option cellState): bool :=
   | _ => true
   end.
 
-Definition cell_state_to_RA (k: option cellState) :=
+Definition cell_state_to_RA (k: option cellState): cellStateUR :=
   match k with
-    | None => (None, cellUninitializedO, None)
+    | None => (ε, cellUninitializedO, None)
     | Some s => match s with
-               | cellInhabited => (Excl' (), cellInhabitedO, None)
+               | cellInhabited γ ℓ =>
+                 (Excl' (), Some (to_agree (γ, ℓ)), None, cellInhabitedO, None)
                | cellDone d => (match d with
                                | cellCancelled => None
                                (* Must give up the token to cancel the cell *)
                                | cellFilled => None
                                (* The cell is never inhabited *)
                                | _ => Excl' ()
-                               end, cellDoneO, Some (to_agree d))
+                               end,
+                               match d with
+                               | cellFilled => None (* True for once *)
+                               | cellCancelled => None (* False *)
+                               | cellAbandoned => None (* False *)
+                               | cellResumed => None (* False *)
+                               end,
+                               match d with
+                               | cellResumed => Excl' ()
+                               | cellAbandoned => Excl' () (* ? *)
+                               | _ => None
+                               end,
+                               cellDoneO,
+                               Some (to_agree d))
                end
   end.
 
 Definition inhabitant_token γtq i :=
-  rendezvous_state γtq i (Excl' (), ε, ε).
+  rendezvous_state γtq i (Excl' (), ε, ε, ε, ε).
 
 Lemma inhabitant_token_exclusive γtq i:
   inhabitant_token γtq i -∗ inhabitant_token γtq i -∗ False.
@@ -432,23 +457,24 @@ Proof.
   rewrite list_lookup_op.
 
   rewrite lookup_app_r. all: rewrite replicate_length. 2: done.
-  rewrite minus_diag. simpl.
-
-  rewrite -Some_op -pair_op Some_valid pair_valid. case.
-  intros HH _. revert HH. rewrite -pair_op pair_valid. case.
-  intros HH _. revert HH. rewrite -Some_op Some_valid.
-  apply exclusive_l. apply excl_exclusive.
+  rewrite minus_diag.
+  compute. repeat case.
 Qed.
 
 Definition deq_front_at_least γtq (n: nat) :=
   own γtq (◯ (ε, (ε, n: mnatUR), ε)).
+
+Definition rendezvous_thread_handle (γtq γt: gname) (th: loc): iProp :=
+  True%I.
 
 Definition cell_resources E R γtq γa γe γd i k :=
   (match k with
    | None => True
    | Some cellState => ∃ ℓ, array_mapsto segment_size γa i ℓ ∗
         match cellState with
-        | cellInhabited => (∃ (th: loc), ℓ ↦ InjLV #th)
+        | cellInhabited γt th => (ℓ ↦ InjLV #th ∗
+                                           thread_doesnt_have_permits γt ∗
+                                           rendezvous_thread_handle γtq γt th)
                             ∗ iterator_issued γe i
                             ∗ cell_cancellation_handle segment_size γa i
         | cellDone cd => match cd with
@@ -456,7 +482,10 @@ Definition cell_resources E R γtq γa γe γd i k :=
                             iterator_issued γe i ∗
                             inhabitant_token γtq i ∗
                             deq_front_at_least γtq (S i) ∗
-                            (iterator_issued γd i ∨ (∃ (th: loc), ℓ ↦ InjLV #th) ∗ E)
+                            (iterator_issued γd i ∨
+                             E ∗ (∃ (th: loc) γt, ℓ ↦ InjLV #th ∗
+                                              thread_doesnt_have_permits γt ∗
+                                              rendezvous_thread_handle γtq γt th))
           | cellCancelled => iterator_issued γe i ∗ (ℓ ↦ CANCELLEDV ∨ ℓ ↦ RESUMEDV)
           | cellFilled => iterator_issued γd i ∗
                           cell_cancellation_handle segment_size γa i ∗
@@ -464,7 +493,7 @@ Definition cell_resources E R γtq γa γe γd i k :=
           | cellResumed => iterator_issued γd i ∗
                           cell_cancellation_handle segment_size γa i ∗
                           iterator_issued γe i ∗
-                           (inhabitant_token γtq i ∨ ℓ ↦ RESUMEDV ∗ R)
+                          (inhabitant_token γtq i ∨ ℓ ↦ RESUMEDV ∗ R)
           end
         end
   end)%I.
@@ -486,14 +515,20 @@ Definition cell_list_contents_auth_ra l (deqFront: nat) :=
   (length l, ((deqFront + count_matching (fun b => not (still_present b)) (drop deqFront l))%nat,
               deqFront: mnatUR), map cell_state_to_RA l).
 
+Definition writer_stage_0 (o: option cellState): bool :=
+  match o with
+    | Some (cellDone cellResumed) => false
+    | Some (cellDone cellFilled) => false
+    | Some (cellDone cellAbandoned) => false
+    | _ => true
+  end.
+
 Definition cell_list_contents (S R: iProp) γa γtq γe γd
            (l: list (option cellState)) (deqFront: nat): iProp :=
   (let nEnq := count_matching still_present l in
    let nDeq := count_matching still_present (take deqFront l) in
    ⌜deqFront <= length l⌝ ∗
-   ([∗ list] x ∈ drop deqFront l, ⌜x = Some (cellDone cellCancelled) ∨
-                                   x = Some cellInhabited ∨
-                                   x = None⌝) ∗
+   ([∗ list] x ∈ drop deqFront l, ⌜writer_stage_0 x = true⌝) ∗
    own γtq (● cell_list_contents_auth_ra l deqFront) ∗
        ([∗ list] s ∈ replicate nEnq S, s) ∗ ([∗ list] r ∈ replicate nDeq R, r) ∗
        ([∗ list] i ↦ k ∈ l, cell_resources S R γtq γa γe γd i k))%I.
@@ -879,17 +914,15 @@ Proof.
     simpl in *. lia.
   }
   iAssert (⌜forall j, (deqFront <= j < length l)%nat ->
-                l !! j = Some None \/
-                l !! j = Some (Some cellInhabited) \/
-                l !! j = Some (Some (cellDone cellCancelled))⌝)%I with "[-]" as %HH.
+                exists v, l !! j = Some v /\ writer_stage_0 v = true⌝)%I with "[-]" as %HH.
   {
     rewrite big_sepL_forall. iIntros (j [HB1 HB2]).
     apply lookup_lt_is_Some_2 in HB2. destruct HB2 as [v HB2].
     iSpecialize ("HNotDone" $! (j-deqFront)%nat v).
     rewrite lookup_drop. replace (deqFront + (_ - _))%nat with j by lia.
-    iDestruct ("HNotDone" with "[]") as "HH"; first done.
+    iDestruct ("HNotDone" with "[]") as "%"; first done.
     rewrite HB2.
-    iDestruct "HH" as "[->|[->|->]]"; eauto.
+    iExists _. eauto.
   }
   iAssert ([∗ list] k ↦ y ∈ drop deqFront l, if (decide (not (still_present y)))
                                              then
@@ -901,10 +934,12 @@ Proof.
     iDestruct (big_sepL_mono with "HCancAwaks") as "$".
     iIntros (k v HEv) "HV".
     rewrite lookup_drop in HEv.
-    destruct (HH (deqFront + k)%nat) as [HE|[HE|HE]]; simplify_eq; simpl in *;
-      eauto.
+    destruct (HH (deqFront + k)%nat) as [? [HEq HSt]]; simplify_eq; simpl in *.
     { split; try lia. apply lookup_lt_is_Some. by eauto. }
-    iDestruct "HV" as "[V|V]"; by eauto.
+    destruct v as [c|]; simpl in *; eauto.
+    destruct c as [|c]; simpl in *; eauto.
+    destruct c; simpl in *; inversion HSt.
+    by iDestruct "HV" as "[V|V]"; eauto.
   }
   clear HH.
   iAssert ([∗ list] y ∈ drop deqFront l,
