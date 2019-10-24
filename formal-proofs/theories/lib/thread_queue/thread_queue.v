@@ -833,6 +833,7 @@ Definition is_thread_queue (S R: iProp) γa γtq γe γd eℓ epℓ dℓ dpℓ l
                           awakening_permit γtq ∨ iterator_issued γd i
                         | _ => True
                         end) ∗
+   ⌜not (l !! deqFront = Some (Some (cellDone cellCancelled)))⌝ ∧
    ∃ (enqIdx deqIdx: nat),
    iterator_points_to segment_size γa γe eℓ epℓ enqIdx ∗
    iterator_points_to segment_size γa γd dℓ dpℓ deqIdx ∗
@@ -2394,17 +2395,21 @@ Proof.
 Qed.
 
 Theorem increase_deqIdx E R γa γtq γe γd (eℓ epℓ dℓ dpℓ: loc):
-  ▷ awakening_permit γtq -∗ ∀ Φ,
+  ▷ awakening_permit γtq -∗ ∀ (Φ : val -> iPropSI Σ),
   AU << ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>
   @ ⊤, ↑N
-  << ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront, COMM Φ #() >> -∗
+  << ∃ (ix: nat) (ℓ: loc),
+          ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
+            iterator_issued γd ix ∗
+            segment_location γa (ix `div` Pos.to_nat segment_size)%nat ℓ,
+     COMM Φ (#ℓ, #(ix `rem` Pos.to_nat segment_size))%V >> -∗
   WP ((iterator_step_skipping_cancelled segment_size) #dpℓ) #dℓ {{ v, Φ v }}.
 Proof.
   iIntros "HAwaken" (Φ) "AU". iLöb as "IH".
 
   wp_lam. wp_pures. wp_bind (!_)%E.
 
-  iMod "AU" as (? ?) "[(HInfArr & HListContents & HCancA & HRest) [HClose _]]".
+  iMod "AU" as (? ?) "[(HInfArr & HListContents & HCancA & >% & HRest) [HClose _]]".
   iDestruct "HRest" as (? deqIdx) "(HEnqIt & >HDeqIt & HRest)".
   iMod (read_iterator with "HDeqIt") as
       (hId hℓ Hhl) "(Hpℓ & #HSegLoc & #HCounter & HRestore)".
@@ -2412,13 +2417,14 @@ Proof.
   iMod ("HClose" with "[HInfArr HListContents HEnqIt HCancA HRest Hpℓ HRestore]") as "AU".
   { iFrame "HInfArr HListContents HCancA".
     iDestruct ("HRestore" with "Hpℓ") as "HIterator".
+    iSplitR; first by iPureIntro.
     iExists _, deqIdx. by iFrame.
   }
 
   iModIntro. wp_pures.
   wp_bind (FAA _ _).
   awp_apply iterator_value_faa. iApply (aacc_aupd_abort with "AU"); first done.
-  iIntros (? deqFront) "(HInfArr & HListContents & HCancA & HRest)".
+  iIntros (? deqFront) "(HInfArr & HListContents & HCancA & >% & HRest)".
   iDestruct "HRest" as (? deqIdx') "(HEnqIt & >HDeqIt & >HRest)".
   iDestruct (iterator_points_to_at_least with "HCounter [HDeqIt]") as %HLet.
   by iDestruct "HDeqIt" as "[$ _]".
@@ -2435,6 +2441,7 @@ Proof.
   iAaccIntro with "HDeqIt".
   { iIntros "HIsIter". iFrame "HInfArr HListContents HCancA".
     iSplitL "HEnqIt HRest HRest' HIsIter".
+    iSplitR; first done.
     by eauto with iFrame.
     by iIntros "!> $". }
   iIntros "[HIsIter HPerms]".
@@ -2449,7 +2456,8 @@ Proof.
 
   iFrame "HInfArr HListContents HCancA".
   iSplitR "HPerms".
-  { iExists _, _. iFrame.
+  { iSplitR; first done.
+    iExists _, _. iFrame.
     rewrite seq_add big_sepL_app.
     iDestruct "HRest'" as "([% %] & %)".
     simpl.
@@ -2485,20 +2493,29 @@ Proof.
 
   iDestruct "HH" as "[(% & <-)|(% & % & HCanc)]".
   {
+    (* deqIdx' <= the head id * segment_size *)
     assert (hId = deqIdx' `div` Pos.to_nat segment_size)%nat as ->.
     { eapply find_segment_id_bound; try lia. done. }
-    iRight. iIntros "!> HΦ !>". wp_pures. rewrite bool_decide_eq_true_2 //.
+    (* This means that the head is the segment that we needed all along. *)
+    iRight.
+    iExists _, _. iFrame "HPerms HSegLoc'".
+    iIntros "!> HΦ !>". wp_pures. rewrite bool_decide_eq_true_2 //.
     wp_pures.
     (* I need to provide proper return predicates. *)
-    admit.
+
+    done.
   }
 
+  (* the head id * segment_size < deqIdx' *)
   destruct (decide (tId = (deqIdx' `div` Pos.to_nat segment_size)%nat)).
   {
-    iRight. iIntros "!> HΦ !>". wp_pures. rewrite bool_decide_eq_true_2.
+    (* But is the segment id still what we were looking for? *)
+    iRight.
+    iExists _, _. subst. iFrame "HPerms HSegLoc'".
+    iIntros "!> HΦ !>". wp_pures. rewrite bool_decide_eq_true_2.
     2: by subst.
     wp_pures.
-    admit.
+    done.
   }
 
   iLeft. iIntros "!> AU !>". wp_pures. rewrite bool_decide_eq_false_2.
@@ -2522,7 +2539,7 @@ Proof.
 
   wp_pures. rewrite -Nat2Z.inj_mul.
   awp_apply increase_value_to_spec. iApply (aacc_aupd_abort with "AU"); first done.
-  iIntros (l ?) "(HInfArr & HListContents & HCancA & HRest)".
+  iIntros (l newDeqFront) "(HInfArr & HListContents & HCancA & >% & HRest)".
   iDestruct "HRest" as (? deqIdx'') "(HEnqIt & >HDeqIt & HRest)".
   iDestruct (iterator_points_to_at_least with "HCounter [HDeqIt]") as "%".
   by iDestruct "HDeqIt" as "[$ _]".
@@ -2532,6 +2549,7 @@ Proof.
     iFrame "HPerms".
     iIntros "HDeqCounter !>". iSplitL.
     * iFrame "HInfArr HListContents HCancA".
+      iSplitR; first done.
       iExists _, _. iFrame "HEnqIt HRest". by iFrame.
     * by iIntros "$".
   }
@@ -2619,6 +2637,7 @@ Proof.
     }
     iFrame "HListContents".
     repeat rewrite -big_sepL_later. iFrame "HCanc'".
+    iSplitR; first done.
     iExists _, _. iFrame.
     by iPureIntro.
   }
@@ -2834,6 +2853,47 @@ Proof.
     iApply ("IH" with "HAwak AU").
   }
 
-Abort.
+  iAssert (⌜forall k, (deqIdx' <= k < tId * Pos.to_nat segment_size)%nat ->
+                 l !! k = Some (Some (cellDone cellCancelled))⌝)%I as %HCanc.
+  {
+    repeat rewrite big_sepL_forall.
+    iDestruct "HEv''" as %HCanc.
+    iPureIntro.
+    intros k [HK1 HK2].
+    apply nat_le_sum in HK1. destruct HK1 as (v & ->).
+    eapply HCanc.
+    apply seq_lookup.
+    lia.
+  }
+
+  assert (tId * Pos.to_nat segment_size <= newDeqFront)%nat.
+  {
+    destruct (decide (tId * Pos.to_nat segment_size <= newDeqFront)%nat); auto.
+    exfalso.
+    assert (l !! newDeqFront = Some (Some (cellDone cellCancelled)) -> False) as HH
+        by assumption.
+    apply HH.
+    apply HCanc.
+    lia.
+  }
+  iFrame "HListContents".
+  iSplitR; first done.
+  iExists _, _. iFrame "HEnqIt HDeqCounter".
+  iSplitL "HDeqLoc".
+  {
+    iDestruct "HDeqLoc" as (? ? ?) "[H1 H2]".
+    iExists _; iSplitR; first by iPureIntro; lia.
+    iExists _; by iFrame.
+  }
+  iSplitL.
+  2: by iPureIntro; lia.
+
+  iDestruct "HRest'" as ">HRest'".
+  iCombine "HRest' HAwaks" as "HAwaks".
+  rewrite -big_sepL_app seq_app.
+  2: lia.
+  done.
+
+Qed.
 
 End proof.
