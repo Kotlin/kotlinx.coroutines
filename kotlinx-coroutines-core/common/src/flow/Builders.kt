@@ -305,7 +305,7 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  *     }
  *     api.register(callback)
  *     // Suspend until either onCompleted or external cancellation are invoked
- *     await { api.unregister(callback) }
+ *     awaitClose { api.unregister(callback) }
  * }
  * ```
  */

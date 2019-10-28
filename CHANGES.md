@@ -1,9 +1,10 @@
 # Change log for kotlinx.coroutines
 
 ## Version 1.3.0-M2
+
  * Kotlin updated to 1.3.40.
  * `Flow` exception transparency concept.
- * New Flow declarative `Flow` operators: `onCompletion`, `catch`, `retryWhen`, `launchIn` (#1263).
+ * New declarative `Flow` operators: `onCompletion`, `catch`, `retryWhen`, `launchIn`. `onError*` operators are deprecated in favour of `catch`. (#1263)
  * `Publisher.asFlow` is integrated with `buffer` operator.
  * `Publisher.openSubscription` default request size is `1` instead of `0` (#1267).
 

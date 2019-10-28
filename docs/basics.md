@@ -326,7 +326,7 @@ World!
 
 
 But what if the extracted function contains a coroutine builder which is invoked on the current scope?
-In this case `suspend` modifier on the extracted function is not enough. Making `doWorld` extension
+In this case `suspend` modifier on the extracted function is not enough. Making `doWorld` an extension
 method on `CoroutineScope` is one of the solutions, but it may not always be applicable as it does not make API clearer.
 The idiomatic solution is to have either an explicit `CoroutineScope` as a field in a class containing the target function
 or an implicit one when the outer class implements `CoroutineScope`.
