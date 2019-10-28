@@ -10,6 +10,76 @@ import kotlin.test.*
 
 class ChannelBuildersFlowTest : TestBase() {
     @Test
+    fun testChannelConsumeAsFlow() = runTest {
+        val channel = produce {
+           repeat(10) {
+               send(it + 1)
+           }
+        }
+        val flow = channel.consumeAsFlow()
+        assertEquals(55, flow.sum())
+        assertFailsWith<IllegalStateException> { flow.collect() }
+    }
+
+    @Test
+    fun testConsumeAsFlowCancellation() = runTest {
+        val channel = produce(NonCancellable) { // otherwise failure will cancel scope as well
+            repeat(10) {
+                send(it + 1)
+            }
+            throw TestException()
+        }
+        val flow = channel.consumeAsFlow()
+        assertEquals(15, flow.take(5).sum())
+        // the channel should have been canceled, even though took only 5 elements
+        assertTrue(channel.isClosedForReceive)
+        assertFailsWith<IllegalStateException> { flow.collect() }
+    }
+
+    @Test
+    fun testConsumeAsFlowException() = runTest {
+        val channel = produce(NonCancellable) { // otherwise failure will cancel scope as well
+            repeat(10) {
+                send(it + 1)
+            }
+            throw TestException()
+        }
+        val flow = channel.consumeAsFlow()
+        assertFailsWith<TestException> { flow.sum() }
+        assertFailsWith<IllegalStateException> { flow.collect() }
+    }
+
+    @Test
+    fun testConsumeAsFlowProduceFusing() = runTest {
+        val channel = produce { send("OK") }
+        val flow = channel.consumeAsFlow()
+        assertSame(channel, flow.produceIn(this))
+        assertFailsWith<IllegalStateException> { flow.produceIn(this) }
+        channel.cancel()
+    }
+
+    @Test
+    fun testConsumeAsFlowProduceBuffered() = runTest {
+        expect(1)
+        val channel = produce {
+            expect(3)
+            (1..10).forEach { send(it) }
+            expect(4) // produces everything because of buffering
+        }
+        val flow = channel.consumeAsFlow().buffer() // request buffering
+        expect(2) // producer is not running yet
+        val result = flow.produceIn(this)
+        // run the flow pipeline until it consumes everything into buffer
+        while (!channel.isClosedForReceive) yield()
+        expect(5) // produced had done running (buffered stuff)
+        assertNotSame(channel, result)
+        assertFailsWith<IllegalStateException> { flow.produceIn(this) }
+        // check that we received everything
+        assertEquals((1..10).toList(), result.toList())
+        finish(6)
+    }
+
+    @Test
     fun testBroadcastChannelAsFlow() = runTest {
         val channel = broadcast {
            repeat(10) {

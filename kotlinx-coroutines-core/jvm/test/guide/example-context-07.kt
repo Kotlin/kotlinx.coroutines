@@ -8,7 +8,6 @@ package kotlinx.coroutines.guide.context07
 import kotlinx.coroutines.*
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     // launch a coroutine to process some kind of incoming request
     val request = launch {
         repeat(3) { i -> // launch a few children jobs
@@ -21,5 +20,4 @@ fun main() = runBlocking<Unit> {
     }
     request.join() // wait for completion of the request, including all its children
     println("Now processing of the request is complete")
-//sampleEnd
 }

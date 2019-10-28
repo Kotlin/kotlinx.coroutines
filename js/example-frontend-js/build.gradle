@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 apply plugin: 'kotlin-dce-js'
@@ -18,7 +18,7 @@ compileKotlin2Js {
 task bundle(type: NpmTask, dependsOn: [npmInstall, runDceKotlinJs]) {
     inputs.files(fileTree("$buildDir/kotlin-js-min/main"))
     inputs.files(fileTree(file("src/main/web")))
-    inputs.file("webpack.config.js")
+    inputs.file("npm/webpack.config.js")
     outputs.dir("$buildDir/dist")
     args = ["run", "bundle"]
 }

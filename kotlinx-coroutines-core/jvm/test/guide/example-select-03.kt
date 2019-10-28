@@ -20,7 +20,6 @@ fun CoroutineScope.produceNumbers(side: SendChannel<Int>) = produce<Int> {
 }
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     val side = Channel<Int>() // allocate side channel
     launch { // this is a very fast consumer for the side channel
         side.consumeEach { println("Side channel has $it") }
@@ -31,5 +30,4 @@ fun main() = runBlocking<Unit> {
     }
     println("Done consuming")
     coroutineContext.cancelChildren()  
-//sampleEnd      
 }

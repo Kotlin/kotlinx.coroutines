@@ -31,7 +31,7 @@ internal inline fun currentTimeMillis(): Long =
     timeSource?.currentTimeMillis() ?: System.currentTimeMillis()
 
 @InlineOnly
-internal inline fun nanoTime(): Long =
+internal actual inline fun nanoTime(): Long =
     timeSource?.nanoTime() ?: System.nanoTime()
 
 @InlineOnly

@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 /**
  * Scope for [actor][GlobalScope.actor] coroutine builder.
@@ -40,7 +41,7 @@ public interface ActorScope<E> : CoroutineScope, ReceiveChannel<E> {
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
- * with corresponding [coroutineContext] element.
+ * with corresponding [context] element.
  *
  * By default, the coroutine is immediately scheduled for execution.
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
@@ -143,11 +144,14 @@ private open class ActorCoroutine<E>(
 private class LazyActorCoroutine<E>(
     parentContext: CoroutineContext,
     channel: Channel<E>,
-    private val block: suspend ActorScope<E>.() -> Unit
+    block: suspend ActorScope<E>.() -> Unit
 ) : ActorCoroutine<E>(parentContext, channel, active = false),
     SelectClause2<E, SendChannel<E>> {
+
+    private var continuation = block.createCoroutineUnintercepted(this, this)
+
     override fun onStart() {
-        block.startCoroutineCancellable(this, this)
+        continuation.startCoroutineCancellable(this)
     }
 
     override suspend fun send(element: E) {

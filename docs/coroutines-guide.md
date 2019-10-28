@@ -15,18 +15,18 @@ In order to use coroutines as well as follow the examples in this guide, you nee
 
 ## Table of contents
 
-* [Coroutine basics](basics.md)
-* [Cancellation and timeouts](cancellation-and-timeouts.md)
-* [Composing suspending functions](composing-suspending-functions.md)
-* [Coroutine context and dispatchers](coroutine-context-and-dispatchers.md)
-* [Exception handling and supervision](exception-handling.md)
-* [Channels (experimental)](channels.md)
-* [Shared mutable state and concurrency](shared-mutable-state-and-concurrency.md)
-* [Select expression (experimental)](select-expression.md)
+* [Basics](basics.md)
+* [Cancellation and Timeouts](cancellation-and-timeouts.md)
+* [Composing Suspending Functions](composing-suspending-functions.md)
+* [Coroutine Context and Dispatchers](coroutine-context-and-dispatchers.md)
+* [Asynchronous Flow](flow.md)
+* [Channels](channels.md)
+* [Exception Handling and Supervision](exception-handling.md)
+* [Shared Mutable State and Concurrency](shared-mutable-state-and-concurrency.md)
+* [Select Expression (experimental)](select-expression.md)
 
 ## Additional references
 
 * [Guide to UI programming with coroutines](../ui/coroutines-guide-ui.md)
-* [Guide to reactive streams with coroutines](../reactive/coroutines-guide-reactive.md)
 * [Coroutines design document (KEEP)](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
 * [Full kotlinx.coroutines API reference](https://kotlin.github.io/kotlinx.coroutines)

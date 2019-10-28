@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.intrinsics
@@ -85,7 +85,7 @@ private inline fun <T> startDirect(completion: Continuation<T>, block: (Continua
  * First, this function initializes the parent job from the `parentContext` of this coroutine that was passed to it
  * during construction. Second, it starts the coroutine using [startCoroutineUninterceptedOrReturn].
  */
-internal fun <T, R> AbstractCoroutine<T>.startUndispatchedOrReturn(receiver: R, block: suspend R.() -> T): Any? {
+internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturn(receiver: R, block: suspend R.() -> T): Any? {
     initParentJob()
     return undispatchedResult({ true }) {
         block.startCoroutineUninterceptedOrReturn(receiver, this)
@@ -95,7 +95,7 @@ internal fun <T, R> AbstractCoroutine<T>.startUndispatchedOrReturn(receiver: R, 
 /**
  * Same as [startUndispatchedOrReturn], but ignores [TimeoutCancellationException] on fast-path.
  */
-internal fun <T, R> AbstractCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
+internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
     receiver: R, block: suspend R.() -> T): Any? {
     initParentJob()
     return undispatchedResult({ e -> !(e is TimeoutCancellationException && e.coroutine === this) }) {
@@ -103,7 +103,7 @@ internal fun <T, R> AbstractCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
     }
 }
 
-private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
+private inline fun <T> ScopeCoroutine<T>.undispatchedResult(
     shouldThrow: (Throwable) -> Boolean,
     startBlock: () -> Any?
 ): Any? {
@@ -112,35 +112,28 @@ private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
     } catch (e: Throwable) {
         CompletedExceptionally(e)
     }
-
     /*
      * We're trying to complete our undispatched block here and have three code-paths:
-     * 1) Suspended.
-     *
-     * Or we are completing our block (and its job).
-     * 2) If we can't complete it, we suspend, probably waiting for children (2)
-     * 3) If we have successfully completed the whole coroutine here in an undispatched manner,
-     *    we should decide which result to return. We have two options: either return proposed update or actual final state.
-     *    But if fact returning proposed value is not an option, otherwise we will ignore possible cancellation or child failure.
+     * (1) Coroutine is suspended.
+     * Otherwise, coroutine had returned result, so we are completing our block (and its job).
+     * (2) If we can't complete it or started waiting for children, we suspend.
+     * (3) If we have successfully completed the coroutine state machine here,
+     *     then we take the actual final state of the coroutine from makeCompletingOnce and return it.
      *
      * shouldThrow parameter is a special code path for timeout coroutine:
      * If timeout is exceeded, but withTimeout() block was not suspended, we would like to return block value,
      * not a timeout exception.
      */
-    return when {
-        result === COROUTINE_SUSPENDED -> COROUTINE_SUSPENDED
-        makeCompletingOnce(result, MODE_IGNORE) -> {
-            val state = state
-            if (state is CompletedExceptionally) {
-                when {
-                    shouldThrow(state.cause) -> throw tryRecover(state.cause)
-                    result is CompletedExceptionally -> throw tryRecover(result.cause)
-                    else -> result
-                }
-            } else {
-                state.unboxState()
-            }
+    if (result === COROUTINE_SUSPENDED) return COROUTINE_SUSPENDED // (1)
+    val state = makeCompletingOnce(result)
+    if (state === COMPLETING_WAITING_CHILDREN) return COROUTINE_SUSPENDED // (2)
+    return if (state is CompletedExceptionally) { // (3)
+        when {
+            shouldThrow(state.cause) -> throw recoverStackTrace(state.cause, uCont)
+            result is CompletedExceptionally -> throw recoverStackTrace(result.cause, uCont)
+            else -> result
         }
-        else -> COROUTINE_SUSPENDED
+    } else {
+        state.unboxState()
     }
 }

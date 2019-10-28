@@ -35,12 +35,10 @@ suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<St
 }
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     val fizz = fizz()
     val buzz = buzz()
     repeat(7) {
         selectFizzBuzz(fizz, buzz)
     }
     coroutineContext.cancelChildren() // cancel fizz & buzz coroutines
-//sampleEnd        
 }

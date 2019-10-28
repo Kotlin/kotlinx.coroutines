@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -9,9 +9,22 @@ import kotlinx.coroutines.scheduling.*
 import org.junit.*
 import java.util.*
 import java.util.concurrent.atomic.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 private val VERBOSE = systemProp("test.verbose", false)
+
+/**
+ * Is `true` when running in a nightly stress test mode.
+ */
+public actual val isStressTest = System.getProperty("stressTest")?.toBoolean() ?: false
+
+public val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
+
+/**
+ * Multiply various constants in stress tests by this factor, so that they run longer during nightly stress test.
+ */
+public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
 
 /**
  * Base class for tests, so that tests for predictable scheduling of actions in multiple coroutines sharing a single
@@ -33,18 +46,6 @@ private val VERBOSE = systemProp("test.verbose", false)
  * ```
  */
 public actual open class TestBase actual constructor() {
-    /**
-     * Is `true` when running in a nightly stress test mode.
-     */
-    public actual val isStressTest = System.getProperty("stressTest") != null
-
-    public val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
-
-    /**
-     * Multiply various constants in stress tests by this factor, so that they run longer during nightly stress test.
-     */
-    public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
-
     private var actionIndex = AtomicInteger()
     private var finished = AtomicBoolean()
     private var error = AtomicReference<Throwable>()
@@ -143,7 +144,7 @@ public actual open class TestBase actual constructor() {
         // onCompletion should not throw exceptions before it finishes all cleanup, so that other tests always
         // start in a clear, restored state
         if (actionIndex.get() != 0 && !finished.get()) {
-            makeError("Expecting that 'finish(...)' was invoked, but it was not")
+            makeError("Expecting that 'finish(${actionIndex.get() + 1})' was invoked, but it was not")
         }
         // Shutdown all thread pools
         shutdownPoolsAfterTest()
@@ -213,4 +214,6 @@ public actual open class TestBase actual constructor() {
         assertTrue(result.exceptionOrNull() is T, "Expected ${T::class}, but had $result")
         return result.exceptionOrNull()!! as T
     }
+
+    protected suspend fun currentDispatcher() = coroutineContext[ContinuationInterceptor]!!
 }

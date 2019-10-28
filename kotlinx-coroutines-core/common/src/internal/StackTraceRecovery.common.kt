@@ -18,6 +18,11 @@ import kotlin.coroutines.*
 internal expect fun <E: Throwable> recoverStackTrace(exception: E, continuation: Continuation<*>): E
 
 /**
+ * initCause on JVM, nop on other platforms
+ */
+internal expect fun Throwable.initCause(cause: Throwable)
+
+/**
  * Tries to recover stacktrace for given [exception]. Used in non-suspendable points of awaiting.
  * Stacktrace recovery tries to instantiate exception of given type with original exception as a cause.
  * Wrapping exception will have proper stacktrace as it's instantiated in the right context.
@@ -42,9 +47,3 @@ internal expect interface CoroutineStackFrame {
     public val callerFrame: CoroutineStackFrame?
     public fun getStackTraceElement(): StackTraceElement?
 }
-
-/**
- * Marker that indicates that stacktrace of the exception should not be recovered.
- * Currently internal, but may become public in the future
- */
-internal interface NonRecoverableThrowable

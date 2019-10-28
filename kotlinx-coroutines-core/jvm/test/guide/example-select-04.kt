@@ -20,7 +20,6 @@ fun CoroutineScope.asyncStringsList(): List<Deferred<String>> {
 }
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     val list = asyncStringsList()
     val result = select<String> {
         list.withIndex().forEach { (index, deferred) ->
@@ -32,5 +31,4 @@ fun main() = runBlocking<Unit> {
     println(result)
     val countActive = list.count { it.isActive }
     println("$countActive coroutines are still active")
-//sampleEnd
 }

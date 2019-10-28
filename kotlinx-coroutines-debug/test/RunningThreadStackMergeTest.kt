@@ -147,7 +147,7 @@ class RunningThreadStackMergeTest : DebugTestBase() {
         verifyDump("Coroutine \"coroutine#1\":BlockingCoroutine{Active}@4bcd176c, state: RUNNING\n" +
                 "\tat java.lang.Thread.getStackTrace(Thread.java:1552)\n" +
                 "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.enhanceStackTraceWithThreadDump(DebugProbesImpl.kt:147)\n" +
-                "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.dumpCoroutines(DebugProbesImpl.kt:122)\n" +
+                "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.dumpCoroutinesSynchronized(DebugProbesImpl.kt:122)\n" +
                 "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.dumpCoroutines(DebugProbesImpl.kt:109)\n" +
                 "\tat kotlinx.coroutines.debug.DebugProbes.dumpCoroutines(DebugProbes.kt:122)\n" +
                 "\tat kotlinx.coroutines.debug.StracktraceUtilsKt.verifyDump(StracktraceUtils.kt)\n" +
@@ -166,5 +166,16 @@ class RunningThreadStackMergeTest : DebugTestBase() {
     private suspend fun nestedSuspensionPoint() {
         yield()
         assertTrue(true)
+    }
+
+    @Test
+    fun testActiveThread() = runBlocking<Unit> {
+        launchCoroutine()
+        awaitCoroutineStarted()
+        val info = DebugProbes.dumpCoroutinesInfo().find { it.state == State.RUNNING }
+        assertNotNull(info)
+        @Suppress("INVISIBLE_MEMBER") // IDEA bug
+        assertNotNull(info.lastObservedThread)
+        coroutineBlocker.await()
     }
 }

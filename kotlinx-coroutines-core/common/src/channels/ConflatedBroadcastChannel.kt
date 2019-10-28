@@ -273,9 +273,9 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         }
 
     private fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend (SendChannel<E>) -> R) {
-        if (!select.trySelect(null)) return
+        if (!select.trySelect()) return
         offerInternal(element)?.let {
-            select.resumeSelectCancellableWithException(it.sendException)
+            select.resumeSelectWithException(it.sendException)
             return
         }
         block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
@@ -284,10 +284,12 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>
     ) : ConflatedChannel<E>(), ReceiveChannel<E> {
-        override fun cancelInternal(cause: Throwable?): Boolean =
-            close(cause).also { closed ->
-                if (closed) broadcastChannel.closeSubscriber(this)
+
+        override fun onCancelIdempotent(wasClosed: Boolean) {
+            if (wasClosed) {
+                broadcastChannel.closeSubscriber(this)
             }
+        }
 
         public override fun offerInternal(element: E): Any = super.offerInternal(element)
     }

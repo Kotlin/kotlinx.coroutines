@@ -49,7 +49,6 @@ public sealed class HandlerDispatcher : MainCoroutineDispatcher(), Delay {
     public abstract override val immediate: HandlerDispatcher
 }
 
-@Keep
 internal class AndroidDispatcherFactory : MainDispatcherFactory {
 
     override fun createDispatcher(allFactories: List<MainDispatcherFactory>) =

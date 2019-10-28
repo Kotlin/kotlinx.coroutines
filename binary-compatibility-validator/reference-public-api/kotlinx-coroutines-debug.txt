@@ -1,13 +1,9 @@
 public final class kotlinx/coroutines/debug/CoroutineInfo {
-	public final fun component1 ()Lkotlin/coroutines/CoroutineContext;
-	public final fun copy (Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;J)Lkotlinx/coroutines/debug/CoroutineInfo;
-	public static synthetic fun copy$default (Lkotlinx/coroutines/debug/CoroutineInfo;Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;JILjava/lang/Object;)Lkotlinx/coroutines/debug/CoroutineInfo;
-	public fun equals (Ljava/lang/Object;)Z
+	public final fun copy ()Lkotlinx/coroutines/debug/CoroutineInfo;
 	public final fun getContext ()Lkotlin/coroutines/CoroutineContext;
 	public final fun getCreationStackTrace ()Ljava/util/List;
 	public final fun getJob ()Lkotlinx/coroutines/Job;
 	public final fun getState ()Lkotlinx/coroutines/debug/State;
-	public fun hashCode ()I
 	public final fun lastObservedStackTrace ()Ljava/util/List;
 	public fun toString ()Ljava/lang/String;
 }

@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 /**
  * Broadcasts all elements of the channel.
@@ -44,7 +45,7 @@ fun <E> ReceiveChannel<E>.broadcast(
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
- * with corresponding [coroutineContext] element.
+ * with corresponding [context] element.
  *
  * Uncaught exceptions in this coroutine close the channel with this exception as a cause and
  * the resulting channel becomes _failed_, so that any attempt to receive from such a channel throws exception.
@@ -96,17 +97,18 @@ private open class BroadcastCoroutine<E>(
         get() = this
 
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
-    final override fun cancel(cause: Throwable?): Boolean =
-        cancelInternal(cause)
-
-    final override fun cancel(cause: CancellationException?) {
-        cancelInternal(cause)
+    final override fun cancel(cause: Throwable?): Boolean {
+        cancelInternal(cause ?: defaultCancellationException())
+        return true
     }
 
-    override fun cancelInternal(cause: Throwable?): Boolean {
-        _channel.cancel(cause?.toCancellationException()) // cancel the channel
+    final override fun cancel(cause: CancellationException?) {
+        cancelInternal(cause ?: defaultCancellationException())
+    }
+
+    override fun cancelInternal(cause: Throwable) {
+        _channel.cancel(cause.toCancellationException()) // cancel the channel
         cancelCoroutine(cause) // cancel the job
-        return true // does not matter - result is used in DEPRECATED functions only
     }
 
     override fun onCompleted(value: Unit) {
@@ -124,7 +126,7 @@ private class LazyBroadcastCoroutine<E>(
     channel: BroadcastChannel<E>,
     block: suspend ProducerScope<E>.() -> Unit
 ) : BroadcastCoroutine<E>(parentContext, channel, active = false) {
-    private var block: (suspend ProducerScope<E>.() -> Unit)? = block
+    private val continuation = block.createCoroutineUnintercepted(this, this)
 
     override fun openSubscription(): ReceiveChannel<E> {
         // open subscription _first_
@@ -135,8 +137,6 @@ private class LazyBroadcastCoroutine<E>(
     }
 
     override fun onStart() {
-        val block = checkNotNull(this.block) { "Already started" }
-        this.block = null
-        block.startCoroutineCancellable(this, this)
+        continuation.startCoroutineCancellable(this)
     }
 }

@@ -7,7 +7,7 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-class SingleTest : TestBase() {
+class SingleTest : TestBase() { 
 
     @Test
     fun testSingle() = runTest {

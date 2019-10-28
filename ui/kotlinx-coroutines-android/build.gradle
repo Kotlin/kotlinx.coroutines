@@ -4,6 +4,17 @@
 
 repositories {
     google()
+    // TODO Remove once R8 is updated to a 1.6.x version.
+    maven {
+        url "http://storage.googleapis.com/r8-releases/raw/master"
+        metadataSources {
+            artifact()
+        }
+    }
+}
+
+configurations {
+    r8
 }
 
 dependencies {
@@ -12,6 +23,80 @@ dependencies {
 
     testImplementation 'com.google.android:android:4.1.1.4'
     testImplementation 'org.robolectric:robolectric:4.0-alpha-3'
+    testImplementation 'org.smali:baksmali:2.2.7'
+
+    // TODO Replace with a 1.6.x version once released to maven.google.com.
+    r8 'com.android.tools:r8:a7ce65837bec81c62261bf0adac73d9c09d32af2'
+}
+
+class RunR8Task extends JavaExec {
+
+    @OutputDirectory
+    File outputDex
+
+    @InputFile
+    File inputConfig
+
+    @InputFile
+    final File inputConfigCommon = new File('r8-test-common.pro')
+
+    @InputFiles
+    final File jarFile = project.jar.archivePath
+
+    @Override
+    Task configure(Closure closure) {
+        super.configure(closure)
+        classpath = project.configurations.r8
+        main = 'com.android.tools.r8.R8'
+
+        def arguments = [
+                '--release',
+                '--no-desugaring',
+                '--output', outputDex.absolutePath,
+                '--pg-conf', inputConfig.absolutePath
+        ]
+        arguments.addAll(project.configurations.runtimeClasspath.files.collect { it.absolutePath })
+        arguments.addAll(jarFile.absolutePath)
+
+        args = arguments
+        return this
+    }
+
+    @Override
+    void exec() {
+        if (outputDex.exists()) {
+            outputDex.deleteDir()
+        }
+        outputDex.mkdirs()
+
+        super.exec()
+    }
+}
+
+def optimizedDex = new File(buildDir, "dex-optim/")
+def unOptimizedDex = new File(buildDir, "dex-unoptim/")
+
+task runR8(type: RunR8Task, dependsOn: 'jar'){
+    outputDex = optimizedDex
+    inputConfig = file('r8-test-rules.pro')
+}
+
+task runR8NoOptim(type: RunR8Task, dependsOn: 'jar'){
+    outputDex = unOptimizedDex
+    inputConfig = file('r8-test-rules-no-optim.pro')
+}
+
+test {
+    // Ensure the R8-processed dex is built and supply its path as a property to the test.
+    dependsOn(runR8)
+    dependsOn(runR8NoOptim)
+    def dex1 = new File(optimizedDex, "classes.dex")
+    def dex2 = new File(unOptimizedDex, "classes.dex")
+
+    inputs.files(dex1, dex2)
+
+    systemProperty 'dexPath', dex1.absolutePath
+    systemProperty 'noOptimDexPath', dex2.absolutePath
 }
 
 tasks.withType(dokka.getClass()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.debug
@@ -11,6 +11,7 @@ import kotlin.test.*
 
 class CoroutinesDumpTest : DebugTestBase() {
     private val monitor = Any()
+    private var coroutineStarted = false // guarded by monitor
 
     @Test
     fun testSuspendedCoroutine() = synchronized(monitor) {
@@ -130,7 +131,7 @@ class CoroutinesDumpTest : DebugTestBase() {
 
     private suspend fun nestedActiveMethod(shouldSuspend: Boolean) {
         if (shouldSuspend) yield()
-        notifyTest()
+        notifyCoroutineStarted()
         while (coroutineContext[Job]!!.isActive) {
             Thread.sleep(100)
         }
@@ -143,17 +144,18 @@ class CoroutinesDumpTest : DebugTestBase() {
 
     private suspend fun sleepingNestedMethod() {
         yield()
-        notifyTest()
+        notifyCoroutineStarted()
         delay(Long.MAX_VALUE)
     }
 
     private fun awaitCoroutineStarted() {
-        (monitor as Object).wait()
+        while (!coroutineStarted) (monitor as Object).wait()
     }
 
-    private fun notifyTest() {
+    private fun notifyCoroutineStarted() {
         synchronized(monitor) {
-            (monitor as Object).notify()
+            coroutineStarted = true
+            (monitor as Object).notifyAll()
         }
     }
 }

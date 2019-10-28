@@ -13,9 +13,7 @@ fun CoroutineScope.produceSquares(): ReceiveChannel<Int> = produce {
 }
 
 fun main() = runBlocking {
-//sampleStart
     val squares = produceSquares()
     squares.consumeEach { println(it) }
     println("Done!")
-//sampleEnd
 }

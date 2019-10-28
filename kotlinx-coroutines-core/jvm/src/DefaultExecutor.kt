@@ -9,7 +9,7 @@ import java.util.concurrent.*
 internal actual val DefaultDelay: Delay = DefaultExecutor
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-internal object DefaultExecutor : EventLoopImplBase(), Runnable {
+internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
     const val THREAD_NAME = "kotlinx.coroutines.DefaultExecutor"
 
     init {
@@ -55,7 +55,7 @@ internal object DefaultExecutor : EventLoopImplBase(), Runnable {
      * but it's not exposed as public API.
      */
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
-        DelayedRunnableTask(timeMillis, block).also { schedule(it) }
+        scheduleInvokeOnTimeout(timeMillis, block)
 
     override fun run() {
         ThreadLocalEventLoop.setEventLoop(this)

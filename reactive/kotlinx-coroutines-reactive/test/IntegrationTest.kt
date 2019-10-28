@@ -20,7 +20,7 @@ class IntegrationTest(
 ) : TestBase() {
 
     enum class Ctx {
-        MAIN        { override fun invoke(context: CoroutineContext): CoroutineContext = context },
+        MAIN        { override fun invoke(context: CoroutineContext): CoroutineContext = context.minusKey(Job) },
         DEFAULT     { override fun invoke(context: CoroutineContext): CoroutineContext = Dispatchers.Default },
         UNCONFINED  { override fun invoke(context: CoroutineContext): CoroutineContext = Dispatchers.Unconfined };
 
@@ -39,7 +39,7 @@ class IntegrationTest(
 
     @Test
     fun testEmpty(): Unit = runBlocking {
-        val pub = CoroutineScope(ctx(coroutineContext)).publish<String> {
+        val pub = publish<String>(ctx(coroutineContext)) {
             if (delay) delay(1)
             // does not send anything
         }
@@ -77,7 +77,7 @@ class IntegrationTest(
     @Test
     fun testNumbers() = runBlocking<Unit> {
         val n = 100 * stressTestMultiplier
-        val pub = CoroutineScope(ctx(coroutineContext)).publish {
+        val pub = publish(ctx(coroutineContext)) {
             for (i in 1..n) {
                 send(i)
                 if (delay) delay(1)
@@ -99,8 +99,7 @@ class IntegrationTest(
     fun testCancelWithoutValue() = runTest {
         val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
             publish<String> {
-                yield()
-                expectUnreached()
+                hang {}
             }.awaitFirst()
         }
 

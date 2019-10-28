@@ -1,5 +1,98 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.3.2
+
+This is a maintenance release that does not include any new features or bug fixes.
+
+* Reactive integrations for `Flow` are promoted to stable API.
+* Obsolete reactive API is deprecated.
+* Deprecation level for API deprecated in 1.3.0 is increased.
+* Various documentation improvements.
+
+## Version 1.3.1
+
+This is a minor update with various fixes:
+* Flow: Fix recursion in combineTransform<T1, T2, R> (#1466).
+* Fixed race in the Semaphore (#1477).
+* Repaired some of ListenableFuture.kt's cancellation corner cases (#1441).
+* Consistently unwrap exception in slow path of CompletionStage.asDeferred (#1479).
+* Various fixes in documentation (#1496, #1476, #1470, #1468).
+* Various cleanups and additions in tests.
+
+Note: Kotlin/Native artifacts are now published with Gradle metadata format version 1.0, so you will need 
+Gradle version 5.3 or later to use this version of kotlinx.coroutines in your Kotlin/Native project.
+
+## Version 1.3.0
+
+### Flow
+
+This version is the first stable release with [`Flow`](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html) API.
+
+All `Flow` API not marked with `@FlowPreview` or `@ExperimentalCoroutinesApi` annotations are stable and here to stay.
+Flow declarations marked with `@ExperimentalCoroutinesApi` have [the same guarantees](/docs/compatibility.md#experimental-api) as regular experimental API.
+Please note that API marked with `@FlowPreview` have [weak guarantees](/docs/compatibility.md#flow-preview-api) on source, binary and semantic compatibility.
+
+### Changelog
+
+* A new [guide section](/docs/flow.md) about Flow.
+* `CoroutineDispatcher.asExecutor` extension (#1450).
+* Fixed bug when `select` statement could report the same exception twice (#1433).
+* Fixed context preservation in `flatMapMerge` in a case when collected values were immediately emitted to another flow (#1440).
+* Reactive Flow integrations enclosing files are renamed for better interoperability with Java.
+* Default buffer size in all Flow operators is increased to 64.
+* Kotlin updated to 1.3.50.
+
+## Version 1.3.0-RC2
+
+### Flow improvements
+* Operators for UI programming are reworked for the sake of consistency, naming scheme for operator overloads is introduced:
+   * `combineLatest` is deprecated in the favor of `combine`.
+   * `combineTransform` operator for non-trivial transformations (#1224).
+   * Top-level `combine` and `combineTransform` overloads for multiple flows (#1262). 
+   * `switchMap` is deprecated. `flatMapLatest`, `mapLatest` and `transformLatest` are introduced instead (#1335).
+   * `collectLatest` terminal operator (#1269).
+
+* Improved cancellation support in `flattenMerge` (#1392).
+* `channelFlow` cancellation does not leak to the parent (#1334).
+* Fixed flow invariant enforcement for `suspend fun main` (#1421).
+* `delayEach` and `delayFlow` are deprecated (#1429).
+
+### General changes
+* Integration with Reactor context
+    * Propagation of the coroutine context of `await` calls into Mono/Flux builder.
+    * Publisher.asFlow propagates coroutine context from `collect` call to the Publisher.
+    * New `Flow.asFlux ` builder.
+
+* ServiceLoader-code is adjusted to avoid I/O on the Main thread on newer (3.6.0+) Android toolchain.
+* Stacktrace recovery support for minified builds on Android (#1416).
+* Guava version in `kotlinx-coroutines-guava` updated to `28.0`.
+* `setTimeout`-based JS dispatcher for platforms where `process` is unavailable (#1404).
+* Native, JS and common modules are added to `kotlinx-coroutines-bom`.
+* Fixed bug with ignored `acquiredPermits` in `Semaphore` (#1423).
+
+## Version 1.3.0-RC
+
+### Flow
+
+* Core `Flow` API is promoted to stable
+* New basic `Flow` operators: `withIndex`, `collectIndexed`, `distinctUntilChanged` overload
+* New core `Flow` operators: `onStart` and `onCompletion`
+* `ReceiveChannel.consumeAsFlow` and `emitAll` (#1340)
+
+### General changes
+
+* Kotlin updated to 1.3.41
+* Added `kotlinx-coroutines-bom` with Maven Bill of Materials (#1110)
+* Reactive integrations are seriously improved
+  * All builders now are top-level functions instead of extensions on `CoroutineScope` and prohibit `Job` instance in their context to simplify lifecycle management
+  * Fatal exceptions are handled consistently (#1297)
+  * Integration with Reactor Context added (#284)
+* Stacktrace recovery for `suspend fun main` (#1328)
+* `CoroutineScope.cancel` extension with message (#1338)
+* Protection against non-monotonic clocks in `delay` (#1312)
+* `Duration.ZERO` is handled properly in JDK 8 extensions (#1349)
+* Library code is adjusted to be more minification-friendly 
+
 ## Version 1.3.0-M2
 
  * Kotlin updated to 1.3.40.

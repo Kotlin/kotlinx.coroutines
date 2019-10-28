@@ -1,6 +1,6 @@
 package kotlinx.coroutines.internal
 
-import kotlinx.coroutines.TestBase
+import kotlinx.coroutines.stressTestMultiplier
 import org.junit.Test
 import java.util.*
 import java.util.concurrent.CyclicBarrier
@@ -9,12 +9,11 @@ import kotlin.concurrent.thread
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
-class SegmentQueueTest : TestBase() {
-
+class SegmentQueueTest {
     @Test
     fun simpleTest() {
         val q = SegmentBasedQueue<Int>()
-        assertEquals( 1, q.numberOfSegments)
+        assertEquals(1, q.numberOfSegments)
         assertEquals(null, q.dequeue())
         q.enqueue(1)
         assertEquals(1, q.numberOfSegments)

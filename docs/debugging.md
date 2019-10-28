@@ -45,7 +45,7 @@ It is easy to demonstrate with actual stacktraces of the same program that await
 
 The only downside of this approach is losing referential transparency of the exception. 
 
-### Stacktrace recovery machinery
+### Stacktrace recovery machinery   
 
 This section explains the inner mechanism of stacktrace recovery and can be skipped.
 
@@ -56,6 +56,7 @@ and then throws the resulting exception instead of the original one.
 
 Exception copy logic is straightforward:
   1) If the exception class implements [CopyableThrowable], [CopyableThrowable.createCopy] is used.
+     `null` can be returned from `createCopy` to opt-out specific exception from being recovered.
   2) If the exception class has class-specific fields not inherited from Throwable, the exception is not copied.
   3) Otherwise, one of the public exception's constructor is invoked reflectively with an optional `initCause` call.  
 

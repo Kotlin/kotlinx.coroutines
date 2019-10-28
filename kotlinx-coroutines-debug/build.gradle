@@ -1,13 +1,27 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 apply plugin: "com.github.johnrengelman.shadow"
 
+configurations {
+    shadowDeps // shaded dependencies, not included into the resulting .pom file
+    compileOnly.extendsFrom(shadowDeps)
+    runtimeOnly.extendsFrom(shadowDeps)
+
+    /*
+     * It is possible to extend a particular configuration with shadow,
+     * but in that case it changes dependency type to "runtime" and resolves it
+     * (so it cannot be further modified). Otherwise, shadow just ignores all dependencies.
+     */
+    shadow.extendsFrom(compile) // shadow - resulting configuration with shaded jar file
+    configureKotlinJvmPlatform(shadow)
+}
+
 dependencies {
     compileOnly "junit:junit:$junit_version"
-    compile "net.bytebuddy:byte-buddy:$byte_buddy_version"
-    compile "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
+    shadowDeps "net.bytebuddy:byte-buddy:$byte_buddy_version"
+    shadowDeps "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
 }
 
 jar {
@@ -20,9 +34,6 @@ jar {
 shadowJar {
     classifier null
     // Shadow only byte buddy, do not package kotlin stdlib
-    dependencies {
-        include(dependency("net.bytebuddy:byte-buddy:$byte_buddy_version"))
-        include(dependency("net.bytebuddy:byte-buddy-agent:$byte_buddy_version"))
-    }
+    configurations = [project.configurations.shadowDeps]
     relocate 'net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy'
 }

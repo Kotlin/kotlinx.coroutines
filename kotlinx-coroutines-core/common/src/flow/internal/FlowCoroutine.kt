@@ -11,7 +11,7 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
+import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
  * Creates a [CoroutineScope] and calls the specified suspend block with this scope.
@@ -52,12 +52,10 @@ internal fun <R> scopedFlow(@BuilderInference block: suspend CoroutineScope.(Flo
         flowScope { block(collector) }
     }
 
-/*
- * Shortcut for produce { flowScope {block() } }
- */
 internal fun <T> CoroutineScope.flowProduce(
     context: CoroutineContext,
-    capacity: Int = 0, @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+    capacity: Int = 0,
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): ReceiveChannel<T> {
     val channel = Channel<T>(capacity)
     val newContext = newCoroutineContext(context)

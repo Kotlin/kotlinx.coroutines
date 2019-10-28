@@ -1,13 +1,13 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
-import kotlin.jvm.*
 
 /**
  * Broadcast channel with array buffer of a fixed [capacity].
@@ -44,12 +44,21 @@ internal class ArrayBroadcastChannel<E>(
 
     // head & tail are Long (64 bits) and we assume that they never wrap around
     // head, tail, and size are guarded by bufferLock
-    @Volatile
-    private var head: Long = 0 // do modulo on use of head
-    @Volatile
-    private var tail: Long = 0 // do modulo on use of tail
-    @Volatile
-    private var size: Int = 0
+
+    private val _head = atomic(0L)
+    private var head: Long // do modulo on use of head
+        get() = _head.value
+        set(value) { _head.value = value }
+
+    private val _tail = atomic(0L)
+    private var tail: Long // do modulo on use of tail
+        get() = _tail.value
+        set(value) { _tail.value = value }
+    
+    private val _size = atomic(0)
+    private var size: Int
+        get() = _size.value
+        set(value) { _size.value = value }
 
     private val subscribers = subscriberList<Subscriber<E>>()
 
@@ -105,7 +114,7 @@ internal class ArrayBroadcastChannel<E>(
             val size = this.size
             if (size >= capacity) return OFFER_FAILED
             // let's try to select sending this element to buffer
-            if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
+            if (!select.trySelect()) { // :todo: move trySelect completion outside of lock
                 return ALREADY_SELECTED
             }
             val tail = this.tail
@@ -134,7 +143,6 @@ internal class ArrayBroadcastChannel<E>(
     private tailrec fun updateHead(addSub: Subscriber<E>? = null, removeSub: Subscriber<E>? = null) {
         // update head in a tail rec loop
         var send: Send? = null
-        var token: Any? = null
         bufferLock.withLock {
             if (addSub != null) {
                 addSub.subHead = tail // start from last element
@@ -163,8 +171,9 @@ internal class ArrayBroadcastChannel<E>(
                     while (true) {
                         send = takeFirstSendOrPeekClosed() ?: break // when when no sender
                         if (send is Closed<*>) break // break when closed for send
-                        token = send!!.tryResumeSend(idempotent = null)
+                        val token = send!!.tryResumeSend(null)
                         if (token != null) {
+                            assert { token === RESUME_TOKEN }
                             // put sent element to the buffer
                             buffer[(tail % capacity).toInt()] = (send as Send).pollResult
                             this.size = size + 1
@@ -177,7 +186,7 @@ internal class ArrayBroadcastChannel<E>(
             return // done updating here -> return
         }
         // we only get out of the lock normally when there is a sender to resume
-        send!!.completeResumeSend(token!!)
+        send!!.completeResumeSend()
         // since we've just sent an element, we might need to resume some receivers
         checkSubOffers()
         // tailrec call to recheck
@@ -199,24 +208,22 @@ internal class ArrayBroadcastChannel<E>(
     ) : AbstractChannel<E>(), ReceiveChannel<E> {
         private val subLock = ReentrantLock()
 
-        @Volatile
-        @JvmField
-        var subHead: Long = 0 // guarded by subLock
+        private val _subHead = atomic(0L)
+        var subHead: Long // guarded by subLock
+            get() = _subHead.value
+            set(value) { _subHead.value = value }
 
         override val isBufferAlwaysEmpty: Boolean get() = false
         override val isBufferEmpty: Boolean get() = subHead >= broadcastChannel.tail
         override val isBufferAlwaysFull: Boolean get() = error("Should not be used")
         override val isBufferFull: Boolean get() = error("Should not be used")
 
-        override fun cancelInternal(cause: Throwable?): Boolean =
-            close(cause).also { closed ->
-                if (closed) broadcastChannel.updateHead(removeSub = this)
-                clearBuffer()
-            }
-
-        private fun clearBuffer() {
-            subLock.withLock {
-                subHead = broadcastChannel.tail
+        override fun onCancelIdempotent(wasClosed: Boolean) {
+            if (wasClosed) {
+                broadcastChannel.updateHead(removeSub = this)
+                subLock.withLock {
+                    subHead = broadcastChannel.tail
+                }
             }
         }
 
@@ -232,9 +239,9 @@ internal class ArrayBroadcastChannel<E>(
                 // it means that `checkOffer` must be retried after every `unlock`
                 if (!subLock.tryLock()) break
                 val receive: ReceiveOrClosed<E>?
-                val token: Any?
+                var result: Any?
                 try {
-                    val result = peekUnderLock()
+                    result = peekUnderLock()
                     when {
                         result === POLL_FAILED -> continue@loop // must retest `needsToCheckOfferWithoutLock` outside of the lock
                         result is Closed<*> -> {
@@ -245,15 +252,15 @@ internal class ArrayBroadcastChannel<E>(
                     // find a receiver for an element
                     receive = takeFirstReceiveOrPeekClosed() ?: break // break when no one's receiving
                     if (receive is Closed<*>) break // noting more to do if this sub already closed
-                    token = receive.tryResumeReceive(result as E, idempotent = null)
-                    if (token == null) continue // bail out here to next iteration (see for next receiver)
+                    val token = receive.tryResumeReceive(result as E, null) ?: continue
+                    assert { token === RESUME_TOKEN }
                     val subHead = this.subHead
                     this.subHead = subHead + 1 // retrieved element for this subscriber
                     updated = true
                 } finally {
                     subLock.unlock()
                 }
-                receive!!.completeResumeReceive(token!!)
+                receive!!.completeResumeReceive(result as E)
             }
             // do close outside of lock if needed
             closed?.also { close(cause = it.closeCause) }
@@ -299,7 +306,7 @@ internal class ArrayBroadcastChannel<E>(
                     result === POLL_FAILED -> { /* just bail out of lock */ }
                     else -> {
                         // let's try to select receiving this element from buffer
-                        if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
+                        if (!select.trySelect()) { // :todo: move trySelect completion outside of lock
                             result = ALREADY_SELECTED
                         } else {
                             // update subHead after retrieiving element from buffer

@@ -24,7 +24,6 @@ suspend fun massiveRun(action: suspend () -> Unit) {
     println("Completed ${n * k} actions in $time ms")    
 }
 
-//sampleStart
 var counter = AtomicInteger()
 
 fun main() = runBlocking {
@@ -35,4 +34,3 @@ fun main() = runBlocking {
     }
     println("Counter = $counter")
 }
-//sampleEnd    
