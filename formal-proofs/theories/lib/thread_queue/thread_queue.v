@@ -327,14 +327,14 @@ Lemma cell_invariant_persistent:
   forall γtq γ n ℓ, Persistent (inv N (cell_invariant γtq γ n ℓ)).
 Proof. apply _. Qed.
 
-Definition tq_ap (γtq γe: gname) :=
+Definition tq_ap (γtq γd: gname) :=
   {|
-    p_cell_is_done_persistent := iterator_counter_at_least_persistent γe;
+    p_cell_is_done_persistent := iterator_counter_at_least_persistent γd;
     p_cell_invariant_persistent := cell_invariant_persistent γtq;
   |}.
 
-Theorem tq_cell_init γtq γe:
-  cell_init segment_size (tq_ap γtq γe) ∅.
+Theorem tq_cell_init γtq γd:
+  cell_init segment_size (tq_ap γtq γd) ∅.
 Proof.
   rewrite /cell_init /=. iIntros "!>"  (γ id ℓ) "HCancHandle Hℓ".
   iMod (inv_alloc N _ (cell_invariant γtq γ id ℓ) with "[-]") as "#HInv".
@@ -562,7 +562,7 @@ Definition cell_list_contents (S R: iProp) γa γtq γe γd
 Definition suspension_permit γtq := own γtq (◯ (1%nat, ε, ε)).
 
 Definition exists_list_element γtq (n: nat) :=
-  own γtq (◯ (ε, replicate n ε ++ [ε])).
+  own γtq (◯ (ε, {[ n := ε ]})).
 
 Theorem exists_list_element_lookup γtq l i d:
   exists_list_element γtq i -∗
@@ -886,7 +886,7 @@ Proof.
 Qed.
 
 Definition is_thread_queue (S R: iProp) γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront :=
-  let ap := tq_ap γtq γe in
+  let ap := tq_ap γtq γd in
   (is_infinite_array segment_size ap γa ∗
    cell_list_contents S R γa γtq γe γd l deqFront ∗
    ([∗ list] i ↦ b ∈ l, match b with
@@ -1820,7 +1820,6 @@ Proof. auto. Qed.
 Theorem resume_rendezvous_spec E R γa γtq γe γd i ℓ:
   inv N (cell_invariant γtq γa i ℓ) -∗
   deq_front_at_least γtq (S i) -∗
-  exists_list_element γtq i -∗
   array_mapsto segment_size γa i ℓ -∗
   iterator_issued γd i -∗
   let ap := tq_ap γtq γe in
@@ -1853,20 +1852,64 @@ Theorem resume_rendezvous_spec E R γa γtq γe γd i ℓ:
              ▷ cell_list_contents E R γa γtq γe γd l deqFront),
         RET v >>>.
 Proof.
-  iIntros "#HCellInv #HDeqFrontLb #HExistsEl #HArrMapsto HIsRes" (Φ) "AU".
+  iIntros "#HCellInv #HDeqFrontLb #HArrMapsto HIsRes" (Φ) "AU".
 
   awp_apply getAndSet_spec.
   iInv N as "HInv".
   iApply (aacc_aupd_commit with "AU"); first done.
   iIntros (l deqFront) "(>% & #HNotDone & >HAuth & HEs & HRs & HCellResources)".
-
+  iDestruct (deq_front_at_least__cell_list_contents
+             with "HDeqFrontLb HAuth") as %HDeqFront.
   repeat rewrite big_sepL_later.
-  iDestruct (exists_list_element_lookup with "HExistsEl HAuth") as %[cr HIsSome].
+  iMod (own_update with "HAuth") as "[HAuth HExistsEl']".
+  2: iDestruct (exists_list_element_lookup _ _ i with "HExistsEl' HAuth")
+    as %[cr HIsSome].
+  {
+    apply auth_update_core_id. apply _.
+    apply prod_included; split; simpl.
+    apply ucmra_unit_least.
+    apply list_lookup_included.
+    intros j. rewrite map_lookup.
+    destruct (decide (i = j)).
+    {
+      subst.
+      rewrite list_lookup_singletonM.
+      assert (is_Some (l !! j)) as [? ->].
+      by apply lookup_lt_is_Some; lia.
+      simpl.
+      apply Some_included_total.
+      apply ucmra_unit_least.
+    }
+    assert (forall (A: ucmraT) (i i': nat) (x: A),
+                (i' < i)%nat -> list_singletonM i x !! i' = Some (ε: A))
+            as HH.
+    {
+      clear. induction i; intros [|i']; naive_solver auto with lia.
+    }
+    assert (forall (A: ucmraT) (i i': nat) (x: A),
+                (i < i')%nat -> list_singletonM i x !! i' = None)
+            as HH'.
+    {
+      clear. induction i; intros [|i']; naive_solver auto with lia.
+    }
+    destruct (decide (i < j)%nat).
+    {
+      rewrite HH'.
+      by apply option_included; auto.
+      lia.
+    }
+    rewrite HH.
+    2: lia.
+    assert (is_Some (l !! j)) as [? ->].
+    by apply lookup_lt_is_Some; lia.
+    simpl.
+    apply Some_included_total.
+    apply ucmra_unit_least.
+  }
+
   destruct cr; simpl in *.
   2: {
     iDestruct "HInv" as "[[>HCancHandle >Hℓ]|>#HCellInit]".
-    iDestruct (deq_front_at_least__cell_list_contents
-                 with "HDeqFrontLb HAuth") as %HDeqFront.
     2: {
       iExFalso.
       rewrite /rendezvous_initialized /rendezvous_state.
@@ -2004,9 +2047,6 @@ Proof.
     iRight.
     by iFrame.
   }
-
-  iDestruct (deq_front_at_least__cell_list_contents
-                with "HDeqFrontLb HAuth") as %HDeqFront.
 
   destruct c as [|γt th o].
   { (* Cell is filled. *)
@@ -3075,5 +3115,216 @@ Proof.
   done.
 
 Qed.
+
+Lemma iterator_issued_implies_bound γ i:
+  iterator_issued γ i -∗
+  iterator_counter_at_least γ (S i).
+Proof.
+  apply own_mono, auth_included; simpl; split; try done.
+  apply prod_included'; simpl; split; try done.
+  apply ucmra_unit_least.
+Qed.
+
+Lemma iterator_counter_at_least_mono γ i j:
+  (j <= i)%nat ->
+  iterator_counter_at_least γ i -∗
+  iterator_counter_at_least γ j.
+Proof.
+  intros HLe. apply own_mono, auth_included; simpl; split; try done.
+  apply prod_included'; simpl; split; try done.
+  by apply mnat_included.
+Qed.
+
+Theorem iterator_move_ptr_forward_spec ap γa γ cℓ (ℓ: loc) (pℓ: loc) i id:
+  ⌜(id * Pos.to_nat segment_size <= i)%nat⌝ -∗
+  iterator_counter_at_least γ i -∗
+  segment_location γa id ℓ -∗
+  <<< ∀ (i': nat), ▷ is_infinite_array segment_size ap γa ∗
+                   iterator_points_to segment_size γa γ cℓ pℓ i' >>>
+    move_ptr_forward #pℓ #ℓ @ ⊤
+    <<< ▷ is_infinite_array segment_size ap γa ∗
+        iterator_points_to segment_size γa γ cℓ pℓ i', RET #() >>>.
+Proof.
+  iIntros (HLt) "#HCtrAtLeast #HSegLoc". iIntros (Φ) "AU". iLöb as "IH".
+  wp_lam. wp_pures.
+
+  wp_bind (!_)%E.
+  iMod "AU" as (?) "[[HIsInf [HCtr HPtr]] [HClose _]]".
+  iDestruct "HPtr" as (id' ? ℓ') "[#HSegLoc' Hℓ']".
+  wp_load.
+  iMod ("HClose" with "[-]") as "AU".
+  { iFrame. iExists _. iSplitR. 2: iExists _; iFrame. done. done. }
+
+  iIntros "!>".
+  wp_pures.
+
+  awp_apply segment_id_spec. iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros (?) "[HIsInf HIt]".
+  iDestruct (is_segment_by_location with "HSegLoc' HIsInf")
+    as (? ?) "[HIsSeg HArrRestore]".
+  iAaccIntro with "HIsSeg".
+  { iIntros "HIsSeg". iDestruct ("HArrRestore" with "HIsSeg") as "$".
+    iFrame "HIt". by iIntros "!> $ !>". }
+  iIntros "HIsSeg".
+  iDestruct ("HArrRestore" with "[HIsSeg]") as "$"; first by iFrame.
+  iFrame "HIt".
+  iIntros "!> AU !>".
+
+  awp_apply segment_id_spec. iApply (aacc_aupd with "AU"); first done.
+  iIntros (?) "[HIsInf HIt]".
+  iDestruct (is_segment_by_location with "HSegLoc HIsInf")
+    as (? ?) "[HIsSeg HArrRestore]".
+  iAaccIntro with "HIsSeg".
+  { iIntros "HIsSeg". iDestruct ("HArrRestore" with "HIsSeg") as "$".
+    iFrame "HIt". by iIntros "!> $ !>". }
+  iIntros "HIsSeg".
+  iDestruct ("HArrRestore" with "[HIsSeg]") as "$"; first by iFrame.
+  iFrame "HIt".
+  iIntros "!>".
+
+  destruct (bool_decide (id <= id')) eqn:Z.
+  {
+    iRight. iIntros "HΦ !>". wp_pures. rewrite Z.
+    by wp_pures.
+  }
+
+  iLeft.
+  iIntros "AU !>". wp_pures. rewrite Z. wp_pures.
+
+  wp_bind (CmpXchg _ _ _).
+  iMod "AU" as (?) "[[HIsInf [HCtr HPtr]] HClose]".
+  iDestruct "HPtr" as (id'' ? ℓ'') "[#HSegLoc'' Hℓ'']".
+
+  destruct (decide (ℓ'' = ℓ')); subst.
+  {
+    wp_cmpxchg_suc.
+    iDestruct (iterator_points_to_at_least with "HCtrAtLeast HCtr") as %HCtr.
+    iMod ("HClose" with "[-]") as "HΦ".
+    { iFrame. iExists _; iSplitR. 2: iExists _; by iFrame. iPureIntro. lia. }
+    iModIntro. by wp_pures.
+  }
+  {
+    wp_cmpxchg_fail.
+    iDestruct "HClose" as "[HClose _]".
+    iMod ("HClose" with "[-]") as "AU".
+    { iFrame. iExists _; iSplitR. 2: iExists _; by iFrame. iPureIntro. lia. }
+    iModIntro. wp_pures. iApply ("IH" with "AU").
+  }
+Qed.
+
+Theorem resume_spec E R γa γtq γe γd (eℓ epℓ dℓ dpℓ: loc):
+  ▷ awakening_permit γtq -∗ ∀ (Φ : val -> iPropSI Σ),
+  AU << ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>
+  @ ⊤, ↑N
+  << ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗ ▷ E,
+     COMM Φ #() >> -∗
+  WP ((resume segment_size) #dpℓ) #dℓ {{ v, Φ v }}.
+Proof.
+  iIntros "HAwaken" (Φ) "AU". iLöb as "IH".
+  wp_lam. wp_pures.
+
+  awp_apply (increase_deqIdx with "HAwaken").
+  iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros (? ?) "HTq".
+  iAaccIntro with "HTq".
+  by iIntros "$ !> $".
+  iIntros (d ?) "($ & HIsRes & #HSegLoc) !> AU !>".
+
+  wp_pures.
+
+  wp_bind (segment_cutoff _).
+  iDestruct (iterator_issued_implies_bound with "HIsRes") as "#HDAtLeast".
+  awp_apply move_head_forward_spec.
+  2: iApply (aacc_aupd_abort with "AU"); first done.
+  2: iIntros (? ?) "(HInfArr & HRest)".
+  2: iDestruct (is_segment_by_location_prev with "HSegLoc HInfArr")
+    as (?) "[HIsSeg HArrRestore]".
+  2: iDestruct "HIsSeg" as (?) "HIsSeg".
+  2: iAaccIntro with "HIsSeg".
+  {
+    iApply big_sepL_forall. iIntros (k d' HEl).
+    iRight. simpl.
+    iApply (iterator_counter_at_least_mono with "HDAtLeast").
+    apply seq_lookup' in HEl.
+    simpl in *. destruct HEl as [<- HEl].
+    assert (forall a x, (a > 0)%nat -> (x `div` a * a <= x)%nat) as HOk.
+    {
+      clear. intros ? ? H.
+      rewrite Nat.mul_comm.
+      apply Nat.mul_div_le.
+      lia.
+    }
+    specialize (HOk (Pos.to_nat segment_size) d).
+    lia.
+  }
+  {
+    iIntros "HIsSeg".
+    iDestruct ("HArrRestore" with "HIsSeg") as "$".
+    iFrame.
+    by iIntros "!> $ !>".
+  }
+  iIntros "HIsSeg".
+  iDestruct ("HArrRestore" with "[HIsSeg]") as "$"; first by iFrame.
+  iFrame.
+  iIntros "!> AU !>".
+
+  wp_pures.
+
+  awp_apply iterator_move_ptr_forward_spec; try iAssumption.
+  {
+    iPureIntro.
+    move: (Nat.mul_div_le d (Pos.to_nat segment_size)).
+    lia.
+  }
+  iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros (? ?) "(HInfArr & HListContents & HCancA & >% & HRest)".
+  iDestruct "HRest" as (? ?) "(HEnqIt & >HDeqIt & HRest)".
+  iCombine "HInfArr" "HDeqIt" as "HAacc".
+  iAaccIntro with "HAacc".
+  {
+    iIntros "[$ HDeqIt] !>". iFrame "HListContents HCancA".
+    iSplitR "HIsRes". iSplitR; first done. iExists _, _. iFrame.
+    by iIntros "$ !>".
+  }
+  iIntros "[$ HDeqPtr] !>".
+  iSplitR "HIsRes".
+  {
+    iFrame "HListContents HCancA". iSplitR; first done.
+    iExists _, _. iFrame.
+  }
+  iIntros "AU !>".
+
+  wp_pures. wp_lam. wp_pures.
+
+  replace (d `rem` Pos.to_nat segment_size) with
+      (Z.of_nat (d `mod` Pos.to_nat segment_size)).
+  2: {
+    destruct (Pos.to_nat segment_size) eqn:S; first by lia.
+    by rewrite rem_of_nat.
+  }
+  awp_apply segment_data_at_spec.
+  { iPureIntro. apply Nat2Z.inj_lt, Nat.mod_upper_bound. lia. }
+  iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros (? ?) "(HInfArr & HRest)".
+  iDestruct (is_segment_by_location with "HSegLoc HInfArr")
+    as (? ?) "[HIsSeg HArrRestore]".
+  iAaccIntro with "HIsSeg".
+  {
+    iIntros "HIsSeg".
+    iDestruct ("HArrRestore" with "HIsSeg") as "$".
+    iFrame "HRest".
+    by iIntros "!> $ !>".
+  }
+  iIntros (?) "(HIsSeg & #HArrMapsto & #HCellInv) !>".
+  simpl.
+  iDestruct ("HArrRestore" with "[HIsSeg]") as "$"; first done.
+  iFrame "HRest".
+  iIntros "AU !>".
+
+  wp_pures.
+  replace (_ + _)%nat with d by (rewrite Nat.mul_comm -Nat.div_mod //; lia).
+
+  awp_apply (resume_rendezvous_spec with "HCellInv [] HArrMapsto HIsRes").
+Abort.
 
 End proof.
