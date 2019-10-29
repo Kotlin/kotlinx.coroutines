@@ -11,6 +11,11 @@ import org.junit.Assert.*
 import java.util.concurrent.*
 
 class ObservableSingleTest : TestBase() {
+    @Before
+    fun setup() {
+        ignoreLostThreads("RxComputationThreadPool-", "RxCachedWorkerPoolEvictor-", "RxSchedulerPurge-")
+    }
+
     @Test
     fun testSingleNoWait() {
         val observable = rxObservable {
@@ -166,7 +171,7 @@ class ObservableSingleTest : TestBase() {
     @Test
     fun testExceptionFromCoroutine() {
         val observable = rxObservable<String> {
-            error(Observable.just("O").awaitSingle() + "K")
+            throw IllegalStateException(Observable.just("O").awaitSingle() + "K")
         }
 
         checkErroneous(observable) {

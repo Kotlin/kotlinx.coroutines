@@ -12,6 +12,12 @@ import reactor.core.publisher.*
 import java.time.Duration.*
 
 class FluxSingleTest : TestBase() {
+
+    @Before
+    fun setup() {
+        ignoreLostThreads("parallel-")
+    }
+
     @Test
     fun testSingleNoWait() {
         val flux = flux {
@@ -167,7 +173,7 @@ class FluxSingleTest : TestBase() {
     @Test
     fun testExceptionFromCoroutine() {
         val flux = flux<String> {
-            error(Flux.just("O").awaitSingle() + "K")
+            throw IllegalStateException(Flux.just("O").awaitSingle() + "K")
         }
 
         checkErroneous(flux) {
