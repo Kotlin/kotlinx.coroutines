@@ -53,7 +53,7 @@ Definition resume: val :=
     let: "cell" := cell_ref_loc "cell'" in
     let: "p" := getAndSet "cell" RESUMEDV in
     match: "p" with
-        InjL "x" => if: "x" = #() then #() else unpark "x"
+        InjL "x" => "x" = #()
       | InjR "x" => "resume" "head" "deqIdx"
     end.
 
@@ -3215,9 +3215,21 @@ Qed.
 Theorem resume_spec E R γa γtq γe γd (eℓ epℓ dℓ dpℓ: loc):
   ▷ awakening_permit γtq -∗ ∀ (Φ : val -> iPropSI Σ),
   AU << ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>
-  @ ⊤, ↑N
-  << ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗ ▷ E,
-     COMM Φ #() >> -∗
+  @ ⊤ ∖ ↑N, ↑N
+  << ∃ (v: bool), ▷ E ∗ (∃ i,
+     (⌜l !! i = Some None⌝ ∧ ⌜v = true⌝ ∧
+                     ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
+                            (alter (fun _ => Some cellFilled) i l) deqFront) ∗
+                            rendezvous_filled γtq i ∨
+  ∃ γt th, (
+      ⌜l !! i = Some (Some (cellInhabited γt th None))⌝ ∧ ⌜v = false⌝ ∧
+      ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
+        (alter (fun _ => Some (cellInhabited γt th (Some cellResumed))) i l)
+        deqFront ∗ rendezvous_resumed γtq i ∗ resumer_token γtq i ∨
+
+      ⌜l !! i = Some (Some (cellInhabited γt th (Some cellAbandoned)))⌝ ∧
+      ⌜v = false⌝
+  )), COMM Φ #v >> -∗
   WP ((resume segment_size) #dpℓ) #dℓ {{ v, Φ v }}.
 Proof.
   iIntros "HAwaken" (Φ) "AU". iLöb as "IH".
@@ -3305,7 +3317,7 @@ Proof.
   awp_apply segment_data_at_spec.
   { iPureIntro. apply Nat2Z.inj_lt, Nat.mod_upper_bound. lia. }
   iApply (aacc_aupd_abort with "AU"); first done.
-  iIntros (? ?) "(HInfArr & HRest)".
+  iIntros (? deqFront) "(HInfArr & HRest)".
   iDestruct (is_segment_by_location with "HSegLoc HInfArr")
     as (? ?) "[HIsSeg HArrRestore]".
   iAaccIntro with "HIsSeg".
@@ -3315,16 +3327,151 @@ Proof.
     iFrame "HRest".
     by iIntros "!> $ !>".
   }
-  iIntros (?) "(HIsSeg & #HArrMapsto & #HCellInv) !>".
-  simpl.
+  iIntros (?) "(HIsSeg & #HArrMapsto & #HCellInv)".
   iDestruct ("HArrRestore" with "[HIsSeg]") as "$"; first done.
-  iFrame "HRest".
-  iIntros "AU !>".
+  iDestruct "HRest" as "((HLen & HRes & >HAuth & HRest') & HRest)".
+  iMod (own_update with "HAuth") as "[HAuth HFrag']".
+  2: iAssert (deq_front_at_least γtq deqFront) with "HFrag'" as "HFrag".
+  {
+    apply auth_update_core_id.
+    by repeat (apply pair_core_id; try apply _).
+    repeat (apply prod_included'; simpl; split; try apply ucmra_unit_least).
+    by apply mnat_included.
+  }
+  simpl.
+  iAssert (▷ deq_front_at_least γtq (S d))%I as "#HDeqFront".
+  {
+    iDestruct "HRest" as "(_ & _ & HH)".
+    iDestruct "HH" as (? deqIdx) "(_ & [>HDeqCtr _] & _ & >%)".
+    iDestruct (iterator_points_to_at_least with "HDAtLeast HDeqCtr") as "%".
+    iApply (own_mono with "HFrag").
+
+    apply auth_included. simpl. split; first done.
+    repeat (apply prod_included'; simpl; split; try done).
+    apply mnat_included. lia.
+  }
+  iFrame.
+  iIntros "!> AU !>".
 
   wp_pures.
   replace (_ + _)%nat with d by (rewrite Nat.mul_comm -Nat.div_mod //; lia).
 
-  awp_apply (resume_rendezvous_spec with "HCellInv [] HArrMapsto HIsRes").
-Abort.
+  awp_apply (resume_rendezvous_spec with "HCellInv HDeqFront HArrMapsto HIsRes").
+  iApply (aacc_aupd with "AU"); first done.
+  iIntros (? deqFront') "(HInfArr & HCellList & HRest)".
+  iAaccIntro with "HCellList".
+  by iFrame; iIntros "$ !> $ !>".
+
+  iIntros (?) "[(% & -> & #HRendFilled & HE & HCont)|HH]".
+  {
+    iRight.
+    iExists _.
+    iSplitL.
+    2: by iIntros "!> HΦ !>"; wp_pures.
+    iFrame "HE".
+    iExists _.
+    iLeft.
+    iFrame. iFrame "HRendFilled".
+    iSplitR; first done.
+    iDestruct "HRest" as "(HCancA & >% & HRest)".
+    iSplitR; first done.
+    iSplitL "HCancA".
+    {
+      iModIntro. iNext.
+      iApply (big_opL_forall' with "HCancA"); first by rewrite alter_length.
+      iIntros (? ? ? HEl HEl').
+      simpl.
+      destruct (decide (d = k)).
+      {
+        subst. rewrite list_lookup_alter in HEl.
+        destruct (_ !! k); simplify_eq. simpl in *.
+        simplify_eq.
+        done.
+      }
+      rewrite list_lookup_alter_ne in HEl; try done.
+      simplify_eq. done.
+    }
+    iSplitR.
+    {
+      iPureIntro.
+      intros (γt & th & HEl).
+      destruct (decide (d = deqFront')).
+      {
+        subst.
+        rewrite list_lookup_alter in HEl.
+        destruct (_ !! deqFront'); simplify_eq.
+      }
+      rewrite list_lookup_alter_ne in HEl; try done.
+      by eauto.
+    }
+    iDestruct "HRest" as (enqIdx deqIdx) "HH".
+    iExists enqIdx, deqIdx.
+    by rewrite alter_length.
+  }
+
+  iDestruct "HH" as (γt th)
+    "[(% & -> & #HRendRes & HE & HListContents & HResumerToken)|
+    [(% & HH & HIsRes & HListContents)|
+    (% & -> & HE & HListContents)]]".
+  3: { (* Abandoned *)
+    iRight.
+    iExists _.
+    iSplitL.
+    2: by iIntros "!> HΦ !>"; wp_pures.
+    iFrame "HE".
+    iExists _. iRight. iExists γt, th. iRight.
+    by iPureIntro.
+  }
+  2: { (* Cancelled *)
+    iDestruct "HRest" as "[HCancA HRest]".
+    iDestruct (big_sepL_lookup_acc with "HCancA") as "[HCanc HCancARestore]".
+    done.
+    simpl.
+    iDestruct "HCanc" as ">[HAwan|HIsRes']".
+    2: by iDestruct (iterator_issued_exclusive with "HIsRes HIsRes'") as %[].
+    iDestruct ("HCancARestore" with "[HIsRes]") as "HCancA".
+    by eauto.
+
+    iLeft.
+    iFrame.
+    iIntros "!> AU !>". wp_pures.
+    iDestruct "HH" as "[->|->]"; wp_pures; iApply ("IH" with "HAwan AU").
+  }
+  (* Resumed *)
+  iRight.
+  iExists false. iFrame "HE". iSplitL.
+  2: by iIntros "!> HΦ !>"; wp_pures.
+  iExists _. iRight. iExists _, _. iLeft.
+  repeat (iSplitR; first done).
+
+  iDestruct "HRest" as "(HCancA & >% & HRest)".
+  rewrite /is_thread_queue.
+  rewrite alter_length.
+  iFrame "HRendRes".
+  iFrame.
+  iSplitL.
+  {
+    iApply (big_opL_forall' with "HCancA").
+    by rewrite alter_length.
+    intros k ? ? HEl HEl'. simpl.
+    destruct (decide (d = k)).
+    {
+      subst. rewrite list_lookup_alter in HEl.
+      destruct (_ !! k); simplify_eq. simpl in *. simplify_eq.
+      done.
+    }
+    rewrite list_lookup_alter_ne in HEl; try done.
+    by destruct (_ !! k); simplify_eq.
+  }
+  iPureIntro.
+  intros (γt' & th' & HEl).
+  destruct (decide (d = deqFront')).
+  {
+    subst. rewrite list_lookup_alter in HEl.
+    destruct (_ !! deqFront'); simplify_eq.
+  }
+  rewrite list_lookup_alter_ne in HEl; try done.
+  by eauto.
+Qed.
 
 End proof.
