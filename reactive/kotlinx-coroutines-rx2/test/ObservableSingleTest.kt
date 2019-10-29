@@ -10,7 +10,7 @@ import org.junit.*
 import org.junit.Assert.*
 import java.util.concurrent.*
 
-class ObservableSingleTest {
+class ObservableSingleTest : TestBase() {
     @Test
     fun testSingleNoWait() {
         val observable = rxObservable {
