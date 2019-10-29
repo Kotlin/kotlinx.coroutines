@@ -1,14 +1,14 @@
 package kotlinx.coroutines.reactor
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
-import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import reactor.core.publisher.Mono
 import reactor.util.context.Context
 import kotlin.test.assertEquals
 
-class FlowAsFluxTest {
+class FlowAsFluxTest : TestBase() {
     @Test
     fun testFlowToFluxContextPropagation() = runBlocking<Unit> {
         val flux = flow<String> {

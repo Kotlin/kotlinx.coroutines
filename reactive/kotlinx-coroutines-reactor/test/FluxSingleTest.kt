@@ -11,7 +11,7 @@ import org.junit.Assert.*
 import reactor.core.publisher.*
 import java.time.Duration.*
 
-class FluxSingleTest {
+class FluxSingleTest : TestBase() {
     @Test
     fun testSingleNoWait() {
         val flux = flux {

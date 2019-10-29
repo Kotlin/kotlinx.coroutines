@@ -9,7 +9,7 @@ import reactor.core.publisher.*
 import reactor.util.context.*
 import kotlin.test.*
 
-class ReactorContextTest {
+class ReactorContextTest : TestBase() {
     @Test
     fun testMonoHookedContext() = runBlocking {
         val mono = mono(Context.of(1, "1", 7, "7").asCoroutineContext()) {
