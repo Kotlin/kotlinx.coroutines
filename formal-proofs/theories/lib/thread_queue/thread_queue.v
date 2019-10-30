@@ -767,7 +767,9 @@ Lemma cell_list_contents_register_for_dequeue E R γa γtq γe γd l deqFront:
   forall i, find_index still_present (drop deqFront l) = Some i ->
   R -∗ cell_list_contents E R γa γtq γe γd l deqFront ==∗
   (awakening_permit γtq ∗ deq_front_at_least γtq (deqFront + S i)%nat) ∗
-  cell_list_contents E R γa γtq γe γd l (deqFront + S i)%nat.
+  cell_list_contents E R γa γtq γe γd l (deqFront + S i)%nat ∗
+  ⌜count_matching still_present (drop deqFront l) =
+   S (count_matching still_present (drop (deqFront + S i) l))⌝.
 Proof.
   rewrite /awakening_permit /deq_front_at_least.
   iIntros (i HFindSome) "HR (% & #HNotDone & HAuth & HSs & HRs & HCellResources)".
@@ -852,7 +854,25 @@ Proof.
 
   iMod (own_update with "HAuth") as "[HAuth HFrag]".
   2: {
-    iFrame "HFrag". iSplitR.
+    iFrame "HFrag". iSplitL.
+    2: {
+      iPureIntro.
+      rewrite count_matching_drop count_matching_drop.
+      rewrite -HCountMatching.
+      remember (count_matching _ l) as K.
+      remember (count_matching _ (take deqFront l)) as K'.
+      assert (K - K' > 0)%nat.
+      2: lia.
+      subst.
+      rewrite -count_matching_drop.
+      replace (drop deqFront l) with
+          (take i (drop deqFront l) ++ v :: drop (S i) (drop deqFront l)).
+      2: by apply take_drop_middle.
+      rewrite count_matching_app. simpl.
+      rewrite decide_left.
+      lia.
+    }
+    iSplitR.
     { iPureIntro. rewrite drop_length in HLt. lia. }
     iFrame. rewrite -HCountMatching. simpl. iFrame.
     repeat rewrite big_sepL_forall.
@@ -3806,5 +3826,47 @@ Proof.
   }
   rewrite list_lookup_alter_ne in HEl; eauto.
 Qed.
+
+Theorem do_cancel_rendezvous_spec E R γa γtq γe γd eℓ epℓ dℓ dpℓ i ℓ:
+  array_mapsto segment_size γa i ℓ -∗
+  inhabitant_token γtq i -∗
+  let ap := tq_ap γtq γe in
+  <<< ∀ l deqFront j, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
+                      ⌜find_index still_present (drop deqFront l) = Some j⌝ >>>
+    getAndSet #ℓ CANCELLEDV = RESUMEDV @ ⊤
+  <<< ∃ (v: bool), ∃ γt th,
+     ⌜l !! i = Some (Some (cellInhabited γt th (Some cellResumed)))⌝ ∧
+     ⌜v = true⌝ ∧
+     ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l (deqFront + S j) ∗
+     awakening_permit γtq ∨
+
+     ⌜l !! i = Some (Some (cellInhabited γt th None))⌝ ∧
+     ⌜v = false⌝ ∧
+     cell_cancellation_handle segment_size γa i ∗ ▷ E ∗
+     rendezvous_cancelled γtq i ∗
+     ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
+      (alter (fun _ => Some (cellInhabited γt th (Some cellCancelled))) i l)
+      (deqFront + S j) (* not true: depends on `i < deqFront` *)
+  , RET #v >>>.
+Proof.
+  iIntros "#HMapsTo HInhToken" (Φ) "AU".
+  awp_apply (cancel_rendezvous_spec with "HMapsTo HInhToken").
+  iApply (aacc_aupd_commit with "AU"); first done.
+
+  iIntros (l deqFront j) "[(HInfArr & HListContents & HRest) %]".
+  iAaccIntro with "HListContents".
+  {
+    iIntros "$". iFrame. iSplitR; first done. iIntros "!> $ !> //".
+  }
+  iIntros (v γt th) "H".
+  iDestruct "H" as "[(% & -> & HListContents & HR)|
+    (% & -> & HCancHandle & HE & HRest')]".
+  all: iExists _; iSplitL; [iExists γt, th|iIntros "!> HΦ"; wp_pures; done].
+  {
+    iLeft. repeat (iSplitR; first done).
+    iFrame "HInfArr".
+    iDestruct (cell_list_contents_register_for_dequeue _ R with "HR HListContents") as "HH".
+    done.
+Abort.
 
 End proof.
