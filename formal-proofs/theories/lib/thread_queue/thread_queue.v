@@ -478,19 +478,24 @@ Qed.
 Definition deq_front_at_least γtq (n: nat) :=
   own γtq (◯ (ε, (ε, n: mnatUR), ε)).
 
-Definition rendezvous_thread_handle (γtq γt: gname) (th: loc) (i: nat): iProp :=
-  (thread_handler_location γt th ∗
-   rendezvous_state γtq i (ε, Some (to_agree (γt, th)), ε, ε, ε))%I.
+Definition rendezvous_thread_locs_state (γtq γt: gname) (th: loc) (i: nat): iProp
+  := rendezvous_state γtq i (ε, Some (to_agree (γt, th)), ε, ε, ε).
 
-Global Instance rendezvous_thread_handle_persistent γtq γt th i:
-  Persistent (rendezvous_thread_handle γtq γt th i).
+Global Instance rendezvous_thread_locs_state_persistent γtq γt th i:
+  Persistent (rendezvous_thread_locs_state γtq γt th i).
 Proof.
-  apply bi.sep_persistent.
-  apply _.
   apply rendezvous_state_persistent.
   repeat apply pair_core_id.
   all: apply _.
 Qed.
+
+Definition rendezvous_thread_handle (γtq γt: gname) (th: loc) (i: nat): iProp :=
+  (thread_handler_location γt th ∗
+   rendezvous_thread_locs_state γtq γt th i)%I.
+
+Global Instance rendezvous_thread_handle_persistent γtq γt th i:
+  Persistent (rendezvous_thread_handle γtq γt th i).
+Proof. apply _. Qed.
 
 Definition resumer_token γtq i :=
   rendezvous_state γtq i (ε, ε, Excl' (), ε, ε).
@@ -1240,7 +1245,7 @@ Proof.
 Qed.
 
 Theorem inhabit_cell_spec N' E R γa γtq γe γd γt i ptr (th: loc):
-  rendezvous_thread_handle γtq γt th i -∗
+  thread_handler_location γt th -∗
   thread_doesnt_have_permits γt -∗
   iterator_issued γe i -∗
   exists_list_element γtq i -∗
@@ -1289,8 +1294,6 @@ Proof.
       first done.
     simpl; iSpecialize ("HH" with "HCellRRs").
     iDestruct "HH" as "[_ HH]".
-    iSpecialize ("HH" with "[HIsSus Hℓ HCancHandle HThreadNoPerms]").
-    { iFrame. iExists _. iFrame "HArrMapsto". eauto. }
     remember (alter (fun _ => Some (cellInhabited γt th None)) i l) as l'.
     assert (length l = length l') as HSameLength.
     { subst. by rewrite alter_length. }
@@ -1345,6 +1348,24 @@ Proof.
         by rewrite -Some_op ucmra_unit_left_id. }
       apply IHl; assumption.
     }
+    iAssert (rendezvous_thread_locs_state γtq γt th i)
+      as "#HRendThread".
+    {
+      iApply (own_mono with "HFrag").
+      apply auth_included. simpl; split; try done.
+      apply prod_included. simpl; split; try done.
+      apply list_lookup_included. clear.
+      induction i; case; simpl; try done.
+      apply Some_included_total. apply prod_included.
+      split; try done. simpl.
+      apply prod_included'. simpl. split.
+      2: by apply ucmra_unit_least.
+      apply prod_included'. simpl. split; try done.
+      apply prod_included'. simpl. split; try done.
+      by apply ucmra_unit_least.
+    }
+    iSpecialize ("HH" with "[HIsSus Hℓ HCancHandle HThreadNoPerms]").
+    { iFrame. iExists _. iFrame "HArrMapsto Hℓ HRendThread HTh". }
     iAssert (own γtq (◯ (ε, {[i := (ε, 1%nat: mnatUR, None)]})))
       with "[-]" as "#HInit".
     {
@@ -3324,7 +3345,7 @@ Proof.
     by rewrite rem_of_nat.
   }
   awp_apply segment_data_at_spec.
-  { iPureIntro. apply Nat2Z.inj_lt, Nat.mod_upper_bound. lia. }
+  { iPureIntro. apply Nat.mod_upper_bound. lia. }
   iApply (aacc_aupd_abort with "AU"); first done.
   iIntros (? deqFront) "(HInfArr & HRest)".
   iDestruct (is_segment_by_location with "HSegLoc HInfArr")
@@ -3488,8 +3509,16 @@ Theorem try_enque_thread_spec E R γa γtq γe γd γt (eℓ epℓ dℓ dpℓ: l
   suspension_permit γtq -∗
   thread_doesnt_have_permits γt -∗ ∀ (Φ : val -> iPropSI Σ),
   AU << ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>
-  @ ⊤, ↑N
-  << True, COMM Φ #() >> -∗
+  @ ⊤ ∖ ↑N, ∅
+  << ∃ (v: bool),
+      (⌜v = false⌝ ∧
+       ∃ (i: nat), ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
+                     (alter (fun _ => Some (cellInhabited γt th None)) i l) deqFront ∗
+                     inhabitant_token γtq i) ∨
+      (⌜v = true⌝ ∧
+       ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
+         thread_doesnt_have_permits γt ∗ ▷ R),
+    COMM Φ #v >> -∗
   WP ((try_enque_thread segment_size) #th #epℓ) #eℓ {{ v, Φ v }}.
 Proof.
   iIntros "#HThLoc HSusp HNoPerms" (Φ) "AU". wp_lam. wp_pures.
@@ -3573,6 +3602,8 @@ Proof.
     apply Some_included_total.
     apply ucmra_unit_least.
   }
+  iDestruct (iterator_points_to_at_least with "HEnqAtLeast [HEnqIt]") as %HnLtn'.
+  by iDestruct "HEnqIt" as "[$ _]".
   iAaccIntro with "HEnqIt".
   {
     iFrame. iIntros "HEnqIt".
@@ -3581,7 +3612,6 @@ Proof.
   }
   simpl. rewrite Nat.add_1_r union_empty_r_L.
   iIntros "[[HEnqCtr HEnqPtr] HIsSus]".
-  iDestruct (iterator_points_to_at_least with "HEnqAtLeast HEnqCtr") as %HnLtn'.
   iClear "HEnqAtLeast".
   iMod (iterator_counter_is_at_least with "HEnqCtr") as "[HEnqCtr #HEnqAtLeast]".
   iClear "HFrag".
@@ -3629,14 +3659,152 @@ Proof.
 
   wp_pures.
 
-  iAssert (∀ l deqFront,
-    iterator_issued γe enqIdx -∗
-    cell_list_contents E R γa γtq γe γd l deqFront ={↑N}=∗
-    ▷ ⌜segId = (enqIdx `div` Pos.to_nat segment_size)%nat⌝)%I as "HContra".
-  {
-    iIntros (l deqFront) "HIsSus HListContents".
-    iDestruct "HListContents" as "(% & _ & HAuth & _ & _ & HCellRRs)".
+  destruct (decide (enqIdx `div` Pos.to_nat segment_size = segId)%nat).
+  2: {
+    iDestruct "HRest'" as "[[% ->]|HC]".
+    {
+      exfalso.
+      assert (enqIdx `div` Pos.to_nat segment_size < segId)%nat by lia.
+      assert ((segId * Pos.to_nat segment_size) `div` Pos.to_nat segment_size <=
+              enqIdx `div` Pos.to_nat segment_size)%nat as HContra.
+      by apply Nat.div_le_mono; lia.
+      rewrite Nat.div_mul in HContra; lia.
+    }
+    iDestruct "HC" as "(% & % & HCanc)".
+    rewrite segments_cancelled__cells_cancelled.
+    remember (Pos.to_nat segment_size) as P.
+    iAssert (cell_is_cancelled segment_size γa
+              (P * enqIdx `div` P + enqIdx `mod` P)%nat) as "HCellCanc".
+    {
+      rewrite Nat.mul_comm.
+      iApply (big_sepL_lookup with "HCanc").
+      apply seq_lookup.
+      assert (enqIdx `mod` P < P)%nat by (apply Nat.mod_upper_bound; lia).
+      destruct (segId - enqIdx `div` P)%nat eqn:Z; try lia.
+      simpl.
+      lia.
+    }
+    rewrite -Nat.div_mod; try lia.
 
-Abort.
+    wp_lam. wp_pures. wp_bind (!_)%E. (* Just so I can open an invariant. *)
+    iInv N as "[[>HCancHandle _]|>HInit]" "HClose".
+    by iDestruct (cell_cancellation_handle'_not_cancelled with "HCancHandle HCellCanc") as %[].
+    iMod "AU" as (? ?) "[(_ & (_ & _ & >HAuth & _ & _ & HCellRRs) & _) _]".
+    iDestruct (exists_list_element_lookup with "HElExists HAuth") as %[c HEl].
+    destruct c as [c|]; simpl.
+    2: {
+      iDestruct (own_valid_2 with "HAuth HInit") as
+          %[[_ HValid]%prod_included _]%auth_both_valid.
+      simpl in *.
+      exfalso.
+      move: HValid. rewrite list_lookup_included. move=> HValid.
+      specialize (HValid enqIdx). move: HValid.
+      rewrite list_lookup_singletonM map_lookup HEl /= Some_included_total.
+      intros HValid.
+      apply prod_included in HValid; simpl in *; destruct HValid as [HValid _].
+      apply prod_included in HValid; simpl in *; destruct HValid as [_ HValid].
+      apply mnat_included in HValid. lia.
+    }
+    iDestruct (big_sepL_lookup with "HCellRRs") as "HR".
+    done.
+    simpl.
+    iDestruct "HR" as (?) "[_ HRest]".
+    destruct c as [|? ? c].
+    {
+      iDestruct "HRest" as "(_ & >HCancHandle & _)".
+      iDestruct (cell_cancellation_handle'_not_cancelled with "HCancHandle HCellCanc") as %[].
+    }
+    destruct c; iDestruct "HRest" as "(_ & >HIsSus' & _)".
+    all: iDestruct (iterator_issued_exclusive with "HIsSus HIsSus'") as %[].
+  }
+
+  subst.
+  iClear "HRest' HInvs HSegLoc HInv". clear.
+
+  awp_apply (iterator_move_ptr_forward_spec with "[%] [$] [$]").
+  by move: (Nat.mul_div_le enqIdx (Pos.to_nat segment_size)); lia.
+  iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros (? ?) "(HInfArr & HListContents & HCancA & HLog1 & HRest)".
+  iDestruct "HRest" as (? ?) "(>HEnqIt & >HDeqIt & HAwaks & >HSusps & HLog2)".
+  iCombine "HInfArr" "HEnqIt" as "HAacc".
+  iAaccIntro with "HAacc".
+  {
+    iIntros "[$ HEnqIt]". iFrame.
+    iSplitL. by iExists _, _; iFrame.
+    by iIntros "!> $ !>".
+  }
+  iIntros "[$ EnqIt]". iFrame.
+  iSplitR "HIsSus HNoPerms".
+  by iExists _, _; iFrame.
+  iIntros "!> AU !>".
+
+  wp_pures. wp_lam. wp_pures.
+  replace (enqIdx `rem` _) with (Z.of_nat (enqIdx `mod` Pos.to_nat segment_size)%nat).
+  2: {
+    destruct (Pos.to_nat segment_size) eqn:Z; try lia.
+    by rewrite rem_of_nat.
+  }
+
+  awp_apply segment_data_at_spec.
+  { iPureIntro. apply Nat.mod_upper_bound; lia. }
+  iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros (? ?) "(HInfArr & HRest)".
+  iDestruct (is_segment_by_location with "HSegLoc' HInfArr")
+    as (? ?) "[HIsSeg HArrRestore]".
+  iAaccIntro with "HIsSeg".
+  {
+    iIntros "HIsSeg !>".
+    iDestruct ("HArrRestore" with "HIsSeg") as "$".
+    iFrame.
+    by iIntros "$ !>".
+  }
+  iIntros (?) "(HIsSeg & HArrMapsto' & _)".
+  iDestruct (array_mapsto'_agree with "HArrMapsto' HMapsTo") as "->".
+  iDestruct ("HArrRestore" with "[HIsSeg]") as "$"; first by iFrame.
+  iFrame "HRest".
+  iIntros "!> AU !>".
+
+  wp_pures.
+  awp_apply (inhabit_cell_spec with "[$] HNoPerms HIsSus HElExists HMapsTo HCellInv").
+  iApply (aacc_aupd_commit with "AU"); first done.
+  iIntros (? deqFront) "(HInfArr & HListContents & HRest)".
+  iAaccIntro with "HListContents".
+  { iIntros "$"; iFrame. iIntros "!> $ !>". done. }
+  iIntros (?) "H".
+  iDestruct "H" as "[(% & -> & HInhToken & HListContents')|
+    (% & -> & HNoPerms & HR & HListContents)]".
+  all: iExists _; iSplitL; [|iIntros "!> HΦ !>"; by wp_pures].
+  2: {
+    iRight. iSplitR; first done. by iFrame.
+  }
+  iLeft. iSplitR; first done. iExists enqIdx.
+  iFrame "HInhToken".
+  iDestruct "HRest" as "(HCancA & >% & >HRest)".
+  rewrite /is_thread_queue.
+  rewrite alter_length.
+  iFrame "HInfArr HRest HListContents'".
+  iSplitL.
+  {
+    iApply (big_opL_forall' with "HCancA").
+    by rewrite alter_length.
+    simpl.
+    intros k ? ? HEl HEl'.
+    destruct (decide (enqIdx = k)).
+    {
+      subst. rewrite list_lookup_alter in HEl.
+      rewrite HEl' in HEl. simpl in *. by simplify_eq.
+    }
+    rewrite list_lookup_alter_ne in HEl; try assumption.
+    by simplify_eq.
+  }
+  iPureIntro.
+  intros (γt' & th' & HEl).
+  destruct (decide (enqIdx = deqFront)).
+  {
+    subst. rewrite list_lookup_alter in HEl.
+    destruct (_ !! deqFront); simpl in *; discriminate.
+  }
+  rewrite list_lookup_alter_ne in HEl; eauto.
+Qed.
 
 End proof.

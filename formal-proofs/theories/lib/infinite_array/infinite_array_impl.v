@@ -1043,7 +1043,7 @@ Proof.
 Qed.
 
 Theorem segment_data_at_spec γ id (ℓ: loc) (ix: nat):
-  ⌜ix < Pos.to_nat segment_size⌝ -∗
+  ⌜(ix < Pos.to_nat segment_size)%nat⌝ -∗
   <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     segment_data_at #ℓ #ix @ ⊤
   <<< ∃ (v: loc), is_segment γ id ℓ pl nl
