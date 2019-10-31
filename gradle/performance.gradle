@@ -2,53 +2,13 @@
  * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import org.jetbrains.kotlin.PerformanceTools
+apply plugin: 'org.jetbrains.kotlin.native.performance'
 
-PerformanceTools.addTimeListener(project)
+def binaries = new ArrayList<?>(kotlin.targets.findAll { it.platformType.toString() == "native" }
+        .collect { it.binaries.getTest("DEBUG") })
 
-def createReport(linkTaskName, status, target, codeSize = null) {
-    def compileTime = PerformanceTools.getCompileTime(["compileKotlin${target}".toString(), linkTaskName], status)
-    def reportFile = new File(buildDir, nativeReport)
-    reportFile.write("kotlinx.coroutines\n$compileTime")
-    if (codeSize != null) {
-        reportFile.append("\n$codeSize")
-    }
-}
-
-kotlin.targets.each {
-    if (it.platformType.name == "native") {
-        def target = ""
-        it.konanTarget.name.split("_").each { word -> target += word.capitalize() }
-        def linkTask = it.binaries.getTest("DEBUG").linkTask
-        def compilationTask = it.compilations.main.compileKotlinTask
-        def binary = it.binaries.getTest("DEBUG").outputFile.absolutePath
-
-        def perfRun = tasks.create("perfDebug$target") { task ->
-            task.dependsOn(linkTask)
-            task.group = "Kotlin/Native Benchmarking"
-            task.description = "Runs compile time benchmarks for Kotlin/Native."
-        }
-        def report = tasks.create("perfDebugReport$target") { task ->
-            task.group = "Kotlin/Native Benchmarking"
-            task.description = "Report results of compile time benchmarks for Kotlin/Native."
-            doLast {
-                createReport(linkTask.name, perfRun.state.failure == null, target,
-                        PerformanceTools.getCodeSize(binary))
-            }
-            perfRun.finalizedBy(task)
-        }
-
-        tasks.create("perfFailureReport$target") { task ->
-            onlyIf {
-                compilationTask.state.failure != null || linkTask.state.failure != null
-            }
-            task.group = "Kotlin/Native Benchmarking"
-            task.description = "Report results of compile time benchmarks for Kotlin/Native in case of failure."
-            doLast {
-                createReport(linkTask.name, false, target)
-            }
-            linkTask.finalizedBy(task)
-            compilationTask.finalizedBy(task)
-        }
+kotlin.performance {
+    binaries.each {
+        binary(it, "kotlinx.coroutines")
     }
 }
