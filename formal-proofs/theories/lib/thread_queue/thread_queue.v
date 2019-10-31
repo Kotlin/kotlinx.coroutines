@@ -763,7 +763,138 @@ Proof.
   rewrite count_matching_app. lia.
 Qed.
 
-Lemma cell_list_contents_register_for_dequeue E R γa γtq γe γd l deqFront:
+Lemma present_cells_in_take_i_if_next_present_is_Si
+  {A: Type} (P: A -> Prop) {H': forall x, Decision (P x)} (i: nat) (l: list A):
+    find_index P l = Some i ->
+    count_matching P (take i l) = O.
+Proof.
+  intros HFindSome.
+  apply find_index_Some in HFindSome.
+  destruct HFindSome as [[v [HIn HPresent]] HNotPresent].
+  assert (i < length l)%nat as HLt.
+  { apply lookup_lt_is_Some. by eexists. }
+
+  assert (forall i', (i' < i)%nat -> exists v', take i l !! i' = Some v' /\
+                                      not (P v')) as HH.
+  {
+    intros i' HLti'. destruct (HNotPresent i' HLti')
+      as [v' [HEl Hv'NotPresent]].
+    exists v'. split; try done. by rewrite lookup_take.
+  }
+  remember (take i l) as l'. assert (i = length l') as HLen.
+  by subst; rewrite take_length_le; lia.
+  subst i.
+  revert HH. clear. rewrite /count_matching /filter /=.
+  induction l'; auto=> H. simpl in *.
+  destruct (H O) as [p H'']; simpl in *; first by lia.
+  destruct H'' as [[=] HH]; subst. destruct (decide (P p)).
+
+  contradiction.
+  apply IHl'.
+  intros i' HLt.
+  destruct (H (S i')); first by lia.
+  simpl in *. eauto.
+Qed.
+
+Lemma present_cells_in_take_1_drop_i_if_next_present_is_Si
+  {A: Type} (P: A -> Prop) {H': forall x, Decision (P x)} (i: nat) (l: list A):
+    find_index P l = Some i ->
+    count_matching P (take 1 (drop i l)) = 1%nat.
+Proof.
+  intros HFindSome.
+  apply find_index_Some in HFindSome.
+  destruct HFindSome as [[v [HIn HPresent]] HNotPresent].
+  assert (i < length l)%nat as HLt.
+  { apply lookup_lt_is_Some. by eexists. }
+
+  replace (drop i l) with (v :: drop (S i) l).
+  { simpl. destruct (decide (P v)); try contradiction. done. }
+  assert (i = length (take i l))%nat as HH.
+  by rewrite take_length_le; lia.
+  replace (drop i l) with (drop i (take i l ++ v :: drop (S i) l)).
+  { symmetry. rewrite drop_app_le. rewrite drop_ge. done. all: lia. }
+  by rewrite take_drop_middle.
+Qed.
+
+Lemma present_cells_in_take_Si_if_next_present_is_Si
+  {A: Type} (P: A -> Prop) {H': forall x, Decision (P x)} (i: nat) (l: list A):
+    find_index P l = Some i ->
+    count_matching P (take (S i) l) = 1%nat.
+Proof.
+  intros HFindSome.
+  change (S i) with (1 + i)%nat.
+  rewrite Nat.add_comm -take_take_drop count_matching_app.
+  rewrite present_cells_in_take_1_drop_i_if_next_present_is_Si.
+  rewrite present_cells_in_take_i_if_next_present_is_Si.
+  all: try done.
+Qed.
+
+Lemma absent_cells_in_drop_Si_if_next_present_is_i
+  {A: Type} (P: A -> Prop) {H': forall x, Decision (P x)} (i: nat) (l: list A):
+    find_index P l = Some i ->
+  count_matching (λ b, not (P b)) l =
+  (i + count_matching (λ b, not (P b)) (drop (S i) l))%nat.
+Proof.
+  intros HFindSome.
+  repeat rewrite count_matching_complement.
+  rewrite drop_length.
+
+  replace (count_matching P l) with
+      (count_matching P (take (S i) l ++ drop (S i) l)).
+  2: by rewrite take_drop.
+
+  rewrite count_matching_app Nat.sub_add_distr.
+  rewrite present_cells_in_take_Si_if_next_present_is_Si; try done.
+
+  repeat rewrite -Nat.sub_add_distr /=.
+  remember (count_matching (_) (drop (S i) _)) as K.
+  rewrite plus_n_Sm.
+  rewrite -(Nat.add_comm (S K)) Nat.sub_add_distr.
+  assert (K <= length l - S i)%nat as HKLt.
+  {
+    rewrite HeqK. eapply transitivity.
+    apply count_matching_le_length.
+    by rewrite drop_length.
+  }
+  assert (i < length l)%nat; try lia.
+  apply find_index_Some in HFindSome.
+  destruct HFindSome as [(v & HEl & _) _].
+  apply lookup_lt_is_Some. eauto.
+Qed.
+
+Lemma deque_register_ra_update l deqFront:
+  forall i, find_index still_present (drop deqFront l) = Some i ->
+  ● cell_list_contents_auth_ra l deqFront ~~>
+    ● cell_list_contents_auth_ra l (deqFront + S i)
+    ⋅ (◯ (ε, (1%nat, ε), ε) ⋅ ◯ (ε, (ε, (deqFront + S i)%nat : mnatUR), ε)).
+Proof.
+  intros i HFindSome.
+
+  assert (deqFront + i < length l)%nat.
+  {
+    apply find_index_Some in HFindSome.
+    destruct HFindSome as [[v [HIn HPresent]] HNotPresent].
+    assert (i < length (drop deqFront l))%nat as HLt.
+    { apply lookup_lt_is_Some. by eexists. }
+    rewrite drop_length in HLt. lia.
+  }
+
+  rewrite -auth_frag_op.
+  repeat rewrite -pair_op ucmra_unit_left_id. rewrite ucmra_unit_right_id.
+
+  apply auth_update_alloc, prod_local_update_1, prod_local_update_2,
+    prod_local_update'.
+  2: apply mnat_local_update; lia.
+  apply nat_local_update.
+
+  rewrite -plus_n_O -Nat.add_assoc Nat.add_1_r -Nat.add_assoc /=.
+  congr (fun x => deqFront + (S x))%nat.
+  rewrite -drop_drop.
+
+  by rewrite -absent_cells_in_drop_Si_if_next_present_is_i.
+Qed.
+
+Theorem cell_list_contents_register_for_dequeue E R γa γtq γe γd l deqFront:
   forall i, find_index still_present (drop deqFront l) = Some i ->
   R -∗ cell_list_contents E R γa γtq γe γd l deqFront ==∗
   (awakening_permit γtq ∗ deq_front_at_least γtq (deqFront + S i)%nat) ∗
@@ -771,152 +902,74 @@ Lemma cell_list_contents_register_for_dequeue E R γa γtq γe γd l deqFront:
   ⌜count_matching still_present (drop deqFront l) =
    S (count_matching still_present (drop (deqFront + S i) l))⌝.
 Proof.
-  rewrite /awakening_permit /deq_front_at_least.
-  iIntros (i HFindSome) "HR (% & #HNotDone & HAuth & HSs & HRs & HCellResources)".
-  rewrite -own_op -auth_frag_op.
-  repeat rewrite -pair_op ucmra_unit_left_id. rewrite ucmra_unit_right_id.
-
-  apply find_index_Some in HFindSome.
-  destruct HFindSome as [[v [HIn HPresent]] HNotPresent].
-  assert (i < length (drop deqFront l))%nat as HLt.
-  { apply lookup_lt_is_Some. by eexists. }
+  iIntros (i HFindSome).
 
   assert (count_matching still_present (take i (drop deqFront l)) = O)
     as HCountMatching2.
-  {
-    remember (drop deqFront l) as l'.
-    assert (forall i', (i' < i)%nat -> exists v', take i l' !! i' = Some v' /\
-                                        not (still_present v')) as HH.
-    {
-      intros i' HLti'. destruct (HNotPresent i' HLti')
-        as [v' [HEl Hv'NotPresent]].
-      exists v'. split; try done. by rewrite lookup_take.
-    }
-    remember (take i l') as l''. assert (i = length l'') as HLen.
-    by subst; rewrite take_length_le; lia.
-    subst i.
-    revert HH. clear. rewrite /count_matching /filter /=.
-    induction l''; auto=> H. simpl in *.
-    destruct (H O) as [p H']; simpl in *; first by lia.
-    destruct H' as [[=] HH]; subst. destruct (decide (still_present p)).
+  by apply present_cells_in_take_i_if_next_present_is_Si.
 
-    contradiction.
-    apply IHl''.
-    intros i' HLt.
-    destruct (H (S i')); first by lia.
-    simpl in *. eauto.
-  }
-
-  assert (count_matching still_present (take 1 (drop (deqFront + i) l)) = 1%nat)
+  assert (count_matching still_present (take 1 (drop i (drop deqFront l))) = 1%nat)
     as HCountMatching3.
-  {
-    replace (drop (deqFront + i) l) with (v :: drop (deqFront + S i) l).
-    { simpl. by rewrite decide_left. }
-    rewrite lookup_drop in HIn.
-    assert (deqFront + i = length (take (deqFront + i) l))%nat as HH.
-    {
-      rewrite take_length_le. done.
-      assert (deqFront + i < length l)%nat as HLt'. 2: lia.
-      apply lookup_lt_is_Some_1. by eauto.
-    }
-    replace (drop (deqFront + i) l) with
-        (drop (deqFront + i) (take (deqFront + i) l ++ v :: drop (deqFront + S i) l)).
-    { symmetry. rewrite drop_app_le. rewrite drop_ge. done. all: lia. }
-    by rewrite -plus_n_Sm take_drop_middle.
-  }
-
-  assert (take i (drop deqFront l) ++ take 1 (drop (deqFront + i) l) =
-          take (S i) (drop deqFront l)) as HTakeApp.
-  {
-    replace (take (S i) (drop deqFront l)) with
-        (take (i + 1)%nat (take i (drop deqFront l) ++ drop (deqFront + i) l)).
-    rewrite take_plus_app; first done.
-    rewrite take_length_le; first done.
-    lia.
-    rewrite Nat.add_comm. simpl. congr (take (S i)).
-    replace (drop (deqFront + i) l) with (drop i (drop deqFront l)).
-    by rewrite take_drop.
-    by rewrite drop_drop.
-  }
+  by apply present_cells_in_take_1_drop_i_if_next_present_is_Si.
 
   assert (S (count_matching still_present (take deqFront l)) =
               count_matching still_present (take (deqFront + S i) l)) as HCountMatching.
   {
-    replace (take (deqFront + S i) l) with
-        (take (deqFront + S i) (take deqFront l ++ drop deqFront l)).
-    2: by rewrite take_drop.
-    rewrite take_plus_app. 2: rewrite take_length_le; lia.
-    rewrite count_matching_app.
-    replace (take (S i) (drop deqFront l)) with
-        (take i (drop deqFront l) ++ take 1 (drop (deqFront + i) l)).
-    rewrite count_matching_app HCountMatching2 HCountMatching3; lia.
+    rewrite -take_take_drop.
+    assert (take i (drop deqFront l) ++ take 1 (drop i (drop deqFront l)) =
+            take (S i) (drop deqFront l)) as <-.
+    by rewrite take_take_drop Nat.add_comm.
+    repeat rewrite count_matching_app.
+    rewrite present_cells_in_take_1_drop_i_if_next_present_is_Si.
+    rewrite (present_cells_in_take_i_if_next_present_is_Si _ i).
+    lia.
+    all: done.
   }
 
-  iMod (own_update with "HAuth") as "[HAuth HFrag]".
-  2: {
-    iFrame "HFrag". iSplitL.
-    2: {
-      iPureIntro.
-      rewrite count_matching_drop count_matching_drop.
-      rewrite -HCountMatching.
-      remember (count_matching _ l) as K.
-      remember (count_matching _ (take deqFront l)) as K'.
-      assert (K - K' > 0)%nat.
-      2: lia.
-      subst.
-      rewrite -count_matching_drop.
-      replace (drop deqFront l) with
-          (take i (drop deqFront l) ++ v :: drop (S i) (drop deqFront l)).
-      2: by apply take_drop_middle.
-      rewrite count_matching_app. simpl.
-      rewrite decide_left.
-      lia.
-    }
-    iSplitR.
-    { iPureIntro. rewrite drop_length in HLt. lia. }
-    iFrame. rewrite -HCountMatching. simpl. iFrame.
-    repeat rewrite big_sepL_forall.
-    iIntros "!>" (k ? HEv). iApply ("HNotDone" $! (k + S i)%nat).
-    iPureIntro. rewrite <- HEv.
-    repeat rewrite lookup_drop. congr (fun x => l !! x). lia.
-  }
-
-  apply auth_update_alloc, prod_local_update_1, prod_local_update_2,
-    prod_local_update'.
-  2: apply mnat_local_update; lia.
-  apply nat_local_update.
-  repeat rewrite count_matching_complement drop_length.
-  repeat rewrite -Nat.add_assoc. congr (Nat.add deqFront).
-  rewrite Nat.add_comm. simpl. congr S. rewrite /ε /nat_unit -plus_n_O.
-  rewrite Nat.sub_add_distr.
-  rewrite -drop_drop.
-
-  replace (count_matching still_present (drop deqFront l)) with
-      (count_matching still_present (take (S i) (drop deqFront l) ++
-                                          drop (S i) (drop deqFront l))).
-  2: by rewrite take_drop.
-
-  rewrite -HTakeApp.
-  repeat rewrite count_matching_app.
-  repeat rewrite HCountMatching2.
-  rewrite HCountMatching3. simpl.
-
-  remember (count_matching (_) (drop (S i) _)) as K.
-  assert (K <= length l - deqFront - S i)%nat as HKLt.
+  assert (count_matching still_present (drop deqFront l) > 0)%nat as HCM4.
   {
-    rewrite HeqK. eapply transitivity.
-    apply count_matching_le_length. rewrite drop_drop.
-    rewrite drop_length.
+    apply find_index_Some in HFindSome.
+    destruct HFindSome as [[v [HIn HPresent]] HNotPresent].
+    replace (drop deqFront l) with
+        (take i (drop deqFront l) ++ v :: drop (S i) (drop deqFront l)).
+    2: by apply take_drop_middle.
+    rewrite count_matching_app. simpl.
+    rewrite decide_left.
     lia.
   }
-  assert (deqFront + i < length l)%nat as HDILt.
-  {
-    apply lookup_lt_is_Some.
-    rewrite lookup_drop in HIn.
-    eauto.
-  }
-  lia.
 
+  assert (deqFront + i < length l)%nat.
+  {
+    apply find_index_Some in HFindSome.
+    destruct HFindSome as [[v [HIn HPresent]] HNotPresent].
+    assert (i < length (drop deqFront l))%nat as HLt.
+    { apply lookup_lt_is_Some. by eexists. }
+    rewrite drop_length in HLt. lia.
+  }
+
+  iIntros "HR (% & #HNotDone & HAuth & HSs & HRs & HCellResources)".
+
+  iMod (own_update with "HAuth") as "[HAuth [HFrag1 HFrag2]]".
+  by apply deque_register_ra_update.
+  iFrame "HFrag1 HFrag2". iSplitL.
+  2: {
+    iPureIntro.
+    rewrite count_matching_drop count_matching_drop.
+    rewrite -HCountMatching.
+    remember (count_matching _ l) as K.
+    remember (count_matching _ (take deqFront l)) as K'.
+    assert (K - K' > 0)%nat.
+    2: lia.
+    subst.
+    by rewrite -count_matching_drop.
+  }
+  iSplitR.
+  by iPureIntro; lia.
+  iFrame. rewrite -HCountMatching. simpl. iFrame.
+  repeat rewrite big_sepL_forall.
+  iIntros "!>" (k ? HEv). iApply ("HNotDone" $! (k + S i)%nat).
+  iPureIntro. rewrite <- HEv.
+  repeat rewrite lookup_drop. congr (fun x => l !! x). lia.
 Qed.
 
 Definition is_thread_queue (S R: iProp) γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront :=
@@ -928,7 +981,7 @@ Definition is_thread_queue (S R: iProp) γa γtq γe γd eℓ epℓ dℓ dpℓ l
                           awakening_permit γtq ∨ iterator_issued γd i
                         | _ => True
                         end) ∗
-   ⌜(∃ γt th, l !! deqFront = Some (Some (cellInhabited γt th (Some cellCancelled)))) -> False⌝ ∧
+   ⌜(deqFront > 0 /\ ∃ γt th, l !! (deqFront - 1)%nat = Some (Some (cellInhabited γt th (Some cellCancelled)))) -> False⌝ ∧
    ∃ (enqIdx deqIdx: nat),
    iterator_points_to segment_size γa γe eℓ epℓ enqIdx ∗
    iterator_points_to segment_size γa γd dℓ dpℓ deqIdx ∗
@@ -1556,6 +1609,455 @@ Proof.
       rewrite lookup_app_l. 2: rewrite take_length_le; try lia.
       rewrite lookup_take //. lia.
     }
+  }
+Qed.
+
+Theorem do_cancel_rendezvous_spec E R γa γtq γe γd eℓ epℓ dℓ dpℓ i ℓ:
+  array_mapsto segment_size γa i ℓ -∗
+  inhabitant_token γtq i -∗
+  let ap := tq_ap γtq γe in
+  <<< ∀ l deqFront j, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
+                      ⌜find_index still_present (drop deqFront l) = Some j⌝ >>>
+    getAndSet #ℓ CANCELLEDV = RESUMEDV @ ⊤
+  <<< ∃ (v: bool), ∃ γt th,
+     ⌜l !! i = Some (Some (cellInhabited γt th (Some cellResumed)))⌝ ∧
+     ⌜v = true⌝ ∧
+     ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l (deqFront + S j) ∗
+     awakening_permit γtq ∨
+
+     ⌜l !! i = Some (Some (cellInhabited γt th None))⌝ ∧
+     ⌜v = false⌝ ∧
+     cell_cancellation_handle segment_size γa i ∗ ▷ E ∗
+     rendezvous_cancelled γtq i ∗
+     ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
+      (alter (fun _ => Some (cellInhabited γt th (Some cellCancelled))) i l)
+      (if decide (i < deqFront)%nat then (deqFront + S j)%nat else deqFront)
+  , RET #v >>>.
+Proof.
+  iIntros "#HArrMapsto HInhToken" (Φ) "AU".
+
+  awp_apply getAndSet_spec. iApply (aacc_aupd_commit with "AU"); first done.
+  iIntros (l deqFront j) "[(HInfArr &
+    (>% & >#HNotDone & >HAuth & HEs & HRs & HCellResources) & HRest) HFindIx]".
+  iDestruct "HFindIx" as %HFindIx.
+
+  iDestruct (inhabited_cell_states with "HAuth HInhToken")
+    as %(γt & th & inhC & HVal).
+
+  destruct inhC as [[ | | ]|].
+
+  {
+    iDestruct (big_sepL_lookup_acc with "HCellResources") as "[HC HH]".
+    eassumption.
+    simpl.
+    iDestruct "HC" as (?) "(_ & _ & _ & HInhToken' & _)".
+    iDestruct (inhabitant_token_exclusive with "HInhToken HInhToken'")
+      as ">[]".
+  }
+
+  2: {
+    iDestruct (big_sepL_lookup_acc with "HCellResources") as "[HC HH]".
+    eassumption.
+    simpl.
+    iDestruct "HC" as (?) "(_ & _ & _ & _ & HInhToken' & _)".
+    iDestruct (inhabitant_token_exclusive with "HInhToken HInhToken'")
+      as ">[]".
+  }
+
+  {
+    iDestruct (big_sepL_lookup_acc with "HCellResources") as "[HC HH]".
+    eassumption.
+    simpl.
+    iDestruct "HC" as (?) "(>HArrMapsto' & #HTh & HIsRes & HCancHandle & HIsSus & HRes)".
+    iDestruct "HRes" as "[[HInhToken' _]|(Hℓ & HR & HPerms)]".
+    by iDestruct (inhabitant_token_exclusive with "HInhToken HInhToken'")
+      as ">[]".
+
+    iDestruct (array_mapsto'_agree with "HArrMapsto HArrMapsto'") as %<-.
+
+    iAssert (▷ ℓ ↦ RESUMEDV ∧ ⌜val_is_unboxed RESUMEDV⌝)%I
+      with "[Hℓ]" as "HAacc"; first by iFrame.
+
+    iAaccIntro with "HAacc".
+    { iIntros "[Hℓ _]". iModIntro.
+      iDestruct (bi.later_wand with "HH
+          [HArrMapsto' HIsRes HCancHandle HIsSus HR Hℓ HPerms]") as "$".
+      by iFrame; iExists _; iFrame "HArrMapsto' HTh"; iRight; iFrame.
+      iFrame. iSplitR. iFrame "HNotDone". iPureIntro; done.
+      iIntros "$". done. }
+    iIntros "Hℓ".
+    iDestruct (bi.later_wand with "HH
+        [HArrMapsto' HIsRes HCancHandle HIsSus HInhToken HPerms]") as "HCellRRs".
+    { iExists _; iFrame "HTh"; iFrame; iLeft; iFrame.
+      iDestruct "HPerms" as "[[HH1 HH2]|HH]"; eauto. }
+    iExists _. iSplitL. 2: by iIntros "!> HΦ !>"; wp_pures.
+    iExists _, _. iLeft.
+    repeat (iSplitR; first done).
+
+    iMod (own_update with "HAuth") as "[HAuth [HFrag1 HFrag2]]".
+    by apply deque_register_ra_update.
+    iFrame "HInfArr HEs".
+    iDestruct "HRest" as "(HCancA & _ & HRest)".
+    destruct (find_index_Some _ _ _ HFindIx) as [[v [HIn HPresent]] HNotPresent].
+    rewrite lookup_drop in HIn.
+    assert (deqFront + j < length l)%nat as HLt.
+    { apply lookup_lt_is_Some. by eexists. }
+    iFrame.
+    iSplitL "HR HRs".
+    {
+      iSplitR; first by iPureIntro; lia.
+      iSplitR.
+      {
+        repeat iModIntro.
+        replace (drop deqFront l) with
+            (take (S j) (drop deqFront l) ++ drop (S j) (drop deqFront l)).
+        2: by apply take_drop.
+        rewrite big_sepL_app drop_drop.
+        iDestruct "HNotDone" as "[_ $]".
+      }
+      rewrite -take_take_drop count_matching_app replicate_plus big_sepL_app.
+      iFrame "HRs".
+      assert (count_matching still_present (take (S j) (drop deqFront l)) =
+              1)%nat as ->; simpl.
+      2: by iFrame.
+      assert (take j (drop deqFront l) ++ take 1 (drop j (drop deqFront l)) =
+              take (S j) (drop deqFront l)) as <-.
+      by rewrite take_take_drop Nat.add_comm.
+      rewrite count_matching_app.
+      rewrite present_cells_in_take_1_drop_i_if_next_present_is_Si //.
+      rewrite present_cells_in_take_i_if_next_present_is_Si //.
+    }
+    iSplitR.
+    {
+      iPureIntro. intros (_ & γt' & th' & HEl).
+      replace (deqFront + S j - 1)%nat with (deqFront + j)%nat in HEl by lia.
+      simplify_eq.
+      inversion HPresent.
+    }
+    iDestruct "HRest" as (? ?) "(HItE & HItD & HAwak & HSusp & >%)".
+    iExists _, _. iFrame.
+    iPureIntro.
+    lia.
+  }
+
+  repeat rewrite big_sepL_later.
+  iDestruct (big_sepL_lookup_alter_abort i O
+             (fun _ => Some (cellInhabited γt th (Some cellCancelled)))
+               with "[HCellResources]") as "[HCellR HCellRRsRestore]";
+    simpl; try done.
+  simpl.
+
+  iDestruct "HCellR" as (?) "(>HArrMapsto' & Hℓ & >HIsSus & >HCancHandle)".
+  iDestruct (array_mapsto_agree with "HArrMapsto' HArrMapsto") as %->.
+  iDestruct "Hℓ" as "[Hℓ HPerms]".
+
+  iAssert (▷ ℓ ↦ InjLV #th ∧ ⌜val_is_unboxed (InjLV #th)⌝)%I
+    with "[Hℓ]" as "HAacc". by iFrame.
+
+  iAaccIntro with "HAacc".
+  { iIntros "[Hℓ _] !>".
+    repeat rewrite -big_sepL_later.
+    iFrame.
+    iSplitL. 2: iIntros "$ //".
+    iSplitL; try done. iSplitR; first by iPureIntro.
+    iFrame "HNotDone".
+    iDestruct "HCellRRsRestore" as "[HCellRRsRestore _]".
+    iApply "HCellRRsRestore".
+    iExists _. iFrame "HArrMapsto". iFrame.
+  }
+  iIntros "Hℓ".
+
+  iExists _. iSplitL. 2: by iIntros "!> HΦ !>"; wp_pures.
+  iExists γt, th.
+  iRight.
+
+  remember (alter (fun _ => Some (cellInhabited γt th (Some cellCancelled))) i l) as K.
+
+  iFrame "HCancHandle".
+  iSplitR; first done.
+  iSplitR; first done.
+
+  iDestruct "HCellRRsRestore" as "[_ HCellRRsRestore]".
+
+  iAssert (▷ (E ∗ [∗ list] x ∈ replicate (count_matching still_present K) E, x))%I
+          with "[HEs]" as "[$ $]".
+  {
+    subst.
+    replace l with (take i l ++ (Some (cellInhabited γt th None) :: drop (S i) l)).
+    2: by rewrite take_drop_middle.
+    rewrite count_matching_app replicate_plus big_sepL_app /=.
+    remember (fun _ => Some (cellInhabited γt th (Some cellCancelled))) as fn.
+    remember (take _ _ ++ _) as KK.
+    replace (alter fn i KK) with (alter fn (length (take i l) + 0)%nat KK).
+    2: {
+      rewrite -plus_n_O take_length_le //.
+      assert (i < length l)%nat. 2: lia.
+      apply lookup_lt_is_Some. by eexists.
+    }
+    subst.
+    rewrite alter_app_r count_matching_app replicate_plus big_sepL_app.
+    simpl.
+    repeat rewrite -big_sepL_later.
+    iDestruct "HEs" as "($ & $ & $)".
+  }
+
+  rewrite /cell_list_contents_auth_ra.
+  replace (length K) with (length l). 2: by subst; rewrite alter_length.
+
+  assert (l !! i = Some (Some (cellInhabited γt th None)) ->
+                  (map cell_state_to_RA l, ε) ~l~>
+                  (map cell_state_to_RA K,
+                   {[ i := (ε,
+                                     (3%nat: mnatUR),
+                                     Some (to_agree
+                                             (cellInhabited γt th (Some cellCancelled))))]})
+          ) as Hupdate_ra_map.
+  { subst K. clear.
+    intros HInh.
+    apply list_lookup_local_update.
+    generalize dependent i.
+
+    induction l; first done. case; simpl.
+    { intros ?. simplify_eq. simpl. case; try done. simpl.
+      apply option_local_update', prod_local_update; simpl.
+      2: by apply alloc_option_local_update.
+      apply prod_local_update_2; simpl.
+      by apply mnat_local_update; lia. }
+    intros i HInh. case; simpl.
+    by apply option_local_update'.
+    intros i'. by apply IHl.
+  }
+
+  destruct (decide (i < deqFront)%nat) as [HLt|HGt].
+  {
+
+    iAssert (⌜(deqFront + S j)%nat <= length l⌝)%I as "$".
+    { iPureIntro. subst.
+      destruct (find_index_Some _ _ _ HFindIx) as [(v & HEl & _) _].
+      rewrite lookup_drop in HEl.
+      assert (deqFront + j < length l)%nat; try lia.
+      apply lookup_lt_is_Some. eauto.
+    }
+
+    iAssert ([∗ list] x ∈ drop (deqFront + S j) K, ⌜resumer_stage_0 x = true⌝)%I as "$".
+    {
+      subst.
+      repeat rewrite big_sepL_forall.
+      iIntros (k x). rewrite lookup_drop.
+      destruct (decide (i = (deqFront + S j + k)%nat)).
+      {
+        subst. rewrite list_lookup_alter.
+        destruct (l !! _); try done.
+        simpl. iIntros (HEq). simplify_eq. eauto.
+      }
+      rewrite list_lookup_alter_ne //. iIntros (HEq).
+      iApply "HNotDone".
+      rewrite lookup_drop. iPureIntro. rewrite -Nat.add_assoc in HEq. apply HEq.
+    }
+
+    replace (take deqFront l)
+      with (take i (take deqFront l) ++
+                 Some (cellInhabited γt th None) :: drop (S i) (take deqFront l)).
+    2: {
+      rewrite take_drop_middle. done.
+      rewrite lookup_take. done.
+      lia.
+    }
+    rewrite count_matching_app replicate_plus big_sepL_app /=.
+    iDestruct "HRs" as "(HRs1 & HR & HRs2)".
+
+    iMod (own_update with "HAuth") as "[HAuth HIsCanc]".
+    2: iAssert (own γtq (● _)) with "HAuth" as "$".
+    {
+      apply auth_update_alloc.
+      replace (drop deqFront K) with (drop deqFront l).
+      2: { subst. rewrite drop_alter. auto. lia. }
+      apply prod_local_update'; simpl.
+      2: by apply Hupdate_ra_map.
+      apply prod_local_update_2.
+      apply prod_local_update'; simpl.
+      2: apply mnat_local_update; lia.
+      apply (nat_local_update _ _ _ (1%nat)).
+      rewrite -plus_n_O.
+      repeat rewrite -Nat.add_assoc.
+      congr (fun x => deqFront + x)%nat.
+      rewrite Nat.add_1_r. simpl.
+      congr S.
+      subst.
+      rewrite drop_alter.
+      2: lia.
+      rewrite -drop_drop.
+      by rewrite -absent_cells_in_drop_Si_if_next_present_is_i.
+    }
+
+    iAssert (rendezvous_cancelled γtq i) as "#$".
+    {
+      rewrite /rendezvous_cancelled.
+      iExists γt, th.
+      iApply (own_mono with "HIsCanc").
+      apply auth_included; split; simpl; try done.
+      apply prod_included; split; simpl.
+      by apply ucmra_unit_least.
+      done.
+    }
+
+    iFrame "HInfArr".
+    iDestruct ("HCellRRsRestore" with
+      "[Hℓ HArrMapsto' HIsSus HInhToken HPerms]") as "HCellRRs".
+    { iExists _. iFrame. iDestruct "HPerms" as "[_ $]". }
+    iDestruct (big_sepL_later with "HCellRRs") as "$".
+    iSplitL "HR HRs1 HRs2".
+    {
+      replace (count_matching still_present (take (deqFront + S j) K))
+              with (S (count_matching still_present (take deqFront K))).
+      {
+        simpl. iFrame "HR".
+        subst.
+        erewrite take_drop_middle_alter; try done.
+        rewrite take_app_ge take_length_le; try lia.
+        rewrite count_matching_app replicate_plus big_sepL_app.
+        rewrite take_take.
+        rewrite -big_sepL_later.
+        replace (i `min` deqFront)%nat with i by lia.
+        iFrame "HRs1".
+        destruct (deqFront - i)%nat eqn:Z; try lia. simpl.
+        rewrite take_drop_commute /= plus_n_Sm -Z.
+        replace (i + (deqFront - i))%nat with deqFront by lia.
+        by rewrite big_sepL_later.
+      }
+      replace (drop deqFront l) with (drop deqFront K) in HFindIx
+        by (subst; rewrite drop_alter //).
+      rewrite -take_take_drop count_matching_app.
+      remember (count_matching _ (take deqFront K)) as L.
+      rewrite present_cells_in_take_Si_if_next_present_is_Si.
+      lia.
+      done.
+    }
+    iAssert (awakening_permit γtq) with "[HIsCanc]" as "HAwak".
+    {
+      iApply (own_mono with "HIsCanc").
+      apply auth_included; split; simpl; try done.
+      repeat (apply prod_included'; split; simpl; try apply ucmra_unit_least).
+      apply nat_included. lia.
+    }
+    iDestruct "HRest" as "(HCancA & >% & HIts)".
+    iSplitL "HCancA HAwak".
+    {
+      subst.
+      replace l with (take i l ++ Some (cellInhabited γt th None) :: drop (S i) l).
+      2: by rewrite take_drop_middle.
+      rewrite alter_app_r_alt take_length_le; try lia.
+      rewrite minus_diag. simpl.
+      repeat rewrite big_sepL_app /=.
+      iDestruct "HCancA" as "($ & _ & $)".
+      eauto.
+    }
+    iSplitR.
+    {
+      iPureIntro. intros (_ & γt' & th' & HEl).
+      subst.
+      replace (deqFront + S j - 1)%nat with (deqFront + j)%nat in HEl by lia.
+      destruct (decide (i = deqFront + j)%nat); try lia.
+      rewrite list_lookup_alter_ne in HEl; try lia.
+      destruct (find_index_Some _ _ _ HFindIx) as [(v & HEl' & HPres) _].
+      rewrite lookup_drop in HEl'. simplify_eq.
+    }
+    iDestruct "HIts" as (enqIdx deqIdx) "HIts".
+    iExists enqIdx, deqIdx.
+    iDestruct "HIts" as "($ & $ & $ & $ & >%)".
+    iPureIntro.
+    repeat split; try lia.
+
+    assert (deqFront + j < length l)%nat; try lia.
+    destruct (find_index_Some _ _ _ HFindIx) as [(v & HEl' & HPres) _].
+    rewrite lookup_drop in HEl'.
+    apply lookup_lt_is_Some; eauto.
+  }
+
+  replace (take deqFront K) with (take deqFront l).
+  2: { subst. rewrite take_alter; auto. lia. }
+  repeat rewrite -big_sepL_later.
+  iFrame "HRs".
+  iDestruct "HPerms" as "[_ HPerms']".
+  iDestruct ("HCellRRsRestore" with
+                 "[HArrMapsto' HIsSus Hℓ HPerms' HInhToken]") as "$".
+  by iExists ℓ; iFrame.
+
+  replace (count_matching (fun b => not (still_present b)) (drop deqFront K)) with
+      (S (count_matching (fun b => not (still_present b)) (drop deqFront l))).
+  2: {
+    subst.
+    assert (deqFront <= i)%nat as HLe by lia.
+    revert HLe. rewrite nat_le_sum. case. intros c ->.
+    rewrite drop_alter'. erewrite count_matching_alter.
+    2: by rewrite lookup_drop.
+    by rewrite /= -minus_n_O Nat.add_1_r.
+  }
+  iMod (own_update with "HAuth") as "[HAuth HFrag]".
+  1: apply auth_update_alloc.
+  2: iFrame "HAuth".
+  {
+    apply prod_local_update'; simpl.
+    { apply prod_local_update_2, prod_local_update_1, nat_local_update.
+      remember (count_matching _ _) as X. rewrite /ε /nat_unit.
+      rewrite -plus_n_O plus_assoc_reverse.
+      replace (S X) with (X + 1)%nat by lia.
+      done. }
+    subst.
+    by eapply Hupdate_ra_map.
+  }
+
+  remember (_, _, _) as X.
+  iAssert (awakening_permit γtq ∗ rendezvous_state γtq i X)%I with "[HFrag]"
+    as "[HAwak HRS]".
+  {
+    rewrite /awakening_permit /rendezvous_done /rendezvous_state.
+    rewrite -own_op -auth_frag_op -pair_op //.
+  }
+  subst.
+  iSplitL "HRS".
+  {
+    iExists γt, th.
+    iApply "HRS".
+  }
+  iFrame "HInfArr".
+  iDestruct "HRest" as "(HCancA & >% & HIts)".
+  iSplitR.
+  {
+    iSplitR; first by iPureIntro; lia.
+    iApply (big_opL_forall' with "HNotDone").
+    by repeat rewrite drop_length; rewrite alter_length.
+    intros k ? ? HEl HEl'. simpl.
+    rewrite lookup_drop in HEl.
+    rewrite lookup_drop in HEl'.
+    destruct (decide (i = (deqFront + k)%nat)).
+    {
+      subst.
+      rewrite list_lookup_alter in HEl.
+      destruct (l !! (deqFront + k)%nat) eqn:Z; simplify_eq.
+      simpl in *. simplify_eq. done.
+    }
+    rewrite list_lookup_alter_ne in HEl; try lia.
+    by simplify_eq.
+  }
+  iSplitL "HCancA HAwak".
+  {
+    erewrite <-(take_drop_middle l i); try done.
+    rewrite big_sepL_app /=.
+    rewrite take_drop_middle; try done.
+    assert (i < length l)%nat by (apply lookup_lt_is_Some; eauto).
+    erewrite take_drop_middle_alter; try done.
+    rewrite big_sepL_app /=.
+    iDestruct "HCancA" as "($ & _ & $)".
+    eauto.
+  }
+  iSplitR.
+  2: by iFrame.
+  {
+    iPureIntro.
+    intros (HLt & γt' & th' & HEl).
+    rewrite list_lookup_alter_ne in HEl; try lia.
+    eauto.
   }
 Qed.
 
@@ -3140,8 +3642,8 @@ Proof.
   {
     destruct (decide (tId * Pos.to_nat segment_size <= newDeqFront)%nat); auto.
     exfalso.
-    assert ((exists γt th, l !! newDeqFront = Some (Some (cellInhabited γt th (Some cellCancelled)))) -> False) as HH by assumption.
-    apply HH.
+    assert (newDeqFront > 0 ∧ (exists γt th, l !! (newDeqFront - 1)%nat = Some (Some (cellInhabited γt th (Some cellCancelled)))) -> False) as HH by assumption.
+    apply HH. split; first by lia.
     apply HCanc.
     lia.
   }
@@ -3444,12 +3946,12 @@ Proof.
     iSplitR.
     {
       iPureIntro.
-      intros (γt & th & HEl).
-      destruct (decide (d = deqFront')).
+      intros (HDeqFront & γt & th & HEl).
+      destruct (decide (d = (deqFront' - 1)%nat)).
       {
         subst.
         rewrite list_lookup_alter in HEl.
-        destruct (_ !! deqFront'); simplify_eq.
+        destruct (_ !! (deqFront' - 1)%nat); simplify_eq.
       }
       rewrite list_lookup_alter_ne in HEl; try done.
       by eauto.
@@ -3514,11 +4016,11 @@ Proof.
     by destruct (_ !! k); simplify_eq.
   }
   iPureIntro.
-  intros (γt' & th' & HEl).
-  destruct (decide (d = deqFront')).
+  intros (HLt & γt' & th' & HEl).
+  destruct (decide (d = (deqFront' - 1)%nat)).
   {
     subst. rewrite list_lookup_alter in HEl.
-    destruct (_ !! deqFront'); simplify_eq.
+    destruct (_ !! (deqFront' - 1)%nat); simplify_eq.
   }
   rewrite list_lookup_alter_ne in HEl; try done.
   by eauto.
@@ -3818,55 +4320,13 @@ Proof.
     by simplify_eq.
   }
   iPureIntro.
-  intros (γt' & th' & HEl).
-  destruct (decide (enqIdx = deqFront)).
+  intros (HLt & γt' & th' & HEl).
+  destruct (decide (enqIdx = (deqFront - 1)%nat)).
   {
     subst. rewrite list_lookup_alter in HEl.
-    destruct (_ !! deqFront); simpl in *; discriminate.
+    destruct (_ !! (deqFront - 1)%nat); simpl in *; discriminate.
   }
   rewrite list_lookup_alter_ne in HEl; eauto.
 Qed.
-
-Theorem do_cancel_rendezvous_spec E R γa γtq γe γd eℓ epℓ dℓ dpℓ i ℓ:
-  array_mapsto segment_size γa i ℓ -∗
-  inhabitant_token γtq i -∗
-  let ap := tq_ap γtq γe in
-  <<< ∀ l deqFront j, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
-                      ⌜find_index still_present (drop deqFront l) = Some j⌝ >>>
-    getAndSet #ℓ CANCELLEDV = RESUMEDV @ ⊤
-  <<< ∃ (v: bool), ∃ γt th,
-     ⌜l !! i = Some (Some (cellInhabited γt th (Some cellResumed)))⌝ ∧
-     ⌜v = true⌝ ∧
-     ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l (deqFront + S j) ∗
-     awakening_permit γtq ∨
-
-     ⌜l !! i = Some (Some (cellInhabited γt th None))⌝ ∧
-     ⌜v = false⌝ ∧
-     cell_cancellation_handle segment_size γa i ∗ ▷ E ∗
-     rendezvous_cancelled γtq i ∗
-     ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
-      (alter (fun _ => Some (cellInhabited γt th (Some cellCancelled))) i l)
-      (deqFront + S j) (* not true: depends on `i < deqFront` *)
-  , RET #v >>>.
-Proof.
-  iIntros "#HMapsTo HInhToken" (Φ) "AU".
-  awp_apply (cancel_rendezvous_spec with "HMapsTo HInhToken").
-  iApply (aacc_aupd_commit with "AU"); first done.
-
-  iIntros (l deqFront j) "[(HInfArr & HListContents & HRest) %]".
-  iAaccIntro with "HListContents".
-  {
-    iIntros "$". iFrame. iSplitR; first done. iIntros "!> $ !> //".
-  }
-  iIntros (v γt th) "H".
-  iDestruct "H" as "[(% & -> & HListContents & HR)|
-    (% & -> & HCancHandle & HE & HRest')]".
-  all: iExists _; iSplitL; [iExists γt, th|iIntros "!> HΦ"; wp_pures; done].
-  {
-    iLeft. repeat (iSplitR; first done).
-    iFrame "HInfArr".
-    iDestruct (cell_list_contents_register_for_dequeue _ R with "HR HListContents") as "HH".
-    done.
-Abort.
 
 End proof.
