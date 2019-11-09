@@ -6,24 +6,27 @@
 package macrobenchmarks.channel
 
 
-import kotlinx.atomicfu.AtomicInt
 import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.loop
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
 import org.nield.kotlinstatistics.standardDeviation
+import runProcess
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.io.PrintWriter
+import java.io.Serializable
 import java.net.URL
 import java.nio.channels.Channels
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.rmi.Remote
+import java.rmi.RemoteException
+import java.rmi.registry.LocateRegistry
+import java.rmi.server.UnicastRemoteObject
 import java.util.*
-import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPInputStream
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+
 
 private val GRAPHS = listOf(
         RandomGraphCreator("RAND-1M-10M", 1_000_000, 10_000_000),
@@ -40,7 +43,28 @@ private val PARALLELISM = listOf(1, 4, 8, 16)
 /**
  * Output file for the benchmark results
  */
-private const val RESULT_FILE = "out/results_bfs_channel.csv"
+const val RESULT_FILE = "out/results_bfs_channel.csv"
+
+/**
+ * The RMI graph service host name
+ */
+const val hostName = "127.0.0.1"
+/**
+ * Port number for the RMI graph service
+ */
+const val port = 1099
+/**
+ * Name of the RMI graph service
+ */
+const val serviceName = "GraphService"
+/**
+ * Class name to run in a new jvm instance
+ */
+private const val CLASS_NAME = "macrobenchmarks.channel.ParallelBfsRunner"
+/**
+ * Options for the new jvm instance
+ */
+private val jvmOptions = listOf<String>(/*"-Xmx64m", "-XX:+PrintGC"*/)
 
 /**
  * This benchmark tests channel as a working queue, as a queue under contention.
@@ -51,65 +75,86 @@ private const val RESULT_FILE = "out/results_bfs_channel.csv"
  * and [kotlinx.coroutines.internal.LockFreeLinkedListNode.helpDelete] (or other channels fixes).
  */
 fun main() {
-    val results = ArrayList<String>()
+    PrintWriter(RESULT_FILE).use { writer -> writer.println("graphName,parallelism,executionTimeAvgMs,executionTimeStdMs") }
+
+    System.setProperty("java.rmi.server.hostname", hostName)
+    val service = GraphServiceImpl()
+    val graphService = UnicastRemoteObject.exportObject(service as GraphService, port) as GraphService
+    val registry = LocateRegistry.createRegistry(port)
+    registry.rebind(serviceName, graphService)
+
     for (graphCreator in GRAPHS) {
+        // for each graph we should start a new jvm instance
         val graphName = graphCreator.name
         println("=== $graphName ===")
-        val graph = graphCreator.getGraph()
+        val graph = service.getGraph(graphName)
 
         val startNode = graph[0]
         print("sequential ")
-        val distancesToCompare = runIteration(graph, results, null, graphName) { bfsSequential(startNode) }
+        val result = runIteration(graph, 0, graphName) { bfsSequential(graph, startNode) }
+
+        FileOutputStream(RESULT_FILE, true).bufferedWriter().use { writer -> writer.append("$result\n") }
 
         for (parallelism in PARALLELISM) {
-            print("coroutines count = $parallelism, parallel ")
-            runIteration(graph, results, distancesToCompare, graphName) { bfsParallel(startNode, parallelism) }
+            val exitValue = runProcess(CLASS_NAME, jvmOptions, arrayOf(graphName, parallelism.toString()))
+            if (exitValue != 0) {
+                println("The benchmark couldn't complete properly, will end running benchmarks")
+                registry.unbind(serviceName)
+                UnicastRemoteObject.unexportObject(service as GraphService, true)
+                return
+            }
         }
     }
-    PrintWriter(RESULT_FILE).use { writer ->
-        writer.println("graphName,parallelism,executionTimeAvgMs,executionTimeStdMs")
-        for (result in results) {
-            writer.println(result)
-        }
+
+    registry.unbind(serviceName)
+    UnicastRemoteObject.unexportObject(service as GraphService, true)
+}
+
+interface GraphService : Remote {
+    @Throws(RemoteException::class)
+    fun getGraph(graphName: String): List<Node>
+}
+
+private class GraphServiceImpl : GraphService {
+    private val graphNameToCreator = HashMap<String, GraphCreator>()
+    private val graphs = HashMap<String, List<Node>>()
+
+    init {
+        GRAPHS.forEach { graphCreator -> graphNameToCreator[graphCreator.name] = graphCreator }
+    }
+
+    override fun getGraph(graphName: String): List<Node> {
+        return graphs.getOrElse(graphName) { graphNameToCreator[graphName]!!.getGraph() }
     }
 }
 
-private fun runIteration(graph: List<Node>, results: ArrayList<String>, distancesToCompare : Array<Int>?,
-                         graphName: String, bfsAlgo: () -> Unit): Array<Int> {
+fun runIteration(graph: List<Node>, parallelism : Int, graphName: String, bfsAlgo: () -> Unit): String {
     // warmup
-    val distances = runBfs(graph, bfsAlgo).distances
+    runBfs(graph, bfsAlgo)
     // benchmark iterations
-    val executionTimes = (1..ITERATIONS).map {
-        val executionResult = runBfs(graph, bfsAlgo)
-        check(distancesToCompare?.contentEquals(executionResult.distances) ?: true) { "Results found using parallel and sequential bfs are not the same" }
-        executionResult.executionTime
-    }
-
-    results += "$graphName,0,${executionTimes.average() / 1_000_000},${executionTimes.standardDeviation() / 1_000_000}"
+    val executionTimes = (1..ITERATIONS).map { runBfs(graph, bfsAlgo) }
     println("execution time = ${executionTimes.average() / 1_000_000}ms " +
             "std = ${executionTimes.standardDeviation() / 1_000_000}ms")
-    return distances
+    return "$graphName,$parallelism,${executionTimes.average() / 1_000_000},${executionTimes.standardDeviation() / 1_000_000}"
 }
 
-private inline fun runBfs(graph: List<Node>, bfsAlgo: () -> Unit): ExecutionResult {
+private inline fun runBfs(graph: List<Node>, bfsAlgo: () -> Unit): Long {
     val start = System.nanoTime()
     bfsAlgo.invoke()
     val end = System.nanoTime()
-    val distances = Array(graph.size) { graph[it].distance.value }
     graph.forEach { node -> node.distance.value = Int.MAX_VALUE } // clear distances
-    return ExecutionResult(end - start, distances)
+    return end - start
 }
 
-private class ExecutionResult(val executionTime: Long, val distances: Array<Int>)
-
-private fun bfsSequential(start: Node) {
+private fun bfsSequential(graph: List<Node>, start: Node) {
     // The distance to the start node is `0`
     start.distance.value = 0
     val queue = ArrayDeque<Node>()
     queue.add(start)
     while (queue.isNotEmpty()) {
         val currentNode = queue.poll()
-        for (neighbourNode in currentNode.neighbours) {
+        for (neighbourNodeId in currentNode.neighbours) {
+            val neighbourNode = graph[neighbourNodeId - 1]
             val newDistance = currentNode.distance.value + 1
             val oldDistance = neighbourNode.distance.value
             if (newDistance < oldDistance) {
@@ -120,61 +165,17 @@ private fun bfsSequential(start: Node) {
     }
 }
 
-private fun bfsParallel(start: Node, parallelism: Int) = runBlocking(Dispatchers.Default) {
-    // The distance to the start node is `0`
-    start.distance.value = 0
-    val queue: Channel<Node> = TaskChannel(parallelism)
-    queue.offer(start)
-    // Run worker threads and wait until the total work is done
-    val workers = Array(parallelism) {
-        GlobalScope.launch {
-            while (true) {
-                val u = queue.receiveOrClosed().valueOrNull ?: break
-                for (v in u.neighbours) {
-                    val newDistance = u.distance.value + 1
-                    if (v.distance.updateIfLower(newDistance)) queue.offer(v)
-                }
-            }
-        }
-    }
-    workers.forEach { it.join() }
-}
-
-/**
- * Try to compare and set if new distance is less than the old one
- */
-private inline fun AtomicInt.updateIfLower(distance: Int): Boolean = loop { cur ->
-    if (cur <= distance) return false
-    if (compareAndSet(cur, distance)) return true
-}
-
-private class Node(val id: Int) {
-    private val _neighbours = arrayListOf<Node>()
-    val neighbours: List<Node> = _neighbours
+class Node(val id: Int) : Serializable {
+    val neighbours = arrayListOf<Int>()
 
     fun addNeighbour(node: Node) {
-        _neighbours.add(node)
+        neighbours.add(node.id)
     }
 
     val distance = atomic(Int.MAX_VALUE)
-}
 
-/**
- * This channel implementation does not suspend on sends and closes itself if the number of waiting receivers exceeds [maxWaitingReceivers].
- */
-@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
-private class TaskChannel<E>(private val maxWaitingReceivers: Int) : LinkedListChannel<E>() {
-    private val waitingReceivers = AtomicLong(0)
-
-    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    override fun onReceiveEnqueued() {
-        val waitingReceivers = waitingReceivers.incrementAndGet()
-        if (waitingReceivers >= maxWaitingReceivers) close()
-    }
-
-    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    override fun onReceiveDequeued() {
-        waitingReceivers.decrementAndGet()
+    companion object {
+        private const val serialVersionUID: Long = 1
     }
 }
 
@@ -266,7 +267,7 @@ private fun addEdges(edgesToAdd: Int, nodesList: List<Node>, random: Random) {
             val second = nodesList[random.nextInt(nodes - 1)].run {
                 if (this == first) nodesList[nodes - 1] else this
             }
-            if (first.neighbours.any { node -> node == second }) continue
+            if (first.neighbours.any { node -> node == second.id }) continue
             first.addNeighbour(second)
             second.addNeighbour(first)
             break
@@ -280,7 +281,7 @@ private fun writeGraphToGrFile(filename: String, graphNodes: List<Node>) {
         pw.println("p sp ${graphNodes.size} $edges")
         graphNodes.forEach { from ->
             from.neighbours.forEach { to ->
-                pw.println("a ${from.id} ${to.id}")
+                pw.println("a ${from.id} $to")
             }
         }
     }
@@ -296,7 +297,7 @@ private fun parseGrFile(filename: String, gzipped: Boolean): List<Node> {
                     line.startsWith("c") -> {} // ignore comments
                     line.startsWith("p sp ") -> {
                         val n = line.split(" ")[2].toInt()
-                        repeat(n) { nodes.add(Node(it)) }
+                        repeat(n) { nodes.add(Node(it + 1)) }
                     }
                     line.startsWith("a ") -> {
                         val parts = line.split(" ")
