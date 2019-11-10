@@ -1,6 +1,10 @@
-@file:JvmName("RunBenchmark")
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
 
-package benchmarks.chat
+@file:JvmName("RunChat")
+
+package macrobenchmarks.chat
 
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.math3.distribution.PoissonDistribution

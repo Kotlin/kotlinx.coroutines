@@ -81,6 +81,6 @@ dependencies {
 }
 
 task runInMemoryChatBenchmark(type : JavaExec) {
-    main = 'benchmarks.chat.InMemoryChatBenchmark'
+    main = 'macrobenchmarks.chat.InMemoryChatBenchmark'
     classpath sourceSets.main.runtimeClasspath
 }

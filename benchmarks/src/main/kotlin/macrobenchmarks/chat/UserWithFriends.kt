@@ -1,6 +1,8 @@
-package benchmarks.chat
+package macrobenchmarks.chat
 
 import kotlinx.coroutines.channels.Channel
+import macrobenchmarks.chat.Message
+import macrobenchmarks.chat.User
 
 class UserWithFriends(id: Long,
                       activity : Double,

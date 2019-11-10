@@ -1,4 +1,8 @@
-package benchmarks.chat
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+package macrobenchmarks.chat
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -22,7 +26,7 @@ const val ITERATIONS = 5
 /**
  * CSV file containing the configurations and final metrics of the executed benchmarks
  */
-const val BENCHMARK_OUTPUT_FILE = "results.csv"
+const val BENCHMARK_OUTPUT_FILE = "results_in_memory_chat.csv"
 /**
  * Folder containing all benchmark output files
  */

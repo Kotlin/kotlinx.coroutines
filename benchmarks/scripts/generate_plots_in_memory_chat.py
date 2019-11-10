@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib.backends.backend_pdf import PdfPages
 
-inputFile = "results.csv"
-outputFile = "in-memory-chat-plots.pdf"
+inputFile = "results_in_memory_chat.csv"
+outputFile = "in-memory-chat.pdf"
 
 colours = ['black', 'silver', 'red', 'gold', 'sienna', 'olivedrab', 'lightseagreen', 'navy', 'blue', 'm', 'crimson', 'yellow', 'orangered', 'slateblue', 'aqua']
 markers = ['.', 'v', '^', '1', '2', '8', 'p', 'P', 'x', 'D', 'd', 's']
