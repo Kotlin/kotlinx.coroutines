@@ -175,7 +175,6 @@ internal class LockFreeTaskQueueCore<E : Any>(
                 }
                 // element == Placeholder can only be when add has not finished yet
                 if (element is Placeholder) return null // consider it not added yet
-                // now we tentative know element to remove -- check predicate
                 // we cannot put null into array here, because copying thread could replace it with Placeholder and that is a disaster
                 val newHead = (head + 1) and MAX_CAPACITY_MASK
                 if (_state.compareAndSet(state, state.updateHead(newHead))) {

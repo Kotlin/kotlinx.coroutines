@@ -64,13 +64,10 @@ open class DispatchersContextSwitchBenchmark {
         repeat(nCoroutines) {
             launch(dispatcher) {
                 repeat(nRepeatDelay) {
-                    delayOrYield()
+                    delay(delayTimeMs)
                 }
             }
         }
     }
-
-    private suspend fun delayOrYield() {
-        delay(delayTimeMs)
-    }
 }
+

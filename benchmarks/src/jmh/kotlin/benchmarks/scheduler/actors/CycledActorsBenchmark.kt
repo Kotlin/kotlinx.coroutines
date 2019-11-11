@@ -29,8 +29,8 @@ import java.util.concurrent.*
  * CycledActorsBenchmark.cycledActors            262144  experimental  avgt   14  1804.146 ±  57.275  ms/op
  */
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 3)
+@Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
+@Fork(value = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
@@ -43,7 +43,7 @@ open class CycledActorsBenchmark : ParametrizedDispatcherBase() {
     @Param("fjp", "ftp_1", "scheduler")
     override var dispatcher: String = "fjp"
 
-    @Param("524288")
+    @Param("1", "1024")
     var actorStateSize = 1
 
     @Benchmark
