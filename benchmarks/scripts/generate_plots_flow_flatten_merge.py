@@ -1,8 +1,9 @@
 import pandas as pd
+import sys
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 
-input_file = "jmh-result.csv"
+input_file = "build/reports/jmh/results.csv"
 output_file = "flow-flatten-merge.svg"
 elements = 100000
 benchmark_name = "benchmarks.flow.FlowFlattenMergeBenchmark.flattenMerge"
@@ -11,7 +12,7 @@ rename_columns = {"Benchmark": "benchmark", "Score" : "score", "Score Error (99.
                   "Param: concurrency" : "concurrency", "Param: flows" : "flows"}
 
 markers = ['.', 'v', '^', '1', '2', '8', 'p', 'P', 'x', 'D', 'd', 's']
-colours = ['black', 'silver', 'red', 'gold', 'sienna', 'olivedrab', 'lightseagreen', 'navy', 'blue', 'm', 'crimson', 'yellow', 'orangered', 'slateblue', 'aqua']
+colours = ['red', 'gold', 'sienna', 'olivedrab', 'lightseagreen', 'navy', 'blue', 'm', 'crimson', 'yellow', 'orangered', 'slateblue', 'aqua', 'black', 'silver']
 
 def next_colour():
     i = 0
@@ -29,7 +30,10 @@ def draw(data, plt):
     plt.xscale('log', basex=2)
     plt.gca().xaxis.set_major_formatter(FormatStrFormatter('%0.f'))
     plt.grid(linewidth='0.5', color='lightgray')
-    plt.ylabel(data.unit.unique()[0])
+    if data.unit.unique()[0] != "ops/s":
+        print("Unexpected time unit: " + data.unit.unique()[0])
+        sys.exit(1)
+    plt.ylabel("elements / ms")
     plt.xlabel('concurrency')
     plt.xticks(data.concurrency.unique())
 
@@ -39,13 +43,14 @@ def draw(data, plt):
         gen_colour = next(colour_gen)
         gen_marker = next(marker_gen)
         res = data[(data.flows == flows)]
-        plt.plot(res.concurrency, res.score*elements, label="flows={}".format(flows), color=gen_colour, marker=gen_marker)
-        plt.errorbar(x=res.concurrency, y=res.score*elements, yerr=res.score_error*elements, solid_capstyle='projecting', capsize=5, color=gen_colour)
+#         plt.plot(res.concurrency, res.score*elements/1000, label="flows={}".format(flows), color=gen_colour, marker=gen_marker)
+        plt.errorbar(x=res.concurrency, y=res.score*elements/1000, yerr=res.score_error*elements/1000, solid_capstyle='projecting',
+                     label="flows={}".format(flows), capsize=4, color=gen_colour)
 
 data = pd.read_table(input_file, sep=",")
 data = data[csv_columns].rename(columns=rename_columns)
 data = data[(data.benchmark == benchmark_name)]
-plt.figure(figsize=(20, 20))
+plt.figure(figsize=(8, 6.5))
 draw(data, plt)
 plt.legend(loc='upper center', borderpad=0, ncol=4, frameon=False, borderaxespad=4, prop={'size': 8})
 plt.tight_layout(pad=12, w_pad=2, h_pad=1)
