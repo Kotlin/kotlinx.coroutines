@@ -7,9 +7,11 @@ package kotlinx.coroutines
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
 import org.junit.*
+import java.lang.Math.*
 import java.util.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
+import kotlin.math.*
 import kotlin.test.*
 
 private val VERBOSE = systemProp("test.verbose", false)
@@ -25,6 +27,8 @@ public val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
  * Multiply various constants in stress tests by this factor, so that they run longer during nightly stress test.
  */
 public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
+
+public val stressTestMultiplierCbrt = cbrt(stressTestMultiplier.toDouble()).roundToInt()
 
 /**
  * Base class for tests, so that tests for predictable scheduling of actions in multiple coroutines sharing a single

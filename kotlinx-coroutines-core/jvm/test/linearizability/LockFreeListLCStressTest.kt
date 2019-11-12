@@ -5,16 +5,16 @@
 
 package kotlinx.coroutines.linearizability
 
-import com.devexperts.dxlab.lincheck.*
-import com.devexperts.dxlab.lincheck.annotations.*
-import com.devexperts.dxlab.lincheck.paramgen.*
-import com.devexperts.dxlab.lincheck.strategy.stress.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import org.jetbrains.kotlinx.lincheck.annotations.*
+import org.jetbrains.kotlinx.lincheck.annotations.Operation
+import org.jetbrains.kotlinx.lincheck.paramgen.*
+import org.jetbrains.kotlinx.lincheck.verifier.*
 import kotlin.test.*
 
-@Param(name = "value", gen = IntGen::class, conf = "1:3")
-class LockFreeListLCStressTest : TestBase() {
+@Param(name = "value", gen = IntGen::class, conf = "1:5")
+class LockFreeListLCStressTest : VerifierState() {
     class Node(val value: Int): LockFreeLinkedListNode()
 
     private val q: LockFreeLinkedListHead = LockFreeLinkedListHead()
@@ -44,29 +44,11 @@ class LockFreeListLCStressTest : TestBase() {
     private fun Any.isSame(value: Int) = this is Node && this.value == value
 
     @Test
-    fun testAddRemoveLinearizability() {
-        val options = StressOptions()
-            .iterations(100 * stressTestMultiplierSqrt)
-            .invocationsPerIteration(1000 * stressTestMultiplierSqrt)
-            .threads(3)
-        LinChecker.check(LockFreeListLCStressTest::class.java, options)
-    }
+    fun testAddRemoveLinearizability() = LCStressOptionsDefault().check(this::class)
 
-    private var _curElements: ArrayList<Int>? = null
-    private val curElements: ArrayList<Int> get() {
-        if (_curElements == null) {
-            _curElements = ArrayList()
-            q.forEach<Node> { _curElements!!.add(it.value) }
-        }
-        return _curElements!!
-    }
-
-    override fun equals(other: Any?): Boolean {
-        other as LockFreeListLCStressTest
-        return curElements == other.curElements
-    }
-
-    override fun hashCode(): Int {
-        return curElements.hashCode()
+    override fun extractState(): Any {
+        val elements = ArrayList<Int>()
+        q.forEach<Node> { elements.add(it.value) }
+        return elements
     }
 }

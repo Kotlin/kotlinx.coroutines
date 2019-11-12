@@ -7,45 +7,26 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 
-enum class TestChannelKind {
-    RENDEZVOUS {
-        override fun create(): Channel<Int> = Channel(Channel.RENDEZVOUS)
-        override fun toString(): String = "RendezvousChannel"
-    },
-    ARRAY_1 {
-        override fun create(): Channel<Int> = Channel(1)
-        override fun toString(): String = "ArrayChannel(1)"
-    },
-    ARRAY_10 {
-        override fun create(): Channel<Int> = Channel(10)
-        override fun toString(): String = "ArrayChannel(10)"
-    },
-    LINKED_LIST {
-        override fun create(): Channel<Int> = Channel(Channel.UNLIMITED)
-        override fun toString(): String = "LinkedListChannel"
-    },
-    CONFLATED {
-        override fun create(): Channel<Int> = Channel(Channel.CONFLATED)
-        override fun toString(): String = "ConflatedChannel"
-        override val isConflated: Boolean get() = true
-    },
-    ARRAY_BROADCAST_1 {
-        override fun create(): Channel<Int> = ChannelViaBroadcast(BroadcastChannel(1))
-        override fun toString(): String = "ArrayBroadcastChannel(1)"
-    },
-    ARRAY_BROADCAST_10 {
-        override fun create(): Channel<Int> = ChannelViaBroadcast(BroadcastChannel(10))
-        override fun toString(): String = "ArrayBroadcastChannel(10)"
-    },
-    CONFLATED_BROADCAST {
-        override fun create(): Channel<Int> = ChannelViaBroadcast(ConflatedBroadcastChannel<Int>())
-        override fun toString(): String = "ConflatedBroadcastChannel"
-        override val isConflated: Boolean get() = true
-    }
+enum class TestChannelKind(val capacity: Int,
+                           private val description: String,
+                           private val viaBroadcast: Boolean = false
+) {
+    RENDEZVOUS(0, "RendezvousChannel"),
+    ARRAY_1(1, "ArrayChannel(1)"),
+    ARRAY_2(2, "ArrayChannel(2)"),
+    ARRAY_10(10, "ArrayChannel(10)"),
+    LINKED_LIST(Channel.UNLIMITED, "LinkedListChannel"),
+    CONFLATED(Channel.CONFLATED, "ConflatedChannel"),
+    ARRAY_1_BROADCAST(1, "ArrayBroadcastChannel(1)", viaBroadcast = true),
+    ARRAY_10_BROADCAST(10, "ArrayBroadcastChannel(10)", viaBroadcast = true),
+    CONFLATED_BROADCAST(Channel.CONFLATED, "ConflatedBroadcastChannel", viaBroadcast = true)
     ;
 
-    abstract fun create(): Channel<Int>
-    open val isConflated: Boolean get() = false
+    fun create(): Channel<Int> = if (viaBroadcast) ChannelViaBroadcast(BroadcastChannel(capacity))
+                                 else Channel(capacity)
+
+    val isConflated get() = capacity == Channel.CONFLATED
+    override fun toString(): String = description
 }
 
 private class ChannelViaBroadcast<E>(
