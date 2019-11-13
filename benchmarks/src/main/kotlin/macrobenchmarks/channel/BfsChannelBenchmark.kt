@@ -19,57 +19,58 @@ import java.rmi.*
 import java.rmi.registry.*
 import java.rmi.server.*
 import java.util.*
-import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
+import kotlin.collections.*
+import kotlin.system.*
 
 
 private val GRAPHS = listOf(
-        RandomGraphCreator("RAND-1M-10M", 1_000_000, 10_000_000),
-        GrGzGraphCreator("USA-DISTANCE", "http://users.diag.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.W.gr.gz"),
-        TxtGzGraphCreator("INTERNET_TOPOLOGY", "http://snap.stanford.edu/data/as-skitter.txt.gz"))
+        RandomGraphCreator("RAND-1M-10M", nodes = 1_000_000, edges = 10_000_000),
+        DownloadingGraphCreator("USA-DISTANCE", "http://users.diag.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.W.gr.gz"),
+        // !NB!: node indexes in a txt file should start at 0. Check it if you decide to change the url
+        DownloadingGraphCreator("INTERNET_TOPOLOGY", "http://snap.stanford.edu/data/as-skitter.txt.gz"))
 /**
- * Iterations count for each graph
+ * Iterations number for each graph
  */
 private const val ITERATIONS = 5
 /**
  * Number of coroutines that are used to execute bfs in parallel
  */
-private val PARALLELISM = listOf(1, 4, 8, 16)
+private val PARALLELISM = listOf(1, 2)
 /**
  * Output file for the benchmark results
  */
-const val RESULT_FILE = "out/results_bfs_channel.csv"
+private const val RESULT_FILE = "out/results_bfs_channel.csv"
 
 /**
  * The RMI graph service host name
  */
-const val GRAPH_CACHE_SERVICE_HOSTNAME = "127.0.0.1"
+private const val GRAPH_CACHE_SERVICE_HOSTNAME = "127.0.0.1"
 /**
  * Port number for the RMI graph service
  */
-const val GRAPH_CACHE_SERVICE_PORT = 1099
+private const val GRAPH_CACHE_SERVICE_PORT = 1099
 /**
  * Name of the RMI graph service
  */
-val GRAPH_CACHE_SERVICE_NAME = GraphCacheService::class.java.simpleName
+private val GRAPH_CACHE_SERVICE_NAME = GraphCacheService::class.java.simpleName
 /**
  * Options for the new jvm instance
  */
 private val JVM_OPTIONS = listOf<String>(/*"-Xmx64m", "-XX:+PrintGC"*/)
+
 
 /**
  * This benchmark tests channel as a working queue, as a queue under contention.
  * The benchmark creates or downloads graphs, then executes parallel BFS using channel as a queue, executes sequential BFS,
  * compares the results and computes execution times.
  *
- * NB: this benchmark works painfully slow without synchronization on methods [kotlinx.coroutines.internal.LockFreeLinkedListNode.remove]
+ * TODO: this benchmark works painfully slow without synchronization on methods [kotlinx.coroutines.internal.LockFreeLinkedListNode.remove]
  * and [kotlinx.coroutines.internal.LockFreeLinkedListNode.helpDelete] (or other channels fixes).
  */
 fun main() {
     // Print header to the output file
-    PrintWriter(RESULT_FILE).use { writer -> writer.println("graphName,parallelism,executionTimeAvgMs,executionTimeStdMs") }
+    writeOutputHeader()
     // Set up a graph cache service
     System.setProperty("java.rmi.server.hostname", GRAPH_CACHE_SERVICE_HOSTNAME)
     val service = GraphCacheServiceImpl()
@@ -86,16 +87,16 @@ fun main() {
             val graph = service.getGraph(graphName)
 
             val startNode = graph[0]
-            print("sequential ")
-            val result = runIteration(graph, 0, graphName) { bfsSequential(graph, startNode) }
+            val result = runIteration(graph) { bfsSequential(graph, startNode) }
+            println("sequential execution time = ${result.executionTime}ms std = ${result.standardDeviation}ms")
 
-            FileOutputStream(RESULT_FILE, true).bufferedWriter().use { writer -> writer.append("$result\n") }
+            writeIterationResults(graphName, 0, result)
 
             for (parallelism in PARALLELISM) {
                 val exitValue = runProcess(ParallelBfsRunner::class.java.name, JVM_OPTIONS, arrayOf(graphName, parallelism.toString()))
                 if (exitValue != 0) {
                     println("The benchmark couldn't complete properly, will end running benchmarks")
-                    return
+                    exitProcess(1)
                 }
             }
         }
@@ -106,30 +107,25 @@ fun main() {
     }
 }
 
-interface GraphCacheService : Remote {
-    @Throws(RemoteException::class)
-    fun getGraph(graphName: String): List<Node>
+private fun writeOutputHeader() {
+    PrintWriter(RESULT_FILE).use { writer -> writer.println("graphName,parallelism,executionTimeAvgMs,executionTimeStdMs") }
 }
 
-private class GraphCacheServiceImpl : GraphCacheService {
-    private val graphs = HashMap<String, List<Node>>()
-
-    override fun getGraph(graphName: String): List<Node> = graphs.computeIfAbsent(graphName) {
-        GRAPHS.find { it.name == graphName }!!.getGraph()
+private fun writeIterationResults(graphName: String, parallelism: Int, result: IterationResult) {
+    FileOutputStream(RESULT_FILE, true).bufferedWriter().use { writer ->
+        writer.append("$graphName,$parallelism,${result.executionTime},${result.standardDeviation}\n")
     }
 }
 
-fun runIteration(graph: List<Node>, parallelism : Int, graphName: String, bfsAlgo: () -> Unit): String {
+private fun runIteration(graph: List<Node>, bfsAlgo: () -> Unit): IterationResult {
     // warmup
     runBfs(graph, bfsAlgo)
     // benchmark iterations
     val executionTimes = (1..ITERATIONS).map { runBfs(graph, bfsAlgo) }
-    println("execution time = ${executionTimes.average() / 1_000_000}ms " +
-            "std = ${executionTimes.standardDeviation() / 1_000_000}ms")
-    return "$graphName,$parallelism,${executionTimes.average() / 1_000_000},${executionTimes.standardDeviation() / 1_000_000}"
+    val executionTime = executionTimes.average() / 1_000_000
+    val standardDeviation = executionTimes.standardDeviation() / 1_000_000
+    return IterationResult(executionTime = executionTime, standardDeviation = standardDeviation)
 }
-
-private data class IterationResult(val executionTime: Double, val standardDeviation: Double)
 
 private inline fun runBfs(graph: List<Node>, bfsAlgo: () -> Unit): Long {
     val start = System.nanoTime()
@@ -139,24 +135,11 @@ private inline fun runBfs(graph: List<Node>, bfsAlgo: () -> Unit): Long {
     return end - start
 }
 
-private fun bfsSequential(graph: List<Node>, start: Node) {
-    // The distance to the start node is `0`
-    start.distance.value = 0
-    val queue = ArrayDeque<Node>()
-    queue.add(start)
-    while (queue.isNotEmpty()) {
-        val currentNode = queue.poll()
-        for (neighbourNodeId in currentNode.neighbours) {
-            val neighbourNode = graph[neighbourNodeId - 1]
-            val newDistance = currentNode.distance.value + 1
-            val oldDistance = neighbourNode.distance.value
-            if (newDistance < oldDistance) {
-                neighbourNode.distance.lazySet(newDistance)
-                queue.add(neighbourNode)
-            }
-        }
-    }
-}
+private data class IterationResult(val executionTime: Double, val standardDeviation: Double)
+
+// #######################################
+// # GRAPH STRUCTURE AND SEQUENTIAL ALGO #
+// #######################################
 
 class Node(val id: Int) : Serializable {
     val neighbours = arrayListOf<Int>()
@@ -166,70 +149,226 @@ class Node(val id: Int) : Serializable {
     }
 
     val distance = atomic(Int.MAX_VALUE)
+}
 
-    companion object {
-        private const val serialVersionUID: Long = 1
+private fun bfsSequential(graph: List<Node>, start: Node) {
+    // The distance to the start node is `0`
+    start.distance.value = 0
+    val queue = ArrayDeque<Node>()
+    queue.add(start)
+    while (queue.isNotEmpty()) {
+        val from = queue.poll()
+        for (toId in from.neighbours) {
+            val to = graph[toId]
+            val newDistance = from.distance.value + 1
+            if (newDistance < to.distance.value) {
+                to.distance.lazySet(newDistance)
+                queue.add(to)
+            }
+        }
     }
 }
 
-private abstract class GraphCreator(val name: String) {
-    fun getGraph(): List<Node> {
-        Files.createDirectories(Paths.get(graphFileName).parent)
-        if (!Paths.get(graphFileName).toFile().exists()) {
-            generateOrDownloadGraphFile(graphFileName)
+// #################################
+// # PARALLEL ALGORITHM AND RUNNER #
+// #################################
+
+class ParallelBfsRunner {
+    companion object {
+        @JvmStatic
+        fun main(args: Array<String>) {
+            val graphName = args[0]
+            val parallelism = args[1].toInt()
+
+            val registry = LocateRegistry.getRegistry(GRAPH_CACHE_SERVICE_HOSTNAME, GRAPH_CACHE_SERVICE_PORT)
+            val graphService = registry.lookup(GRAPH_CACHE_SERVICE_NAME) as GraphCacheService
+            val graph = graphService.getGraph(graphName)
+
+            val startNode = graph[0]
+
+            val result = runIteration(graph) { bfsParallel(graph, startNode, parallelism) }
+            println("parallelism = $parallelism, parallel execution time = ${result.executionTime}ms std = ${result.standardDeviation}ms")
+            writeIterationResults(graphName, parallelism, result)
         }
-        return parseGraphFile(graphFileName)
+    }
+}
+
+fun bfsParallel(graph: List<Node>, start: Node, parallelism: Int) = runBlocking(Dispatchers.Default) {
+    // The distance to the start node is `0`
+    start.distance.value = 0
+    val queue: Channel<Node> = TaskChannel(parallelism)
+    queue.offer(start)
+    // Run worker threads and wait until the total work is done
+    val workers = Array(parallelism) {
+        GlobalScope.launch {
+            while (true) {
+                val from = queue.receiveOrClosed().valueOrNull ?: break
+                for (toId in from.neighbours) {
+                    val to = graph[toId]
+                    val newDistance = from.distance.value + 1
+                    if (to.distance.updateIfLower(newDistance)) queue.offer(to)
+                }
+            }
+        }
+    }
+    workers.forEach { it.join() }
+}
+
+/**
+ * Try to compare and set if new distance is less than the old one
+ */
+private inline fun AtomicInt.updateIfLower(distance: Int): Boolean = loop { cur ->
+    if (cur <= distance) return false
+    if (compareAndSet(cur, distance)) return true
+}
+
+/**
+ * This channel implementation does not suspend on sends and closes itself if the number of waiting receivers exceeds [maxWaitingReceivers].
+ */
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
+private class TaskChannel<E>(private val maxWaitingReceivers: Int) : LinkedListChannel<E>() {
+    private val waitingReceivers = atomic(0)
+
+    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
+    override fun onReceiveEnqueued() {
+        val waitingReceivers = waitingReceivers.incrementAndGet()
+        if (waitingReceivers >= maxWaitingReceivers) close()
     }
 
-    abstract val graphFileName: String
+    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
+    override fun onReceiveDequeued() {
+        waitingReceivers.decrementAndGet()
+    }
+}
 
-    abstract fun generateOrDownloadGraphFile(graphFileName: String)
+// ###################################
+// # GRAPHS CREATION AND DOWNLOADING #
+// ###################################
 
-    abstract fun parseGraphFile(graphFileName: String): List<Node>
+private abstract class GraphCreator(val name: String) {
+    protected abstract val graphFileName: String
+    protected abstract fun generateOrDownloadGraphFile()
+    protected abstract fun parseGraphFile(): List<Node>
+
+    fun getGraph(): List<Node> {
+        Files.createDirectories(Paths.get(graphFileName).parent)
+        if (!Paths.get(graphFileName).toFile().exists())
+            generateOrDownloadGraphFile()
+        return parseGraphFile()
+    }
 }
 
 private class RandomGraphCreator(name: String, private val nodes: Int, private val edges: Int) : GraphCreator(name) {
-    override val graphFileName = "out/bfs-channel-benchmark/$name.gr"
+    override val graphFileName = "out/bfs-channel-benchmark/$name.gr" // TODO extract the path prefix
 
-    override fun generateOrDownloadGraphFile(graphFileName: String) {
+    override fun generateOrDownloadGraphFile() {
         println("Generating $graphFileName as a random graph with $nodes nodes and $edges edges")
         val graphNodes = randomConnectedGraph(nodes, edges)
-        writeGraphToGrFile(graphFileName, graphNodes)
+        writeGraphToGrFile(graphNodes)
         println("Generated $graphFileName")
     }
 
-    override fun parseGraphFile(graphFileName: String): List<Node> = parseGrFile(graphFileName, false)
+    private fun writeGraphToGrFile(graphNodes: List<Node>) {
+        val edges = graphNodes.map { node -> node.neighbours.size }.sum()
+        PrintWriter(graphFileName).use { pw ->
+            pw.println("p sp ${graphNodes.size} $edges")
+            graphNodes.forEach { from ->
+                from.neighbours.forEach { toId ->
+                    pw.println("a ${from.id + 1} ${toId + 1}")
+                }
+            }
+        }
+    }
+
+    override fun parseGraphFile(): List<Node> = parseGrFile(graphFileName, false)
 }
 
-private class GrGzGraphCreator(name: String, private val url: String) : GraphCreator(name) {
-    override val graphFileName = "out/bfs-channel-benchmark/$name.gr.gz"
+private class DownloadingGraphCreator(name: String, private val url: String) : GraphCreator(name) {
+    private val fileExtension: String
+    private val fileFormat: String
+    private val gzipped: Boolean
 
-    override fun generateOrDownloadGraphFile(graphFileName: String) = downloadGraphFile(graphFileName, url)
+    init {
+        val filename = url.substring(url.lastIndexOf("/") + 1)
+        gzipped = filename.endsWith(".gz")
+        fileExtension = filename.substring(filename.replace(".gz", "").lastIndexOf(".") + 1)
+        fileFormat = if (gzipped) fileExtension.substring(0, fileExtension.length - 3) else fileExtension
+    }
+    override val graphFileName = "out/bfs-channel-benchmark/$name.$fileExtension"
 
-    override fun parseGraphFile(graphFileName: String): List<Node> = parseGrFile(graphFileName, true)
+    override fun generateOrDownloadGraphFile() {
+        println("Downloading $graphFileName from $url")
+        val input = Channels.newChannel(URL(url).openStream())
+        val output = FileOutputStream(graphFileName)
+        output.channel.transferFrom(input, 0, Long.MAX_VALUE)
+        println("Downloaded $graphFileName")
+    }
+
+    override fun parseGraphFile(): List<Node> = when (fileFormat) {
+        "txt" -> parseTxtFile(graphFileName, gzipped)
+        "gr" -> parseGrFile(graphFileName, gzipped)
+        else -> error("Unexpected graph format: $fileFormat")
+    }
 }
 
-private class TxtGzGraphCreator(name: String, private val url: String) : GraphCreator(name) {
-    override val graphFileName = "out/bfs-channel-benchmark/$name.txt.gz"
-
-    override fun generateOrDownloadGraphFile(graphFileName: String) = downloadGraphFile(graphFileName, url)
-
-    override fun parseGraphFile(graphFileName: String): List<Node> = parseTxtFile(graphFileName)
+private fun parseGrFile(filename: String, gzipped: Boolean): List<Node> {
+    val nodes = mutableListOf<Node>()
+    val inputStream = if (gzipped) GZIPInputStream(FileInputStream(filename)) else FileInputStream(filename)
+    inputStream.use { input ->
+        InputStreamReader(input).buffered().useLines {
+            it.forEach { line ->
+                when {
+                    line.startsWith("c") -> {} // ignore comments
+                    line.startsWith("p sp ") -> {
+                        val n = line.split(" ")[2].toInt()
+                        repeat(n) { nodes.add(Node(it)) }
+                    }
+                    line.startsWith("a ") -> {
+                        val parts = line.split(" ")
+                        val from = nodes[parts[1].toInt() - 1]
+                        val to = nodes[parts[2].toInt() - 1]
+                        from.addNeighbour(to)
+                    }
+                    else -> error("Gr file $filename has an incorrect format `$line`")
+                }
+            }
+        }
+    }
+    return nodes
 }
 
-private fun downloadGraphFile(graphFileName: String, url: String) {
-    println("Downloading $graphFileName from $url")
-    val input = Channels.newChannel(URL(url).openStream())
-    val output = FileOutputStream(graphFileName)
-    output.channel.transferFrom(input, 0, Long.MAX_VALUE)
-    println("Downloaded $graphFileName")
+private fun parseTxtFile(filename: String, gzipped: Boolean): List<Node> {
+    val nodes = ArrayList<Node>()
+    val inputStream = if (gzipped) GZIPInputStream(FileInputStream(filename)) else FileInputStream(filename)
+    inputStream.use { input ->
+        InputStreamReader(input).buffered().useLines {
+            it.forEach { line ->
+                when {
+                    line.startsWith("#") -> {} // ignore comments
+                    else -> {
+                        val parts = line.split(" ", "\t")
+                        // !NB!: node indexes in a txt file should start at 0
+                        val from = parts[0].toInt()
+                        val to = parts[1].toInt()
+                        while (nodes.size <= from || nodes.size <= to) nodes.add(Node(nodes.size))
+                        nodes[from].addNeighbour(nodes[to])
+                    }
+                }
+            }
+        }
+        return nodes
+    }
 }
+
+// ###########################
+// # RANDOM GRAPH GENERATION #
+// ###########################
 
 private fun randomConnectedGraph(nodes: Int, edges: Int): List<Node> {
     require(edges >= nodes - 1)
     // always use the same seed
     val random = Random(0)
-    val nodesList = List(nodes) { Node(it + 1) }
+    val nodesList = List(nodes) { Node(it) }
     // generate a random connected graph with `nodes-1` edges
     generateTreeRandom(nodesList, random)
     // add `edges - nodes + 1` random edges
@@ -268,131 +407,19 @@ private fun addEdges(edgesToAdd: Int, nodesList: List<Node>, random: Random) {
     }
 }
 
-private fun writeGraphToGrFile(filename: String, graphNodes: List<Node>) {
-    val edges = graphNodes.map { node -> node.neighbours.size }.sum()
-    PrintWriter(filename).use { pw ->
-        pw.println("p sp ${graphNodes.size} $edges")
-        graphNodes.forEach { from ->
-            from.neighbours.forEach { to ->
-                pw.println("a ${from.id} $to")
-            }
-        }
-    }
+// ##########################
+// # GRAPHS CACHING SERVICE #
+// ##########################
+
+interface GraphCacheService : Remote {
+    @Throws(RemoteException::class)
+    fun getGraph(graphName: String): List<Node>
 }
 
-private fun parseGrFile(filename: String, gzipped: Boolean): List<Node> {
-    val nodes = mutableListOf<Node>()
-    val inputStream = if (gzipped) GZIPInputStream(FileInputStream(filename)) else FileInputStream(filename)
-    inputStream.use { input ->
-        InputStreamReader(input).buffered().useLines {
-            it.forEach { line ->
-                when {
-                    line.startsWith("c") -> {} // ignore comments
-                    line.startsWith("p sp ") -> {
-                        val n = line.split(" ")[2].toInt()
-                        repeat(n) { nodes.add(Node(it + 1)) }
-                    }
-                    line.startsWith("a ") -> {
-                        val parts = line.split(" ")
-                        val from = nodes[parts[1].toInt() - 1]
-                        val to = nodes[parts[2].toInt() - 1]
-                        from.addNeighbour(to)
-                    }
-                    else -> error("Gr file $filename has an incorrect format `$line`")
-                }
-            }
-        }
-    }
-    return nodes
-}
+private class GraphCacheServiceImpl : GraphCacheService {
+    private val graphs = HashMap<String, List<Node>>()
 
-private fun parseTxtFile(filename: String): List<Node> {
-    val nodes = ArrayList<Node>()
-    val inputStream = GZIPInputStream(FileInputStream(filename))
-    inputStream.use { input ->
-        InputStreamReader(input).buffered().useLines {
-            it.forEach { line ->
-                when {
-                    line.startsWith("#") -> {} // ignore comments
-                    else -> {
-                        val parts = line.split(" ", "\t")
-                        val from = parts[0].toInt()
-                        val to = parts[1].toInt()
-                        while (nodes.size <= from || nodes.size <= to) nodes.add(Node(nodes.size))
-                        nodes[from].addNeighbour(nodes[to])
-                    }
-                }
-            }
-        }
-        return nodes
-    }
-}
-
-
-class ParallelBfsRunner {
-    companion object {
-        fun main(args: Array<String>) {
-            val graphName = args[0]
-            val parallelism = args[1].toInt()
-
-            val registry = LocateRegistry.getRegistry(GRAPH_CACHE_SERVICE_HOSTNAME, GRAPH_CACHE_SERVICE_PORT)
-            val graphService = registry.lookup(GRAPH_CACHE_SERVICE_NAME) as GraphCacheService
-            val graph = graphService.getGraph(graphName)
-
-            val startNode = graph[0]
-
-            print("coroutines count = $parallelism, parallel ")
-            val result = runIteration(graph, parallelism, graphName) { bfsParallel(graph, startNode, parallelism) }
-
-            FileOutputStream(RESULT_FILE, true).bufferedWriter().use { writer -> writer.append("$result\n") }
-        }
-    }
-}
-
-fun bfsParallel(graph: List<Node>, start: Node, parallelism: Int) = runBlocking(Dispatchers.Default) {
-    // The distance to the start node is `0`
-    start.distance.value = 0
-    val queue: Channel<Node> = TaskChannel(parallelism)
-    queue.offer(start)
-    // Run worker threads and wait until the total work is done
-    val workers = Array(parallelism) {
-        GlobalScope.launch {
-            while (true) {
-                val u = queue.receiveOrClosed().valueOrNull ?: break
-                for (v in u.neighbours) {
-                    val node = graph[v - 1]
-                    val newDistance = u.distance.value + 1
-                    if (node.distance.updateIfLower(newDistance)) queue.offer(node)
-                }
-            }
-        }
-    }
-    workers.forEach { it.join() }
-}
-
-/**
- * Try to compare and set if new distance is less than the old one
- */
-private inline fun AtomicInt.updateIfLower(distance: Int): Boolean = loop { cur ->
-    if (cur <= distance) return false
-    if (compareAndSet(cur, distance)) return true
-}
-
-/**
- * This channel implementation does not suspend on sends and closes itself if the number of waiting receivers exceeds [maxWaitingReceivers].
- */
-@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
-private class TaskChannel<E>(private val maxWaitingReceivers: Int) : LinkedListChannel<E>() {
-    private val waitingReceivers = AtomicLong(0)
-
-    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    override fun onReceiveEnqueued() {
-        val waitingReceivers = waitingReceivers.incrementAndGet()
-        if (waitingReceivers >= maxWaitingReceivers) close()
-    }
-
-    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    override fun onReceiveDequeued() {
-        waitingReceivers.decrementAndGet()
+    override fun getGraph(graphName: String): List<Node> = graphs.computeIfAbsent(graphName) {
+        GRAPHS.find { it.name == graphName }!!.getGraph()
     }
 }
