@@ -36,11 +36,15 @@ private const val ITERATIONS = 5
 /**
  * Number of coroutines that are used to execute bfs in parallel
  */
-private val PARALLELISM = listOf(1, 2)
+private val PARALLELISM = listOf(1, 4, 8, 16)
 /**
  * Output file for the benchmark results
  */
 private const val RESULT_FILE = "out/results_bfs_channel.csv"
+/**
+ * Graphs location
+ */
+private const val GRAPH_LOCATION = "out/bfs-channel-benchmark"
 
 /**
  * The RMI graph service host name
@@ -259,7 +263,7 @@ private abstract class GraphCreator(val name: String) {
 }
 
 private class RandomGraphCreator(name: String, private val nodes: Int, private val edges: Int) : GraphCreator(name) {
-    override val graphFileName = "out/bfs-channel-benchmark/$name.gr" // TODO extract the path prefix
+    override val graphFileName = "$GRAPH_LOCATION/$name.gr"
 
     override fun generateOrDownloadGraphFile() {
         println("Generating $graphFileName as a random graph with $nodes nodes and $edges edges")
@@ -294,7 +298,7 @@ private class DownloadingGraphCreator(name: String, private val url: String) : G
         fileExtension = filename.substring(filename.replace(".gz", "").lastIndexOf(".") + 1)
         fileFormat = if (gzipped) fileExtension.substring(0, fileExtension.length - 3) else fileExtension
     }
-    override val graphFileName = "out/bfs-channel-benchmark/$name.$fileExtension"
+    override val graphFileName = "$GRAPH_LOCATION/$name.$fileExtension"
 
     override fun generateOrDownloadGraphFile() {
         println("Downloading $graphFileName from $url")
