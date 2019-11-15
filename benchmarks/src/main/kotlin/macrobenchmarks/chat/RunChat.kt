@@ -6,12 +6,11 @@
 
 package macrobenchmarks.chat
 
-import kotlinx.coroutines.runBlocking
-import org.apache.commons.math3.distribution.PoissonDistribution
-import java.io.Closeable
-import java.io.FileOutputStream
+import kotlinx.coroutines.*
+import org.apache.commons.math3.distribution.*
+import java.io.*
 import java.util.*
-import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.*
 import kotlin.collections.ArrayList
 
 var context = DispatcherTypes.FORK_JOIN.create(1)
@@ -48,8 +47,7 @@ fun main(args: Array<String>) {
     }
 
     FileOutputStream("$BENCHMARK_OUTPUT_FOLDER/$BENCHMARK_OUTPUT_FILE", true).bufferedWriter().use { writer ->
-        writer.append("${configuration.toCSV()},${benchmarkResults.toCSV()}")
-        writer.newLine()
+        writer.append("${configuration.toCSV()},${benchmarkResults.toCSV()}\n")
     }
 
     if (SHOULD_PRINT_DEBUG_OUTPUT) {

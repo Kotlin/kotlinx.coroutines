@@ -4,12 +4,13 @@
 
 package macrobenchmarks.chat
 
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher
-import org.nield.kotlinstatistics.standardDeviation
-import java.util.concurrent.ForkJoinPool
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.scheduling.*
+import org.nield.kotlinstatistics.*
+import java.util.*
+import java.util.concurrent.*
+import kotlin.collections.ArrayList
 
 /**
  * Execution time of each benchmark.
@@ -161,6 +162,6 @@ class BenchmarkResults {
         val avgReceivedMessages = receivedMessagesPerRun.average()
         val stdSentMessages = sentMessagesPerRun.standardDeviation()
         val stdReceivedMessages = receivedMessagesPerRun.standardDeviation()
-        return "%.2f,%.2f,%.2f,%.2f".format(avgSentMessages, stdSentMessages, avgReceivedMessages, stdReceivedMessages)
+        return String.format(Locale.ROOT, "%.2f,%.2f,%.2f,%.2f", avgSentMessages, stdSentMessages, avgReceivedMessages, stdReceivedMessages)
     }
 }

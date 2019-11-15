@@ -4,7 +4,7 @@
 
 package macrobenchmarks.chat
 
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.*
 
 class UserWithoutFriends(id: Long,
                          activity: Double,
