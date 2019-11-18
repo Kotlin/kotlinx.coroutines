@@ -8,6 +8,7 @@ package macrobenchmarks.chat
 
 import benchmarks.common.*
 import java.io.*
+import java.nio.file.*
 import java.util.concurrent.*
 import kotlin.math.*
 
@@ -20,10 +21,9 @@ fun main() {
     println("${configurationsList.size} benchmarks will be run, benchmarks total time is " +
             "${TimeUnit.MILLISECONDS.toMinutes(executionTimeMs)} minutes")
 
-    val benchmarkOutputFolder = File(BENCHMARK_OUTPUT_FOLDER)
-    benchmarkOutputFolder.mkdir()
-    val csvHeader = "threads,userCount,maxFriendsPercentage,channel,averageWork,benchmarkMode,dispatcherType,avgSentMessages,stdSentMessages,avgReceivedMessages,stdReceivedMessages"
-    PrintWriter("$BENCHMARK_OUTPUT_FOLDER/$BENCHMARK_OUTPUT_FILE").use { pw ->
+    Files.createDirectories(Paths.get(BENCHMARK_OUTPUT_FILE).parent)
+    val csvHeader = "threads,userCount,maxFriendsPercentage,channel,averageWork,dispatcherType,avgSentMessages,stdSentMessages,avgReceivedMessages,stdReceivedMessages"
+    PrintWriter(BENCHMARK_OUTPUT_FILE).use { pw ->
         pw.println(csvHeader)
     }
 

@@ -27,11 +27,7 @@ const val ITERATIONS = 5
 /**
  * CSV file containing the configurations and final metrics of the executed benchmarks
  */
-const val BENCHMARK_OUTPUT_FILE = "results_in_memory_chat.csv"
-/**
- * Folder containing all benchmark output files
- */
-const val BENCHMARK_OUTPUT_FOLDER = "out/"
+const val BENCHMARK_OUTPUT_FILE = "out/results_in_memory_chat.csv"
 
 // Configurations we want to test in the benchmark
 
@@ -51,11 +47,6 @@ private val MAX_FRIENDS_PERCENTAGE = listOf(0.2)
  * The average amount work that will be executed on CPU.
  */
 private val AVERAGE_WORK = listOf(40, 80)
-
-enum class BenchmarkModes {
-    CHOOSE_RANDOM_FRIEND, // benchmark mode that sets to users some friends and lets users to send a message to a random friend
-    CHOOSE_BASED_ON_ACTIVITY // benchmark mode that lets a user to choose another user to write based on users' activity
-}
 
 enum class ChannelCreator(private val capacity: Int) {
     RENDEZVOUS(Channel.RENDEZVOUS),
@@ -82,20 +73,17 @@ val allConfigurations: List<BenchmarkConfiguration>
                 for (maxFriendsPercentage in MAX_FRIENDS_PERCENTAGE) {
                     for (channelCreator in ChannelCreator.values()) {
                         for (tokens in AVERAGE_WORK) {
-                            for (userType in BenchmarkModes.values()) {
-                                for (dispatcherType in DispatcherTypes.values()) {
-                                    list.add(
-                                            BenchmarkConfiguration(
-                                                    threads,
-                                                    userCount,
-                                                    maxFriendsPercentage,
-                                                    channelCreator,
-                                                    tokens,
-                                                    userType,
-                                                    dispatcherType
-                                            )
-                                    )
-                                }
+                            for (dispatcherType in DispatcherTypes.values()) {
+                                list.add(
+                                        BenchmarkConfiguration(
+                                                threads,
+                                                userCount,
+                                                maxFriendsPercentage,
+                                                channelCreator,
+                                                tokens,
+                                                dispatcherType
+                                        )
+                                )
                             }
                         }
                     }
@@ -114,19 +102,18 @@ class BenchmarkConfiguration(
         var maxFriendsPercentage: Double,
         var channelCreator: ChannelCreator,
         var averageWork: Int,
-        var benchmarkMode: BenchmarkModes,
         var dispatcherType: DispatcherTypes
 ) {
     fun configurationToString() : String {
-        return "[threads=$threads, users=$users, maxFriendsPercentage=$maxFriendsPercentage, channelCreator=$channelCreator, averageWork=$averageWork, benchmarkMode=$benchmarkMode, dispatcherType=$dispatcherType]"
+        return "[threads=$threads, users=$users, maxFriendsPercentage=$maxFriendsPercentage, channelCreator=$channelCreator, averageWork=$averageWork, dispatcherType=$dispatcherType]"
     }
 
     fun toCSV(): String {
-        return "$threads,$users,$maxFriendsPercentage,$channelCreator,$averageWork,$benchmarkMode,$dispatcherType"
+        return "$threads,$users,$maxFriendsPercentage,$channelCreator,$averageWork,$dispatcherType"
     }
 
     fun configurationToArgsArray() : Array<String> {
-        return arrayOf(threads.toString(), users.toString(), maxFriendsPercentage.toString(), channelCreator.toString(), averageWork.toString(), benchmarkMode.toString(), dispatcherType.toString())
+        return arrayOf(threads.toString(), users.toString(), maxFriendsPercentage.toString(), channelCreator.toString(), averageWork.toString(), dispatcherType.toString())
     }
 
     companion object {
@@ -136,9 +123,8 @@ class BenchmarkConfiguration(
             val maxFriendsPercentage = array[2].toDouble()
             val channelCreator = ChannelCreator.valueOf(array[3])
             val averageWork = array[4].toInt()
-            val benchmarkMode = BenchmarkModes.valueOf(array[5])
-            val dispatcherType = DispatcherTypes.valueOf(array[6])
-            return BenchmarkConfiguration(threads, userCount, maxFriendsPercentage, channelCreator, averageWork, benchmarkMode, dispatcherType)
+            val dispatcherType = DispatcherTypes.valueOf(array[5])
+            return BenchmarkConfiguration(threads, userCount, maxFriendsPercentage, channelCreator, averageWork, dispatcherType)
         }
 
         /**
@@ -146,8 +132,8 @@ class BenchmarkConfiguration(
          * this method in fun main in RunBenchmark.
          */
         fun defaultConfiguration() : BenchmarkConfiguration {
-            return BenchmarkConfiguration(4, 10000, 0.2, ChannelCreator.BUFFERED_UNLIMITED,
-                    80, BenchmarkModes.CHOOSE_BASED_ON_ACTIVITY, DispatcherTypes.FORK_JOIN)
+            return BenchmarkConfiguration(1, 10000, 0.2, ChannelCreator.RENDEZVOUS,
+                    40, DispatcherTypes.FORK_JOIN)
         }
     }
 }

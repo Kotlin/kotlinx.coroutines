@@ -9,6 +9,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.selects.*
 import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * An abstract class for server-side chat users.
@@ -25,21 +26,33 @@ import java.util.*
  * wait for this coroutine to end it's execution.
  * todo: remove the call of yield when this bug is fixed
  */
-abstract class User(private val id: Long,
+class User(private val id: Long,
                     val activity: Double,
                     private val messageChannel: Channel<Message>,
                     private val averageWork: Int) {
     var sentMessages = 0L
-        protected set
-
+        private set
     var receivedMessages = 0L
-        protected set
+        private set
 
-    protected val random = Random(id)
-
+    private val random = Random(id)
     private var messagesToSent: Double = activity
 
+    private lateinit var friends: List<User>
+    private lateinit var cumSumFriends : List<Double>
+
     lateinit var runCoroutine: Job
+
+    fun setFriends(friends : List<User>) {
+        require(friends.isNotEmpty())
+        this.friends = friends
+        val cumSumFriends = ArrayList<Double>(friends.size + 1)
+        cumSumFriends.add(friends[0].activity)
+        for (i in 1 until friends.size) {
+            cumSumFriends.add(cumSumFriends[i - 1] + friends[i].activity)
+        }
+        this.cumSumFriends = cumSumFriends
+    }
 
     fun startUser() {
         var yieldLoopCounter = 0L
@@ -96,7 +109,22 @@ abstract class User(private val id: Long,
         messageChannel.close()
     }
 
-    abstract fun chooseUserToSend(): User
+    private fun chooseUserToSend(): User {
+        var user : User = this
+        while (this == user) {
+            val randomDouble = random.nextDouble() * cumSumFriends.last()
+            var insertionPoint = cumSumFriends.binarySearch(randomDouble)
+
+            // binary search can return negative values. It indicates the position in the original collection where
+            // the searched element can be inserted
+            if (insertionPoint < 0) insertionPoint = -(insertionPoint + 1)
+
+            // insertionPoint won't be out of bounds because randomDouble is less than or equals to the last number in the
+            // cumSumFriends list
+            user =  friends[insertionPoint]
+        }
+        return user
+    }
 }
 
 /**

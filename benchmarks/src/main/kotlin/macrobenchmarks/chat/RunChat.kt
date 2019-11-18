@@ -46,7 +46,7 @@ fun main(args: Array<String>) {
         runBenchmarkIteration(it + 1, mean, configuration, benchmarkResults)
     }
 
-    FileOutputStream("$BENCHMARK_OUTPUT_FOLDER/$BENCHMARK_OUTPUT_FILE", true).bufferedWriter().use { writer ->
+    FileOutputStream(BENCHMARK_OUTPUT_FILE, true).bufferedWriter().use { writer ->
         writer.append("${configuration.toCSV()},${benchmarkResults.toCSV()}\n")
     }
 
@@ -89,14 +89,6 @@ private fun runBenchmarkIteration(iteration: Int,
     }
 }
 
-private fun waitForCoroutines(users : ArrayList<User>) {
-    runBlocking {
-        for (user in users) {
-            user.runCoroutine.join()
-        }
-    }
-}
-
 @Suppress("ConstantConditionIf")
 private fun createUsers(users: ArrayList<User>,
                         mean: Double,
@@ -109,49 +101,19 @@ private fun createUsers(users: ArrayList<User>,
     repeat(configuration.users) {
         val sample = poissonDistribution.sample()
         val activity = sample / mean
-        val user = createUser(idSequence, configuration, activity)
+        val userId = idSequence.incrementAndGet()
+        val messageChannel = configuration.channelCreator.create<Message>()
+        val user = User(userId, activity, messageChannel, configuration.averageWork)
         users.add(user)
     }
     val endCreatingUsers = System.currentTimeMillis()
-
-    when (configuration.benchmarkMode) {
-        BenchmarkModes.CHOOSE_RANDOM_FRIEND -> {
-            addFriendsToUsers(configuration, users.map { user -> user as UserWithFriends }.toList(), random)
-        }
-        BenchmarkModes.CHOOSE_BASED_ON_ACTIVITY -> {
-            val cumSumFriends = ArrayList<Double>(users.size)
-            for (i in 0 until users.size) {
-                if (cumSumFriends.isEmpty()) {
-                    cumSumFriends.add(users[i].activity)
-                } else {
-                    cumSumFriends.add(cumSumFriends[i - 1] + users[i].activity)
-                }
-            }
-            for (user in users) {
-                user as UserWithoutFriends
-                user.setUsers(users, cumSumFriends)
-            }
-        }
-    }
-
+    addFriendsToUsers(configuration, users, random)
     val endAddingContacts = System.currentTimeMillis()
 
-    for (user in users) {
-        user.startUser()
-    }
+    users.forEach(User::startUser)
 
     if (SHOULD_PRINT_DEBUG_OUTPUT) {
         println("Creating users : ${endCreatingUsers - startCreatingUsers}, adding contacts : ${endAddingContacts - endCreatingUsers}")
-    }
-}
-
-fun createUser(idSequence : AtomicLong, configuration: BenchmarkConfiguration, activity : Double): User {
-    val userId = idSequence.incrementAndGet()
-    val messageChannel = configuration.channelCreator.create<Message>()
-
-    return when (configuration.benchmarkMode) {
-        BenchmarkModes.CHOOSE_RANDOM_FRIEND -> UserWithFriends(userId, activity, messageChannel, configuration.averageWork)
-        BenchmarkModes.CHOOSE_BASED_ON_ACTIVITY -> UserWithoutFriends(userId, activity, messageChannel, configuration.averageWork)
     }
 }
 
@@ -159,12 +121,11 @@ private fun addFriendsToUsers(configuration: BenchmarkConfiguration, users: List
     val friendsCount = (configuration.users * configuration.maxFriendsPercentage).toInt()
 
     for (user in users) {
-        user as UserWithFriends
         val randomAmountOfFriends = random.nextInt(friendsCount) + 1
         // if the number of friends is too big, use not that fast but stable method. If we manually
         // add friends it will be painfully slow
         if (randomAmountOfFriends > 0.6 * users.size) {
-            user.setFriends(users.shuffled().take(randomAmountOfFriends))
+            user.setFriends(users.shuffled(random).take(randomAmountOfFriends))
             continue
         }
 
@@ -183,6 +144,19 @@ private fun addFriendsToUsers(configuration: BenchmarkConfiguration, users: List
     }
 }
 
+private fun stopUsers(users: ArrayList<User>) {
+    stopped = true
+    users.forEach(User::stopUser)
+}
+
+private fun waitForCoroutines(users : ArrayList<User>) {
+    runBlocking {
+        for (user in users) {
+            user.runCoroutine.join()
+        }
+    }
+}
+
 private fun collectBenchmarkMetrics(users: ArrayList<User>, results: BenchmarkResults) {
     var sentMessages = 0L
     var receivedMessages = 0L
@@ -192,9 +166,4 @@ private fun collectBenchmarkMetrics(users: ArrayList<User>, results: BenchmarkRe
     }
     results.sentMessagesPerRun.add(sentMessages.toDouble() / BENCHMARK_TIME_MS)
     results.receivedMessagesPerRun.add(receivedMessages.toDouble() / BENCHMARK_TIME_MS)
-}
-
-private fun stopUsers(users: ArrayList<User>) {
-    stopped = true
-    users.forEach(User::stopUser)
 }
