@@ -11,6 +11,7 @@ import kotlin.coroutines.*
  */
 internal object Unconfined : CoroutineDispatcher() {
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
-    override fun dispatch(context: CoroutineContext, block: Runnable) { throw UnsupportedOperationException() }
+    // Just in case somebody wraps Unconfined dispatcher casing the "dispatch" to be called from "yield"
+    override fun dispatch(context: CoroutineContext, block: Runnable) = block.run()
     override fun toString(): String = "Unconfined"
 }

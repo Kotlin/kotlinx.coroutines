@@ -141,4 +141,18 @@ class HandlerDispatcherTest : TestBase() {
     // TODO compile against API 22+ so this can be invoked without reflection.
     private val Message.isAsynchronous: Boolean
         get() = Message::class.java.getDeclaredMethod("isAsynchronous").invoke(this) as Boolean
+
+    @Test
+    fun testImmediateDispatcherYield() = runBlocking(Dispatchers.Main) {
+        expect(1)
+        // launch in the immediate dispatcher
+        launch(Dispatchers.Main.immediate) {
+            expect(2)
+            yield()
+            expect(4)
+        }
+        expect(3) // after yield
+        yield() // yield back
+        finish(5)
+    }
 }
