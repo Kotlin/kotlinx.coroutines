@@ -43,4 +43,15 @@ class ImmediateYieldTest : TestBase() {
         }
         finish(4) // after launch
     }
+
+    @Test
+    fun testWrappedUnconfinedDispatcherYieldStackOverflow() = runTest {
+        expect(1)
+        withContext(wrapperDispatcher(Dispatchers.Unconfined)) {
+            repeat(100_000) {
+                yield()
+            }
+        }
+        finish(2)
+    }
 }

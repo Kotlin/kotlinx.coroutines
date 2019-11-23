@@ -27,9 +27,16 @@ public suspend fun yield(): Unit = suspendCoroutineUninterceptedOrReturn sc@ { u
     val context = uCont.context
     context.checkCompletion()
     val cont = uCont.intercepted() as? DispatchedContinuation<Unit> ?: return@sc Unit
+    // This code detects the Unconfined dispatcher even if it was wrapped into another dispatcher
+    val yieldContext = YieldContext()
+    cont.dispatchYield(context + yieldContext, Unit)
     // Special case for the unconfined dispatcher that can yield only in existing unconfined loop
-    if (cont.dispatcher === Unconfined) return@sc if (cont.yieldUndispatched()) COROUTINE_SUSPENDED else Unit
-    cont.dispatchYield(Unit)
+    if (yieldContext.dispatcherWasUnconfined) {
+        // Means that the Unconfined dispatcher got the call, but did not do anything.
+        // See also code of "Unconfined.dispatch" function.
+        return@sc if (cont.yieldUndispatched()) COROUTINE_SUSPENDED else Unit
+    }
+    // It was some other dispatcher that successfully dispatched the coroutine
     COROUTINE_SUSPENDED
 }
 
