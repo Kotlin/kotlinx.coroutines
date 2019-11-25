@@ -3,14 +3,14 @@
  */
 @file:JvmName("BfsChannelBenchmark")
 
-package macrobenchmarks.channel
+package macrobenchmarks
 
+import benchmarks.common.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.channels.Channel
 import org.nield.kotlinstatistics.*
-import runProcess
 import java.io.*
 import java.net.*
 import java.nio.channels.*
@@ -32,11 +32,11 @@ private val GRAPHS = listOf(
 /**
  * Iterations number for each graph
  */
-private const val ITERATIONS = 5
+private const val ITERATIONS = 3
 /**
  * Number of coroutines that are used to execute bfs in parallel
  */
-private val PARALLELISM = listOf(1, 4, 8, 16)
+private val PARALLELISM = listOf(1, 2)
 /**
  * Output file for the benchmark results
  */
@@ -117,7 +117,7 @@ private fun writeOutputHeader() {
 
 private fun writeIterationResults(graphName: String, parallelism: Int, result: IterationResult) {
     FileOutputStream(RESULT_FILE, true).bufferedWriter().use { writer ->
-        writer.append("$graphName,$parallelism,${result.executionTime},${result.standardDeviation}\n")
+        writer.append("$graphName,$parallelism,${String.format(Locale.ROOT, "%.2f",result.executionTime)},${String.format(Locale.ROOT, "%.2f",result.standardDeviation)}\n")
     }
 }
 

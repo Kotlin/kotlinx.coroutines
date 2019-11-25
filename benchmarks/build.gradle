@@ -80,7 +80,7 @@ dependencies {
 }
 
 task runBfsChannelBenchmark(type : JavaExec) {
-    main = 'macrobenchmarks.channel.BfsChannelBenchmark'
+    main = 'macrobenchmarks.BfsChannelBenchmark'
     jvmArgs '-Xmx3G' // graphs cache
     classpath sourceSets.main.runtimeClasspath
 }
