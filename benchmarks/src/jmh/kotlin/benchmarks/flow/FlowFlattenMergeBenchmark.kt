@@ -3,7 +3,7 @@
  */
 package benchmarks.flow
 
-import doGeomDistrWork
+import benchmarks.common.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
@@ -56,6 +56,7 @@ open class FlowFlattenMergeBenchmark {
     }
 }
 
-// If you change this variable please be sure that you change variable elements in the corresponding python script as well
+// If you change this variable please be sure that you change variable elements in the generate_plots_flow_flatten_merge.py
+// python script as well
 private const val ELEMENTS = 100_000
 private const val WORK = 100

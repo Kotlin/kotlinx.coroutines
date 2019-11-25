@@ -1,14 +1,19 @@
+# To run this script run the command 'python3 scripts/generate_plots_flow_flatten_merge.py' in the benchmarks/ folder or
+# 'python3 generate_plots_flow_flatten_merge.py' in the benchmarks/scripts/ folder
+
 import pandas as pd
 import sys
+import locale
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 
 input_file = "build/reports/jmh/results.csv"
-output_file = "flow-flatten-merge.svg"
+output_file = "out/flow-flatten-merge.svg"
+# Please change the value of this variable according to the FlowFlattenMergeBenchmarkKt.ELEMENTS
 elements = 100000
 benchmark_name = "benchmarks.flow.FlowFlattenMergeBenchmark.flattenMerge"
-csv_columns = ["Benchmark", "Score", "Score Error (99.9%)", "Unit", "Param: concurrency", "Param: flows"]
-rename_columns = {"Benchmark": "benchmark", "Score" : "score", "Score Error (99.9%)" : "score_error", "Unit" : "unit",
+csv_columns = ["Benchmark", "Score", "Unit", "Param: concurrency", "Param: flows"]
+rename_columns = {"Benchmark": "benchmark", "Score" : "score", "Unit" : "unit",
                   "Param: concurrency" : "concurrency", "Param: flows" : "flows"}
 
 markers = ['.', 'v', '^', '1', '2', '8', 'p', 'P', 'x', 'D', 'd', 's']
@@ -45,13 +50,26 @@ def draw(data, plt):
         res = data[(data.flows == flows)]
 #         plt.plot(res.concurrency, res.score*elements/1000, label="flows={}".format(flows), color=gen_colour, marker=gen_marker)
         plt.errorbar(x=res.concurrency, y=res.score*elements/1000, yerr=res.score_error*elements/1000, solid_capstyle='projecting',
-                     label="flows={}".format(flows), capsize=4, color=gen_colour)
+                     label="flows={}".format(flows), capsize=4, color=gen_colour, linewidth=2.2)
 
-data = pd.read_table(input_file, sep=",")
+langlocale = locale.getdefaultlocale()[0]
+locale.setlocale(locale.LC_ALL, langlocale)
+dp = locale.localeconv()['decimal_point']
+if dp == ",":
+    csv_columns.append("Score Error (99,9%)")
+    rename_columns["Score Error (99,9%)"] = "score_error"
+elif dp == ".":
+    csv_columns.append("Score Error (99.9%)")
+    rename_columns["Score Error (99.9%)"] = "score_error"
+else:
+    print("Unexpected locale delimeter: " + dp)
+    sys.exit(1)
+data = pd.read_csv(input_file, sep=",", decimal=dp)
 data = data[csv_columns].rename(columns=rename_columns)
 data = data[(data.benchmark == benchmark_name)]
-plt.figure(figsize=(8, 6.5))
+plt.rcParams.update({'font.size': 15})
+plt.figure(figsize=(12.5, 10))
 draw(data, plt)
-plt.legend(loc='upper center', borderpad=0, ncol=4, frameon=False, borderaxespad=4, prop={'size': 8})
+plt.legend(loc='upper center', borderpad=0, bbox_to_anchor=(0.5, 1.3), ncol=2, frameon=False, borderaxespad=2, prop={'size': 15})
 plt.tight_layout(pad=12, w_pad=2, h_pad=1)
 plt.savefig(output_file, bbox_inches='tight')

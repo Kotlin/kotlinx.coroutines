@@ -2,6 +2,8 @@
 * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
 */
 
+package benchmarks.common
+
 import java.util.concurrent.ThreadLocalRandom
 
 fun doGeomDistrWork(work: Int) {

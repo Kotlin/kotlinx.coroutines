@@ -1,6 +1,6 @@
 package benchmarks
 
-import doGeomDistrWork
+import benchmarks.common.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher
