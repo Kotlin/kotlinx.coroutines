@@ -65,7 +65,12 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  *     * if there is a [Job] in the context, then [Job.cancel] is invoked;
  *     * Otherwise, all instances of [CoroutineExceptionHandler] found via [ServiceLoader]
  *     * and current thread's [Thread.uncaughtExceptionHandler] are invoked.
- **/
+ *
+ * [CoroutineExceptionHandler] can be invoked from an arbitrary dispatcher used by coroutines in the current job hierarchy.
+ * For example, if one has a `MainScope` and launches children of the scope in main and default dispatchers, then exception handler can
+ * be invoked either in main or in default dispatcher thread regardless of
+ * which particular dispatcher coroutine that has thrown an exception used.
+ */
 public interface CoroutineExceptionHandler : CoroutineContext.Element {
     /**
      * Key for [CoroutineExceptionHandler] instance in the coroutine context.
