@@ -27,8 +27,8 @@ import kotlin.coroutines.*
  *
  * This class ensures that debugging facilities in [newCoroutineContext] function work properly.
  */
-public abstract class CoroutineDispatcher
-    : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
+public abstract class CoroutineDispatcher :
+    AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
 
     /**
      * Returns `true` if the execution of the coroutine should be performed with [dispatch] method.
@@ -40,8 +40,10 @@ public abstract class CoroutineDispatcher
      *
      * A dispatcher can override this method to provide a performance optimization and avoid paying a cost of an unnecessary dispatch.
      * E.g. [MainCoroutineDispatcher.immediate] checks whether we are already in the required UI thread in this method and avoids
-     * an additional dispatch when it is not required. But this method should not return `false` by default, because
-     * it may expose unexpected behaviour (e.g. with interleaved event-loops) and unexpected order of events.
+     * an additional dispatch when it is not required.
+     *
+     * While this approach can be more efficient, it is not chosen by default to provide a consistent dispatching behaviour
+     * so that users won't observe unexpected and non-consistent order of events by default.
      *
      * Coroutine builders like [launch][CoroutineScope.launch] and [async][CoroutineScope.async] accept an optional [CoroutineStart]
      * parameter that allows one to optionally choose the [undispatched][CoroutineStart.UNDISPATCHED] behavior to start coroutine immediately,
@@ -49,10 +51,7 @@ public abstract class CoroutineDispatcher
      *
      * This method should generally be exception-safe. An exception thrown from this method
      * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
-     *
-     * **This is an experimental api.** Execution semantics of coroutines may change in the future when this function returns `false`.
      */
-    @ExperimentalCoroutinesApi
     public open fun isDispatchNeeded(context: CoroutineContext): Boolean = true
 
     /**
