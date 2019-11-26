@@ -78,8 +78,9 @@ public abstract class CoroutineDispatcher :
      * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
      *
      * **Note**: This method must not immediately call [block]. Doing so would result in [StackOverflowError]
-     * when [yield] is repeatedly called from a loop. However, an implementation can delegate this function
-     * to `dispatch` method of [Dispatchers.Unconfined], which is integrated with [yield] to avoid this problem.
+     * when [yield] is repeatedly called from a loop. However, an implementation that returns `false` from
+     * [isDispatchNeeded] can delegate this function to `dispatch` method of [Dispatchers.Unconfined], which is
+     * integrated with [yield] to avoid this problem.
      */
     public abstract fun dispatch(context: CoroutineContext, block: Runnable)
 

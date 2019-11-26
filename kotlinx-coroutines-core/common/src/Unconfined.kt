@@ -14,15 +14,16 @@ internal object Unconfined : CoroutineDispatcher() {
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        // Just in case somebody wraps Unconfined dispatcher casing the "dispatch" to be called from "yield"
-        // See also code of "yield" function
+        // It can only be called by the "yield" function. See also code of "yield" function.
         val yieldContext = context[YieldContext]
         if (yieldContext != null) {
             // report to "yield" that it is an unconfined dispatcher and don't call "block.run()"
             yieldContext.dispatcherWasUnconfined = true
             return
         }
-        block.run()
+        throw UnsupportedOperationException("Dispatchers.Unconfined.dispatch function can only be used by the yield function. " +
+            "If you wrap Unconfined dispatcher in your code, make sure you properly delegate " +
+            "isDispatchNeeded and dispatch calls.")
     }
     
     override fun toString(): String = "Unconfined"
