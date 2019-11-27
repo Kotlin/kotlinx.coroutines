@@ -138,7 +138,7 @@ internal class WorkQueue {
     }
 
     fun offloadAllWorkTo(globalQueue: GlobalQueue) {
-        lastScheduledTask.getAndSet(null)?.let { globalQueue.add(it) }
+        lastScheduledTask.getAndSet(null)?.let { globalQueue.addLast(it) }
         while (pollTo(globalQueue)) {
             // Steal everything
         }
@@ -173,7 +173,7 @@ internal class WorkQueue {
 
     private fun pollTo(queue: GlobalQueue): Boolean {
         val task = pollBuffer() ?: return false
-        queue.add(task)
+        queue.addLast(task)
         return true
     }
 
@@ -197,14 +197,4 @@ internal class WorkQueue {
             assert { value >= 0 }
         }
     }
-}
-
-private fun GlobalQueue.add(task: Task) {
-    /*
-     * globalQueue is closed as the very last step in the shutdown sequence when all worker threads had
-     * been already shutdown (with the only exception of the last worker thread that might be performing
-     * shutdown procedure itself). As a consistency check we do a [cheap!] check that it is not closed here yet.
-     */
-    val added = addLast(task)
-    assert { added }
 }
