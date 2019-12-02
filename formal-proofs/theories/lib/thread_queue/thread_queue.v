@@ -13,10 +13,10 @@ Section impl.
 Variable segment_size: positive.
 
 Definition cancel_cell: val :=
-  λ: "cell'", let: "cell" := cell_ref_loc "cell'" in
-              if: getAndSet "cell" CANCELLEDV = RESUMEDV
-              then #false
-              else segment_cancel_single_cell (Fst "cell") ;; #true.
+  λ: "cell'" <>, let: "cell" := cell_ref_loc "cell'" in
+                 if: getAndSet "cell" CANCELLEDV = RESUMEDV
+                 then #false
+                 else segment_cancel_single_cell (Fst "cell") ;; #true.
 
 Definition move_ptr_forward : val :=
   rec: "loop" "ptr" "seg" := let: "curSeg" := !"ptr" in
@@ -27,8 +27,10 @@ Definition move_ptr_forward : val :=
 
 Definition park: val :=
   λ: "cancellationHandler" "cancHandle" "threadHandle",
-  let: "r" := (loop: (λ: "c", ! "c")%V
-               interrupted: "cancellationHandler") in
+  let: "r" := (loop: (λ: "c", if: ! "c" then NONEV else SOMEV #())%V
+               interrupted: "cancellationHandler")
+              "cancHandle"
+              "threadHandle" in
   "threadHandle" <- #true ;;
   "r".
 
@@ -71,7 +73,7 @@ Definition resume: val :=
 Definition new_thread_queue: val :=
   λ: <>, let: "arr" := new_infinite_array segment_size #() in
          let: "hd" := ref "arr" in
-         let: "tl" := ref "tl" in
+         let: "tl" := ref "arr" in
          let: "enqIdx" := ref #0 in
          let: "deqIdx" := ref #0 in
          (("hd", "enqIdx"), ("tl", "deqIdx")).
@@ -705,7 +707,7 @@ Qed.
 
 Definition awakening_permit γtq := own γtq (◯ (ε, (1%nat, ε), ε)).
 
-Instance deq_front_at_least_persistent γtq n:
+Global Instance deq_front_at_least_persistent γtq n:
   Persistent (deq_front_at_least γtq n).
 Proof.
   apply own_core_persistent, auth_frag_core_id, pair_core_id; apply _.
@@ -4327,6 +4329,58 @@ Proof.
     destruct (_ !! (deqFront - 1)%nat); simpl in *; discriminate.
   }
   rewrite list_lookup_alter_ne in HEl; eauto.
+Qed.
+
+Theorem new_thread_queue_spec S R:
+  {{{ True }}}
+    new_thread_queue segment_size #()
+  {{{ γa γtq γe γd eℓ epℓ dℓ dpℓ, RET ((#epℓ, #eℓ), (#dpℓ, #dℓ));
+      is_thread_queue S R γa γtq γe γd eℓ epℓ dℓ dpℓ [] 0 }}}.
+Proof.
+  iIntros (Φ) "_ HPost".
+  wp_lam.
+  iMod (own_alloc (● (GSet (set_seq 0 0), 0%nat: mnatUR))) as (γd) "HAuthD".
+  { simpl. apply auth_auth_valid, pair_valid; split; done. }
+  iMod (own_alloc (● (GSet (set_seq 0 0), 0%nat: mnatUR))) as (γe) "HAuthE".
+  { simpl. apply auth_auth_valid, pair_valid; split; done. }
+  iMod (own_alloc (● (0%nat, (0%nat, 0%nat: mnatUR), []))) as (γtq) "HAuth".
+  { apply auth_auth_valid, pair_valid; split; try done.
+    apply list_lookup_valid; intro. rewrite lookup_nil //. }
+  iMod (own_alloc (● [])) as (γa) "HAuthTq".
+  { simpl. apply auth_auth_valid, list_lookup_valid. intros i.
+    by rewrite lookup_nil. }
+  wp_apply (new_infinite_array_spec with "[HAuthTq]").
+  by iFrame; iApply (tq_cell_init γtq γd).
+  iIntros (ℓ) "[HInfArr #HSegLoc]".
+  wp_pures.
+
+  rewrite -wp_fupd.
+  wp_alloc eℓ as "Heℓ". wp_alloc dℓ as "Hdℓ".
+  wp_alloc epℓ as "Hepℓ". wp_alloc dpℓ as "Hdpℓ".
+
+  wp_pures.
+  iApply "HPost".
+  rewrite /is_thread_queue /cell_list_contents /cell_list_contents_auth_ra /=.
+  iFrame "HInfArr HAuth".
+  repeat iSplitR; try done.
+  by iPureIntro; lia.
+
+  iExists 0%nat, 0%nat. simpl.
+  rewrite /iterator_points_to /iterator_counter.
+  iFrame "Hepℓ Hdpℓ HAuthE HAuthD".
+  iSplitL "Heℓ".
+  {
+    iExists 0%nat. simpl.
+    iSplitR; first done.
+    iExists _; by iFrame.
+  }
+  iSplitL "Hdℓ".
+  {
+    iExists 0%nat. simpl.
+    iSplitR; first done.
+    iExists _; by iFrame.
+  }
+  eauto.
 Qed.
 
 End proof.

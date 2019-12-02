@@ -13,6 +13,7 @@
 ./theories/lib/semaphore/semaphore_impl.v
 ./theories/lib/semaphore/semaphore.v
 ./theories/lib/semaphore/semaphore_spec.v
+./theories/lib/interruptible_semaphore/interruptible_semaphore.v
 ./theories/lib/util/getAndSet.v
 ./theories/lib/util/interruptibly.v
 ./theories/util/iPropPow.v

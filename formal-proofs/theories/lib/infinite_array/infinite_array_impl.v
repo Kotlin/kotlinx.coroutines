@@ -100,9 +100,7 @@ Definition cell_ref_cutoff : val :=
   λ: "c", segment_cutoff (Fst "c").
 
 Definition new_infinite_array : val :=
-  λ: <>, let: "initialSegment" := new_segment #O NONE in
-         let: "tail" := "initialSegment" in
-         ref ("tail").
+  λ: <>, new_segment #O NONE.
 
 Definition array_tail : val :=
   λ: "arr", "arr".
@@ -2329,16 +2327,16 @@ Proof.
 Qed.
 
 Lemma alloc_tail (E: coPset) γ ℓ dℓ cℓ pℓ nℓ pl segments:
-  cell_init E ∗
-  own γ (● segments) ∗
-  nℓ ↦ NONEV ∗ pℓ ↦ pl ∗ is_valid_prev γ (length segments) pl ∗
-  dℓ ↦∗ replicate (Z.to_nat (Z.pos segment_size)) NONEV ∗
-  cℓ ↦ #0 ∗ ℓ ↦ (#(length segments), #cℓ, #dℓ, (#pℓ, #nℓ))
+  cell_init E -∗
+  own γ (● segments) -∗
+  nℓ ↦ NONEV -∗ pℓ ↦ pl -∗ is_valid_prev γ (length segments) pl -∗
+  dℓ ↦∗ replicate (Z.to_nat (Z.pos segment_size)) NONEV -∗
+  cℓ ↦ #0 -∗ ℓ ↦ (#(length segments), #cℓ, #dℓ, (#pℓ, #nℓ))
   ={E}=∗
   ∃ z, own γ (● (segments ++ [z])) ∗ segment_location γ (length segments) ℓ ∗
            is_tail_segment γ ℓ (length segments).
 Proof.
-  iIntros "(#HCellInit & HAuth & Hnℓ & Hpℓ & #HValidPrev & Hdℓ & Hcℓ & Hℓ)".
+  iIntros "#HCellInit HAuth Hnℓ Hpℓ #HValidPrev Hdℓ Hcℓ Hℓ".
   iDestruct (algebra_append_new_segment (ℓ, (dℓ, cℓ), (pℓ, nℓ)) with "HAuth")
     as ">HH".
   iDestruct "HH" as (z) "(HAuth & #HSegLocs & HCancParts & HCancHandles)".
@@ -2402,8 +2400,8 @@ Proof.
   iMod (own_alloc (● [] ⋅ ◯ [])) as (γ) "[HOwn _]".
   { apply auth_both_valid; split; try done. apply list_lookup_valid; by case. }
 
-  iDestruct (alloc_tail with "[-HPost]") as ">HTail".
-  { iFrame "HOwn Hnℓ Hpℓ Hcℓ Hdℓ Hℓ HCellInit". iLeft. iSplit; done. }
+  iDestruct (alloc_tail with "HCellInit HOwn Hnℓ Hpℓ [] Hdℓ Hcℓ Hℓ") as ">HTail".
+  by iLeft; iSplit; done.
 
   iApply "HPost".
 
@@ -2764,11 +2762,13 @@ Proof.
   replace (#(1%nat + id)) with (#(length segments')).
   2: rewrite -HLt; congr LitV; congr LitInt; lia.
 
-  iDestruct (alloc_tail with "[HAuth Hnℓ Hpℓ Hcℓ Hdℓ Hℓ]") as ">HTail".
-  { iFrame "HAuth Hnℓ Hpℓ Hcℓ Hdℓ Hℓ HCellInit". iRight.
+  iDestruct (alloc_tail with "HCellInit HAuth Hnℓ Hpℓ [] Hdℓ Hcℓ Hℓ") as ">HTail".
+  {
+    iRight.
     iExists _, _. iFrame "HHeadLoc".
     repeat iSplit; try (iPureIntro; try done; lia).
-    rewrite HLt -minus_n_n /=. done. }
+    rewrite HLt -minus_n_n /=. done.
+  }
 
   iDestruct "HTail" as (?) "(HAuth & #HNewTailSegLoc & HIsTail)".
 
@@ -2818,6 +2818,48 @@ Proof.
 
   1: wp_store; wp_load; iApply ("IH'" with "[$] AU").
 
+Qed.
+
+Theorem new_infinite_array_spec γ E:
+  {{{ cell_init E ∗ own γ (● []) }}}
+    new_infinite_array segment_size #()
+  {{{ ℓ, RET #ℓ; is_infinite_array γ ∗ segment_location γ 0 ℓ }}}.
+Proof.
+  iIntros (Φ) "[#HCellInit HAuth] HΦ". wp_lam. wp_pures. rewrite -wp_fupd.
+  wp_lam. wp_pures.
+  wp_bind ((_, _))%E.
+  wp_bind (ref _)%E. wp_alloc nℓ as "Hnℓ".
+  wp_bind (ref _)%E. wp_alloc pℓ as "Hpℓ".
+  wp_pures.
+  wp_bind (AllocN _ _)%E. wp_alloc dℓ as "Hdℓ"; first done.
+  wp_bind (ref _)%E. wp_alloc cℓ as "Hcℓ".
+  wp_pures.
+  wp_alloc ℓ as "Hℓ".
+
+  iMod (alloc_tail with "[] HAuth Hnℓ Hpℓ [] Hdℓ Hcℓ Hℓ")
+    as (z) "(HAuth & #HNewTailSegLoc & HIsTail)".
+  {
+    rewrite /cell_init. iModIntro.
+    iIntros (γ' id ℓ') "HCancHandle Hℓ'".
+    iDestruct ("HCellInit" with "HCancHandle Hℓ'") as "HCI".
+    iApply (fupd_mask_mono with "HCI"); done.
+  }
+  {
+    iLeft. simpl. done.
+  }
+  simpl.
+
+  iApply "HΦ".
+  rewrite /is_infinite_array.
+  iSplitL.
+  2: done.
+  iExists []. simpl.
+  iSplitR; first done.
+  iSplitR "HAuth".
+  2: {
+    iExists _. iFrame. done.
+  }
+  eauto.
 Qed.
 
 End proof.
