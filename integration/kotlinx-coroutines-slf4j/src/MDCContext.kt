@@ -28,13 +28,6 @@ public typealias MDCContextMap = Map<String, String>?
  * }
  * ```
  *
- * Note that you cannot update MDC context from inside of the coroutine simply
- * using [MDC.put]. These updates are going to be lost on the next suspension and
- * reinstalled to the MDC context that was captured or explicitly specified in
- * [contextMap] when this object was created on the next resumption.
- * Use `withContext(MDCContext()) { ... }` to capture updated map of MDC keys and values
- * for the specified block of code.
- *
  * @param contextMap the value of [MDC] context map.
  * Default value is the copy of the current thread's context map that is acquired via
  * [MDC.getCopyOfContextMap].
@@ -43,7 +36,7 @@ public class MDCContext(
     /**
      * The value of [MDC] context map.
      */
-    public val contextMap: MDCContextMap = MDC.getCopyOfContextMap()
+    public var contextMap: MDCContextMap = MDC.getCopyOfContextMap()
 ) : ThreadContextElement<MDCContextMap>, AbstractCoroutineContextElement(Key) {
     /**
      * Key of [MDCContext] in [CoroutineContext].
@@ -59,6 +52,7 @@ public class MDCContext(
 
     /** @suppress */
     override fun restoreThreadContext(context: CoroutineContext, oldState: MDCContextMap) {
+        contextMap = MDC.getCopyOfContextMap()
         setCurrent(oldState)
     }
 
