@@ -30,7 +30,7 @@ class CancellableResumeTest : TestBase() {
         expected = { it is TestException }
     ) {
         expect(1)
-        val ok = suspendCancellableCoroutine<String> { cont ->
+        suspendCancellableCoroutine<String> { cont ->
             expect(2)
             cont.invokeOnCancellation { expect(3) }
             cont.cancel(TestException("FAIL"))
@@ -38,6 +38,25 @@ class CancellableResumeTest : TestBase() {
             cont.resume("OK") { cause ->
                 expect(5)
                 assertTrue(cause is TestException)
+            }
+            finish(6)
+        }
+        expectUnreached()
+    }
+
+    @Test
+    fun testResumeImmediateAfterIndirectCancel() = runTest(
+        expected = { it is CancellationException }
+    ) {
+        expect(1)
+        val ctx = coroutineContext
+        suspendCancellableCoroutine<String> { cont ->
+            expect(2)
+            cont.invokeOnCancellation { expect(3) }
+            ctx.cancel()
+            expect(4)
+            cont.resume("OK") { cause ->
+                expect(5)
             }
             finish(6)
         }
