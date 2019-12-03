@@ -634,55 +634,41 @@ Proof.
   by rewrite map_length.
 Qed.
 
-Fixpoint find_index' {A} (P: A -> Prop) {H': forall x, Decision (P x)}
-         (l: list A) (i: nat): option nat :=
+Fixpoint find_index {A} (P: A -> Prop) {H': forall x, Decision (P x)}
+         (l: list A): option nat :=
   match l with
   | nil => None
-  | cons x l => if decide (P x) then Some i else find_index' P l (S i)
+  | cons x l => if decide (P x) then Some 0%nat
+               else option_map S (find_index P l)
   end.
-
-Definition find_index {A} (P: A -> Prop) {H': forall x, Decision (P x)}
-           (l: list A): option nat := find_index' P l O.
 
 Lemma find_index_Some {A} (P: A -> Prop) {H': forall x, Decision (P x)}:
   forall l i, find_index P l = Some i ->
          (exists v, l !! i = Some v /\ P v) /\
          (forall i', (i' < i)%nat -> exists v', l !! i' = Some v' /\ not (P v')).
 Proof.
-  rewrite /find_index /=. remember O as start. intros ? ?.
-  replace (Some i) with (Some (start + i))%nat. 2: congr Some; lia.
-  clear Heqstart.
-  revert i. revert start.
-  induction l; intros ? ? HIsSome; first by inversion HIsSome.
-  destruct i; simpl in *.
-  {
-    rewrite Nat.add_0_r in HIsSome.
-    destruct (decide (P a)).
-    { split. eexists _. done. intros ? HContra. inversion HContra. }
-    exfalso. revert HIsSome. clear. change (S start) with (1 + start)%nat.
-    remember 0%nat as K. clear HeqK. revert K.
-    induction l; intros ? HContra; inversion HContra as [HContra'].
-    destruct (decide (P a)).
-    - inversion HContra' as [H]. lia.
-    - by apply (IHl (S K)).
-  }
-  destruct (decide (P a)) as [p|p]. inversion HIsSome; lia.
-  destruct (IHl (S start) i) as [HH HH']. by rewrite HIsSome; congr Some; lia.
+  induction l; first done; simpl in *.
+  case; simpl; destruct (decide (P a)).
+  by intros _; split; [eauto|intros i; lia].
+  by destruct (find_index P l).
+  done.
+  destruct (find_index P l); try done.
+  simpl in *.
+  intros n' ?; simplify_eq.
+  destruct (IHl _ eq_refl) as [HEl HRst].
   split; first done.
-  intros i' HLt. inversion HLt; subst.
-  { destruct i; eauto. }
-  destruct i'; eauto. simpl.
-  apply HH'. lia.
+  case; simpl; first by eauto.
+  intros. apply HRst. lia.
 Qed.
 
 Lemma find_index_None {A} (P: A -> Prop) {H': forall x, Decision (P x)}:
   forall l, find_index P l = None -> forall v, In v l -> not (P v).
 Proof.
-  unfold find_index. remember O as start. clear Heqstart.
-  intros l HIsNone v HIn. generalize dependent start.
-  induction l; intros start HIsNone; first by inversion HIn.
-  simpl in *; destruct (decide (P a)); first by discriminate.
-  inversion HIn; subst; eauto.
+  induction l; simpl; first done.
+  destruct (decide (P a)); first done.
+  destruct (find_index P l); first done.
+  intros _ ? HEv; subst.
+  inversion HEv; subst; eauto.
 Qed.
 
 Lemma option_local_update' {A: ucmraT} (x x' y': A):
@@ -3166,15 +3152,14 @@ Proof.
 Qed.
 
 Theorem increase_deqIdx E R γa γtq γe γd (eℓ epℓ dℓ dpℓ: loc):
-  ▷ awakening_permit γtq -∗ ∀ (Φ : val -> iPropSI Σ),
-  AU << ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>
-  @ ⊤, ↑N
-  << ∃ (ix: nat) (ℓ: loc),
+  ▷ awakening_permit γtq -∗
+  <<< ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>>
+  ((iterator_step_skipping_cancelled segment_size) #dpℓ) #dℓ @ ⊤
+  <<< ∃ (ix: nat) (ℓ: loc),
           ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
             iterator_issued γd ix ∗
             segment_location γa (ix `div` Pos.to_nat segment_size)%nat ℓ,
-     COMM Φ (#ℓ, #(ix `rem` Pos.to_nat segment_size))%V >> -∗
-  WP ((iterator_step_skipping_cancelled segment_size) #dpℓ) #dℓ {{ v, Φ v }}.
+     RET (#ℓ, #(ix `rem` Pos.to_nat segment_size))%V >>>.
 Proof.
   iIntros "HAwaken" (Φ) "AU". iLöb as "IH".
 
@@ -3306,28 +3291,8 @@ Proof.
     by iIntros "!> $ !>".
   }
   iIntros "HIsSeg". iDestruct (bi.later_wand with "HInfArrRestore HIsSeg") as "$".
-  iIntros "!> AU !>".
 
-  wp_pures. rewrite -Nat2Z.inj_mul.
-  awp_apply increase_value_to_spec. iApply (aacc_aupd_abort with "AU"); first done.
-  iIntros (l newDeqFront) "(HInfArr & HListContents & HCancA & >% & HRest)".
-  iDestruct "HRest" as (? deqIdx'') "(HEnqIt & >HDeqIt & HRest)".
-  iDestruct (iterator_points_to_at_least with "HCounter [HDeqIt]") as "%".
-  by iDestruct "HDeqIt" as "[$ _]".
-  iDestruct "HDeqIt" as "[HDeqCounter HDeqLoc]".
-  iAaccIntro with "HDeqCounter".
-  {
-    iFrame "HPerms".
-    iIntros "HDeqCounter !>". iSplitL.
-    * iFrame "HInfArr HListContents HCancA".
-      iSplitR; first done.
-      iExists _, _. iFrame "HEnqIt HRest". by iFrame.
-    * by iIntros "$".
-  }
-
-  iIntros "[HPerms' HV]". iFrame "HInfArr".
   rewrite segments_cancelled__cells_cancelled.
-
   (* I need to get my acquire permit back from the cancelled segment. *)
   (* First, I need to learn that my cell is truly cancelled. *)
   remember (deqIdx' `div` Pos.to_nat segment_size)%nat as deqSeg.
@@ -3366,9 +3331,66 @@ Proof.
   iClear "HSegInv HCanc".
   rewrite big_sepL_forall.
 
+  iAssert (□ [∗ list] k ∈ seq deqIdx' (tId * Pos.to_nat segment_size - deqIdx')%nat,
+           |={⊤}=> cell_is_cancelled segment_size γa k ∗ rendezvous_initialized γtq k)%I
+  as "#HEv'".
+  {
+    iIntros "!>".
+    remember (seq _ _) as l'.
+    iClear "IH HSegLoc HCounter HSegLoc'". clear.
+    iInduction l' as [|x l'] "IH"; simpl; first done.
+    iDestruct ("HEv" $! O with "[]") as "[HInv HCanc]"; first by eauto.
+    iDestruct "HInv" as (?) "#HInv".
+    iSplitL.
+    2: {
+      iApply "IH".
+      iIntros "!>" (k ? HEl).
+      iApply ("HEv" $! (S k) a).
+      by simpl.
+    }
+    iInv N as ">HOpen" "HClose".
+    iDestruct "HOpen" as "[[HCancHandle _]|#HH]".
+    by iDestruct (cell_cancellation_handle'_not_cancelled
+                    with "HCancHandle HCanc") as %[].
+    iFrame "HCanc HH".
+    by iMod ("HClose" with "[$]").
+  }
+
+  rewrite big_sepL_fupd.
+
+  iIntros "!> AU".
+  iDestruct "HEv'" as ">#HEv'".
+
+  iIntros "!>". wp_pures. rewrite -Nat2Z.inj_mul.
+
+  awp_apply increase_value_to_spec.
+  iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros (l newDeqFront) "(HInfArr & HListContents & HCancA & >% & HRest)".
+  iDestruct "HRest" as (? deqIdx'') "(HEnqIt & >HDeqIt & HRest)".
+  iDestruct (iterator_points_to_at_least with "HCounter [HDeqIt]") as "%".
+  by iDestruct "HDeqIt" as "[$ _]".
+  iDestruct "HDeqIt" as "[HDeqCounter HDeqLoc]".
+  iAaccIntro with "HDeqCounter".
+  {
+    iFrame "HPerms".
+    iIntros "HDeqCounter !>". iSplitL.
+    * iFrame "HInfArr HListContents HCancA".
+      iSplitR; first done.
+      iExists _, _. iFrame "HEnqIt HRest". by iFrame.
+    * by iIntros "$".
+  }
+
+  iIntros "[HPerms' HV]". iFrame "HInfArr".
+
+  assert (deqIdx' < deqIdx'')%nat as HL by lia.
+  apply nat_lt_sum in HL. destruct HL as (d & ->).
+
+  (* *)
+
   iDestruct "HV" as "[[% HDeqCounter]|[% HDeqCounter]]".
   {
-    iDestruct ("HEv" $! O with "[]") as "[HInv #HCanc]".
+    rewrite big_sepL_forall.
+    iDestruct ("HEv'" $! O with "[]") as "[#HCanc #HInit]".
     {
       iPureIntro. apply seq_lookup. subst.
       assert (deqIdx' `div` Pos.to_nat segment_size < tId)%nat as HH by lia.
@@ -3388,10 +3410,9 @@ Proof.
       apply plus_lt_le_compat. 2: done.
       apply Nat.mod_upper_bound. lia.
     }
-    iDestruct "HInv" as (?) "#HInv".
-    iInv N as ">HOpen" "HClose". rewrite -plus_n_O.
-    iDestruct (cancelled_cell_is_cancelled_rendezvous with
-                   "HCanc HOpen HListContents") as (? ?) "#>%".
+    rewrite -plus_n_O.
+    iDestruct (cancelled_cell_is_cancelled_rendezvous' with
+                   "HCanc HInit HListContents") as (? ?) "#>%".
     iDestruct "HRest" as "(HAwak & HSusp & >[[% %] %])".
     repeat rewrite big_sepL_later.
     iDestruct (big_sepL_lookup_acc with "HCancA")
@@ -3400,7 +3421,6 @@ Proof.
     iDestruct "HXCanc" as "[HAwaken|>HContra]".
     2: by iDestruct (iterator_issued_exclusive with "HPerms HContra") as %[].
     iDestruct ("HCancRestore" with "[HPerms]") as "HCanc'". by iRight.
-    iMod ("HClose" with "HOpen") as "_".
     iSplitR "HAwaken".
     2: {
       iIntros "!> AU !>". wp_pures.
@@ -3412,9 +3432,6 @@ Proof.
     iExists _, _. iFrame.
     by iPureIntro.
   }
-
-  assert (deqIdx' < deqIdx'')%nat as HL by lia.
-  apply nat_lt_sum in HL. destruct HL as (d & ->).
 
   iAssert ([∗ list] i ∈ seq (deqIdx' + S d)
                     (tId * Pos.to_nat segment_size - (deqIdx' + S d)),
@@ -3446,33 +3463,7 @@ Proof.
     simpl. lia.
   }
 
-  iAssert (□ [∗ list] k ∈ seq deqIdx' (tId * Pos.to_nat segment_size - deqIdx')%nat,
-           |={↑N}=> cell_is_cancelled segment_size γa k ∗ rendezvous_initialized γtq k)%I
-  as "#HEv'".
-  {
-    iIntros "!>".
-    remember (seq _ _) as l'.
-    iClear "IH HSegLoc HCounter HSegLoc'". clear.
-    iInduction l' as [|x l'] "IH"; simpl; first done.
-    iDestruct ("HEv" $! O with "[]") as "[HInv HCanc]"; first by eauto.
-    iDestruct "HInv" as (?) "#HInv".
-    iSplitL.
-    2: {
-      iApply "IH".
-      iIntros "!>" (k ? HEl).
-      iApply ("HEv" $! (S k) a).
-      by simpl.
-    }
-    iInv N as ">HOpen" "HClose".
-    iDestruct "HOpen" as "[[HCancHandle _]|#HH]".
-    by iDestruct (cell_cancellation_handle'_not_cancelled
-                    with "HCancHandle HCanc") as %[].
-    iFrame "HCanc HH".
-    by iMod ("HClose" with "[$]").
-  }
-
-  rewrite big_sepL_fupd.
-  iDestruct "HEv'" as ">#HEv'".
+  (* *)
 
   iAssert ([∗ list] k ∈ seq deqIdx' (tId * Pos.to_nat segment_size - deqIdx'),
            ▷ ∃ γt th, ⌜l !! k = Some (Some (cellInhabited γt th (Some cellCancelled)))⌝)%I
@@ -3513,7 +3504,7 @@ Proof.
                                  end)))%I
   with "[HCancA HIsss]" as "[>HAwaks $]".
   {
-    iClear "IH HEv HSegLoc HCounter HSegLoc' HEv'".
+    iClear "IH HEv HSegLoc HCounter HSegLoc'".
     iAssert (⌜tId * Pos.to_nat segment_size <= length l⌝)%I as "%".
     {
       iDestruct (big_sepL_lookup
@@ -3767,10 +3758,10 @@ Proof.
 Qed.
 
 Theorem try_deque_thread_spec E R γa γtq γe γd (eℓ epℓ dℓ dpℓ: loc):
-  ▷ awakening_permit γtq -∗ ∀ (Φ : val -> iPropSI Σ),
-  AU << ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>
-  @ ⊤ ∖ ↑N, ↑N
-  << ∃ (v: val), ▷ E ∗ (∃ i,
+  ▷ awakening_permit γtq -∗
+  <<< ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>>
+  ((try_deque_thread segment_size) #dpℓ) #dℓ @ ⊤ ∖ ↑N
+  <<< ∃ (v: val), ▷ E ∗ (∃ i,
      (⌜l !! i = Some None⌝ ∧ ⌜v = #()⌝ ∧
                      ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
                             (alter (fun _ => Some cellFilled) i l) deqFront) ∗
@@ -3783,8 +3774,7 @@ Theorem try_deque_thread_spec E R γa γtq γe γd (eℓ epℓ dℓ dpℓ: loc):
 
       ⌜l !! i = Some (Some (cellInhabited γt th (Some cellAbandoned)))⌝ ∧
       ⌜v = #th⌝
-  )), COMM Φ v >> -∗
-  WP ((try_deque_thread segment_size) #dpℓ) #dℓ {{ v, Φ v }}.
+  )), RET v >>>.
 Proof.
   iIntros "HAwaken" (Φ) "AU". iLöb as "IH".
   wp_lam. wp_pures.
@@ -4031,10 +4021,10 @@ Qed.
 Theorem try_enque_thread_spec E R γa γtq γe γd γt (eℓ epℓ dℓ dpℓ: loc) th:
   thread_handler_location γt th -∗
   suspension_permit γtq -∗
-  thread_doesnt_have_permits γt -∗ ∀ (Φ : val -> iPropSI Σ),
-  AU << ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>
-  @ ⊤ ∖ ↑N, ∅
-  << ∃ (v: bool),
+  thread_doesnt_have_permits γt -∗
+  <<< ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>>
+  ((try_enque_thread segment_size) #th #epℓ) #eℓ @ ⊤ ∖ ↑N
+  <<< ∃ (v: bool),
       (⌜v = false⌝ ∧
        ∃ (i: nat), ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
                      (alter (fun _ => Some (cellInhabited γt th None)) i l) deqFront ∗
@@ -4042,8 +4032,7 @@ Theorem try_enque_thread_spec E R γa γtq γe γd γt (eℓ epℓ dℓ dpℓ: l
       (⌜v = true⌝ ∧
        ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
          thread_doesnt_have_permits γt ∗ ▷ R),
-    COMM Φ #v >> -∗
-  WP ((try_enque_thread segment_size) #th #epℓ) #eℓ {{ v, Φ v }}.
+    RET #v >>>.
 Proof.
   iIntros "#HThLoc HSusp HNoPerms" (Φ) "AU". wp_lam. wp_pures.
   wp_lam. wp_pures.

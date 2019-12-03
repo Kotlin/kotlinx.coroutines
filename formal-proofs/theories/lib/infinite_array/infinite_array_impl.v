@@ -2842,6 +2842,7 @@ Proof.
     rewrite /cell_init. iModIntro.
     iIntros (γ' id ℓ') "HCancHandle Hℓ'".
     iDestruct ("HCellInit" with "HCancHandle Hℓ'") as "HCI".
+
     iApply (fupd_mask_mono with "HCI"); done.
   }
   {
