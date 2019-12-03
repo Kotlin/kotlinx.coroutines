@@ -1,37 +1,17 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.*
-import java.util.*
 import kotlin.coroutines.*
-
-/**
- * Name of the boolean property that enables using of [FastServiceLoader].
- */
-private const val FAST_SERVICE_LOADER_PROPERTY_NAME = "kotlinx.coroutines.fast.service.loader"
 
 // Lazy loader for the main dispatcher
 internal object MainDispatcherLoader {
-
-    private val FAST_SERVICE_LOADER_ENABLED = systemProp(FAST_SERVICE_LOADER_PROPERTY_NAME, true)
 
     @JvmField
     val dispatcher: MainCoroutineDispatcher = loadMainDispatcher()
 
     private fun loadMainDispatcher(): MainCoroutineDispatcher {
         return try {
-            val factories = if (FAST_SERVICE_LOADER_ENABLED) {
-                MainDispatcherFactory::class.java.let { clz ->
-                    FastServiceLoader.load(clz, clz.classLoader)
-                }
-            } else {
-                //We are explicitly using the
-                //`ServiceLoader.load(MyClass::class.java, MyClass::class.java.classLoader).iterator()`
-                //form of the ServiceLoader call to enable R8 optimization when compiled on Android.
-                ServiceLoader.load(
-                        MainDispatcherFactory::class.java,
-                        MainDispatcherFactory::class.java.classLoader
-                ).iterator().asSequence().toList()
-            }
+            val factories = loadServices<MainDispatcherFactory>()
             factories.maxBy { it.loadPriority }?.tryCreateDispatcher(factories)
                 ?: MissingMainCoroutineDispatcher(null)
         } catch (e: Throwable) {
