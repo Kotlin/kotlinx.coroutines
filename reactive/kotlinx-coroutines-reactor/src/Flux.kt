@@ -10,28 +10,23 @@ package kotlinx.coroutines.reactor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.reactive.*
-import org.reactivestreams.Publisher
-import reactor.core.CoreSubscriber
+import org.reactivestreams.*
+import reactor.core.*
 import reactor.core.publisher.*
+import reactor.util.context.*
 import kotlin.coroutines.*
-import kotlin.internal.LowPriorityInOverloadResolution
+import kotlin.internal.*
 
 /**
  * Creates cold reactive [Flux] that runs a given [block] in a coroutine.
  * Every time the returned flux is subscribed, it starts a new coroutine in the specified [context].
- * Coroutine emits items with `send`. Unsubscribing cancels running coroutine.
- *
- * Coroutine context can be specified with [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
+ * Coroutine emits ([Subscriber.onNext]) values with `send`, completes ([Subscriber.onComplete])
+ * when the coroutine completes or channel is explicitly closed and emits error ([Subscriber.onError])
+ * if coroutine throws an exception or closes channel with a cause.
+ * Unsubscribing cancels running coroutine.
  *
  * Invocations of `send` are suspended appropriately when subscribers apply back-pressure and to ensure that
  * `onNext` is not invoked concurrently.
- *
- * | **Coroutine action**                         | **Signal to subscriber**
- * | -------------------------------------------- | ------------------------
- * | `send`                                       | `onNext`
- * | Normal completion or `close` without cause   | `onComplete`
- * | Failure with exception or `close` with cause | `onError`
  *
  * Method throws [IllegalArgumentException] if provided [context] contains a [Job] instance.
  *
@@ -71,7 +66,17 @@ private fun <T> reactorPublish(
     val currentContext = subscriber.currentContext()
     val reactorContext = (context[ReactorContext]?.context?.putAll(currentContext) ?: currentContext).asCoroutineContext()
     val newContext = scope.newCoroutineContext(context + reactorContext)
-    val coroutine = PublisherCoroutine(newContext, subscriber)
+    val coroutine = PublisherCoroutine(newContext, subscriber, REACTOR_HANDLER)
     subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
+}
+
+private val REACTOR_HANDLER: (Throwable, CoroutineContext) -> Unit = { e, ctx ->
+    if (e !is CancellationException) {
+        try {
+            Operators.onOperatorError(e, ctx[ReactorContext]?.context ?: Context.empty())
+        } catch (e: Throwable) {
+            handleCoroutineException(ctx, e)
+        }
+    }
 }
