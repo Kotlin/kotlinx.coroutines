@@ -85,12 +85,12 @@ Qed.
 
 Theorem release_semaphore_spec R γ (p epℓ eℓ dpℓ dℓ: loc) γa γtq γe γd:
   is_semaphore R γ p epℓ eℓ dpℓ dℓ γa γtq γe γd -∗
-  R -∗
-  <<< ∀ availablePermits, semaphore_permits γ availablePermits >>>
-    (release_semaphore segment_size) #p #dpℓ #dℓ @ ⊤ ∖ ↑N
-  <<< semaphore_permits γ (1 + availablePermits)%nat, RET #() >>>.
+  inv (N .@ "permits") (∃ a, semaphore_permits γ a) -∗
+  {{{ R }}}
+    (release_semaphore segment_size) #p #dpℓ #dℓ
+  {{{ RET #(); True }}}.
 Proof.
-  iIntros "#HSemInv HR" (Φ) "AU". wp_lam. wp_pures.
+  iIntros "#HSemInv #HPermInv" (Φ) "!> HR HΦ". wp_lam. wp_pures.
   wp_bind (FAA _ _).
   iInv "HSemInv" as (availablePermits' readyToCancel l deqFront)
                       "(HPerms & >HAuth & HTq & Hp & >HPure)" "HInvClose".
@@ -100,7 +100,7 @@ Proof.
   wp_faa.
   destruct (decide (0 <= op)).
   {
-    iMod "AU" as (availablePermits) "[HFrag HCloseAU]".
+    iInv "HPermInv" as (availablePermits) ">HFrag" "HInvClose'".
     iDestruct (own_valid_2 with "HAuth HFrag") as
         %[[<-%Excl_included%leibniz_equiv _]%prod_included _]%auth_both_valid.
     iMod (own_update_2 with "HAuth HFrag") as "[HAuth HFrag]".
@@ -110,7 +110,7 @@ Proof.
       done.
     }
     repeat rewrite Nat.add_1_r.
-    iMod ("HCloseAU" with "HFrag") as "HΦ".
+    iMod ("HInvClose'" with "[HFrag]") as "_"; first by eauto.
     iMod ("HInvClose" with "[-HΦ]") as "_".
     {
       iExists _, _, _, _. simpl. iFrame "HAuth HTq". simpl.
@@ -133,7 +133,7 @@ Proof.
       split; lia.
     }
     iModIntro. wp_pures. rewrite bool_decide_decide.
-    destruct (decide (0 <= op)); try lia. by wp_pures.
+    destruct (decide (0 <= op)); try lia. wp_pures. by iApply "HΦ".
   }
 
   assert (v > 0) as HExistsNondequed by lia.
@@ -148,7 +148,7 @@ Proof.
   by eauto.
   iDestruct "HCounts" as %HCounts.
 
-  iMod ("HInvClose" with "[-HAwak AU]") as "_".
+  iMod ("HInvClose" with "[-HAwak HΦ]") as "_".
   {
     iExists _, _, _, _. iFrame "HListContents". iFrame.
     iSplitL "HRest".
@@ -187,26 +187,88 @@ Proof.
   rewrite decide_False; auto.
   wp_pures. wp_lam. wp_pures.
 
-  awp_apply (try_deque_thread_spec (N .@ "tq") with "HAwak").
-  iInv "HSemInv" as (? ? ? ?) "(HPerms & >HAuth & HTq & HRest)".
-  iApply (aacc_aupd with "AU"); first by solve_ndisj.
-  iIntros (availablePermits) "HPerms'".
+  awp_apply (try_deque_thread_spec (N .@ "tq") with "HAwak") without "HΦ".
+  iInv "HSemInv" as (? ? ? deqFront') "(HPerms & >HAuth & HTq & HRest)".
   iAaccIntro with "HTq".
   {
-    iFrame "HPerms'".
-    iIntros "HTq !> $ !>".
+    iIntros "HTq !>".
+    iSplitL; last done.
     iExists _, _, _, _. iFrame.
   }
   iIntros (?) "[_ HState]".
   iDestruct "HState" as (i) "[HState|HState]".
   {
-    iRight.
-    iDestruct "HState" as "[(% & -> & HTq) HRend]".
-    iMod (own_update_2 with "HAuth HPerms'") as "[HAuth HPerms']".
-    apply auth_update.
-    2: iFrame "HPerms'".
+    iDestruct "HState" as "[(HEl & -> & HTq) HRend]".
+    iDestruct "HEl" as %HEl.
+    iSplitL.
+    2: {
+      iIntros "!> HΦ".
+      wp_pures.
+      by iApply "HΦ".
+    }
+    destruct (decide (i < deqFront')%nat).
+    2: {
+      iDestruct "HTq" as "(_ & (_ & >HResumerStage & _) & _)".
+      rewrite big_sepL_forall.
+      iSpecialize ("HResumerStage" $! (i - deqFront')%nat _ with "[]").
+      {
+        iPureIntro.
+        rewrite lookup_drop.
+        replace (deqFront' + (i - deqFront'))%nat with i by lia.
+        rewrite list_lookup_alter.
+        rewrite HEl. done.
+      }
+      simpl.
+      iDestruct "HResumerStage" as %HContra.
+      discriminate.
+    }
+    iExists _, _, _, _. iFrame "HPerms HAuth HTq".
+    iDestruct "HRest" as "[Hp >%]".
+    rewrite drop_alter //.
+    iSplitL "Hp"; done.
+  }
+
+  iDestruct "HState" as (? ?) "[HState|HState]".
+  {
+    iDestruct "HState" as (HEl ?) "(HTq & #HRendRes & HResTok)".
+    iDestruct "HRest" as "[Hp >%]".
+    subst.
+    iAssert (▷ thread_handler_location _ _)%I with "[-]" as "#HThreadLoc".
     {
-      apply prod_local_update_1, option_local_update.
+      iDestruct "HTq" as "(_ & (_ & _ & _ & _ & _ & HLc) & _)".
+      iDestruct (big_sepL_lookup with "HLc") as "HH".
+      {
+        erewrite list_lookup_alter.
+        by rewrite HEl.
+      }
+      simpl.
+      iDestruct "HH" as (?) "(_ & (HThreadLoc & HRend') & _)".
+      iApply "HThreadLoc".
+    }
+    iSplitR "HResTok".
+    {
+      destruct (decide (i < deqFront')%nat).
+      2: {
+        iDestruct "HTq" as "(_ & (_ & >HResumerStage & _) & _)".
+        rewrite big_sepL_forall.
+        iSpecialize ("HResumerStage" $! (i - deqFront')%nat _ with "[]").
+        {
+          iPureIntro.
+          rewrite lookup_drop.
+          replace (deqFront' + (i - deqFront'))%nat with i by lia.
+          rewrite list_lookup_alter.
+          rewrite HEl. done.
+        }
+        simpl.
+        iDestruct "HResumerStage" as %HContra.
+        discriminate.
+      }
+      iExists _, _, _, _. iFrame "HTq HAuth".
+      rewrite drop_alter //.
+      by iFrame.
+    }
+    iIntros "!> HΦ". wp_pures.
+    awp_apply unpark_spec without "HΦ".
 
 Abort.
 

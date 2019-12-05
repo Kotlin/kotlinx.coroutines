@@ -95,53 +95,53 @@ Instance subG_parkingΣ {Σ} : subG parkingΣ Σ -> parkingG Σ.
 Proof. solve_inG. Qed.
 
 Context `{heapG Σ} `{parkingG Σ} `{interruptiblyG Σ}.
+Variable N: namespace.
 
 Definition thread_handle_in_state (γ: gname) (v: loc) (x: bool): iProp Σ :=
   (v ↦ #x ∗ own γ (● (Some (1%Qp, to_agree x), Some (to_agree v))))%I.
 
 Definition is_thread_handle (γ: gname) (v: val) :=
-  (∃ (ℓ: loc) x, ⌜v = #ℓ⌝ ∗ thread_handle_in_state γ ℓ x)%I.
+  inv N (∃ (ℓ: loc) x, ⌜v = #ℓ⌝ ∗ thread_handle_in_state γ ℓ x)%I.
 
 Definition thread_handler (γ: gname) (q: Qp) (x: bool): iProp Σ :=
   own γ (◯ (Some (q, to_agree x), None)).
 
 Theorem thread_update_state γ (ℓ: loc) (x'': bool):
-  <<< ∀ x', ▷ is_thread_handle γ #ℓ ∗ ▷ thread_handler γ 1 x' >>>
-    #ℓ <- #x'' @ ⊤
-  <<< thread_handle_in_state γ ℓ x'' ∗ thread_handler γ 1 x'', RET #() >>>.
+  is_thread_handle γ #ℓ -∗
+  <<< ∀ x', ▷ thread_handler γ 1 x' >>>
+    #ℓ <- #x'' @ ⊤ ∖ ↑N
+  <<< thread_handler γ 1 x'', RET #() >>>.
 Proof.
-  iIntros (Φ) "AU".
-  iMod "AU" as (x') "[[HIsHandle HFrag] [_ HClose]]".
+  iIntros "#HInv" (Φ) "AU".
+  iInv "HInv" as "HIsHandle" "HInvClose".
+  iMod "AU" as (x') "[HFrag [_ HClose]]".
   iDestruct "HIsHandle" as (? ?) "[>% [HLoc HAuth]]". simplify_eq.
   wp_store.
   iMod (own_update_2 with "HAuth HFrag") as "[HAuth HFrag]".
   { by apply auth_update, prod_local_update_1, option_local_update,
       (exclusive_local_update _ (1%Qp, to_agree x'')). }
-  iMod ("HClose" with "[HLoc HAuth HFrag]") as "HΦ".
+  iMod ("HClose" with "HFrag") as "HΦ".
+  iModIntro.
+  iMod ("HInvClose" with "[-HΦ]") as "_".
+  by iExists _, _; iFrame.
   by iFrame.
-  by iModIntro.
 Qed.
-
-Definition thread_handler_location γ ℓ :=
-  own γ (◯ (None, Some (to_agree ℓ))).
-
-Global Instance thread_handler_location_persistent γ ℓ:
-  Persistent (thread_handler_location γ ℓ).
-Proof. apply _. Qed.
 
 Definition thread_has_permit γ := thread_handler γ 1 false.
 Definition thread_doesnt_have_permits γ := thread_handler γ 1 true.
 
 Theorem unpark_spec γ (ℓ: loc):
-  <<< ▷ is_thread_handle γ #ℓ ∗ ▷ thread_doesnt_have_permits γ >>>
-      unpark #ℓ @ ⊤
-  <<< thread_handle_in_state γ ℓ false ∗ thread_has_permit γ, RET #() >>>.
+  is_thread_handle γ #ℓ -∗
+  <<< ▷ thread_doesnt_have_permits γ >>>
+      unpark #ℓ @ ⊤ ∖ ↑N
+  <<< thread_has_permit γ, RET #() >>>.
 Proof.
-  iIntros (Φ) "AU". wp_lam.
-  awp_apply thread_update_state. iApply (aacc_aupd_commit with "AU"); first done.
+  iIntros "HInv" (Φ) "AU". wp_lam.
+  awp_apply (thread_update_state with "HInv").
+  iApply (aacc_aupd_commit with "AU"); first done.
   iIntros "H".
-  iAaccIntro with "H"; first by iIntros "[$ $] !> AU".
-  by iIntros "[$ $] !> $ !>".
+  iAaccIntro with "H"; first by iIntros "$ !> AU".
+  by iIntros "$ !> $ !>".
 Qed.
 
 End parking.
@@ -301,6 +301,7 @@ Proof. solve_inG. Qed.
 
 Context `{heapG Σ} `{iArrayG Σ} `{iteratorG Σ} `{threadQueueG Σ} `{parkingG Σ}.
 Variable (N: namespace).
+Variable (Nth: namespace).
 Notation iProp := (iProp Σ).
 
 Variable segment_size: positive.
@@ -492,7 +493,7 @@ Proof.
 Qed.
 
 Definition rendezvous_thread_handle (γtq γt: gname) (th: loc) (i: nat): iProp :=
-  (thread_handler_location γt th ∗
+  (is_thread_handle Nth γt #th ∗
    rendezvous_thread_locs_state γtq γt th i)%I.
 
 Global Instance rendezvous_thread_handle_persistent γtq γt th i:
@@ -536,15 +537,6 @@ Definition cell_resources E R γtq γa γe γd i k :=
           end
         end
   end)%I.
-
-Theorem cell_resources_timeless S R γtq γa γe γd i k :
-  Timeless R -> Timeless S ->
-  Timeless (cell_resources S R γtq γa γe γd i k).
-Proof. destruct k as [x|]; try apply _.
-       destruct x as [|? ? x]; try apply _.
-       destruct x as [x|]; try apply _. simpl.
-       destruct x; try apply _.
-Qed.
 
 Definition option_Pos_of_nat (n: nat): option positive :=
   match n with
@@ -1306,7 +1298,7 @@ Proof.
 Qed.
 
 Theorem inhabit_cell_spec N' E R γa γtq γe γd γt i ptr (th: loc):
-  thread_handler_location γt th -∗
+  is_thread_handle Nth γt #th -∗
   thread_doesnt_have_permits γt -∗
   iterator_issued γe i -∗
   exists_list_element γtq i -∗
@@ -2604,7 +2596,7 @@ Proof.
     simpl.
     iDestruct "HR" as (ℓ') "(>HArrMapsto' & HThread & HIsSus & HCancHandle)".
     iDestruct (array_mapsto_agree with "HArrMapsto' HArrMapsto") as %->.
-    iDestruct "HThread" as "(Hℓ & >HNotPerms & >#HRend)".
+    iDestruct "HThread" as "(Hℓ & >HNotPerms & #HRend)".
     iAssert (▷ ℓ ↦ InjLV #th ∧ ⌜val_is_unboxed (InjLV #th)⌝)%I
       with "[Hℓ]" as "HAacc".
     by iFrame.
@@ -3766,14 +3758,16 @@ Theorem try_deque_thread_spec E R γa γtq γe γd (eℓ epℓ dℓ dpℓ: loc):
                      ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
                             (alter (fun _ => Some cellFilled) i l) deqFront) ∗
                             rendezvous_filled γtq i ∨
-  ∃ γt (th: loc), (
+   ∃ γt (th: loc),
+       ▷ rendezvous_thread_handle γtq γt th i ∗ (
       ⌜l !! i = Some (Some (cellInhabited γt th None))⌝ ∧ ⌜v = #th⌝ ∧
       ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
         (alter (fun _ => Some (cellInhabited γt th (Some cellResumed))) i l)
         deqFront ∗ rendezvous_resumed γtq i ∗ resumer_token γtq i ∨
 
       ⌜l !! i = Some (Some (cellInhabited γt th (Some cellAbandoned)))⌝ ∧
-      ⌜v = #th⌝
+      ⌜v = #th⌝ ∧
+      ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront
   )), RET v >>>.
 Proof.
   iIntros "HAwaken" (Φ) "AU". iLöb as "IH".
@@ -3954,7 +3948,7 @@ Proof.
   }
 
   iDestruct "HH" as (γt th)
-    "[(% & -> & #HRendRes & HE & HListContents & HResumerToken)|
+    "[(HEl & -> & #HRendRes & HE & HListContents & HResumerToken)|
     [(% & HH & HIsRes & HListContents)|
     (% & -> & HE & HListContents)]]".
   3: { (* Abandoned *)
@@ -3963,8 +3957,18 @@ Proof.
     iSplitL.
     2: by iIntros "!> HΦ !>"; wp_pures.
     iFrame "HE".
-    iExists _. iRight. iExists γt, th. iRight.
-    by iPureIntro.
+    iExists _. iRight. iExists γt, th.
+    iAssert (▷ rendezvous_thread_handle γtq γt th d)%I with "[-]" as "#HH".
+    {
+      iDestruct "HListContents" as "(_ & _ & _ & _ & _ & HLc)".
+      iDestruct (big_sepL_lookup with "HLc") as "HCR"; first eassumption.
+      simpl.
+      iDestruct "HCR" as (?) "(_ & $ & _)".
+    }
+    iFrame "HH".
+    iRight.
+    repeat (iSplitR; first by iPureIntro).
+    by iFrame.
   }
   2: { (* Cancelled *)
     iDestruct "HRest" as "[HCancA HRest]".
@@ -3983,9 +3987,23 @@ Proof.
   }
   (* Resumed *)
   iRight.
+  iDestruct "HEl" as %HEl.
   iExists _. iFrame "HE". iSplitL.
   2: by iIntros "!> HΦ !>"; wp_pures.
-  iExists _. iRight. iExists _, _. iLeft.
+  iExists _. iRight. iExists _, _.
+  iAssert (▷ rendezvous_thread_handle γtq γt th d)%I with "[-]" as "#HH".
+  {
+    iDestruct "HListContents" as "(_ & _ & _ & _ & _ & HLc)".
+    iDestruct (big_sepL_lookup with "HLc") as "HCR".
+    {
+      erewrite list_lookup_alter.
+      by rewrite HEl.
+    }
+    simpl.
+    iDestruct "HCR" as (?) "(_ & $ & _)".
+  }
+  iFrame "HH". iClear "HH".
+  iLeft.
   repeat (iSplitR; first done).
 
   iDestruct "HRest" as "(HCancA & >% & HRest)".
@@ -3997,29 +4015,29 @@ Proof.
   {
     iApply (big_opL_forall' with "HCancA").
     by rewrite alter_length.
-    intros k ? ? HEl HEl'. simpl.
+    intros k ? ? HEl'' HEl'. simpl.
     destruct (decide (d = k)).
     {
-      subst. rewrite list_lookup_alter in HEl.
+      subst. rewrite list_lookup_alter in HEl''.
       destruct (_ !! k); simplify_eq. simpl in *. simplify_eq.
       done.
     }
-    rewrite list_lookup_alter_ne in HEl; try done.
+    rewrite list_lookup_alter_ne in HEl''; try done.
     by destruct (_ !! k); simplify_eq.
   }
   iPureIntro.
-  intros (HLt & γt' & th' & HEl).
+  intros (HLt & γt' & th' & HEl'').
   destruct (decide (d = (deqFront' - 1)%nat)).
   {
-    subst. rewrite list_lookup_alter in HEl.
+    subst. rewrite list_lookup_alter in HEl''.
     destruct (_ !! (deqFront' - 1)%nat); simplify_eq.
   }
-  rewrite list_lookup_alter_ne in HEl; try done.
+  rewrite list_lookup_alter_ne in HEl''; try done.
   by eauto.
 Qed.
 
-Theorem try_enque_thread_spec E R γa γtq γe γd γt (eℓ epℓ dℓ dpℓ: loc) th:
-  thread_handler_location γt th -∗
+Theorem try_enque_thread_spec E R γa γtq γe γd γt (eℓ epℓ dℓ dpℓ: loc) (th: loc):
+  is_thread_handle Nth γt #th -∗
   suspension_permit γtq -∗
   thread_doesnt_have_permits γt -∗
   <<< ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>>
