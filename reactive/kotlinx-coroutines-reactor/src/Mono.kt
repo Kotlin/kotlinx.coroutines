@@ -13,15 +13,10 @@ import kotlin.coroutines.*
 import kotlin.internal.*
 
 /**
- * Creates cold [mono][Mono] that will run a given [block] in a coroutine.
+ * Creates cold [mono][Mono] that will run a given [block] in a coroutine and emits its result.
  * Every time the returned mono is subscribed, it starts a new coroutine.
- * Coroutine returns a single, possibly null value. Unsubscribing cancels running coroutine.
- *
- * | **Coroutine action**                  | **Signal to sink**
- * | ------------------------------------- | ------------------------
- * | Returns a non-null value              | `success(value)`
- * | Returns a null                        | `success`
- * | Failure with exception or unsubscribe | `error`
+ * If [block] result is `null`, [MonoSink.success] is invoked without a value.
+ * Unsubscribing cancels running coroutine.
  *
  * Coroutine context can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
@@ -64,18 +59,24 @@ private class MonoCoroutine<in T>(
     parentContext: CoroutineContext,
     private val sink: MonoSink<T>
 ) : AbstractCoroutine<T>(parentContext, true), Disposable {
-    var disposed = false
+    @Volatile
+    private var disposed = false
 
     override fun onCompleted(value: T) {
-        if (!disposed) {
-            if (value == null) sink.success() else sink.success(value)
-        }
+        if (value == null) sink.success() else sink.success(value)
     }
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
-        if (!disposed) {
-            sink.error(cause)
-        } else if (!handled) {
+        try {
+            /*
+             * sink.error handles exceptions on its own and, by default, handling of undeliverable exceptions is a no-op.
+             * Guard potentially non-empty handlers against meaningless cancellation exceptions
+             */
+            if (getCancellationException() !== cause) {
+                sink.error(cause)
+            }
+        } catch (e: Throwable) {
+            // In case of improper error implementation or fatal exceptions
             handleCoroutineException(context, cause)
         }
     }

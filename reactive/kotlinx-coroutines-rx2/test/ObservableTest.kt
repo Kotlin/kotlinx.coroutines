@@ -4,13 +4,22 @@
 
 package kotlinx.coroutines.rx2
 
+import io.reactivex.*
+import io.reactivex.plugins.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Test
+import java.util.concurrent.*
 import kotlin.test.*
 
 class ObservableTest : TestBase() {
+    @Before
+    fun setup() {
+        ignoreLostThreads("RxComputationThreadPool-", "RxCachedWorkerPoolEvictor-", "RxSchedulerPurge-")
+    }
+
     @Test
     fun testBasicSuccess() = runBlocking {
         expect(1)
@@ -129,4 +138,28 @@ class ObservableTest : TestBase() {
             expect(4)
         }
     }
+
+    @Test
+    fun testExceptionAfterCancellation() {
+        // Test that no exceptions were reported to the global EH (it will fail the test if so)
+        val handler = { e: Throwable ->
+            assertFalse(e is CancellationException)
+        }
+        withExceptionHandler(handler) {
+            RxJavaPlugins.setErrorHandler {
+                require(it !is CancellationException)
+            }
+            Observable
+                .interval(1, TimeUnit.MILLISECONDS)
+                .take(1000)
+                .switchMapSingle {
+                    rxSingle {
+                        timeBomb().await()
+                    }
+                }
+                .blockingSubscribe({}, {})
+        }
+    }
+
+    private fun timeBomb() = Single.timer(1, TimeUnit.MILLISECONDS).doOnSuccess { throw TestException() }
 }

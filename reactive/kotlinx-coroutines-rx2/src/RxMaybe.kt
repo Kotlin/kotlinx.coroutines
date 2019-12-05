@@ -12,16 +12,10 @@ import kotlin.coroutines.*
 import kotlin.internal.*
 
 /**
- * Creates cold [maybe][Maybe] that will run a given [block] in a coroutine.
+ * Creates cold [maybe][Maybe] that will run a given [block] in a coroutine and emits its result.
+ * If [block] result is `null`, [onComplete][MaybeObserver.onComplete] is invoked without a value.
  * Every time the returned observable is subscribed, it starts a new coroutine.
- * Coroutine returns a single, possibly null value. Unsubscribing cancels running coroutine.
- *
- * | **Coroutine action**                  | **Signal to subscriber**
- * | ------------------------------------- | ------------------------
- * | Returns a non-null value              | `onSuccess`
- * | Returns a null                        | `onComplete`
- * | Failure with exception or unsubscribe | `onError`
- *
+ * Unsubscribing cancels running coroutine.
  * Coroutine context can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * Method throws [IllegalArgumentException] if provided [context] contains a [Job] instance.
@@ -62,24 +56,20 @@ private class RxMaybeCoroutine<T>(
     private val subscriber: MaybeEmitter<T>
 ) : AbstractCoroutine<T>(parentContext, true) {
     override fun onCompleted(value: T) {
-        if (!subscriber.isDisposed) {
-            try {
-                if (value == null) subscriber.onComplete() else subscriber.onSuccess(value)
-            } catch(e: Throwable) {
-                handleCoroutineException(context, e)
-            }
+        try {
+            if (value == null) subscriber.onComplete() else subscriber.onSuccess(value)
+        } catch (e: Throwable) {
+            handleUndeliverableException(e, context)
         }
     }
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
-        if (!subscriber.isDisposed) {
-            try {
-                subscriber.onError(cause)
-            } catch (e: Throwable) {
-                handleCoroutineException(context, e)
+        try {
+            if (!subscriber.tryOnError(cause)) {
+                handleUndeliverableException(cause, context)
             }
-        } else if (!handled) {
-            handleCoroutineException(context, cause)
+        } catch (e: Throwable) {
+            handleUndeliverableException(e, context)
         }
     }
 }
