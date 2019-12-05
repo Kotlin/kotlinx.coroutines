@@ -35,4 +35,6 @@ internal open class ScopeCoroutine<in T>(
 
 internal class ContextScope(context: CoroutineContext) : CoroutineScope {
     override val coroutineContext: CoroutineContext = context
+    // CoroutineScope is used intentionally for user-friendly representation
+    override fun toString(): String = "CoroutineScope(coroutineContext = $coroutineContext)"
 }
