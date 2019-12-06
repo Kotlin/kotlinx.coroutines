@@ -239,30 +239,6 @@ Proof.
     iAaccIntro with "HNoPerms".
     by iIntros ">HNoPerms !>".
     iIntros "HPerms !> HΦ". wp_pures. by iApply "HΦ".
-(*
-    iDestruct "HRendAbandoned" as (γt th) "HRendAbandoned".
-    iDestruct "HState" as %HElem.
-    iSplitL.
-    by iExists _, _, _, _; iFrame.
-    iIntros "!> HΦ". wp_pures.
-    awp_apply (unpark_spec with "HIsThread") without "HΦ".
-
-    iInv "HSemInv" as (? ? l' ?) "(HPerms & >HAuth & (HInfArr & HListContents & HRest') & HRest)".
-    iDestruct "HListContents" as "(HLi1 & HLi2 & >HTqAuth & HLi4 & HLi5 & HCellResources)".
-
-    iDestruct (cell_list_contents_done_agree with "HTqAuth HRendAbandoned")
-              as %HEl.
-
-    iDestruct (cell_list_contents_ra_locs with "HTqAuth HThreadLocs")
-              as %[? HEl'].
-    simplify_eq.
-
-    iDestruct (big_sepL_lookup_acc with "HCellResources") as "[HRes HRRsRestore]".
-    done.
-    simpl.
-    iDestruct "HRes" as (ℓ) "(HArrMapsto & _ & HIsSus & HCancHandle & HInhTok &
-                             HDeqFront' & [HIsRes | HNoPerms])".
-    admit. *)
   }
   {
     iDestruct "HState" as (HEl ?) "(HTq & #HRendRes & HResTok)".
@@ -293,6 +269,72 @@ Proof.
     iIntros "!> HΦ". wp_pures.
     awp_apply (unpark_spec with "HIsThread") without "HΦ".
 
-Abort.
+    iInv "HSemInv" as (? ? l' ?) "(HPerms & >HAuth & (HInfArr & HListContents & HRest') & HRest)".
+    iDestruct "HListContents" as "(HLi1 & HLi2 & >HTqAuth & HLi4 & HLi5 & HCellResources)".
+
+    iDestruct "HRendRes" as (? ?) "HRendRes".
+
+    iDestruct (cell_list_contents_done_agree with "HTqAuth HRendRes")
+              as %HEl'.
+
+    iDestruct (cell_list_contents_ra_locs with "HTqAuth HThreadLocs")
+              as %[? HEl''].
+    simplify_eq.
+
+    iDestruct (big_sepL_lookup_acc with "HCellResources") as "[HRes HRRsRestore]".
+    done.
+    simpl.
+    iAssert (resumer_token γtq i -∗ resumer_token γtq i -∗ False)%I as "HNoResTok".
+    {
+      iIntros "HResTok HResTok'".
+      iDestruct (own_valid_2 with "HResTok HResTok'") as %HH.
+      rewrite -auth_frag_op in HH. exfalso. move: HH.
+      rewrite auth_frag_valid pair_valid list_op_singletonM list_lookup_valid /=.
+      intros [_ HValid]. specialize (HValid i). move: HValid.
+      rewrite list_lookup_singletonM.
+      intros HValid.
+      destruct HValid as [[[_ []] _] _].
+    }
+    iDestruct "HRes" as (ℓ) "(HArrMapsto & HTH & HIsSus & HIsRes & HCancHandle &
+                             HConds)".
+    iDestruct "HConds" as "[[HInhTok [HNoPerms|>HResTok']]|
+                           [Hℓ [HR [[_ >HResTok']|HNoPerms]]]]";
+      try iDestruct ("HNoResTok" with "HResTok HResTok'") as %[].
+
+    all: iAaccIntro with "HNoPerms".
+    3: {
+      iFrame "HResTok".
+      iIntros ">HNoPerms !>". iExists _, _, _, _. iFrame.
+      iApply ("HRRsRestore" with "[-]").
+      iExists _. iFrame.
+      iRight; iFrame.
+    }
+    {
+      iFrame "HResTok".
+      iIntros ">HNoPerms !>". iExists _, _, _, _. iFrame.
+      iApply ("HRRsRestore" with "[-]").
+      iExists _. iFrame.
+    }
+
+    {
+      iIntros "HThPerms !>".
+      iSplitL.
+      2: iIntros "HΦ"; wp_pures; by iApply "HΦ".
+      iExists _, _, _, _. iFrame.
+      iApply ("HRRsRestore" with "[-]").
+      iExists _. iFrame. iLeft. iFrame.
+    }
+
+    {
+      iIntros "HThPerms !>".
+      iSplitL.
+      2: iIntros "HΦ"; wp_pures; by iApply "HΦ".
+      iExists _, _, _, _. iFrame.
+      iApply ("HRRsRestore" with "[-]").
+      iExists _. iFrame. iRight. iFrame. iLeft. iFrame.
+    }
+  }
+
+Qed.
 
 End proof.
