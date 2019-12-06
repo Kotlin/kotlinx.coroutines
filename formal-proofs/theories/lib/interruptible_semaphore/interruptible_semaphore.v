@@ -52,7 +52,8 @@ Instance subG_semaphoreΣ {Σ} : subG semaphoreΣ Σ -> semaphoreG Σ.
 Proof. solve_inG. Qed.
 
 Context `{iArrayG Σ} `{iteratorG Σ} `{heapG Σ} `{threadQueueG Σ} `{semaphoreG Σ} `{parkingG Σ}.
-Variable (N: namespace).
+Variable (Nth: namespace) (N: namespace).
+Variable (namespaces_disjoint : Nth ## N).
 Notation iProp := (iProp Σ).
 
 Variable (segment_size: positive).
@@ -62,7 +63,7 @@ Definition is_semaphore_inv (R : iProp) (γ: gname) (availablePermits: nat) (p: 
   (∃ (readyToCancel: nat) l deqFront,
   ([∗ list] _ ∈ seq 0 availablePermits, R) ∗
    own γ (● (Excl' availablePermits, readyToCancel)) ∗
-   is_thread_queue (N .@ "tq") segment_size True R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
+   is_thread_queue (N .@ "tq") Nth segment_size True R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
    let v := count_matching still_present (drop deqFront l) in
    p ↦ #(availablePermits - v + readyToCancel) ∗
    ⌜readyToCancel <= v ∧ (availablePermits = 0 ∨ v = readyToCancel)%nat⌝)%I.
@@ -228,23 +229,45 @@ Proof.
     iSplitL "Hp"; done.
   }
 
-  iDestruct "HState" as (? ?) "[HState|HState]".
+  iDestruct "HState" as (? ?) "[#[HIsThread HThreadLocs] [HState|HState]]".
+  2: {
+    iDestruct "HState" as "[HState (-> & HTq & #HRendAbandoned & HNoPerms)]".
+    iSplitR "HNoPerms".
+    by iExists _, _, _, _; iFrame.
+    iIntros "!> HΦ". wp_pures.
+    awp_apply (unpark_spec with "HIsThread") without "HΦ".
+    iAaccIntro with "HNoPerms".
+    by iIntros ">HNoPerms !>".
+    iIntros "HPerms !> HΦ". wp_pures. by iApply "HΦ".
+(*
+    iDestruct "HRendAbandoned" as (γt th) "HRendAbandoned".
+    iDestruct "HState" as %HElem.
+    iSplitL.
+    by iExists _, _, _, _; iFrame.
+    iIntros "!> HΦ". wp_pures.
+    awp_apply (unpark_spec with "HIsThread") without "HΦ".
+
+    iInv "HSemInv" as (? ? l' ?) "(HPerms & >HAuth & (HInfArr & HListContents & HRest') & HRest)".
+    iDestruct "HListContents" as "(HLi1 & HLi2 & >HTqAuth & HLi4 & HLi5 & HCellResources)".
+
+    iDestruct (cell_list_contents_done_agree with "HTqAuth HRendAbandoned")
+              as %HEl.
+
+    iDestruct (cell_list_contents_ra_locs with "HTqAuth HThreadLocs")
+              as %[? HEl'].
+    simplify_eq.
+
+    iDestruct (big_sepL_lookup_acc with "HCellResources") as "[HRes HRRsRestore]".
+    done.
+    simpl.
+    iDestruct "HRes" as (ℓ) "(HArrMapsto & _ & HIsSus & HCancHandle & HInhTok &
+                             HDeqFront' & [HIsRes | HNoPerms])".
+    admit. *)
+  }
   {
     iDestruct "HState" as (HEl ?) "(HTq & #HRendRes & HResTok)".
     iDestruct "HRest" as "[Hp >%]".
     subst.
-    iAssert (▷ thread_handler_location _ _)%I with "[-]" as "#HThreadLoc".
-    {
-      iDestruct "HTq" as "(_ & (_ & _ & _ & _ & _ & HLc) & _)".
-      iDestruct (big_sepL_lookup with "HLc") as "HH".
-      {
-        erewrite list_lookup_alter.
-        by rewrite HEl.
-      }
-      simpl.
-      iDestruct "HH" as (?) "(_ & (HThreadLoc & HRend') & _)".
-      iApply "HThreadLoc".
-    }
     iSplitR "HResTok".
     {
       destruct (decide (i < deqFront')%nat).
@@ -268,7 +291,7 @@ Proof.
       by iFrame.
     }
     iIntros "!> HΦ". wp_pures.
-    awp_apply unpark_spec without "HΦ".
+    awp_apply (unpark_spec with "HIsThread") without "HΦ".
 
 Abort.
 

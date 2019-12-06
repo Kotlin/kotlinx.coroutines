@@ -548,6 +548,130 @@ Definition cell_list_contents_auth_ra l (deqFront: nat) :=
   (length l, ((deqFront + count_matching (fun b => not (still_present b)) (drop deqFront l))%nat,
               deqFront: mnatUR), map cell_state_to_RA l).
 
+Lemma included_None {A: cmraT} (a : option A):
+  (a ≼ None) -> a = None.
+Proof.
+  rewrite option_included. case; first done.
+  intros (? & ? & _ & HContra & _). discriminate.
+Qed.
+
+Lemma list_lookup_singletonM_lt:
+    forall (A: ucmraT) (i i': nat) (x: A),
+                (i' < i)%nat -> list_singletonM i x !! i' = Some (ε: A).
+Proof.
+  induction i; intros [|i']; naive_solver auto with lia.
+Qed.
+
+Lemma list_lookup_singletonM_gt:
+    forall (A: ucmraT) (i i': nat) (x: A),
+                (i < i')%nat -> list_singletonM i x !! i' = None.
+Proof.
+  induction i; intros [|i']; naive_solver auto with lia.
+Qed.
+
+Lemma None_least (A: cmraT) (a: option A): None ≼ a.
+Proof. by apply option_included; left. Qed.
+
+Lemma list_singletonM_included {A: ucmraT} (i: nat) (x: A) (l: list A):
+  {[i := x]} ≼ l <-> (exists v, l !! i = Some v ∧ x ≼ v).
+Proof.
+  rewrite list_lookup_included.
+  split.
+  {
+    intros HEv. specialize (HEv i). move: HEv.
+    rewrite list_lookup_singletonM. destruct (l !! i) as [x'|].
+    2: by intros HContra; apply included_None in HContra.
+    rewrite Some_included_total. eauto.
+  }
+  {
+    intros (v & HEl & HInc) i'.
+    destruct (decide (i < i')%nat).
+    {
+      rewrite list_lookup_singletonM_gt //.
+      apply None_least.
+    }
+    destruct (decide (i = i')%nat).
+    {
+      subst.
+      rewrite list_lookup_singletonM. rewrite HEl.
+      by apply Some_included_total.
+    }
+    {
+      rewrite list_lookup_singletonM_lt; last lia.
+      assert (i < length l)%nat.
+      by apply lookup_lt_is_Some; eauto.
+      assert (is_Some (l !! i')) as [? HEl'].
+      by apply lookup_lt_is_Some; lia.
+      rewrite HEl' Some_included_total.
+      apply ucmra_unit_least.
+    }
+  }
+Qed.
+
+Theorem cell_list_contents_done_agree γ l (deqFront: nat) i c:
+  own γ (● (cell_list_contents_auth_ra l deqFront)) -∗
+  rendezvous_done γ i c -∗
+  ⌜l !! i ≡ Some (Some c)⌝.
+Proof.
+  iIntros "HAuth HFrag".
+  iDestruct (own_valid_2 with "HAuth HFrag")
+    as %[[_ (v&HEl&HInc)%list_singletonM_included]%prod_included _]%auth_both_valid.
+  simpl in *. iPureIntro.
+
+  rewrite map_lookup in HEl.
+  destruct (l !! i) as [el|]; simpl in *; inversion HEl; subst.
+  clear HEl.
+  apply prod_included in HInc.
+  destruct el as [el'|]; simpl in *.
+  2: {
+    destruct HInc as [_ HInc].
+    by apply included_None in HInc.
+  }
+  destruct el' as [|γ' ℓ d]; simpl in *.
+  {
+    destruct HInc as [_ HInc]. move: HInc.
+    rewrite Some_included_total to_agree_included.
+    by intros ->.
+  }
+  destruct d as [d|]; simpl in *.
+  {
+    destruct HInc as [_ HInc]. move: HInc.
+    rewrite Some_included_total to_agree_included.
+    by intros ->.
+  }
+  destruct HInc as [HInc _]. apply prod_included in HInc; simpl.
+  destruct HInc as [_ HInc]. move: HInc. simpl.
+  rewrite mnat_included. lia.
+Qed.
+
+Theorem cell_list_contents_ra_locs γ l deqFront i γt th:
+  own γ (● (cell_list_contents_auth_ra l deqFront)) -∗
+  rendezvous_thread_locs_state γ γt th i -∗
+  ⌜exists c, l !! i ≡ Some (Some (cellInhabited γt th c))⌝.
+Proof.
+  iIntros "HAuth HFrag".
+  iDestruct (own_valid_2 with "HAuth HFrag")
+    as %[[_ (v&HEl&HInc)%list_singletonM_included]%prod_included _]%auth_both_valid.
+  simpl in *. iPureIntro.
+
+  rewrite map_lookup in HEl.
+  destruct (l !! i) as [el|]; simpl in *; inversion HEl; subst.
+  clear HEl.
+
+  apply prod_included in HInc; simpl in *. destruct HInc as [HInc _].
+  apply prod_included in HInc; simpl in *. destruct HInc as [HInc _].
+  apply prod_included in HInc; simpl in *. destruct HInc as [HInc _].
+  apply prod_included in HInc; simpl in *. destruct HInc as [_ HInc].
+
+  destruct el as [el'|]; simpl in *.
+  2: by apply included_None in HInc.
+  destruct el' as [|γ' ℓ d]; simpl in *.
+  by apply included_None in HInc.
+  move: HInc.
+  destruct d as [d|]; simpl in *; rewrite Some_included_total to_agree_included.
+  all: intros; simplify_eq; eauto.
+Qed.
+
 (* The resumer hasn't been assigned yet *)
 Definition resumer_stage_0 (o: option cellState): bool :=
   match o with
@@ -581,12 +705,9 @@ Proof.
   iDestruct (own_valid_2 with "HAuth HExistsEl")
     as %[[_ HH]%prod_included _]%auth_both_valid.
   simpl in *. iPureIntro.
-  revert HH. rewrite list_lookup_included=> HH.
-  specialize (HH i). move: HH. rewrite option_included.
-  case. intros HH; exfalso; by induction i.
-  intros (a & b & _ & HH & _). move: HH.
-  rewrite map_lookup. destruct (l !! i); simpl; first by eauto.
-  done.
+  apply list_singletonM_included in HH.
+  destruct HH as (v & HMap & _). rewrite map_lookup in HMap.
+  destruct (l !! i); simpl in *; [eauto|done].
 Qed.
 
 Lemma cell_list_contents_append E R γa γtq γe γd l deqFront:
@@ -2379,8 +2500,10 @@ Theorem resume_rendezvous_spec E R γa γtq γe γd i ℓ:
 
            ⌜l !! i = Some (Some (cellInhabited γt th (Some cellAbandoned)))⌝ ∧
            ⌜v = InjLV #th⌝ ∧
+           rendezvous_abandoned γtq i ∗
            ▷ E ∗
-             ▷ cell_list_contents E R γa γtq γe γd l deqFront),
+           thread_doesnt_have_permits γt ∗
+           ▷ cell_list_contents E R γa γtq γe γd l deqFront),
         RET v >>>.
 Proof.
   iIntros "#HCellInv #HDeqFrontLb #HArrMapsto HIsRes" (Φ) "AU".
@@ -2745,9 +2868,61 @@ Proof.
     iApply "HCellRRsRestore".
     iExists _; iFrame "HArrMapsto'". by iFrame.
   }
+  (* Abandoned *)
+
+  iMod (own_update with "HAuth") as "[HAuth HIsAbandoned]".
+  2: iAssert (rendezvous_done γtq i (cellInhabited γt th (Some cellAbandoned)))
+             with "HIsAbandoned" as "HIsAbandoned".
+  {
+    apply auth_update_core_id.
+    apply _.
+    apply prod_included'; split; simpl.
+    by apply ucmra_unit_least.
+    apply list_lookup_included.
+    intros j.
+    rewrite map_lookup.
+    assert (i < length l)%nat.
+    by apply lookup_lt_is_Some; eauto.
+    assert (forall (A: ucmraT) (i i': nat) (x: A),
+                (i' < i)%nat -> list_singletonM i x !! i' = Some (ε: A))
+            as HH.
+    {
+      clear. induction i; intros [|i']; naive_solver auto with lia.
+    }
+    assert (forall (A: ucmraT) (i i': nat) (x: A),
+                (i < i')%nat -> list_singletonM i x !! i' = None)
+            as HH'.
+    {
+      clear. induction i; intros [|i']; naive_solver auto with lia.
+    }
+    destruct (decide (j < i)%nat).
+    {
+      rewrite HH; last done.
+      assert (is_Some (l !! j)) as [? ->].
+      by apply lookup_lt_is_Some; lia.
+      simpl.
+      apply Some_included_total.
+      apply ucmra_unit_least.
+    }
+    destruct (decide (j = i)).
+    {
+      subst.
+      rewrite HIsSome.
+      rewrite list_lookup_singletonM.
+      apply Some_included_total.
+      simpl.
+      apply prod_included; simpl; split; last done.
+      apply prod_included'; simpl; split; last done.
+      apply ucmra_unit_least.
+    }
+    {
+      rewrite HH'; try lia.
+      rewrite option_included. left. done.
+    }
+  }
 
   iDestruct "HR" as (?) "(>HArrMapsto' & #HRend & HCancHandle & HIsSus & HInh & HDeqFront & HH)".
-  iDestruct "HH" as "[>HIsRes'|(HE & Hℓ & HNoPerms)]".
+  iDestruct "HH" as "[>HIsRes'|(HE & Hℓ & >HNoPerms)]".
   by iDestruct (iterator_issued_exclusive with "HIsRes HIsRes'") as %[].
   iDestruct (array_mapsto_agree with "HArrMapsto' HArrMapsto") as %->.
 
@@ -2777,6 +2952,8 @@ Proof.
   iSplitR; first done.
   iSplitR; first by eauto.
   iFrame.
+  iSplitL "HIsAbandoned".
+  by iExists _, _.
   iSplitR; first done.
   iApply "HCellRRsRestore".
   iExists _; iFrame "HArrMapsto'". by iFrame.
@@ -3767,7 +3944,9 @@ Theorem try_deque_thread_spec E R γa γtq γe γd (eℓ epℓ dℓ dpℓ: loc):
 
       ⌜l !! i = Some (Some (cellInhabited γt th (Some cellAbandoned)))⌝ ∧
       ⌜v = #th⌝ ∧
-      ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront
+      ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
+      rendezvous_abandoned γtq i ∗
+      thread_doesnt_have_permits γt
   )), RET v >>>.
 Proof.
   iIntros "HAwaken" (Φ) "AU". iLöb as "IH".
@@ -3950,7 +4129,7 @@ Proof.
   iDestruct "HH" as (γt th)
     "[(HEl & -> & #HRendRes & HE & HListContents & HResumerToken)|
     [(% & HH & HIsRes & HListContents)|
-    (% & -> & HE & HListContents)]]".
+    (% & -> & HRendAbandoned & HE & HNoPerms & HListContents)]]".
   3: { (* Abandoned *)
     iRight.
     iExists _.
