@@ -27,12 +27,13 @@ Definition move_ptr_forward : val :=
 
 Definition park: val :=
   λ: "cancellationHandler" "cancHandle" "threadHandle",
-  let: "r" := (loop: (λ: "c", if: ! "c" then NONEV else SOMEV #())%V
-               interrupted: "cancellationHandler")
-              "cancHandle"
-              "threadHandle" in
-  "threadHandle" <- #true ;;
-  "r".
+  let: "r" := interruptibly "cancHandle"
+                            (λ: "c", if: ! "c" then NONEV else SOMEV #())%V
+                            "cancellationHandler"
+                            "threadHandle" in
+  if: (Fst "r")
+  then #true
+  else "threadHandle" <- #true ;; #false.
 
 Definition unpark: val :=
   λ: "threadHandle", "threadHandle" <- #false.
@@ -42,13 +43,17 @@ Definition try_enque_thread: val :=
   let: "cell'" := (iterator_step segment_size) "tail" "enqIdx" in
   move_ptr_forward "tail" (Fst "cell'") ;;
   let: "cell" := cell_ref_loc "cell'" in
-  getAndSet "cell" (InjL "threadHandle") = RESUMEDV.
+  if: getAndSet "cell" (InjL "threadHandle") = RESUMEDV
+  then NONE
+  else SOME "cell'".
 
 Definition suspend: val :=
   λ: "handler" "cancHandle" "threadHandle" "tail" "enqIdx",
-  if: try_enque_thread "threadHandle" "tail" "enqIdx"
-  then #()
-  else park ("handler" (cancel_cell "cell'")) "cancHandle" "threadHandle".
+  match: try_enque_thread "threadHandle" "tail" "enqIdx" with
+    NONE => #false
+  | SOME "cell'" =>
+    park ("handler" (cancel_cell "cell'")) "cancHandle" "threadHandle"
+  end.
 
 Definition try_deque_thread: val :=
   rec: "resume" "head" "deqIdx" :=
@@ -1091,6 +1096,30 @@ Definition is_thread_queue (S R: iProp) γa γtq γe γd eℓ epℓ dℓ dpℓ l
    ⌜deqIdx <= deqFront <= length l⌝ ∧ ⌜enqIdx <= length l⌝
   )%I.
 
+Theorem thread_queue_append E R γa γtq γe γd l deqFront eℓ epℓ dℓ dpℓ:
+  E -∗ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ==∗
+  (suspension_permit γtq ∗
+  exists_list_element γtq (length l)) ∗
+  is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ (l ++ [None]) deqFront.
+Proof.
+  iIntros "HE (HInfArr & HListContents & HCancAwak & HDeqIdx & HIts)".
+  iMod (cell_list_contents_append with "HE HListContents") as "($ & $ & $)".
+  iFrame "HInfArr HCancAwak". simpl.
+  iSplitR; first done.
+  iDestruct "HDeqIdx" as %HDeqIdx.
+  iDestruct "HIts" as (enqIdx deqIdx) "(HEnqIt & HDeqIt & HAwaks & HSusps & %)".
+  iSplitR.
+  {
+    iPureIntro.
+    destruct deqFront; first lia.
+    rewrite lookup_app_l; first done.
+    lia.
+  }
+  iExists enqIdx, deqIdx. iFrame.
+  iPureIntro. rewrite app_length.
+  lia.
+Qed.
+
 Lemma pair_op_1 {A: ucmraT} {B: cmraT} (b b': B):
   (b ⋅ b', ε) ≡ (b, (ε: A)) ⋅ (b', (ε: A)).
 Proof. by rewrite -pair_op ucmra_unit_left_id. Qed.
@@ -1430,6 +1459,7 @@ Theorem inhabit_cell_spec N' E R γa γtq γe γd γt i ptr (th: loc):
   <<< ∃ r, ⌜l !! i = Some None⌝ ∧
            ⌜r = InjLV #()⌝ ∧
            inhabitant_token γtq i ∗
+           rendezvous_thread_handle γtq γt th i ∗
            ▷ cell_list_contents E R γa γtq γe γd
              (alter (fun _ => Some (cellInhabited γt th None)) i l) deqFront ∨
            ⌜l !! i = Some (Some cellFilled)⌝ ∧
@@ -1558,6 +1588,7 @@ Proof.
     2: by iFrame "HInit".
 
     iLeft.
+    iFrame "HRendThread HTh".
     unfold cell_list_contents. iFrame.
     iSplitR; first by iPureIntro.
     iSplitR; first by iPureIntro.
@@ -4221,15 +4252,18 @@ Theorem try_enque_thread_spec E R γa γtq γe γd γt (eℓ epℓ dℓ dpℓ: l
   thread_doesnt_have_permits γt -∗
   <<< ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>>
   ((try_enque_thread segment_size) #th #epℓ) #eℓ @ ⊤ ∖ ↑N
-  <<< ∃ (v: bool),
-      (⌜v = false⌝ ∧
-       ∃ (i: nat), ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
-                     (alter (fun _ => Some (cellInhabited γt th None)) i l) deqFront ∗
-                     inhabitant_token γtq i) ∨
-      (⌜v = true⌝ ∧
+  <<< ∃ (v: val),
+      (∃ i (s: loc), ⌜v = SOMEV (#s, #(i `mod` Pos.to_nat segment_size)%nat)⌝ ∧
+       ⌜l !! i = Some None⌝ ∧
+       segment_location γa (i `div` Pos.to_nat segment_size)%nat s ∗
+       rendezvous_thread_handle γtq γt th i ∗
+       ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
+         (alter (fun _ => Some (cellInhabited γt th None)) i l) deqFront ∗
+         inhabitant_token γtq i) ∨
+      (⌜v = NONEV⌝ ∧
        ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
          thread_doesnt_have_permits γt ∗ ▷ R),
-    RET #v >>>.
+    RET v >>>.
 Proof.
   iIntros "#HThLoc HSusp HNoPerms" (Φ) "AU". wp_lam. wp_pures.
   wp_lam. wp_pures.
@@ -4481,14 +4515,15 @@ Proof.
   iAaccIntro with "HListContents".
   { iIntros "$"; iFrame. iIntros "!> $ !>". done. }
   iIntros (?) "H".
-  iDestruct "H" as "[(% & -> & HInhToken & HListContents')|
+  iDestruct "H" as "[(% & -> & HInhToken & #HRend & HListContents')|
     (% & -> & HNoPerms & HR & HListContents)]".
   all: iExists _; iSplitL; [|iIntros "!> HΦ !>"; by wp_pures].
   2: {
     iRight. iSplitR; first done. by iFrame.
   }
-  iLeft. iSplitR; first done. iExists enqIdx.
-  iFrame "HInhToken".
+  iLeft.
+  iExists _, _. iSplitR; first done. iSplitR; first done.
+  iFrame "HInhToken HSegLoc' HRend".
   iDestruct "HRest" as "(HCancA & >% & >HRest)".
   rewrite /is_thread_queue.
   rewrite alter_length.

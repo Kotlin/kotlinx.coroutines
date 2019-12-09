@@ -135,7 +135,7 @@ Proof.
   iIntros (r) "HQ'". wp_pures. by iApply "HPost".
 Qed.
 
-Lemma interruptibly_spec : forall γ P Q Q' handle (b h e: val),
+Lemma interruptibly_spec : forall {γ} P Q Q' handle (b h e: val),
   {{{ is_interrupt_handle γ handle ∗ P ∗
     {{{ P }}}
       (b e)%V

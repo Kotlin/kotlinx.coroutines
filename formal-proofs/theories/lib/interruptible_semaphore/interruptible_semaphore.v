@@ -11,7 +11,7 @@ Definition new_semaphore : val :=
           ("availablePermits", new_thread_queue segment_size #()).
 
 Definition cancellation_handler : val :=
-  λ: "availablePermits" "head" "deqIdx" "canceller",
+  λ: "availablePermits" "head" "deqIdx" "canceller" <>,
   let: "p" := FAA "availablePermits" #1
   in if: #0 ≤ "p" then #() else
   if: "canceller" #() then #()
@@ -20,10 +20,10 @@ Definition cancellation_handler : val :=
 Definition acquire_semaphore : val :=
   λ: "cancHandle" "threadHandle" "availablePermits" "tail" "enqIdx" "head" "deqIdx",
   let: "p" := FAA "availablePermits"  #(-1)
-  in if: #0 < "p" then #()
+  in if: #0 < "p" then #false
   else suspend segment_size
                (cancellation_handler "availablePermits" "head" "deqIdx")
-               "threadHandle" "tail" "enqIdx".
+               "cancHandle" "threadHandle" "tail" "enqIdx".
 
 Definition release_semaphore : val :=
   λ: "availablePermits" "head" "deqIdx",
@@ -41,6 +41,7 @@ From iris.program_logic Require Import atomic.
 
 Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
 Require Import SegmentQueue.lib.infinite_array.iterator.
+Require Import SegmentQueue.lib.util.interruptibly.
 
 Section proof.
 
@@ -51,7 +52,8 @@ Definition semaphoreΣ : gFunctors := #[GFunctor algebra].
 Instance subG_semaphoreΣ {Σ} : subG semaphoreΣ Σ -> semaphoreG Σ.
 Proof. solve_inG. Qed.
 
-Context `{iArrayG Σ} `{iteratorG Σ} `{heapG Σ} `{threadQueueG Σ} `{semaphoreG Σ} `{parkingG Σ}.
+Context `{iArrayG Σ} `{iteratorG Σ} `{heapG Σ} `{threadQueueG Σ} `{semaphoreG Σ}
+        `{parkingG Σ} `{interruptiblyG Σ}.
 Variable (Nth: namespace) (N: namespace).
 Variable (namespaces_disjoint : Nth ## N).
 Notation iProp := (iProp Σ).
@@ -336,5 +338,217 @@ Proof.
   }
 
 Qed.
+
+Theorem acquire_semaphore_spec Nint R γ (p epℓ eℓ dpℓ dℓ: loc) γa γtq γe γd
+        γi cancHandle γth (threadHandle: loc):
+  is_interrupt_handle Nint γi cancHandle -∗
+  is_thread_handle Nth γth #threadHandle -∗
+  is_semaphore R γ p epℓ eℓ dpℓ dℓ γa γtq γe γd -∗
+  inv (N .@ "permits") (∃ a, semaphore_permits γ a) -∗
+  {{{ thread_doesnt_have_permits γth }}}
+    (acquire_semaphore segment_size) cancHandle #threadHandle #p #epℓ #eℓ #dpℓ #dℓ
+  {{{ (v: bool), RET #v;
+      ⌜v = false⌝ ∧ thread_doesnt_have_permits γth ∗ R ∨
+      ⌜v = true⌝ ∧ interrupted γth
+  }}}.
+Proof.
+  iIntros "#HIntHandle #HThreadHandle #HSemInv #HPermInv".
+  iIntros (Φ) "!> HNoPerms HΦ".
+
+  wp_lam. wp_pures. wp_bind (FAA _ _).
+  iInv "HSemInv" as (availablePermits readyToCancel l deqFront)
+                      "(HPerms & >HAuth & HTq & Hp & >HPure)" "HInvClose".
+  wp_faa.
+  iInv "HPermInv" as (?) ">HFrag" "HPermsClose".
+  iDestruct (own_valid_2 with "HAuth HFrag") as
+        %[[->%Excl_included%leibniz_equiv _]%prod_included _]%auth_both_valid.
+  remember (availablePermits - _ + readyToCancel) as oldP.
+  destruct (decide (0 < oldP)).
+  {
+    iMod (own_update_2 with "HAuth HFrag") as "[HAuth HFrag]".
+    {
+      apply auth_update, prod_local_update_1, option_local_update.
+      apply (exclusive_local_update _ (Excl (availablePermits - 1)%nat)).
+      done.
+    }
+    iMod ("HPermsClose" with "[HFrag]") as "_"; first by eauto.
+    iDestruct "HPure" as %[HRC [->|HOk]].
+    by lia.
+    destruct availablePermits; simpl in *; first by lia.
+    iDestruct "HPerms" as "[HR HPerms]".
+    iSpecialize ("HΦ" with "[HNoPerms HR]").
+    { iLeft. iFrame. eauto. }
+    iMod ("HInvClose" with "[-HΦ]") as "_".
+    {
+      iExists _, _, _, _.
+      rewrite Nat.sub_0_r big_opL_irrelevant_element' seq_length.
+      replace (oldP + -1) with
+          (availablePermits - count_matching still_present (drop deqFront l) +
+           readyToCancel) by lia.
+      iFrame.
+      iPureIntro.
+      eauto.
+    }
+    iModIntro. wp_pures. rewrite bool_decide_decide decide_True //. by wp_pures.
+  }
+
+  destruct availablePermits.
+  2: by iDestruct "HPure" as %[HRC [HContra|HOk]]; lia.
+  rewrite Z.sub_0_l in HeqoldP.
+  subst.
+  iClear "HPure".
+  iAssert (⌜deqFront <= length l⌝)%I as %HDeqFront.
+  {
+    iDestruct "HTq" as "(_ & _ & _ & _ & HRest)".
+    iDestruct "HRest" as (? ?) "(_ & _ & _ & _ & %)".
+    iPureIntro.
+    lia.
+  }
+  iMod (thread_queue_append with "[$] HTq") as "[[HIsSusp #HElExists] HTq]".
+  iMod ("HPermsClose" with "[HFrag]") as "_"; first by eauto.
+  iMod ("HInvClose" with "[-HIsSusp HNoPerms HΦ]") as "_".
+  {
+    iExists _, _, _, _. iFrame.
+    rewrite drop_app_le.
+    2: lia.
+    rewrite count_matching_app. simpl.
+    replace (- count_matching still_present (drop deqFront l) +
+             readyToCancel + -1) with
+        (0%nat - (count_matching still_present (drop deqFront l) + 1)%nat +
+         readyToCancel) by lia.
+    iFrame.
+    iPureIntro. lia.
+  }
+  iModIntro. wp_pures. rewrite bool_decide_decide decide_False //. wp_pures.
+  wp_lam. wp_pures. wp_lam. wp_pures.
+
+  rewrite /is_semaphore.
+
+  awp_apply (try_enque_thread_spec (N.@"tq") with "HThreadHandle HIsSusp HNoPerms")
+            without "HΦ".
+  iInv "HSemInv" as (? ? l' deqFront') "(HPerms & >HAuth & HTq & Hp & >HPure)".
+  iAaccIntro with "HTq".
+  {
+    iIntros "HTq !>". iSplitL; last done.
+    iExists _, _, _, _. iFrame.
+  }
+  iIntros (?) "HPures".
+  iDestruct "HPures" as "[HTq|(-> & HTq & HNoPerms & HR)]".
+  2: {
+    iModIntro. iSplitR "HNoPerms HR".
+    by iExists _, _, _, _; iFrame.
+    iIntros "HΦ".
+    wp_pures.
+    iSpecialize ("HΦ" with "[-]").
+    { iLeft. iFrame. eauto. }
+    done.
+  }
+  iDestruct "HTq" as (i s -> HEl) "(#HSegLoc & #HRend & HTq & HInhToken)".
+  iSplitR "HInhToken".
+  {
+    iExists _, _, _, _. iFrame.
+    replace (count_matching _ (drop deqFront' (alter _ _ _))) with
+      (count_matching still_present (drop deqFront' l')).
+    2: {
+      repeat erewrite count_matching_alter; eauto.
+      destruct (decide (i < deqFront')%nat).
+      by rewrite drop_alter //.
+      repeat rewrite count_matching_drop.
+      rewrite take_alter; try lia.
+      erewrite count_matching_alter; eauto.
+      simpl.
+      admit.
+    }
+    by iFrame.
+  }
+
+  iIntros "!> HΦ". wp_pures. wp_lam. wp_pures. wp_lam. wp_pures.
+  wp_apply (interruptibly_spec _ (inhabitant_token γtq i)
+                               (fun _ => thread_has_permit γth ∗ R)%I
+                               (fun _ => interrupted γth)
+              with "[HInhToken]").
+  {
+    iFrame "HIntHandle HInhToken".
+    iSplit.
+    {
+      iIntros (Φ') "!> HInhTok HΦ'". wp_pures. wp_bind (!_)%E.
+      rewrite /is_thread_handle.
+      iInv "HThreadHandle" as (? t) "[>% [Hℓ HThAuth]]" "HClose". simplify_eq.
+      wp_load.
+      iInv "HSemInv" as (? ? l'' ?) "(HPerms & >HAuth & HTq & HRest)" "HClose'".
+      iAssert (▷ ⌜∃ c, l'' !! i ≡ Some (Some (cellInhabited γth _ c))⌝)%I
+        as "#>HI".
+      {
+        iDestruct "HTq" as "(_ & (_ & _ & >HH' & _) & _)".
+        iDestruct "HRend" as "[_ HRend]".
+        iApply (cell_list_contents_ra_locs with "HH' HRend").
+      }
+      iDestruct "HI" as %(r & HEl').
+      simplify_eq.
+      iAssert (▷ ⌜r = None ∨ r = Some cellResumed⌝)%I as "#>HPures".
+      {
+        iDestruct "HTq" as "(_ & (_ & _ & _ & _ & _ & HH') & _)".
+        iDestruct (big_sepL_lookup with "HH'") as "HRes"; first done.
+        simpl. iDestruct "HRes" as (?) "[_ HRes]".
+        destruct r as [r|]; last by eauto.
+        iRight. iDestruct "HRes" as "(_ & _ & HRes)".
+        destruct r.
+        2: by eauto.
+        1: iDestruct "HRes" as "[>HInhTok' _]".
+        2: iDestruct "HRes" as "(_ & >HInhTok' & _)".
+        all: by iDestruct (inhabitant_token_exclusive with "HInhTok HInhTok'") as %[].
+      }
+      iDestruct "HPures" as %HPures.
+      iDestruct "HTq" as "(HHead & HListContents & HTail)".
+      iDestruct (cell_list_contents_lookup_acc with "HListContents")
+        as "[HRes HLcRestore]".
+      erewrite HEl'.
+      destruct HPures as [HPures|HPures]; subst; simpl.
+      {
+        iDestruct "HRes" as (?) "(HArrMapsto & (Hℓ' & >HNoPerms & HRend') & HRest')".
+        iAssert (⌜t ≡ true⌝)%I as %HH.
+        {
+          iDestruct (own_valid_2 with "HThAuth HNoPerms")
+            as %[[HH%Some_included _]%prod_included _]%auth_both_valid.
+          iPureIntro.
+          destruct HH as [[? HOk]|HOk].
+          - simpl in *. by apply to_agree_inj.
+          - apply prod_included in HOk; simpl in *.
+            destruct HOk as [_ HOk].
+            by apply to_agree_included in HOk.
+        }
+        simplify_eq.
+        (*)
+        iMod ("HClose'" with "[-Hℓ HThAuth]") as "_".
+        {
+          iDestruct ("HLcRestore" with "[]")
+          iExists _, _, _, _. iFrame.
+        }
+        iMod ("HClose" with "[Hℓ HThAuth]") as "_".
+        {
+          iExists _, _. by iFrame.
+        }
+*)
+        admit.
+      }
+
+      admit.
+    }
+    {
+      iIntros (Φ') "!> [HInhTok #HInterrupted] HΦ'". wp_pures. wp_bind (FAA _ _).
+      admit.
+    }
+  }
+  iIntros (? ?) "[(-> & #HInterrupted)|(-> & HHasPerm & HR)]".
+  1: by wp_pures; iApply "HΦ"; eauto.
+  wp_pures.
+  iAssert (▷ thread_has_permit γth)%I with "[$]" as "HHasPerm".
+  awp_apply (thread_update_state with "HThreadHandle") without "HΦ HR".
+  iAaccIntro with "HHasPerm".
+  by iIntros "$ //".
+  iIntros "HNoPerms !> [HΦ HR]".
+
+  wp_pures. iApply "HΦ". iLeft. iFrame. done.
+Abort.
 
 End proof.
