@@ -5,10 +5,11 @@
 package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.*
-import org.junit.*
+import org.junit.Test
 import java.lang.Runnable
 import java.util.concurrent.*
 import kotlin.coroutines.*
+import kotlin.test.*
 
 class CoroutineSchedulerTest : TestBase() {
 
@@ -125,6 +126,29 @@ class CoroutineSchedulerTest : TestBase() {
             dispatcher.close(); latch.countDown()
         })
         latch.await()
+    }
+
+    @Test
+    fun testInterruptionCleanup() {
+        ExperimentalCoroutineDispatcher(1, 1).use {
+            val executor = it.executor
+            var latch = CountDownLatch(1)
+            executor.execute {
+                Thread.currentThread().interrupt()
+                latch.countDown()
+            }
+            latch.await()
+            Thread.sleep(100) // I am really sorry
+            latch = CountDownLatch(1)
+            executor.execute {
+                try {
+                    assertFalse(Thread.currentThread().isInterrupted)
+                } finally {
+                    latch.countDown()
+                }
+            }
+            latch.await()
+        }
     }
 
     private fun testUniformDistribution(worker: CoroutineScheduler.Worker, bound: Int) {
