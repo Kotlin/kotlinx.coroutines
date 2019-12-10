@@ -89,7 +89,8 @@ private class MissingMainCoroutineDispatcher(
         if  (cause == null) {
             throw IllegalStateException(
                 "Module with the Main dispatcher is missing. " +
-                    "Add dependency providing the Main dispatcher, e.g. 'kotlinx-coroutines-android'"
+                    "Add dependency providing the Main dispatcher, e.g. 'kotlinx-coroutines-android' " +
+                        "and ensure it has the same version as 'kotlinx-coroutines-core'"
             )
         } else {
             val message = "Module with the Main dispatcher had failed to initialize" + (errorHint?.let { ". $it" } ?: "")
