@@ -12,7 +12,7 @@ class SelectMutexStressTest : TestBase() {
     @Test
     fun testSelectCancelledResourceRelease() = runTest {
         val n = 1_000 * stressTestMultiplier
-        val mutex = Mutex(true) as MutexImpl // locked
+        val mutex = Mutex(true) // locked
         expect(1)
         repeat(n) { i ->
             val job = launch(kotlin.coroutines.coroutineContext) {
@@ -28,7 +28,6 @@ class SelectMutexStressTest : TestBase() {
             yield() // so it can cleanup after itself
         }
         assertTrue(mutex.isLocked)
-        assertTrue(mutex.isLockedEmptyQueueState)
         finish(n + 2)
     }
 }

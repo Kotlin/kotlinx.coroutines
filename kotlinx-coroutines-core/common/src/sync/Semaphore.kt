@@ -3,7 +3,7 @@ package kotlinx.coroutines.sync
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import kotlin.coroutines.*
+import kotlin.jvm.*
 import kotlin.math.*
 
 /**
@@ -78,24 +78,12 @@ public suspend inline fun <T> Semaphore.withPermit(action: () -> T): T {
     }
 }
 
-private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Semaphore {
-
-    // The queue of waiting acquirers is essentially an infinite array based on the list of segments
-    // (see `SemaphoreSegment`); each segment contains a fixed number of slots. To determine a slot for each enqueue
-    // and dequeue operation, we increment the corresponding counter at the beginning of the operation
-    // and use the value before the increment as a slot number. This way, each enqueue-dequeue pair
-    // works with an individual cell.We use the corresponding segment pointer to find the required ones.
-    private val head: AtomicRef<SemaphoreSegment>
-    private val deqIdx = atomic(0L)
-    private val tail: AtomicRef<SemaphoreSegment>
-    private val enqIdx = atomic(0L)
-
+internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int)
+    : SegmentQueueSynchronizer<SemaphoreImpl, Unit>(), Semaphore
+{
     init {
         require(permits > 0) { "Semaphore should have at least 1 permit, but had $permits" }
         require(acquiredPermits in 0..permits) { "The number of acquired permits should be in 0..$permits" }
-        val s = SemaphoreSegment(0, null, 2)
-        head = atomic(s)
-        tail = atomic(s)
     }
 
     /**
@@ -118,107 +106,28 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
     override suspend fun acquire() {
         val p = _availablePermits.getAndDecrement()
         if (p > 0) return // permit acquired
-        addToQueueAndSuspend()
+        suspend(::onCancel)
     }
 
     override fun release() {
         val p = incPermits()
         if (p >= 0) return // no waiters
-        resumeNextFromQueue()
+        resumeNextWaiter(Unit)
     }
 
     fun incPermits() = _availablePermits.getAndUpdate { cur ->
-        check(cur < permits) { "The number of released permits cannot be greater than $permits" }
+        check(cur < permits) { invalidReleaseMessage }
         cur + 1
     }
 
-    private suspend fun addToQueueAndSuspend() = suspendAtomicCancellableCoroutineReusable<Unit> sc@{ cont ->
-        val curTail = this.tail.value
-        val enqIdx = enqIdx.getAndIncrement()
-        val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail,
-                                                          createNewSegment = ::createSegment).run { segment } // cannot be closed
-        val i = (enqIdx % SEGMENT_SIZE).toInt()
-        if (segment.get(i) === RESUMED || !segment.cas(i, null, cont)) {
-            // already resumed
-            cont.resume(Unit)
-            return@sc
-        }
-        cont.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(this, segment, i).asHandler)
-    }
+    open val invalidReleaseMessage: String
+        get() = "The number of released permits cannot be greater than $permits; this semaphore is broken"
 
-    @Suppress("UNCHECKED_CAST")
-    internal fun resumeNextFromQueue() {
-        try_again@ while (true) {
-            val curHead = this.head.value
-            val deqIdx = deqIdx.getAndIncrement()
-            val id = deqIdx / SEGMENT_SIZE
-            val segment = this.head.findSegmentAndMoveForward(id, startFrom = curHead,
-                                                              createNewSegment = ::createSegment).run { segment } // cannot be closed
-            segment.cleanPrev()
-            if (segment.id > id) {
-                this.deqIdx.updateIfLower(segment.id * SEGMENT_SIZE)
-                continue@try_again
-            }
-            val i = (deqIdx % SEGMENT_SIZE).toInt()
-            val cont = segment.getAndSet(i, RESUMED)
-            if (cont === null) return // just resumed
-            if (cont === CANCELLED) continue@try_again
-            (cont as CancellableContinuation<Unit>).resume(Unit)
-            return
+    companion object {
+        @JvmStatic
+        private fun onCancel(s: SemaphoreImpl) {
+            val p = s.incPermits()
+            if (p < 0) s.resumeNextWaiter(Unit)
         }
     }
 }
-
-private inline fun AtomicLong.updateIfLower(value: Long): Unit = loop { cur ->
-    if (cur >= value || compareAndSet(cur, value)) return
-}
-
-private class CancelSemaphoreAcquisitionHandler(
-    private val semaphore: SemaphoreImpl,
-    private val segment: SemaphoreSegment,
-    private val index: Int
-) : CancelHandler() {
-    override fun invoke(cause: Throwable?) {
-        val p = semaphore.incPermits()
-        if (p >= 0) return
-        if (segment.cancel(index)) return
-        semaphore.resumeNextFromQueue()
-    }
-
-    override fun toString() = "CancelSemaphoreAcquisitionHandler[$semaphore, $segment, $index]"
-}
-
-private fun createSegment(id: Long, prev: SemaphoreSegment?) = SemaphoreSegment(id, prev, 0)
-
-private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int) : Segment<SemaphoreSegment>(id, prev, pointers) {
-    val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
-    override val maxSlots: Int get() = SEGMENT_SIZE
-
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun get(index: Int): Any? = acquirers[index].value
-
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun cas(index: Int, expected: Any?, value: Any?): Boolean = acquirers[index].compareAndSet(expected, value)
-
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun getAndSet(index: Int, value: Any?) = acquirers[index].getAndSet(value)
-
-    // Cleans the acquirer slot located by the specified index
-    // and removes this segment physically if all slots are cleaned.
-    fun cancel(index: Int): Boolean {
-        // Try to cancel the slot
-        val cancelled = getAndSet(index, CANCELLED) !== RESUMED
-        // Remove this segment if needed
-        onSlotCleaned()
-        return cancelled
-    }
-
-    override fun toString() = "SemaphoreSegment[id=$id, hashCode=${hashCode()}]"
-}
-
-@SharedImmutable
-private val RESUMED = Symbol("RESUMED")
-@SharedImmutable
-private val CANCELLED = Symbol("CANCELLED")
-@SharedImmutable
-private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.semaphore.segmentSize", 16)
