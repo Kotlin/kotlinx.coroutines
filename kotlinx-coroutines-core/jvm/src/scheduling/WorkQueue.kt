@@ -32,7 +32,7 @@ internal const val NOTHING_TO_STEAL = -2L
  * order to properly claim value from the buffer.
  * Moreover, [Task] objects are reusable, so it may seem that this queue is prone to ABA problem.
  * Indeed it formally has ABA-problem, but the whole processing logic is written in the way that such ABA is harmless.
- * "I have discovered a truly marvelous proof of this, which this margin is too narrow to contain"
+ * I have discovered a truly marvelous proof of this, which this KDoc is too narrow to contain.
  */
 internal class WorkQueue {
 
