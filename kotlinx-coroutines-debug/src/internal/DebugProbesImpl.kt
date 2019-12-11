@@ -29,7 +29,7 @@ internal object DebugProbesImpl {
     private val capturedCoroutines = HashSet<CoroutineOwner<*>>()
     @Volatile
     private var installations = 0
-    private val isInstalled: Boolean get() = installations > 0
+    internal val isInstalled: Boolean get() = installations > 0
     // To sort coroutines by creation order, used as unique id
     private var sequenceNumber: Long = 0
 
