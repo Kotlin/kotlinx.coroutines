@@ -145,7 +145,7 @@ Proof.
   apply count_matching_find_index_Some in HExistsNondequed.
   destruct HExistsNondequed as [? HFindIndex].
 
-  iDestruct "HTq" as "(HInfArr & HListContents & HCancA & % & HRest)".
+  iDestruct "HTq" as "(HInfArr & HListContents & % & HRest)".
   iDestruct (cell_list_contents_register_for_dequeue
                with "HR HListContents") as ">[[HAwak #HDeqFront] [HListContents HCounts]]".
   by eauto.
@@ -399,7 +399,7 @@ Proof.
   iClear "HPure".
   iAssert (⌜deqFront <= length l⌝)%I as %HDeqFront.
   {
-    iDestruct "HTq" as "(_ & _ & _ & _ & HRest)".
+    iDestruct "HTq" as "(_ & _ & _ & HRest)".
     iDestruct "HRest" as (? ?) "(_ & _ & _ & _ & %)".
     iPureIntro.
     lia.
@@ -502,7 +502,7 @@ Proof.
       iDestruct "HTq" as "(HHead & HListContents & HTail)".
       iDestruct (cell_list_contents_lookup_acc with "HListContents")
         as "[HRes HLcRestore]".
-      erewrite HEl'.
+      by erewrite HEl'.
       destruct HPures as [HPures|HPures]; subst; simpl.
       {
         iDestruct "HRes" as (?) "(HArrMapsto & (Hℓ' & >HNoPerms & HRend') & HRest')".
