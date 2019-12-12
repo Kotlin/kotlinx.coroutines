@@ -2,10 +2,11 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package benchmarks.actors
+package benchmarks.scheduler.actors
 
 import benchmarks.*
-import benchmarks.actors.PingPongActorBenchmark.*
+import benchmarks.akka.*
+import benchmarks.scheduler.actors.PingPongActorBenchmark.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.openjdk.jmh.annotations.*
@@ -28,8 +29,8 @@ import java.util.concurrent.*
  * CycledActorsBenchmark.cycledActors            262144  experimental  avgt   14  1804.146 ±  57.275  ms/op
  */
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 3)
+@Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
+@Fork(value = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
@@ -39,10 +40,10 @@ open class CycledActorsBenchmark : ParametrizedDispatcherBase() {
         val NO_CHANNEL = Channel<Letter>(0)
     }
 
-    @Param("fjp", "ftp_1", "experimental")
+    @Param("fjp", "ftp_1", "scheduler")
     override var dispatcher: String = "fjp"
 
-    @Param("524288")
+    @Param("1", "1024")
     var actorStateSize = 1
 
     @Benchmark
