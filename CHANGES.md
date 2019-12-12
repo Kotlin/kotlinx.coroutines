@@ -1,5 +1,48 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.3.3
+
+### Flow
+* `Flow.take` performance is significantly improved (#1538).
+* `Flow.merge` operator (#1491).
+* Reactive Flow adapters are promoted to stable API (#1549).
+* Reusable cancellable continuations were introduced that improved the performance of various flow operators and iteration over channels (#1534).
+* Fixed interaction of multiple flows with `take` operator (#1610).
+* Throw `NoSuchElementException` instead of `UnsupportedOperationException` for empty `Flow` in `reduce` operator (#1659).
+* `onCompletion` now rethrows downstream exceptions on emit attempt (#1654).
+* Allow non-emitting `withContext` from `flow` builder (#1616).
+
+### Debugging
+
+* `DebugProbes.dumpCoroutines` is optimized to be able to print the 6-digit number of coroutines (#1535).
+* Properly capture unstarted lazy coroutines in debugger (#1544).
+* Capture coroutines launched from within a test constructor with `CoroutinesTimeout` test rule (#1542).
+* Stacktraces of `Job`-related coroutine machinery are shortened and prettified (#1574).
+* Stacktrace recovery unification that should provide a consistent experience recover of stacktrace (#1597).
+* Stacktrace recovery for `withTimeout` is supported (#1625).
+* Do not recover exception with a single `String` parameter constructor that is not a `message` (#1631).
+
+### Other features
+
+* `Dispatchers.Default` and `Dispatchers.IO` rework: CPU consumption is significantly lower, predictable idle threads termination (#840, #1046, #1286).
+* Avoid `ServiceLoader` for loading `Dispatchers.Main` (#1572, #1557, #878, #1606).
+* Consistently handle undeliverable exceptions in RxJava and Reactor integrations (#252, #1614).
+* `yield` support in immediate dispatchers (#1474).
+* `CompletableDeferred.completeWith(result: Result<T>)` is introduced.
+* Added support for tvOS and watchOS-based Native targets (#1596).
+
+### Bug fixes and improvements
+
+* Kotlin version is updated to 1.3.61.
+* `CoroutineDispatcher.isDispatchNeeded` is promoted to stable API (#1014).
+* Livelock and stackoverflows in mutual `select` expressions are fixed (#1411, #504).
+* Properly handle `null` values in `ListenableFuture` integration (#1510).
+* Making ReceiveChannel.cancel linearizability-friendly.
+* Linearizability of Channel.close in a complex contended cases (#1419).
+* ArrayChannel.isBufferEmpty atomicity is fixed (#1526).
+* Various documentation improvements.
+* Reduced bytecode size of `kotlinx-coroutines-core`, reduced size of minified `dex` when using basic functionality of `kotlinx-coroutines`.
+
 ## Version 1.3.2
 
 This is a maintenance release that does not include any new features or bug fixes.
