@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicLongArray
 class ChannelSelectStressTest : TestBase() {
     private val pairedCoroutines = 3
     private val dispatcher = newFixedThreadPoolContext(pairedCoroutines * 2, "ChannelSelectStressTest")
-    private val scope = CoroutineScope(dispatcher)
     private val elementsToSend = 20_000 * Long.SIZE_BITS * stressTestMultiplier
     private val sent = atomic(0)
     private val received = atomic(0)
@@ -28,19 +27,27 @@ class ChannelSelectStressTest : TestBase() {
 
     @Test
     fun testAtomicCancelStress() = runTest {
-        repeat(pairedCoroutines) { launchSender() }
-        repeat(pairedCoroutines) { launchReceiver() }
-        val job = scope.coroutineContext[Job] as CompletableJob
-        job.complete()
-        job.join()
-
+        withContext(dispatcher) {
+            repeat(pairedCoroutines) { launchSender() }
+            repeat(pairedCoroutines) { launchReceiver() }
+        }
+        val missing = ArrayList<Int>()
         for (i in 0 until receivedArray.length()) {
-            assertEquals("Missing element detected", 0L.inv(), receivedArray[i])
+            val bits = receivedArray[i]
+            if (bits != 0L.inv()) {
+                for (j in 0 until Long.SIZE_BITS) {
+                    val mask = 1L shl j
+                    if (bits and mask == 0L) missing += i * Long.SIZE_BITS + j
+                }
+            }
+        }
+        if (missing.isNotEmpty()) {
+            fail("Missed ${missing.size} out of $elementsToSend: $missing")
         }
     }
 
-    private fun launchSender() {
-        scope.launch {
+    private fun CoroutineScope.launchSender() {
+        launch {
             while (sent.value < elementsToSend) {
                 val element = sent.getAndIncrement()
                 if (element >= elementsToSend) break
@@ -50,8 +57,8 @@ class ChannelSelectStressTest : TestBase() {
         }
     }
 
-    private fun launchReceiver() {
-        scope.launch {
+    private fun CoroutineScope.launchReceiver() {
+        launch {
             while (received.value != elementsToSend) {
                 val element = select<Int> { channel.onReceive { it } }
                 received.incrementAndGet()
