@@ -2,6 +2,8 @@ public abstract class kotlinx/coroutines/AbstractCoroutine : kotlinx/coroutines/
 	protected final field parentContext Lkotlin/coroutines/CoroutineContext;
 	public fun <init> (Lkotlin/coroutines/CoroutineContext;Z)V
 	public synthetic fun <init> (Lkotlin/coroutines/CoroutineContext;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	protected fun afterResume (Ljava/lang/Object;)V
+	protected fun cancellationExceptionMessage ()Ljava/lang/String;
 	public final fun getContext ()Lkotlin/coroutines/CoroutineContext;
 	public fun getCoroutineContext ()Lkotlin/coroutines/CoroutineContext;
 	public fun isActive ()Z
@@ -119,6 +121,7 @@ public final class kotlinx/coroutines/CompletableDeferredKt {
 	public static final fun CompletableDeferred (Ljava/lang/Object;)Lkotlinx/coroutines/CompletableDeferred;
 	public static final fun CompletableDeferred (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/CompletableDeferred;
 	public static synthetic fun CompletableDeferred$default (Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/CompletableDeferred;
+	public static final fun completeWith (Lkotlinx/coroutines/CompletableDeferred;Ljava/lang/Object;)Z
 }
 
 public abstract interface class kotlinx/coroutines/CompletableJob : kotlinx/coroutines/Job {
@@ -262,6 +265,10 @@ public final class kotlinx/coroutines/DelayKt {
 	public static final fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class kotlinx/coroutines/DispatchedContinuationKt {
+	public static final fun resumeCancellableWith (Lkotlin/coroutines/Continuation;Ljava/lang/Object;)V
+}
+
 public final class kotlinx/coroutines/Dispatchers {
 	public static final field INSTANCE Lkotlinx/coroutines/Dispatchers;
 	public static final fun getDefault ()Lkotlinx/coroutines/CoroutineDispatcher;
@@ -379,13 +386,14 @@ public final class kotlinx/coroutines/JobKt {
 
 public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlinx/coroutines/Job, kotlinx/coroutines/ParentJob, kotlinx/coroutines/selects/SelectClause0 {
 	public fun <init> (Z)V
-	protected fun afterCompletionInternal (Ljava/lang/Object;I)V
+	protected fun afterCompletion (Ljava/lang/Object;)V
 	public final fun attachChild (Lkotlinx/coroutines/ChildJob;)Lkotlinx/coroutines/ChildHandle;
 	public synthetic fun cancel ()V
 	public synthetic fun cancel (Ljava/lang/Throwable;)Z
 	public fun cancel (Ljava/util/concurrent/CancellationException;)V
 	public final fun cancelCoroutine (Ljava/lang/Throwable;)Z
-	public fun cancelInternal (Ljava/lang/Throwable;)Z
+	public fun cancelInternal (Ljava/lang/Throwable;)V
+	protected fun cancellationExceptionMessage ()Ljava/lang/String;
 	public fun childCancelled (Ljava/lang/Throwable;)Z
 	public fun fold (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
@@ -504,7 +512,9 @@ public final class kotlinx/coroutines/ThreadPoolDispatcherKt {
 	public static final fun newSingleThreadContext (Ljava/lang/String;)Lkotlinx/coroutines/ExecutorCoroutineDispatcher;
 }
 
-public final class kotlinx/coroutines/TimeoutCancellationException : java/util/concurrent/CancellationException {
+public final class kotlinx/coroutines/TimeoutCancellationException : java/util/concurrent/CancellationException, kotlinx/coroutines/CopyableThrowable {
+	public synthetic fun createCopy ()Ljava/lang/Throwable;
+	public fun createCopy ()Lkotlinx/coroutines/TimeoutCancellationException;
 }
 
 public final class kotlinx/coroutines/TimeoutKt {
@@ -916,7 +926,9 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun map (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun mapLatest (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun mapNotNull (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun merge (Ljava/lang/Iterable;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun merge (Lkotlinx/coroutines/flow/Flow;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun merge ([Lkotlinx/coroutines/flow/Flow;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun observeOn (Lkotlinx/coroutines/flow/Flow;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/flow/Flow;
 	public static final synthetic fun onCompletion (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun onCompletion (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
@@ -961,7 +973,6 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun transform (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun transformLatest (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun unsafeTransform (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
-	public static final fun withContext (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function1;)V
 	public static final fun withIndex (Lkotlinx/coroutines/flow/Flow;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun zip (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 }
@@ -1047,9 +1058,11 @@ public final class kotlinx/coroutines/selects/SelectBuilderImpl : kotlinx/corout
 	public fun isSelected ()Z
 	public fun onTimeout (JLkotlin/jvm/functions/Function1;)V
 	public fun performAtomicTrySelect (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
-	public fun resumeSelectCancellableWithException (Ljava/lang/Throwable;)V
+	public fun resumeSelectWithException (Ljava/lang/Throwable;)V
 	public fun resumeWith (Ljava/lang/Object;)V
-	public fun trySelect (Ljava/lang/Object;)Z
+	public fun toString ()Ljava/lang/String;
+	public fun trySelect ()Z
+	public fun trySelectOther (Lkotlinx/coroutines/internal/LockFreeLinkedListNode$PrepareOp;)Ljava/lang/Object;
 }
 
 public abstract interface class kotlinx/coroutines/selects/SelectClause0 {
@@ -1069,8 +1082,9 @@ public abstract interface class kotlinx/coroutines/selects/SelectInstance {
 	public abstract fun getCompletion ()Lkotlin/coroutines/Continuation;
 	public abstract fun isSelected ()Z
 	public abstract fun performAtomicTrySelect (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
-	public abstract fun resumeSelectCancellableWithException (Ljava/lang/Throwable;)V
-	public abstract fun trySelect (Ljava/lang/Object;)Z
+	public abstract fun resumeSelectWithException (Ljava/lang/Throwable;)V
+	public abstract fun trySelect ()Z
+	public abstract fun trySelectOther (Lkotlinx/coroutines/internal/LockFreeLinkedListNode$PrepareOp;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/selects/SelectKt {

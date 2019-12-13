@@ -5,6 +5,7 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
 import org.hamcrest.core.*
 import org.junit.*
@@ -129,5 +130,16 @@ class FluxTest : TestBase() {
     @Test
     fun testIllegalArgumentException() {
         assertFailsWith<IllegalArgumentException> { flux<Int>(Job()) { } }
+    }
+
+    @Test
+    fun testLeakedException() = runBlocking {
+        // Test exception is not reported to global handler
+        val flow = flux<Unit> { throw TestException() }.asFlow()
+        repeat(2000) {
+            combine(flow, flow) { _, _ -> Unit }
+                .catch {}
+                .collect { }
+        }
     }
 }

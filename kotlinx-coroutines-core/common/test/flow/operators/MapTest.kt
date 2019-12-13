@@ -37,8 +37,9 @@ class MapTest : TestBase() {
                     hang { cancelled = true }
                 }
                 emit(1)
+                expectUnreached()
             }
-        }.onEach {
+        }.map<Int, Int> {
             latch.receive()
             throw TestException()
         }.catch { emit(42) }

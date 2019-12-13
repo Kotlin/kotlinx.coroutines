@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.selects
@@ -385,7 +385,38 @@ class SelectArrayChannelTest : TestBase() {
     // only for debugging
     internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {
         this as SelectBuilderImpl // type assertion
-        if (!trySelect(null)) return
+        if (!trySelect()) return
         block.startCoroutineUnintercepted(this)
+    }
+
+    @Test
+    fun testSelectReceiveOrClosedForClosedChannel() = runTest {
+        val channel = Channel<Int>(1)
+        channel.close()
+        expect(1)
+        select<Unit> {
+            expect(2)
+            channel.onReceiveOrClosed {
+                assertTrue(it.isClosed)
+                assertNull(it.closeCause)
+                finish(3)
+            }
+        }
+    }
+
+    @Test
+    fun testSelectReceiveOrClosedForClosedChannelWithValue() = runTest {
+        val channel = Channel<Int>(1)
+        channel.send(42)
+        channel.close()
+        expect(1)
+        select<Unit> {
+            expect(2)
+            channel.onReceiveOrClosed {
+                assertFalse(it.isClosed)
+                assertEquals(42, it.value)
+                finish(3)
+            }
+        }
     }
 }

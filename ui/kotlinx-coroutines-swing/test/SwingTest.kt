@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.swing
 
+import javafx.application.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
@@ -82,5 +83,19 @@ class SwingTest : TestBase() {
 
     private suspend fun join(component: SwingTest.SwingComponent) {
         component.coroutineContext[Job]!!.join()
+    }
+
+    @Test
+    fun testImmediateDispatcherYield() = runBlocking(Dispatchers.Swing) {
+        expect(1)
+        // launch in the immediate dispatcher
+        launch(Dispatchers.Swing.immediate) {
+            expect(2)
+            yield()
+            expect(4)
+        }
+        expect(3) // after yield
+        yield() // yield back
+        finish(5)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("DEPRECATION_ERROR")
 
@@ -94,6 +94,8 @@ public abstract class AbstractCoroutine<in T>(
      */
     protected open fun onCancelled(cause: Throwable, handled: Boolean) {}
 
+    override fun cancellationExceptionMessage(): String = "$classSimpleName was cancelled"
+
     @Suppress("UNCHECKED_CAST")
     protected final override fun onCompletionInternal(state: Any?) {
         if (state is CompletedExceptionally)
@@ -102,14 +104,16 @@ public abstract class AbstractCoroutine<in T>(
             onCompleted(state as T)
     }
 
-    internal open val defaultResumeMode: Int get() = MODE_ATOMIC_DEFAULT
-
     /**
      * Completes execution of this with coroutine with the specified result.
      */
     public final override fun resumeWith(result: Result<T>) {
-        makeCompletingOnce(result.toState(), defaultResumeMode)
+        val state = makeCompletingOnce(result.toState())
+        if (state === COMPLETING_WAITING_CHILDREN) return
+        afterResume(state)
     }
+
+    protected open fun afterResume(state: Any?) = afterCompletion(state)
 
     internal final override fun handleOnCompletionException(exception: Throwable) {
         handleCoroutineException(context, exception)

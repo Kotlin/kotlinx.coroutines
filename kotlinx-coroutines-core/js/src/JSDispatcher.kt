@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -113,7 +113,7 @@ private class WindowMessageQueue(private val window: Window) : MessageQueue() {
 }
 
 /**
- * An abstraction over JS scheduling mechanism that leverages micro-batching of [dispatch] blocks without
+ * An abstraction over JS scheduling mechanism that leverages micro-batching of dispatched blocks without
  * paying the cost of JS callbacks scheduling on every dispatch.
  *
  * Queue uses two scheduling mechanisms:

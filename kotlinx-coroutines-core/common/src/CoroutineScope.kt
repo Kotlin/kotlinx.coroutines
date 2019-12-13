@@ -73,14 +73,13 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  * Example of use:
  * ```
  * class MyAndroidActivity {
- *   private val scope = MainScope()
+ *     private val scope = MainScope()
  *
- *   override fun onDestroy() {
- *     super.onDestroy()
- *     scope.cancel()
- *   }
+ *     override fun onDestroy() {
+ *         super.onDestroy()
+ *         scope.cancel()
+ *     }
  * }
- *
  * ```
  *
  * The resulting scope has [SupervisorJob] and [Dispatchers.Main] context elements.
@@ -128,7 +127,6 @@ public val CoroutineScope.isActive: Boolean
  *         send(Math.sqrt(number))
  *     }
  * }
- *
  * ```
  */
 public object GlobalScope : CoroutineScope {
@@ -151,16 +149,15 @@ public object GlobalScope : CoroutineScope {
  *
  * ```
  * suspend fun showSomeData() = coroutineScope {
- *
- *   val data = async(Dispatchers.IO) { // <- extension on current scope
+ *     val data = async(Dispatchers.IO) { // <- extension on current scope
  *      ... load some UI data for the Main thread ...
- *   }
+ *     }
  *
- *   withContext(Dispatchers.Main) {
- *     doSomeWork()
- *     val result = data.await()
- *     display(result)
- *   }
+ *     withContext(Dispatchers.Main) {
+ *         doSomeWork()
+ *         val result = data.await()
+ *         display(result)
+ *     }
  * }
  * ```
  *
@@ -184,7 +181,7 @@ public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R 
  * Creates a [CoroutineScope] that wraps the given coroutine [context].
  *
  * If the given [context] does not contain a [Job] element, then a default `Job()` is created.
- * This way, cancellation or failure or any child coroutine in this scope cancels all the other children,
+ * This way, cancellation or failure of any child coroutine in this scope cancels all the other children,
  * just like inside [coroutineScope] block.
  */
 @Suppress("FunctionName")

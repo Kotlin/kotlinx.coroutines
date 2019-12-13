@@ -20,6 +20,37 @@ class ChannelsTest: TestBase() {
     }
 
     @Test
+    fun testCloseWithMultipleWaiters() = runTest {
+        val channel = Channel<Int>()
+        launch {
+            try {
+                expect(2)
+                channel.receive()
+                expectUnreached()
+            } catch (e: ClosedReceiveChannelException) {
+                expect(5)
+            }
+        }
+
+        launch {
+            try {
+                expect(3)
+                channel.receive()
+                expectUnreached()
+            } catch (e: ClosedReceiveChannelException) {
+                expect(6)
+            }
+        }
+
+        expect(1)
+        yield()
+        expect(4)
+        channel.close()
+        yield()
+        finish(7)
+    }
+
+    @Test
     fun testAssociate() = runTest {
         assertEquals(testList.associate { it * 2 to it * 3 },
             testList.asReceiveChannel().associate { it * 2 to it * 3 }.toMap())

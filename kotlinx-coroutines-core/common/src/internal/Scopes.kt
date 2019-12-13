@@ -1,11 +1,12 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
 
 /**
@@ -19,26 +20,21 @@ internal open class ScopeCoroutine<in T>(
     final override fun getStackTraceElement(): StackTraceElement? = null
     final override val isScopedCoroutine: Boolean get() = true
 
-    override val defaultResumeMode: Int get() = MODE_DIRECT
-
     internal val parent: Job? get() = parentContext[Job]
 
-    @Suppress("UNCHECKED_CAST")
-    override fun afterCompletionInternal(state: Any?, mode: Int) {
-        if (state is CompletedExceptionally) {
-            val exception = if (mode == MODE_IGNORE) state.cause else recoverStackTrace(state.cause, uCont)
-            uCont.resumeUninterceptedWithExceptionMode(exception, mode)
-        } else {
-            uCont.resumeUninterceptedMode(state as T, mode)
-        }
+    override fun afterCompletion(state: Any?) {
+        // Resume in a cancellable way by default when resuming from another context
+        uCont.intercepted().resumeCancellableWith(recoverResult(state, uCont))
     }
-}
 
-internal fun AbstractCoroutine<*>.tryRecover(exception: Throwable): Throwable {
-    val cont = (this as? ScopeCoroutine<*>)?.uCont ?: return exception
-    return recoverStackTrace(exception, cont)
+    override fun afterResume(state: Any?) {
+        // Resume direct because scope is already in the correct context
+        uCont.resumeWith(recoverResult(state, uCont))
+    }
 }
 
 internal class ContextScope(context: CoroutineContext) : CoroutineScope {
     override val coroutineContext: CoroutineContext = context
+    // CoroutineScope is used intentionally for user-friendly representation
+    override fun toString(): String = "CoroutineScope(coroutineContext=$coroutineContext)"
 }

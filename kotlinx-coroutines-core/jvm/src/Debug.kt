@@ -49,33 +49,6 @@ public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
 internal const val STACKTRACE_RECOVERY_PROPERTY_NAME = "kotlinx.coroutines.stacktrace.recovery"
 
 /**
- * Throwable which can be cloned during stacktrace recovery in a class-specific way.
- * For additional information about stacktrace recovery see [STACKTRACE_RECOVERY_PROPERTY_NAME]
- *
- * Example of usage:
- * ```
- * class BadResponseCodeException(val responseCode: Int) : Exception(), CopyableThrowable<BadResponseCodeException> {
- *
- *  override fun createCopy(): BadResponseCodeException {
- *    val result = BadResponseCodeException(responseCode)
- *    result.initCause(this)
- *    return result
- *  }
- * ```
- */
-@ExperimentalCoroutinesApi
-public interface CopyableThrowable<T> where T : Throwable, T : CopyableThrowable<T> {
-
-    /**
-     * Creates a copy of the current instance.
-     * For better debuggability, it is recommended to use original exception as [cause][Throwable.cause] of the resulting one.
-     * Stacktrace of copied exception will be overwritten by stacktrace recovery machinery by [Throwable.setStackTrace] call.
-     * An exception can opt-out of copying by returning `null` from this function.
-     */
-    public fun createCopy(): T?
-}
-
-/**
  * Automatic debug configuration value for [DEBUG_PROPERTY_NAME].
  */
 public const val DEBUG_PROPERTY_VALUE_AUTO = "auto"

@@ -115,36 +115,41 @@ private class PulseTimer : AnimationTimer() {
     }
 }
 
-internal fun initPlatform(): Boolean {
-    /*
-     * Try to instantiate JavaFx platform in a way which works
-     * both on Java 8 and Java 11 and does not produce "illegal reflective access":
-     *
-     * 1) Try to invoke javafx.application.Platform.startup if this class is
-     *    present in a classpath.
-     * 2) If it is not successful and does not because it is already started,
-     *    fallback to PlatformImpl.
-     *
-     * Ignore exception anyway in case of unexpected changes in API, in that case
-     * user will have to instantiate it manually.
-     */
-    val runnable = Runnable {}
-    return runCatching {
-        // Invoke public API if it is present
-        Class.forName("javafx.application.Platform")
-            .getMethod("startup", java.lang.Runnable::class.java)
-            .invoke(null, runnable)
-    }.recoverCatching { exception ->
-        // Recover -> check re-initialization
-        val cause = exception.cause
-        if (exception is InvocationTargetException && cause is IllegalStateException
-            && "Toolkit already initialized" == cause.message) {
-            // Toolkit is already initialized -> success, return
-            Unit
-        } else { // Fallback to Java 8 API
-            Class.forName("com.sun.javafx.application.PlatformImpl")
+internal fun initPlatform(): Boolean = PlatformInitializer.success
+
+// Lazily try to initialize JavaFx platform just once
+private object PlatformInitializer {
+    val success = run {
+        /*
+         * Try to instantiate JavaFx platform in a way which works
+         * both on Java 8 and Java 11 and does not produce "illegal reflective access":
+         *
+         * 1) Try to invoke javafx.application.Platform.startup if this class is
+         *    present in a classpath.
+         * 2) If it is not successful and does not because it is already started,
+         *    fallback to PlatformImpl.
+         *
+         * Ignore exception anyway in case of unexpected changes in API, in that case
+         * user will have to instantiate it manually.
+         */
+        val runnable = Runnable {}
+        runCatching {
+            // Invoke public API if it is present
+            Class.forName("javafx.application.Platform")
                 .getMethod("startup", java.lang.Runnable::class.java)
                 .invoke(null, runnable)
-        }
-    }.isSuccess
+        }.recoverCatching { exception ->
+            // Recover -> check re-initialization
+            val cause = exception.cause
+            if (exception is InvocationTargetException && cause is IllegalStateException
+                && "Toolkit already initialized" == cause.message) {
+                // Toolkit is already initialized -> success, return
+                Unit
+            } else { // Fallback to Java 8 API
+                Class.forName("com.sun.javafx.application.PlatformImpl")
+                    .getMethod("startup", java.lang.Runnable::class.java)
+                    .invoke(null, runnable)
+            }
+        }.isSuccess
+    }
 }

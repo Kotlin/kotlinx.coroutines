@@ -1,27 +1,27 @@
 package kotlinx.coroutines.reactor
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
-import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import reactor.core.publisher.Mono
 import reactor.util.context.Context
 import kotlin.test.assertEquals
 
-class FlowAsFluxTest {
+class FlowAsFluxTest : TestBase() {
     @Test
-    fun testFlowToFluxContextPropagation() = runBlocking<Unit> {
+    fun testFlowToFluxContextPropagation() {
         val flux = flow<String> {
-            (1..4).forEach { i -> emit(m(i).awaitFirst()) }
+            (1..4).forEach { i -> emit(createMono(i).awaitFirst()) }
         }   .asFlux()
             .subscriberContext(Context.of(1, "1"))
             .subscriberContext(Context.of(2, "2", 3, "3", 4, "4"))
-        var i = 0
-        flux.subscribe { str -> i++; println(str); assertEquals(str, i.toString()) }
+        val list = flux.collectList().block()!!
+        assertEquals(listOf("1", "2", "3", "4"), list)
     }
 
-    private fun m(i: Int): Mono<String> = mono {
-        val ctx = coroutineContext[ReactorContext]?.context
-        ctx?.getOrDefault(i, "noValue")
+    private fun createMono(i: Int): Mono<String> = mono {
+        val ctx = coroutineContext[ReactorContext]!!.context
+        ctx.getOrDefault(i, "noValue")
     }
 }

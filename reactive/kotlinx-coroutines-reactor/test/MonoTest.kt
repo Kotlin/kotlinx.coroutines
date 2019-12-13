@@ -5,13 +5,17 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
 import org.reactivestreams.*
 import reactor.core.publisher.*
+import reactor.util.context.*
+import java.time.*
 import java.time.Duration.*
+import java.util.function.*
 
 class MonoTest : TestBase() {
     @Before
@@ -217,11 +221,13 @@ class MonoTest : TestBase() {
     fun testUnhandledException() = runTest {
         expect(1)
         var subscription: Subscription? = null
-        val mono = mono(currentDispatcher() + CoroutineExceptionHandler { _, t ->
+        val handler = BiFunction<Throwable, Any?, Throwable> { t, _ ->
             assertTrue(t is TestException)
             expect(5)
+            t
+        }
 
-        }) {
+        val mono = mono(currentDispatcher()) {
             expect(4)
             subscription!!.cancel() // cancel our own subscription, so that delay will get cancelled
             try {
@@ -229,7 +235,7 @@ class MonoTest : TestBase() {
             } finally {
                 throw TestException() // would not be able to handle it since mono is disposed
             }
-        }
+        }.subscriberContext { Context.of("reactor.onOperatorError.local", handler) }
         mono.subscribe(object : Subscriber<Unit> {
             override fun onSubscribe(s: Subscription) {
                 expect(2)
@@ -247,5 +253,36 @@ class MonoTest : TestBase() {
     @Test
     fun testIllegalArgumentException() {
         assertFailsWith<IllegalArgumentException> { mono(Job()) { } }
+    }
+
+    @Test
+    fun testExceptionAfterCancellation() = runTest {
+        // Test exception is not reported to global handler
+        Flux
+            .interval(ofMillis(1))
+            .switchMap {
+                mono(coroutineContext) {
+                    timeBomb().awaitFirst()
+                }
+            }
+            .onErrorReturn({
+                expect(1)
+                true
+            }, 42)
+            .blockLast()
+        finish(2)
+    }
+
+    private fun timeBomb() = Mono.delay(Duration.ofMillis(1)).doOnSuccess { throw Exception("something went wrong") }
+
+    @Test
+    fun testLeakedException() = runBlocking {
+        // Test exception is not reported to global handler
+        val flow = mono<Unit> { throw TestException() }.toFlux().asFlow()
+        repeat(10000) {
+            combine(flow, flow) { _, _ -> Unit }
+                .catch {}
+                .collect { }
+        }
     }
 }

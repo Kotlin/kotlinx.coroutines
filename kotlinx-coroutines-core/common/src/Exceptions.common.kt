@@ -5,14 +5,16 @@
 package kotlinx.coroutines
 
 /**
+ * This exception gets thrown if an exception is caught while processing [CompletionHandler] invocation for [Job].
+ *
  * @suppress **This an internal API and should not be used from general code.**
  */
 @InternalCoroutinesApi
-public expect class CompletionHandlerException(message: String, cause: Throwable) : RuntimeException
+public class CompletionHandlerException(message: String, cause: Throwable) : RuntimeException(message, cause)
 
 public expect open class CancellationException(message: String?) : IllegalStateException
 
-@Suppress("FunctionName")
+@Suppress("FunctionName", "NO_ACTUAL_FOR_EXPECT")
 public expect fun CancellationException(message: String?, cause: Throwable?) : CancellationException
 
 internal expect class JobCancellationException(

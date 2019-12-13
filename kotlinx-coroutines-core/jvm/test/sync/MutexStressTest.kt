@@ -9,7 +9,7 @@ import kotlin.test.*
 
 class MutexStressTest : TestBase() {
     @Test
-    fun testStress() = runTest {
+    fun testStress() = runBlocking(Dispatchers.Default) {
         val n = 1000 * stressTestMultiplier
         val k = 100
         var shared = 0

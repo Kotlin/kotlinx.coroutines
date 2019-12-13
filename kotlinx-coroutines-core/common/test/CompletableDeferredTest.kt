@@ -80,6 +80,26 @@ class CompletableDeferredTest : TestBase() {
     }
 
     @Test
+    fun testCompleteWithResultOK() {
+        val c = CompletableDeferred<String>()
+        assertEquals(true, c.completeWith(Result.success("OK")))
+        checkCompleteOk(c)
+        assertEquals("OK", c.getCompleted())
+        assertEquals(false, c.completeWith(Result.success("OK")))
+        checkCompleteOk(c)
+        assertEquals("OK", c.getCompleted())
+    }
+
+    @Test
+    fun testCompleteWithResultException() {
+        val c = CompletableDeferred<String>()
+        assertEquals(true, c.completeWith(Result.failure(TestException())))
+        checkCancelWithException(c)
+        assertEquals(false, c.completeWith(Result.failure(TestException())))
+        checkCancelWithException(c)
+    }
+
+    @Test
     fun testParentCancelsChild() {
         val parent = Job()
         val c = CompletableDeferred<String>(parent)

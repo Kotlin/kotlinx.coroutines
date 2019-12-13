@@ -15,6 +15,18 @@ import kotlin.test.*
 private val VERBOSE = systemProp("test.verbose", false)
 
 /**
+ * Is `true` when running in a nightly stress test mode.
+ */
+public actual val isStressTest = System.getProperty("stressTest")?.toBoolean() ?: false
+
+public val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
+
+/**
+ * Multiply various constants in stress tests by this factor, so that they run longer during nightly stress test.
+ */
+public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
+
+/**
  * Base class for tests, so that tests for predictable scheduling of actions in multiple coroutines sharing a single
  * thread can be written. Use it like this:
  *
@@ -34,18 +46,6 @@ private val VERBOSE = systemProp("test.verbose", false)
  * ```
  */
 public actual open class TestBase actual constructor() {
-    /**
-     * Is `true` when running in a nightly stress test mode.
-     */
-    public actual val isStressTest = System.getProperty("stressTest")?.toBoolean() ?: false
-
-    public val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
-
-    /**
-     * Multiply various constants in stress tests by this factor, so that they run longer during nightly stress test.
-     */
-    public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
-
     private var actionIndex = AtomicInteger()
     private var finished = AtomicBoolean()
     private var error = AtomicReference<Throwable>()

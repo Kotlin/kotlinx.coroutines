@@ -7,7 +7,6 @@ package kotlinx.coroutines.scheduling
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
-import java.util.*
 import java.util.concurrent.*
 import kotlin.concurrent.*
 import kotlin.test.*
@@ -17,8 +16,8 @@ class WorkQueueStressTest : TestBase() {
     private val threads = mutableListOf<Thread>()
     private val offerIterations = 100_000 * stressTestMultiplierSqrt // memory pressure, not CPU time
     private val stealersCount = 6
-    private val stolenTasks = Array(stealersCount) { Queue() }
-    private val globalQueue = Queue() // only producer will use it
+    private val stolenTasks = Array(stealersCount) { GlobalQueue() }
+    private val globalQueue = GlobalQueue() // only producer will use it
     private val producerQueue = WorkQueue()
 
     @Volatile
@@ -45,7 +44,7 @@ class WorkQueueStressTest : TestBase() {
                     Thread.yield()
                 }
 
-                producerQueue.add(task(i.toLong()), globalQueue)
+                producerQueue.add(task(i.toLong()))?.let { globalQueue.addLast(it) }
             }
 
             producerFinished = true
@@ -55,12 +54,14 @@ class WorkQueueStressTest : TestBase() {
             threads += thread(name = "stealer $i") {
                 val myQueue = WorkQueue()
                 startLatch.await()
-                while (!producerFinished || producerQueue.size() != 0) {
-                    myQueue.trySteal(producerQueue, stolenTasks[i])
+                while (!producerFinished || producerQueue.size != 0) {
+                    stolenTasks[i].addAll(myQueue.drain().map { task(it) })
+                    myQueue.tryStealFrom(victim = producerQueue)
                 }
 
                 // Drain last element which is not counted in buffer
-                myQueue.trySteal(producerQueue, stolenTasks[i])
+                stolenTasks[i].addAll(myQueue.drain().map { task(it) })
+                myQueue.tryStealFrom(producerQueue)
                 stolenTasks[i].addAll(myQueue.drain().map { task(it) })
             }
         }
@@ -73,7 +74,6 @@ class WorkQueueStressTest : TestBase() {
     @Test
     fun testSingleProducerSingleStealer() {
         val startLatch = CountDownLatch(1)
-        val fakeQueue = Queue()
         threads += thread(name = "producer") {
             startLatch.await()
             for (i in 1..offerIterations) {
@@ -82,16 +82,16 @@ class WorkQueueStressTest : TestBase() {
                 }
 
                 // No offloading to global queue here
-                producerQueue.add(task(i.toLong()), fakeQueue)
+                producerQueue.add(task(i.toLong()))
             }
         }
 
-        val stolen = Queue()
+        val stolen = GlobalQueue()
         threads += thread(name = "stealer") {
             val myQueue = WorkQueue()
             startLatch.await()
             while (stolen.size != offerIterations) {
-                if (!myQueue.trySteal(producerQueue, stolen)) {
+                if (myQueue.tryStealFrom(producerQueue) != NOTHING_TO_STEAL) {
                     stolen.addAll(myQueue.drain().map { task(it) })
                 }
             }
@@ -114,10 +114,8 @@ class WorkQueueStressTest : TestBase() {
         val expected = (1L..offerIterations).toSet()
         assertEquals(expected, result, "Following elements are missing: ${(expected - result)}")
     }
-}
 
-internal class Queue : GlobalQueue() {
-    fun addAll(tasks: Collection<Task>) {
+    private fun GlobalQueue.addAll(tasks: Collection<Task>) {
         tasks.forEach { addLast(it) }
     }
 }

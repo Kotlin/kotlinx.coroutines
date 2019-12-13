@@ -66,14 +66,15 @@ private fun <E : Throwable> recoverFromStackFrame(exception: E, continuation: Co
 
     // Try to create an exception of the same type and get stacktrace from continuation
     val newException = tryCopyException(cause) ?: return exception
+    // Verify that the new exception has the same message as the original one (bail out if not, see #1631)
+    if (newException.message != cause.message) return exception
+    // Update stacktrace
     val stacktrace = createStackTrace(continuation)
     if (stacktrace.isEmpty()) return exception
-
     // Merge if necessary
     if (cause !== exception) {
         mergeRecoveredTraces(recoveredStacktrace, stacktrace)
     }
-
     // Take recovered stacktrace, merge it with existing one if necessary and return
     return createFinalException(cause, newException, stacktrace)
 }
@@ -204,3 +205,8 @@ internal actual typealias CoroutineStackFrame = kotlin.coroutines.jvm.internal.C
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias StackTraceElement = java.lang.StackTraceElement
+
+internal actual fun Throwable.initCause(cause: Throwable) {
+    // Resolved to member, verified by test
+    initCause(cause)
+}

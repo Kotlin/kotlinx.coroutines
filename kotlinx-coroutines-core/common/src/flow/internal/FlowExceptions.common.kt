@@ -5,12 +5,21 @@
 package kotlinx.coroutines.flow.internal
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 
 /**
  * This exception is thrown when operator need no more elements from the flow.
  * This exception should never escape outside of operator's implementation.
+ * This exception can be safely ignored by non-terminal flow operator if and only if it was caught by its owner
+ * (see usages of [checkOwnership]).
  */
-internal expect class AbortFlowException() : CancellationException
+internal expect class AbortFlowException(owner: FlowCollector<*>) : CancellationException {
+    public val owner: FlowCollector<*>
+}
+
+internal fun AbortFlowException.checkOwnership(owner: FlowCollector<*>) {
+    if (this.owner !== owner) throw this
+}
 
 /**
  * Exception used to cancel child of [scopedFlow] without cancelling the whole scope.

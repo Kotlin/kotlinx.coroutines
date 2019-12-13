@@ -10,10 +10,10 @@ import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-public expect open class TestBase constructor() {
-    public val isStressTest: Boolean
-    public val stressTestMultiplier: Int
+public expect val isStressTest: Boolean
+public expect val stressTestMultiplier: Int
 
+public expect open class TestBase constructor() {
     public fun error(message: Any, cause: Throwable? = null): Nothing
     public fun expect(index: Int)
     public fun expectUnreached()
@@ -71,9 +71,10 @@ public class RecoverableTestCancellationException(message: String? = null) : Can
 public fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
     val dispatcher = context[ContinuationInterceptor] as CoroutineDispatcher
     return object : CoroutineDispatcher() {
-        override fun dispatch(context: CoroutineContext, block: Runnable) {
+        override fun isDispatchNeeded(context: CoroutineContext): Boolean =
+            dispatcher.isDispatchNeeded(context)
+        override fun dispatch(context: CoroutineContext, block: Runnable) =
             dispatcher.dispatch(context, block)
-        }
     }
 }
 

@@ -49,28 +49,26 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
     flows: Array<out Flow<T>>,
     arrayFactory: () -> Array<T?>,
     transform: suspend FlowCollector<R>.(Array<T>) -> Unit
-) {
-    coroutineScope {
-        val size = flows.size
-        val channels =
-            Array(size) { asFairChannel(flows[it]) }
-        val latestValues = arrayOfNulls<Any?>(size)
-        val isClosed = Array(size) { false }
-
-        // See flow.combine(other) for explanation.
-        while (!isClosed.all { it }) {
-            select<Unit> {
-                for (i in 0 until size) {
-                    onReceive(isClosed[i], channels[i], { isClosed[i] = true }) { value ->
-                        latestValues[i] = value
-                        if (latestValues.all { it !== null }) {
-                            val arguments = arrayFactory()
-                            for (index in 0 until size) {
-                                arguments[index] = NULL.unbox(latestValues[index])
-                            }
-                            transform(arguments as Array<T>)
-                        }
+): Unit = coroutineScope {
+    val size = flows.size
+    val channels = Array(size) { asFairChannel(flows[it]) }
+    val latestValues = arrayOfNulls<Any?>(size)
+    val isClosed = Array(size) { false }
+    var nonClosed = size
+    var remainingNulls = size
+    // See flow.combine(other) for explanation.
+    while (nonClosed != 0) {
+        select<Unit> {
+            for (i in 0 until size) {
+                onReceive(isClosed[i], channels[i], { isClosed[i] = true; --nonClosed }) { value ->
+                    if (latestValues[i] == null) --remainingNulls
+                    latestValues[i] = value
+                    if (remainingNulls != 0) return@onReceive
+                    val arguments = arrayFactory()
+                    for (index in 0 until size) {
+                        arguments[index] = NULL.unbox(latestValues[index])
                     }
+                    transform(arguments as Array<T>)
                 }
             }
         }
@@ -84,6 +82,7 @@ private inline fun SelectBuilder<Unit>.onReceive(
     noinline onReceive: suspend (value: Any) -> Unit
 ) {
     if (isClosed) return
+    @Suppress("DEPRECATION")
     channel.onReceiveOrNull {
         // TODO onReceiveOrClosed when boxing issues are fixed
         if (it === null) onClosed()
@@ -115,7 +114,7 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
          * Invariant: this clause is invoked only when all elements from the channel were processed (=> rendezvous restriction).
          */
         (second as SendChannel<*>).invokeOnClose {
-            if (!first.isClosedForReceive) first.cancel(AbortFlowException())
+            if (!first.isClosedForReceive) first.cancel(AbortFlowException(this@unsafeFlow))
         }
 
         val otherIterator = second.iterator()
@@ -127,9 +126,9 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
                 emit(transform(NULL.unbox(value), NULL.unbox(otherIterator.next())))
             }
         } catch (e: AbortFlowException) {
-            // complete
+            e.checkOwnership(owner = this@unsafeFlow)
         } finally {
-            if (!second.isClosedForReceive) second.cancel(AbortFlowException())
+            if (!second.isClosedForReceive) second.cancel(AbortFlowException(this@unsafeFlow))
         }
     }
 }

@@ -6,7 +6,6 @@
 
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
-apply plugin: "com.github.johnrengelman.shadow"
 
 apply from: project.rootProject.file('gradle/maven-central.gradle')
 
@@ -15,7 +14,16 @@ apply from: project.rootProject.file('gradle/maven-central.gradle')
 def isMultiplatform = project.name == "kotlinx-coroutines-core"
 def isBom = project.name == "kotlinx-coroutines-bom"
 
-if (!isMultiplatform) {
+if (!isBom) {
+    apply plugin: "com.github.johnrengelman.shadow"
+
+    // empty xxx-javadoc.jar
+    task javadocJar(type: Jar) {
+        archiveClassifier = 'javadoc'
+    }
+}
+
+if (!isMultiplatform && !isBom) {
     // Regular java modules need 'java-library' plugin for proper publication
     apply plugin: 'java-library'
 
@@ -24,11 +32,6 @@ if (!isMultiplatform) {
         archiveClassifier = 'sources'
         from sourceSets.main.allSource
     }
-}
-
-// empty xxx-javadoc.jar
-task javadocJar(type: Jar) {
-    archiveClassifier = 'javadoc'
 }
 
 publishing {
@@ -46,12 +49,7 @@ publishing {
         }
     }
 
-    if (isBom) {
-        // Configure mavenBom publication
-        publications {
-            mavenBom(MavenPublication) {}
-        }
-    } else if (!isMultiplatform) {
+    if (!isMultiplatform && !isBom) {
         // Configure java publications for regular non-MPP modules
         publications {
             maven(MavenPublication) {

@@ -12,15 +12,9 @@ import kotlin.coroutines.*
 import kotlin.internal.*
 
 /**
- * Creates cold [Completable] that runs a given [block] in a coroutine.
+ * Creates cold [Completable] that runs a given [block] in a coroutine and emits its result.
  * Every time the returned completable is subscribed, it starts a new coroutine.
  * Unsubscribing cancels running coroutine.
- *
- * | **Coroutine action**                  | **Signal to subscriber**
- * | ------------------------------------- | ------------------------
- * | Completes successfully                | `onCompleted`
- * | Failure with exception or unsubscribe | `onError`
- *
  * Coroutine context can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * Method throws [IllegalArgumentException] if provided [context] contains a [Job] instance.
@@ -62,21 +56,19 @@ private class RxCompletableCoroutine(
 ) : AbstractCoroutine<Unit>(parentContext, true) {
     override fun onCompleted(value: Unit) {
         try {
-            if (!subscriber.isDisposed) subscriber.onComplete()
+            subscriber.onComplete()
         } catch (e: Throwable) {
-            handleCoroutineException(context, e)
+            handleUndeliverableException(e, context)
         }
     }
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
-        if (!subscriber.isDisposed) {
-            try {
-                subscriber.onError(cause)
-            } catch (e: Throwable) {
-                handleCoroutineException(context, e)
+        try {
+            if (!subscriber.tryOnError(cause)) {
+                handleUndeliverableException(cause, context)
             }
-        } else if (!handled) {
-            handleCoroutineException(context, cause)
+        } catch (e: Throwable) {
+            handleUndeliverableException(e, context)
         }
     }
 }

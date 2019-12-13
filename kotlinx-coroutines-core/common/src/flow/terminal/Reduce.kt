@@ -15,7 +15,7 @@ import kotlin.jvm.*
 
 /**
  * Accumulates value starting with the first element and applying [operation] to current accumulator value and each element.
- * Throws [UnsupportedOperationException] if flow was empty.
+ * Throws [NoSuchElementException] if flow was empty.
  */
 @ExperimentalCoroutinesApi
 public suspend fun <S, T : S> Flow<T>.reduce(operation: suspend (accumulator: S, value: T) -> S): S {
@@ -30,7 +30,7 @@ public suspend fun <S, T : S> Flow<T>.reduce(operation: suspend (accumulator: S,
         }
     }
 
-    if (accumulator === NULL) throw UnsupportedOperationException("Empty flow can't be reduced")
+    if (accumulator === NULL) throw NoSuchElementException("Empty flow can't be reduced")
     @Suppress("UNCHECKED_CAST")
     return accumulator as S
 }
@@ -90,7 +90,7 @@ public suspend fun <T> Flow<T>.first(): T {
     try {
         collect { value ->
             result = value
-            throw AbortFlowException()
+            throw AbortFlowException(NopCollector)
         }
     } catch (e: AbortFlowException) {
         // Do nothing
@@ -110,7 +110,7 @@ public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
         collect { value ->
             if (predicate(value)) {
                 result = value
-                throw AbortFlowException()
+                throw AbortFlowException(NopCollector)
             }
         }
     } catch (e: AbortFlowException) {

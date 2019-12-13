@@ -2,10 +2,10 @@
 
 [![official JetBrains project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=1.3.2) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/1.3.2)
+[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=1.3.3) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/1.3.3)
 
 Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
-This is a companion version for Kotlin `1.3.50` release.
+This is a companion version for Kotlin `1.3.61` release.
 
 ```kotlin
 suspend fun main() = coroutineScope {
@@ -82,7 +82,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>1.3.2</version>
+    <version>1.3.3</version>
 </dependency>
 ```
 
@@ -90,7 +90,7 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.3.50</kotlin.version>
+    <kotlin.version>1.3.61</kotlin.version>
 </properties>
 ```
 
@@ -100,7 +100,7 @@ Add dependencies (you can also add other modules that you need):
 
 ```groovy
 dependencies {
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.3'
 }
 ```
 
@@ -108,7 +108,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.3.50'
+    ext.kotlin_version = '1.3.61'
 }
 ```
 
@@ -126,7 +126,7 @@ Add dependencies (you can also add other modules that you need):
 
 ```groovy
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.3")
 }
 ```
 
@@ -134,7 +134,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 plugins {
-    kotlin("jvm") version "1.3.50"
+    kotlin("jvm") version "1.3.61"
 }
 ```
 
@@ -145,7 +145,7 @@ Make sure that you have either `jcenter()` or `mavenCentral()` in the list of re
 Core modules of `kotlinx.coroutines` are also available for 
 [Kotlin/JS](#js) and [Kotlin/Native](#native).
 In common code that should get compiled for different platforms, add dependency to  
-[`kotlinx-coroutines-core-common`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-common/1.3.2/jar)
+[`kotlinx-coroutines-core-common`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-common/1.3.3/jar)
 (follow the link to get the dependency declaration snippet).
 
 ### Android
@@ -154,7 +154,7 @@ Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
 module as dependency when using `kotlinx.coroutines` on Android:
 
 ```groovy
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.2'
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.3'
 ```
 
 This gives you access to Android [Dispatchers.Main]
@@ -173,7 +173,7 @@ R8 is a replacement for ProGuard in Android ecosystem, it is enabled by default 
 ### JS
 
 [Kotlin/JS](https://kotlinlang.org/docs/reference/js-overview.html) version of `kotlinx.coroutines` is published as 
-[`kotlinx-coroutines-core-js`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.3.2/jar)
+[`kotlinx-coroutines-core-js`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.3.3/jar)
 (follow the link to get the dependency declaration snippet).
  
 You can also use [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) package via NPM. 
@@ -181,7 +181,7 @@ You can also use [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotli
 ### Native
 
 [Kotlin/Native](https://kotlinlang.org/docs/reference/native-overview.html) version of `kotlinx.coroutines` is published as 
-[`kotlinx-coroutines-core-native`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-native/1.3.2/jar)
+[`kotlinx-coroutines-core-native`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-native/1.3.3/jar)
 (follow the link to get the dependency declaration snippet).
 
 Only single-threaded code (JS-style) on Kotlin/Native is currently supported. 

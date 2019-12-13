@@ -48,7 +48,12 @@ class RunR8Task extends JavaExec {
         super.configure(closure)
         classpath = project.configurations.r8
         main = 'com.android.tools.r8.R8'
+        return this
+    }
 
+    @Override
+    void exec() {
+        // Resolve classpath only during execution
         def arguments = [
                 '--release',
                 '--no-desugaring',
@@ -59,11 +64,7 @@ class RunR8Task extends JavaExec {
         arguments.addAll(jarFile.absolutePath)
 
         args = arguments
-        return this
-    }
 
-    @Override
-    void exec() {
         if (outputDex.exists()) {
             outputDex.deleteDir()
         }

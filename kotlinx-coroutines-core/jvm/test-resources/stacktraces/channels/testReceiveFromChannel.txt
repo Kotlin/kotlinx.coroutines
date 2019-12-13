@@ -1,0 +1,8 @@
+kotlinx.coroutines.RecoverableTestException
+	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testReceiveFromChannel$1$job$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt:97)
+	(Coroutine boundary)
+	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest.channelReceive(StackTraceRecoveryChannelsTest.kt:116)
+	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testReceiveFromChannel$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt:101)
+Caused by: kotlinx.coroutines.RecoverableTestException
+	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testReceiveFromChannel$1$job$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt:97)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)

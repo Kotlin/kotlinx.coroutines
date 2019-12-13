@@ -19,16 +19,14 @@ import kotlin.internal.*
 /**
  * Creates cold [observable][Observable] that will run a given [block] in a coroutine.
  * Every time the returned observable is subscribed, it starts a new coroutine.
- * Coroutine emits items with `send`. Unsubscribing cancels running coroutine.
+ *
+ * Coroutine emits ([ObservableEmitter.onNext]) values with `send`, completes ([ObservableEmitter.onComplete])
+ * when the coroutine completes or channel is explicitly closed and emits error ([ObservableEmitter.onError])
+ * if coroutine throws an exception or closes channel with a cause.
+ * Unsubscribing cancels running coroutine.
  *
  * Invocations of `send` are suspended appropriately to ensure that `onNext` is not invoked concurrently.
- * Note that Rx 2.x [Observable] **does not support backpressure**. Use [rxFlowable].
- *
- * | **Coroutine action**                         | **Signal to subscriber**
- * | -------------------------------------------- | ------------------------
- * | `send`                                       | `onNext`
- * | Normal completion or `close` without cause   | `onComplete`
- * | Failure with exception or `close` with cause | `onError`
+ * Note that Rx 2.x [Observable] **does not support backpressure**.
  *
  * Coroutine context can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
@@ -170,9 +168,9 @@ private class RxObservableCoroutine<T: Any>(
                          * by coroutines machinery, anyway, they should not be present in regular program flow,
                          * thus our goal here is just to expose it as soon as possible.
                          */
-                        subscriber.onError(cause)
+                        subscriber.tryOnError(cause)
                         if (!handled && cause.isFatal()) {
-                            handleCoroutineException(context, cause)
+                            handleUndeliverableException(cause, context)
                         }
                     }
                     else {
@@ -180,7 +178,7 @@ private class RxObservableCoroutine<T: Any>(
                     }
                 } catch (e: Throwable) {
                     // Unhandled exception (cannot handle in other way, since we are already complete)
-                    handleCoroutineException(context, e)
+                    handleUndeliverableException(e, context)
                 }
             }
         } finally {

@@ -94,9 +94,13 @@ public fun <T: Any> Flow<T>.asObservable() : Observable<T> = Observable.create {
             emitter.onComplete()
         } catch (e: Throwable) {
             // 'create' provides safe emitter, so we can unconditionally call on* here if exception occurs in `onComplete`
-            if (e !is CancellationException) emitter.onError(e)
-            else emitter.onComplete()
-
+            if (e !is CancellationException) {
+                if (!emitter.tryOnError(e)) {
+                    handleUndeliverableException(e, coroutineContext)
+                }
+            } else {
+                emitter.onComplete()
+            }
         }
     }
     emitter.setCancellable(RxCancellable(job))

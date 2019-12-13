@@ -62,12 +62,11 @@ buildscript {
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
-        classpath "io.spring.gradle:dependency-management-plugin:$spring_dependency_management_version"
 
         // JMH plugins
-        classpath "com.github.jengelman.gradle.plugins:shadow:4.0.2"
-        classpath "me.champeau.gradle:jmh-gradle-plugin:0.4.7"
-        classpath "net.ltgt.gradle:gradle-apt-plugin:0.10"
+        classpath "com.github.jengelman.gradle.plugins:shadow:5.1.0"
+        classpath "me.champeau.gradle:jmh-gradle-plugin:0.5.0-rc-2"
+        classpath "net.ltgt.gradle:gradle-apt-plugin:0.21"
     }
 }
 

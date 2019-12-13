@@ -20,13 +20,11 @@ internal object MainDispatcherLoader {
     private fun loadMainDispatcher(): MainCoroutineDispatcher {
         return try {
             val factories = if (FAST_SERVICE_LOADER_ENABLED) {
-                MainDispatcherFactory::class.java.let { clz ->
-                    FastServiceLoader.load(clz, clz.classLoader)
-                }
+                FastServiceLoader.loadMainDispatcherFactory()
             } else {
-                //We are explicitly using the
-                //`ServiceLoader.load(MyClass::class.java, MyClass::class.java.classLoader).iterator()`
-                //form of the ServiceLoader call to enable R8 optimization when compiled on Android.
+                // We are explicitly using the
+                // `ServiceLoader.load(MyClass::class.java, MyClass::class.java.classLoader).iterator()`
+                // form of the ServiceLoader call to enable R8 optimization when compiled on Android.
                 ServiceLoader.load(
                         MainDispatcherFactory::class.java,
                         MainDispatcherFactory::class.java.classLoader
@@ -89,7 +87,8 @@ private class MissingMainCoroutineDispatcher(
         if  (cause == null) {
             throw IllegalStateException(
                 "Module with the Main dispatcher is missing. " +
-                    "Add dependency providing the Main dispatcher, e.g. 'kotlinx-coroutines-android'"
+                    "Add dependency providing the Main dispatcher, e.g. 'kotlinx-coroutines-android' " +
+                        "and ensure it has the same version as 'kotlinx-coroutines-core'"
             )
         } else {
             val message = "Module with the Main dispatcher had failed to initialize" + (errorHint?.let { ". $it" } ?: "")

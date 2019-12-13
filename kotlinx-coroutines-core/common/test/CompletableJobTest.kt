@@ -6,7 +6,7 @@ package kotlinx.coroutines
 
 import kotlin.test.*
 
-class CompletableJobTest {
+class CompletableJobTest : TestBase() {
     @Test
     fun testComplete() {
         val job = Job()
@@ -45,5 +45,58 @@ class CompletableJobTest {
         assertTrue(parent.isCompleted)
         assertFalse(child.isActive)
         assertFalse(parent.isActive)
+    }
+
+    @Test
+    fun testExceptionIsNotReportedToChildren() = parametrized { job ->
+        expect(1)
+        val child = launch(job) {
+            expect(2)
+            try {
+                // KT-33840
+                hang {}
+            } catch (e: Throwable) {
+                assertTrue(e is CancellationException)
+                assertTrue((if (RECOVER_STACK_TRACES) e.cause?.cause else e.cause) is TestException)
+                expect(4)
+                throw e
+            }
+        }
+        yield()
+        expect(3)
+        job.completeExceptionally(TestException())
+        child.join()
+        finish(5)
+    }
+
+    @Test
+    fun testCompleteExceptionallyDoesntAffectDeferred() = parametrized { job ->
+        expect(1)
+        val child = async(job) {
+            expect(2)
+            try {
+                // KT-33840
+                hang {}
+            } catch (e: Throwable) {
+                assertTrue(e is CancellationException)
+                assertTrue((if (RECOVER_STACK_TRACES) e.cause?.cause else e.cause) is TestException)
+                expect(4)
+                throw e
+            }
+        }
+        yield()
+        expect(3)
+        job.completeExceptionally(TestException())
+        child.join()
+        assertTrue { child.getCompletionExceptionOrNull() is CancellationException }
+        finish(5)
+    }
+
+    private fun parametrized(block: suspend CoroutineScope.(CompletableJob) -> Unit) {
+        runTest {
+            block(Job())
+            reset()
+            block(SupervisorJob())
+        }
     }
 }

@@ -19,6 +19,7 @@ import kotlin.coroutines.*
  * Debug probes is a dynamic attach mechanism which installs multiple hooks into coroutines machinery.
  * It slows down all coroutine-related code, but in return provides a lot of diagnostic information, including
  * asynchronous stack-traces and coroutine dumps (similar to [ThreadMXBean.dumpAllThreads] and `jstack` via [DebugProbes.dumpCoroutines].
+ * All introspecting methods throw [IllegalStateException] if debug probes were not installed.
  *
  * Installed hooks:
  *
@@ -40,6 +41,11 @@ public object DebugProbes {
      * the first one and the last one to simplify diagnostic.
      */
     public var sanitizeStackTraces: Boolean = true
+
+    /**
+     * Determines whether debug probes were [installed][DebugProbes.install].
+     */
+    public val isInstalled: Boolean get() = DebugProbesImpl.isInstalled
 
     /**
      * Installs a [DebugProbes] instead of no-op stdlib probes by redefining

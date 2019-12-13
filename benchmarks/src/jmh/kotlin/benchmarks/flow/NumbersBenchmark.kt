@@ -13,22 +13,6 @@ import kotlinx.coroutines.flow.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
 
-/*
- * Results:
- *
- * // Throw FlowAborted overhead
- * Numbers.primes            avgt    7  3039.185 ± 25.598  us/op
- * Numbers.primesRx          avgt    7  2677.937 ± 17.720  us/op
- *
- * // On par
- * Numbers.transformations   avgt    7    16.207 ±  0.133  us/op
- * Numbers.transformationsRx avgt    7    19.626 ±  0.135  us/op
- *
- * // Channels overhead
- * Numbers.zip               avgt    7   434.160 ±  7.014  us/op
- * Numbers.zipRx             avgt    7    87.898 ±  5.007  us/op
- *
- */
 @Warmup(iterations = 7, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 7, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(value = 1)
@@ -39,11 +23,11 @@ open class NumbersBenchmark {
 
     companion object {
         private const val primes = 100
-        private const val natural = 1000
+        private const val natural = 1000L
     }
 
-    private fun numbers() = flow {
-        for (i in 2L..Long.MAX_VALUE) emit(i)
+    private fun numbers(limit: Long = Long.MAX_VALUE) = flow {
+        for (i in 2L..limit) emit(i)
     }
 
     private fun primesFlow(): Flow<Long> = flow {
@@ -80,7 +64,7 @@ open class NumbersBenchmark {
 
     @Benchmark
     fun zip() = runBlocking {
-        val numbers = numbers().take(natural)
+        val numbers = numbers(natural)
         val first = numbers
             .filter { it % 2L != 0L }
             .map { it * it }
@@ -105,8 +89,7 @@ open class NumbersBenchmark {
 
     @Benchmark
     fun transformations(): Int = runBlocking {
-        numbers()
-            .take(natural)
+        numbers(natural)
             .filter { it % 2L != 0L }
             .map { it * it }
             .filter { (it + 1) % 3 == 0L }.count()

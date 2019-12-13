@@ -82,6 +82,42 @@ public fun <T> Flow<Flow<T>>.flattenConcat(): Flow<T> = flow {
 }
 
 /**
+ * Merges the given flows into a single flow without preserving an order of elements.
+ * All flows are merged concurrently, without limit on the number of simultaneously collected flows.
+ *
+ * ### Operator fusion
+ *
+ * Applications of [flowOn], [buffer], [produceIn], and [broadcastIn] _after_ this operator are fused with
+ * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
+ */
+@ExperimentalCoroutinesApi
+public fun <T> Iterable<Flow<T>>.merge(): Flow<T> {
+    /*
+     * This is a fuseable implementation of the following operator:
+     * channelFlow {
+     *    forEach { flow ->
+     *        launch {
+     *            flow.collect { send(it) }
+     *        }
+     *    }
+     * }
+     */
+    return ChannelLimitedFlowMerge(this)
+}
+
+/**
+ * Merges the given flows into a single flow without preserving an order of elements.
+ * All flows are merged concurrently, without limit on the number of simultaneously collected flows.
+ *
+ * ### Operator fusion
+ *
+ * Applications of [flowOn], [buffer], [produceIn], and [broadcastIn] _after_ this operator are fused with
+ * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
+ */
+@ExperimentalCoroutinesApi
+public fun <T> merge(vararg flows: Flow<T>): Flow<T> = flows.asIterable().merge()
+
+/**
  * Flattens the given flow of flows into a single flow with a [concurrency] limit on the number of
  * concurrently collected flows.
  *
@@ -169,7 +205,7 @@ public inline fun <T, R> Flow<T>.flatMapLatest(@BuilderInference crossinline tra
  *     "Computed $value"
  * }
  * ```
- * will print "Started computing 1" and "Started computing 2", but the resulting flow will contain only "Computed 2" value.
+ * will print "Started computing a" and "Started computing b", but the resulting flow will contain only "Computed b" value.
  *
  * This operator is [buffered][buffer] by default and size of its output buffer can be changed by applying subsequent [buffer] operator.
  */
