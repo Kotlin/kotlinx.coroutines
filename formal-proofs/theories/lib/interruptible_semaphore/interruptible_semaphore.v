@@ -450,14 +450,13 @@ Proof.
     replace (count_matching _ (drop deqFront' (alter _ _ _))) with
       (count_matching still_present (drop deqFront' l')).
     2: {
-      repeat erewrite count_matching_alter; eauto.
       destruct (decide (i < deqFront')%nat).
       by rewrite drop_alter //.
       repeat rewrite count_matching_drop.
       rewrite take_alter; try lia.
       erewrite count_matching_alter; eauto.
       simpl.
-      admit.
+      lia.
     }
     by iFrame.
   }
