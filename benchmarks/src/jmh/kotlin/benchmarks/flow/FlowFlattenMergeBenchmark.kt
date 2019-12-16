@@ -1,6 +1,7 @@
 /*
  * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+
 package benchmarks.flow
 
 import benchmarks.common.*
@@ -20,22 +21,17 @@ import java.util.concurrent.*
 @State(Scope.Benchmark)
 @Fork(1)
 open class FlowFlattenMergeBenchmark {
-
-    /**
-     * Number of flows that are merged in this benchmark. Negative number means that number of flows
-     * will be computed as -([flows] * [concurrency]), positive number will be chosen as number of flows.
-     */
     @Param
-    private var flows: Flows = Flows.`10xConcurrency flows`
+    private var flowsNumberStrategy: FlowsNumberStrategy = FlowsNumberStrategy.`10xConcurrency flows`
 
-    @Param("1", "2", "4")
+    @Param("1", "2", "4", "8")
     private var concurrency: Int = 0
 
     private lateinit var flow: Flow<Flow<Int>>
 
     @Setup
     fun setup() {
-        val n = flows.getFlows(concurrency)
+        val n = flowsNumberStrategy.get(concurrency)
         val flowElementsToProcess = ELEMENTS / n
 
         flow = (1..n).asFlow().map {
@@ -54,21 +50,11 @@ open class FlowFlattenMergeBenchmark {
     }
 }
 
-enum class Flows {
-    `10xConcurrency flows` {
-        override fun getFlows(concurrency: Int): Int = 10 * concurrency
-    },
-    `1xConcurrency flows` {
-        override fun getFlows(concurrency: Int): Int = concurrency
-    },
-    `100 flows` {
-        override fun getFlows(concurrency: Int): Int = 100
-    },
-    `500 flows` {
-        override fun getFlows(concurrency: Int): Int = 500
-    };
-
-    abstract fun getFlows(concurrency : Int): Int
+enum class FlowsNumberStrategy(val get: (concurrency: Int) -> Int) {
+    `10xConcurrency flows`({ concurrency -> concurrency * 10 }),
+    `1xConcurrency flows`({ it }),
+    `100 flows`({ 100 }),
+    `500 flows`({ 500 })
 }
 
 // If you change this variable please be sure that you change variable elements in the generate_plots_flow_flatten_merge.py

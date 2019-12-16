@@ -1,4 +1,4 @@
-# To run this script run the command 'python3 scripts/generate_plots_flow_flatten_merge.py' in the benchmarks/ folder
+# To run this script run the command 'python3 scripts/generate_plots_flow_flatten_merge.py' in the /benchmarks folder
 
 
 import pandas as pd
@@ -12,9 +12,9 @@ output_file = "out/flow-flatten-merge.svg"
 # Please change the value of this variable according to the FlowFlattenMergeBenchmarkKt.ELEMENTS
 elements = 100000
 benchmark_name = "benchmarks.flow.FlowFlattenMergeBenchmark.flattenMerge"
-csv_columns = ["Benchmark", "Score", "Unit", "Param: concurrency", "Param: flows"]
+csv_columns = ["Benchmark", "Score", "Unit", "Param: concurrency", "Param: flowsNumberStrategy"]
 rename_columns = {"Benchmark": "benchmark", "Score" : "score", "Unit" : "unit",
-                  "Param: concurrency" : "concurrency", "Param: flows" : "flows"}
+                  "Param: concurrency" : "concurrency", "Param: flowsNumberStrategy" : "flows"}
 
 markers = ['.', 'v', '^', '1', '2', '8', 'p', 'P', 'x', 'D', 'd', 's']
 colours = ['red', 'gold', 'sienna', 'olivedrab', 'lightseagreen', 'navy', 'blue', 'm', 'crimson', 'yellow', 'orangered', 'slateblue', 'aqua', 'black', 'silver']
