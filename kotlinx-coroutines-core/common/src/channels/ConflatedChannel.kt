@@ -7,7 +7,7 @@ package kotlinx.coroutines.channels
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.selects.*
+import kotlin.jvm.*
 
 /**
  * Channel that buffers at most one element and conflates all subsequent `send` and `offer` invocations,
@@ -20,81 +20,8 @@ import kotlinx.coroutines.selects.*
  *
  * This implementation is fully lock-free.
  */
-internal open class ConflatedChannel<E>: SegmentQueueSynchronizer<ConflatedChannel<E>, E>(), Channel<E> {
-    @ExperimentalCoroutinesApi
-    override val isClosedForSend: Boolean
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    @ExperimentalCoroutinesApi
-    override val isFull: Boolean
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+internal open class ConflatedChannel<E>: NewAbstractChannel<E>(), Channel<E> {
 
-    override suspend fun send(element: E) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override val onSend: SelectClause2<E, SendChannel<E>>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-
-    override fun offer(element: E): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun close(cause: Throwable?): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    @ExperimentalCoroutinesApi
-    override fun invokeOnClose(handler: (cause: Throwable?) -> Unit) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    @ExperimentalCoroutinesApi
-    override val isClosedForReceive: Boolean
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    @ExperimentalCoroutinesApi
-    override val isEmpty: Boolean
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-
-    override suspend fun receive(): E {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override val onReceive: SelectClause1<E>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-
-    @ObsoleteCoroutinesApi
-    override suspend fun receiveOrNull(): E? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    @ObsoleteCoroutinesApi
-    override val onReceiveOrNull: SelectClause1<E?>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-
-    @InternalCoroutinesApi
-    override suspend fun receiveOrClosed(): ValueOrClosed<E> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    @InternalCoroutinesApi
-    override val onReceiveOrClosed: SelectClause1<ValueOrClosed<E>>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-
-    override fun poll(): E? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun iterator(): ChannelIterator<E> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun cancel(cause: CancellationException?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun cancel(cause: Throwable?): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
 }
 
 internal abstract class NewAbstractChannel<E> : Channel<E> {
@@ -164,7 +91,13 @@ internal abstract class NewAbstractChannel<E> : Channel<E> {
      * channel is not cancelled.
      */
     private val closeCause = atomic<Any?>(NO_CLOSE_CAUSE)
-    private val closeCompleted = atomic(false)
+
+    @Volatile
+    private var closeFinished = false
+    @Volatile
+    private var cancelFinished = false
+    @Volatile
+    private var cancelled = false
 
     private val receiveException: Throwable
         get() = (closeCause.value as Throwable?) ?: ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE)
@@ -175,13 +108,21 @@ internal abstract class NewAbstractChannel<E> : Channel<E> {
     private val closeHandler = atomic<Any?>(null)
 
     override val isClosedForSend: Boolean get() = (closeCause.value !== NO_CLOSE_CAUSE).also {
-        if (!closeCompleted.value) {
-            helpClose()
-            closeCompleted.value = true
-        }
+        if (it) helpCloseOrCancel()
     }
 
     override val isClosedForReceive: Boolean get() = isClosedForSend && isEmpty
+
+    private fun helpCloseOrCancel() {
+        if (!closeFinished) {
+            helpCloseIdempotent()
+            closeFinished = true
+        }
+        if (cancelled && !cancelFinished) {
+            helpCancelIdempotent()
+            cancelFinished = true
+        }
+    }
 
     /**
      * Invoked when channel is closed as the last action of [close] invocation.
@@ -191,8 +132,8 @@ internal abstract class NewAbstractChannel<E> : Channel<E> {
 
     override fun close(cause: Throwable?): Boolean {
         val closedByThisOperation = closeCause.compareAndSet(NO_CLOSE_CAUSE, cause)
-        helpClose()
-        closeCompleted.value = true
+        helpCloseIdempotent()
+        closeFinished = true
         return if (closedByThisOperation) {
             onClosed()
             invokeCloseHandler()
@@ -239,13 +180,15 @@ internal abstract class NewAbstractChannel<E> : Channel<E> {
     final override fun cancel(cause: CancellationException?) { cancelImpl(cause) }
 
     protected open fun cancelImpl(cause: Throwable?): Boolean {
+        cancelled = true
         val closedByThisOperation = close(cause)
-        helpCancel()
+        helpCancelIdempotent()
+        cancelFinished = true
         return closedByThisOperation
     }
 
-    protected abstract fun helpClose()
-    protected abstract fun helpCancel()
+    protected abstract fun helpCloseIdempotent()
+    protected abstract fun helpCancelIdempotent()
 
     // ######################
     // ## Iterator Support ##
