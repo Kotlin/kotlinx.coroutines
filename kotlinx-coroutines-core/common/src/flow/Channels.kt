@@ -151,7 +151,7 @@ public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
  * that collects the given flow and thus resulting channel should be properly closed or cancelled.
  *
  * A channel with [default][Channel.Factory.BUFFERED] buffer size is created.
- * Use [buffer] operator on the flow before calling `produce` to specify a value other than
+ * Use [buffer] operator on the flow before calling `broadcastIn` to specify a value other than
  * default and to control what happens when data is produced faster than it is consumed,
  * that is to control backpressure behavior.
  */
@@ -169,7 +169,7 @@ public fun <T> Flow<T>.broadcastIn(
  * that collects the given flow and thus resulting channel should be properly closed or cancelled.
  *
  * A channel with [default][Channel.Factory.BUFFERED] buffer size is created.
- * Use [buffer] operator on the flow before calling `produce` to specify a value other than
+ * Use [buffer] operator on the flow before calling `produceIn` to specify a value other than
  * default and to control what happens when data is produced faster than it is consumed,
  * that is to control backpressure behavior.
  */
