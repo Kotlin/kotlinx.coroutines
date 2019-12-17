@@ -8,6 +8,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
+import kotlin.native.concurrent.*
 
 @SharedImmutable
 private val UNDEFINED = Symbol("UNDEFINED")

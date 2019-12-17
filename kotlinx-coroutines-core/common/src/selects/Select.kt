@@ -13,6 +13,7 @@ import kotlinx.coroutines.sync.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
+import kotlin.native.concurrent.*
 
 /**
  * Scope for [select] invocation.
@@ -213,6 +214,7 @@ internal class SeqNumber {
     fun next() = number.incrementAndGet()
 }
 
+@SharedImmutable
 private val selectOpSequenceNumber = SeqNumber()
 
 @PublishedApi

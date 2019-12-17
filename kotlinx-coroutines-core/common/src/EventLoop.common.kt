@@ -8,6 +8,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
+import kotlin.native.concurrent.*
 
 /**
  * Extended by [CoroutineDispatcher] implementations that have event loop inside and can

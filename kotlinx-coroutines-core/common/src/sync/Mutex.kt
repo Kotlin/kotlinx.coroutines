@@ -11,6 +11,7 @@ import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
+import kotlin.native.concurrent.*
 
 /**
  * Mutual exclusion for coroutines.

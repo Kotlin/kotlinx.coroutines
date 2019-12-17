@@ -7,6 +7,7 @@ package kotlinx.coroutines.internal
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlin.jvm.*
+import kotlin.native.concurrent.*
 
 /**
  * The most abstract operation that can be in process. Other threads observing an instance of this
