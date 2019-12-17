@@ -16,7 +16,7 @@ Definition cancel_cell: val :=
   λ: "cell'" <>, let: "cell" := cell_ref_loc "cell'" in
                  if: getAndSet "cell" CANCELLEDV = RESUMEDV
                  then #false
-                 else segment_cancel_single_cell (Fst "cell") ;; #true.
+                 else segment_cancell_cell segment_size (Fst "cell'") ;; #true.
 
 Definition move_ptr_forward : val :=
   rec: "loop" "ptr" "seg" := let: "curSeg" := !"ptr" in

@@ -87,7 +87,7 @@ Definition segment_cancel_single_cell : val :=
   λ: "seg", FAA (segment_cancelled "seg") #1.
 
 Definition segment_cancell_cell: val :=
-  λ: "seg", if: FAA (segment_cancelled "seg") #1 = #(Zpos segment_size)
+  λ: "seg", if: (FAA (segment_cancelled "seg") #1) + #1 = #(Zpos segment_size)
             then segment_remove "seg"
             else #().
 
@@ -898,10 +898,10 @@ Proof.
   by rewrite -plus_n_Sm.
 Qed.
 
-Theorem segment_canc_incr_spec γ id cid (ℓ cℓ: loc) segments:
+Theorem segment_canc_incr_spec γ id cid (ℓ cℓ: loc):
   (cid < Pos.to_nat segment_size)%nat ->
   segment_canc_location γ id cℓ -∗
-  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl ∗
+  <<< ∀ pl nl segments, ▷ is_segment γ id ℓ pl nl ∗
                               cell_cancellation_handle' γ id cid ∗
                               own γ (● segments) >>>
     FAA #cℓ #1 @ ⊤
@@ -910,11 +910,11 @@ Theorem segment_canc_incr_spec γ id cid (ℓ cℓ: loc) segments:
     (∃ cells,
           cells_are_cancelled γ id cells
           ∗ ⌜S cancelled = length (List.filter (fun i => i) (vec_to_list cells))⌝) ∗
-    (∃ segments', own γ (● segments')),
+    (∃ segments', ⌜length segments' = length segments⌝ ∧ own γ (● segments')),
     RET #cancelled >>>.
 Proof.
   iIntros (HCid) "#HIsCancLoc". iIntros (Φ) "AU".
-  iMod "AU" as (pl nl) "[[HIsSeg [HCancHandle HAuth]] [_ HClose]]".
+  iMod "AU" as (pl nl segments) "[[HIsSeg [HCancHandle HAuth]] [_ HClose]]".
   rename cℓ into cℓ'. iDestructHIsSeg.
   iAssert (segment_canc_location γ id cℓ) as "#HCancLoc"; first by eauto 6.
   iDestruct (segment_canc_location_agree with "HIsCancLoc HCancLoc") as %->.
@@ -1031,7 +1031,10 @@ Proof.
   }
   {
     iSplitR.
-    2: by eauto with iFrame.
+    2: {
+      iExists _. iFrame.
+      iPureIntro. by rewrite alter_length.
+    }
     iExists _.
     iSplitL.
     iApply "HCancLoc'".
@@ -1747,6 +1750,31 @@ Proof.
   destruct HIn. auto.
 Qed.
 
+Lemma filter_induces_vector:
+  forall v (cells : vec bool v), v = length (List.filter (fun x => x) cells) ->
+           cells = Vector.const true v.
+Proof.
+  intros v cells HH.
+  assert (forall f, cells !!! f = true) as HEq.
+  {
+    intros f. destruct (cells !!! f) eqn:E; auto.
+    assert (exists f, cells !!! f = false) as HContra by eauto.
+    move: HContra. rewrite -elem_of_vlookup elem_of_list_In. move=> HEl.
+    assert (length (List.filter (fun i => i) (vec_to_list cells)) =
+            length (vec_to_list cells)) as HLen.
+    by rewrite vec_to_list_length.
+    eapply list_filter_length_eq_in in HLen.
+    2: apply HEl.
+    inversion HLen.
+  }
+
+  apply Vector.eq_nth_iff.
+  intros ? p ->.
+  rewrite HEq.
+  symmetry.
+  apply Vector.const_nth.
+Qed.
+
 Theorem segment_is_removed_spec γ id (ℓ: loc):
   <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     (segment_is_removed segment_size) #ℓ @ ⊤
@@ -1776,24 +1804,7 @@ Proof.
     iDestruct "HCells" as (cells) "[HCancelled %]".
     replace cells with (Vector.const true (Pos.to_nat segment_size)).
     1: by auto.
-
-    assert (forall f, cells !!! f = true) as HEq.
-    {
-      intros f. destruct (cells !!! f) eqn:E; auto.
-      assert (exists f, cells !!! f = false) as HContra by eauto.
-      move: HContra. rewrite -elem_of_vlookup elem_of_list_In. move=> HEl.
-      assert (length (List.filter (fun i => i) (vec_to_list cells)) =
-              length (vec_to_list cells)) as HLen.
-      by rewrite vec_to_list_length.
-      eapply list_filter_length_eq_in in HLen.
-      2: apply HEl.
-      inversion HLen.
-    }
-
-    apply Vector.eq_nth_iff.
-    intros ? p ->.
-    rewrite HEq.
-    apply Vector.const_nth.
+    by erewrite <-filter_induces_vector.
   }
 Qed.
 
@@ -2182,6 +2193,140 @@ Proof.
   iExists _. iSplitR.
   2: iIntros "HΦ !>"; wp_pures; wp_load; wp_pures; wp_load; wp_pures; done.
   iRight. iExists _, _, _. iFrame "HSegLoc HValidPrev". done.
+Qed.
+
+Theorem segment_cancel_cell_spec γ id ix s:
+  (ix < Pos.to_nat segment_size)%nat ->
+  segment_location γ id s -∗
+  cell_cancellation_handle' γ id ix -∗
+  <<< ▷ is_infinite_array γ >>>
+  segment_cancell_cell segment_size #s @ ⊤
+  <<< ∃ v, ▷ is_infinite_array γ, RET v >>>.
+Proof.
+  iIntros (HLt) "#HSegLoc HCancHandle". iIntros (Φ) "AU".
+  wp_lam.
+
+  awp_apply segment_canc_spec without "HCancHandle".
+  iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros "HInfArr".
+  iDestruct (is_segment_by_location with "HSegLoc HInfArr")
+    as (? ?) "[HIsSeg HInfArrRestore]".
+  iAaccIntro with "HIsSeg".
+  {
+    iIntros "HIsSeg".
+    iDestruct ("HInfArrRestore" with "HIsSeg") as "$".
+    iIntros "!> $ !> //".
+  }
+  iIntros (cℓ) "[HIsSeg #HCancLoc] !>".
+  iDestruct (bi.later_wand with "HInfArrRestore HIsSeg") as "$".
+  iIntros "AU !> HCancHandle".
+
+  awp_apply segment_canc_incr_spec.
+  eassumption.
+  done.
+  iApply (aacc_aupd with "AU"); first done.
+  iIntros "HInfArr".
+
+  iAssert (▷ (∃ pl nl ss, own γ (● ss) ∗ is_segment γ id s pl nl ∗
+        (∀ pl' ss', ⌜length ss' = length ss⌝ -∗ own γ (● ss') -∗
+                          (is_segment γ id s pl' nl) -∗
+                          is_infinite_array γ)))%I with "[HInfArr]"
+    as (pl nl ss) "(>HAuth & HIsSeg & HInfArrRestore)".
+  {
+    iDestruct "HInfArr" as (segments) "[HNormSegs [HTailSeg HAuth]]".
+    iDestruct "HAuth" as (segments') "[>% >HAuth]".
+    destruct (le_lt_dec (length segments) id).
+    { inversion l; subst.
+      2: {
+        iDestruct "HSegLoc" as (? ? ? ?) "HSegLoc".
+        iDestruct (own_valid_2 with "HAuth HSegLoc")
+          as %[HValid _]%auth_both_valid.
+        exfalso. revert HValid. rewrite list_lookup_included.
+        intro HValid. specialize (HValid (S m)).
+        rewrite ias_segment_info_lookup in HValid.
+        assert (length segments' <= (S m))%nat as HIsNil by lia.
+        apply lookup_ge_None in HIsNil. rewrite HIsNil in HValid.
+        apply option_included in HValid.
+        destruct HValid as [[=]|[a [b [_ [[=] _]]]]].
+      }
+      iDestruct "HTailSeg" as (ℓ pl) "HIsSeg".
+      iExists _, _, _. iFrame "HAuth".
+      iSplitL "HIsSeg".
+      {
+        iDestruct (segment_location_from_segment with "HIsSeg") as "#>HSegLoc'".
+        iDestruct (segment_location_agree with "HSegLoc HSegLoc'") as %->.
+        iFrame.
+      }
+      iIntros (pl' ss' HLen) "!> HAuth HIsSeg".
+      iExists segments. iFrame "HNormSegs".
+      iSplitL "HIsSeg"; first by iExists _, _.
+      iExists _. iFrame "HAuth". iPureIntro. lia.
+    }
+    apply lookup_lt_is_Some_2 in l. destruct l as [ℓ Hℓ].
+    iDestruct (big_sepL_lookup_acc with "HNormSegs") as "[HIsSeg HRestSegs]".
+    done.
+    iDestruct "HIsSeg" as (? ?) "[HIsSeg HValNext]".
+    iExists _, _, _. iFrame "HAuth".
+    iDestruct (segment_location_from_segment with "HIsSeg") as "#>HSegLoc'".
+    iDestruct (segment_location_agree with "HSegLoc HSegLoc'") as %->.
+    iFrame "HIsSeg".
+
+    iIntros (pl' ss' HLen) "!> HAuth HIsSeg".
+    iExists segments. iFrame "HTailSeg". iSplitR "HAuth".
+    by iApply "HRestSegs"; iExists _, _; iFrame.
+    iExists _. iFrame. iPureIntro. lia.
+  }
+
+  iAssert (_ ∗ _ ∗ _)%I with "[HIsSeg HCancHandle HAuth]" as "HAacc".
+  {
+    iSplitL "HIsSeg"; first by iApply "HIsSeg".
+    iSplitL "HCancHandle"; first by iApply "HCancHandle".
+    by iApply "HAuth".
+  }
+
+  iAaccIntro with "HAacc".
+  {
+    iIntros "(HIsSeg & $ & HAuth)".
+    iDestruct ("HInfArrRestore" with "[] [HAuth] HIsSeg") as "$"; try done.
+    iIntros "!> $ !> //".
+  }
+
+  iIntros (v) "(HIsSeg & HCells & HAuth)".
+  iDestruct "HCells" as (cells) "[#HCellsCancelled %]".
+  iDestruct "HAuth" as (segments' HLengths) "HAuth".
+  iDestruct ("HInfArrRestore" with "[%] [HAuth] [HIsSeg]") as "$"; try done.
+  iIntros "!>".
+  destruct (decide (S v = Pos.to_nat segment_size)) as [HEq|HNe].
+  2: {
+    iRight. iExists _. iIntros "HΦ !>".
+    wp_pures. rewrite bool_decide_decide decide_False.
+    2: {
+      intros HContra. simplify_eq.
+      lia.
+    }
+    wp_pures.
+    done.
+  }
+  iLeft.
+  iIntros "AU !>".
+
+  wp_pures. rewrite bool_decide_decide decide_True.
+  2: {
+    congr (#(LitInt _)). lia.
+  }
+  wp_pures.
+  replace cells with (Vector.const true (Pos.to_nat segment_size)).
+  2: {
+    erewrite filter_induces_vector; try done.
+    lia.
+  }
+  awp_apply remove_segment_spec; try iAssumption.
+  iApply (aacc_aupd_commit with "AU"); first done.
+  iIntros "HInfArr".
+  iAaccIntro with "HInfArr".
+  by iIntros "$ !> $ !> //".
+  iIntros (?) "[$ HCanc]".
+  iExists _. iIntros "!> $ !> //".
 Qed.
 
 Lemma replicate_op {A: ucmraT} (a b: A) n:

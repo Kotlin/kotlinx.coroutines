@@ -7,8 +7,7 @@ Section impl.
 Variable segment_size : positive.
 
 Definition new_semaphore : val :=
-  λ: "n", "availablePermits" <- ref "n" ;;
-          ("availablePermits", new_thread_queue segment_size #()).
+  λ: "n", (ref "n", new_thread_queue segment_size #()).
 
 Definition cancellation_handler : val :=
   λ: "availablePermits" "head" "deqIdx" "canceller" <>,
@@ -85,108 +84,50 @@ Proof.
   destruct (find_index P l); by eauto.
 Qed.
 
-Theorem release_semaphore_spec R γ (p epℓ eℓ dpℓ dℓ: loc) γa γtq γe γd:
+Lemma new_semaphore_spec (n: nat) R:
+  {{{ ([∗ list] x ∈ replicate n R, x) }}}
+    new_semaphore segment_size #n
+  {{{ p γ γa γtq γe γd eℓ epℓ dℓ dpℓ, RET (#p, ((#epℓ, #eℓ), (#dpℓ, #dℓ)));
+      is_semaphore R γ p epℓ eℓ dpℓ dℓ γa γtq γe γd ∗
+      semaphore_permits γ n
+  }}}.
+Proof.
+  iIntros (Φ) "HRs HΦ".
+  wp_lam.
+  iMod (own_alloc (● (Excl' n%nat) ⋅ ◯ (Excl' n%nat))) as (γ) "[HAuth HFrag]".
+  by apply auth_both_valid.
+  wp_apply new_thread_queue_spec; first done.
+  iIntros (γa γtq γe γd eℓ epℓ dℓ dpℓ) "HTq".
+  wp_bind (ref _)%E.
+  rewrite -wp_fupd.
+  wp_alloc p as "Hp".
+  iMod (inv_alloc (N .@ "semaphore") _
+                  (∃ n, is_semaphore_inv R γ n p epℓ eℓ dpℓ dℓ γa γtq γe γd)%I
+          with "[-HΦ HFrag]") as "#HInv".
+  {
+    iExists _.
+    rewrite /is_semaphore_inv. iExists [], O.
+    iFrame. simpl. rewrite Z.sub_0_r. iFrame.
+    iSplitL; last by iPureIntro; right.
+    iApply (big_opL_forall' with "HRs"); simpl.
+    by rewrite replicate_length seq_length.
+    intros ? ? ?. rewrite lookup_replicate. by intros _ [-> _].
+  }
+  iModIntro. wp_pures.
+  iApply "HΦ".
+  iFrame.
+  rewrite /is_semaphore.
+  done.
+Qed.
+
+Lemma resume_in_semaphore_spec R γ p epℓ eℓ dpℓ dℓ γa γtq γe γd:
   is_semaphore R γ p epℓ eℓ dpℓ dℓ γa γtq γe γd -∗
-  inv (N .@ "permits") (∃ a, semaphore_permits γ a) -∗
-  {{{ R }}}
-    (release_semaphore segment_size) #p #dpℓ #dℓ
+  inv (N.@"permits") (∃ a, semaphore_permits γ a) -∗
+  {{{ awakening_permit γtq }}}
+    (resume segment_size) #dpℓ #dℓ
   {{{ RET #(); True }}}.
 Proof.
-  iIntros "#HSemInv #HPermInv" (Φ) "!> HR HΦ". wp_lam. wp_pures.
-  wp_bind (FAA _ _).
-  iInv "HSemInv" as (availablePermits' l deqFront)
-                      "(HPerms & >HAuth & HTq & Hp & >HPure)" "HInvClose".
-  iDestruct "HPure" as %HPure.
-  remember (count_matching _ _) as v.
-  remember (availablePermits' - v) as op.
-  wp_faa.
-  destruct (decide (0 <= op)).
-  {
-    iInv "HPermInv" as (availablePermits) ">HFrag" "HInvClose'".
-    iDestruct (own_valid_2 with "HAuth HFrag") as
-        %[<-%Excl_included%leibniz_equiv _]%auth_both_valid.
-    iMod (own_update_2 with "HAuth HFrag") as "[HAuth HFrag]".
-    {
-      apply auth_update, option_local_update.
-      apply (exclusive_local_update _ (Excl (1 + availablePermits)%nat)).
-      done.
-    }
-    repeat rewrite Nat.add_1_r.
-    iMod ("HInvClose'" with "[HFrag]") as "_"; first by eauto.
-    iMod ("HInvClose" with "[-HΦ]") as "_".
-    {
-      iExists _, _, _. simpl. iFrame "HAuth HTq". simpl.
-      iFrame "HR".
-      iSplitL "HPerms".
-      {
-        iApply (big_opL_forall' with "HPerms").
-        by repeat rewrite seq_length.
-        done.
-      }
-      iSplitL.
-      {
-        rewrite -Heqv Heqop.
-        replace (S availablePermits - v) with (availablePermits - v + 1).
-        done.
-        lia.
-      }
-      iPureIntro.
-      lia.
-    }
-    iModIntro. wp_pures. rewrite bool_decide_decide.
-    destruct (decide (0 <= op)); try lia. wp_pures. by iApply "HΦ".
-  }
-
-  assert (v > 0) as HExistsNondequed by lia.
-  move: HExistsNondequed. subst. move=> HExistsNondequed.
-
-  apply count_matching_find_index_Some in HExistsNondequed.
-  destruct HExistsNondequed as [? HFindIndex].
-
-  iDestruct "HTq" as "(HInfArr & HListContents & % & HRest)".
-  iDestruct (cell_list_contents_register_for_dequeue
-               with "HR HListContents") as ">[[HAwak #HDeqFront] [HListContents HCounts]]".
-  by eauto.
-  iDestruct "HCounts" as %HCounts.
-
-  iMod ("HInvClose" with "[-HAwak HΦ]") as "_".
-  {
-    iExists _, _, _. iFrame "HListContents". iFrame.
-    iSplitL "HRest".
-    {
-      iDestruct "HRest" as (enqIdx deqIdx) "(HIt1 & HIt2 & HAwaks & HSusps & %)".
-      apply find_index_Some in HFindIndex.
-      destruct HFindIndex as [[? [HC HPres]] HNotPres].
-      rewrite lookup_drop in HC.
-      iSplitR.
-      {
-        iPureIntro.
-        intros [_ (? & ? & HOk)].
-        replace (deqFront + S x - 1)%nat with (deqFront + x)%nat in HOk by lia.
-        by simplify_eq.
-      }
-      iExists _, _. iFrame.
-      iPureIntro.
-      repeat split; try lia.
-      assert (deqFront + x < length l)%nat; try lia.
-      apply lookup_lt_is_Some. by eauto.
-    }
-    iSplitL.
-    {
-      rewrite HCounts.
-      clear.
-      remember (count_matching _ _) as v.
-      replace (availablePermits' - S v + 1) with (availablePermits' - v) by lia.
-      done.
-    }
-    iPureIntro.
-    lia.
-  }
-
-  iModIntro. wp_pures. rewrite bool_decide_decide.
-  rewrite decide_False; auto.
-  wp_pures. wp_lam. wp_pures.
-
+  iIntros "#HSemInv #HPermInv" (Φ) "!> HAwak HΦ". wp_lam. wp_pures.
   awp_apply (try_deque_thread_spec (N .@ "tq") with "HAwak") without "HΦ".
   iInv "HSemInv" as (? ? deqFront') "(HPerms & >HAuth & HTq & HRest)".
   iAaccIntro with "HTq".
@@ -334,6 +275,111 @@ Proof.
       iExists _. iFrame. iRight. iFrame. iLeft. iFrame.
     }
   }
+Qed.
+
+Theorem release_semaphore_spec R γ (p epℓ eℓ dpℓ dℓ: loc) γa γtq γe γd:
+  is_semaphore R γ p epℓ eℓ dpℓ dℓ γa γtq γe γd -∗
+  inv (N .@ "permits") (∃ a, semaphore_permits γ a) -∗
+  {{{ R }}}
+    (release_semaphore segment_size) #p #dpℓ #dℓ
+  {{{ RET #(); True }}}.
+Proof.
+  iIntros "#HSemInv #HPermInv" (Φ) "!> HR HΦ". wp_lam. wp_pures.
+  wp_bind (FAA _ _).
+  iInv "HSemInv" as (availablePermits' l deqFront)
+                      "(HPerms & >HAuth & HTq & Hp & >HPure)" "HInvClose".
+  iDestruct "HPure" as %HPure.
+  remember (count_matching _ _) as v.
+  remember (availablePermits' - v) as op.
+  wp_faa.
+  destruct (decide (0 <= op)).
+  {
+    iInv "HPermInv" as (availablePermits) ">HFrag" "HInvClose'".
+    iDestruct (own_valid_2 with "HAuth HFrag") as
+        %[<-%Excl_included%leibniz_equiv _]%auth_both_valid.
+    iMod (own_update_2 with "HAuth HFrag") as "[HAuth HFrag]".
+    {
+      apply auth_update, option_local_update.
+      apply (exclusive_local_update _ (Excl (1 + availablePermits)%nat)).
+      done.
+    }
+    repeat rewrite Nat.add_1_r.
+    iMod ("HInvClose'" with "[HFrag]") as "_"; first by eauto.
+    iMod ("HInvClose" with "[-HΦ]") as "_".
+    {
+      iExists _, _, _. simpl. iFrame "HAuth HTq". simpl.
+      iFrame "HR".
+      iSplitL "HPerms".
+      {
+        iApply (big_opL_forall' with "HPerms").
+        by repeat rewrite seq_length.
+        done.
+      }
+      iSplitL.
+      {
+        rewrite -Heqv Heqop.
+        replace (S availablePermits - v) with (availablePermits - v + 1).
+        done.
+        lia.
+      }
+      iPureIntro.
+      lia.
+    }
+    iModIntro. wp_pures. rewrite bool_decide_decide.
+    destruct (decide (0 <= op)); try lia. wp_pures. by iApply "HΦ".
+  }
+
+  assert (v > 0) as HExistsNondequed by lia.
+  move: HExistsNondequed. subst. move=> HExistsNondequed.
+
+  apply count_matching_find_index_Some in HExistsNondequed.
+  destruct HExistsNondequed as [? HFindIndex].
+
+  iDestruct "HTq" as "(HInfArr & HListContents & % & HRest)".
+  iDestruct (cell_list_contents_register_for_dequeue
+               with "HR HListContents") as ">[[HAwak #HDeqFront] [HListContents HCounts]]".
+  by eauto.
+  iDestruct "HCounts" as %HCounts.
+
+  iMod ("HInvClose" with "[-HAwak HΦ]") as "_".
+  {
+    iExists _, _, _. iFrame "HListContents". iFrame.
+    iSplitL "HRest".
+    {
+      iDestruct "HRest" as (enqIdx deqIdx) "(HIt1 & HIt2 & HAwaks & HSusps & %)".
+      apply find_index_Some in HFindIndex.
+      destruct HFindIndex as [[? [HC HPres]] HNotPres].
+      rewrite lookup_drop in HC.
+      iSplitR.
+      {
+        iPureIntro.
+        intros [_ (? & ? & HOk)].
+        replace (deqFront + S x - 1)%nat with (deqFront + x)%nat in HOk by lia.
+        by simplify_eq.
+      }
+      iExists _, _. iFrame.
+      iPureIntro.
+      repeat split; try lia.
+      assert (deqFront + x < length l)%nat; try lia.
+      apply lookup_lt_is_Some. by eauto.
+    }
+    iSplitL.
+    {
+      rewrite HCounts.
+      clear.
+      remember (count_matching _ _) as v.
+      replace (availablePermits' - S v + 1) with (availablePermits' - v) by lia.
+      done.
+    }
+    iPureIntro.
+    lia.
+  }
+
+  iModIntro. wp_pures. rewrite bool_decide_decide.
+  rewrite decide_False; auto.
+  wp_pures.
+
+  by wp_apply (resume_in_semaphore_spec with "[$] [$] [$]").
 
 Qed.
 
@@ -717,7 +763,7 @@ Proof.
 
       wp_faa.
 
-      iDestruct "HTT" as "[(HEl & HTq & HCancTok & HRendCanc) |
+      iDestruct "HTT" as "[(HEl & HTq & HCancTok & #HRendCanc) |
         (HEl & HTq & HLoc & HAwak & #HRendRes)]"; iDestruct "HEl" as %HEl.
       2: {
         iMod ("HInvClose" with "[-HΦ' HAwak HLoc]") as "_".
@@ -761,15 +807,170 @@ Proof.
 
         iDestruct "HLoc" as (ℓ) "[#HArrMapsto' Hℓ]".
         iDestruct (array_mapsto'_agree with "HArrMapsto HArrMapsto'") as %->.
+        iAssert (▷ ℓ ↦ RESUMEDV)%I with "Hℓ" as "Hℓ".
         awp_apply getAndSet.getAndSet_spec without "HΦ' HAwak".
-        iAaccIntro with "[Hℓ]".
-        {
-          rewrite /tele_app.
-        }
-        admit.
+        iAssert (▷ ℓ ↦ RESUMEDV ∧ ⌜val_is_unboxed RESUMEDV⌝)%I
+          with "[Hℓ]" as "HAacc".
+        by iFrame.
+        iAaccIntro with "HAacc".
+        by iIntros "[$ _]".
+        iIntros "Hℓ !> [HΦ' HAwak]".
+        wp_pures.
+        wp_apply (resume_in_semaphore_spec with "[$] [$] [$]").
+        iIntros "_". iApply "HΦ'". iAssumption.
       }
 
-      admit.
+      iMod ("HInvClose" with "[-HΦ' HCancTok]") as "_".
+      {
+        iExists _, _, _. iFrame.
+        iSplitL "Hp".
+        2: {
+          iDestruct "HPure" as "[->|HCount]"; first by (iPureIntro; lia).
+          iDestruct "HCount" as %HCount. iPureIntro. right.
+          destruct (decide (i < deqFront)%nat).
+          - rewrite drop_alter. 2: lia.
+            rewrite -drop_drop. remember (drop deqFront l) as l'.
+            replace l' with (take (S x) l' ++ drop (S x) l') in HCount;
+              last by rewrite take_drop.
+            rewrite count_matching_app in HCount. lia.
+          - assert (deqFront <= i)%nat as HSum by lia.
+            apply nat_le_sum in HSum. destruct HSum as [? ->].
+            rewrite drop_alter'.
+            erewrite count_matching_alter; last by rewrite lookup_drop.
+            simpl. lia.
+        }
+        destruct (decide (i < deqFront)%nat).
+        - rewrite drop_alter; last lia.
+          rewrite -drop_drop. remember (drop deqFront l) as l'.
+          rewrite count_matching_drop.
+          rewrite present_cells_in_take_Si_if_next_present_is_Si //.
+          by replace (_ - (_ - _)%nat) with
+              (availablePermits - count_matching still_present l' + 1) by lia.
+        - assert (deqFront <= i)%nat as HSum by lia.
+          apply nat_le_sum in HSum. destruct HSum as [? ->].
+          rewrite drop_alter'.
+          erewrite count_matching_alter; last by rewrite lookup_drop.
+          simpl.
+          by replace (_ - (_ + _ - _)%nat) with
+              (availablePermits - count_matching still_present (drop deqFront l) + 1) by lia.
+      }
+
+      iModIntro. wp_pures. rewrite bool_decide_decide decide_False //. wp_pures.
+      wp_lam. wp_pures.
+
+      awp_apply (segment_data_at_spec) without "HΦ' HCancTok".
+      by iPureIntro; apply Nat.mod_upper_bound; lia.
+      iInv "HSemInv" as (? ? ?) "(HHead1 & HHead2 & (HInfArr & HTail') & HTail)".
+      iDestruct (is_segment_by_location with "HSegLoc HInfArr")
+        as (? ?) "[HIsSeg HInfArrRestore]".
+      iAaccIntro with "HIsSeg".
+      {
+        iIntros "HIsSeg".
+        iDestruct ("HInfArrRestore" with "HIsSeg") as "HInfArr".
+        iIntros "!>". iSplitL; last done.
+        iExists _, _, _. iFrame.
+      }
+      iIntros (ℓ) "(HIsSeg & #HArrMapsto & #HCellInv)".
+      iDestruct (bi.later_wand with "HInfArrRestore HIsSeg") as "HInfArr".
+      iSplitL; first by iExists _, _, _; iFrame.
+      iIntros "!> (HΦ' & HCancTok)". wp_pures.
+
+      awp_apply getAndSet.getAndSet_spec without "HΦ'".
+      move: namespaces_disjoint. clear. intros.
+      iInv "HSemInv" as (? l ?) "(HHead1 & HHead2 &
+        (HInfArr & HListContents & HTail') & HTail)".
+      iAssert (▷ ⌜∃ γt th, l !! i = Some (Some (cellInhabited γt th
+                                  (Some cellCancelled)))⌝)%I
+              as "#>HEl".
+      {
+        iDestruct "HListContents" as "(_ & _ & >HAuth & _)".
+        iDestruct "HRendCanc" as (? ?) "HRendCanc".
+        iDestruct (cell_list_contents_done_agree with "HAuth HRendCanc")
+                  as %HOk.
+        simplify_eq.
+        iExists _, _. done.
+      }
+      iDestruct "HEl" as %(γt & th & HEl).
+
+      iDestruct (cell_list_contents_lookup_acc with "HListContents")
+        as "[HRR HListContentsRestore]"; first done.
+      simpl.
+      iDestruct "HRR" as (ℓ') "(#>HArrMapsto' & HRendHandle & HIsSus & >HInhTok & HH)".
+      iDestruct (array_mapsto'_agree with "HArrMapsto' HArrMapsto") as %->.
+      assert (inhabitant_token' γtq i (1/2)%Qp -∗
+              inhabitant_token' γtq i (1/2)%Qp -∗
+              inhabitant_token' γtq i (1/2)%Qp -∗ False)%I as HNoTwoCanc.
+      {
+        iIntros "HInhTok1 HInhTok2 HInhTok3".
+        iDestruct (own_valid_3 with "HInhTok1 HInhTok2 HInhTok3") as %HValid.
+        iPureIntro.
+        move: HValid. rewrite -auth_frag_op -pair_op.
+        repeat rewrite list_op_singletonM.
+        rewrite auth_frag_valid /=. rewrite pair_valid.
+        rewrite list_singleton_valid. intros [_ [[[[HPairValid _] _] _] _]].
+        by compute.
+      }
+      iDestruct "HH" as "[(Hℓ & HResTok & _ & HCancHandle & HNoPerms & HAwak)|
+        [(Hℓ & HIsRes & [(>HCancTok' & _)|(HCancHandle & HAwak)])|(_ & >HCancTok' & _)]]".
+      all: try iDestruct (HNoTwoCanc with "HInhTok HCancTok HCancTok'") as %[].
+
+      2: {
+        iAssert (▷ ℓ ↦ RESUMEDV ∧ ⌜val_is_unboxed RESUMEDV⌝)%I with "[$]" as "HAacc".
+        iAaccIntro with "HAacc".
+        {
+          iIntros "[Hℓ _]". iFrame "HCancTok".
+          iIntros "!>". iExists _, _, _.
+          iFrame.
+          iApply "HListContentsRestore".
+          iExists _. iFrame "HArrMapsto' HRendHandle HIsSus HInhTok".
+          iRight. iLeft. iFrame. iRight. iFrame.
+        }
+
+        iIntros "Hℓ !>".
+        iSplitR "HAwak".
+        {
+          iExists _, _, _. iFrame.
+          iApply "HListContentsRestore".
+          iExists _. iFrame "HArrMapsto' HRendHandle HIsSus HInhTok".
+          iRight. iRight. iFrame. iLeft. iFrame.
+        }
+        iIntros "HΦ'". wp_pures.
+        wp_apply (resume_in_semaphore_spec with "[$] [$] [$]").
+        iIntros "_". iApply "HΦ'". iAssumption.
+      }
+
+      iAssert (▷ ℓ ↦ InjLV #th ∧ ⌜val_is_unboxed (InjLV #th)⌝)%I with "[$]" as "HAacc".
+      iAaccIntro with "HAacc".
+      {
+        iIntros "[Hℓ _]". iFrame "HCancTok".
+        iIntros "!>". iExists _, _, _.
+        iFrame.
+        iApply "HListContentsRestore".
+        iExists _. iFrame "HArrMapsto' HRendHandle HIsSus HInhTok".
+        iLeft. iFrame.
+      }
+
+      iIntros "Hℓ !>".
+      iSplitR "HCancHandle".
+      {
+        iExists _, _, _. iFrame.
+        iApply "HListContentsRestore".
+        iExists _. iFrame "HArrMapsto' HRendHandle HIsSus HInhTok".
+        iRight. iRight. iFrame. iRight. iFrame.
+      }
+      iIntros "HΦ'". wp_pures.
+
+      awp_apply (segment_cancel_cell_spec with "HSegLoc HCancHandle") without "HΦ'".
+      by apply Nat.mod_upper_bound; lia.
+
+      iInv "HSemInv" as (? ? ?) "(HHead1 & HHead2 & (HInfArr & HTail') & HTail)".
+      iAaccIntro with "HInfArr".
+      {
+        iIntros "$ !>". iExists _, _, _. iFrame.
+      }
+      iIntros (?) "$ !>". iSplitL.
+      by iExists _, _, _; iFrame.
+      iIntros "HΦ". wp_pures. iApply "HΦ". iAssumption.
     }
   }
   iIntros (? ?) "[(-> & #HInterrupted)|(-> & HHasPerm & HR)]".
@@ -782,6 +983,6 @@ Proof.
   iIntros "HNoPerms !> [HΦ HR]".
 
   wp_pures. iApply "HΦ". iLeft. iFrame. done.
-Abort.
+Qed.
 
 End proof.
