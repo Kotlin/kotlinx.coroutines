@@ -586,7 +586,7 @@ Proof.
     }
     {
       iIntros (Φ') "!> [HInhTok #HInterrupted] HΦ'". wp_pures. wp_bind (FAA _ _).
-      iClear "HElExists". clear.
+      iClear "HElExists". move: namespaces_disjoint. clear. intros.
       iInv "HSemInv" as (availablePermits l deqFront)
                           "(HPerms & >HAuth & HTq & Hp & >HPure)" "HInvClose".
 
@@ -706,8 +706,6 @@ Proof.
           iApply "HΦ'". iApply "HInterrupted".
         }
       }
-      rewrite /cell_ref_loc.
-
       remember (count_matching _ _) as v.
       assert (v > 0) as HExistsNondequed by lia.
       move: HExistsNondequed. subst. move=> HExistsNondequed.
@@ -716,6 +714,60 @@ Proof.
 
       iMod (do_cancel_rendezvous_spec with "HInhTok HTq") as (? ?) "HTT";
         first done.
+
+      wp_faa.
+
+      iDestruct "HTT" as "[(HEl & HTq & HCancTok & HRendCanc) |
+        (HEl & HTq & HLoc & HAwak & #HRendRes)]"; iDestruct "HEl" as %HEl.
+      2: {
+        iMod ("HInvClose" with "[-HΦ' HAwak HLoc]") as "_".
+        {
+          iExists _, _, _. iFrame.
+          iSplitL "Hp".
+          2: {
+            iDestruct "HPure" as "[->|HCount]"; first by (iPureIntro; lia).
+            iDestruct "HCount" as %HCount. iPureIntro. right.
+            rewrite -drop_drop. remember (drop deqFront l) as l'.
+            replace l' with (take (S x) l' ++ drop (S x) l') in HCount;
+              last by rewrite take_drop.
+            rewrite count_matching_app in HCount. lia.
+          }
+          rewrite -drop_drop. remember (drop deqFront l) as l'.
+          rewrite count_matching_drop.
+          rewrite present_cells_in_take_Si_if_next_present_is_Si //.
+          by replace (_ - (_ - _)%nat) with
+              (availablePermits - count_matching still_present l' + 1) by lia.
+        }
+        iModIntro. wp_pures. rewrite bool_decide_decide decide_False //.
+        wp_pures. wp_lam. wp_pures.
+
+        awp_apply (segment_data_at_spec) without "HΦ' HLoc HAwak".
+        by iPureIntro; apply Nat.mod_upper_bound; lia.
+        iInv "HSemInv" as (? ? ?) "(HHead1 & HHead2 & (HInfArr & HTail') & HTail)".
+        iDestruct (is_segment_by_location with "HSegLoc HInfArr")
+          as (? ?) "[HIsSeg HInfArrRestore]".
+        iAaccIntro with "HIsSeg".
+        {
+          iIntros "HIsSeg".
+          iDestruct ("HInfArrRestore" with "HIsSeg") as "HInfArr".
+          iIntros "!>". iSplitL; last done.
+          iExists _, _, _. iFrame.
+        }
+
+        iIntros (?) "(HIsSeg & #HArrMapsto & #HCellInv)".
+        iDestruct (bi.later_wand with "HInfArrRestore HIsSeg") as "HInfArr".
+        iSplitL; first by iExists _, _, _; iFrame.
+        iIntros "!> (HΦ' & HLoc & HAwak)". wp_pures.
+
+        iDestruct "HLoc" as (ℓ) "[#HArrMapsto' Hℓ]".
+        iDestruct (array_mapsto'_agree with "HArrMapsto HArrMapsto'") as %->.
+        awp_apply getAndSet.getAndSet_spec without "HΦ' HAwak".
+        iAaccIntro with "[Hℓ]".
+        {
+          rewrite /tele_app.
+        }
+        admit.
+      }
 
       admit.
     }

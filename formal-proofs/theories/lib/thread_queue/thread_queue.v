@@ -2146,6 +2146,48 @@ Proof.
   }
 Qed.
 
+Lemma rendezvous_done_from_auth γtq i γt th d l deqFront:
+  l !! i = Some (Some d) ->
+  (d = cellFilled ∨ ∃ v, d = cellInhabited γt th (Some v)) ->
+  own γtq (● cell_list_contents_auth_ra l deqFront) ==∗
+   own γtq (● cell_list_contents_auth_ra l deqFront) ∗ rendezvous_done γtq i d.
+Proof.
+  iIntros (HEl Hd) "HAuth".
+  iMod (own_update with "HAuth") as "[$ $]"; last done.
+  apply auth_update_core_id.
+  apply _.
+  apply prod_included'; split; simpl.
+  by apply ucmra_unit_least.
+  apply list_lookup_included.
+  intros j.
+  rewrite map_lookup.
+  assert (i < length l)%nat.
+  by apply lookup_lt_is_Some; eauto.
+  destruct (decide (j < i)%nat).
+  {
+    rewrite list_lookup_singletonM_lt; last done.
+    assert (is_Some (l !! j)) as [? ->].
+    by apply lookup_lt_is_Some; lia.
+    simpl.
+    apply Some_included_total.
+    apply ucmra_unit_least.
+  }
+  destruct (decide (j = i)).
+  2: {
+    rewrite list_lookup_singletonM_gt; try lia.
+    rewrite option_included. left. done.
+  }
+  subst.
+  rewrite HEl.
+  rewrite list_lookup_singletonM.
+  apply Some_included_total.
+  simpl.
+  destruct d; first done. destruct Hd as [|[? Hd]]; simplify_eq.
+  apply prod_included; simpl; split; last done.
+  apply prod_included'; simpl; split; last done.
+  apply ucmra_unit_least.
+Qed.
+
 Lemma do_cancel_rendezvous_spec E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront i j:
   find_index still_present (drop deqFront l) = Some j ->
   inhabitant_token γtq i -∗
@@ -2160,7 +2202,9 @@ Lemma do_cancel_rendezvous_spec E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deq
     ⌜l !! i = Some (Some (cellInhabited γt th (Some cellResumed)))⌝ ∧
     is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l (deqFront + S j)%nat ∗
     (∃ (ℓ: loc), array_mapsto segment_size γa i ℓ ∗ ▷ ℓ ↦ RESUMEDV) ∗
-    awakening_permit γtq)).
+    awakening_permit γtq ∗
+    rendezvous_resumed γtq i
+  )).
 Proof.
   iIntros (HFindIndex) "HInhToken HTq".
   iDestruct "HTq" as "($ & HListContents & #>HDeqFront & HRest)".
@@ -2205,8 +2249,12 @@ Proof.
     rewrite lookup_drop in HEl''. eauto.
   }
   {
-    iRight. iFrame "HLoc HAwak HListContents".
+    iRight.
+    iDestruct "HListContents" as "($ & $ & >HLCAuth & $)".
+    iMod (rendezvous_done_from_auth with "HLCAuth") as "[$ #HRendRes]"; eauto.
+    iFrame "HLoc HAwak".
     iSplitR; first done.
+    iSplitL; last by iExists _, _.
     iSplitR.
     {
       iDestruct "HDeqFront" as %HDeqFront. iPureIntro.
@@ -2232,48 +2280,6 @@ Qed.
 
 Lemma fmap_is_map {A B} (f: A -> B) (l: list A): f <$> l = map f l.
 Proof. auto. Qed.
-
-Lemma rendezvous_done_from_auth γtq i γt th d l deqFront:
-  l !! i = Some (Some d) ->
-  (d = cellFilled ∨ ∃ v, d = cellInhabited γt th (Some v)) ->
-  own γtq (● cell_list_contents_auth_ra l deqFront) ==∗
-   own γtq (● cell_list_contents_auth_ra l deqFront) ∗ rendezvous_done γtq i d.
-Proof.
-  iIntros (HEl Hd) "HAuth".
-  iMod (own_update with "HAuth") as "[$ $]"; last done.
-  apply auth_update_core_id.
-  apply _.
-  apply prod_included'; split; simpl.
-  by apply ucmra_unit_least.
-  apply list_lookup_included.
-  intros j.
-  rewrite map_lookup.
-  assert (i < length l)%nat.
-  by apply lookup_lt_is_Some; eauto.
-  destruct (decide (j < i)%nat).
-  {
-    rewrite list_lookup_singletonM_lt; last done.
-    assert (is_Some (l !! j)) as [? ->].
-    by apply lookup_lt_is_Some; lia.
-    simpl.
-    apply Some_included_total.
-    apply ucmra_unit_least.
-  }
-  destruct (decide (j = i)).
-  2: {
-    rewrite list_lookup_singletonM_gt; try lia.
-    rewrite option_included. left. done.
-  }
-  subst.
-  rewrite HEl.
-  rewrite list_lookup_singletonM.
-  apply Some_included_total.
-  simpl.
-  destruct d; first done. destruct Hd as [|[? Hd]]; simplify_eq.
-  apply prod_included; simpl; split; last done.
-  apply prod_included'; simpl; split; last done.
-  apply ucmra_unit_least.
-Qed.
 
 Theorem resume_rendezvous_spec E R γa γtq γe γd i ℓ:
   inv N (cell_invariant γtq γa i ℓ) -∗
@@ -3988,7 +3994,6 @@ Theorem try_enque_thread_spec E R γa γtq γe γd γt (eℓ epℓ dℓ dpℓ: l
       (∃ i (s: loc), ⌜v = SOMEV (#s, #(i `mod` Pos.to_nat segment_size)%nat)⌝ ∧
        ⌜l !! i = Some None⌝ ∧
        segment_location γa (i `div` Pos.to_nat segment_size)%nat s ∗
-       array_mapsto segment_size γa i (s +ₗ (i `mod` Pos.to_nat segment_size)%nat) ∗
        rendezvous_thread_handle γtq γt th i ∗
        ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
          (alter (fun _ => Some (cellInhabited γt th None)) i l) deqFront ∗
