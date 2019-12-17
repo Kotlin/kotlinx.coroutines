@@ -10,9 +10,11 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
+import kotlin.native.concurrent.*
 
 /**
  * Broadcasts all elements of the channel.
+ * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  *
  * The kind of the resulting channel depends on the specified [capacity] parameter:
  * when `capacity` is positive (1 by default), but less than [UNLIMITED] -- uses `ArrayBroadcastChannel` with a buffer of given capacity,
@@ -20,17 +22,37 @@ import kotlin.coroutines.intrinsics.*
  *   Note that resulting channel behaves like [ConflatedBroadcastChannel] but is not an instance of [ConflatedBroadcastChannel].
  *   otherwise -- throws [IllegalArgumentException].
  *
+ * ### Cancelling broadcast
+ *
+ * **To stop broadcasting from the underlying channel call [cancel][BroadcastChannel.cancel] on the result.**
+ *
+ * Do not use [close][BroadcastChannel.close] on the resulting channel.
+ * It causes eventual failure of the broadcast coroutine and cancellation of the underlying channel, too,
+ * but it is not as prompt.
+ *
+ * ### Obsolete
+ *
+ * This function has an inappropriate result type of [BroadcastChannel] which provides
+ * [send][BroadcastChannel.send] and [close][BroadcastChannel.close] operations that interfere with
+ * the broadcasting coroutine in hard-to-specify ways. It will be replaced with
+ * sharing operators on [Flow][kotlinx.coroutines.flow.Flow].
+ *
  * @param start coroutine start option. The default value is [CoroutineStart.LAZY].
  */
+@ObsoleteCoroutinesApi // since version 1.4.0
 fun <E> ReceiveChannel<E>.broadcast(
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY
-): BroadcastChannel<E> =
-    GlobalScope.broadcast(Dispatchers.Unconfined, capacity = capacity, start = start, onCompletion = consumes()) {
+): BroadcastChannel<E> {
+    val scope = GlobalScope + Dispatchers.Unconfined + CoroutineExceptionHandler { _, _ -> }
+    // We can run this coroutine in the context that ignores all exceptions, because of `onCompletion = consume()`
+    // which passes all exceptions upstream to the source ReceiveChannel
+    return scope.broadcast(capacity = capacity, start = start, onCompletion = consumes()) {
         for (e in this@broadcast) {
             send(e)
         }
     }
+}
 
 /**
  * Launches new coroutine to produce a stream of values by sending them to a broadcast channel
@@ -63,12 +85,28 @@ fun <E> ReceiveChannel<E>.broadcast(
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
+ * ### Cancelling broadcast
+ *
+ * **To stop broadcasting from the underlying channel call [cancel][BroadcastChannel.cancel] on the result.**
+ *
+ * Do not use [close][BroadcastChannel.close] on the resulting channel.
+ * It causes  failure of the `send` operation in broadcast coroutine and would not cancel it if the
+ * coroutine is doing something else.
+ *
+ * ### Obsolete
+ *
+ * This function has an inappropriate result type of [BroadcastChannel] which provides
+ * [send][BroadcastChannel.send] and [close][BroadcastChannel.close] operations that interfere with
+ * the broadcasting coroutine in hard-to-specify ways. It will be replaced with
+ * sharing operators on [Flow][kotlinx.coroutines.flow.Flow].
+ *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param capacity capacity of the channel's buffer (1 by default).
  * @param start coroutine start option. The default value is [CoroutineStart.LAZY].
  * @param onCompletion optional completion handler for the producer coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
+@ObsoleteCoroutinesApi // since version 1.4.0
 public fun <E> CoroutineScope.broadcast(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 1,
@@ -107,8 +145,9 @@ private open class BroadcastCoroutine<E>(
     }
 
     override fun cancelInternal(cause: Throwable) {
-        _channel.cancel(cause.toCancellationException()) // cancel the channel
-        cancelCoroutine(cause) // cancel the job
+        val exception = cause.toCancellationException()
+        _channel.cancel(exception) // cancel the channel
+        cancelCoroutine(exception) // cancel the job
     }
 
     override fun onCompleted(value: Unit) {
@@ -118,6 +157,13 @@ private open class BroadcastCoroutine<E>(
     override fun onCancelled(cause: Throwable, handled: Boolean) {
         val processed = _channel.close(cause)
         if (!processed && !handled) handleCoroutineException(context, cause)
+    }
+
+    // The BroadcastChannel could be also closed
+    override fun close(cause: Throwable?): Boolean {
+        val result = _channel.close(cause)
+        start() // start coroutine if it was not started yet
+        return result
     }
 }
 
