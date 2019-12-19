@@ -1,0 +1,5 @@
+public final class kotlinx/coroutines/swt/SWTDispatcherKt {
+	public static final fun getSWT (Lkotlinx/coroutines/Dispatchers;)Lkotlinx/coroutines/MainCoroutineDispatcher;
+	public static final fun swt (Lkotlinx/coroutines/Dispatchers;Lorg/eclipse/swt/widgets/Display;)Lkotlinx/coroutines/MainCoroutineDispatcher;
+}
+

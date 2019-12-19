@@ -40,6 +40,7 @@ module('ui/kotlinx-coroutines-android')
 module('ui/kotlinx-coroutines-android/android-unit-tests')
 module('ui/kotlinx-coroutines-javafx')
 module('ui/kotlinx-coroutines-swing')
+module('ui/kotlinx-coroutines-swt')
 
 module('js/js-stub')
 module('js/example-frontend-js')

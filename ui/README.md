@@ -9,3 +9,4 @@ Module name below corresponds to the artifact name in Maven/Gradle.
 * [kotlinx-coroutines-android](kotlinx-coroutines-android/README.md) -- `Dispatchers.Main` context for Android applications.
 * [kotlinx-coroutines-javafx](kotlinx-coroutines-javafx/README.md) -- `Dispatchers.JavaFx` context for JavaFX UI applications.
 * [kotlinx-coroutines-swing](kotlinx-coroutines-swing/README.md) -- `Dispatchers.Swing` context for Swing UI applications.
+* [kotlinx-coroutines-swt](kotlinx-coroutines-swt/README.md) -- `Dispatchers.SWT` context for SWT UI applications.

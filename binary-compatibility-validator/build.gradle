@@ -29,6 +29,7 @@ dependencies {
     testArtifacts project(':kotlinx-coroutines-android')
     testArtifacts project(':kotlinx-coroutines-javafx')
     testArtifacts project(':kotlinx-coroutines-swing')
+    testArtifacts project(':kotlinx-coroutines-swt')
 }
 
 def testCasesDeclarationsDump = "${buildDir}/visibilities.json".toString()

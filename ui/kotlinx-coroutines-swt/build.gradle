@@ -1,0 +1,61 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+ext {
+    swtVersion = '3.113.0'
+    osgiPlatform = getOsgiPlatform()
+}
+
+dependencies {
+    compileOnly "org.eclipse.platform:org.eclipse.swt:$swtVersion"
+
+    testImplementation project(':kotlinx-coroutines-jdk8')
+    testImplementation "org.eclipse.platform:org.eclipse.swt:$swtVersion"
+}
+
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        // The maven property ${osgi.platform} is not handled by Gradle
+        // so we replace the dependency, using the osgi platform from the project settings
+        substitute module('org.eclipse.platform:org.eclipse.swt.${osgi.platform}') with module("org.eclipse.platform:org.eclipse.swt.$osgiPlatform:$swtVersion")
+    }
+}
+
+/** Get SWT platform identifier. */
+static String getOsgiPlatform() {
+    def library = getSWTWindowingLibrary(System.properties['os.name'].toString())
+    def platform = getSWTPlatform(System.properties['os.name'].toString())
+    def arch = getSWTArch(System.properties['os.arch'].toString())
+    "$library.$platform.$arch"
+}
+
+/** Get SWT windowing library. */
+static String getSWTWindowingLibrary(String platform) {
+    switch (platform.replaceAll(' ', '').toLowerCase()) {
+        case ~/.*linux.*/: return 'gtk'
+        case ~/.*darwin.*/: return 'cocoa'
+        case ~/.*osx.*/: return 'cocoa'
+        case ~/.*win.*/: return 'win32'
+        default: return null
+    }
+}
+
+/** Get SWT platform. */
+static String getSWTPlatform(String platform) {
+    switch (platform.replaceAll(' ', '').toLowerCase()) {
+        case ~/.*linux.*/: return 'linux'
+        case ~/.*darwin.*/: return 'macosx'
+        case ~/.*osx.*/: return 'macosx'
+        case ~/.*win.*/: return 'win32'
+        default: return platform
+    }
+}
+
+/** Get SWT architecture. */
+static String getSWTArch(String arch) {
+    switch (arch) {
+        case ~/.*64.*/: return 'x86_64'
+        default: return 'x86'
+    }
+}

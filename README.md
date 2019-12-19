@@ -23,7 +23,7 @@ suspend fun main() = coroutineScope {
 
 * [core](kotlinx-coroutines-core/README.md) &mdash; common coroutines across all platforms:
   * [launch] and [async] coroutine builders returning [Job] and [Deferred] light-weight futures with cancellation support;
-  * [Dispatchers] object with [Main][Dispatchers.Main] dispatcher for Android/Swing/JavaFx, and [Default][Dispatchers.Default] dispatcher for background coroutines;
+  * [Dispatchers] object with [Main][Dispatchers.Main] dispatcher for Android/Swing/JavaFx/SWT, and [Default][Dispatchers.Default] dispatcher for background coroutines;
   * [delay] and [yield] top-level suspending functions;
   * [Flow] &mdash; cold asynchronous stream with [flow][_flow] builder and comprehensive operator set ([filter], [map], etc);
   * [Channel], [Mutex], and [Semaphore] communication and synchronization primitives;
@@ -48,7 +48,7 @@ suspend fun main() = coroutineScope {
     RxJava 2.x ([rxFlowable], [rxSingle], etc), and 
     Project Reactor ([flux], [mono], etc). 
 * [ui](ui/README.md) &mdash; modules that provide coroutine dispatchers for various single-threaded UI libraries:
-  * Android, JavaFX, and Swing.
+  * Android, JavaFX, Swing, and SWT.
 * [integration](integration/README.md) &mdash; modules that provide integration with various asynchronous callback- and future-based libraries:
   * JDK8 [CompletionStage.await], Guava [ListenableFuture.await], and Google Play Services [Task.await];
   * SLF4J MDC integration via [MDCContext].

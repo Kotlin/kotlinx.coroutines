@@ -21,6 +21,7 @@ Library support for Kotlin coroutines. This reference is a companion to
 | [kotlinx-coroutines-android](kotlinx-coroutines-android)             | `Main` dispatcher for Android applications |
 | [kotlinx-coroutines-javafx](kotlinx-coroutines-javafx)               | `JavaFx` dispatcher for JavaFX UI applications |
 | [kotlinx-coroutines-swing](kotlinx-coroutines-swing)                 | `Swing` dispatcher for Swing UI applications |
+| [kotlinx-coroutines-swt](kotlinx-coroutines-swt)                     | `SWT` dispatcher for SWT UI applications |
 | [kotlinx-coroutines-jdk8](kotlinx-coroutines-jdk8)                   | Integration with JDK8 `CompletableFuture` (Android API level 24) |
 | [kotlinx-coroutines-guava](kotlinx-coroutines-guava)                 | Integration with Guava [ListenableFuture](https://github.com/google/guava/wiki/ListenableFutureExplained) |
 | [kotlinx-coroutines-slf4j](kotlinx-coroutines-slf4j)                 | Integration with SLF4J [MDC](https://logback.qos.ch/manual/mdc.html) |

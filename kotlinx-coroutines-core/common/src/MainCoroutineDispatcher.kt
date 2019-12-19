@@ -40,7 +40,7 @@ public abstract class MainCoroutineDispatcher : CoroutineDispatcher() {
      * Method may throw [UnsupportedOperationException] if immediate dispatching is not supported by current dispatcher,
      * please refer to specific dispatcher documentation.
      *
-     * [Dispatchers.Main] supports immediate execution for Android, JavaFx and Swing platforms.
+     * [Dispatchers.Main] supports immediate execution for Android, JavaFx, Swing and SWT platforms.
      */
     public abstract val immediate: MainCoroutineDispatcher
 }
