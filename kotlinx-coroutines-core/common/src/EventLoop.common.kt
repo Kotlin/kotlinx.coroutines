@@ -118,7 +118,7 @@ internal abstract class EventLoop : CoroutineDispatcher() {
     protected open fun shutdown() {}
 }
 
-@NativeThreadLocal
+@ThreadLocal
 internal object ThreadLocalEventLoop {
     private val ref = CommonThreadLocal<EventLoop?>()
 
