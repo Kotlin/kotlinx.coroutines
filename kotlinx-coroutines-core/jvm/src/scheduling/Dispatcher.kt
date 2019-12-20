@@ -65,7 +65,7 @@ open class ExperimentalCoroutineDispatcher(
 
     override fun dispatchYield(context: CoroutineContext, block: Runnable): Unit =
         try {
-            coroutineScheduler.dispatch(block, fair = true)
+            coroutineScheduler.dispatch(block, tailDispatch = true)
         } catch (e: RejectedExecutionException) {
             DefaultExecutor.dispatchYield(context, block)
         }
@@ -101,9 +101,9 @@ open class ExperimentalCoroutineDispatcher(
         return LimitingDispatcher(this, parallelism, TaskMode.NON_BLOCKING)
     }
 
-    internal fun dispatchWithContext(block: Runnable, context: TaskContext, fair: Boolean) {
+    internal fun dispatchWithContext(block: Runnable, context: TaskContext, tailDispatch: Boolean) {
         try {
-            coroutineScheduler.dispatch(block, context, fair)
+            coroutineScheduler.dispatch(block, context, tailDispatch)
         } catch (e: RejectedExecutionException) {
             // Context shouldn't be lost here to properly invoke before/after task
             DefaultExecutor.enqueue(coroutineScheduler.createTask(block, context))
@@ -147,7 +147,7 @@ private class LimitingDispatcher(
 
     override fun dispatch(context: CoroutineContext, block: Runnable) = dispatch(block, false)
 
-    private fun dispatch(block: Runnable, fair: Boolean) {
+    private fun dispatch(block: Runnable, tailDispatch: Boolean) {
         var taskToSchedule = block
         while (true) {
             // Commit in-flight tasks slot
@@ -155,7 +155,7 @@ private class LimitingDispatcher(
 
             // Fast path, if parallelism limit is not reached, dispatch task and return
             if (inFlight <= parallelism) {
-                dispatcher.dispatchWithContext(taskToSchedule, this, fair)
+                dispatcher.dispatchWithContext(taskToSchedule, this, tailDispatch)
                 return
             }
 
@@ -183,6 +183,10 @@ private class LimitingDispatcher(
 
             taskToSchedule = queue.poll() ?: return
         }
+    }
+
+    override fun dispatchYield(context: CoroutineContext, block: Runnable) {
+        dispatch(block, tailDispatch = true)
     }
 
     override fun toString(): String {
