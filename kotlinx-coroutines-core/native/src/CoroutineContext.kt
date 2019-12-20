@@ -1,10 +1,11 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
+import kotlin.native.concurrent.*
 
 private fun takeEventLoop(): EventLoopImpl =
     ThreadLocalEventLoop.currentOrNull() as? EventLoopImpl ?:
@@ -26,6 +27,7 @@ internal fun loopWasShutDown(): Nothing = error("Cannot execute task because eve
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
     DefaultExecutor
 
+@SharedImmutable
 internal actual val DefaultDelay: Delay = DefaultExecutor
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {

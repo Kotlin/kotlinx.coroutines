@@ -6,6 +6,7 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.*
+import io.reactivex.exceptions.*
 import io.reactivex.functions.*
 import kotlinx.coroutines.*
 import org.hamcrest.core.*
@@ -201,13 +202,19 @@ class SingleTest : TestBase() {
 
     @Test
     fun testFatalExceptionInSubscribe() = runTest {
-        rxSingle(Dispatchers.Unconfined + CoroutineExceptionHandler { _, e -> assertTrue(e is LinkageError); expect(2) }) {
-            expect(1)
-            42
-        }.subscribe(Consumer {
-            throw LinkageError()
-        })
-        finish(3)
+        val handler = { e: Throwable ->
+            assertTrue(e is UndeliverableException && e.cause is LinkageError)
+            expect(2)
+        }
+        withExceptionHandler(handler) {
+            rxSingle(Dispatchers.Unconfined) {
+                expect(1)
+                42
+            }.subscribe(Consumer {
+                throw LinkageError()
+            })
+            finish(3)
+        }
     }
 
     @Test
@@ -223,11 +230,11 @@ class SingleTest : TestBase() {
     fun testUnhandledException() = runTest {
         expect(1)
         var disposable: Disposable? = null
-        val eh = CoroutineExceptionHandler { _, t ->
-            assertTrue(t is TestException)
+        val handler = { e: Throwable ->
+            assertTrue(e is UndeliverableException && e.cause is TestException)
             expect(5)
         }
-        val single = rxSingle(currentDispatcher() + eh) {
+        val single = rxSingle(currentDispatcher()) {
             expect(4)
             disposable!!.dispose() // cancel our own subscription, so that delay will get cancelled
             try {
@@ -236,16 +243,24 @@ class SingleTest : TestBase() {
                 throw TestException() // would not be able to handle it since mono is disposed
             }
         }
-        single.subscribe(object : SingleObserver<Unit> {
-            override fun onSubscribe(d: Disposable) {
-                expect(2)
-                disposable = d
-            }
-            override fun onSuccess(t: Unit) { expectUnreached() }
-            override fun onError(t: Throwable) { expectUnreached() }
-        })
-        expect(3)
-        yield() // run coroutine
-        finish(6)
+        withExceptionHandler(handler) {
+            single.subscribe(object : SingleObserver<Unit> {
+                override fun onSubscribe(d: Disposable) {
+                    expect(2)
+                    disposable = d
+                }
+
+                override fun onSuccess(t: Unit) {
+                    expectUnreached()
+                }
+
+                override fun onError(t: Throwable) {
+                    expectUnreached()
+                }
+            })
+            expect(3)
+            yield() // run coroutine
+            finish(6)
+        }
     }
 }

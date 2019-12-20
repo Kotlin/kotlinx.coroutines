@@ -75,7 +75,8 @@ Here we are launching a new coroutine in the [GlobalScope], meaning that the lif
 coroutine is limited only by the lifetime of the whole application.  
 
 You can achieve the same result replacing
-`GlobalScope.launch { ... }` with `thread { ... }` and `delay(...)` with `Thread.sleep(...)`. Try it.
+`GlobalScope.launch { ... }` with `thread { ... }` and `delay(...)` with `Thread.sleep(...)`. 
+Try it (don't forget to import `kotlin.concurrent.thread`).
 
 If you start by replacing `GlobalScope.launch` by `thread`, the compiler produces the following error:
 

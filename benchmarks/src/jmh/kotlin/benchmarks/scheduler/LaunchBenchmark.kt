@@ -1,9 +1,10 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package benchmarks
+package benchmarks.scheduler
 
+import benchmarks.*
 import kotlinx.coroutines.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
@@ -21,7 +22,7 @@ import java.util.concurrent.*
 @State(Scope.Benchmark)
 open class LaunchBenchmark : ParametrizedDispatcherBase() {
 
-    @Param("experimental", "fjp")
+    @Param("scheduler", "fjp")
     override var dispatcher: String = "fjp"
 
     private val jobsToLaunch = 100

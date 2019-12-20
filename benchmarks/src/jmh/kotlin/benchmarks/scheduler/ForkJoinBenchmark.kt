@@ -1,9 +1,10 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package benchmarks
+package benchmarks.scheduler
 
+import benchmarks.*
 import kotlinx.coroutines.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
@@ -44,7 +45,7 @@ open class ForkJoinBenchmark : ParametrizedDispatcherBase() {
     }
 
     lateinit var coefficients: LongArray
-    override var dispatcher: String = "experimental"
+    override var dispatcher: String = "scheduler"
 
     @Setup
     override fun setup() {
@@ -129,8 +130,18 @@ open class ForkJoinBenchmark : ParametrizedDispatcherBase() {
             } else {
                 pendingCount = 2
                 // One may fork only once here and executing second task here with looping over firstComplete to be even more efficient
-                first = RecursiveAction(coefficients, start, start + (end - start) / 2, parent = this).fork()
-                second = RecursiveAction(coefficients, start + (end - start) / 2, end, parent = this).fork()
+                first = RecursiveAction(
+                    coefficients,
+                    start,
+                    start + (end - start) / 2,
+                    parent = this
+                ).fork()
+                second = RecursiveAction(
+                    coefficients,
+                    start + (end - start) / 2,
+                    end,
+                    parent = this
+                ).fork()
             }
 
             tryComplete()

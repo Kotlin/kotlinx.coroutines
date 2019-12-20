@@ -21,7 +21,7 @@ public fun <T: Any> Flow<T>.asFlux(): Flux<T> = FlowAsFlux(this)
 private class FlowAsFlux<T : Any>(private val flow: Flow<T>) : Flux<T>() {
     override fun subscribe(subscriber: CoreSubscriber<in T>?) {
         if (subscriber == null) throw NullPointerException()
-        val hasContext = subscriber.currentContext().isEmpty
+        val hasContext = !subscriber.currentContext().isEmpty
         val source = if (hasContext) flow.flowOn(subscriber.currentContext().asCoroutineContext()) else flow
         subscriber.onSubscribe(FlowSubscription(source, subscriber))
     }

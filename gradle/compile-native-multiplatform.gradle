@@ -1,28 +1,42 @@
+project.ext.nativeMainSets = []
+project.ext.nativeTestSets = []
+
 kotlin {
+    targets.metaClass.addTarget = { preset ->
+        def target = delegate.fromPreset(preset, preset.name)
+        project.ext.nativeMainSets.add(target.compilations['main'].kotlinSourceSets.first())
+        project.ext.nativeTestSets.add(target.compilations['test'].kotlinSourceSets.first())
+    }
+
     targets {
         if (project.ext.ideaActive) {
             fromPreset(project.ext.ideaPreset, 'native')
         } else {
-            fromPreset(presets.linuxX64, 'linuxX64')
-            fromPreset(presets.iosArm64, 'iosArm64')
-            fromPreset(presets.iosArm32, 'iosArm32')
-            fromPreset(presets.iosX64, 'iosX64')
-            fromPreset(presets.macosX64, 'macosX64')
-            fromPreset(presets.mingwX64, 'windowsX64')
+            addTarget(presets.linuxX64)
+            addTarget(presets.iosArm64)
+            addTarget(presets.iosArm32)
+            addTarget(presets.iosX64)
+            addTarget(presets.macosX64)
+            addTarget(presets.mingwX64)
+            addTarget(presets.tvosArm64)
+            addTarget(presets.tvosX64)
+            addTarget(presets.watchosArm32)
+            addTarget(presets.watchosArm64)
+            addTarget(presets.watchosX86)
         }
     }
 
     sourceSets {
         nativeMain { dependsOn commonMain }
-        // Empty source set is required in order to have native tests task 
+        // Empty source set is required in order to have native tests task
         nativeTest {}
 
         if (!project.ext.ideaActive) {
-            configure([linuxX64Main, macosX64Main, windowsX64Main, iosArm32Main, iosArm64Main, iosX64Main]) {
+            configure(nativeMainSets) {
                 dependsOn nativeMain
             }
 
-            configure([linuxX64Test, macosX64Test, windowsX64Test, iosArm32Test, iosArm64Test, iosX64Test]) {
+            configure(nativeTestSets) {
                 dependsOn nativeTest
             }
         }

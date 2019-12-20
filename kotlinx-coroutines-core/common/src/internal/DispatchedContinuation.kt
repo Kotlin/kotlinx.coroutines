@@ -8,6 +8,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
+import kotlin.native.concurrent.*
 
 @SharedImmutable
 private val UNDEFINED = Symbol("UNDEFINED")
@@ -211,8 +212,7 @@ internal class DispatchedContinuation<in T>(
     }
 
     // used by "yield" implementation
-    internal fun dispatchYield(value: T) {
-        val context = continuation.context
+    internal fun dispatchYield(context: CoroutineContext, value: T) {
         _state = value
         resumeMode = MODE_CANCELLABLE
         dispatcher.dispatchYield(context, this)

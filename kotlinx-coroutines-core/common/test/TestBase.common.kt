@@ -71,9 +71,10 @@ public class RecoverableTestCancellationException(message: String? = null) : Can
 public fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
     val dispatcher = context[ContinuationInterceptor] as CoroutineDispatcher
     return object : CoroutineDispatcher() {
-        override fun dispatch(context: CoroutineContext, block: Runnable) {
+        override fun isDispatchNeeded(context: CoroutineContext): Boolean =
+            dispatcher.isDispatchNeeded(context)
+        override fun dispatch(context: CoroutineContext, block: Runnable) =
             dispatcher.dispatch(context, block)
-        }
     }
 }
 

@@ -5,6 +5,7 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.internal.*
 import kotlin.test.*
 
 class OnCompletionTest : TestBase() {
@@ -171,14 +172,91 @@ class OnCompletionTest : TestBase() {
                     .onCompletion { e ->
                         expect(8)
                         assertNull(e)
-                        emit(TestData.Done(e))
+                        try {
+                            emit(TestData.Done(e))
+                            expectUnreached()
+                        } finally {
+                            expect(9)
+                        }
                     }.collect {
                         collected += it
                     }
             }
         }
-        val expected = (1..5).map { TestData.Value(it) } + TestData.Done(null)
+        val expected = (1..5).map<Int, TestData> { TestData.Value(it) }
         assertEquals(expected, collected)
-        finish(9)
+        finish(10)
+    }
+
+    @Test
+    fun testFailedEmit() = runTest {
+        val cause = TestException()
+        assertFailsWith<TestException> {
+            flow<TestData> {
+                expect(1)
+                emit(TestData.Value(2))
+                expectUnreached()
+            }.onCompletion {
+                assertNull(it)
+                expect(3)
+                try {
+                    emit(TestData.Done(it))
+                    expectUnreached()
+                } catch (e: TestException) {
+                    assertSame(cause, e)
+                    finish(4)
+                }
+            }.collect {
+                expect((it as TestData.Value).i)
+                throw cause
+            }
+        }
+    }
+
+    @Test
+    fun testFirst() = runTest {
+        val value = flowOf(239).onCompletion {
+            assertNull(it)
+            expect(1)
+            try {
+                emit(42)
+                expectUnreached()
+            } catch (e: Throwable) {
+                assertTrue { e is AbortFlowException }
+            }
+        }.first()
+        assertEquals(239, value)
+        finish(2)
+    }
+
+    @Test
+    fun testSingle() = runTest {
+        assertFailsWith<IllegalStateException> {
+            flowOf(239).onCompletion {
+                assertNull(it)
+                expect(1)
+                try {
+                    emit(42)
+                    expectUnreached()
+                } catch (e: Throwable) {
+                    // Second emit -- failure
+                    assertTrue { e is IllegalStateException }
+                    throw e
+                }
+            }.single()
+            expectUnreached()
+        }
+        finish(2)
+    }
+
+    @Test
+    fun testEmptySingleInterference() = runTest {
+        val value = emptyFlow<Int>().onCompletion {
+            assertNull(it)
+            expect(1)
+            emit(42)
+        }.single()
+        assertEquals(42, value)
+        finish(2)
     }
 }

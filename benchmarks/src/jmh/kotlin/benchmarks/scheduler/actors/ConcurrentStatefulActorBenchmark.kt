@@ -2,10 +2,11 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package benchmarks.actors
+package benchmarks.scheduler.actors
 
 import benchmarks.*
-import benchmarks.actors.StatefulActorBenchmark.*
+import benchmarks.akka.*
+import benchmarks.scheduler.actors.StatefulActorBenchmark.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.openjdk.jmh.annotations.*
@@ -57,10 +58,10 @@ import java.util.concurrent.*
 @State(Scope.Benchmark)
 open class ConcurrentStatefulActorBenchmark : ParametrizedDispatcherBase() {
 
-    @Param("1024", "8192", "262144")
+    @Param("1024", "8192")
     var stateSize: Int = -1
 
-    @Param("fjp", "ftp_1", "ftp_8", "experimental")
+    @Param("fjp", "scheduler")
     override var dispatcher: String = "fjp"
 
     @Benchmark
@@ -68,7 +69,7 @@ open class ConcurrentStatefulActorBenchmark : ParametrizedDispatcherBase() {
         val resultChannel: Channel<Unit> = Channel(1)
         val computations = (0 until CORES_COUNT).map { computationActor(stateSize) }
         val requestor = requestorActorUnfair(computations, resultChannel)
-        requestor.send(Letter(Start(), Channel(0)))
+        requestor.send(Letter(Start(), requestor))
         resultChannel.receive()
     }
 
@@ -77,7 +78,7 @@ open class ConcurrentStatefulActorBenchmark : ParametrizedDispatcherBase() {
         val resultChannel: Channel<Unit> = Channel(1)
         val computations = (0 until CORES_COUNT).map { computationActor(stateSize) }
         val requestor = requestorActorFair(computations, resultChannel)
-        requestor.send(Letter(Start(), Channel(0)))
+        requestor.send(Letter(Start(), requestor))
         resultChannel.receive()
     }
 
@@ -95,6 +96,7 @@ open class ConcurrentStatefulActorBenchmark : ParametrizedDispatcherBase() {
                     }
                     is Long -> {
                         if (++received >= ROUNDS * 8) {
+                            computations.forEach { it.close() }
                             stopChannel.send(Unit)
                             return@actor
                         } else {
@@ -122,6 +124,7 @@ open class ConcurrentStatefulActorBenchmark : ParametrizedDispatcherBase() {
                     }
                     is Long -> {
                         if (++receivedTotal >= ROUNDS * computations.size) {
+                            computations.forEach { it.close() }
                             stopChannel.send(Unit)
                             return@actor
                         } else {

@@ -6,6 +6,7 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.*
+import io.reactivex.exceptions.*
 import kotlinx.coroutines.*
 import org.hamcrest.core.*
 import org.junit.*
@@ -122,11 +123,11 @@ class CompletableTest : TestBase() {
     fun testUnhandledException() = runTest() {
         expect(1)
         var disposable: Disposable? = null
-        val eh = CoroutineExceptionHandler { _, t ->
-            assertTrue(t is TestException)
+        val handler = { e: Throwable ->
+            assertTrue(e is UndeliverableException && e.cause is TestException)
             expect(5)
         }
-        val completable = rxCompletable(currentDispatcher() + eh) {
+        val completable = rxCompletable(currentDispatcher()) {
             expect(4)
             disposable!!.dispose() // cancel our own subscription, so that delay will get cancelled
             try {
@@ -135,26 +136,40 @@ class CompletableTest : TestBase() {
                 throw TestException() // would not be able to handle it since mono is disposed
             }
         }
-        completable.subscribe(object : CompletableObserver {
-            override fun onSubscribe(d: Disposable) {
-                expect(2)
-                disposable = d
-            }
-            override fun onComplete() { expectUnreached() }
-            override fun onError(t: Throwable) { expectUnreached() }
-        })
-        expect(3)
-        yield() // run coroutine
-        finish(6)
+        withExceptionHandler(handler) {
+            completable.subscribe(object : CompletableObserver {
+                override fun onSubscribe(d: Disposable) {
+                    expect(2)
+                    disposable = d
+                }
+
+                override fun onComplete() {
+                    expectUnreached()
+                }
+
+                override fun onError(t: Throwable) {
+                    expectUnreached()
+                }
+            })
+            expect(3)
+            yield() // run coroutine
+            finish(6)
+        }
     }
 
     @Test
     fun testFatalExceptionInSubscribe() = runTest {
-        rxCompletable(Dispatchers.Unconfined + CoroutineExceptionHandler{ _, e -> assertTrue(e is LinkageError); expect(2)}) {
-            expect(1)
-            42
-        }.subscribe({ throw LinkageError() })
-        finish(3)
+        val handler: (Throwable) -> Unit = { e ->
+            assertTrue(e is UndeliverableException && e.cause is LinkageError); expect(2)
+        }
+
+        withExceptionHandler(handler) {
+            rxCompletable(Dispatchers.Unconfined) {
+                expect(1)
+                42
+            }.subscribe({ throw LinkageError() })
+            finish(3)
+        }
     }
 
     @Test

@@ -75,3 +75,23 @@ internal class ChannelFlowMerge<T>(
     override fun additionalToStringProps(): String =
         "concurrency=$concurrency, "
 }
+
+internal class ChannelLimitedFlowMerge<T>(
+    private val flows: Iterable<Flow<T>>,
+    context: CoroutineContext = EmptyCoroutineContext,
+    capacity: Int = Channel.BUFFERED
+) : ChannelFlow<T>(context, capacity) {
+    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
+        ChannelLimitedFlowMerge(flows, context, capacity)
+
+    override fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> {
+        return scope.flowProduce(context, capacity, block = collectToFun)
+    }
+
+    override suspend fun collectTo(scope: ProducerScope<T>) {
+        val collector = SendingCollector(scope)
+        flows.forEach { flow ->
+            scope.launch { flow.collect(collector) }
+        }
+    }
+}

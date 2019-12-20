@@ -7,17 +7,6 @@
 package kotlinx.coroutines
 
 /**
- * This exception gets thrown if an exception is caught while processing [CompletionHandler] invocation for [Job].
- *
- * @suppress **This an internal API and should not be used from general code.**
- */
-@InternalCoroutinesApi
-public actual class CompletionHandlerException actual constructor(
-    message: String,
-    cause: Throwable
-) : RuntimeException(message, cause)
-
-/**
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled while it is suspending.
  * It indicates _normal_ cancellation of a coroutine.
  * **It is not printed to console/log by default uncaught exception handler**.

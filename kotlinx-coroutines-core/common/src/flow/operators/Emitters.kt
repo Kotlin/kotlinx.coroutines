@@ -128,13 +128,26 @@ public fun <T> Flow<T>.onStart(
 public fun <T> Flow<T>.onCompletion(
     action: suspend FlowCollector<T>.(cause: Throwable?) -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke completion action
-    var exception: Throwable? = null
-    try {
-        exception = catchImpl(this)
-    } finally {
-        // Separate method because of KT-32220
-        SafeCollector<T>(this, coroutineContext).invokeSafely(action, exception)
-        exception?.let { throw it }
+    val exception = try {
+        catchImpl(this)
+    } catch (e: Throwable) {
+        /*
+         * Exception from the downstream.
+         * Use throwing collector to prevent any emissions from the
+         * completion sequence when downstream has failed, otherwise it may
+         * lead to a non-sequential behaviour impossible with `finally`
+         */
+        ThrowingCollector(e).invokeSafely(action, null)
+        throw e
+    }
+    // Exception from the upstream or normal completion
+    SafeCollector(this, coroutineContext).invokeSafely(action, exception)
+    exception?.let { throw it }
+}
+
+private class ThrowingCollector(private val e: Throwable) : FlowCollector<Any?> {
+    override suspend fun emit(value: Any?) {
+        throw e
     }
 }
 
@@ -155,5 +168,3 @@ private suspend fun <T> FlowCollector<T>.invokeSafely(
         throw e
     }
 }
-
-

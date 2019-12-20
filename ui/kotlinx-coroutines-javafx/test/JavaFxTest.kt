@@ -34,4 +34,26 @@ class JavaFxTest : TestBase() {
             finish(4)
         }
     }
+
+    @Test
+    fun testImmediateDispatcherYield() {
+        if (!initPlatform()) {
+            println("Skipping JavaFxTest in headless environment")
+            return // ignore test in headless environments
+        }
+
+        runBlocking(Dispatchers.JavaFx) {
+            expect(1)
+            check(Platform.isFxApplicationThread())
+            // launch in the immediate dispatcher
+            launch(Dispatchers.JavaFx.immediate) {
+                expect(2)
+                yield()
+                expect(4)
+            }
+            expect(3) // after yield
+            yield() // yield back
+            finish(5)
+        }
+    }
 }

@@ -1,6 +1,6 @@
 package kotlinx.coroutines.internal
 
-import kotlinx.coroutines.stressTestMultiplier
+import kotlinx.coroutines.*
 import org.junit.Test
 import java.util.*
 import java.util.concurrent.CyclicBarrier
@@ -9,9 +9,9 @@ import kotlin.concurrent.thread
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
-class SegmentQueueTest {
+class SegmentQueueTest : TestBase() {
     @Test
-    fun simpleTest() {
+    fun testSimpleTest() {
         val q = SegmentBasedQueue<Int>()
         assertEquals(1, q.numberOfSegments)
         assertEquals(null, q.dequeue())
@@ -69,10 +69,10 @@ class SegmentQueueTest {
     }
 
     @Test
-    fun stressTestRemoveSegmentsSerial() = stressTestRemoveSegments(false)
+    fun testRemoveSegmentsSerial() = stressTestRemoveSegments(false)
 
     @Test
-    fun stressTestRemoveSegmentsRandom() = stressTestRemoveSegments(true)
+    fun testRemoveSegmentsRandom() = stressTestRemoveSegments(true)
 
     private fun stressTestRemoveSegments(random: Boolean) {
         val N = 100_000 * stressTestMultiplier

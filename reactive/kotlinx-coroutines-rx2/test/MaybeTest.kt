@@ -6,6 +6,7 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.*
+import io.reactivex.exceptions.*
 import io.reactivex.functions.*
 import io.reactivex.internal.functions.Functions.*
 import kotlinx.coroutines.*
@@ -66,8 +67,8 @@ class MaybeTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            Assert.assertThat(error, IsInstanceOf(RuntimeException::class.java))
-            Assert.assertThat(error.message, IsEqual("OK"))
+            assertThat(error, IsInstanceOf(RuntimeException::class.java))
+            assertThat(error.message, IsEqual("OK"))
         })
         expect(3)
         yield() // to started coroutine
@@ -251,11 +252,11 @@ class MaybeTest : TestBase() {
     fun testUnhandledException() = runTest {
         expect(1)
         var disposable: Disposable? = null
-        val eh = CoroutineExceptionHandler { _, t ->
-            assertTrue(t is TestException)
+        val handler = { e: Throwable ->
+            assertTrue(e is UndeliverableException && e.cause is TestException)
             expect(5)
         }
-        val maybe = rxMaybe(currentDispatcher() + eh) {
+        val maybe = rxMaybe(currentDispatcher()) {
             expect(4)
             disposable!!.dispose() // cancel our own subscription, so that delay will get cancelled
             try {
@@ -264,27 +265,45 @@ class MaybeTest : TestBase() {
                 throw TestException() // would not be able to handle it since mono is disposed
             }
         }
-        maybe.subscribe(object : MaybeObserver<Unit> {
-            override fun onSubscribe(d: Disposable) {
-                expect(2)
-                disposable = d
-            }
-            override fun onComplete() { expectUnreached() }
-            override fun onSuccess(t: Unit) { expectUnreached() }
-            override fun onError(t: Throwable) { expectUnreached() }
-        })
-        expect(3)
-        yield() // run coroutine
-        finish(6)
+        withExceptionHandler(handler) {
+            maybe.subscribe(object : MaybeObserver<Unit> {
+                override fun onSubscribe(d: Disposable) {
+                    expect(2)
+                    disposable = d
+                }
+
+                override fun onComplete() {
+                    expectUnreached()
+                }
+
+                override fun onSuccess(t: Unit) {
+                    expectUnreached()
+                }
+
+                override fun onError(t: Throwable) {
+                    expectUnreached()
+                }
+            })
+            expect(3)
+            yield() // run coroutine
+            finish(6)
+        }
     }
 
     @Test
     fun testFatalExceptionInSubscribe() = runTest {
-        rxMaybe(Dispatchers.Unconfined + CoroutineExceptionHandler{ _, e -> assertTrue(e is LinkageError); expect(2)}) {
-            expect(1)
-            42
-        }.subscribe({ throw LinkageError() })
-        finish(3)
+        val handler = { e: Throwable ->
+            assertTrue(e is UndeliverableException && e.cause is LinkageError)
+            expect(2)
+        }
+
+        withExceptionHandler(handler) {
+            rxMaybe(Dispatchers.Unconfined) {
+                expect(1)
+                42
+            }.subscribe({ throw LinkageError() })
+            finish(3)
+        }
     }
 
     @Test
