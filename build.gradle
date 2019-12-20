@@ -182,6 +182,8 @@ allprojects {
         kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
         // Binary compatibility support
         kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
+        // Remove null assertions to get smaller bytecode on Android
+        kotlinOptions.freeCompilerArgs += ["-Xno-param-assertions", "-Xno-receiver-assertions", "-Xno-call-assertions"]
     }
 }
 

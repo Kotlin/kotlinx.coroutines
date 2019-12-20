@@ -4,13 +4,6 @@
 
 repositories {
     google()
-    // TODO Remove once R8 is updated to a 1.6.x version.
-    maven {
-        url "http://storage.googleapis.com/r8-releases/raw/master"
-        metadataSources {
-            artifact()
-        }
-    }
 }
 
 configurations {
@@ -25,8 +18,7 @@ dependencies {
     testImplementation 'org.robolectric:robolectric:4.0-alpha-3'
     testImplementation 'org.smali:baksmali:2.2.7'
 
-    // TODO Replace with a 1.6.x version once released to maven.google.com.
-    r8 'com.android.tools:r8:a7ce65837bec81c62261bf0adac73d9c09d32af2'
+    r8 'com.android.tools.build:builder:4.0.0-alpha06' // Contains r8-2.0.4-dev
 }
 
 class RunR8Task extends JavaExec {
@@ -38,7 +30,7 @@ class RunR8Task extends JavaExec {
     File inputConfig
 
     @InputFile
-    final File inputConfigCommon = new File('r8-test-common.pro')
+    final File inputConfigCommon = new File('testdata/r8-test-common.pro')
 
     @InputFiles
     final File jarFile = project.jar.archivePath
@@ -79,12 +71,12 @@ def unOptimizedDex = new File(buildDir, "dex-unoptim/")
 
 task runR8(type: RunR8Task, dependsOn: 'jar'){
     outputDex = optimizedDex
-    inputConfig = file('r8-test-rules.pro')
+    inputConfig = file('testdata/r8-test-rules.pro')
 }
 
 task runR8NoOptim(type: RunR8Task, dependsOn: 'jar'){
     outputDex = unOptimizedDex
-    inputConfig = file('r8-test-rules-no-optim.pro')
+    inputConfig = file('testdata/r8-test-rules-no-optim.pro')
 }
 
 test {

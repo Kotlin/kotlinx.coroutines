@@ -73,7 +73,7 @@ import kotlin.random.*
  * Only [corePoolSize] workers can be created for regular CPU tasks)
  *
  * ### Support for blocking tasks
- * The scheduler also supports the notion of [blocking][TaskMode.PROBABLY_BLOCKING] tasks.
+ * The scheduler also supports the notion of [blocking][TASK_PROBABLY_BLOCKING] tasks.
  * When executing or enqueuing blocking tasks, the scheduler notifies or creates one more worker in
  * addition to core pool size, so at any given moment, it has [corePoolSize] threads (potentially not yet created)
  * to serve CPU-bound tasks. To properly guarantee liveness, the scheduler maintains
@@ -394,7 +394,7 @@ internal class CoroutineScheduler(
         }
         val skipUnpark = tailDispatch && currentWorker != null
         // Checking 'task' instead of 'notAdded' is completely okay
-        if (task.mode == TaskMode.NON_BLOCKING) {
+        if (task.mode == TASK_NON_BLOCKING) {
             if (skipUnpark) return
             signalCpuWork()
         } else {
@@ -499,7 +499,7 @@ internal class CoroutineScheduler(
          */
         if (state === WorkerState.TERMINATED) return task
         // Do not add CPU tasks in local queue if we are not able to execute it
-        if (task.mode === TaskMode.NON_BLOCKING && state === WorkerState.BLOCKING) {
+        if (task.mode == TASK_NON_BLOCKING && state === WorkerState.BLOCKING) {
             return task
         }
         mayHaveLocalTasks = true
@@ -739,16 +739,16 @@ internal class CoroutineScheduler(
             afterTask(taskMode)
         }
 
-        private fun beforeTask(taskMode: TaskMode) {
-            if (taskMode == TaskMode.NON_BLOCKING) return
+        private fun beforeTask(taskMode: Int) {
+            if (taskMode == TASK_NON_BLOCKING) return
             // Always notify about new work when releasing CPU-permit to execute some blocking task
             if (tryReleaseCpu(WorkerState.BLOCKING)) {
                 signalCpuWork()
             }
         }
 
-        private fun afterTask(taskMode: TaskMode) {
-            if (taskMode == TaskMode.NON_BLOCKING) return
+        private fun afterTask(taskMode: Int) {
+            if (taskMode == TASK_NON_BLOCKING) return
             decrementBlockingTasks()
             val currentState = state
             // Shutdown sequence of blocking dispatcher
@@ -846,10 +846,10 @@ internal class CoroutineScheduler(
         }
 
         // It is invoked by this worker when it finds a task
-        private fun idleReset(mode: TaskMode) {
+        private fun idleReset(mode: Int) {
             terminationDeadline = 0L // reset deadline for termination
             if (state == WorkerState.PARKING) {
-                assert { mode == TaskMode.PROBABLY_BLOCKING }
+                assert { mode == TASK_PROBABLY_BLOCKING }
                 state = WorkerState.BLOCKING
             }
         }
@@ -926,12 +926,12 @@ internal class CoroutineScheduler(
 
     enum class WorkerState {
         /**
-         * Has CPU token and either executes [TaskMode.NON_BLOCKING] task or tries to find one.
+         * Has CPU token and either executes [TASK_NON_BLOCKING] task or tries to find one.
          */
         CPU_ACQUIRED,
 
         /**
-         * Executing task with [TaskMode.PROBABLY_BLOCKING].
+         * Executing task with [TASK_PROBABLY_BLOCKING].
          */
         BLOCKING,
 
