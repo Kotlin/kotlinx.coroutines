@@ -21,7 +21,7 @@ internal class AndroidExceptionPreHandler :
     private fun preHandler(): Method? {
         val current = _preHandler
         if (current !== this) return current as Method?
-        val declared =try {
+        val declared = try {
             Thread::class.java.getDeclaredMethod("getUncaughtExceptionPreHandler").takeIf {
                 Modifier.isPublic(it.modifiers) && Modifier.isStatic(it.modifiers)
             }

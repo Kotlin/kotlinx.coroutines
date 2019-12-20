@@ -165,10 +165,7 @@ threads are handled by Android runtime.
 #### R8 and ProGuard
 
 R8 and ProGuard rules are bundled into the [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android) module.
-For best results it is recommended to use a recent version of R8.
-R8 is a replacement for ProGuard in Android ecosystem, it is enabled by default since Android gradle plugin 3.4.0
-(3.3.0-beta also had it enabled). The upcoming AGP 4.0.0 has never R8 and additional rules enable
-more optimizations, producing smaller binary size. 
+For more details see ["Optimization" section for Android](ui/kotlinx-coroutines-android/README.md#optimization). 
 
 ### JS
 

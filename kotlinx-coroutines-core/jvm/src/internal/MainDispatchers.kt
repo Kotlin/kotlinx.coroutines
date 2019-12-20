@@ -65,7 +65,7 @@ public fun MainCoroutineDispatcher.isMissing(): Boolean = this is MissingMainCor
 
 // R8 optimization hook, not const on purpose to enable R8 optimizations via "assumenosideeffects"
 @Suppress("MayBeConstant")
-val SUPPORT_MISSING = true
+private val SUPPORT_MISSING = true
 
 @Suppress("ConstantConditionIf")
 private fun createMissingDispatcher(cause: Throwable? = null, errorHint: String? = null) =

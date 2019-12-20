@@ -7,8 +7,8 @@
 -checkdiscard class kotlinx.coroutines.DebugKt
 -checkdiscard class kotlinx.coroutines.internal.StackTraceRecoveryKt
 
-# Real android projects do not keep this class, but somehow it is kept in this test (R& bug)
+# Real android projects do not keep this class, but somehow it is kept in this test (R8 bug)
 # -checkdiscard class kotlinx.coroutines.internal.MissingMainCoroutineDispatcher
 
-# Should not keep this class, but it is still there (R& bug)
+# Should not keep this class, but it is still there (R8 bug)
 #-checkdiscard class kotlinx.coroutines.CoroutineId
