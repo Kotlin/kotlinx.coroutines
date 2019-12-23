@@ -20,8 +20,11 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * the channel afterwards. If you need to iterate over the channel without consuming it,
  * a regular `for` loop should be used instead.
  *
- * This function provides a more efficient shorthand for `channel.consumeEach { value -> emit(value) }`.
- * See [consumeEach][ReceiveChannel.consumeEach].
+ * Note, that emitting values from a channel into a flow is not atomic. A value that was received from the
+ * channel many not reach the flow collector if it was cancelled and will be lost.
+ *
+ * This function provides a more efficient shorthand for `channel.consumeEach { value -> emit(value) }` modulo
+ * atomicity. See [consumeEach][ReceiveChannel.consumeEach].
  */
 @ExperimentalCoroutinesApi // since version 1.3.0
 public suspend fun <T> FlowCollector<T>.emitAll(channel: ReceiveChannel<T>): Unit =
@@ -45,7 +48,7 @@ private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>,
             //     L$1 <- channel
             //     L$2 <- cause
             //     L$3 <- this$run (actually equal to this)
-            val result = run { channel.receiveOrClosed() }
+            val result = run { channel.receiveOrClosed(atomic = false) }
             if (result.isClosed) {
                 result.closeCause?.let { throw it }
                 break // returns normally when result.closeCause == null

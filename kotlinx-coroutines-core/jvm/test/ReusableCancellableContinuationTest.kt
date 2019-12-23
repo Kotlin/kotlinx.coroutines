@@ -14,7 +14,7 @@ class ReusableCancellableContinuationTest : TestBase() {
 
     @Test
     fun testReusable() = runTest {
-        testContinuationsCount(10, 1, ::suspendAtomicCancellableCoroutineReusable)
+        testContinuationsCount(10, 1) { suspendAtomicCancellableCoroutineReusable(block = it) }
     }
 
     @Test

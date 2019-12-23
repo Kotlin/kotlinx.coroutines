@@ -251,8 +251,8 @@ public interface ReceiveChannel<out E> {
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with a [CancellationException].
      *
-     * *Cancellation of suspended `receive` is atomic*: when this function
-     * throws a [CancellationException], it means that the element was not retrieved from this channel.
+     * If [atomic] is set to `true` (by default) then *cancellation of suspended `receive` is atomic*:
+     * when this function throws a [CancellationException], it means that the element was not retrieved from this channel.
      * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
      * continue to execute even after it was cancelled from the same thread in the case when this receive operation
      * was already resumed and the continuation was posted for execution to the thread's queue.
@@ -267,7 +267,10 @@ public interface ReceiveChannel<out E> {
      *            [KT-27524](https://youtrack.jetbrains.com/issue/KT-27524) needs to be fixed.
      */
     @InternalCoroutinesApi // until https://youtrack.jetbrains.com/issue/KT-27524 is fixed
-    public suspend fun receiveOrClosed(): ValueOrClosed<E>
+    public suspend fun receiveOrClosed(atomic: Boolean = true): ValueOrClosed<E>
+
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility") // Since version 1.4.0
+    public suspend fun receiveOrClosed(): ValueOrClosed<E> = receiveOrClosed(atomic = true)
 
     /**
      * Clause for the [select] expression of the [receiveOrClosed] suspending function that selects with the [ValueOrClosed] with a value

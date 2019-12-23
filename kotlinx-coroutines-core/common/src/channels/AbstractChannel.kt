@@ -543,11 +543,13 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         @Suppress("UNCHECKED_CAST")
         if (result !== POLL_FAILED && result !is Closed<*>) return result as E
         // slow-path does suspend
-        return receiveSuspend(RECEIVE_THROWS_ON_CLOSE)
+        return receiveSuspend(RECEIVE_THROWS_ON_CLOSE, MODE_ATOMIC_DEFAULT)
     }
 
     @Suppress("UNCHECKED_CAST")
-    private suspend fun <R> receiveSuspend(receiveMode: Int): R = suspendAtomicCancellableCoroutineReusable sc@ { cont ->
+    private suspend fun <R> receiveSuspend(
+        receiveMode: Int, resumeMode: Int
+    ): R = suspendAtomicCancellableCoroutineReusable(resumeMode) sc@ { cont ->
         val receive = ReceiveElement<E>(cont as CancellableContinuation<Any?>, receiveMode)
         while (true) {
             if (enqueueReceive(receive)) {
@@ -581,7 +583,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         @Suppress("UNCHECKED_CAST")
         if (result !== POLL_FAILED && result !is Closed<*>) return result as E
         // slow-path does suspend
-        return receiveSuspend(RECEIVE_NULL_ON_CLOSE)
+        return receiveSuspend(RECEIVE_NULL_ON_CLOSE, MODE_ATOMIC_DEFAULT)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -594,12 +596,12 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     }
 
     @Suppress("UNCHECKED_CAST")
-    public final override suspend fun receiveOrClosed(): ValueOrClosed<E> {
+    public final override suspend fun receiveOrClosed(atomic: Boolean): ValueOrClosed<E> {
         // fast path -- try poll non-blocking
         val result = pollInternal()
         if (result !== POLL_FAILED) return result.toResult()
         // slow-path does suspend
-        return receiveSuspend(RECEIVE_RESULT)
+        return receiveSuspend(RECEIVE_RESULT, if (atomic) MODE_ATOMIC_DEFAULT else MODE_CANCELLABLE_REUSABLE)
     }
 
     @Suppress("UNCHECKED_CAST")

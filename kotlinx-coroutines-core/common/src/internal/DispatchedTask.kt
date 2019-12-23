@@ -8,12 +8,17 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
-@PublishedApi internal const val MODE_ATOMIC_DEFAULT = 0 // schedule non-cancellable dispatch for suspendCoroutine
-@PublishedApi internal const val MODE_CANCELLABLE = 1    // schedule cancellable dispatch for suspendCancellableCoroutine
-@PublishedApi internal const val MODE_UNDISPATCHED = 2   // when the thread is right, but need to mark it with current coroutine
+@PublishedApi
+internal const val MODE_ATOMIC_DEFAULT = 0 // schedule non-cancellable dispatch for suspendCoroutine
+@PublishedApi
+internal const val MODE_CANCELLABLE = 1    // schedule cancellable dispatch for suspendCancellableCoroutine
 
-internal val Int.isCancellableMode get() = this == MODE_CANCELLABLE
-internal val Int.isDispatchedMode get() = this == MODE_ATOMIC_DEFAULT || this == MODE_CANCELLABLE
+internal const val MODE_CANCELLABLE_REUSABLE = 2 // same as MODE_CANCELLABLE but supports reused
+internal const val MODE_UNDISPATCHED = 3   // when the thread is right, but need to mark it with current coroutine
+
+internal val Int.isCancellableMode get() = this == MODE_CANCELLABLE || this == MODE_CANCELLABLE_REUSABLE
+internal val Int.isDispatchedMode get() = this != MODE_UNDISPATCHED
+internal val Int.isReusableMode get() = this == MODE_ATOMIC_DEFAULT || this == MODE_CANCELLABLE_REUSABLE
 
 internal abstract class DispatchedTask<in T>(
     @JvmField public var resumeMode: Int
@@ -120,7 +125,7 @@ internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: In
     val result = if (exception != null) Result.failure(exception) else Result.success(state as T)
     when (useMode) {
         MODE_ATOMIC_DEFAULT -> delegate.resumeWith(result)
-        MODE_CANCELLABLE -> delegate.resumeCancellableWith(result)
+        MODE_CANCELLABLE, MODE_CANCELLABLE_REUSABLE -> delegate.resumeCancellableWith(result)
         MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatchedWith(result)
         else -> error("Invalid mode $useMode")
     }
