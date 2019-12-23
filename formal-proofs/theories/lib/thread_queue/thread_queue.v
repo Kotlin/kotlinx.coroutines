@@ -63,9 +63,11 @@ Definition try_deque_thread: val :=
     move_ptr_forward "head" (Fst "cell'") ;;
     let: "cell" := cell_ref_loc "cell'" in
     let: "p" := getAndSet "cell" RESUMEDV in
-    match: "p" with
+    if: "p" = CANCELLEDV
+    then "resume" "head" "deqIdx"
+    else match: "p" with
         InjL "x" => "x"
-      | InjR "x" => "resume" "head" "deqIdx"
+      | InjR "x" => "impossible"
     end.
 
 Definition resume: val :=
@@ -2304,9 +2306,7 @@ Theorem resume_rendezvous_spec E R γa γtq γe γd i ℓ:
            resumer_token γtq i ∨
 
            ⌜l !! i = Some (Some (cellInhabited γt th (Some cellCancelled)))⌝ ∧
-           ((⌜v = RESUMEDV⌝ ∨ (* can't actually happen, but it's hard to prove
-                                it. *)
-             ⌜v = CANCELLEDV⌝) ∧
+           (⌜v = CANCELLEDV⌝ ∧
             awakening_permit γtq ∨
            ⌜v = InjLV #th⌝ ∧
            rendezvous_cancelled γtq i ∗
@@ -3938,7 +3938,7 @@ Proof.
     {
       iLeft. iFrame.
       iIntros "!> AU !>". wp_pures.
-      iDestruct "HH" as "[->|->]"; wp_pures; iApply ("IH" with "HAwak AU").
+      iDestruct "HH" as "->"; wp_pures. iApply ("IH" with "HAwak AU").
     }
     iRight. iExists _. iFrame "HE". iSplitL.
     2: by iIntros "!> HΦ !>"; wp_pures.
