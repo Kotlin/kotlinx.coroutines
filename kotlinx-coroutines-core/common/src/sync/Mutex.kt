@@ -45,12 +45,7 @@ public interface Mutex {
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
-     *
-     * *Cancellation of suspended lock invocation is atomic* -- when this function
-     * throws [CancellationException] it means that the mutex was not locked.
-     * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
-     * continue to execute even after it was cancelled from the same thread in the case when this lock operation
-     * was already resumed and the continuation was posted for execution to the thread's queue.
+     * The lock is not acquired if [CancellationException] was thrown.
      *
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
@@ -124,8 +119,6 @@ public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T
 @SharedImmutable
 private val LOCK_FAIL = Symbol("LOCK_FAIL")
 @SharedImmutable
-private val ENQUEUE_FAIL = Symbol("ENQUEUE_FAIL")
-@SharedImmutable
 private val UNLOCK_FAIL = Symbol("UNLOCK_FAIL")
 @SharedImmutable
 private val SELECT_SUCCESS = Symbol("SELECT_SUCCESS")
@@ -194,8 +187,8 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         return lockSuspend(owner)
     }
 
-    private suspend fun lockSuspend(owner: Any?) = suspendAtomicCancellableCoroutineReusable<Unit> sc@ { cont ->
-        val waiter = LockCont(owner, cont)
+    private suspend fun lockSuspend(owner: Any?) = suspendCancellableCoroutineReusable<Unit> sc@ { cont ->
+        val waiter = LockCont(this, owner, cont)
         _state.loop { state ->
             when (state) {
                 is Empty -> {
@@ -254,7 +247,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                 }
                 is LockedQueue -> {
                     check(state.owner !== owner) { "Already locked by $owner" }
-                    val node = LockSelect(owner, this, select, block)
+                    val node = LockSelect(this, owner, select, block)
                     if (state.addLastIf(node) { _state.value === state }) {
                         // successfully enqueued
                         select.disposeOnSelect(node)
@@ -353,6 +346,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     }
 
     private abstract class LockWaiter(
+        @JvmField val mutex: Mutex,
         @JvmField val owner: Any?
     ) : LockFreeLinkedListNode(), DisposableHandle {
         final override fun dispose() { remove() }
@@ -361,24 +355,28 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     }
 
     private class LockCont(
+        mutex: MutexImpl,
         owner: Any?,
         @JvmField val cont: CancellableContinuation<Unit>
-    ) : LockWaiter(owner) {
-        override fun tryResumeLockWaiter() = cont.tryResume(Unit)
+    ) : LockWaiter(mutex, owner) {
+        override fun tryResumeLockWaiter() = cont.tryResumeAtomic(Unit, idempotent = null) {
+            // if this continuation get's cancelled during dispatch to the caller, then release the lock
+            mutex.unlock(owner)
+        }
         override fun completeResumeLockWaiter(token: Any) = cont.completeResume(token)
         override fun toString(): String = "LockCont[$owner, $cont]"
     }
 
     private class LockSelect<R>(
+        mutex: Mutex,
         owner: Any?,
-        @JvmField val mutex: Mutex,
         @JvmField val select: SelectInstance<R>,
         @JvmField val block: suspend (Mutex) -> R
-    ) : LockWaiter(owner) {
+    ) : LockWaiter(mutex, owner) {
         override fun tryResumeLockWaiter(): Any? = if (select.trySelect()) SELECT_SUCCESS else null
         override fun completeResumeLockWaiter(token: Any) {
             assert { token === SELECT_SUCCESS }
-            block.startCoroutine(receiver = mutex, completion = select.completion)
+            block.startCoroutineCancellable(receiver = mutex, completion = select.completion)
         }
         override fun toString(): String = "LockSelect[$owner, $mutex, $select]"
     }

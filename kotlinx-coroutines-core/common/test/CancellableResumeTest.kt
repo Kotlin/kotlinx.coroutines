@@ -118,25 +118,30 @@ class CancellableResumeTest : TestBase() {
             try {
                 suspendCancellableCoroutine<String> { cont ->
                     expect(3)
-                    // resumed first, then cancelled, so no invokeOnCancellation call
-                    cont.invokeOnCancellation { expectUnreached() }
+                    // resumed first, dispatched, then cancelled, bit still got invokeOnCancellation call
+                    cont.invokeOnCancellation { cause ->
+                        // Note: invokeOnCancellation is called before cc.resume(value) { ... } handler
+                        expect(7)
+                        assertTrue(cause is TestCancellationException)
+                    }
                     cc = cont
                 }
                 expectUnreached()
             } catch (e: CancellationException) {
-                expect(8)
+                expect(9)
             }
         }
         expect(4)
         cc.resume("OK") { cause ->
-            expect(7)
+            // Note: this handler is called after invokeOnCancellation handler
+            expect(8)
             assertTrue(cause is TestCancellationException)
         }
         expect(5)
         job.cancel(TestCancellationException()) // cancel while execution is dispatched
         expect(6)
         yield() // to coroutine -- throws cancellation exception
-        finish(9)
+        finish(10)
     }
 
 

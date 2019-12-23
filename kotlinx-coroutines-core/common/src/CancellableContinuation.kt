@@ -77,6 +77,14 @@ public interface CancellableContinuation<in T> : Continuation<T> {
     public fun tryResume(value: T, idempotent: Any? = null): Any?
 
     /**
+     * Same as [tryResume] but with [onCancellation] handler that called if and only if the value is not
+     * delivered to the caller because of the dispatch in the process, so that atomicity delivery
+     * guaranteed can be provided by having a cancellation fallback.
+     */
+    @InternalCoroutinesApi
+    public fun tryResumeAtomic(value: T, idempotent: Any?, onCancellation: (cause: Throwable) -> Unit): Any?
+
+    /**
      * Tries to resume this continuation with the specified [exception] and returns a non-null object token if successful,
      * or `null` otherwise (it was already resumed or cancelled). When a non-null object is returned,
      * [completeResume] must be invoked with it.
@@ -110,8 +118,8 @@ public interface CancellableContinuation<in T> : Continuation<T> {
     public fun cancel(cause: Throwable? = null): Boolean
 
     /**
-     * Registers a [handler] to be **synchronously** invoked on cancellation (regular or exceptional) of this continuation.
-     * When the continuation is already cancelled, the handler will be immediately invoked
+     * Registers a [handler] to be **synchronously** invoked on [cancellation][cancel] (regular or exceptional) of this continuation.
+     * When the continuation is already cancelled, the handler is immediately invoked
      * with the cancellation exception. Otherwise, the handler will be invoked as soon as this
      * continuation is cancelled.
      *
@@ -120,7 +128,12 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * processed as an uncaught exception in the context of the current coroutine
      * (see [CoroutineExceptionHandler]).
      *
-     * At most one [handler] can be installed on a continuation.
+     * At most one [handler] can be installed on a continuation. Attempt to call `invokeOnCancellation` second
+     * time produces [IllegalStateException].
+     *
+     * This handler is also called when this continuation [resumes][resume] normally (with a value) and then
+     * is cancelled while waiting to be dispatched. More generally speaking, this handler is called whenever
+     * the caller of [suspendCancellableCoroutine] is getting a [CancellationException].
      *
      * **Note**: Implementation of `CompletionHandler` must be fast, non-blocking, and thread-safe.
      * This `handler` can be invoked concurrently with the surrounding code.
@@ -199,40 +212,24 @@ public suspend inline fun <T> suspendCancellableCoroutine(
     }
 
 /**
- * Suspends the coroutine like [suspendCancellableCoroutine], but with *atomic cancellation*.
- *
- * When the suspended function throws a [CancellationException], it means that the continuation was not resumed.
- * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
- * continue to execute even after it was cancelled from the same thread in the case when the continuation
- * was already resumed and was posted for execution to the thread's queue.
- *
- * @suppress **This an internal API and should not be used from general code.**
+ * Suspends the coroutine similar to [suspendCancellableCoroutine], but an instance of
+ * [CancellableContinuationImpl] is reused.
  */
-@InternalCoroutinesApi
-public suspend inline fun <T> suspendAtomicCancellableCoroutine(
-    crossinline block: (CancellableContinuation<T>) -> Unit
-): T =
-    suspendCoroutineUninterceptedOrReturn { uCont ->
-        val cancellable = CancellableContinuationImpl(uCont.intercepted(), resumeMode = MODE_ATOMIC_DEFAULT)
-        block(cancellable)
-        cancellable.getResult()
-    }
-
-/**
- *  Suspends coroutine similar to [suspendAtomicCancellableCoroutine], but an instance of [CancellableContinuationImpl] is reused if possible.
- */
-internal suspend inline fun <T> suspendAtomicCancellableCoroutineReusable(
+internal suspend inline fun <T> suspendCancellableCoroutineReusable(
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T = suspendCoroutineUninterceptedOrReturn { uCont ->
-    val cancellable = getOrCreateCancellableContinuation(uCont.intercepted())
+    val cancellable = getOrCreateCancellableContinuation(uCont.intercepted(), resumeMode = MODE_CANCELLABLE_REUSABLE)
     block(cancellable)
     cancellable.getResult()
 }
 
-internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): CancellableContinuationImpl<T> {
+internal fun <T> getOrCreateCancellableContinuation(
+    delegate: Continuation<T>, resumeMode: Int
+): CancellableContinuationImpl<T> {
+    assert { resumeMode.isReusableMode }
     // If used outside of our dispatcher
     if (delegate !is DispatchedContinuation<T>) {
-        return CancellableContinuationImpl(delegate, resumeMode = MODE_ATOMIC_DEFAULT)
+        return CancellableContinuationImpl(delegate, resumeMode)
     }
     /*
      * Attempt to claim reusable instance.
@@ -248,23 +245,9 @@ internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): 
      *    thus leaking CC instance for indefinite time.
      * 2) Continuation was cancelled. Then we should prevent any further reuse and bail out.
      */
-    return delegate.claimReusableCancellableContinuation()?.takeIf { it.resetState() }
-        ?: return CancellableContinuationImpl(delegate, MODE_ATOMIC_DEFAULT)
+    return delegate.claimReusableCancellableContinuation()?.takeIf { it.resetState(resumeMode) }
+        ?: return CancellableContinuationImpl(delegate, resumeMode)
 }
-
-/**
- * @suppress **Deprecated**
- */
-@Deprecated(
-    message = "holdCancellability parameter is deprecated and is no longer used",
-    replaceWith = ReplaceWith("suspendAtomicCancellableCoroutine(block)")
-)
-@InternalCoroutinesApi
-public suspend inline fun <T> suspendAtomicCancellableCoroutine(
-    holdCancellability: Boolean = false,
-    crossinline block: (CancellableContinuation<T>) -> Unit
-): T =
-    suspendAtomicCancellableCoroutine(block)
 
 /**
  * Removes the specified [node] on cancellation.
