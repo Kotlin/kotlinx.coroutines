@@ -8,7 +8,6 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
-import kotlin.jvm.*
 import kotlin.math.*
 import kotlin.native.concurrent.*
 
@@ -33,9 +32,7 @@ public interface Semaphore {
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
-     *
-     * *Cancellation of suspended semaphore acquisition is atomic* -- when this function
-     * throws [CancellationException] it means that the semaphore was not acquired.
+     * The semaphore is not acquired if [CancellationException] was thrown.
      *
      * Note, that this function does not check for cancellation when it does not suspend.
      * Use [CoroutineScope.isActive] or [CoroutineScope.ensureActive] to periodically
@@ -136,7 +133,7 @@ private class SemaphoreImpl(
         cur + 1
     }
 
-    private suspend fun addToQueueAndSuspend() = suspendAtomicCancellableCoroutineReusable<Unit> sc@ { cont ->
+    private suspend fun addToQueueAndSuspend() = suspendCancellableCoroutineReusable<Unit> sc@ { cont ->
         val last = this.tail
         val enqIdx = enqIdx.getAndIncrement()
         val segment = getSegment(last, enqIdx / SEGMENT_SIZE)

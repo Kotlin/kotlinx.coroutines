@@ -19,7 +19,7 @@ internal val REUSABLE_CLAIMED = Symbol("REUSABLE_CLAIMED")
 internal class DispatchedContinuation<in T>(
     @JvmField val dispatcher: CoroutineDispatcher,
     @JvmField val continuation: Continuation<T>
-) : DispatchedTask<T>(MODE_ATOMIC_DEFAULT), CoroutineStackFrame, Continuation<T> by continuation {
+) : DispatchedTask<T>(MODE_ATOMIC), CoroutineStackFrame, Continuation<T> by continuation {
     @JvmField
     @Suppress("PropertyName")
     internal var _state: Any? = UNDEFINED
@@ -43,7 +43,7 @@ internal class DispatchedContinuation<in T>(
      *    }
      *    // state == CC
      *    ```
-     * 4) [Throwable] continuation was cancelled with this cause while being in [suspendAtomicCancellableCoroutineReusable],
+     * 4) [Throwable] continuation was cancelled with this cause while being in [suspendCancellableCoroutineReusable],
      *    [CancellableContinuationImpl.getResult] will check for cancellation later.
      *
      * [REUSABLE_CLAIMED] state is required to prevent the lost resume in the channel.
@@ -83,7 +83,7 @@ internal class DispatchedContinuation<in T>(
     }
 
     /**
-     * Claims the continuation for [suspendAtomicCancellableCoroutineReusable] block,
+     * Claims the continuation for [suspendCancellableCoroutineReusable] block,
      * so all cancellations will be postponed.
      */
     @Suppress("UNCHECKED_CAST")
@@ -180,10 +180,10 @@ internal class DispatchedContinuation<in T>(
         val state = result.toState()
         if (dispatcher.isDispatchNeeded(context)) {
             _state = state
-            resumeMode = MODE_ATOMIC_DEFAULT
+            resumeMode = MODE_ATOMIC
             dispatcher.dispatch(context, this)
         } else {
-            executeUnconfined(state, MODE_ATOMIC_DEFAULT) {
+            executeUnconfined(state, MODE_ATOMIC) {
                 withCoroutineContext(this.context, countOrElement) {
                     continuation.resumeWith(result)
                 }

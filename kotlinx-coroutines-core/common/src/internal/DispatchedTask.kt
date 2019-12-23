@@ -8,12 +8,38 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
-@PublishedApi internal const val MODE_ATOMIC_DEFAULT = 0 // schedule non-cancellable dispatch for suspendCoroutine
-@PublishedApi internal const val MODE_CANCELLABLE = 1    // schedule cancellable dispatch for suspendCancellableCoroutine
-@PublishedApi internal const val MODE_UNDISPATCHED = 2   // when the thread is right, but need to mark it with current coroutine
+/**
+ * Non-cancellable dispatch mode.
+ *
+ * **DO NOT CHANGE THE CONSTANT VALUE**. It might be inlined into legacy user code that was calling
+ * inline `suspendAtomicCancellableCoroutine` function and did not support reuse.
+ */
+internal const val MODE_ATOMIC = 0
 
-internal val Int.isCancellableMode get() = this == MODE_CANCELLABLE
-internal val Int.isDispatchedMode get() = this == MODE_ATOMIC_DEFAULT || this == MODE_CANCELLABLE
+/**
+ * Cancellable dispatch mode. It is used by user-facing [suspendCancellableCoroutine].
+ * Note, that implementation of cancellability checks mode via [Int.isCancellableMode] extension.
+ *
+ * **DO NOT CHANGE THE CONSTANT VALUE**. It is being into the user code from [suspendCancellableCoroutine].
+ */
+@PublishedApi
+internal const val MODE_CANCELLABLE = 1
+
+/**
+ * Cancellable dispatch mode for [suspendCancellableCoroutineReusable].
+ * Note, that implementation of cancellability checks mode via [Int.isCancellableMode] extension;
+ * implementation of reuse checks mode via [Int.isReusableMode] extension.
+ */
+internal const val MODE_CANCELLABLE_REUSABLE = 2
+
+/**
+ * Undispatched mode for [CancellableContinuation.resumeUndispatched].
+ * It is used when the thread is right, but it needs to be mark it with the current coroutine.
+ */
+internal const val MODE_UNDISPATCHED = 4
+
+internal val Int.isCancellableMode get() = this == MODE_CANCELLABLE || this == MODE_CANCELLABLE_REUSABLE
+internal val Int.isReusableMode get() = this == MODE_CANCELLABLE_REUSABLE
 
 internal abstract class DispatchedTask<in T>(
     @JvmField public var resumeMode: Int
@@ -22,7 +48,10 @@ internal abstract class DispatchedTask<in T>(
 
     internal abstract fun takeState(): Any?
 
-    internal open fun cancelResult(state: Any?, cause: Throwable) {}
+    /**
+     * Called when this task was cancelled while it was being dispatched.
+     */
+    internal open fun cancelCompletedResult(cause: Throwable) {}
 
     @Suppress("UNCHECKED_CAST")
     internal open fun <T> getSuccessfulResult(state: Any?): T =
@@ -49,7 +78,7 @@ internal abstract class DispatchedTask<in T>(
                 val job = if (exception == null && resumeMode.isCancellableMode) context[Job] else null
                 if (job != null && !job.isActive) {
                     val cause = job.getCancellationException()
-                    cancelResult(state, cause)
+                    cancelCompletedResult(cause)
                     continuation.resumeWithStackTrace(cause)
                 } else {
                     if (exception != null) {
@@ -101,7 +130,8 @@ internal abstract class DispatchedTask<in T>(
 
 internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
     val delegate = this.delegate
-    if (mode.isDispatchedMode && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {
+    val undispatched = mode == MODE_UNDISPATCHED
+    if (!undispatched && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {
         // dispatch directly using this instance's Runnable implementation
         val dispatcher = delegate.dispatcher
         val context = delegate.context
@@ -111,21 +141,21 @@ internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
             resumeUnconfined()
         }
     } else {
-        resume(delegate, mode)
+        // delegate is coming from 3rd-party interceptor implementation (and does not support cancellation)
+        // or undispatched mode was requested
+        resume(delegate, undispatched)
     }
 }
 
 @Suppress("UNCHECKED_CAST")
-internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: Int) {
-    // slow-path - use delegate
+internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, undispatched: Boolean) {
+    // This resume is never cancellable. The result is always delivered to delegate continuation.
     val state = takeState()
     val exception = getExceptionalResult(state)?.let { recoverStackTrace(it, delegate) }
-    val result = if (exception != null) Result.failure(exception) else Result.success(state as T)
-    when (useMode) {
-        MODE_ATOMIC_DEFAULT -> delegate.resumeWith(result)
-        MODE_CANCELLABLE -> delegate.resumeCancellableWith(result)
-        MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatchedWith(result)
-        else -> error("Invalid mode $useMode")
+    val result = if (exception != null) Result.failure(exception) else Result.success(getSuccessfulResult<T>(state))
+    when {
+        undispatched -> (delegate as DispatchedContinuation).resumeUndispatchedWith(result)
+        else -> delegate.resumeWith(result)
     }
 }
 
@@ -137,7 +167,7 @@ private fun DispatchedTask<*>.resumeUnconfined() {
     } else {
         // Was not active -- run event loop until all unconfined tasks are executed
         runUnconfinedEventLoop(eventLoop) {
-            resume(delegate, MODE_UNDISPATCHED)
+            resume(delegate, undispatched = true)
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.flow
@@ -237,6 +237,22 @@ abstract class CombineTestBase : TestBase() {
         }
         assertFailsWith<CancellationException>(flow)
         finish(7)
+    }
+
+    @Test
+    fun testCancelledCombine() = runTest(
+        expected = { it is CancellationException }
+    ) {
+        coroutineScope {
+            val flow =  flow {
+                emit(Unit) // emit
+            }
+            cancel() // cancel the scope
+            flow.combineLatest(flow) { u, _ -> u }.collect {
+                // should not be reached, because cancelled before it runs
+                expectUnreached()
+            }
+        }
     }
 }
 
