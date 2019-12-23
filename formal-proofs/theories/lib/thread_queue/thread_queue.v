@@ -8,6 +8,14 @@ Require Import SegmentQueue.lib.util.interruptibly.
 Notation RESUMEDV := (SOMEV #0).
 Notation CANCELLEDV := (SOMEV #1).
 
+Lemma big_sepL_forall' {PROP: bi} {A B: Type}
+      (f: nat -> A -> PROP) (g: nat -> B -> PROP)
+      (l: list A) (l': list B):
+  strings.length l = strings.length l' ->
+  (∀ (k : nat) y y', l !! k = Some y → l' !! k = Some y' → f k y ≡ g k y') ->
+  ([∗ list] k ↦ y ∈ l, f k y)%I ≡ ([∗ list] k ↦ y ∈ l', g k y)%I.
+Proof. intros. apply big_opL_forall'; eauto; try apply _. Qed.
+
 Section impl.
 
 Variable segment_size: positive.
@@ -4107,7 +4115,7 @@ Proof.
             with "[HSusps HSusp]" as "$".
     {
       simpl. iFrame.
-      iApply (big_opL_forall' with "HSusps").
+      iApply (big_sepL_forall' with "HSusps").
       by repeat rewrite seq_length.
       done.
     }

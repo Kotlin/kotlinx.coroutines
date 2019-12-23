@@ -109,7 +109,7 @@ Proof.
     rewrite /is_semaphore_inv. iExists [], O.
     iFrame. simpl. rewrite Z.sub_0_r. iFrame.
     iSplitL; last by iPureIntro; right.
-    iApply (big_opL_forall' with "HRs"); simpl.
+    iApply (big_sepL_forall' with "HRs").
     by rewrite replicate_length seq_length.
     intros ? ? ?. rewrite lookup_replicate. by intros _ [-> _].
   }
@@ -311,7 +311,7 @@ Proof.
       iFrame "HR".
       iSplitL "HPerms".
       {
-        iApply (big_opL_forall' with "HPerms").
+        iApply (big_sepL_forall' with "HPerms").
         by repeat rewrite seq_length.
         done.
       }
@@ -686,7 +686,7 @@ Proof.
             iFrame "HR".
             iSplitL "HPerms".
             {
-              iApply (big_opL_forall' with "HPerms").
+              iApply (big_sepL_forall' with "HPerms").
               by repeat rewrite seq_length.
               done.
             }
@@ -731,7 +731,7 @@ Proof.
                 iExists _. iFrame. iLeft. iFrame.
               }
               iFrame "HR". iSplitL "HPerms".
-              { iApply (big_opL_forall' with "HPerms"); last done.
+              { iApply (big_sepL_forall' with "HPerms"); last done.
                 by repeat rewrite seq_length. }
               iFrame. iPureIntro. right. done.
             }
@@ -742,7 +742,7 @@ Proof.
                 iExists _. iFrame.
               }
               iFrame "HR". iSplitL "HPerms".
-              { iApply (big_opL_forall' with "HPerms"); last done.
+              { iApply (big_sepL_forall' with "HPerms"); last done.
                 by repeat rewrite seq_length. }
               iFrame. iPureIntro. right. done.
             }
