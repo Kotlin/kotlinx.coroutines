@@ -39,7 +39,7 @@
   * [Flow completion](#flow-completion)
     * [Imperative finally block](#imperative-finally-block)
     * [Declarative handling](#declarative-handling)
-    * [Upstream exceptions only](#upstream-exceptions-only)
+    * [Successful completion](#successful-completion)
   * [Imperative versus declarative](#imperative-versus-declarative)
   * [Launching flow](#launching-flow)
   * [Flow and Reactive Streams](#flow-and-reactive-streams)
@@ -1635,10 +1635,10 @@ The [onCompletion] operator, unlike [catch], does not handle the exception. As w
 example code, the exception still flows downstream. It will be delivered to further `onCompletion` operators
 and can be handled with a `catch` operator. 
 
-#### Upstream exceptions only
+#### Successful completion
 
-Just like the [catch] operator, [onCompletion] only sees exceptions coming from upstream and does not
-see downstream exceptions. For example, run the following code:
+Another difference with [catch] operator is that [onCompletion] sees all exceptions and receives
+a `null` exception only on successful completion of the upstream flow (without cancellation or failure).
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -1664,11 +1664,11 @@ fun main() = runBlocking<Unit> {
 
 > You can get the full code from [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-34.kt). 
 
-We can see the completion cause is null, yet collection failed with exception:
+We can see the completion cause is not null, because the flow was aborted due to downstream exception:
 
 ```text 
 1
-Flow completed with null
+Flow completed with java.lang.IllegalStateException: Collected 2
 Exception in thread "main" java.lang.IllegalStateException: Collected 2
 ```
 
