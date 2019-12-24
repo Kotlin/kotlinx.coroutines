@@ -277,6 +277,12 @@ public suspend inline fun <T> suspendAtomicCancellableCoroutine(
 internal fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedListNode) =
     invokeOnCancellation(handler = RemoveOnCancel(node).asHandler)
 
+internal fun <T> CancellableContinuation<T>.tryResumeAndComplete(value: T): Boolean {
+    val token = tryResume(value) ?: return false
+    completeResume(token)
+    return true
+}
+
 /**
  * Disposes the specified [handle] when this continuation is cancelled.
  *

@@ -96,6 +96,7 @@ private class NumberedCancellationException(number: Int) : CancellationException
     val testResult = "Closed($number)"
 }
 
+@LogLevel(LoggingLevel.DEBUG)
 @RunWith(Parameterized::class)
 class ChannelsLCStressTest(kind: TestChannelKind) : TestBase() {
     companion object {

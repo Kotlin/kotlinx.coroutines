@@ -205,7 +205,7 @@ internal class ArrayBroadcastChannel<E>(
 
     private class Subscriber<E>(
         private val broadcastChannel: ArrayBroadcastChannel<E>
-    ) : AbstractChannel<E>(), ReceiveChannel<E> {
+    ) : AbstractChannelOld<E>(), ReceiveChannel<E> {
         private val subLock = ReentrantLock()
 
         private val _subHead = atomic(0L)

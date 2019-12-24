@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.channels
 
-import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
@@ -24,7 +23,7 @@ internal open class ArrayChannel<E>(
      * Buffer capacity.
      */
     val capacity: Int
-) : AbstractChannel<E>() {
+) : AbstractChannelOld<E>() {
     init {
         require(capacity >= 1) { "ArrayChannel capacity must be at least 1, but $capacity was specified" }
     }

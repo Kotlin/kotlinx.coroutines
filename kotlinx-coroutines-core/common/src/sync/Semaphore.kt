@@ -106,7 +106,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
     override suspend fun acquire() {
         val p = _availablePermits.getAndDecrement()
         if (p > 0) return // permit acquired
-        suspend(::onCancel)
+        suspend(this, ::onCancel)
     }
 
     override fun release() {
@@ -127,7 +127,9 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
         @JvmStatic
         private fun onCancel(s: SemaphoreImpl) {
             val p = s.incPermits()
-            if (p < 0) s.resumeNextWaiter(Unit)
+            if (p >= 0) return
+            if (segment.cancel(index)) return
+            s.resumeNextWaiter(Unit)
         }
     }
 }

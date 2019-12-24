@@ -4,7 +4,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
-internal open class SegmentQueueSynchronizer<S: SegmentQueueSynchronizer<S, T>, T> {
+internal open class SegmentQueueSynchronizer<S, T> {
     // The queue of waiting acquirers is essentially an infinite array based on the list of segments
     // (see `SemaphoreSegment`); each segment contains a fixed number of slots. To determine a slot for each enqueue
     // and dequeue operation, we increment the corresponding counter at the beginning of the operation
@@ -21,40 +21,49 @@ internal open class SegmentQueueSynchronizer<S: SegmentQueueSynchronizer<S, T>, 
         tail = atomic(s)
     }
 
-    suspend fun suspend(onCancellation: (S) -> Unit) = suspendAtomicCancellableCoroutineReusable<Unit> sc@{ cont ->
-        val curTail = this.tail.value
-        val enqIdx = enqIdx.getAndIncrement()
-        val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail,
+    @Suppress("UNCHECKED_CAST")
+    suspend fun suspend(sync: S, onCancellation: (S) -> Unit): T = suspendAtomicCancellableCoroutineReusable sc@{ cont ->
+        val tail = this.tail.value
+        val enqIdx = this.enqIdx.getAndIncrement()
+        val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = tail,
             createNewSegment = ::createSegment).run { segment } // cannot be closed
         val i = (enqIdx % SEGMENT_SIZE).toInt()
-        if (segment.get(i) === RESUMED || !segment.cas(i, null, cont)) {
+        val old = segment.getAndSet(i, cont)
+        if (old === null) {
+            // added to the waiting queue
+            cont.invokeOnCancellation(SegmentQueueSynchronizerCancelHandler(sync, segment, i, onCancellation).asHandler)
+        } else {
             // already resumed
-            cont.resume(Unit)
-            return@sc
+            segment.set(i, null)
+            cont.resume(old as T)
         }
-        cont.invokeOnCancellation(SegmentQueueSynchronizerCancelHandler(this as S, segment, i, onCancellation).asHandler)
     }
 
-    @Suppress("UNCHECKED_CAST")
     fun resumeNextWaiter(value: T) {
-        try_again@ while (true) {
-            val curHead = this.head.value
-            val deqIdx = deqIdx.getAndIncrement()
-            val id = deqIdx / SEGMENT_SIZE
-            val segment = this.head.findSegmentAndMoveForward(id, startFrom = curHead,
-                createNewSegment = ::createSegment).run { segment } // cannot be closed
-            segment.cleanPrev()
-            if (segment.id > id) {
-                this.deqIdx.updateIfLower(segment.id * SEGMENT_SIZE)
-                continue@try_again
-            }
-            val i = (deqIdx % SEGMENT_SIZE).toInt()
-            val cont = segment.getAndSet(i, RESUMED)
-            if (cont === null) return // just resumed
-            if (cont === CANCELLED) continue@try_again
-            (cont as CancellableContinuation<Unit>).resume(Unit)
-            return
+        while (!tryResumeNextWaiterInternal(value, true)) { /* repeat again */ }
+    }
+
+    fun tryResumeNextWaiter(value: T): Boolean = tryResumeNextWaiterInternal(value, false)
+
+    @Suppress("UNCHECKED_CAST")
+    private fun tryResumeNextWaiterInternal(value: T, updateDeqIdxInAdvance: Boolean): Boolean {
+        val head = this.head.value
+        val deqIdx = this.deqIdx.getAndIncrement()
+        val id = deqIdx / SEGMENT_SIZE
+        val segment = this.head.findSegmentAndMoveForward(id, startFrom = head,
+            createNewSegment = ::createSegment).run { segment } // cannot be closed
+        segment.cleanPrev()
+        if (segment.id > id) {
+            if (updateDeqIdxInAdvance) this.deqIdx.updateIfLower(segment.id * SEGMENT_SIZE)
+            return false
         }
+        val i = (deqIdx % SEGMENT_SIZE).toInt()
+        val cont = segment.getAndSet(i, value)
+        if (cont === null) return true // just resumed
+        if (cont === CANCELLED) return false
+        segment.set(i, null)
+        cont as CancellableContinuation<T>
+        return cont.tryResumeAndComplete(value)
     }
 }
 
@@ -62,7 +71,7 @@ private inline fun AtomicLong.updateIfLower(value: Long): Unit = loop { cur ->
     if (cur >= value || compareAndSet(cur, value)) return
 }
 
-internal class SegmentQueueSynchronizerCancelHandler<S : SegmentQueueSynchronizer<S, T>, T>(
+internal class SegmentQueueSynchronizerCancelHandler<S>(
     private val sync: S,
     private val segment: SegmentQueueSynchronizerSegment,
     private val index: Int,
@@ -79,23 +88,25 @@ internal class SegmentQueueSynchronizerCancelHandler<S : SegmentQueueSynchronize
 internal class SegmentQueueSynchronizerSegment(id: Long, prev: SegmentQueueSynchronizerSegment?, pointers: Int)
     : Segment<SegmentQueueSynchronizerSegment>(id, prev, pointers)
 {
-    val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
+    val waiters = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
     override val maxSlots: Int get() = SEGMENT_SIZE
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun get(index: Int): Any? = acquirers[index].value
+    inline fun get(index: Int): Any? = waiters[index].value
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun cas(index: Int, expected: Any?, value: Any?): Boolean = acquirers[index].compareAndSet(expected, value)
+    inline fun set(index: Int, value: Any?) {
+        waiters[index].value = value
+    }
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun getAndSet(index: Int, value: Any?) = acquirers[index].getAndSet(value)
+    inline fun getAndSet(index: Int, value: Any?) = waiters[index].getAndSet(value)
 
     // Cleans the acquirer slot located by the specified index
     // and removes this segment physically if all slots are cleaned.
     fun cancel(index: Int): Boolean {
         // Try to cancel the slot
-        val cancelled = getAndSet(index, CANCELLED) !== RESUMED
+        val cancelled = getAndSet(index, CANCELLED) === null
         // Remove this segment if needed
         onSlotCleaned()
         return cancelled
@@ -106,8 +117,6 @@ internal class SegmentQueueSynchronizerSegment(id: Long, prev: SegmentQueueSynch
 
 private fun createSegment(id: Long, prev: SegmentQueueSynchronizerSegment?) = SegmentQueueSynchronizerSegment(id, prev, 0)
 
-@SharedImmutable
-private val RESUMED = Symbol("RESUMED")
 @SharedImmutable
 private val CANCELLED = Symbol("CANCELLED")
 @SharedImmutable

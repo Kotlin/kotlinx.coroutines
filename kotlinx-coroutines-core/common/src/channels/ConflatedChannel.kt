@@ -7,7 +7,8 @@ package kotlinx.coroutines.channels
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import kotlin.jvm.*
+import kotlinx.coroutines.internal.SegmentQueueSynchronizer
+import kotlinx.coroutines.selects.*
 
 /**
  * Channel that buffers at most one element and conflates all subsequent `send` and `offer` invocations,
@@ -20,230 +21,98 @@ import kotlin.jvm.*
  *
  * This implementation is fully lock-free.
  */
-internal open class ConflatedChannel<E>: NewAbstractChannel<E>(), Channel<E> {
+internal open class ConflatedChannel<E>: AbstractChannel<E>(), Channel<E> {
+    private val sync = SegmentQueueSynchronizer<ConflatedChannel<E>, E>() // TODO lazy initialization
+    private val value = atomic<Any?>(NO_VALUE)
+    private val waiters = atomic(0) // -1 if this channel contains an element;
 
-}
-
-internal abstract class NewAbstractChannel<E> : Channel<E> {
-    protected abstract fun offerInternal(): Any // SUCCESS or CLOSED
-    protected abstract suspend fun sendInternal(): Any // SUCCESS or CLOSED
-    protected abstract fun pollInternal(): Any? // element or EMPTY or CLOSED
-    protected abstract suspend fun receiveInternal(): Any? // element or EMPTY or CLOSED
-
-    override suspend fun send(element: E) {
-        val result = sendInternal()
-        if (result === CLOSED_RESULT) throw sendException
-    }
-
-    override fun offer(element: E): Boolean {
-        val result = offerInternal()
-        when {
-            result === SUCCESS_RESULT -> return true
-            result === FAILED_RESULT -> return false
-            result === CLOSED_RESULT -> throw sendException
-            else -> error("Unexpected offerInternal invocation result: $result")
+    override fun offerInternal(element: E): Any {
+        waiters.loop { w ->
+            when (w) {
+                -1 -> {
+                    // do not change waiters, update the value
+                    val curValue = value.value
+                    if (curValue === NO_VALUE) return@loop // todo: spin wait, fix by dcss
+                    // if this CAS fails then another `send` came earlier
+                    value.compareAndSet(curValue, element)
+                    return SUCCESS_RESULT
+                }
+                0 -> {
+                    // inc waiters
+                    if (!waiters.compareAndSet(w, w - 1)) return@loop
+                    // set the element, if this CAS fails then another `send` came earlier
+                    value.compareAndSet(NO_VALUE, element)
+                    return SUCCESS_RESULT
+                }
+                else -> {
+                    // decrement the number of waiters
+                    if (!waiters.compareAndSet(w, w - 1)) return@loop
+                    sync.resumeNextWaiter(element)
+                    return SUCCESS_RESULT
+                }
+            }
         }
     }
 
-    override suspend fun receive(): E {
-        val result = receiveInternal()
-        if (result === CLOSED_RESULT) {
-            throw this.receiveException
+    override suspend fun sendInternal(element: E): Any = offerInternal(element)
+
+    override fun pollInternal(): Any? {
+        waiters.loop { w ->
+            when (w) {
+                -1 -> {
+                    if (!waiters.compareAndSet(-1, 0)) return@loop
+                    value.loop { v ->
+                        // todo: spin loop here
+                        if (v !== NO_VALUE && value.compareAndSet(v, NO_VALUE)) return v
+                    }
+                }
+                else -> return POLL_FAILED
+            }
         }
-        return result as E
     }
 
-    @ObsoleteCoroutinesApi
-    override suspend fun receiveOrNull(): E? {
-        val result = receiveInternal()
-        if (result === CLOSED_RESULT) {
-            val closeCause = closeCause.value ?: return null
-            throw closeCause as Throwable
+    override suspend fun receiveInternal(): Any? {
+        waiters.loop { w ->
+            when (w) {
+                -1 -> {
+                    if (!waiters.compareAndSet(-1, 0)) return@loop
+                    value.loop { v ->
+                        // todo: spin loop here
+                        if (v !== NO_VALUE && value.compareAndSet(v, NO_VALUE)) return v
+                    }
+                }
+                else -> {
+                    if (!waiters.compareAndSet(w, w + 1)) return@loop
+                    return sync.suspend(this, ::onCancellation)
+                }
+            }
         }
-        return result as E
     }
 
-    @InternalCoroutinesApi
-    override suspend fun receiveOrClosed(): ValueOrClosed<E> {
+    override fun helpCloseIdempotent(wasClosed: Boolean) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun poll(): E? {
-        val result = pollInternal()
-        when {
-            result === FAILED_RESULT -> return null
-            result === CLOSED_RESULT -> {
-                val closeCause = closeCause.value ?: return null
-                throw closeCause as Throwable
-            }
-            else -> return result as (E?)
-        }
+    override fun helpCancelIdempotent(wasClosed: Boolean) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    // ##############################
-    // ## Closing and Cancellation ##
-    // ##############################
+    companion object {
+        private fun onCancellation(c: ConflatedChannel<*>) {}
 
-    /**
-     * Indicates whether this channel is cancelled. In case it is cancelled,
-     * it stores either an exception if it was cancelled with or `null` if
-     * this channel was cancelled without error. Stores [NO_CLOSE_CAUSE] if this
-     * channel is not cancelled.
-     */
-    private val closeCause = atomic<Any?>(NO_CLOSE_CAUSE)
-
-    @Volatile
-    private var closeFinished = false
-    @Volatile
-    private var cancelFinished = false
-    @Volatile
-    private var cancelled = false
-
-    private val receiveException: Throwable
-        get() = (closeCause.value as Throwable?) ?: ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE)
-    private val sendException: Throwable
-        get() = (closeCause.value as Throwable?) ?: ClosedSendChannelException(DEFAULT_CLOSE_MESSAGE)
-
-    // Stores the close handler.
-    private val closeHandler = atomic<Any?>(null)
-
-    override val isClosedForSend: Boolean get() = (closeCause.value !== NO_CLOSE_CAUSE).also {
-        if (it) helpCloseOrCancel()
     }
 
-    override val isClosedForReceive: Boolean get() = isClosedForSend && isEmpty
+    @ExperimentalCoroutinesApi
+    override val isFull: Boolean get() = false
+    @ExperimentalCoroutinesApi
+    override val isEmpty: Boolean get() = waiters.value != -1
 
-    private fun helpCloseOrCancel() {
-        if (!closeFinished) {
-            helpCloseIdempotent()
-            closeFinished = true
-        }
-        if (cancelled && !cancelFinished) {
-            helpCancelIdempotent()
-            cancelFinished = true
-        }
-    }
-
-    /**
-     * Invoked when channel is closed as the last action of [close] invocation.
-     * This method should be idempotent and can be called multiple times.
-     */
-    protected open fun onClosed() {}
-
-    override fun close(cause: Throwable?): Boolean {
-        val closedByThisOperation = closeCause.compareAndSet(NO_CLOSE_CAUSE, cause)
-        helpCloseIdempotent()
-        closeFinished = true
-        return if (closedByThisOperation) {
-            onClosed()
-            invokeCloseHandler()
-            true
-        } else false
-    }
-
-    private fun invokeCloseHandler() {
-        val closeHandler = closeHandler.getAndUpdate {
-            if (it === null) CLOSE_HANDLER_CLOSED
-            else CLOSE_HANDLER_INVOKED
-        } ?: return
-        closeHandler as (cause: Throwable?) -> Unit
-        val closeCause = closeCause.value as Throwable?
-        closeHandler(closeCause)
-    }
-
-    override fun invokeOnClose(handler: (cause: Throwable?) -> Unit) {
-        if (closeHandler.compareAndSet(null, handler)) {
-            // Handler has been successfully set, finish the operation.
-            return
-        }
-        // Either handler was set already or this channel is cancelled.
-        // Read the value of [closeHandler] and either throw [IllegalStateException]
-        // or invoke the handler respectively.
-        when (val curHandler = closeHandler.value) {
-            CLOSE_HANDLER_CLOSED -> {
-                // In order to be sure that our handler is the only one, we have to change the
-                // [closeHandler] value to `INVOKED`. If this CAS fails, another handler has been
-                // executed and an [IllegalStateException] should be thrown.
-                if (closeHandler.compareAndSet(CLOSE_HANDLER_CLOSED, CLOSE_HANDLER_INVOKED)) {
-                    handler(closeCause.value as Throwable?)
-                } else {
-                    throw IllegalStateException("Another handler was already registered and successfully invoked")
-                }
-            }
-            CLOSE_HANDLER_INVOKED -> error("Another handler was already registered and successfully invoked")
-            else -> error("Another handler was already registered: $curHandler")
-        }
-    }
-
-    final override fun cancel(cause: Throwable?): Boolean = cancelImpl(cause)
-    final override fun cancel() { cancelImpl(null) }
-    final override fun cancel(cause: CancellationException?) { cancelImpl(cause) }
-
-    protected open fun cancelImpl(cause: Throwable?): Boolean {
-        cancelled = true
-        val closedByThisOperation = close(cause)
-        helpCancelIdempotent()
-        cancelFinished = true
-        return closedByThisOperation
-    }
-
-    protected abstract fun helpCloseIdempotent()
-    protected abstract fun helpCancelIdempotent()
-
-    // ######################
-    // ## Iterator Support ##
-    // ######################
-
-    override fun iterator(): ChannelIterator<E> = object : ChannelIterator<E> {
-        private var result: Any? = NO_RESULT // NO_RESULT | E (next element) | CLOSED
-        override suspend fun hasNext(): Boolean {
-            if (result != NO_RESULT) return checkNotClosed(result)
-            // Try to receive an element. Store the result even if
-            // receiving fails in order to process further [hasNext]
-            // and [next] invocations properly.
-            result = receiveInternal() // todo: tail call optimization?
-            return if (result == CLOSED_RESULT) {
-                if (closeCause.value == null) {
-                    false
-                } else {
-                    throw (closeCause.value as Throwable)
-                }
-            } else true
-        }
-
-        private fun checkNotClosed(result: Any?): Boolean {
-            return if (result === CLOSED_RESULT) {
-                if (closeCause.value != null) throw (closeCause.value as Throwable)
-                false
-            } else true
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        override fun next(): E =
-            // Read the already received result or NO_RESULT if [hasNext] has not been invoked yet.
-            when (val result = this.result) {
-                // Rare case -- [hasNext] has not been invoked, invoke [receive] directly.
-                NO_RESULT -> error("[hasNext] has not been invoked")
-                // Channel is closed, throw the cause exception.
-                CLOSED_RESULT -> throw receiveException
-                // An element has been received successfully.
-                else -> {
-                    // Reset the [result] field and return the element.
-                    this.result = NO_RESULT
-                    result as E
-                }
-            }
-    }
+    override val onSend: SelectClause2<E, SendChannel<E>> get() = TODO("not implemented")
+    override val onReceive: SelectClause1<E> get() = TODO("not implemented")
+    @ObsoleteCoroutinesApi
+    override val onReceiveOrNull: SelectClause1<E?> get() = TODO("not implemented")
+    @InternalCoroutinesApi
+    override val onReceiveOrClosed: SelectClause1<ValueOrClosed<E>> get() = TODO("not implemented")
 }
 
-// Special values for `CLOSE_HANDLER`
-private val CLOSE_HANDLER_CLOSED = Symbol("CLOSE_HANDLER_CLOSED")
-private val CLOSE_HANDLER_INVOKED = Symbol("CLOSE_HANDLER_INVOKED")
-// Specifies the absence of the close cause
-private val NO_CLOSE_CAUSE = Symbol("NO_CLOSE_CAUSE")
-
-// Special return values
-private val NO_RESULT = Symbol("NO_RESULT")
-internal val SUCCESS_RESULT = Symbol("SUCCESS_RESULT")
-internal val FAILED_RESULT = Symbol("FAILED_RESULT")
-internal val CLOSED_RESULT = Symbol("CLOSED_RESULT")
+private val NO_VALUE = Symbol("NO_VALUE")

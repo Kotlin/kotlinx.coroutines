@@ -285,10 +285,9 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         private val broadcastChannel: ConflatedBroadcastChannel<E>
     ) : ConflatedChannel<E>(), ReceiveChannel<E> {
 
-        override fun onCancelIdempotent(wasClosed: Boolean) {
-            if (wasClosed) {
-                broadcastChannel.closeSubscriber(this)
-            }
+        override fun helpCancelIdempotent(wasClosed: Boolean) {
+            super.helpCancelIdempotent(wasClosed)
+            if (wasClosed) broadcastChannel.closeSubscriber(this)
         }
 
         public override fun offerInternal(element: E): Any = super.offerInternal(element)

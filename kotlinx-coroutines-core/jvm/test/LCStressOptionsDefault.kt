@@ -5,11 +5,12 @@ package kotlinx.coroutines
 
 import org.jetbrains.kotlinx.lincheck.*
 import org.jetbrains.kotlinx.lincheck.strategy.stress.*
+import kotlin.math.*
 import kotlin.reflect.*
 
 class LCStressOptionsDefault : StressOptions() {
     init {
-        iterations(100 * stressTestMultiplierSqrt)
+        iterations(100 * stressTestMultiplier.toDouble().pow(-3).roundToInt())
         invocationsPerIteration(1000 * stressTestMultiplierSqrt)
         actorsBefore(if (isStressTest) 3 else 0)
         threads(3)
