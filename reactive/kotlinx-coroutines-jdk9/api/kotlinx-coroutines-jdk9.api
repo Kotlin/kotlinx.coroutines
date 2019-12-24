@@ -1,0 +1,69 @@
+public final class kotlinx/coroutines/jdk9/AwaitKt {
+	public static final fun awaitFirst (Ljava/util/concurrent/Flow$Publisher;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitFirstOrDefault (Ljava/util/concurrent/Flow$Publisher;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitFirstOrElse (Ljava/util/concurrent/Flow$Publisher;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitFirstOrNull (Ljava/util/concurrent/Flow$Publisher;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitLast (Ljava/util/concurrent/Flow$Publisher;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitSingle (Ljava/util/concurrent/Flow$Publisher;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/jdk9/ChannelKt {
+	public static final fun collect (Ljava/util/concurrent/Flow$Publisher;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun consumeEach (Ljava/util/concurrent/Flow$Publisher;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun openSubscription (Ljava/util/concurrent/Flow$Publisher;I)Lkotlinx/coroutines/channels/ReceiveChannel;
+	public static synthetic fun openSubscription$default (Ljava/util/concurrent/Flow$Publisher;IILjava/lang/Object;)Lkotlinx/coroutines/channels/ReceiveChannel;
+}
+
+public abstract interface class kotlinx/coroutines/jdk9/ContextInjector {
+	public abstract fun injectCoroutineContext (Ljava/util/concurrent/Flow$Publisher;Lkotlin/coroutines/CoroutineContext;)Ljava/util/concurrent/Flow$Publisher;
+}
+
+public final class kotlinx/coroutines/jdk9/ConvertKt {
+	public static final fun asPublisher (Lkotlinx/coroutines/channels/ReceiveChannel;Lkotlin/coroutines/CoroutineContext;)Ljava/util/concurrent/Flow$Publisher;
+	public static synthetic fun asPublisher$default (Lkotlinx/coroutines/channels/ReceiveChannel;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Ljava/util/concurrent/Flow$Publisher;
+}
+
+public final class kotlinx/coroutines/jdk9/FlowKt {
+	public static final fun asFlow (Ljava/util/concurrent/Flow$Publisher;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun asFlow (Ljava/util/concurrent/Flow$Publisher;I)Lkotlinx/coroutines/flow/Flow;
+	public static final fun asPublisher (Lkotlinx/coroutines/flow/Flow;)Ljava/util/concurrent/Flow$Publisher;
+}
+
+public final class kotlinx/coroutines/jdk9/FlowSubscription : kotlinx/coroutines/AbstractCoroutine, java/util/concurrent/Flow$Subscription {
+	public final field flow Lkotlinx/coroutines/flow/Flow;
+	public final field subscriber Ljava/util/concurrent/Flow$Subscriber;
+	public fun <init> (Lkotlinx/coroutines/flow/Flow;Ljava/util/concurrent/Flow$Subscriber;)V
+	public fun cancel ()V
+	public fun request (J)V
+}
+
+public final class kotlinx/coroutines/jdk9/PublishKt {
+	public static final fun publish (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Ljava/util/concurrent/Flow$Publisher;
+	public static final fun publish (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Ljava/util/concurrent/Flow$Publisher;
+	public static synthetic fun publish$default (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/util/concurrent/Flow$Publisher;
+	public static synthetic fun publish$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/util/concurrent/Flow$Publisher;
+	public static final fun publishInternal (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)Ljava/util/concurrent/Flow$Publisher;
+}
+
+public final class kotlinx/coroutines/jdk9/PublisherCoroutine : kotlinx/coroutines/AbstractCoroutine, java/util/concurrent/Flow$Subscription, kotlinx/coroutines/channels/ProducerScope, kotlinx/coroutines/selects/SelectClause2 {
+	public fun <init> (Lkotlin/coroutines/CoroutineContext;Ljava/util/concurrent/Flow$Subscriber;Lkotlin/jvm/functions/Function2;)V
+	public fun cancel ()V
+	public fun close (Ljava/lang/Throwable;)Z
+	public fun getChannel ()Lkotlinx/coroutines/channels/SendChannel;
+	public fun getOnSend ()Lkotlinx/coroutines/selects/SelectClause2;
+	public fun invokeOnClose (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
+	public synthetic fun invokeOnClose (Lkotlin/jvm/functions/Function1;)V
+	public fun isClosedForSend ()Z
+	public fun isFull ()Z
+	public fun offer (Ljava/lang/Object;)Z
+	public synthetic fun onCompleted (Ljava/lang/Object;)V
+	public fun registerSelectClause2 (Lkotlinx/coroutines/selects/SelectInstance;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
+	public fun request (J)V
+	public fun send (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/jdk9/ReactiveFlowKt {
+	public static final fun asFlow (Ljava/util/concurrent/Flow$Publisher;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun asPublisher (Lkotlinx/coroutines/flow/Flow;)Ljava/util/concurrent/Flow$Publisher;
+}
+

@@ -1,0 +1,57 @@
+/*
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+targetCompatibility = 9
+
+
+dependencies {
+    testCompile "org.reactivestreams:reactive-streams-tck:$reactive_streams_version"
+    testCompile "org.reactivestreams:reactive-streams-flow-adapters:$reactive_streams_version"
+}
+
+task testNG(type: Test) {
+    useTestNG()
+    reports.html.destination = file("$buildDir/reports/testng")
+    include '**/*ReactiveStreamTckTest.*'
+    // Skip testNG when tests are filtered with --tests, otherwise it simply fails
+    onlyIf {
+        filter.includePatterns.isEmpty()
+    }
+    doFirst {
+        // Classic gradle, nothing works without doFirst
+        println "TestNG tests: ($includes)"
+    }
+}
+
+task checkJdk11() {
+    // only fail w/o JDK_11 when actually trying to compile, not during project setup phase
+    doLast {
+        if (!System.env.JDK_11) {
+            throw new GradleException("JDK_11 environment variable is not defined. " +
+                    "Can't build against JDK 11 runtime and run JDK 11 compatibility tests. " +
+                    "Please ensure JDK 11 is installed and that JDK_11 points to it.")
+        }
+    }
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "9"
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "9"
+    kotlinOptions.jdkHome = System.env.JDK_11
+    dependsOn(checkJdk11)
+}
+
+test {
+    dependsOn(testNG)
+    reports.html.destination = file("$buildDir/reports/junit")
+}
+
+tasks.withType(dokka.getClass()) {
+    externalDocumentationLink {
+        url = new URL("https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/Flow.html")
+        packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
+    }
+}
