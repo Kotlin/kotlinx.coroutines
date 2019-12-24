@@ -7,26 +7,8 @@ public final class kotlinx/coroutines/jdk9/AwaitKt {
 	public static final fun awaitSingle (Ljava/util/concurrent/Flow$Publisher;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class kotlinx/coroutines/jdk9/ChannelKt {
-	public static final fun collect (Ljava/util/concurrent/Flow$Publisher;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun consumeEach (Ljava/util/concurrent/Flow$Publisher;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun openSubscription (Ljava/util/concurrent/Flow$Publisher;I)Lkotlinx/coroutines/channels/ReceiveChannel;
-	public static synthetic fun openSubscription$default (Ljava/util/concurrent/Flow$Publisher;IILjava/lang/Object;)Lkotlinx/coroutines/channels/ReceiveChannel;
-}
-
 public abstract interface class kotlinx/coroutines/jdk9/ContextInjector {
 	public abstract fun injectCoroutineContext (Ljava/util/concurrent/Flow$Publisher;Lkotlin/coroutines/CoroutineContext;)Ljava/util/concurrent/Flow$Publisher;
-}
-
-public final class kotlinx/coroutines/jdk9/ConvertKt {
-	public static final fun asPublisher (Lkotlinx/coroutines/channels/ReceiveChannel;Lkotlin/coroutines/CoroutineContext;)Ljava/util/concurrent/Flow$Publisher;
-	public static synthetic fun asPublisher$default (Lkotlinx/coroutines/channels/ReceiveChannel;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Ljava/util/concurrent/Flow$Publisher;
-}
-
-public final class kotlinx/coroutines/jdk9/FlowKt {
-	public static final fun asFlow (Ljava/util/concurrent/Flow$Publisher;)Lkotlinx/coroutines/flow/Flow;
-	public static final fun asFlow (Ljava/util/concurrent/Flow$Publisher;I)Lkotlinx/coroutines/flow/Flow;
-	public static final fun asPublisher (Lkotlinx/coroutines/flow/Flow;)Ljava/util/concurrent/Flow$Publisher;
 }
 
 public final class kotlinx/coroutines/jdk9/FlowSubscription : kotlinx/coroutines/AbstractCoroutine, java/util/concurrent/Flow$Subscription {
@@ -65,5 +47,6 @@ public final class kotlinx/coroutines/jdk9/PublisherCoroutine : kotlinx/coroutin
 public final class kotlinx/coroutines/jdk9/ReactiveFlowKt {
 	public static final fun asFlow (Ljava/util/concurrent/Flow$Publisher;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun asPublisher (Lkotlinx/coroutines/flow/Flow;)Ljava/util/concurrent/Flow$Publisher;
+	public static final fun collect (Ljava/util/concurrent/Flow$Publisher;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 

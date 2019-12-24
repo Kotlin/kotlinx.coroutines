@@ -6,6 +6,7 @@ package kotlinx.coroutines.jdk9
 
 import kotlinx.coroutines.*
 import org.junit.Test
+import kotlinx.coroutines.flow.flowOn
 import org.junit.runner.*
 import org.junit.runners.*
 import java.util.concurrent.Flow.*
@@ -89,9 +90,8 @@ class IntegrationTest(
         assertEquals(1, pub.awaitFirstOrElse { 0 })
         assertIAE { pub.awaitSingle() }
         checkNumbers(n, pub)
-        val channel = pub.openSubscription()
-        checkNumbers(n, channel.asPublisher(ctx(coroutineContext)))
-        channel.cancel()
+        val flow = pub.asFlow()
+        checkNumbers(n, flow.flowOn(ctx(coroutineContext)).asPublisher())
     }
 
     @Test
@@ -107,7 +107,7 @@ class IntegrationTest(
     }
 
     @Test
-    fun testEmptySingle() = runTest(unhandled = listOf({e -> e is NoSuchElementException})) {
+    fun testEmptySingle() = runTest(unhandled = listOf { e -> e is NoSuchElementException}) {
         expect(1)
         val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
             publish<String> {

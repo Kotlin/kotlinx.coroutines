@@ -37,6 +37,13 @@ public fun <T : Any> Publisher<T>.asFlow(): Flow<T> =
  */
 public fun <T : Any> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
 
+/**
+ * Subscribes to this [Publisher] and performs the specified action for each received element.
+ * Cancels subscription if any exception happens during collect.
+ */
+public suspend fun <T> Publisher<T>.collect(action: (T) -> Unit) =
+    openSubscription().consumeEach(action)
+
 private class PublisherAsFlow<T : Any>(
     private val publisher: Publisher<T>,
     context: CoroutineContext = EmptyCoroutineContext,
