@@ -30,6 +30,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
 
     /**
      * Returns `true` if this channel's buffer is full.
+     * This operation should be atomic if it is invoked by [enqueueSend].
      * @suppress **This is unstable API and it is subject to change.**
      */
     protected abstract val isBufferFull: Boolean
@@ -140,8 +141,8 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     // ------ SendChannel ------
 
     public final override val isClosedForSend: Boolean get() = closedForSend != null
-    public final override val isFull: Boolean get() = full
-    private val full: Boolean get() = queue.nextNode !is ReceiveOrClosed<*> && isBufferFull // TODO rename to `isFull`
+    public override val isFull: Boolean get() = isFullImpl
+    protected val isFullImpl: Boolean get() = queue.nextNode !is ReceiveOrClosed<*> && isBufferFull
 
     public final override suspend fun send(element: E) {
         // fast path -- try offer non-blocking
@@ -182,7 +183,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
 
     private suspend fun sendSuspend(element: E): Unit = suspendAtomicCancellableCoroutineReusable sc@ { cont ->
         loop@ while (true) {
-            if (full) {
+            if (isFullImpl) {
                 val send = SendElement(element, cont)
                 val enqueueResult = enqueueSend(send)
                 when {
@@ -227,7 +228,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
      * * ENQUEUE_FAILED -- buffer is not full (should not enqueue)
      * * ReceiveOrClosed<*> -- receiver is waiting or it is closed (should not enqueue)
      */
-    private fun enqueueSend(send: Send): Any? {
+    protected open fun enqueueSend(send: Send): Any? {
         if (isBufferAlwaysFull) {
             queue.addLastIfPrev(send) { prev ->
                 if (prev is ReceiveOrClosed<*>) return@enqueueSend prev
@@ -382,7 +383,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     private fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend (SendChannel<E>) -> R) {
         while (true) {
             if (select.isSelected) return
-            if (full) {
+            if (isFullImpl) {
                 val node = SendSelect(element, this, select, block)
                 val enqueueResult = enqueueSend(node)
                 when {
@@ -495,6 +496,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
 
     /**
      * Returns `true` if this channel's buffer is empty.
+     * This operation should be atomic if it is invoked by [enqueueReceive].
      * @suppress **This is unstable API and it is subject to change.**
      */
     protected abstract val isBufferEmpty: Boolean
@@ -542,8 +544,9 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
 
     // ------ ReceiveChannel ------
 
-    public final override val isClosedForReceive: Boolean get() = closedForReceive != null && isBufferEmpty
-    public final override val isEmpty: Boolean get() = queue.nextNode !is Send && isBufferEmpty
+    public override val isClosedForReceive: Boolean get() = closedForReceive != null && isBufferEmpty
+    public override val isEmpty: Boolean get() = isEmptyImpl
+    protected val isEmptyImpl: Boolean get() = queue.nextNode !is Send && isBufferEmpty
 
     public final override suspend fun receive(): E {
         // fast path -- try poll non-blocking
@@ -580,12 +583,12 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         }
     }
 
-    private fun enqueueReceive(receive: Receive<E>): Boolean {
-        val result = if (isBufferAlwaysEmpty)
-            queue.addLastIfPrev(receive) { it !is Send } else
-            queue.addLastIfPrevAndIf(receive, { it !is Send }, { isBufferEmpty })
+    protected open fun enqueueReceiveInternal(receive: Receive<E>): Boolean = if (isBufferAlwaysEmpty)
+        queue.addLastIfPrev(receive) { it !is Send } else
+        queue.addLastIfPrevAndIf(receive, { it !is Send }, { isBufferEmpty })
+
+    private fun enqueueReceive(receive: Receive<E>) = enqueueReceiveInternal(receive).also { result ->
         if (result) onReceiveEnqueued()
-        return result
     }
 
     public final override suspend fun receiveOrNull(): E? {
@@ -718,7 +721,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     private fun <R> registerSelectReceiveMode(select: SelectInstance<R>, receiveMode: Int, block: suspend (Any?) -> R) {
         while (true) {
             if (select.isSelected) return
-            if (isEmpty) {
+            if (isEmptyImpl) {
                 if (enqueueReceiveSelect(select, block, receiveMode)) return
             } else {
                 val pollResult = pollSelectInternal(select)
@@ -1058,7 +1061,7 @@ internal class Closed<in E>(
     override fun toString(): String = "Closed@$hexAddress[$closeCause]"
 }
 
-private abstract class Receive<in E> : LockFreeLinkedListNode(), ReceiveOrClosed<E> {
+internal abstract class Receive<in E> : LockFreeLinkedListNode(), ReceiveOrClosed<E> {
     override val offerResult get() = OFFER_SUCCESS
     abstract fun resumeReceiveClosed(closed: Closed<*>)
 }
