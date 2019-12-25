@@ -82,7 +82,7 @@ class CoroutineSchedulerTest : TestBase() {
                 it.dispatch(Runnable {
                     expect(2)
                     finishLatch.countDown()
-                }, fair = true)
+                }, tailDispatch = true)
             })
 
             startLatch.countDown()
