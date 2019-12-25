@@ -377,8 +377,8 @@ internal class CoroutineScheduler(
      * If `true`, then  the task will be dispatched in a FIFO manner and no additional workers will be requested,
      * but only if the current thread is a corresponding worker thread.
      * Note that caller cannot be ensured that it is being executed on worker thread for the following reasons:
-     *   -- [CoroutineStart.UNDISPATCHED]
-     *   -- Concurrent [close] that effectively shutdowns the worker thread
+     *   * [CoroutineStart.UNDISPATCHED]
+     *   * Concurrent [close] that effectively shutdowns the worker thread
      */
     fun dispatch(block: Runnable, taskContext: TaskContext = NonBlockingContext, tailDispatch: Boolean = false) {
         trackTask() // this is needed for virtual time support
@@ -492,7 +492,7 @@ internal class CoroutineScheduler(
      * task that was not added or replaced (thus should be added to global queue).
      */
     private fun Worker?.submitToLocalQueue(task: Task, tailDispatch: Boolean): Task? {
-        if (this === null) return task
+        if (this == null) return task
         /*
          * This worker could have been already terminated from this thread by close/shutdown and it should not
          * accept any more tasks into its local queue.
