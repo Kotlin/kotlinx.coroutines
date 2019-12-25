@@ -53,7 +53,8 @@ To release new `<version>` of `kotlinx-coroutines`:
    * Create a release named `<version>`. 
    * Cut & paste lines from [`CHANGES.md`](CHANGES.md) into description.    
 
-3. Build and publish documentation for web-site: <br>
+3. Build and publish documentation for web-site
+   (make sure you have [Docker](https://www.docker.com/) installed first): <br>
    `site/deploy.sh <version> push`
    
 4. In [Bintray](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines) admin interface:
