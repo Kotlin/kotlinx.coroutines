@@ -653,6 +653,7 @@ internal class CoroutineScheduler(
         }
 
         override fun run() = runWorker()
+
         @JvmField
         var mayHaveLocalTasks = false
 
