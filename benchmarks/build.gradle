@@ -74,4 +74,6 @@ dependencies {
     compile "org.openjdk.jmh:jmh-core:1.21"
     compile 'com.typesafe.akka:akka-actor_2.12:2.5.0'
     compile project(':kotlinx-coroutines-core')
+    // add jmh dependency on main
+    jmh sourceSets.main.runtimeClasspath
 }
