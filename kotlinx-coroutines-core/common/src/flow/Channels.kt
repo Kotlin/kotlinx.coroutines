@@ -74,9 +74,9 @@ private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>,
  *
  * ### Cancellation semantics
  *
- * 1) Flow collectors are cancelled when the original channel is cancelled.
- * 2) Flow collectors complete normally when the original channel completes (~is closed) normally.
- * 3) Failure or cancellation of the flow collector does not affect the channel.
+ * * Flow collectors are cancelled when the original channel is [closed][SendChannel.close] with an exception.
+ * * Flow collectors complete normally when the original channel is [closed][SendChannel.close] normally.
+ * * Failure or cancellation of the flow collector does not affect the channel.
  *
  * ### Operator fusion
  *
@@ -96,9 +96,9 @@ public fun <T> ReceiveChannel<T>.receiveAsFlow(): Flow<T> = ChannelAsFlow(this, 
  *
  * ### Cancellation semantics
  *
- * 1) Flow collector is cancelled when the original channel is cancelled.
- * 2) Flow collector completes normally when the original channel was closed normally and then fully consumed.
- * 3) If the flow collector fails with an exception, channel is cancelled.
+ * * Flow collector is cancelled when the original channel is [closed][SendChannel.close] with an exception.
+ * * Flow collector completes normally when the original channel is [closed][SendChannel.close] normally.
+ * * If the flow collector fails with an exception, the source channel is [cancelled][ReceiveChannel.cancel].
  *
  * ### Operator fusion
  *
