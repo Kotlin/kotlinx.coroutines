@@ -4337,4 +4337,79 @@ Proof.
   eauto.
 Qed.
 
+Theorem thread_queue_unpark_spec E R γa γtq γe γd γt (eℓ epℓ dℓ dpℓ: loc) (th: loc) i:
+  rendezvous_resumed γtq i -∗
+  is_thread_handle Nth γt #th -∗
+  rendezvous_thread_locs_state γtq γt th i -∗
+  <<< ∀ l deqFront, resumer_token γtq i ∗
+                    ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>>
+    unpark #th @ ⊤ ∖ ↑Nth
+  <<< ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront, RET #() >>>.
+Proof.
+  iIntros "#HRendRes #HIsThread #HThreadLocs" (Φ) "AU".
+  awp_apply (unpark_spec with "HIsThread").
+  iApply (aacc_aupd_commit with "AU"); first done.
+  iIntros (? ?) "(HResTok & HInfArr & HListContents & HRest')".
+  iDestruct "HListContents" as "(HLi1 & HLi2 & >HTqAuth & HLi4 & HLi5 & HCellResources)".
+
+  iDestruct "HRendRes" as (? ?) "HRendRes".
+
+  iDestruct (cell_list_contents_done_agree with "HTqAuth HRendRes")
+            as %HEl'.
+
+  iDestruct (cell_list_contents_ra_locs with "HTqAuth HThreadLocs")
+            as %[? HEl''].
+  simplify_eq.
+
+  iDestruct (big_sepL_lookup_acc with "HCellResources") as "[HRes HRRsRestore]".
+  done.
+  simpl.
+  iAssert (resumer_token γtq i -∗ resumer_token γtq i -∗ False)%I as "HNoResTok".
+  {
+    iIntros "HResTok HResTok'".
+    iDestruct (own_valid_2 with "HResTok HResTok'") as %HH.
+    rewrite -auth_frag_op in HH. exfalso. move: HH.
+    rewrite auth_frag_valid pair_valid list_op_singletonM list_lookup_valid /=.
+    intros [_ HValid]. specialize (HValid i). move: HValid.
+    rewrite list_lookup_singletonM.
+    intros HValid.
+    destruct HValid as [[[_ []] _] _].
+  }
+  iDestruct "HRes" as (ℓ) "(HArrMapsto & HTH & HIsSus & HIsRes & HCancHandle &
+                            HConds)".
+  iDestruct "HConds" as "[[HInhTok [HNoPerms|>HResTok']]|
+                          [Hℓ [HR [[HE >HResTok']|HNoPerms]]]]";
+    try iDestruct ("HNoResTok" with "HResTok HResTok'") as %[].
+
+  all: iAaccIntro with "HNoPerms".
+  all: iFrame "HInfArr HLi1 HLi2 HTqAuth HLi4 HLi5 HRest'".
+  3: {
+    iFrame "HResTok".
+    iIntros ">HNoPerms !>". iSplitL; last by iIntros "$".
+    iApply ("HRRsRestore" with "[-]").
+    iExists _. iFrame.
+    iRight; iFrame.
+  }
+  {
+    iFrame "HResTok".
+    iIntros ">HNoPerms !>". iSplitL; last by iIntros "$".
+    iApply ("HRRsRestore" with "[-]").
+    iExists _. iFrame.
+  }
+
+  {
+    iIntros "HThPerms !>". iSplitL; last by iIntros "$".
+    iApply ("HRRsRestore" with "[-]").
+    iExists _. iFrame. iLeft. iFrame.
+  }
+
+  {
+    iIntros "HThPerms !>".
+    iSplitL.
+    2: iIntros "HΦ"; wp_pures; by iApply "HΦ".
+    iApply ("HRRsRestore" with "[-]").
+    iExists _. iFrame. iRight. iFrame. iLeft. iFrame.
+  }
+Qed.
+
 End proof.
