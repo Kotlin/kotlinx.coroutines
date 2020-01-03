@@ -20,7 +20,6 @@ fun main() = runBlocking {
         println("Cancelling child")
         child.cancel()
         child.join()
-        yield()
         println("Parent is not cancelled")
     }
     job.join()
