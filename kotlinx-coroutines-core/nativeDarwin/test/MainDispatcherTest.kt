@@ -4,10 +4,22 @@
 
 package kotlinx.coroutines
 
+import kotlin.native.concurrent.isFrozen
 import kotlin.test.*
 
 class MainDispatcherTest : TestBase() {
     private val testThread = currentThread()
+
+    @Test
+    fun testParentIsFrozen() {
+        runTest {
+            assertEquals(this.isFrozen, false)
+            withContext(Dispatchers.Default) {
+                "anything"
+            }
+            assertEquals(this.isFrozen, false)
+        }
+    }
 
     @Test
     fun testWithContext() {
