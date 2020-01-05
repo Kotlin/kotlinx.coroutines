@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.rx2
 
+import io.reactivex.subjects.PublishSubject
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
@@ -40,6 +41,74 @@ class ObservableAsFlow3Test : TestBase() {
         assertEquals(1, onNext)
         assertEquals(1, onError)
         assertEquals(1, onCancelled)
+    }
+
+    @Test
+    fun testImmediateCollection() {
+        val source = PublishSubject.create<Int>()
+        val flow = source.asFlow3()
+        GlobalScope.launch(Dispatchers.Unconfined) {
+            expect(1)
+            flow.collect { expect(it) }
+            expect(6)
+        }
+        expect(2)
+        source.onNext(3)
+        expect(4)
+        source.onNext(5)
+        source.onComplete()
+        finish(7)
+    }
+
+    @Test
+    fun testOnErrorCancellation() {
+        val source = PublishSubject.create<Int>()
+        val flow = source.asFlow3()
+        val exception = java.lang.RuntimeException("Some exception")
+        GlobalScope.launch(Dispatchers.Unconfined) {
+            try {
+                expect(1)
+                flow.collect { expect(it) }
+                expectUnreached()
+            }
+            catch (e: Exception) {
+                assertSame(exception, e.cause)
+                expect(5)
+            }
+            expect(6)
+        }
+        expect(2)
+        source.onNext(3)
+        expect(4)
+        source.onError(exception)
+        finish(7)
+    }
+
+    @Test
+    fun testUnsubscribeOnCollectionException() {
+        val source = PublishSubject.create<Int>()
+        val flow = source.asFlow3()
+        val exception = java.lang.RuntimeException("Some exception")
+        GlobalScope.launch(Dispatchers.Unconfined) {
+            try {
+                expect(1)
+                flow.collect {
+                    expect(it)
+                    if (it == 3) throw exception
+                }
+                expectUnreached()
+            }
+            catch (e: Exception) {
+                assertSame(exception, e.cause)
+                expect(4)
+            }
+            expect(5)
+        }
+        expect(2)
+        assertTrue(source.hasObservers())
+        source.onNext(3)
+        assertFalse(source.hasObservers())
+        finish(6)
     }
 
     @Test
