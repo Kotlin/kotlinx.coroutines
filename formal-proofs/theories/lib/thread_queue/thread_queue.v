@@ -4412,4 +4412,135 @@ Proof.
   }
 Qed.
 
+Theorem thread_queue_check_thread_permits_spec E R γa γtq γe γd
+        (eℓ epℓ dℓ dpℓ: loc) i γth (threadHandle: loc) s:
+  is_thread_handle Nth γth #threadHandle -∗
+  segment_location γa (i `div` Pos.to_nat segment_size) s -∗
+  rendezvous_thread_handle γtq γth threadHandle i -∗
+  <<< ∀ l deqFront, inhabitant_token γtq i ∗
+                    ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>>
+    ! #threadHandle @ ⊤ ∖ ↑Nth
+  <<< ∃ (r: bool), ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
+                  (⌜r = true⌝ ∧ inhabitant_token γtq i
+                   ∨ ⌜r = false⌝ ∧ thread_has_permit γth ∗ R), RET #r >>>.
+Proof.
+  iIntros "#HTh #HSegLoc #HRend" (Φ) "AU".
+  iInv "HTh" as (? t) "[>% [Hℓ >HThAuth]]" "HClose". simplify_eq.
+  iMod "AU" as (l deqFront) "[[HInhTok HTq] [_ HClose']]".
+  iAssert (▷ ⌜∃ c, l !! i ≡ Some (Some (cellInhabited γth _ c))⌝)%I as "#>HI".
+  {
+    iDestruct "HTq" as "(_ & (_ & _ & >HH' & _) & _)".
+    iDestruct "HRend" as "[_ HRend]".
+    iApply (cell_list_contents_ra_locs with "HH' HRend").
+  }
+  iDestruct "HI" as %(r & HEl'); simplify_eq.
+  iAssert (▷ ⌜r = None ∨ r = Some cellResumed⌝)%I as "#>HPures".
+  {
+    iDestruct "HTq" as "(_ & (_ & _ & _ & _ & _ & HH') & _)".
+    iDestruct (big_sepL_lookup with "HH'") as "HRes"; first done.
+    simpl. iDestruct "HRes" as (?) "[_ HRes]".
+    destruct r as [r|]; last by eauto.
+    iRight. iDestruct "HRes" as "(_ & _ & HRes)".
+    destruct r.
+    2: by eauto.
+    1: iDestruct "HRes" as "[>HInhTok' _]".
+    2: iDestruct "HRes" as "(_ & >HInhTok' & _)".
+    all: by iDestruct (inhabitant_token_exclusive with "HInhTok HInhTok'") as %[].
+  }
+  iDestruct "HPures" as %HPures.
+  iDestruct "HTq" as "(HHead & HListContents & HTail)".
+  iDestruct (cell_list_contents_lookup_acc with "HListContents")
+    as "[HRes HLcRestore]".
+  by erewrite HEl'.
+  destruct HPures as [HPures|HPures]; subst; simpl.
+  {
+    iDestruct "HRes" as (?) "(HArrMapsto & (Hℓ' & >HNoPerms & HRend') & HRest')".
+    iAssert (⌜t ≡ true⌝)%I as %HH.
+    {
+      iDestruct (own_valid_2 with "HThAuth HNoPerms")
+        as %[[HH%Some_included _]%prod_included _]%auth_both_valid.
+      iPureIntro.
+      destruct HH as [[? HOk]|HOk].
+      - simpl in *. by apply to_agree_inj.
+      - apply prod_included in HOk; simpl in *.
+        destruct HOk as [_ HOk].
+        by apply to_agree_included in HOk.
+    }
+    simplify_eq.
+    wp_load.
+    iMod ("HClose'" with "[-Hℓ HThAuth HClose]") as "HΦ".
+    {
+      iDestruct ("HLcRestore" with "[HArrMapsto Hℓ' HNoPerms HRend' HRest']") as "HLC".
+      by iExists _; iFrame.
+      iFrame. iLeft. by iFrame.
+    }
+    iModIntro.
+    iMod ("HClose" with "[Hℓ HThAuth]") as "_".
+    {
+      iExists _, _. by iFrame.
+    }
+    done.
+  }
+
+  iDestruct "HRes" as (ℓ') "(HArrMapsto & HRendHandle & HIsSus & HIsRes &
+    HCancHandle & [[>HInhTok' _]|(Hℓ' & HR & [[>HHasPerm HResTok]|>HNoPerms])])".
+  by iDestruct (inhabitant_token_exclusive with "HInhTok HInhTok'") as %[].
+  {
+    iAssert (⌜t ≡ false⌝)%I as %HH.
+    {
+      iDestruct (own_valid_2 with "HThAuth HHasPerm")
+        as %[[HH%Some_included _]%prod_included _]%auth_both_valid.
+      iPureIntro.
+      destruct HH as [[? HOk]|HOk].
+      - simpl in *. by apply to_agree_inj.
+      - apply prod_included in HOk; simpl in *.
+        destruct HOk as [_ HOk].
+        by apply to_agree_included in HOk.
+    }
+    simplify_eq.
+    wp_load.
+    iMod ("HClose'" with "[-Hℓ Hℓ' HThAuth HClose]") as "HΦ'".
+    {
+      iDestruct ("HLcRestore" with "[HArrMapsto HRendHandle HIsSus HIsRes
+        HCancHandle HInhTok HResTok]") as "HLC".
+      { iExists _. iFrame. iLeft. iFrame "HInhTok". iRight. iFrame "HResTok". }
+      iFrame. iRight. by iFrame.
+    }
+    iModIntro.
+    iMod ("HClose" with "[Hℓ HThAuth]") as "_".
+    {
+      iExists _, _. by iFrame.
+    }
+    done.
+  }
+  {
+    iAssert (⌜t ≡ true⌝)%I as %HH.
+    {
+      iDestruct (own_valid_2 with "HThAuth HNoPerms")
+        as %[[HH%Some_included _]%prod_included _]%auth_both_valid.
+      iPureIntro.
+      destruct HH as [[? HOk]|HOk].
+      - simpl in *. by apply to_agree_inj.
+      - apply prod_included in HOk; simpl in *.
+        destruct HOk as [_ HOk].
+        by apply to_agree_included in HOk.
+    }
+    simplify_eq.
+    wp_load.
+    iMod ("HClose'" with "[-Hℓ HThAuth HClose]") as "HΦ'".
+    {
+      iDestruct ("HLcRestore" with "[HArrMapsto HRendHandle HIsSus HIsRes
+        HCancHandle HR Hℓ' HNoPerms]") as "HLC".
+      { iExists _. iFrame. iRight. iFrame "HR Hℓ'". }
+      iFrame. iLeft. by iFrame.
+    }
+    iModIntro.
+    iMod ("HClose" with "[Hℓ HThAuth]") as "_".
+    {
+      iExists _, _. by iFrame.
+    }
+    done.
+  }
+Qed.
+
 End proof.

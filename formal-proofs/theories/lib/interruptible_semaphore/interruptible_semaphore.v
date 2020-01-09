@@ -335,123 +335,20 @@ Proof.
     {
       iIntros (Φ') "!> HInhTok HΦ'". wp_pures. wp_bind (!_)%E.
       rewrite /is_thread_handle.
-      iInv "HThreadHandle" as (? t) "[>% [Hℓ HThAuth]]" "HClose". simplify_eq.
-      wp_load.
-      iInv "HSemInv" as (? ?) "(HPerms & >HAuth & HTq & HRest)" "HClose'".
-      iDestruct "HTq" as (l'' ?) "[HTq >->]".
-      iAssert (▷ ⌜∃ c, l'' !! i ≡ Some (Some (cellInhabited γth _ c))⌝)%I
-        as "#>HI".
-      {
-        iDestruct "HTq" as "(_ & (_ & _ & >HH' & _) & _)".
-        iDestruct "HRend" as "[_ HRend]".
-        iApply (cell_list_contents_ra_locs with "HH' HRend").
-      }
-      iDestruct "HI" as %(r & HEl').
-      simplify_eq.
-      iAssert (▷ ⌜r = None ∨ r = Some cellResumed⌝)%I as "#>HPures".
-      {
-        iDestruct "HTq" as "(_ & (_ & _ & _ & _ & _ & HH') & _)".
-        iDestruct (big_sepL_lookup with "HH'") as "HRes"; first done.
-        simpl. iDestruct "HRes" as (?) "[_ HRes]".
-        destruct r as [r|]; last by eauto.
-        iRight. iDestruct "HRes" as "(_ & _ & HRes)".
-        destruct r.
-        2: by eauto.
-        1: iDestruct "HRes" as "[>HInhTok' _]".
-        2: iDestruct "HRes" as "(_ & >HInhTok' & _)".
-        all: by iDestruct (inhabitant_token_exclusive with "HInhTok HInhTok'") as %[].
-      }
-      iDestruct "HPures" as %HPures.
-      iDestruct "HTq" as "(HHead & HListContents & HTail)".
-      iDestruct (cell_list_contents_lookup_acc with "HListContents")
-        as "[HRes HLcRestore]".
-      by erewrite HEl'.
-      destruct HPures as [HPures|HPures]; subst; simpl.
-      {
-        iDestruct "HRes" as (?) "(HArrMapsto & (Hℓ' & >HNoPerms & HRend') & HRest')".
-        iAssert (⌜t ≡ true⌝)%I as %HH.
-        {
-          iDestruct (own_valid_2 with "HThAuth HNoPerms")
-            as %[[HH%Some_included _]%prod_included _]%auth_both_valid.
-          iPureIntro.
-          destruct HH as [[? HOk]|HOk].
-          - simpl in *. by apply to_agree_inj.
-          - apply prod_included in HOk; simpl in *.
-            destruct HOk as [_ HOk].
-            by apply to_agree_included in HOk.
-        }
-        simplify_eq.
-        iMod ("HClose'" with "[-Hℓ HThAuth HClose HInhTok HΦ']") as "_".
-        {
-          iExists _, _.
-          iDestruct ("HLcRestore" with "[HArrMapsto Hℓ' HNoPerms HRend' HRest']") as "HLC".
-          by iExists _; iFrame.
-          iFrame. iExists _, _. by iFrame.
-        }
-        iMod ("HClose" with "[Hℓ HThAuth]") as "_".
-        {
-          iExists _, _. by iFrame.
-        }
-        iIntros "!>". wp_pures. iApply "HΦ'". iLeft. by iFrame.
-      }
-
-      iDestruct "HRes" as (ℓ') "(HArrMapsto & HRendHandle & HIsSus & HIsRes &
-        HCancHandle & [[>HInhTok' _]|(Hℓ' & HR & [[>HHasPerm HResTok]|>HNoPerms])])".
-      by iDestruct (inhabitant_token_exclusive with "HInhTok HInhTok'") as %[].
-      {
-        iAssert (⌜t ≡ false⌝)%I as %HH.
-        {
-          iDestruct (own_valid_2 with "HThAuth HHasPerm")
-            as %[[HH%Some_included _]%prod_included _]%auth_both_valid.
-          iPureIntro.
-          destruct HH as [[? HOk]|HOk].
-          - simpl in *. by apply to_agree_inj.
-          - apply prod_included in HOk; simpl in *.
-            destruct HOk as [_ HOk].
-            by apply to_agree_included in HOk.
-        }
-        simplify_eq.
-        iMod ("HClose'" with "[-Hℓ Hℓ' HThAuth HClose HHasPerm HΦ' HR]") as "_".
-        {
-          iExists _, _.
-          iDestruct ("HLcRestore" with "[HArrMapsto HRendHandle HIsSus HIsRes
-            HCancHandle HInhTok HResTok]") as "HLC".
-          { iExists _. iFrame. iLeft. iFrame "HInhTok". iRight. iFrame "HResTok". }
-          iFrame. iExists _, _. by iFrame.
-        }
-        iMod ("HClose" with "[Hℓ HThAuth]") as "_".
-        {
-          iExists _, _. by iFrame.
-        }
-        iIntros "!>". wp_pures. iApply "HΦ'". iRight. iExists _. by iFrame.
-      }
-      {
-        iAssert (⌜t ≡ true⌝)%I as %HH.
-        {
-          iDestruct (own_valid_2 with "HThAuth HNoPerms")
-            as %[[HH%Some_included _]%prod_included _]%auth_both_valid.
-          iPureIntro.
-          destruct HH as [[? HOk]|HOk].
-          - simpl in *. by apply to_agree_inj.
-          - apply prod_included in HOk; simpl in *.
-            destruct HOk as [_ HOk].
-            by apply to_agree_included in HOk.
-        }
-        simplify_eq.
-        iMod ("HClose'" with "[-Hℓ HThAuth HClose HInhTok HΦ']") as "_".
-        {
-          iExists _, _.
-          iDestruct ("HLcRestore" with "[HArrMapsto HRendHandle HIsSus HIsRes
-            HCancHandle HR Hℓ' HNoPerms]") as "HLC".
-          { iExists _. iFrame. iRight. iFrame "HR Hℓ'". }
-          iFrame. iExists _, _. by iFrame.
-        }
-        iMod ("HClose" with "[Hℓ HThAuth]") as "_".
-        {
-          iExists _, _. by iFrame.
-        }
-        iIntros "!>". wp_pures. iApply "HΦ'". iLeft. by iFrame.
-      }
+      awp_apply (thread_queue_as_counter_check_thread_permits_spec with
+                     "HThreadHandle HSegLoc HRend") without "HΦ'".
+      iInv "HSemInv" as (? ?) "(HPerms & >HAuth & HTq & HRest)".
+      iCombine "HInhTok" "HTq" as "HAacc".
+      iAaccIntro with "HAacc".
+      { iIntros "[$ HTq]". by iExists _, _; iFrame. }
+      iIntros (b) "[HTq HRes] !>".
+      iSplitR "HRes".
+      by iExists _, _; iFrame.
+      iIntros "HΦ".
+      iDestruct "HRes" as "[[-> HInh]|(-> & HPerm & HR)]".
+      all: wp_pures; iApply "HΦ".
+      iLeft; by iFrame.
+      iRight; iFrame. by iExists _.
     }
     {
       iIntros (Φ') "!> [HInhTok #HInterrupted] HΦ'". wp_pures. wp_bind (FAA _ _).
@@ -473,113 +370,22 @@ Proof.
           done.
         }
         iMod ("HPermsClose" with "[HFrag]") as "_"; first by eauto.
-        iAssert (⌜v = 0%nat⌝)%I as %HH.
+        iAssert (⌜v = 0%nat⌝)%I as %->.
         by iDestruct "HPure" as %[HH|HH]; subst; iPureIntro; lia.
-        iDestruct "HTq" as (l deqFront) "[HTq ->]".
-        iDestruct "HTq" as "(HInfArr & (HL1 & HL2 & HLAuth & HL3) & HRest)".
-        iDestruct (inhabited_cell_states with "HInhTok [$]") as
-            %(γt & th & [HEl|HEl]).
+        subst. rewrite Z.sub_0_r.
+        iMod (thread_queue_abandon_if_empty with "HInhTok HTq")
+          as "(HTq & HR & #HDone)".
+        iMod ("HInvClose" with "[-HΦ']") as "_".
         {
-          destruct (decide (i < deqFront)%nat).
-          2: { (* Can't happen: we are alive, but the counter says otherwise *)
-            exfalso.
-            assert (deqFront <= i)%nat as HSum by lia.
-            apply nat_le_sum in HSum. destruct HSum as [z ->].
-            rewrite -lookup_drop in HEl. remember (drop deqFront l) as l'.
-            move: HH HEl. clear. intros.
-            generalize dependent z.
-            induction l'; intros z HEl. by inversion HEl.
-            destruct z; simpl in *; first by simplify_eq.
-            destruct (decide (still_present _)); try done.
-            by eapply IHl'.
-          }
-          iMod (cell_list_contents__deq_front_at_least (S i) with "HLAuth") as
-              "[HLAuth #HDeqFrontAtLeast]"; first by lia.
-          iMod (abandon_rendezvous with "HDeqFrontAtLeast HInhTok [$]")
-            as "[HH HR]".
-          iDestruct "HH" as (? ?) "[(HEl' & HListContents & HRendAbandon)|
-                                    (HContra & _)]".
-          2: {
-            iDestruct "HContra" as %HContra.
-            simplify_eq.
-          }
-          iMod ("HInvClose" with "[-HΦ' HRendAbandon]") as "_".
-          {
-            iExists _, _. iFrame "HAuth". rewrite Nat.add_1_r /=.
-            iFrame "HR".
-            iSplitL "HPerms".
-            {
-              iApply (big_sepL_forall' with "HPerms").
-              by repeat rewrite seq_length.
-              done.
-            }
-            subst.
-            rewrite Z.add_1_r Nat2Z.inj_succ Zminus_succ_l.
-            iFrame "Hp".
-            iSplitL; last by iPureIntro; right.
-            iExists _, _.
-            iFrame  "HInfArr HListContents".
-            rewrite alter_length.
-            iDestruct "HRest" as "[HRest $]".
-            iSplitL "HRest".
-            {
-              destruct (decide (i = deqFront - 1)%nat).
-              - subst. rewrite list_lookup_alter. iPureIntro.
-                rewrite HEl. simpl. intros [_ (? & ? & HContra)].
-                simplify_eq.
-              - by rewrite list_lookup_alter_ne.
-            }
-            rewrite drop_alter; last lia. subst.
-            by rewrite HH.
-          }
-          iModIntro. wp_pures. rewrite bool_decide_decide decide_True //.
-          wp_pures.
-          iApply "HΦ'".
-          iApply "HInterrupted".
+          iExists _, _. iFrame. rewrite seq_add big_sepL_app /=. iFrame.
+          iSplitL; last by iPureIntro; eauto.
+          by rewrite Z.sub_0_r Nat2Z.inj_add.
         }
-        {
-          iMod ("HInvClose" with "[-HΦ']") as "_".
-          {
-            iExists _, O.
-            iDestruct (cell_list_contents_lookup_acc with "[$]")
-                      as "[HRR HListRestore]"; first done.
-            simpl.
-            iFrame "HAuth". subst.
-            rewrite HH. repeat rewrite Z.sub_0_r.
-            rewrite Z.add_1_r Nat.add_1_r /= Nat2Z.inj_succ.
-            iFrame "Hp".
-            iDestruct "HRR" as (ℓ) "(HArrMapsto & HRendTh & HIsSus & HIsRes &
-              HCancHandle & [[HInhTok' _]|(Hℓ & HR & [[HHasPerm HResTok]|HNoPerms])])".
-            by iDestruct (inhabitant_token_exclusive with "HInhTok HInhTok'") as %[].
-            {
-              iDestruct ("HListRestore" with "[HArrMapsto HRendTh HIsSus HIsRes
-                HCancHandle HResTok HInhTok]") as "HLC".
-              {
-                iExists _. iFrame. iLeft. iFrame.
-              }
-              iFrame "HR". iSplitL "HPerms".
-              { iApply (big_sepL_forall' with "HPerms"); last done.
-                by repeat rewrite seq_length. }
-              iSplitL; last by iPureIntro; right.
-              iExists _, _. by iFrame.
-            }
-            {
-              iDestruct ("HListRestore" with "[HArrMapsto HRendTh HIsSus HIsRes
-                HCancHandle HInhTok HNoPerms]") as "HLC".
-              {
-                iExists _. iFrame.
-              }
-              iFrame "HR". iSplitL "HPerms".
-              { iApply (big_sepL_forall' with "HPerms"); last done.
-                by repeat rewrite seq_length. }
-              iSplitL; last by iPureIntro; right.
-              iExists _, _. by iFrame.
-            }
-          }
-          iModIntro. wp_pures. rewrite bool_decide_decide decide_True //.
-          wp_pures.
-          iApply "HΦ'". iApply "HInterrupted".
-        }
+        iModIntro. wp_pures. rewrite bool_decide_decide decide_True //.
+        wp_pures.
+        iApply "HΦ'".
+        iApply "HInterrupted".
+        lia.
       }
 
       iMod (do_cancel_rendezvous_as_counter_spec with "HInhTok HTq")
