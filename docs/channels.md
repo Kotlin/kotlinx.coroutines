@@ -209,7 +209,9 @@ fun main() = runBlocking {
 //sampleStart
     val numbers = produceNumbers() // produces integers from 1 and on
     val squares = square(numbers) // squares integers
-    for (i in 1..5) println(squares.receive()) // print first five
+    repeat(5) {
+        println(squares.receive()) // print first five
+    }
     println("Done!") // we are done
     coroutineContext.cancelChildren() // cancel children coroutines
 //sampleEnd
@@ -297,7 +299,7 @@ import kotlinx.coroutines.channels.*
 fun main() = runBlocking {
 //sampleStart
     var cur = numbersFrom(2)
-    for (i in 1..10) {
+    repeat(10) {
         val prime = cur.receive()
         println(prime)
         cur = filter(cur, prime)

@@ -10,7 +10,7 @@ import kotlinx.coroutines.channels.*
 
 fun main() = runBlocking {
     var cur = numbersFrom(2)
-    for (i in 1..10) {
+    repeat(10) {
         val prime = cur.receive()
         println(prime)
         cur = filter(cur, prime)
