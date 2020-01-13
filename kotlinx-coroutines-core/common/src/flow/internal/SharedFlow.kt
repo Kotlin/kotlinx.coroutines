@@ -67,6 +67,11 @@ internal class SharedFlow<T>(
         .replayIfNeeded()
         .onCompletion { onCollectEnd() }
 
+    private suspend fun getChannel(): BroadcastChannel<T> = mutex.withLock {
+        refCount++
+        lazyChannelRef.value
+    }
+
     // lazy holder for the BroadcastChannel, which is reset whenever all collection ends
     private var lazyChannelRef = createLazyChannel()
 
@@ -91,15 +96,12 @@ internal class SharedFlow<T>(
         }
     } else this
 
+    private suspend fun onCollectEnd() = mutex.withLock { if (--refCount == 0) reset() }
+
     private fun reset() {
         cache = CircularArray(cacheHistory)
+
+        lazyChannelRef.value.cancel()
         lazyChannelRef = createLazyChannel()
     }
-
-    private suspend fun onCollectEnd() = mutex.withLock { if (--refCount == 0) reset() }
-    private suspend fun getChannel(): BroadcastChannel<T> = mutex.withLock {
-        refCount++
-        lazyChannelRef.value
-    }
-
 }

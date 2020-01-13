@@ -168,38 +168,75 @@ class ShareInTest : TestBase() {
 
     }
 
+
     @Test
-    fun closedCoroutineScope_emitsRemainingValuesToSlowCollectors() = runTest({
-        it is JobCancellationException
-    }) {
+    fun refCountOfZero_cancelsSourceFlow() = runTest {
 
-        val scope = CoroutineScope(Job())
+        val sourceBroadcastChannel = BroadcastChannel<Int>(1)
 
-        val sourceLock = Channel<Unit>()
-        val collectorLock = Channel<Unit>()
+        val sourceFlow = sourceBroadcastChannel.asFlow()
 
-        val sourceFlow = flowOf(1, 2, 3, 4, 5)
-            .onEach {
-                if (it == 4) {
-                    sourceLock.send(Unit)
-                    hang { }
-                }
-            }
-            .shareIn(scope)
+        val sharedFlow = sourceFlow.shareIn(this)
 
-        val listDeferred = async {
-            sourceFlow.onEach {
-                if (it == 2) {
-                    collectorLock.receive()
-                }
-            }.toList()
+        /*
+        first sharing session begins
+         */
+        val listOneDeferred = async(start = CoroutineStart.UNDISPATCHED) {
+            expect(1)
+            sharedFlow
+                .take(1)
+                .toList()
         }
 
-        sourceLock.receive()
-        scope.cancel()
-        collectorLock.send(Unit)
+        expect(2)
+        yield() // ensure that the "listOneDeferred" async has begun collection before sending
+        expect(3)
 
-        assertEquals(listOf(1, 2, 3, 4), listDeferred.await())
+        sourceBroadcastChannel.send(1)
+
+        assertEquals(listOf(1), listOneDeferred.await())
+
+        val newReceiveChannel = sourceBroadcastChannel.openSubscription()
+
+        val sendList = listOf(2, 3, 4, 5)
+
+        /*
+        second sharing session begins
+         */
+        val listTwoDeferred = async(start = CoroutineStart.UNDISPATCHED) {
+            expect(4)
+            sharedFlow.take(sendList.size)
+                .toList()
+        }
+
+        val listThreeDeferred = async {
+            newReceiveChannel.consumeAsFlow()
+                .shareIn(this)
+                .take(sendList.size)
+                .toList()
+        }
+
+        assertEquals(false, sourceBroadcastChannel.isClosedForSend)
+
+        expect(5)
+        yield() // ensure that the "listTwoDeferred" async has begun collection before sending
+        expect(6)
+
+        sendList.forEach {
+            sourceBroadcastChannel.send(it)
+        }
+
+        expect(7)
+
+        // Reaching here means that the sends aren't suspending,
+        // which means that the internal channel created during the first sharing session was properly closed,
+        // else there would be deadlock.
+        assertEquals(sendList, listTwoDeferred.await())
+        assertEquals(sendList, listThreeDeferred.await())
+
+        assertEquals(false, sourceBroadcastChannel.isClosedForSend)
+
+        finish(8)
     }
 
 }
