@@ -13,7 +13,6 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
  * Emits all elements from the given [channel] to this flow collector and [cancels][cancel] (consumes)
@@ -128,7 +127,7 @@ private class ChannelAsFlow<T>(
             check(!consumed.getAndSet(true)) { "ReceiveChannel.consumeAsFlow can be collected just once" }
         }
     }
-    
+
     override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
         ChannelAsFlow(channel, consume, context, capacity)
 
@@ -170,9 +169,7 @@ private class ChannelAsFlow<T>(
  * 3) If the flow consumer fails with an exception, subscription is cancelled.
  */
 @FlowPreview
-public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
-    emitAll(openSubscription())
-}
+public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = BroadcastChannelAsFlow(this)
 
 /**
  * Creates a [broadcast] coroutine that collects the given flow.
