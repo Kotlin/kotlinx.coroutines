@@ -1,8 +1,8 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package benchmarks.actors
+package benchmarks.akka
 
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
@@ -13,7 +13,6 @@ import org.openjdk.jmh.annotations.*
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 const val N_MESSAGES = 100_000
 
@@ -29,12 +28,12 @@ class Stop
  * PingPongAkkaBenchmark.singlePingPong             default-dispatcher  avgt   10  173.742 ± 41.984  ms/op
  * PingPongAkkaBenchmark.singlePingPong       single-thread-dispatcher  avgt   10   24.181 ±  0.730  ms/op
  */
-@Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 2)
-@BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MILLISECONDS)
-@State(Scope.Benchmark)
+//@Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
+//@Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
+//@Fork(value = 2)
+//@BenchmarkMode(Mode.AverageTime)
+//@OutputTimeUnit(TimeUnit.MILLISECONDS)
+//@State(Scope.Benchmark)
 open class PingPongAkkaBenchmark {
 
     lateinit var system: ActorSystem
@@ -62,12 +61,12 @@ open class PingPongAkkaBenchmark {
         Await.ready(system.terminate(), Duration.Inf())
     }
 
-    @Benchmark
+//    @Benchmark
     fun singlePingPong() {
         runPingPongs(1)
     }
 
-    @Benchmark
+//    @Benchmark
     fun coresCountPingPongs() {
         runPingPongs(Runtime.getRuntime().availableProcessors())
     }

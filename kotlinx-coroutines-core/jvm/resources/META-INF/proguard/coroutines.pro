@@ -8,3 +8,8 @@
 -keepclassmembernames class kotlinx.** {
     volatile <fields>;
 }
+
+# Same story for the standard library's SafeContinuation that also uses AtomicReferenceFieldUpdater
+-keepclassmembernames class kotlin.coroutines.SafeContinuation {
+    volatile <fields>;
+}

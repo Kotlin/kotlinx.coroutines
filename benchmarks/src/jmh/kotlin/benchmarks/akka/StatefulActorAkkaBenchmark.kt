@@ -1,8 +1,8 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package benchmarks.actors
+package benchmarks.akka
 
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
@@ -14,7 +14,6 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ThreadLocalRandom
-import java.util.concurrent.TimeUnit
 
 const val ROUNDS = 10_000
 const val STATE_SIZE = 1024
@@ -38,12 +37,12 @@ val CORES_COUNT = Runtime.getRuntime().availableProcessors()
  * StatefulActorAkkaBenchmark.singleComputationSingleRequestor              default-dispatcher  avgt   14   39.964 ±  2.343  ms/op
  * StatefulActorAkkaBenchmark.singleComputationSingleRequestor        single-thread-dispatcher  avgt   14   10.214 ±  2.152  ms/op
  */
-@Warmup(iterations = 7, time = 1, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 7, time = 1, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 2)
-@BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MILLISECONDS)
-@State(Scope.Benchmark)
+//@Warmup(iterations = 7, time = 1, timeUnit = TimeUnit.SECONDS)
+//@Measurement(iterations = 7, time = 1, timeUnit = TimeUnit.SECONDS)
+//@Fork(value = 2)
+//@BenchmarkMode(Mode.AverageTime)
+//@OutputTimeUnit(TimeUnit.MILLISECONDS)
+//@State(Scope.Benchmark)
 open class StatefulActorAkkaBenchmark {
 
     lateinit var system: ActorSystem
@@ -72,22 +71,22 @@ open class StatefulActorAkkaBenchmark {
         Await.ready(system.terminate(), Duration.Inf())
     }
 
-    @Benchmark
+//    @Benchmark
     fun singleComputationSingleRequestor() {
         run(1, 1)
     }
 
-    @Benchmark
+//    @Benchmark
     fun singleComputationMultipleRequestors() {
         run(1, CORES_COUNT)
     }
 
-    @Benchmark
+//    @Benchmark
     fun multipleComputationsSingleRequestor() {
         run(CORES_COUNT, 1)
     }
 
-    @Benchmark
+//    @Benchmark
     fun multipleComputationsMultipleRequestors() {
         run(CORES_COUNT, CORES_COUNT)
     }
@@ -120,7 +119,8 @@ open class StatefulActorAkkaBenchmark {
 
     private fun createComputationActors(initLatch: CountDownLatch, count: Int): List<ActorRef> {
         return (0 until count).map {
-            system.actorOf(Props.create(ComputationActor::class.java,
+            system.actorOf(Props.create(
+                ComputationActor::class.java,
                     LongArray(STATE_SIZE) { ThreadLocalRandom.current().nextLong(0, 100) }, initLatch)
                     .withDispatcher("akka.actor.$dispatcher"))
         }

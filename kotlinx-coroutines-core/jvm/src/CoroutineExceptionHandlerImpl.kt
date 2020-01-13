@@ -22,7 +22,6 @@ private val handlers: List<CoroutineExceptionHandler> = ServiceLoader.load(
         CoroutineExceptionHandler::class.java.classLoader
 ).iterator().asSequence().toList()
 
-
 internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) {
     // use additional extension handlers
     for (handler in handlers) {

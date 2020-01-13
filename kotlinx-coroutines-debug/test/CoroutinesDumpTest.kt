@@ -11,41 +11,47 @@ import kotlin.test.*
 
 class CoroutinesDumpTest : DebugTestBase() {
     private val monitor = Any()
-    private var coroutineStarted = false // guarded by monitor
+    private var coroutineThread: Thread? = null // guarded by monitor
 
     @Test
-    fun testSuspendedCoroutine() = synchronized(monitor) {
-        val deferred = GlobalScope.async {
+    fun testSuspendedCoroutine() = runBlocking {
+        val deferred = async(Dispatchers.Default) {
             sleepingOuterMethod()
         }
 
-        awaitCoroutineStarted()
-        Thread.sleep(100)  // Let delay be invoked
+        awaitCoroutine()
+        val found = DebugProbes.dumpCoroutinesInfo().single { it.job === deferred }
         verifyDump(
             "Coroutine \"coroutine#1\":DeferredCoroutine{Active}@1e4a7dd4, state: SUSPENDED\n" +
-                "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.sleepingNestedMethod(CoroutinesDumpTest.kt:95)\n" +
-                "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.sleepingOuterMethod(CoroutinesDumpTest.kt:88)\n" +
-            "\t(Coroutine creation stacktrace)\n" +
-                "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
-                "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
-                "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n")
-
-        val found = DebugProbes.dumpCoroutinesInfo().single { it.job === deferred }
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.sleepingNestedMethod(CoroutinesDumpTest.kt:95)\n" +
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.sleepingOuterMethod(CoroutinesDumpTest.kt:88)\n" +
+                    "\t(Coroutine creation stacktrace)\n" +
+                    "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
+                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
+                    "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n",
+            ignoredCoroutine = "BlockingCoroutine"
+        ) {
+            deferred.cancel()
+            coroutineThread!!.interrupt()
+        }
         assertSame(deferred, found.job)
-        runBlocking { deferred.cancelAndJoin() }
     }
 
     @Test
-    fun testRunningCoroutine() = synchronized(monitor) {
-        val deferred = GlobalScope.async {
+    fun testRunningCoroutine() = runBlocking {
+        val deferred = async(Dispatchers.Default) {
             activeMethod(shouldSuspend = false)
             assertTrue(true)
         }
 
-        awaitCoroutineStarted()
+        awaitCoroutine()
         verifyDump(
-            "Coroutine \"coroutine#1\":DeferredCoroutine{Active}@227d9994, state: RUNNING (Last suspension stacktrace, not an actual stacktrace)\n" +
-            "\t(Coroutine creation stacktrace)\n" +
+            "Coroutine \"coroutine#1\":DeferredCoroutine{Active}@227d9994, state: RUNNING\n" +
+                    "\tat java.lang.Thread.sleep(Native Method)\n" +
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.nestedActiveMethod(CoroutinesDumpTest.kt:141)\n" +
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.activeMethod(CoroutinesDumpTest.kt:133)\n" +
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest\$testRunningCoroutine\$1$deferred\$1.invokeSuspend(CoroutinesDumpTest.kt:41)\n" +
+                    "\t(Coroutine creation stacktrace)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                     "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
                     "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n" +
@@ -54,74 +60,84 @@ class CoroutinesDumpTest : DebugTestBase() {
                     "\tat kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
                     "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt)\n" +
                     "\tat kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
-                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.testRunningCoroutine(CoroutinesDumpTest.kt:49)")
-        runBlocking { deferred.cancelAndJoin() }
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.testRunningCoroutine(CoroutinesDumpTest.kt:49)",
+            ignoredCoroutine = "BlockingCoroutine"
+        ) {
+            deferred.cancel()
+            coroutineThread?.interrupt()
+        }
     }
 
     @Test
-    fun testRunningCoroutineWithSuspensionPoint() = synchronized(monitor) {
-        val deferred = GlobalScope.async {
+    fun testRunningCoroutineWithSuspensionPoint() = runBlocking {
+        val deferred = async(Dispatchers.Default) {
             activeMethod(shouldSuspend = true)
             yield() // tail-call
         }
 
-        awaitCoroutineStarted()
-        Thread.sleep(10)
+        awaitCoroutine()
         verifyDump(
             "Coroutine \"coroutine#1\":DeferredCoroutine{Active}@1e4a7dd4, state: RUNNING\n" +
-                "\tat java.lang.Thread.sleep(Native Method)\n" +
-                "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.nestedActiveMethod(CoroutinesDumpTest.kt:111)\n" +
-                "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.activeMethod(CoroutinesDumpTest.kt:106)\n" +
-                "\t(Coroutine creation stacktrace)\n" +
-                "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
-                "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
-                "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n" +
-                "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:148)\n" +
-                "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt)\n" +
-                "\tat kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
-                "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt)\n" +
-                "\tat kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
-                "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.testRunningCoroutineWithSuspensionPoint(CoroutinesDumpTest.kt:71)"
-        )
-        runBlocking { deferred.cancelAndJoin() }
+                    "\tat java.lang.Thread.sleep(Native Method)\n" +
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.nestedActiveMethod(CoroutinesDumpTest.kt:111)\n" +
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.activeMethod(CoroutinesDumpTest.kt:106)\n" +
+                    "\t(Coroutine creation stacktrace)\n" +
+                    "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
+                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
+                    "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n" +
+                    "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:148)\n" +
+                    "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt)\n" +
+                    "\tat kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
+                    "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt)\n" +
+                    "\tat kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.testRunningCoroutineWithSuspensionPoint(CoroutinesDumpTest.kt:71)",
+            ignoredCoroutine = "BlockingCoroutine"
+        ) {
+            deferred.cancel()
+            coroutineThread!!.interrupt()
+        }
     }
 
     @Test
-    fun testCreationStackTrace() = synchronized(monitor) {
-        val deferred = GlobalScope.async {
+    fun testCreationStackTrace() = runBlocking {
+        val deferred = async(Dispatchers.Default) {
             activeMethod(shouldSuspend = true)
         }
 
-        awaitCoroutineStarted()
-        val coroutine = DebugProbes.dumpCoroutinesInfo().first()
+        awaitCoroutine()
+        val coroutine = DebugProbes.dumpCoroutinesInfo().first { it.job is Deferred<*> }
         val result = coroutine.creationStackTrace.fold(StringBuilder()) { acc, element ->
             acc.append(element.toString())
             acc.append('\n')
         }.toString().trimStackTrace()
 
-        runBlocking { deferred.cancelAndJoin() }
+        deferred.cancel()
+        coroutineThread!!.interrupt()
 
-        val expected = ("kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
-                "kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
-                "kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:109)\n" +
-                "kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:160)\n" +
-                "kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt:88)\n" +
-                "kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
-                "kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt:81)\n" +
-                "kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
-                "kotlinx.coroutines.debug.CoroutinesDumpTest.testCreationStackTrace(CoroutinesDumpTest.kt:109)").trimStackTrace()
+        val expected =
+            ("kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
+                    "kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
+                    "kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:109)\n" +
+                    "kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:160)\n" +
+                    "kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt:88)\n" +
+                    "kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
+                    "kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt:81)\n" +
+                    "kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
+                    "kotlinx.coroutines.debug.CoroutinesDumpTest\$testCreationStackTrace\$1.invokeSuspend(CoroutinesDumpTest.kt)").trimStackTrace()
         assertTrue(result.startsWith(expected))
     }
 
     @Test
-    fun testFinishedCoroutineRemoved() = synchronized(monitor) {
-        val deferred = GlobalScope.async {
+    fun testFinishedCoroutineRemoved() = runBlocking {
+        val deferred = async(Dispatchers.Default) {
             activeMethod(shouldSuspend = true)
         }
 
-        awaitCoroutineStarted()
-        runBlocking { deferred.cancelAndJoin() }
-        verifyDump()
+        awaitCoroutine()
+        deferred.cancel()
+        coroutineThread!!.interrupt()
+        deferred.join()
+        verifyDump(ignoredCoroutine = "BlockingCoroutine")
     }
 
     private suspend fun activeMethod(shouldSuspend: Boolean) {
@@ -133,28 +149,31 @@ class CoroutinesDumpTest : DebugTestBase() {
         if (shouldSuspend) yield()
         notifyCoroutineStarted()
         while (coroutineContext[Job]!!.isActive) {
-            Thread.sleep(100)
+            runCatching { Thread.sleep(60_000) }
         }
     }
 
     private suspend fun sleepingOuterMethod() {
         sleepingNestedMethod()
-        yield()
+        yield() // TCE
     }
 
     private suspend fun sleepingNestedMethod() {
-        yield()
+        yield() // Suspension point
         notifyCoroutineStarted()
         delay(Long.MAX_VALUE)
     }
 
-    private fun awaitCoroutineStarted() {
-        while (!coroutineStarted) (monitor as Object).wait()
+    private fun awaitCoroutine() = synchronized(monitor) {
+        while (coroutineThread == null) (monitor as Object).wait()
+        while (coroutineThread!!.state != Thread.State.TIMED_WAITING) {
+            // Wait until thread sleeps to have a consistent stacktrace
+        }
     }
 
     private fun notifyCoroutineStarted() {
         synchronized(monitor) {
-            coroutineStarted = true
+            coroutineThread = Thread.currentThread()
             (monitor as Object).notifyAll()
         }
     }

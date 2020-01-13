@@ -15,6 +15,7 @@ public final class kotlinx/coroutines/debug/DebugProbes {
 	public final fun dumpCoroutinesInfo ()Ljava/util/List;
 	public final fun getSanitizeStackTraces ()Z
 	public final fun install ()V
+	public final fun isInstalled ()Z
 	public final fun jobToString (Lkotlinx/coroutines/Job;)Ljava/lang/String;
 	public final fun printJob (Lkotlinx/coroutines/Job;Ljava/io/PrintStream;)V
 	public static synthetic fun printJob$default (Lkotlinx/coroutines/debug/DebugProbes;Lkotlinx/coroutines/Job;Ljava/io/PrintStream;ILjava/lang/Object;)V

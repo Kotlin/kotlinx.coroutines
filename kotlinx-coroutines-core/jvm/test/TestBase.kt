@@ -7,9 +7,11 @@ package kotlinx.coroutines
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
 import org.junit.*
+import java.lang.Math.*
 import java.util.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
+import kotlin.math.*
 import kotlin.test.*
 
 private val VERBOSE = systemProp("test.verbose", false)
@@ -26,19 +28,21 @@ public val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
  */
 public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
 
+public val stressTestMultiplierCbrt = cbrt(stressTestMultiplier.toDouble()).roundToInt()
+
 /**
  * Base class for tests, so that tests for predictable scheduling of actions in multiple coroutines sharing a single
  * thread can be written. Use it like this:
  *
  * ```
- * class MyTest {
+ * class MyTest : TestBase() {
  *    @Test
- *    fun testSomething() = runBlocking<Unit> { // run in the context of the main thread
+ *    fun testSomething() = runBlocking { // run in the context of the main thread
  *        expect(1) // initiate action counter
- *        val job = launch(context) { // use the context of the main thread
+ *        launch { // use the context of the main thread
  *           expect(3) // the body of this coroutine in going to be executed in the 3rd step
  *        }
- *        expect(2) // launch just scheduled coroutine for exectuion later, so this line is executed second
+ *        expect(2) // launch just scheduled coroutine for execution later, so this line is executed second
  *        yield() // yield main thread to the launched job
  *        finish(4) // fourth step is the last one. `finish` must be invoked or test fails
  *    }
