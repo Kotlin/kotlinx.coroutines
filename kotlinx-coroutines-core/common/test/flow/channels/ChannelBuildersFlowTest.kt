@@ -22,6 +22,18 @@ class ChannelBuildersFlowTest : TestBase() {
     }
 
     @Test
+    fun testChannelReceiveAsFlow() = runTest {
+        val channel = produce {
+           repeat(10) {
+               send(it + 1)
+           }
+        }
+        val flow = channel.receiveAsFlow()
+        assertEquals(55, flow.sum())
+        assertEquals(emptyList(), flow.toList())
+    }
+
+    @Test
     fun testConsumeAsFlowCancellation() = runTest {
         val channel = produce(NonCancellable) { // otherwise failure will cancel scope as well
             repeat(10) {
@@ -34,6 +46,20 @@ class ChannelBuildersFlowTest : TestBase() {
         // the channel should have been canceled, even though took only 5 elements
         assertTrue(channel.isClosedForReceive)
         assertFailsWith<IllegalStateException> { flow.collect() }
+    }
+
+    @Test
+    fun testReceiveAsFlowCancellation() = runTest {
+        val channel = produce(NonCancellable) { // otherwise failure will cancel scope as well
+            repeat(10) {
+                send(it + 1)
+            }
+            throw TestException()
+        }
+        val flow = channel.receiveAsFlow()
+        assertEquals(15, flow.take(5).sum()) // sum of first 5
+        assertEquals(40, flow.take(5).sum()) // sum the rest 5
+        assertFailsWith<TestException> { flow.sum() } // exception in the rest
     }
 
     @Test
@@ -50,11 +76,33 @@ class ChannelBuildersFlowTest : TestBase() {
     }
 
     @Test
+    fun testReceiveAsFlowException() = runTest {
+        val channel = produce(NonCancellable) { // otherwise failure will cancel scope as well
+            repeat(10) {
+                send(it + 1)
+            }
+            throw TestException()
+        }
+        val flow = channel.receiveAsFlow()
+        assertFailsWith<TestException> { flow.sum() }
+        assertFailsWith<TestException> { flow.collect() } // repeated collection -- same exception
+    }
+
+    @Test
     fun testConsumeAsFlowProduceFusing() = runTest {
         val channel = produce { send("OK") }
         val flow = channel.consumeAsFlow()
         assertSame(channel, flow.produceIn(this))
         assertFailsWith<IllegalStateException> { flow.produceIn(this) }
+        channel.cancel()
+    }
+
+    @Test
+    fun testReceiveAsFlowProduceFusing() = runTest {
+        val channel = produce { send("OK") }
+        val flow = channel.receiveAsFlow()
+        assertSame(channel, flow.produceIn(this))
+        assertSame(channel, flow.produceIn(this)) // can use produce multiple times
         channel.cancel()
     }
 

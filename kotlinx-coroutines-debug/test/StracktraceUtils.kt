@@ -55,13 +55,22 @@ public fun toStackTrace(t: Throwable): String {
 
 public fun String.count(substring: String): Int = split(substring).size - 1
 
+public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null, finally: () -> Unit) {
+    try {
+        verifyDump(*traces, ignoredCoroutine = ignoredCoroutine)
+    } finally {
+        finally()
+    }
+}
+
 public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
     val baos = ByteArrayOutputStream()
     DebugProbes.dumpCoroutines(PrintStream(baos))
     val trace = baos.toString().split("\n\n")
     if (traces.isEmpty()) {
-        assertEquals(1, trace.size)
-        assertTrue(trace[0].startsWith("Coroutines dump"))
+        val filtered = trace.filter { ignoredCoroutine == null || !it.contains(ignoredCoroutine) }
+        assertEquals(1, filtered.count())
+        assertTrue(filtered[0].startsWith("Coroutines dump"))
         return
     }
     // Drop "Coroutine dump" line

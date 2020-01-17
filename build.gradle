@@ -101,7 +101,7 @@ allprojects {
         kotlin_version = rootProject.properties['kotlin_snapshot_version']
     }
 
-    if (build_snapshot_train || atomicfu_version.endsWith("-SNAPSHOT")) {
+    if (build_snapshot_train || atomicfu_version.endsWith("-SNAPSHOT") || lincheck_version.endsWith("-SNAPSHOT")) {
         repositories {
             mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }

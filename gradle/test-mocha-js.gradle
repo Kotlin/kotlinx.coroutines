@@ -76,8 +76,8 @@ task testMochaChrome(type: NodeTask, dependsOn: prepareMochaChrome) {
 task installDependenciesMochaJsdom(type: NpmTask, dependsOn: [npmInstall]) {
     args = ['install',
             "mocha@$mocha_version",
-            'jsdom',
-            'jsdom-global',
+            'jsdom@15.2.1',
+            'jsdom-global@3.0.2',
             "source-map-support@$source_map_support_version",
             '--no-save']
     if (project.hasProperty("teamcity")) args += ["mocha-teamcity-reporter@$mocha_teamcity_reporter_version"]

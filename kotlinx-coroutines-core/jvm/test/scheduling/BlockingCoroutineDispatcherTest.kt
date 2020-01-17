@@ -194,10 +194,10 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
     fun testYield() = runBlocking {
         corePoolSize = 1
         maxPoolSize = 1
-        val ds = blockingDispatcher(1)
-        val outerJob = launch(ds) {
+        val bd = blockingDispatcher(1)
+        val outerJob = launch(bd) {
             expect(1)
-            val innerJob = launch(ds) {
+            val innerJob = launch(bd) {
                 // Do nothing
                 expect(3)
             }
@@ -213,6 +213,21 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
 
         outerJob.join()
         finish(5)
+    }
+
+    @Test
+    fun testUndispatchedYield() = runTest {
+        expect(1)
+        corePoolSize = 1
+        maxPoolSize = 1
+        val blockingDispatcher = blockingDispatcher(1)
+        val job = launch(blockingDispatcher, CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            yield()
+        }
+        expect(3)
+        job.join()
+        finish(4)
     }
 
     @Test(expected = IllegalArgumentException::class)
