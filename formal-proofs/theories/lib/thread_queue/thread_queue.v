@@ -21,10 +21,10 @@ Section impl.
 Variable segment_size: positive.
 
 Definition cancel_cell: val :=
-  λ: "cell'" <>, let: "cell" := cell_ref_loc "cell'" in
-                 if: getAndSet "cell" CANCELLEDV = RESUMEDV
-                 then #false
-                 else segment_cancell_cell segment_size (Fst "cell'") ;; #true.
+  λ: "cell'", let: "cell" := cell_ref_loc "cell'" in
+              if: getAndSet "cell" CANCELLEDV = RESUMEDV
+              then #false
+              else segment_cancell_cell segment_size (Fst "cell'") ;; #true.
 
 Definition move_ptr_forward : val :=
   rec: "loop" "ptr" "seg" := let: "curSeg" := !"ptr" in
@@ -60,7 +60,7 @@ Definition suspend: val :=
   match: try_enque_thread "threadHandle" "tail" "enqIdx" with
     NONE => #false
   | SOME "cell'" =>
-    park ("handler" (cancel_cell "cell'")) "cancHandle" "threadHandle"
+    park ("handler" (λ: <>, cancel_cell "cell'")) "cancHandle" "threadHandle"
   end.
 
 Definition try_deque_thread: val :=
@@ -4541,6 +4541,136 @@ Proof.
     }
     done.
   }
+Qed.
+
+Theorem cancel_cell_spec (s: loc) (i: nat) E R γa γtq γe γd eℓ epℓ dℓ dpℓ:
+  rendezvous_cancelled γtq i -∗
+  segment_location γa (i `div` Pos.to_nat segment_size) s -∗
+  canceller_token γtq i -∗
+  <<< ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>>
+      cancel_cell segment_size (#s, #(i `mod` Pos.to_nat segment_size)%nat)%V @ ⊤
+  <<< ∃ (v: bool), ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
+    (⌜v = false⌝ ∗ ▷ awakening_permit γtq ∨ ⌜v = true⌝), RET #v >>>.
+Proof.
+  iIntros "#HRendCanc #HSegLoc HCancTok" (Φ) "AU".
+  wp_lam. wp_pures. wp_lam. wp_pures.
+
+  awp_apply (segment_data_at_spec) without "HCancTok".
+  by iPureIntro; apply Nat.mod_upper_bound; lia.
+  iApply (aacc_aupd_abort with "AU"); first done.
+  iIntros (l deqFront) "HTq".
+  iDestruct "HTq" as "[HInfArr HTail']".
+  iDestruct (is_segment_by_location with "HSegLoc HInfArr")
+    as (? ?) "[HIsSeg HInfArrRestore]".
+  iAaccIntro with "HIsSeg".
+  {
+    iIntros "HIsSeg".
+    iDestruct ("HInfArrRestore" with "HIsSeg") as "HInfArr".
+    iIntros "!>". iSplitL; last by iIntros "$".
+    by iFrame.
+  }
+  iIntros (ℓ) "(HIsSeg & #HArrMapsto & #HCellInv)".
+  iDestruct (bi.later_wand with "HInfArrRestore HIsSeg") as "$".
+  iFrame.
+  iIntros "!> AU !> HCancTok". wp_pures.
+
+  awp_apply getAndSet.getAndSet_spec. clear.
+  iApply (aacc_aupd with "AU"); first done.
+  iIntros (l ?) "(HInfArr & HListContents & HTail')".
+  iAssert (▷ ⌜∃ γt th, l !! i = Some (Some (cellInhabited γt th
+                              (Some cellCancelled)))⌝)%I
+          as "#>HEl".
+  {
+    iDestruct "HListContents" as "(_ & _ & >HAuth & _)".
+    iDestruct "HRendCanc" as (? ?) "HRendCanc".
+    iDestruct (cell_list_contents_done_agree with "HAuth HRendCanc")
+              as %HOk.
+    simplify_eq.
+    iExists _, _. done.
+  }
+  iDestruct "HEl" as %(γt & th & HEl).
+
+  iDestruct (cell_list_contents_lookup_acc with "HListContents")
+    as "[HRR HListContentsRestore]"; first done.
+  simpl.
+  iDestruct "HRR" as (ℓ') "(#>HArrMapsto' & HRendHandle & HIsSus & >HInhTok & HH)".
+  iDestruct (array_mapsto'_agree with "HArrMapsto' HArrMapsto") as %->.
+  assert (inhabitant_token' γtq i (1/2)%Qp -∗
+          inhabitant_token' γtq i (1/2)%Qp -∗
+          inhabitant_token' γtq i (1/2)%Qp -∗ False)%I as HNoTwoCanc.
+  {
+    iIntros "HInhTok1 HInhTok2 HInhTok3".
+    iDestruct (own_valid_3 with "HInhTok1 HInhTok2 HInhTok3") as %HValid.
+    iPureIntro.
+    move: HValid. rewrite -auth_frag_op -pair_op.
+    repeat rewrite list_op_singletonM.
+    rewrite auth_frag_valid /=. rewrite pair_valid.
+    rewrite list_singleton_valid. intros [_ [[[[HPairValid _] _] _] _]].
+    by compute.
+  }
+  iDestruct "HH" as "[(Hℓ & HResTok & HE & HCancHandle & HNoPerms & HAwak)|
+    [(Hℓ & HIsRes & [(>HCancTok' & _)|(HCancHandle & HAwak)])|(_ & >HCancTok' & _)]]".
+  all: try iDestruct (HNoTwoCanc with "HInhTok HCancTok HCancTok'") as %[].
+
+  2: {
+    iAssert (▷ ℓ ↦ RESUMEDV ∧ ⌜val_is_unboxed RESUMEDV⌝)%I with "[$]" as "HAacc".
+    iAaccIntro with "HAacc".
+    {
+      iIntros "[Hℓ _]". iFrame "HCancTok".
+      iIntros "!>".
+      iSplitL; last by iIntros "$". iFrame.
+      iApply "HListContentsRestore".
+      iExists _. iFrame "HArrMapsto' HRendHandle HIsSus HInhTok".
+      iRight. iLeft. iFrame. iRight. iFrame.
+    }
+
+    iIntros "Hℓ !>". iRight. iExists false.
+    iSplitL.
+    {
+      iSplitR "HAwak"; last by iLeft; iFrame.
+      iFrame.
+      iApply "HListContentsRestore".
+      iExists _. iFrame "HArrMapsto' HRendHandle HIsSus HInhTok".
+      iRight. iRight. iFrame. iLeft. iFrame.
+    }
+    iIntros "HΦ' !>". wp_pures.
+    by iApply "HΦ'".
+  }
+
+  iAssert (▷ ℓ ↦ InjLV #th ∧ ⌜val_is_unboxed (InjLV #th)⌝)%I with "[$]" as "HAacc".
+
+  iAaccIntro with "HAacc".
+  {
+    iIntros "[Hℓ _]". iFrame "HCancTok".
+    iIntros "!>".
+    iSplitL; last by iIntros "$ !>".
+    iFrame.
+    iApply "HListContentsRestore".
+    iExists _. iFrame "HArrMapsto' HRendHandle HIsSus HInhTok".
+    iLeft. iFrame.
+  }
+
+  iIntros "Hℓ !>".
+  iLeft.
+  iSplitR "HCancHandle".
+  {
+    iFrame.
+    iApply "HListContentsRestore".
+    iExists _. iFrame "HArrMapsto' HRendHandle HIsSus HInhTok".
+    iRight. iRight. iFrame. iRight. iFrame.
+  }
+  iIntros "AU !>". wp_pures.
+
+  awp_apply (segment_cancel_cell_spec with "HSegLoc HCancHandle").
+  by apply Nat.mod_upper_bound; lia.
+
+  iApply (aacc_aupd_commit with "AU"); first done.
+  iIntros (? ?) "(HInfArr & HTail')".
+  iAaccIntro with "HInfArr".
+  { iIntros "$ !>". iFrame. iIntros "$ !> //". }
+  iIntros (?) "$ !>". iExists true. iFrame.
+  iSplitR; first by iRight.
+  iIntros "HΦ !>". wp_pures. by iApply "HΦ".
 Qed.
 
 End proof.

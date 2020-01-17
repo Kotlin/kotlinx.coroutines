@@ -324,7 +324,7 @@ Proof.
   iDestruct "HPures" as (i s ->) "(#HSegLoc & #HRend & HInhToken)".
   iSplitR "HInhToken"; first by iExists _, _; iFrame.
 
-  iIntros "!> HΦ". wp_pures. wp_lam. wp_pures. wp_lam. wp_pures.
+  iIntros "!> HΦ". wp_pures. wp_lam. wp_pures.
   wp_apply (interruptibly_spec _ (inhabitant_token γtq i)
                                (fun _ => thread_has_permit γth ∗ R)%I
                                (fun _ => interrupted γi)
@@ -403,7 +403,7 @@ Proof.
           by replace (availablePermits - v + 1) with (availablePermits - (v - 1)%nat) by lia.
         }
         iModIntro. wp_pures. rewrite bool_decide_decide decide_False //.
-        wp_pures. wp_lam. wp_pures.
+        wp_pures. wp_lam. wp_lam. wp_pures.
 
         awp_apply (segment_data_at_spec) without "HΦ' HLoc HAwak".
         by iPureIntro; apply Nat.mod_upper_bound; lia.
@@ -448,127 +448,21 @@ Proof.
       }
 
       iModIntro. wp_pures. rewrite bool_decide_decide decide_False //. wp_pures.
-      wp_lam. wp_pures.
-
-      awp_apply (segment_data_at_spec) without "HΦ' HCancTok".
-      by iPureIntro; apply Nat.mod_upper_bound; lia.
+      awp_apply (cancel_cell_spec with "HRendCanc HSegLoc HCancTok") without "HΦ'".
       iInv "HSemInv" as (? ?) "(HHead1 & HHead2 & HTq & HTail)".
-      iDestruct "HTq" as (? ?) "[(HInfArr & HTail') HTail'']".
-      iDestruct (is_segment_by_location with "HSegLoc HInfArr")
-        as (? ?) "[HIsSeg HInfArrRestore]".
-      iAaccIntro with "HIsSeg".
+      iDestruct "HTq" as (? ?) "[HTq HTail'']".
+      iAaccIntro with "HTq".
       {
-        iIntros "HIsSeg".
-        iDestruct ("HInfArrRestore" with "HIsSeg") as "HInfArr".
-        iIntros "!>". iSplitL; last done.
-        iExists _, _; iFrame.
-        iExists _, _; iFrame.
+        iIntros "HTq !>". iSplitL; last done. iExists _, _. iFrame.
+        iExists _, _. iFrame.
       }
-      iIntros (ℓ) "(HIsSeg & #HArrMapsto & #HCellInv)".
-      iDestruct (bi.later_wand with "HInfArrRestore HIsSeg") as "HInfArr".
-      iSplitL; first by iExists _, _; iFrame; iExists _, _; iFrame.
-      iIntros "!> (HΦ' & HCancTok)". wp_pures.
-
-      awp_apply getAndSet.getAndSet_spec without "HΦ'".
-      move: namespaces_disjoint. clear. intros.
-      iInv "HSemInv" as (? ?) "(HHead1 & HHead2 & HTq & HTail)".
-      iDestruct "HTq" as (l ?) "[(HInfArr & HListContents & HTail') >->]".
-      iAssert (▷ ⌜∃ γt th, l !! i = Some (Some (cellInhabited γt th
-                                  (Some cellCancelled)))⌝)%I
-              as "#>HEl".
-      {
-        iDestruct "HListContents" as "(_ & _ & >HAuth & _)".
-        iDestruct "HRendCanc" as (? ?) "HRendCanc".
-        iDestruct (cell_list_contents_done_agree with "HAuth HRendCanc")
-                  as %HOk.
-        simplify_eq.
-        iExists _, _. done.
-      }
-      iDestruct "HEl" as %(γt & th & HEl).
-
-      iDestruct (cell_list_contents_lookup_acc with "HListContents")
-        as "[HRR HListContentsRestore]"; first done.
-      simpl.
-      iDestruct "HRR" as (ℓ') "(#>HArrMapsto' & HRendHandle & HIsSus & >HInhTok & HH)".
-      iDestruct (array_mapsto'_agree with "HArrMapsto' HArrMapsto") as %->.
-      assert (inhabitant_token' γtq i (1/2)%Qp -∗
-              inhabitant_token' γtq i (1/2)%Qp -∗
-              inhabitant_token' γtq i (1/2)%Qp -∗ False)%I as HNoTwoCanc.
-      {
-        iIntros "HInhTok1 HInhTok2 HInhTok3".
-        iDestruct (own_valid_3 with "HInhTok1 HInhTok2 HInhTok3") as %HValid.
-        iPureIntro.
-        move: HValid. rewrite -auth_frag_op -pair_op.
-        repeat rewrite list_op_singletonM.
-        rewrite auth_frag_valid /=. rewrite pair_valid.
-        rewrite list_singleton_valid. intros [_ [[[[HPairValid _] _] _] _]].
-        by compute.
-      }
-      iDestruct "HH" as "[(Hℓ & HResTok & _ & HCancHandle & HNoPerms & HAwak)|
-        [(Hℓ & HIsRes & [(>HCancTok' & _)|(HCancHandle & HAwak)])|(_ & >HCancTok' & _)]]".
-      all: try iDestruct (HNoTwoCanc with "HInhTok HCancTok HCancTok'") as %[].
-
-      2: {
-        iAssert (▷ ℓ ↦ RESUMEDV ∧ ⌜val_is_unboxed RESUMEDV⌝)%I with "[$]" as "HAacc".
-        iAaccIntro with "HAacc".
-        {
-          iIntros "[Hℓ _]". iFrame "HCancTok".
-          iIntros "!>". iExists _, _. iFrame. iExists _, _. iFrame.
-          iSplitL; last by iPureIntro.
-          iApply "HListContentsRestore".
-          iExists _. iFrame "HArrMapsto' HRendHandle HIsSus HInhTok".
-          iRight. iLeft. iFrame. iRight. iFrame.
-        }
-
-        iIntros "Hℓ !>".
-        iSplitR "HAwak".
-        {
-          iExists _, _. iFrame.
-          iExists _, _. iFrame.
-          iSplitL; last by iPureIntro.
-          iApply "HListContentsRestore".
-          iExists _. iFrame "HArrMapsto' HRendHandle HIsSus HInhTok".
-          iRight. iRight. iFrame. iLeft. iFrame.
-        }
-        iIntros "HΦ'". wp_pures.
-        wp_apply (resume_in_semaphore_spec with "[$] [$] [$]").
-        iIntros "_". iApply "HΦ'". iAssumption.
-      }
-
-      iAssert (▷ ℓ ↦ InjLV #th ∧ ⌜val_is_unboxed (InjLV #th)⌝)%I with "[$]" as "HAacc".
-      iAaccIntro with "HAacc".
-      {
-        iIntros "[Hℓ _]". iFrame "HCancTok".
-        iIntros "!>". iExists _, _. iFrame. iExists _, _. iFrame.
-        iSplitL; last by iPureIntro.
-        iApply "HListContentsRestore".
-        iExists _. iFrame "HArrMapsto' HRendHandle HIsSus HInhTok".
-        iLeft. iFrame.
-      }
-
-      iIntros "Hℓ !>".
-      iSplitR "HCancHandle".
-      {
-        iExists _, _. iFrame. iExists _, _. iFrame.
-        iSplitL; last by iPureIntro.
-        iApply "HListContentsRestore".
-        iExists _. iFrame "HArrMapsto' HRendHandle HIsSus HInhTok".
-        iRight. iRight. iFrame. iRight. iFrame.
-      }
-      iIntros "HΦ'". wp_pures.
-
-      awp_apply (segment_cancel_cell_spec with "HSegLoc HCancHandle") without "HΦ'".
-      by apply Nat.mod_upper_bound; lia.
-
-      iInv "HSemInv" as (? ?) "(HHead1 & HHead2 & HTq & HTail)".
-      iDestruct "HTq" as (? ?) "[(HInfArr & HTail') HPf]".
-      iAaccIntro with "HInfArr".
-      {
-        iIntros "$ !>". iExists _, _. iFrame. iExists _, _. iFrame.
-      }
-      iIntros (?) "$ !>". iSplitL.
-      by iExists _, _; iFrame; iExists _, _; iFrame.
-      iIntros "HΦ". wp_pures. iApply "HΦ". iAssumption.
+      iIntros (b) "[HTq HRes] !>".
+      iSplitR "HRes".
+      { iExists _, _. iFrame. iExists _, _. iFrame. }
+      iIntros "HΦ'". iSpecialize ("HΦ'" $! #() with "HInterrupted").
+      iDestruct "HRes" as "[(-> & HAwak)|->]"; wp_pures.
+      iApply (resume_in_semaphore_spec with "[$] [$] [$]").
+      all: by iFrame.
     }
   }
   iIntros (? ?) "[(-> & #HInterrupted)|(-> & HHasPerm & HR)]".
