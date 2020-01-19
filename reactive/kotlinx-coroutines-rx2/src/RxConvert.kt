@@ -5,7 +5,6 @@
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
-import io.reactivex.BackpressureStrategy.DROP
 import io.reactivex.disposables.Disposable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -79,29 +78,7 @@ public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): 
         send(t)
 }
 
-// TODO NOW: write tests for all three versions (same as they write for other converters)!!!
-
-// This version is worse than asFlow2 in every way, so I'll keep it here only for a while to experiment
-// (compare) how it reacts in unit tests I'm going to write for all asFlowX implementations.
-public fun <T: Any> Observable<T>.asFlow1(): Flow<T> = flow {
-    materialize().collect {
-        when {
-            it.isOnError -> throw it.error!!
-            it.isOnNext -> emit(it.value!!)
-            // it.isOnComplete -> Unit // unnecessary - the collect ends on complete anyway
-        }
-    }
-}
-
-public fun <T: Any> ObservableSource<T>.asFlow2(): Flow<T> = flow {
-    collect { // TODO: test if it actually buffer source items when emit is slow
-        emit(it)
-        // FIXME: for sure this can emit on wrong "dispatcher" UPDATE: No! it should collect in right context
-        // TODO: test these issues (if it is guaranteed to collect/emit in right execution context)
-    }
-} // TODO: show in tests that this version does not support Flow operator fusion, so asFlow3 is better
-
-public fun <T: Any> ObservableSource<T>.asFlow3(): Flow<T> = callbackFlow {
+public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
 
     var disposable: Disposable? = null
 
@@ -113,13 +90,7 @@ public fun <T: Any> ObservableSource<T>.asFlow3(): Flow<T> = callbackFlow {
     }
     subscribe(observer)
     awaitClose { disposable?.dispose() }
-} // TODO: test it also with Flow operator fusion (changing the channel buffer to CONFLATED and UNLIMITED)
-
-// NOTE: for other no-backpressure stream types (Maybe, Single, Completable) we can just use .toObservable():
-public fun <T: Any> Maybe<T>.asFlow3() = toObservable().asFlow3()
-
-//TODO: run this implementation through the same unit tests (and benchmarks?) for comparison
-public fun <T: Any> Observable<T>.asFlow4(strategy: BackpressureStrategy = DROP) = toFlowable(strategy).asFlow()
+}
 
 /**
  * Converts the given flow to a cold observable.

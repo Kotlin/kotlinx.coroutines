@@ -11,7 +11,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlin.test.*
 
-class ObservableAsFlow3Test : TestBase() {
+class ObservableAsFlowTest : TestBase() {
     @Test
     fun testCancellation() = runTest {
         var onNext = 0
@@ -28,7 +28,7 @@ class ObservableAsFlow3Test : TestBase() {
             }
         }
 
-        source.asFlow3().launchIn(CoroutineScope(Dispatchers.Unconfined)) {
+        source.asFlow().launchIn(CoroutineScope(Dispatchers.Unconfined)) {
             onEach {
                 ++onNext
                 throw RuntimeException()
@@ -47,7 +47,7 @@ class ObservableAsFlow3Test : TestBase() {
     @Test
     fun testImmediateCollection() {
         val source = PublishSubject.create<Int>()
-        val flow = source.asFlow3()
+        val flow = source.asFlow()
         GlobalScope.launch(Dispatchers.Unconfined) {
             expect(1)
             flow.collect { expect(it) }
@@ -64,7 +64,7 @@ class ObservableAsFlow3Test : TestBase() {
     @Test
     fun testOnErrorCancellation() {
         val source = PublishSubject.create<Int>()
-        val flow = source.asFlow3()
+        val flow = source.asFlow()
         val exception = RuntimeException()
         GlobalScope.launch(Dispatchers.Unconfined) {
             try {
@@ -88,7 +88,7 @@ class ObservableAsFlow3Test : TestBase() {
     @Test
     fun testUnsubscribeOnCollectionException() {
         val source = PublishSubject.create<Int>()
-        val flow = source.asFlow3()
+        val flow = source.asFlow()
         val exception = RuntimeException()
         GlobalScope.launch(Dispatchers.Unconfined) {
             try {
@@ -125,21 +125,21 @@ class ObservableAsFlow3Test : TestBase() {
             expect(8); send(17)
             expect(9)
         }
-        source.asFlow3().buffer(Channel.UNLIMITED).collect { expect(it) }
+        source.asFlow().buffer(Channel.UNLIMITED).collect { expect(it) }
         finish(18)
     }
 
     @Test
     fun testConflated() = runTest {
         val source = Observable.range(1, 5)
-        val list = source.asFlow3().conflate().toList()
+        val list = source.asFlow().conflate().toList()
         assertEquals(listOf(1, 5), list)
     }
 
     @Test
     fun testProduce() = runTest {
         val source = Observable.range(0, 10)
-        val flow = source.asFlow3()
+        val flow = source.asFlow()
         check((0..9).toList(), flow.produceIn(this))
         check((0..9).toList(), flow.buffer(Channel.UNLIMITED).produceIn(this))
         check((0..2).toList(), flow.buffer(2).produceIn(this))
