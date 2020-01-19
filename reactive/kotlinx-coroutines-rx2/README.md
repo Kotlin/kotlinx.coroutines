@@ -14,10 +14,11 @@ Coroutine builders:
 
 Integration with [Flow]:
 
-| **Name**             | **Result**      | **Description**
-| ---------------      | --------------  | ---------------
-| [Flow.asFlowable]    | `Flowable`      | Converts the given flow to a cold Flowable.
-| [Flow.asObservable]  | `Observable`    | Converts the given flow to a cold Observable.
+| **Name**                   | **Result**      | **Description**
+| ---------------            | --------------  | ---------------
+| [Flow.asFlowable]          | `Flowable`      | Converts the given flow to a cold Flowable.
+| [Flow.asObservable]        | `Observable`    | Converts the given flow to a cold Observable.
+| [ObservableSource.asFlow]  | `Flow`          | Converts the given cold ObservableSource to flow
 
 Suspending extension functions and suspending iteration:
 

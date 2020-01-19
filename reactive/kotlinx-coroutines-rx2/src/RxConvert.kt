@@ -78,6 +78,16 @@ public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): 
         send(t)
 }
 
+/**
+ * Transforms given cold [ObservableSource] into cold [Flow].
+ *
+ * The resulting flow is _cold_, which means that [ObservableSource.subscribe] is called every time a terminal operator
+ * is applied to the resulting flow.
+ *
+ * A channel with the [default][Channel.BUFFERED] buffer size is used. Use the [buffer] operator on the
+ * resulting flow to specify a user-defined value and to control what happens when data is produced faster
+ * than consumed, i.e. to control the back-pressure behavior. Check [callbackFlow] for more details.
+ */
 public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
 
     var disposable: Disposable? = null
