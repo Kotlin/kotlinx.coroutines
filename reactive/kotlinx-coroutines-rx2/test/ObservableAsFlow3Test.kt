@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.rx2
 
+import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -17,7 +18,7 @@ class ObservableAsFlow3Test : TestBase() {
         var onCancelled = 0
         var onError = 0
 
-        val observable = rxObservable(currentDispatcher()) {
+        val source = rxObservable(currentDispatcher()) {
             coroutineContext[Job]?.invokeOnCompletion {
                 if (it is CancellationException) ++onCancelled
             }
@@ -27,7 +28,7 @@ class ObservableAsFlow3Test : TestBase() {
             }
         }
 
-        observable.asFlow3().launchIn(CoroutineScope(Dispatchers.Unconfined)) {
+        source.asFlow3().launchIn(CoroutineScope(Dispatchers.Unconfined)) {
             onEach {
                 ++onNext
                 throw RuntimeException()
@@ -64,7 +65,7 @@ class ObservableAsFlow3Test : TestBase() {
     fun testOnErrorCancellation() {
         val source = PublishSubject.create<Int>()
         val flow = source.asFlow3()
-        val exception = java.lang.RuntimeException("Some exception")
+        val exception = RuntimeException()
         GlobalScope.launch(Dispatchers.Unconfined) {
             try {
                 expect(1)
@@ -88,7 +89,7 @@ class ObservableAsFlow3Test : TestBase() {
     fun testUnsubscribeOnCollectionException() {
         val source = PublishSubject.create<Int>()
         val flow = source.asFlow3()
-        val exception = java.lang.RuntimeException("Some exception")
+        val exception = RuntimeException()
         GlobalScope.launch(Dispatchers.Unconfined) {
             try {
                 expect(1)
@@ -113,7 +114,7 @@ class ObservableAsFlow3Test : TestBase() {
 
     @Test
     fun testBufferUnlimited() = runTest {
-        val observable = rxObservable(currentDispatcher()) {
+        val source = rxObservable(currentDispatcher()) {
             expect(1); send(10)
             expect(2); send(11)
             expect(3); send(12)
@@ -124,95 +125,31 @@ class ObservableAsFlow3Test : TestBase() {
             expect(8); send(17)
             expect(9)
         }
-
-        observable
-            .asFlow3()
-            .buffer(Channel.UNLIMITED)
-            .collect { expect(it) }
-
+        source.asFlow3().buffer(Channel.UNLIMITED).collect { expect(it) }
         finish(18)
     }
-//
-//    @Test
-//    fun testBufferSize10() = runTest {
-//        val publisher = publish(currentDispatcher()) {
-//            expect(1)
-//            send(5)
-//
-//            expect(2)
-//            send(6)
-//
-//            expect(3)
-//            send(7)
-//            expect(4)
-//        }
-//
-//        publisher.asFlow().buffer(10).collect {
-//            expect(it)
-//        }
-//
-//        finish(8)
-//    }
-//
-//    @Test
-//    fun testConflated() = runTest {
-//        val publisher = publish(currentDispatcher()) {
-//            for (i in 1..5) send(i)
-//        }
-//        val list = publisher.asFlow().conflate().toList()
-//        assertEquals(listOf(1, 5), list)
-//    }
-//
-//    @Test
-//    fun testProduce() = runTest {
-//        val flow = publish(currentDispatcher()) { repeat(10) { send(it) } }.asFlow()
-//        check((0..9).toList(), flow.produceIn(this))
-//        check((0..9).toList(), flow.buffer(2).produceIn(this))
-//        check((0..9).toList(), flow.buffer(Channel.UNLIMITED).produceIn(this))
-//        check(listOf(0, 9), flow.conflate().produceIn(this))
-//    }
-//
-//    private suspend fun check(expected: List<Int>, channel: ReceiveChannel<Int>) {
-//        val result = ArrayList<Int>(10)
-//        channel.consumeEach { result.add(it) }
-//        assertEquals(expected, result)
-//    }
-//
-//    @Test
-//    fun testProduceCancellation() = runTest {
-//        expect(1)
-//        // publisher is an async coroutine, so it overproduces to the channel, but still gets cancelled
-//        val flow = publish(currentDispatcher()) {
-//            expect(3)
-//            repeat(10) { value ->
-//                when (value) {
-//                    in 0..6 -> send(value)
-//                    7 -> try {
-//                        send(value)
-//                    } catch (e: CancellationException) {
-//                        finish(6)
-//                        throw e
-//                    }
-//                    else -> expectUnreached()
-//                }
-//            }
-//        }.asFlow()
-//        assertFailsWith<TestException> {
-//            coroutineScope {
-//                expect(2)
-//                val channel = flow.produceIn(this)
-//                channel.consumeEach { value ->
-//                    when (value) {
-//                        in 0..4 -> {}
-//                        5 -> {
-//                            expect(4)
-//                            throw TestException()
-//                        }
-//                        else -> expectUnreached()
-//                    }
-//                }
-//            }
-//        }
-//        expect(5)
-//    }
+
+    @Test
+    fun testConflated() = runTest {
+        val source = Observable.range(1, 5)
+        val list = source.asFlow3().conflate().toList()
+        assertEquals(listOf(1, 5), list)
+    }
+
+    @Test
+    fun testProduce() = runTest {
+        val source = Observable.range(0, 10)
+        val flow = source.asFlow3()
+        check((0..9).toList(), flow.produceIn(this))
+        check((0..9).toList(), flow.buffer(Channel.UNLIMITED).produceIn(this))
+        check((0..2).toList(), flow.buffer(2).produceIn(this))
+            // whole source is "offered" immediately (no back-pressure), so 3..9 is dropped
+        check(listOf(0, 9), flow.conflate().produceIn(this))
+    }
+
+    private suspend fun check(expected: List<Int>, channel: ReceiveChannel<Int>) {
+        val result = ArrayList<Int>(10)
+        channel.consumeEach { result.add(it) }
+        assertEquals(expected, result)
+    }
 }
