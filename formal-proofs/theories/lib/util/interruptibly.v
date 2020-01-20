@@ -18,8 +18,8 @@ Definition wait: val :=
 Definition interruptibly: val :=
   λ: "H" "b" "h" "e",
   match: wait "H" "b" "e" with
-    NONE => (#true, "h" "e")
-  | SOME "v" => (#false, SOME "v")
+    NONE => "h" "e"
+  | SOME "v" => SOME "v"
   end.
 
 Notation "'loop:' b 'interrupted:' h" :=
@@ -62,32 +62,6 @@ Proof. apply _. Qed.
 Global Instance interrupt_sent_persistent γ: Persistent (interrupt_sent γ).
 Proof. apply _. Qed.
 
-Lemma interruptibly_wait_fail_spec : forall γ handle (b e: val),
-  {{{ is_interrupt_handle γ handle ∗ interrupt_sent γ }}}
-    wait handle b e
-  {{{ RET (InjLV #()); True }}}.
-Proof.
-  iIntros (γ handle b e Φ) "[#IntHInv #IntSent] HPost". wp_lam. wp_pures.
-  iDestruct "IntHInv" as (ℓ) "[-> IntHInv]". rewrite /interrupt_handle_inv.
-  wp_bind (!_)%E.
-  iInv N as (n) "(Hℓ & HOwn & >%)" "HClose".
-  wp_load.
-  destruct n.
-  by iDestruct (own_valid_2 with "HOwn IntSent")
-      as %[HC%mnat_included _]%auth_both_valid; lia.
-
-  iMod ("HClose" with "[Hℓ HOwn]") as "_"; first by eauto 10 with iFrame.
-  iModIntro. wp_pures. wp_bind (_ <- _)%E.
-
-  iInv N as (?) "(Hℓ & HOwn & >%)" "HClose".
-  wp_store.
-  iMod (own_update with "HOwn") as "[HOwn HFrag]".
-  { apply (auth_update_alloc _ (2%nat: mnatUR) (2%nat: mnatUR)).
-    apply mnat_local_update. lia. }
-  iMod ("HClose" with "[Hℓ HOwn]") as "_"; first by eauto 10 with iFrame.
-  iModIntro. wp_pures. by iApply "HPost".
-Qed.
-
 Lemma interruptibly_wait_spec : forall γ P Q handle (b e: val),
   {{{ is_interrupt_handle γ handle ∗ P ∗
     ({{{ P }}}
@@ -120,21 +94,6 @@ Proof.
     eauto with iFrame.
 Qed.
 
-Lemma interruptibly_fail_spec : forall γ P Q' handle (b h e: val),
-  {{{ is_interrupt_handle γ handle ∗ P ∗ interrupt_sent γ ∗
-    {{{ P }}}
-      (h e)%V
-    {{{ (r: val), RET r; Q' r }}}
-  }}}
-    interruptibly handle b h e
-  {{{ (v: val), RET (#true, v)%V; Q' v }}}.
-Proof.
-  intros. iIntros "[#HIsInt [HP [#HIntSent #Hhe]]] HPost". wp_rec. wp_pures.
-  wp_apply (interruptibly_wait_fail_spec); auto.
-  iIntros "_". wp_pures. wp_bind (h e). wp_apply ("Hhe" with "HP").
-  iIntros (r) "HQ'". wp_pures. by iApply "HPost".
-Qed.
-
 Lemma interruptibly_spec : forall {γ} P Q Q' handle (b h e: val),
   {{{ is_interrupt_handle γ handle ∗ P ∗
     {{{ P }}}
@@ -142,17 +101,17 @@ Lemma interruptibly_spec : forall {γ} P Q Q' handle (b h e: val),
     {{{ r, RET r; ⌜r = InjLV #()⌝ ∧ P ∨ (∃ (v: val), ⌜r = InjRV v⌝ ∧ Q v) }}} ∗
     {{{ P ∗ interrupted γ }}}
       (h e)%V
-    {{{ (r: val), RET r; Q' r }}}
+    {{{ r v, RET r; (⌜r = InjLV v⌝ ∧ Q' v) ∨ (⌜r = InjRV v⌝ ∧ Q v) }}}
   }}}
     interruptibly handle b h e
-  {{{ r v, RET r; ⌜r = (#true, v)%V⌝ ∧ Q' v ∨ ⌜r = (#false, InjRV v)%V⌝ ∧ Q v }}}.
+  {{{ r v, RET r; (⌜r = InjLV v⌝ ∧ Q' v) ∨ (⌜r = InjRV v⌝ ∧ Q v) }}}.
 Proof.
   intros. iIntros "[#HIsInt [HP [#Hbe #Hhe]]] HPost". wp_rec. wp_pures.
   wp_bind (wait _ _ _). wp_apply (interruptibly_wait_spec with "[HP]").
   { iFrame "HIsInt". iSplitL. iApply "HP". iApply "Hbe". }
   iIntros (r) "[[-> [HP HIntr]] | Hr]".
-  - wp_pures. wp_bind (h e). wp_apply ("Hhe" with "[HP HIntr]"); first by iFrame.
-    iIntros (r) "HQ'". wp_pures. iApply "HPost". iLeft. by iFrame.
+  - wp_pures. wp_apply ("Hhe" with "[HP HIntr]"); first by iFrame.
+    iApply "HPost".
   - iDestruct "Hr" as (v) "[-> HQ]". wp_pures. iApply "HPost". iRight. by iFrame.
 Qed.
 

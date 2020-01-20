@@ -21,21 +21,21 @@ Definition cancellation_handler : val :=
   rec: "loop" "ctr" "head" "deqIdx" "canceller" <>:=
   let: "arrived" := ! "ctr"
   in if: #(Pos.to_nat limit) ≤ "arrived"
-     then #false
+     then InjRV #()
      else
-       if: CAS "ctr" "arrived" ("arrived" + #1)
+       if: CAS "ctr" "arrived" ("arrived" - #1)
        then if: "canceller" #()
-            then #()
+            then InjLV #()
             else resume segment_size "head" "deqIdx"
               ;;
-            #true
-       else "loop" "ctr" "head" "deqIdx" "canceller".
+            InjLV #()
+       else "loop" "ctr" "head" "deqIdx" "canceller" #().
 
 Definition await : val :=
   λ: "cancHandle" "threadHandle" "ctr" "tail" "enqIdx" "head" "deqIdx",
   let: "p" := FAA "ctr" #1
   in if: "p" = #(Pos.to_nat limit-1)
-     then forRange "p" (λ: "i", resume segment_size "head" "deqIdx") ;; #false
+     then forRange "p" (λ: "i", resume segment_size "head" "deqIdx") ;; InjRV #()
      else suspend segment_size (cancellation_handler "ctr" "head" "deqIdx")
                   "cancHandle" "threadHandle" "tail" "enqIdx".
 
@@ -114,7 +114,8 @@ Section barrier_proof.
 
 Variable (limit: positive).
 
-Notation algebra := (authR (optionUR (csumR positiveR positiveR))).
+Notation algebra := (authR (prodUR natUR
+                                   (optionUR (csumR positiveR positiveR)))).
 
 Class barrierG Σ := BarrierG { barrier_inG :> inG Σ algebra }.
 Definition barrierΣ : gFunctors := #[GFunctor algebra].
@@ -129,13 +130,13 @@ Notation iProp := (iProp Σ).
 
 Variable (segment_size: positive).
 
-Definition barrier_entry_piece γ := own γ (◯ (Some (Cinl 1%positive))).
-Definition barrier_exit_piece γ := own γ (◯ (Some (Cinr 1%positive))).
+Definition barrier_entry_piece γ := own γ (◯ (ε, Some (Cinl 1%positive))).
+Definition barrier_exit_piece γ := own γ (◯ (ε, Some (Cinr 1%positive))).
 
 Definition is_barrier_inv γ (ℓ: loc)
   (epℓ eℓ dpℓ dℓ: loc) (γa γtq γe γd: gname) (n: nat) :=
-  ((if decide (n < Pos.to_nat limit)%nat then own γ (● (Some (Cinl limit))) else
-      if decide (n = Pos.to_nat limit) then own γ (● (Some (Cinr limit))) else
+  ((if decide (n < Pos.to_nat limit)%nat then own γ (● (n, Some (Cinl limit))) else
+      if decide (n = Pos.to_nat limit) then own γ (● (n, Some (Cinr limit))) else
         False) ∗
     ℓ ↦ #n ∗ ([∗] replicate (n `mod` Pos.to_nat limit)%nat (barrier_entry_piece γ)) ∗
     thread_queue_as_counter (N .@ "tq") Nth segment_size True (barrier_exit_piece γ)
@@ -210,10 +211,10 @@ Lemma await_spec Nint γi cancHandle γth (threadHandle: loc)
   is_barrier γ p epℓ eℓ dpℓ dℓ γa γtq γe γd -∗
   {{{ thread_doesnt_have_permits γth ∗ barrier_entry_piece γ }}}
   (await segment_size limit) cancHandle #threadHandle #p #epℓ #eℓ #dpℓ #dℓ
-  {{{ (v: bool), RET #v;
-      ⌜v = false⌝ ∧ thread_doesnt_have_permits γth ∗ barrier_exit_piece γ ∨
-      ⌜v = true⌝ ∧ interrupted γi }}}.
-
+  {{{ (v: val), RET v;
+      ⌜v = InjRV #()⌝ ∧ (thread_doesnt_have_permits γth ∨ interrupted γi) ∗
+                          barrier_exit_piece γ ∨
+      ⌜v = InjLV #()⌝ ∧ interrupted γi ∗ barrier_entry_piece γ }}}.
 Proof.
   iIntros "#HIntHandle #HThreadHandle #HBarInv" (Φ) "!> [HNoPerms HEnt] HΦ".
 
@@ -226,7 +227,8 @@ Proof.
     iDestruct (own_valid_2 with "HAuth HEnt") as %[HH _]%auth_both_valid.
     exfalso.
 
-    move: HH. rewrite Some_included. case. by intros; simplify_eq.
+    move: HH. rewrite prod_included. rewrite Some_included.
+    case. intros _. case. by intros; simplify_eq.
     rewrite csum_included. case; first done. case.
     by intros (? & ? & _ & HH & _); simplify_eq.
     by intros (? & ? & HH & _); simplify_eq.
@@ -241,7 +243,7 @@ Proof.
     subst.
     replace (S (_ - _)) with (Pos.to_nat limit) by lia.
     rewrite /barrier_entry_piece.
-    iAssert (own γ (◯ Some (Cinl limit))) with "[HEnt HEntries]" as "HFrag".
+    iAssert (own γ (◯ (ε, Some (Cinl limit)))) with "[HEnt HEntries]" as "HFrag".
     {
       clear.
       remember (Pos.to_nat limit) as limN.
@@ -257,12 +259,18 @@ Proof.
       replace (Pos.of_nat (S (S limN'))) with
           (Pos.of_nat 1%nat + Pos.of_nat (S limN'))%positive
         by rewrite -Nat2Pos.inj_add //.
-      rewrite Cinl_op Some_op auth_frag_op own_op. iFrame.
+      rewrite Cinl_op Some_op pair_op_2 auth_frag_op own_op. iFrame.
     }
     iMod (own_update_2 with "HAuth HFrag") as "HAuth".
-    { apply auth_update_dealloc, ucmra_cancel_local_update, _. }
+    { apply auth_update_dealloc, prod_local_update_2, ucmra_cancel_local_update, _. }
     iMod (own_update with "HAuth") as "[HAuth HFrag]".
-    by apply auth_update_alloc, (alloc_option_local_update (Cinr limit)).
+    { apply auth_update_alloc, prod_local_update'; simpl.
+      - apply (nat_local_update _ 0 (Pos.to_nat limit) 1). lia.
+      - by apply (alloc_option_local_update (Cinr limit)).
+    }
+    iAssert (own γ (◯ (ε, Some (Cinr limit))) ∗
+             own γ (◯ (1%nat, ε)))%I with "[HFrag]" as "[HFrag HInhabit]".
+    by rewrite -own_op -auth_frag_op -pair_op.
     iAssert ([∗] replicate (Pos.to_nat limit) (barrier_exit_piece γ))%I
       with "[HFrag]" as "HExit".
     {
@@ -276,12 +284,11 @@ Proof.
       replace (Pos.of_nat (S limN')) with
           (Pos.of_nat 1%nat + Pos.of_nat limN')%positive;
         last by rewrite -Nat2Pos.inj_add //; lia.
-      rewrite Cinr_op Some_op auth_frag_op own_op.
+      rewrite Cinr_op Some_op pair_op_2 auth_frag_op own_op.
       iDestruct "HFrag" as "[$ HFrag]".
       iApply ("IH" with "[%] [$]").
       lia.
     }
-    (* TODO: dequeue (limit - 1) threads. *)
     remember (Pos.to_nat limit - 1)%nat as sleepers.
     replace (Pos.to_nat limit) with (S sleepers) by lia.
     simpl. iDestruct "HExit" as "[HMyExit HWakers]".
@@ -329,7 +336,10 @@ Proof.
   {
     iMod (thread_queue_as_counter_append with "[] HTq") as "[HSusp HTq]";
       first done.
-    iMod ("HClose" with "[-HΦ HSusp HNoPerms]") as "_".
+    iMod (own_update with "HAuth") as "[HAuth HFrag]".
+    { apply auth_update_alloc, prod_local_update_1, (nat_local_update _ 0 (S n) 1).
+      lia. }
+    iMod ("HClose" with "[-HΦ HSusp HNoPerms HFrag]") as "_".
     {
       iExists (S n). iFrame "Hℓ".
       destruct (decide (S n < Pos.to_nat limit)%nat); try lia.
@@ -347,7 +357,7 @@ Proof.
 
     wp_lam. wp_pures. wp_lam. wp_pures.
     awp_apply (try_enque_thread_as_counter_spec (N.@"tq") with
-                   "HThreadHandle HSusp HNoPerms") without "HΦ".
+                   "HThreadHandle HSusp HNoPerms") without "HΦ HFrag".
 
     iInv "HBarInv" as (n') "(HAuth & Hℓ & HEntries & HTq)".
     iAaccIntro with "HTq".
@@ -356,17 +366,223 @@ Proof.
     iIntros "!>".
     iSplitR "HStates".
     { iExists _. iFrame. }
-    iIntros "HΦ".
+    iIntros "[HΦ HFrag]".
 
     iDestruct "HStates" as "[HPures|(-> & HR & HNoPerms)]".
     2: { wp_pures. iApply "HΦ". iLeft. by iFrame. }
     iDestruct "HPures" as (i s ->) "(#HSegLoc & #HRend & HInhToken)".
     wp_pures. wp_lam. wp_pures.
-    wp_apply (interruptibly_spec _ (inhabitant_token γtq i)
-                                   (fun _ => thread_has_permit γth ∗ barrier_exit_piece γ)%I
-                                   (fun _ => interrupted γi)
-              with "[HInhToken]").
+    wp_apply (interruptibly_spec _ (inhabitant_token γtq i ∗ own γ (◯ (1%nat, ε)))%I
+                                 (fun v => ⌜v = #()⌝ ∧ (thread_doesnt_have_permits γth
+                                                     ∨ interrupted γi) ∗
+                                                    barrier_exit_piece γ)%I
+                                 (fun v => ⌜v = #()⌝ ∧ interrupted γi ∗ barrier_entry_piece γ)%I
+              with "[HInhToken HFrag]").
+    {
+      iFrame "HIntHandle HInhToken HFrag".
+      iSplit.
+      {
+        iIntros (Φ') "!> [HInhTok HFrag] HΦ'". wp_pures. wp_bind (!_)%E.
+        rewrite /is_thread_handle.
+        awp_apply (thread_queue_as_counter_check_thread_permits_spec with
+                      "HThreadHandle HSegLoc HRend") without "HΦ' HFrag".
+        iInv "HBarInv" as (?) "(HAuth & Hℓ & HEntries & HTq)".
+        iCombine "HInhTok" "HTq" as "HAacc".
+        iAaccIntro with "HAacc".
+        { iIntros "[$ HTq]". by iExists _; iFrame. }
+        iIntros (b) "[HTq HRes] !>".
+        iSplitR "HRes".
+        by iExists _; iFrame.
+        iIntros "[HΦ HFrag]".
+        iDestruct "HRes" as "[[-> HInh]|(-> & HPerm & HR)]".
+        all: wp_pures.
+        - iApply "HΦ".
+          iLeft; by iFrame.
+        - iAssert (▷ thread_has_permit γth)%I with "[$]" as "HHasPerm".
+          awp_apply (thread_update_state _ _ _ true with "HThreadHandle") without "HΦ HR".
+          iAaccIntro with "HHasPerm".
+          by iIntros "$ //".
+          iIntros "HNoPerms !> [HΦ HR]".
+          wp_pures. iApply "HΦ".
+          iRight; iFrame. by iExists _.
+      }
+      iIntros (Φ') "!> [[HInhToken HFrag] #HInterrupted] HΦ'". wp_pures.
+      iClear "HIntHandle".
+      move: namespaces_disjoint. clear. intros.
+      iLöb as "IH". wp_bind (!_)%E.
 
-Abort.
+      iInv "HBarInv" as (n) "(HAuth & Hℓ & HEntries & HTq)" "HClose".
+      destruct (decide (n < Pos.to_nat limit)%nat).
+      2: {
+        destruct (decide (n = Pos.to_nat limit));
+          last by iDestruct "HAuth" as ">[]".
+        wp_load.
+        subst. rewrite Nat.mod_same; last lia.
+        iMod (thread_queue_abandon_if_empty with "HInhToken HTq")
+          as "(HTq & HExit & #HReason)".
+        iMod ("HClose" with "[HAuth Hℓ HEntries HTq]") as "_".
+        { iExists _; iFrame "Hℓ".
+          rewrite decide_False // decide_True // Nat.mod_same; last lia.
+          iFrame. }
+        iModIntro. wp_pures.
+        rewrite bool_decide_eq_true_2; last done. wp_pures.
+        iApply "HΦ'". iRight. iFrame.
+        repeat iSplitR; try done. by iRight.
+      }
+      wp_load.
+      iMod ("HClose" with "[HAuth Hℓ HEntries HTq]") as "_".
+      { iExists _; iFrame "Hℓ". rewrite decide_True //. iFrame. }
+
+      iModIntro. wp_pures. rewrite bool_decide_eq_false_2; last lia.
+      wp_pures.
+      wp_bind (CmpXchg _ _ _).
+      iInv "HBarInv" as (n') "(HAuth & Hℓ & HEntries & HTq)" "HClose".
+      destruct (decide (n = n')).
+      2: {
+        wp_cmpxchg_fail; first by intro HContra; simplify_eq.
+        iMod ("HClose" with "[HAuth Hℓ HEntries HTq]") as "_".
+        by iExists _; iFrame.
+        iModIntro. wp_pures. wp_lam. wp_pures.
+        by iApply ("IH" with "HInhToken HFrag HΦ'").
+      }
+      subst.
+      rewrite decide_True; last done.
+      iDestruct "HAuth" as ">HAuth".
+      iAssert (⌜(n' > 0)%nat⌝)%I with "[-]" as %HN'Gt.
+      {
+        iDestruct (own_valid_2 with "HAuth HFrag") as
+            %[[HOk%nat_included _]%prod_included _]%auth_both_valid.
+        iPureIntro; simpl in *; lia.
+      }
+      iMod (do_cancel_rendezvous_as_counter_spec with "HInhToken HTq")
+           as "[HTq HRes]".
+      by rewrite Nat.mod_small; lia.
+      iMod (own_update_2 with "HAuth HFrag") as "HAuth".
+      {
+        apply auth_update_dealloc, prod_local_update_1,
+          (nat_local_update _ 1 (n'-1) 0).
+        lia.
+      }
+      wp_cmpxchg_suc.
+      replace  (n' `mod` Pos.to_nat limit)%nat with n';
+        last by symmetry; apply Nat.mod_small; lia.
+      destruct n' as [|n']; first by lia.
+      simpl.
+      iDestruct "HEntries" as "[HEntry HEntries]".
+      iMod ("HClose" with "[HAuth Hℓ HEntries HTq]") as "_".
+      {
+        iExists n'. rewrite /is_barrier_inv.
+        replace  (n' `mod` Pos.to_nat limit)%nat with n';
+          last by symmetry; apply Nat.mod_small; lia.
+        rewrite Nat.sub_0_r decide_True; last lia.
+        iFrame "HEntries HTq HAuth".
+        replace (S n' - 1) with (Z.of_nat n') by lia.
+        iFrame.
+      }
+      iModIntro. wp_pures.
+
+      iDestruct "HRes" as "[[HCancTok #HRendCanc]|(HArr & HAwak & #HRendRes)]".
+      2: {
+        iDestruct "HArr" as (?) "[#HArrMapsto Hℓ]".
+        wp_lam. wp_lam. wp_pures.
+
+        awp_apply (segment_data_at_spec) without "HΦ' HEntry Hℓ HAwak".
+        by iPureIntro; apply Nat.mod_upper_bound; lia.
+        iInv "HBarInv" as (?) "(HAuth & Hl & HPieces & HTq)".
+        iDestruct "HTq" as (? ?) "[(HInfArr & HTail') HTail'']".
+        iDestruct (is_segment_by_location with "HSegLoc HInfArr")
+          as (? ?) "[HIsSeg HInfArrRestore]".
+        iAaccIntro with "HIsSeg".
+        {
+          iIntros "HIsSeg".
+          iDestruct ("HInfArrRestore" with "HIsSeg") as "HInfArr".
+          iIntros "!>". iSplitL; last done.
+          iExists _. iFrame. iExists _, _. iFrame.
+        }
+        iIntros (?) "(HIsSeg & #HArrMapsto' & #HCellInv)".
+        iDestruct (bi.later_wand with "HInfArrRestore HIsSeg") as "HInfArr".
+        iSplitL; first by iExists _; iFrame; iExists _, _; iFrame.
+        iIntros "!> (HΦ' & HEntry & Hℓ & HAwak)". wp_pures.
+        iDestruct (array_mapsto'_agree with "HArrMapsto HArrMapsto'") as %->.
+        iAssert (▷ _ ↦ RESUMEDV)%I with "Hℓ" as "Hℓ".
+        awp_apply getAndSet.getAndSet_spec without "HΦ' HEntry HAwak".
+        iAssert (▷ _ ↦ RESUMEDV ∧ ⌜val_is_unboxed RESUMEDV⌝)%I
+          with "[Hℓ]" as "HAacc".
+        by iFrame.
+        iAaccIntro with "HAacc"; first by iIntros "[$ _] //".
+        iIntros "Hℓ !> (HΦ' & HEntry & HAwak)".
+        wp_pures.
+        wp_apply (resume_in_barrier_spec with "[$] [$]"). iIntros (_).
+        wp_pures.
+        iApply "HΦ'".
+        iLeft. iFrame "HEntry HInterrupted". done.
+      }
+      awp_apply (cancel_cell_spec with "HRendCanc HSegLoc HCancTok")
+        without "HΦ' HEntry".
+      iInv "HBarInv" as (?) "(HAuth & Hl & HPieces & HTq)".
+      iDestruct "HTq" as (? ?) "[HTq HTail'']".
+      iAaccIntro with "HTq".
+      { iIntros "HTq !>". iSplitL; last done. iExists _. iFrame.
+        iExists _, _. iFrame. }
+      iIntros (b) "[HTq HAwak]".
+      iSplitR "HAwak".
+      { iExists _. iFrame. iExists _, _. iFrame. done. }
+      iIntros "!> [HΦ' HEntryPiece]".
+      iDestruct "HAwak" as "[[-> HAwak]|->]"; wp_pures.
+      wp_apply (resume_in_barrier_spec with "[$] [$]"); iIntros (_); wp_pures.
+      all: by iApply "HΦ'"; iLeft; iFrame "HInterrupted HEntryPiece".
+    }
+    iIntros (? ?) "HOk".
+    iDestruct "HOk" as "[(-> & -> & HInt & HEnt)|(-> & -> & HInt & HExit)]".
+    - iApply "HΦ". iRight. by iFrame.
+    - iApply "HΦ". iLeft. by iFrame.
+  }
+Qed.
+
+Lemma new_barrier_spec:
+  {{{ True }}}
+    new_barrier segment_size #()
+  {{{ p γ γa γtq γe γd eℓ epℓ dℓ dpℓ, RET (#p, ((#epℓ, #eℓ), (#dpℓ, #dℓ)));
+      is_barrier γ p epℓ eℓ dpℓ dℓ γa γtq γe γd ∗
+      [∗] replicate (Pos.to_nat limit) (barrier_entry_piece γ)
+  }}}.
+Proof.
+  iIntros (Φ) "_ HΦ".
+  wp_lam.
+  iMod (own_alloc (● (O, Some (Cinl limit)) ⋅ ◯ (O, Some (Cinl limit))))
+    as (γ) "[HAuth HFrag]".
+  by apply auth_both_valid; split; done.
+  wp_apply new_thread_queue_spec; first done.
+  iIntros (γa γtq γe γd eℓ epℓ dℓ dpℓ) "HTq".
+  wp_bind (ref _)%E.
+  rewrite -wp_fupd.
+  wp_alloc p as "Hp".
+  iMod (inv_alloc (N .@ "barrier") _
+                  (∃ n, is_barrier_inv γ p epℓ eℓ dpℓ dℓ γa γtq γe γd n)%I
+          with "[-HΦ HFrag]") as "#HInv".
+  {
+    iExists O. rewrite /is_barrier_inv. rewrite decide_True; last lia.
+    iFrame "HAuth". iFrame "Hp". rewrite Nat.mod_small; last lia. simpl.
+    iSplitR; first done. iExists [], O. by iFrame.
+  }
+  iModIntro. wp_pures.
+  iApply "HΦ".
+  iFrame "HInv".
+  iClear "HInv". clear.
+
+  remember (Pos.to_nat limit) as NLim.
+  replace limit with (Pos.of_nat NLim) by (subst; apply Pos2Nat.id).
+  assert (NLim > 0)%nat as HGt by (subst; lia). move: HGt. clear.
+  intros HGt.
+  iInduction (NLim) as [|NLim] "IH"; first done.
+  simpl.
+  inversion HGt; subst; first by iFrame.
+  replace (Pos.of_nat (S NLim)) with (1 + Pos.of_nat NLim)%positive;
+    last by rewrite Nat2Pos.inj_succ; lia.
+  rewrite Cinl_op Some_op pair_op_2 auth_frag_op own_op.
+  iDestruct "HFrag" as "[$ HFrag]".
+  iApply ("IH" with "[%] [$]").
+  lia.
+Qed.
 
 End barrier_proof.

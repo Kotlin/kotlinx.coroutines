@@ -12,14 +12,14 @@ Definition new_semaphore : val :=
 Definition cancellation_handler : val :=
   λ: "availablePermits" "head" "deqIdx" "canceller" <>,
   let: "p" := FAA "availablePermits" #1
-  in if: #0 ≤ "p" then #() else
-  if: "canceller" #() then #()
-  else resume segment_size "head" "deqIdx".
+  in if: #0 ≤ "p" then InjLV #() else
+  if: "canceller" #() then InjLV #()
+  else resume segment_size "head" "deqIdx" ;; InjLV #().
 
 Definition acquire_semaphore : val :=
   λ: "cancHandle" "threadHandle" "availablePermits" "tail" "enqIdx" "head" "deqIdx",
   let: "p" := FAA "availablePermits"  #(-1)
-  in if: #0 < "p" then #false
+  in if: #0 < "p" then InjRV #()
   else suspend segment_size
                (cancellation_handler "availablePermits" "head" "deqIdx")
                "cancHandle" "threadHandle" "tail" "enqIdx".
@@ -241,9 +241,9 @@ Theorem acquire_semaphore_spec Nint R γ (p epℓ eℓ dpℓ dℓ: loc) γa γtq
   inv (N .@ "permits") (∃ a, semaphore_permits γ a) -∗
   {{{ thread_doesnt_have_permits γth }}}
     (acquire_semaphore segment_size) cancHandle #threadHandle #p #epℓ #eℓ #dpℓ #dℓ
-  {{{ (v: bool), RET #v;
-      ⌜v = false⌝ ∧ thread_doesnt_have_permits γth ∗ R ∨
-      ⌜v = true⌝ ∧ interrupted γi
+  {{{ (v: val), RET v;
+      ⌜v = InjRV #()⌝ ∧ thread_doesnt_have_permits γth ∗ R ∨
+      ⌜v = InjLV #()⌝ ∧ interrupted γi
   }}}.
 Proof.
   iIntros "#HIntHandle #HThreadHandle #HSemInv #HPermInv".
@@ -326,8 +326,8 @@ Proof.
 
   iIntros "!> HΦ". wp_pures. wp_lam. wp_pures.
   wp_apply (interruptibly_spec _ (inhabitant_token γtq i)
-                               (fun _ => thread_has_permit γth ∗ R)%I
-                               (fun _ => interrupted γi)
+                               (fun v => ⌜v = #()⌝ ∧ thread_doesnt_have_permits γth ∗ R)%I
+                               (fun v => ⌜v = #()⌝ ∧ interrupted γi)%I
               with "[HInhToken]").
   {
     iFrame "HIntHandle HInhToken".
@@ -346,9 +346,17 @@ Proof.
       by iExists _, _; iFrame.
       iIntros "HΦ".
       iDestruct "HRes" as "[[-> HInh]|(-> & HPerm & HR)]".
-      all: wp_pures; iApply "HΦ".
-      iLeft; by iFrame.
-      iRight; iFrame. by iExists _.
+      all: wp_pures.
+      - iApply "HΦ".
+        iLeft; by iFrame.
+      - iAssert (▷ thread_has_permit γth)%I with "[$]" as "HHasPerm".
+        iClear "HIntHandle HSemInv HPermInv HSegLoc HRend". clear.
+        awp_apply (thread_update_state _ _ _ true with "HThreadHandle") without "HΦ HR".
+        iAaccIntro with "HHasPerm".
+        by iIntros "$ //".
+        iIntros "HNoPerms !> [HΦ HR]".
+        wp_pures. iApply "HΦ".
+        iRight; iFrame. by iExists _.
     }
     {
       iIntros (Φ') "!> [HInhTok #HInterrupted] HΦ'". wp_pures. wp_bind (FAA _ _).
@@ -381,11 +389,10 @@ Proof.
           iSplitL; last by iPureIntro; eauto.
           by rewrite Z.sub_0_r Nat2Z.inj_add.
         }
-        iModIntro. wp_pures. rewrite bool_decide_decide decide_True //.
+        iModIntro. wp_pures. rewrite bool_decide_decide decide_True //; last lia.
         wp_pures.
         iApply "HΦ'".
-        iApply "HInterrupted".
-        lia.
+        iLeft. by iFrame "HInterrupted".
       }
 
       iMod (do_cancel_rendezvous_as_counter_spec with "HInhTok HTq")
@@ -436,7 +443,7 @@ Proof.
         iIntros "Hℓ !> [HΦ' HAwak]".
         wp_pures.
         wp_apply (resume_in_semaphore_spec with "[$] [$] [$]").
-        iIntros "_". iApply "HΦ'". iAssumption.
+        iIntros "_". wp_pures. iApply "HΦ'". iLeft. by iFrame "HInterrupted".
       }
 
       iMod ("HInvClose" with "[-HΦ' HCancTok]") as "_".
@@ -459,22 +466,16 @@ Proof.
       iIntros (b) "[HTq HRes] !>".
       iSplitR "HRes".
       { iExists _, _. iFrame. iExists _, _. iFrame. }
-      iIntros "HΦ'". iSpecialize ("HΦ'" $! #() with "HInterrupted").
+      iIntros "HΦ'".
       iDestruct "HRes" as "[(-> & HAwak)|->]"; wp_pures.
-      iApply (resume_in_semaphore_spec with "[$] [$] [$]").
-      all: by iFrame.
+      wp_apply (resume_in_semaphore_spec with "[$] [$] [$]").
+      iIntros "_"; wp_pures.
+      all: iApply "HΦ'"; iLeft; by iFrame "HInterrupted".
     }
   }
-  iIntros (? ?) "[(-> & #HInterrupted)|(-> & HHasPerm & HR)]".
-  1: by wp_pures; iApply "HΦ"; eauto.
-  wp_pures.
-  iAssert (▷ thread_has_permit γth)%I with "[$]" as "HHasPerm".
-  awp_apply (thread_update_state with "HThreadHandle") without "HΦ HR".
-  iAaccIntro with "HHasPerm".
-  by iIntros "$ //".
-  iIntros "HNoPerms !> [HΦ HR]".
-
-  wp_pures. iApply "HΦ". iLeft. iFrame. done.
+  iIntros (? ?) "[(-> & [-> #HInterrupted])|(-> & -> & HHasPerm & HR)]".
+  1: by wp_pures; iApply "HΦ"; iRight; eauto.
+  iApply "HΦ". iLeft. iFrame. done.
 Qed.
 
 End proof.

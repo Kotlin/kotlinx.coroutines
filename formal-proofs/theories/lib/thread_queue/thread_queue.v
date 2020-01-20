@@ -35,13 +35,11 @@ Definition move_ptr_forward : val :=
 
 Definition park: val :=
   λ: "cancellationHandler" "cancHandle" "threadHandle",
-  let: "r" := interruptibly "cancHandle"
-                            (λ: "c", if: ! "c" then NONEV else SOMEV #())%V
-                            "cancellationHandler"
-                            "threadHandle" in
-  if: (Fst "r")
-  then #true
-  else "threadHandle" <- #true ;; #false.
+  interruptibly "cancHandle"
+                (λ: "c", if: ! "c" then NONEV
+                         else "c" <- #true ;; SOMEV #())%V
+                "cancellationHandler"
+                "threadHandle".
 
 Definition unpark: val :=
   λ: "threadHandle", "threadHandle" <- #false.
@@ -58,7 +56,7 @@ Definition try_enque_thread: val :=
 Definition suspend: val :=
   λ: "handler" "cancHandle" "threadHandle" "tail" "enqIdx",
   match: try_enque_thread "threadHandle" "tail" "enqIdx" with
-    NONE => #false
+    NONE => InjRV #()
   | SOME "cell'" =>
     park ("handler" (λ: <>, cancel_cell "cell'")) "cancHandle" "threadHandle"
   end.
