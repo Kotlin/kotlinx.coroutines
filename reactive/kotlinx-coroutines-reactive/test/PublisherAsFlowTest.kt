@@ -120,7 +120,7 @@ class PublisherAsFlowTest : TestBase() {
                     7 -> try {
                         send(value)
                     } catch (e: CancellationException) {
-                        finish(6)
+                        expect(5)
                         throw e
                     }
                     else -> expectUnreached()
@@ -143,6 +143,6 @@ class PublisherAsFlowTest : TestBase() {
                 }
             }
         }
-        expect(5)
+        finish(6)
     }
 }
