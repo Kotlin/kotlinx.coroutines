@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.reactive
@@ -27,7 +27,7 @@ import kotlin.coroutines.*
  * see its documentation for additional details.
  */
 public fun <T : Any> Publisher<T>.asFlow(): Flow<T> =
-    PublisherAsFlow(this, 1)
+    PublisherAsFlow(this)
 
 /**
  * Transforms the given flow to a reactive specification compliant [Publisher].
@@ -39,30 +39,11 @@ public fun <T : Any> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
 
 private class PublisherAsFlow<T : Any>(
     private val publisher: Publisher<T>,
-    capacity: Int
-) : ChannelFlow<T>(EmptyCoroutineContext, capacity) {
+    context: CoroutineContext = EmptyCoroutineContext,
+    capacity: Int = 1
+) : ChannelFlow<T>(context, capacity) {
     override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
-        PublisherAsFlow(publisher, capacity)
-
-    override fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> {
-        // use another channel for conflation (cannot do openSubscription)
-        if (capacity < 0) return super.produceImpl(scope)
-        // Open subscription channel directly
-        val channel = publisher
-            .injectCoroutineContext(scope.coroutineContext)
-            .openSubscription(capacity)
-        val handle = scope.coroutineContext[Job]?.invokeOnCompletion(onCancelling = true) { cause ->
-            channel.cancel(cause?.let {
-                it as? CancellationException ?: CancellationException("Job was cancelled", it)
-            })
-        }
-        if (handle != null && handle !== NonDisposableHandle) {
-            (channel as SendChannel<*>).invokeOnClose {
-                handle.dispose()
-            }
-        }
-        return channel
-    }
+        PublisherAsFlow(publisher, context, capacity)
 
     private val requestSize: Long
         get() = when (capacity) {
@@ -73,8 +54,26 @@ private class PublisherAsFlow<T : Any>(
         }
 
     override suspend fun collect(collector: FlowCollector<T>) {
+        val collectContext = coroutineContext
+        val newDispatcher = context[ContinuationInterceptor]
+        if (newDispatcher == null || newDispatcher == collectContext[ContinuationInterceptor]) {
+            // fast path -- subscribe directly in this dispatcher
+            return collectImpl(collectContext + context, collector)
+        }
+        // slow path -- produce in a separate dispatcher
+        collectSlowPath(collector)
+    }
+
+    private suspend fun collectSlowPath(collector: FlowCollector<T>) {
+        coroutineScope {
+            collector.emitAll(produceImpl(this + context))
+        }
+    }
+
+    private suspend fun collectImpl(injectContext: CoroutineContext, collector: FlowCollector<T>) {
         val subscriber = ReactiveSubscriber<T>(capacity, requestSize)
-        publisher.injectCoroutineContext(coroutineContext).subscribe(subscriber)
+        // inject subscribe context into publisher
+        publisher.injectCoroutineContext(injectContext).subscribe(subscriber)
         try {
             var consumed = 0L
             while (true) {
@@ -90,9 +89,9 @@ private class PublisherAsFlow<T : Any>(
         }
     }
 
-    // The second channel here is used only for broadcast
+    // The second channel here is used for produceIn/broadcastIn and slow-path (dispatcher change)
     override suspend fun collectTo(scope: ProducerScope<T>) =
-        collect(SendingCollector(scope.channel))
+        collectImpl(scope.coroutineContext, SendingCollector(scope.channel))
 }
 
 @Suppress("SubscriberImplementation")
