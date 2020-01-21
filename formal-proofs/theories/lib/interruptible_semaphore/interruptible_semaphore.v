@@ -42,6 +42,7 @@ Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
 Require Import SegmentQueue.lib.infinite_array.iterator.
 Require Import SegmentQueue.lib.util.interruptibly.
 Require Import SegmentQueue.lib.thread_queue.thread_queue_as_counter.
+Require Import SegmentQueue.util.everything.
 
 Section proof.
 
@@ -104,7 +105,7 @@ Proof.
       iSplitL; last by iPureIntro; right.
       iExists _, _. by iFrame.
     }
-    iApply (big_sepL_forall' with "HRs").
+    iApply (big_sepL_forall_2 with "HRs").
     by rewrite replicate_length seq_length.
     intros ? ? ?. rewrite lookup_replicate. by intros _ [-> _].
   }
@@ -197,7 +198,7 @@ Proof.
       iFrame "HR".
       iSplitL "HPerms".
       {
-        iApply (big_sepL_forall' with "HPerms").
+        iApply (big_sepL_forall_2 with "HPerms").
         by repeat rewrite seq_length.
         done.
       }

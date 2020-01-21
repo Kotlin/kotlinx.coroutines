@@ -1,5 +1,6 @@
 From iris.heap_lang Require Import proofmode notation lang.
 Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
+Require Import SegmentQueue.util.everything.
 
 Section impl.
 
@@ -98,19 +99,6 @@ Proof.
   exfalso. revert HContra. clear. rewrite -auth_frag_op -pair_op.
   case; simpl. rewrite gset_disj_valid_op. rewrite disjoint_singleton_l.
   case. rewrite elem_of_singleton. done.
-Qed.
-
-Lemma quot_of_nat n m:
-  Z.of_nat n `quot` Z.of_nat m = Z.of_nat (n `div` m).
-Proof.
-  destruct m. destruct n; done.
-  rewrite Z2Nat_inj_div; apply Z.quot_div_nonneg; lia.
-Qed.
-
-Lemma rem_of_nat n m:
-  Z.of_nat n `rem` Z.of_nat (S m) = Z.of_nat (n `mod` S m).
-Proof.
-  rewrite Z2Nat_inj_mod; apply Z.rem_mod_nonneg; lia.
 Qed.
 
 Lemma iterator_value_increase (n m: nat):

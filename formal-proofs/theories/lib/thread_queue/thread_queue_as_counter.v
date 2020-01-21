@@ -8,6 +8,7 @@ Require Import SegmentQueue.lib.thread_queue.thread_queue.
 Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
 Require Import SegmentQueue.lib.infinite_array.iterator.
 Require Import SegmentQueue.lib.util.interruptibly.
+Require Import SegmentQueue.util.everything.
 
 Section proof.
 
@@ -189,14 +190,6 @@ Proof.
   iIntros "HTq".
   iSplitL; last by iIntros "!> $".
   iExists _, _. by iFrame.
-Qed.
-
-Theorem count_matching_find_index_Some A (P: A -> Prop) (H': forall x, Decision (P x)) l:
-  (count_matching P l > 0)%nat -> is_Some (find_index P l).
-Proof.
-  induction l; simpl; first lia.
-  destruct (decide (P a)); first by eauto.
-  destruct (find_index P l); by eauto.
 Qed.
 
 Lemma thread_as_counter_register_for_dequeue E R γa γtq γe γd (eℓ epℓ dℓ dpℓ : loc) n:

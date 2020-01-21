@@ -129,6 +129,7 @@ Definition find_segment : val :=
 End impl.
 
 From iris.algebra Require Import cmra auth list agree csum excl gset frac.
+Require Import SegmentQueue.util.everything.
 
 Section proof.
 
@@ -182,23 +183,6 @@ Proof.
   2: done.
   apply Hyp.
   eapply elem_of_list_lookup; by eauto.
-Qed.
-
-Theorem elem_of_map {A B} {f: A -> B} (l: list A) x:
-  x ∈ f <$> l -> (exists y, y ∈ l /\ x = f y).
-Proof.
-  intros Hel.
-  destruct l; first by inversion Hel.
-  simpl in Hel.
-  remember (f a :: list_fmap A B f l) as l'.
-  generalize dependent l.
-  generalize dependent a.
-  induction Hel as [|x ? l'' Hel]; intros; inversion Heql'; subst; simpl in *.
-  - exists a; split; econstructor.
-  - destruct l; first by inversion Hel.
-    simpl in *.
-    destruct (IHHel _ _ eq_refl) as [y' [Hy'el Hy'eq]]; subst.
-    eexists _; split; by econstructor.
 Qed.
 
 Section ias_segment_info.
@@ -768,102 +752,6 @@ Proof.
   by wp_pures.
 Qed.
 
-Lemma list_lookup_local_update {A: ucmraT}:
-  forall (x y x' y': list A),
-    (forall i, (x !! i, y !! i) ~l~> (x' !! i, y' !! i)) ->
-    (x, y) ~l~> (x', y').
-Proof.
-  intros x y x' y' Hup.
-  apply local_update_unital=> n z Hxv Hx.
-  unfold local_update in Hup.
-  simpl in *.
-  assert (forall i, ✓{n} (x' !! i) /\ x' !! i ≡{n}≡ (y' ⋅ z) !! i) as Hup'.
-  { intros i. destruct (Hup i n (Some (z !! i))); simpl in *.
-    - by apply list_lookup_validN.
-    - rewrite -list_lookup_op.
-      by apply list_dist_lookup.
-    - rewrite list_lookup_op. split; done.
-  }
-  split; [apply list_lookup_validN | apply list_dist_lookup].
-  all: intros i; by destruct (Hup' i).
-Qed.
-
-Lemma list_append_local_update {A: ucmraT}:
-  forall (x z: list A), (forall n, ✓{n} z) -> (x, ε) ~l~> (x ++ z, (replicate (length x) ε) ++ z).
-Proof.
-  intros ? ? Hzv. apply local_update_unital=> n mz Hxv Hx.
-  split; first by apply Forall_app_2; [apply Hxv|apply Hzv].
-  rewrite Hx.
-  replace (ε ⋅ mz) with mz by auto.
-  rewrite list_op_app_le.
-  2: by rewrite replicate_length.
-  assert (replicate (length mz) ε ⋅ mz ≡ mz) as Heq.
-  { clear. apply list_equiv_lookup.
-    induction mz; simpl; first done.
-    destruct i; simpl.
-    by rewrite ucmra_unit_left_id.
-    done.
-  }
-  by rewrite Heq.
-Qed.
-
-Lemma list_alter_local_update {A: ucmraT}:
-  forall n f g (x y: list A),
-    (x !! n, y !! n) ~l~> (f <$> (x !! n), g <$> (y !! n)) ->
-    (x, y) ~l~> (list_alter f n x, list_alter g n y).
-Proof.
-  intros ? ? ? ? ? Hup.
-  apply list_lookup_local_update.
-  intros i.
-  destruct (nat_eq_dec i n); subst.
-  - by repeat rewrite list_lookup_alter.
-  - by repeat rewrite list_lookup_alter_ne.
-Qed.
-
-Lemma None_local_update {A: cmraT}: forall (x: A) a b, (None, Some x) ~l~> (a, b).
-Proof.
-  intros ? ? ? n mz _ Heq. exfalso. simpl in *.
-  symmetry in Heq. apply (dist_None n _) in Heq.
-  destruct mz; simpl in Heq.
-  1: rewrite Some_op_opM in Heq.
-  all: discriminate.
-Qed.
-
-Lemma map_lookup: forall {A B: Type} (f: A -> B) l i, map f l !! i = option_map f (l !! i).
-Proof. induction l; destruct i; simpl; auto. Qed.
-
-Lemma big_sepL_list_alter {A: Type} {P: nat -> A -> iProp} (f: A -> A) v i x':
-  ⌜v !! i = Some x'⌝ -∗
-  ([∗ list] k ↦ x ∈ v, P k x) -∗
-  (P i (f x')) -∗
-  (P i x' ∗ [∗ list] k ↦ x ∈ alter f i v, P k x).
-Proof.
-  iIntros "% HList HVal".
-  assert (i < length v)%nat as HLength by (apply lookup_lt_is_Some_1; eauto).
-  assert (i = (length (take i v) + 0)%nat) as HCidLen.
-  { rewrite take_length_le. by rewrite -plus_n_O. lia. }
-  replace (alter _ i) with (@alter _ _ _ list_alter f (length (take i v) + 0)%nat) by auto.
-  remember (length _ + 0)%nat as K.
-  replace v with (take i v ++ x' :: drop (S i) v) by (rewrite take_drop_middle; auto).
-  subst K.
-  rewrite alter_app_r.
-  rewrite big_opL_app. rewrite big_opL_app. simpl.
-  iDestruct "HList" as "[HListPre [HListMid HListSuf]]".
-  rewrite -HCidLen.
-  by iFrame.
-Qed.
-
-Lemma VectorDef_replace_order_list_alter: forall A n r (p: (r < n)%nat) x (v: vec A n),
-               vec_to_list (VectorDef.replace_order v p x) = alter (fun _ => x) r (vec_to_list v).
-Proof.
-  intros. generalize dependent r. induction v; simpl.
-  - inversion p.
-  - intros. destruct r; simpl; auto.
-    unfold alter in IHv.
-    rewrite -(IHv _ (lt_S_n r n p)).
-    done.
-Qed.
-
 Lemma segment_info_to_cell_info' l γ id:
   forall k, own γ (◯ ias_segment_info id (ε, replicate k ε ++ l)) ≡
   (([∗ list] i ↦ e ∈ l, own γ (◯ ias_cell_info' id (k+i)%nat e)) ∗
@@ -947,8 +835,8 @@ Proof.
   { rewrite /cell_cancellation_parts.
     subst.
     rewrite VectorDef_replace_order_list_alter.
-    iDestruct (big_sepL_list_alter with "[]") as "HOwnFr".
-    { iPureIntro. unfold lookup. apply HWasNotCancelled. }
+    iDestruct (big_sepL_list_alter) as "HOwnFr".
+    { unfold lookup. apply HWasNotCancelled. }
     iSpecialize ("HOwnFr" with "HCancParts").
     by iApply "HOwnFr".
   }
@@ -997,8 +885,8 @@ Proof.
   iAssert (cells_are_cancelled γ id cancelled_cells')%I as "HCancLoc'".
   { rewrite /cells_are_cancelled.
     subst. rewrite VectorDef_replace_order_list_alter.
-    iDestruct (big_sepL_list_alter (fun _ => true) with "[]") as "HOwnFr".
-    { iPureIntro. apply HWasNotCancelled. }
+    iDestruct (big_sepL_list_alter (fun _ => true)) as "HOwnFr".
+    by apply HWasNotCancelled.
     iSpecialize ("HOwnFr" with "HCanc HSeg'").
     iDestruct "HOwnFr" as "[_ HOwnFr]". done.
   }
@@ -1296,12 +1184,6 @@ Qed.
 Definition cell_init (E: coPset) : iProp :=
   (□ (∀ γ id ℓ, cell_cancellation_handle γ id -∗ ℓ ↦ NONEV
                                          ={E}=∗ cell_invariant γ id ℓ))%I.
-
-Lemma local_update_refl {A: cmraT}: forall (a b: A),
-  (a, b) ~l~> (a, b).
-Proof.
-  intros. unfold local_update. intros. simpl in *. split; done.
-Qed.
 
 Theorem move_head_forward_spec γ id (ℓ: loc):
   ([∗ list] j ∈ seq 0 (id * Pos.to_nat segment_size),
@@ -1660,23 +1542,6 @@ Proof.
   }
 Qed.
 
-Lemma seq_add: forall m n k,
-    seq n (m + k)%nat = seq n m ++ seq (n + m)%nat k.
-Proof.
-  induction m; simpl; intros; first by rewrite Nat.add_0_r.
-  congr (cons n). replace (n + S m)%nat with (S n + m)%nat by lia.
-  by apply IHm.
-Qed.
-
-Lemma seq_app: forall m n k, (m <= k)%nat ->
-    seq n m ++ seq (n + m)%nat (k - m)%nat = seq n k.
-Proof.
-  intros m n k HLt.
-  replace k with (m + (k - m))%nat by lia.
-  rewrite seq_add. replace (m + (k - m) - m)%nat with (k - m)%nat by lia.
-  done.
-Qed.
-
 Lemma segment_cancelled__cells_cancelled γ id:
   segment_is_cancelled γ id -∗
   [∗ list] id ∈ seq (id * Pos.to_nat segment_size)%nat (Pos.to_nat segment_size),
@@ -1709,71 +1574,9 @@ Proof.
   done.
 Qed.
 
-Lemma seq_bind n m k:
-  seq n m ≫= (fun x => seq (x * k) k) = seq (n * k) (m * k).
-Proof.
-  unfold mbind.
-  generalize dependent n.
-  induction m; simpl; first done.
-  intros. rewrite seq_add IHm. simpl.
-  replace (k + n * k)%nat with (n * k + k)%nat by lia.
-  done.
-Qed.
-
 Definition RemoveInv γ nlℓ plℓ :=
   (∃ nℓ nid, segment_location γ nid nℓ ∗ nlℓ ↦ SOMEV #nℓ ∗
                               (∃ pl, plℓ ↦ pl ∗ is_valid_prev γ nid pl))%I.
-
-Lemma list_filter_length_le {A} p (l: list A):
-  length (List.filter p l) <= length l.
-Proof.
-  induction l; simpl. lia. destruct (p a); simpl; lia.
-Qed.
-
-Lemma list_filter_length_eq {A} p (l: list A):
-  length (List.filter p l) = length l -> List.filter p l = l.
-Proof.
-  intros Hll. induction l as [|r l']; simpl in *; first by auto.
-  destruct (p r) eqn:E; simpl in *.
-  2: assert (length (List.filter p l') <= length l')
-    by apply list_filter_length_le; lia.
-  congr (r :: _). auto.
-Qed.
-
-Lemma list_filter_length_eq_in {A} p (l: list A):
-  length (List.filter p l) = length l -> forall i, In i l -> p i.
-Proof.
-  intros HLL. apply list_filter_length_eq in HLL.
-  rewrite <- HLL.
-  intros i HIn.
-  apply filter_In in HIn.
-  destruct HIn. auto.
-Qed.
-
-Lemma filter_induces_vector:
-  forall v (cells : vec bool v), v = length (List.filter (fun x => x) cells) ->
-           cells = Vector.const true v.
-Proof.
-  intros v cells HH.
-  assert (forall f, cells !!! f = true) as HEq.
-  {
-    intros f. destruct (cells !!! f) eqn:E; auto.
-    assert (exists f, cells !!! f = false) as HContra by eauto.
-    move: HContra. rewrite -elem_of_vlookup elem_of_list_In. move=> HEl.
-    assert (length (List.filter (fun i => i) (vec_to_list cells)) =
-            length (vec_to_list cells)) as HLen.
-    by rewrite vec_to_list_length.
-    eapply list_filter_length_eq_in in HLen.
-    2: apply HEl.
-    inversion HLen.
-  }
-
-  apply Vector.eq_nth_iff.
-  intros ? p ->.
-  rewrite HEq.
-  symmetry.
-  apply Vector.const_nth.
-Qed.
 
 Theorem segment_is_removed_spec γ id (ℓ: loc):
   <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
@@ -2329,58 +2132,6 @@ Proof.
   iExists _. iIntros "!> $ !> //".
 Qed.
 
-Lemma replicate_op {A: ucmraT} (a b: A) n:
-  replicate n (a ⋅ b) = replicate n a ⋅ replicate n b.
-Proof. apply list_eq. induction n; simpl. done. case; done. Qed.
-
-Lemma pair_op_2 {A: ucmraT} {B: cmraT} (b b': B):
-  (ε, b ⋅ b') ≡ ((ε: A), b) ⋅ (ε, b').
-Proof. by rewrite -pair_op ucmra_unit_left_id. Qed.
-
-Lemma big_opL_forall' {M: ofeT} {o: M -> M -> M} {H': Monoid o} {A B: Type}
-      R f g (l: list A) (l': list B):
-  Reflexive R ->
-  Proper (R ==> R ==> R) o ->
-  length l = length l' ->
-  (forall k y y', l !! k = Some y -> l' !! k = Some y' -> R (f k y) (g k y')) ->
-  R ([^o list] k ↦ y ∈ l, f k y) ([^o list] k ↦ y ∈ l', g k y).
-Proof.
-  intros ??. revert l' f g. induction l as [|x l IH]=> l' f g HLen HHyp //=.
-  all: destruct l'; inversion HLen; eauto.
-  simpl. f_equiv; eauto.
-Qed.
-
-Lemma big_opL_irrelevant_element (M: ofeT) (o: M -> M -> M) (H': Monoid o)
-      {A: Type} n (P: nat -> M) (l: list A):
-  ([^o list] i ↦ _ ∈ l, P (n+i)%nat)%I =
-  ([^o list] i ∈ seq n (length l), P i%nat)%I.
-Proof.
-  assert (length l = length (seq n (length l))) as HSeqLen
-      by (rewrite seq_length; auto).
-  apply big_opL_forall'; try apply _. done.
-  intros ? ? ? _ HElem.
-  assert (k < length l)%nat as HKLt.
-  { rewrite HSeqLen. apply lookup_lt_is_Some. by eexists. }
-  apply nth_lookup_Some with (d:=O) in HElem.
-  rewrite seq_nth in HElem; subst; done.
-Qed.
-
-Lemma big_opL_replicate_irrelevant_element
-      (M: ofeT) (o: M -> M -> M) (H': Monoid o)
-      {A: Type} (P: nat -> A -> M) (a: A) n:
-  ([^o list] i ↦ k ∈ replicate n a, P i k)%I =
-  ([^o list] i ↦ _ ∈ replicate n a, P i a)%I.
-Proof.
-  apply big_opL_forall; try apply _.
-  intros ? ?; rewrite lookup_replicate; case; by intros ->.
-Qed.
-
-Lemma big_opL_irrelevant_element'
-      (M: ofeT) (o: M -> M -> M) (H': Monoid o)
-      {A: Type} (P: nat -> M) (l: list A):
-  ([^o list] i ↦ k ∈ l, P i)%I = ([^o list] i ∈ seq 0 (length l), P i%nat)%I.
-Proof. by rewrite -big_opL_irrelevant_element. Qed.
-
 Lemma segment_info_to_cell_info l γ id:
   own γ (◯ ias_segment_info id (ε, l)) ≡
   (([∗ list] i ↦ e ∈ l, own γ (◯ ias_cell_info' id i e)) ∗
@@ -2391,14 +2142,6 @@ Proof.
   2: by auto.
   by rewrite segment_info_to_cell_info'.
 Qed.
-
-(* from https://gitlab.mpi-sws.org/iris/iris/commit/aa5a89e08b2cad8b7f780f296b78ea27ab8f6246?merge_request_iid=305 *)
-Global Instance bupd_homomorphism :
-  MonoidHomomorphism bi_sep bi_sep (flip (⊢)) (bupd (PROP:=iProp)).
-Proof. split; [split|]; try apply _. apply bupd_sep. apply bupd_intro. Qed.
-Lemma big_sepL_bupd {A} (Φ : nat → A → iProp) E l:
-  ([∗ list] k↦x ∈ l, |={E}=> Φ k x) ⊢ |={E}=> [∗ list] k↦x ∈ l, Φ k x.
-Proof. by rewrite (big_opL_commute _). Qed.
 
 Lemma algebra_append_new_segment p γ segments:
   own γ (● segments) -∗
@@ -2515,7 +2258,7 @@ Proof.
       rewrite seq_length in HLt. done. }
     by eexists.
   }
-  iDestruct (big_sepL_bupd with "HCellInfo") as ">HCellInfo".
+  iDestruct (big_sepL_fupd with "HCellInfo") as ">HCellInfo".
 
   iExists z. iFrame "HAuth HSegLoc".
   iExists pl. rewrite /is_segment. iExists dℓ, cℓ, pℓ, nℓ, O.

@@ -50,6 +50,7 @@ From iris.program_logic Require Import atomic.
 Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
 Require Import SegmentQueue.lib.infinite_array.iterator.
 Require Import SegmentQueue.lib.util.interruptibly.
+Require Import SegmentQueue.util.everything.
 
 Section proof.
 
@@ -192,16 +193,6 @@ Proof.
     by iExists _; iFrame.
     iIntros "!> HΦ". wp_pures. by iApply "HΦ".
   }
-Qed.
-
-Lemma ucmra_cancel_local_update {A: ucmraT} (x: A) `{!Cancelable x}:
-  (x, x) ~l~> (ε, ε).
-Proof.
-  intros n f ? Heq. split; first by apply ucmra_unit_validN.
-  apply (cancelableN x); rewrite /= ucmra_unit_right_id; first done.
-  destruct f as [f'|]; simpl in *.
-  by rewrite ucmra_unit_left_id.
-  by rewrite ucmra_unit_right_id.
 Qed.
 
 Lemma await_spec Nint γi cancHandle γth (threadHandle: loc)

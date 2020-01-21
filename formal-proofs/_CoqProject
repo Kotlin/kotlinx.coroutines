@@ -8,3 +8,4 @@
 ./theories/lib/util/getAndSet.v
 ./theories/lib/util/interruptibly.v
 ./theories/lib/barrier/barrier.v
+./theories/util/everything.v
