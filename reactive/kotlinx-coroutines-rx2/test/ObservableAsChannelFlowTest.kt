@@ -11,7 +11,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlin.test.*
 
-class ObservableAsFlowTest : TestBase() {
+class ObservableAsChannelFlowTest : TestBase() {
     @Test
     fun testCancellation() = runTest {
         var onNext = 0
@@ -28,7 +28,7 @@ class ObservableAsFlowTest : TestBase() {
             }
         }
 
-        source.asFlow().launchIn(CoroutineScope(Dispatchers.Unconfined)) {
+        source.asChannelFlow(Channel.RENDEZVOUS).launchIn(CoroutineScope(Dispatchers.Unconfined)) {
             onEach {
                 ++onNext
                 throw RuntimeException()
@@ -47,7 +47,7 @@ class ObservableAsFlowTest : TestBase() {
     @Test
     fun testImmediateCollection() {
         val source = PublishSubject.create<Int>()
-        val flow = source.asFlow()
+        val flow = source.asChannelFlow(Channel.RENDEZVOUS)
         GlobalScope.launch(Dispatchers.Unconfined) {
             expect(1)
             flow.collect { expect(it) }
@@ -64,7 +64,7 @@ class ObservableAsFlowTest : TestBase() {
     @Test
     fun testOnErrorCancellation() {
         val source = PublishSubject.create<Int>()
-        val flow = source.asFlow()
+        val flow = source.asChannelFlow(Channel.RENDEZVOUS)
         val exception = RuntimeException()
         GlobalScope.launch(Dispatchers.Unconfined) {
             try {
@@ -88,7 +88,7 @@ class ObservableAsFlowTest : TestBase() {
     @Test
     fun testUnsubscribeOnCollectionException() {
         val source = PublishSubject.create<Int>()
-        val flow = source.asFlow()
+        val flow = source.asChannelFlow(Channel.RENDEZVOUS)
         val exception = RuntimeException()
         GlobalScope.launch(Dispatchers.Unconfined) {
             try {
@@ -125,26 +125,25 @@ class ObservableAsFlowTest : TestBase() {
             expect(8); send(17)
             expect(9)
         }
-        source.asFlow().buffer(Channel.UNLIMITED).collect { expect(it) }
+        source.asChannelFlow(Channel.UNLIMITED).collect { expect(it) }
         finish(18)
     }
 
     @Test
     fun testConflated() = runTest {
         val source = Observable.range(1, 5)
-        val list = source.asFlow().conflate().toList()
+        val list = source.asChannelFlow(Channel.CONFLATED).toList()
         assertEquals(listOf(1, 5), list)
     }
 
     @Test
     fun testProduce() = runTest {
         val source = Observable.range(0, 10)
-        val flow = source.asFlow()
-        check((0..9).toList(), flow.produceIn(this))
-        check((0..9).toList(), flow.buffer(Channel.UNLIMITED).produceIn(this))
-        check((0..2).toList(), flow.buffer(2).produceIn(this))
+        check((0..9).toList(), source.asChannelFlow(Channel.UNLIMITED).produceIn(this))
+        check((0..9).toList(), source.asChannelFlow(10).produceIn(this))
+        check((0..2).toList(), source.asChannelFlow(2).produceIn(this))
             // whole source is "offered" immediately (no back-pressure), so 3..9 is dropped
-        check(listOf(0, 9), flow.conflate().produceIn(this))
+        check(listOf(0, 9), source.asChannelFlow(Channel.CONFLATED).produceIn(this))
     }
 
     private suspend fun check(expected: List<Int>, channel: ReceiveChannel<Int>) {
