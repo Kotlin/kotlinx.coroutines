@@ -144,6 +144,13 @@ class ObservableAsFlowTest : TestBase() {
     }
 
     @Test
+    fun testLongRangeDroppingWhenFull() = runTest {
+        val source = Observable.range(1, 10_000)
+        val count = source.asFlow(dropWhenFull = true).buffer(10).count()
+        assertEquals(11, count)
+    }
+
+    @Test
     fun testProduce() = runTest {
         val source = Observable.range(0, 10)
         val flow = source.asFlow()
@@ -151,6 +158,17 @@ class ObservableAsFlowTest : TestBase() {
         check((0..9).toList(), flow.buffer(Channel.UNLIMITED).produceIn(this))
         check((0..9).toList(), flow.buffer(2).produceIn(this))
         check((0..9).toList(), flow.buffer(0).produceIn(this))
+        check(listOf(0, 9), flow.conflate().produceIn(this))
+    }
+
+    @Test
+    fun testProduceDroppingWhenFull() = runTest {
+        val source = Observable.range(0, 10)
+        val flow = source.asFlow(dropWhenFull = true)
+        check((0..9).toList(), flow.produceIn(this))
+        check((0..9).toList(), flow.buffer(Channel.UNLIMITED).produceIn(this))
+        check((0..2).toList(), flow.buffer(2).produceIn(this))
+        check(listOf(0), flow.buffer(0).produceIn(this))
         check(listOf(0, 9), flow.conflate().produceIn(this))
     }
 
