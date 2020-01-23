@@ -84,29 +84,25 @@ public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): 
  * The resulting flow is _cold_, which means that [ObservableSource.subscribe] is called every time a terminal operator
  * is applied to the resulting flow.
  *
- * A channel with the [capacity] buffer size is used. Use it to control what happens when data is produced
- * faster than consumed, i.e. to control the back-pressure behavior. Check [callbackFlow] for more details.
- *
- * @param capacity type/capacity of the buffer. Allowed values are the same as in `Channel(...)`
- * factory function: [BUFFERED][Channel.BUFFERED], [CONFLATED][Channel.CONFLATED],
- * [RENDEZVOUS][Channel.RENDEZVOUS], [UNLIMITED][Channel.UNLIMITED] or a non-negative value indicating
- * an explicitly requested size.
+ * A channel with the [default][Channel.BUFFERED] buffer size is used. Use the [buffer] operator on the
+ * resulting flow to specify a user-defined value and to control what happens when data is produced faster
+ * than consumed, i.e. to control the back-pressure behavior. Check [callbackFlow] for more details.
  */
 @Suppress("NOTHING_TO_INLINE")
 @ExperimentalCoroutinesApi
-public inline fun <T: Any> ObservableSource<T>.asChannelFlow(capacity: Int): Flow<T> = channelFlow {
+public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
 
     var disposable: Disposable? = null
 
     val observer = object : Observer<T> {
         override fun onComplete() { close() }
         override fun onSubscribe(d: Disposable) { disposable = d }
-        override fun onNext(t: T) { offer(t) }
+        override fun onNext(t: T) { sendBlocking(t) }
         override fun onError(e: Throwable) { close(e) }
     }
     subscribe(observer)
     awaitClose { disposable?.dispose() }
-}.buffer(capacity)
+}
 
 /**
  * Converts the given flow to a cold observable.
