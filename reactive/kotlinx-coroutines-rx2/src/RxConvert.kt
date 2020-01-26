@@ -87,19 +87,16 @@ public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): 
  * A channel with the [default][Channel.BUFFERED] buffer size is used. Use the [buffer] operator on the
  * resulting flow to specify a user-defined value and to control what happens when data is produced faster
  * than consumed, i.e. to control the back-pressure behavior. Check [callbackFlow] for more details.
- *
- * @param dropWhenFull Set to true to drop items when buffer is full instead of blocking the [ObservableSource].
  */
-@Suppress("BlockingMethodInNonBlockingContext")
 @ExperimentalCoroutinesApi
-public fun <T: Any> ObservableSource<T>.asFlow(dropWhenFull: Boolean = false): Flow<T> = callbackFlow {
+public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
 
     var disposable: Disposable? = null
 
     val observer = object : Observer<T> {
         override fun onComplete() { close() }
         override fun onSubscribe(d: Disposable) { disposable = d }
-        override fun onNext(t: T) { if(!offer(t) && !dropWhenFull) runBlocking { send(t) } }
+        override fun onNext(t: T) { sendBlocking(t) }
         override fun onError(e: Throwable) { close(e) }
     }
     subscribe(observer)
