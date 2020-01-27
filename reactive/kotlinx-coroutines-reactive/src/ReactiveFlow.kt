@@ -18,9 +18,9 @@ import kotlin.coroutines.*
  * Transforms the given reactive [Publisher] into [Flow].
  * Use [buffer] operator on the resulting flow to specify the size of the backpressure.
  * More precisely, it specifies the value of the subscription's [request][Subscription.request].
- * `1` is used by default.
+ * [buffer] default capacity is used by default.
  *
- * If any of the resulting flow transformations fails, subscription is immediately cancelled and all in-flights elements
+ * If any of the resulting flow transformations fails, subscription is immediately cancelled and all in-flight elements
  * are discarded.
  *
  * This function is integrated with `ReactorContext` from `kotlinx-coroutines-reactor` module,
@@ -40,16 +40,23 @@ public fun <T : Any> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
 private class PublisherAsFlow<T : Any>(
     private val publisher: Publisher<T>,
     context: CoroutineContext = EmptyCoroutineContext,
-    capacity: Int = 1
+    capacity: Int = Channel.BUFFERED
 ) : ChannelFlow<T>(context, capacity) {
     override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
         PublisherAsFlow(publisher, context, capacity)
 
+    /*
+     * Suppress for Channel.CHANNEL_DEFAULT_CAPACITY.
+     * It's too counter-intuitive to be public and moving it to Flow companion
+     * will also create undesired effect.
+     */
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
     private val requestSize: Long
         get() = when (capacity) {
             Channel.CONFLATED -> Long.MAX_VALUE // request all and conflate incoming
             Channel.RENDEZVOUS -> 1L // need to request at least one anyway
             Channel.UNLIMITED -> Long.MAX_VALUE // reactive streams way to say "give all" must be Long.MAX_VALUE
+            Channel.BUFFERED -> Channel.CHANNEL_DEFAULT_CAPACITY.toLong()
             else -> capacity.toLong().also { check(it >= 1) }
         }
 

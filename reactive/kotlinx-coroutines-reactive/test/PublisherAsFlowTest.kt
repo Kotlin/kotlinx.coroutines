@@ -56,7 +56,43 @@ class PublisherAsFlowTest : TestBase() {
             expect(6)
         }
 
+        publisher.asFlow().buffer(1).collect {
+            expect(it)
+        }
+
+        finish(8)
+    }
+
+    @Test
+    fun testBufferSizeDefault() = runTest {
+        val publisher = publish(currentDispatcher()) {
+            repeat(64) {
+                send(it + 1)
+                expect(it + 1)
+            }
+            assertFalse { offer(-1) }
+        }
+
         publisher.asFlow().collect {
+            expect(64 + it)
+        }
+
+        finish(129)
+    }
+
+    @Test
+    fun testDefaultCapacityIsProperlyOverwritten() = runTest {
+        val publisher = publish(currentDispatcher()) {
+            expect(1)
+            send(3)
+            expect(2)
+            send(5)
+            expect(4)
+            send(7)
+            expect(6)
+        }
+
+        publisher.asFlow().flowOn(wrapperDispatcher()).buffer(1).collect {
             expect(it)
         }
 
@@ -126,7 +162,7 @@ class PublisherAsFlowTest : TestBase() {
                     else -> expectUnreached()
                 }
             }
-        }.asFlow()
+        }.asFlow().buffer(1)
         assertFailsWith<TestException> {
             coroutineScope {
                 expect(2)
