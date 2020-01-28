@@ -88,8 +88,8 @@ internal open class CancellableContinuationImpl<in T>(
     private fun isReusable(): Boolean = delegate is DispatchedContinuation<*> && delegate.isReusable(this)
 
     /**
-     * Resets cancellability state in order to [suspendAtomicCancellableCoroutineReusable] to work.
-     * Invariant: used only by [suspendAtomicCancellableCoroutineReusable] in [REUSABLE_CLAIMED] state.
+     * Resets cancellability state in order to [suspendCancellableCoroutineReusable] to work.
+     * Invariant: used only by [suspendCancellableCoroutineReusable] in [REUSABLE_CLAIMED] state.
      */
     @JvmName("resetState") // Prettier stack traces
     internal fun resetState(resumeMode: Int): Boolean {
@@ -174,7 +174,7 @@ internal open class CancellableContinuationImpl<in T>(
             if (state is CancelHandler) invokeHandlerSafely { state.invoke(cause) }
             // Complete state update
             detachChildIfNonResuable()
-            dispatchResume(mode = MODE_ATOMIC_DEFAULT)
+            dispatchResume(mode = MODE_ATOMIC) // no need for additional cancellation checks
             return true
         }
     }
@@ -232,10 +232,10 @@ internal open class CancellableContinuationImpl<in T>(
         val state = this.state
         if (state is CompletedExceptionally) throw recoverStackTrace(state.cause, this)
         // if the parent job was already cancelled, then throw the corresponding cancellation exception
-        // otherwise, there is a race is suspendCancellableCoroutine { cont -> ... } does cont.resume(...)
+        // otherwise, there is a race if suspendCancellableCoroutine { cont -> ... } does cont.resume(...)
         // before the block returns. This getResult would return a result as opposed to cancellation
         // exception that should have happened if the continuation is dispatched for execution later.
-        if (resumeMode == MODE_CANCELLABLE) {
+        if (resumeMode.isCancellableMode) {
             val job = context[Job]
             if (job != null && !job.isActive) {
                 val cause = job.getCancellationException()

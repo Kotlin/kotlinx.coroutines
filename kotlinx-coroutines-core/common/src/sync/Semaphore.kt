@@ -8,7 +8,6 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
-import kotlin.jvm.*
 import kotlin.math.*
 import kotlin.native.concurrent.*
 
@@ -136,7 +135,7 @@ private class SemaphoreImpl(
         cur + 1
     }
 
-    private suspend fun addToQueueAndSuspend() = suspendAtomicCancellableCoroutineReusable<Unit> sc@ { cont ->
+    private suspend fun addToQueueAndSuspend() = suspendCancellableCoroutineReusable<Unit>(MODE_ATOMIC_REUSABLE) sc@ { cont ->
         val last = this.tail
         val enqIdx = enqIdx.getAndIncrement()
         val segment = getSegment(last, enqIdx / SEGMENT_SIZE)

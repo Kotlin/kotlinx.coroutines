@@ -8,17 +8,44 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
-@PublishedApi
-internal const val MODE_ATOMIC_DEFAULT = 0 // schedule non-cancellable dispatch for suspendCoroutine
-@PublishedApi
-internal const val MODE_CANCELLABLE = 1    // schedule cancellable dispatch for suspendCancellableCoroutine
+/**
+ * Non-cancellable dispatch mode.
+ *
+ * **DO NOT CHANGE THE CONSTANT VALUE**. It might be inlined into legacy user code that was calling
+ * inline `suspendAtomicCancellableCoroutine` function and did not support reuse.
+ */
+internal const val MODE_ATOMIC = 0
 
-internal const val MODE_CANCELLABLE_REUSABLE = 2 // same as MODE_CANCELLABLE but supports reused
-internal const val MODE_UNDISPATCHED = 3   // when the thread is right, but need to mark it with current coroutine
+/**
+ * Cancellable dispatch mode. It is used by user-facing [suspendCancellableCoroutine].
+ * Note, that implementation of cancellability checks mode via [Int.isCancellableMode] extension.
+ *
+ * **DO NOT CHANGE THE CONSTANT VALUE**. It is being into the user code from [suspendCancellableCoroutine].
+ */
+@PublishedApi
+internal const val MODE_CANCELLABLE = 1
+
+/**
+ * Atomic dispatch mode for [suspendCancellableCoroutineReusable].
+ * Note, that implementation of reuse checks mode via [Int.isReusableMode] extension.
+ */
+internal const val MODE_ATOMIC_REUSABLE = 2
+
+/**
+ * Cancellable dispatch mode for [suspendCancellableCoroutineReusable].
+ * Note, that implementation of cancellability checks mode via [Int.isCancellableMode] extension;
+ * implementation of reuse checks mode via [Int.isReusableMode] extension.
+ */
+internal const val MODE_CANCELLABLE_REUSABLE = 3
+
+/**
+ * Undispatched mode for [CancellableContinuation.resumeUndispatched].
+ * It is used when the thread is right, but it needs to be mark it with the current coroutine.
+ */
+internal const val MODE_UNDISPATCHED = 4
 
 internal val Int.isCancellableMode get() = this == MODE_CANCELLABLE || this == MODE_CANCELLABLE_REUSABLE
-internal val Int.isDispatchedMode get() = this != MODE_UNDISPATCHED
-internal val Int.isReusableMode get() = this == MODE_ATOMIC_DEFAULT || this == MODE_CANCELLABLE_REUSABLE
+internal val Int.isReusableMode get() = this == MODE_ATOMIC_REUSABLE || this == MODE_CANCELLABLE_REUSABLE
 
 internal abstract class DispatchedTask<in T>(
     @JvmField public var resumeMode: Int
@@ -103,7 +130,7 @@ internal abstract class DispatchedTask<in T>(
 
 internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
     val delegate = this.delegate
-    if (mode.isDispatchedMode && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {
+    if (mode != MODE_UNDISPATCHED && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {
         // dispatch directly using this instance's Runnable implementation
         val dispatcher = delegate.dispatcher
         val context = delegate.context
@@ -124,7 +151,7 @@ internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: In
     val exception = getExceptionalResult(state)?.let { recoverStackTrace(it, delegate) }
     val result = if (exception != null) Result.failure(exception) else Result.success(state as T)
     when (useMode) {
-        MODE_ATOMIC_DEFAULT -> delegate.resumeWith(result)
+        MODE_ATOMIC, MODE_ATOMIC_REUSABLE -> delegate.resumeWith(result)
         MODE_CANCELLABLE, MODE_CANCELLABLE_REUSABLE -> delegate.resumeCancellableWith(result)
         MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatchedWith(result)
         else -> error("Invalid mode $useMode")
