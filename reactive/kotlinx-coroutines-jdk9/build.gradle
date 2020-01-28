@@ -5,8 +5,9 @@ targetCompatibility = 9
 
 
 dependencies {
+    compile project(":kotlinx-coroutines-reactive")
+    compile "org.reactivestreams:reactive-streams-flow-adapters:$reactive_streams_version"
     testCompile "org.reactivestreams:reactive-streams-tck:$reactive_streams_version"
-    testCompile "org.reactivestreams:reactive-streams-flow-adapters:$reactive_streams_version"
 }
 
 task testNG(type: Test) {
