@@ -72,7 +72,7 @@ private class PublisherAsFlow<T : Any>(
         val newDispatcher = context[ContinuationInterceptor]
         if (newDispatcher == null || newDispatcher == collectContext[ContinuationInterceptor]) {
             // fast path -- subscribe directly in this dispatcher
-            return collectImpl(collectContext + context, collector)
+            return collectImpl(collector)
         }
         // slow path -- produce in a separate dispatcher
         collectSlowPath(collector)
@@ -84,10 +84,10 @@ private class PublisherAsFlow<T : Any>(
         }
     }
 
-    private suspend fun collectImpl(injectContext: CoroutineContext, collector: FlowCollector<T>) {
+    private suspend fun collectImpl(collector: FlowCollector<T>) {
         val subscriber = ReactiveSubscriber<T>(capacity, requestSize)
         // inject subscribe context into publisher
-        publisher.injectCoroutineContext(injectContext).subscribe(subscriber)
+        publisher.subscribe(subscriber)
         try {
             var consumed = 0L
             while (true) {
@@ -105,7 +105,7 @@ private class PublisherAsFlow<T : Any>(
 
     // The second channel here is used for produceIn/broadcastIn and slow-path (dispatcher change)
     override suspend fun collectTo(scope: ProducerScope<T>) =
-        collectImpl(scope.coroutineContext, SendingCollector(scope.channel))
+        collectImpl(SendingCollector(scope.channel))
 }
 
 @Suppress("SubscriberImplementation")
@@ -144,15 +144,6 @@ private class ReactiveSubscriber<T : Any>(
         subscription.cancel()
     }
 }
-
-// ContextInjector service is implemented in `kotlinx-coroutines-reactor` module only.
-// If `kotlinx-coroutines-reactor` module is not included, the list is empty.
-private val contextInjectors: List<ContextInjector> =
-    ServiceLoader.load(ContextInjector::class.java, ContextInjector::class.java.classLoader).toList()
-
-private fun <T> Publisher<T>.injectCoroutineContext(coroutineContext: CoroutineContext) =
-    contextInjectors.fold(this) { pub, contextInjector -> contextInjector.injectCoroutineContext(pub, coroutineContext) }
-
 
 /**
  * Adapter that transforms [Flow] into TCK-complaint [Publisher].

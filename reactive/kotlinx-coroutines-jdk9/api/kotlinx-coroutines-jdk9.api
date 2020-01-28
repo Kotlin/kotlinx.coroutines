@@ -7,10 +7,6 @@ public final class kotlinx/coroutines/jdk9/AwaitKt {
 	public static final fun awaitSingle (Ljava/util/concurrent/Flow$Publisher;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public abstract interface class kotlinx/coroutines/jdk9/ContextInjector {
-	public abstract fun injectCoroutineContext (Ljava/util/concurrent/Flow$Publisher;Lkotlin/coroutines/CoroutineContext;)Ljava/util/concurrent/Flow$Publisher;
-}
-
 public final class kotlinx/coroutines/jdk9/FlowSubscription : kotlinx/coroutines/AbstractCoroutine, java/util/concurrent/Flow$Subscription {
 	public final field flow Lkotlinx/coroutines/flow/Flow;
 	public final field subscriber Ljava/util/concurrent/Flow$Subscriber;
