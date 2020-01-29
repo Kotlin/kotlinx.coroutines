@@ -27,7 +27,7 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
 
 /**
  * Suspends the current coroutine until the channel is either [closed][SendChannel.close] or [cancelled][ReceiveChannel.cancel]
- * and invokes the given [block] before resuming the coroutine.
+ * and invokes the given [block] before resuming the coroutine. This suspending function is cancellable.
  *
  * Note that when the producer channel is cancelled, this function resumes with a cancellation exception.
  * Therefore, in case of cancellation, no code after the call to this function will be executed.

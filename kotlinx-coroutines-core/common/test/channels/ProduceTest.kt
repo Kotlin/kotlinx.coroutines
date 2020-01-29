@@ -5,6 +5,7 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -143,9 +144,20 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testAwaitIllegalState() = runTest {
-        val channel = produce<Int> {  }
-        @Suppress("RemoveExplicitTypeArguments") // KT-31525
+        val channel = produce<Int> { }
         assertFailsWith<IllegalStateException> { (channel as ProducerScope<*>).awaitClose() }
+        callbackFlow<Unit> {
+            expect(1)
+            launch {
+                expect(2)
+                assertFailsWith<IllegalStateException> {
+                    awaitClose { expectUnreached() }
+                    expectUnreached()
+                }
+            }
+            close()
+        }.collect()
+        finish(3)
     }
 
     private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {
