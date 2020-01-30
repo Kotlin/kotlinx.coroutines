@@ -6,10 +6,13 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.Disposable
+import io.reactivex.disposables.Disposables
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
+import kotlinx.coroutines.sync.Mutex
 import kotlin.coroutines.*
 
 /**
@@ -91,16 +94,19 @@ public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): 
 @ExperimentalCoroutinesApi
 public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
 
-    var disposable: Disposable? = null
+    var disposable = Disposables.empty()
 
     val observer = object : Observer<T> {
         override fun onComplete() { close() }
-        override fun onSubscribe(d: Disposable) { disposable = d }
+        override fun onSubscribe(d: Disposable) = if (disposable.isDisposed) d.dispose() else disposable = d
         override fun onNext(t: T) { sendBlocking(t) }
         override fun onError(e: Throwable) { close(e) }
     }
+
     subscribe(observer)
-    awaitClose { disposable?.dispose() }
+    awaitClose { disposable.dispose() }
+        // in case when the source did not actually subscribe yet at all (observer.onSubscribe was not called):
+        // then this .dispose() just "marks" that we want to unsubscribe synchronously when we get .onSubscribe
 }
 
 /**
