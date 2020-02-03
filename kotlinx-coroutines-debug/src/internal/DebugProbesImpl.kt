@@ -66,6 +66,8 @@ internal object DebugProbesImpl {
             .name(cl.name)
             .make()
             .load(cl.classLoader, ClassReloadingStrategy.fromInstalledAgent())
+
+        BlockHoundIntegration.install()
     }
 
     public fun uninstall(): Unit = coroutineStateLock.write {
@@ -82,6 +84,8 @@ internal object DebugProbesImpl {
             .name(cl.name)
             .make()
             .load(cl.classLoader, ClassReloadingStrategy.fromInstalledAgent())
+
+        BlockHoundIntegration.uninstall()
     }
 
     public fun hierarchyToString(job: Job): String = coroutineStateLock.write {

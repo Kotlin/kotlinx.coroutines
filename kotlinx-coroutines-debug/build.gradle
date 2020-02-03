@@ -22,6 +22,8 @@ dependencies {
     compileOnly "junit:junit:$junit_version"
     shadowDeps "net.bytebuddy:byte-buddy:$byte_buddy_version"
     shadowDeps "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
+    compile 'io.projectreactor.tools:blockhound:1.0.1.BUILD-SNAPSHOT'
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 }
 
 jar {
