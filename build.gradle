@@ -176,11 +176,10 @@ if (build_snapshot_train) {
             exclude '**/*LFTest*'
             exclude '**/*StressTest*'
             exclude '**/*scheduling*'
-            exclude '**/*scheduling*'
             exclude '**/*Timeout*'
             exclude '**/*definitely/not/kotlinx*'
             // Disable because of KT-11567 in 1.4
-            exclude '**/*CasesPublicAPITest.companions*'
+            exclude '**/*CasesPublicAPITest*'
         }
     }
 
