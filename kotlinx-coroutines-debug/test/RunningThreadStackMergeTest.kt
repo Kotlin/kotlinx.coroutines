@@ -33,8 +33,9 @@ class RunningThreadStackMergeTest : DebugTestBase() {
                     "\t(Coroutine creation stacktrace)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)",
             ignoredCoroutine = ":BlockingCoroutine"
-        )
-        coroutineBlocker.await()
+        ) {
+            coroutineBlocker.await()
+        }
     }
 
     private fun awaitCoroutineStarted() {
@@ -87,8 +88,9 @@ class RunningThreadStackMergeTest : DebugTestBase() {
                     "\t(Coroutine creation stacktrace)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)",
             ignoredCoroutine = ":BlockingCoroutine"
-        )
-        coroutineBlocker.await()
+        ) {
+            coroutineBlocker.await()
+        }
     }
 
     private fun CoroutineScope.launchEscapingCoroutine() {
@@ -125,8 +127,9 @@ class RunningThreadStackMergeTest : DebugTestBase() {
                     "\t(Coroutine creation stacktrace)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)",
             ignoredCoroutine = ":BlockingCoroutine"
-        )
-        coroutineBlocker.await()
+        ) {
+            coroutineBlocker.await()
+        }
     }
 
     private fun CoroutineScope.launchEscapingCoroutineWithoutContext() {
