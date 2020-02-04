@@ -35,7 +35,7 @@ public interface SelectBuilder<in R> {
     public operator fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R)
 
     /**
-     * Registers clause in this [select] expression with additional parameter nullable parameter of type [P]
+     * Registers clause in this [select] expression with additional nullable parameter of type [P]
      * with the `null` value for this parameter that selects value of type [Q].
      */
     public operator fun <P, Q> SelectClause2<P?, Q>.invoke(block: suspend (Q) -> R) = invoke(null, block)
