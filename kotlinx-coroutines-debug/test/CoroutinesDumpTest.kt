@@ -39,7 +39,7 @@ class CoroutinesDumpTest : DebugTestBase() {
 
     @Test
     fun testRunningCoroutine() = runBlocking {
-        val deferred = async(Dispatchers.Default) {
+        val deferred = async(Dispatchers.IO) {
             activeMethod(shouldSuspend = false)
             assertTrue(true)
         }
@@ -70,7 +70,7 @@ class CoroutinesDumpTest : DebugTestBase() {
 
     @Test
     fun testRunningCoroutineWithSuspensionPoint() = runBlocking {
-        val deferred = async(Dispatchers.Default) {
+        val deferred = async(Dispatchers.IO) {
             activeMethod(shouldSuspend = true)
             yield() // tail-call
         }
@@ -100,7 +100,7 @@ class CoroutinesDumpTest : DebugTestBase() {
 
     @Test
     fun testCreationStackTrace() = runBlocking {
-        val deferred = async(Dispatchers.Default) {
+        val deferred = async(Dispatchers.IO) {
             activeMethod(shouldSuspend = true)
         }
 
@@ -129,7 +129,7 @@ class CoroutinesDumpTest : DebugTestBase() {
 
     @Test
     fun testFinishedCoroutineRemoved() = runBlocking {
-        val deferred = async(Dispatchers.Default) {
+        val deferred = async(Dispatchers.IO) {
             activeMethod(shouldSuspend = true)
         }
 
@@ -149,7 +149,10 @@ class CoroutinesDumpTest : DebugTestBase() {
         if (shouldSuspend) yield()
         notifyCoroutineStarted()
         while (coroutineContext[Job]!!.isActive) {
-            runCatching { Thread.sleep(60_000) }
+            try {
+                Thread.sleep(60_000)
+            } catch (_ : InterruptedException) {
+            }
         }
     }
 
