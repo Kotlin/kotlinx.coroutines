@@ -99,9 +99,6 @@ internal fun Looper.asHandler(async: Boolean): Handler {
 @Deprecated("Use Dispatchers.Main instead", level = DeprecationLevel.HIDDEN)
 internal val Main: HandlerDispatcher? = runCatching { HandlerContext(Looper.getMainLooper().asHandler(async = true), "Main") }.getOrNull()
 
-fun foo() {
-
-}
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary Android [Handler].
  */
