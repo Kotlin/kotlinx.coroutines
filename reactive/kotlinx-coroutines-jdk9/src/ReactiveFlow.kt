@@ -25,9 +25,6 @@ public fun <T : Any> Publisher<T>.asFlow(): Flow<T> =
 
 /**
  * Transforms the given flow to a reactive specification compliant [Publisher].
- *
- * This function is integrated with `ReactorContext` from `kotlinx-coroutines-reactor` module,
- * see its documentation for additional details.
  */
 public fun <T : Any> Flow<T>.asPublisher(): Publisher<T> {
     val reactivePublisher : org.reactivestreams.Publisher<T> = this.asPublisher<T>()
