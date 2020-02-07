@@ -187,8 +187,6 @@ public interface CancellableContinuation<in T> : Continuation<T> {
     public fun resume(value: T, onCancellation: (cause: Throwable) -> Unit)
 }
 
-fun foo() {}
-
 /**
  * Suspends the coroutine like [suspendCoroutine], but providing a [CancellableContinuation] to
  * the [block]. This function throws a [CancellationException] if the coroutine is cancelled or completed while suspended.
