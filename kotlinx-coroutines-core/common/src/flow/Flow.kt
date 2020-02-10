@@ -149,8 +149,8 @@ import kotlin.coroutines.*
  * it hard to reason about the code because an exception in the `collect { ... }` could be somehow "caught"
  * by an upstream flow, limiting the ability of local reasoning about the code.
  *
- * Currently, the flow infrastructure does not enforce exception transparency contracts, however, it might be enforced
- * in the future either at run time or at compile time.
+ * Flow machinery enforces exception transparency at runtime an throws [IllegalStateException] on any attempt to emit value,
+ * if an exception has been thrown on previous attemp.
  *
  * ### Reactive streams
  *
@@ -199,7 +199,7 @@ public abstract class AbstractFlow<T> : Flow<T> {
 
     @InternalCoroutinesApi
     public final override suspend fun collect(collector: FlowCollector<T>) {
-        collectSafely(SafeCollector(collector, collectContext = coroutineContext))
+        collectSafely(SafeCollector(collector, coroutineContext))
     }
 
     /**

@@ -1001,7 +1001,7 @@ public final class kotlinx/coroutines/flow/internal/FlowExceptions_commonKt {
 	public static final fun checkIndexOverflow (I)I
 }
 
-public final class kotlinx/coroutines/flow/internal/SafeCollectorKt {
+public final class kotlinx/coroutines/flow/internal/SafeCollector_commonKt {
 	public static final fun unsafeFlow (Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
 }
 
