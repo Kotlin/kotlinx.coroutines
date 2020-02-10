@@ -6,12 +6,11 @@ package kotlinx.coroutines.guava
 
 import com.google.common.util.concurrent.*
 import kotlinx.coroutines.*
-import org.hamcrest.core.*
 import org.junit.*
-import org.junit.Assert.*
 import org.junit.Test
 import java.util.concurrent.*
 import java.util.concurrent.CancellationException
+import kotlin.test.*
 
 class ListenableFutureTest : TestBase() {
     @Before
@@ -27,7 +26,7 @@ class ListenableFutureTest : TestBase() {
                 "O"
             }).await() + "K"
         }
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
     }
 
     @Test
@@ -64,7 +63,7 @@ class ListenableFutureTest : TestBase() {
         val future = GlobalScope.future {
             toAwait.await() + "K"
         }
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
     }
 
     @Test
@@ -75,7 +74,7 @@ class ListenableFutureTest : TestBase() {
         }
         assertFalse(future.isDone)
         toAwait.set("O")
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
     }
 
     @Test
@@ -86,11 +85,11 @@ class ListenableFutureTest : TestBase() {
             try {
                 toAwait.await()
             } catch (e: RuntimeException) {
-                assertThat(e, IsInstanceOf(IllegalArgumentException::class.java))
+                assertTrue(e is IllegalArgumentException)
                 e.message!!
             } + "K"
         }
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
     }
 
     @Test
@@ -100,13 +99,13 @@ class ListenableFutureTest : TestBase() {
             try {
                 toAwait.await()
             } catch (e: RuntimeException) {
-                assertThat(e, IsInstanceOf(IllegalArgumentException::class.java))
+                assertTrue(e is IllegalArgumentException)
                 e.message!!
             } + "K"
         }
         assertFalse(future.isDone)
         toAwait.setException(IllegalArgumentException("O"))
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
     }
 
     @Test
@@ -122,8 +121,8 @@ class ListenableFutureTest : TestBase() {
             future.get()
             fail("'get' should've throw an exception")
         } catch (e: ExecutionException) {
-            assertThat(e.cause, IsInstanceOf(IllegalStateException::class.java))
-            assertThat(e.cause!!.message, IsEqual("OK"))
+            assertTrue(e.cause is IllegalStateException)
+            assertEquals("OK", e.cause!!.message)
         }
     }
 
@@ -134,7 +133,7 @@ class ListenableFutureTest : TestBase() {
             GlobalScope.future(start = CoroutineStart.LAZY) {}
         }
 
-        assertThat(e.message, IsEqual("LAZY start is not supported"))
+        assertEquals("LAZY start is not supported", e.message)
         finish(2)
     }
 
@@ -147,7 +146,7 @@ class ListenableFutureTest : TestBase() {
         }
         expect(3)
         val future = deferred.asListenableFuture()
-        assertThat(future.await(), IsEqual("OK"))
+        assertEquals("OK", future.await())
         finish(4)
     }
 
@@ -160,7 +159,7 @@ class ListenableFutureTest : TestBase() {
         }
         expect(2)
         val future = deferred.asListenableFuture()
-        assertThat(future.await(), IsEqual("OK")) // await yields main thread to deferred coroutine
+        assertEquals("OK", future.await()) // await yields main thread to deferred coroutine
         finish(4)
     }
 
@@ -370,9 +369,7 @@ class ListenableFutureTest : TestBase() {
         assertTrue(asFutureAsDeferred.isCompleted)
         // By documentation, join() shouldn't throw when asDeferred is already complete.
         asFutureAsDeferred.join()
-        assertThat(
-          asFutureAsDeferred.getCompletionExceptionOrNull(),
-          IsInstanceOf(CancellationException::class.java))
+        assertTrue(asFutureAsDeferred.getCompletionExceptionOrNull() is CancellationException)
     }
 
     @Test
@@ -395,9 +392,7 @@ class ListenableFutureTest : TestBase() {
         assertTrue(asDeferred.isCompleted)
         // By documentation, join() shouldn't throw when asDeferred is already complete.
         asDeferred.join()
-        assertThat(
-          asDeferred.getCompletionExceptionOrNull(),
-          IsInstanceOf(CancellationException::class.java))
+        assertTrue(asDeferred.getCompletionExceptionOrNull() is CancellationException)
     }
 
     @Test

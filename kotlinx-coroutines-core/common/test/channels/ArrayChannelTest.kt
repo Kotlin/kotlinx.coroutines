@@ -48,7 +48,7 @@ class ArrayChannelTest : TestBase() {
             assertEquals(42, q.receiveOrNull())
             expect(6)
             check(!q.isEmpty && q.isClosedForSend && q.isClosedForReceive)
-            assertEquals(null, q.receiveOrNull())
+            assertNull(q.receiveOrNull())
             expect(7)
         }
         expect(2)
@@ -94,13 +94,13 @@ class ArrayChannelTest : TestBase() {
             expect(3)
             assertEquals(1, q.poll())
             expect(4)
-            assertEquals(null, q.poll())
+            assertNull(q.poll())
             expect(5)
             assertEquals(2, q.receive()) // suspends
             expect(9)
             assertEquals(3, q.poll())
             expect(10)
-            assertEquals(null, q.poll())
+            assertNull(q.poll())
             expect(11)
         }
         expect(2)

@@ -4,8 +4,8 @@
 
 package kotlinx.coroutines.internal
 
-import org.junit.Assert.*
 import org.junit.Test
+import kotlin.test.*
 
 class LockFreeLinkedListTest {
     data class IntNode(val i: Int) : LockFreeLinkedListNode()
@@ -79,7 +79,7 @@ class LockFreeLinkedListTest {
         var index = 0
         list.forEach<IntNode> { actual[index++] = it.i }
         assertEquals(n, index)
-        for (i in 0 until n) assertEquals("item i", expected[i], actual[i])
+        for (i in 0 until n) assertEquals(expected[i], actual[i], "item $i")
         assertEquals(expected.isEmpty(), list.isEmpty)
     }
 }

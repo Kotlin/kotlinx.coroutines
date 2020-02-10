@@ -7,9 +7,9 @@ package kotlinx.coroutines.guide.test
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
-import org.junit.Assert.*
 import java.io.*
 import java.util.concurrent.*
+import kotlin.test.*
 
 fun wrapTask(block: Runnable) = kotlinx.coroutines.wrapTask(block)
 
@@ -145,7 +145,7 @@ private fun List<String>.verifyCommonLines(expected: Array<out String>, mode: Sa
     for (i in 0 until n) {
         val exp = sanitize(expected[i], mode)
         val act = sanitize(get(i), mode)
-        assertEquals("Line ${i + 1}", exp, act)
+        assertEquals(exp, act, "Line ${i + 1}")
     }
 }
 
@@ -163,7 +163,7 @@ fun List<String>.verifyLines(vararg expected: String) = verify {
 
 fun List<String>.verifyLinesStartWith(vararg expected: String) = verify {
     verifyCommonLines(expected)
-    assertTrue("Number of lines", expected.size <= size)
+    assertTrue(expected.size <= size, "Number of lines")
 }
 
 fun List<String>.verifyLinesArbitraryTime(vararg expected: String) = verify {
@@ -197,7 +197,7 @@ fun List<String>.verifyExceptions(vararg expected: String) {
     for (i in 0 until n) {
         val exp = sanitize(expected[i], SanitizeMode.FLEXIBLE_THREAD)
         val act = sanitize(actual[i], SanitizeMode.FLEXIBLE_THREAD)
-        assertEquals("Line ${i + 1}", exp, act)
+        assertEquals(exp, act, "Line ${i + 1}")
     }
 }
 
@@ -207,7 +207,7 @@ fun List<String>.verifyLinesStart(vararg expected: String) = verify {
     for (i in 0 until n) {
         val exp = sanitize(expected[i], SanitizeMode.FLEXIBLE_THREAD)
         val act = sanitize(get(i), SanitizeMode.FLEXIBLE_THREAD)
-        assertEquals("Line ${i + 1}", exp, act.substring(0, minOf(act.length, exp.length)))
+        assertEquals(exp, act.substring(0, minOf(act.length, exp.length)), "Line ${i + 1}")
     }
     checkEqualNumberOfLines(expected)
 }

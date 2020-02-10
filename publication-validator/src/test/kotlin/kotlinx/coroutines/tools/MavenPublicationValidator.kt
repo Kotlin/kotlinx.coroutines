@@ -5,7 +5,6 @@
 package kotlinx.coroutines.validator
 
 import org.junit.*
-import org.junit.Assert.*
 import java.io.*
 import java.util.jar.*
 
