@@ -9,7 +9,7 @@ def rootModule = "kotlinx.coroutines"
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
 def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom']
-def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'knit', 'js-stub', 'stdlib-stubs', 'binary-compatibility-validator']
+def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'knit', 'js-stub', 'stdlib-stubs']
 // Not published
 def unpublished = internal + ['example-frontend-js', 'android-unit-tests']
 
@@ -68,6 +68,7 @@ buildscript {
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
+        classpath "org.jetbrains.kotlinx:binary-compatibility-validator:$binary_compatibility_validator_version"
 
         // JMH plugins
         classpath "com.github.jengelman.gradle.plugins:shadow:5.1.0"
@@ -118,6 +119,14 @@ allprojects {
         systemProperty 'stressTest', stressTest
     }
 }
+
+apply plugin: "binary-compatibility-validator"
+apiValidation {
+    ignoredProjects += ["stdlib-stubs", "benchmarks", "knit", "site",
+                        "kotlinx-coroutines-bom", "android-unit-tests", "js-stub"]
+    ignoredPackages += "kotlinx.coroutines.internal"
+}
+
 
 allprojects {
     apply plugin: 'kotlinx-atomicfu' // it also adds all the necessary dependencies

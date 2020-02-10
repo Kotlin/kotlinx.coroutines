@@ -18,8 +18,6 @@ include('benchmarks')
 include('knit')
 include('site')
 
-module('binary-compatibility-validator')
-
 include "kotlinx-coroutines-core"
 
 module('kotlinx-coroutines-test')
