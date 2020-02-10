@@ -5,9 +5,9 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import kotlin.coroutines.*
+import kotlin.test.*
 
 class TestBuildersTest {
 

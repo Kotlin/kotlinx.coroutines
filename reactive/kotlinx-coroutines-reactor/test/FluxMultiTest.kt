@@ -7,9 +7,10 @@ package kotlinx.coroutines.reactor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.reactive.*
 import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import reactor.core.publisher.*
 import java.io.*
+import kotlin.test.*
 
 class FluxMultiTest : TestBase() {
     @Test
