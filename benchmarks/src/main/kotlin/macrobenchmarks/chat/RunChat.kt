@@ -13,7 +13,7 @@ import java.util.*
 import java.util.concurrent.atomic.*
 import kotlin.collections.ArrayList
 
-var context = DispatcherTypes.FORK_JOIN.create(1)
+var context = DispatcherTypes.Experimental.create(1)
 private const val SHOULD_PRINT_DEBUG_OUTPUT = true
 
 @Volatile

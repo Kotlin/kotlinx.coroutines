@@ -9,7 +9,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.selects.*
 import java.util.*
-import kotlin.collections.ArrayList
 
 /**
  * An abstract class for server-side chat users.
@@ -39,17 +38,17 @@ class User(private val id: Long,
     private var messagesToSent: Double = activity
 
     private lateinit var friends: List<User>
-    private lateinit var cumSumFriends : List<Double>
+    private lateinit var cumSumFriends : DoubleArray
 
     lateinit var runCoroutine: Job
 
     fun setFriends(friends : List<User>) {
         require(friends.isNotEmpty())
         this.friends = friends
-        val cumSumFriends = ArrayList<Double>(friends.size + 1)
-        cumSumFriends.add(friends[0].activity)
+        val cumSumFriends = DoubleArray(friends.size)
+        cumSumFriends[0] = friends[0].activity
         for (i in 1 until friends.size) {
-            cumSumFriends.add(cumSumFriends[i - 1] + friends[i].activity)
+            cumSumFriends[i] = cumSumFriends[i - 1] + friends[i].activity
         }
         this.cumSumFriends = cumSumFriends
     }

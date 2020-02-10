@@ -49,20 +49,18 @@ private val MAX_FRIENDS_PERCENTAGE = listOf(0.2)
 private val AVERAGE_WORK = listOf(40, 80)
 
 enum class ChannelCreator(private val capacity: Int) {
-    RENDEZVOUS(Channel.RENDEZVOUS),
-    BUFFERED_1(1),
-    BUFFERED_2(2),
-    BUFFERED_4(4),
-    BUFFERED_32(32),
-    BUFFERED_128(128),
-    BUFFERED_UNLIMITED(Channel.UNLIMITED);
+    Rendezvous(Channel.RENDEZVOUS),
+    `Buffered(1)`(1),
+    `Buffered(16)`(16),
+    `Buffered(128)`(128),
+    Unlimited(Channel.UNLIMITED);
 
     fun <T> create(): Channel<T> = Channel(capacity)
 }
 
 enum class DispatcherTypes(val create: (parallelism: Int) -> CoroutineDispatcher) {
-    FORK_JOIN({ parallelism -> ForkJoinPool(parallelism).asCoroutineDispatcher() }),
-    EXPERIMENTAL({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
+    ForkJoin({ parallelism -> ForkJoinPool(parallelism).asCoroutineDispatcher() }),
+    Experimental({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
 }
 
 val allConfigurations: List<BenchmarkConfiguration>
@@ -132,8 +130,8 @@ class BenchmarkConfiguration(
          * this method in fun main in RunBenchmark.
          */
         fun defaultConfiguration() : BenchmarkConfiguration {
-            return BenchmarkConfiguration(1, 10000, 0.2, ChannelCreator.RENDEZVOUS,
-                    40, DispatcherTypes.FORK_JOIN)
+            return BenchmarkConfiguration(1, 10000, 0.2, ChannelCreator.Unlimited,
+                    40, DispatcherTypes.Experimental)
         }
     }
 }

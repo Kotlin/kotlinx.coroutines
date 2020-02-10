@@ -1,3 +1,5 @@
+# To run this script run the command 'python3 scripts/generate_plots_in_memory_chat.py' in the /benchmarks folder
+
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
@@ -33,18 +35,17 @@ def draw(data, users, max_friends, ax_arr):
         ax.set_xticks(data.threads.unique())
 
     i = 0
-    for bench_mode in data.benchmarkMode.unique():
+    for dispatcher_type in data.dispatcherType.unique():
         for avg_work in data.averageWork.unique():
-            flatten_ax_arr[i].set_title("benchMode={},avgWork={}".format(bench_mode, avg_work))
+            flatten_ax_arr[i].set_title("dispatcherType={},avgWork={}".format(dispatcher_type, avg_work))
             colour_gen = next_colour()
             marker_gen = next_marker()
             for channel in data.channel.unique():
-                for dispatcherType in data.dispatcherType.unique():
-                    gen_colour = next(colour_gen)
-                    gen_marker = next(marker_gen)
-                    res = data[(data.benchmarkMode == bench_mode) & (data.averageWork == avg_work) & (data.userCount == users) & (data.maxFriendsPercentage == max_friends) & (data.channel == channel) & (data.dispatcherType == dispatcherType)]
-                    flatten_ax_arr[i].plot(res.threads, res.avgSentMessages, label="channel={},dispatcher={}".format(channel, dispatcherType), color=gen_colour, marker=gen_marker)
-            # sent_ax.errorbar(x=res.threads, y=res.avgSentMessages, yerr=res.stdSentMessages, solid_capstyle='projecting', capsize=5)
+                gen_colour = next(colour_gen)
+                gen_marker = next(marker_gen)
+                res = data[(data.dispatcherType == dispatcher_type) & (data.averageWork == avg_work) & (data.userCount == users) & (data.maxFriendsPercentage == max_friends) & (data.channel == channel)]
+                flatten_ax_arr[i].plot(res.threads, res.avgSentMessages, label="channel={}".format(channel), color=gen_colour, marker=gen_marker)
+#                 flatten_ax_arr[i].errorbar(x=res.threads, y=res.avgSentMessages, yerr=res.stdSentMessages, label="channel={}".format(channel), solid_capstyle='projecting', color=gen_colour, marker=gen_marker, capsize=5)
             i += 1
 
 def genFile(pdf):
