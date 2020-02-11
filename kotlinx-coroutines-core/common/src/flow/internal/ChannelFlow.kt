@@ -32,7 +32,7 @@ public abstract class ChannelFlow<T>(
     internal val collectToFun: suspend (ProducerScope<T>) -> Unit
         get() = { collectTo(it) }
 
-    protected val produceCapacity: Int
+    private val produceCapacity: Int
         get() = if (capacity == Channel.OPTIONAL_CHANNEL) Channel.BUFFERED else capacity
 
     public fun update(

@@ -298,8 +298,8 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  *     }
  *     api.register(callback)
  *     /*
- *      * Suspends until either 'onCompleted' from the callback is invoked
- *      * or flow collector is cancelled (e.g. by 'take(1)' or because a collector's activity was destroyed).
+ *      * Suspends until either 'onCompleted'/'onApiError' from the callback is invoked
+ *      * or flow collector is cancelled (e.g. by 'take(1)' or because a collector's coroutine was cancelled).
  *      * In both cases, callback will be properly unregistered.
  *      */
  *     awaitClose { api.unregister(callback) }
@@ -342,8 +342,8 @@ private class CallbackFlowBuilder<T>(
             throw IllegalStateException(
                 """
                     'awaitClose { yourCallbackOrListener.cancel() }' should be used in the end of callbackFlow block.
-                    Otherwise, a callback/listener may leak in case of cancellation external cancellation (e.g. by 'take(1)' or destroyed activity).
-                    See callbackFlow API documentation for the details. 
+                    Otherwise, a callback/listener may leak in case of external cancellation.
+                    See callbackFlow API documentation for the details.
                 """.trimIndent()
             )
         }
