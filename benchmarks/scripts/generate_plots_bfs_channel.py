@@ -1,5 +1,4 @@
-# To run this script run the command 'python3 scripts/generate_plots_bfs_channel.py' in the benchmarks/ folder or
-# 'python3 generate_plots_bfs_channel.py' in the benchmarks/scripts/ folder
+# To run this script run the command 'python3 scripts/generate_plots_bfs_channel.py' in the benchmarks/ folder
 
 import pandas as pd
 import matplotlib.pyplot as plt
