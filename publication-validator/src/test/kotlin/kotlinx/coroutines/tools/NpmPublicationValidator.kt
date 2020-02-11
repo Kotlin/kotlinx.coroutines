@@ -9,6 +9,7 @@ import org.apache.commons.compress.archivers.tar.*
 import org.junit.*
 import java.io.*
 import java.util.zip.*
+import org.junit.Assert.*
 
 class NpmPublicationValidator {
     private val VERSION = System.getenv("DeployVersion")
