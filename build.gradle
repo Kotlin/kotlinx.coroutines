@@ -41,7 +41,8 @@ buildscript {
         }
     }
 
-    ext.using_snapshot_version=build_snapshot_train
+    // Determine if any project dependency is using a snapshot version
+    ext.using_snapshot_version = build_snapshot_train
     rootProject.properties.each { key, value ->
         if (key.endsWith("_version") && value instanceof String && value.endsWith("-SNAPSHOT")) {
             println("NOTE: USING SNAPSHOT VERSION: $key=$value")
