@@ -41,7 +41,7 @@ class ConsumeAsFlowLeakTest : TestBase() {
         if (shouldSuspendOnSend) yield()
         channel.send(second)
         yield()
-        assertEquals(0, FieldWalker.walk(channel).count { it === second })
+        FieldWalker.assertReachableCount(0, channel) { it === second }
         finish(6)
         job.cancelAndJoin()
     }
