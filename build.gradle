@@ -8,8 +8,8 @@ apply from: rootProject.file("gradle/experimental.gradle")
 def rootModule = "kotlinx.coroutines"
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
-def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom', 'knit']
-def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'knit', 'js-stub', 'stdlib-stubs']
+def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom']
+def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'js-stub', 'stdlib-stubs']
 // Not published
 def unpublished = internal + ['example-frontend-js', 'android-unit-tests']
 
@@ -131,7 +131,7 @@ allprojects {
 
 apply plugin: "binary-compatibility-validator"
 apiValidation {
-    ignoredProjects += ["stdlib-stubs", "benchmarks", "knit", "site",
+    ignoredProjects += ["stdlib-stubs", "benchmarks", "site",
                         "kotlinx-coroutines-bom", "android-unit-tests", "js-stub"]
     ignoredPackages += "kotlinx.coroutines.internal"
 }
@@ -274,3 +274,14 @@ task deploy(dependsOn: getTasksByName("publish", true) + getTasksByName("publish
 apply plugin: 'base'
 
 clean.dependsOn gradle.includedBuilds.collect { it.task(':clean') }
+
+// --------------- Knit configuration ---------------
+
+apply plugin: 'kotlinx-knit'
+
+knit {
+    siteRoot = "https://kotlin.github.io/kotlinx.coroutines"
+    moduleRoots = [".", "integration", "reactive", "ui"]
+}
+
+knitPrepare.dependsOn getTasksByName("dokka", true)
