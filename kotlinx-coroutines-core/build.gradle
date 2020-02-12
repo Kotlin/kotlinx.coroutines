@@ -46,6 +46,14 @@ configurations {
     configureKotlinJvmPlatform(kotlinCompilerPluginClasspath)
 }
 
+// Update module name for metadata artifact to avoid conflicts
+// see https://github.com/Kotlin/kotlinx.coroutines/issues/1797
+compileKotlinMetadata {
+    kotlinOptions {
+        freeCompilerArgs += ["-module-name", "kotlinx-coroutines-core-common"]
+    }
+}
+
 kotlin.sourceSets {
     jvmTest.dependencies {
         api "org.jetbrains.kotlinx:lincheck:$lincheck_version"
