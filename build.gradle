@@ -258,7 +258,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
             tasks.withType(dokka.getClass()) {
                 externalDocumentationLink {
                     url = new URL(core_docs_url)
-                    packageListUrl = new URL("file://$core_docs_file")
+                    packageListUrl = new File(core_docs_file).toURI().toURL()
                 }
             }
         }
