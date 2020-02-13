@@ -10,36 +10,12 @@ class AsyncJvmTest : TestBase() {
     // This must be a common test but it fails on JS because of KT-21961
     @Test
     fun testAsyncWithFinally() = runTest {
-        expect(1)
+         launch(Dispatchers.Default) {
 
-        @Suppress("UNREACHABLE_CODE")
-        val d = async {
-            expect(3)
-            try {
-                yield() // to main, will cancel
-            } finally {
-                expect(6) // will go there on await
-                return@async "Fail" // result will not override cancellation
-            }
-            expectUnreached()
-            "Fail2"
+         }
+
+        launch(Dispatchers.IO) {
+
         }
-        expect(2)
-        yield() // to async
-        expect(4)
-        check(d.isActive && !d.isCompleted && !d.isCancelled)
-        d.cancel()
-        check(!d.isActive && !d.isCompleted && d.isCancelled)
-        check(!d.isActive && !d.isCompleted && d.isCancelled)
-        expect(5)
-        try {
-            d.await() // awaits
-            expectUnreached() // does not complete normally
-        } catch (e: Throwable) {
-            expect(7)
-            check(e is CancellationException)
-        }
-        check(!d.isActive && d.isCompleted && d.isCancelled)
-        finish(8)
     }
 }
