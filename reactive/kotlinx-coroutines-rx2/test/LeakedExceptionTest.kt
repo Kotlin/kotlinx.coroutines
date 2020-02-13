@@ -27,8 +27,8 @@ class LeakedExceptionTest : TestBase() {
             runBlocking {
                 repeat(10000) {
                     combine(flow, flow) { _, _ -> Unit }
-                            .catch {}
-                            .collect { }
+                        .catch {}
+                        .collect {}
                 }
             }
         }
@@ -38,13 +38,13 @@ class LeakedExceptionTest : TestBase() {
     fun testObservable() = withExceptionHandler(handler) {
         withFixedThreadPool(4) { dispatcher ->
             val flow = rxObservable<Unit>(dispatcher) { throw TestException() }
-                    .toFlowable(BackpressureStrategy.BUFFER)
-                    .asFlow()
+                .toFlowable(BackpressureStrategy.BUFFER)
+                .asFlow()
             runBlocking {
                 repeat(10000) {
                     combine(flow, flow) { _, _ -> Unit }
-                            .catch {}
-                            .collect { }
+                        .catch {}
+                        .collect {}
                 }
             }
         }
@@ -57,8 +57,8 @@ class LeakedExceptionTest : TestBase() {
             runBlocking {
                 repeat(10000) {
                     combine(flow, flow) { _, _ -> Unit }
-                            .catch {}
-                            .collect { }
+                        .catch {}
+                        .collect {}
                 }
             }
         }
@@ -86,8 +86,8 @@ class LeakedExceptionTest : TestBase() {
             }.asFlow()
             runBlocking {
                 combine(flow, flow) { _, _ -> Unit }
-                        .catch {}
-                        .collect { }
+                    .catch {}
+                    .collect {}
             }
         }
     }
@@ -100,6 +100,8 @@ class LeakedExceptionTest : TestBase() {
         val dispatcher = pool.asCoroutineDispatcher()
         block(dispatcher)
         pool.shutdown()
-        while (!pool.awaitTermination(10, TimeUnit.SECONDS));
+        while (!pool.awaitTermination(10, TimeUnit.SECONDS)) {
+            /* deliberately empty */
+        }
     }
 }
