@@ -8,8 +8,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
 import kotlinx.knit.test.*
-import org.junit.Assert.*
-import java.io.*
 import java.util.concurrent.*
 import kotlin.test.*
 
