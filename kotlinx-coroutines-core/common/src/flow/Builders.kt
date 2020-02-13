@@ -51,7 +51,12 @@ public fun <T> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit
 // Named anonymous object
 private class SafeFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit) : Flow<T> {
     override suspend fun collect(collector: FlowCollector<T>) {
-        SafeCollector(collector, coroutineContext).block()
+        val safeCollector = SafeCollector(collector, coroutineContext)
+        try {
+            safeCollector.block()
+        } finally {
+            safeCollector.releaseIntercepted()
+        }
     }
 }
 
