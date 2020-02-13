@@ -25,6 +25,6 @@ internal actual class SafeCollector<T> actual constructor(
         collector.emit(value)
     }
 
-    public actual fun release() {
+    public actual fun releaseIntercepted() {
     }
 }

@@ -17,7 +17,7 @@ internal expect class SafeCollector<T>(
     internal val collector: FlowCollector<T>
     internal val collectContext: CoroutineContext
     internal val collectContextSize: Int
-    public fun release()
+    public fun releaseIntercepted()
 }
 
 @JvmName("checkContext") // For prettier stack traces

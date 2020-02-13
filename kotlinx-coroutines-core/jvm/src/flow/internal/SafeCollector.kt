@@ -10,41 +10,36 @@ import kotlin.coroutines.intrinsics.*
 import kotlin.coroutines.jvm.internal.*
 
 @Suppress("UNCHECKED_CAST")
+private val emitFun =
+    FlowCollector<Any?>::emit as Function3<FlowCollector<Any?>, Any?, Continuation<Unit>, Any?>
+/*
+ * Implementor of ContinuationImpl (that will be preserved as ABI nearly forever)
+ * in order to properly control 'intercepted()' lifecycle.
+ */
+@Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNCHECKED_CAST")
 internal actual class SafeCollector<T> actual constructor(
     @JvmField internal actual val collector: FlowCollector<T>,
     @JvmField internal actual val collectContext: CoroutineContext
-) : FlowCollector<T> {
+) : FlowCollector<T>, ContinuationImpl(NoOpContinuation, EmptyCoroutineContext) {
 
     @JvmField // Note, it is non-capturing lambda, so no extra allocation during init of SafeCollector
     internal actual val collectContextSize = collectContext.fold(0) { count, _ -> count + 1 }
     private var lastEmissionContext: CoroutineContext? = null
-    private var intercepted: InterceptedContinuationOwner = InterceptedContinuationOwner()
-    private val emitFun = run {
-        collector::emit as Function2<T, Continuation<Unit>, Any?>
+    private var completion: Continuation<Unit>? = null
+
+    // ContinuationImpl
+    override val context: CoroutineContext
+        get() = completion?.context ?: EmptyCoroutineContext
+
+    override fun invokeSuspend(result: Result<Any?>): Any? {
+        result.onFailure { lastEmissionContext = DownstreamExceptionElement(it) }
+        completion?.resumeWith(result as Result<Unit>)
+        return COROUTINE_SUSPENDED
     }
 
-    /*
-     * Implementor of ContinuationImpl (that will be preserved by ABI implementation nearly forever)
-     * in order to properly control 'intercepted()' lifecycle.
-     */
-    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-    private inner class InterceptedContinuationOwner : ContinuationImpl(NoOpContinuation, EmptyCoroutineContext) {
-        @JvmField
-        public var realCompletion: Continuation<Unit>? = null
-
-        override val context: CoroutineContext
-            get() = realCompletion?.context ?: EmptyCoroutineContext
-
-        override fun invokeSuspend(result: Result<Any?>): Any? {
-            result.onFailure { lastEmissionContext = DownstreamExceptionElement(it) }
-            realCompletion?.resumeWith(result as Result<Unit>)
-            return COROUTINE_SUSPENDED
-        }
-
-        // Escalate visibility to manually release intercepted continuation
-        public override fun releaseIntercepted() {
-            super.releaseIntercepted()
-        }
+    // Escalate visibility to manually release intercepted continuation
+    public actual override fun releaseIntercepted() {
+        super.releaseIntercepted()
     }
 
     /**
@@ -72,8 +67,8 @@ internal actual class SafeCollector<T> actual constructor(
         if (previousContext !== currentContext) {
             checkContext(currentContext, previousContext, value)
         }
-        intercepted.realCompletion = uCont
-        return emitFun(value, intercepted as Continuation<Unit>)
+        completion = uCont
+        return emitFun(collector as FlowCollector<Any?>, value, this as Continuation<Unit>)
     }
 
     private fun checkContext(
@@ -86,10 +81,6 @@ internal actual class SafeCollector<T> actual constructor(
         }
         checkContext(currentContext)
         lastEmissionContext = currentContext
-    }
-
-    public actual fun release() {
-        intercepted.releaseIntercepted()
     }
 
     private fun exceptionTransparencyViolated(exception: DownstreamExceptionElement, value: Any?) {

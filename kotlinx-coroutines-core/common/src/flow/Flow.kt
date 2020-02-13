@@ -5,7 +5,7 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.internal.SafeCollector
+import kotlinx.coroutines.flow.internal.*
 import kotlin.coroutines.*
 
 /**
@@ -149,8 +149,8 @@ import kotlin.coroutines.*
  * it hard to reason about the code because an exception in the `collect { ... }` could be somehow "caught"
  * by an upstream flow, limiting the ability of local reasoning about the code.
  *
- * Flow machinery enforces exception transparency at runtime an throws [IllegalStateException] on any attempt to emit value,
- * if an exception has been thrown on previous attemp.
+ * Flow machinery enforces exception transparency at runtime and throws [IllegalStateException] on any attempt to emit a value,
+ * if an exception has been thrown on previous attempt.
  *
  * ### Reactive streams
  *
@@ -199,7 +199,12 @@ public abstract class AbstractFlow<T> : Flow<T> {
 
     @InternalCoroutinesApi
     public final override suspend fun collect(collector: FlowCollector<T>) {
-        collectSafely(SafeCollector(collector, coroutineContext))
+        val safeCollector = SafeCollector(collector, coroutineContext)
+        try {
+            collectSafely(safeCollector)
+        } finally {
+            safeCollector.releaseIntercepted()
+        }
     }
 
     /**

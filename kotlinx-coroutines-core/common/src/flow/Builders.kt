@@ -55,7 +55,7 @@ private class SafeFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit
         try {
             safeCollector.block()
         } finally {
-            safeCollector.release()
+            safeCollector.releaseIntercepted()
         }
     }
 }
