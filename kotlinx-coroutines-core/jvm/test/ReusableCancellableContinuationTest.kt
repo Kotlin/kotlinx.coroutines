@@ -76,7 +76,7 @@ class ReusableCancellableContinuationTest : TestBase() {
         expect(4)
         ensureActive()
         // Verify child was bound
-        assertNotNull(FieldWalker.walk(coroutineContext[Job]!!).single { it === continuation })
+        FieldWalker.assertReachableCount(1, coroutineContext[Job]) { it === continuation }
         suspendAtomicCancellableCoroutineReusable<Unit> {
             expect(5)
             coroutineContext[Job]!!.cancel()
@@ -97,7 +97,7 @@ class ReusableCancellableContinuationTest : TestBase() {
             cont = it
         }
         ensureActive()
-        assertTrue { FieldWalker.walk(coroutineContext[Job]!!).contains(cont!!) }
+        assertTrue { FieldWalker.walk(coroutineContext[Job]).contains(cont!!) }
         finish(2)
     }
 
@@ -112,7 +112,7 @@ class ReusableCancellableContinuationTest : TestBase() {
             cont = it
         }
         ensureActive()
-        assertFalse { FieldWalker.walk(coroutineContext[Job]!!).contains(cont!!) }
+        FieldWalker.assertReachableCount(0, coroutineContext[Job]) { it === cont }
         finish(2)
     }
 
@@ -127,7 +127,7 @@ class ReusableCancellableContinuationTest : TestBase() {
             }
             expectUnreached()
         } catch (e: CancellationException) {
-            assertFalse { FieldWalker.walk(coroutineContext[Job]!!).contains(cont!!) }
+            FieldWalker.assertReachableCount(0, coroutineContext[Job]) { it === cont }
             finish(2)
         }
     }
@@ -148,19 +148,19 @@ class ReusableCancellableContinuationTest : TestBase() {
         expect(4)
         ensureActive()
         // Verify child was bound
-        assertEquals(1, FieldWalker.walk(currentJob).count { it is CancellableContinuation<*> })
+        FieldWalker.assertReachableCount(1, currentJob) { it is CancellableContinuation<*> }
         currentJob.cancel()
         assertFalse(isActive)
         // Child detached
-        assertEquals(0, FieldWalker.walk(currentJob).count { it is CancellableContinuation<*> })
+        FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
         suspendAtomicCancellableCoroutineReusable<Unit> { it.resume(Unit) }
         suspendAtomicCancellableCoroutineReusable<Unit> { it.resume(Unit) }
-        assertEquals(0, FieldWalker.walk(currentJob).count { it is CancellableContinuation<*> })
+        FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
 
         try {
             suspendAtomicCancellableCoroutineReusable<Unit> {}
         } catch (e: CancellationException) {
-            assertEquals(0, FieldWalker.walk(currentJob).count { it is CancellableContinuation<*> })
+            FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
             finish(5)
         }
     }
@@ -184,12 +184,12 @@ class ReusableCancellableContinuationTest : TestBase() {
             expect(2)
             val job = coroutineContext[Job]!!
             // 1 for reusable CC, another one for outer joiner
-            assertEquals(2, FieldWalker.walk(job).count { it is CancellableContinuation<*> })
+            FieldWalker.assertReachableCount(2, job) { it is CancellableContinuation<*> }
         }
         expect(1)
         receiver.join()
         // Reference should be claimed at this point
-        assertEquals(0, FieldWalker.walk(receiver).count { it is CancellableContinuation<*> })
+        FieldWalker.assertReachableCount(0, receiver) { it is CancellableContinuation<*> }
         finish(3)
     }
 }
