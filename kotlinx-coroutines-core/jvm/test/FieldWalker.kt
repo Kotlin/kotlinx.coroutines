@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -37,10 +37,12 @@ object FieldWalker {
         val visited = walkRefs(root)
         val actual = visited.keys.filter(predicate)
         if (actual.size != expected) {
-            val text = actual.joinToString("\n") { "\t" + showPath(it, visited) }
-            assertEquals(expected, actual.size, "Unexpected number objects. Expected $expected, found ${actual.size}:\n$text")
+            val textDump = actual.joinToString("") { "\n\t" + showPath(it, visited) }
+            assertEquals(
+                expected, actual.size,
+                "Unexpected number objects. Expected $expected, found ${actual.size}$textDump"
+            )
         }
-
     }
 
     /*
@@ -50,7 +52,7 @@ object FieldWalker {
     private fun walkRefs(root: Any?): Map<Any, Ref> {
         val visited = IdentityHashMap<Any, Ref>()
         if (root == null) return visited
-        visited.put(root, Ref.RootRef)
+        visited[root] = Ref.RootRef
         val stack = ArrayDeque<Any>()
         stack.addLast(root)
         while (stack.isNotEmpty()) {
@@ -68,7 +70,7 @@ object FieldWalker {
         val path = ArrayList<String>()
         var cur = element
         while (true) {
-            val ref = visited[cur]!!
+            val ref = visited.getValue(cur)
             if (ref is Ref.RootRef) break
             when (ref) {
                 is Ref.FieldRef -> {
