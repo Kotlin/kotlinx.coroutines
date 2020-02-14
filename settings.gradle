@@ -15,7 +15,6 @@ def module(String path) {
 // ---------------------------
 
 include('benchmarks')
-include('knit')
 include('site')
 
 include "kotlinx-coroutines-core"

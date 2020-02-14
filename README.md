@@ -217,6 +217,12 @@ The `develop` branch is pushed to `master` during release.
 
 * Full release procedure checklist is [here](RELEASE.md).
 * Steps for contributing new integration modules are explained [here](integration/README.md#Contributing).
+* Use [Knit](https://github.com/Kotlin/kotlinx-knit/blob/master/README.md) for updates to documentation:
+  * In project root directory run `./gradlew knit`.
+  * Commit updated documents and examples together with other changes.
+* Use [Binary Compatibility Validator](https://github.com/Kotlin/binary-compatibility-validator/blob/master/README.md) for updates to public API:
+  * In project root directory run `./gradlew apiDump`. 
+  * Commit updated API index together with other changes.
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->

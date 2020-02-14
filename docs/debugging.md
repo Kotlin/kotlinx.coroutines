@@ -9,8 +9,7 @@
 * [Debug agent](#debug-agent)
   * [Debug agent and Android](#debug-agent-and-android)
 
-<!--- END_TOC -->
-
+<!--- END -->
 
 ## Debugging coroutines
 Debugging asynchronous programs is challenging, because multiple concurrent coroutines are typically working at the same time.

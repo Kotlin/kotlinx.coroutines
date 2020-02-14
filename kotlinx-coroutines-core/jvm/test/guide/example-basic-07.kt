@@ -1,18 +1,19 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.basic07
+// This file was automatically generated from basics.md by Knit tool. Do not edit.
+package kotlinx.coroutines.guide.exampleBasic07
 
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
-    GlobalScope.launch {
-        repeat(1000) { i ->
-            println("I'm sleeping $i ...")
-            delay(500L)
-        }
-    }
-    delay(1300L) // just quit after delay
+    launch { doWorld() }
+    println("Hello,")
+}
+
+// this is your first suspending function
+suspend fun doWorld() {
+    delay(1000L)
+    println("World!")
 }
