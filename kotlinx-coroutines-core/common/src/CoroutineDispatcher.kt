@@ -30,6 +30,12 @@ import kotlin.coroutines.*
 public abstract class CoroutineDispatcher :
     AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
 
+    /** @suppress */
+    @ExperimentalStdlibApi
+    public companion object Key : AbstractCoroutineContextKey<ContinuationInterceptor, CoroutineDispatcher>(
+        ContinuationInterceptor,
+        { it as? CoroutineDispatcher })
+
     /**
      * Returns `true` if the execution of the coroutine should be performed with [dispatch] method.
      * The default behavior for most dispatchers is to return `true`.
