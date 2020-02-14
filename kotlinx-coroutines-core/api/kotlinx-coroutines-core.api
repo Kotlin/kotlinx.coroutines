@@ -151,6 +151,7 @@ public final class kotlinx/coroutines/CoroutineContextKt {
 }
 
 public abstract class kotlinx/coroutines/CoroutineDispatcher : kotlin/coroutines/AbstractCoroutineContextElement, kotlin/coroutines/ContinuationInterceptor {
+	public static final field Key Lkotlinx/coroutines/CoroutineDispatcher$Key;
 	public fun <init> ()V
 	public abstract fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun dispatchYield (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
@@ -161,6 +162,9 @@ public abstract class kotlinx/coroutines/CoroutineDispatcher : kotlin/coroutines
 	public final fun plus (Lkotlinx/coroutines/CoroutineDispatcher;)Lkotlinx/coroutines/CoroutineDispatcher;
 	public fun releaseInterceptedContinuation (Lkotlin/coroutines/Continuation;)V
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class kotlinx/coroutines/CoroutineDispatcher$Key : kotlin/coroutines/AbstractCoroutineContextKey {
 }
 
 public abstract interface class kotlinx/coroutines/CoroutineExceptionHandler : kotlin/coroutines/CoroutineContext$Element {
@@ -294,9 +298,13 @@ public final class kotlinx/coroutines/ExceptionsKt {
 }
 
 public abstract class kotlinx/coroutines/ExecutorCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher, java/io/Closeable {
+	public static final field Key Lkotlinx/coroutines/ExecutorCoroutineDispatcher$Key;
 	public fun <init> ()V
 	public abstract fun close ()V
 	public abstract fun getExecutor ()Ljava/util/concurrent/Executor;
+}
+
+public final class kotlinx/coroutines/ExecutorCoroutineDispatcher$Key : kotlin/coroutines/AbstractCoroutineContextKey {
 }
 
 public final class kotlinx/coroutines/ExecutorsKt {
