@@ -13,6 +13,7 @@ public fun String.trimStackTrace(): String =
         .replace(Regex("#[0-9]+"), "")
         .replace(Regex("(?<=\tat )[^\n]*/"), "")
         .replace(Regex("\t"), "")
+        .replace("sun.misc.Unsafe.park", "jdk.internal.misc.Unsafe.park") // JDK8->JDK11
         .applyBackspace()
 
 public fun String.applyBackspace(): String {
