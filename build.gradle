@@ -78,6 +78,7 @@ buildscript {
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
         classpath "org.jetbrains.kotlinx:kotlinx-knit:$knit_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
+        classpath "org.openjfx:javafx-plugin:$javafx_plugin_version"
         classpath "org.jetbrains.kotlinx:binary-compatibility-validator:$binary_compatibility_validator_version"
 
         // JMH plugins
@@ -269,8 +270,26 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 // Report Kotlin compiler version when building project
 println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
 
+// --------------- Publish only from under JDK11+ ---------------
+task checkJdkForPublish {
+    doFirst {
+        String javaVersion = System.properties["java.version"]
+        int i = javaVersion.indexOf('.')
+        int javaVersionMajor =  (i < 0 ? javaVersion : javaVersion.substring(0, i)).toInteger()
+        if (javaVersionMajor < 11) {
+            throw new GradleException("Project can be build for publishing only under JDK 11+, but found ${javaVersion}")
+        }
+    }
+}
+
 // --------------- Configure sub-projects that are published ---------------
-task deploy(dependsOn: getTasksByName("publish", true) + getTasksByName("publishNpm", true))
+def publishTasks = getTasksByName("publish", true) + getTasksByName("publishNpm", true)
+
+publishTasks.each {
+    it.dependsOn checkJdkForPublish
+}
+
+task deploy(dependsOn: publishTasks)
 
 apply plugin: 'base'
 

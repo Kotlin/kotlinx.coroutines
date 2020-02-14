@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 repositories {
@@ -18,12 +18,12 @@ configurations {
 }
 
 dependencies {
-    compileOnly 'com.google.android:android:4.1.1.4'
-    compileOnly 'com.android.support:support-annotations:26.1.0'
+    compileOnly "com.google.android:android:$android_version"
+    compileOnly "com.android.support:support-annotations:$android_support_version"
 
-    testImplementation 'com.google.android:android:4.1.1.4'
-    testImplementation 'org.robolectric:robolectric:4.0-alpha-3'
-    testImplementation 'org.smali:baksmali:2.2.7'
+    testImplementation "com.google.android:android:$android_version"
+    testImplementation "org.robolectric:robolectric:$robolectric_version"
+    testImplementation "org.smali:baksmali:$baksmali_version"
 
     // TODO Replace with a 1.6.x version once released to maven.google.com.
     r8 'com.android.tools:r8:a7ce65837bec81c62261bf0adac73d9c09d32af2'

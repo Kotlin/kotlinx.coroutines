@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 package kotlinx.coroutines.debug
 
@@ -20,7 +20,7 @@ class RunningThreadStackMergeTest : DebugTestBase() {
         verifyDump(
             "Coroutine \"coroutine#1\":BlockingCoroutine{Active}@62230679", // <- this one is ignored
             "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@50284dc4, state: RUNNING\n" +
-                    "\tat sun.misc.Unsafe.park(Native Method)\n" +
+                    "\tat jdk.internal.misc.Unsafe.park(Native Method)\n" +
                     "\tat java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)\n" +
                     "\tat java.util.concurrent.locks.AbstractQueuedSynchronizer\$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)\n" +
                     "\tat java.util.concurrent.CyclicBarrier.dowait(CyclicBarrier.java:234)\n" +
@@ -75,7 +75,7 @@ class RunningThreadStackMergeTest : DebugTestBase() {
         verifyDump(
             "Coroutine \"coroutine#1\":BlockingCoroutine{Active}@62230679", // <- this one is ignored
             "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@3aea3c67, state: RUNNING\n" +
-                    "\tat sun.misc.Unsafe.park(Native Method)\n" +
+                    "\tat jdk.internal.misc.Unsafe.park(Native Method)\n" +
                     "\tat java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)\n" +
                     "\tat java.util.concurrent.locks.AbstractQueuedSynchronizer\$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)\n" +
                     "\tat java.util.concurrent.CyclicBarrier.dowait(CyclicBarrier.java:234)\n" +
@@ -116,7 +116,7 @@ class RunningThreadStackMergeTest : DebugTestBase() {
         verifyDump(
             "Coroutine \"coroutine#1\":BlockingCoroutine{Active}@62230679", // <- this one is ignored
             "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@3aea3c67, state: RUNNING\n" +
-                    "\tat sun.misc.Unsafe.park(Native Method)\n" +
+                    "\tat jdk.internal.misc.Unsafe.park(Native Method)\n" +
                     "\tat java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)\n" +
                     "\tat java.util.concurrent.locks.AbstractQueuedSynchronizer\$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)\n" +
                     "\tat java.util.concurrent.CyclicBarrier.dowait(CyclicBarrier.java:234)\n" +
