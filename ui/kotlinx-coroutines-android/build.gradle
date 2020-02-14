@@ -4,13 +4,6 @@
 
 repositories {
     google()
-    // TODO Remove once R8 is updated to a 1.6.x version.
-    maven {
-        url "http://storage.googleapis.com/r8-releases/raw/master"
-        metadataSources {
-            artifact()
-        }
-    }
 }
 
 configurations {
@@ -25,8 +18,7 @@ dependencies {
     testImplementation "org.robolectric:robolectric:$robolectric_version"
     testImplementation "org.smali:baksmali:$baksmali_version"
 
-    // TODO Replace with a 1.6.x version once released to maven.google.com.
-    r8 'com.android.tools:r8:a7ce65837bec81c62261bf0adac73d9c09d32af2'
+    r8 'com.android.tools.build:builder:4.0.0-alpha06' // Contains r8-2.0.4-dev
 }
 
 class RunR8Task extends JavaExec {
@@ -38,7 +30,7 @@ class RunR8Task extends JavaExec {
     File inputConfig
 
     @InputFile
-    final File inputConfigCommon = new File('r8-test-common.pro')
+    final File inputConfigCommon = new File('testdata/r8-test-common.pro')
 
     @InputFiles
     final File jarFile = project.jar.archivePath
@@ -74,30 +66,36 @@ class RunR8Task extends JavaExec {
     }
 }
 
-def optimizedDex = new File(buildDir, "dex-optim/")
-def unOptimizedDex = new File(buildDir, "dex-unoptim/")
+def optimizedDexDir = new File(buildDir, "dex-optim/")
+def unOptimizedDexDir = new File(buildDir, "dex-unoptim/")
+
+def optimizedDexFile = new File(optimizedDexDir, "classes.dex")
+def unOptimizedDexFile = new File(unOptimizedDexDir, "classes.dex")
 
 task runR8(type: RunR8Task, dependsOn: 'jar'){
-    outputDex = optimizedDex
-    inputConfig = file('r8-test-rules.pro')
+    outputDex = optimizedDexDir
+    inputConfig = file('testdata/r8-test-rules.pro')
 }
 
 task runR8NoOptim(type: RunR8Task, dependsOn: 'jar'){
-    outputDex = unOptimizedDex
-    inputConfig = file('r8-test-rules-no-optim.pro')
+    outputDex = unOptimizedDexDir
+    inputConfig = file('testdata/r8-test-rules-no-optim.pro')
 }
 
 test {
     // Ensure the R8-processed dex is built and supply its path as a property to the test.
     dependsOn(runR8)
     dependsOn(runR8NoOptim)
-    def dex1 = new File(optimizedDex, "classes.dex")
-    def dex2 = new File(unOptimizedDex, "classes.dex")
 
-    inputs.files(dex1, dex2)
+    inputs.files(optimizedDexFile, unOptimizedDexFile)
 
-    systemProperty 'dexPath', dex1.absolutePath
-    systemProperty 'noOptimDexPath', dex2.absolutePath
+    systemProperty 'dexPath', optimizedDexFile.absolutePath
+    systemProperty 'noOptimDexPath', unOptimizedDexFile.absolutePath
+
+    // Output custom metric with the size of the optimized dex
+    doLast {
+        println("##teamcity[buildStatisticValue key='optimizedDexSize' value='${optimizedDexFile.length()}']")
+    }
 }
 
 tasks.withType(dokka.getClass()) {

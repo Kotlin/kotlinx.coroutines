@@ -264,7 +264,10 @@ internal class SelectBuilderImpl<in R>(
         assert { isSelected } // "Must be selected first"
         _result.loop { result ->
             when {
-                result === UNDECIDED -> if (_result.compareAndSet(UNDECIDED, value())) return
+                result === UNDECIDED -> {
+                    val update = value()
+                    if (_result.compareAndSet(UNDECIDED, update)) return
+                }
                 result === COROUTINE_SUSPENDED -> if (_result.compareAndSet(COROUTINE_SUSPENDED, RESUMED)) {
                     block()
                     return

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.scheduling
@@ -85,7 +85,7 @@ open class ExperimentalCoroutineDispatcher(
      */
     public fun blocking(parallelism: Int = BLOCKING_DEFAULT_PARALLELISM): CoroutineDispatcher {
         require(parallelism > 0) { "Expected positive parallelism level, but have $parallelism" }
-        return LimitingDispatcher(this, parallelism, TaskMode.PROBABLY_BLOCKING)
+        return LimitingDispatcher(this, parallelism, TASK_PROBABLY_BLOCKING)
     }
 
     /**
@@ -98,7 +98,7 @@ open class ExperimentalCoroutineDispatcher(
     public fun limited(parallelism: Int): CoroutineDispatcher {
         require(parallelism > 0) { "Expected positive parallelism level, but have $parallelism" }
         require(parallelism <= corePoolSize) { "Expected parallelism level lesser than core pool size ($corePoolSize), but have $parallelism" }
-        return LimitingDispatcher(this, parallelism, TaskMode.NON_BLOCKING)
+        return LimitingDispatcher(this, parallelism, TASK_NON_BLOCKING)
     }
 
     internal fun dispatchWithContext(block: Runnable, context: TaskContext, tailDispatch: Boolean) {
@@ -132,7 +132,7 @@ open class ExperimentalCoroutineDispatcher(
 private class LimitingDispatcher(
     val dispatcher: ExperimentalCoroutineDispatcher,
     val parallelism: Int,
-    override val taskMode: TaskMode
+    override val taskMode: Int
 ) : ExecutorCoroutineDispatcher(), TaskContext, Executor {
 
     private val queue = ConcurrentLinkedQueue<Runnable>()
