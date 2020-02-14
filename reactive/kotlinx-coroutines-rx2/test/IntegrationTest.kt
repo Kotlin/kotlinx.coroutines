@@ -42,12 +42,12 @@ class IntegrationTest(
             if (delay) delay(1)
             // does not send anything
         }
-        assertNSE { observable.awaitFirst() }
+        assertFailsWith<NoSuchElementException> { observable.awaitFirst() }
         assertEquals("OK", observable.awaitFirstOrDefault("OK"))
         assertNull(observable.awaitFirstOrNull())
         assertEquals("ELSE", observable.awaitFirstOrElse { "ELSE" })
-        assertNSE { observable.awaitLast() }
-        assertNSE { observable.awaitSingle() }
+        assertFailsWith<NoSuchElementException> { observable.awaitLast() }
+        assertFailsWith<NoSuchElementException> { observable.awaitSingle() }
         var cnt = 0
         observable.collect {
             cnt++
@@ -89,7 +89,7 @@ class IntegrationTest(
         assertEquals(1, observable.awaitFirstOrNull())
         assertEquals(1, observable.awaitFirstOrElse { 0 })
         assertEquals(n, observable.awaitLast())
-        assertIAE { observable.awaitSingle() }
+        assertFailsWith<IllegalArgumentException> { observable.awaitSingle() }
         checkNumbers(n, observable)
         val channel = observable.openSubscription()
         checkNumbers(n, channel.asObservable(ctx(coroutineContext)))
@@ -131,22 +131,4 @@ class IntegrationTest(
         assertEquals(n, last)
     }
 
-
-    private inline fun assertIAE(block: () -> Unit) {
-        try {
-            block()
-            expectUnreached()
-        } catch (e: Throwable) {
-            assertTrue(e is IllegalArgumentException)
-        }
-    }
-
-    private inline fun assertNSE(block: () -> Unit) {
-        try {
-            block()
-            expectUnreached()
-        } catch (e: Throwable) {
-            assertTrue(e is NoSuchElementException)
-        }
-    }
 }

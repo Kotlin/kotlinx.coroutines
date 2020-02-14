@@ -43,12 +43,12 @@ class IntegrationTest(
             if (delay) delay(1)
             // does not send anything
         }
-        assertNSE { pub.awaitFirst() }
+        assertFailsWith<NoSuchElementException> { pub.awaitFirst() }
         assertEquals("OK", pub.awaitFirstOrDefault("OK"))
         assertNull(pub.awaitFirstOrNull())
         assertEquals("ELSE", pub.awaitFirstOrElse { "ELSE" })
-        assertNSE { pub.awaitLast() }
-        assertNSE { pub.awaitSingle() }
+        assertFailsWith<NoSuchElementException> { pub.awaitLast() }
+        assertFailsWith<NoSuchElementException> { pub.awaitSingle() }
         var cnt = 0
         pub.collect { cnt++ }
         assertEquals(0, cnt)
@@ -88,7 +88,7 @@ class IntegrationTest(
         assertEquals(n, pub.awaitLast())
         assertEquals(1, pub.awaitFirstOrNull())
         assertEquals(1, pub.awaitFirstOrElse { 0 })
-        assertIAE { pub.awaitSingle() }
+        assertFailsWith<IllegalArgumentException> { pub.awaitSingle() }
         checkNumbers(n, pub)
         val flow = pub.asFlow()
         checkNumbers(n, flow.flowOn(ctx(coroutineContext)).asPublisher())
@@ -129,21 +129,4 @@ class IntegrationTest(
         assertEquals(n, last)
     }
 
-    private inline fun assertIAE(block: () -> Unit) {
-        try {
-            block()
-            expectUnreached()
-        } catch (e: Throwable) {
-            assertTrue(e is IllegalArgumentException)
-        }
-    }
-
-    private inline fun assertNSE(block: () -> Unit) {
-        try {
-            block()
-            expectUnreached()
-        } catch (e: Throwable) {
-            assertTrue(e is NoSuchElementException)
-        }
-    }
 }
