@@ -6,6 +6,8 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 /**
  * This dispatcher _feature_ is implemented by [CoroutineDispatcher] implementations that natively support
@@ -75,5 +77,31 @@ public suspend fun delay(timeMillis: Long) {
     }
 }
 
+/**
+ * Delays coroutine for a given [duration] without blocking a thread and resumes it after the specified time.
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * immediately resumes with [CancellationException].
+ *
+ * Note that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ *
+ * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
+ */
+@ExperimentalTime
+public suspend fun delay(duration: Duration) = delay(duration.toDelayMillis())
+
 /** Returns [Delay] implementation of the given context */
 internal val CoroutineContext.delay: Delay get() = get(ContinuationInterceptor) as? Delay ?: DefaultDelay
+
+/**
+ * Convert this duration to its millisecond value.
+ * Positive durations are coerced at least `1`.
+ */
+@ExperimentalTime
+internal fun Duration.toDelayMillis(): Long =
+        when {
+            this > Duration.ZERO -> toLongMilliseconds().coerceAtLeast(1)
+            this < Duration.ZERO -> -1
+            // 0, -0, NaN
+            else -> 0
+        }
