@@ -11,19 +11,15 @@ import kotlin.test.*
 import kotlin.test.Test
 
 class CancellableContinuationResumeCloseStressTest : TestBase() {
-    private val dispatcher =
-        newFixedThreadPoolContext(2, "CancellableContinuationResumeCloseStressTest")
+    @get:Rule
+    public val dispatcher = ExecutorRule(2)
+
     private val startBarrier = CyclicBarrier(3)
     private val doneBarrier = CyclicBarrier(2)
     private val nRepeats = 1_000 * stressTestMultiplier
 
     private val closed = atomic(false)
     private var returnedOk = false
-
-    @After
-    fun tearDown() {
-        dispatcher.close()
-    }
 
     @Test
     @Suppress("BlockingMethodInNonBlockingContext")

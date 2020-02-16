@@ -1,20 +1,5 @@
-<!--- INCLUDE .*/example-([a-z]+)-([0-9a-z]+)\.kt 
-/*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
+<!--- TEST_NAME ChannelsGuideTest -->
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.$$1$$2
--->
-<!--- KNIT     ../kotlinx-coroutines-core/jvm/test/guide/.*\.kt -->
-<!--- TEST_OUT ../kotlinx-coroutines-core/jvm/test/guide/test/ChannelsGuideTest.kt
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.test
-
-import org.junit.Test
-
-class ChannelsGuideTest {
---> 
 **Table of contents**
 
 <!--- TOC -->
@@ -31,7 +16,7 @@ class ChannelsGuideTest {
   * [Channels are fair](#channels-are-fair)
   * [Ticker channels](#ticker-channels)
 
-<!--- END_TOC -->
+<!--- END -->
 
 ## Channels
 

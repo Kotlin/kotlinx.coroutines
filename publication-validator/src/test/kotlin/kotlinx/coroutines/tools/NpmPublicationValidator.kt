@@ -7,9 +7,9 @@ package kotlinx.coroutines.validator
 import com.google.gson.*
 import org.apache.commons.compress.archivers.tar.*
 import org.junit.*
-import org.junit.Assert.*
 import java.io.*
 import java.util.zip.*
+import org.junit.Assert.*
 
 class NpmPublicationValidator {
     private val VERSION = System.getenv("DeployVersion")

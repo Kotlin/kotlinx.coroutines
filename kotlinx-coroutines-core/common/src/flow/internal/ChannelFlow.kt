@@ -27,6 +27,14 @@ public abstract class ChannelFlow<T>(
     // buffer capacity between upstream and downstream context
     @JvmField val capacity: Int
 ) : Flow<T> {
+
+    // shared code to create a suspend lambda from collectTo function in one place
+    internal val collectToFun: suspend (ProducerScope<T>) -> Unit
+        get() = { collectTo(it) }
+
+    private val produceCapacity: Int
+        get() = if (capacity == Channel.OPTIONAL_CHANNEL) Channel.BUFFERED else capacity
+
     public fun update(
         context: CoroutineContext = EmptyCoroutineContext,
         capacity: Int = Channel.OPTIONAL_CHANNEL
@@ -57,13 +65,6 @@ public abstract class ChannelFlow<T>(
 
     protected abstract suspend fun collectTo(scope: ProducerScope<T>)
 
-    // shared code to create a suspend lambda from collectTo function in one place
-    internal val collectToFun: suspend (ProducerScope<T>) -> Unit
-        get() = { collectTo(it) }
-
-    private val produceCapacity: Int
-        get() = if (capacity == Channel.OPTIONAL_CHANNEL) Channel.BUFFERED else capacity
-
     open fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =
         scope.broadcast(context, produceCapacity, start, block = collectToFun)
 
@@ -75,11 +76,11 @@ public abstract class ChannelFlow<T>(
             collector.emitAll(produceImpl(this))
         }
 
+    open fun additionalToStringProps() = ""
+
     // debug toString
     override fun toString(): String =
         "$classSimpleName[${additionalToStringProps()}context=$context, capacity=$capacity]"
-
-    open fun additionalToStringProps() = ""
 }
 
 // ChannelFlow implementation that operates on another flow before it
@@ -161,7 +162,7 @@ private suspend fun <T, V> withContextUndispatched(
     countOrElement: Any = threadContextElements(newContext), // can be precomputed for speed
     block: suspend (V) -> T, value: V
 ): T =
-    suspendCoroutineUninterceptedOrReturn sc@{ uCont ->
+    suspendCoroutineUninterceptedOrReturn { uCont ->
         withCoroutineContext(newContext, countOrElement) {
             block.startCoroutineUninterceptedOrReturn(value, Continuation(newContext) {
                 uCont.resumeWith(it)

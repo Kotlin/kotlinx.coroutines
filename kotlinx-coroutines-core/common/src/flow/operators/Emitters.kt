@@ -71,7 +71,12 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
 public fun <T> Flow<T>.onStart(
     action: suspend FlowCollector<T>.() -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke start action
-    SafeCollector<T>(this, coroutineContext).action()
+    val safeCollector = SafeCollector<T>(this, coroutineContext)
+    try {
+        safeCollector.action()
+    } finally {
+        safeCollector.releaseIntercepted()
+    }
     collect(this) // directly delegate
 }
 
@@ -141,7 +146,12 @@ public fun <T> Flow<T>.onCompletion(
         throw e
     }
     // Exception from the upstream or normal completion
-    SafeCollector(this, coroutineContext).invokeSafely(action, exception)
+    val safeCollector = SafeCollector(this, coroutineContext)
+    try {
+        safeCollector.invokeSafely(action, exception)
+    } finally {
+        safeCollector.releaseIntercepted()
+    }
     exception?.let { throw it }
 }
 

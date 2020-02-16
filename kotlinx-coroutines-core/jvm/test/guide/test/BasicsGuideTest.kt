@@ -1,53 +1,56 @@
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
+/*
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+// This file was automatically generated from basics.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
 
 import org.junit.Test
 
 class BasicsGuideTest {
-
     @Test
-    fun testKotlinxCoroutinesGuideBasic01() {
-        test("KotlinxCoroutinesGuideBasic01") { kotlinx.coroutines.guide.basic01.main() }.verifyLines(
+    fun testExampleBasic01() {
+        test("ExampleBasic01") { kotlinx.coroutines.guide.exampleBasic01.main() }.verifyLines(
             "Hello,",
             "World!"
         )
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideBasic02() {
-        test("KotlinxCoroutinesGuideBasic02") { kotlinx.coroutines.guide.basic02.main() }.verifyLines(
+    fun testExampleBasic02() {
+        test("ExampleBasic02") { kotlinx.coroutines.guide.exampleBasic02.main() }.verifyLines(
             "Hello,",
             "World!"
         )
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideBasic02b() {
-        test("KotlinxCoroutinesGuideBasic02b") { kotlinx.coroutines.guide.basic02b.main() }.verifyLines(
+    fun testExampleBasic03() {
+        test("ExampleBasic03") { kotlinx.coroutines.guide.exampleBasic03.main() }.verifyLines(
             "Hello,",
             "World!"
         )
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideBasic03() {
-        test("KotlinxCoroutinesGuideBasic03") { kotlinx.coroutines.guide.basic03.main() }.verifyLines(
+    fun testExampleBasic04() {
+        test("ExampleBasic04") { kotlinx.coroutines.guide.exampleBasic04.main() }.verifyLines(
             "Hello,",
             "World!"
         )
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideBasic03s() {
-        test("KotlinxCoroutinesGuideBasic03s") { kotlinx.coroutines.guide.basic03s.main() }.verifyLines(
+    fun testExampleBasic05() {
+        test("ExampleBasic05") { kotlinx.coroutines.guide.exampleBasic05.main() }.verifyLines(
             "Hello,",
             "World!"
         )
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideBasic04() {
-        test("KotlinxCoroutinesGuideBasic04") { kotlinx.coroutines.guide.basic04.main() }.verifyLines(
+    fun testExampleBasic06() {
+        test("ExampleBasic06") { kotlinx.coroutines.guide.exampleBasic06.main() }.verifyLines(
             "Task from coroutine scope",
             "Task from runBlocking",
             "Task from nested launch",
@@ -56,23 +59,23 @@ class BasicsGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideBasic05() {
-        test("KotlinxCoroutinesGuideBasic05") { kotlinx.coroutines.guide.basic05.main() }.verifyLines(
+    fun testExampleBasic07() {
+        test("ExampleBasic07") { kotlinx.coroutines.guide.exampleBasic07.main() }.verifyLines(
             "Hello,",
             "World!"
         )
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideBasic06() {
-        test("KotlinxCoroutinesGuideBasic06") { kotlinx.coroutines.guide.basic06.main() }.also { lines ->
+    fun testExampleBasic08() {
+        test("ExampleBasic08") { kotlinx.coroutines.guide.exampleBasic08.main() }.also { lines ->
             check(lines.size == 1 && lines[0] == ".".repeat(100_000))
         }
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideBasic07() {
-        test("KotlinxCoroutinesGuideBasic07") { kotlinx.coroutines.guide.basic07.main() }.verifyLines(
+    fun testExampleBasic09() {
+        test("ExampleBasic09") { kotlinx.coroutines.guide.exampleBasic09.main() }.verifyLines(
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ..."

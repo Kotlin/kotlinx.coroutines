@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.android
@@ -12,17 +12,24 @@ import kotlin.coroutines.*
 
 @Keep
 internal class AndroidExceptionPreHandler :
-    AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler, Function0<Method?> {
+    AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler
+{
+    @Volatile
+    private var _preHandler: Any? = this // uninitialized marker
 
-    private val preHandler by lazy(this)
-
-    // Reflectively lookup pre-handler. Implement Function0 to avoid generating second class for lambda
-    override fun invoke(): Method? = try {
-        Thread::class.java.getDeclaredMethod("getUncaughtExceptionPreHandler").takeIf {
-            Modifier.isPublic(it.modifiers) && Modifier.isStatic(it.modifiers)
+    // Reflectively lookup pre-handler.
+    private fun preHandler(): Method? {
+        val current = _preHandler
+        if (current !== this) return current as Method?
+        val declared = try {
+            Thread::class.java.getDeclaredMethod("getUncaughtExceptionPreHandler").takeIf {
+                Modifier.isPublic(it.modifiers) && Modifier.isStatic(it.modifiers)
+            }
+        } catch (e: Throwable) {
+            null /* not found */
         }
-    } catch (e: Throwable) {
-        null /* not found */
+        _preHandler = declared
+        return declared
     }
 
     override fun handleException(context: CoroutineContext, exception: Throwable) {
@@ -39,7 +46,7 @@ internal class AndroidExceptionPreHandler :
         if (Build.VERSION.SDK_INT >= 28) {
             thread.uncaughtExceptionHandler.uncaughtException(thread, exception)
         } else {
-            (preHandler?.invoke(null) as? Thread.UncaughtExceptionHandler)
+            (preHandler()?.invoke(null) as? Thread.UncaughtExceptionHandler)
                 ?.uncaughtException(thread, exception)
         }
     }

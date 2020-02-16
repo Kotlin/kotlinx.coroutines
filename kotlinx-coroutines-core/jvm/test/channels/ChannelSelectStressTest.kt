@@ -7,9 +7,10 @@ package kotlinx.coroutines.channels
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.After
+import org.junit.Test
 import java.util.concurrent.atomic.AtomicLongArray
+import kotlin.test.*
 
 class ChannelSelectStressTest : TestBase() {
     private val pairedCoroutines = 3

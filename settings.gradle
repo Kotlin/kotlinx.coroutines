@@ -15,10 +15,7 @@ def module(String path) {
 // ---------------------------
 
 include('benchmarks')
-include('knit')
 include('site')
-
-module('binary-compatibility-validator')
 
 include "kotlinx-coroutines-core"
 

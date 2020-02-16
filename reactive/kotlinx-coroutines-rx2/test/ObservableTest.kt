@@ -8,7 +8,6 @@ import io.reactivex.*
 import io.reactivex.plugins.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
-import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
@@ -30,7 +29,7 @@ class ObservableTest : TestBase() {
         expect(2)
         observable.subscribe { value ->
             expect(5)
-            Assert.assertThat(value, IsEqual("OK"))
+            assertEquals("OK", value)
         }
         expect(3)
         yield() // to started coroutine
@@ -49,8 +48,8 @@ class ObservableTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            Assert.assertThat(error, IsInstanceOf(RuntimeException::class.java))
-            Assert.assertThat(error.message, IsEqual("OK"))
+            assertTrue(error is RuntimeException)
+            assertEquals("OK", error.message)
         })
         expect(3)
         yield() // to started coroutine

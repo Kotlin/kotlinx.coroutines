@@ -6,11 +6,11 @@ package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.LockFreedomTestEnvironment
 import kotlinx.coroutines.stressTestMultiplier
-import org.junit.Assert.*
 import org.junit.Test
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.test.*
 
 /**
  * This stress test has 4 threads adding randomly to the list and them immediately undoing

@@ -164,11 +164,8 @@ threads are handled by Android runtime.
 
 #### R8 and ProGuard
 
-For R8 no actions required, it will take obfuscation rules from the jar.
-
-For Proguard  you need to add options from [coroutines.pro](kotlinx-coroutines-core/jvm/resources/META-INF/proguard/coroutines.pro) to your rules manually.
- 
-R8 is a replacement for ProGuard in Android ecosystem, it is enabled by default since Android gradle plugin 3.4.0 (3.3.0-beta also had it enabled).
+R8 and ProGuard rules are bundled into the [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android) module.
+For more details see ["Optimization" section for Android](ui/kotlinx-coroutines-android/README.md#optimization). 
 
 ### JS
 
@@ -203,8 +200,9 @@ to Gradle (in Preferences -> Build, Execution, Deployment -> Build Tools -> Grad
 
 ### Requirements
 
-* JDK >= 1.8 referred to by the `JAVA_HOME` environment variable. JDK must include JavaFX.
+* JDK >= 11 referred to by the `JAVA_HOME` environment variable.
 * JDK 1.6 referred to by the `JDK_16` environment variable. It is okay to have `JDK_16` pointing to `JAVA_HOME` for external contributions.
+* JDK 1.8 referred to by the `JDK_18` environment variable. Only used by nightly stress-tests. It is okay to have `JDK_16` pointing to `JAVA_HOME` for external contributions.
 
 ## Contributions and releases
 
@@ -217,6 +215,12 @@ The `develop` branch is pushed to `master` during release.
 
 * Full release procedure checklist is [here](RELEASE.md).
 * Steps for contributing new integration modules are explained [here](integration/README.md#Contributing).
+* Use [Knit](https://github.com/Kotlin/kotlinx-knit/blob/master/README.md) for updates to documentation:
+  * In project root directory run `./gradlew knit`.
+  * Commit updated documents and examples together with other changes.
+* Use [Binary Compatibility Validator](https://github.com/Kotlin/binary-compatibility-validator/blob/master/README.md) for updates to public API:
+  * In project root directory run `./gradlew apiDump`. 
+  * Commit updated API index together with other changes.
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->

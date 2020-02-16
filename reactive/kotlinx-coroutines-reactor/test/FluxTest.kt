@@ -7,7 +7,6 @@ package kotlinx.coroutines.reactor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
-import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Test
 import kotlin.test.*
@@ -23,7 +22,7 @@ class FluxTest : TestBase() {
         expect(2)
         flux.subscribe { value ->
             expect(5)
-            Assert.assertThat(value, IsEqual("OK"))
+            assertEquals("OK", value)
         }
         expect(3)
         yield() // to started coroutine
@@ -42,8 +41,8 @@ class FluxTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            Assert.assertThat(error, IsInstanceOf(RuntimeException::class.java))
-            Assert.assertThat(error.message, IsEqual("OK"))
+            assertTrue(error is RuntimeException)
+            assertEquals("OK", error.message)
         })
         expect(3)
         yield() // to started coroutine

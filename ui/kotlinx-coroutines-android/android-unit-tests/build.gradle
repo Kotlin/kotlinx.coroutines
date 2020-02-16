@@ -1,16 +1,11 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-repositories {
-    google()
-}
-
 dependencies {
-    testImplementation 'com.google.android:android:4.1.1.4'
-    testImplementation 'com.android.support:support-annotations:26.1.0'
-    testImplementation 'com.google.android:android:4.1.1.4'
-    testImplementation 'org.robolectric:robolectric:4.0-alpha-3'
+    testImplementation "com.google.android:android:$android_version"
+    testImplementation "com.android.support:support-annotations:$android_support_version"
+    testImplementation "org.robolectric:robolectric:$robolectric_version"
     testImplementation project(":kotlinx-coroutines-test")
     testImplementation project(":kotlinx-coroutines-android")
 }

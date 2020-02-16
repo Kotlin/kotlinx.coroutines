@@ -6,11 +6,11 @@ package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
 import java.util.concurrent.atomic.*
+import kotlin.test.*
 
 @RunWith(Parameterized::class)
 class ChannelSendReceiveStressTest(
@@ -101,7 +101,7 @@ class ChannelSendReceiveStressTest(
         assertEquals(nEvents, sentTotal.get())
         if (!kind.isConflated) assertEquals(nEvents, receivedTotal.get())
         repeat(nReceivers) { receiveIndex ->
-            assertTrue("Each receiver should have received something", receivedBy[receiveIndex] > 0)
+            assertTrue(receivedBy[receiveIndex] > 0, "Each receiver should have received something")
         }
     }
 
