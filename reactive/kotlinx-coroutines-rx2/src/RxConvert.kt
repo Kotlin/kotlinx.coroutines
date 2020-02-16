@@ -6,14 +6,12 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.Disposable
-import io.reactivex.disposables.Disposables
-import kotlinx.atomicfu.locks.reentrantLock
-import kotlinx.atomicfu.locks.withLock
+import io.reactivex.internal.disposables.DisposableHelper
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
-import kotlinx.coroutines.sync.Mutex
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.*
 
 /**
@@ -93,101 +91,19 @@ public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): 
  * than consumed, i.e. to control the back-pressure behavior. Check [callbackFlow] for more details.
  */
 @ExperimentalCoroutinesApi
-public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = asFlow_ReentrantLock()
+public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
 
-
-// This version doesn't even compile - I don't know much about atomicfu yet.
-/*
-@ExperimentalCoroutinesApi
-public fun <T: Any> ObservableSource<T>.asFlow_AtomicFu(): Flow<T> = callbackFlow {
-
-    val disposable = atomic(Disposables.empty())
+    val disposableRef = AtomicReference<Disposable>(null)
 
     val observer = object : Observer<T> {
         override fun onComplete() { close() }
-        override fun onSubscribe(d: Disposable) =
-            if (disposable.value.isDisposed) d.dispose() else disposable.value = d
-                // we should probably do some compareAndSet above instead
+        override fun onSubscribe(d: Disposable) { DisposableHelper.setOnce(disposableRef, d) }
         override fun onNext(t: T) { sendBlocking(t) }
         override fun onError(e: Throwable) { close(e) }
     }
 
     subscribe(observer)
-    awaitClose { disposable.value.dispose() }
-        // in case when the source did not actually subscribe yet at all (observer.onSubscribe was not called):
-        // then this .dispose() just "marks" that we want to unsubscribe synchronously when we get .onSubscribe
-}
-*/
-
-@ExperimentalCoroutinesApi
-public fun <T: Any> ObservableSource<T>.asFlow_ReentrantLock(): Flow<T> = callbackFlow {
-
-    var disposable = Disposables.empty()
-    val lock = reentrantLock()
-
-    val observer = object : Observer<T> {
-        override fun onComplete() { close() }
-        override fun onSubscribe(d: Disposable) =
-            lock.withLock { if (disposable.isDisposed) d.dispose() else disposable = d }
-        override fun onNext(t: T) { sendBlocking(t) }
-        override fun onError(e: Throwable) { close(e) }
-    }
-
-    subscribe(observer)
-    awaitClose { lock.withLock { disposable.dispose() } }
-        // in case when the source did not actually subscribe yet at all (observer.onSubscribe was not called):
-        // then this .dispose() just "marks" that we want to unsubscribe synchronously when we get .onSubscribe
-}
-
-// This version tries to leverage Job.isActive and generally Job and Channel happens-before guaranties.
-// (but I think it's incorrect)
-@ExperimentalCoroutinesApi
-public fun <T: Any> ObservableSource<T>.asFlow_JobIsActive(): Flow<T> = callbackFlow {
-
-    var disposable: Disposable? = null
-
-    val observer = object : Observer<T> {
-        override fun onComplete() { close() }
-        override fun onSubscribe(d: Disposable) = if (isActive) disposable = d else d.dispose()
-            // Is this version correct due to Job and Channel being thread-safe?? (and rx signaling being "serial")
-        override fun onNext(t: T) { sendBlocking(t) }
-        override fun onError(e: Throwable) { close(e) }
-    }
-    subscribe(observer)
-    awaitClose { disposable?.dispose() }
-}
-
-@ExperimentalCoroutinesApi
-public fun <T: Any> ObservableSource<T>.asFlow_Mutex(): Flow<T> = callbackFlow {
-
-    lateinit var disposable: Disposable
-    val mutex = Mutex(locked = true)
-
-    val observer = object : Observer<T> {
-        override fun onComplete() { close() }
-        override fun onSubscribe(d: Disposable) { disposable = d; mutex.unlock() }
-        override fun onNext(t: T) { sendBlocking(t) }
-        override fun onError(e: Throwable) { close(e) }
-    }
-    subscribe(observer)
-    if (mutex.isLocked) withContext(NonCancellable) { mutex.lock() }
-    awaitClose { disposable.dispose() }
-}
-
-@ExperimentalCoroutinesApi
-public fun <T: Any> ObservableSource<T>.asFlow_Deferred(): Flow<T> = callbackFlow {
-
-    val deferred = CompletableDeferred<Disposable>()
-
-    val observer = object : Observer<T> {
-        override fun onComplete() { close() }
-        override fun onSubscribe(d: Disposable) { deferred.complete(d) }
-        override fun onNext(t: T) { sendBlocking(t) }
-        override fun onError(e: Throwable) { close(e) }
-    }
-    subscribe(observer)
-    val disposable = withContext(NonCancellable) { deferred.await() }
-    awaitClose { disposable.dispose() }
+    awaitClose { DisposableHelper.dispose(disposableRef) }
 }
 
 /**
