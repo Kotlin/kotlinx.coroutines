@@ -30,16 +30,16 @@ import kotlin.native.concurrent.*
  * It causes eventual failure of the broadcast coroutine and cancellation of the underlying channel, too,
  * but it is not as prompt.
  *
- * ### Obsolete
+ * ### Future replacement
  *
  * This function has an inappropriate result type of [BroadcastChannel] which provides
  * [send][BroadcastChannel.send] and [close][BroadcastChannel.close] operations that interfere with
  * the broadcasting coroutine in hard-to-specify ways. It will be replaced with
- * sharing operators on [Flow][kotlinx.coroutines.flow.Flow].
+ * sharing operators on [Flow][kotlinx.coroutines.flow.Flow] in the future.
  *
  * @param start coroutine start option. The default value is [CoroutineStart.LAZY].
  */
-@ObsoleteCoroutinesApi // since version 1.4.0
+//@ObsoleteCoroutinesApi // since version 1.4.0
 fun <E> ReceiveChannel<E>.broadcast(
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY
