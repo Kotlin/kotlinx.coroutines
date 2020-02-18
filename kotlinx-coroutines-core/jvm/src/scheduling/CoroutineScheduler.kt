@@ -951,3 +951,12 @@ internal class CoroutineScheduler(
         TERMINATED
     }
 }
+
+@Suppress("UNUSED")
+@JvmName("isSchedulerWorker")
+internal fun isSchedulerWorker(thread: Thread) = thread is CoroutineScheduler.Worker
+
+@Suppress("UNUSED")
+@JvmName("mayNotBlock")
+internal fun mayNotBlock(thread: Thread) = thread is CoroutineScheduler.Worker &&
+    thread.state == CoroutineScheduler.WorkerState.CPU_ACQUIRED
