@@ -8,8 +8,8 @@ apply from: rootProject.file("gradle/experimental.gradle")
 def rootModule = "kotlinx.coroutines"
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
-def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom']
-def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'js-stub', 'stdlib-stubs']
+def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom', 'publication-validator']
+def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'js-stub', 'stdlib-stubs', 'publication-validator']
 // Not published
 def unpublished = internal + ['example-frontend-js', 'android-unit-tests']
 
@@ -133,8 +133,7 @@ allprojects {
 
 apply plugin: "binary-compatibility-validator"
 apiValidation {
-    ignoredProjects += ["stdlib-stubs", "benchmarks", "site",
-                        "kotlinx-coroutines-bom", "android-unit-tests", "js-stub"]
+    ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
     ignoredPackages += "kotlinx.coroutines.internal"
 }
 

@@ -12,8 +12,8 @@ import java.util.zip.*
 import org.junit.Assert.*
 
 class NpmPublicationValidator {
-    private val VERSION = System.getenv("DeployVersion")
-    private val BUILD_DIR = System.getenv("teamcity.build.checkoutDir")
+    private val VERSION = System.getenv("deployVersion")!!
+    private val BUILD_DIR = System.getenv("projectRoot")!!
     private val NPM_ARTIFACT = "$BUILD_DIR/kotlinx-coroutines-core/build/npm/kotlinx-coroutines-core-$VERSION.tgz"
 
     @Test

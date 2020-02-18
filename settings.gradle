@@ -40,3 +40,5 @@ module('ui/kotlinx-coroutines-swing')
 
 module('js/js-stub')
 module('js/example-frontend-js')
+
+module('publication-validator')
