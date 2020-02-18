@@ -5,6 +5,9 @@
 package kotlinx.coroutines.rx2
 
 import io.reactivex.Observable
+import io.reactivex.ObservableSource
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposables
 import io.reactivex.subjects.PublishSubject
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -110,6 +113,26 @@ class ObservableAsFlowTest : TestBase() {
         source.onNext(3)
         assertFalse(source.hasObservers())
         finish(6)
+    }
+
+    @Test
+    fun testLateOnSubscribe() {
+        var observer: Observer<in Int>? = null
+        val source = ObservableSource<Int> { observer = it }
+        val flow = source.asFlow()
+        assertNull(observer)
+        val job = GlobalScope.launch(Dispatchers.Unconfined) {
+            expect(1)
+            flow.collect { expectUnreached() }
+            expectUnreached()
+        }
+        expect(2)
+        assertNotNull(observer)
+        job.cancel()
+        val disposable = Disposables.empty()
+        observer!!.onSubscribe(disposable)
+        assertTrue(disposable.isDisposed)
+        finish(3)
     }
 
     @Test

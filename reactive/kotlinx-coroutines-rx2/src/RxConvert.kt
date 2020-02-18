@@ -90,10 +90,10 @@ public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): 
  * resulting flow to specify a user-defined value and to control what happens when data is produced faster
  * than consumed, i.e. to control the back-pressure behavior. Check [callbackFlow] for more details.
  */
-@ExperimentalCoroutinesApi
+@ExperimentalCoroutinesApi // TODO: Use logic from DisposableHelper directly instead of using the (internal?) helper
 public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
 
-    val disposableRef = AtomicReference<Disposable>(null)
+    val disposableRef = AtomicReference<Disposable>()
 
     val observer = object : Observer<T> {
         override fun onComplete() { close() }
