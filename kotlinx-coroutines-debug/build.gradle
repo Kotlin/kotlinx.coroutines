@@ -22,7 +22,7 @@ dependencies {
     compileOnly "junit:junit:$junit_version"
     shadowDeps "net.bytebuddy:byte-buddy:$byte_buddy_version"
     compile "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
-    compile 'io.projectreactor.tools:blockhound:1.0.1.BUILD-SNAPSHOT'
+    compile 'io.projectreactor.tools:blockhound:1.0.2.RELEASE'
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     runtime "net.java.dev.jna:jna:5.5.0"
     runtime "net.java.dev.jna:jna-platform:5.5.0"
