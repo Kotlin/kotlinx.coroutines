@@ -6,7 +6,6 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.Disposable
-import io.reactivex.internal.disposables.DisposableHelper
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
@@ -90,20 +89,25 @@ public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): 
  * resulting flow to specify a user-defined value and to control what happens when data is produced faster
  * than consumed, i.e. to control the back-pressure behavior. Check [callbackFlow] for more details.
  */
-@ExperimentalCoroutinesApi // TODO: Use logic from DisposableHelper directly instead of using the (internal?) helper
+@ExperimentalCoroutinesApi
 public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
 
     val disposableRef = AtomicReference<Disposable>()
 
     val observer = object : Observer<T> {
         override fun onComplete() { close() }
-        override fun onSubscribe(d: Disposable) { DisposableHelper.setOnce(disposableRef, d) }
+        override fun onSubscribe(d: Disposable) { if (!disposableRef.compareAndSet(null, d)) d.dispose() }
         override fun onNext(t: T) { sendBlocking(t) }
         override fun onError(e: Throwable) { close(e) }
     }
 
     subscribe(observer)
-    awaitClose { DisposableHelper.dispose(disposableRef) }
+    awaitClose { disposableRef.getAndSet(DISPOSED)?.dispose() }
+}
+
+private object DISPOSED : Disposable {
+    override fun isDisposed() = true
+    override fun dispose() = Unit
 }
 
 /**
