@@ -116,7 +116,7 @@ private class PulseTimer : AnimationTimer() {
     }
 }
 
-/** @return [true] if initialized successfully, and [false] if no display is detected */
+/** @return true if initialized successfully, and false if no display is detected */
 internal fun initPlatform(): Boolean = PlatformInitializer.success
 
 // Lazily try to initialize JavaFx platform just once

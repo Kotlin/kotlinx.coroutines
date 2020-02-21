@@ -26,7 +26,7 @@ class FxAsFlowApp: Application(), CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = JavaFx + job
 
-    private val incrementBttn = Button("Increment")
+    private val incrementButton = Button("Increment")
     private val incrementLabel = Label("")
     private val textInput = TextField()
     private val flippedTextLabel = Label()
@@ -38,7 +38,7 @@ class FxAsFlowApp: Application(), CoroutineScope {
         gridPane.apply {
             hgap = 10.0
             vgap = 10.0
-            add(incrementBttn, 0, 0)
+            add(incrementButton, 0, 0)
             add(incrementLabel, 1, 0)
             add(textInput, 0, 1)
             add(flippedTextLabel, 1, 1)
@@ -63,7 +63,7 @@ class FxAsFlowApp: Application(), CoroutineScope {
         // Initializing the "Increment" button
         val stringProperty = SimpleStringProperty()
         var i = 0
-        incrementBttn.onAction = EventHandler {
+        incrementButton.onAction = EventHandler {
             i += 1
             stringProperty.set(i.toString())
         }
