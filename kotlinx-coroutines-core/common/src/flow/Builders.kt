@@ -298,7 +298,7 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  *             // Also, offer will throw if the channel is canceled.
  *             // To avoid that, we wrap the call in runBlocking.
  *             // See https://github.com/Kotlin/kotlinx.coroutines/issues/974
- *             runBlocking {
+ *             runCatching {
  *                 offer(value)
  *             }
  *         }
