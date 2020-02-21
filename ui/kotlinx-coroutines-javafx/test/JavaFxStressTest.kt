@@ -14,7 +14,7 @@ class JavaFxStressTest : TestBase() {
     }
 
     @Test
-    fun cancellationRaceStressTest() = runTest {
+    fun testCancellationRace() = runTest {
         if (!initPlatform()) {
             println("Skipping JavaFxTest in headless environment")
             return@runTest // ignore test in headless environments

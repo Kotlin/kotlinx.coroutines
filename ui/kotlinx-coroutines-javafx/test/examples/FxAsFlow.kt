@@ -26,12 +26,12 @@ class FxAsFlowApp: Application(), CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = JavaFx + job
 
-    private  val  incrementBttn = Button("Increment")
-    private  val  incrementLabel = Label("")
-    private  val  textInput = TextField()
-    private  val  flippedTextLabel = Label()
-    private  val  spinner = Spinner<Int>()
-    private  val  spinnerChangesLabel = Label()
+    private val incrementBttn = Button("Increment")
+    private val incrementLabel = Label("")
+    private val textInput = TextField()
+    private val flippedTextLabel = Label()
+    private val spinner = Spinner<Int>()
+    private val spinnerChangesLabel = Label()
 
     public override fun start(  primaryStage: Stage) {
         val gridPane = GridPane()
@@ -61,7 +61,7 @@ class FxAsFlowApp: Application(), CoroutineScope {
 
     init {
         // Initializing the "Increment" button
-        val stringProperty = SimpleStringProperty("")
+        val stringProperty = SimpleStringProperty()
         var i = 0
         incrementBttn.onAction = EventHandler {
             i += 1
@@ -76,7 +76,7 @@ class FxAsFlowApp: Application(), CoroutineScope {
         }
         incrementLabel.textProperty().bind(stringProperty)
         // Initializing the reversed text field
-        val stringProperty2 = SimpleStringProperty("")
+        val stringProperty2 = SimpleStringProperty()
         launch {
             textInput.textProperty().asFlow().collect {
                 if (it != null) {
@@ -88,7 +88,7 @@ class FxAsFlowApp: Application(), CoroutineScope {
         // Initializing the spinner
         spinner.valueFactory = SpinnerValueFactory.IntegerSpinnerValueFactory(0, 100)
         spinner.isEditable = true
-        val stringProperty3 = SimpleStringProperty("")
+        val stringProperty3 = SimpleStringProperty()
         launch {
             spinner.valueProperty().asFlow().collect {
                 if (it != null) {

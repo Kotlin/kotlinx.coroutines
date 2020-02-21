@@ -1,3 +1,7 @@
+/*
+ *  Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.javafx
 
 import javafx.beans.value.ChangeListener
@@ -20,9 +24,16 @@ import kotlinx.coroutines.flow.flowOn
  *
  * Since this implementation uses [ObservableValue.addListener], even if this [ObservableValue]
  * supports lazy evaluation, eager computation will be enforced while the flow is being collected.
+ *
+ * All the calls to JavaFX API are performed in the JavaFX application thread.
+ *
+ * ### Operator fusion
+ *
+ * Adjacent applications of [flowOn], [buffer], [conflate], and [produceIn] to the result of `asFlow` are fused.
+ * [conflate] has no effect, as this flow is already conflated; one can use [buffer] to change that instead.
  */
 @ExperimentalCoroutinesApi
-public fun <T: Any> ObservableValue<T>.asFlow(): Flow<T> = callbackFlow<T> {
+public fun <T> ObservableValue<T>.asFlow(): Flow<T> = callbackFlow<T> {
     val listener = ChangeListener<T> { _, _, newValue ->
         try {
             offer(newValue)

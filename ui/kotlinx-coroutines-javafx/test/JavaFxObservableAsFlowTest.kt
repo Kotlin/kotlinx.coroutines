@@ -24,7 +24,7 @@ class JavaFxObservableAsFlowTest : TestBase() {
         }
 
         val integerProperty = SimpleIntegerProperty(0)
-        val n = 10000 * stressTestMultiplier
+        val n = 1000
         val flow = integerProperty.asFlow().takeWhile { j -> j != n }
         newSingleThreadContext("setter").use { pool ->
             launch(pool) {
