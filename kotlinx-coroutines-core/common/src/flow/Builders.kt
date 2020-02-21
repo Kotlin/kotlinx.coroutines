@@ -293,9 +293,14 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  * fun flowFrom(api: CallbackBasedApi): Flow<T> = callbackFlow {
  *     val callback = object : Callback { // implementation of some callback interface
  *         override fun onNextValue(value: T) {
- *             // Note: offer drops value when buffer is full
+ *             // Note: offer drops values when the buffer is full
  *             // Use either buffer(Channel.CONFLATED) or buffer(Channel.UNLIMITED) to avoid overfill
- *             offer(value)
+ *             // Also, offer will throw if the channel is canceled.
+ *             // To avoid that, we wrap the call in runBlocking.
+ *             // See https://github.com/Kotlin/kotlinx.coroutines/issues/974
+ *             runBlocking {
+ *                 offer(value)
+ *             }
  *         }
  *         override fun onApiError(cause: Throwable) {
  *             cancel(CancellationException("API Error", cause))
