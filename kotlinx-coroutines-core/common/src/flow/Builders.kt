@@ -296,7 +296,7 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  *             // Note: offer drops values when the buffer is full
  *             // Use either buffer(Channel.CONFLATED) or buffer(Channel.UNLIMITED) to avoid overfill
  *             // Also, offer will throw if the channel is canceled.
- *             // To avoid that, we wrap the call in runBlocking.
+ *             // To avoid that, we wrap the call in runCatching.
  *             // See https://github.com/Kotlin/kotlinx.coroutines/issues/974
  *             runCatching {
  *                 offer(value)
