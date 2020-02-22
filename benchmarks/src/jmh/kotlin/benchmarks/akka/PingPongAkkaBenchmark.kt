@@ -1,18 +1,15 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package benchmarks.akka
 
-import akka.actor.ActorRef
-import akka.actor.ActorSystem
-import akka.actor.Props
-import akka.actor.UntypedAbstractActor
-import com.typesafe.config.ConfigFactory
+import akka.actor.*
+import com.typesafe.config.*
 import org.openjdk.jmh.annotations.*
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-import java.util.concurrent.CountDownLatch
+import scala.concurrent.*
+import scala.concurrent.duration.*
+import java.util.concurrent.*
 
 const val N_MESSAGES = 100_000
 
