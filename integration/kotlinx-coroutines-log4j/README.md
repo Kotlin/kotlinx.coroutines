@@ -4,13 +4,17 @@ Integration with Log4J 2's [ThreadContext](https://logging.apache.org/log4j/2.x/
 
 ## Example
 
-Add [Log4JThreadContext] to the coroutine context so that the Log4J `ThreadContext` state is captured and passed into the coroutine.
+Add a [DiagnosticContext] to the coroutine context so that the Log4J `ThreadContext` state is set for the duration of
+coroutine context.
 
 ```kotlin
-ThreadContext.put("kotlin", "rocks")
+launch(MutableDiagnosticContext().put("kotlin", "rocks")) {
+  logger.info(...)  // The ThreadContext will contain the mapping here
+}
 
-launch(Log4JThreadContext()) {
-   logger.info(...)   // the ThreadContext will contain the mapping here
+// If not modifying the context state, use an immutable context for fewer allocations
+launch(immutableDiagnosticContext()) {
+  logger.info(...)
 }
 ```
 

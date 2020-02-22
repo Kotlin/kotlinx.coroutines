@@ -5,21 +5,17 @@
 package kotlinx.coroutines.log4j
 
 import kotlinx.coroutines.*
-import org.apache.logging.log4j.CloseableThreadContext
 import org.apache.logging.log4j.ThreadContext
 import org.junit.*
 import org.junit.Test
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class Log4JThreadContextTest : TestBase() {
-    @Before
-    fun setUp() {
-        ThreadContext.clearAll()
-    }
+class Log4jDiagnosticContextTest : TestBase() {
 
+    @Before
     @After
-    fun tearDown() {
+    fun clearThreadContext() {
         ThreadContext.clearAll()
     }
 
@@ -27,103 +23,107 @@ class Log4JThreadContextTest : TestBase() {
     fun testContextIsNotPassedByDefaultBetweenCoroutines() = runTest {
         expect(1)
         ThreadContext.put("myKey", "myValue")
-        ThreadContext.push("stack1")
         // Standalone launch
         GlobalScope.launch {
             assertEquals(null, ThreadContext.get("myKey"))
-            assertEquals("", ThreadContext.peek())
             expect(2)
         }.join()
         finish(3)
     }
 
     @Test
-    fun testContextCanBePassedBetweenCoroutines() = runTest {
+    fun testImmutableContextContainsOriginalContent() = runTest {
         expect(1)
         ThreadContext.put("myKey", "myValue")
-        ThreadContext.push("stack1")
-        // Scoped launch with Log4JThreadContext element
-        launch(Log4JThreadContext()) {
+        // Standalone launch
+        GlobalScope.launch(immutableDiagnosticContext()) {
             assertEquals("myValue", ThreadContext.get("myKey"))
-            assertEquals("stack1", ThreadContext.peek())
             expect(2)
         }.join()
+        finish(3)
+    }
 
+    @Test
+    fun testMutableContextContainsOriginalContent() = runTest {
+        expect(1)
+        ThreadContext.put("myKey", "myValue")
+        // Standalone launch
+        GlobalScope.launch(MutableDiagnosticContext()) {
+            assertEquals("myValue", ThreadContext.get("myKey"))
+            expect(2)
+        }.join()
         finish(3)
     }
 
     @Test
     fun testContextInheritance() = runTest {
         expect(1)
-        ThreadContext.put("myKey", "myValue")
-        ThreadContext.push("stack1")
-        withContext(Log4JThreadContext()) {
+        withContext(MutableDiagnosticContext()
+            .put("myKey", "myValue")
+        ) {
+            // Update the global ThreadContext. This isn't tied to the CoroutineContext though, so shouldn't get used.
             ThreadContext.put("myKey", "myValue2")
-            ThreadContext.push("stack2")
             // Scoped launch with inherited Log4JThreadContext element
             launch(Dispatchers.Default) {
                 assertEquals("myValue", ThreadContext.get("myKey"))
-                assertEquals("stack1", ThreadContext.peek())
                 expect(2)
             }.join()
 
             finish(3)
         }
         assertEquals("myValue", ThreadContext.get("myKey"))
-        assertEquals("stack1", ThreadContext.peek())
     }
 
     @Test
-    fun testContextPassedWhileOnMainThread() {
+    fun testContextPassedWhileOnSameThread() {
         ThreadContext.put("myKey", "myValue")
-        ThreadContext.push("stack1")
         // No ThreadContext element
         runBlocking {
             assertEquals("myValue", ThreadContext.get("myKey"))
-            assertEquals("stack1", ThreadContext.peek())
         }
     }
 
     @Test
-    fun testContextCanBePassedWhileOnMainThread() {
-        ThreadContext.put("myKey", "myValue")
-        ThreadContext.push("stack1")
-        runBlocking(Log4JThreadContext()) {
-            assertEquals("myValue", ThreadContext.get("myKey"))
-            assertEquals("stack1", ThreadContext.peek())
-        }
-    }
-
-    @Test
-    fun testContextNeededWithOtherContext() {
-        ThreadContext.put("myKey", "myValue")
-        ThreadContext.push("stack1")
-        runBlocking(Log4JThreadContext()) {
-            assertEquals("myValue", ThreadContext.get("myKey"))
-            assertEquals("stack1", ThreadContext.peek())
+    fun testImmutableContextMayBeEmpty() {
+        runBlocking(immutableDiagnosticContext()) {
+            assertEquals(null, ThreadContext.get("myKey"))
         }
     }
 
     @Test
     fun testContextMayBeEmpty() {
-        runBlocking(Log4JThreadContext()) {
+        runBlocking(MutableDiagnosticContext()) {
             assertEquals(null, ThreadContext.get("myKey"))
-            assertEquals("", ThreadContext.peek())
         }
     }
 
     @Test
-    fun testContextWithContext() = runTest {
-        ThreadContext.put("myKey", "myValue")
-        ThreadContext.push("stack1")
+    fun testCoroutineContextWithLoggingContext() = runTest {
         val mainDispatcher = kotlin.coroutines.coroutineContext[ContinuationInterceptor]!!
-        withContext(Dispatchers.Default + Log4JThreadContext()) {
+        withContext(Dispatchers.Default
+            + MutableDiagnosticContext().put("myKey", "myValue")
+        ) {
             assertEquals("myValue", ThreadContext.get("myKey"))
-            assertEquals("stack1", ThreadContext.peek())
             withContext(mainDispatcher) {
                 assertEquals("myValue", ThreadContext.get("myKey"))
-                assertEquals("stack1", ThreadContext.peek())
             }
+        }
+    }
+
+    @Test
+    fun testNestedContexts() {
+        runBlocking(MutableDiagnosticContext().put("key", "value")) {
+            withContext(MutableDiagnosticContext().put("key", "value2")){
+                assertEquals("value2", ThreadContext.get("key"))
+            }
+            assertEquals("value", ThreadContext.get("key"))
+        }
+    }
+
+    @Test
+    fun testAcceptsNullValues() {
+        runBlocking(MutableDiagnosticContext().put("key", null)) {
+            assertNull(ThreadContext.get("key"))
         }
     }
 }
