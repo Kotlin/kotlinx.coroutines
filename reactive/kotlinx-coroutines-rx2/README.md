@@ -14,10 +14,11 @@ Coroutine builders:
 
 Integration with [Flow]:
 
-| **Name**             | **Result**      | **Description**
-| ---------------      | --------------  | ---------------
-| [Flow.asFlowable]    | `Flowable`      | Converts the given flow to a cold Flowable.
-| [Flow.asObservable]  | `Observable`    | Converts the given flow to a cold Observable.
+| **Name**                   | **Result**      | **Description**
+| ---------------            | --------------  | ---------------
+| [Flow.asFlowable]          | `Flowable`      | Converts the given flow to a cold Flowable.
+| [Flow.asObservable]        | `Observable`    | Converts the given flow to a cold Observable.
+| [ObservableSource.asFlow]  | `Flow`          | Converts the given cold ObservableSource to flow
 
 Suspending extension functions and suspending iteration:
 
@@ -67,6 +68,7 @@ Conversion functions:
 [rxFlowable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/rx-flowable.html
 [Flow.asFlowable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/kotlinx.coroutines.flow.-flow/as-flowable.html
 [Flow.asObservable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/kotlinx.coroutines.flow.-flow/as-observable.html
+[ObservableSource.asFlow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/io.reactivex.-observable-source/as-flow.html
 [io.reactivex.CompletableSource.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/io.reactivex.-completable-source/await.html
 [io.reactivex.MaybeSource.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/io.reactivex.-maybe-source/await.html
 [io.reactivex.MaybeSource.awaitOrDefault]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/io.reactivex.-maybe-source/await-or-default.html
