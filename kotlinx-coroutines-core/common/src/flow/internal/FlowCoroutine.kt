@@ -60,7 +60,7 @@ internal fun <T> CoroutineScope.flowProduce(
     val channel = Channel<T>(capacity)
     val newContext = newCoroutineContext(context)
     val coroutine = FlowProduceCoroutine(newContext, channel)
-    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
+    coroutine.start(CoroutineStart.ATOMIC, coroutine, block)
     return coroutine
 }
 
