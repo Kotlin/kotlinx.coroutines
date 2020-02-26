@@ -48,8 +48,7 @@ internal suspend fun <R> flowScope(@BuilderInference block: suspend CoroutineSco
  */
 internal fun <R> scopedFlow(@BuilderInference block: suspend CoroutineScope.(FlowCollector<R>) -> Unit): Flow<R> =
     flow {
-        val collector = this
-        flowScope { block(collector) }
+        flowScope { block(this@flow) }
     }
 
 internal fun <T> CoroutineScope.flowProduce(
