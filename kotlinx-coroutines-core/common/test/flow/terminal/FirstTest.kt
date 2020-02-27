@@ -91,14 +91,6 @@ class FirstTest : TestBase() {
     }
 
     @Test
-    fun testFirstOrNullWithNulls() = runTest {
-        val flow = flowOf(null, 1)
-        assertNull(flow.firstOrNull())
-        assertNull(flow.firstOrNull { it == null })
-        assertEquals(1, flow.firstOrNull { it != null })
-    }
-
-    @Test
     fun testFirstOrNullWithPredicate() = runTest {
         val flow = flowOf(1, 2, 3)
         assertEquals(1, flow.firstOrNull { it > 0 })
