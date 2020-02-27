@@ -125,7 +125,7 @@ public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
  * The terminal operator that returns the first element emitted by the flow and then cancels flow's collection.
  * Returns [null] if the flow was empty.
  */
-public suspend fun <T> Flow<T>.firstOrNull(): T? {
+public suspend fun <T : Any> Flow<T>.firstOrNull(): T? {
     var result: Any? = NULL
     try {
         collect { value ->
