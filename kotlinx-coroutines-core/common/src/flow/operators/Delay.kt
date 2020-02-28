@@ -82,15 +82,15 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
  * ```
  * flow {
  *     emit(1)
- *     delay(90.0.milliseconds)
+ *     delay(90.milliseconds)
  *     emit(2)
- *     delay(90.0.milliseconds)
+ *     delay(90.milliseconds)
  *     emit(3)
- *     delay(1010.0.milliseconds)
+ *     delay(1010.milliseconds)
  *     emit(4)
- *     delay(1010.0.milliseconds)
+ *     delay(1010.milliseconds)
  *     emit(5)
- * }.debounce(1000.0.milliseconds)
+ * }.debounce(1000.milliseconds)
  * ```
  * produces `3, 4, 5`.
  *
@@ -172,9 +172,9 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMil
  * flow {
  *     repeat(10) {
  *         emit(it)
- *         delay(50.0.milliseconds)
+ *         delay(50.milliseconds)
  *     }
- * }.sample(100.0.milliseconds)
+ * }.sample(100.milliseconds)
  * ```
  * produces `1, 3, 5, 7, 9`.
  *

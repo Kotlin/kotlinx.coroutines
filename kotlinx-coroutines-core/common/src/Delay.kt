@@ -99,9 +99,5 @@ internal val CoroutineContext.delay: Delay get() = get(ContinuationInterceptor) 
  */
 @ExperimentalTime
 internal fun Duration.toDelayMillis(): Long =
-        when {
-            this > Duration.ZERO -> toLongMilliseconds().coerceAtLeast(1)
-            this < Duration.ZERO -> -1
-            // 0, -0, NaN
-            else -> 0
-        }
+        if (this > Duration.ZERO) toLongMilliseconds().coerceAtLeast(1)
+        else 0
