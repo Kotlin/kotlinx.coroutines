@@ -47,13 +47,6 @@ compileTestKotlinJs {
     kotlinOptions.metaInfo = true
     kotlinOptions.sourceMap = true
     kotlinOptions.moduleKind = 'umd'
-    kotlinOptions.freeCompilerArgs += "-XXLanguage:-NewInference"
-}
-
-if (project.tasks.findByName('compileKotlinJsIr')) {
-    compileKotlinJsIr {
-        kotlinOptions.freeCompilerArgs += "-XXLanguage:-NewInference"
-    }
 }
 
 

@@ -6,7 +6,7 @@ apply plugin: 'kotlin-dce-js'
 apply from: rootProject.file('gradle/node-js.gradle')
 
 // Workaround resolving new Gradle metadata with kotlin2js
-// TODO: Remove once plugin is fixed
+// TODO: Remove once KT-37188 is fixed
 try {
     def jsCompilerType = Class.forName("org.jetbrains.kotlin.gradle.targets.js.JsCompilerType")
     def jsCompilerAttr = Attribute.of("org.jetbrains.kotlin.js.compiler", jsCompilerType)
