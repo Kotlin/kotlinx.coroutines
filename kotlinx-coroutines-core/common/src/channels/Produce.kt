@@ -115,6 +115,7 @@ public fun <E> CoroutineScope.produce(
 public fun <E> CoroutineScope.produce(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
     @BuilderInference block: suspend ProducerScope<E>.() -> Unit
 ): ReceiveChannel<E> {
@@ -122,7 +123,7 @@ public fun <E> CoroutineScope.produce(
     val newContext = newCoroutineContext(context)
     val coroutine = ProducerCoroutine(newContext, channel)
     if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)
-    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
+    coroutine.start(start, coroutine, block)
     return coroutine
 }
 

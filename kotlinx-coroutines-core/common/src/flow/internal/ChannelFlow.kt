@@ -68,8 +68,16 @@ public abstract class ChannelFlow<T>(
     open fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =
         scope.broadcast(context, produceCapacity, start, block = collectToFun)
 
+    /**
+     * Here we use ATOMIC start for a reason (#1825).
+     * NB: [produceImpl] is used for [flowOn].
+     * For non-atomic start it is possible to observe the situation,
+     * where the pipeline after the [flowOn] call successfully executes (mostly, its `onCompletion`)
+     * handlers, while the pipeline before does not, because it was cancelled during its dispatch.
+     * Thus `onCompletion` and `finally` blocks won't be executed and it may lead to a different kinds of memory leaks.
+     */
     open fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
-        scope.produce(context, produceCapacity, block = collectToFun)
+        scope.produce(context, produceCapacity, start = CoroutineStart.ATOMIC, block = collectToFun)
 
     override suspend fun collect(collector: FlowCollector<T>) =
         coroutineScope {
