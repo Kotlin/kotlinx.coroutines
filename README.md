@@ -5,7 +5,7 @@
 [![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=1.3.3) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/1.3.3)
 
 Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
-This is a companion version for Kotlin `1.3.61` release.
+This is a companion version for Kotlin `1.3.70` release.
 
 ```kotlin
 suspend fun main() = coroutineScope {
@@ -90,7 +90,7 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.3.61</kotlin.version>
+    <kotlin.version>1.3.70</kotlin.version>
 </properties>
 ```
 
@@ -108,7 +108,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.3.61'
+    ext.kotlin_version = '1.3.70'
 }
 ```
 
@@ -134,7 +134,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 plugins {
-    kotlin("jvm") version "1.3.61"
+    kotlin("jvm") version "1.3.70"
 }
 ```
 
