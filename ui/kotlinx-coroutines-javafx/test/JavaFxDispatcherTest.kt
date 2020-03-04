@@ -8,7 +8,7 @@ import javafx.application.*
 import kotlinx.coroutines.*
 import org.junit.*
 
-class JavaFxTest : TestBase() {
+class JavaFxDispatcherTest : TestBase() {
     @Before
     fun setup() {
         ignoreLostThreads("JavaFX Application Thread", "Thread-", "QuantumRenderer-", "InvokeLaterDispatcher")
