@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.*
  * Since this implementation uses [ObservableValue.addListener], even if this [ObservableValue]
  * supports lazy evaluation, eager computation will be enforced while the flow is being collected.
  * All the calls to JavaFX API are performed in [Dispatchers.JavaFx].
+ * This flow emits at least the initial value.
  *
  * ### Operator fusion
  *

@@ -3,8 +3,7 @@ package kotlinx.coroutines.javafx
 import javafx.beans.property.SimpleIntegerProperty
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
-import org.junit.Before
-import org.junit.Test
+import org.junit.*
 
 class JavaFxStressTest : TestBase() {
 
@@ -12,6 +11,9 @@ class JavaFxStressTest : TestBase() {
     fun setup() {
         ignoreLostThreads("JavaFX Application Thread", "Thread-", "QuantumRenderer-", "InvokeLaterDispatcher")
     }
+
+    @get:Rule
+    val pool = ExecutorRule(1)
 
     @Test
     fun testCancellationRace() = runTest {
@@ -24,16 +26,14 @@ class JavaFxStressTest : TestBase() {
         val flow = integerProperty.asFlow()
         var i = 1
         val n = 1000 * stressTestMultiplier
-        newSingleThreadContext("collector").use { pool ->
-            repeat (n) {
-                launch(pool) {
-                    flow.first()
-                }
-                withContext(Dispatchers.JavaFx) {
-                    integerProperty.set(i)
-                }
-                i += 1
+        repeat (n) {
+            launch(pool) {
+                flow.first()
             }
+            withContext(Dispatchers.JavaFx) {
+                integerProperty.set(i)
+            }
+            i += 1
         }
     }
 }
