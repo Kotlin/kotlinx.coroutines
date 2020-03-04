@@ -100,12 +100,7 @@ public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
     }
 
     subscribe(observer)
-    awaitClose { disposableRef.getAndSet(Disposed)?.dispose() }
-}
-
-private object Disposed : Disposable {
-    override fun isDisposed() = true
-    override fun dispose() = Unit
+    awaitClose { disposableRef.getAndSet(Disposables.disposed())?.dispose() }
 }
 
 /**
