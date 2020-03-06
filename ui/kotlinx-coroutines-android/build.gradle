@@ -77,7 +77,7 @@ task runR8(type: RunR8Task, dependsOn: 'jar'){
     inputConfig = file('testdata/r8-test-rules.pro')
 }
 
-task runR8NoOptim(type: RunR8Task, dependsOn: 'jar'){
+task runR8NoOptim(type: RunR8Task, dependsOn: 'jar') {
     outputDex = unOptimizedDexDir
     inputConfig = file('testdata/r8-test-rules-no-optim.pro')
 }
