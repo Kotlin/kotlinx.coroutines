@@ -390,7 +390,7 @@ public actual open class LockFreeLinkedListNode {
         final override fun updatedNext(affected: Node, next: Node): Any = next.removed()
 
         final override fun finishOnSuccess(affected: Node, next: Node) {
-            // Complete removal operation here. It bails out if next node is also removed and it becomes
+            // Complete removal operation here. It bails out if next node is also removed. It becomes
             // responsibility of the next's removes to call correctPrev which would help fix all the links.
             next.correctPrev(null)
         }
@@ -531,7 +531,12 @@ public actual open class LockFreeLinkedListNode {
     private fun finishAdd(next: Node) {
         next._prev.loop { nextPrev ->
             if (this.next !== next) return // this or next was removed or another node added, remover/adder fixes up links
-            if (next._prev.compareAndSet(nextPrev, this)) return
+            if (next._prev.compareAndSet(nextPrev, this)) {
+                // This newly added node could have been removed, and the above CAS would have added it physically again.
+                // Let us double-check for this situation and correct if needed
+                if (isRemoved) next.correctPrev(null)
+                return
+            }
         }
     }
 
@@ -546,7 +551,7 @@ public actual open class LockFreeLinkedListNode {
      * * When this node is removed. In this case there is no need to waste time on corrections, because
      *   remover of this node will ultimately call [correctPrev] on the next node and that will fix all
      *   the links from this node, too.
-     * * When [op] descriptor is not `null` and and operation descriptor that is [OpDescriptor.isEarlierThan]
+     * * When [op] descriptor is not `null` and operation descriptor that is [OpDescriptor.isEarlierThan]
      *   that current [op] is found while traversing the list. This `null` result will be translated
      *   by callers to [RETRY_ATOMIC].
      */
@@ -554,7 +559,7 @@ public actual open class LockFreeLinkedListNode {
         val oldPrev = _prev.value
         var prev: Node = oldPrev
         var last: Node? = null // will be set so that last.next === prev
-        while (true) { // move the the left until first non-removed node
+        while (true) { // move the left until first non-removed node
             val prevNext: Any = prev._next.value
             when {
                 // fast path to find quickly find prev node when everything is properly linked
@@ -565,7 +570,7 @@ public actual open class LockFreeLinkedListNode {
                         // Note: retry from scratch on failure to update prev
                         return correctPrev(op)
                     }
-                    return prev // return a correct prev
+                    return prev // return the correct prev
                 }
                 // slow path when we need to help remove operations
                 this.isRemoved -> return null // nothing to do, this node was removed, bail out asap to save time
