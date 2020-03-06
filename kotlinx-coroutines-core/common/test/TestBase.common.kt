@@ -50,7 +50,7 @@ public suspend inline fun <reified T : Throwable> assertFailsWith(flow: Flow<*>)
         flow.collect()
         fail("Should be unreached")
     } catch (e: Throwable) {
-        assertTrue(e is T)
+        assertTrue(e is T, "Expected exception ${T::class}, but had $e instead")
     }
 }
 

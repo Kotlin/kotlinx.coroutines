@@ -118,6 +118,18 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     }
 
     @Test
+    fun testUndispatchedYield() = runTest {
+        expect(1)
+        val job = launch(dispatcher, CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            yield()
+        }
+        expect(3)
+        job.join()
+        finish(4)
+    }
+
+    @Test
     fun testThreadName() = runBlocking {
         val initialCount = Thread.getAllStackTraces().keys.asSequence()
             .count { it is CoroutineScheduler.Worker && it.name.contains("SomeTestName") }

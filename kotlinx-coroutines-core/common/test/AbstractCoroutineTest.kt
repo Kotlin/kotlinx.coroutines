@@ -19,7 +19,7 @@ class AbstractCoroutineTest : TestBase() {
             }
 
             override fun onCancelling(cause: Throwable?) {
-                assertEquals(null, cause)
+                assertNull(cause)
                 expect(5)
             }
 
@@ -34,12 +34,12 @@ class AbstractCoroutineTest : TestBase() {
         }
 
         coroutine.invokeOnCompletion(onCancelling = true) {
-            assertEquals(null, it)
+            assertNull(it)
             expect(7)
         }
 
         coroutine.invokeOnCompletion {
-            assertEquals(null, it)
+            assertNull(it)
             expect(8)
         }
         expect(2)

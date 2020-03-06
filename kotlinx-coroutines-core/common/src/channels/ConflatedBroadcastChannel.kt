@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -10,6 +10,7 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
+import kotlin.native.concurrent.*
 
 /**
  * Broadcasts the most recently sent element (aka [value]) to all [openSubscription] subscribers.
@@ -90,7 +91,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
      */
     public val valueOrNull: E? get() = when (val state = _state.value) {
         is Closed -> null
-        is State<*> -> UNDEFINED.unbox(state.value)
+        is State<*> -> UNDEFINED.unbox<E?>(state.value)
         else -> error("Invalid state $state")
     }
 

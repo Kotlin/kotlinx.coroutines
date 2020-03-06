@@ -160,4 +160,38 @@ class ChannelFlowTest : TestBase() {
 
         finish(6)
     }
+
+    @Test
+    fun testClosedPrematurely() = runTest(unhandled = listOf({ e -> e is ClosedSendChannelException })) {
+        val outerScope = this
+        val flow = channelFlow {
+            // ~ callback-based API, no children
+            outerScope.launch(Job()) {
+                expect(2)
+                send(1)
+                expectUnreached()
+            }
+            expect(1)
+        }
+        assertEquals(emptyList(), flow.toList())
+        finish(3)
+    }
+
+    @Test
+    fun testNotClosedPrematurely() = runTest {
+        val outerScope = this
+        val flow = channelFlow {
+            // ~ callback-based API
+            outerScope.launch(Job()) {
+                expect(2)
+                send(1)
+                close()
+            }
+            expect(1)
+            awaitClose()
+        }
+
+        assertEquals(listOf(1), flow.toList())
+        finish(3)
+    }
 }

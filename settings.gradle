@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 rootProject.name = 'kotlinx.coroutines'
@@ -15,10 +15,7 @@ def module(String path) {
 // ---------------------------
 
 include('benchmarks')
-include('knit')
 include('site')
-
-module('binary-compatibility-validator')
 
 include "kotlinx-coroutines-core"
 
@@ -43,3 +40,5 @@ module('ui/kotlinx-coroutines-swing')
 
 module('js/js-stub')
 module('js/example-frontend-js')
+
+module('publication-validator')

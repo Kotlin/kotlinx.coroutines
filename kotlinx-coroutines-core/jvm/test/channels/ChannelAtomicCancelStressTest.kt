@@ -6,12 +6,13 @@ package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.After
+import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
 import kotlin.random.Random
 import java.util.concurrent.atomic.*
+import kotlin.test.*
 
 /**
  * Tests cancel atomicity for channel send & receive operations, including their select versions.

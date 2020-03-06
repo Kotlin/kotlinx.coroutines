@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.*
@@ -30,11 +34,12 @@ internal object MainDispatcherLoader {
                         MainDispatcherFactory::class.java.classLoader
                 ).iterator().asSequence().toList()
             }
+            @Suppress("ConstantConditionIf")
             factories.maxBy { it.loadPriority }?.tryCreateDispatcher(factories)
-                ?: MissingMainCoroutineDispatcher(null)
+                ?: createMissingDispatcher()
         } catch (e: Throwable) {
             // Service loader can throw an exception as well
-            MissingMainCoroutineDispatcher(e)
+            createMissingDispatcher(e)
         }
     }
 }
@@ -51,12 +56,29 @@ public fun MainDispatcherFactory.tryCreateDispatcher(factories: List<MainDispatc
     try {
         createDispatcher(factories)
     } catch (cause: Throwable) {
-        MissingMainCoroutineDispatcher(cause, hintOnError())
+        createMissingDispatcher(cause, hintOnError())
     }
 
 /** @suppress */
 @InternalCoroutinesApi
 public fun MainCoroutineDispatcher.isMissing(): Boolean = this is MissingMainCoroutineDispatcher
+
+// R8 optimization hook, not const on purpose to enable R8 optimizations via "assumenosideeffects"
+@Suppress("MayBeConstant")
+private val SUPPORT_MISSING = true
+
+@Suppress("ConstantConditionIf")
+private fun createMissingDispatcher(cause: Throwable? = null, errorHint: String? = null) =
+    if (SUPPORT_MISSING) MissingMainCoroutineDispatcher(cause, errorHint) else
+        cause?.let { throw it } ?: throwMissingMainDispatcherException()
+
+internal fun throwMissingMainDispatcherException(): Nothing {
+    throw IllegalStateException(
+        "Module with the Main dispatcher is missing. " +
+            "Add dependency providing the Main dispatcher, e.g. 'kotlinx-coroutines-android' " +
+            "and ensure it has the same version as 'kotlinx-coroutines-core'"
+    )
+}
 
 private class MissingMainCoroutineDispatcher(
     private val cause: Throwable?,
@@ -85,11 +107,7 @@ private class MissingMainCoroutineDispatcher(
 
     private fun missing(): Nothing {
         if  (cause == null) {
-            throw IllegalStateException(
-                "Module with the Main dispatcher is missing. " +
-                    "Add dependency providing the Main dispatcher, e.g. 'kotlinx-coroutines-android' " +
-                        "and ensure it has the same version as 'kotlinx-coroutines-core'"
-            )
+            throwMissingMainDispatcherException()
         } else {
             val message = "Module with the Main dispatcher had failed to initialize" + (errorHint?.let { ". $it" } ?: "")
             throw IllegalStateException(message, cause)

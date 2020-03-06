@@ -21,7 +21,6 @@ class BlockingCoroutineDispatcherThreadLimitStressTest : SchedulerTestBase() {
     private val concurrentWorkers = AtomicInteger(0)
 
     @Test
-    @Ignore
     fun testLimitParallelismToOne() = runTest {
         val limitingDispatcher = blockingDispatcher(1)
         // Do in bursts to avoid OOM

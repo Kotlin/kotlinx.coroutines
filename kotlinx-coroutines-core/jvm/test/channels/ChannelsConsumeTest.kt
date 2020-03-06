@@ -76,7 +76,7 @@ class ChannelsConsumeTest : TestBase() {
             assertEquals(4, elementAtOrNull(3))
         }
         checkTerminal {
-            assertEquals(null, elementAtOrNull(10))
+            assertNull(elementAtOrNull(10))
         }
     }
 
@@ -124,7 +124,7 @@ class ChannelsConsumeTest : TestBase() {
             assertEquals(3, firstOrNull { it % 3 == 0 })
         }
         checkTerminal {
-            assertEquals(null, firstOrNull { it > 10 })
+            assertNull(firstOrNull { it > 10 })
         }
     }
 
@@ -195,7 +195,7 @@ class ChannelsConsumeTest : TestBase() {
             assertEquals(9, lastOrNull { it % 3 == 0 })
         }
         checkTerminal {
-            assertEquals(null, lastOrNull { it > 10 })
+            assertNull(lastOrNull { it > 10 })
         }
     }
 
@@ -222,7 +222,7 @@ class ChannelsConsumeTest : TestBase() {
     @Test
     fun testSingleOrNull() {
         checkTerminal {
-            assertEquals(null, singleOrNull())
+            assertNull(singleOrNull())
         }
     }
 
@@ -232,10 +232,10 @@ class ChannelsConsumeTest : TestBase() {
             assertEquals(7, singleOrNull { it % 7 == 0 })
         }
         checkTerminal {
-            assertEquals(null, singleOrNull { it % 3 == 0 })
+            assertNull(singleOrNull { it % 3 == 0 })
         }
         checkTerminal {
-            assertEquals(null, singleOrNull { it > 10 })
+            assertNull(singleOrNull { it > 10 })
         }
     }
 
@@ -898,7 +898,7 @@ class ChannelsConsumeTest : TestBase() {
                 res.cancel()
             } else {
                 // then check that result is closed
-                assertEquals(null, res.receiveOrNull(), "Result has unexpected values")
+                assertNull(res.receiveOrNull(), "Result has unexpected values")
             }
             src
         }

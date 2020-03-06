@@ -1,14 +1,16 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
+import io.reactivex.disposables.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
+import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
 /**
@@ -75,6 +77,30 @@ public fun <T : Any> Deferred<T>.asSingle(context: CoroutineContext): Single<T> 
 public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = rxObservable(context) {
     for (t in this@asObservable)
         send(t)
+}
+
+/**
+ * Transforms given cold [ObservableSource] into cold [Flow].
+ *
+ * The resulting flow is _cold_, which means that [ObservableSource.subscribe] is called every time a terminal operator
+ * is applied to the resulting flow.
+ *
+ * A channel with the [default][Channel.BUFFERED] buffer size is used. Use the [buffer] operator on the
+ * resulting flow to specify a user-defined value and to control what happens when data is produced faster
+ * than consumed, i.e. to control the back-pressure behavior. Check [callbackFlow] for more details.
+ */
+@ExperimentalCoroutinesApi
+public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
+    val disposableRef = AtomicReference<Disposable>()
+    val observer = object : Observer<T> {
+        override fun onComplete() { close() }
+        override fun onSubscribe(d: Disposable) { if (!disposableRef.compareAndSet(null, d)) d.dispose() }
+        override fun onNext(t: T) { sendBlocking(t) }
+        override fun onError(e: Throwable) { close(e) }
+    }
+
+    subscribe(observer)
+    awaitClose { disposableRef.getAndSet(Disposables.disposed())?.dispose() }
 }
 
 /**

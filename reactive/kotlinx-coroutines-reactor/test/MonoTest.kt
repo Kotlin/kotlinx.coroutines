@@ -7,15 +7,15 @@ package kotlinx.coroutines.reactor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
-import org.hamcrest.core.*
 import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import org.reactivestreams.*
 import reactor.core.publisher.*
 import reactor.util.context.*
 import java.time.*
 import java.time.Duration.*
 import java.util.function.*
+import kotlin.test.*
 
 class MonoTest : TestBase() {
     @Before
@@ -33,7 +33,7 @@ class MonoTest : TestBase() {
         expect(2)
         mono.subscribe { value ->
             expect(5)
-            assertThat(value, IsEqual("OK"))
+            assertEquals("OK", value)
         }
         expect(3)
         yield() // to started coroutine
@@ -52,8 +52,8 @@ class MonoTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            assertThat(error, IsInstanceOf(RuntimeException::class.java))
-            assertThat(error.message, IsEqual("OK"))
+            assertTrue(error is RuntimeException)
+            assertEquals("OK", error.message)
         })
         expect(3)
         yield() // to started coroutine

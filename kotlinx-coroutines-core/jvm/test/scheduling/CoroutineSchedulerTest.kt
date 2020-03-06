@@ -12,11 +12,12 @@ import kotlin.coroutines.*
 import kotlin.test.*
 
 class CoroutineSchedulerTest : TestBase() {
+    private val taskModes = listOf(TASK_NON_BLOCKING, TASK_PROBABLY_BLOCKING)
 
     @Test
     fun testModesExternalSubmission() { // Smoke
         CoroutineScheduler(1, 1).use {
-            for (mode in TaskMode.values()) {
+            for (mode in taskModes) {
                 val latch = CountDownLatch(1)
                 it.dispatch(Runnable {
                     latch.countDown()
@@ -30,9 +31,9 @@ class CoroutineSchedulerTest : TestBase() {
     @Test
     fun testModesInternalSubmission() { // Smoke
         CoroutineScheduler(2, 2).use {
-            val latch = CountDownLatch(TaskMode.values().size)
+            val latch = CountDownLatch(taskModes.size)
             it.dispatch(Runnable {
-                for (mode in TaskMode.values()) {
+                for (mode in taskModes) {
                     it.dispatch(Runnable {
                         latch.countDown()
                     }, TaskContextImpl(mode))
@@ -82,7 +83,7 @@ class CoroutineSchedulerTest : TestBase() {
                 it.dispatch(Runnable {
                     expect(2)
                     finishLatch.countDown()
-                }, fair = true)
+                }, tailDispatch = true)
             })
 
             startLatch.countDown()
@@ -167,7 +168,7 @@ class CoroutineSchedulerTest : TestBase() {
         }
     }
 
-    private class TaskContextImpl(override val taskMode: TaskMode) : TaskContext {
+    private class TaskContextImpl(override val taskMode: Int) : TaskContext {
         override fun afterTask() {}
     }
 }

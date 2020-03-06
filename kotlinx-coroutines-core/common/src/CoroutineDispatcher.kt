@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -29,6 +29,12 @@ import kotlin.coroutines.*
  */
 public abstract class CoroutineDispatcher :
     AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
+
+    /** @suppress */
+    @ExperimentalStdlibApi
+    public companion object Key : AbstractCoroutineContextKey<ContinuationInterceptor, CoroutineDispatcher>(
+        ContinuationInterceptor,
+        { it as? CoroutineDispatcher })
 
     /**
      * Returns `true` if the execution of the coroutine should be performed with [dispatch] method.

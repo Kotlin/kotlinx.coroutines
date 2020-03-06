@@ -77,7 +77,7 @@ class WithTimeoutOrNullTest : TestBase() {
                 yield()
             }
         }
-        assertEquals(null, result)
+        assertNull(result)
         finish(2)
     }
 
@@ -135,11 +135,11 @@ class WithTimeoutOrNullTest : TestBase() {
                         yield()
                     }
                 }
-                assertEquals(null, inner)
+                assertNull(inner)
                 counter++
             }
         }
-        assertEquals(null, result)
+        assertNull(result)
         check(counter in 1..2) {"Executed: $counter times"}
     }
 
@@ -167,7 +167,7 @@ class WithTimeoutOrNullTest : TestBase() {
             expectUnreached()
             "OK"
         }
-        assertEquals(null, result)
+        assertNull(result)
         finish(3)
     }
 
@@ -183,7 +183,7 @@ class WithTimeoutOrNullTest : TestBase() {
             }
             "OK"
         }
-        assertEquals(null, result)
+        assertNull(result)
         finish(4)
     }
 

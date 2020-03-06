@@ -44,7 +44,7 @@ class RendezvousChannelTest : TestBase() {
             expect(3)
             assertEquals(42, q.receiveOrNull())
             expect(4)
-            assertEquals(null, q.receiveOrNull())
+            assertNull(q.receiveOrNull())
             expect(6)
         }
         expect(2)
@@ -86,11 +86,11 @@ class RendezvousChannelTest : TestBase() {
         expect(1)
         launch {
             expect(3)
-            assertEquals(null, q.poll())
+            assertNull(q.poll())
             expect(4)
             assertEquals(2, q.receive())
             expect(7)
-            assertEquals(null, q.poll())
+            assertNull(q.poll())
             yield()
             expect(9)
             assertEquals(3, q.poll())

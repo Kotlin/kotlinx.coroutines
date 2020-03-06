@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 import org.jetbrains.kotlin.konan.target.HostManager
 
@@ -8,8 +8,8 @@ apply from: rootProject.file("gradle/experimental.gradle")
 def rootModule = "kotlinx.coroutines"
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
-def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom']
-def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'knit', 'js-stub', 'stdlib-stubs', 'binary-compatibility-validator']
+def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom', 'publication-validator']
+def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'js-stub', 'stdlib-stubs', 'publication-validator']
 // Not published
 def unpublished = internal + ['example-frontend-js', 'android-unit-tests']
 
@@ -41,7 +41,16 @@ buildscript {
         }
     }
 
-    if (build_snapshot_train || atomicfu_version.endsWith("-SNAPSHOT")) {
+    // Determine if any project dependency is using a snapshot version
+    ext.using_snapshot_version = build_snapshot_train
+    rootProject.properties.each { key, value ->
+        if (key.endsWith("_version") && value instanceof String && value.endsWith("-SNAPSHOT")) {
+            println("NOTE: USING SNAPSHOT VERSION: $key=$value")
+            ext.using_snapshot_version=true
+        }
+    }
+
+    if (using_snapshot_version) {
         repositories {
             mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
@@ -51,7 +60,13 @@ buildscript {
     repositories {
         jcenter()
         maven { url "https://kotlin.bintray.com/kotlinx" }
-        maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven {
+            url "https://kotlin.bintray.com/kotlin-dev"
+            credentials {
+                username = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER') ?: ""
+                password = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY') ?: ""
+            }
+        }
         maven { url "https://kotlin.bintray.com/kotlin-eap" }
         maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
         maven { url "https://plugins.gradle.org/m2/" }
@@ -61,7 +76,10 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
+        classpath "org.jetbrains.kotlinx:kotlinx-knit:$knit_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
+        classpath "org.openjfx:javafx-plugin:$javafx_plugin_version"
+        classpath "org.jetbrains.kotlinx:binary-compatibility-validator:$binary_compatibility_validator_version"
 
         // JMH plugins
         classpath "com.github.jengelman.gradle.plugins:shadow:5.1.0"
@@ -95,7 +113,7 @@ allprojects {
         kotlin_version = rootProject.properties['kotlin_snapshot_version']
     }
 
-    if (build_snapshot_train || atomicfu_version.endsWith("-SNAPSHOT")) {
+    if (using_snapshot_version) {
         repositories {
             mavenLocal()
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
@@ -113,46 +131,59 @@ allprojects {
     }
 }
 
+apply plugin: "binary-compatibility-validator"
+apiValidation {
+    ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
+    ignoredPackages += "kotlinx.coroutines.internal"
+}
+
+// Configure repositories
 allprojects {
-    apply plugin: 'kotlinx-atomicfu' // it also adds all the necessary dependencies
-    def projectName = it.name
+    String projectName = it.name
     repositories {
         /*
          * google should be first in the repository list because some of the play services
          * transitive dependencies was removed from jcenter, thus breaking gradle dependency resolution
          */
-        if (projectName == "kotlinx-coroutines-play-services") {
-            google()
-        }
+        google()
         jcenter()
-        maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven {
+            url "https://kotlin.bintray.com/kotlin-dev"
+            credentials {
+                username = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER') ?: ""
+                password = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY') ?: ""
+            }
+        }
         maven { url "https://kotlin.bintray.com/kotlin-eap" }
         maven { url "https://kotlin.bintray.com/kotlinx" }
     }
+}
 
-    if (projectName == rootModule || projectName == coreModule) return
-
-    // Add dependency to core source sets. Core is configured in kx-core/build.gradle
+// Add dependency to core source sets. Core is configured in kx-core/build.gradle
+configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != coreModule }) {
     evaluationDependsOn(":$coreModule")
-    if (sourceless.contains(projectName)) return
-
     def platform = platformOf(it)
     apply from: rootProject.file("gradle/compile-${platform}.gradle")
-
     dependencies {
         // See comment below for rationale, it will be replaced with "project" dependency
         compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
-
         // the only way IDEA can resolve test classes
         testCompile project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
     }
+}
 
+// Configure subprojects with Kotlin sources
+configure(subprojects.findAll { !sourceless.contains(it.name) }) {
+    // Use atomicfu plugin, it also adds all the necessary dependencies
+    apply plugin: 'kotlinx-atomicfu'
+
+    // Configure options for all Kotlin compilation tasks
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
         kotlinOptions.freeCompilerArgs += experimentalAnnotations.collect { "-Xuse-experimental=" + it }
         kotlinOptions.freeCompilerArgs += "-progressive"
         kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
-        // Binary compatibility support
-        kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
+        // Remove null assertions to get smaller bytecode on Android
+        kotlinOptions.freeCompilerArgs += ["-Xno-param-assertions", "-Xno-receiver-assertions", "-Xno-call-assertions"]
     }
 }
 
@@ -166,6 +197,8 @@ if (build_snapshot_train) {
             exclude '**/*scheduling*'
             exclude '**/*Timeout*'
             exclude '**/*definitely/not/kotlinx*'
+            // Disable because of KT-11567 in 1.4
+            exclude '**/*CasesPublicAPITest*'
         }
     }
 
@@ -228,7 +261,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
             tasks.withType(dokka.getClass()) {
                 externalDocumentationLink {
                     url = new URL(core_docs_url)
-                    packageListUrl = new URL("file://$core_docs_file")
+                    packageListUrl = new File(core_docs_file).toURI().toURL()
                 }
             }
         }
@@ -238,9 +271,38 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 // Report Kotlin compiler version when building project
 println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
 
+// --------------- Publish only from under JDK11+ ---------------
+task checkJdkForPublish {
+    doFirst {
+        String javaVersion = System.properties["java.version"]
+        int i = javaVersion.indexOf('.')
+        int javaVersionMajor =  (i < 0 ? javaVersion : javaVersion.substring(0, i)).toInteger()
+        if (javaVersionMajor < 11) {
+            throw new GradleException("Project can be build for publishing only under JDK 11+, but found ${javaVersion}")
+        }
+    }
+}
+
 // --------------- Configure sub-projects that are published ---------------
-task deploy(dependsOn: getTasksByName("publish", true) + getTasksByName("publishNpm", true))
+def publishTasks = getTasksByName("publish", true) + getTasksByName("publishNpm", true)
+
+publishTasks.each {
+    it.dependsOn checkJdkForPublish
+}
+
+task deploy(dependsOn: publishTasks)
 
 apply plugin: 'base'
 
 clean.dependsOn gradle.includedBuilds.collect { it.task(':clean') }
+
+// --------------- Knit configuration ---------------
+
+apply plugin: 'kotlinx-knit'
+
+knit {
+    siteRoot = "https://kotlin.github.io/kotlinx.coroutines"
+    moduleRoots = [".", "integration", "reactive", "ui"]
+}
+
+knitPrepare.dependsOn getTasksByName("dokka", true)

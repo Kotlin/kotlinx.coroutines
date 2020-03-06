@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 apply plugin: 'kotlin-multiplatform'
@@ -46,9 +46,18 @@ configurations {
     configureKotlinJvmPlatform(kotlinCompilerPluginClasspath)
 }
 
+// Update module name for metadata artifact to avoid conflicts
+// see https://github.com/Kotlin/kotlinx.coroutines/issues/1797
+compileKotlinMetadata {
+    kotlinOptions {
+        freeCompilerArgs += ["-module-name", "kotlinx-coroutines-core-common"]
+    }
+}
+
 kotlin.sourceSets {
     jvmTest.dependencies {
-        api "com.devexperts.lincheck:lincheck:$lincheck_version"
+        api "org.jetbrains.kotlinx:lincheck:$lincheck_version"
+        api "org.jetbrains.kotlinx:kotlinx-knit-test:$knit_version"
         api "com.esotericsoftware:kryo:4.0.0"
         implementation project (":android-unit-tests")
     }
@@ -99,7 +108,7 @@ task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
     testClassesDirs = files { jvmTest.testClassesDirs }
     executable = "$System.env.JDK_16/bin/java"
     exclude '**/*LFStressTest.*' // lock-freedom tests use LockFreedomTestEnvironment which needs JDK8
-    exclude '**/*LCStressTest.*' // lic-check tests use LinChecker which needs JDK8
+    exclude '**/*LCStressTest.*' // lin-check tests use LinChecker which needs JDK8
     exclude '**/exceptions/**'   // exceptions tests check suppressed exception which needs JDK8
     exclude '**/ExceptionsGuideTest.*'
 }

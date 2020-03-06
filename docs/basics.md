@@ -1,20 +1,4 @@
-<!--- INCLUDE .*/example-([a-z]+)-([0-9a-z]+)\.kt 
-/*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
-
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.$$1$$2
--->
-<!--- KNIT     ../kotlinx-coroutines-core/jvm/test/guide/.*\.kt -->
-<!--- TEST_OUT ../kotlinx-coroutines-core/jvm/test/guide/test/BasicsGuideTest.kt
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.test
-
-import org.junit.Test
-
-class BasicsGuideTest {
---> 
+<!--- TEST_NAME BasicsGuideTest -->
 
 **Table of contents**
 
@@ -30,8 +14,7 @@ class BasicsGuideTest {
   * [Coroutines ARE light-weight](#coroutines-are-light-weight)
   * [Global coroutines are like daemon threads](#global-coroutines-are-like-daemon-threads)
 
-<!--- END_TOC -->
-
+<!--- END -->
 
 ## Coroutine Basics
 
@@ -142,7 +125,7 @@ fun main() = runBlocking<Unit> { // start main coroutine
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-02b.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-03.kt).
 
 <!--- TEST
 Hello,
@@ -197,7 +180,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-03.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-04.kt).
 
 <!--- TEST
 Hello,
@@ -242,7 +225,7 @@ fun main() = runBlocking { // this: CoroutineScope
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-03s.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-05.kt).
 
 <!--- TEST
 Hello,
@@ -288,7 +271,7 @@ fun main() = runBlocking { // this: CoroutineScope
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-04.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-06.kt).
 
 <!--- TEST
 Task from coroutine scope
@@ -327,7 +310,7 @@ suspend fun doWorld() {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-05.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-07.kt).
 
 <!--- TEST
 Hello,
@@ -364,7 +347,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-06.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-08.kt).
 
 <!--- TEST lines.size == 1 && lines[0] == ".".repeat(100_000) -->
 
@@ -396,7 +379,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-07.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-09.kt).
 
 You can run and see that it prints three lines and terminates:
 

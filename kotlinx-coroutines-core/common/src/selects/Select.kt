@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.selects
@@ -13,6 +13,7 @@ import kotlinx.coroutines.sync.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
+import kotlin.native.concurrent.*
 
 /**
  * Scope for [select] invocation.
@@ -34,7 +35,7 @@ public interface SelectBuilder<in R> {
     public operator fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R)
 
     /**
-     * Registers clause in this [select] expression with additional parameter nullable parameter of type [P]
+     * Registers clause in this [select] expression with additional nullable parameter of type [P]
      * with the `null` value for this parameter that selects value of type [Q].
      */
     public operator fun <P, Q> SelectClause2<P?, Q>.invoke(block: suspend (Q) -> R) = invoke(null, block)
@@ -213,6 +214,7 @@ internal class SeqNumber {
     fun next() = number.incrementAndGet()
 }
 
+@SharedImmutable
 private val selectOpSequenceNumber = SeqNumber()
 
 @PublishedApi
@@ -262,7 +264,10 @@ internal class SelectBuilderImpl<in R>(
         assert { isSelected } // "Must be selected first"
         _result.loop { result ->
             when {
-                result === UNDECIDED -> if (_result.compareAndSet(UNDECIDED, value())) return
+                result === UNDECIDED -> {
+                    val update = value()
+                    if (_result.compareAndSet(UNDECIDED, update)) return
+                }
                 result === COROUTINE_SUSPENDED -> if (_result.compareAndSet(COROUTINE_SUSPENDED, RESUMED)) {
                     block()
                     return

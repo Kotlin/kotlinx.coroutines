@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.debug
@@ -11,6 +11,9 @@ public fun String.trimStackTrace(): String =
     trimIndent()
         .replace(Regex(":[0-9]+"), "")
         .replace(Regex("#[0-9]+"), "")
+        .replace(Regex("(?<=\tat )[^\n]*/"), "")
+        .replace(Regex("\t"), "")
+        .replace("sun.misc.Unsafe.park", "jdk.internal.misc.Unsafe.park") // JDK8->JDK11
         .applyBackspace()
 
 public fun String.applyBackspace(): String {
@@ -30,16 +33,12 @@ public fun String.applyBackspace(): String {
 
 public fun verifyStackTrace(e: Throwable, traces: List<String>) {
     val stacktrace = toStackTrace(e)
+    val trimmedStackTrace = stacktrace.trimStackTrace()
     traces.forEach {
-        val expectedLines = it.trimStackTrace().split("\n")
-        for (i in 0 until expectedLines.size) {
-            traces.forEach {
-                assertTrue(
-                    stacktrace.trimStackTrace().contains(it.trimStackTrace()),
-                    "\nExpected trace element:\n$it\n\nActual stacktrace:\n$stacktrace"
-                )
-            }
-        }
+        assertTrue(
+            trimmedStackTrace.contains(it.trimStackTrace()),
+            "\nExpected trace element:\n$it\n\nActual stacktrace:\n$stacktrace"
+        )
     }
 
     val causes = stacktrace.count("Caused by")
@@ -55,13 +54,22 @@ public fun toStackTrace(t: Throwable): String {
 
 public fun String.count(substring: String): Int = split(substring).size - 1
 
+public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null, finally: () -> Unit) {
+    try {
+        verifyDump(*traces, ignoredCoroutine = ignoredCoroutine)
+    } finally {
+        finally()
+    }
+}
+
 public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
     val baos = ByteArrayOutputStream()
     DebugProbes.dumpCoroutines(PrintStream(baos))
     val trace = baos.toString().split("\n\n")
     if (traces.isEmpty()) {
-        assertEquals(1, trace.size)
-        assertTrue(trace[0].startsWith("Coroutines dump"))
+        val filtered = trace.filter { ignoredCoroutine == null || !it.contains(ignoredCoroutine) }
+        assertEquals(1, filtered.count())
+        assertTrue(filtered[0].startsWith("Coroutines dump"))
         return
     }
     // Drop "Coroutine dump" line

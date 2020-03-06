@@ -1,10 +1,9 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.swing
 
-import javafx.application.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
@@ -81,7 +80,7 @@ class SwingTest : TestBase() {
         join(component)
     }
 
-    private suspend fun join(component: SwingTest.SwingComponent) {
+    private suspend fun join(component: SwingComponent) {
         component.coroutineContext[Job]!!.join()
     }
 
