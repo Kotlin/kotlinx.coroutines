@@ -117,3 +117,24 @@ public fun <T> Flow<T>.scanReduce(operation: suspend (accumulator: T, value: T) 
         emit(accumulator as T)
     }
 }
+
+/**
+ * Re-subscribes to the current flow (`this`) each time the [other] flow emits a new item.
+ * The previous flow is immediately cancelled.
+ *
+ * For example:
+ * ```
+ * val repeatFlow = flow {
+ *      emit("Repeat")
+ * }
+ *
+ * flowOf(1, 2, 3, 4).repeatWhen(repeatFlow).toList()
+ * ```
+ * will produce `[1, 2, 3, 4, 1, 2, 3, 4]`
+ */
+public fun <T> Flow<T>.repeatWhen(other: Flow<*>) = flow {
+    emit(this@repeatWhen)
+    other.collect {
+        emit(this@repeatWhen)
+    }
+}.flatMapLatest { it }
