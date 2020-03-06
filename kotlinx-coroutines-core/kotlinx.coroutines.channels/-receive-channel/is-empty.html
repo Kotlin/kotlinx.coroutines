@@ -33,10 +33,10 @@
 
 <h1 id="isempty">isEmpty</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L161">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L163">(source)</a></div>
 
-<p>Returns <code>true</code> if the channel is empty (contains no elements) and the <a href="receive.html">receive</a> attempt will suspend.
-This function returns <code>false</code> for <a href="is-closed-for-receive.html">isClosedForReceive</a> channel.</p>
+<p>Returns <code>true</code> if the channel is empty (contains no elements), which means that an attempt to <a href="receive.html">receive</a> will suspend.
+This function returns <code>false</code> if the channel <a href="is-closed-for-receive.html">is closed for <code>receive</code></a>.</p>
 
 
       </div>

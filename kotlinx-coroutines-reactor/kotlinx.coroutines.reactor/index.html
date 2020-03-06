@@ -162,7 +162,10 @@ Coroutine context element that propagates information about Reactor’s <a href=
 
         <p>Creates cold reactive <a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/core/publisher/Flux.html">Flux</a> that runs a given <a href="flux.html#kotlinx.coroutines.reactor$flux(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.reactor.flux.T)), kotlin.Unit)))/block">block</a> in a coroutine.
 Every time the returned flux is subscribed, it starts a new coroutine in the specified <a href="flux.html#kotlinx.coroutines.reactor$flux(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.reactor.flux.T)), kotlin.Unit)))/context">context</a>.
-Coroutine emits items with <code>send</code>. Unsubscribing cancels running coroutine.</p>
+Coroutine emits (<a href="#">Subscriber.onNext</a>) values with <code>send</code>, completes (<a href="#">Subscriber.onComplete</a>)
+when the coroutine completes or channel is explicitly closed and emits error (<a href="#">Subscriber.onError</a>)
+if coroutine throws an exception or closes channel with a cause.
+Unsubscribing cancels running coroutine.</p>
 
       </td>
 </tr>
@@ -175,9 +178,10 @@ Coroutine emits items with <code>send</code>. Unsubscribing cancels running coro
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">mono</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="mono.html#T"><span class="identifier">T</span></a><span class="symbol">?</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/core/publisher/Mono.html"><span class="identifier">Mono</span></a><span class="symbol">&lt;</span><a href="mono.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Creates cold <a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/core/publisher/Mono.html">mono</a> that will run a given <a href="mono.html#kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/block">block</a> in a coroutine.
+        <p>Creates cold <a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/core/publisher/Mono.html">mono</a> that will run a given <a href="mono.html#kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/block">block</a> in a coroutine and emits its result.
 Every time the returned mono is subscribed, it starts a new coroutine.
-Coroutine returns a single, possibly null value. Unsubscribing cancels running coroutine.</p>
+If <a href="mono.html#kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/block">block</a> result is <code>null</code>, <a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/core/publisher/MonoSink.html#success()">MonoSink.success</a> is invoked without a value.
+Unsubscribing cancels running coroutine.</p>
 
       </td>
 </tr>

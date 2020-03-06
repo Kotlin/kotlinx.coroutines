@@ -36,34 +36,15 @@
 <div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <span class="identifier">rxFlowable</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxFlowable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.rx2.rxFlowable.T)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxFlowable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.rx2.rxFlowable.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="rx-flowable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://reactivex.io/RxJava/javadoc/io/reactivex/Flowable.html"><span class="identifier">Flowable</span></a><span class="symbol">&lt;</span><a href="rx-flowable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
 <p>Creates cold <a href="http://reactivex.io/RxJava/javadoc/io/reactivex/Flowable.html">flowable</a> that will run a given <a href="rx-flowable.html#kotlinx.coroutines.rx2$rxFlowable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.rx2.rxFlowable.T)), kotlin.Unit)))/block">block</a> in a coroutine.
-Every time the returned flowable is subscribed, it starts a new coroutine.
-Coroutine emits items with <code>send</code>. Unsubscribing cancels running coroutine.</p>
+Every time the returned flowable is subscribed, it starts a new coroutine.</p>
+
+<p>Coroutine emits (<a href="http://reactivex.io/RxJava/javadoc/io/reactivex/Emitter.html#onNext(T)">ObservableEmitter.onNext</a>) values with <code>send</code>, completes (<a href="http://reactivex.io/RxJava/javadoc/io/reactivex/Emitter.html#onComplete()">ObservableEmitter.onComplete</a>)
+when the coroutine completes or channel is explicitly closed and emits error (<a href="http://reactivex.io/RxJava/javadoc/io/reactivex/Emitter.html#onError(java.lang.Throwable)">ObservableEmitter.onError</a>)
+if coroutine throws an exception or closes channel with a cause.
+Unsubscribing cancels running coroutine.</p>
 
 <p>Invocations of <code>send</code> are suspended appropriately when subscribers apply back-pressure and to ensure that
 <code>onNext</code> is not invoked concurrently.</p>
-
-<table>
-  <thead>
-    <tr>
-      <th><strong>Coroutine action</strong></th>
-      <th><strong>Signal to subscriber</strong></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>send</code></td>
-      <td><code>onNext</code></td>
-    </tr>
-    <tr>
-      <td>Normal completion or <code>close</code> without cause</td>
-      <td><code>onComplete</code></td>
-    </tr>
-    <tr>
-      <td>Failure with exception or <code>close</code> with cause</td>
-      <td><code>onError</code></td>
-    </tr>
-  </tbody>
-</table>
 
 <p>Coroutine context can be specified with <a href="rx-flowable.html#kotlinx.coroutines.rx2$rxFlowable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.rx2.rxFlowable.T)), kotlin.Unit)))/context">context</a> argument.
 If the context does not have any dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a>, then <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html">Dispatchers.Default</a> is used.

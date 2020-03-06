@@ -33,7 +33,7 @@
 
 <h1 id="channeliterator">ChannelIterator</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ChannelIterator</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L429">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ChannelIterator</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L431">(source)</a></div>
 
 <p>Iterator for <a href="../-receive-channel/index.html">ReceiveChannel</a>. Instances of this interface are <em>not thread-safe</em> and shall not be used
 from concurrent coroutines.</p>
@@ -52,7 +52,7 @@ from concurrent coroutines.</p>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">operator</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">hasNext</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if the channel has more elements, suspending the caller while this channel is empty,
-or returns <code>false</code> if the channel <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a> without cause.
+or returns <code>false</code> if the channel <a href="../-receive-channel/is-closed-for-receive.html">is closed for <code>receive</code></a> without a cause.
 It throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
 
       </td>
@@ -66,9 +66,9 @@ It throws the original <a href="../-send-channel/close.html">close</a> cause exc
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">operator</span> <span class="keyword">fun </span><span class="identifier">next</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#E"><span class="identifier">E</span></a></code></div>
 
-        <p>Retrieves the element from the current iterator previously removed from the channel by preceding call to <a href="has-next.html">hasNext</a> or
-throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if <a href="has-next.html">hasNext</a> was not invoked.
-<a href="next.html">next</a> should only be used in pair with <a href="has-next.html">hasNext</a>:</p>
+        <p>Retrieves the element removed from the channel by a preceding call to <a href="has-next.html">hasNext</a>, or
+throws an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if <a href="has-next.html">hasNext</a> was not invoked.
+This method should only be used in pair with <a href="has-next.html">hasNext</a>:</p>
 
       </td>
 </tr>

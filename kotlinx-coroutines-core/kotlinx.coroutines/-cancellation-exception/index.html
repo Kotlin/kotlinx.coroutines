@@ -33,7 +33,7 @@
 
 <h1 id="cancellationexception">CancellationException</h1>
 
-<div class="signature"><code><span class="keyword">open</span> <span class="keyword">expect</span> <span class="keyword">class </span><span class="identifier">CancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html"><span class="identifier">IllegalStateException</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Exceptions.common.kt#L13">(source)</a></div>
+<div class="signature"><code><span class="keyword">open</span> <span class="keyword">expect</span> <span class="keyword">class </span><span class="identifier">CancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html"><span class="identifier">IllegalStateException</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Exceptions.common.kt#L15">(source)</a></div>
 
 <h3 id="constructors">Constructors</h3>
 
@@ -46,6 +46,12 @@
       </td>
 <td>
         <div class="signature"><code><span class="identifier">CancellationException</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.CancellationException$&lt;init&gt;(kotlin.String)/message">message</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">)</span></code></div>
+        <div class="signature"><code><span class="identifier">CancellationException</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.CancellationException$&lt;init&gt;(kotlin.String, kotlin.Throwable)/message">message</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">, </span><span class="parameterName" id="kotlinx.coroutines.CancellationException$&lt;init&gt;(kotlin.String, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span></code></div>
+
+        <p>Thrown by cancellable suspending functions if the <a href="../-job/index.html">Job</a> of the coroutine is cancelled while it is suspending.
+It indicates <em>normal</em> cancellation of a coroutine.
+<strong>It is not printed to console/log by default uncaught exception handler</strong>.
+(see <a href="../-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a>).</p>
 
       </td>
 </tr></tbody>
@@ -74,11 +80,11 @@
 <tr>
 <td>
 
-        <p><a href="../-timeout-cancellation-exception.html">TimeoutCancellationException</a></p>
+        <p><a href="../-timeout-cancellation-exception/index.html">TimeoutCancellationException</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">class </span><span class="identifier">TimeoutCancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">CancellationException</span></a></code></div>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">TimeoutCancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="./index.md"><span class="identifier">CancellationException</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-copyable-throwable/index.html"><span class="identifier">CopyableThrowable</span></a><span class="symbol">&lt;</span><a href="../-timeout-cancellation-exception/index.html"><span class="identifier">TimeoutCancellationException</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>This exception is thrown by <a href="../with-timeout.html">withTimeout</a> to indicate timeout.</p>
 

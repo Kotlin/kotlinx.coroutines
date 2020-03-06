@@ -26,6 +26,7 @@ $dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.collections.Iterator((kotl
 $dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.ranges.IntRange)kotlinx.coroutines.flow/kotlin.ranges.-int-range/as-flow.html
 $dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.ranges.LongRange)kotlinx.coroutines.flow/kotlin.ranges.-long-range/as-flow.html
 $dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.sequences.Sequence((kotlinx.coroutines.flow.asFlow.T)))kotlinx.coroutines.flow/kotlin.sequences.-sequence/as-flow.html
+$dokka.location:kotlinx.coroutines.flow$merge(kotlin.collections.Iterable((kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.merge.T)))))kotlinx.coroutines.flow/kotlin.collections.-iterable/merge.html
 $dokka.location:kotlinx.coroutines.intrinsics$startCoroutineCancellable(kotlin.SuspendFunction0((kotlinx.coroutines.intrinsics.startCoroutineCancellable.T)), kotlin.coroutines.Continuation((kotlinx.coroutines.intrinsics.startCoroutineCancellable.T)))kotlinx.coroutines.flow/kotlin.-suspend-function0/start-coroutine-cancellable.html
 kotlinx.coroutines
 kotlinx.coroutines.channels

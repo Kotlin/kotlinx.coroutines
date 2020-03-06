@@ -33,7 +33,7 @@
 
 <h1 id="coroutineexceptionhandler">CoroutineExceptionHandler</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineExceptionHandler</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineExceptionHandler.kt#L69">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineExceptionHandler</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineExceptionHandler.kt#L74">(source)</a></div>
 
 <p>An optional element in the coroutine context to handle uncaught exceptions.</p>
 
@@ -54,6 +54,11 @@ in the resulting <a href="../-deferred/index.html">Deferred</a> object.</p>
     </ul>
   </li>
 </ul>
+
+<p><a href="./index.md">CoroutineExceptionHandler</a> can be invoked from an arbitrary dispatcher used by coroutines in the current job hierarchy.
+For example, if one has a <code>MainScope</code> and launches children of the scope in main and default dispatchers, then exception handler can
+be invoked either in main or in default dispatcher thread regardless of
+which particular dispatcher coroutine that has thrown an exception used.</p>
 
 <h3 id="types">Types</h3>
 

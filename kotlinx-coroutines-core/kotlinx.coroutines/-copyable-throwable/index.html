@@ -33,9 +33,7 @@
 
 <h1 id="copyablethrowable">CopyableThrowable</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">interface </span><span class="identifier">CopyableThrowable</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="keyword"> where </span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">, </span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">CopyableThrowable</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/Debug.kt#L67">(source)</a></div>
-
-<p><strong>Platform and version requirements:</strong> JVM</p>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">interface </span><span class="identifier">CopyableThrowable</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="keyword"> where </span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">, </span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">CopyableThrowable</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Debug.common.kt#L31">(source)</a></div>
 
 <p>Throwable which can be cloned during stacktrace recovery in a class-specific way.
 For additional information about stacktrace recovery see <a href="#">STACKTRACE_RECOVERY_PROPERTY_NAME</a></p>
@@ -50,6 +48,9 @@ For additional information about stacktrace recovery see <a href="#">STACKTRACE_
    return result
  }
 </pre>
+
+<p>Copy mechanism is used only on JVM, but it might be convenient to implement it in common exceptions,
+so on JVM their stacktraces will be properly recovered.</p>
 
 <h3 id="functions">Functions</h3>
 
@@ -68,6 +69,26 @@ For additional information about stacktrace recovery see <a href="#">STACKTRACE_
 For better debuggability, it is recommended to use original exception as <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/cause.html">cause</a> of the resulting one.
 Stacktrace of copied exception will be overwritten by stacktrace recovery machinery by <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/set-stack-trace.html">Throwable.setStackTrace</a> call.
 An exception can opt-out of copying by returning <code>null</code> from this function.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="inheritors">Inheritors</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="../-timeout-cancellation-exception/index.html">TimeoutCancellationException</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">TimeoutCancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="./index.md"><span class="identifier">CopyableThrowable</span></a><span class="symbol">&lt;</span><a href="../-timeout-cancellation-exception/index.html"><span class="identifier">TimeoutCancellationException</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>This exception is thrown by <a href="../with-timeout.html">withTimeout</a> to indicate timeout.</p>
 
       </td>
 </tr>

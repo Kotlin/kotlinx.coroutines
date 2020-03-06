@@ -33,19 +33,19 @@
 
 <h1 id="invokeonclose">invokeOnClose</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnClose</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$invokeOnClose(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L137">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnClose</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$invokeOnClose(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L139">(source)</a></div>
 
-<p>Registers handler which is synchronously invoked once the channel is <a href="close.html">closed</a>
-or receiving side of this channel is <a href="../-receive-channel/cancel.html">cancelled</a>.
-Only one handler can be attached to the channel during channel’s lifetime.
-Handler is invoked when <a href="is-closed-for-send.html">isClosedForSend</a> starts to return <code>true</code>.
-If channel is already closed, handler is invoked immediately.</p>
+<p>Registers a <a href="invoke-on-close.html#kotlinx.coroutines.channels.SendChannel$invokeOnClose(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> which is synchronously invoked once the channel is <a href="close.html">closed</a>
+or the receiving side of this channel is <a href="../-receive-channel/cancel.html">cancelled</a>.
+Only one handler can be attached to a channel during its lifetime.
+The <code>handler</code> is invoked when <a href="is-closed-for-send.html">isClosedForSend</a> starts to return <code>true</code>.
+If the channel is closed already, the handler is invoked immediately.</p>
 
 <p>The meaning of <code>cause</code> that is passed to the handler:</p>
 
 <ul>
-  <li><code>null</code> if channel was closed or cancelled without corresponding argument</li>
-  <li>close or cancel cause otherwise.</li>
+  <li><code>null</code> if the channel was closed or cancelled without the corresponding argument</li>
+  <li>the cause of <code>close</code> or <code>cancel</code> otherwise.</li>
 </ul>
 
 <p>Example of usage (exception handling is omitted):</p>
@@ -68,7 +68,7 @@ events.invokeOnClose { callbackBasedApi.stop() }
 
 <h3 id="exceptions">Exceptions</h3>
 
-<p><code>UnsupportedOperationException</code> - if underlying channel doesn’t support <a href="./invoke-on-close.md">invokeOnClose</a>.
+<p><code>UnsupportedOperationException</code> - if the underlying channel doesn’t support <a href="./invoke-on-close.md">invokeOnClose</a>.
 Implementation note: currently, <a href="./invoke-on-close.md">invokeOnClose</a> is unsupported only by Rx-like integrations</p>
 
 <p><code>IllegalStateException</code> - if another handler was already registered</p>

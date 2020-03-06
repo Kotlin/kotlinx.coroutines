@@ -45,17 +45,15 @@ It may cancel coroutines on timeout if <a href="#">cancelOnTimeout</a> set to <c
 <p>Example of usage:</p>
 
 <pre>class HangingTest {
+    @get:Rule
+    val timeout = CoroutinesTimeout.seconds(5)
 
-  @Rule
-  @JvmField
-  val timeout = CoroutinesTimeout.seconds(5)
-
-  @Test
-  fun testThatHangs() = runBlocking {
-    ...
-    delay(Long.MAX_VALUE) // somewhere deep in the stack
-    ...
-  }
+    @Test
+    fun testThatHangs() = runBlocking {
+         ...
+         delay(Long.MAX_VALUE) // somewhere deep in the stack
+         ...
+    }
 }
 </pre>
 

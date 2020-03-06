@@ -33,45 +33,28 @@
 
 <h1 id="isdispatchneeded">isDispatchNeeded</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">isDispatchNeeded</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CoroutineDispatcher$isDispatchNeeded(kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineDispatcher.kt#L72">(source)</a></div>
+<div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">isDispatchNeeded</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.CoroutineDispatcher$isDispatchNeeded(kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineDispatcher.kt#L61">(source)</a></div>
 
-<p>Returns <code>true</code> if execution shall be dispatched onto another thread.
-The default behaviour for most dispatchers is to return <code>true</code>.</p>
+<p>Returns <code>true</code> if the execution of the coroutine should be performed with <a href="dispatch.html">dispatch</a> method.
+The default behavior for most dispatchers is to return <code>true</code>.</p>
 
-<p>This method should never be used from general code, it is used only by <code>kotlinx.coroutines</code>
-internals and its contract with the rest of API is an implementation detail.</p>
+<p>If this method returns <code>false</code>, the coroutine is resumed immediately in the current thread,
+potentially forming an event-loop to prevent stack overflows.
+The event loop is an advanced topic and its implications can be found in <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> documentation.</p>
 
-<p>UI dispatchers <em>should not</em> override <code>isDispatchNeeded</code>, but leave a default implementation that
-returns <code>true</code>. To understand the rationale beyond this recommendation, consider the following code:</p>
+<p>A dispatcher can override this method to provide a performance optimization and avoid paying a cost of an unnecessary dispatch.
+E.g. <a href="../-main-coroutine-dispatcher/immediate.html">MainCoroutineDispatcher.immediate</a> checks whether we are already in the required UI thread in this method and avoids
+an additional dispatch when it is not required.</p>
 
-<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="k">fun</span> <span class="nf">asyncUpdateUI</span><span class="p">()</span> <span class="p">=</span> <span class="n">async</span><span class="p">(</span><span class="n">Dispatchers</span><span class="p">.</span><span class="n">Main</span><span class="p">)</span> <span class="p">{</span>
-    <span class="c1">// do something here that updates something in UI
-</span><span class="p">}</span>
-</code></pre>
-</div>
+<p>While this approach can be more efficient, it is not chosen by default to provide a consistent dispatching behaviour
+so that users won’t observe unexpected and non-consistent order of events by default.</p>
 
-<p>When you invoke <code>asyncUpdateUI</code> in some background thread, it immediately continues to the next
-line, while UI update happens asynchronously in the UI thread. However, if you invoke
-it in the UI thread itself, it updates UI <em>synchronously</em> if your <code>isDispatchNeeded</code> is
-overridden with a thread check. Checking if we are already in the UI thread seems more
-efficient (and it might indeed save a few CPU cycles), but this subtle and context-sensitive
-difference in behavior makes the resulting async code harder to debug.</p>
+<p>Coroutine builders like <a href="../launch.html">launch</a> and <a href="../async.html">async</a> accept an optional <a href="../-coroutine-start/index.html">CoroutineStart</a>
+parameter that allows one to optionally choose the <a href="../-coroutine-start/-u-n-d-i-s-p-a-t-c-h-e-d.html">undispatched</a> behavior to start coroutine immediately,
+but to be resumed only in the provided dispatcher.</p>
 
-<p>Basically, the choice here is between “JS-style” asynchronous approach (async actions
-are always postponed to be executed later in the even dispatch thread) and “C#-style” approach
-(async actions are executed in the invoker thread until the first suspension point).
-While, C# approach seems to be more efficient, it ends up with recommendations like
-“use <code>yield</code> if you need to ….”. This is error-prone. JS-style approach is more consistent
-and does not require programmers to think about whether they need to yield or not.</p>
-
-<p>However, coroutine builders like <a href="../launch.html">launch</a> and <a href="../async.html">async</a> accept an optional <a href="../-coroutine-start/index.html">CoroutineStart</a>
-parameter that allows one to optionally choose C#-style <a href="../-coroutine-start/-u-n-d-i-s-p-a-t-c-h-e-d.html">CoroutineStart.UNDISPATCHED</a> behaviour
-whenever it is needed for efficiency.</p>
-
-<p>This method should be generally exception-safe, an exception thrown from this method
+<p>This method should generally be exception-safe. An exception thrown from this method
 may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.</p>
-
-<p><strong>Note: This is an experimental api.</strong> Execution semantics of coroutines may change in the future when this function returns <code>false</code>.</p>
 
 
       </div>

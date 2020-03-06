@@ -35,21 +35,21 @@
 
 <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCancellation</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L137">(source)</a></div>
 
-<p>Registers handler that is <strong>synchronously</strong> invoked once on cancellation (both regular and exceptional) of this continuation.
-When the continuation is already cancelled, then the handler is immediately invoked
-with cancellation exception. Otherwise, the handler will be invoked once on cancellation if this
+<p>Registers a <a href="invoke-on-cancellation.html#kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> to be <strong>synchronously</strong> invoked on cancellation (regular or exceptional) of this continuation.
+When the continuation is already cancelled, the handler will be immediately invoked
+with the cancellation exception. Otherwise, the handler will be invoked as soon as this
 continuation is cancelled.</p>
 
-<p>Installed <a href="invoke-on-cancellation.html#kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> should not throw any exceptions.
-If it does, they will get caught, wrapped into <a href="#">CompletionHandlerException</a> and
-processed as uncaught exception in the context of the current coroutine
+<p>The installed <a href="invoke-on-cancellation.html#kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> should not throw any exceptions.
+If it does, they will get caught, wrapped into a <a href="#">CompletionHandlerException</a> and
+processed as an uncaught exception in the context of the current coroutine
 (see <a href="../-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a>).</p>
 
-<p>At most one <a href="invoke-on-cancellation.html#kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> can be installed on one continuation.</p>
+<p>At most one <a href="invoke-on-cancellation.html#kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> can be installed on a continuation.</p>
 
 <p><strong>Note</strong>: Implementation of <code>CompletionHandler</code> must be fast, non-blocking, and thread-safe.
-This handler can be invoked concurrently with the surrounding code.
-There is no guarantee on the execution context in which the <a href="invoke-on-cancellation.html#kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> is invoked.</p>
+This <code>handler</code> can be invoked concurrently with the surrounding code.
+There is no guarantee on the execution context in which the <code>handler</code> will be invoked.</p>
 
 
       </div>

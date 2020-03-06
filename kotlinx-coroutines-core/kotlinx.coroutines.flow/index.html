@@ -280,8 +280,8 @@ Every flow collector will trigger a new broadcast channel subscription.</p>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">callbackFlow</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$callbackFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.callbackFlow.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="callback-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="callback-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Creates an instance of the cold <a href="-flow/index.html">Flow</a> with elements that are sent to a <a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>
-that is provided to the builder’s <a href="callback-flow.html#kotlinx.coroutines.flow$callbackFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.callbackFlow.T)), kotlin.Unit)))/block">block</a> of code via <a href="../kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>. It allows elements to be
-produced by the code that is running in a different context or running concurrently.</p>
+provided to the builder’s <a href="callback-flow.html#kotlinx.coroutines.flow$callbackFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.callbackFlow.T)), kotlin.Unit)))/block">block</a> of code via <a href="../kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>. It allows elements to be
+produced by code that is running in a different context or concurrently.</p>
 
       </td>
 </tr>
@@ -310,10 +310,10 @@ in downstream flow and does not catch exceptions that are thrown to cancel the f
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">channelFlow</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$channelFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.channelFlow.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="channel-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="channel-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Creates an instance of the cold <a href="-flow/index.html">Flow</a> with elements that are sent to a <a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>
-that is provided to the builder’s <a href="channel-flow.html#kotlinx.coroutines.flow$channelFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.channelFlow.T)), kotlin.Unit)))/block">block</a> of code via <a href="../kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>. It allows elements to be
-produced by the code that is running in a different context or running concurrently.
-The resulting flow is <em>cold</em>, which means that <a href="channel-flow.html#kotlinx.coroutines.flow$channelFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.channelFlow.T)), kotlin.Unit)))/block">block</a> is called on each call of a terminal operator
-on the resulting flow.</p>
+provided to the builder’s <a href="channel-flow.html#kotlinx.coroutines.flow$channelFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.channelFlow.T)), kotlin.Unit)))/block">block</a> of code via <a href="../kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>. It allows elements to be
+produced by code that is running in a different context or concurrently.
+The resulting flow is <em>cold</em>, which means that <a href="channel-flow.html#kotlinx.coroutines.flow$channelFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.channelFlow.T)), kotlin.Unit)))/block">block</a> is called every time a terminal operator
+is applied to the resulting flow.</p>
 
       </td>
 </tr>
@@ -746,11 +746,11 @@ concurrently collected flows.</p>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">flowOf</span><span class="symbol">(</span><span class="keyword">vararg</span> <span class="parameterName" id="kotlinx.coroutines.flow$flowOf(kotlin.Array((kotlinx.coroutines.flow.flowOf.T)))/elements">elements</span><span class="symbol">:</span>&nbsp;<a href="flow-of.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-of.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Creates a flow that produces values from the given array of elements.</p>
+        <p>Creates a flow that produces values from the specified <code>vararg</code>-arguments.</p>
 
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">flowOf</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$flowOf(kotlinx.coroutines.flow.flowOf.T)/value">value</span><span class="symbol">:</span>&nbsp;<a href="flow-of.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-of.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Creates flow that produces a given <a href="flow-of.html#kotlinx.coroutines.flow$flowOf(kotlinx.coroutines.flow.flowOf.T)/value">value</a>.</p>
+        <p>Creates flow that produces the given <a href="flow-of.html#kotlinx.coroutines.flow$flowOf(kotlinx.coroutines.flow.flowOf.T)/value">value</a>.</p>
 
       </td>
 </tr>
@@ -853,6 +853,20 @@ When the original flow emits a new value, computation of the <a href="map-latest
 <tr>
 <td>
 
+        <p><a href="merge.html">merge</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">merge</span><span class="symbol">(</span><span class="keyword">vararg</span> <span class="parameterName" id="kotlinx.coroutines.flow$merge(kotlin.Array((kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.merge.T)))))/flows">flows</span><span class="symbol">:</span>&nbsp;<a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="merge.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="merge.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Merges the given flows into a single flow without preserving an order of elements.
+All flows are merged concurrently, without limit on the number of simultaneously collected flows.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="on-completion.html">onCompletion</a></p>
 
       </td>
@@ -906,6 +920,20 @@ the exception from the upstream (if any) as cause parameter of <a href="on-compl
 <tr>
 <td>
 
+        <p><a href="receive-as-flow.html">receiveAsFlow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="receive-as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">receiveAsFlow</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="receive-as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Represents the given receive channel as a hot flow and <a href="../kotlinx.coroutines.channels/-receive-channel/receive.html">receives</a> from the channel
+in fan-out fashion every time this flow is collected. One element will be emitted to one collector only.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="reduce.html">reduce</a></p>
 
       </td>
@@ -913,7 +941,7 @@ the exception from the upstream (if any) as cause parameter of <a href="on-compl
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">S</span><span class="symbol">, </span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="reduce.html#S"><span class="identifier">S</span></a><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="reduce.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">reduce</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$reduce(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.reduce.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.reduce.S, kotlinx.coroutines.flow.reduce.T, )))/operation">operation</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">accumulator</span><span class="symbol">:</span>&nbsp;<a href="reduce.html#S"><span class="identifier">S</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="reduce.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="reduce.html#S"><span class="identifier">S</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="reduce.html#S"><span class="identifier">S</span></a></code></div>
 
         <p>Accumulates value starting with the first element and applying <a href="reduce.html#kotlinx.coroutines.flow$reduce(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.reduce.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.reduce.S, kotlinx.coroutines.flow.reduce.T, )))/operation">operation</a> to current accumulator value and each element.
-Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unsupported-operation-exception/index.html">UnsupportedOperationException</a> if flow was empty.</p>
+Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-no-such-element-exception/index.html">NoSuchElementException</a> if flow was empty.</p>
 
       </td>
 </tr>

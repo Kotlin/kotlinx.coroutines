@@ -35,32 +35,10 @@
 
 <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">mono</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="mono.html#T"><span class="identifier">T</span></a><span class="symbol">?</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/core/publisher/Mono.html"><span class="identifier">Mono</span></a><span class="symbol">&lt;</span><a href="mono.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-<p>Creates cold <a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/core/publisher/Mono.html">mono</a> that will run a given <a href="mono.html#kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/block">block</a> in a coroutine.
+<p>Creates cold <a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/core/publisher/Mono.html">mono</a> that will run a given <a href="mono.html#kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/block">block</a> in a coroutine and emits its result.
 Every time the returned mono is subscribed, it starts a new coroutine.
-Coroutine returns a single, possibly null value. Unsubscribing cancels running coroutine.</p>
-
-<table>
-  <thead>
-    <tr>
-      <th><strong>Coroutine action</strong></th>
-      <th><strong>Signal to sink</strong></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Returns a non-null value</td>
-      <td><code>success(value)</code></td>
-    </tr>
-    <tr>
-      <td>Returns a null</td>
-      <td><code>success</code></td>
-    </tr>
-    <tr>
-      <td>Failure with exception or unsubscribe</td>
-      <td><code>error</code></td>
-    </tr>
-  </tbody>
-</table>
+If <a href="mono.html#kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/block">block</a> result is <code>null</code>, <a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/core/publisher/MonoSink.html#success()">MonoSink.success</a> is invoked without a value.
+Unsubscribing cancels running coroutine.</p>
 
 <p>Coroutine context can be specified with <a href="mono.html#kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/context">context</a> argument.
 If the context does not have any dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a>, then <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html">Dispatchers.Default</a> is used.</p>

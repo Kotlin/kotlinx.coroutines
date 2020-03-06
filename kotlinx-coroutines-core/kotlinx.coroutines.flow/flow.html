@@ -33,23 +33,24 @@
 
 <h1 id="flow">flow</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">flow</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flow(kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.flow.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Builders.kt#L48">(source)</a></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">flow</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flow(kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.flow.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Builders.kt#L49">(source)</a></div>
 
 <p>Creates a flow from the given suspendable <a href="flow.html#kotlinx.coroutines.flow$flow(kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.flow.T)), kotlin.Unit)))/block">block</a>.</p>
 
 <p>Example of usage:</p>
 
-<pre>fun fibonacci(): Flow&lt;Long&gt; = flow {
-    emit(1L)
-    var f1 = 1L
-    var f2 = 1L
-    repeat(100) {
-        var tmp = f1
-        f1 = f2
-        f2 += tmp
-        emit(f1)
+<pre>fun fibonacci(): Flow&lt;BigInteger&gt; = flow {
+    var x = BigInteger.ZERO
+    var y = BigInteger.ONE
+    while (true) {
+        emit(x)
+        x = y.also {
+            y += x
+        }
     }
 }
+
+fibonacci().take(100).collect { println(it) }
 </pre>
 
 <p><code>emit</code> should happen strictly in the dispatchers of the <a href="flow.html#kotlinx.coroutines.flow$flow(kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.flow.T)), kotlin.Unit)))/block">block</a> in order to preserve the flow context.

@@ -33,19 +33,21 @@
 
 <h1 id="consumeasflow">consumeAsFlow</h1>
 
-<div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="consume-as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeAsFlow</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="consume-as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Channels.kt#L84">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="consume-as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeAsFlow</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="consume-as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Channels.kt#L110">(source)</a></div>
 
 <p>Represents the given receive channel as a hot flow and <a href="../kotlinx.coroutines.channels/consume.html">consumes</a> the channel
 on the first collection from this flow. The resulting flow can be collected just once and throws
 <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> when trying to collect it more than once.</p>
 
+<p>See also <a href="receive-as-flow.html">receiveAsFlow</a> which supports multiple collectors of the resulting flow.</p>
+
 <h3 id="cancellation-semantics">Cancellation semantics</h3>
 
-<ol>
-  <li>Flow consumer is cancelled when the original channel is cancelled.</li>
-  <li>Flow consumer completes normally when the original channel completes (~is closed) normally.</li>
-  <li>If the flow consumer fails with an exception, channel is cancelled.</li>
-</ol>
+<ul>
+  <li>Flow collector is cancelled when the original channel is <a href="../kotlinx.coroutines.channels/-send-channel/close.html">closed</a> with an exception.</li>
+  <li>Flow collector completes normally when the original channel is <a href="../kotlinx.coroutines.channels/-send-channel/close.html">closed</a> normally.</li>
+  <li>If the flow collector fails with an exception, the source channel is <a href="../kotlinx.coroutines.channels/-receive-channel/cancel.html">cancelled</a>.</li>
+</ul>
 
 <h3 id="operator-fusion">Operator fusion</h3>
 

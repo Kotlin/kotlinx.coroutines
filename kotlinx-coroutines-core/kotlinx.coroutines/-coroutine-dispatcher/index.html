@@ -35,24 +35,24 @@
 
 <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">CoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html"><span class="identifier">ContinuationInterceptor</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineDispatcher.kt#L30">(source)</a></div>
 
-<p>Base class that shall be extended by all coroutine dispatcher implementations.</p>
+<p>Base class to be extended by all coroutine dispatcher implementations.</p>
 
 <p>The following standard implementations are provided by <code>kotlinx.coroutines</code> as properties on
-<a href="../-dispatchers/index.html">Dispatchers</a> objects:</p>
+the <a href="../-dispatchers/index.html">Dispatchers</a> object:</p>
 
 <ul>
-  <li><a href="../-dispatchers/-default.html">Dispatchers.Default</a> – is used by all standard builder if no dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a>
+  <li><a href="../-dispatchers/-default.html">Dispatchers.Default</a> — is used by all standard builders if no dispatcher or any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a>
 is specified in their context. It uses a common pool of shared background threads.
 This is an appropriate choice for compute-intensive coroutines that consume CPU resources.</li>
-  <li><a href="../-dispatchers/-i-o.html">Dispatchers.IO</a> – uses a shared pool of on-demand created threads and is designed for offloading of IO-intensive <em>blocking</em>
+  <li><a href="../-dispatchers/-i-o.html">Dispatchers.IO</a> — uses a shared pool of on-demand created threads and is designed for offloading of IO-intensive <em>blocking</em>
 operations (like file I/O and blocking socket I/O).</li>
-  <li><a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> – starts coroutine execution in the current call-frame until the first suspension.
-On first  suspension the coroutine builder function returns.
-The coroutine resumes in whatever thread that is used by the
+  <li><a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> — starts coroutine execution in the current call-frame until the first suspension,
+whereupon the coroutine builder function returns.
+The coroutine will later resume in whatever thread used by the
 corresponding suspending function, without confining it to any specific thread or pool.
-<strong>Unconfined dispatcher should not be normally used in code</strong>.</li>
+<strong>The <code>Unconfined</code> dispatcher should not normally be used in code</strong>.</li>
   <li>Private thread pools can be created with <a href="../new-single-thread-context.html">newSingleThreadContext</a> and <a href="../new-fixed-thread-pool-context.html">newFixedThreadPoolContext</a>.</li>
-  <li>An arbitrary <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html">Executor</a> can be converted to dispatcher with <a href="../java.util.concurrent.-executor/as-coroutine-dispatcher.html">asCoroutineDispatcher</a> extension function.</li>
+  <li>An arbitrary <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html">Executor</a> can be converted to a dispatcher with the <a href="../java.util.concurrent.-executor/as-coroutine-dispatcher.html">asCoroutineDispatcher</a> extension function.</li>
 </ul>
 
 <p>This class ensures that debugging facilities in <a href="../new-coroutine-context.html">newCoroutineContext</a> function work properly.</p>
@@ -70,7 +70,7 @@ corresponding suspending function, without confining it to any specific thread o
 <td>
         <div class="signature"><code><span class="identifier">CoroutineDispatcher</span><span class="symbol">(</span><span class="symbol">)</span></code></div>
 
-        <p>Base class that shall be extended by all coroutine dispatcher implementations.</p>
+        <p>Base class to be extended by all coroutine dispatcher implementations.</p>
 
       </td>
 </tr>
@@ -103,7 +103,7 @@ corresponding suspending function, without confining it to any specific thread o
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">interceptContinuation</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CoroutineDispatcher$interceptContinuation(kotlin.coroutines.Continuation((kotlinx.coroutines.CoroutineDispatcher.interceptContinuation.T)))/continuation">continuation</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="intercept-continuation.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="intercept-continuation.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Returns continuation that wraps the original <a href="intercept-continuation.html#kotlinx.coroutines.CoroutineDispatcher$interceptContinuation(kotlin.coroutines.Continuation((kotlinx.coroutines.CoroutineDispatcher.interceptContinuation.T)))/continuation">continuation</a>, thus intercepting all resumptions.</p>
+        <p>Returns a continuation that wraps the provided <a href="intercept-continuation.html#kotlinx.coroutines.CoroutineDispatcher$interceptContinuation(kotlin.coroutines.Continuation((kotlinx.coroutines.CoroutineDispatcher.interceptContinuation.T)))/continuation">continuation</a>, thus intercepting all resumptions.</p>
 
       </td>
 </tr>
@@ -116,8 +116,19 @@ corresponding suspending function, without confining it to any specific thread o
 <td>
         <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">isDispatchNeeded</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.CoroutineDispatcher$isDispatchNeeded(kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Returns <code>true</code> if execution shall be dispatched onto another thread.
-The default behaviour for most dispatchers is to return <code>true</code>.</p>
+        <p>Returns <code>true</code> if the execution of the coroutine should be performed with <a href="dispatch.html">dispatch</a> method.
+The default behavior for most dispatchers is to return <code>true</code>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="release-intercepted-continuation.html">releaseInterceptedContinuation</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">releaseInterceptedContinuation</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CoroutineDispatcher$releaseInterceptedContinuation(kotlin.coroutines.Continuation((kotlin.Any)))/continuation">continuation</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
       </td>
 </tr>

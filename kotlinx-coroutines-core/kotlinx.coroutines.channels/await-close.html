@@ -36,11 +36,11 @@
 <div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><a href="-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitClose</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$awaitClose(kotlinx.coroutines.channels.ProducerScope((kotlin.Any)), kotlin.Function0((kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;{}<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Produce.kt#L45">(source)</a></div>
 
 <p>Suspends the current coroutine until the channel is either <a href="-send-channel/close.html">closed</a> or <a href="-receive-channel/cancel.html">cancelled</a>
-and invokes the given <a href="await-close.html#kotlinx.coroutines.channels$awaitClose(kotlinx.coroutines.channels.ProducerScope((kotlin.Any)), kotlin.Function0((kotlin.Unit)))/block">block</a> before resuming the coroutine.</p>
+and invokes the given <a href="await-close.html#kotlinx.coroutines.channels$awaitClose(kotlinx.coroutines.channels.ProducerScope((kotlin.Any)), kotlin.Function0((kotlin.Unit)))/block">block</a> before resuming the coroutine. This suspending function is cancellable.</p>
 
-<p>Note that when producer channel is cancelled this function resumes with cancellation exception,
-so putting the code after calling this function would not lead to its execution in case of cancellation.
-That is why this code takes a lambda parameter.</p>
+<p>Note that when the producer channel is cancelled, this function resumes with a cancellation exception.
+Therefore, in case of cancellation, no code after the call to this function will be executed.
+That’s why this function takes a lambda parameter.</p>
 
 <p>Example of usage:</p>
 

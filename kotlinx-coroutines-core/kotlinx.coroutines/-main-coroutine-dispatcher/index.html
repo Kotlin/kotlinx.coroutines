@@ -108,7 +108,7 @@ and used for any UI-based activities. Instance of <code>MainDispatcher</code> ca
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">interceptContinuation</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CoroutineDispatcher$interceptContinuation(kotlin.coroutines.Continuation((kotlinx.coroutines.CoroutineDispatcher.interceptContinuation.T)))/continuation">continuation</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="../-coroutine-dispatcher/intercept-continuation.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="../-coroutine-dispatcher/intercept-continuation.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Returns continuation that wraps the original <a href="../-coroutine-dispatcher/intercept-continuation.html#kotlinx.coroutines.CoroutineDispatcher$interceptContinuation(kotlin.coroutines.Continuation((kotlinx.coroutines.CoroutineDispatcher.interceptContinuation.T)))/continuation">continuation</a>, thus intercepting all resumptions.</p>
+        <p>Returns a continuation that wraps the provided <a href="../-coroutine-dispatcher/intercept-continuation.html#kotlinx.coroutines.CoroutineDispatcher$interceptContinuation(kotlin.coroutines.Continuation((kotlinx.coroutines.CoroutineDispatcher.interceptContinuation.T)))/continuation">continuation</a>, thus intercepting all resumptions.</p>
 
       </td>
 </tr>
@@ -121,8 +121,19 @@ and used for any UI-based activities. Instance of <code>MainDispatcher</code> ca
 <td>
         <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">isDispatchNeeded</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.CoroutineDispatcher$isDispatchNeeded(kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Returns <code>true</code> if execution shall be dispatched onto another thread.
-The default behaviour for most dispatchers is to return <code>true</code>.</p>
+        <p>Returns <code>true</code> if the execution of the coroutine should be performed with <a href="../-coroutine-dispatcher/dispatch.html">dispatch</a> method.
+The default behavior for most dispatchers is to return <code>true</code>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../-coroutine-dispatcher/release-intercepted-continuation.html">releaseInterceptedContinuation</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">releaseInterceptedContinuation</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CoroutineDispatcher$releaseInterceptedContinuation(kotlin.coroutines.Continuation((kotlin.Any)))/continuation">continuation</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
       </td>
 </tr>

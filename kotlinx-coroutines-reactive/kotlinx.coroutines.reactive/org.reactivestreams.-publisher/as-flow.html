@@ -47,9 +47,9 @@
   <p>Transforms the given reactive <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a> into <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>.
 Use <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/buffer.html">buffer</a> operator on the resulting flow to specify the size of the backpressure.
 More precisely, it specifies the value of the subscription’s <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Subscription.html#request(long)">request</a>.
-<code>1</code> is used by default.</p>
+<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/buffer.html">buffer</a> default capacity is used by default.</p>
 
-  <p>If any of the resulting flow transformations fails, subscription is immediately cancelled and all in-flights elements
+  <p>If any of the resulting flow transformations fails, subscription is immediately cancelled and all in-flight elements
 are discarded.</p>
 
   <p>This function is integrated with <code>ReactorContext</code> from <code>kotlinx-coroutines-reactor</code> module,

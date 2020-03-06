@@ -33,7 +33,7 @@
 
 <h1 id="producein">produceIn</h1>
 
-<div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="produce-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">produceIn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$produceIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.produceIn.T)), kotlinx.coroutines.CoroutineScope)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="produce-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Channels.kt#L177">(source)</a></div>
+<div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="produce-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">produceIn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$produceIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.produceIn.T)), kotlinx.coroutines.CoroutineScope)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="produce-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Channels.kt#L207">(source)</a></div>
 
 <p>Creates a <a href="../kotlinx.coroutines.channels/produce.html">produce</a> coroutine that collects the given flow.</p>
 
@@ -41,7 +41,7 @@
 that collects the given flow and thus resulting channel should be properly closed or cancelled.</p>
 
 <p>A channel with <a href="../kotlinx.coroutines.channels/-channel/-b-u-f-f-e-r-e-d.html">default</a> buffer size is created.
-Use <a href="buffer.html">buffer</a> operator on the flow before calling <code>produce</code> to specify a value other than
+Use <a href="buffer.html">buffer</a> operator on the flow before calling <code>produceIn</code> to specify a value other than
 default and to control what happens when data is produced faster than it is consumed,
 that is to control backpressure behavior.</p>
 

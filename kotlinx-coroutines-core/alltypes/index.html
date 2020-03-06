@@ -91,9 +91,9 @@ function.</p>
       </td>
 <td>
 
-        <p>Cancellable continuation. It is <em>completed</em> when it is resumed or cancelled.
-When <a href="../kotlinx.coroutines/-cancellable-continuation/cancel.html">cancel</a> function is explicitly invoked, this continuation immediately resumes with <a href="../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a> or
-with the specified cancel cause.</p>
+        <p>Cancellable continuation. It is <em>completed</em> when resumed or cancelled.
+When the <a href="../kotlinx.coroutines/-cancellable-continuation/cancel.html">cancel</a> function is explicitly invoked, this continuation immediately resumes with a <a href="../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a> or
+the specified cancel cause.</p>
 
       </td>
 </tr>
@@ -111,9 +111,9 @@ with the specified cancel cause.</p>
       </td>
 <td>
 
-        <p>Channel is a non-blocking primitive for communication between sender using <a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a> and receiver using <a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a>.
-Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
-but it has suspending operations instead of blocking ones and it can be closed.</p>
+        <p>Channel is a non-blocking primitive for communication between a sender (via <a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>) and a receiver (via <a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a>).
+Conceptually, a channel is similar to Java’s <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
+but it has suspending operations instead of blocking ones and can be <a href="../kotlinx.coroutines.channels/-send-channel/close.html">closed</a>.</p>
 
       </td>
 </tr>
@@ -134,7 +134,7 @@ from concurrent coroutines.</p>
       </td>
 <td>
 
-        <p>Indicates attempt to <a href="../kotlinx.coroutines.channels/-receive-channel/receive.html">receive</a> on <a href="../kotlinx.coroutines.channels/-receive-channel/is-closed-for-receive.html">isClosedForReceive</a>
+        <p>Indicates an attempt to <a href="../kotlinx.coroutines.channels/-receive-channel/receive.html">receive</a> from a <a href="../kotlinx.coroutines.channels/-receive-channel/is-closed-for-receive.html">isClosedForReceive</a>
 channel that was closed without a cause. A <em>failed</em> channel rethrows the original <a href="../kotlinx.coroutines.channels/-send-channel/close.html">close</a> cause
 exception on receive attempts.</p>
 
@@ -146,7 +146,7 @@ exception on receive attempts.</p>
       </td>
 <td>
 
-        <p>Indicates attempt to <a href="../kotlinx.coroutines.channels/-send-channel/send.html">send</a> on <a href="../kotlinx.coroutines.channels/-send-channel/is-closed-for-send.html">isClosedForSend</a> channel
+        <p>Indicates an attempt to <a href="../kotlinx.coroutines.channels/-send-channel/send.html">send</a> to a <a href="../kotlinx.coroutines.channels/-send-channel/is-closed-for-send.html">isClosedForSend</a> channel
 that was closed without a cause. A <em>failed</em> channel rethrows the original <a href="../kotlinx.coroutines.channels/-send-channel/close.html">close</a> cause
 exception on send attempts.</p>
 
@@ -226,7 +226,7 @@ For additional information about stacktrace recovery see <a href="#">STACKTRACE_
       </td>
 <td>
 
-        <p>Base class that shall be extended by all coroutine dispatcher implementations.</p>
+        <p>Base class to be extended by all coroutine dispatcher implementations.</p>
 
       </td>
 </tr>
@@ -516,7 +516,7 @@ so they cannot be deprecated right away.</p>
       </td>
 <td>
 
-        <p>Scope for <a href="../kotlinx.coroutines.channels/produce.html">produce</a> coroutine builder.</p>
+        <p>Scope for the <a href="../kotlinx.coroutines.channels/produce.html">produce</a> coroutine builder.</p>
 
       </td>
 </tr>
@@ -669,7 +669,7 @@ every time the coroutine with this element in the context is resumed on a thread
 </tr>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines/-timeout-cancellation-exception.html">kotlinx.coroutines.TimeoutCancellationException</a></p>
+        <p><a href="../kotlinx.coroutines/-timeout-cancellation-exception/index.html">kotlinx.coroutines.TimeoutCancellationException</a></p>
       </td>
 <td>
 

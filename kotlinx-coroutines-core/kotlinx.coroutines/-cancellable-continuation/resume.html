@@ -35,28 +35,28 @@
 
 <div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">resume</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/value">value</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L187">(source)</a></div>
 
-<p>Resumes this continuation with a given <a href="resume.html#kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/value">value</a> and calls the specified <a href="resume.html#kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</a>
-handler when resumed too late (when continuation was already cancelled) or when resumed
-successfully (before cancellation), but coroutine’s job was cancelled before it had a
-chance to run in its dispatcher, so that suspended function threw an exception
+<p>Resumes this continuation with the specified <code>value</code> and calls the specified <code>onCancellation</code>
+handler when either resumed too late (when continuation was already cancelled) or, although resumed
+successfully (before cancellation), the coroutine’s job was cancelled before it had a
+chance to run in its dispatcher, so that the suspended function threw an exception
 instead of returning this value.</p>
 
-<p>Installed <a href="resume.html#kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</a> handler should not throw any exceptions.
-If it does, they will get caught, wrapped into <a href="#">CompletionHandlerException</a> and
-processed as uncaught exception in the context of the current coroutine
+<p>The installed <a href="resume.html#kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</a> handler should not throw any exceptions.
+If it does, they will get caught, wrapped into a <a href="#">CompletionHandlerException</a> and
+processed as an uncaught exception in the context of the current coroutine
 (see <a href="../-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a>).</p>
 
-<p>This function shall be used when resuming with a resource that must be closed by the
-code that had called the corresponding suspending function, e.g.:</p>
+<p>This function shall be used when resuming with a resource that must be closed by
+code that called the corresponding suspending function, e.g.:</p>
 
 <pre>continuation.resume(resource) {
     resource.close()
 }
 </pre>
 
-<p><strong>Note</strong>: Implementation of <a href="resume.html#kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</a> handler must be fast, non-blocking, and thread-safe.
-This handler can be invoked concurrently with the surrounding code.
-There is no guarantee on the execution context in which the <a href="resume.html#kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</a> handler is invoked.</p>
+<p><strong>Note</strong>: The <a href="resume.html#kotlinx.coroutines.CancellableContinuation$resume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</a> handler must be fast, non-blocking, and thread-safe.
+It can be invoked concurrently with the surrounding code.
+There is no guarantee on the execution context of its invocation.</p>
 
 
       </div>

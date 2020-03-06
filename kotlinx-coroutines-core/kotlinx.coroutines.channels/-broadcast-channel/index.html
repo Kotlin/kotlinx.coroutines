@@ -57,8 +57,8 @@ broadcast channel implementations.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-send-channel/close.html">close</a> and thus
-the <a href="../-send-channel/send.html">send</a> and <a href="../-send-channel/offer.html">offer</a> attempts throws exception.</p>
+        <p>Returns <code>true</code> if this channel was closed by an invocation of <a href="../-send-channel/close.html">close</a>. This means that
+calling <a href="../-send-channel/send.html">send</a> or <a href="../-send-channel/offer.html">offer</a> will result in an exception.</p>
 
       </td>
 </tr>
@@ -71,8 +71,8 @@ the <a href="../-send-channel/send.html">send</a> and <a href="../-send-channel/
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">onSend</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.selects/-select-clause2.html"><span class="identifier">SelectClause2</span></a><span class="symbol">&lt;</span><a href="../-send-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">,</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="../-send-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
 
-        <p>Clause for <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of <a href="../-send-channel/send.html">send</a> suspending function that selects when the element that is specified
-as parameter is sent to the channel. When the clause is selected the reference to this channel
+        <p>Clause for the <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of the <a href="../-send-channel/send.html">send</a> suspending function that selects when the element that is specified
+as the parameter is sent to the channel. When the clause is selected, the reference to this channel
 is passed into the corresponding block.</p>
 
       </td>
@@ -134,7 +134,7 @@ broadcast channel.</p>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Closes this channel.
-This is an idempotent operation – subsequent invocations of this function have no effect and return <code>false</code>.
+This is an idempotent operation — subsequent invocations of this function have no effect and return <code>false</code>.
 Conceptually, its sends a special “close token” over this channel.</p>
 
       </td>
@@ -148,11 +148,11 @@ Conceptually, its sends a special “close token” over this channel.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnClose</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$invokeOnClose(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Registers handler which is synchronously invoked once the channel is <a href="../-send-channel/close.html">closed</a>
-or receiving side of this channel is <a href="../-receive-channel/cancel.html">cancelled</a>.
-Only one handler can be attached to the channel during channel’s lifetime.
-Handler is invoked when <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> starts to return <code>true</code>.
-If channel is already closed, handler is invoked immediately.</p>
+        <p>Registers a <a href="../-send-channel/invoke-on-close.html#kotlinx.coroutines.channels.SendChannel$invokeOnClose(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> which is synchronously invoked once the channel is <a href="../-send-channel/close.html">closed</a>
+or the receiving side of this channel is <a href="../-receive-channel/cancel.html">cancelled</a>.
+Only one handler can be attached to a channel during its lifetime.
+The <code>handler</code> is invoked when <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> starts to return <code>true</code>.
+If the channel is closed already, the handler is invoked immediately.</p>
 
       </td>
 </tr>
@@ -165,9 +165,9 @@ If channel is already closed, handler is invoked immediately.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">offer</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Adds <a href="../-send-channel/offer.html#kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</a> into this queue if it is possible to do so immediately without violating capacity restrictions
-and returns <code>true</code>. Otherwise, it returns <code>false</code> immediately
-or throws exception if the channel <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> (see <a href="../-send-channel/close.html">close</a> for details).</p>
+        <p>Immediately adds the specified <a href="../-send-channel/offer.html#kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</a> to this channel, if this doesn’t violate its capacity restrictions,
+and returns <code>true</code>. Otherwise, just returns <code>false</code>. This is a synchronous variant of <a href="../-send-channel/send.html">send</a> which backs off
+in situations when <code>send</code> suspends.</p>
 
       </td>
 </tr>
@@ -180,8 +180,8 @@ or throws exception if the channel <a href="../-send-channel/is-closed-for-send.
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">send</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$send(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Adds <a href="../-send-channel/send.html#kotlinx.coroutines.channels.SendChannel$send(kotlinx.coroutines.channels.SendChannel.E)/element">element</a> into to this channel, suspending the caller while the buffer of this channel is full
-or if it does not exist, or throws exception if the channel <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> (see <a href="../-send-channel/close.html">close</a> for details).</p>
+        <p>Sends the specified <a href="../-send-channel/send.html#kotlinx.coroutines.channels.SendChannel$send(kotlinx.coroutines.channels.SendChannel.E)/element">element</a> to this channel, suspending the caller while the buffer of this channel is full
+or if it does not exist, or throws an exception if the channel <a href="../-send-channel/is-closed-for-send.html">is closed for <code>send</code></a> (see <a href="../-send-channel/close.html">close</a> for details).</p>
 
       </td>
 </tr>

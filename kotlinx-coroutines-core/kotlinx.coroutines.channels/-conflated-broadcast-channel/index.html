@@ -33,7 +33,7 @@
 
 <h1 id="conflatedbroadcastchannel">ConflatedBroadcastChannel</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">class </span><span class="identifier">ConflatedBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/ConflatedBroadcastChannel.kt#L32">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">class </span><span class="identifier">ConflatedBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/ConflatedBroadcastChannel.kt#L33">(source)</a></div>
 
 <p>Broadcasts the most recently sent element (aka <a href="value.html">value</a>) to all <a href="open-subscription.html">openSubscription</a> subscribers.</p>
 
@@ -88,8 +88,8 @@ number of subscribers.</p>
 <td>
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Returns <code>true</code> if this channel was closed by invocation of <a href="close.html">close</a> and thus
-the <a href="send.html">send</a> and <a href="offer.html">offer</a> attempts throws exception.</p>
+        <p>Returns <code>true</code> if this channel was closed by an invocation of <a href="close.html">close</a>. This means that
+calling <a href="send.html">send</a> or <a href="offer.html">offer</a> will result in an exception.</p>
 
       </td>
 </tr>
@@ -102,8 +102,8 @@ the <a href="send.html">send</a> and <a href="offer.html">offer</a> attempts thr
 <td>
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">onSend</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.selects/-select-clause2.html"><span class="identifier">SelectClause2</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">,</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
 
-        <p>Clause for <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of <a href="send.html">send</a> suspending function that selects when the element that is specified
-as parameter is sent to the channel. When the clause is selected the reference to this channel
+        <p>Clause for the <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of the <a href="send.html">send</a> suspending function that selects when the element that is specified
+as the parameter is sent to the channel. When the clause is selected, the reference to this channel
 is passed into the corresponding block.</p>
 
       </td>
@@ -170,7 +170,7 @@ a cancellation reason for debugging purposes.</p>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.ConflatedBroadcastChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Closes this channel.
-This is an idempotent operation – subsequent invocations of this function have no effect and return <code>false</code>.
+This is an idempotent operation — subsequent invocations of this function have no effect and return <code>false</code>.
 Conceptually, its sends a special “close token” over this channel.</p>
 
       </td>
@@ -184,11 +184,11 @@ Conceptually, its sends a special “close token” over this channel.</p>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">invokeOnClose</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.ConflatedBroadcastChannel$invokeOnClose(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<span class="identifier">Handler</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Registers handler which is synchronously invoked once the channel is <a href="close.html">closed</a>
-or receiving side of this channel is <a href="../-receive-channel/cancel.html">cancelled</a>.
-Only one handler can be attached to the channel during channel’s lifetime.
-Handler is invoked when <a href="is-closed-for-send.html">isClosedForSend</a> starts to return <code>true</code>.
-If channel is already closed, handler is invoked immediately.</p>
+        <p>Registers a <a href="invoke-on-close.html#kotlinx.coroutines.channels.ConflatedBroadcastChannel$invokeOnClose(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> which is synchronously invoked once the channel is <a href="close.html">closed</a>
+or the receiving side of this channel is <a href="../-receive-channel/cancel.html">cancelled</a>.
+Only one handler can be attached to a channel during its lifetime.
+The <code>handler</code> is invoked when <a href="is-closed-for-send.html">isClosedForSend</a> starts to return <code>true</code>.
+If the channel is closed already, the handler is invoked immediately.</p>
 
       </td>
 </tr>

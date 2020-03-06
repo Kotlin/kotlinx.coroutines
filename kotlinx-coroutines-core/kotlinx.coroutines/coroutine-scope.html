@@ -33,7 +33,7 @@
 
 <h1 id="coroutinescope">coroutineScope</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">coroutineScope</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$coroutineScope(kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.coroutineScope.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="coroutine-scope.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="coroutine-scope.html#R"><span class="identifier">R</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L177">(source)</a></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">coroutineScope</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$coroutineScope(kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.coroutineScope.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="coroutine-scope.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="coroutine-scope.html#R"><span class="identifier">R</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L174">(source)</a></div>
 
 <p>Creates a <a href="-coroutine-scope/index.html">CoroutineScope</a> and calls the specified suspend block with this scope.
 The provided scope inherits its <a href="-coroutine-scope/coroutine-context.html">coroutineContext</a> from the outer scope, but overrides
@@ -45,16 +45,15 @@ This function returns as soon as the given block and all its children coroutines
 A usage example of a scope looks like this:</p>
 
 <pre>suspend fun showSomeData() = coroutineScope {
-
-  val data = async(Dispatchers.IO) { // &lt;- extension on current scope
+    val data = async(Dispatchers.IO) { // &lt;- extension on current scope
      ... load some UI data for the Main thread ...
-  }
+    }
 
-  withContext(Dispatchers.Main) {
-    doSomeWork()
-    val result = data.await()
-    display(result)
-  }
+    withContext(Dispatchers.Main) {
+        doSomeWork()
+        val result = data.await()
+        display(result)
+    }
 }
 </pre>
 

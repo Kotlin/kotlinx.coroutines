@@ -5,6 +5,8 @@ $dokka.location:kotlinx.coroutines.future$asCompletableFuture(kotlinx.coroutines
 $dokka.location:kotlinx.coroutines.future$asDeferred(java.util.concurrent.CompletionStage((kotlinx.coroutines.future.asDeferred.T)))kotlinx.coroutines.future/java.util.concurrent.-completion-stage/as-deferred.html
 $dokka.location:kotlinx.coroutines.future$await(java.util.concurrent.CompletionStage((kotlinx.coroutines.future.await.T)))kotlinx.coroutines.future/java.util.concurrent.-completion-stage/await.html
 $dokka.location:kotlinx.coroutines.future$future(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.future.future.T)))kotlinx.coroutines.future/kotlinx.coroutines.-coroutine-scope/future.html
+$dokka.location:kotlinx.coroutines.stream$consumeAsFlow(java.util.stream.Stream((kotlinx.coroutines.stream.consumeAsFlow.T)))kotlinx.coroutines.stream/java.util.stream.-stream/consume-as-flow.html
 $dokka.location:kotlinx.coroutines.time$onTimeout(kotlinx.coroutines.selects.SelectBuilder((kotlinx.coroutines.time.onTimeout.R)), java.time.Duration, kotlin.SuspendFunction0((kotlinx.coroutines.time.onTimeout.R)))kotlinx.coroutines.time/kotlinx.coroutines.selects.-select-builder/on-timeout.html
 kotlinx.coroutines.future
+kotlinx.coroutines.stream
 kotlinx.coroutines.time

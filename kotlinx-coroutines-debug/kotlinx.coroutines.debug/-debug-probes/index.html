@@ -39,7 +39,8 @@
 
 <p>Debug probes is a dynamic attach mechanism which installs multiple hooks into coroutines machinery.
 It slows down all coroutine-related code, but in return provides a lot of diagnostic information, including
-asynchronous stack-traces and coroutine dumps (similar to <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/management/ThreadMXBean.html#dumpAllThreads(boolean, boolean)">ThreadMXBean.dumpAllThreads</a> and <code>jstack</code> via <a href="dump-coroutines.html">DebugProbes.dumpCoroutines</a>.</p>
+asynchronous stack-traces and coroutine dumps (similar to <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/management/ThreadMXBean.html#dumpAllThreads(boolean, boolean)">ThreadMXBean.dumpAllThreads</a> and <code>jstack</code> via <a href="dump-coroutines.html">DebugProbes.dumpCoroutines</a>.
+All introspecting methods throw <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if debug probes were not installed.</p>
 
 <p>Installed hooks:</p>
 
@@ -61,6 +62,19 @@ asynchronous stack-traces and coroutine dumps (similar to <a href="http://docs.o
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+
+        <p><a href="is-installed.html">isInstalled</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isInstalled</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Determines whether debug probes were <a href="install.html">installed</a>.</p>
+
+      </td>
+</tr>
 <tr>
 <td>
 

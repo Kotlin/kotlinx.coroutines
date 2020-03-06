@@ -33,13 +33,14 @@
 
 <h1 id="immediate">immediate</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">immediate</span><span class="symbol">: </span><a href="index.html"><span class="identifier">MainCoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/MainCoroutineDispatcher.kt#L44">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">immediate</span><span class="symbol">: </span><a href="index.html"><span class="identifier">MainCoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/MainCoroutineDispatcher.kt#L45">(source)</a></div>
 
 <p>Returns dispatcher that executes coroutines immediately when it is already in the right context
 (e.g. current looper is the same as this handler’s looper) without an additional <a href="../-coroutine-dispatcher/dispatch.html">re-dispatch</a>.</p>
 
 <p>Immediate dispatcher is safe from stack overflows and in case of nested invocations forms event-loop similar to <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a>.
-The event loop is an advanced topic and its implications can be found in <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> documentation.</p>
+The event loop is an advanced topic and its implications can be found in <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> documentation.
+The formed event-loop is shared with <a href="#">Unconfined</a> and other immediate dispatchers, potentially overlapping tasks between them.</p>
 
 <p>Example of usage:</p>
 

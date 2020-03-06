@@ -1,4 +1,5 @@
 $dokka.format:kotlin-website
 $dokka.linkExtension:html
 $dokka.location:kotlinx.coroutines.javafx$JavaFx#kotlinx.coroutines.Dispatcherskotlinx.coroutines.javafx/kotlinx.coroutines.-dispatchers/-java-fx.html
+$dokka.location:kotlinx.coroutines.javafx$asFlow(javafx.beans.value.ObservableValue((kotlinx.coroutines.javafx.asFlow.T)))kotlinx.coroutines.javafx/javafx.beans.value.-observable-value/as-flow.html
 kotlinx.coroutines.javafx

@@ -33,7 +33,7 @@
 
 <h1 id="io">IO</h1>
 
-<div class="signature"><code><span class="identifier">@JvmStatic</span> <span class="keyword">val </span><span class="identifier">IO</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/Dispatchers.kt#L109">(source)</a></div>
+<div class="signature"><code><span class="identifier">@JvmStatic</span> <span class="keyword">val </span><span class="identifier">IO</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/Dispatchers.kt#L114">(source)</a></div>
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
@@ -43,6 +43,11 @@
 The number of threads used by this dispatcher is limited by the value of
 “<code>kotlinx.coroutines.io.parallelism</code>” (<a href="../-i-o_-p-a-r-a-l-l-e-l-i-s-m_-p-r-o-p-e-r-t-y_-n-a-m-e.html">IO_PARALLELISM_PROPERTY_NAME</a>) system property.
 It defaults to the limit of 64 threads or the number of cores (whichever is larger).</p>
+
+<p>Moreover, the maximum configurable number of threads is capped by the
+<code>kotlinx.coroutines.scheduler.max.pool.size</code> system property.
+If you need a higher number of parallel threads,
+you should use a custom dispatcher backed by your own thread pool.</p>
 
 <p>This dispatcher shares threads with a <a href="-default.html">Default</a> dispatcher, so using
 <code>withContext(Dispatchers.IO) { ... }</code> does not lead to an actual switching to another thread —

@@ -179,8 +179,8 @@ throw any unhandled exceptions that occur in their code or in upstream flows, fo
 it hard to reason about the code because an exception in the <code>collect { ... }</code> could be somehow “caught”
 by an upstream flow, limiting the ability of local reasoning about the code.</p>
 
-<p>Currently, the flow infrastructure does not enforce exception transparency contracts, however, it might be enforced
-in the future either at run time or at compile time.</p>
+<p>Flow machinery enforces exception transparency at runtime and throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> on any attempt to emit a value,
+if an exception has been thrown on previous attempt.</p>
 
 <h3 id="reactive-streams">Reactive streams</h3>
 
@@ -751,7 +751,7 @@ the exception from the upstream (if any) as cause parameter of <a href="../on-co
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">S</span><span class="symbol">, </span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../reduce.html#S"><span class="identifier">S</span></a><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../reduce.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">reduce</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$reduce(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.reduce.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.reduce.S, kotlinx.coroutines.flow.reduce.T, )))/operation">operation</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">accumulator</span><span class="symbol">:</span>&nbsp;<a href="../reduce.html#S"><span class="identifier">S</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../reduce.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../reduce.html#S"><span class="identifier">S</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../reduce.html#S"><span class="identifier">S</span></a></code></div>
 
         <p>Accumulates value starting with the first element and applying <a href="../reduce.html#kotlinx.coroutines.flow$reduce(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.reduce.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.reduce.S, kotlinx.coroutines.flow.reduce.T, )))/operation">operation</a> to current accumulator value and each element.
-Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unsupported-operation-exception/index.html">UnsupportedOperationException</a> if flow was empty.</p>
+Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-no-such-element-exception/index.html">NoSuchElementException</a> if flow was empty.</p>
 
       </td>
 </tr>
