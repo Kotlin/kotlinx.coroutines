@@ -134,6 +134,10 @@ allprojects {
 apply plugin: "binary-compatibility-validator"
 apiValidation {
     ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
+    if (build_snapshot_train) {
+        ignoredProjects.remove("site")
+        ignoredProjects.remove("example-frontend-js")
+    }
     ignoredPackages += "kotlinx.coroutines.internal"
 }
 
