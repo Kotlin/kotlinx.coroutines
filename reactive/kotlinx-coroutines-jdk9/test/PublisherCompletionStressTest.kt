@@ -12,7 +12,7 @@ import kotlin.coroutines.*
 class PublisherCompletionStressTest : TestBase() {
     private val N_REPEATS = 10_000 * stressTestMultiplier
 
-    private fun CoroutineScope.range(context: CoroutineContext, start: Int, count: Int) = publish(context) {
+    private fun CoroutineScope.range(context: CoroutineContext, start: Int, count: Int) = flowPublish(context) {
         for (x in start until start + count) send(x)
     }
 

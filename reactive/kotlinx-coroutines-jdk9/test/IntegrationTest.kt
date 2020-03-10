@@ -9,7 +9,7 @@ import org.junit.Test
 import kotlinx.coroutines.flow.flowOn
 import org.junit.runner.*
 import org.junit.runners.*
-import java.util.concurrent.Flow.*
+import java.util.concurrent.Flow as JFlow
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -39,7 +39,7 @@ class IntegrationTest(
 
     @Test
     fun testEmpty(): Unit = runBlocking {
-        val pub = publish<String>(ctx(coroutineContext)) {
+        val pub = flowPublish<String>(ctx(coroutineContext)) {
             if (delay) delay(1)
             // does not send anything
         }
@@ -56,7 +56,7 @@ class IntegrationTest(
 
     @Test
     fun testSingle() = runBlocking {
-        val pub = publish(ctx(coroutineContext)) {
+        val pub = flowPublish(ctx(coroutineContext)) {
             if (delay) delay(1)
             send("OK")
         }
@@ -77,7 +77,7 @@ class IntegrationTest(
     @Test
     fun testNumbers() = runBlocking {
         val n = 100 * stressTestMultiplier
-        val pub = publish(ctx(coroutineContext)) {
+        val pub = flowPublish(ctx(coroutineContext)) {
             for (i in 1..n) {
                 send(i)
                 if (delay) delay(1)
@@ -97,7 +97,7 @@ class IntegrationTest(
     @Test
     fun testCancelWithoutValue() = runTest {
         val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
-            publish<String> {
+            flowPublish<String> {
                 hang {}
             }.awaitFirst()
         }
@@ -110,7 +110,7 @@ class IntegrationTest(
     fun testEmptySingle() = runTest(unhandled = listOf { e -> e is NoSuchElementException}) {
         expect(1)
         val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
-            publish<String> {
+            flowPublish<String> {
                 yield()
                 expect(2)
                 // Nothing to emit
@@ -121,7 +121,7 @@ class IntegrationTest(
         finish(3)
     }
 
-    private suspend fun checkNumbers(n: Int, pub: Publisher<Int>) {
+    private suspend fun checkNumbers(n: Int, pub: JFlow.Publisher<Int>) {
         var last = 0
         pub.collect {
             assertEquals(++last, it)

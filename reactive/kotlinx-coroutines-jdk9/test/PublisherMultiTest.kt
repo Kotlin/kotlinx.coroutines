@@ -12,7 +12,7 @@ class PublisherMultiTest : TestBase() {
     @Test
     fun testConcurrentStress() = runBlocking {
         val n = 10_000 * stressTestMultiplier
-        val observable = publish {
+        val observable = flowPublish {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch

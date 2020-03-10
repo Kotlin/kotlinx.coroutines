@@ -6,12 +6,12 @@ package kotlinx.coroutines.jdk9
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import java.util.concurrent.Flow.*
+import java.util.concurrent.*
 import kotlin.coroutines.*
 import org.reactivestreams.FlowAdapters
 
 /**
- * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
+ * Creates cold reactive [Flow.Publisher] that runs a given [block] in a coroutine.
  * Every time the returned flux is subscribed, it starts a new coroutine in the specified [context].
  * Coroutine emits ([Subscriber.onNext]) values with `send`, completes ([Subscriber.onComplete])
  * when the coroutine completes or channel is explicitly closed and emits error ([Subscriber.onError])
@@ -29,10 +29,10 @@ import org.reactivestreams.FlowAdapters
  *        to cancellation and error handling may change in the future.
  */
 @ExperimentalCoroutinesApi
-public fun <T> publish(
+public fun <T> flowPublish(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Publisher<T> {
+): Flow.Publisher<T> {
     val reactivePublisher : org.reactivestreams.Publisher<T> = kotlinx.coroutines.reactive.publish<T>(context, block)
     return FlowAdapters.toFlowPublisher(reactivePublisher)
 }

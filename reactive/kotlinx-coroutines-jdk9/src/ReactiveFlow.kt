@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
 import kotlinx.coroutines.reactive.collect
-import java.util.concurrent.Flow.*
+import java.util.concurrent.Flow as JFlow
 import org.reactivestreams.FlowAdapters
 
 /**
@@ -20,13 +20,13 @@ import org.reactivestreams.FlowAdapters
  * If any of the resulting flow transformations fails, subscription is immediately cancelled and all in-flight elements
  * are discarded.
  */
-public fun <T : Any> Publisher<T>.asFlow(): Flow<T> =
+public fun <T : Any> JFlow.Publisher<T>.asFlow(): Flow<T> =
         FlowAdapters.toPublisher(this).asFlow()
 
 /**
  * Transforms the given flow to a reactive specification compliant [Publisher].
  */
-public fun <T : Any> Flow<T>.asPublisher(): Publisher<T> {
+public fun <T : Any> Flow<T>.asPublisher(): JFlow.Publisher<T> {
     val reactivePublisher : org.reactivestreams.Publisher<T> = this.asPublisher<T>()
     return FlowAdapters.toFlowPublisher(reactivePublisher)
 }
@@ -35,5 +35,5 @@ public fun <T : Any> Flow<T>.asPublisher(): Publisher<T> {
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  * Cancels subscription if any exception happens during collect.
  */
-public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit) =
+public suspend inline fun <T> JFlow.Publisher<T>.collect(action: (T) -> Unit) =
     FlowAdapters.toPublisher(this).collect(action)

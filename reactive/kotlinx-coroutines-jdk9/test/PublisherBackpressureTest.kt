@@ -6,13 +6,13 @@ package kotlinx.coroutines.jdk9
 
 import kotlinx.coroutines.*
 import org.junit.*
-import java.util.concurrent.Flow.*
+import java.util.concurrent.Flow as JFlow
 
 class PublisherBackpressureTest : TestBase() {
     @Test
     fun testCancelWhileBPSuspended() = runBlocking {
         expect(1)
-        val observable = publish(currentDispatcher()) {
+        val observable = flowPublish(currentDispatcher()) {
             expect(5)
             send("A") // will not suspend, because an item was requested
             expect(7)
@@ -26,9 +26,9 @@ class PublisherBackpressureTest : TestBase() {
             expectUnreached()
         }
         expect(2)
-        var sub: Subscription? = null
-        observable.subscribe(object : Subscriber<String> {
-            override fun onSubscribe(s: Subscription) {
+        var sub: JFlow.Subscription? = null
+        observable.subscribe(object : JFlow.Subscriber<String> {
+            override fun onSubscribe(s: JFlow.Subscription) {
                 sub = s
                 expect(3)
                 s.request(2) // request two items

@@ -6,19 +6,19 @@ package kotlinx.coroutines.jdk9
 
 import kotlinx.coroutines.*
 import org.junit.Test
-import java.util.concurrent.Flow.*
+import java.util.concurrent.Flow as JFlow
 import kotlin.test.*
 
 class PublishTest : TestBase() {
     @Test
     fun testBasicEmpty() = runTest {
         expect(1)
-        val publisher = publish<Int>(currentDispatcher()) {
+        val publisher = flowPublish<Int>(currentDispatcher()) {
             expect(5)
         }
         expect(2)
-        publisher.subscribe(object : Subscriber<Int> {
-            override fun onSubscribe(s: Subscription?) { expect(3) }
+        publisher.subscribe(object : JFlow.Subscriber<Int> {
+            override fun onSubscribe(s: JFlow.Subscription?) { expect(3) }
             override fun onNext(t: Int?) { expectUnreached() }
             override fun onComplete() { expect(6) }
             override fun onError(t: Throwable?) { expectUnreached() }
@@ -31,14 +31,14 @@ class PublishTest : TestBase() {
     @Test
     fun testBasicSingle() = runTest {
         expect(1)
-        val publisher = publish(currentDispatcher()) {
+        val publisher = flowPublish(currentDispatcher()) {
             expect(5)
             send(42)
             expect(7)
         }
         expect(2)
-        publisher.subscribe(object : Subscriber<Int> {
-            override fun onSubscribe(s: Subscription) {
+        publisher.subscribe(object : JFlow.Subscriber<Int> {
+            override fun onSubscribe(s: JFlow.Subscription) {
                 expect(3)
                 s.request(1)
             }
@@ -57,13 +57,13 @@ class PublishTest : TestBase() {
     @Test
     fun testBasicError() = runTest {
         expect(1)
-        val publisher = publish<Int>(currentDispatcher()) {
+        val publisher = flowPublish<Int>(currentDispatcher()) {
             expect(5)
             throw RuntimeException("OK")
         }
         expect(2)
-        publisher.subscribe(object : Subscriber<Int> {
-            override fun onSubscribe(s: Subscription) {
+        publisher.subscribe(object : JFlow.Subscriber<Int> {
+            override fun onSubscribe(s: JFlow.Subscription) {
                 expect(3)
                 s.request(1)
             }
@@ -88,7 +88,7 @@ class PublishTest : TestBase() {
             assertTrue(t is RuntimeException)
             expect(6)
         }
-        val publisher = publish<Unit>(Dispatchers.Unconfined + eh) {
+        val publisher = flowPublish<Unit>(Dispatchers.Unconfined + eh) {
             try {
                 expect(3)
                 delay(10000)
@@ -97,13 +97,13 @@ class PublishTest : TestBase() {
                 throw RuntimeException("FAILED") // crash after cancel
             }
         }
-        var sub: Subscription? = null
-        publisher.subscribe(object : Subscriber<Unit> {
+        var sub: JFlow.Subscription? = null
+        publisher.subscribe(object : JFlow.Subscriber<Unit> {
             override fun onComplete() {
                 expectUnreached()
             }
 
-            override fun onSubscribe(s: Subscription) {
+            override fun onSubscribe(s: JFlow.Subscription) {
                 expect(2)
                 sub = s
             }
@@ -124,7 +124,7 @@ class PublishTest : TestBase() {
     @Test
     fun testOnNextError() = runTest {
         expect(1)
-        val publisher = publish(currentDispatcher()) {
+        val publisher = flowPublish(currentDispatcher()) {
             expect(4)
             try {
                 send("OK")
@@ -135,12 +135,12 @@ class PublishTest : TestBase() {
         }
         expect(2)
         val latch = CompletableDeferred<Unit>()
-        publisher.subscribe(object : Subscriber<String> {
+        publisher.subscribe(object : JFlow.Subscriber<String> {
             override fun onComplete() {
                 expectUnreached()
             }
 
-            override fun onSubscribe(s: Subscription) {
+            override fun onSubscribe(s: JFlow.Subscription) {
                 expect(3)
                 s.request(1)
             }
@@ -163,7 +163,7 @@ class PublishTest : TestBase() {
 
     @Test
     fun testFailingConsumer() = runTest {
-        val pub = publish(currentDispatcher()) {
+        val pub = flowPublish(currentDispatcher()) {
             repeat(3) {
                 expect(it + 1) // expect(1), expect(2) *should* be invoked
                 send(it)
@@ -180,6 +180,6 @@ class PublishTest : TestBase() {
 
     @Test
     fun testIllegalArgumentException() {
-        assertFailsWith<IllegalArgumentException> { publish<Int>(Job()) { } }
+        assertFailsWith<IllegalArgumentException> { flowPublish<Int>(Job()) { } }
     }
 }
