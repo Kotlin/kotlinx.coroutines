@@ -85,12 +85,13 @@ internal open class CancellableContinuationImpl<in T>(
         // This method does nothing. Leftover for binary compatibility with old compiled code
     }
 
-    private fun isReusable(): Boolean = delegate is DispatchedContinuation<*> && delegate.isReusable
+    private fun isReusable(): Boolean = delegate is DispatchedContinuation<*> && delegate.isReusable(this)
 
     /**
      * Resets cancellability state in order to [suspendAtomicCancellableCoroutineReusable] to work.
      * Invariant: used only by [suspendAtomicCancellableCoroutineReusable] in [REUSABLE_CLAIMED] state.
      */
+    @JvmName("resetState") // Prettier stack traces
     internal fun resetState(): Boolean {
         assert { parentHandle !== NonDisposableHandle }
         val state = _state.value
