@@ -6,7 +6,16 @@ apply from: rootProject.file('gradle/node-js.gradle')
 
 kotlin {
     targets {
-        fromPreset(presets.js, 'js')
+        fromPreset(presets.js, 'js') {
+            // Enable built-in test runner only for IR target.
+            // These runners don't support changing js module name change.
+            if (js.hasProperty("irTarget")) {
+                irTarget.nodejs()
+                irTarget?.compilations['main']?.dependencies {
+                    api "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
+                }
+            }
+        }
     }
 
     sourceSets {
@@ -41,12 +50,16 @@ compileTestKotlinJs {
     kotlinOptions.moduleKind = 'umd'
 }
 
+
 task populateNodeModules(type: Copy, dependsOn: compileTestKotlinJs) {
     // we must copy output that is transformed by atomicfu
     from(kotlin.targets.js.compilations.main.output.allOutputs)
     into "$node.nodeModulesDir/node_modules"
 
-    def configuration = configurations.jsTestRuntimeClasspath
+    def configuration = configurations.hasProperty("legacyjsTestRuntimeClasspath")
+            ? configurations.legacyjsTestRuntimeClasspath
+            : configurations.jsTestRuntimeClasspath
+
     from(files {
         configuration.collect { File file ->
             file.name.endsWith(".jar") ?
