@@ -1,7 +1,7 @@
 From iris.base_logic.lib Require Export invariants.
 From iris.proofmode Require Import tactics.
-From iris.heap_lang Require Import proofmode notation lang.
 From iris.program_logic Require Export atomic.
+From iris.heap_lang Require Import proofmode notation lang.
 
 Definition new_handle: val := λ: <>, ref #0%nat.
 
@@ -126,7 +126,7 @@ Proof.
   rewrite -wp_fupd.
   wp_alloc ℓ as "Hℓ".
   iMod (inv_alloc N _ (interrupt_handle_inv γ ℓ) with "[HOwn Hℓ]") as "HInv".
-  { iExists _; by eauto with iFrame. }
+  { iExists _. iFrame. eauto. }
   iModIntro. iApply "HPost". iExists _. eauto.
 Qed.
 
@@ -144,7 +144,7 @@ Proof.
     iMod (own_update with "HOwn") as "[HOwn HFrag]".
     { apply (auth_update_alloc _ (1%nat: mnatUR) (1%nat: mnatUR)).
       apply mnat_local_update. lia. }
-    iMod ("HClose" with "[Hℓ HOwn]") as "_". by eauto with iFrame.
+    iMod ("HClose" with "[Hℓ HOwn]") as "_". by iExists _; iFrame; eauto.
     iModIntro. wp_pures. iApply "HPost". by rewrite /interrupt_sent.
   - wp_cmpxchg_fail; first done.
     iMod (own_update with "HOwn") as "[HOwn HFrag]".

@@ -59,7 +59,7 @@ Notation algebra := (authR (prodUR (gset_disjUR nat) mnatUR)).
 
 Class iteratorG Σ := IIteratorG { iterator_inG :> inG Σ algebra }.
 Definition iteratorΣ : gFunctors := #[GFunctor algebra].
-Instance subG_iteratorΣ {Σ} : subG iteratorΣ Σ -> iteratorG Σ.
+Instance subG_iteratorΣ : subG iteratorΣ Σ -> iteratorG Σ.
 Proof. solve_inG. Qed.
 
 Context `{iteratorG Σ}.
@@ -213,7 +213,7 @@ Proof.
   iIntros "!> AU !>". wp_pures.
 
   wp_bind (find_segment _ _ _).
-  replace (Z.of_nat n `quot` Z.of_nat (Pos.to_nat segment_size)) with
+  replace (Z.quot (Z.of_nat n) (Z.of_nat (Pos.to_nat segment_size))) with
       (Z.of_nat (n `div` Pos.to_nat segment_size)%nat).
   2: by rewrite quot_of_nat.
 
@@ -256,7 +256,7 @@ Proof.
 
   {
     assert (a = n `div` Pos.to_nat segment_size)%nat as ->. {
-      eapply find_segment_id_bound; try lia. done.
+      eapply find_segment_id_bound. lia. all: done.
     }
 
     iLeft. iPureIntro.
@@ -287,11 +287,10 @@ Theorem increase_value_to_spec γ (fℓ: loc) (n: nat):
     (increase_value_to #fℓ #n) @ ⊤
   <<< own γ (◯ (GSet (set_seq m (n-m)%nat), n: mnatUR)) ∗
       (⌜m >= n⌝ ∧ iterator_counter γ fℓ m ∨
-       ⌜m < n⌝ ∧ iterator_counter γ fℓ n), RET #() >>>.
-Proof.
+       ⌜m < n⌝ ∧ iterator_counter γ fℓ n), RET #() >>>. Proof.
   iIntros (Φ) "AU". wp_lam. wp_pures. wp_bind (!_)%E.
   iMod "AU" as (m) "[[Hfℓ HAuth] HClose]". wp_load.
-  destruct (decide (m < n)) eqn:E.
+  destruct (decide (m < n)%Z) eqn:E.
 
   2: {
     iMod (own_update with "HAuth") as "[HAuth HOk]".
@@ -324,7 +323,7 @@ Proof.
     by apply iterator_value_increase.
     iMod ("HClose" with "[-Htℓ]") as "HΦ".
     { simpl. replace (m + x - m)%nat with x by lia. iFrame "HOk".
-      iRight. iFrame. by iPureIntro. }
+      iRight. iFrame. iPureIntro. lia. }
     iModIntro. by wp_pures.
   }
   {
@@ -335,7 +334,7 @@ Proof.
     iModIntro. wp_pures. wp_bind (!_)%E.
     iMod "AU" as (m'') "[[Hfℓ HAuth] HClose]". wp_load.
 
-    destruct (decide (m'' < n)) eqn:E.
+    destruct (decide (m'' < n)%Z) eqn:E.
 
     2: {
       iMod (own_update with "HAuth") as "[HAuth HOk]".
@@ -354,6 +353,7 @@ Proof.
 
     iDestruct "HClose" as "[HClose _]". iMod ("HClose" with "[$]") as "AU".
     iModIntro. wp_store. wp_pures. wp_load. wp_pures.
+
     rewrite bool_decide_decide E. wp_pures.
 
     by iApply ("IH" with "[%] AU Htℓ").

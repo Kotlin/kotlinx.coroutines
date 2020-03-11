@@ -1,5 +1,5 @@
-From iris.heap_lang Require Import proofmode notation lang.
 Require Import SegmentQueue.lib.util.getAndSet.
+From iris.heap_lang Require Import proofmode notation lang.
 
 Section impl.
 
@@ -158,7 +158,7 @@ Record infinite_array_parameters :=
 
 Class iArrayG Σ := IArrayG { iarray_inG :> inG Σ algebra }.
 Definition iArrayΣ : gFunctors := #[GFunctor algebra].
-Instance subG_iArrayΣ {Σ} : subG iArrayΣ Σ -> iArrayG Σ.
+Instance subG_iArrayΣ : subG iArrayΣ Σ -> iArrayG Σ.
 Proof. solve_inG. Qed.
 Context `{iArrayG Σ}.
 
@@ -894,10 +894,10 @@ Proof.
   iIntros "#HCancLoc'".
   wp_faa.
   assert (length (List.filter (fun i => i) cancelled_cells) + 1 =
-          Z.of_nat (length (List.filter (fun i => i) cancelled_cells'))) as Hlen.
+          Z.of_nat (length (List.filter (fun i => i) cancelled_cells')))%Z as Hlen.
   { subst. rewrite VectorDef_replace_order_list_alter.
     remember (vec_to_list cancelled_cells) as K.
-    rewrite Z.add_comm. replace 1 with (Z.of_nat (S O)) by auto.
+    rewrite Z.add_comm. replace 1%Z with (Z.of_nat (S O)) by auto.
     rewrite -Nat2Z.inj_add. simpl. apply inj_eq.
     move: HWasNotCancelled. clear.
     generalize dependent cid.
@@ -1340,7 +1340,7 @@ Proof.
   { iSplitL; by [iApply "HArrRestore"|eauto]. }
   iSplitL; first by iApply "HArrRestore". iIntros "AU".
 
-  destruct (bool_decide (nnid <= nid)) eqn:E.
+  destruct (bool_decide (nnid <= nid)%Z) eqn:E.
   iMod "AU" as "[HInfArr [_ HClose]]"; iMod ("HClose" with "HInfArr") as "HΦ".
   all: iModIntro; wp_pures; rewrite E; wp_pures.
   1: done.
@@ -1493,7 +1493,7 @@ Proof.
     { by iApply "HArrRestore". }
     iFrame "HInfArr".
 
-    destruct (bool_decide (opid <= npid)) eqn:E.
+    destruct (bool_decide (opid <= npid)%Z) eqn:E.
     { iRight. iIntros "HΦ !>". wp_pures. rewrite E. by wp_pures. }
     { iLeft. iIntros "AU !>". wp_pures. rewrite E. wp_pures.
 
@@ -1555,7 +1555,8 @@ Proof.
     iApply big_sepL_mono. 2: done.
     iIntros (k y HEl). replace y with true. done.
     revert HEl. rewrite -vlookup_lookup'.
-    case. intros ?. by rewrite Vector.const_nth.
+    case. intros ?. clear. remember (nat_to_fin x) as m. clear.
+    by induction m.
   }
   rewrite big_sepL_forall.
   rewrite big_sepL_forall.
@@ -1739,8 +1740,7 @@ Proof.
 
   iDestruct "HValidPrev" as "[[-> #HOldCanc]|HValidPrev]".
   { iLeft; iSplit; first done.
-    iApply move_cutoff; try done.
-    lia. }
+    iApply move_cutoff; try done. }
   { iRight. iDestruct "HValidPrev"
       as (pid' prevℓ') "(% & -> & #HNewPrevSegLoc & #HNewPrevCanc)".
     iExists pid', prevℓ'. repeat iSplit; try done.
@@ -1852,7 +1852,7 @@ Proof.
 
   iAssert (is_valid_prev γ nid' pl) as "#HNewValidPrev".
   { iDestruct "HValidPrev" as "[[-> HCanc]|HValidPrev]".
-    { iLeft; iSplitR; first done. iApply move_cutoff; try done. lia. }
+    { iLeft; iSplitR; first done. iApply move_cutoff; done. }
     { iDestruct "HValidPrev" as (pid prevℓ) "(% & -> & #HSegLoc & #HPrevCanc)".
       iRight; iExists pid, prevℓ; repeat iSplit; try done. iPureIntro; lia.
       iApply merge_cancelled_segments; try done; lia. }
@@ -1948,7 +1948,7 @@ Proof.
     iExists nextℓ, nid. iFrame "HNextSegLoc". iFrame.
     iDestruct "HValidPrev" as "[(-> & #HPrevCanc)|HH]".
     { iExists (InjLV #()). iFrame. iLeft. iSplitL; first done.
-      iApply move_cutoff; try done. lia. }
+      iApply move_cutoff; done. }
     {
       iDestruct "HH" as (pid prevℓ) "(% & -> & #HPrevSegLoc & #HPrevSegCanc)".
       iExists _. iFrame. iRight. iExists _, _. iFrame "HPrevSegLoc".
@@ -2195,7 +2195,8 @@ Proof.
     { intros ? ? HEl.
       apply vlookup_lookup' in HEl.
       destruct HEl as [? HEl].
-      rewrite Vector.const_nth in HEl.
+      assert (y = false) as ->.
+      by move: HEl; remember (nat_to_fin x) as m; clear; by induction m.
       subst.
       iIntros "HOk". iApply "HOk".
     }
@@ -2272,7 +2273,8 @@ Proof.
     2: by iApply big_sepL_forall.
     intros ? ? HEl.
     apply vlookup_lookup' in HEl. destruct HEl as [? HEl].
-    rewrite Vector.const_nth in HEl. by subst.
+    assert (y = false) as ->; last done.
+    move: HEl. remember (nat_to_fin x) as m. clear. by induction m.
 Qed.
 
 Theorem initial_segment_spec:
@@ -2452,11 +2454,11 @@ Proof.
   { iDestruct ("HArrRestore" with "HIsSeg") as "$". by eauto with iFrame. }
 
   iDestruct (bi.later_wand with "HArrRestore HIsSeg") as "$".
-  destruct (decide (fid <= id)) eqn:E.
+  destruct (decide (fid <= id)%Z) eqn:E.
   { iRight. iModIntro. iExists _, _. iFrame "HHeadLoc".
     iSplit. iSplit.
     { rewrite big_sepL_later. by iFrame "HSegInv". }
-    iLeft; repeat iSplit; by iPureIntro.
+    iLeft; (repeat iSplit; iPureIntro); [lia|done].
     iIntros "HΦ !>". wp_pures. rewrite bool_decide_decide E. by wp_pures. }
   iLeft. iIntros "!> AU !>". wp_pures. rewrite bool_decide_decide E. wp_pures.
 

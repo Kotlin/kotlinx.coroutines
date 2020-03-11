@@ -1,10 +1,10 @@
-From iris.heap_lang Require Import notation.
 Require Import SegmentQueue.util.everything.
 
 Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
 Require Import SegmentQueue.lib.infinite_array.iterator.
 Require Import SegmentQueue.lib.util.getAndSet.
 Require Import SegmentQueue.lib.util.interruptibly.
+From iris.heap_lang Require Import notation.
 
 Notation RESUMEDV := (SOMEV #0).
 Notation CANCELLEDV := (SOMEV #1).
@@ -165,7 +165,7 @@ Context `{iArrayG Σ}.
 
 Class iArrayPtrG Σ := IArrayPtrG { iarrayptr_inG :> inG Σ (authUR mnatUR) }.
 Definition iArrayPtrΣ : gFunctors := #[GFunctor (authUR mnatUR)].
-Instance subG_iArrayPtrΣ {Σ} : subG iArrayPtrΣ Σ -> iArrayPtrG Σ.
+Instance subG_iArrayPtrΣ : subG iArrayPtrΣ Σ -> iArrayPtrG Σ.
 Proof. solve_inG. Qed.
 
 Context `{iArrayPtrG Σ}.
@@ -215,7 +215,7 @@ Proof.
     iDestruct (bi.later_wand with "HArrRestore HIsSeg") as "$".
   by eauto.
 
-  destruct (decide (id <= id')) eqn:E.
+  destruct (decide (id <= id')%Z) eqn:E.
   {
     iRight. iSplitL.
     { iAssert (⌜id' <= id''⌝)%I with "[HFrag HPtr]" as %HLt.
@@ -1980,7 +1980,7 @@ Proof.
       2: by subst; rewrite alter_length.
       apply prod_local_update'; simpl.
       apply prod_local_update_2.
-      { subst. rewrite drop_alter //. lia. }
+      { subst. rewrite drop_alter //. }
       repeat rewrite -fmap_is_map.
       subst.
       rewrite (list_alter_fmap
@@ -2627,7 +2627,6 @@ Proof.
     iFrame.
     iPureIntro.
     repeat split; try done.
-    lia.
   }
   iIntros "!> AU !>".
 
@@ -2658,7 +2657,7 @@ Proof.
   {
     (* deqIdx' <= the head id * segment_size *)
     assert (hId = deqIdx' `div` Pos.to_nat segment_size)%nat as ->.
-    { eapply find_segment_id_bound; try lia. done. }
+    { eapply find_segment_id_bound; try lia. done. lia. }
     (* This means that the head is the segment that we needed all along. *)
     iRight.
     iExists _, _. iFrame "HPerms HSegLoc'".
@@ -2875,7 +2874,8 @@ Proof.
     iApply ("IH" with "[] [HRec]").
     2: by rewrite mnat_op_max /= -HEqX.
     iPureIntro.
-    simpl. lia.
+    simpl in *. rewrite /op /mnat_op.
+    lia.
   }
 
   (* *)
@@ -3058,8 +3058,8 @@ Proof.
   iSplitL "HDeqLoc".
   {
     iDestruct "HDeqLoc" as (? ? ?) "[H1 H2]".
-    iExists _; iSplitR; first by iPureIntro; lia.
-    iExists _; by iFrame.
+    iExists _; iSplitR; last by iExists _; iFrame.
+    iPureIntro. lia.
   }
   iFrame.
   iSplitL.
@@ -3067,10 +3067,9 @@ Proof.
 
   iDestruct "HRest'" as ">HRest'".
   iCombine "HRest' HAwaks" as "HAwaks".
-  rewrite -big_sepL_app seq_app.
-  2: lia.
-  done.
-
+  rewrite -big_sepL_app -seq_app.
+  replace (_ + _ + _) with (tId * Pos.to_nat segment_size); first done.
+  lia.
 Qed.
 
 Lemma iterator_issued_implies_bound γ i:
@@ -3139,7 +3138,7 @@ Proof.
   iFrame "HIt".
   iIntros "!>".
 
-  destruct (bool_decide (id <= id')) eqn:Z.
+  destruct (bool_decide (id <= id')%Z) eqn:Z.
   {
     iRight. iIntros "HΦ !>". wp_pures. rewrite Z.
     by wp_pures.
@@ -3270,7 +3269,7 @@ Proof.
 
   wp_pures. wp_lam. wp_pures.
 
-  replace (d `rem` Pos.to_nat segment_size) with
+  replace (Z.rem d (Pos.to_nat segment_size)) with
       (Z.of_nat (d `mod` Pos.to_nat segment_size)).
   2: {
     destruct (Pos.to_nat segment_size) eqn:S; first by lia.
@@ -3505,7 +3504,7 @@ Proof.
     clear.
     intros ? i.
     rewrite -fmap_is_map list_lookup_fmap.
-    destruct (decide (i >= S enqIdx)).
+    destruct (decide (i >= S enqIdx)%Z).
     {
       remember (cells !! i) as K. clear HeqK.
       rewrite lookup_ge_None_2.
@@ -3667,7 +3666,7 @@ Proof.
   iIntros "!> AU !>".
 
   wp_pures. wp_lam. wp_pures.
-  replace (enqIdx `rem` _) with (Z.of_nat (enqIdx `mod` Pos.to_nat segment_size)%nat).
+  replace (Z.rem enqIdx _) with (Z.of_nat (enqIdx `mod` Pos.to_nat segment_size)%nat).
   2: {
     destruct (Pos.to_nat segment_size) eqn:Z; try lia.
     by rewrite rem_of_nat.

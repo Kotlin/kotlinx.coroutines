@@ -1,7 +1,7 @@
 From iris.base_logic.lib Require Export invariants.
 From iris.proofmode Require Import tactics.
-From iris.heap_lang Require Import proofmode notation lang.
 From iris.program_logic Require Export atomic.
+From iris.heap_lang Require Import proofmode notation lang.
 
 Definition getAndSet : val :=
   rec: "getAndSet" "l" "v" :=

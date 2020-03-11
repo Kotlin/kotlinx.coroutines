@@ -1,7 +1,7 @@
-From iris.heap_lang Require Import notation.
-
 Require Import SegmentQueue.lib.thread_queue.thread_queue.
 Require Import SegmentQueue.lib.thread_queue.thread_queue_as_counter.
+
+From iris.heap_lang Require Import notation.
 
 Section impl.
 
@@ -41,16 +41,16 @@ Definition await : val :=
 
 End impl.
 
-From iris.base_logic.lib Require Import invariants.
-From iris.heap_lang Require Import proofmode.
-From iris.algebra Require Import auth.
-From iris.algebra Require Import list gset excl csum.
-From iris.program_logic Require Import atomic.
-
 Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
 Require Import SegmentQueue.lib.infinite_array.iterator.
 Require Import SegmentQueue.lib.util.interruptibly.
 Require Import SegmentQueue.util.everything.
+
+From iris.base_logic.lib Require Import invariants.
+From iris.algebra Require Import auth.
+From iris.algebra Require Import list gset excl csum.
+From iris.program_logic Require Import atomic.
+From iris.heap_lang Require Import proofmode.
 
 Section proof.
 

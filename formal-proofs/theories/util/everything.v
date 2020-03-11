@@ -218,11 +218,11 @@ Proof.
     inversion HLen.
   }
 
-  apply Vector.eq_nth_iff.
-  intros ? p ->.
+  apply vec_eq.
+  intros ?.
   rewrite HEq.
   symmetry.
-  apply Vector.const_nth.
+  clear. by induction i.
 Qed.
 
 Lemma local_update_refl {A: cmraT}: forall (a b: A),
@@ -817,14 +817,14 @@ Proof.
 Qed.
 
 Lemma quot_of_nat n m:
-  Z.of_nat n `quot` Z.of_nat m = Z.of_nat (n `div` m).
+  Z.quot (Z.of_nat n) (Z.of_nat m) = Z.of_nat (n `div` m).
 Proof.
   destruct m. destruct n; done.
   rewrite Z2Nat_inj_div; apply Z.quot_div_nonneg; lia.
 Qed.
 
 Lemma rem_of_nat n m:
-  Z.of_nat n `rem` Z.of_nat (S m) = Z.of_nat (n `mod` S m).
+  Z.rem (Z.of_nat n) (Z.of_nat (S m)) = Z.of_nat (n `mod` S m).
 Proof.
   rewrite Z2Nat_inj_mod; apply Z.rem_mod_nonneg; lia.
 Qed.

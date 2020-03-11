@@ -1,4 +1,3 @@
-From iris.heap_lang Require Import notation.
 From iris.base_logic.lib Require Import invariants.
 From iris.heap_lang Require Import proofmode.
 From iris.algebra Require Import auth.
@@ -9,6 +8,7 @@ Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
 Require Import SegmentQueue.lib.infinite_array.iterator.
 Require Import SegmentQueue.lib.util.interruptibly.
 Require Import SegmentQueue.util.everything.
+From iris.heap_lang Require Import notation.
 
 Section proof.
 

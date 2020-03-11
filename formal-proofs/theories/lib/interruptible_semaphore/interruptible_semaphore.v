@@ -1,6 +1,5 @@
-From iris.heap_lang Require Import notation.
-
 Require Import SegmentQueue.lib.thread_queue.thread_queue.
+From iris.heap_lang Require Import notation.
 
 Section impl.
 
@@ -32,17 +31,17 @@ Definition release_semaphore : val :=
 
 End impl.
 
-From iris.base_logic.lib Require Import invariants.
-From iris.heap_lang Require Import proofmode.
-From iris.algebra Require Import auth.
-From iris.algebra Require Import list gset excl csum.
-From iris.program_logic Require Import atomic.
-
 Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
 Require Import SegmentQueue.lib.infinite_array.iterator.
 Require Import SegmentQueue.lib.util.interruptibly.
 Require Import SegmentQueue.lib.thread_queue.thread_queue_as_counter.
 Require Import SegmentQueue.util.everything.
+
+From iris.base_logic.lib Require Import invariants.
+From iris.algebra Require Import auth.
+From iris.algebra Require Import list gset excl csum.
+From iris.program_logic Require Import atomic.
+From iris.heap_lang Require Import proofmode.
 
 Section proof.
 
@@ -178,9 +177,9 @@ Proof.
   iInv "HSemInv" as (availablePermits' v)
                       "(HPerms & >HAuth & HTq & Hp & >HPure)" "HInvClose".
   iDestruct "HPure" as %HPure.
-  remember (availablePermits' - v) as op.
+  remember (availablePermits' - v)%Z as op.
   wp_faa.
-  destruct (decide (0 <= op)).
+  destruct (decide (0 <= op)%Z).
   {
     iInv "HPermInv" as (availablePermits) ">HFrag" "HInvClose'".
     iDestruct (own_valid_2 with "HAuth HFrag") as
@@ -205,15 +204,14 @@ Proof.
       iSplitL.
       {
         rewrite Heqop.
-        replace (S availablePermits - v) with (availablePermits - v + 1).
+        replace (S availablePermits - v)%Z with (availablePermits - v + 1)%Z.
         done.
         lia.
       }
-      iPureIntro.
-      lia.
+      iPureIntro. lia.
     }
     iModIntro. wp_pures. rewrite bool_decide_decide.
-    destruct (decide (0 <= op)); try lia. wp_pures. by iApply "HΦ".
+    destruct (decide (0 <= op)%Z); try lia. wp_pures. by iApply "HΦ".
   }
 
   iMod (thread_as_counter_register_for_dequeue with "HR HTq")
@@ -222,7 +220,7 @@ Proof.
   iMod ("HInvClose" with "[-HAwak HΦ]") as "_".
   {
     iExists _, _. iFrame. subst.
-    replace (availablePermits' - v + 1) with (availablePermits' - (v - 1)%nat) by lia.
+    replace (availablePermits' - v + 1)%Z with (availablePermits' - (v - 1)%nat)%Z by lia.
     iFrame "Hp". iPureIntro. lia.
   }
 
