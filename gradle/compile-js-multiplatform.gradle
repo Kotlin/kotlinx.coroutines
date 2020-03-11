@@ -10,8 +10,10 @@ kotlin {
             // Enable built-in test runner only for IR target.
             // These runners don't support changing js module name change.
             if (js.hasProperty("irTarget")) {
-                irTarget.browser()
                 irTarget.nodejs()
+                irTarget?.compilations['main']?.dependencies {
+                    api "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
+                }
             }
         }
     }
@@ -19,7 +21,6 @@ kotlin {
     sourceSets {
         jsMain.dependencies {
             api "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
-            api "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
         }
 
         jsTest.dependencies {
