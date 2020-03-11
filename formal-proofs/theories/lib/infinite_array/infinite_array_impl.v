@@ -426,15 +426,15 @@ Proof. apply _. Qed.
 End locations.
 
 Hint Extern 1 => match goal with | [ |- context [segment_location]]
-                                  => unfold segment_location end.
+                                  => unfold segment_location end : core.
 Hint Extern 1 => match goal with | [ |- context [segment_data_location]]
-                                  => unfold segment_data_location end.
+                                  => unfold segment_data_location end : core.
 Hint Extern 1 => match goal with | [ |- context [segment_canc_location]]
-                                  => unfold segment_canc_location end.
+                                  => unfold segment_canc_location end : core.
 Hint Extern 1 => match goal with | [ |- context [segment_prev_location]]
-                                  => unfold segment_prev_location end.
+                                  => unfold segment_prev_location end : core.
 Hint Extern 1 => match goal with | [ |- context [segment_next_location]]
-                                  => unfold segment_next_location end.
+                                  => unfold segment_next_location end : core.
 
 Section array_mapsto.
 

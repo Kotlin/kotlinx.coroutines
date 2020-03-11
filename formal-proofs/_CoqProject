@@ -1,4 +1,7 @@
 -R theories/ SegmentQueue
+-arg -w -arg -convert_concl_no_check
+-arg -w -arg -ambiguous-paths
+-arg -w -arg -redundant-canonical-projection
 ./theories/lib/infinite_array/infinite_array_impl.v
 ./theories/lib/infinite_array/iterator.v
 ./theories/lib/thread_queue/thread_queue.v
