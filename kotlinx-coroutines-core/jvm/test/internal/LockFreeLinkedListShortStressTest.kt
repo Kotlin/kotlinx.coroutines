@@ -5,11 +5,11 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import java.util.*
 import java.util.concurrent.atomic.*
 import kotlin.concurrent.*
+import kotlin.test.*
 
 /**
  * This stress test has 6 threads adding randomly first to the list and them immediately undoing

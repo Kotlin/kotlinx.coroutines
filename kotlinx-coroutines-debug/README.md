@@ -18,7 +18,7 @@ of coroutines hierarchy referenced by a [Job] or [CoroutineScope] instances usin
 Add `kotlinx-coroutines-debug` to your project test dependencies:
 ```
 dependencies {
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.3.3'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.3.4'
 }
 ```
 
@@ -56,7 +56,7 @@ stacktraces will be dumped to the console.
 ### Using as JVM agent
 
 It is possible to use this module as a standalone JVM agent to enable debug probes on the application startup.
-You can run your application with an additional argument: `-javaagent:kotlinx-coroutines-debug-1.3.3.jar`.
+You can run your application with an additional argument: `-javaagent:kotlinx-coroutines-debug-1.3.4.jar`.
 Additionally, on Linux and Mac OS X you can use `kill -5 $pid` command in order to force your application to print all alive coroutines.
 
 

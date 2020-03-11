@@ -41,14 +41,6 @@ class ChannelLFStressTest : TestBase() {
         checkAllReceived()
     }
 
-    @Test
-    fun testConflatedLockFreedom() {
-        // This test does not really verify that all sent elements were received
-        // and checks only LF property
-        channel = Channel(Channel.CONFLATED)
-        performLockFreedomTest()
-    }
-
     private fun performLockFreedomTest() {
         env.onCompletion {
             // We must cancel the channel to abort both senders & receivers

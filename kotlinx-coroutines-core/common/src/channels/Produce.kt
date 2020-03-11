@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -27,7 +27,7 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
 
 /**
  * Suspends the current coroutine until the channel is either [closed][SendChannel.close] or [cancelled][ReceiveChannel.cancel]
- * and invokes the given [block] before resuming the coroutine.
+ * and invokes the given [block] before resuming the coroutine. This suspending function is cancellable.
  *
  * Note that when the producer channel is cancelled, this function resumes with a cancellation exception.
  * Therefore, in case of cancellation, no code after the call to this function will be executed.
@@ -115,6 +115,7 @@ public fun <E> CoroutineScope.produce(
 public fun <E> CoroutineScope.produce(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
     @BuilderInference block: suspend ProducerScope<E>.() -> Unit
 ): ReceiveChannel<E> {
@@ -122,7 +123,7 @@ public fun <E> CoroutineScope.produce(
     val newContext = newCoroutineContext(context)
     val coroutine = ProducerCoroutine(newContext, channel)
     if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)
-    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
+    coroutine.start(start, coroutine, block)
     return coroutine
 }
 

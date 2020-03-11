@@ -7,14 +7,14 @@ import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 import kotlin.random.Random
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class SegmentQueueTest : TestBase() {
     @Test
     fun testSimpleTest() {
         val q = SegmentBasedQueue<Int>()
         assertEquals(1, q.numberOfSegments)
-        assertEquals(null, q.dequeue())
+        assertNull(q.dequeue())
         q.enqueue(1)
         assertEquals(1, q.numberOfSegments)
         q.enqueue(2)
@@ -23,7 +23,7 @@ class SegmentQueueTest : TestBase() {
         assertEquals(2, q.numberOfSegments)
         assertEquals(2, q.dequeue())
         assertEquals(1, q.numberOfSegments)
-        assertEquals(null, q.dequeue())
+        assertNull(q.dequeue())
     }
 
     @Test
@@ -37,7 +37,7 @@ class SegmentQueueTest : TestBase() {
         assertEquals(2, q.numberOfSegments)
         assertEquals(1, q.dequeue())
         assertEquals(3, q.dequeue())
-        assertEquals(null, q.dequeue())
+        assertNull(q.dequeue())
     }
 
     @Test
@@ -49,7 +49,7 @@ class SegmentQueueTest : TestBase() {
         q.enqueue(3)
         s.removeSegment()
         assertEquals(3, q.dequeue())
-        assertEquals(null, q.dequeue())
+        assertNull(q.dequeue())
     }
 
     @Test

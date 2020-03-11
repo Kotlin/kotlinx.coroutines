@@ -1,11 +1,11 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.internal.SafeCollector
+import kotlinx.coroutines.flow.internal.*
 import kotlin.coroutines.*
 
 /**
@@ -149,8 +149,8 @@ import kotlin.coroutines.*
  * it hard to reason about the code because an exception in the `collect { ... }` could be somehow "caught"
  * by an upstream flow, limiting the ability of local reasoning about the code.
  *
- * Currently, the flow infrastructure does not enforce exception transparency contracts, however, it might be enforced
- * in the future either at run time or at compile time.
+ * Flow machinery enforces exception transparency at runtime and throws [IllegalStateException] on any attempt to emit a value,
+ * if an exception has been thrown on previous attempt.
  *
  * ### Reactive streams
  *
@@ -199,7 +199,12 @@ public abstract class AbstractFlow<T> : Flow<T> {
 
     @InternalCoroutinesApi
     public final override suspend fun collect(collector: FlowCollector<T>) {
-        collectSafely(SafeCollector(collector, collectContext = coroutineContext))
+        val safeCollector = SafeCollector(collector, coroutineContext)
+        try {
+            collectSafely(safeCollector)
+        } finally {
+            safeCollector.releaseIntercepted()
+        }
     }
 
     /**

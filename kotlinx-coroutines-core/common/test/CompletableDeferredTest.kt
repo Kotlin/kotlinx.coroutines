@@ -50,7 +50,7 @@ class CompletableDeferredTest : TestBase() {
         assertEquals(false, c.isCancelled)
         assertEquals(true, c.isCompleted)
         assertTrue(c.getCancellationException() is JobCancellationException)
-        assertEquals(null, c.getCompletionExceptionOrNull())
+        assertNull(c.getCompletionExceptionOrNull())
     }
 
     private fun checkCancel(c: CompletableDeferred<String>) {

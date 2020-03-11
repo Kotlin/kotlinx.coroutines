@@ -258,8 +258,8 @@ class ChannelsTest: TestBase() {
         testList.indices.forEach { i ->
             assertEquals(testList[i], testList.asReceiveChannel().elementAtOrNull(i))
         }
-        assertEquals(null, testList.asReceiveChannel().elementAtOrNull(-1))
-        assertEquals(null, testList.asReceiveChannel().elementAtOrNull(testList.size))
+        assertNull(testList.asReceiveChannel().elementAtOrNull(-1))
+        assertNull(testList.asReceiveChannel().elementAtOrNull(testList.size))
     }
 
     @Test
@@ -310,14 +310,14 @@ class ChannelsTest: TestBase() {
     @Test
     fun testLastOrNull() = runTest {
         assertEquals(testList.lastOrNull(), testList.asReceiveChannel().lastOrNull())
-        assertEquals(null, emptyList<Int>().asReceiveChannel().lastOrNull())
+        assertNull(emptyList<Int>().asReceiveChannel().lastOrNull())
     }
 
     @Test
     fun testSingleOrNull() = runTest {
         assertEquals(1, listOf(1).asReceiveChannel().singleOrNull())
-        assertEquals(null, listOf(1, 2).asReceiveChannel().singleOrNull())
-        assertEquals(null, emptyList<Int>().asReceiveChannel().singleOrNull())
+        assertNull(listOf(1, 2).asReceiveChannel().singleOrNull())
+        assertNull(emptyList<Int>().asReceiveChannel().singleOrNull())
         repeat(testList.size + 1) { i ->
             assertEquals(testList.singleOrNull { it == i },
                 testList.asReceiveChannel().singleOrNull { it == i })

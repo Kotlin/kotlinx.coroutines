@@ -8,9 +8,8 @@ import io.reactivex.*
 import io.reactivex.disposables.*
 import io.reactivex.exceptions.*
 import kotlinx.coroutines.*
-import org.hamcrest.core.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
+import kotlin.test.*
 
 class CompletableTest : TestBase() {
     @Test
@@ -40,8 +39,8 @@ class CompletableTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            assertThat(error, IsInstanceOf(RuntimeException::class.java))
-            assertThat(error.message, IsEqual("OK"))
+            assertTrue(error is RuntimeException)
+            assertEquals("OK", error.message)
         })
         expect(3)
         yield() // to completable coroutine
@@ -95,7 +94,7 @@ class CompletableTest : TestBase() {
             expectUnreached()
         } catch (e: RuntimeException) {
             finish(4)
-            assertThat(e.message, IsEqual("OK"))
+            assertEquals("OK", e.message)
         }
     }
 

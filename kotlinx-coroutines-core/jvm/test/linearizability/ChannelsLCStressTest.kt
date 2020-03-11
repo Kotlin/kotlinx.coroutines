@@ -17,7 +17,6 @@ import org.jetbrains.kotlinx.lincheck.paramgen.*
 import org.jetbrains.kotlinx.lincheck.verifier.*
 import org.junit.*
 
-
 class RendezvousChannelLCStressTest : ChannelLCStressTestBase(
     c = Channel(RENDEZVOUS),
     sequentialSpecification = SequentialRendezvousChannel::class.java
@@ -47,7 +46,6 @@ class ConflatedChannelLCStressTest : ChannelLCStressTestBase(
     sequentialSpecification = SequentialConflatedChannel::class.java
 )
 class SequentialConflatedChannel : SequentialIntChannelBase(CONFLATED)
-
 
 @Param.Params(
     Param(name = "value", gen = IntGen::class, conf = "1:5"),
@@ -105,10 +103,10 @@ abstract class ChannelLCStressTestBase(private val c: Channel<Int>, private val 
     // @Operation
     fun cancel(@Param(name = "closeToken") token: Int) = c.cancel(NumberedCancellationException(token))
 
-//    @Operation
+    // @Operation
     fun isClosedForReceive() = c.isClosedForReceive
 
-//    @Operation
+    // @Operation
     fun isClosedForSend() = c.isClosedForSend
 
     // TODO: this operation should be (and can be!) linearizable, but is not

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -8,8 +8,6 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
-
-// -------- Operations on SendChannel  --------
 
 /**
  * Adds [element] into to this channel, **blocking** the caller while this channel [Channel.isFull],

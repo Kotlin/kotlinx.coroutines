@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.*
 
 /**
  * Marks declarations that are still **experimental** in coroutines API, which means that the design of the
@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.Flow
  */
 @MustBeDocumented
 @Retention(value = AnnotationRetention.BINARY)
-@Experimental(level = Experimental.Level.WARNING)
+@RequiresOptIn(level = RequiresOptIn.Level.WARNING)
 public annotation class ExperimentalCoroutinesApi
 
 /**
@@ -30,7 +30,12 @@ public annotation class ExperimentalCoroutinesApi
  */
 @MustBeDocumented
 @Retention(value = AnnotationRetention.BINARY)
-@Experimental(level = Experimental.Level.WARNING)
+@RequiresOptIn(
+    level = RequiresOptIn.Level.WARNING,
+    message = "This declaration is in a preview state and can be changed in a backwards-incompatible manner with a best-effort migration. " +
+            "Its usage should be marked with '@kotlinx.coroutines.FlowPreview' or '@OptIn(kotlinx.coroutines.FlowPreview::class)' " +
+            "if you accept the drawback of relying on preview API"
+)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.TYPEALIAS, AnnotationTarget.PROPERTY)
 public annotation class FlowPreview
 
@@ -42,7 +47,7 @@ public annotation class FlowPreview
  */
 @MustBeDocumented
 @Retention(value = AnnotationRetention.BINARY)
-@Experimental(level = Experimental.Level.WARNING)
+@RequiresOptIn(level = RequiresOptIn.Level.WARNING)
 public annotation class ObsoleteCoroutinesApi
 
 /**
@@ -51,6 +56,11 @@ public annotation class ObsoleteCoroutinesApi
  * warnings and without providing any migration aids.
  */
 @Retention(value = AnnotationRetention.BINARY)
-@Experimental(level = Experimental.Level.ERROR)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.TYPEALIAS, AnnotationTarget.PROPERTY)
+@RequiresOptIn(
+    level = RequiresOptIn.Level.ERROR, message = "This is an internal kotlinx.coroutines API that " +
+            "should not be used from outside of kotlinx.coroutines. No compatibility guarantees are provided." +
+            "It is recommended to report your use-case of internal API to kotlinx.coroutines issue tracker, " +
+            "so stable API could be provided instead"
+)
 public annotation class InternalCoroutinesApi

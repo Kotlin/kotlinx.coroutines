@@ -6,8 +6,9 @@ package kotlinx.coroutines.rx2
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Assert
+import org.junit.Test
+import kotlin.test.*
 
 class ConvertTest : TestBase() {
     @Test
@@ -64,9 +65,9 @@ class ConvertTest : TestBase() {
             null
         }
         val maybe1 = d.asMaybe(Dispatchers.Unconfined)
-        checkMaybeValue(maybe1, ::assertNull)
+        checkMaybeValue(maybe1, Assert::assertNull)
         val maybe2 = d.asMaybe(Dispatchers.Unconfined)
-        checkMaybeValue(maybe2, ::assertNull)
+        checkMaybeValue(maybe2, Assert::assertNull)
     }
 
     @Test

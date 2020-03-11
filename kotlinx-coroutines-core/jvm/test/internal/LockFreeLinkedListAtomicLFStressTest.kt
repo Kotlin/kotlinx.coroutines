@@ -1,16 +1,16 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.LockFreedomTestEnvironment
 import kotlinx.coroutines.stressTestMultiplier
-import org.junit.Assert.*
 import org.junit.Test
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.test.*
 
 /**
  * This stress test has 4 threads adding randomly to the list and them immediately undoing
@@ -19,9 +19,9 @@ import java.util.concurrent.atomic.AtomicReference
 class LockFreeLinkedListAtomicLFStressTest {
     private val env = LockFreedomTestEnvironment("LockFreeLinkedListAtomicLFStressTest")
 
-    data class IntNode(val i: Int) : LockFreeLinkedListNode()
+    private data class Node(val i: Long) : LockFreeLinkedListNode()
 
-    private val TEST_DURATION_SEC = 5 * stressTestMultiplier
+    private val nSeconds = 5 * stressTestMultiplier
 
     private val nLists = 4
     private val nAdderThreads = 4
@@ -32,7 +32,8 @@ class LockFreeLinkedListAtomicLFStressTest {
     private val undone = AtomicLong()
     private val missed = AtomicLong()
     private val removed = AtomicLong()
-    val error = AtomicReference<Throwable>()
+    private val error = AtomicReference<Throwable>()
+    private val index = AtomicLong()
 
     @Test
     fun testStress() {
@@ -42,7 +43,7 @@ class LockFreeLinkedListAtomicLFStressTest {
                 when (rnd.nextInt(4)) {
                     0 -> {
                         val list = lists[rnd.nextInt(nLists)]
-                        val node = IntNode(threadId)
+                        val node = Node(index.incrementAndGet())
                         addLastOp(list, node)
                         randomSpinWaitIntermission()
                         tryRemoveOp(node)
@@ -50,7 +51,7 @@ class LockFreeLinkedListAtomicLFStressTest {
                     1 -> {
                         // just to test conditional add
                         val list = lists[rnd.nextInt(nLists)]
-                        val node = IntNode(threadId)
+                        val node = Node(index.incrementAndGet())
                         addLastIfTrueOp(list, node)
                         randomSpinWaitIntermission()
                         tryRemoveOp(node)
@@ -58,7 +59,7 @@ class LockFreeLinkedListAtomicLFStressTest {
                     2 -> {
                         // just to test failed conditional add and burn some time
                         val list = lists[rnd.nextInt(nLists)]
-                        val node = IntNode(threadId)
+                        val node = Node(index.incrementAndGet())
                         addLastIfFalseOp(list, node)
                     }
                     3 -> {
@@ -68,8 +69,8 @@ class LockFreeLinkedListAtomicLFStressTest {
                         check(idx1 < idx2) // that is our global order
                         val list1 = lists[idx1]
                         val list2 = lists[idx2]
-                        val node1 = IntNode(threadId)
-                        val node2 = IntNode(-threadId - 1)
+                        val node1 = Node(index.incrementAndGet())
+                        val node2 = Node(index.incrementAndGet())
                         addTwoOp(list1, node1, list2, node2)
                         randomSpinWaitIntermission()
                         tryRemoveOp(node1)
@@ -91,13 +92,13 @@ class LockFreeLinkedListAtomicLFStressTest {
                 removeTwoOp(list1, list2)
             }
         }
-        env.performTest(TEST_DURATION_SEC) {
-            val _undone = undone.get()
-            val _missed = missed.get()
-            val _removed = removed.get()
-            println("  Adders undone $_undone node additions")
-            println("  Adders missed $_missed nodes")
-            println("Remover removed $_removed nodes")
+        env.performTest(nSeconds) {
+            val undone = undone.get()
+            val missed = missed.get()
+            val removed = removed.get()
+            println("  Adders undone $undone node additions")
+            println("  Adders missed $missed nodes")
+            println("Remover removed $removed nodes")
         }
         error.get()?.let { throw it }
         assertEquals(missed.get(), removed.get())
@@ -106,19 +107,19 @@ class LockFreeLinkedListAtomicLFStressTest {
         lists.forEach { it.validate() }
     }
 
-    private fun addLastOp(list: LockFreeLinkedListHead, node: IntNode) {
+    private fun addLastOp(list: LockFreeLinkedListHead, node: Node) {
         list.addLast(node)
     }
 
-    private fun addLastIfTrueOp(list: LockFreeLinkedListHead, node: IntNode) {
-        assertTrue(list.addLastIf(node, { true }))
+    private fun addLastIfTrueOp(list: LockFreeLinkedListHead, node: Node) {
+        assertTrue(list.addLastIf(node) { true })
     }
 
-    private fun addLastIfFalseOp(list: LockFreeLinkedListHead, node: IntNode) {
-        assertFalse(list.addLastIf(node, { false }))
+    private fun addLastIfFalseOp(list: LockFreeLinkedListHead, node: Node) {
+        assertFalse(list.addLastIf(node) { false })
     }
 
-    private fun addTwoOp(list1: LockFreeLinkedListHead, node1: IntNode, list2: LockFreeLinkedListHead, node2: IntNode) {
+    private fun addTwoOp(list1: LockFreeLinkedListHead, node1: Node, list2: LockFreeLinkedListHead, node2: Node) {
         val add1 = list1.describeAddLast(node1)
         val add2 = list2.describeAddLast(node2)
         val op = object : AtomicOp<Any?>() {
@@ -138,7 +139,7 @@ class LockFreeLinkedListAtomicLFStressTest {
         assertTrue(op.perform(null) == null)
     }
 
-    private fun tryRemoveOp(node: IntNode) {
+    private fun tryRemoveOp(node: Node) {
         if (node.remove())
             undone.incrementAndGet()
         else
@@ -165,5 +166,4 @@ class LockFreeLinkedListAtomicLFStressTest {
         val success = op.perform(null) == null
         if (success) removed.addAndGet(2)
     }
-
 }

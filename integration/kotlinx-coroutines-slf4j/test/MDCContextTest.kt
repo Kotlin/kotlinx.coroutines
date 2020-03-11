@@ -28,7 +28,7 @@ class MDCContextTest : TestBase() {
         MDC.put("myKey", "myValue")
         // Standalone launch
         GlobalScope.launch {
-            assertEquals(null, MDC.get("myKey"))
+            assertNull(MDC.get("myKey"))
             expect(2)
         }.join()
         finish(3)
@@ -92,7 +92,7 @@ class MDCContextTest : TestBase() {
     @Test
     fun testContextMayBeEmpty() {
         runBlocking(MDCContext()) {
-            assertEquals(null, MDC.get("myKey"))
+            assertNull(MDC.get("myKey"))
         }
     }
 

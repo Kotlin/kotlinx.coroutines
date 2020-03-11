@@ -38,6 +38,35 @@ class FlatMapMergeTest : FlatMapMergeBaseTest() {
     }
 
     @Test
+    fun testAtomicStart() = runTest {
+        try {
+            coroutineScope {
+                val job = coroutineContext[Job]!!
+                val flow = flow {
+                    expect(3)
+                    emit(1)
+                }
+                    .onCompletion { expect(5) }
+                    .flatMapMerge {
+                        expect(4)
+                        flowOf(it).onCompletion { expectUnreached() } }
+                    .onCompletion { expect(6) }
+
+                launch {
+                    expect(1)
+                    flow.collect()
+                }
+                launch {
+                    expect(2)
+                    job.cancel()
+                }
+            }
+        } catch (e: CancellationException) {
+            finish(7)
+        }
+    }
+
+    @Test
     fun testCancellationExceptionDownstream() = runTest {
         val flow = flow {
             emit(1)
