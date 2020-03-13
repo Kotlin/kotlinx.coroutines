@@ -21,7 +21,13 @@ internal object AgentPremain {
     private fun installSignalHandler() {
         try {
             Signal.handle(Signal("TRAP")) { // kill -5
-                DebugProbes.dumpCoroutines()
+                if (DebugProbes.isInstalled) {
+                    // Case with 'isInstalled' changed between this check-and-act is not considered
+                    // a real debug probes use-case, thus is not guarded against.
+                    DebugProbes.dumpCoroutines()
+                } else {
+                    println("""Cannot perform coroutines dump, debug probes are disabled""")
+                }
             }
         } catch (t: Throwable) {
             System.err.println("Failed to install signal handler: $t")
