@@ -277,6 +277,7 @@ The `develop` branch is pushed to `master` during release.
 [ListenableFuture.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava/kotlinx.coroutines.guava/com.google.common.util.concurrent.-listenable-future/await.html
 <!--- MODULE kotlinx-coroutines-play-services -->
 <!--- INDEX kotlinx.coroutines.tasks -->
+[Task.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.tasks/com.google.android.gms.tasks.-task/await.html
 <!--- MODULE kotlinx-coroutines-reactive -->
 <!--- INDEX kotlinx.coroutines.reactive -->
 [Publisher.collect]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/collect.html

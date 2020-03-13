@@ -80,14 +80,14 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
 
         val expected = traces[index - 1].applyBackspace().split("\n\t(Coroutine creation stacktrace)\n", limit = 2)
         val actual = value.applyBackspace().split("\n\t(Coroutine creation stacktrace)\n", limit = 2)
-        assertEquals(expected.size, actual.size)
+        assertEquals(expected.size, actual.size, "Creation stacktrace should be part of the expected input")
 
         expected.withIndex().forEach { (index, trace) ->
             val actualTrace = actual[index].trimStackTrace().sanitizeAddresses()
             val expectedTrace = trace.trimStackTrace().sanitizeAddresses()
             val actualLines = actualTrace.split("\n")
             val expectedLines = expectedTrace.split("\n")
-            for (i in 0 until expectedLines.size) {
+            for (i in expectedLines.indices) {
                 assertEquals(expectedLines[i], actualLines[i])
             }
         }

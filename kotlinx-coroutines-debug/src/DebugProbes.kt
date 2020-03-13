@@ -28,19 +28,29 @@ import kotlin.coroutines.*
  * * `probeCoroutineCreated` is invoked on every coroutine creation using stdlib intrinsics.
  *
  * Overhead:
- *  * Every created coroutine is stored in a weak hash map, thus adding additional GC pressure.
- *  * On every created coroutine, stacktrace of the current thread is dumped.
- *  * On every `resume` and `suspend`, [WeakHashMap] is updated under a global lock.
+ *  * Every created coroutine is stored in a concurrent hash map and hash map is looked up and
+ *    updated on each suspension and resumption.
+ *  * If [DebugProbes.enableCreationStackTraces] is enabled, stack trace of the current thread is captured on
+ *    each created coroutine that is a rough equivalent of throwing an exception per each created coroutine.
  */
 @ExperimentalCoroutinesApi
 public object DebugProbes {
 
     /**
-     * Whether coroutine creation stacktraces should be sanitized.
+     * Whether coroutine creation stack traces should be sanitized.
      * Sanitization removes all frames from `kotlinx.coroutines` package except
      * the first one and the last one to simplify diagnostic.
      */
     public var sanitizeStackTraces: Boolean = true
+
+    /**
+     * Whether coroutine creation stack traces should be captured.
+     * When enabled, for each created coroutine a stack trace of the current
+     * thread is captured and attached to the coroutine.
+     * This option can be useful during local debug sessions, but is recommended
+     * to be disabled in production environments to avoid stack trace dumping overhead.
+     */
+    public var enableCreationStackTraces: Boolean = true
 
     /**
      * Determines whether debug probes were [installed][DebugProbes.install].
@@ -132,5 +142,5 @@ public object DebugProbes {
 internal fun probeCoroutineResumed(frame: Continuation<*>) = DebugProbesImpl.probeCoroutineResumed(frame)
 
 internal fun probeCoroutineSuspended(frame: Continuation<*>) = DebugProbesImpl.probeCoroutineSuspended(frame)
-internal fun <T> probeCoroutineCreated(completion: kotlin.coroutines.Continuation<T>): kotlin.coroutines.Continuation<T> =
+internal fun <T> probeCoroutineCreated(completion: Continuation<T>): Continuation<T> =
     DebugProbesImpl.probeCoroutineCreated(completion)

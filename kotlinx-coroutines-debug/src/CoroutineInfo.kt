@@ -16,7 +16,7 @@ import kotlin.coroutines.jvm.internal.*
 @ExperimentalCoroutinesApi
 public class CoroutineInfo internal constructor(
     val context: CoroutineContext,
-    private val creationStackBottom: CoroutineStackFrame,
+    private val creationStackBottom: CoroutineStackFrame?,
     @JvmField internal val sequenceNumber: Long
 ) {
 
@@ -28,6 +28,7 @@ public class CoroutineInfo internal constructor(
 
     /**
      * Creation stacktrace of the coroutine.
+     * Can be empty if [DebugProbes.enableCreationStackTraces] is not set.
      */
     public val creationStackTrace: List<StackTraceElement> get() = creationStackTrace()
 
@@ -66,8 +67,9 @@ public class CoroutineInfo internal constructor(
     }
 
     private fun creationStackTrace(): List<StackTraceElement> {
+        val bottom = creationStackBottom ?: return emptyList()
         // Skip "Coroutine creation stacktrace" frame
-        return sequence<StackTraceElement> { yieldFrames(creationStackBottom.callerFrame) }.toList()
+        return sequence<StackTraceElement> { yieldFrames(bottom.callerFrame) }.toList()
     }
 
     private tailrec suspend fun SequenceScope<StackTraceElement>.yieldFrames(frame: CoroutineStackFrame?) {

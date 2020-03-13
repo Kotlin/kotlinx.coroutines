@@ -13,6 +13,7 @@ public final class kotlinx/coroutines/debug/DebugProbes {
 	public final fun dumpCoroutines (Ljava/io/PrintStream;)V
 	public static synthetic fun dumpCoroutines$default (Lkotlinx/coroutines/debug/DebugProbes;Ljava/io/PrintStream;ILjava/lang/Object;)V
 	public final fun dumpCoroutinesInfo ()Ljava/util/List;
+	public final fun getEnableCreationStackTraces ()Z
 	public final fun getSanitizeStackTraces ()Z
 	public final fun install ()V
 	public final fun isInstalled ()Z
@@ -22,6 +23,7 @@ public final class kotlinx/coroutines/debug/DebugProbes {
 	public final fun printScope (Lkotlinx/coroutines/CoroutineScope;Ljava/io/PrintStream;)V
 	public static synthetic fun printScope$default (Lkotlinx/coroutines/debug/DebugProbes;Lkotlinx/coroutines/CoroutineScope;Ljava/io/PrintStream;ILjava/lang/Object;)V
 	public final fun scopeToString (Lkotlinx/coroutines/CoroutineScope;)Ljava/lang/String;
+	public final fun setEnableCreationStackTraces (Z)V
 	public final fun setSanitizeStackTraces (Z)V
 	public final fun uninstall ()V
 	public final fun withDebugProbes (Lkotlin/jvm/functions/Function0;)V
@@ -35,17 +37,27 @@ public final class kotlinx/coroutines/debug/State : java/lang/Enum {
 	public static fun values ()[Lkotlinx/coroutines/debug/State;
 }
 
+public synthetic class kotlinx/coroutines/debug/internal/DebugProbesImplSequenceNumberRefVolatile {
+	public fun <init> (J)V
+}
+
 public final class kotlinx/coroutines/debug/junit4/CoroutinesTimeout : org/junit/rules/TestRule {
 	public static final field Companion Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout$Companion;
 	public fun <init> (JZ)V
 	public synthetic fun <init> (JZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (JZZ)V
+	public synthetic fun <init> (JZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun apply (Lorg/junit/runners/model/Statement;Lorg/junit/runner/Description;)Lorg/junit/runners/model/Statement;
 }
 
 public final class kotlinx/coroutines/debug/junit4/CoroutinesTimeout$Companion {
+	public final fun seconds (I)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
 	public final fun seconds (IZ)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
+	public final fun seconds (IZZ)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
+	public final fun seconds (J)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
 	public final fun seconds (JZ)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
-	public static synthetic fun seconds$default (Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout$Companion;IZILjava/lang/Object;)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
-	public static synthetic fun seconds$default (Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout$Companion;JZILjava/lang/Object;)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
+	public final fun seconds (JZZ)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
+	public static synthetic fun seconds$default (Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout$Companion;IZZILjava/lang/Object;)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
+	public static synthetic fun seconds$default (Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout$Companion;JZZILjava/lang/Object;)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
 }
 
