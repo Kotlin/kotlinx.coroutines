@@ -32,6 +32,7 @@ module('integration/kotlinx-coroutines-play-services')
 
 module('reactive/kotlinx-coroutines-reactive')
 module('reactive/kotlinx-coroutines-reactor')
+module('reactive/kotlinx-coroutines-jdk9')
 module('reactive/kotlinx-coroutines-rx2')
 module('ui/kotlinx-coroutines-android')
 module('ui/kotlinx-coroutines-android/android-unit-tests')

@@ -1,14 +1,15 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.rx2
+package kotlinx.coroutines.jdk9
 
-import io.reactivex.*
 import kotlinx.coroutines.*
 import org.junit.Test
+import kotlinx.coroutines.flow.flowOn
 import org.junit.runner.*
 import org.junit.runners.*
+import java.util.concurrent.Flow as JFlow
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -38,37 +39,35 @@ class IntegrationTest(
 
     @Test
     fun testEmpty(): Unit = runBlocking {
-        val observable = rxObservable<String>(ctx(coroutineContext)) {
+        val pub = flowPublish<String>(ctx(coroutineContext)) {
             if (delay) delay(1)
             // does not send anything
         }
-        assertFailsWith<NoSuchElementException> { observable.awaitFirst() }
-        assertEquals("OK", observable.awaitFirstOrDefault("OK"))
-        assertNull(observable.awaitFirstOrNull())
-        assertEquals("ELSE", observable.awaitFirstOrElse { "ELSE" })
-        assertFailsWith<NoSuchElementException> { observable.awaitLast() }
-        assertFailsWith<NoSuchElementException> { observable.awaitSingle() }
+        assertFailsWith<NoSuchElementException> { pub.awaitFirst() }
+        assertEquals("OK", pub.awaitFirstOrDefault("OK"))
+        assertNull(pub.awaitFirstOrNull())
+        assertEquals("ELSE", pub.awaitFirstOrElse { "ELSE" })
+        assertFailsWith<NoSuchElementException> { pub.awaitLast() }
+        assertFailsWith<NoSuchElementException> { pub.awaitSingle() }
         var cnt = 0
-        observable.collect {
-            cnt++
-        }
+        pub.collect { cnt++ }
         assertEquals(0, cnt)
     }
 
     @Test
     fun testSingle() = runBlocking {
-        val observable = rxObservable(ctx(coroutineContext)) {
+        val pub = flowPublish(ctx(coroutineContext)) {
             if (delay) delay(1)
             send("OK")
         }
-        assertEquals("OK", observable.awaitFirst())
-        assertEquals("OK", observable.awaitFirstOrDefault("OK"))
-        assertEquals("OK", observable.awaitFirstOrNull())
-        assertEquals("OK", observable.awaitFirstOrElse { "ELSE" })
-        assertEquals("OK", observable.awaitLast())
-        assertEquals("OK", observable.awaitSingle())
+        assertEquals("OK", pub.awaitFirst())
+        assertEquals("OK", pub.awaitFirstOrDefault("!"))
+        assertEquals("OK", pub.awaitFirstOrNull())
+        assertEquals("OK", pub.awaitFirstOrElse { "ELSE" })
+        assertEquals("OK", pub.awaitLast())
+        assertEquals("OK", pub.awaitSingle())
         var cnt = 0
-        observable.collect {
+        pub.collect {
             assertEquals("OK", it)
             cnt++
         }
@@ -76,31 +75,30 @@ class IntegrationTest(
     }
 
     @Test
-    fun testNumbers() = runBlocking<Unit> {
+    fun testNumbers() = runBlocking {
         val n = 100 * stressTestMultiplier
-        val observable = rxObservable(ctx(coroutineContext)) {
+        val pub = flowPublish(ctx(coroutineContext)) {
             for (i in 1..n) {
                 send(i)
                 if (delay) delay(1)
             }
         }
-        assertEquals(1, observable.awaitFirst())
-        assertEquals(1, observable.awaitFirstOrDefault(0))
-        assertEquals(1, observable.awaitFirstOrNull())
-        assertEquals(1, observable.awaitFirstOrElse { 0 })
-        assertEquals(n, observable.awaitLast())
-        assertFailsWith<IllegalArgumentException> { observable.awaitSingle() }
-        checkNumbers(n, observable)
-        val channel = observable.openSubscription()
-        checkNumbers(n, channel.asObservable(ctx(coroutineContext)))
-        channel.cancel()
+        assertEquals(1, pub.awaitFirst())
+        assertEquals(1, pub.awaitFirstOrDefault(0))
+        assertEquals(n, pub.awaitLast())
+        assertEquals(1, pub.awaitFirstOrNull())
+        assertEquals(1, pub.awaitFirstOrElse { 0 })
+        assertFailsWith<IllegalArgumentException> { pub.awaitSingle() }
+        checkNumbers(n, pub)
+        val flow = pub.asFlow()
+        checkNumbers(n, flow.flowOn(ctx(coroutineContext)).asPublisher())
     }
 
     @Test
     fun testCancelWithoutValue() = runTest {
         val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
-            rxObservable<String> {
-                hang {  }
+            flowPublish<String> {
+                hang {}
             }.awaitFirst()
         }
 
@@ -109,10 +107,10 @@ class IntegrationTest(
     }
 
     @Test
-    fun testEmptySingle() = runTest(unhandled = listOf({e -> e is NoSuchElementException})) {
+    fun testEmptySingle() = runTest(unhandled = listOf { e -> e is NoSuchElementException}) {
         expect(1)
         val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
-            rxObservable<String> {
+            flowPublish<String> {
                 yield()
                 expect(2)
                 // Nothing to emit
@@ -123,9 +121,9 @@ class IntegrationTest(
         finish(3)
     }
 
-    private suspend fun checkNumbers(n: Int, observable: Observable<Int>) {
+    private suspend fun checkNumbers(n: Int, pub: JFlow.Publisher<Int>) {
         var last = 0
-        observable.collect {
+        pub.collect {
             assertEquals(++last, it)
         }
         assertEquals(n, last)

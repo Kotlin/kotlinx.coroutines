@@ -45,8 +45,9 @@ suspend fun main() = coroutineScope {
   * [CoroutinesTimeout] test rule to automatically dump coroutines on test timeout.
 * [reactive](reactive/README.md) &mdash; modules that provide builders and iteration support for various reactive streams libraries:
   * Reactive Streams ([Publisher.collect], [Publisher.awaitSingle], [publish], etc), 
-    RxJava 2.x ([rxFlowable], [rxSingle], etc), and 
-    Project Reactor ([flux], [mono], etc). 
+  * Flow (JDK 9) (the same interface as for Reactive Streams),
+  * RxJava 2.x ([rxFlowable], [rxSingle], etc), and
+  * Project Reactor ([flux], [mono], etc).
 * [ui](ui/README.md) &mdash; modules that provide coroutine dispatchers for various single-threaded UI libraries:
   * Android, JavaFX, and Swing.
 * [integration](integration/README.md) &mdash; modules that provide integration with various asynchronous callback- and future-based libraries:
