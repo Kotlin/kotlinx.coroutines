@@ -14,8 +14,7 @@ import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
 import kotlin.native.concurrent.*
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+import kotlin.time.*
 
 /**
  * Scope for [select] invocation.
@@ -53,7 +52,6 @@ public interface SelectBuilder<in R> {
     @ExperimentalCoroutinesApi
     public fun onTimeout(timeMillis: Long, block: suspend () -> R)
 }
-
 
 /**
  * Clause that selects the given [block] after the specified [timeout] passes.

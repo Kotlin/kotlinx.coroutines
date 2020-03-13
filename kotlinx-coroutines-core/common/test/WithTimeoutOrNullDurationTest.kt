@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
@@ -9,10 +9,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
-import kotlin.time.milliseconds
-import kotlin.time.seconds
+import kotlin.time.*
 
 @ExperimentalTime
 class WithTimeoutOrNullDurationTest : TestBase() {

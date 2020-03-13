@@ -1,15 +1,12 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.selects
 
 import kotlinx.coroutines.*
 import kotlin.test.*
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
-import kotlin.time.milliseconds
-import kotlin.time.seconds
+import kotlin.time.*
 
 @ExperimentalTime
 class SelectTimeoutDurationTest : TestBase() {

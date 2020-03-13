@@ -6,8 +6,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+import kotlin.time.*
 
 /**
  * This dispatcher _feature_ is implemented by [CoroutineDispatcher] implementations that natively support
@@ -99,5 +98,4 @@ internal val CoroutineContext.delay: Delay get() = get(ContinuationInterceptor) 
  */
 @ExperimentalTime
 internal fun Duration.toDelayMillis(): Long =
-        if (this > Duration.ZERO) toLongMilliseconds().coerceAtLeast(1)
-        else 0
+    if (this > Duration.ZERO) toLongMilliseconds().coerceAtLeast(1) else 0

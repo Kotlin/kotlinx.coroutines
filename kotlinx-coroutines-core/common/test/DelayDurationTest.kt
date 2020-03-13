@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED", "DEPRECATION")
@@ -8,7 +8,7 @@
 
 package kotlinx.coroutines
 
-import kotlin.test.Test
+import kotlin.test.*
 import kotlin.time.*
 
 @ExperimentalTime

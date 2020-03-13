@@ -10,8 +10,7 @@ import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+import kotlin.time.*
 
 /**
  * Runs a given suspending [block] of code inside a coroutine with a specified [timeout][timeMillis] and throws
