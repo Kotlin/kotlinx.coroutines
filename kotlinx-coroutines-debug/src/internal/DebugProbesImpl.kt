@@ -334,18 +334,23 @@ internal object DebugProbesImpl {
          * even more verbose (it will attach coroutine creation stacktrace to all exceptions),
          * and then using CoroutineOwner completion as unique identifier of coroutineSuspended/resumed calls.
          */
-        val stacktrace = sanitizeStackTrace(Exception())
-        val frame = stacktrace.foldRight<StackTraceElement, CoroutineStackFrame?>(null) { frame, acc ->
-            object : CoroutineStackFrame {
-                override val callerFrame: CoroutineStackFrame? = acc
-                override fun getStackTraceElement(): StackTraceElement = frame
+
+        val frame = if (DebugProbes.enableCreationStackTraces) {
+            val stacktrace = sanitizeStackTrace(Exception())
+            stacktrace.foldRight<StackTraceElement, CoroutineStackFrame?>(null) { frame, acc ->
+                object : CoroutineStackFrame {
+                    override val callerFrame: CoroutineStackFrame? = acc
+                    override fun getStackTraceElement(): StackTraceElement = frame
+                }
             }
-        }!!
+        } else {
+            null
+        }
 
         return createOwner(completion, frame)
     }
 
-    private fun <T> createOwner(completion: Continuation<T>, frame: CoroutineStackFrame): Continuation<T> {
+    private fun <T> createOwner(completion: Continuation<T>, frame: CoroutineStackFrame?): Continuation<T> {
         if (!isInstalled) return completion
         val info = CoroutineInfo(completion.context, frame, sequenceNumber.incrementAndGet())
         val owner = CoroutineOwner(completion, info, frame)
@@ -372,8 +377,14 @@ internal object DebugProbesImpl {
     private class CoroutineOwner<T>(
         @JvmField val delegate: Continuation<T>,
         @JvmField val info: CoroutineInfo,
-        frame: CoroutineStackFrame
-    ) : Continuation<T> by delegate, CoroutineStackFrame by frame {
+        private val frame: CoroutineStackFrame?
+    ) : Continuation<T> by delegate, CoroutineStackFrame {
+
+        override val callerFrame: CoroutineStackFrame?
+            get() = frame?.callerFrame
+
+        override fun getStackTraceElement(): StackTraceElement? = frame?.getStackTraceElement()
+
         override fun resumeWith(result: Result<T>) {
             probeCoroutineCompleted(this)
             delegate.resumeWith(result)

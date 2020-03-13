@@ -11,9 +11,14 @@ import java.lang.instrument.*
 @Suppress("unused")
 internal object AgentPremain {
 
+    private val enableCreationStackTraces =
+        System.getProperty("kotlinx.coroutines.debug.enable.creation.stack.trace")?.toBoolean()
+            ?: DebugProbes.enableCreationStackTraces
+
     @JvmStatic
     public fun premain(args: String?, instrumentation: Instrumentation) {
         Installer.premain(args, instrumentation)
+        DebugProbes.enableCreationStackTraces = enableCreationStackTraces
         DebugProbes.install()
         installSignalHandler()
     }
