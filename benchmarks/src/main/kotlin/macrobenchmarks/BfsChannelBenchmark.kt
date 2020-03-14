@@ -25,6 +25,7 @@ import kotlin.system.*
 
 private val GRAPHS = listOf(
         RandomGraphCreator("RAND-1M-10M", nodes = 1_000_000, edges = 10_000_000),
+        RandomGraphCreator("RAND-1M*log(1M)", nodes = 1_000_000, edges = 19_931_569),
         DownloadingGraphCreator("USA-DISTANCE", "http://users.diag.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.W.gr.gz"),
         // !NB!: node indexes in a txt file should start at 0. Check it if you decide to change the url
         DownloadingGraphCreator("INTERNET_TOPOLOGY", "http://snap.stanford.edu/data/as-skitter.txt.gz"))
@@ -35,7 +36,7 @@ private const val ITERATIONS = 3
 /**
  * Number of coroutines to be used to execute bfs in parallel
  */
-private val PARALLELISM = listOf(1, 2)
+private val PARALLELISM = listOf(1, 2, 4, 8, 12)
 /**
  * Benchmark output file
  */
@@ -68,8 +69,8 @@ private val JVM_OPTIONS = listOf<String>(/*"-Xmx64m", "-XX:+PrintGC"*/)
  * compares the results and computes execution times.
  * We use graph caching service to avoid parsing the text files and creating graph objects from scratch in each benchmark.
  *
- * TODO: this benchmark works painfully slow without synchronization on methods [kotlinx.coroutines.internal.LockFreeLinkedListNode.remove]
- * (or other channels fixes).
+ * TODO: this benchmark can be painfully slow without synchronization on methods
+ * [kotlinx.coroutines.internal.LockFreeLinkedListNode.remove] (or other channels fixes).
  */
 fun main() {
     // Create a new output CSV file and write the header
