@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:JvmName("BfsChannelBenchmark")
 
@@ -20,7 +20,6 @@ import java.rmi.registry.*
 import java.rmi.server.*
 import java.util.*
 import java.util.zip.*
-import kotlin.collections.*
 import kotlin.system.*
 
 
@@ -30,22 +29,21 @@ private val GRAPHS = listOf(
         // !NB!: node indexes in a txt file should start at 0. Check it if you decide to change the url
         DownloadingGraphCreator("INTERNET_TOPOLOGY", "http://snap.stanford.edu/data/as-skitter.txt.gz"))
 /**
- * Iterations number for each graph
+ * Number of iterations for each graph
  */
 private const val ITERATIONS = 3
 /**
- * Number of coroutines that are used to execute bfs in parallel
+ * Number of coroutines to be used to execute bfs in parallel
  */
 private val PARALLELISM = listOf(1, 2)
 /**
- * Output file for the benchmark results
+ * Benchmark output file
  */
-private const val RESULT_FILE = "out/results_bfs_channel.csv"
+private const val OUTPUT = "out/results_bfs_channel.csv"
 /**
  * Graphs location
  */
 private const val GRAPH_LOCATION = "out/bfs-channel-benchmark"
-
 /**
  * The RMI graph service host name
  */
@@ -59,7 +57,7 @@ private const val GRAPH_CACHE_SERVICE_PORT = 1099
  */
 private val GRAPH_CACHE_SERVICE_NAME = GraphCacheService::class.java.simpleName
 /**
- * Options for the new jvm instance
+ * Options for benchmark jvm instances
  */
 private val JVM_OPTIONS = listOf<String>(/*"-Xmx64m", "-XX:+PrintGC"*/)
 
@@ -68,12 +66,14 @@ private val JVM_OPTIONS = listOf<String>(/*"-Xmx64m", "-XX:+PrintGC"*/)
  * This benchmark tests channel as a working queue, as a queue under contention.
  * The benchmark creates or downloads graphs, then executes parallel BFS using channel as a queue, executes sequential BFS,
  * compares the results and computes execution times.
+ * We use graph caching service to avoid parsing the text files and creating graph objects from scratch in each benchmark.
  *
  * TODO: this benchmark works painfully slow without synchronization on methods [kotlinx.coroutines.internal.LockFreeLinkedListNode.remove]
- * and [kotlinx.coroutines.internal.LockFreeLinkedListNode.helpDelete] (or other channels fixes).
+ * (or other channels fixes).
  */
 fun main() {
-    // Print header to the output file
+    // Create a new output CSV file and write the header
+    Files.createDirectories(Paths.get(OUTPUT).parent)
     writeOutputHeader()
     // Set up a graph cache service
     System.setProperty("java.rmi.server.hostname", GRAPH_CACHE_SERVICE_HOSTNAME)
@@ -81,21 +81,18 @@ fun main() {
     val graphService = UnicastRemoteObject.exportObject(service, GRAPH_CACHE_SERVICE_PORT) as GraphCacheService
     val registry = LocateRegistry.createRegistry(GRAPH_CACHE_SERVICE_PORT)
     registry.rebind(GRAPH_CACHE_SERVICE_NAME, graphService)
-    // Run benchmarks
+    // Run the benchmark for each graph
     try {
         for (graphCreator in GRAPHS) {
             val graphName = graphCreator.name
             println("=== $graphName ===")
-
-            // for each graph we should start a new jvm instance
             val graph = service.getGraph(graphName)
-
             val startNode = graph[0]
-            val result = runIteration(graph) { bfsSequential(graph, startNode) }
+            // Execute sequential bfs to establish a baseline for benchmarks results
+            val result = executeBenchmark(graph) { bfsSequential(graph, startNode) }
             println("sequential execution time = ${result.executionTime}ms std = ${result.standardDeviation}ms")
-
             writeIterationResults(graphName, 0, result)
-
+            // Execute parallel bfs on different number of coroutines
             for (parallelism in PARALLELISM) {
                 val exitValue = runProcess(ParallelBfsRunner::class.java.name, JVM_OPTIONS, arrayOf(graphName, parallelism.toString()))
                 if (exitValue != 0) {
@@ -112,23 +109,23 @@ fun main() {
 }
 
 private fun writeOutputHeader() {
-    PrintWriter(RESULT_FILE).use { writer -> writer.println("graphName,parallelism,executionTimeAvgMs,executionTimeStdMs") }
+    PrintWriter(OUTPUT).use { writer -> writer.println("graphName,parallelism,executionTimeAvgMs,executionTimeStdMs") }
 }
 
-private fun writeIterationResults(graphName: String, parallelism: Int, result: IterationResult) {
-    FileOutputStream(RESULT_FILE, true).bufferedWriter().use { writer ->
+private fun writeIterationResults(graphName: String, parallelism: Int, result: BenchmarkResult) {
+    FileOutputStream(OUTPUT, true).bufferedWriter().use { writer ->
         writer.append("$graphName,$parallelism,${String.format(Locale.ROOT, "%.2f",result.executionTime)},${String.format(Locale.ROOT, "%.2f",result.standardDeviation)}\n")
     }
 }
 
-private fun runIteration(graph: List<Node>, bfsAlgo: () -> Unit): IterationResult {
+private fun executeBenchmark(graph: List<Node>, bfsAlgo: () -> Unit): BenchmarkResult {
     // warmup
     runBfs(graph, bfsAlgo)
     // benchmark iterations
     val executionTimes = (1..ITERATIONS).map { runBfs(graph, bfsAlgo) }
     val executionTime = executionTimes.average() / 1_000_000
     val standardDeviation = executionTimes.standardDeviation() / 1_000_000
-    return IterationResult(executionTime = executionTime, standardDeviation = standardDeviation)
+    return BenchmarkResult(executionTime = executionTime, standardDeviation = standardDeviation)
 }
 
 private inline fun runBfs(graph: List<Node>, bfsAlgo: () -> Unit): Long {
@@ -139,7 +136,7 @@ private inline fun runBfs(graph: List<Node>, bfsAlgo: () -> Unit): Long {
     return end - start
 }
 
-private data class IterationResult(val executionTime: Double, val standardDeviation: Double)
+private data class BenchmarkResult(val executionTime: Double, val standardDeviation: Double)
 
 // #######################################
 // # GRAPH STRUCTURE AND SEQUENTIAL ALGO #
@@ -183,14 +180,13 @@ class ParallelBfsRunner {
         fun main(args: Array<String>) {
             val graphName = args[0]
             val parallelism = args[1].toInt()
-
+            // Download graph from the graph cache service
             val registry = LocateRegistry.getRegistry(GRAPH_CACHE_SERVICE_HOSTNAME, GRAPH_CACHE_SERVICE_PORT)
             val graphService = registry.lookup(GRAPH_CACHE_SERVICE_NAME) as GraphCacheService
             val graph = graphService.getGraph(graphName)
-
             val startNode = graph[0]
-
-            val result = runIteration(graph) { bfsParallel(graph, startNode, parallelism) }
+            // Execute parallel bfs
+            val result = executeBenchmark(graph) { bfsParallel(graph, startNode, parallelism) }
             println("parallelism = $parallelism, parallel execution time = ${result.executionTime}ms std = ${result.standardDeviation}ms")
             writeIterationResults(graphName, parallelism, result)
         }

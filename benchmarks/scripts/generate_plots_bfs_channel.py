@@ -22,7 +22,7 @@ def draw(data, plt):
     plt.xscale('log', basex=2)
     plt.gca().xaxis.set_major_formatter(FormatStrFormatter('%0.f'))
     plt.grid(linewidth='0.5', color='lightgray')
-    plt.ylabel('speed up (parallel time / sequential time)')
+    plt.ylabel('speed up (sequential time / parallel time)')
     plt.xlabel('parallelism')
     plt.xticks(data.parallelism.unique())
 
@@ -33,7 +33,7 @@ def draw(data, plt):
         gen_marker = next(marker_gen)
         res_parallel = data[(data.graphName == graphName) & (data.parallelism != 0)]
         res_sequential_time = data[(data.graphName == graphName) & (data.parallelism == 0)].executionTimeAvgMs.unique()
-        plt.plot(res_parallel.parallelism, res_parallel.executionTimeAvgMs / res_sequential_time,
+        plt.plot(res_parallel.parallelism, res_sequential_time / res_parallel.executionTimeAvgMs,
                 label="graphName={}".format(graphName), color=gen_colour, marker=gen_marker, linewidth=2.2)
 
 data = pd.read_csv(input_file, sep=",")
