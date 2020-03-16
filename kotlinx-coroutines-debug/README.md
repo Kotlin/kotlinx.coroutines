@@ -13,6 +13,9 @@ suspension stacktraces.
 Additionally, it is possible to process the list of such coroutines via [DebugProbes.dumpCoroutinesInfo] or dump isolated parts
 of coroutines hierarchy referenced by a [Job] or [CoroutineScope] instances using  [DebugProbes.printJob] and [DebugProbes.printScope] respectively.
 
+Additionally, this module provides a [BlockHound](https://github.com/reactor/BlockHound) service
+that detects when a blocking operation was called in a coroutine context that prohibits it.
+
 ### Using in your project
 
 Add `kotlinx-coroutines-debug` to your project test dependencies:
