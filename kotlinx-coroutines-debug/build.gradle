@@ -39,7 +39,5 @@ shadowJar {
     classifier null
     // Shadow only byte buddy, do not package kotlin stdlib
     configurations = [project.configurations.shadowDeps]
-    relocate('net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy') {
-        exclude 'net.bytebuddy.agent'
-    }
+    relocate('net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy')
 }
