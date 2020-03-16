@@ -277,7 +277,7 @@ important to ensure that [cleanupTestCoroutines][TestCoroutineScope.cleanupTestC
 ```kotlin
 class TestClass {
     private val testScope = TestCoroutineScope()
-    private lateinit var subject: Subject = null 
+    private lateinit var subject: Subject
     
     @Before
     fun setup() {
