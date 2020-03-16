@@ -9,5 +9,6 @@ The tests are the following:
   `-PdryRun` affects `npmPublish` so that it only provides a packed publication
   and does not in fact attempt to send the build for publication.
 * `MavenPublicationValidator` depends on the published artifacts and tests artifacts binary content and absence of atomicfu in the classpath
+* `DebugAgentTest` checks that the coroutine debugger can be run as a Java agent.
 
 All the available tests can be run with `integration-testing:test`.
