@@ -20,6 +20,11 @@ sourceSets {
         compileClasspath += sourceSets.test.runtimeClasspath
         runtimeClasspath += sourceSets.test.runtimeClasspath
     }
+    debugAgentTest {
+        kotlin
+        compileClasspath += sourceSets.test.runtimeClasspath
+        runtimeClasspath += sourceSets.test.runtimeClasspath
+    }
 }
 
 task npmTest(type: Test) {
@@ -44,6 +49,14 @@ task mavenTest(type: Test) {
     classpath = sourceSet.runtimeClasspath
 }
 
+task debugAgentTest(type: Test) {
+    def sourceSet = sourceSets.debugAgentTest
+    dependsOn(project(':kotlinx-coroutines-debug').shadowJar)
+    jvmArgs ('-javaagent:' + project(':kotlinx-coroutines-debug').shadowJar.outputs.files.getFiles()[0])
+    testClassesDirs = sourceSet.output.classesDirs
+    classpath = sourceSet.runtimeClasspath
+}
+
 dependencies {
     testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testCompile 'junit:junit:4.12'
@@ -51,6 +64,8 @@ dependencies {
     npmTestCompile 'com.google.code.gson:gson:2.8.5'
     mavenTestRuntimeOnly project(':kotlinx-coroutines-core')
     mavenTestRuntimeOnly project(':kotlinx-coroutines-android')
+    debugAgentTestCompile project(':kotlinx-coroutines-core')
+    debugAgentTestCompile project(':kotlinx-coroutines-debug')
 }
 
 compileTestKotlin {
@@ -58,5 +73,5 @@ compileTestKotlin {
 }
 
 test {
-    dependsOn([npmTest, mavenTest])
+    dependsOn([npmTest, mavenTest, debugAgentTest])
 }
