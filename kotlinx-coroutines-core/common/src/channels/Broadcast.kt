@@ -39,7 +39,6 @@ import kotlin.native.concurrent.*
  *
  * @param start coroutine start option. The default value is [CoroutineStart.LAZY].
  */
-//@ObsoleteCoroutinesApi // since version 1.4.0
 fun <E> ReceiveChannel<E>.broadcast(
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY
@@ -93,12 +92,12 @@ fun <E> ReceiveChannel<E>.broadcast(
  * It causes  failure of the `send` operation in broadcast coroutine and would not cancel it if the
  * coroutine is doing something else.
  *
- * ### Obsolete
+ * ### Future replacement
  *
  * This function has an inappropriate result type of [BroadcastChannel] which provides
  * [send][BroadcastChannel.send] and [close][BroadcastChannel.close] operations that interfere with
  * the broadcasting coroutine in hard-to-specify ways. It will be replaced with
- * sharing operators on [Flow][kotlinx.coroutines.flow.Flow].
+ * sharing operators on [Flow][kotlinx.coroutines.flow.Flow] in the future.
  *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param capacity capacity of the channel's buffer (1 by default).
@@ -106,7 +105,6 @@ fun <E> ReceiveChannel<E>.broadcast(
  * @param onCompletion optional completion handler for the producer coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
-@ObsoleteCoroutinesApi // since version 1.4.0
 public fun <E> CoroutineScope.broadcast(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 1,
