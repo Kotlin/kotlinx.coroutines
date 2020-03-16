@@ -123,7 +123,7 @@ public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
 
 /**
  * The terminal operator that returns the first element emitted by the flow and then cancels flow's collection.
- * Returns [null] if the flow was empty.
+ * Returns `null` if the flow was empty.
  */
 public suspend fun <T : Any> Flow<T>.firstOrNull(): T? {
     var result: Any? = NULL
@@ -135,12 +135,12 @@ public suspend fun <T : Any> Flow<T>.firstOrNull(): T? {
     } catch (e: AbortFlowException) {
         // Do nothing
     }
-    return result.takeUnless { it == NULL } as T?
+    return result.takeUnless { it === NULL } as T?
 }
 
 /**
- * The terminal operator that returns the first element emitted by the flow and then cancels flow's collection.
- * Returns [null] if the flow did not contain an element matching the [predicate].
+ *  The terminal operator that returns the first element emitted by the flow matching the given [predicate] and then cancels flow's collection.
+ * Returns `null` if the flow did not contain an element matching the [predicate].
  */
 public suspend fun <T : Any> Flow<T>.firstOrNull(predicate: suspend (T) -> Boolean): T? {
     var result: Any? = NULL
@@ -154,5 +154,5 @@ public suspend fun <T : Any> Flow<T>.firstOrNull(predicate: suspend (T) -> Boole
     } catch (e: AbortFlowException) {
         // Do nothing
     }
-    return result.takeUnless { it == NULL } as T?
+    return result.takeUnless { it === NULL } as T?
 }

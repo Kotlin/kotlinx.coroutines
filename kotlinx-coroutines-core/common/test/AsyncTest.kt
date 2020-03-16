@@ -210,12 +210,6 @@ class AsyncTest : TestBase() {
         finish(13)
     }
 
-    class BadClass {
-        override fun equals(other: Any?): Boolean = error("equals")
-        override fun hashCode(): Int = error("hashCode")
-        override fun toString(): String = error("toString")
-    }
-
     @Test
     fun testDeferBadClass() = runTest {
         val bad = BadClass()

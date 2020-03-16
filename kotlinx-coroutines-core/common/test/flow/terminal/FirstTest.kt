@@ -150,4 +150,14 @@ class FirstTest : TestBase() {
         assertEquals(1, flow.firstOrNull())
         finish(2)
     }
+
+    @Test
+    fun testBadClass() = runTest {
+        val instance = BadClass()
+        val flow = flowOf(instance)
+        assertSame(instance, flow.first())
+        assertSame(instance, flow.firstOrNull())
+        assertSame(instance, flow.first { true })
+        assertSame(instance, flow.firstOrNull { true })
+    }
 }
