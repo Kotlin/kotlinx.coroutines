@@ -15,7 +15,8 @@ of coroutines hierarchy referenced by a [Job] or [CoroutineScope] instances usin
 
 This module also provides an automatic [BlockHound](https://github.com/reactor/BlockHound) integration
 that detects when a blocking operation was called in a coroutine context that prohibits it. In order to use it,
-please follow the BlockHound [quick start guide](https://github.com/reactor/BlockHound/blob/master/docs/quick_start.md).
+please follow the BlockHound [quick start guide](
+https://github.com/reactor/BlockHound/blob/1.0.2.RELEASE/docs/quick_start.md).
 
 ### Using in your project
 
