@@ -954,9 +954,7 @@ internal class CoroutineScheduler(
 
 /**
  * Checks if the thread is part of a thread pool that supports coroutines.
- *
- * This function is needed for integration with BlockHound and accessed by violating the
- * visibility modifier.
+ * This function is needed for integration with BlockHound.
  */
 @Suppress("UNUSED")
 @JvmName("isSchedulerWorker")
@@ -964,9 +962,7 @@ internal fun isSchedulerWorker(thread: Thread) = thread is CoroutineScheduler.Wo
 
 /**
  * Checks if the thread is running a CPU-bound task.
- *
- * This function is needed for integration with BlockHound and accessed by violating the
- * visibility modifier.
+ * This function is needed for integration with BlockHound.
  */
 @Suppress("UNUSED")
 @JvmName("mayNotBlock")
