@@ -45,4 +45,4 @@ if (!build_snapshot_train) {
     include('site')
 }
 
-module('publication-validator')
+module('integration-testing')
