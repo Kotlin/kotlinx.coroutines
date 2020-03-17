@@ -6,6 +6,7 @@ package kotlinx.coroutines.validator
 
 import org.junit.*
 import org.junit.Assert.assertTrue
+import java.io.*
 import java.util.jar.*
 
 class MavenPublicationValidator {

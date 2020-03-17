@@ -8,8 +8,8 @@ apply from: rootProject.file("gradle/experimental.gradle")
 def rootModule = "kotlinx.coroutines"
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
-def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom', 'integration-testing']
-def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'js-stub', 'stdlib-stubs', 'integration-testing']
+def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom', 'publication-validator']
+def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'js-stub', 'stdlib-stubs', 'publication-validator']
 // Not published
 def unpublished = internal + ['example-frontend-js', 'android-unit-tests']
 

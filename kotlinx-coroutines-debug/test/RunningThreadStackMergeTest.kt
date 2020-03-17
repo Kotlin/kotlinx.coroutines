@@ -133,7 +133,7 @@ class RunningThreadStackMergeTest : DebugTestBase() {
     }
 
     private fun CoroutineScope.launchEscapingCoroutineWithoutContext() {
-        launch(Dispatchers.IO) {
+        launch(Dispatchers.Default) {
             suspendingFunctionWithoutContext()
             assertTrue(true)
         }

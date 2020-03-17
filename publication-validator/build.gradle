@@ -1,0 +1,37 @@
+/*
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+apply from: rootProject.file("gradle/compile-jvm.gradle")
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.apache.commons:commons-compress:1.18'
+    testCompile 'com.google.code.gson:gson:2.8.5'
+    testCompile project(':kotlinx-coroutines-core')
+    testCompile project(':kotlinx-coroutines-android')
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+def dryRunNpm = properties['dryRun']
+
+test {
+    onlyIf { dryRunNpm == "true" } // so that we don't accidentally publish anything, especially before the test
+    doFirst { println "Verifying publishing version $version" } // all modules share the same version
+    environment "projectRoot", project.rootDir
+    environment "deployVersion", version
+    if (dryRunNpm == "true") { // `onlyIf` only affects execution of the task, not the dependency subtree
+        dependsOn(project(':').getTasksByName("publishNpm", true) +
+                project(':').getTasksByName("publishToMavenLocal", true))
+        dependsOn.remove(project(':').getTasksByName("dokka", true))
+    }
+}
