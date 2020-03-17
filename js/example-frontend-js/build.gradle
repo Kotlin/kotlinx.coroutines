@@ -5,6 +5,24 @@
 apply plugin: 'kotlin-dce-js'
 apply from: rootProject.file('gradle/node-js.gradle')
 
+// Workaround resolving new Gradle metadata with kotlin2js
+// TODO: Remove once KT-37188 is fixed
+try {
+    def jsCompilerType = Class.forName("org.jetbrains.kotlin.gradle.targets.js.JsCompilerType")
+    def jsCompilerAttr = Attribute.of("org.jetbrains.kotlin.js.compiler", jsCompilerType)
+    project.dependencies.attributesSchema.attribute(jsCompilerAttr)
+    configurations {
+        matching {
+            it.name.endsWith("Classpath")
+        }.forEach {
+            it.attributes.attribute(jsCompilerAttr, jsCompilerType.legacy)
+        }
+    }
+} catch (java.lang.ClassNotFoundException e) {
+    // org.jetbrains.kotlin.gradle.targets.js.JsCompilerType is missing in 1.3.x
+    // But 1.3.x doesn't generate Gradle metadata, so this workaround is not needed
+}
+
 dependencies {
     compile "org.jetbrains.kotlinx:kotlinx-html-js:$html_version"
 }

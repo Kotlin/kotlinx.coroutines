@@ -140,12 +140,13 @@ private class ReactiveSubscriber<T : Any>(
 
 // ContextInjector service is implemented in `kotlinx-coroutines-reactor` module only.
 // If `kotlinx-coroutines-reactor` module is not included, the list is empty.
-private val contextInjectors: List<ContextInjector> =
-    ServiceLoader.load(ContextInjector::class.java, ContextInjector::class.java.classLoader).toList()
+private val contextInjectors: Array<ContextInjector> =
+    ServiceLoader.load(ContextInjector::class.java, ContextInjector::class.java.classLoader)
+        .iterator().asSequence()
+        .toList().toTypedArray() // R8 opto
 
-private fun <T> Publisher<T>.injectCoroutineContext(coroutineContext: CoroutineContext) =
+internal fun <T> Publisher<T>.injectCoroutineContext(coroutineContext: CoroutineContext) =
     contextInjectors.fold(this) { pub, contextInjector -> contextInjector.injectCoroutineContext(pub, coroutineContext) }
-
 
 /**
  * Adapter that transforms [Flow] into TCK-complaint [Publisher].

@@ -82,16 +82,6 @@ public suspend fun <T> Publisher<T>.awaitSingle(): T = awaitOne(Mode.SINGLE)
 
 // ------------------------ private ------------------------
 
-// ContextInjector service is implemented in `kotlinx-coroutines-reactor` module only.
-// If `kotlinx-coroutines-reactor` module is not included, the list is empty.
-private val contextInjectors: Array<ContextInjector> =
-    ServiceLoader.load(ContextInjector::class.java, ContextInjector::class.java.classLoader).iterator().asSequence().toList().toTypedArray() // R8 opto
-
-private fun <T> Publisher<T>.injectCoroutineContext(coroutineContext: CoroutineContext) =
-    contextInjectors.fold(this) { pub, contextInjector ->
-        contextInjector.injectCoroutineContext(pub, coroutineContext)
-    }
-
 private enum class Mode(val s: String) {
     FIRST("awaitFirst"),
     FIRST_OR_DEFAULT("awaitFirstOrDefault"),

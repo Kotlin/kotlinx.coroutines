@@ -14,6 +14,7 @@ import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
 import kotlin.native.concurrent.*
+import kotlin.time.*
 
 /**
  * Scope for [select] invocation.
@@ -51,6 +52,17 @@ public interface SelectBuilder<in R> {
     @ExperimentalCoroutinesApi
     public fun onTimeout(timeMillis: Long, block: suspend () -> R)
 }
+
+/**
+ * Clause that selects the given [block] after the specified [timeout] passes.
+ * If timeout is negative or zero, [block] is selected immediately.
+ *
+ * **Note: This is an experimental api.** It may be replaced with light-weight timer/timeout channels in the future.
+ */
+@ExperimentalCoroutinesApi
+@ExperimentalTime
+public fun <R> SelectBuilder<R>.onTimeout(timeout: Duration, block: suspend () -> R) =
+        onTimeout(timeout.toDelayMillis(), block)
 
 /**
  * Clause for [select] expression without additional parameters that does not select any value.

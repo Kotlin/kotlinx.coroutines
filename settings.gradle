@@ -11,11 +11,11 @@ def module(String path) {
     include(name)
     project(":$name").projectDir = file(path)
 }
-
+def prop = System.getProperty("build_snapshot_train")
+ext.build_snapshot_train = prop != null && prop != ""
 // ---------------------------
 
 include('benchmarks')
-include('site')
 
 include "kotlinx-coroutines-core"
 
@@ -32,6 +32,7 @@ module('integration/kotlinx-coroutines-play-services')
 
 module('reactive/kotlinx-coroutines-reactive')
 module('reactive/kotlinx-coroutines-reactor')
+module('reactive/kotlinx-coroutines-jdk9')
 module('reactive/kotlinx-coroutines-rx2')
 module('ui/kotlinx-coroutines-android')
 module('ui/kotlinx-coroutines-android/android-unit-tests')
@@ -39,6 +40,9 @@ module('ui/kotlinx-coroutines-javafx')
 module('ui/kotlinx-coroutines-swing')
 
 module('js/js-stub')
-module('js/example-frontend-js')
+if (!build_snapshot_train) {
+    module('js/example-frontend-js')
+    include('site')
+}
 
 module('publication-validator')

@@ -62,11 +62,14 @@ public abstract class CoroutineDispatcher :
 
     /**
      * Dispatches execution of a runnable [block] onto another thread in the given [context].
+     * This method should guarantee that the given [block] will be eventually invoked,
+     * otherwise the system may reach a deadlock state and never leave it.
+     * Cancellation mechanism is transparent for [CoroutineDispatcher] and is managed by [block] internals.
      *
      * This method should generally be exception-safe. An exception thrown from this method
      * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
      *
-     * **Note**: This method must not immediately call [block]. Doing so would result in [StackOverflowError]
+     * This method must not immediately call [block]. Doing so would result in [StackOverflowError]
      * when [yield] is repeatedly called from a loop. However, an implementation that returns `false` from
      * [isDispatchNeeded] can delegate this function to `dispatch` method of [Dispatchers.Unconfined], which is
      * integrated with [yield] to avoid this problem.
@@ -78,7 +81,7 @@ public abstract class CoroutineDispatcher :
      * with a hint for the dispatcher that the current dispatch is triggered by a [yield] call, so that the execution of this
      * continuation may be delayed in favor of already dispatched coroutines.
      *
-     * **Implementation note:** Though the `yield` marker may be passed as a part of [context], this
+     * Though the `yield` marker may be passed as a part of [context], this
      * is a separate method for performance reasons.
      *
      * @suppress **This an internal API and should not be used from general code.**

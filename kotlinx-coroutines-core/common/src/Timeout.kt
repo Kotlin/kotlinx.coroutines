@@ -10,6 +10,7 @@ import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
+import kotlin.time.*
 
 /**
  * Runs a given suspending [block] of code inside a coroutine with a specified [timeout][timeMillis] and throws
@@ -31,6 +32,22 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
         setupTimeout(TimeoutCoroutine(timeMillis, uCont), block)
     }
 }
+
+/**
+ * Runs a given suspending [block] of code inside a coroutine with the specified [timeout] and throws
+ * a [TimeoutCancellationException] if the timeout was exceeded.
+ *
+ * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
+ * the cancellable suspending function inside the block throws a [TimeoutCancellationException].
+ *
+ * The sibling function that does not throw an exception on timeout is [withTimeoutOrNull].
+ * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ *
+ * Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ */
+@ExperimentalTime
+public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineScope.() -> T): T =
+        withTimeout(timeout.toDelayMillis(), block)
 
 /**
  * Runs a given suspending block of code inside a coroutine with a specified [timeout][timeMillis] and returns
@@ -64,6 +81,22 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
         throw e
     }
 }
+
+/**
+ * Runs a given suspending block of code inside a coroutine with the specified [timeout] and returns
+ * `null` if this timeout was exceeded.
+ *
+ * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
+ * cancellable suspending function inside the block throws a [TimeoutCancellationException].
+ *
+ * The sibling function that throws an exception on timeout is [withTimeout].
+ * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ *
+ * Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ */
+@ExperimentalTime
+public suspend fun <T> withTimeoutOrNull(timeout: Duration, block: suspend CoroutineScope.() -> T): T? =
+        withTimeoutOrNull(timeout.toDelayMillis(), block)
 
 private fun <U, T: U> setupTimeout(
     coroutine: TimeoutCoroutine<U, T>,

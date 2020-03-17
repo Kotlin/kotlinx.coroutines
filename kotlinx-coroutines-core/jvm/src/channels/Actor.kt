@@ -165,8 +165,11 @@ private class LazyActorCoroutine<E>(
     }
 
     override fun close(cause: Throwable?): Boolean {
+        // close the channel _first_
+        val closed = super.close(cause)
+        // then start the coroutine (it will promptly fail if it was not started yet)
         start()
-        return super.close(cause)
+        return closed
     }
 
     override val onSend: SelectClause2<E, SendChannel<E>>

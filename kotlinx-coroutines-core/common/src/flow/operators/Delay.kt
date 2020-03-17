@@ -12,7 +12,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.internal.unsafeFlow as flow
+import kotlin.time.*
 
 /**
  * Returns a flow that mirrors the original flow, but filters out values
@@ -70,6 +70,34 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
         }
     }
 }
+
+/**
+ * Returns a flow that mirrors the original flow, but filters out values
+ * that are followed by the newer values within the given [timeout].
+ * The latest value is always emitted.
+ *
+ * Example:
+ * ```
+ * flow {
+ *     emit(1)
+ *     delay(90.milliseconds)
+ *     emit(2)
+ *     delay(90.milliseconds)
+ *     emit(3)
+ *     delay(1010.milliseconds)
+ *     emit(4)
+ *     delay(1010.milliseconds)
+ *     emit(5)
+ * }.debounce(1000.milliseconds)
+ * ```
+ * produces `3, 4, 5`.
+ *
+ * Note that the resulting flow does not emit anything as long as the original flow emits
+ * items faster than every [timeout] milliseconds.
+ */
+@ExperimentalTime
+@FlowPreview
+public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.toDelayMillis())
 
 /**
  * Returns a flow that emits only the latest value emitted by the original flow during the given sampling [period][periodMillis].
@@ -133,3 +161,23 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMil
         }
     }
 }
+
+/**
+ * Returns a flow that emits only the latest value emitted by the original flow during the given sampling [period].
+ *
+ * Example:
+ * ```
+ * flow {
+ *     repeat(10) {
+ *         emit(it)
+ *         delay(50.milliseconds)
+ *     }
+ * }.sample(100.milliseconds)
+ * ```
+ * produces `1, 3, 5, 7, 9`.
+ *
+ * Note that the latest element is not emitted if it does not fit into the sampling window.
+ */
+@ExperimentalTime
+@FlowPreview
+public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())

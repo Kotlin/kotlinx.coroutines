@@ -107,12 +107,6 @@ class WithTimeoutTest : TestBase() {
         assertSame(bad, result)
     }
 
-    class BadClass {
-        override fun equals(other: Any?): Boolean = error("Should not be called")
-        override fun hashCode(): Int = error("Should not be called")
-        override fun toString(): String = error("Should not be called")
-    }
-
     @Test
     fun testExceptionOnTimeout() = runTest {
         expect(1)

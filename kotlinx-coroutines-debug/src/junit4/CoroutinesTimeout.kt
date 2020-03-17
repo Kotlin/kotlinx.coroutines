@@ -17,6 +17,8 @@ import java.util.concurrent.*
  *
  * Additionally, this rule installs [DebugProbes] and dumps all coroutines at the moment of the timeout.
  * It may cancel coroutines on timeout if [cancelOnTimeout] set to `true`.
+ * [enableCoroutineCreationStackTraces] controls the corresponding [DebugProbes.enableCreationStackTraces] property
+ * and can be optionally disabled to speed-up tests if creation stack traces are not needed.
  *
  * Example of usage:
  * ```
@@ -35,8 +37,12 @@ import java.util.concurrent.*
  */
 public class CoroutinesTimeout(
     private val testTimeoutMs: Long,
-    private val cancelOnTimeout: Boolean = false
+    private val cancelOnTimeout: Boolean = false,
+    private val enableCoroutineCreationStackTraces: Boolean = true
 ) : TestRule {
+
+    @Suppress("UNUSED") // Binary compatibility
+    constructor(testTimeoutMs: Long, cancelOnTimeout: Boolean = false) : this(testTimeoutMs, cancelOnTimeout, true)
 
     init {
         require(testTimeoutMs > 0) { "Expected positive test timeout, but had $testTimeoutMs" }
@@ -44,6 +50,8 @@ public class CoroutinesTimeout(
          * Install probes in the constructor, so all the coroutines launched from within
          * target test constructor will be captured
          */
+        // Do not preserve previous state for unit-test environment
+        DebugProbes.enableCreationStackTraces = enableCoroutineCreationStackTraces
         DebugProbes.install()
     }
 
@@ -51,14 +59,28 @@ public class CoroutinesTimeout(
         /**
          * Creates [CoroutinesTimeout] rule with the given timeout in seconds.
          */
-        public fun seconds(seconds: Int, cancelOnTimeout: Boolean = false): CoroutinesTimeout =
-            seconds(seconds.toLong(), cancelOnTimeout)
+        @JvmOverloads
+        public fun seconds(
+            seconds: Int,
+            cancelOnTimeout: Boolean = false,
+            enableCoroutineCreationStackTraces: Boolean = true
+        ): CoroutinesTimeout =
+            seconds(seconds.toLong(), cancelOnTimeout, enableCoroutineCreationStackTraces)
 
         /**
          * Creates [CoroutinesTimeout] rule with the given timeout in seconds.
          */
-        public fun seconds(seconds: Long, cancelOnTimeout: Boolean = false): CoroutinesTimeout =
-            CoroutinesTimeout(TimeUnit.SECONDS.toMillis(seconds), cancelOnTimeout) // Overflow is properly handled by TimeUnit
+        @JvmOverloads
+        public fun seconds(
+            seconds: Long,
+            cancelOnTimeout: Boolean = false,
+            enableCoroutineCreationStackTraces: Boolean = true
+        ): CoroutinesTimeout =
+            CoroutinesTimeout(
+                TimeUnit.SECONDS.toMillis(seconds),  // Overflow is properly handled by TimeUnit
+                cancelOnTimeout,
+                enableCoroutineCreationStackTraces
+            )
     }
 
     /**

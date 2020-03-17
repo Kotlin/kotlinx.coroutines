@@ -40,7 +40,8 @@ internal actual class JobCancellationException public actual constructor(
         if (DEBUG) {
             return super.fillInStackTrace()
         }
-
+        // Prevent Android <= 6.0 bug, #1866
+        stackTrace = emptyArray()
         /*
          * In non-debug mode we don't want to have a stacktrace on every cancellation/close,
          * parent job reference is enough. Stacktrace of JCE is not needed most of the time (e.g., it is not logged)

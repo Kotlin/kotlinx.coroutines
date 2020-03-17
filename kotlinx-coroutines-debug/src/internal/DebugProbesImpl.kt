@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.debug.internal
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.*
 import net.bytebuddy.*
@@ -12,8 +13,10 @@ import net.bytebuddy.dynamic.loading.*
 import java.io.*
 import java.text.*
 import java.util.*
+import java.util.concurrent.*
+import java.util.concurrent.locks.*
 import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
+import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.*
 import kotlinx.coroutines.internal.artificialFrame as createArtificialFrame // IDEA bug workaround
@@ -26,12 +29,20 @@ import kotlinx.coroutines.internal.artificialFrame as createArtificialFrame // I
 internal object DebugProbesImpl {
     private const val ARTIFICIAL_FRAME_MESSAGE = "Coroutine creation stacktrace"
     private val dateFormat = SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
-    private val capturedCoroutines = HashSet<CoroutineOwner<*>>()
+    private val capturedCoroutines = Collections.newSetFromMap(ConcurrentHashMap<CoroutineOwner<*>, Boolean>())
     @Volatile
     private var installations = 0
     internal val isInstalled: Boolean get() = installations > 0
     // To sort coroutines by creation order, used as unique id
-    private var sequenceNumber: Long = 0
+    private val sequenceNumber = atomic(0L)
+    /*
+     * RW-lock that guards all debug probes state changes.
+     * All individual coroutine state transitions are guarded by read-lock
+     * and do not interfere with each other.
+     * All state reads are guarded by the write lock to guarantee a strongly-consistent
+     * snapshot of the system.
+     */
+    private val coroutineStateLock = ReentrantReadWriteLock()
 
     /*
      * This is an optimization in the face of KT-29997:
@@ -41,10 +52,9 @@ internal object DebugProbesImpl {
      * Then at least three RUNNING -> RUNNING transitions will occur consecutively and complexity of each is O(depth).
      * To avoid that quadratic complexity, we are caching lookup result for such chains in this map and update it incrementally.
      */
-    private val callerInfoCache = HashMap<CoroutineStackFrame, CoroutineInfo>()
+    private val callerInfoCache = ConcurrentHashMap<CoroutineStackFrame, CoroutineInfo>()
 
-    @Synchronized
-    public fun install() {
+    public fun install(): Unit = coroutineStateLock.write {
         if (++installations > 1) return
 
         ByteBuddyAgent.install()
@@ -58,8 +68,7 @@ internal object DebugProbesImpl {
             .load(cl.classLoader, ClassReloadingStrategy.fromInstalledAgent())
     }
 
-    @Synchronized
-    public fun uninstall() {
+    public fun uninstall(): Unit = coroutineStateLock.write {
         check(isInstalled) { "Agent was not installed" }
         if (--installations != 0) return
 
@@ -75,8 +84,7 @@ internal object DebugProbesImpl {
             .load(cl.classLoader, ClassReloadingStrategy.fromInstalledAgent())
     }
 
-    @Synchronized
-    public fun hierarchyToString(job: Job): String {
+    public fun hierarchyToString(job: Job): String = coroutineStateLock.write {
         check(isInstalled) { "Debug probes are not installed" }
         val jobToStack = capturedCoroutines
             .filter { it.delegate.context[Job] != null }
@@ -114,8 +122,7 @@ internal object DebugProbesImpl {
     @Suppress("DEPRECATION_ERROR") // JobSupport
     private val Job.debugString: String get() = if (this is JobSupport) toDebugString() else toString()
 
-    @Synchronized
-    public fun dumpCoroutinesInfo(): List<CoroutineInfo> {
+    public fun dumpCoroutinesInfo(): List<CoroutineInfo> = coroutineStateLock.write {
         check(isInstalled) { "Debug probes are not installed" }
         return capturedCoroutines.asSequence()
             .map { it.info.copy() } // Copy as CoroutineInfo can be mutated concurrently by DebugProbes
@@ -123,10 +130,10 @@ internal object DebugProbesImpl {
             .toList()
     }
 
-    public fun dumpCoroutines(out: PrintStream) = synchronized(out) {
+    public fun dumpCoroutines(out: PrintStream): Unit = synchronized(out) {
         /*
          * This method synchronizes both on `out` and `this` for a reason:
-         * 1) Synchronization on `this` is required to have a consistent snapshot of coroutines.
+         * 1) Taking a write lock is required to have a consistent snapshot of coroutines.
          * 2) Synchronization on `out` is not required, but prohibits interleaving with any other
          *    (asynchronous) attempt to write to this `out` (System.out by default).
          * Yet this prevents the progress of coroutines until they are fully dumped to the out which we find acceptable compromise.
@@ -134,8 +141,7 @@ internal object DebugProbesImpl {
         dumpCoroutinesSynchronized(out)
     }
 
-    @Synchronized
-    private fun dumpCoroutinesSynchronized(out: PrintStream) {
+    private fun dumpCoroutinesSynchronized(out: PrintStream): Unit = coroutineStateLock.write {
         check(isInstalled) { "Debug probes are not installed" }
         out.print("Coroutines dump ${dateFormat.format(System.currentTimeMillis())}")
         capturedCoroutines
@@ -277,8 +283,8 @@ internal object DebugProbesImpl {
         updateState(owner, frame, state)
     }
 
-    @Synchronized // See comment to callerInfoCache
-    private fun updateRunningState(frame: CoroutineStackFrame, state: State) {
+    // See comment to callerInfoCache
+    private fun updateRunningState(frame: CoroutineStackFrame, state: State): Unit = coroutineStateLock.read {
         if (!isInstalled) return
         // Lookup coroutine info in cache or by traversing stack frame
         val info: CoroutineInfo
@@ -288,7 +294,8 @@ internal object DebugProbesImpl {
         } else {
             info = frame.owner()?.info ?: return
             // Guard against improper implementations of CoroutineStackFrame and bugs in the compiler
-            callerInfoCache.remove(info.lastObservedFrame?.realCaller())
+            val realCaller = info.lastObservedFrame?.realCaller()
+            if (realCaller != null) callerInfoCache.remove(realCaller)
         }
 
         info.updateState(state, frame as Continuation<*>)
@@ -302,8 +309,7 @@ internal object DebugProbesImpl {
         return if (caller.getStackTraceElement() != null) caller else caller.realCaller()
     }
 
-    @Synchronized
-    private fun updateState(owner: CoroutineOwner<*>, frame: Continuation<*>, state: State) {
+    private fun updateState(owner: CoroutineOwner<*>, frame: Continuation<*>, state: State) = coroutineStateLock.read {
         if (!isInstalled) return
         owner.info.updateState(state, frame)
     }
@@ -313,6 +319,7 @@ internal object DebugProbesImpl {
     private tailrec fun CoroutineStackFrame.owner(): CoroutineOwner<*>? =
         if (this is CoroutineOwner<*>) this else callerFrame?.owner()
 
+    // Not guarded by the lock at all, does not really affect consistency
     internal fun <T> probeCoroutineCreated(completion: Continuation<T>): Continuation<T> {
         if (!isInstalled) return completion
         /*
@@ -327,34 +334,39 @@ internal object DebugProbesImpl {
          * even more verbose (it will attach coroutine creation stacktrace to all exceptions),
          * and then using CoroutineOwner completion as unique identifier of coroutineSuspended/resumed calls.
          */
-        val stacktrace = sanitizeStackTrace(Exception())
-        val frame = stacktrace.foldRight<StackTraceElement, CoroutineStackFrame?>(null) { frame, acc ->
-            object : CoroutineStackFrame {
-                override val callerFrame: CoroutineStackFrame? = acc
-                override fun getStackTraceElement(): StackTraceElement = frame
+
+        val frame = if (DebugProbes.enableCreationStackTraces) {
+            val stacktrace = sanitizeStackTrace(Exception())
+            stacktrace.foldRight<StackTraceElement, CoroutineStackFrame?>(null) { frame, acc ->
+                object : CoroutineStackFrame {
+                    override val callerFrame: CoroutineStackFrame? = acc
+                    override fun getStackTraceElement(): StackTraceElement = frame
+                }
             }
-        }!!
+        } else {
+            null
+        }
 
         return createOwner(completion, frame)
     }
 
-    @Synchronized
-    private fun <T> createOwner(completion: Continuation<T>, frame: CoroutineStackFrame): Continuation<T> {
+    private fun <T> createOwner(completion: Continuation<T>, frame: CoroutineStackFrame?): Continuation<T> {
         if (!isInstalled) return completion
-        val info = CoroutineInfo(completion.context, frame, ++sequenceNumber)
+        val info = CoroutineInfo(completion.context, frame, sequenceNumber.incrementAndGet())
         val owner = CoroutineOwner(completion, info, frame)
         capturedCoroutines += owner
+        if (!isInstalled) capturedCoroutines.clear()
         return owner
     }
 
-    @Synchronized
+    // Not guarded by the lock at all, does not really affect consistency
     private fun probeCoroutineCompleted(owner: CoroutineOwner<*>) {
         capturedCoroutines.remove(owner)
         /*
          * This removal is a guard against improperly implemented CoroutineStackFrame
          * and bugs in the compiler.
          */
-        val caller = owner.info.lastObservedFrame?.realCaller()
+        val caller = owner.info.lastObservedFrame?.realCaller() ?: return
         callerInfoCache.remove(caller)
     }
 
@@ -365,8 +377,14 @@ internal object DebugProbesImpl {
     private class CoroutineOwner<T>(
         @JvmField val delegate: Continuation<T>,
         @JvmField val info: CoroutineInfo,
-        frame: CoroutineStackFrame
-    ) : Continuation<T> by delegate, CoroutineStackFrame by frame {
+        private val frame: CoroutineStackFrame?
+    ) : Continuation<T> by delegate, CoroutineStackFrame {
+
+        override val callerFrame: CoroutineStackFrame?
+            get() = frame?.callerFrame
+
+        override fun getStackTraceElement(): StackTraceElement? = frame?.getStackTraceElement()
+
         override fun resumeWith(result: Result<T>) {
             probeCoroutineCompleted(this)
             delegate.resumeWith(result)

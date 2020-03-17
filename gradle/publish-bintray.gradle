@@ -89,8 +89,8 @@ publishing {
                 break
         }
 
-        // disable metadata everywhere, but in native modules
-        if (type == 'maven' || type == 'metadata' || type == 'jvm' || type == 'js') {
+        // disable metadata everywhere, but in native and js modules
+        if (type == 'maven' || type == 'metadata' || type == 'jvm') {
             moduleDescriptorGenerator = null
         }
     }
