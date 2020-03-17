@@ -77,7 +77,6 @@ public suspend fun <T: Any> Flow<T>.singleOrNull(): T? {
         if (result != null) error("Expected only one element")
         result = value
     }
-
     return result
 }
 
@@ -119,4 +118,40 @@ public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
 
     if (result === NULL) throw NoSuchElementException("Expected at least one element matching the predicate $predicate")
     return result as T
+}
+
+/**
+ * The terminal operator that returns the first element emitted by the flow and then cancels flow's collection.
+ * Returns `null` if the flow was empty.
+ */
+public suspend fun <T : Any> Flow<T>.firstOrNull(): T? {
+    var result: T? = null
+    try {
+        collect { value ->
+            result = value
+            throw AbortFlowException(NopCollector)
+        }
+    } catch (e: AbortFlowException) {
+        // Do nothing
+    }
+    return result
+}
+
+/**
+ *  The terminal operator that returns the first element emitted by the flow matching the given [predicate] and then cancels flow's collection.
+ * Returns `null` if the flow did not contain an element matching the [predicate].
+ */
+public suspend fun <T : Any> Flow<T>.firstOrNull(predicate: suspend (T) -> Boolean): T? {
+    var result: T? = null
+    try {
+        collect { value ->
+            if (predicate(value)) {
+                result = value
+                throw AbortFlowException(NopCollector)
+            }
+        }
+    } catch (e: AbortFlowException) {
+        // Do nothing
+    }
+    return result
 }
