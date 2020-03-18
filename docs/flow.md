@@ -1,20 +1,4 @@
-<!--- INCLUDE .*/example-([a-z]+)-([0-9a-z]+)\.kt 
-/*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
-
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.$$1$$2
--->
-<!--- KNIT     ../kotlinx-coroutines-core/jvm/test/guide/.*-##\.kt -->
-<!--- TEST_OUT ../kotlinx-coroutines-core/jvm/test/guide/test/FlowGuideTest.kt
-// This file was automatically generated from flow.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.test
-
-import org.junit.Test
-
-class FlowGuideTest {
---> 
+<!--- TEST_NAME FlowGuideTest --> 
 
 **Table of contents**
 
@@ -58,8 +42,9 @@ class FlowGuideTest {
     * [Upstream exceptions only](#upstream-exceptions-only)
   * [Imperative versus declarative](#imperative-versus-declarative)
   * [Launching flow](#launching-flow)
+  * [Flow and Reactive Streams](#flow-and-reactive-streams)
 
-<!--- END_TOC -->
+<!--- END -->
 
 ## Asynchronous Flow
 
@@ -707,17 +692,15 @@ fun main() = runBlocking<Unit> {
 
 This code produces the following exception:
 
-<!--- TEST EXCEPTION
+```text
 Exception in thread "main" java.lang.IllegalStateException: Flow invariant is violated:
 		Flow was collected in [CoroutineId(1), "coroutine#1":BlockingCoroutine{Active}@5511c7f8, BlockingEventLoop@2eac3323],
 		but emission happened in [CoroutineId(1), "coroutine#1":DispatchedCoroutine{Active}@2dae0000, DefaultDispatcher].
 		Please refer to 'flow' documentation or use 'flowOn' instead
 	at ...
--->
-   
-> Note that we had to use a fully qualified name of the [kotlinx.coroutines.withContext][withContext] function in this example to 
-demonstrate this exception. A short name of `withContext` would have resolved to a special stub function that
-produces a compilation error to prevent us from running into this problem.   
+``` 
+
+<!--- TEST EXCEPTION -->
 
 #### flowOn operator
    
@@ -1793,6 +1776,18 @@ as cancellation and structured concurrency serve this purpose.
 
 Note that [launchIn] also returns a [Job], which can be used to [cancel][Job.cancel] the corresponding flow collection
 coroutine only without cancelling the whole scope or to [join][Job.join] it.
+ 
+### Flow and Reactive Streams
+
+For those who are familiar with [Reactive Streams](https://www.reactive-streams.org/) or reactive frameworks such as RxJava and project Reactor, 
+design of the Flow may look very familiar.
+
+Indeed, its design was inspired by Reactive Streams and its various implementations. But Flow main goal is to have as simple design as possible, 
+be Kotlin and suspension friendly and respect structured concurrency. Achieving this goal would be impossible without reactive pioneers and their tremendous work. You can read the complete story in [Reactive Streams and Kotlin Flows](https://medium.com/@elizarov/reactive-streams-and-kotlin-flows-bfd12772cda4) article.
+
+While being different, conceptually, Flow *is* a reactive stream and it is possible to convert it to the reactive (spec and TCK compliant) Publisher and vice versa.
+Such converters are provided by `kotlinx.coroutines` out-of-the-box and can be found in corresponding reactive modules (`kotlinx-coroutines-reactive` for Reactive Streams, `kotlinx-coroutines-reactor` for Project Reactor and `kotlinx-coroutines-rx2` for RxJava2).
+Integration modules include conversions from and to `Flow`, integration with Reactor's `Context` and suspension-friendly ways to work with various reactive entities.
  
 <!-- stdlib references -->
 

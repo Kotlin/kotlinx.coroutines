@@ -5,13 +5,12 @@
 package kotlinx.coroutines.reactive
 
 import kotlinx.coroutines.*
-import org.hamcrest.MatcherAssert.*
-import org.hamcrest.core.*
-import org.junit.*
+import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
 import org.reactivestreams.*
 import kotlin.coroutines.*
+import kotlin.test.*
 
 @RunWith(Parameterized::class)
 class IntegrationTest(
@@ -43,15 +42,15 @@ class IntegrationTest(
             if (delay) delay(1)
             // does not send anything
         }
-        assertNSE { pub.awaitFirst() }
-        assertThat(pub.awaitFirstOrDefault("OK"), IsEqual("OK"))
-        assertThat(pub.awaitFirstOrNull(), IsNull())
-        assertThat(pub.awaitFirstOrElse { "ELSE" }, IsEqual("ELSE"))
-        assertNSE { pub.awaitLast() }
-        assertNSE { pub.awaitSingle() }
+        assertFailsWith<NoSuchElementException> { pub.awaitFirst() }
+        assertEquals("OK", pub.awaitFirstOrDefault("OK"))
+        assertNull(pub.awaitFirstOrNull())
+        assertEquals("ELSE", pub.awaitFirstOrElse { "ELSE" })
+        assertFailsWith<NoSuchElementException> { pub.awaitLast() }
+        assertFailsWith<NoSuchElementException> { pub.awaitSingle() }
         var cnt = 0
         pub.collect { cnt++ }
-        assertThat(cnt, IsEqual(0))
+        assertEquals(0, cnt)
     }
 
     @Test
@@ -60,18 +59,18 @@ class IntegrationTest(
             if (delay) delay(1)
             send("OK")
         }
-        assertThat(pub.awaitFirst(), IsEqual("OK"))
-        assertThat(pub.awaitFirstOrDefault("!"), IsEqual("OK"))
-        assertThat(pub.awaitFirstOrNull(), IsEqual("OK"))
-        assertThat(pub.awaitFirstOrElse { "ELSE" }, IsEqual("OK"))
-        assertThat(pub.awaitLast(), IsEqual("OK"))
-        assertThat(pub.awaitSingle(), IsEqual("OK"))
+        assertEquals("OK", pub.awaitFirst())
+        assertEquals("OK", pub.awaitFirstOrDefault("!"))
+        assertEquals("OK", pub.awaitFirstOrNull())
+        assertEquals("OK", pub.awaitFirstOrElse { "ELSE" })
+        assertEquals("OK", pub.awaitLast())
+        assertEquals("OK", pub.awaitSingle())
         var cnt = 0
         pub.collect {
-            assertThat(it, IsEqual("OK"))
+            assertEquals("OK", it)
             cnt++
         }
-        assertThat(cnt, IsEqual(1))
+        assertEquals(1, cnt)
     }
 
     @Test
@@ -83,12 +82,12 @@ class IntegrationTest(
                 if (delay) delay(1)
             }
         }
-        assertThat(pub.awaitFirst(), IsEqual(1))
-        assertThat(pub.awaitFirstOrDefault(0), IsEqual(1))
-        assertThat(pub.awaitLast(), IsEqual(n))
-        assertThat(pub.awaitFirstOrNull(), IsEqual(1))
-        assertThat(pub.awaitFirstOrElse { 0 }, IsEqual(1))
-        assertIAE { pub.awaitSingle() }
+        assertEquals(1, pub.awaitFirst())
+        assertEquals(1, pub.awaitFirstOrDefault(0))
+        assertEquals(n, pub.awaitLast())
+        assertEquals(1, pub.awaitFirstOrNull())
+        assertEquals(1, pub.awaitFirstOrElse { 0 })
+        assertFailsWith<IllegalArgumentException> { pub.awaitSingle() }
         checkNumbers(n, pub)
         val channel = pub.openSubscription()
         checkNumbers(n, channel.asPublisher(ctx(coroutineContext)))
@@ -125,26 +124,9 @@ class IntegrationTest(
     private suspend fun checkNumbers(n: Int, pub: Publisher<Int>) {
         var last = 0
         pub.collect {
-            assertThat(it, IsEqual(++last))
+            assertEquals(++last, it)
         }
-        assertThat(last, IsEqual(n))
+        assertEquals(n, last)
     }
 
-    private inline fun assertIAE(block: () -> Unit) {
-        try {
-            block()
-            expectUnreached()
-        } catch (e: Throwable) {
-            assertThat(e, IsInstanceOf(IllegalArgumentException::class.java))
-        }
-    }
-
-    private inline fun assertNSE(block: () -> Unit) {
-        try {
-            block()
-            expectUnreached()
-        } catch (e: Throwable) {
-            assertThat(e, IsInstanceOf(NoSuchElementException::class.java))
-        }
-    }
 }

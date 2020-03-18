@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
@@ -13,15 +13,10 @@ import kotlin.coroutines.*
 import kotlin.internal.*
 
 /**
- * Creates cold [mono][Mono] that will run a given [block] in a coroutine.
+ * Creates cold [mono][Mono] that will run a given [block] in a coroutine and emits its result.
  * Every time the returned mono is subscribed, it starts a new coroutine.
- * Coroutine returns a single, possibly null value. Unsubscribing cancels running coroutine.
- *
- * | **Coroutine action**                  | **Signal to sink**
- * | ------------------------------------- | ------------------------
- * | Returns a non-null value              | `success(value)`
- * | Returns a null                        | `success`
- * | Failure with exception or unsubscribe | `error`
+ * If [block] result is `null`, [MonoSink.success] is invoked without a value.
+ * Unsubscribing cancels running coroutine.
  *
  * Coroutine context can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
@@ -39,7 +34,7 @@ public fun <T> mono(
 
 @Deprecated(
     message = "CoroutineScope.mono is deprecated in favour of top-level mono",
-    level = DeprecationLevel.WARNING,
+    level = DeprecationLevel.ERROR,
     replaceWith = ReplaceWith("mono(context, block)")
 ) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
 @LowPriorityInOverloadResolution
@@ -64,18 +59,24 @@ private class MonoCoroutine<in T>(
     parentContext: CoroutineContext,
     private val sink: MonoSink<T>
 ) : AbstractCoroutine<T>(parentContext, true), Disposable {
-    var disposed = false
+    @Volatile
+    private var disposed = false
 
     override fun onCompleted(value: T) {
-        if (!disposed) {
-            if (value == null) sink.success() else sink.success(value)
-        }
+        if (value == null) sink.success() else sink.success(value)
     }
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
-        if (!disposed) {
-            sink.error(cause)
-        } else if (!handled) {
+        try {
+            /*
+             * sink.error handles exceptions on its own and, by default, handling of undeliverable exceptions is a no-op.
+             * Guard potentially non-empty handlers against meaningless cancellation exceptions
+             */
+            if (getCancellationException() !== cause) {
+                sink.error(cause)
+            }
+        } catch (e: Throwable) {
+            // In case of improper error implementation or fatal exceptions
             handleCoroutineException(context, cause)
         }
     }

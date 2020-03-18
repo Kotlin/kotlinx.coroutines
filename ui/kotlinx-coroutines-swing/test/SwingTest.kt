@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.swing
@@ -80,7 +80,21 @@ class SwingTest : TestBase() {
         join(component)
     }
 
-    private suspend fun join(component: SwingTest.SwingComponent) {
+    private suspend fun join(component: SwingComponent) {
         component.coroutineContext[Job]!!.join()
+    }
+
+    @Test
+    fun testImmediateDispatcherYield() = runBlocking(Dispatchers.Swing) {
+        expect(1)
+        // launch in the immediate dispatcher
+        launch(Dispatchers.Swing.immediate) {
+            expect(2)
+            yield()
+            expect(4)
+        }
+        expect(3) // after yield
+        yield() // yield back
+        finish(5)
     }
 }

@@ -77,7 +77,7 @@ class WithTimeoutOrNullTest : TestBase() {
                 yield()
             }
         }
-        assertEquals(null, result)
+        assertNull(result)
         finish(2)
     }
 
@@ -135,11 +135,11 @@ class WithTimeoutOrNullTest : TestBase() {
                         yield()
                     }
                 }
-                assertEquals(null, inner)
+                assertNull(inner)
                 counter++
             }
         }
-        assertEquals(null, result)
+        assertNull(result)
         check(counter in 1..2) {"Executed: $counter times"}
     }
 
@@ -152,12 +152,6 @@ class WithTimeoutOrNullTest : TestBase() {
         assertSame(bad, result)
     }
 
-    class BadClass {
-        override fun equals(other: Any?): Boolean = error("Should not be called")
-        override fun hashCode(): Int = error("Should not be called")
-        override fun toString(): String = error("Should not be called")
-    }
-
     @Test
     fun testNullOnTimeout() = runTest {
         expect(1)
@@ -167,7 +161,7 @@ class WithTimeoutOrNullTest : TestBase() {
             expectUnreached()
             "OK"
         }
-        assertEquals(null, result)
+        assertNull(result)
         finish(3)
     }
 
@@ -183,7 +177,7 @@ class WithTimeoutOrNullTest : TestBase() {
             }
             "OK"
         }
-        assertEquals(null, result)
+        assertNull(result)
         finish(4)
     }
 

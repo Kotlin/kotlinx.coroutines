@@ -6,12 +6,11 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import kotlinx.coroutines.*
-import org.hamcrest.MatcherAssert.*
-import org.hamcrest.core.*
-import org.junit.*
+import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
 import kotlin.coroutines.*
+import kotlin.test.*
 
 @RunWith(Parameterized::class)
 class IntegrationTest(
@@ -43,17 +42,17 @@ class IntegrationTest(
             if (delay) delay(1)
             // does not send anything
         }
-        assertNSE { observable.awaitFirst() }
-        assertThat(observable.awaitFirstOrDefault("OK"), IsEqual("OK"))
-        assertThat(observable.awaitFirstOrNull(), IsNull())
-        assertThat(observable.awaitFirstOrElse { "ELSE" }, IsEqual("ELSE"))
-        assertNSE { observable.awaitLast() }
-        assertNSE { observable.awaitSingle() }
+        assertFailsWith<NoSuchElementException> { observable.awaitFirst() }
+        assertEquals("OK", observable.awaitFirstOrDefault("OK"))
+        assertNull(observable.awaitFirstOrNull())
+        assertEquals("ELSE", observable.awaitFirstOrElse { "ELSE" })
+        assertFailsWith<NoSuchElementException> { observable.awaitLast() }
+        assertFailsWith<NoSuchElementException> { observable.awaitSingle() }
         var cnt = 0
         observable.collect {
             cnt++
         }
-        assertThat(cnt, IsEqual(0))
+        assertEquals(0, cnt)
     }
 
     @Test
@@ -62,18 +61,18 @@ class IntegrationTest(
             if (delay) delay(1)
             send("OK")
         }
-        assertThat(observable.awaitFirst(), IsEqual("OK"))
-        assertThat(observable.awaitFirstOrDefault("OK"), IsEqual("OK"))
-        assertThat(observable.awaitFirstOrNull(), IsEqual("OK"))
-        assertThat(observable.awaitFirstOrElse { "ELSE" }, IsEqual("OK"))
-        assertThat(observable.awaitLast(), IsEqual("OK"))
-        assertThat(observable.awaitSingle(), IsEqual("OK"))
+        assertEquals("OK", observable.awaitFirst())
+        assertEquals("OK", observable.awaitFirstOrDefault("OK"))
+        assertEquals("OK", observable.awaitFirstOrNull())
+        assertEquals("OK", observable.awaitFirstOrElse { "ELSE" })
+        assertEquals("OK", observable.awaitLast())
+        assertEquals("OK", observable.awaitSingle())
         var cnt = 0
         observable.collect {
-            assertThat(it, IsEqual("OK"))
+            assertEquals("OK", it)
             cnt++
         }
-        assertThat(cnt, IsEqual(1))
+        assertEquals(1, cnt)
     }
 
     @Test
@@ -85,12 +84,12 @@ class IntegrationTest(
                 if (delay) delay(1)
             }
         }
-        assertThat(observable.awaitFirst(), IsEqual(1))
-        assertThat(observable.awaitFirstOrDefault(0), IsEqual(1))
-        assertThat(observable.awaitFirstOrNull(), IsEqual(1))
-        assertThat(observable.awaitFirstOrElse { 0 }, IsEqual(1))
-        assertThat(observable.awaitLast(), IsEqual(n))
-        assertIAE { observable.awaitSingle() }
+        assertEquals(1, observable.awaitFirst())
+        assertEquals(1, observable.awaitFirstOrDefault(0))
+        assertEquals(1, observable.awaitFirstOrNull())
+        assertEquals(1, observable.awaitFirstOrElse { 0 })
+        assertEquals(n, observable.awaitLast())
+        assertFailsWith<IllegalArgumentException> { observable.awaitSingle() }
         checkNumbers(n, observable)
         val channel = observable.openSubscription()
         checkNumbers(n, channel.asObservable(ctx(coroutineContext)))
@@ -127,27 +126,9 @@ class IntegrationTest(
     private suspend fun checkNumbers(n: Int, observable: Observable<Int>) {
         var last = 0
         observable.collect {
-            assertThat(it, IsEqual(++last))
+            assertEquals(++last, it)
         }
-        assertThat(last, IsEqual(n))
+        assertEquals(n, last)
     }
 
-
-    private inline fun assertIAE(block: () -> Unit) {
-        try {
-            block()
-            expectUnreached()
-        } catch (e: Throwable) {
-            assertThat(e, IsInstanceOf(IllegalArgumentException::class.java))
-        }
-    }
-
-    private inline fun assertNSE(block: () -> Unit) {
-        try {
-            block()
-            expectUnreached()
-        } catch (e: Throwable) {
-            assertThat(e, IsInstanceOf(NoSuchElementException::class.java))
-        }
-    }
 }

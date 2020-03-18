@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
@@ -16,16 +16,14 @@ import kotlin.internal.*
 /**
  * Creates cold [flowable][Flowable] that will run a given [block] in a coroutine.
  * Every time the returned flowable is subscribed, it starts a new coroutine.
- * Coroutine emits items with `send`. Unsubscribing cancels running coroutine.
+ *
+ * Coroutine emits ([ObservableEmitter.onNext]) values with `send`, completes ([ObservableEmitter.onComplete])
+ * when the coroutine completes or channel is explicitly closed and emits error ([ObservableEmitter.onError])
+ * if coroutine throws an exception or closes channel with a cause.
+ * Unsubscribing cancels running coroutine.
  *
  * Invocations of `send` are suspended appropriately when subscribers apply back-pressure and to ensure that
  * `onNext` is not invoked concurrently.
- *
- * | **Coroutine action**                         | **Signal to subscriber**
- * | -------------------------------------------- | ------------------------
- * | `send`                                       | `onNext`
- * | Normal completion or `close` without cause   | `onComplete`
- * | Failure with exception or `close` with cause | `onError`
  *
  * Coroutine context can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
@@ -40,16 +38,18 @@ public fun <T: Any> rxFlowable(
 ): Flowable<T> {
     require(context[Job] === null) { "Flowable context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
-    return Flowable.fromPublisher(publishInternal(GlobalScope, context, block))
+    return Flowable.fromPublisher(publishInternal(GlobalScope, context, RX_HANDLER, block))
 }
 
 @Deprecated(
     message = "CoroutineScope.rxFlowable is deprecated in favour of top-level rxFlowable",
-    level = DeprecationLevel.WARNING,
+    level = DeprecationLevel.ERROR,
     replaceWith = ReplaceWith("rxFlowable(context, block)")
 ) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
 @LowPriorityInOverloadResolution
 public fun <T: Any> CoroutineScope.rxFlowable(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Flowable<T> = Flowable.fromPublisher(publishInternal(this, context, block))
+): Flowable<T> = Flowable.fromPublisher(publishInternal(this, context, RX_HANDLER, block))
+
+private val RX_HANDLER: (Throwable, CoroutineContext) -> Unit = ::handleUndeliverableException

@@ -41,18 +41,13 @@ class ChannelLFStressTest : TestBase() {
         checkAllReceived()
     }
 
-    @Test
-    fun testConflatedLockFreedom() {
-        // This test does not really verify that all sent elements were received
-        // and checks only LF property
-        channel = Channel(Channel.CONFLATED)
-        performLockFreedomTest()
-    }
-
     private fun performLockFreedomTest() {
-        env.onCompletion { channel.close() }
-        repeat(2) { env.testThread { sender() } }
-        repeat(2) { env.testThread { receiver() } }
+        env.onCompletion {
+            // We must cancel the channel to abort both senders & receivers
+            channel.cancel(TestCompleted())
+        }
+        repeat(2) { env.testThread("sender-$it") { sender() } }
+        repeat(2) { env.testThread("receiver-$it") { receiver() } }
         env.performTest(nSeconds) {
             println("Sent: $sendIndex, Received: $receiveCount, dups: $duplicateCount")
         }
@@ -70,7 +65,7 @@ class ChannelLFStressTest : TestBase() {
         val value = sendIndex.getAndIncrement()
         try {
             channel.send(value)
-        } catch (e: ClosedSendChannelException) {
+        } catch (e: TestCompleted) {
             check(env.isCompleted) // expected when test was completed
             markReceived(value) // fake received (actually failed to send)
         }
@@ -79,7 +74,7 @@ class ChannelLFStressTest : TestBase() {
     private suspend fun receiver() {
         val value = try {
             channel.receive()
-        } catch (e: ClosedReceiveChannelException) {
+        } catch (e: TestCompleted) {
             check(env.isCompleted) // expected when test was completed
             return
         }
@@ -107,4 +102,6 @@ class ChannelLFStressTest : TestBase() {
         val bits = receivedBits.get(index)
         return bits and mask != 0L
     }
+
+    private class TestCompleted : CancellationException()
 }

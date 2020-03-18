@@ -1,11 +1,11 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
-import java.io.Closeable
+import java.io.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
 
@@ -17,17 +17,23 @@ import kotlin.coroutines.*
  * asynchronous API which requires instance of the [Executor].
  */
 public abstract class ExecutorCoroutineDispatcher: CoroutineDispatcher(), Closeable {
+    /** @suppress */
+    @ExperimentalStdlibApi
+    public companion object Key : AbstractCoroutineContextKey<CoroutineDispatcher, ExecutorCoroutineDispatcher>(
+        CoroutineDispatcher,
+        { it as? ExecutorCoroutineDispatcher })
+
+    /**
+     * Underlying executor of current [CoroutineDispatcher].
+     */
+    public abstract val executor: Executor
+
     /**
      * Closes this coroutine dispatcher and shuts down its executor.
      *
      * It may throw an exception if this dispatcher is global and cannot be closed.
      */
     public abstract override fun close()
-
-    /**
-     * Underlying executor of current [CoroutineDispatcher].
-     */
-    public abstract val executor: Executor
 }
 
 /**

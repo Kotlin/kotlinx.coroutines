@@ -1,27 +1,17 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.basic04
+// This file was automatically generated from basics.md by Knit tool. Do not edit.
+package kotlinx.coroutines.guide.exampleBasic04
 
 import kotlinx.coroutines.*
 
-fun main() = runBlocking { // this: CoroutineScope
-    launch { 
-        delay(200L)
-        println("Task from runBlocking")
+fun main() = runBlocking {
+    val job = GlobalScope.launch { // launch a new coroutine and keep a reference to its Job
+        delay(1000L)
+        println("World!")
     }
-    
-    coroutineScope { // Creates a coroutine scope
-        launch {
-            delay(500L) 
-            println("Task from nested launch")
-        }
-    
-        delay(100L)
-        println("Task from coroutine scope") // This line will be printed before the nested launch
-    }
-    
-    println("Coroutine scope is over") // This line is not printed until the nested launch completes
+    println("Hello,")
+    job.join() // wait until child coroutine completes
 }

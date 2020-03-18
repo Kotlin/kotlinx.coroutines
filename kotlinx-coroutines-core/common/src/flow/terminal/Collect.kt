@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -130,5 +130,6 @@ public suspend fun <T> Flow<T>.collectLatest(action: suspend (value: T) -> Unit)
  * Collects all the values from the given [flow] and emits them to the collector.
  * It is a shorthand for `flow.collect { value -> emit(value) }`.
  */
+@BuilderInference
 @ExperimentalCoroutinesApi
 public suspend inline fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) = flow.collect(this)

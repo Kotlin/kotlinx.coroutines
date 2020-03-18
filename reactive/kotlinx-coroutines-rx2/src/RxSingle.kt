@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
@@ -12,15 +12,9 @@ import kotlin.coroutines.*
 import kotlin.internal.*
 
 /**
- * Creates cold [single][Single] that will run a given [block] in a coroutine.
+ * Creates cold [single][Single] that will run a given [block] in a coroutine and emits its result.
  * Every time the returned observable is subscribed, it starts a new coroutine.
- * Coroutine returns a single value. Unsubscribing cancels running coroutine.
- *
- * | **Coroutine action**                  | **Signal to subscriber**
- * | ------------------------------------- | ------------------------
- * | Returns a value                       | `onSuccess`
- * | Failure with exception or unsubscribe | `onError`
- *
+ * Unsubscribing cancels running coroutine.
  * Coroutine context can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * Method throws [IllegalArgumentException] if provided [context] contains a [Job] instance.
@@ -36,7 +30,7 @@ public fun <T : Any> rxSingle(
 
 @Deprecated(
     message = "CoroutineScope.rxSingle is deprecated in favour of top-level rxSingle",
-    level = DeprecationLevel.WARNING,
+    level = DeprecationLevel.ERROR,
     replaceWith = ReplaceWith("rxSingle(context, block)")
 ) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
 @LowPriorityInOverloadResolution
@@ -62,21 +56,19 @@ private class RxSingleCoroutine<T: Any>(
 ) : AbstractCoroutine<T>(parentContext, true) {
     override fun onCompleted(value: T) {
         try {
-            if (!subscriber.isDisposed) subscriber.onSuccess(value)
+            subscriber.onSuccess(value)
         } catch (e: Throwable) {
-            handleCoroutineException(context, e)
+            handleUndeliverableException(e, context)
         }
     }
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
-        if (!subscriber.isDisposed) {
-            try {
-                subscriber.onError(cause)
-            } catch (e: Throwable) {
-                handleCoroutineException(context, e)
+        try {
+            if (!subscriber.tryOnError(cause)) {
+                handleUndeliverableException(cause, context)
             }
-        } else if (!handled) {
-            handleCoroutineException(context, cause)
+        } catch (e: Throwable) {
+            handleUndeliverableException(e, context)
         }
     }
 }

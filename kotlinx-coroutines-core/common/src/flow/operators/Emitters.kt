@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -71,7 +71,12 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
 public fun <T> Flow<T>.onStart(
     action: suspend FlowCollector<T>.() -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke start action
-    SafeCollector<T>(this, coroutineContext).action()
+    val safeCollector = SafeCollector<T>(this, coroutineContext)
+    try {
+        safeCollector.action()
+    } finally {
+        safeCollector.releaseIntercepted()
+    }
     collect(this) // directly delegate
 }
 
@@ -128,13 +133,31 @@ public fun <T> Flow<T>.onStart(
 public fun <T> Flow<T>.onCompletion(
     action: suspend FlowCollector<T>.(cause: Throwable?) -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke completion action
-    var exception: Throwable? = null
+    val exception = try {
+        catchImpl(this)
+    } catch (e: Throwable) {
+        /*
+         * Exception from the downstream.
+         * Use throwing collector to prevent any emissions from the
+         * completion sequence when downstream has failed, otherwise it may
+         * lead to a non-sequential behaviour impossible with `finally`
+         */
+        ThrowingCollector(e).invokeSafely(action, null)
+        throw e
+    }
+    // Exception from the upstream or normal completion
+    val safeCollector = SafeCollector(this, coroutineContext)
     try {
-        exception = catchImpl(this)
+        safeCollector.invokeSafely(action, exception)
     } finally {
-        // Separate method because of KT-32220
-        SafeCollector<T>(this, coroutineContext).invokeSafely(action, exception)
-        exception?.let { throw it }
+        safeCollector.releaseIntercepted()
+    }
+    exception?.let { throw it }
+}
+
+private class ThrowingCollector(private val e: Throwable) : FlowCollector<Any?> {
+    override suspend fun emit(value: Any?) {
+        throw e
     }
 }
 
@@ -155,5 +178,3 @@ private suspend fun <T> FlowCollector<T>.invokeSafely(
         throw e
     }
 }
-
-

@@ -20,6 +20,37 @@ class ChannelsTest: TestBase() {
     }
 
     @Test
+    fun testCloseWithMultipleWaiters() = runTest {
+        val channel = Channel<Int>()
+        launch {
+            try {
+                expect(2)
+                channel.receive()
+                expectUnreached()
+            } catch (e: ClosedReceiveChannelException) {
+                expect(5)
+            }
+        }
+
+        launch {
+            try {
+                expect(3)
+                channel.receive()
+                expectUnreached()
+            } catch (e: ClosedReceiveChannelException) {
+                expect(6)
+            }
+        }
+
+        expect(1)
+        yield()
+        expect(4)
+        channel.close()
+        yield()
+        finish(7)
+    }
+
+    @Test
     fun testAssociate() = runTest {
         assertEquals(testList.associate { it * 2 to it * 3 },
             testList.asReceiveChannel().associate { it * 2 to it * 3 }.toMap())
@@ -227,8 +258,8 @@ class ChannelsTest: TestBase() {
         testList.indices.forEach { i ->
             assertEquals(testList[i], testList.asReceiveChannel().elementAtOrNull(i))
         }
-        assertEquals(null, testList.asReceiveChannel().elementAtOrNull(-1))
-        assertEquals(null, testList.asReceiveChannel().elementAtOrNull(testList.size))
+        assertNull(testList.asReceiveChannel().elementAtOrNull(-1))
+        assertNull(testList.asReceiveChannel().elementAtOrNull(testList.size))
     }
 
     @Test
@@ -279,14 +310,14 @@ class ChannelsTest: TestBase() {
     @Test
     fun testLastOrNull() = runTest {
         assertEquals(testList.lastOrNull(), testList.asReceiveChannel().lastOrNull())
-        assertEquals(null, emptyList<Int>().asReceiveChannel().lastOrNull())
+        assertNull(emptyList<Int>().asReceiveChannel().lastOrNull())
     }
 
     @Test
     fun testSingleOrNull() = runTest {
         assertEquals(1, listOf(1).asReceiveChannel().singleOrNull())
-        assertEquals(null, listOf(1, 2).asReceiveChannel().singleOrNull())
-        assertEquals(null, emptyList<Int>().asReceiveChannel().singleOrNull())
+        assertNull(listOf(1, 2).asReceiveChannel().singleOrNull())
+        assertNull(emptyList<Int>().asReceiveChannel().singleOrNull())
         repeat(testList.size + 1) { i ->
             assertEquals(testList.singleOrNull { it == i },
                 testList.asReceiveChannel().singleOrNull { it == i })

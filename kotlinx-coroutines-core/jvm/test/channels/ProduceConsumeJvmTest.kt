@@ -5,10 +5,10 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
+import kotlin.test.*
 
 @RunWith(Parameterized::class)
 class ProduceConsumeJvmTest(

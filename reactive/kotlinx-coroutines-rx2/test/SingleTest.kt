@@ -6,12 +6,13 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.*
+import io.reactivex.exceptions.*
 import io.reactivex.functions.*
 import kotlinx.coroutines.*
-import org.hamcrest.core.*
 import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import java.util.concurrent.*
+import kotlin.test.*
 
 class SingleTest : TestBase() {
     @Before
@@ -29,7 +30,7 @@ class SingleTest : TestBase() {
         expect(2)
         single.subscribe { value ->
             expect(5)
-            assertThat(value, IsEqual("OK"))
+            assertEquals("OK", value)
         }
         expect(3)
         yield() // to started coroutine
@@ -48,8 +49,8 @@ class SingleTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            assertThat(error, IsInstanceOf(RuntimeException::class.java))
-            assertThat(error.message, IsEqual("OK"))
+            assertTrue(error is RuntimeException)
+            assertEquals("OK", error.message)
         })
         expect(3)
         yield() // to started coroutine
@@ -201,18 +202,24 @@ class SingleTest : TestBase() {
 
     @Test
     fun testFatalExceptionInSubscribe() = runTest {
-        GlobalScope.rxSingle(Dispatchers.Unconfined + CoroutineExceptionHandler { _, e -> assertTrue(e is LinkageError); expect(2) }) {
-            expect(1)
-            42
-        }.subscribe(Consumer {
-            throw LinkageError()
-        })
-        finish(3)
+        val handler = { e: Throwable ->
+            assertTrue(e is UndeliverableException && e.cause is LinkageError)
+            expect(2)
+        }
+        withExceptionHandler(handler) {
+            rxSingle(Dispatchers.Unconfined) {
+                expect(1)
+                42
+            }.subscribe(Consumer {
+                throw LinkageError()
+            })
+            finish(3)
+        }
     }
 
     @Test
     fun testFatalExceptionInSingle() = runTest {
-        GlobalScope.rxSingle(Dispatchers.Unconfined) {
+        rxSingle(Dispatchers.Unconfined) {
             throw LinkageError()
         }.subscribe({ _, e ->  assertTrue(e is LinkageError); expect(1) })
 
@@ -223,11 +230,11 @@ class SingleTest : TestBase() {
     fun testUnhandledException() = runTest {
         expect(1)
         var disposable: Disposable? = null
-        val eh = CoroutineExceptionHandler { _, t ->
-            assertTrue(t is TestException)
+        val handler = { e: Throwable ->
+            assertTrue(e is UndeliverableException && e.cause is TestException)
             expect(5)
         }
-        val single = rxSingle(currentDispatcher() + eh) {
+        val single = rxSingle(currentDispatcher()) {
             expect(4)
             disposable!!.dispose() // cancel our own subscription, so that delay will get cancelled
             try {
@@ -236,16 +243,24 @@ class SingleTest : TestBase() {
                 throw TestException() // would not be able to handle it since mono is disposed
             }
         }
-        single.subscribe(object : SingleObserver<Unit> {
-            override fun onSubscribe(d: Disposable) {
-                expect(2)
-                disposable = d
-            }
-            override fun onSuccess(t: Unit) { expectUnreached() }
-            override fun onError(t: Throwable) { expectUnreached() }
-        })
-        expect(3)
-        yield() // run coroutine
-        finish(6)
+        withExceptionHandler(handler) {
+            single.subscribe(object : SingleObserver<Unit> {
+                override fun onSubscribe(d: Disposable) {
+                    expect(2)
+                    disposable = d
+                }
+
+                override fun onSuccess(t: Unit) {
+                    expectUnreached()
+                }
+
+                override fun onError(t: Throwable) {
+                    expectUnreached()
+                }
+            })
+            expect(3)
+            yield() // run coroutine
+            finish(6)
+        }
     }
 }

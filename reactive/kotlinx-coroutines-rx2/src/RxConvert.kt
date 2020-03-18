@@ -1,14 +1,16 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
+import io.reactivex.disposables.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
+import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
 /**
@@ -67,16 +69,38 @@ public fun <T : Any> Deferred<T>.asSingle(context: CoroutineContext): Single<T> 
  *
  * Every subscriber receives values from this channel in **fan-out** fashion. If the are multiple subscribers,
  * they'll receive values in round-robin way.
- *
- * **Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.**
- *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
- *
- * @param context -- the coroutine context from which the resulting observable is going to be signalled
  */
-@ObsoleteCoroutinesApi
+@Deprecated(
+    message = "Deprecated in the favour of Flow",
+    level = DeprecationLevel.WARNING, replaceWith = ReplaceWith("this.consumeAsFlow().asObservable()")
+)
 public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = rxObservable(context) {
     for (t in this@asObservable)
         send(t)
+}
+
+/**
+ * Transforms given cold [ObservableSource] into cold [Flow].
+ *
+ * The resulting flow is _cold_, which means that [ObservableSource.subscribe] is called every time a terminal operator
+ * is applied to the resulting flow.
+ *
+ * A channel with the [default][Channel.BUFFERED] buffer size is used. Use the [buffer] operator on the
+ * resulting flow to specify a user-defined value and to control what happens when data is produced faster
+ * than consumed, i.e. to control the back-pressure behavior. Check [callbackFlow] for more details.
+ */
+@ExperimentalCoroutinesApi
+public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
+    val disposableRef = AtomicReference<Disposable>()
+    val observer = object : Observer<T> {
+        override fun onComplete() { close() }
+        override fun onSubscribe(d: Disposable) { if (!disposableRef.compareAndSet(null, d)) d.dispose() }
+        override fun onNext(t: T) { sendBlocking(t) }
+        override fun onError(e: Throwable) { close(e) }
+    }
+
+    subscribe(observer)
+    awaitClose { disposableRef.getAndSet(Disposables.disposed())?.dispose() }
 }
 
 /**
@@ -96,9 +120,13 @@ public fun <T: Any> Flow<T>.asObservable() : Observable<T> = Observable.create {
             emitter.onComplete()
         } catch (e: Throwable) {
             // 'create' provides safe emitter, so we can unconditionally call on* here if exception occurs in `onComplete`
-            if (e !is CancellationException) emitter.onError(e)
-            else emitter.onComplete()
-
+            if (e !is CancellationException) {
+                if (!emitter.tryOnError(e)) {
+                    handleUndeliverableException(e, coroutineContext)
+                }
+            } else {
+                emitter.onComplete()
+            }
         }
     }
     emitter.setCancellable(RxCancellable(job))

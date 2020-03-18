@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package benchmarks.flow.scrabble
@@ -7,7 +7,6 @@ package benchmarks.flow.scrabble
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.openjdk.jmh.annotations.*
-import java.lang.Long.*
 import java.lang.Long.max
 import java.util.*
 import java.util.concurrent.*

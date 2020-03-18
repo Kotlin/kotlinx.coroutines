@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // Configures generation of JavaDoc & Dokka artifacts
@@ -35,10 +35,18 @@ dokka {
     outputFormat = 'kotlin-website'
     dependsOn(project.configurations.dokkaStubs)
 
+    noStdlibLink = true
+    
+    externalDocumentationLink {
+        packageListUrl = rootProject.projectDir.toPath().resolve("site/stdlib.package.list").toUri().toURL()
+        url = new URL("https://kotlinlang.org/api/latest/jvm/stdlib/")
+    }
+
     if (project.name != "kotlinx-coroutines-core") {
         dependsOn(project.configurations.compileClasspath)
         dependsOn(project.sourceSets.main.output)
-        afterEvaluate {
+        doFirst {
+            // resolve classpath only during execution
             classpath = project.configurations.dokkaStubs.files + project.configurations.compileClasspath.files + project.sourceSets.main.output.files
         }
     }

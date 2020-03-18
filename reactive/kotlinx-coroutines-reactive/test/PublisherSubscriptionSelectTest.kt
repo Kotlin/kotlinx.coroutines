@@ -6,10 +6,10 @@ package kotlinx.coroutines.reactive
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
+import kotlin.test.*
 
 @RunWith(Parameterized::class)
 class PublisherSubscriptionSelectTest(private val request: Int) : TestBase() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.debug.junit4
@@ -30,11 +30,10 @@ internal class CoroutinesTimeoutStatement(
     private val testThread =  Thread(testResult, "Timeout test thread").apply { isDaemon = true }
 
     override fun evaluate() {
-        DebugProbes.install()
-        testThread.start()
-        // Await until test is started to take only test execution time into account
-        testStartedLatch.await()
         try {
+            testThread.start()
+            // Await until test is started to take only test execution time into account
+            testStartedLatch.await()
             testResult.get(testTimeoutMs, TimeUnit.MILLISECONDS)
             return
         } catch (e: TimeoutException) {
