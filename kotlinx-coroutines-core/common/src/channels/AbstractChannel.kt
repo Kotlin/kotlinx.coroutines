@@ -122,22 +122,6 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         }
     }
 
-    /**
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    protected fun describeSendConflated(element: E): AddLastDesc<*> = SendConflatedDesc(queue, element)
-
-    private class SendConflatedDesc<E>(
-        queue: LockFreeLinkedListHead,
-        element: E
-    ) : SendBufferedDesc<E>(queue, element) {
-        override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) {
-            super.finishOnSuccess(affected, next)
-            // remove previous SendBuffered
-            (affected as? SendBuffered<*>)?.remove()
-        }
-    }
-
     // ------ SendChannel ------
 
     public final override val isClosedForSend: Boolean get() = closedForSend != null
