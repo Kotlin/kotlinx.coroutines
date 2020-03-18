@@ -1,12 +1,11 @@
-package kotlinx.coroutines.flow.operators
+@file:JvmMultifileClass
+@file:JvmName("FlowKt")
 
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.internal.RingBuffer
-import kotlin.math.max
-import kotlin.math.min
+package kotlinx.coroutines.flow
+
+import kotlinx.coroutines.*
+import kotlin.jvm.*
+import kotlin.math.*
 
 /**
  * Returns a flow of lists each not exceeding the given [size].
