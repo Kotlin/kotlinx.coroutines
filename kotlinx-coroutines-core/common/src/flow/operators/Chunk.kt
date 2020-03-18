@@ -71,30 +71,31 @@ public fun <T> Flow<T>.windowed(size: Int, step: Int, partialWindows: Boolean): 
  * @param partialWindows controls whether or not to keep partial windows in the end if any.
  */
 
+@OptIn(ExperimentalStdlibApi::class)
 @FlowPreview
 public fun <T, R> Flow<T>.windowed(size: Int, step: Int, partialWindows: Boolean, transform: suspend (List<T>) -> R): Flow<R> {
     require(size > 0 && step > 0) { "Size and step should be greater than 0, but was size: $size, step: $step" }
 
     return flow {
-        val buffer = RingBuffer<T>(size)
+        val buffer = ArrayDeque<T>(size)
         val toDrop = min(step, size)
         val toSkip = max(step - size, 0)
         var skipped = toSkip
 
         collect { value ->
-            if(toSkip == skipped) buffer.add(value)
+            if (toSkip == skipped) buffer.addLast(value)
             else skipped++
 
-            if (buffer.isFull()) {
+            if (buffer.size == size) {
                 emit(transform(buffer))
-                buffer.removeFirst(toDrop)
+                repeat(toDrop) { buffer.removeFirst() }
                 skipped = 0
             }
         }
 
         while (partialWindows && buffer.isNotEmpty()) {
             emit(transform(buffer))
-            buffer.removeFirst(min(toDrop, buffer.size))
+            repeat(min(toDrop, buffer.size)) { buffer.removeFirst() }
         }
     }
 }

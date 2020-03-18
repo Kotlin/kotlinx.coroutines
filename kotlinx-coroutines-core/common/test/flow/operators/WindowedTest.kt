@@ -45,7 +45,7 @@ class WindowedTest : TestBase() {
     @Test
     fun `Emits correct number of overlapping windows for long sequence of overlapping partial windows`() = runTest {
         val elements = generateSequence(1) { it + 1 }.take(100)
-        val flow = elements.asFlow().windowed(100, 1, true) { }
+        val flow = elements.asFlow().windowed(100, 1, true)
         assertEquals(100, flow.count())
     }
 
