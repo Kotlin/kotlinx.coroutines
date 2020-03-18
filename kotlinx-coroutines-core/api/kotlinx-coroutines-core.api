@@ -1020,6 +1020,13 @@ public final class kotlinx/coroutines/flow/internal/SendingCollector : kotlinx/c
 	public fun emit (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class kotlinx/coroutines/flow/operators/ChunkKt {
+	public static final fun chunked (Lkotlinx/coroutines/flow/Flow;I)Lkotlinx/coroutines/flow/Flow;
+	public static final fun chunked (Lkotlinx/coroutines/flow/Flow;ILkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun windowed (Lkotlinx/coroutines/flow/Flow;IIZ)Lkotlinx/coroutines/flow/Flow;
+	public static final fun windowed (Lkotlinx/coroutines/flow/Flow;IIZLkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
+}
+
 public final class kotlinx/coroutines/intrinsics/CancellableKt {
 	public static final fun startCoroutineCancellable (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)V
 }
