@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -16,6 +16,11 @@ import kotlin.coroutines.*
  * Works only on JVM with enabled debug-mode.
  */
 internal expect fun <E: Throwable> recoverStackTrace(exception: E, continuation: Continuation<*>): E
+
+/**
+ * initCause on JVM, nop on other platforms
+ */
+internal expect fun Throwable.initCause(cause: Throwable)
 
 /**
  * Tries to recover stacktrace for given [exception]. Used in non-suspendable points of awaiting.

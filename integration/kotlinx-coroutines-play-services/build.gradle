@@ -1,32 +1,43 @@
+/*
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+import org.gradle.api.artifacts.transform.*
+
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
-/*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
-
 ext.tasks_version = '16.0.1'
 
-def attr = Attribute.of("artifactType", String.class)
-configurations {
-    aar {
-        attributes { attribute(attr, ArtifactTypeDefinition.JAR_TYPE) }
-        sourceSets.main.compileClasspath += it
-        sourceSets.test.compileClasspath += it
-        sourceSets.test.runtimeClasspath += it
+def artifactType = Attribute.of("artifactType", String)
+def unpackedAar = Attribute.of("unpackedAar", Boolean)
+
+configurations.all {
+    afterEvaluate {
+        if (canBeResolved) {
+            attributes.attribute(unpackedAar, true) // request all AARs to be unpacked
+        }
     }
 }
 
 dependencies {
-    registerTransform {
-        from.attribute(attr, "aar")
-        to.attribute(attr, "jar")
-        artifactTransform(ExtractJars.class)
+    attributesSchema {
+        attribute(unpackedAar)
     }
 
-    aar("com.google.android.gms:play-services-tasks:$tasks_version") {
+    artifactTypes {
+        aar {
+            attributes.attribute(unpackedAar, false)
+        }
+    }
+
+    registerTransform(UnpackAar) {
+        from.attribute(unpackedAar, false).attribute(artifactType, "aar")
+        to.attribute(unpackedAar, true).attribute(artifactType, "jar")
+    }
+
+    api("com.google.android.gms:play-services-tasks:$tasks_version") {
         exclude group: 'com.android.support'
     }
 }
@@ -37,48 +48,32 @@ tasks.withType(dokka.getClass()) {
         // This is workaround for missing package list in Google API
         packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
     }
-
-    afterEvaluate {
-        classpath += project.configurations.aar.files
-    }
 }
 
-class ExtractJars extends ArtifactTransform {
+abstract class UnpackAar implements TransformAction<TransformParameters.None> {
+    @InputArtifact
+    abstract Provider<FileSystemLocation> getInputArtifact()
+
     @Override
-    List<File> transform(File input) {
-        unzip(input)
-
-        List<File> jars = new ArrayList<>()
-        outputDirectory.traverse(nameFilter: ~/.*\.jar/) { jars += it }
-
-        return jars
-    }
-
-    private void unzip(File zipFile) {
-        ZipFile zip
+    void transform(TransformOutputs outputs) {
+        ZipFile zip = new ZipFile(inputArtifact.get().asFile)
         try {
-            zip = new ZipFile(zipFile)
             for (entry in zip.entries()) {
-                unzipEntryTo(zip, entry)
+                if (!entry.isDirectory() && entry.name.endsWith(".jar")) {
+                    unzipEntryTo(zip, entry, outputs.file(entry.name))
+                }
             }
         } finally {
-            if (zip != null) zip.close()
+            zip.close()
         }
     }
 
-    private void unzipEntryTo(ZipFile zip, ZipEntry entry) {
-        File output = new File(outputDirectory, entry.name)
-        if (entry.isDirectory()) {
-            output.mkdirs()
-        } else {
-            InputStream stream
-            try {
-                stream = zip.getInputStream(entry)
-                Files.copy(stream, output.toPath())
-            } catch (NoSuchFileException ignored) {
-            } finally {
-                if (stream != null) stream.close()
-            }
+    private static void unzipEntryTo(ZipFile zip, ZipEntry entry, File output) {
+        InputStream stream = zip.getInputStream(entry)
+        try {
+            Files.copy(stream, output.toPath())
+        } finally {
+            stream.close()
         }
     }
 }

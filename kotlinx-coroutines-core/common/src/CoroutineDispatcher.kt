@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -29,53 +29,50 @@ import kotlin.coroutines.*
  */
 public abstract class CoroutineDispatcher :
     AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
+
+    /** @suppress */
+    @ExperimentalStdlibApi
+    public companion object Key : AbstractCoroutineContextKey<ContinuationInterceptor, CoroutineDispatcher>(
+        ContinuationInterceptor,
+        { it as? CoroutineDispatcher })
+
     /**
-     * Returns `true` if the execution shall be dispatched onto another thread.
+     * Returns `true` if the execution of the coroutine should be performed with [dispatch] method.
      * The default behavior for most dispatchers is to return `true`.
      *
-     * This method should never be used from general code, it is used only by `kotlinx.coroutines`
-     * internals and its contract with the rest of the API is an implementation detail.
+     * If this method returns `false`, the coroutine is resumed immediately in the current thread,
+     * potentially forming an event-loop to prevent stack overflows.
+     * The event loop is an advanced topic and its implications can be found in [Dispatchers.Unconfined] documentation.
      *
-     * UI dispatchers _should not_ override `isDispatchNeeded`, but leave the default implementation that
-     * returns `true`. To understand the rationale beyond this recommendation, consider the following code:
+     * A dispatcher can override this method to provide a performance optimization and avoid paying a cost of an unnecessary dispatch.
+     * E.g. [MainCoroutineDispatcher.immediate] checks whether we are already in the required UI thread in this method and avoids
+     * an additional dispatch when it is not required.
      *
-     * ```kotlin
-     * fun asyncUpdateUI() = async(Dispatchers.Main) {
-     *     // do something here that updates something in UI
-     * }
-     * ```
+     * While this approach can be more efficient, it is not chosen by default to provide a consistent dispatching behaviour
+     * so that users won't observe unexpected and non-consistent order of events by default.
      *
-     * When you invoke `asyncUpdateUI` in some background thread, it immediately continues to the next
-     * line, while the UI update happens asynchronously in the UI thread. However, if you invoke
-     * it in the UI thread itself, it will update the UI _synchronously_ if your `isDispatchNeeded` is
-     * overridden with a thread check. Checking if we are already in the UI thread seems more
-     * efficient (and it might indeed save a few CPU cycles), but this subtle and context-sensitive
-     * difference in behavior makes the resulting async code harder to debug.
-     *
-     * Basically, the choice here is between the "JS-style" asynchronous approach (async actions
-     * are always postponed to be executed later in the event dispatch thread) and "C#-style" approach
-     * (async actions are executed in the invoker thread until the first suspension point).
-     * While the C# approach seems to be more efficient, it ends up with recommendations like
-     * "use `yield` if you need to ....". This is error-prone. The JS-style approach is more consistent
-     * and does not require programmers to think about whether they need to yield or not.
-     *
-     * However, coroutine builders like [launch][CoroutineScope.launch] and [async][CoroutineScope.async] accept an optional [CoroutineStart]
-     * parameter that allows one to optionally choose the C#-style [CoroutineStart.UNDISPATCHED] behavior
-     * whenever it is needed for efficiency.
+     * Coroutine builders like [launch][CoroutineScope.launch] and [async][CoroutineScope.async] accept an optional [CoroutineStart]
+     * parameter that allows one to optionally choose the [undispatched][CoroutineStart.UNDISPATCHED] behavior to start coroutine immediately,
+     * but to be resumed only in the provided dispatcher.
      *
      * This method should generally be exception-safe. An exception thrown from this method
      * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
-     *
-     * **Note: This is an experimental api.** Execution semantics of coroutines may change in the future when this function returns `false`.
      */
-    @ExperimentalCoroutinesApi
     public open fun isDispatchNeeded(context: CoroutineContext): Boolean = true
 
     /**
      * Dispatches execution of a runnable [block] onto another thread in the given [context].
+     * This method should guarantee that the given [block] will be eventually invoked,
+     * otherwise the system may reach a deadlock state and never leave it.
+     * Cancellation mechanism is transparent for [CoroutineDispatcher] and is managed by [block] internals.
      *
      * This method should generally be exception-safe. An exception thrown from this method
      * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
+     *
+     * This method must not immediately call [block]. Doing so would result in [StackOverflowError]
+     * when [yield] is repeatedly called from a loop. However, an implementation that returns `false` from
+     * [isDispatchNeeded] can delegate this function to `dispatch` method of [Dispatchers.Unconfined], which is
+     * integrated with [yield] to avoid this problem.
      */
     public abstract fun dispatch(context: CoroutineContext, block: Runnable)
 
@@ -84,7 +81,7 @@ public abstract class CoroutineDispatcher :
      * with a hint for the dispatcher that the current dispatch is triggered by a [yield] call, so that the execution of this
      * continuation may be delayed in favor of already dispatched coroutines.
      *
-     * **Implementation note:** Though the `yield` marker may be passed as a part of [context], this
+     * Though the `yield` marker may be passed as a part of [context], this
      * is a separate method for performance reasons.
      *
      * @suppress **This an internal API and should not be used from general code.**
@@ -100,6 +97,11 @@ public abstract class CoroutineDispatcher :
      */
     public final override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
         DispatchedContinuation(this, continuation)
+
+    @InternalCoroutinesApi
+    public override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
+        (continuation as DispatchedContinuation<*>).reusableCancellableContinuation?.detachChild()
+    }
 
     /**
      * @suppress **Error**: Operator '+' on two CoroutineDispatcher objects is meaningless.

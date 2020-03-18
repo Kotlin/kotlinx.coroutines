@@ -1,20 +1,5 @@
-<!--- INCLUDE .*/example-([a-z]+)-([0-9a-z]+)\.kt 
-/*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
-
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.$$1$$2
--->
-<!--- KNIT     ../kotlinx-coroutines-core/jvm/test/guide/.*\.kt -->
-<!--- TEST_OUT ../kotlinx-coroutines-core/jvm/test/guide/test/SharedStateGuideTest.kt
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.test
-
-import org.junit.Test
-
-class SharedStateGuideTest {
---> 
+<!--- TEST_NAME SharedStateGuideTest -->
+ 
 **Table of contents**
 
 <!--- TOC -->
@@ -28,7 +13,7 @@ class SharedStateGuideTest {
   * [Mutual exclusion](#mutual-exclusion)
   * [Actors](#actors)
 
-<!--- END_TOC -->
+<!--- END -->
 
 ## Shared mutable state and concurrency
 

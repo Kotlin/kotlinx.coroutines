@@ -40,54 +40,33 @@ class FlowInvariantsTest : TestBase() {
     @Test
     fun testWithContextContract() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
         flow {
-            kotlinx.coroutines.withContext(NonCancellable) {
+            withContext(NonCancellable) {
                 emit(1)
             }
         }.collect {
-            assertEquals(1, it)
+            expectUnreached()
         }
     }
 
     @Test
     fun testWithDispatcherContractViolated() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
         flow {
-            kotlinx.coroutines.withContext(NamedDispatchers("foo")) {
+            withContext(NamedDispatchers("foo")) {
                 emit(1)
             }
         }.collect {
-            fail()
+            expectUnreached()
         }
-    }
-
-    @Test
-    fun testCachedInvariantCheckResult() = runParametrizedTest<Int> { flow ->
-        flow {
-            emit(1)
-
-            try {
-                kotlinx.coroutines.withContext(NamedDispatchers("foo")) {
-                    emit(1)
-                }
-                fail()
-            } catch (e: IllegalStateException) {
-                expect(2)
-            }
-
-            emit(3)
-        }.collect {
-            expect(it)
-        }
-        finish(4)
     }
 
     @Test
     fun testWithNameContractViolated() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
         flow {
-            kotlinx.coroutines.withContext(CoroutineName("foo")) {
+            withContext(CoroutineName("foo")) {
                 emit(1)
             }
         }.collect {
-            fail()
+            expectUnreached()
         }
     }
 
@@ -107,7 +86,6 @@ class FlowInvariantsTest : TestBase() {
                     }
                 }.join()
         }
-
         assertEquals("original", result)
     }
 
@@ -116,7 +94,6 @@ class FlowInvariantsTest : TestBase() {
         flow { emit(1) }.buffer(EmptyCoroutineContext, flow).collect {
             expect(1)
         }
-
         finish(2)
     }
 
@@ -125,7 +102,6 @@ class FlowInvariantsTest : TestBase() {
         flow { emit(1) }.buffer(Dispatchers.Unconfined, flow).collect {
             expect(1)
         }
-
         finish(2)
     }
 
@@ -151,9 +127,9 @@ class FlowInvariantsTest : TestBase() {
             }
         }
 
-        val flow = flowOf(1)
-        assertFailsWith<IllegalStateException> { flow.merge(flow).toList() }
-        assertFailsWith<IllegalStateException> { flow.trickyMerge(flow).toList() }
+        val flowInstance = flowOf(1)
+        assertFailsWith<IllegalStateException> { flowInstance.merge(flowInstance).toList() }
+        assertFailsWith<IllegalStateException> { flowInstance.trickyMerge(flowInstance).toList() }
     }
 
     @Test
@@ -242,7 +218,7 @@ class FlowInvariantsTest : TestBase() {
             emptyContextTest {
                 transform {
                     expect(it)
-                    kotlinx.coroutines.withContext(Dispatchers.Unconfined) {
+                    withContext(Dispatchers.Unconfined) {
                         emit(it + 1)
                     }
                 }

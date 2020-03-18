@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.sync
 
 import kotlinx.atomicfu.*
@@ -6,6 +10,7 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlin.math.*
+import kotlin.native.concurrent.*
 
 /**
  * A counting semaphore for coroutines that logically maintains a number of available permits.
@@ -131,7 +136,7 @@ private class SemaphoreImpl(
         cur + 1
     }
 
-    private suspend fun addToQueueAndSuspend() = suspendAtomicCancellableCoroutine<Unit> sc@ { cont ->
+    private suspend fun addToQueueAndSuspend() = suspendAtomicCancellableCoroutineReusable<Unit> sc@ { cont ->
         val last = this.tail
         val enqIdx = enqIdx.getAndIncrement()
         val segment = getSegment(last, enqIdx / SEGMENT_SIZE)

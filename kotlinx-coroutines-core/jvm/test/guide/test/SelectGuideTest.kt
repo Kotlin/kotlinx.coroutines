@@ -1,13 +1,16 @@
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
+/*
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+// This file was automatically generated from select-expression.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
 
 import org.junit.Test
 
 class SelectGuideTest {
-
     @Test
-    fun testKotlinxCoroutinesGuideSelect01() {
-        test("KotlinxCoroutinesGuideSelect01") { kotlinx.coroutines.guide.select01.main() }.verifyLines(
+    fun testExampleSelect01() {
+        test("ExampleSelect01") { kotlinx.coroutines.guide.exampleSelect01.main() }.verifyLines(
             "fizz -> 'Fizz'",
             "buzz -> 'Buzz!'",
             "fizz -> 'Fizz'",
@@ -19,8 +22,8 @@ class SelectGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideSelect02() {
-        test("KotlinxCoroutinesGuideSelect02") { kotlinx.coroutines.guide.select02.main() }.verifyLines(
+    fun testExampleSelect02() {
+        test("ExampleSelect02") { kotlinx.coroutines.guide.exampleSelect02.main() }.verifyLines(
             "a -> 'Hello 0'",
             "a -> 'Hello 1'",
             "b -> 'World 0'",
@@ -33,8 +36,8 @@ class SelectGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideSelect03() {
-        test("KotlinxCoroutinesGuideSelect03") { kotlinx.coroutines.guide.select03.main() }.verifyLines(
+    fun testExampleSelect03() {
+        test("ExampleSelect03") { kotlinx.coroutines.guide.exampleSelect03.main() }.verifyLines(
             "Consuming 1",
             "Side channel has 2",
             "Side channel has 3",
@@ -50,16 +53,16 @@ class SelectGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideSelect04() {
-        test("KotlinxCoroutinesGuideSelect04") { kotlinx.coroutines.guide.select04.main() }.verifyLines(
+    fun testExampleSelect04() {
+        test("ExampleSelect04") { kotlinx.coroutines.guide.exampleSelect04.main() }.verifyLines(
             "Deferred 4 produced answer 'Waited for 128 ms'",
             "11 coroutines are still active"
         )
     }
 
     @Test
-    fun testKotlinxCoroutinesGuideSelect05() {
-        test("KotlinxCoroutinesGuideSelect05") { kotlinx.coroutines.guide.select05.main() }.verifyLines(
+    fun testExampleSelect05() {
+        test("ExampleSelect05") { kotlinx.coroutines.guide.exampleSelect05.main() }.verifyLines(
             "BEGIN",
             "Replace",
             "END",

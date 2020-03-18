@@ -99,13 +99,13 @@ class CombineParametersTest : TestBase() {
     }
 
     @Test
-    fun testEmptyVararg() = runTest {
+    fun testSingleVararg() = runTest {
         val list = combine(flowOf(1, 2, 3)) { args: Array<Any?> -> args[0] }.toList()
         assertEquals(listOf(1, 2, 3), list)
     }
 
     @Test
-    fun testEmptyVarargTransform() = runTest {
+    fun testSingleVarargTransform() = runTest {
         val list = combineTransform(flowOf(1, 2, 3)) { args: Array<Any?> -> emit(args[0]) }.toList()
         assertEquals(listOf(1, 2, 3), list)
     }
@@ -131,7 +131,15 @@ class CombineParametersTest : TestBase() {
     }
 
     @Test
-    fun testEmpty() = runTest {
+    fun testTransformEmptyIterable() = runTest {
+        val value = combineTransform(emptyList()) { args: Array<Int> ->
+            emit(args[0] + args[1])
+        }.singleOrNull()
+        assertNull(value)
+    }
+
+    @Test
+    fun testTransformEmptyVararg() = runTest {
         val value = combineTransform { args: Array<Int> ->
             emit(args[0] + args[1])
         }.singleOrNull()
@@ -140,24 +148,16 @@ class CombineParametersTest : TestBase() {
 
     @Test
     fun testEmptyIterable() = runTest {
-        val value = combineTransform(emptyList()) { args: Array<Int> ->
-            emit(args[0] + args[1])
+        val value = combine(emptyList()) { args: Array<Int> ->
+            args[0] + args[1]
         }.singleOrNull()
         assertNull(value)
     }
 
     @Test
-    fun testEmptyReified() = runTest {
-        val value = combineTransform { args: Array<Int> ->
-            emit(args[0] + args[1])
-        }.singleOrNull()
-        assertNull(value)
-    }
-
-    @Test
-    fun testEmptyIterableReified() = runTest {
-        val value = combineTransform(emptyList()) { args: Array<Int> ->
-            emit(args[0] + args[1])
+    fun testEmptyVararg() = runTest {
+        val value = combine { args: Array<Int> ->
+            args[0] + args[1]
         }.singleOrNull()
         assertNull(value)
     }

@@ -1,21 +1,10 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("FunctionName")
 
 package kotlinx.coroutines
-
-/**
- * This exception gets thrown if an exception is caught while processing [CompletionHandler] invocation for [Job].
- *
- * @suppress **This an internal API and should not be used from general code.**
- */
-@InternalCoroutinesApi
-public actual class CompletionHandlerException actual constructor(
-    message: String,
-    cause: Throwable
-) : RuntimeException(message, cause)
 
 /**
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled while it is suspending.
@@ -51,7 +40,8 @@ internal actual class JobCancellationException public actual constructor(
         if (DEBUG) {
             return super.fillInStackTrace()
         }
-
+        // Prevent Android <= 6.0 bug, #1866
+        stackTrace = emptyArray()
         /*
          * In non-debug mode we don't want to have a stacktrace on every cancellation/close,
          * parent job reference is enough. Stacktrace of JCE is not needed most of the time (e.g., it is not logged)

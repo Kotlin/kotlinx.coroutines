@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // -- Testing with Mocha under Node
@@ -19,7 +19,9 @@ task testMochaNode(type: NodeTask, dependsOn: [compileTestKotlinJs, installDepen
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
 }
 
-jsTest.dependsOn testMochaNode
+def legacyjsTestTask = project.tasks.findByName('legacyjsTest') ? legacyjsTest : jsTest
+
+legacyjsTestTask.dependsOn testMochaNode
 
 // -- Testing with Mocha under headless Chrome
 
@@ -76,8 +78,8 @@ task testMochaChrome(type: NodeTask, dependsOn: prepareMochaChrome) {
 task installDependenciesMochaJsdom(type: NpmTask, dependsOn: [npmInstall]) {
     args = ['install',
             "mocha@$mocha_version",
-            'jsdom',
-            'jsdom-global',
+            'jsdom@15.2.1',
+            'jsdom-global@3.0.2',
             "source-map-support@$source_map_support_version",
             '--no-save']
     if (project.hasProperty("teamcity")) args += ["mocha-teamcity-reporter@$mocha_teamcity_reporter_version"]
@@ -89,5 +91,5 @@ task testMochaJsdom(type: NodeTask, dependsOn: [compileTestKotlinJs, installDepe
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
 }
 
-jsTest.dependsOn testMochaJsdom
+legacyjsTestTask.dependsOn testMochaJsdom
 

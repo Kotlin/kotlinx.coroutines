@@ -4,11 +4,10 @@
 
 package kotlinx.coroutines
 
-import org.hamcrest.MatcherAssert.*
-import org.hamcrest.core.*
 import org.junit.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
+import kotlin.test.assertEquals
 
 class DelayJvmTest : TestBase() {
     /**
@@ -22,12 +21,12 @@ class DelayJvmTest : TestBase() {
         }
         val context = CustomInterceptor(pool)
         val c = async(context) {
-            assertThat(Thread.currentThread(), IsEqual(thread))
+            assertEquals(thread, Thread.currentThread())
             delay(100)
-            assertThat(Thread.currentThread(), IsEqual(thread))
+            assertEquals(thread, Thread.currentThread())
             42
         }
-        assertThat(c.await(), IsEqual(42))
+        assertEquals(42, c.await())
         pool.shutdown()
     }
 
@@ -38,7 +37,7 @@ class DelayJvmTest : TestBase() {
             delay(100)
             42
         }
-        assertThat(c.await(), IsEqual(42))
+        assertEquals(42, c.await())
     }
 
     @Test

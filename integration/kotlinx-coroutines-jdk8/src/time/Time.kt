@@ -1,9 +1,10 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 package kotlinx.coroutines.time
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.*
 import java.time.*
 import java.time.temporal.*
@@ -13,6 +14,18 @@ import java.time.temporal.*
  */
 public suspend fun delay(duration: Duration) =
         kotlinx.coroutines.delay(duration.coerceToMillis())
+
+/**
+ * "java.time" adapter method for [kotlinx.coroutines.flow.debounce].
+ */
+@FlowPreview
+public fun <T> Flow<T>.debounce(timeout: Duration) = debounce(timeout.coerceToMillis())
+
+/**
+ * "java.time" adapter method for [kotlinx.coroutines.flow.sample].
+ */
+@FlowPreview
+public fun <T> Flow<T>.sample(period: Duration) = sample(period.coerceToMillis())
 
 /**
  * "java.time" adapter method for [SelectBuilder.onTimeout].

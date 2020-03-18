@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("DEPRECATION_ERROR")
 
@@ -44,6 +44,18 @@ public interface CompletableDeferred<T> : Deferred<T> {
      */
     public fun completeExceptionally(exception: Throwable): Boolean
 }
+
+/**
+ * Completes this deferred value with the value or exception in the given [result]. Returns `true` if this deferred
+ * was completed as a result of this invocation and `false` otherwise (if it was already completed).
+ *
+ * Subsequent invocations of this function have no effect and always produce `false`.
+ *
+ * This function transitions this deferred in the same ways described by [CompletableDeferred.complete] and
+ * [CompletableDeferred.completeExceptionally].
+ */
+@ExperimentalCoroutinesApi // since 1.3.2, tentatively until 1.4.0
+public fun <T> CompletableDeferred<T>.completeWith(result: Result<T>) = result.fold({ complete(it) }, { completeExceptionally(it) })
 
 /**
  * Creates a [CompletableDeferred] in an _active_ state.

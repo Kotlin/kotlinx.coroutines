@@ -1,20 +1,4 @@
-<!--- INCLUDE .*/example-([a-z]+)-([0-9a-z]+)\.kt 
-/*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
-
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.$$1$$2
--->
-<!--- KNIT     ../kotlinx-coroutines-core/jvm/test/guide/.*\.kt -->
-<!--- TEST_OUT ../kotlinx-coroutines-core/jvm/test/guide/test/BasicsGuideTest.kt
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.test
-
-import org.junit.Test
-
-class BasicsGuideTest {
---> 
+<!--- TEST_NAME BasicsGuideTest -->
 
 **Table of contents**
 
@@ -30,8 +14,7 @@ class BasicsGuideTest {
   * [Coroutines ARE light-weight](#coroutines-are-light-weight)
   * [Global coroutines are like daemon threads](#global-coroutines-are-like-daemon-threads)
 
-<!--- END_TOC -->
-
+<!--- END -->
 
 ## Coroutine Basics
 
@@ -75,7 +58,8 @@ Here we are launching a new coroutine in the [GlobalScope], meaning that the lif
 coroutine is limited only by the lifetime of the whole application.  
 
 You can achieve the same result replacing
-`GlobalScope.launch { ... }` with `thread { ... }` and `delay(...)` with `Thread.sleep(...)`. Try it.
+`GlobalScope.launch { ... }` with `thread { ... }` and `delay(...)` with `Thread.sleep(...)`. 
+Try it (don't forget to import `kotlin.concurrent.thread`).
 
 If you start by replacing `GlobalScope.launch` by `thread`, the compiler produces the following error:
 
@@ -141,7 +125,7 @@ fun main() = runBlocking<Unit> { // start main coroutine
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-02b.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-03.kt).
 
 <!--- TEST
 Hello,
@@ -196,7 +180,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-03.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-04.kt).
 
 <!--- TEST
 Hello,
@@ -241,7 +225,7 @@ fun main() = runBlocking { // this: CoroutineScope
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-03s.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-05.kt).
 
 <!--- TEST
 Hello,
@@ -251,8 +235,14 @@ World!
 ### Scope builder
 In addition to the coroutine scope provided by different builders, it is possible to declare your own scope using
 [coroutineScope] builder. It creates a coroutine scope and does not complete until all launched children
-complete. The main difference between [runBlocking] and [coroutineScope] is that the latter does not block the current thread 
-while waiting for all children to complete.
+complete. 
+
+[runBlocking] and [coroutineScope] may look similar because they both wait for its body and all its children to complete.
+The main difference between these two is that the [runBlocking] method _blocks_ the current thread for waiting,
+while [coroutineScope] just suspends, releasing the underlying thread for other usages.
+Because of that difference, [runBlocking] is a regular function and [coroutineScope] is a suspending function.
+
+It can be demonstrated by the following example:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -281,7 +271,7 @@ fun main() = runBlocking { // this: CoroutineScope
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-04.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-06.kt).
 
 <!--- TEST
 Task from coroutine scope
@@ -289,6 +279,9 @@ Task from runBlocking
 Task from nested launch
 Coroutine scope is over
 -->
+
+Note that right after "Task from coroutine scope" message, while waiting for nested launch,
+ "Task from runBlocking" is executed and printed, though coroutineScope is not completed yet. 
 
 ### Extract function refactoring
 
@@ -317,7 +310,7 @@ suspend fun doWorld() {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-05.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-07.kt).
 
 <!--- TEST
 Hello,
@@ -354,7 +347,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-06.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-08.kt).
 
 <!--- TEST lines.size == 1 && lines[0] == ".".repeat(100_000) -->
 
@@ -386,7 +379,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-07.kt).
+> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-basic-09.kt).
 
 You can run and see that it prints three lines and terminates:
 
