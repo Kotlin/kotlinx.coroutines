@@ -27,6 +27,24 @@ public interface Semaphore {
     public val availablePermits: Int
 
     /**
+     * Acquires a permit from this semaphore, suspending until one is available.
+     * All suspending acquirers are processed in first-in-first-out (FIFO) order.
+     *
+     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
+     * function is suspended, this function immediately resumes with [CancellationException].
+     *
+     * *Cancellation of suspended semaphore acquisition is atomic* -- when this function
+     * throws [CancellationException] it means that the semaphore was not acquired.
+     *
+     * Note, that this function does not check for cancellation when it does not suspend.
+     * Use [CoroutineScope.isActive] or [CoroutineScope.ensureActive] to periodically
+     * check for cancellation in tight loops if needed.
+     *
+     * Use [tryAcquire] to try acquire a permit of this semaphore without suspension.
+     */
+    public suspend fun acquire()
+
+    /**
      * Acquires the given number of permits from this semaphore, suspending until ones are available.
      * All suspending acquirers are processed in first-in-first-out (FIFO) order.
      *
@@ -46,7 +64,14 @@ public interface Semaphore {
      *
      * @throws [IllegalArgumentException] if [permits] is less than or equal to zero.
      */
-    public suspend fun acquire(permits: Int = 1)
+    public suspend fun acquire(permits: Int)
+
+    /**
+     * Tries to acquire a permit from this semaphore without suspension.
+     *
+     * @return `true` if a permit was acquired, `false` otherwise.
+     */
+    public fun tryAcquire(): Boolean
 
     /**
      * Tries to acquire the given number of permits from this semaphore without suspension.
@@ -56,7 +81,15 @@ public interface Semaphore {
      *
      * @throws [IllegalArgumentException] if [permits] is less than or equal to zero.
      */
-    public fun tryAcquire(permits: Int = 1): Boolean
+    public fun tryAcquire(permits: Int): Boolean
+
+    /**
+     * Releases a permit, returning it into this semaphore. Resumes the first
+     * suspending acquirer if there is one at the point of invocation and the requested number of permits is available.
+     *
+     * @throws [IllegalStateException] if the number of [release] invocations is greater than the number of preceding [acquire].
+     */
+    public fun release()
 
     /**
      * Releases the given number of permits, returning them into this semaphore. Resumes the first
@@ -67,7 +100,7 @@ public interface Semaphore {
      * @throws [IllegalArgumentException] if [permits] is less than or equal to zero.
      * @throws [IllegalStateException] if the number of [release] invocations is greater than the number of preceding [acquire].
      */
-    public fun release(permits: Int = 1)
+    public fun release(permits: Int)
 }
 
 /**
@@ -127,6 +160,10 @@ private class SemaphoreImpl(
      */
     internal val accumulator = atomic(0)
 
+    override fun tryAcquire(): Boolean {
+        return tryAcquire(1)
+    }
+
     override fun tryAcquire(permits: Int): Boolean {
         require(permits > 0) { "The number of acquired permits must be greater than 0" }
         permitsBalance.loop { p ->
@@ -135,11 +172,19 @@ private class SemaphoreImpl(
         }
     }
 
+    override suspend fun acquire() {
+        return acquire(1)
+    }
+
     override suspend fun acquire(permits: Int) {
         require(permits > 0) { "The number of acquired permits must be greater than 0" }
         val p = permitsBalance.getAndAdd(-permits)
         if (p >= permits) return // permits are acquired
         tryToAddToQueue(permits)
+    }
+
+    override fun release() {
+        release(1)
     }
 
     override fun release(permits: Int) {

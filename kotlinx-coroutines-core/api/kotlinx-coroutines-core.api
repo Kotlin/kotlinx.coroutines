@@ -1147,10 +1147,19 @@ public final class kotlinx/coroutines/sync/MutexKt {
 }
 
 public abstract interface class kotlinx/coroutines/sync/Semaphore {
+	public abstract fun acquire (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun acquire (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getAvailablePermits ()I
 	public abstract fun release ()V
+	public abstract fun release (I)V
 	public abstract fun tryAcquire ()Z
+	public abstract fun tryAcquire (I)Z
+}
+
+public final class kotlinx/coroutines/sync/Semaphore$DefaultImpls {
+	public static synthetic fun acquire$default (Lkotlinx/coroutines/sync/Semaphore;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun release$default (Lkotlinx/coroutines/sync/Semaphore;IILjava/lang/Object;)V
+	public static synthetic fun tryAcquire$default (Lkotlinx/coroutines/sync/Semaphore;IILjava/lang/Object;)Z
 }
 
 public final class kotlinx/coroutines/sync/SemaphoreKt {
