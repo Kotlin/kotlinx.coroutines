@@ -306,4 +306,4 @@ private val RESUMED = 0
 @SharedImmutable
 private val CANCELLED = -1
 @SharedImmutable
-private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.semaphore.segmentSize", 1)
+private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.semaphore.segmentSize", 16)
