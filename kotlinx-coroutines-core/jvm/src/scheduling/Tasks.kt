@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.scheduling
@@ -17,11 +17,6 @@ internal const val DEFAULT_SCHEDULER_NAME = "DefaultDispatcher"
 @JvmField
 internal val WORK_STEALING_TIME_RESOLUTION_NS = systemProp(
     "kotlinx.coroutines.scheduler.resolution.ns", 100000L
-)
-
-@JvmField
-internal val QUEUE_SIZE_OFFLOAD_THRESHOLD = systemProp(
-    "kotlinx.coroutines.scheduler.offload.threshold", 96, maxValue = BUFFER_CAPACITY
 )
 
 @JvmField
@@ -50,32 +45,29 @@ internal val MAX_POOL_SIZE = systemProp(
 
 @JvmField
 internal val IDLE_WORKER_KEEP_ALIVE_NS = TimeUnit.SECONDS.toNanos(
-    systemProp("kotlinx.coroutines.scheduler.keep.alive.sec", 5L)
+    systemProp("kotlinx.coroutines.scheduler.keep.alive.sec", 60L)
 )
 
 @JvmField
 internal var schedulerTimeSource: TimeSource = NanoTimeSource
 
-internal enum class TaskMode {
+/**
+ * Marker indicating that task is CPU-bound and will not block
+ */
+internal const val TASK_NON_BLOCKING = 0
 
-    /**
-     * Marker indicating that task is CPU-bound and will not block
-     */
-    NON_BLOCKING,
-
-    /**
-     * Marker indicating that task may potentially block, thus giving scheduler a hint that additional thread may be required
-     */
-    PROBABLY_BLOCKING,
-}
+/**
+ * Marker indicating that task may potentially block, thus giving scheduler a hint that additional thread may be required
+ */
+internal const val TASK_PROBABLY_BLOCKING = 1
 
 internal interface TaskContext {
-    val taskMode: TaskMode
+    val taskMode: Int // TASK_XXX
     fun afterTask()
 }
 
 internal object NonBlockingContext : TaskContext {
-    override val taskMode: TaskMode = TaskMode.NON_BLOCKING
+    override val taskMode: Int = TASK_NON_BLOCKING
 
     override fun afterTask() {
        // Nothing for non-blocking context
@@ -87,8 +79,10 @@ internal abstract class Task(
     @JvmField var taskContext: TaskContext
 ) : Runnable {
     constructor() : this(0, NonBlockingContext)
-    val mode: TaskMode get() = taskContext.taskMode
+    inline val mode: Int get() = taskContext.taskMode // TASK_XXX
 }
+
+internal inline val Task.isBlocking get() = taskContext.taskMode == TASK_PROBABLY_BLOCKING
 
 // Non-reusable Task implementation to wrap Runnable instances that do not otherwise implement task
 internal class TaskImpl(
@@ -109,10 +103,7 @@ internal class TaskImpl(
 }
 
 // Open for tests
-internal open class GlobalQueue : LockFreeTaskQueue<Task>(singleConsumer = false) {
-    public fun removeFirstWithModeOrNull(mode: TaskMode): Task? =
-        removeFirstOrNullIf { it.mode == mode }
-}
+internal class GlobalQueue : LockFreeTaskQueue<Task>(singleConsumer = false)
 
 internal abstract class TimeSource {
     abstract fun nanoTime(): Long

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -8,6 +8,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
+import kotlin.native.concurrent.*
 
 @SharedImmutable
 private val UNDEFINED = Symbol("UNDEFINED")
@@ -62,8 +63,24 @@ internal class DispatchedContinuation<in T>(
     public val reusableCancellableContinuation: CancellableContinuationImpl<*>?
         get() = _reusableCancellableContinuation.value as? CancellableContinuationImpl<*>
 
-    public val isReusable: Boolean
-        get() = _reusableCancellableContinuation.value != null
+    public fun isReusable(requester: CancellableContinuationImpl<*>): Boolean {
+        /*
+         * Reusability control:
+         * `null` -> no reusability at all, false
+         * If current state is not CCI, then we are within `suspendAtomicCancellableCoroutineReusable`, true
+         * Else, if result is CCI === requester.
+         * Identity check my fail for the following pattern:
+         * ```
+         * loop:
+         * suspendAtomicCancellableCoroutineReusable { } // Reusable, outer coroutine stores the child handle
+         * suspendCancellableCoroutine { } // **Not reusable**, handle should be disposed after {}, otherwise
+         * it will leak because it won't be freed by `releaseInterceptedContinuation`
+         * ```
+         */
+        val value = _reusableCancellableContinuation.value ?: return false
+        if (value is CancellableContinuationImpl<*>) return value === requester
+        return true
+    }
 
     /**
      * Claims the continuation for [suspendAtomicCancellableCoroutineReusable] block,
@@ -174,33 +191,19 @@ internal class DispatchedContinuation<in T>(
         }
     }
 
-    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
-    inline fun resumeCancellable(value: T) {
+    // We inline it to save an entry on the stack in cases where it shows (unconfined dispatcher)
+    // It is used only in Continuation<T>.resumeCancellableWith
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun resumeCancellableWith(result: Result<T>) {
+        val state = result.toState()
         if (dispatcher.isDispatchNeeded(context)) {
-            _state = value
-            resumeMode = MODE_CANCELLABLE
-            dispatcher.dispatch(context, this)
-        } else {
-            executeUnconfined(value, MODE_CANCELLABLE) {
-                if (!resumeCancelled()) {
-                    resumeUndispatched(value)
-                }
-            }
-        }
-    }
-
-    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
-    inline fun resumeCancellableWithException(exception: Throwable) {
-        val context = continuation.context
-        val state = CompletedExceptionally(exception)
-        if (dispatcher.isDispatchNeeded(context)) {
-            _state = CompletedExceptionally(exception)
+            _state = state
             resumeMode = MODE_CANCELLABLE
             dispatcher.dispatch(context, this)
         } else {
             executeUnconfined(state, MODE_CANCELLABLE) {
                 if (!resumeCancelled()) {
-                    resumeUndispatchedWithException(exception)
+                    resumeUndispatchedWith(result)
                 }
             }
         }
@@ -218,22 +221,14 @@ internal class DispatchedContinuation<in T>(
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
-    inline fun resumeUndispatched(value: T) {
+    inline fun resumeUndispatchedWith(result: Result<T>) {
         withCoroutineContext(context, countOrElement) {
-            continuation.resume(value)
-        }
-    }
-
-    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
-    inline fun resumeUndispatchedWithException(exception: Throwable) {
-        withCoroutineContext(context, countOrElement) {
-            continuation.resumeWithStackTrace(exception)
+            continuation.resumeWith(result)
         }
     }
 
     // used by "yield" implementation
-    internal fun dispatchYield(value: T) {
-        val context = continuation.context
+    internal fun dispatchYield(context: CoroutineContext, value: T) {
         _state = value
         resumeMode = MODE_CANCELLABLE
         dispatcher.dispatchYield(context, this)
@@ -241,6 +236,18 @@ internal class DispatchedContinuation<in T>(
 
     override fun toString(): String =
         "DispatchedContinuation[$dispatcher, ${continuation.toDebugString()}]"
+}
+
+/**
+ * It is not inline to save bytecode (it is pretty big and used in many places)
+ * and we leave it public so that its name is not mangled in use stack traces if it shows there.
+ * It may appear in stack traces when coroutines are started/resumed with unconfined dispatcher.
+ * @suppress **This an internal API and should not be used from general code.**
+ */
+@InternalCoroutinesApi
+public fun <T> Continuation<T>.resumeCancellableWith(result: Result<T>) = when (this) {
+    is DispatchedContinuation -> resumeCancellableWith(result)
+    else -> resumeWith(result)
 }
 
 internal fun DispatchedContinuation<Unit>.yieldUndispatched(): Boolean =

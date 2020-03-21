@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -181,7 +181,7 @@ public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R 
  * Creates a [CoroutineScope] that wraps the given coroutine [context].
  *
  * If the given [context] does not contain a [Job] element, then a default `Job()` is created.
- * This way, cancellation or failure or any child coroutine in this scope cancels all the other children,
+ * This way, cancellation or failure of any child coroutine in this scope cancels all the other children,
  * just like inside [coroutineScope] block.
  */
 @Suppress("FunctionName")

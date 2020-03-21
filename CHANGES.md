@@ -1,5 +1,81 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.3.5
+
+* `firstOrNull` operator. Contributed by @bradynpoulsen.
+* `java.time` adapters for Flow operators. Contributed by @fvasco.
+* `kotlin.time.Duration` support (#1402). Contributed by @fvasco. 
+* Memory leak with a mix of reusable and non-reusable continuations is fixed (#1855).
+* `DebugProbes` are ready for production installation: its performance is increased, the flag to disable creation stacktraces to reduce the footprint is introduced (#1379, #1372).
+* Stacktrace recovery workaround for Android 6.0 and earlier bug (#1866).
+* New integration module: `kotlinx-coroutines-jdk9` with adapters for `java.util.concurrent.Flow`.
+* `BroadcastChannel.close` properly starts lazy coroutine (#1713).
+* `kotlinx-coroutines-bom` is published without Gradle metadata.
+* Make calls to service loader in reactor integrations optimizable by R8 (#1817).
+
+## Version 1.3.4
+
+### Flow
+
+* Detect missing `awaitClose` calls in `callbackFlow` to make it less error-prone when used with callbacks (#1762, #1770). This change makes `callbackFlow` **different** from `channelFlow`.
+* `ReceiveChannel.asFlow` extension is introduced (#1490).
+* Enforce exception transparency invariant in `flow` builder (#1657).
+* Proper `Dispatcher` support in `Flow` reactive integrations (#1765).
+* Batch `Subscription.request` calls in `Flow` reactive integration (#766).
+* `ObservableValue.asFlow` added to JavaFx integration module (#1695).
+* `ObservableSource.asFlow` added to RxJava2 integration module (#1768).
+
+### Other changes
+
+* `kotlinx-coroutines-core` is optimized for R8, making it much smaller for Android usages (75 KB for `1.3.4` release).
+* Performance of `Dispatchers.Default` is improved (#1704, #1706).
+* Kotlin is updated to 1.3.70.
+* `CoroutineDispatcher` and `ExecutorCoroutineDispatcher` experimental coroutine context keys are introduced (#1805).
+* Performance of various `Channel` operations is improved (#1565).
+
+## Version 1.3.3
+
+### Flow
+* `Flow.take` performance is significantly improved (#1538).
+* `Flow.merge` operator (#1491).
+* Reactive Flow adapters are promoted to stable API (#1549).
+* Reusable cancellable continuations were introduced that improved the performance of various flow operators and iteration over channels (#1534).
+* Fixed interaction of multiple flows with `take` operator (#1610).
+* Throw `NoSuchElementException` instead of `UnsupportedOperationException` for empty `Flow` in `reduce` operator (#1659).
+* `onCompletion` now rethrows downstream exceptions on emit attempt (#1654).
+* Allow non-emitting `withContext` from `flow` builder (#1616).
+
+### Debugging
+
+* `DebugProbes.dumpCoroutines` is optimized to be able to print the 6-digit number of coroutines (#1535).
+* Properly capture unstarted lazy coroutines in debugger (#1544).
+* Capture coroutines launched from within a test constructor with `CoroutinesTimeout` test rule (#1542).
+* Stacktraces of `Job`-related coroutine machinery are shortened and prettified (#1574).
+* Stacktrace recovery unification that should provide a consistent experience recover of stacktrace (#1597).
+* Stacktrace recovery for `withTimeout` is supported (#1625).
+* Do not recover exception with a single `String` parameter constructor that is not a `message` (#1631).
+
+### Other features
+
+* `Dispatchers.Default` and `Dispatchers.IO` rework: CPU consumption is significantly lower, predictable idle threads termination (#840, #1046, #1286).
+* Avoid `ServiceLoader` for loading `Dispatchers.Main` (#1572, #1557, #878, #1606).
+* Consistently handle undeliverable exceptions in RxJava and Reactor integrations (#252, #1614).
+* `yield` support in immediate dispatchers (#1474).
+* `CompletableDeferred.completeWith(result: Result<T>)` is introduced.
+* Added support for tvOS and watchOS-based Native targets (#1596).
+
+### Bug fixes and improvements
+
+* Kotlin version is updated to 1.3.61.
+* `CoroutineDispatcher.isDispatchNeeded` is promoted to stable API (#1014).
+* Livelock and stackoverflows in mutual `select` expressions are fixed (#1411, #504).
+* Properly handle `null` values in `ListenableFuture` integration (#1510).
+* Making ReceiveChannel.cancel linearizability-friendly.
+* Linearizability of Channel.close in a complex contended cases (#1419).
+* ArrayChannel.isBufferEmpty atomicity is fixed (#1526).
+* Various documentation improvements.
+* Reduced bytecode size of `kotlinx-coroutines-core`, reduced size of minified `dex` when using basic functionality of `kotlinx-coroutines`.
+
 ## Version 1.3.2
 
 This is a maintenance release that does not include any new features or bug fixes.

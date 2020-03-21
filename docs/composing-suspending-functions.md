@@ -1,20 +1,4 @@
-<!--- INCLUDE .*/example-([a-z]+)-([0-9a-z]+)\.kt 
-/*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
-
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.$$1$$2
--->
-<!--- KNIT     ../kotlinx-coroutines-core/jvm/test/guide/.*\.kt -->
-<!--- TEST_OUT ../kotlinx-coroutines-core/jvm/test/guide/test/ComposingGuideTest.kt
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.test
-
-import org.junit.Test
-
-class ComposingGuideTest {
---> 
+<!--- TEST_NAME ComposingGuideTest -->
 
 **Table of contents**
 
@@ -27,7 +11,7 @@ class ComposingGuideTest {
   * [Async-style functions](#async-style-functions)
   * [Structured concurrency with async](#structured-concurrency-with-async)
 
-<!--- END_TOC -->
+<!--- END -->
 
 ## Composing Suspending Functions
 

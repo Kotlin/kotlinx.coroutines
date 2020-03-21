@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -10,6 +10,7 @@ import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
+import kotlin.time.*
 
 /**
  * Runs a given suspending [block] of code inside a coroutine with a specified [timeout][timeMillis] and throws
@@ -31,6 +32,22 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
         setupTimeout(TimeoutCoroutine(timeMillis, uCont), block)
     }
 }
+
+/**
+ * Runs a given suspending [block] of code inside a coroutine with the specified [timeout] and throws
+ * a [TimeoutCancellationException] if the timeout was exceeded.
+ *
+ * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
+ * the cancellable suspending function inside the block throws a [TimeoutCancellationException].
+ *
+ * The sibling function that does not throw an exception on timeout is [withTimeoutOrNull].
+ * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ *
+ * Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ */
+@ExperimentalTime
+public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineScope.() -> T): T =
+        withTimeout(timeout.toDelayMillis(), block)
 
 /**
  * Runs a given suspending block of code inside a coroutine with a specified [timeout][timeMillis] and returns
@@ -65,6 +82,22 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
     }
 }
 
+/**
+ * Runs a given suspending block of code inside a coroutine with the specified [timeout] and returns
+ * `null` if this timeout was exceeded.
+ *
+ * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
+ * cancellable suspending function inside the block throws a [TimeoutCancellationException].
+ *
+ * The sibling function that throws an exception on timeout is [withTimeout].
+ * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ *
+ * Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ */
+@ExperimentalTime
+public suspend fun <T> withTimeoutOrNull(timeout: Duration, block: suspend CoroutineScope.() -> T): T? =
+        withTimeoutOrNull(timeout.toDelayMillis(), block)
+
 private fun <U, T: U> setupTimeout(
     coroutine: TimeoutCoroutine<U, T>,
     block: suspend CoroutineScope.() -> T
@@ -78,26 +111,12 @@ private fun <U, T: U> setupTimeout(
     return coroutine.startUndispatchedOrReturnIgnoreTimeout(coroutine, block)
 }
 
-private open class TimeoutCoroutine<U, in T: U>(
+private class TimeoutCoroutine<U, in T: U>(
     @JvmField val time: Long,
-    @JvmField val uCont: Continuation<U> // unintercepted continuation
-) : AbstractCoroutine<T>(uCont.context, active = true), Runnable, Continuation<T>, CoroutineStackFrame {
-    override val defaultResumeMode: Int get() = MODE_DIRECT
-    override val callerFrame: CoroutineStackFrame? get() = (uCont as? CoroutineStackFrame)
-    override fun getStackTraceElement(): StackTraceElement? = null
-    override val isScopedCoroutine: Boolean get() = true
-
-    @Suppress("LeakingThis", "Deprecation")
+    uCont: Continuation<U> // unintercepted continuation
+) : ScopeCoroutine<T>(uCont.context, uCont), Runnable {
     override fun run() {
         cancelCoroutine(TimeoutCancellationException(time, this))
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    override fun afterCompletionInternal(state: Any?, mode: Int) {
-        if (state is CompletedExceptionally)
-            uCont.resumeUninterceptedWithExceptionMode(state.cause, mode)
-        else
-            uCont.resumeUninterceptedMode(state as T, mode)
     }
 
     override fun nameString(): String =
@@ -110,13 +129,17 @@ private open class TimeoutCoroutine<U, in T: U>(
 public class TimeoutCancellationException internal constructor(
     message: String,
     @JvmField internal val coroutine: Job?
-) : CancellationException(message) {
+) : CancellationException(message), CopyableThrowable<TimeoutCancellationException> {
     /**
      * Creates a timeout exception with the given message.
      * This constructor is needed for exception stack-traces recovery.
      */
     @Suppress("UNUSED")
     internal constructor(message: String) : this(message, null)
+
+    // message is never null in fact
+    override fun createCopy(): TimeoutCancellationException? =
+        TimeoutCancellationException(message ?: "", coroutine).also { it.initCause(this) }
 }
 
 @Suppress("FunctionName")
@@ -124,5 +147,3 @@ internal fun TimeoutCancellationException(
     time: Long,
     coroutine: Job
 ) : TimeoutCancellationException = TimeoutCancellationException("Timed out waiting for $time ms", coroutine)
-
-

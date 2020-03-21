@@ -6,10 +6,9 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import kotlinx.coroutines.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import java.io.*
-import kotlin.experimental.*
+import kotlin.test.*
 
 /**
  * Test emitting multiple values with [rxObservable].

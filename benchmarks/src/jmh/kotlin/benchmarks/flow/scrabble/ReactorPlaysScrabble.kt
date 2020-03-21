@@ -1,14 +1,12 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package benchmarks.flow.scrabble
 
-import org.openjdk.jmh.annotations.*
 import reactor.core.publisher.*
 import java.lang.Long.*
 import java.util.*
-import java.util.concurrent.*
 import java.util.function.Function
 
 /*@Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)

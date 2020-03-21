@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.rx2
 
+import io.reactivex.exceptions.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
@@ -16,15 +17,15 @@ class FlowableExceptionHandlingTest : TestBase() {
         ignoreLostThreads("RxComputationThreadPool-", "RxCachedWorkerPoolEvictor-", "RxSchedulerPurge-")
     }
 
-    private inline fun <reified T : Throwable> ceh(expect: Int) = CoroutineExceptionHandler { _, t ->
-        assertTrue(t is T)
+    private inline fun <reified T : Throwable> handler(expect: Int) = { t: Throwable ->
+        assertTrue(t is UndeliverableException && t.cause is T)
         expect(expect)
     }
 
     private fun cehUnreached() = CoroutineExceptionHandler { _, _ -> expectUnreached() }
 
     @Test
-    fun testException() = runTest {
+    fun testException() = withExceptionHandler({ expectUnreached() }) {
         rxFlowable<Int>(Dispatchers.Unconfined + cehUnreached()) {
             expect(1)
             throw TestException()
@@ -37,8 +38,8 @@ class FlowableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testFatalException() = runTest {
-        rxFlowable<Int>(Dispatchers.Unconfined + ceh<LinkageError>(3)) {
+    fun testFatalException() = withExceptionHandler(handler<LinkageError>(3)) {
+        rxFlowable<Int>(Dispatchers.Unconfined) {
             expect(1)
             throw LinkageError()
         }.subscribe({
@@ -50,7 +51,7 @@ class FlowableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testExceptionAsynchronous() = runTest {
+    fun testExceptionAsynchronous() = withExceptionHandler({ expectUnreached() }) {
         rxFlowable<Int>(Dispatchers.Unconfined + cehUnreached()) {
             expect(1)
             throw TestException()
@@ -65,8 +66,8 @@ class FlowableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testFatalExceptionAsynchronous() = runTest {
-        rxFlowable<Int>(Dispatchers.Unconfined + ceh<LinkageError>(3)) {
+    fun testFatalExceptionAsynchronous() = withExceptionHandler(handler<LinkageError>(3)) {
+        rxFlowable<Int>(Dispatchers.Unconfined) {
             expect(1)
             throw LinkageError()
         }.publish()
@@ -80,8 +81,8 @@ class FlowableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testFatalExceptionFromSubscribe() = runTest {
-        rxFlowable(Dispatchers.Unconfined + ceh<LinkageError>(4)) {
+    fun testFatalExceptionFromSubscribe() = withExceptionHandler(handler<LinkageError>(4)) {
+        rxFlowable(Dispatchers.Unconfined) {
             expect(1)
             send(Unit)
         }.subscribe({
@@ -92,7 +93,7 @@ class FlowableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testExceptionFromSubscribe() = runTest {
+    fun testExceptionFromSubscribe() = withExceptionHandler({ expectUnreached() }) {
         rxFlowable(Dispatchers.Unconfined + cehUnreached()) {
             expect(1)
             send(Unit)
@@ -104,7 +105,7 @@ class FlowableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testAsynchronousExceptionFromSubscribe() = runTest {
+    fun testAsynchronousExceptionFromSubscribe() = withExceptionHandler({ expectUnreached() }) {
         rxFlowable(Dispatchers.Unconfined + cehUnreached()) {
             expect(1)
             send(Unit)
@@ -118,8 +119,8 @@ class FlowableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testAsynchronousFatalExceptionFromSubscribe() = runTest {
-        rxFlowable(Dispatchers.Unconfined + ceh<LinkageError>(3)) {
+    fun testAsynchronousFatalExceptionFromSubscribe() = withExceptionHandler(handler<LinkageError>(3)) {
+        rxFlowable(Dispatchers.Unconfined) {
             expect(1)
             send(Unit)
         }.publish()

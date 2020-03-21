@@ -12,25 +12,35 @@ import kotlin.test.*
 
 class FlowCallbackTest : TestBase() {
     @Test
-    fun testClosedPrematurely() = runTest(unhandled = listOf({ e -> e is ClosedSendChannelException })) {
+    fun testClosedPrematurely() = runTest {
         val outerScope = this
-        val flow = channelFlow {
+        val flow = callbackFlow {
             // ~ callback-based API
             outerScope.launch(Job()) {
                 expect(2)
-                send(1)
-                expectUnreached()
+                try {
+                    send(1)
+                    expectUnreached()
+                } catch (e: IllegalStateException) {
+                    expect(3)
+                    assertTrue(e.message!!.contains("awaitClose"))
+                }
             }
             expect(1)
         }
-        assertEquals(emptyList(), flow.toList())
-        finish(3)
+        try {
+            flow.collect()
+        } catch (e: IllegalStateException) {
+            expect(4)
+            assertTrue(e.message!!.contains("awaitClose"))
+        }
+        finish(5)
     }
 
     @Test
     fun testNotClosedPrematurely() = runTest {
         val outerScope = this
-        val flow = channelFlow<Int> {
+        val flow = callbackFlow {
             // ~ callback-based API
             outerScope.launch(Job()) {
                 expect(2)

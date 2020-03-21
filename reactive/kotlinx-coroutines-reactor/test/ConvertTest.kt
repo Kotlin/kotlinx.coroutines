@@ -8,7 +8,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.reactive.*
 import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
+import kotlin.test.*
 
 class ConvertTest : TestBase() {
     @Test
@@ -66,9 +67,9 @@ class ConvertTest : TestBase() {
             null
         }
         val mono1 = d.asMono(Dispatchers.Unconfined)
-        checkMonoValue(mono1, ::assertNull)
+        checkMonoValue(mono1, Assert::assertNull)
         val mono2 = d.asMono(Dispatchers.Unconfined)
-        checkMonoValue(mono2, ::assertNull)
+        checkMonoValue(mono2, Assert::assertNull)
     }
 
     @Test

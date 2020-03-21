@@ -7,11 +7,18 @@ package kotlinx.coroutines.reactor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.reactive.*
 import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import reactor.core.publisher.*
 import java.time.Duration.*
+import kotlin.test.*
 
-class FluxSingleTest {
+class FluxSingleTest : TestBase() {
+
+    @Before
+    fun setup() {
+        ignoreLostThreads("parallel-")
+    }
+
     @Test
     fun testSingleNoWait() {
         val flux = flux {
@@ -167,7 +174,7 @@ class FluxSingleTest {
     @Test
     fun testExceptionFromCoroutine() {
         val flux = flux<String> {
-            error(Flux.just("O").awaitSingle() + "K")
+            throw IllegalStateException(Flux.just("O").awaitSingle() + "K")
         }
 
         checkErroneous(flux) {

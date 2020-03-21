@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 apply plugin: 'kotlin-multiplatform'
@@ -46,9 +46,18 @@ configurations {
     configureKotlinJvmPlatform(kotlinCompilerPluginClasspath)
 }
 
+// Update module name for metadata artifact to avoid conflicts
+// see https://github.com/Kotlin/kotlinx.coroutines/issues/1797
+compileKotlinMetadata {
+    kotlinOptions {
+        freeCompilerArgs += ["-module-name", "kotlinx-coroutines-core-common"]
+    }
+}
+
 kotlin.sourceSets {
     jvmTest.dependencies {
-        api "com.devexperts.lincheck:lincheck:$lincheck_version"
+        api "org.jetbrains.kotlinx:lincheck:$lincheck_version"
+        api "org.jetbrains.kotlinx:kotlinx-knit-test:$knit_version"
         api "com.esotericsoftware:kryo:4.0.0"
         implementation project (":android-unit-tests")
     }
@@ -76,16 +85,22 @@ jvmTest {
     maxHeapSize = '1g'
     enableAssertions = true
     systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
-    exclude '**/*LFStressTest.*'
+    // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
+    if (!project.ext.ideaActive && rootProject.properties['stress'] == null) {
+        exclude '**/*StressTest.*'
+    }
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
 }
 
-task lockFreedomTest(type: Test, dependsOn: compileTestKotlinJvm) {
+task jvmStressTest(type: Test, dependsOn: compileTestKotlinJvm) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
-    include '**/*LFStressTest.*'
+    minHeapSize = '1g'
+    maxHeapSize = '1g'
+    include '**/*StressTest.*'
     enableAssertions = true
     testLogging.showStandardStreams = true
+    systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
 }
 
 task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
@@ -93,7 +108,7 @@ task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
     testClassesDirs = files { jvmTest.testClassesDirs }
     executable = "$System.env.JDK_16/bin/java"
     exclude '**/*LFStressTest.*' // lock-freedom tests use LockFreedomTestEnvironment which needs JDK8
-    exclude '**/*LCStressTest.*' // lic-check tests use LinChecker which needs JDK8
+    exclude '**/*LCStressTest.*' // lin-check tests use LinChecker which needs JDK8
     exclude '**/exceptions/**'   // exceptions tests check suppressed exception which needs JDK8
     exclude '**/ExceptionsGuideTest.*'
 }
@@ -102,7 +117,7 @@ task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
 jdk16Test.onlyIf { project.properties['stressTest'] != null }
 
 // Always run those tests
-task moreTest(dependsOn: [lockFreedomTest, jdk16Test])
+task moreTest(dependsOn: [jvmStressTest, jdk16Test])
 build.dependsOn moreTest
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {

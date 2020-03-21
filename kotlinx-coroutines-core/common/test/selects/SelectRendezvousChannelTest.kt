@@ -348,6 +348,21 @@ class SelectRendezvousChannelTest : TestBase() {
     }
 
     @Test
+    fun testSelectReceiveOrClosedForClosedChannel() = runTest {
+        val channel = Channel<Unit>()
+        channel.close()
+        expect(1)
+        select<Unit> {
+            expect(2)
+            channel.onReceiveOrClosed {
+                assertTrue(it.isClosed)
+                assertNull(it.closeCause)
+                finish(3)
+            }
+        }
+    }
+
+    @Test
     fun testSelectReceiveOrClosed() = runTest {
         val channel = Channel<Int>(Channel.RENDEZVOUS)
         val iterations = 10

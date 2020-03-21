@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -9,10 +9,15 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
+import kotlin.native.concurrent.*
 
 private const val UNDECIDED = 0
 private const val SUSPENDED = 1
 private const val RESUMED = 2
+
+@JvmField
+@SharedImmutable
+internal val RESUME_TOKEN = Symbol("RESUME_TOKEN")
 
 /**
  * @suppress **This is unstable API and it is subject to change.**
@@ -80,12 +85,13 @@ internal open class CancellableContinuationImpl<in T>(
         // This method does nothing. Leftover for binary compatibility with old compiled code
     }
 
-    private fun isReusable(): Boolean = delegate is DispatchedContinuation<*> && delegate.isReusable
+    private fun isReusable(): Boolean = delegate is DispatchedContinuation<*> && delegate.isReusable(this)
 
     /**
      * Resets cancellability state in order to [suspendAtomicCancellableCoroutineReusable] to work.
      * Invariant: used only by [suspendAtomicCancellableCoroutineReusable] in [REUSABLE_CLAIMED] state.
      */
+    @JvmName("resetState") // Prettier stack traces
     internal fun resetState(): Boolean {
         assert { parentHandle !== NonDisposableHandle }
         val state = _state.value
@@ -240,7 +246,7 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     override fun resumeWith(result: Result<T>) {
-        resumeImpl(result.toState(), resumeMode)
+        resumeImpl(result.toState(this), resumeMode)
     }
 
     override fun resume(value: T, onCancellation: (cause: Throwable) -> Unit) {
@@ -252,9 +258,6 @@ internal open class CancellableContinuationImpl<in T>(
             }
         }
     }
-
-    internal fun resumeWithExceptionMode(exception: Throwable, mode: Int) =
-        resumeImpl(CompletedExceptionally(exception), mode)
 
     public override fun invokeOnCancellation(handler: CompletionHandler) {
         var handleCache: CancelHandler? = null
@@ -347,20 +350,21 @@ internal open class CancellableContinuationImpl<in T>(
         parentHandle = NonDisposableHandle
     }
 
+    // Note: Always returns RESUME_TOKEN | null
     override fun tryResume(value: T, idempotent: Any?): Any? {
         _state.loop { state ->
             when (state) {
                 is NotCompleted -> {
                     val update: Any? = if (idempotent == null) value else
-                        CompletedIdempotentResult(idempotent, value, state)
+                        CompletedIdempotentResult(idempotent, value)
                     if (!_state.compareAndSet(state, update)) return@loop // retry on cas failure
                     detachChildIfNonResuable()
-                    return state
+                    return RESUME_TOKEN
                 }
                 is CompletedIdempotentResult -> {
                     return if (state.idempotentResume === idempotent) {
                         assert { state.result === value } // "Non-idempotent resume"
-                        state.token
+                        RESUME_TOKEN
                     } else {
                         null
                     }
@@ -377,15 +381,16 @@ internal open class CancellableContinuationImpl<in T>(
                     val update = CompletedExceptionally(exception)
                     if (!_state.compareAndSet(state, update)) return@loop // retry on cas failure
                     detachChildIfNonResuable()
-                    return state
+                    return RESUME_TOKEN
                 }
                 else -> return null // cannot resume -- not active anymore
             }
         }
     }
 
+    // note: token is always RESUME_TOKEN
     override fun completeResume(token: Any) {
-        // note: We don't actually use token anymore, because handler needs to be invoked on cancellation only
+        assert { token === RESUME_TOKEN }
         dispatchResume(resumeMode)
     }
 
@@ -437,8 +442,7 @@ private class InvokeOnCancel( // Clashes with InvokeOnCancellation
 
 private class CompletedIdempotentResult(
     @JvmField val idempotentResume: Any?,
-    @JvmField val result: Any?,
-    @JvmField val token: NotCompleted
+    @JvmField val result: Any?
 ) {
     override fun toString(): String = "CompletedIdempotentResult[$result]"
 }

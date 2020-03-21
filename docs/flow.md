@@ -1,20 +1,4 @@
-<!--- INCLUDE .*/example-([a-z]+)-([0-9a-z]+)\.kt 
-/*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
-
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.$$1$$2
--->
-<!--- KNIT     ../kotlinx-coroutines-core/jvm/test/guide/.*-##\.kt -->
-<!--- TEST_OUT ../kotlinx-coroutines-core/jvm/test/guide/test/FlowGuideTest.kt
-// This file was automatically generated from flow.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.test
-
-import org.junit.Test
-
-class FlowGuideTest {
---> 
+<!--- TEST_NAME FlowGuideTest --> 
 
 **Table of contents**
 
@@ -60,7 +44,7 @@ class FlowGuideTest {
   * [Launching flow](#launching-flow)
   * [Flow and Reactive Streams](#flow-and-reactive-streams)
 
-<!--- END_TOC -->
+<!--- END -->
 
 ## Asynchronous Flow
 
@@ -708,17 +692,15 @@ fun main() = runBlocking<Unit> {
 
 This code produces the following exception:
 
-<!--- TEST EXCEPTION
+```text
 Exception in thread "main" java.lang.IllegalStateException: Flow invariant is violated:
 		Flow was collected in [CoroutineId(1), "coroutine#1":BlockingCoroutine{Active}@5511c7f8, BlockingEventLoop@2eac3323],
 		but emission happened in [CoroutineId(1), "coroutine#1":DispatchedCoroutine{Active}@2dae0000, DefaultDispatcher].
 		Please refer to 'flow' documentation or use 'flowOn' instead
 	at ...
--->
-   
-> Note that we had to use a fully qualified name of the [kotlinx.coroutines.withContext][withContext] function in this example to 
-demonstrate this exception. A short name of `withContext` would have resolved to a special stub function that
-produces a compilation error to prevent us from running into this problem.   
+``` 
+
+<!--- TEST EXCEPTION -->
 
 #### flowOn operator
    

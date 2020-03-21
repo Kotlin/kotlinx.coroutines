@@ -1,20 +1,5 @@
-<!--- INCLUDE .*/example-([a-z]+)-([0-9a-z]+)\.kt 
-/*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
+<!--- TEST_NAME ExceptionsGuideTest -->
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.$$1$$2
--->
-<!--- KNIT     ../kotlinx-coroutines-core/jvm/test/guide/.*\.kt -->
-<!--- TEST_OUT ../kotlinx-coroutines-core/jvm/test/guide/test/ExceptionsGuideTest.kt
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.test
-
-import org.junit.Test
-
-class ExceptionsGuideTest {
---> 
 **Table of contents**
 
 <!--- TOC -->
@@ -29,7 +14,7 @@ class ExceptionsGuideTest {
     * [Supervision scope](#supervision-scope)
     * [Exceptions in supervised coroutines](#exceptions-in-supervised-coroutines)
 
-<!--- END_TOC -->
+<!--- END -->
 
 ## Exception Handling
 
@@ -145,8 +130,7 @@ Caught java.lang.AssertionError
 Cancellation is tightly bound with exceptions. Coroutines internally use `CancellationException` for cancellation, these
 exceptions are ignored by all handlers, so they should be used only as the source of additional debug information, which can
 be obtained by `catch` block.
-When a coroutine is cancelled using [Job.cancel] without a cause, it terminates, but it does not cancel its parent.
-Cancelling without cause is a mechanism for parent to cancel its children without cancelling itself. 
+When a coroutine is cancelled using [Job.cancel], it terminates, but it does not cancel its parent.
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -189,7 +173,7 @@ Parent is not cancelled
 
 <!--- TEST-->
 
-If a coroutine encounters exception other than `CancellationException`, it cancels its parent with that exception. 
+If a coroutine encounters an exception other than `CancellationException`, it cancels its parent with that exception. 
 This behaviour cannot be overridden and is used to provide stable coroutines hierarchies for
 [structured concurrency](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/composing-suspending-functions.md#structured-concurrency-with-async) which do not depend on 
 [CoroutineExceptionHandler] implementation.
@@ -261,7 +245,6 @@ to leak to its exception handler.
 
 
 <!--- INCLUDE
-
 import kotlinx.coroutines.exceptions.*
 -->
 

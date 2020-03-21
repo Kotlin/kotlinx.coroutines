@@ -4,10 +4,10 @@
 
 package kotlinx.coroutines
 
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import java.util.concurrent.*
 import kotlin.coroutines.*
+import kotlin.test.*
 
 class ExecutorsTest : TestBase() {
     private fun checkThreadName(prefix: String) {

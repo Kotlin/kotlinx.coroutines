@@ -1,4 +1,41 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+static int javaVersionMajor() {
+    String javaVersion = System.properties["java.version"]
+    int i = javaVersion.indexOf('.')
+    return (i < 0 ? javaVersion : javaVersion.substring(0, i)).toInteger()
+}
+
+// JDK11+ does not bundle JavaFx and the plugin for JavaFx support is compiled with class file version 55.0 (JDK 11)
+if (javaVersionMajor() >= 11) {
+    apply plugin: 'org.openjfx.javafxplugin'
+    
+    javafx {
+        version = javafx_version
+        modules = ['javafx.controls']
+        configuration = 'compile'
+    }
+}
+
+task checkJdk8() {
+    // only fail w/o JDK_18 when actually trying to test, not during project setup phase
+    doLast {
+        if (!System.env.JDK_18) {
+            throw new GradleException("JDK_18 environment variable is not defined. " +
+                    "Can't run JDK 8 compatibility tests. " +
+                    "Please ensure JDK 8 is installed and that JDK_18 points to it.")
+        }
+    }
+}
+
+task jdk8Test(type: Test, dependsOn: [compileTestKotlin, checkJdk8]) {
+    classpath = files { test.classpath }
+    testClassesDirs = files { test.testClassesDirs }
+    executable = "$System.env.JDK_18/bin/java"
+}
+
+// Run these tests only during nightly stress test
+jdk8Test.onlyIf { project.properties['stressTest'] != null }
+build.dependsOn jdk8Test
