@@ -32,7 +32,7 @@ public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHe
 
     public val isEmpty: Boolean get() = size == 0
 
-    public fun clear() = synchronized(this) {
+    public fun clear(): Unit = synchronized(this) {
         a?.fill(null)
         _size.value = 0
     }
@@ -57,7 +57,7 @@ public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHe
         }
     }
 
-    public fun addLast(node: T) = synchronized(this) { addImpl(node) }
+    public fun addLast(node: T): Unit = synchronized(this) { addImpl(node) }
 
     // @Synchronized // NOTE! NOTE! NOTE! inline fun cannot be @Synchronized
     // Condition also receives current first node in the heap

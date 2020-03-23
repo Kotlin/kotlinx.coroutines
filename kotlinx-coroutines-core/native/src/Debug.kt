@@ -13,6 +13,6 @@ internal actual val Any.hexAddress: String get() = abs(id().let { if (it == Int.
 internal actual val Any.classSimpleName: String get() = this::class.simpleName ?: "Unknown"
 
 @SymbolName("Kotlin_Any_hashCode")
-external fun Any.id(): Int // Note: can return negative value on K/N
+public external fun Any.id(): Int // Note: can return negative value on K/N
 
 internal actual inline fun assert(value: () -> Boolean) {}

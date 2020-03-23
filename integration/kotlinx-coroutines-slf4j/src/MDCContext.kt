@@ -48,7 +48,7 @@ public class MDCContext(
     /**
      * Key of [MDCContext] in [CoroutineContext].
      */
-    companion object Key : CoroutineContext.Key<MDCContext>
+    public companion object Key : CoroutineContext.Key<MDCContext>
 
     /** @suppress */
     override fun updateThreadContext(context: CoroutineContext): MDCContextMap {

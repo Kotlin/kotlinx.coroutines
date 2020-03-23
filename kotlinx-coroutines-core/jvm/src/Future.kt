@@ -29,7 +29,7 @@ public fun Job.cancelFutureOnCompletion(future: Future<*>): DisposableHandle =
  * invokeOnCancellation { future.cancel(false) }
  * ```
  */
-public fun CancellableContinuation<*>.cancelFutureOnCancellation(future: Future<*>) =
+public fun CancellableContinuation<*>.cancelFutureOnCancellation(future: Future<*>): Unit =
     invokeOnCancellation(handler = CancelFutureOnCancel(future))
 
 private class CancelFutureOnCompletion(

@@ -49,7 +49,7 @@ import kotlinx.coroutines.reactive.*
  */
 @ExperimentalCoroutinesApi
 public class ReactorContext(public val context: Context) : AbstractCoroutineContextElement(ReactorContext) {
-    companion object Key : CoroutineContext.Key<ReactorContext>
+    public companion object Key : CoroutineContext.Key<ReactorContext>
 }
 
 /**

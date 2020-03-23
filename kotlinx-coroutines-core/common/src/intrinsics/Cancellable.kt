@@ -13,7 +13,7 @@ import kotlin.coroutines.intrinsics.*
  * while waiting to be dispatched.
  */
 @InternalCoroutinesApi
-public fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>) = runSafely(completion) {
+public fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>): Unit = runSafely(completion) {
     createCoroutineUnintercepted(completion).intercepted().resumeCancellableWith(Result.success(Unit))
 }
 

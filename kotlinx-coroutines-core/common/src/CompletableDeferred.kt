@@ -55,7 +55,8 @@ public interface CompletableDeferred<T> : Deferred<T> {
  * [CompletableDeferred.completeExceptionally].
  */
 @ExperimentalCoroutinesApi // since 1.3.2, tentatively until 1.4.0
-public fun <T> CompletableDeferred<T>.completeWith(result: Result<T>) = result.fold({ complete(it) }, { completeExceptionally(it) })
+public fun <T> CompletableDeferred<T>.completeWith(result: Result<T>): Boolean =
+    result.fold({ complete(it) }, { completeExceptionally(it) })
 
 /**
  * Creates a [CompletableDeferred] in an _active_ state.

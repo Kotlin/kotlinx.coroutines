@@ -25,7 +25,7 @@ public interface Delay {
      * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
      * immediately resumes with [CancellationException].
      */
-    suspend fun delay(time: Long) {
+    public suspend fun delay(time: Long) {
         if (time <= 0) return // don't delay
         return suspendCancellableCoroutine { scheduleResumeAfterDelay(time, it) }
     }
@@ -45,7 +45,7 @@ public interface Delay {
      * with(continuation) { resumeUndispatchedWith(Unit) }
      * ```
      */
-    fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>)
+    public fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>)
 
     /**
      * Schedules invocation of a specified [block] after a specified delay [timeMillis].
@@ -54,7 +54,7 @@ public interface Delay {
      *
      * This implementation uses a built-in single-threaded scheduled executor service.
      */
-    fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
+    public fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
         DefaultDelay.invokeOnTimeout(timeMillis, block)
 }
 
@@ -87,7 +87,7 @@ public suspend fun delay(timeMillis: Long) {
  * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
  */
 @ExperimentalTime
-public suspend fun delay(duration: Duration) = delay(duration.toDelayMillis())
+public suspend fun delay(duration: Duration): Unit = delay(duration.toDelayMillis())
 
 /** Returns [Delay] implementation of the given context */
 internal val CoroutineContext.delay: Delay get() = get(ContinuationInterceptor) as? Delay ?: DefaultDelay

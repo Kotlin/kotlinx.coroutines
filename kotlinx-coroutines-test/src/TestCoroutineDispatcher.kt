@@ -105,7 +105,7 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     }
 
     /** @suppress */
-    override val currentTime get() = _time.value
+    override val currentTime: Long get() = _time.value
 
     /** @suppress */
     override fun advanceTimeBy(delayTimeMillis: Long): Long {
@@ -136,7 +136,7 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     }
 
     /** @suppress */
-    override fun runCurrent() = doActionsUntil(currentTime)
+    override fun runCurrent(): Unit  = doActionsUntil(currentTime)
 
     /** @suppress */
     override suspend fun pauseDispatcher(block: suspend () -> Unit) {

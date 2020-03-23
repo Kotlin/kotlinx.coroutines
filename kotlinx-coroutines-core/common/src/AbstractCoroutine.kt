@@ -113,7 +113,7 @@ public abstract class AbstractCoroutine<in T>(
         afterResume(state)
     }
 
-    protected open fun afterResume(state: Any?) = afterCompletion(state)
+    protected open fun afterResume(state: Any?): Unit = afterCompletion(state)
 
     internal final override fun handleOnCompletionException(exception: Throwable) {
         handleCoroutineException(context, exception)

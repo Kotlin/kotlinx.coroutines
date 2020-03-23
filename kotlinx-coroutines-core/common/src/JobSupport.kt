@@ -652,7 +652,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * Makes this [Job] cancelled with a specified [cause].
      * It is used in [AbstractCoroutine]-derived classes when there is an internal failure.
      */
-    public fun cancelCoroutine(cause: Throwable?) = cancelImpl(cause)
+    public fun cancelCoroutine(cause: Throwable?): Boolean = cancelImpl(cause)
 
     // cause is Throwable or ParentJob when cancelChild was invoked
     // returns true is exception was handled, false otherwise

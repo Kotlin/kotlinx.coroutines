@@ -12,3 +12,8 @@ kotlin.sourceSets {
         api "org.jetbrains.kotlin:kotlin-test-annotations-common:$kotlin_version"
     }
 }
+
+
+kotlin.sourceSets.matching({ it.name.contains("Main") }).all { srcSet ->
+    project.ext.set("kotlin.mpp.freeCompilerArgsForSourceSet.${srcSet.name}", "-Xexplicit-api=strict")
+}

@@ -13,7 +13,8 @@ import kotlin.coroutines.*
  * **Note: Ticker channels are not currently integrated with structured concurrency and their api will change in the future.**
  */
 @ObsoleteCoroutinesApi
-enum class TickerMode {
+@Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE")
+public enum class TickerMode {
     /**
      * Adjust delay to maintain fixed period if consumer cannot keep up or is otherwise slow.
      * **This is a default mode.**

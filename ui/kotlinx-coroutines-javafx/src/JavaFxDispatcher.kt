@@ -31,7 +31,7 @@ public val Dispatchers.JavaFx: JavaFxDispatcher
 public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
 
     /** @suppress */
-    override fun dispatch(context: CoroutineContext, block: Runnable) = Platform.runLater(block)
+    override fun dispatch(context: CoroutineContext, block: Runnable): Unit = Platform.runLater(block)
 
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {

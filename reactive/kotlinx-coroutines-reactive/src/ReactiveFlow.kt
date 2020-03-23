@@ -163,8 +163,8 @@ private class FlowAsPublisher<T : Any>(private val flow: Flow<T>) : Publisher<T>
 /** @suppress */
 @InternalCoroutinesApi
 public class FlowSubscription<T>(
-    @JvmField val flow: Flow<T>,
-    @JvmField val subscriber: Subscriber<in T>
+    @JvmField public val flow: Flow<T>,
+    @JvmField public val subscriber: Subscriber<in T>
 ) : Subscription, AbstractCoroutine<Unit>(Dispatchers.Unconfined, false) {
     private val requested = atomic(0L)
     private val producer = atomic<CancellableContinuation<Unit>?>(null)

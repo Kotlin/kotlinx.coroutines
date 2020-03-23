@@ -40,26 +40,26 @@ public fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
 
 // Will be promoted to error in 1.3.0, removed in 1.4.0
 @Deprecated(message = "Use collect instead", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("this.collect(action)"))
-public suspend inline fun <T> MaybeSource<T>.consumeEach(action: (T) -> Unit) =
+public suspend inline fun <T> MaybeSource<T>.consumeEach(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
 
 // Will be promoted to error in 1.3.0, removed in 1.4.0
 @Deprecated(message = "Use collect instead", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("this.collect(action)"))
-public suspend inline fun <T> ObservableSource<T>.consumeEach(action: (T) -> Unit) =
+public suspend inline fun <T> ObservableSource<T>.consumeEach(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
 
 /**
  * Subscribes to this [MaybeSource] and performs the specified action for each received element.
  * Cancels subscription if any exception happens during collect.
  */
-public suspend inline fun <T> MaybeSource<T>.collect(action: (T) -> Unit) =
+public suspend inline fun <T> MaybeSource<T>.collect(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
 
 /**
  * Subscribes to this [ObservableSource] and performs the specified action for each received element.
  * Cancels subscription if any exception happens during collect.
  */
-public suspend inline fun <T> ObservableSource<T>.collect(action: (T) -> Unit) =
+public suspend inline fun <T> ObservableSource<T>.collect(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")

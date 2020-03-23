@@ -288,7 +288,7 @@ internal fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinke
  * @suppress **This an internal API and should not be used from general code.**
  */
 @InternalCoroutinesApi
-public fun CancellableContinuation<*>.disposeOnCancellation(handle: DisposableHandle) =
+public fun CancellableContinuation<*>.disposeOnCancellation(handle: DisposableHandle): Unit =
     invokeOnCancellation(handler = DisposeOnCancel(handle).asHandler)
 
 // --------------- implementation details ---------------

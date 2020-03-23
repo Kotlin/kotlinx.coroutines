@@ -135,7 +135,7 @@ public object DebugProbes {
      * ...
      * ```
      */
-    public fun dumpCoroutines(out: PrintStream = System.out) = DebugProbesImpl.dumpCoroutines(out)
+    public fun dumpCoroutines(out: PrintStream = System.out): Unit = DebugProbesImpl.dumpCoroutines(out)
 }
 
 // Stubs which are injected as coroutine probes. Require direct match of signatures

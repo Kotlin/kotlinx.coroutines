@@ -32,20 +32,20 @@ internal object DefaultScheduler : ExperimentalCoroutineDispatcher() {
  */
 // TODO make internal (and rename) after complete integration
 @InternalCoroutinesApi
-open class ExperimentalCoroutineDispatcher(
+public open class ExperimentalCoroutineDispatcher(
     private val corePoolSize: Int,
     private val maxPoolSize: Int,
     private val idleWorkerKeepAliveNs: Long,
     private val schedulerName: String = "CoroutineScheduler"
 ) : ExecutorCoroutineDispatcher() {
-    constructor(
+    public constructor(
         corePoolSize: Int = CORE_POOL_SIZE,
         maxPoolSize: Int = MAX_POOL_SIZE,
         schedulerName: String = DEFAULT_SCHEDULER_NAME
     ) : this(corePoolSize, maxPoolSize, IDLE_WORKER_KEEP_ALIVE_NS, schedulerName)
 
     @Deprecated(message = "Binary compatibility for Ktor 1.0-beta", level = DeprecationLevel.HIDDEN)
-    constructor(
+    public constructor(
         corePoolSize: Int = CORE_POOL_SIZE,
         maxPoolSize: Int = MAX_POOL_SIZE
     ) : this(corePoolSize, maxPoolSize, IDLE_WORKER_KEEP_ALIVE_NS)
@@ -70,7 +70,7 @@ open class ExperimentalCoroutineDispatcher(
             DefaultExecutor.dispatchYield(context, block)
         }
 
-    override fun close() = coroutineScheduler.close()
+    override fun close(): Unit = coroutineScheduler.close()
 
     override fun toString(): String {
         return "${super.toString()}[scheduler = $coroutineScheduler]"
