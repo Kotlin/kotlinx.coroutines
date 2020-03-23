@@ -65,17 +65,19 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
             if (!notifyStartup()) return
             while (true) {
                 Thread.interrupted() // just reset interruption flag
-                var parkNanos = processNextEvent()
+                val nextTask = popNextTask()
+                if (nextTask != null) {
+                    shutdownNanos = Long.MAX_VALUE
+                    nextTask.run()
+                }
+                var parkNanos = nextTime
                 if (parkNanos == Long.MAX_VALUE) {
                     // nothing to do, initialize shutdown timeout
-                    if (shutdownNanos == Long.MAX_VALUE) {
-                        val now = nanoTime()
-                        if (shutdownNanos == Long.MAX_VALUE) shutdownNanos = now + KEEP_ALIVE_NANOS
-                        val tillShutdown = shutdownNanos - now
-                        if (tillShutdown <= 0) return // shut thread down
-                        parkNanos = parkNanos.coerceAtMost(tillShutdown)
-                    } else
-                        parkNanos = parkNanos.coerceAtMost(KEEP_ALIVE_NANOS) // limit wait time anyway
+                    val now = nanoTime()
+                    if (shutdownNanos == Long.MAX_VALUE) shutdownNanos = now + KEEP_ALIVE_NANOS
+                    val tillShutdown = shutdownNanos - now
+                    if (tillShutdown <= 0) return // shut thread down
+                    parkNanos = parkNanos.coerceAtMost(tillShutdown)
                 }
                 if (parkNanos > 0) {
                     // check if shutdown was requested and bail out in this case
