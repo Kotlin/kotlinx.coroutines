@@ -53,7 +53,7 @@ internal abstract class EventLoop : CoroutineDispatcher() {
      *          (no check for performance reasons, may be added in the future).
      */
     public open fun processNextEvent(): Long {
-        val task = popNextTask() ?: return Long.MAX_VALUE
+        val task = dequeueNextTask() ?: return Long.MAX_VALUE
         task.run()
         return nextTime
     }
@@ -67,16 +67,19 @@ internal abstract class EventLoop : CoroutineDispatcher() {
         }
 
     public fun processUnconfinedEvent(): Boolean {
-        val task = popUnconfinedTask() ?: return false
+        val task = dequeueUnconfinedTask() ?: return false
         task.run()
         return true
     }
 
-    public fun popUnconfinedTask(): DispatchedTask<*>? =
+    protected fun dequeueUnconfinedTask(): DispatchedTask<*>? =
         unconfinedQueue?.removeFirstOrNull()
 
-    protected open fun popNextTask(onlyUnconfined: Boolean = false): Runnable? =
-        popUnconfinedTask()
+    /**
+     * Get the next event in this event loop, if there is one.
+     */
+    protected open fun dequeueNextTask(): Runnable? =
+        dequeueUnconfinedTask()
 
     /**
      * Returns `true` if the invoking `runBlocking(context) { ... }` that was passed this event loop in its context
@@ -258,11 +261,8 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         }
     }
 
-    override fun popNextTask(onlyUnconfined: Boolean): Runnable? {
-        val unconfined = popUnconfinedTask()
-        if (onlyUnconfined) {
-            return unconfined
-        }
+    protected override fun dequeueNextTask(): Runnable? {
+        val unconfined = dequeueUnconfinedTask()
         // unconfined events take priority
         if (unconfined != null) {
             return unconfined

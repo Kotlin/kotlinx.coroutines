@@ -65,7 +65,7 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
             if (!notifyStartup()) return
             while (true) {
                 Thread.interrupted() // just reset interruption flag
-                val nextTask = popNextTask()
+                val nextTask = dequeueNextTask()
                 if (nextTask != null) {
                     shutdownNanos = Long.MAX_VALUE
                     nextTask.run()
