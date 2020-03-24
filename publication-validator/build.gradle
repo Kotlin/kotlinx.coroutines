@@ -4,6 +4,8 @@
 
 apply from: rootProject.file("gradle/compile-jvm.gradle")
 
+def coroutines_version = version // all modules share the same version
+
 repositories {
     mavenLocal()
     mavenCentral()
@@ -14,8 +16,6 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'org.apache.commons:commons-compress:1.18'
     testCompile 'com.google.code.gson:gson:2.8.5'
-    testCompile project(':kotlinx-coroutines-core')
-    testCompile project(':kotlinx-coroutines-android')
 }
 
 compileTestKotlin {
@@ -26,7 +26,14 @@ def dryRunNpm = properties['dryRun']
 
 test {
     onlyIf { dryRunNpm == "true" } // so that we don't accidentally publish anything, especially before the test
-    doFirst { println "Verifying publishing version $version" } // all modules share the same version
+    doFirst {
+        println "Verifying publishing version $coroutines_version"
+        // we can't depend on the subprojects because we need to test the classfiles that are published in the end.
+        // also, we can't put this in the `dependencies` block because the resolution would happen before publication.
+        classpath += project.configurations.detachedConfiguration(
+                project.dependencies.create("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"),
+                project.dependencies.create("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"))
+    }
     environment "projectRoot", project.rootDir
     environment "deployVersion", version
     if (dryRunNpm == "true") { // `onlyIf` only affects execution of the task, not the dependency subtree
