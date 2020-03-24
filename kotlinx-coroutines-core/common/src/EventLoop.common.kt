@@ -287,6 +287,11 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         return dequeue()
     }
 
+    override fun processNextEvent(): Long {
+        dequeueNextTask()?.run()
+        return nextTime
+    }
+
     public final override fun dispatch(context: CoroutineContext, block: Runnable) = enqueue(block)
 
     public fun enqueue(task: Runnable) {
