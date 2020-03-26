@@ -140,4 +140,7 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
         resetAll() // clear queues
         (this as Object).notifyAll()
     }
+
+    internal val isThreadPresent
+        get() = _thread != null
 }
