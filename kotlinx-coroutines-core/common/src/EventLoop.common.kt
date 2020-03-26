@@ -23,8 +23,6 @@ import kotlin.native.concurrent.*
 internal abstract class EventLoop : CoroutineDispatcher() {
     /**
      * Counts the number of nested `runBlocking` and [Dispatchers.Unconfined] that use this event loop.
-     * There are two 32-bit counters encoded in this 64-bit value, allowing to count [Dispatchers.Unconfined]
-     * separately from `runBlocking`; see [delta] and its uses.
      */
     private var useCount = 0L
 
@@ -53,9 +51,8 @@ internal abstract class EventLoop : CoroutineDispatcher() {
      *          (no check for performance reasons, may be added in the future).
      */
     public open fun processNextEvent(): Long {
-        val task = dequeueNextTask() ?: return Long.MAX_VALUE
-        task.run()
-        return nextTime
+        if (!processUnconfinedEvent()) return Long.MAX_VALUE
+        return 0
     }
 
     protected open val isEmpty: Boolean get() = isUnconfinedQueueEmpty
@@ -67,20 +64,11 @@ internal abstract class EventLoop : CoroutineDispatcher() {
         }
 
     public fun processUnconfinedEvent(): Boolean {
-        val task = dequeueUnconfinedTask() ?: return false
+        val queue = unconfinedQueue ?: return false
+        val task = queue.removeFirstOrNull() ?: return false
         task.run()
         return true
     }
-
-    protected fun dequeueUnconfinedTask(): DispatchedTask<*>? =
-        unconfinedQueue?.removeFirstOrNull()
-
-    /**
-     * Get the next event in this event loop, if there is one.
-     */
-    protected open fun dequeueNextTask(): Runnable? =
-        dequeueUnconfinedTask()
-
     /**
      * Returns `true` if the invoking `runBlocking(context) { ... }` that was passed this event loop in its context
      * parameter should call [processNextEvent] for this event loop (otherwise, it will process thread-local one).
@@ -261,12 +249,9 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         }
     }
 
-    protected override fun dequeueNextTask(): Runnable? {
-        val unconfined = dequeueUnconfinedTask()
+    override fun processNextEvent(): Long {
         // unconfined events take priority
-        if (unconfined != null) {
-            return unconfined
-        }
+        if (processUnconfinedEvent()) return 0
         // queue all delayed tasks that are due to be executed
         val delayed = _delayed.value
         if (delayed != null && !delayed.isEmpty) {
@@ -284,11 +269,11 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             }
         }
         // then process one event from queue
-        return dequeue()
-    }
-
-    override fun processNextEvent(): Long {
-        dequeueNextTask()?.run()
+        val task = dequeue()
+        if (task != null) {
+            task.run()
+            return 0
+        }
         return nextTime
     }
 
