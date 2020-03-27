@@ -38,7 +38,7 @@ class DefaultExecutorStressTest : TestBase() {
     }
 
     @Test
-    fun workerShutsDown() = withVirtualTimeSource {
+    fun testWorkerShutdown() = withVirtualTimeSource {
         val iterations = 1_000 * stressTestMultiplier
         // wait for the worker to shut down
         suspend fun awaitWorkerShutdown() {
