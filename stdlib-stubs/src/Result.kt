@@ -4,7 +4,7 @@
 
 package kotlin
 
-interface Result<out T> {
+public interface Result<out T> {
     public val value: T
     public val isSuccess: Boolean
     public val isFailure: Boolean

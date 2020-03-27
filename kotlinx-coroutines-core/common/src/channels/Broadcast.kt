@@ -39,7 +39,7 @@ import kotlin.native.concurrent.*
  *
  * @param start coroutine start option. The default value is [CoroutineStart.LAZY].
  */
-fun <E> ReceiveChannel<E>.broadcast(
+public fun <E> ReceiveChannel<E>.broadcast(
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY
 ): BroadcastChannel<E> {

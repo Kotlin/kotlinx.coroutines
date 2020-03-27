@@ -245,7 +245,7 @@ internal class DispatchedContinuation<in T>(
  * @suppress **This an internal API and should not be used from general code.**
  */
 @InternalCoroutinesApi
-public fun <T> Continuation<T>.resumeCancellableWith(result: Result<T>) = when (this) {
+public fun <T> Continuation<T>.resumeCancellableWith(result: Result<T>): Unit = when (this) {
     is DispatchedContinuation -> resumeCancellableWith(result)
     else -> resumeWith(result)
 }

@@ -2,7 +2,7 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("PropertyName")
+@file:Suppress("PropertyName", "NO_EXPLICIT_VISIBILITY_IN_API_MODE")
 
 package kotlinx.coroutines.debug
 
@@ -15,7 +15,7 @@ import kotlin.coroutines.jvm.internal.*
  */
 @ExperimentalCoroutinesApi
 public class CoroutineInfo internal constructor(
-    val context: CoroutineContext,
+    public val context: CoroutineContext,
     private val creationStackBottom: CoroutineStackFrame?,
     @JvmField internal val sequenceNumber: Long
 ) {

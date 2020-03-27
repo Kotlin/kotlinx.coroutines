@@ -164,7 +164,7 @@ private class ThrowingCollector(private val e: Throwable) : FlowCollector<Any?> 
 // It was only released in 1.3.0-M2, remove in 1.4.0
 /** @suppress */
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility with a version w/o FlowCollector receiver")
-public fun <T> Flow<T>.onCompletion(action: suspend (cause: Throwable?) -> Unit) =
+public fun <T> Flow<T>.onCompletion(action: suspend (cause: Throwable?) -> Unit): Flow<T> =
     onCompletion { action(it) }
 
 private suspend fun <T> FlowCollector<T>.invokeSafely(

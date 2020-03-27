@@ -27,7 +27,7 @@ import kotlin.jvm.*
  *     .collect() // trigger collection of the flow
  * ```
  */
-public suspend fun Flow<*>.collect() = collect(NopCollector)
+public suspend fun Flow<*>.collect(): Unit = collect(NopCollector)
 
 /**
  * Terminal flow operator that [launches][launch] the [collection][collect] of the given flow in the [scope].
@@ -132,4 +132,4 @@ public suspend fun <T> Flow<T>.collectLatest(action: suspend (value: T) -> Unit)
  */
 @BuilderInference
 @ExperimentalCoroutinesApi
-public suspend inline fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) = flow.collect(this)
+public suspend inline fun <T> FlowCollector<T>.emitAll(flow: Flow<T>): Unit = flow.collect(this)

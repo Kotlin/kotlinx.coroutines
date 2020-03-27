@@ -1,6 +1,7 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE")
 
 package kotlinx.coroutines.internal
 
@@ -433,7 +434,7 @@ public actual open class LockFreeLinkedListNode {
             return null
         }
 
-        public fun finishPrepare() = desc.finishPrepare(this)
+        public fun finishPrepare(): Unit = desc.finishPrepare(this)
 
         override fun toString(): String = "PrepareOp(op=$atomicOp)"
     }

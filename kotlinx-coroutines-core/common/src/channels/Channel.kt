@@ -7,15 +7,15 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
+import kotlinx.coroutines.channels.Channel.Factory.CHANNEL_DEFAULT_CAPACITY
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
-import kotlinx.coroutines.channels.Channel.Factory.CHANNEL_DEFAULT_CAPACITY
-import kotlinx.coroutines.internal.systemProp
+import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
-import kotlin.jvm.*
 import kotlin.internal.*
+import kotlin.jvm.*
 
 /**
  * Sender's interface to [Channel].
@@ -314,7 +314,7 @@ public interface ReceiveChannel<out E> {
      * @suppress This method implements old version of JVM ABI. Use [cancel].
      */
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
-    public fun cancel() = cancel(null)
+    public fun cancel(): Unit = cancel(null)
 
     /**
      * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [cancel].
@@ -517,17 +517,17 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
         /**
          * Requests a channel with an unlimited capacity buffer in the `Channel(...)` factory function
          */
-        public const val UNLIMITED = Int.MAX_VALUE
+        public const val UNLIMITED: Int = Int.MAX_VALUE
 
         /**
          * Requests a rendezvous channel in the `Channel(...)` factory function &mdash; a `RendezvousChannel` gets created.
          */
-        public const val RENDEZVOUS = 0
+        public const val RENDEZVOUS: Int = 0
 
         /**
          * Requests a conflated channel in the `Channel(...)` factory function &mdash; a `ConflatedChannel` gets created.
          */
-        public const val CONFLATED = -1
+        public const val CONFLATED: Int = -1
 
         /**
          * Requests a buffered channel with the default buffer capacity in the `Channel(...)` factory function &mdash;
@@ -535,7 +535,7 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
          * The default capacity is 64 and can be overridden by setting
          * [DEFAULT_BUFFER_PROPERTY_NAME] on JVM.
          */
-        public const val BUFFERED = -2
+        public const val BUFFERED: Int = -2
 
         // only for internal use, cannot be used with Channel(...)
         internal const val OPTIONAL_CHANNEL = -3
@@ -544,7 +544,7 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
          * Name of the property that defines the default channel capacity when
          * [BUFFERED] is used as parameter in `Channel(...)` factory function.
          */
-        public const val DEFAULT_BUFFER_PROPERTY_NAME = "kotlinx.coroutines.channels.defaultBuffer"
+        public const val DEFAULT_BUFFER_PROPERTY_NAME: String = "kotlinx.coroutines.channels.defaultBuffer"
 
         internal val CHANNEL_DEFAULT_CAPACITY = systemProp(DEFAULT_BUFFER_PROPERTY_NAME,
             64, 1, UNLIMITED - 1

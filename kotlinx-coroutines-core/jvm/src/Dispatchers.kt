@@ -14,7 +14,7 @@ import kotlin.coroutines.*
 /**
  * Name of the property that defines the maximal number of threads that are used by [Dispatchers.IO] coroutines dispatcher.
  */
-public const val IO_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.io.parallelism"
+public const val IO_PARALLELISM_PROPERTY_NAME: String = "kotlinx.coroutines.io.parallelism"
 
 /**
  * Groups various implementations of [CoroutineDispatcher].

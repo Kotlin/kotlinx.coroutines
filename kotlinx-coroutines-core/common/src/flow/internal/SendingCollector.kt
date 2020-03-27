@@ -16,5 +16,5 @@ import kotlinx.coroutines.flow.*
 public class SendingCollector<T>(
     private val channel: SendChannel<T>
 ) : FlowCollector<T> {
-    override suspend fun emit(value: T) = channel.send(value)
+    override suspend fun emit(value: T): Unit = channel.send(value)
 }

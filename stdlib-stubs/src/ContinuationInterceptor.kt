@@ -5,7 +5,7 @@ package kotlin.coroutines
 
 // DOKKA STUB
 public interface ContinuationInterceptor : CoroutineContext.Element {
-    companion object Key : CoroutineContext.Key<ContinuationInterceptor>
+    public companion object Key : CoroutineContext.Key<ContinuationInterceptor>
     public fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T>
     public fun releaseInterceptedContinuation(continuation: Continuation<*>): Continuation<*> {
         return continuation

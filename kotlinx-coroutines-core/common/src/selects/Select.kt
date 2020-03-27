@@ -39,7 +39,7 @@ public interface SelectBuilder<in R> {
      * Registers clause in this [select] expression with additional nullable parameter of type [P]
      * with the `null` value for this parameter that selects value of type [Q].
      */
-    public operator fun <P, Q> SelectClause2<P?, Q>.invoke(block: suspend (Q) -> R) = invoke(null, block)
+    public operator fun <P, Q> SelectClause2<P?, Q>.invoke(block: suspend (Q) -> R): Unit = invoke(null, block)
 
     /**
      * Clause that selects the given [block] after a specified timeout passes.
@@ -61,7 +61,7 @@ public interface SelectBuilder<in R> {
  */
 @ExperimentalCoroutinesApi
 @ExperimentalTime
-public fun <R> SelectBuilder<R>.onTimeout(timeout: Duration, block: suspend () -> R) =
+public fun <R> SelectBuilder<R>.onTimeout(timeout: Duration, block: suspend () -> R): Unit =
         onTimeout(timeout.toDelayMillis(), block)
 
 /**
