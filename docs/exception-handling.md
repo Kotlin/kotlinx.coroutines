@@ -78,9 +78,10 @@ Caught ArithmeticException
 
 ### CoroutineExceptionHandler
 
-But what if one does not want to print all exceptions to the console?
-[CoroutineExceptionHandler] context element is used as generic `catch` block of coroutine where custom logging or exception handling may take place.
-It is similar to using [`Thread.uncaughtExceptionHandler`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#setUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler)).
+What if one does not want to print all exceptions to the console?
+[CoroutineExceptionHandler] context element on a _root_ coroutine can be used as generic `catch` block for
+this root coroutine and all its children where custom logging or exception handling may take place.
+It is similar to [`Thread.uncaughtExceptionHandler`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#setUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler)).
 
 On JVM it is possible to redefine global exception handler for all coroutines by registering [CoroutineExceptionHandler] via
 [`ServiceLoader`](https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html).
@@ -89,8 +90,12 @@ Global exception handler is similar to
 which is used when no more specific handlers are registered.
 On Android, `uncaughtExceptionPreHandler` is installed as a global coroutine exception handler.
 
-[CoroutineExceptionHandler] is invoked only on exceptions which are not expected to be handled by the user, 
-so registering it in [async] builder and the like of it has no effect.
+`CoroutineExceptionHandler` is invoked only on **uncaught** exceptions &mdash; exceptions that were not handled in any other way.
+In particular, all _children_ coroutines (coroutines created in the context of another [Job]) delegate handling of
+their exceptions to their parent coroutine, which also delegates to the parent, and so on until the root,
+so the `CoroutineExceptionHandler` installed in their context is never used. 
+In addition to that, [async] builder always catches all exceptions and represents them in the resulting [Deferred] object, 
+so its `CoroutineExceptionHandler` has no effect either.
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -102,10 +107,10 @@ fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("Caught $exception") 
     }
-    val job = GlobalScope.launch(handler) {
+    val job = GlobalScope.launch(handler) { // root coroutine, running in GlobalScope
         throw AssertionError()
     }
-    val deferred = GlobalScope.async(handler) {
+    val deferred = GlobalScope.async(handler) { // also root, but async instead of launch
         throw ArithmeticException() // Nothing will be printed, relying on user to call deferred.await()
     }
     joinAll(job, deferred)
@@ -501,6 +506,8 @@ Scope is completed
 [Deferred.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/await.html
 [GlobalScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-global-scope/index.html
 [CoroutineExceptionHandler]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-exception-handler/index.html
+[Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
+[Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html
 [Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
 [SupervisorJob()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-supervisor-job.html

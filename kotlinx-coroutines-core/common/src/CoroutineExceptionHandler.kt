@@ -52,11 +52,32 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
     }
 
 /**
- * An optional element in the coroutine context to handle uncaught exceptions.
+ * An optional element in the coroutine context to handle **uncaught** exceptions.
  *
- * Normally, uncaught exceptions can only result from coroutines created using the [launch][CoroutineScope.launch] builder.
+ * Normally, uncaught exceptions can only result from _root_ coroutines created using the [launch][CoroutineScope.launch] builder.
+ * All _children_ coroutines (coroutines created in the context of another [Job]) delegate handling of their
+ * exceptions to their parent coroutine, which also delegates to the parent, and so on until the root,
+ * so the `CoroutineExceptionHandler` installed in their context is never used.
  * A coroutine that was created using [async][CoroutineScope.async] always catches all its exceptions and represents them
- * in the resulting [Deferred] object.
+ * in the resulting [Deferred] object, so it cannot result in uncaught exceptions either.
+ *
+ * ### Handling coroutine exceptions
+ *
+ * `CoroutineExceptionHandler` is a last-resort mechanism for global "catch all" behavior.
+ * If you need to handle exception in a specific part of the code, it is recommended to use `try`/`catch` around
+ * the corresponding code inside your coroutine, like this:
+ *
+ * ```
+ * scope.launch { // launch child coroutine in a scope
+ *     try {
+ *          // do something
+ *     } catch (e: Throwable) {
+ *          // handle exception
+ *     }
+ * }
+ * ```
+ *
+ * ### Implementation details
  *
  * By default, when no handler is installed, uncaught exception are handled in the following way:
  * * If exception is [CancellationException] then it is ignored
