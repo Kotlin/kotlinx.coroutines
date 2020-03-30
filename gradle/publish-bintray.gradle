@@ -64,8 +64,8 @@ publishing {
     publications.all {
         MavenCentralKt.configureMavenCentralMetadata(pom, project)
 
-        // add empty javadocs (no need for MPP root publication which publishes only pom file)
-        if (it.name != 'kotlinMultiplatform' && !isBom) {
+        // add empty javadocs
+        if (!isBom && it.name != "kotlinMultiplatform") {
             it.artifact(javadocJar)
         }
 
@@ -73,13 +73,15 @@ publishing {
         def type = it.name
         switch (type) {
             case 'kotlinMultiplatform':
-                it.artifactId = "$project.name-native"
+                it.artifactId = "$project.name"
+                apply from: "$rootDir/gradle/publish-mpp-root-module-in-platform.gradle"
+                publishPlatformArtifactsInRootModule(publications["jvm"])
                 break
             case 'metadata':
                 it.artifactId = "$project.name-common"
                 break
             case 'jvm':
-                it.artifactId = "$project.name"
+                it.artifactId = "$project.name-jvm"
                 break
             case 'js':
             case 'native':
