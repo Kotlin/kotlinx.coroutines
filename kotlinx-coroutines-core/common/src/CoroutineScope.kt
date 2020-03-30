@@ -31,7 +31,7 @@ import kotlin.coroutines.intrinsics.*
  *
  * ### Android usage
  *
- * Android has first-party support for coroutine scope in all entities with lifecycle.
+ * Android has first-party support for coroutine scope in all entities with the lifecycle.
  * See [the corresponding documentation](https://developer.android.com/topic/libraries/architecture/coroutines#lifecyclescope).
  *
  * ### Custom usage
@@ -50,7 +50,7 @@ import kotlin.coroutines.intrinsics.*
  *
  *     /*
  *      * Note: if this instance is destroyed or any of the launched coroutines
- *      * in this method throw an exception, then all nested coroutines are cancelled.
+ *      * in this method throws an exception, then all nested coroutines are cancelled.
  *      */
  *     fun showSomeData() = scope.launch { // launched in the main thread
  *        // ... here we can use suspending functions or coroutine builders with other dispatchers

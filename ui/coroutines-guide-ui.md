@@ -408,47 +408,40 @@ during UI freeze.
 ### Structured concurrency, lifecycle and coroutine parent-child hierarchy
 
 A typical UI application has a number of elements with a lifecycle. Windows, UI controls, activities, views, fragments
-and other visual elements are created and destroyed. A long-running coroutine, performing some IO or a background 
-computation, can retain references to the corresponding UI elements for longer than it is needed, preventing garbage 
+and other visual elements are created and destroyed. A long-running coroutine, performing some IO or a background
+computation, can retain references to the corresponding UI elements for longer than it is needed, preventing garbage
 collection of the whole trees of UI objects that were already destroyed and will not be displayed anymore.
 
-The natural solution to this problem is to associate a [Job] object with each UI object that has a lifecycle and create
-all the coroutines in the context of this job. But passing associated job object to every coroutine builder is error-prone, 
-it is easy to forget it. For this purpose, [CoroutineScope] interface could be implemented by UI owner, and then every
-coroutine builder defined as an extension on [CoroutineScope] inherits UI job without explicitly mentioning it.
-For the sake of simplicity, [MainScope()] factory can be used. It automatically provides `Dispatchers.Main` and parent 
-job.
+The natural solution to this problem is to associate a [CoroutineScope] object with each UI object that has a
+lifecycle and create all the coroutines in the context of this scope.
+For the sake of simplicity, [MainScope()] factory can be used. It automatically provides `Dispatchers.Main` and
+a parent job for all the children coroutines.
 
-For example, in Android application an `Activity` is initially _created_ and is _destroyed_ when it is no longer 
-needed and when its memory must be released. A natural solution is to attach an 
-instance of a `Job` to an instance of an `Activity`:
+For example, in Android application an `Activity` is initially _created_ and is _destroyed_ when it is no longer
+needed and when its memory must be released. A natural solution is to attach an
+instance of a `CoroutineScope` to an instance of an `Activity`:
+
 <!--- CLEAR -->
 
 ```kotlin
-abstract class ScopedAppActivity: AppCompatActivity(), CoroutineScope by MainScope() {
+class MainActivity : AppCompatActivity() {
+    private val scope = MainScope()
+
     override fun onDestroy() {
         super.onDestroy()
-        cancel() // CoroutineScope.cancel
+        scope.cancel()
     } 
-}
-```
 
-Now, an activity that is associated with a job has to extend ScopedAppActivity
-
-```kotlin
-class MainActivity : ScopedAppActivity() {
-
-    fun asyncShowData() = launch { // Is invoked in UI context with Activity's job as a parent
+    fun asyncShowData() = scope.launch { // Is invoked in UI context with Activity's scope as a parent
         // actual implementation
     }
     
     suspend fun showIOData() {
-        val deferred = async(Dispatchers.IO) {
-            // impl      
+        val data = withContext(Dispatchers.IO) {
+            // compute data in background thread      
         }
         withContext(Dispatchers.Main) {
-          val data = deferred.await()
-          // Show data in UI
+            // Show data in UI
         }
     }
 }
@@ -457,43 +450,14 @@ class MainActivity : ScopedAppActivity() {
 Every coroutine launched from within a `MainActivity` has its job as a parent and is immediately cancelled when
 activity is destroyed.
 
-To propagate activity scope to its views and presenters, multiple techniques can be used:
-- [coroutineScope] builder to provide a nested scope
-- Receive [CoroutineScope] in presenter method parameters
-- Make method extension on [CoroutineScope] (applicable only for top-level methods)
-
-```kotlin
-class ActivityWithPresenters: ScopedAppActivity() {
-    fun init() {
-        val presenter = Presenter()
-        val presenter2 = ScopedPresenter(this)
-    }
-}
-
-class Presenter {
-    suspend fun loadData() = coroutineScope {
-        // Nested scope of outer activity
-    }
-    
-    suspend fun loadData(uiScope: CoroutineScope) = uiScope.launch {
-      // Invoked in the uiScope
-    }
-}
-
-class ScopedPresenter(scope: CoroutineScope): CoroutineScope by scope {
-    fun loadData() = launch { // Extension on ActivityWithPresenters's scope
-    }
-}
-
-suspend fun CoroutineScope.launchInIO() = launch(Dispatchers.IO) {
-   // Launched in the scope of the caller, but with IO dispatcher
-}
-``` 
+> Note, that Android has first-party support for coroutine scope in all entities with the lifecycle.
+See [the corresponding documentation](https://developer.android.com/topic/libraries/architecture/coroutines#lifecyclescope).
 
 Parent-child relation between jobs forms a hierarchy. A coroutine that performs some background job on behalf of
-the view and in its context can create further children coroutines. The whole tree of coroutines gets cancelled
+the activity can create further children coroutines. The whole tree of coroutines gets cancelled
 when the parent job is cancelled. An example of that is shown in the
 ["Children of a coroutine"](../docs/coroutine-context-and-dispatchers.md#children-of-a-coroutine) section of the guide to coroutines.
+
 <!--- CLEAR -->
 
 ### Blocking operations
@@ -649,7 +613,6 @@ After delay
 [Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
 [MainScope()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-main-scope.html
-[coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html
 [Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
 [CoroutineStart]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-start/index.html
