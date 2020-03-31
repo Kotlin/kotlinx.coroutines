@@ -47,9 +47,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     private val onCloseHandler = atomic<Any?>(null)
 
     private companion object {
-        @SharedImmutable
         private val CLOSED = Closed(null)
-        @SharedImmutable
         private val UNDEFINED = Symbol("UNDEFINED")
         private val INITIAL_STATE = State<Any?>(UNDEFINED, null)
     }
