@@ -64,8 +64,13 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  * ### Handling coroutine exceptions
  *
  * `CoroutineExceptionHandler` is a last-resort mechanism for global "catch all" behavior.
+ * You cannot recover from the exception in the `CoroutineExceptionHandler`. The coroutine had already completed
+ * with the corresponding exception when the handler is called. Normally, the handler is used to
+ * log the exception, show some kind of error message, terminate, and/or restart the application.
+ *
  * If you need to handle exception in a specific part of the code, it is recommended to use `try`/`catch` around
- * the corresponding code inside your coroutine, like this:
+ * the corresponding code inside your coroutine. This way you can you prevent completion of the coroutine
+ * with the exception (exception is now _caught_), retry the operation, and/or take other arbitrary actions:
  *
  * ```
  * scope.launch { // launch child coroutine in a scope

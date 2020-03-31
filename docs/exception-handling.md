@@ -80,8 +80,11 @@ Caught ArithmeticException
 
 What if one does not want to print all exceptions to the console?
 [CoroutineExceptionHandler] context element on a _root_ coroutine can be used as generic `catch` block for
-this root coroutine and all its children where custom logging or exception handling may take place.
+this root coroutine and all its children where custom exception handling may take place.
 It is similar to [`Thread.uncaughtExceptionHandler`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#setUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler)).
+You cannot recover from the exception in the `CoroutineExceptionHandler`. The coroutine had already completed
+with the corresponding exception when the handler is called. Normally, the handler is used to
+log the exception, show some kind of error message, terminate, and/or restart the application.
 
 On JVM it is possible to redefine global exception handler for all coroutines by registering [CoroutineExceptionHandler] via
 [`ServiceLoader`](https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html).
