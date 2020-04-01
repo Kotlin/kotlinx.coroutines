@@ -22,7 +22,7 @@ class ExceptionsGuideTest {
     @Test
     fun testExampleExceptions02() {
         test("ExampleExceptions02") { kotlinx.coroutines.guide.exampleExceptions02.main() }.verifyLines(
-            "Caught java.lang.AssertionError"
+            "CoroutineExceptionHandler got java.lang.AssertionError"
         )
     }
 
@@ -41,14 +41,14 @@ class ExceptionsGuideTest {
             "Second child throws an exception",
             "Children are cancelled, but exception is not handled until all children terminate",
             "The first child finished its non cancellable block",
-            "Caught java.lang.ArithmeticException"
+            "CoroutineExceptionHandler got java.lang.ArithmeticException"
         )
     }
 
     @Test
     fun testExampleExceptions05() {
         test("ExampleExceptions05") { kotlinx.coroutines.guide.exampleExceptions05.main() }.verifyLines(
-            "Caught java.io.IOException with suppressed [java.lang.ArithmeticException]"
+            "CoroutineExceptionHandler got java.io.IOException with suppressed [java.lang.ArithmeticException]"
         )
     }
 
@@ -56,7 +56,7 @@ class ExceptionsGuideTest {
     fun testExampleExceptions06() {
         test("ExampleExceptions06") { kotlinx.coroutines.guide.exampleExceptions06.main() }.verifyLines(
             "Rethrowing CancellationException with original cause",
-            "Caught original java.io.IOException"
+            "CoroutineExceptionHandler got java.io.IOException"
         )
     }
 
@@ -85,7 +85,7 @@ class ExceptionsGuideTest {
         test("ExampleSupervision03") { kotlinx.coroutines.guide.exampleSupervision03.main() }.verifyLines(
             "Scope is completing",
             "Child throws an exception",
-            "Caught java.lang.AssertionError",
+            "CoroutineExceptionHandler got java.lang.AssertionError",
             "Scope is completed"
         )
     }

@@ -10,13 +10,13 @@ import java.io.*
 
 fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception ->
-        println("Caught original $exception")
+        println("CoroutineExceptionHandler got $exception")
     }
     val job = GlobalScope.launch(handler) {
-        val inner = launch {
+        val inner = launch { // all this stack of coroutines will get cancelled
             launch {
                 launch {
-                    throw IOException()
+                    throw IOException() // the original exception
                 }
             }
         }
@@ -24,7 +24,7 @@ fun main() = runBlocking {
             inner.join()
         } catch (e: CancellationException) {
             println("Rethrowing CancellationException with original cause")
-            throw e
+            throw e // cancellation exception is rethrown, yet the original IOException gets to the handler  
         }
     }
     job.join()
