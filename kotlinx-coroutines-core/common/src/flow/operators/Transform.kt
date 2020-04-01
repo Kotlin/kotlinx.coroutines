@@ -57,6 +57,14 @@ public inline fun <T, R: Any> Flow<T>.mapNotNull(crossinline transform: suspend 
 }
 
 /**
+ * Returns a flow containing a list of the results of applying the given [transform] function to each value of the original flow
+ */
+public inline fun <T, R> Flow<Iterable<T>>.mapForEach(crossinline transform: suspend (value: T) -> R): Flow<List<R>> = transform { value ->
+    val transformed = value.map { transform(it) }
+    return@transform emit(transformed)
+}
+
+/**
  * Returns a flow that wraps each element into [IndexedValue], containing value and its index (starting from zero).
  */
 @ExperimentalCoroutinesApi
