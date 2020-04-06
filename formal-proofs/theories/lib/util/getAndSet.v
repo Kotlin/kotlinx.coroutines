@@ -15,7 +15,7 @@ Section getAndSetProof.
 Context `{heapG} (N: namespace).
 
 Theorem getAndSet_spec (ℓ: loc) (v: val):
-  <<< ∀ k, ▷ ℓ ↦ k ∧ ⌜val_is_unboxed k⌝>>>
+  ⊢ <<< ∀ k, ▷ ℓ ↦ k ∧ ⌜val_is_unboxed k⌝>>>
     getAndSet #ℓ v @ ⊤
   <<< ℓ ↦ v, RET k >>>.
 Proof.

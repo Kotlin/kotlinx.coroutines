@@ -362,7 +362,7 @@ Definition tq_ap (γtq γd: gname) :=
   |}.
 
 Theorem tq_cell_init γtq γd:
-  cell_init segment_size (tq_ap γtq γd) ∅.
+  ⊢ cell_init segment_size (tq_ap γtq γd) ∅.
 Proof.
   rewrite /cell_init /=. iIntros "!>"  (γ id ℓ) "HCancHandle Hℓ".
   iMod (inv_alloc N _ (cell_invariant γtq γ id ℓ) with "[-]") as "#HInv".
@@ -919,7 +919,7 @@ Proof.
 
   rewrite drop_app_ge take_length_le; try lia. rewrite minus_diag drop_0.
 
-  assert (forall k, own γd (● (GSet (set_seq 0 deqIdx), deqIdx: mnatUR)) -∗
+  assert (forall k, ⊢ own γd (● (GSet (set_seq 0 deqIdx), deqIdx: mnatUR)) -∗
                       iterator_issued γd (deqIdx + k) -∗ False)%I as HContra.
   {
     iIntros (k) "HCtrAuth HIsSus".
@@ -4032,9 +4032,9 @@ Proof.
   simpl.
   iDestruct "HRR" as (ℓ') "(#>HArrMapsto' & HRendHandle & HIsSus & >HInhTok & HH)".
   iDestruct (array_mapsto'_agree with "HArrMapsto' HArrMapsto") as %->.
-  assert (inhabitant_token' γtq i (1/2)%Qp -∗
-          inhabitant_token' γtq i (1/2)%Qp -∗
-          inhabitant_token' γtq i (1/2)%Qp -∗ False)%I as HNoTwoCanc.
+  assert (⊢ inhabitant_token' γtq i (1/2)%Qp -∗
+            inhabitant_token' γtq i (1/2)%Qp -∗
+            inhabitant_token' γtq i (1/2)%Qp -∗ False)%I as HNoTwoCanc.
   {
     iIntros "HInhTok1 HInhTok2 HInhTok3".
     iDestruct (own_valid_3 with "HInhTok1 HInhTok2 HInhTok3") as %HValid.

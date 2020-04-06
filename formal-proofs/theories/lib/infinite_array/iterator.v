@@ -116,7 +116,7 @@ Proof.
 Qed.
 
 Theorem iterator_value_faa γa γ (fℓ ℓ: loc) (m: nat):
-  <<< ∀ (n: nat), iterator_points_to γa γ fℓ ℓ n >>>
+  ⊢ <<< ∀ (n: nat), iterator_points_to γa γ fℓ ℓ n >>>
     FAA #fℓ #m @ ⊤
   <<< iterator_points_to γa γ fℓ ℓ (n+m)%nat ∗
     own γ (◯ (GSet (set_seq n m), (n + m)%nat: mnatUR)), RET #n >>>.
@@ -163,7 +163,7 @@ Proof.
 Qed.
 
 Theorem iterator_step_spec γa γ (ℓ fℓ: loc):
-  cell_init segment_size ap ∅ -∗
+  ⊢ cell_init segment_size ap ∅ -∗
   <<< ▷ is_infinite_array segment_size ap γa ∗ is_iterator γa γ fℓ ℓ >>>
      (iterator_step segment_size) #ℓ #fℓ @ ⊤
   <<< ∃ (ix: nat) (sℓ: loc),
@@ -283,7 +283,7 @@ Proof.
 Qed.
 
 Theorem increase_value_to_spec γ (fℓ: loc) (n: nat):
-  <<< ∀ m, iterator_counter γ fℓ m >>>
+  ⊢ <<< ∀ m, iterator_counter γ fℓ m >>>
     (increase_value_to #fℓ #n) @ ⊤
   <<< own γ (◯ (GSet (set_seq m (n-m)%nat), n: mnatUR)) ∗
       (⌜m >= n⌝ ∧ iterator_counter γ fℓ m ∨

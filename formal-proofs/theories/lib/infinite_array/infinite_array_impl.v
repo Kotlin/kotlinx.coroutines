@@ -608,7 +608,7 @@ Ltac iCloseHIsSeg := iMod ("HClose" with "[-]") as "HΦ";
   first by (rewrite /is_segment /is_segment'; eauto 20 with iFrame).
 
 Theorem segment_id_spec γ id (ℓ: loc):
-  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
+  ⊢ <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     segment_id #ℓ @ ⊤
   <<< is_segment γ id ℓ pl nl, RET #id >>>.
 Proof.
@@ -622,7 +622,7 @@ Proof.
 Qed.
 
 Theorem segment_prev_spec γ id (ℓ: loc):
-  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
+  ⊢ <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     segment_prev #ℓ @ ⊤
     <<< ∃ (pℓ: loc),
           is_segment γ id ℓ pl nl ∗ segment_prev_location γ id pℓ, RET #pℓ >>>.
@@ -636,7 +636,7 @@ Proof.
 Qed.
 
 Theorem segment_prev_read_spec γ id (ℓ pℓ: loc):
-  segment_prev_location γ id pℓ -∗
+  ⊢ segment_prev_location γ id pℓ -∗
   <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     ! #pℓ @ ⊤
   <<< is_segment γ id ℓ pl nl ∗ is_valid_prev γ id pl, RET pl >>>.
@@ -653,7 +653,7 @@ Proof.
 Qed.
 
 Theorem segment_prev_write_spec γ id (ℓ pℓ: loc) (pl: val):
-  segment_prev_location γ id pℓ -∗ is_valid_prev γ id pl -∗
+  ⊢ segment_prev_location γ id pℓ -∗ is_valid_prev γ id pl -∗
   <<< ∀ pl' nl, ▷ is_segment γ id ℓ pl' nl >>>
   #pℓ <- pl @ ⊤
   <<< is_segment γ id ℓ pl nl, RET #() >>>.
@@ -669,7 +669,7 @@ Proof.
 Qed.
 
 Theorem segment_next_spec γ id (ℓ: loc):
-  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
+  ⊢ <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     segment_next #ℓ @ ⊤
   <<< ∃ (nℓ: loc),
         is_segment γ id ℓ pl nl ∗ segment_next_location γ id nℓ, RET #nℓ >>>.
@@ -684,7 +684,7 @@ Proof.
 Qed.
 
 Theorem segment_next_read_spec γ id (ℓ nℓ: loc):
-  segment_next_location γ id nℓ -∗
+  ⊢ segment_next_location γ id nℓ -∗
   <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     ! #nℓ @ ⊤
   <<< is_segment γ id ℓ pl nl, RET nl >>>.
@@ -701,7 +701,7 @@ Proof.
 Qed.
 
 Theorem segment_next_write_spec γ id (ℓ nℓ: loc) (nl: val):
-  segment_next_location γ id nℓ -∗
+  ⊢ segment_next_location γ id nℓ -∗
   <<< ∀ pl nl', ▷ is_segment γ id ℓ pl nl' >>>
     #nℓ <- nl @ ⊤
   <<< is_segment γ id ℓ pl nl, RET #() >>>.
@@ -717,7 +717,7 @@ Proof.
 Qed.
 
 Theorem segment_canc_spec γ id (ℓ: loc):
-  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
+  ⊢ <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     segment_cancelled #ℓ @ ⊤
     <<< ∃ (cℓ: loc),
           is_segment γ id ℓ pl nl ∗ segment_canc_location γ id cℓ, RET #cℓ >>>.
@@ -732,7 +732,7 @@ Proof.
 Qed.
 
 Theorem segment_canc_read_spec γ id (ℓ cℓ: loc):
-  segment_canc_location γ id cℓ -∗
+  ⊢ segment_canc_location γ id cℓ -∗
   <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     ! #cℓ @ ⊤
   <<< ∃ (cancelled: nat), is_segment γ id ℓ pl nl ∗
@@ -788,7 +788,7 @@ Qed.
 
 Theorem segment_canc_incr_spec γ id cid (ℓ cℓ: loc):
   (cid < Pos.to_nat segment_size)%nat ->
-  segment_canc_location γ id cℓ -∗
+  ⊢ segment_canc_location γ id cℓ -∗
   <<< ∀ pl nl segments, ▷ is_segment γ id ℓ pl nl ∗
                               cell_cancellation_handle' γ id cid ∗
                               own γ (● segments) >>>
@@ -932,7 +932,7 @@ Proof.
 Qed.
 
 Theorem segment_data_at_spec γ id (ℓ: loc) (ix: nat):
-  ⌜(ix < Pos.to_nat segment_size)%nat⌝ -∗
+  ⊢ ⌜(ix < Pos.to_nat segment_size)%nat⌝ -∗
   <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     segment_data_at #ℓ #ix @ ⊤
   <<< ∃ (v: loc), is_segment γ id ℓ pl nl
@@ -985,7 +985,7 @@ Proof.
 Qed.
 
 Lemma segment_by_location' γ id hid:
-  ⌜(id ≤ hid)%nat⌝ -∗ segment_exists γ hid -∗ is_infinite_array γ -∗
+  ⊢ ⌜(id ≤ hid)%nat⌝ -∗ segment_exists γ hid -∗ is_infinite_array γ -∗
   (∃ ℓ, (is_normal_segment γ ℓ id ∗ (is_normal_segment γ ℓ id -∗ is_infinite_array γ)) ∨
    (is_tail_segment γ ℓ id ∗ (is_tail_segment γ ℓ id -∗ is_infinite_array γ))).
 Proof.
@@ -1580,7 +1580,7 @@ Definition RemoveInv γ nlℓ plℓ :=
                               (∃ pl, plℓ ↦ pl ∗ is_valid_prev γ nid pl))%I.
 
 Theorem segment_is_removed_spec γ id (ℓ: loc):
-  <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
+  ⊢ <<< ∀ pl nl, ▷ is_segment γ id ℓ pl nl >>>
     (segment_is_removed segment_size) #ℓ @ ⊤
   <<< ∃ (v: bool), ▷ is_segment γ id ℓ pl nl ∗
       (⌜v = false⌝ ∨ ⌜v = true⌝ ∧ segment_is_cancelled γ id), RET #v >>>.
