@@ -192,4 +192,17 @@ class ReusableCancellableContinuationTest : TestBase() {
         FieldWalker.assertReachableCount(0, receiver) { it is CancellableContinuation<*> }
         finish(3)
     }
+
+    @Test
+    fun testReusableAndRegularSuspendCancellableCoroutineMemoryLeak() = runTest {
+        val channel =  produce {
+            repeat(10) {
+                send(Unit)
+            }
+        }
+        for (value in channel) {
+            delay(1)
+        }
+        FieldWalker.assertReachableCount(1, coroutineContext[Job], { it is ChildContinuation })
+    }
 }

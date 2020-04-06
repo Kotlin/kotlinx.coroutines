@@ -4,7 +4,7 @@
 
 @file:JvmMultifileClass
 @file:JvmName("FlowKt")
-@file:Suppress("unused", "DeprecatedCallableAddReplaceWith", "UNUSED_PARAMETER")
+@file:Suppress("unused", "DeprecatedCallableAddReplaceWith", "UNUSED_PARAMETER", "NO_EXPLICIT_RETURN_TYPE_IN_API_MODE")
 
 package kotlinx.coroutines.flow
 

@@ -17,7 +17,6 @@ class SingleTest : TestBase() {
 
         assertEquals(239L, flow.single())
         assertEquals(239L, flow.singleOrNull())
-
     }
 
     @Test
@@ -62,5 +61,13 @@ class SingleTest : TestBase() {
         assertEquals(1, flowOf<Int?>(1).single())
         assertNull(flowOf<Int?>(null).single())
         assertFailsWith<NoSuchElementException> { flowOf<Int?>().single() }
+    }
+
+    @Test
+    fun testBadClass() = runTest {
+        val instance = BadClass()
+        val flow = flowOf(instance)
+        assertSame(instance, flow.single())
+        assertSame(instance, flow.singleOrNull())
     }
 }

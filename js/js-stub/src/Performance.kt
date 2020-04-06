@@ -5,5 +5,5 @@
 package org.w3c.performance
 
 public abstract class Performance {
-    abstract fun now(): Double
+    public abstract fun now(): Double
 }

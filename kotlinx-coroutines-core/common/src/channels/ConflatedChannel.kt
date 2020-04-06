@@ -31,7 +31,6 @@ internal open class ConflatedChannel<E> : AbstractChannel<E>() {
     private var value: Any? = EMPTY
 
     private companion object {
-        @SharedImmutable
         private val EMPTY = Symbol("EMPTY")
     }
 

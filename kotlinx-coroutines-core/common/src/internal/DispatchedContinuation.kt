@@ -63,8 +63,24 @@ internal class DispatchedContinuation<in T>(
     public val reusableCancellableContinuation: CancellableContinuationImpl<*>?
         get() = _reusableCancellableContinuation.value as? CancellableContinuationImpl<*>
 
-    public val isReusable: Boolean
-        get() = _reusableCancellableContinuation.value != null
+    public fun isReusable(requester: CancellableContinuationImpl<*>): Boolean {
+        /*
+         * Reusability control:
+         * `null` -> no reusability at all, false
+         * If current state is not CCI, then we are within `suspendAtomicCancellableCoroutineReusable`, true
+         * Else, if result is CCI === requester.
+         * Identity check my fail for the following pattern:
+         * ```
+         * loop:
+         * suspendAtomicCancellableCoroutineReusable { } // Reusable, outer coroutine stores the child handle
+         * suspendCancellableCoroutine { } // **Not reusable**, handle should be disposed after {}, otherwise
+         * it will leak because it won't be freed by `releaseInterceptedContinuation`
+         * ```
+         */
+        val value = _reusableCancellableContinuation.value ?: return false
+        if (value is CancellableContinuationImpl<*>) return value === requester
+        return true
+    }
 
     /**
      * Claims the continuation for [suspendAtomicCancellableCoroutineReusable] block,
@@ -229,7 +245,7 @@ internal class DispatchedContinuation<in T>(
  * @suppress **This an internal API and should not be used from general code.**
  */
 @InternalCoroutinesApi
-public fun <T> Continuation<T>.resumeCancellableWith(result: Result<T>) = when (this) {
+public fun <T> Continuation<T>.resumeCancellableWith(result: Result<T>): Unit = when (this) {
     is DispatchedContinuation -> resumeCancellableWith(result)
     else -> resumeWith(result)
 }

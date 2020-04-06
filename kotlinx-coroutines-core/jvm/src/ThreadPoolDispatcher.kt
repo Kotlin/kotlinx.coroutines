@@ -27,7 +27,7 @@ import kotlin.coroutines.*
  * @param name the base name of the created thread.
  */
 @ObsoleteCoroutinesApi
-fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
+public fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
     newFixedThreadPoolContext(1, name)
 
 /**
@@ -49,7 +49,7 @@ fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
  * @param name the base name of the created threads.
  */
 @ObsoleteCoroutinesApi
-fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
+public fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
     require(nThreads >= 1) { "Expected at least one thread, but $nThreads specified" }
     return ThreadPoolDispatcher(nThreads, name)
 }

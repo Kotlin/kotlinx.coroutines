@@ -48,7 +48,7 @@ public class TestCoroutineExceptionHandler :
     }
 
     /** @suppress **/
-    override val uncaughtExceptions
+    override val uncaughtExceptions: List<Throwable>
         get() = synchronized(_exceptions) { _exceptions.toList() }
 
     /** @suppress **/

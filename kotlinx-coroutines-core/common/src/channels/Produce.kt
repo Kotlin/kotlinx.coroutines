@@ -22,7 +22,7 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
      * All the [SendChannel] functions on this interface delegate to
      * the channel instance returned by this property.
      */
-    val channel: SendChannel<E>
+    public val channel: SendChannel<E>
 }
 
 /**

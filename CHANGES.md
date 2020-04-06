@@ -1,5 +1,18 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.3.5
+
+* `firstOrNull` operator. Contributed by @bradynpoulsen.
+* `java.time` adapters for Flow operators. Contributed by @fvasco.
+* `kotlin.time.Duration` support (#1402). Contributed by @fvasco. 
+* Memory leak with a mix of reusable and non-reusable continuations is fixed (#1855).
+* `DebugProbes` are ready for production installation: its performance is increased, the flag to disable creation stacktraces to reduce the footprint is introduced (#1379, #1372).
+* Stacktrace recovery workaround for Android 6.0 and earlier bug (#1866).
+* New integration module: `kotlinx-coroutines-jdk9` with adapters for `java.util.concurrent.Flow`.
+* `BroadcastChannel.close` properly starts lazy coroutine (#1713).
+* `kotlinx-coroutines-bom` is published without Gradle metadata.
+* Make calls to service loader in reactor integrations optimizable by R8 (#1817).
+
 ## Version 1.3.4
 
 ### Flow

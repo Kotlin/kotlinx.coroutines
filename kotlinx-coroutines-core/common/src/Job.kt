@@ -167,7 +167,7 @@ public interface Job : CoroutineContext.Element {
      * @suppress This method implements old version of JVM ABI. Use [cancel].
      */
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
-    public fun cancel() = cancel(null)
+    public fun cancel(): Unit = cancel(null)
 
     /**
      * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [cancel].
@@ -337,7 +337,7 @@ public interface Job : CoroutineContext.Element {
         "Job is a coroutine context element and `+` is a set-sum operator for coroutine contexts. " +
         "The job to the right of `+` just replaces the job the left of `+`.",
         level = DeprecationLevel.ERROR)
-    public operator fun plus(other: Job) = other
+    public operator fun plus(other: Job): Job = other
 }
 
 /**
@@ -382,7 +382,7 @@ public interface DisposableHandle {
  */
 @Suppress("FunctionName")
 @InternalCoroutinesApi
-public inline fun DisposableHandle(crossinline block: () -> Unit) =
+public inline fun DisposableHandle(crossinline block: () -> Unit): DisposableHandle =
     object : DisposableHandle {
         override fun dispose() {
             block()
@@ -496,7 +496,7 @@ public fun Job.cancelChildren(cause: CancellationException? = null) {
  * @suppress This method implements old version of JVM ABI. Use [cancel].
  */
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
-public fun Job.cancelChildren() = cancelChildren(null)
+public fun Job.cancelChildren(): Unit = cancelChildren(null)
 
 /**
  * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [Job.cancelChildren].
@@ -539,7 +539,7 @@ public fun CoroutineContext.cancel(cause: CancellationException? = null) {
  * @suppress This method implements old version of JVM ABI. Use [CoroutineContext.cancel].
  */
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
-public fun CoroutineContext.cancel() = cancel(null)
+public fun CoroutineContext.cancel(): Unit = cancel(null)
 
 /**
  * Ensures that current job is [active][Job.isActive].
@@ -605,7 +605,7 @@ public fun CoroutineContext.cancelChildren(cause: CancellationException? = null)
  * @suppress This method implements old version of JVM ABI. Use [CoroutineContext.cancelChildren].
  */
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
-public fun CoroutineContext.cancelChildren() = cancelChildren(null)
+public fun CoroutineContext.cancelChildren(): Unit = cancelChildren(null)
 
 /**
  * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [CoroutineContext.cancelChildren].

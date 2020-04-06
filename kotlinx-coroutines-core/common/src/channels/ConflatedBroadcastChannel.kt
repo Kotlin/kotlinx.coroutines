@@ -37,7 +37,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
      * It is as a shortcut to creating an instance with a default constructor and
      * immediately sending an element: `ConflatedBroadcastChannel().apply { offer(value) }`.
      */
-    constructor(value: E) : this() {
+    public constructor(value: E) : this() {
         _state.lazySet(State<E>(value, null))
     }
 
@@ -47,9 +47,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     private val onCloseHandler = atomic<Any?>(null)
 
     private companion object {
-        @SharedImmutable
         private val CLOSED = Closed(null)
-        @SharedImmutable
         private val UNDEFINED = Symbol("UNDEFINED")
         private val INITIAL_STATE = State<Any?>(UNDEFINED, null)
     }

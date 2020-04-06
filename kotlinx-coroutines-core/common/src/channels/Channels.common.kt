@@ -84,7 +84,7 @@ public fun <E : Any> ReceiveChannel<E>.onReceiveOrNull(): SelectClause1<E?> {
  *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
  */
 @ObsoleteCoroutinesApi
-public suspend inline fun <E> BroadcastChannel<E>.consumeEach(action: (E) -> Unit) =
+public suspend inline fun <E> BroadcastChannel<E>.consumeEach(action: (E) -> Unit): Unit =
     consume {
         for (element in this) action(element)
     }
@@ -175,7 +175,7 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
 @ExperimentalCoroutinesApi // since 1.3.0, tentatively graduates in 1.4.0
-public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit) =
+public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit): Unit =
     consume {
         for (e in this) action(e)
     }

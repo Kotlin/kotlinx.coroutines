@@ -23,9 +23,9 @@ internal fun <T> Flow<T>.asChannelFlow(): ChannelFlow<T> =
 @InternalCoroutinesApi
 public abstract class ChannelFlow<T>(
     // upstream context
-    @JvmField val context: CoroutineContext,
+    @JvmField public val context: CoroutineContext,
     // buffer capacity between upstream and downstream context
-    @JvmField val capacity: Int
+    @JvmField public val capacity: Int
 ) : Flow<T> {
 
     // shared code to create a suspend lambda from collectTo function in one place
@@ -65,7 +65,7 @@ public abstract class ChannelFlow<T>(
 
     protected abstract suspend fun collectTo(scope: ProducerScope<T>)
 
-    open fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =
+    public open fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =
         scope.broadcast(context, produceCapacity, start, block = collectToFun)
 
     /**
@@ -76,15 +76,15 @@ public abstract class ChannelFlow<T>(
      * handlers, while the pipeline before does not, because it was cancelled during its dispatch.
      * Thus `onCompletion` and `finally` blocks won't be executed and it may lead to a different kinds of memory leaks.
      */
-    open fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
+    public open fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
         scope.produce(context, produceCapacity, start = CoroutineStart.ATOMIC, block = collectToFun)
 
-    override suspend fun collect(collector: FlowCollector<T>) =
+    override suspend fun collect(collector: FlowCollector<T>): Unit =
         coroutineScope {
             collector.emitAll(produceImpl(this))
         }
 
-    open fun additionalToStringProps() = ""
+    public open fun additionalToStringProps(): String = ""
 
     // debug toString
     override fun toString(): String =

@@ -10,37 +10,49 @@ import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
 /**
- * Defines a scope for new coroutines. Every coroutine builder
+ * Defines a scope for new coroutines. Every **coroutine builder** (like [launch], [async], etc)
  * is an extension on [CoroutineScope] and inherits its [coroutineContext][CoroutineScope.coroutineContext]
- * to automatically propagate both context elements and cancellation.
+ * to automatically propagate all its elements and cancellation.
  *
  * The best ways to obtain a standalone instance of the scope are [CoroutineScope()] and [MainScope()] factory functions.
  * Additional context elements can be appended to the scope using the [plus][CoroutineScope.plus] operator.
  *
- * Manual implementation of this interface is not recommended, implementation by delegation should be preferred instead.
- * By convention, the [context of a scope][CoroutineScope.coroutineContext] should contain an instance of a [job][Job] to enforce structured concurrency.
+ * ### Convention for structured concurrency
  *
- * Every coroutine builder (like [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc)
+ * Manual implementation of this interface is not recommended, implementation by delegation should be preferred instead.
+ * By convention, the [context of a scope][CoroutineScope.coroutineContext] should contain an instance of a
+ * [job][Job] to enforce the discipline of **structured concurrency** with propagation of cancellation.
+ *
+ * Every coroutine builder (like [launch], [async], etc)
  * and every scoping function (like [coroutineScope], [withContext], etc) provides _its own_ scope
  * with its own [Job] instance into the inner block of code it runs.
  * By convention, they all wait for all the coroutines inside their block to complete before completing themselves,
- * thus enforcing the discipline of **structured concurrency**.
+ * thus enforcing the structured concurrency. See [Job] documentation for more details.
  *
- * [CoroutineScope] should be implemented (or used as a field) on entities with a well-defined lifecycle that are responsible
- * for launching children coroutines. Example of such entity on Android is Activity.
- * Usage of this interface may look like this:
+ * ### Android usage
+ *
+ * Android has first-party support for coroutine scope in all entities with the lifecycle.
+ * See [the corresponding documentation](https://developer.android.com/topic/libraries/architecture/coroutines#lifecyclescope).
+ *
+ * ### Custom usage
+ *
+ * [CoroutineScope] should be implemented or declared as a property on entities with a well-defined lifecycle that are
+ * responsible for launching children coroutines, for example:
  *
  * ```
- * class MyActivity : AppCompatActivity(), CoroutineScope by MainScope() {
- *     override fun onDestroy() {
- *         cancel() // cancel is extension on CoroutineScope
+ * class MyUIClass {
+ *     val scope = MainScope() // the scope of MyUIClass
+ *
+ *     fun destroy() { // destroys an instance of MyUIClass
+ *         scope.cancel() // cancels all coroutines launched in this scope
+ *         // ... do the rest of cleanup here ...
  *     }
  *
  *     /*
- *      * Note how coroutine builders are scoped: if activity is destroyed or any of the launched coroutines
+ *      * Note: if this instance is destroyed or any of the launched coroutines
  *      * in this method throws an exception, then all nested coroutines are cancelled.
  *      */
- *     fun showSomeData() = launch { // <- extension on current activity, launched in the main thread
+ *     fun showSomeData() = scope.launch { // launched in the main thread
  *        // ... here we can use suspending functions or coroutine builders with other dispatchers
  *        draw(data) // draw in the main thread
  *     }

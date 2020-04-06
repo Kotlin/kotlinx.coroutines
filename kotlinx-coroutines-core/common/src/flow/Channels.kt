@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * See [consumeEach][ReceiveChannel.consumeEach].
  */
 @ExperimentalCoroutinesApi // since version 1.3.0
-public suspend fun <T> FlowCollector<T>.emitAll(channel: ReceiveChannel<T>) =
+public suspend fun <T> FlowCollector<T>.emitAll(channel: ReceiveChannel<T>): Unit =
     emitAllImpl(channel, consume = true)
 
 private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>, consume: Boolean) {
