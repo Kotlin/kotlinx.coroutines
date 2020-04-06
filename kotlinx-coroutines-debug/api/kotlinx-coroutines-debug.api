@@ -8,6 +8,11 @@ public final class kotlinx/coroutines/debug/CoroutineInfo {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class kotlinx/coroutines/debug/CoroutinesBlockHoundIntegration : reactor/blockhound/integration/BlockHoundIntegration {
+	public fun <init> ()V
+	public fun applyTo (Lreactor/blockhound/BlockHound$Builder;)V
+}
+
 public final class kotlinx/coroutines/debug/DebugProbes {
 	public static final field INSTANCE Lkotlinx/coroutines/debug/DebugProbes;
 	public final fun dumpCoroutines (Ljava/io/PrintStream;)V
