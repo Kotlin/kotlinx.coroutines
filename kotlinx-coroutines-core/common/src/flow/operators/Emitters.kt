@@ -155,6 +155,39 @@ public fun <T> Flow<T>.onCompletion(
     exception?.let { throw it }
 }
 
+/**
+ * Invokes the given [action] when this flow completes without emitting any elements.
+ * The receiver of the [action] is [FlowCollector], so `onEmpty` can emit additional elements.
+ *
+ * For example:
+ *
+ * ```
+ * emptyFlow<Int>().onEmpty {
+ *     emit(1)
+ *     emit(2)
+ * }
+ * .collect { println(it) } // prints 1, 2
+ * ```
+ */
+@ExperimentalCoroutinesApi
+public fun <T> Flow<T>.onEmpty(
+    action: suspend FlowCollector<T>.() -> Unit
+): Flow<T> = unsafeFlow {
+    var isEmpty = true
+    collect {
+        isEmpty = false
+        emit(it)
+    }
+    if (isEmpty) {
+        val collector = SafeCollector(this, coroutineContext)
+        try {
+            collector.action()
+        } finally {
+            collector.releaseIntercepted()
+        }
+    }
+}
+
 private class ThrowingCollector(private val e: Throwable) : FlowCollector<Any?> {
     override suspend fun emit(value: Any?) {
         throw e
