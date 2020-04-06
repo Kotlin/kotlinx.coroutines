@@ -67,7 +67,7 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
  *     .collect { println(it) } // prints Begin, a, b, c
  * ```
  */
-@ExperimentalCoroutinesApi // tentatively stable in 1.3.0
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.onStart(
     action: suspend FlowCollector<T>.() -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke start action
@@ -129,7 +129,7 @@ public fun <T> Flow<T>.onStart(
  *     .collect { println(it) } // prints a, b, c, Done
  * ```
  */
-@ExperimentalCoroutinesApi // tentatively stable in 1.3.0
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.onCompletion(
     action: suspend FlowCollector<T>.(cause: Throwable?) -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke completion action
@@ -165,8 +165,7 @@ public fun <T> Flow<T>.onCompletion(
  * emptyFlow<Int>().onEmpty {
  *     emit(1)
  *     emit(2)
- * }
- * .collect { println(it) } // prints 1, 2
+ * }.collect { println(it) } // prints 1, 2
  * ```
  */
 @ExperimentalCoroutinesApi

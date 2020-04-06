@@ -61,7 +61,7 @@ class OnEmptyTest : TestBase() {
     }
 
     @Test
-    fun testOnEmptyTransparencyViolation() = runTest {
+    fun testTransparencyViolation() = runTest {
         val flow = emptyFlow<Int>().onEmpty {
             expect(2)
             coroutineScope {

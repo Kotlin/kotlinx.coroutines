@@ -259,4 +259,23 @@ class OnCompletionTest : TestBase() {
         assertEquals(42, value)
         finish(2)
     }
+
+    @Test
+    fun testTransparencyViolation() = runTest {
+        val flow = emptyFlow<Int>().onCompletion {
+            expect(2)
+            coroutineScope {
+                launch {
+                    try {
+                        emit(1)
+                    } catch (e: IllegalStateException) {
+                        expect(3)
+                    }
+                }
+            }
+        }
+        expect(1)
+        assertNull(flow.singleOrNull())
+        finish(4)
+    }
 }
