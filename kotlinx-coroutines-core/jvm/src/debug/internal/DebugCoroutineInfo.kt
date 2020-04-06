@@ -2,55 +2,36 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("PropertyName")
+package kotlinx.coroutines.debug.internal
 
-package kotlinx.coroutines.debug
-
-import kotlinx.coroutines.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.*
 
-/**
- * Class describing coroutine info such as its context, state and stacktrace.
- * This API is usable only along with `kotlinx-coroutines-debug` module.
- */
-@ExperimentalCoroutinesApi
-public class CoroutineInfo internal constructor(
-    /**
-     * Coroutine context of the coroutine
-     */
+internal const val CREATED = "CREATED"
+internal const val RUNNING = "RUNNING"
+internal const val SUSPENDED = "SUSPENDED"
+
+internal class DebugCoroutineInfo(
     public val context: CoroutineContext,
-    private val creationStackBottom: CoroutineStackFrame?,
+    public val creationStackBottom: CoroutineStackFrame?,
     @JvmField internal val sequenceNumber: Long
 ) {
 
-    /**
-     * [Job] associated with a current coroutine or null.
-     * May be later used in [DebugProbes.printJob].
-     */
-    public val job: Job? get() = context[Job]
-
-    /**
-     * Creation stacktrace of the coroutine.
-     * Can be empty if [DebugProbes.enableCreationStackTraces] is not set.
-     */
     public val creationStackTrace: List<StackTraceElement> get() = creationStackTrace()
 
     /**
-     * Last observed [state][State] of the coroutine.
+     * Last observed state of the coroutine.
+     * Can be CREATED, RUNNING, SUSPENDED.
      */
-    public val state: State get() = _state
-
-    private var _state: State =
-        State.CREATED
+    public val state: String get() = _state
+    private var _state: String = CREATED
 
     @JvmField
     internal var lastObservedThread: Thread? = null
-
     @JvmField
     internal var lastObservedFrame: CoroutineStackFrame? = null
 
-    public fun copy(): CoroutineInfo = CoroutineInfo(
+    public fun copy(): DebugCoroutineInfo = DebugCoroutineInfo(
         context,
         creationStackBottom,
         sequenceNumber
@@ -90,35 +71,17 @@ public class CoroutineInfo internal constructor(
         }
     }
 
-    internal fun updateState(state: State, frame: Continuation<*>) {
+    internal fun updateState(state: String, frame: Continuation<*>) {
         // Propagate only duplicating transitions to running for KT-29997
-        if (_state == state && state == State.SUSPENDED && lastObservedFrame != null) return
+        if (_state == state && state == SUSPENDED && lastObservedFrame != null) return
         _state = state
         lastObservedFrame = frame as? CoroutineStackFrame
-        if (state == State.RUNNING) {
-            lastObservedThread = Thread.currentThread()
+        lastObservedThread = if (state == RUNNING) {
+            Thread.currentThread()
         } else {
-            lastObservedThread = null
+            null
         }
     }
 
-    override fun toString(): String = "CoroutineInfo(state=$state,context=$context)"
-}
-
-/**
- * Current state of the coroutine.
- */
-public enum class State {
-    /**
-     * Created, but not yet started.
-     */
-    CREATED,
-    /**
-     * Started and running.
-     */
-    RUNNING,
-    /**
-     * Suspended.
-     */
-    SUSPENDED
+    override fun toString(): String = "DebugCoroutineInfo(state=$state,context=$context)"
 }

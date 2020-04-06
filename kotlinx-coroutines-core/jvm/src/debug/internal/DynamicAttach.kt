@@ -16,3 +16,4 @@ private fun getFunction(clzName: String): Function0<Unit>? = runCatching {
     val ctor = clz.constructors[0]
     ctor.newInstance() as Function0<Unit>
 }.getOrNull()
+

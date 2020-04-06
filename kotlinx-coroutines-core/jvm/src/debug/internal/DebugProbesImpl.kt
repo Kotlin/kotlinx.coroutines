@@ -6,7 +6,6 @@ package kotlinx.coroutines.debug.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.debug.*
 import java.io.*
 import java.text.*
 import java.util.*
@@ -18,11 +17,6 @@ import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.*
 import kotlinx.coroutines.internal.artificialFrame as createArtificialFrame // IDEA bug workaround
 
-/**
- * Mirror of [DebugProbes] with actual implementation.
- * [DebugProbes] are implemented with pimpl to simplify user-facing class and make it look simple and
- * documented.
- */
 internal object DebugProbesImpl {
     private const val ARTIFICIAL_FRAME_MESSAGE = "Coroutine creation stacktrace"
     private val dateFormat = SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
@@ -52,7 +46,7 @@ internal object DebugProbesImpl {
      * Then at least three RUNNING -> RUNNING transitions will occur consecutively and complexity of each is O(depth).
      * To avoid that quadratic complexity, we are caching lookup result for such chains in this map and update it incrementally.
      */
-    private val callerInfoCache = ConcurrentHashMap<CoroutineStackFrame, CoroutineInfo>()
+    private val callerInfoCache = ConcurrentHashMap<CoroutineStackFrame, DebugCoroutineInfo>()
 
     public fun install(): Unit = coroutineStateLock.write {
         if (++installations > 1) return
@@ -77,7 +71,7 @@ internal object DebugProbesImpl {
         }
     }
 
-    private fun Job.build(map: Map<Job, CoroutineInfo>, builder: StringBuilder, indent: String) {
+    private fun Job.build(map: Map<Job, DebugCoroutineInfo>, builder: StringBuilder, indent: String) {
         val info = map[this]
         val newIndent: String
         if (info == null) { // Append coroutine without stacktrace
@@ -105,13 +99,15 @@ internal object DebugProbesImpl {
     @Suppress("DEPRECATION_ERROR") // JobSupport
     private val Job.debugString: String get() = if (this is JobSupport) toDebugString() else toString()
 
-    public fun dumpCoroutinesInfo(): List<CoroutineInfo> = coroutineStateLock.write {
+    public fun dumpCoroutinesInfo(): List<DebugCoroutineInfo> = coroutineStateLock.write {
         check(isInstalled) { "Debug probes are not installed" }
         return capturedCoroutines.asSequence()
             .map { it.info.copy() } // Copy as CoroutineInfo can be mutated concurrently by DebugProbes
             .sortedBy { it.sequenceNumber }
             .toList()
     }
+
+    public fun dumpDebuggerInfo() = dumpCoroutinesInfo().map { DebuggerInfo(it) }
 
     public fun dumpCoroutines(out: PrintStream): Unit = synchronized(out) {
         /*
@@ -134,7 +130,7 @@ internal object DebugProbesImpl {
                 val info = owner.info
                 val observedStackTrace = info.lastObservedStackTrace()
                 val enhancedStackTrace = enhanceStackTraceWithThreadDump(info, observedStackTrace)
-                val state = if (info.state == State.RUNNING && enhancedStackTrace === observedStackTrace)
+                val state = if (info.state == RUNNING && enhancedStackTrace === observedStackTrace)
                     "${info.state} (Last suspension stacktrace, not an actual stacktrace)"
                 else
                     info.state.toString()
@@ -156,17 +152,17 @@ internal object DebugProbesImpl {
     }
 
     /**
-     * Tries to enhance [coroutineTrace] (obtained by call to [CoroutineInfo.lastObservedStackTrace]) with
-     * thread dump of [CoroutineInfo.lastObservedThread].
+     * Tries to enhance [coroutineTrace] (obtained by call to [DebugCoroutineInfo.lastObservedStackTrace]) with
+     * thread dump of [DebugCoroutineInfo.lastObservedThread].
      *
      * Returns [coroutineTrace] if enhancement was unsuccessful or the enhancement result.
      */
     private fun enhanceStackTraceWithThreadDump(
-        info: CoroutineInfo,
+        info: DebugCoroutineInfo,
         coroutineTrace: List<StackTraceElement>
     ): List<StackTraceElement> {
         val thread = info.lastObservedThread
-        if (info.state != State.RUNNING || thread == null) return coroutineTrace
+        if (info.state != RUNNING || thread == null) return coroutineTrace
         // Avoid security manager issues
         val actualTrace = runCatching { thread.stackTrace }.getOrNull()
             ?: return coroutineTrace
@@ -250,13 +246,13 @@ internal object DebugProbesImpl {
         }
     }
 
-    internal fun probeCoroutineResumed(frame: Continuation<*>) = updateState(frame, State.RUNNING)
+    internal fun probeCoroutineResumed(frame: Continuation<*>) = updateState(frame, RUNNING)
 
-    internal fun probeCoroutineSuspended(frame: Continuation<*>) = updateState(frame, State.SUSPENDED)
+    internal fun probeCoroutineSuspended(frame: Continuation<*>) = updateState(frame, SUSPENDED)
 
-    private fun updateState(frame: Continuation<*>, state: State) {
+    private fun updateState(frame: Continuation<*>, state: String) {
         // KT-29997 is here only since 1.3.30
-        if (state == State.RUNNING && KotlinVersion.CURRENT.isAtLeast(1, 3, 30)) {
+        if (state == RUNNING && KotlinVersion.CURRENT.isAtLeast(1, 3, 30)) {
             val stackFrame = frame as? CoroutineStackFrame ?: return
             updateRunningState(stackFrame, state)
             return
@@ -268,10 +264,10 @@ internal object DebugProbesImpl {
     }
 
     // See comment to callerInfoCache
-    private fun updateRunningState(frame: CoroutineStackFrame, state: State): Unit = coroutineStateLock.read {
+    private fun updateRunningState(frame: CoroutineStackFrame, state: String): Unit = coroutineStateLock.read {
         if (!isInstalled) return
         // Lookup coroutine info in cache or by traversing stack frame
-        val info: CoroutineInfo
+        val info: DebugCoroutineInfo
         val cached = callerInfoCache.remove(frame)
         if (cached != null) {
             info = cached
@@ -293,7 +289,7 @@ internal object DebugProbesImpl {
         return if (caller.getStackTraceElement() != null) caller else caller.realCaller()
     }
 
-    private fun updateState(owner: CoroutineOwner<*>, frame: Continuation<*>, state: State) = coroutineStateLock.read {
+    private fun updateState(owner: CoroutineOwner<*>, frame: Continuation<*>, state: String) = coroutineStateLock.read {
         if (!isInstalled) return
         owner.info.updateState(state, frame)
     }
@@ -336,7 +332,7 @@ internal object DebugProbesImpl {
 
     private fun <T> createOwner(completion: Continuation<T>, frame: CoroutineStackFrame?): Continuation<T> {
         if (!isInstalled) return completion
-        val info = CoroutineInfo(completion.context, frame, sequenceNumber.incrementAndGet())
+        val info = DebugCoroutineInfo(completion.context, frame, sequenceNumber.incrementAndGet())
         val owner = CoroutineOwner(completion, info, frame)
         capturedCoroutines += owner
         if (!isInstalled) capturedCoroutines.clear()
@@ -360,7 +356,7 @@ internal object DebugProbesImpl {
      */
     private class CoroutineOwner<T>(
         @JvmField val delegate: Continuation<T>,
-        @JvmField val info: CoroutineInfo,
+        @JvmField val info: DebugCoroutineInfo,
         private val frame: CoroutineStackFrame?
     ) : Continuation<T> by delegate, CoroutineStackFrame {
 

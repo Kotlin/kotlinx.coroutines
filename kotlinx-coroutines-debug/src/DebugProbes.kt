@@ -121,7 +121,7 @@ public object DebugProbes {
      * Returns all existing coroutines info.
      * The resulting collection represents a consistent snapshot of all existing coroutines at the moment of invocation.
      */
-    public fun dumpCoroutinesInfo(): List<CoroutineInfo> = DebugProbesImpl.dumpCoroutinesInfo()
+    public fun dumpCoroutinesInfo(): List<CoroutineInfo> = DebugProbesImpl.dumpCoroutinesInfo().map { CoroutineInfo(it) }
 
     /**
      * Dumps all active coroutines into the given output stream, providing a consistent snapshot of all existing coroutines at the moment of invocation.
