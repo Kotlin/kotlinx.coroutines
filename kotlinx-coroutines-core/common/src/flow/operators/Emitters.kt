@@ -56,9 +56,9 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
 }
 
 /**
- * Invokes the given [action] when the this flow starts to be collected.
+ * Invokes the given [action] when this flow starts to be collected.
  *
- * The receiver of the [action] is [FlowCollector] and thus `onStart` can emit additional elements.
+ * The receiver of the [action] is [FlowCollector], so `onStart` can emit additional elements.
  * For example:
  *
  * ```
@@ -158,7 +158,6 @@ public fun <T> Flow<T>.onCompletion(
 /**
  * Invokes the given [action] when this flow completes without emitting any elements.
  * The receiver of the [action] is [FlowCollector], so `onEmpty` can emit additional elements.
- *
  * For example:
  *
  * ```
