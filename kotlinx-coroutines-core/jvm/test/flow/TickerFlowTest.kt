@@ -5,30 +5,30 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.ticker
+import kotlinx.coroutines.flow.tickerFlow
 import java.util.concurrent.CancellationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 
-class TickerFlowsTest : TestBase() {
+class TickerFlowTest : TestBase() {
 
     @Test(expected = IllegalArgumentException::class)
     fun testNegativePeriod() = runTest {
         // WHEN
-        ticker(-1).launchIn(this)
+        tickerFlow(-1).launchIn(this)
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun testZeroNegativePeriod() = runTest {
         // WHEN
-        ticker(0).launchIn(this)
+        tickerFlow(0).launchIn(this)
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun testNegativeInitialDelay() = runTest {
         // WHEN
-        ticker(100, -1).launchIn(this)
+        tickerFlow(100, -1).launchIn(this)
     }
 
     @Test
@@ -38,7 +38,7 @@ class TickerFlowsTest : TestBase() {
 
         // WHEN
         val periodicTicker =
-                ticker(100, 100).onEach {
+                tickerFlow(100, 100).onEach {
                     inbox.add(Unit)
                 }.launchIn(this)
 
@@ -58,7 +58,7 @@ class TickerFlowsTest : TestBase() {
 
         // WHEN
         val periodicTicker =
-                ticker(100).onEach {
+                tickerFlow(100).onEach {
                     inbox.add(Unit)
                 }.launchIn(this)
 
@@ -77,7 +77,7 @@ class TickerFlowsTest : TestBase() {
 
         // WHEN
         val periodicTicker =
-                ticker(100).onEach {
+                tickerFlow(100).onEach {
                     inbox.add(Unit)
                 }.launchIn(this)
 
