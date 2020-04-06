@@ -5,21 +5,19 @@
 // This file was automatically generated from coroutine-context-and-dispatchers.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.exampleContext10
 
-import kotlin.coroutines.*
 import kotlinx.coroutines.*
 
-class Activity : CoroutineScope by CoroutineScope(Dispatchers.Default) {
-
+class Activity {
+    private val mainScope = CoroutineScope(Dispatchers.Default) // use Default for test purposes
+    
     fun destroy() {
-        cancel() // Extension on CoroutineScope
+        mainScope.cancel()
     }
-    // to be continued ...
 
-    // class Activity continues
     fun doSomething() {
         // launch ten coroutines for a demo, each working for a different time
         repeat(10) { i ->
-            launch {
+            mainScope.launch {
                 delay((i + 1) * 200L) // variable delay 200ms, 400ms, ... etc
                 println("Coroutine $i is done")
             }
