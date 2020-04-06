@@ -7,9 +7,6 @@ package kotlinx.coroutines.debug.internal
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.*
-import net.bytebuddy.*
-import net.bytebuddy.agent.*
-import net.bytebuddy.dynamic.loading.*
 import java.io.*
 import java.text.*
 import java.util.*
@@ -44,6 +41,9 @@ internal object DebugProbesImpl {
      */
     private val coroutineStateLock = ReentrantReadWriteLock()
 
+    public var sanitizeStackTraces: Boolean = true
+    public var enableCreationStackTraces: Boolean = true
+
     /*
      * This is an optimization in the face of KT-29997:
      * Consider suspending call stack a()->b()->c() and c() completes its execution and every call is
@@ -56,32 +56,15 @@ internal object DebugProbesImpl {
 
     public fun install(): Unit = coroutineStateLock.write {
         if (++installations > 1) return
-
-        ByteBuddyAgent.install(ByteBuddyAgent.AttachmentProvider.ForEmulatedAttachment.INSTANCE)
-        val cl = Class.forName("kotlin.coroutines.jvm.internal.DebugProbesKt")
-        val cl2 = Class.forName("kotlinx.coroutines.debug.DebugProbesKt")
-
-        ByteBuddy()
-            .redefine(cl2)
-            .name(cl.name)
-            .make()
-            .load(cl.classLoader, ClassReloadingStrategy.fromInstalledAgent())
+        attach.invoke()
     }
 
     public fun uninstall(): Unit = coroutineStateLock.write {
         check(isInstalled) { "Agent was not installed" }
         if (--installations != 0) return
-
         capturedCoroutines.clear()
         callerInfoCache.clear()
-        val cl = Class.forName("kotlin.coroutines.jvm.internal.DebugProbesKt")
-        val cl2 = Class.forName("kotlinx.coroutines.debug.internal.NoOpProbesKt")
-
-        ByteBuddy()
-            .redefine(cl2)
-            .name(cl.name)
-            .make()
-            .load(cl.classLoader, ClassReloadingStrategy.fromInstalledAgent())
+        detach.invoke()
     }
 
     public fun hierarchyToString(job: Job): String = coroutineStateLock.write {
@@ -213,7 +196,8 @@ internal object DebugProbesImpl {
         val (continuationStartFrame, frameSkipped) = findContinuationStartIndex(
             indexOfResumeWith,
             actualTrace,
-            coroutineTrace)
+            coroutineTrace
+        )
 
         if (continuationStartFrame == -1) return coroutineTrace
 
@@ -335,7 +319,7 @@ internal object DebugProbesImpl {
          * and then using CoroutineOwner completion as unique identifier of coroutineSuspended/resumed calls.
          */
 
-        val frame = if (DebugProbes.enableCreationStackTraces) {
+        val frame = if (enableCreationStackTraces) {
             val stacktrace = sanitizeStackTrace(Exception())
             stacktrace.foldRight<StackTraceElement, CoroutineStackFrame?>(null) { frame, acc ->
                 object : CoroutineStackFrame {
@@ -398,7 +382,7 @@ internal object DebugProbesImpl {
         val size = stackTrace.size
         val probeIndex = stackTrace.indexOfLast { it.className == "kotlin.coroutines.jvm.internal.DebugProbesKt" }
 
-        if (!DebugProbes.sanitizeStackTraces) {
+        if (!sanitizeStackTraces) {
             return List(size - probeIndex) {
                 if (it == 0) createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE) else stackTrace[it + probeIndex]
             }

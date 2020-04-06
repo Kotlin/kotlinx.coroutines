@@ -12,9 +12,13 @@ import kotlin.coroutines.jvm.internal.*
 
 /**
  * Class describing coroutine info such as its context, state and stacktrace.
+ * This API is usable only along with `kotlinx-coroutines-debug` module.
  */
 @ExperimentalCoroutinesApi
 public class CoroutineInfo internal constructor(
+    /**
+     * Coroutine context of the coroutine
+     */
     public val context: CoroutineContext,
     private val creationStackBottom: CoroutineStackFrame?,
     @JvmField internal val sequenceNumber: Long
@@ -37,7 +41,8 @@ public class CoroutineInfo internal constructor(
      */
     public val state: State get() = _state
 
-    private var _state: State = State.CREATED
+    private var _state: State =
+        State.CREATED
 
     @JvmField
     internal var lastObservedThread: Thread? = null
@@ -45,7 +50,11 @@ public class CoroutineInfo internal constructor(
     @JvmField
     internal var lastObservedFrame: CoroutineStackFrame? = null
 
-    public fun copy(): CoroutineInfo = CoroutineInfo(context, creationStackBottom, sequenceNumber).also {
+    public fun copy(): CoroutineInfo = CoroutineInfo(
+        context,
+        creationStackBottom,
+        sequenceNumber
+    ).also {
         it._state = _state
         it.lastObservedFrame = lastObservedFrame
         it.lastObservedThread = lastObservedThread
