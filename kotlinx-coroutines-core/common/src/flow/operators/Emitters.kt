@@ -56,9 +56,9 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
 }
 
 /**
- * Invokes the given [action] when the this flow starts to be collected.
+ * Invokes the given [action] when this flow starts to be collected.
  *
- * The receiver of the [action] is [FlowCollector] and thus `onStart` can emit additional elements.
+ * The receiver of the [action] is [FlowCollector], so `onStart` can emit additional elements.
  * For example:
  *
  * ```
@@ -67,7 +67,7 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
  *     .collect { println(it) } // prints Begin, a, b, c
  * ```
  */
-@ExperimentalCoroutinesApi // tentatively stable in 1.3.0
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.onStart(
     action: suspend FlowCollector<T>.() -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke start action
@@ -129,7 +129,7 @@ public fun <T> Flow<T>.onStart(
  *     .collect { println(it) } // prints a, b, c, Done
  * ```
  */
-@ExperimentalCoroutinesApi // tentatively stable in 1.3.0
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.onCompletion(
     action: suspend FlowCollector<T>.(cause: Throwable?) -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke completion action
@@ -153,6 +153,37 @@ public fun <T> Flow<T>.onCompletion(
         safeCollector.releaseIntercepted()
     }
     exception?.let { throw it }
+}
+
+/**
+ * Invokes the given [action] when this flow completes without emitting any elements.
+ * The receiver of the [action] is [FlowCollector], so `onEmpty` can emit additional elements.
+ * For example:
+ *
+ * ```
+ * emptyFlow<Int>().onEmpty {
+ *     emit(1)
+ *     emit(2)
+ * }.collect { println(it) } // prints 1, 2
+ * ```
+ */
+@ExperimentalCoroutinesApi
+public fun <T> Flow<T>.onEmpty(
+    action: suspend FlowCollector<T>.() -> Unit
+): Flow<T> = unsafeFlow {
+    var isEmpty = true
+    collect {
+        isEmpty = false
+        emit(it)
+    }
+    if (isEmpty) {
+        val collector = SafeCollector(this, coroutineContext)
+        try {
+            collector.action()
+        } finally {
+            collector.releaseIntercepted()
+        }
+    }
 }
 
 private class ThrowingCollector(private val e: Throwable) : FlowCollector<Any?> {
