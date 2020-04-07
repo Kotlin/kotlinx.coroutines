@@ -58,8 +58,9 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  * All _children_ coroutines (coroutines created in the context of another [Job]) delegate handling of their
  * exceptions to their parent coroutine, which also delegates to the parent, and so on until the root,
  * so the `CoroutineExceptionHandler` installed in their context is never used.
+ * Coroutines running with [SupervisorJob] do not propagate exceptions to their parent and are treated like root coroutines.
  * A coroutine that was created using [async][CoroutineScope.async] always catches all its exceptions and represents them
- * in the resulting [Deferred] object, so it cannot result in uncaught exceptions either.
+ * in the resulting [Deferred] object, so it cannot result in uncaught exceptions.
  *
  * ### Handling coroutine exceptions
  *
@@ -92,10 +93,7 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  *     * Otherwise, all instances of [CoroutineExceptionHandler] found via [ServiceLoader]
  *     * and current thread's [Thread.uncaughtExceptionHandler] are invoked.
  *
- * [CoroutineExceptionHandler] can be invoked from an arbitrary dispatcher used by coroutines in the current job hierarchy.
- * For example, if one has a `MainScope` and launches children of the scope in main and default dispatchers, then exception handler can
- * be invoked either in main or in default dispatcher thread regardless of
- * which particular dispatcher coroutine that has thrown an exception used.
+ * [CoroutineExceptionHandler] can be invoked from an arbitrary thread.
  */
 public interface CoroutineExceptionHandler : CoroutineContext.Element {
     /**

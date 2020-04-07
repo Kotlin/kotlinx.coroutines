@@ -247,7 +247,7 @@ CoroutineExceptionHandler got java.lang.ArithmeticException
 ### Exceptions aggregation
 
 When multiple children of a coroutine fail with an exception the
-general rule is "the first exception wins", so the first exception gets handed.
+general rule is "the first exception wins", so the first exception gets handled.
 All additional exceptions that happen after the first one are attached to the first exception as suppressed ones. 
 
 <!--- INCLUDE
