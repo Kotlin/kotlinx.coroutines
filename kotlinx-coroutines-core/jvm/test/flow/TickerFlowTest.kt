@@ -20,7 +20,7 @@ class TickerFlowTest : TestBase() {
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun testZeroNegativePeriod() = runTest {
+    fun testZeroPeriod() = runTest {
         // WHEN
         tickerFlow(0).launchIn(this)
     }
@@ -46,6 +46,25 @@ class TickerFlowTest : TestBase() {
 
         // THEN
         assertEquals(4, inbox.size)
+
+        periodicTicker.cancelAndJoin()
+    }
+
+    @Test
+    fun testZeroInitialDelay() = runTest {
+        // GIVEN
+        val inbox = mutableListOf<Unit>()
+
+        // WHEN
+        val periodicTicker =
+                tickerFlow(100, 0).onEach {
+                    inbox.add(Unit)
+                }.launchIn(this)
+
+        delay(500)
+
+        // THEN
+        assertEquals(5, inbox.size)
 
         periodicTicker.cancelAndJoin()
     }
@@ -82,10 +101,10 @@ class TickerFlowTest : TestBase() {
                 }.launchIn(this)
 
         delay(50)
+        periodicTicker.cancel(CancellationException())
 
         // THEN
         assertEquals(0, inbox.size)
-        periodicTicker.cancel(CancellationException())
     }
 
 
