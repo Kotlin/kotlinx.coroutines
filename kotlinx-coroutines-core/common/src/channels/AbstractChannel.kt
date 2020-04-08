@@ -440,7 +440,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
             select.trySelectOther(otherOp) as Symbol? // must return symbol
 
         override fun completeResumeSend() {
-            block.startCoroutine(receiver = channel, completion = select.completion)
+            block.startCoroutineCancellable(receiver = channel, completion = select.completion)
         }
 
         override fun dispose() { // invoked on select completion
@@ -927,16 +927,16 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
 
         @Suppress("UNCHECKED_CAST")
         override fun completeResumeReceive(value: E) {
-            block.startCoroutine(if (receiveMode == RECEIVE_RESULT) ValueOrClosed.value(value) else value, select.completion)
+            block.startCoroutineCancellable(if (receiveMode == RECEIVE_RESULT) ValueOrClosed.value(value) else value, select.completion)
         }
 
         override fun resumeReceiveClosed(closed: Closed<*>) {
             if (!select.trySelect()) return
             when (receiveMode) {
                 RECEIVE_THROWS_ON_CLOSE -> select.resumeSelectWithException(closed.receiveException)
-                RECEIVE_RESULT -> block.startCoroutine(ValueOrClosed.closed<R>(closed.closeCause), select.completion)
+                RECEIVE_RESULT -> block.startCoroutineCancellable(ValueOrClosed.closed<R>(closed.closeCause), select.completion)
                 RECEIVE_NULL_ON_CLOSE -> if (closed.closeCause == null) {
-                    block.startCoroutine(null, select.completion)
+                    block.startCoroutineCancellable(null, select.completion)
                 } else {
                     select.resumeSelectWithException(closed.receiveException)
                 }
