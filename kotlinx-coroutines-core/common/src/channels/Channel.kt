@@ -52,12 +52,6 @@ public interface SendChannel<in E> {
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with a [CancellationException].
      *
-     * *Cancellation of suspended `send` is atomic*: when this function
-     * throws a [CancellationException], it means that the [element] was not sent to this channel.
-     * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
-     * continue to execute even after it was cancelled from the same thread in the case when this `send` operation
-     * was already resumed and the continuation was posted for execution to the thread's queue.
-     *
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
@@ -171,12 +165,6 @@ public interface ReceiveChannel<out E> {
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with a [CancellationException].
      *
-     * *Cancellation of suspended `receive` is atomic*: when this function
-     * throws a [CancellationException], it means that the element was not retrieved from this channel.
-     * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
-     * continue to execute even after it was cancelled from the same thread in the case when this `receive` operation
-     * was already resumed and the continuation was posted for execution to the thread's queue.
-     *
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
@@ -200,12 +188,6 @@ public interface ReceiveChannel<out E> {
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with a [CancellationException].
-     *
-     * *Cancellation of suspended `receive` is atomic*: when this function
-     * throws a [CancellationException], it means that the element was not retrieved from this channel.
-     * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
-     * continue to execute even after it was cancelled from the same thread in the case when this `receive` operation
-     * was already resumed and the continuation was posted for execution to the thread's queue.
      *
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
@@ -250,12 +232,6 @@ public interface ReceiveChannel<out E> {
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with a [CancellationException].
-     *
-     * If [atomic] is set to `true` (by default) then *cancellation of suspended `receive` is atomic*:
-     * when this function throws a [CancellationException], it means that the element was not retrieved from this channel.
-     * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
-     * continue to execute even after it was cancelled from the same thread in the case when this receive operation
-     * was already resumed and the continuation was posted for execution to the thread's queue.
      *
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
@@ -439,12 +415,6 @@ public interface ChannelIterator<out E> {
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with a [CancellationException].
-     *
-     * *Cancellation of suspended `receive` is atomic*: when this function
-     * throws a [CancellationException], it means that the element was not retrieved from this channel.
-     * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
-     * continue to execute even after it was cancelled from the same thread in the case when this receive operation
-     * was already resumed and the continuation was posted for execution to the thread's queue.
      *
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.

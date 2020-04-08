@@ -206,13 +206,6 @@ public suspend inline fun <T> suspendCancellableCoroutine(
 /**
  * Suspends the coroutine similar to [suspendCancellableCoroutine], but an instance of
  * [CancellableContinuationImpl] is reused.
- *
- * * when [resumeMode] is [MODE_CANCELLABLE_REUSABLE] works like [suspendCancellableCoroutine].
- * * when [resumeMode] is [MODE_ATOMIC_REUSABLE] it has *atomic cancellation*.
- *   When the suspended function throws a [CancellationException], it means that the continuation was not resumed.
- *   As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
- *   continue to execute even after it was cancelled from the same thread in the case when the continuation
- *   was already resumed and was posted for execution to the thread's queue.
  */
 internal suspend inline fun <T> suspendCancellableCoroutineReusable(
     crossinline block: (CancellableContinuation<T>) -> Unit
