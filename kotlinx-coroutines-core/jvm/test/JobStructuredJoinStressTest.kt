@@ -32,7 +32,7 @@ class JobStructuredJoinStressTest : TestBase() {
     @Test
     fun testStressSuspendCancellableReusable() {
         stress { job ->
-            suspendCancellableCoroutineReusable(MODE_CANCELLABLE_REUSABLE) { cont ->
+            suspendCancellableCoroutineReusable { cont ->
                 job.invokeOnCompletion { cont.resume(Unit) }
             }
         }

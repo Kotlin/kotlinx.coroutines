@@ -26,17 +26,11 @@ internal const val MODE_ATOMIC = 0
 internal const val MODE_CANCELLABLE = 1
 
 /**
- * Atomic dispatch mode for [suspendCancellableCoroutineReusable].
- * Note, that implementation of reuse checks mode via [Int.isReusableMode] extension.
- */
-internal const val MODE_ATOMIC_REUSABLE = 2
-
-/**
  * Cancellable dispatch mode for [suspendCancellableCoroutineReusable].
  * Note, that implementation of cancellability checks mode via [Int.isCancellableMode] extension;
  * implementation of reuse checks mode via [Int.isReusableMode] extension.
  */
-internal const val MODE_CANCELLABLE_REUSABLE = 3
+internal const val MODE_CANCELLABLE_REUSABLE = 2
 
 /**
  * Undispatched mode for [CancellableContinuation.resumeUndispatched].
@@ -45,7 +39,7 @@ internal const val MODE_CANCELLABLE_REUSABLE = 3
 internal const val MODE_UNDISPATCHED = 4
 
 internal val Int.isCancellableMode get() = this == MODE_CANCELLABLE || this == MODE_CANCELLABLE_REUSABLE
-internal val Int.isReusableMode get() = this == MODE_ATOMIC_REUSABLE || this == MODE_CANCELLABLE_REUSABLE
+internal val Int.isReusableMode get() = this == MODE_CANCELLABLE_REUSABLE
 
 internal abstract class DispatchedTask<in T>(
     @JvmField public var resumeMode: Int
@@ -151,7 +145,7 @@ internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: In
     val exception = getExceptionalResult(state)?.let { recoverStackTrace(it, delegate) }
     val result = if (exception != null) Result.failure(exception) else Result.success(state as T)
     when (useMode) {
-        MODE_ATOMIC, MODE_ATOMIC_REUSABLE -> delegate.resumeWith(result)
+        MODE_ATOMIC -> delegate.resumeWith(result)
         MODE_CANCELLABLE, MODE_CANCELLABLE_REUSABLE -> delegate.resumeCancellableWith(result)
         MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatchedWith(result)
         else -> error("Invalid mode $useMode")

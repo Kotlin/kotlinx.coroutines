@@ -215,10 +215,9 @@ public suspend inline fun <T> suspendCancellableCoroutine(
  *   was already resumed and was posted for execution to the thread's queue.
  */
 internal suspend inline fun <T> suspendCancellableCoroutineReusable(
-    resumeMode: Int,
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T = suspendCoroutineUninterceptedOrReturn { uCont ->
-        val cancellable = getOrCreateCancellableContinuation(uCont.intercepted(), resumeMode)
+        val cancellable = getOrCreateCancellableContinuation(uCont.intercepted(), resumeMode = MODE_CANCELLABLE_REUSABLE)
         block(cancellable)
         cancellable.getResult()
     }

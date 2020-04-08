@@ -39,7 +39,7 @@ private class ChannelViaBroadcast<E>(
 
     override suspend fun receive(): E = sub.receive()
     override suspend fun receiveOrNull(): E? = sub.receiveOrNull()
-    override suspend fun receiveOrClosed(atomic: Boolean): ValueOrClosed<E> = sub.receiveOrClosed(atomic)
+    override suspend fun receiveOrClosed(): ValueOrClosed<E> = sub.receiveOrClosed()
     override fun poll(): E? = sub.poll()
     override fun iterator(): ChannelIterator<E> = sub.iterator()
     

@@ -267,10 +267,7 @@ public interface ReceiveChannel<out E> {
      *            [KT-27524](https://youtrack.jetbrains.com/issue/KT-27524) needs to be fixed.
      */
     @InternalCoroutinesApi // until https://youtrack.jetbrains.com/issue/KT-27524 is fixed
-    public suspend fun receiveOrClosed(atomic: Boolean = true): ValueOrClosed<E>
-
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility") // Since version 1.4.0
-    public suspend fun receiveOrClosed(): ValueOrClosed<E> = receiveOrClosed(atomic = true)
+    public suspend fun receiveOrClosed(): ValueOrClosed<E>
 
     /**
      * Clause for the [select] expression of the [receiveOrClosed] suspending function that selects with the [ValueOrClosed] with a value

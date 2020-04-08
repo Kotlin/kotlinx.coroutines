@@ -135,7 +135,7 @@ private class SemaphoreImpl(
         cur + 1
     }
 
-    private suspend fun addToQueueAndSuspend() = suspendCancellableCoroutineReusable<Unit>(MODE_ATOMIC_REUSABLE) sc@ { cont ->
+    private suspend fun addToQueueAndSuspend() = suspendCancellableCoroutineReusable<Unit> sc@ { cont ->
         val last = this.tail
         val enqIdx = enqIdx.getAndIncrement()
         val segment = getSegment(last, enqIdx / SEGMENT_SIZE)

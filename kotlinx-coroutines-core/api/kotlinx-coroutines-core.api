@@ -545,7 +545,6 @@ public abstract interface class kotlinx/coroutines/channels/ActorScope : kotlinx
 
 public final class kotlinx/coroutines/channels/ActorScope$DefaultImpls {
 	public static synthetic fun cancel (Lkotlinx/coroutines/channels/ActorScope;)V
-	public static synthetic fun receiveOrClosed (Lkotlinx/coroutines/channels/ActorScope;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public abstract interface class kotlinx/coroutines/channels/BroadcastChannel : kotlinx/coroutines/channels/SendChannel {
@@ -581,7 +580,6 @@ public abstract interface class kotlinx/coroutines/channels/Channel : kotlinx/co
 
 public final class kotlinx/coroutines/channels/Channel$DefaultImpls {
 	public static synthetic fun cancel (Lkotlinx/coroutines/channels/Channel;)V
-	public static synthetic fun receiveOrClosed (Lkotlinx/coroutines/channels/Channel;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/channels/Channel$Factory {
@@ -778,8 +776,7 @@ public abstract interface class kotlinx/coroutines/channels/ReceiveChannel {
 	public abstract fun iterator ()Lkotlinx/coroutines/channels/ChannelIterator;
 	public abstract fun poll ()Ljava/lang/Object;
 	public abstract fun receive (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract synthetic fun receiveOrClosed (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract fun receiveOrClosed (ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun receiveOrClosed (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun receiveOrNull (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
@@ -787,8 +784,6 @@ public final class kotlinx/coroutines/channels/ReceiveChannel$DefaultImpls {
 	public static synthetic fun cancel (Lkotlinx/coroutines/channels/ReceiveChannel;)V
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/channels/ReceiveChannel;Ljava/lang/Throwable;ILjava/lang/Object;)Z
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/channels/ReceiveChannel;Ljava/util/concurrent/CancellationException;ILjava/lang/Object;)V
-	public static synthetic fun receiveOrClosed (Lkotlinx/coroutines/channels/ReceiveChannel;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static synthetic fun receiveOrClosed$default (Lkotlinx/coroutines/channels/ReceiveChannel;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public abstract interface class kotlinx/coroutines/channels/SendChannel {

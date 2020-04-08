@@ -48,7 +48,7 @@ private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>,
             //     L$1 <- channel
             //     L$2 <- cause
             //     L$3 <- this$run (actually equal to this)
-            val result = run { channel.receiveOrClosed(atomic = false) }
+            val result = run { channel.receiveOrClosed() }
             if (result.isClosed) {
                 result.closeCause?.let { throw it }
                 break // returns normally when result.closeCause == null

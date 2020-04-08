@@ -84,13 +84,13 @@ class CancellableChannel : SimpleChannel() {
 
 class CancellableReusableChannel : SimpleChannel() {
     @Suppress("INVISIBLE_MEMBER")
-    override suspend fun suspendReceive(): Int = suspendCancellableCoroutineReusable(MODE_ATOMIC_REUSABLE) {
+    override suspend fun suspendReceive(): Int = suspendCancellableCoroutineReusable {
         consumer = it.intercepted()
         COROUTINE_SUSPENDED
     }
 
     @Suppress("INVISIBLE_MEMBER")
-    override suspend fun suspendSend(element: Int) = suspendCancellableCoroutineReusable<Unit>(MODE_ATOMIC_REUSABLE) {
+    override suspend fun suspendSend(element: Int) = suspendCancellableCoroutineReusable<Unit> {
         enqueuedValue = element
         producer = it.intercepted()
         COROUTINE_SUSPENDED
