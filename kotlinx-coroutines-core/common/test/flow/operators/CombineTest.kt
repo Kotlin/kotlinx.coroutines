@@ -240,12 +240,14 @@ abstract class CombineTestBase : TestBase() {
     }
 
     @Test
-    fun testCancelledCombine() = runTest {
+    fun testCancelledCombine() = runTest(
+        expected = { it is CancellationException }
+    ) {
         coroutineScope {
             val flow =  flow {
-                emit(Unit) // emit to buffer
-                cancel() // now cancel
+                emit(Unit) // emit
             }
+            cancel() // cancel the scope
             flow.combineLatest(flow) { u, _ -> u }.collect {
                 // should not be reached, because cancelled before it runs
                 expectUnreached()

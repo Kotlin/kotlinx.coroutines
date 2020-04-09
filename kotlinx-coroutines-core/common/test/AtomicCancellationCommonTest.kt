@@ -87,23 +87,23 @@ class AtomicCancellationCommonTest : TestBase() {
     }
 
     @Test
-    fun testLockAtomicCancel() = runTest {
+    fun testLockCancellable() = runTest {
         expect(1)
         val mutex = Mutex(true) // locked mutex
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             mutex.lock() // suspends
-            expect(4) // should execute despite cancellation
+            expectUnreached() // should NOT execute because of cancellation
         }
         expect(3)
         mutex.unlock() // unlock mutex first
         job.cancel() // cancel the job next
         yield() // now yield
-        finish(5)
+        finish(4)
     }
 
     @Test
-    fun testSelectLockAtomicCancel() = runTest {
+    fun testSelectLockCancellable() = runTest {
         expect(1)
         val mutex = Mutex(true) // locked mutex
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
@@ -114,13 +114,12 @@ class AtomicCancellationCommonTest : TestBase() {
                     "OK"
                 }
             }
-            assertEquals("OK", result)
-            expect(5) // should execute despite cancellation
+            expectUnreached() // should NOT execute because of cancellation
         }
         expect(3)
         mutex.unlock() // unlock mutex first
         job.cancel() // cancel the job next
         yield() // now yield
-        finish(6)
+        finish(4)
     }
 }

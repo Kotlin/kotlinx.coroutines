@@ -76,13 +76,16 @@ class ReusableCancellableContinuationTest : TestBase() {
         ensureActive()
         // Verify child was bound
         FieldWalker.assertReachableCount(1, coroutineContext[Job]) { it === continuation }
-        suspendCancellableCoroutineReusable<Unit> {
-            expect(5)
-            coroutineContext[Job]!!.cancel()
-            it.resume(Unit)
+        try {
+            suspendCancellableCoroutineReusable<Unit> {
+                expect(5)
+                coroutineContext[Job]!!.cancel()
+                it.resume(Unit) // will not dispatch, will get CancellationException
+            }
+        } catch (e: CancellationException) {
+            assertFalse(isActive)
+            finish(6)
         }
-        assertFalse(isActive)
-        finish(6)
     }
 
     @Test
@@ -152,15 +155,23 @@ class ReusableCancellableContinuationTest : TestBase() {
         assertFalse(isActive)
         // Child detached
         FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
-        suspendCancellableCoroutineReusable<Unit> { it.resume(Unit) }
-        suspendCancellableCoroutineReusable<Unit> { it.resume(Unit) }
-        FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
-
+        expect(5)
         try {
+            // Resume is non-atomic, so it throws cancellation exception
+            suspendCancellableCoroutineReusable<Unit> {
+                expect(6) // but the code inside the block is executed
+                it.resume(Unit)
+            }
+        } catch (e: CancellationException) {
+            FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
+            expect(7)
+        }
+        try {
+            // No resume -- still cancellation exception
             suspendCancellableCoroutineReusable<Unit> {}
         } catch (e: CancellationException) {
             FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
-            finish(5)
+            finish(8)
         }
     }
 
