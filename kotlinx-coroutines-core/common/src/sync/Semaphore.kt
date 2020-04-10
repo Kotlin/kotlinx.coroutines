@@ -8,9 +8,8 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
-import kotlin.jvm.*
 import kotlin.math.*
-import kotlin.native.concurrent.*
+import kotlin.native.concurrent.SharedImmutable
 
 /**
  * A counting semaphore for coroutines that logically maintains a number of available permits.
@@ -84,15 +83,25 @@ public suspend inline fun <T> Semaphore.withPermit(action: () -> T): T {
     }
 }
 
-private class SemaphoreImpl(
-    private val permits: Int, acquiredPermits: Int
-) : Semaphore, SegmentQueue<SemaphoreSegment>() {
+private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Semaphore {
+
+    // The queue of waiting acquirers is essentially an infinite array based on the list of segments
+    // (see `SemaphoreSegment`); each segment contains a fixed number of slots. To determine a slot for each enqueue
+    // and dequeue operation, we increment the corresponding counter at the beginning of the operation
+    // and use the value before the increment as a slot number. This way, each enqueue-dequeue pair
+    // works with an individual cell.We use the corresponding segment pointer to find the required ones.
+    private val head: AtomicRef<SemaphoreSegment>
+    private val deqIdx = atomic(0L)
+    private val tail: AtomicRef<SemaphoreSegment>
+    private val enqIdx = atomic(0L)
+
     init {
         require(permits > 0) { "Semaphore should have at least 1 permit, but had $permits" }
         require(acquiredPermits in 0..permits) { "The number of acquired permits should be in 0..$permits" }
+        val s = SemaphoreSegment(0, null, 2)
+        head = atomic(s)
+        tail = atomic(s)
     }
-
-    override fun newSegment(id: Long, prev: SemaphoreSegment?) = SemaphoreSegment(id, prev)
 
     /**
      * This counter indicates a number of available permits if it is non-negative,
@@ -103,14 +112,6 @@ private class SemaphoreImpl(
      */
     private val _availablePermits = atomic(permits - acquiredPermits)
     override val availablePermits: Int get() = max(_availablePermits.value, 0)
-
-    // The queue of waiting acquirers is essentially an infinite array based on `SegmentQueue`;
-    // each segment contains a fixed number of slots. To determine a slot for each enqueue
-    // and dequeue operation, we increment the corresponding counter at the beginning of the operation
-    // and use the value before the increment as a slot number. This way, each enqueue-dequeue pair
-    // works with an individual cell.
-    private val enqIdx = atomic(0L)
-    private val deqIdx = atomic(0L)
 
     override fun tryAcquire(): Boolean {
         _availablePermits.loop { p ->
@@ -136,12 +137,13 @@ private class SemaphoreImpl(
         cur + 1
     }
 
-    private suspend fun addToQueueAndSuspend() = suspendAtomicCancellableCoroutineReusable<Unit> sc@ { cont ->
-        val last = this.tail
+    private suspend fun addToQueueAndSuspend() = suspendAtomicCancellableCoroutineReusable<Unit> sc@{ cont ->
+        val curTail = this.tail.value
         val enqIdx = enqIdx.getAndIncrement()
-        val segment = getSegment(last, enqIdx / SEGMENT_SIZE)
+        val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail,
+                                                          createNewSegment = ::createSegment).run { segment } // cannot be closed
         val i = (enqIdx % SEGMENT_SIZE).toInt()
-        if (segment === null || segment.get(i) === RESUMED || !segment.cas(i, null, cont)) {
+        if (segment.get(i) === RESUMED || !segment.cas(i, null, cont)) {
             // already resumed
             cont.resume(Unit)
             return@sc
@@ -151,10 +153,17 @@ private class SemaphoreImpl(
 
     @Suppress("UNCHECKED_CAST")
     internal fun resumeNextFromQueue() {
-        try_again@while (true) {
-            val first = this.head
+        try_again@ while (true) {
+            val curHead = this.head.value
             val deqIdx = deqIdx.getAndIncrement()
-            val segment = getSegmentAndMoveHead(first, deqIdx / SEGMENT_SIZE) ?: continue@try_again
+            val id = deqIdx / SEGMENT_SIZE
+            val segment = this.head.findSegmentAndMoveForward(id, startFrom = curHead,
+                                                              createNewSegment = ::createSegment).run { segment } // cannot be closed
+            segment.cleanPrev()
+            if (segment.id > id) {
+                this.deqIdx.updateIfLower(segment.id * SEGMENT_SIZE)
+                continue@try_again
+            }
             val i = (deqIdx % SEGMENT_SIZE).toInt()
             val cont = segment.getAndSet(i, RESUMED)
             if (cont === null) return // just resumed
@@ -163,6 +172,10 @@ private class SemaphoreImpl(
             return
         }
     }
+}
+
+private inline fun AtomicLong.updateIfLower(value: Long): Unit = loop { cur ->
+    if (cur >= value || compareAndSet(cur, value)) return
 }
 
 private class CancelSemaphoreAcquisitionHandler(
@@ -180,10 +193,11 @@ private class CancelSemaphoreAcquisitionHandler(
     override fun toString() = "CancelSemaphoreAcquisitionHandler[$semaphore, $segment, $index]"
 }
 
-private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?): Segment<SemaphoreSegment>(id, prev) {
+private fun createSegment(id: Long, prev: SemaphoreSegment?) = SemaphoreSegment(id, prev, 0)
+
+private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int) : Segment<SemaphoreSegment>(id, prev, pointers) {
     val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
-    private val cancelledSlots = atomic(0)
-    override val removed get() = cancelledSlots.value == SEGMENT_SIZE
+    override val maxSlots: Int get() = SEGMENT_SIZE
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun get(index: Int): Any? = acquirers[index].value
@@ -200,8 +214,7 @@ private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?): Segment<Semap
         // Try to cancel the slot
         val cancelled = getAndSet(index, CANCELLED) !== RESUMED
         // Remove this segment if needed
-        if (cancelledSlots.incrementAndGet() == SEGMENT_SIZE)
-            remove()
+        onSlotCleaned()
         return cancelled
     }
 
