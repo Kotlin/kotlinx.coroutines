@@ -6,7 +6,7 @@ package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import kotlin.native.concurrent.*
+import kotlin.native.concurrent.SharedImmutable
 
 /**
  * Returns the first segment `s` with `s.id >= id` or `CLOSED`
