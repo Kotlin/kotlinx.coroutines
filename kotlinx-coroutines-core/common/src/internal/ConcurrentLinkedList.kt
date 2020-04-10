@@ -18,11 +18,9 @@ private inline fun <S : Segment<S>> S.findSegmentInternal(id: Long, createNewSeg
     // uses it. This way, only one segment with each id can be added.
     var cur: S = this
     while (cur.id < id || cur.removed) {
-        val nextOrClosed = cur.nextOrClosed
-        if (nextOrClosed.isClosed) return SegmentOrClosed(CLOSED)
-        val nextNode = nextOrClosed.node
-        if (nextNode != null) { // there is a next node -- move there
-            cur = nextNode
+        val next = cur.nextOrIfClosed { return SegmentOrClosed(CLOSED) }
+        if (next != null) { // there is a next node -- move there
+            cur = next
             continue
         }
         val newTail = createNewSegment(cur.id + 1, cur)
@@ -70,7 +68,7 @@ internal inline fun <S : Segment<S>> AtomicRef<S>.findSegmentAndMoveForward(id: 
 internal fun <N : ConcurrentLinkedListNode<N>> N.close(): N {
     var cur: N = this
     while (true) {
-        val next = cur.nextOrClosed.run { if (isClosed) return cur else node }
+        val next = cur.nextOrIfClosed { return cur }
         if (next === null) {
             if (cur.markAsClosed()) return cur
         } else {
@@ -82,13 +80,29 @@ internal fun <N : ConcurrentLinkedListNode<N>> N.close(): N {
 internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>>(prev: N?) {
     // Pointer to the next node, updates similarly to the Michael-Scott queue algorithm.
     private val _next = atomic<Any?>(null)
-    val nextOrClosed: NextNodeOrClosed<N> get() = NextNodeOrClosed(_next.value)
+    private val nextInternal get() = _next.value
+    val next: N? get() = nextInternal.let { if (it === CLOSED) null else it as N? }
+
+    /**
+     * Returns the next segment or `null` of the one does not exists,
+     * and invokes [onClosedAction] if this segment is marked as closed.
+     */
+    inline fun nextOrIfClosed(onClosedAction: () -> Unit): N? = nextInternal.let {
+        if (it === CLOSED) {
+            onClosedAction()
+            null
+        } else it as N?
+    }
+
+    /**
+     * Tries to set the next segment if it is not specified and this segment is not marked as closed.
+     */
     fun trySetNext(value: N): Boolean = _next.compareAndSet(null, value)
 
     /**
      * Checks whether this node is the physical tail of the current linked list.
      */
-    val isTail: Boolean get() = _next.value.let { it === null || it === CLOSED }
+    val isTail: Boolean get() = next === null
 
     // Pointer to the previous node, updates in [remove] function.
     private val _prev = atomic(prev)
@@ -105,11 +119,6 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
     fun markAsClosed() = _next.compareAndSet(null, CLOSED)
 
     /**
-     * Checks whether this node is a physical tail and is closed for further node additions.
-     */
-    val isClosed get() = _next.value === CLOSED
-
-    /**
      * This property indicates whether the current node is logically removed.
      * The expected use-case is removing the node logically (so that [removed] becomes true),
      * and invoking [remove] after that. Note that this implementation relies on the contract
@@ -124,7 +133,7 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
      */
     fun remove() {
         assert { removed } // The node should be logically removed at first.
-        assert { nextOrClosed.node !== null } // The physical tail cannot be removed.
+        assert { !isTail } // The physical tail cannot be removed.
         while (true) {
             // Read `next` and `prev` pointers ignoring logically removed nodes.
             val prev = leftmostAliveNode
@@ -149,9 +158,9 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
 
     private val rightmostAliveNode: N get() {
         assert { !isTail } // Should not be invoked on the tail node
-        var cur = nextOrClosed.node!!
+        var cur = next!!
         while (cur.removed)
-            cur = cur.nextOrClosed.node!!
+            cur = cur.next!!
         return cur
     }
 }
@@ -206,11 +215,6 @@ private inline fun AtomicInt.addConditionally(delta: Int, condition: (cur: Int) 
 internal inline class SegmentOrClosed<S : Segment<S>>(private val value: Any?) {
     val isClosed: Boolean get() = value === CLOSED
     val segment: S get() = if (value === CLOSED) error("Does not contain segment") else value as S
-}
-
-internal inline class NextNodeOrClosed<N : ConcurrentLinkedListNode<N>>(private val value: Any?) {
-    val isClosed: Boolean get() = value === CLOSED
-    val node: N? get() = if (isClosed) null else value as N?
 }
 
 private const val POINTERS_SHIFT = 16

@@ -74,10 +74,7 @@ internal class SegmentBasedQueue<T> {
         var cur = head.value
         var i = 1
         while (true) {
-            cur = cur.nextOrClosed.run {
-                if (isClosed || node === null) return i
-                this.node!!
-            }
+            cur = cur.next ?: return i
             i++
         }
     }

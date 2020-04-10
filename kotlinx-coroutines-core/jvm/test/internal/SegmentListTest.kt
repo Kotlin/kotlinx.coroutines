@@ -32,7 +32,7 @@ class SegmentListTest {
 }
 
 private class AtomicRefHolder<T>(initialValue: T) {
-    val ref: AtomicRef<T> = atomic(initialValue)
+    val ref = atomic(initialValue)
 }
 
 private class TestSegment(id: Long, prev: TestSegment?, pointers: Int) : Segment<TestSegment>(id, prev, pointers) {
