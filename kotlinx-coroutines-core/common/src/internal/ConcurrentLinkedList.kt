@@ -6,16 +6,21 @@ package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import kotlin.native.concurrent.SharedImmutable
+import kotlin.native.concurrent.*
 
-// Returns the first segment `s` with `s.id >= id` or `CLOSED`
-// if all the segments in this linked list have lower `id` and the list is closed for further segment additions.
-private inline fun <S : Segment<S>> S.findSegmentInternal(id: Long, createNewSegment: (id: Long, prev: S?) -> S): SegmentOrClosed<S> {
-    // Go through `next` references and add new segments if needed,
-    // similarly to the `push` in the Michael-Scott queue algorithm.
-    // The only difference is that `CAS failure` means that the
-    // required segment has already been added, so the algorithm just
-    // uses it. This way, only one segment with each id can be added.
+/**
+ * Returns the first segment `s` with `s.id >= id` or `CLOSED`
+ * if all the segments in this linked list have lower `id`, and the list is closed for further segment additions.
+ */
+private inline fun <S : Segment<S>> S.findSegmentInternal(
+    id: Long,
+    createNewSegment: (id: Long, prev: S?) -> S
+): SegmentOrClosed<S> {
+    /*
+       Go through `next` references and add new segments if needed, similarly to the `push` in the Michael-Scott
+       queue algorithm. The only difference is that "CAS failure" means that the required segment has already been
+       added, so the algorithm just uses it. This way, only one segment with each id can be added.
+     */
     var cur: S = this
     while (cur.id < id || cur.removed) {
         val next = cur.nextOrIfClosed { return SegmentOrClosed(CLOSED) }
@@ -32,7 +37,10 @@ private inline fun <S : Segment<S>> S.findSegmentInternal(id: Long, createNewSeg
     return SegmentOrClosed(cur)
 }
 
-// Returns `false` if the segment `to` is logically removed, `true` on successful update.
+/**
+ * Returns `false` if the segment `to` is logically removed, `true` on a successful update.
+ */
+@Suppress("NOTHING_TO_INLINE") // Must be inline because it is an AtomicRef extension
 private inline fun <S : Segment<S>> AtomicRef<S>.moveForward(to: S): Boolean = loop { cur ->
     if (cur.id >= to.id) return true
     if (!to.tryIncPointers()) return false
@@ -50,11 +58,15 @@ private inline fun <S : Segment<S>> AtomicRef<S>.moveForward(to: S): Boolean = l
  * At the same time, [Segment.cleanPrev] should also be invoked if the previous segments are no longer needed
  * (e.g., queues should use it in dequeue operations).
  *
- * Since segments can be removed from the list, or it can be closed for further segment additions, this function
- * returns the segment `s` with `s.id >= id` or `CLOSED` if all the segments in this linked list have lower `id`
+ * Since segments can be removed from the list, or it can be closed for further segment additions.
+ * Returns the segment `s` with `s.id >= id` or `CLOSED` if all the segments in this linked list have lower `id`,
  * and the list is closed.
  */
-internal inline fun <S : Segment<S>> AtomicRef<S>.findSegmentAndMoveForward(id: Long, startFrom: S, createNewSegment: (id: Long, prev: S?) -> S): SegmentOrClosed<S> {
+internal inline fun <S : Segment<S>> AtomicRef<S>.findSegmentAndMoveForward(
+    id: Long,
+    startFrom: S,
+    createNewSegment: (id: Long, prev: S?) -> S
+): SegmentOrClosed<S> {
     while (true) {
         val s = startFrom.findSegmentInternal(id, createNewSegment)
         if (s.isClosed || moveForward(s.segment)) return s
@@ -80,19 +92,25 @@ internal fun <N : ConcurrentLinkedListNode<N>> N.close(): N {
 internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>>(prev: N?) {
     // Pointer to the next node, updates similarly to the Michael-Scott queue algorithm.
     private val _next = atomic<Any?>(null)
-    private val nextInternal get() = _next.value
-    val next: N? get() = nextInternal.let { if (it === CLOSED) null else it as N? }
+    // Pointer to the previous node, updates in [remove] function.
+    private val _prev = atomic(prev)
+
+    private val nextOrClosed get() = _next.value
 
     /**
-     * Returns the next segment or `null` of the one does not exists,
+     * Returns the next segment or `null` of the one does not exist,
      * and invokes [onClosedAction] if this segment is marked as closed.
      */
-    inline fun nextOrIfClosed(onClosedAction: () -> Unit): N? = nextInternal.let {
+    @Suppress("UNCHECKED_CAST")
+    inline fun nextOrIfClosed(onClosedAction: () -> Nothing): N? = nextOrClosed.let {
         if (it === CLOSED) {
             onClosedAction()
-            null
-        } else it as N?
+        } else {
+            it as N?
+        }
     }
+
+    val next: N? get() = nextOrIfClosed { return null }
 
     /**
      * Tries to set the next segment if it is not specified and this segment is not marked as closed.
@@ -102,10 +120,8 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
     /**
      * Checks whether this node is the physical tail of the current linked list.
      */
-    val isTail: Boolean get() = next === null
+    val isTail: Boolean get() = next == null
 
-    // Pointer to the previous node, updates in [remove] function.
-    private val _prev = atomic(prev)
     val prev: N? get() = _prev.value
 
     /**
@@ -141,7 +157,7 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
             // Link `next` and `prev`.
             next._prev.value = prev
             if (prev !== null) prev._next.value = next
-            // Check that prev and next are still alive.
+            // Checks that prev and next are still alive.
             if (next.removed) continue
             if (prev !== null && prev.removed) continue
             // This node is removed.
@@ -178,13 +194,13 @@ internal abstract class Segment<S : Segment<S>>(val id: Long, prev: S?, pointers
     abstract val maxSlots: Int
 
     /**
-     * Numbers of cleaned slots (lowest bits) and AtomicRef pointers to this segment (highest bits)
+     * Numbers of cleaned slots (the lowest bits) and AtomicRef pointers to this segment (the highest bits)
      */
     private val cleanedAndPointers = atomic(pointers shl POINTERS_SHIFT)
 
     /**
-     * The segment is considered as removed if all the slots are cleaned,
-     * there is no pointers to this segment from outside, and
+     * The segment is considered as removed if all the slots are cleaned.
+     * There are no pointers to this segment from outside, and
      * it is not a physical tail in the linked list of segments.
      */
     override val removed get() = cleanedAndPointers.value == maxSlots && !isTail
@@ -196,8 +212,7 @@ internal abstract class Segment<S : Segment<S>>(val id: Long, prev: S?, pointers
     internal fun decPointers() = cleanedAndPointers.addAndGet(-(1 shl POINTERS_SHIFT)) == maxSlots && !isTail
 
     /**
-     * This functions should be invoked on each slot clean-up;
-     * should not be invoked twice for the same slot.
+     * Invoked on each slot clean-up; should not be invoked twice for the same slot.
      */
     fun onSlotCleaned() {
         if (cleanedAndPointers.incrementAndGet() == maxSlots && !isTail) remove()
@@ -212,8 +227,10 @@ private inline fun AtomicInt.addConditionally(delta: Int, condition: (cur: Int) 
     }
 }
 
+@Suppress("EXPERIMENTAL_FEATURE_WARNING") // We are using inline class only internally, so it is Ok
 internal inline class SegmentOrClosed<S : Segment<S>>(private val value: Any?) {
     val isClosed: Boolean get() = value === CLOSED
+    @Suppress("UNCHECKED_CAST")
     val segment: S get() = if (value === CLOSED) error("Does not contain segment") else value as S
 }
 

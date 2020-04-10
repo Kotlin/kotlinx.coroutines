@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
@@ -55,6 +59,7 @@ internal class SegmentBasedQueue<T> {
                 else el = s.element.value
             }
             if (el === BROKEN) continue
+            @Suppress("UNCHECKED_CAST")
             return el as T
         }
     }
