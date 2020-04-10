@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -20,18 +20,16 @@ private inline fun <S : Segment<S>> S.findSegmentInternal(id: Long, createNewSeg
     while (cur.id < id || cur.removed) {
         val nextOrClosed = cur.nextOrClosed
         if (nextOrClosed.isClosed) return SegmentOrClosed(CLOSED)
-        val next: S = if (nextOrClosed.node === null) {
-            val newTail = createNewSegment(cur.id + 1, cur)
-            if (cur.trySetNext(newTail)) {
-                if (cur.removed) cur.remove()
-                newTail
-            } else {
-                val nextOrClosed = cur.nextOrClosed
-                if (nextOrClosed.isClosed) return SegmentOrClosed(CLOSED)
-                nextOrClosed.node!!
-            }
-        } else nextOrClosed.node!!
-        cur = next
+        val nextNode = nextOrClosed.node
+        if (nextNode != null) { // there is a next node -- move there
+            cur = nextNode
+            continue
+        }
+        val newTail = createNewSegment(cur.id + 1, cur)
+        if (cur.trySetNext(newTail)) { // successfully added new node -- move there
+            if (cur.removed) cur.remove()
+            cur = newTail
+        }
     }
     return SegmentOrClosed(cur)
 }
@@ -40,13 +38,11 @@ private inline fun <S : Segment<S>> S.findSegmentInternal(id: Long, createNewSeg
 private inline fun <S : Segment<S>> AtomicRef<S>.moveForward(to: S): Boolean = loop { cur ->
     if (cur.id >= to.id) return true
     if (!to.tryIncPointers()) return false
-    if (compareAndSet(cur, to)) {
-        // the segment is moved
+    if (compareAndSet(cur, to)) { // the segment is moved
         if (cur.decPointers()) cur.remove()
         return true
-    } else {
-        if (to.decPointers()) to.remove()
     }
+    if (to.decPointers()) to.remove() // undo tryIncPointers
 }
 
 /**
