@@ -118,8 +118,8 @@ public interface CancellableContinuation<in T> : Continuation<T> {
     public fun cancel(cause: Throwable? = null): Boolean
 
     /**
-     * Registers a [handler] to be **synchronously** invoked on cancellation (regular or exceptional) of this continuation.
-     * When the continuation is already cancelled, the handler will be immediately invoked
+     * Registers a [handler] to be **synchronously** invoked on [cancellation][cancel] (regular or exceptional) of this continuation.
+     * When the continuation is already cancelled, the handler is immediately invoked
      * with the cancellation exception. Otherwise, the handler will be invoked as soon as this
      * continuation is cancelled.
      *
@@ -128,7 +128,12 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * processed as an uncaught exception in the context of the current coroutine
      * (see [CoroutineExceptionHandler]).
      *
-     * At most one [handler] can be installed on a continuation.
+     * At most one [handler] can be installed on a continuation. Attempt to call `invokeOnCancellation` second
+     * time produces [IllegalStateException].
+     *
+     * This handler is also called when this continuation [resumes][resume] normally (with a value) and then
+     * is cancelled while waiting to be dispatched. More generally speaking, this handler is called whenever
+     * the caller of [suspendCancellableCoroutine] is getting a [CancellationException].
      *
      * **Note**: Implementation of `CompletionHandler` must be fast, non-blocking, and thread-safe.
      * This `handler` can be invoked concurrently with the surrounding code.

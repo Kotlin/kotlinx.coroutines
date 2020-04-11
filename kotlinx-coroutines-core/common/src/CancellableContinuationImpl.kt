@@ -147,10 +147,21 @@ internal open class CancellableContinuationImpl<in T>(
 
     override fun takeState(): Any? = state
 
-    override fun cancelResult(state: Any?, cause: Throwable) {
-        if (state is CompletedWithCancellation) {
-            invokeHandlerSafely {
-                state.onCancellation(cause)
+    override fun cancelCompletedResult(cause: Throwable): Unit = _state.loop { state ->
+        when (state) {
+            is NotCompleted -> error("Not completed")
+            is CancelledContinuation -> return // already cancelled, nothing to do
+            is CompletedWithCancelHandler -> {
+                check(!state.cancelled) { "Must be called at most once" }
+                val update = state.withCancelCause(cause)
+                if (_state.compareAndSet(state, update)) {
+                    state.invokeHandler(this, cause)
+                    return // done
+                }
+            }
+            else -> {
+                // completed normally without marker class, set CompletedWithCancelHandler to synchronize cancellation
+                if (_state.compareAndSet(state, CompletedWithCancelHandler(state, null, cause))) return
             }
         }
     }
@@ -186,7 +197,7 @@ internal open class CancellableContinuationImpl<in T>(
         detachChildIfNonResuable()
     }
 
-    private inline fun invokeHandlerSafely(block: () -> Unit) {
+    internal inline fun invokeHandlerSafely(block: () -> Unit) {
         try {
             block()
         } catch (ex: Throwable) {
@@ -239,57 +250,64 @@ internal open class CancellableContinuationImpl<in T>(
             val job = context[Job]
             if (job != null && !job.isActive) {
                 val cause = job.getCancellationException()
-                cancelResult(state, cause)
+                cancelCompletedResult(cause)
                 throw recoverStackTrace(cause, this)
             }
         }
         return getSuccessfulResult(state)
     }
 
-    override fun resumeWith(result: Result<T>) {
+    override fun resumeWith(result: Result<T>) =
         resumeImpl(result.toState(this), resumeMode)
-    }
 
-    override fun resume(value: T, onCancellation: (cause: Throwable) -> Unit) {
-        val cancelled = resumeImpl(CompletedWithCancellation(value, onCancellation), resumeMode)
-        if (cancelled != null) {
-            // too late to resume (was cancelled) -- call handler
-            invokeHandlerSafely {
-                onCancellation(cancelled.cause)
-            }
-        }
-    }
+    override fun resume(value: T, onCancellation: (cause: Throwable) -> Unit) =
+        resumeImpl(value, resumeMode, onCancellation)
 
     public override fun invokeOnCancellation(handler: CompletionHandler) {
-        var handleCache: CancelHandler? = null
+        val cancelHandler = makeCancelHandler(handler)
         _state.loop { state ->
             when (state) {
                 is Active -> {
-                    val node = handleCache ?: makeHandler(handler).also { handleCache = it }
-                    if (_state.compareAndSet(state, node)) return // quit on cas success
+                    if (_state.compareAndSet(state, cancelHandler)) return // quit on cas success
                 }
                 is CancelHandler -> multipleHandlersError(handler, state)
-                is CancelledContinuation -> {
+                is CompletedExceptionally -> {
                     /*
-                     * Continuation was already cancelled, invoke directly.
+                     * Continuation was already cancelled or completed exceptionally.
                      * NOTE: multiple invokeOnCancellation calls with different handlers are not allowed,
-                     * so we check to make sure that handler was installed just once.
+                     * so we check to make sure handler was installed just once.
                      */
                     if (!state.makeHandled()) multipleHandlersError(handler, state)
                     /*
+                     * Call handler only if it was cancelled.
                      * :KLUDGE: We have to invoke a handler in platform-specific way via `invokeIt` extension,
                      * because we play type tricks on Kotlin/JS and handler is not necessarily a function there
                      */
-                    invokeHandlerSafely { handler.invokeIt((state as? CompletedExceptionally)?.cause) }
+                    if (state is CancelledContinuation) {
+                        invokeHandlerSafely { handler.invokeIt((state as? CompletedExceptionally)?.cause) }
+                    }
                     return
+                }
+                is CompletedWithCancelHandler -> {
+                    /*
+                     * Continuation was already completed, and might already have cancel handler.
+                     */
+                    if (state.cancelHandler != null) multipleHandlersError(handler, state)
+                    if (state.cancelled) {
+                        // Was already cancelled while being dispatched -- invoke the handler directly
+                        invokeHandlerSafely { handler.invokeIt(state.cancelCause) }
+                        return
+                    }
+                    val update = state.withCancelHandler(cancelHandler)
+                    if (_state.compareAndSet(state, update)) return // quit on cas success
                 }
                 else -> {
                     /*
-                     * Continuation was already completed, do nothing.
-                     * NOTE: multiple invokeOnCancellation calls with different handlers are not allowed,
-                     * but we have no way to check that it was installed just once in this case.
+                     * Continuation was already completed, but might get cancelled while being dispatched.
+                     * Change its state to CompletedWithCancelHandler.
                      */
-                    return
+                    val update = CompletedWithCancelHandler(state, cancelHandler, null)
+                    if (_state.compareAndSet(state, update)) return // quit on cas success
                 }
             }
         }
@@ -299,7 +317,7 @@ internal open class CancellableContinuationImpl<in T>(
         error("It's prohibited to register multiple handlers, tried to register $handler, already has $state")
     }
 
-    private fun makeHandler(handler: CompletionHandler): CancelHandler =
+    private fun makeCancelHandler(handler: CompletionHandler): CancelHandler =
         if (handler is CancelHandler) handler else InvokeOnCancel(handler)
 
     private fun dispatchResume(mode: Int) {
@@ -309,14 +327,25 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     // returns null when successfully dispatched resumed, CancelledContinuation if too late (was already cancelled)
-    private fun resumeImpl(proposedUpdate: Any?, resumeMode: Int): CancelledContinuation? {
+    private fun resumeImpl(
+        proposedUpdate: Any?,
+        resumeMode: Int,
+        onCancellation: ((cause: Throwable) -> Unit)? = null
+    ) {
         _state.loop { state ->
             when (state) {
                 is NotCompleted -> {
-                    if (!_state.compareAndSet(state, proposedUpdate)) return@loop // retry on cas failure
+                    val update = when {
+                        proposedUpdate is CompletedExceptionally -> proposedUpdate // only successful results can be cancelled
+                        !resumeMode.isCancellableMode -> proposedUpdate // cannot be cancelled in process, all is fine
+                        onCancellation != null -> CompletedWithOnCancellation(proposedUpdate, state as? CancelHandler, onCancellation)
+                        state is CancelHandler -> CompletedWithCancelHandler(proposedUpdate, state)
+                        else -> proposedUpdate
+                    }
+                    if (!_state.compareAndSet(state, update)) return@loop // retry on cas failure
                     detachChildIfNonResuable()
-                    dispatchResume(resumeMode)
-                    return null
+                    dispatchResume(resumeMode) // dispatch resume, but it might get cancelled in process
+                    return // done
                 }
                 is CancelledContinuation -> {
                     /*
@@ -324,10 +353,14 @@ internal open class CancellableContinuationImpl<in T>(
                      * because cancellation is asynchronous and may race with resume.
                      * Racy exceptions will be lost, too.
                      */
-                    if (state.makeResumed()) return state // tried to resume just once, but was cancelled
+                    if (state.makeResumed()) { // check if trying to resume one (otherwise error)
+                        // call onCancellation
+                        onCancellation?.let { invokeHandlerSafely { it(state.cause) } }
+                        return // done
+                    }
                 }
             }
-            alreadyResumedError(proposedUpdate) // otherwise -- an error (second resume attempt)
+            alreadyResumedError(proposedUpdate) // otherwise, an error (second resume attempt)
         }
     }
 
@@ -343,7 +376,7 @@ internal open class CancellableContinuationImpl<in T>(
 
     /**
      * Detaches from the parent.
-     * Invariant: used used from [CoroutineDispatcher.releaseInterceptedContinuation] iff [isReusable] is `true`
+     * Invariant: used from [CoroutineDispatcher.releaseInterceptedContinuation] iff [isReusable] is `true`
      */
     internal fun detachChild() {
         val handle = parentHandle
@@ -356,8 +389,11 @@ internal open class CancellableContinuationImpl<in T>(
         _state.loop { state ->
             when (state) {
                 is NotCompleted -> {
-                    val update: Any? = if (idempotent == null) value else
-                        CompletedIdempotentResult(idempotent, value)
+                    val update: Any? = when {
+                        idempotent != null -> CompletedIdempotentResult(idempotent, value, state as? CancelHandler)
+                        state is CancelHandler -> CompletedWithCancelHandler(value, state)
+                        else -> value
+                    }
                     if (!_state.compareAndSet(state, update)) return@loop // retry on cas failure
                     detachChildIfNonResuable()
                     return RESUME_TOKEN
@@ -408,8 +444,7 @@ internal open class CancellableContinuationImpl<in T>(
     @Suppress("UNCHECKED_CAST")
     override fun <T> getSuccessfulResult(state: Any?): T =
         when (state) {
-            is CompletedIdempotentResult -> state.result as T
-            is CompletedWithCancellation -> state.result as T
+            is CompletedWithCancelHandler -> state.result as T
             else -> state as T
         }
 
@@ -441,17 +476,53 @@ private class InvokeOnCancel( // Clashes with InvokeOnCancellation
     override fun toString() = "InvokeOnCancel[${handler.classSimpleName}@$hexAddress]"
 }
 
+private open class CompletedWithCancelHandler(
+    @JvmField val result: Any?,
+    @JvmField val cancelHandler: CancelHandler?, // installed via invokeOnCancellation
+    @JvmField val cancelCause: Throwable? = null
+) {
+    val cancelled: Boolean get() = cancelCause != null
+
+    open fun invokeHandler(cont: CancellableContinuationImpl<*>, cause: Throwable) {
+        cancelHandler?.let { cont.invokeHandlerSafely { it.invoke(cause) } }
+    }
+
+    open fun withCancelCause(cancelCause: Throwable): CompletedWithCancelHandler =
+        CompletedWithCancelHandler(result, cancelHandler, cancelCause)
+
+    open fun withCancelHandler(cancelHandler: CancelHandler): CompletedWithCancelHandler =
+        CompletedWithCancelHandler(result, cancelHandler, cancelCause)
+
+    override fun toString(): String = "$classSimpleName[$result]"
+}
+
 private class CompletedIdempotentResult(
     @JvmField val idempotentResume: Any?,
-    @JvmField val result: Any?
-) {
-    override fun toString(): String = "CompletedIdempotentResult[$result]"
+    result: Any?,
+    cancelHandler: CancelHandler?,
+    cancelCause: Throwable? = null
+) : CompletedWithCancelHandler(result, cancelHandler, cancelCause) {
+    override fun withCancelCause(cancelCause: Throwable): CompletedWithCancelHandler =
+        CompletedIdempotentResult(idempotentResume, result, cancelHandler, cancelCause)
+
+    override fun withCancelHandler(cancelHandler: CancelHandler): CompletedWithCancelHandler =
+        CompletedIdempotentResult(idempotentResume, result, cancelHandler, cancelCause)
 }
 
-private class CompletedWithCancellation(
-    @JvmField val result: Any?,
-    @JvmField val onCancellation: (cause: Throwable) -> Unit
-) {
-    override fun toString(): String = "CompletedWithCancellation[$result]"
-}
+private class CompletedWithOnCancellation(
+    result: Any?,
+    cancelHandler: CancelHandler?, // installed via invokeOnCancellation
+    @JvmField val onCancellation: (cause: Throwable) -> Unit, // installed via resume block
+    cancelCause: Throwable? = null
+) : CompletedWithCancelHandler(result, cancelHandler, cancelCause) {
+    override fun invokeHandler(cont: CancellableContinuationImpl<*>, cause: Throwable) {
+        super.invokeHandler(cont, cause)
+        cont.invokeHandlerSafely { onCancellation.invoke(cause) }
+    }
 
+    override fun withCancelCause(cancelCause: Throwable): CompletedWithCancelHandler =
+        CompletedWithOnCancellation(result, cancelHandler, onCancellation, cancelCause)
+
+    override fun withCancelHandler(cancelHandler: CancelHandler): CompletedWithCancelHandler =
+        CompletedWithOnCancellation(result, cancelHandler, onCancellation, cancelCause)
+}

@@ -23,10 +23,23 @@ class CancellableContinuationHandlersTest : TestBase() {
     fun testDoubleSubscriptionAfterCompletion() = runTest {
         suspendCancellableCoroutine<Unit> { c ->
             c.resume(Unit)
-            // Nothing happened
+            // First invokeOnCancellation is Ok
             c.invokeOnCancellation { expectUnreached() }
-            // Cannot validate after completion
-            c.invokeOnCancellation { expectUnreached() }
+            // Second invokeOnCancellation is not allowed
+            assertFailsWith<IllegalStateException> { c.invokeOnCancellation { expectUnreached() } }
+        }
+    }
+
+    @Test
+    fun testDoubleSubscriptionAfterCompletionWithException() = runTest {
+        assertFailsWith<TestException> {
+            suspendCancellableCoroutine<Unit> { c ->
+                c.resumeWithException(TestException())
+                // First invokeOnCancellation is Ok
+                c.invokeOnCancellation { expectUnreached() }
+                // Second invokeOnCancellation is not allowed
+                assertFailsWith<IllegalStateException> { c.invokeOnCancellation { expectUnreached() } }
+            }
         }
     }
 

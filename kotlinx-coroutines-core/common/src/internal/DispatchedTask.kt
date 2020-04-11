@@ -48,7 +48,10 @@ internal abstract class DispatchedTask<in T>(
 
     internal abstract fun takeState(): Any?
 
-    internal open fun cancelResult(state: Any?, cause: Throwable) {}
+    /**
+     * Called when this task was cancelled while it was being dispatched.
+     */
+    internal open fun cancelCompletedResult(cause: Throwable) {}
 
     @Suppress("UNCHECKED_CAST")
     internal open fun <T> getSuccessfulResult(state: Any?): T =
@@ -75,7 +78,7 @@ internal abstract class DispatchedTask<in T>(
                  */
                 if (exception == null && job != null && !job.isActive) {
                     val cause = job.getCancellationException()
-                    cancelResult(state, cause)
+                    cancelCompletedResult(cause)
                     continuation.resumeWithStackTrace(cause)
                 } else {
                     if (exception != null) continuation.resumeWithException(exception)
@@ -124,7 +127,8 @@ internal abstract class DispatchedTask<in T>(
 
 internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
     val delegate = this.delegate
-    if (mode != MODE_UNDISPATCHED && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {
+    val undispatched = mode == MODE_UNDISPATCHED
+    if (!undispatched && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {
         // dispatch directly using this instance's Runnable implementation
         val dispatcher = delegate.dispatcher
         val context = delegate.context
@@ -134,21 +138,21 @@ internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
             resumeUnconfined()
         }
     } else {
-        resume(delegate, mode)
+        // delegate is coming from 3rd-party interceptor implementation (and does not support cancellation)
+        // or undispatched mode was requested
+        resume(delegate, undispatched)
     }
 }
 
 @Suppress("UNCHECKED_CAST")
-internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: Int) {
-    // slow-path - use delegate
+internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, undispatched: Boolean) {
+    // This resume is never cancellable. The result is always delivered to delegate continuation.
     val state = takeState()
     val exception = getExceptionalResult(state)?.let { recoverStackTrace(it, delegate) }
-    val result = if (exception != null) Result.failure(exception) else Result.success(state as T)
-    when (useMode) {
-        MODE_ATOMIC -> delegate.resumeWith(result)
-        MODE_CANCELLABLE, MODE_CANCELLABLE_REUSABLE -> delegate.resumeCancellableWith(result)
-        MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatchedWith(result)
-        else -> error("Invalid mode $useMode")
+    val result = if (exception != null) Result.failure(exception) else Result.success(getSuccessfulResult<T>(state))
+    when {
+        undispatched -> (delegate as DispatchedContinuation).resumeUndispatchedWith(result)
+        else -> delegate.resumeWith(result)
     }
 }
 
@@ -160,7 +164,7 @@ private fun DispatchedTask<*>.resumeUnconfined() {
     } else {
         // Was not active -- run event loop until all unconfined tasks are executed
         runUnconfinedEventLoop(eventLoop) {
-            resume(delegate, MODE_UNDISPATCHED)
+            resume(delegate, undispatched = true)
         }
     }
 }

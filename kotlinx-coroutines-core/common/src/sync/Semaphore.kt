@@ -157,6 +157,11 @@ private class SemaphoreImpl(
             if (cont === null) return // just resumed
             if (cont === CANCELLED) continue@try_again
             (cont as CancellableContinuation<Unit>).resume(Unit)
+//            (cont as CancellableContinuation<Unit>).resume(Unit) {
+//                // Release permit if this continuation gets cancelled while being dispatched
+//                val p = incPermits()
+//                if (p < 0) resumeNextFromQueue()
+//            }
             return
         }
     }
