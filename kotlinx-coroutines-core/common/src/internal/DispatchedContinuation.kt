@@ -194,29 +194,38 @@ internal class DispatchedContinuation<in T>(
     // We inline it to save an entry on the stack in cases where it shows (unconfined dispatcher)
     // It is used only in Continuation<T>.resumeCancellableWith
     @Suppress("NOTHING_TO_INLINE")
-    inline fun resumeCancellableWith(result: Result<T>) {
-        val state = result.toState()
+    inline fun resumeCancellableWith(
+        result: Result<T>,
+        noinline onCancellation: ((cause: Throwable) -> Unit)?
+    ) {
+        val state = result.toState(onCancellation)
         if (dispatcher.isDispatchNeeded(context)) {
             _state = state
             resumeMode = MODE_CANCELLABLE
             dispatcher.dispatch(context, this)
         } else {
             executeUnconfined(state, MODE_CANCELLABLE) {
-                if (!resumeCancelled()) {
+                if (!resumeCancelled(state)) {
                     resumeUndispatchedWith(result)
                 }
             }
         }
     }
 
+    // takeState had already cleared the state so we cancel takenState here
+    override fun cancelCompletedResult(takenState: Any?, cause: Throwable) {
+        cancelState(takenState, cause)
+    }
+
     @Suppress("NOTHING_TO_INLINE")
-    inline fun resumeCancelled(): Boolean {
+    inline fun resumeCancelled(state: Any?): Boolean {
         val job = context[Job]
         if (job != null && !job.isActive) {
-            resumeWithException(job.getCancellationException())
+            val cause = job.getCancellationException()
+            cancelState(state, cause)
+            resumeWithException(cause)
             return true
         }
-
         return false
     }
 
@@ -245,8 +254,11 @@ internal class DispatchedContinuation<in T>(
  * @suppress **This an internal API and should not be used from general code.**
  */
 @InternalCoroutinesApi
-public fun <T> Continuation<T>.resumeCancellableWith(result: Result<T>): Unit = when (this) {
-    is DispatchedContinuation -> resumeCancellableWith(result)
+public fun <T> Continuation<T>.resumeCancellableWith(
+    result: Result<T>,
+    onCancellation: ((cause: Throwable) -> Unit)? = null
+): Unit = when (this) {
+    is DispatchedContinuation -> resumeCancellableWith(result, onCancellation)
     else -> resumeWith(result)
 }
 

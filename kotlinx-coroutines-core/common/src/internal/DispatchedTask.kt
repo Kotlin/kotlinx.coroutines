@@ -51,7 +51,7 @@ internal abstract class DispatchedTask<in T>(
     /**
      * Called when this task was cancelled while it was being dispatched.
      */
-    internal open fun cancelCompletedResult(cause: Throwable) {}
+    internal open fun cancelCompletedResult(takenState: Any?, cause: Throwable) {}
 
     @Suppress("UNCHECKED_CAST")
     internal open fun <T> getSuccessfulResult(state: Any?): T =
@@ -78,7 +78,7 @@ internal abstract class DispatchedTask<in T>(
                 val job = if (exception == null && resumeMode.isCancellableMode) context[Job] else null
                 if (job != null && !job.isActive) {
                     val cause = job.getCancellationException()
-                    cancelCompletedResult(cause)
+                    cancelCompletedResult(state, cause)
                     continuation.resumeWithStackTrace(cause)
                 } else {
                     if (exception != null) {

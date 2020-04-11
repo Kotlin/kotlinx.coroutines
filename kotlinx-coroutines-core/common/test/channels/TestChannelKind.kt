@@ -22,7 +22,7 @@ enum class TestChannelKind(val capacity: Int,
     CONFLATED_BROADCAST(Channel.CONFLATED, "ConflatedBroadcastChannel", viaBroadcast = true)
     ;
 
-    fun create(): Channel<Int> = if (viaBroadcast) ChannelViaBroadcast(BroadcastChannel(capacity))
+    fun <T> create(): Channel<T> = if (viaBroadcast) ChannelViaBroadcast(BroadcastChannel(capacity))
                                  else Channel(capacity)
 
     val isConflated get() = capacity == Channel.CONFLATED
