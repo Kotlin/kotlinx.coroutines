@@ -180,6 +180,8 @@ internal class ArrayBroadcastChannel<E>(
                             this.tail = tail + 1
                             return@withLock // go out of lock to wakeup this sender
                         }
+                        // too late, already cancelled, but we removed it from the queue and need to cancel resource
+                        send!!.cancelResource()
                     }
                 }
             }

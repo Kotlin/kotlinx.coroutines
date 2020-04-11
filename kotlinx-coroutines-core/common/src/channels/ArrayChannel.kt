@@ -172,6 +172,8 @@ internal open class ArrayChannel<E>(
                         replacement = send!!.pollResult
                         break@loop
                     }
+                    // too late, already cancelled, but we removed it from the queue and need to cancel resource
+                    send!!.cancelResource()
                 }
             }
             if (replacement !== POLL_FAILED && replacement !is Closed<*>) {
@@ -254,17 +256,19 @@ internal open class ArrayChannel<E>(
     // Note: this function is invoked when channel is already closed
     override fun onCancelIdempotent(wasClosed: Boolean) {
         // clear buffer first, but do not wait for it in helpers
-        if (wasClosed) {
-            lock.withLock {
-                repeat(size.value) {
-                    buffer[head] = 0
-                    head = (head + 1) % buffer.size
-                }
-                size.value = 0
+        var resourceException: ResourceCancellationException? = null // first resource cancel exception, others suppressed
+        lock.withLock {
+            repeat(size.value) {
+                val value = buffer[head]
+                if (value is Resource<*>) resourceException = callCancelResourceSafely(value, resourceException)
+                buffer[head] = null
+                head = (head + 1) % buffer.size
             }
+            size.value = 0
         }
         // then clean all queued senders
         super.onCancelIdempotent(wasClosed)
+        resourceException?.let { throw it } // throw resource exception at the end if there was one
     }
 
     // ------ debug ------

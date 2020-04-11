@@ -7,7 +7,6 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
-import kotlin.native.concurrent.*
 
 /**
  * Channel that buffers at most one element and conflates all subsequent `send` and `offer` invocations,
@@ -54,7 +53,7 @@ internal open class ConflatedChannel<E> : AbstractChannel<E>() {
                     }
                 }
             }
-            value = element
+            updateValueLocked(element)?.let { throw it }
             return OFFER_SUCCESS
         }
         // breaks here if offer meets receiver
@@ -87,7 +86,7 @@ internal open class ConflatedChannel<E> : AbstractChannel<E>() {
             if (!select.trySelect()) {
                 return ALREADY_SELECTED
             }
-            value = element
+            updateValueLocked(element)?.let { throw it }
             return OFFER_SUCCESS
         }
         // breaks here if offer meets receiver
@@ -120,12 +119,20 @@ internal open class ConflatedChannel<E> : AbstractChannel<E>() {
     }
 
     protected override fun onCancelIdempotent(wasClosed: Boolean) {
-        if (wasClosed) {
-            lock.withLock {
-                value = EMPTY
-            }
+        var resourceException: ResourceCancellationException? = null // resource cancel exception
+        lock.withLock {
+            resourceException = updateValueLocked(EMPTY)
         }
         super.onCancelIdempotent(wasClosed)
+        resourceException?.let { throw it } // throw resource exception at the end if there was one
+    }
+
+    private fun updateValueLocked(element: Any?): ResourceCancellationException? {
+        var resourceException: ResourceCancellationException? = null // resource cancel exception
+        val old = value
+        if (old is Resource<*>) resourceException = callCancelResourceSafely(old)
+        value = element
+        return resourceException
     }
 
     override fun enqueueReceiveInternal(receive: Receive<E>): Boolean = lock.withLock {

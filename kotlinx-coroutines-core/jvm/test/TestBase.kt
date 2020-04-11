@@ -69,6 +69,8 @@ public actual open class TestBase actual constructor() {
         throw makeError(message, cause)
     }
 
+    public fun hasError() = error.get() != null
+
     private fun makeError(message: Any, cause: Throwable? = null): IllegalStateException =
         IllegalStateException(message.toString(), cause).also {
             setError(it)

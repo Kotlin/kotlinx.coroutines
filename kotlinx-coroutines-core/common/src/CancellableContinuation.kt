@@ -84,7 +84,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * guaranteed can be provided by having a cancellation fallback.
      */
     @InternalCoroutinesApi
-    public fun tryResumeAtomic(value: T, idempotent: Any?, onCancellation: (cause: Throwable) -> Unit): Any?
+    public fun tryResumeAtomic(value: T, idempotent: Any?, onCancellation: ((cause: Throwable) -> Unit)?): Any?
 
     /**
      * Tries to resume this continuation with the specified [exception] and returns a non-null object token if successful,

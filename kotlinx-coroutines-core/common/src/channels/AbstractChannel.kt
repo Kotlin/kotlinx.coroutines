@@ -444,12 +444,18 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         }
 
         override fun dispose() { // invoked on select completion
-            remove()
+            if (!remove()) return
+            // if the node was successfully removed (meaning it was added but was not received) then cancel resource
+            cancelResource()
         }
 
         override fun resumeSendClosed(closed: Closed<*>) {
             if (select.trySelect())
                 select.resumeSelectWithException(closed.sendException)
+        }
+
+        override fun cancelResource() {
+            cancelResourceIfNeeded(pollResult) { select.completion.context }
         }
 
         override fun toString(): String = "SendSelect@$hexAddress($pollResult)[$channel, $select]"
@@ -501,6 +507,8 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                 send.completeResumeSend()
                 return send.pollResult
             }
+            // too late, already cancelled, but we removed it from the queue and need to cancel resource
+            send.cancelResource()
         }
     }
 
@@ -561,7 +569,12 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                 return@sc
             }
             if (result !== POLL_FAILED) {
-                cont.resume(receive.resumeValue(result as E))
+                val resumeValue = receive.resumeValue(result as E)
+                val onCancellation = receive.resumeOnCancellation(result as E)
+                if (onCancellation == null) {
+                    cont.resume(resumeValue)
+                } else
+                    cont.resume(resumeValue, onCancellation)
                 return@sc
             }
         }
@@ -671,7 +684,11 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         @Suppress("UNCHECKED_CAST")
         override fun onPrepare(prepareOp: PrepareOp): Any? {
             val affected = prepareOp.affected as Send // see "failure" impl
-            val token = affected.tryResumeSend(prepareOp) ?: return REMOVE_PREPARED
+            val token = affected.tryResumeSend(prepareOp) ?: run {
+                // too late, already cancelled, but we removed it from the queue and need to cancel resource
+                affected.cancelResource()
+                return REMOVE_PREPARED
+            }
             if (token === RETRY_ATOMIC) return RETRY_ATOMIC
             assert { token === RESUME_TOKEN }
             return null
@@ -832,7 +849,9 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                     return@sc
                 }
                 if (result !== POLL_FAILED) {
-                    cont.resume(true)
+                    cont.resume(true) {
+                        cancelResourceIfNeeded(result) { cont.context }
+                    }
                     return@sc
                 }
             }
@@ -860,9 +879,14 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
             else -> value
         }
 
+        fun resumeOnCancellation(value: E): ((Throwable) -> Unit)? = when (receiveMode) {
+            RECEIVE_RESULT -> { _: Throwable -> cancelResourceIfNeeded(value) { cont.context } }
+            else -> null
+        }
+
         @Suppress("IMPLICIT_CAST_TO_ANY")
         override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol? {
-            val token = cont.tryResume(resumeValue(value), otherOp?.desc) ?: return null
+            val token = cont.tryResumeAtomic(resumeValue(value), otherOp?.desc, resumeOnCancellation(value)) ?: return null
             assert { token === RESUME_TOKEN } // the only other possible result
             // We can call finishPrepare only after successful tryResume, so that only good affected node is saved
             otherOp?.finishPrepare()
@@ -886,7 +910,9 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         @JvmField val cont: CancellableContinuation<Boolean>
     ) : Receive<E>() {
         override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol? {
-            val token = cont.tryResume(true, otherOp?.desc) ?: return null
+            val token = cont.tryResumeAtomic(true, otherOp?.desc) {
+                cancelResourceIfNeeded(value) { cont.context }
+            } ?: return null
             assert { token === RESUME_TOKEN } // the only other possible result
             // We can call finishPrepare only after successful tryResume, so that only good affected node is saved
             otherOp?.finishPrepare()
@@ -927,7 +953,9 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
 
         @Suppress("UNCHECKED_CAST")
         override fun completeResumeReceive(value: E) {
-            block.startCoroutineCancellable(if (receiveMode == RECEIVE_RESULT) ValueOrClosed.value(value) else value, select.completion)
+            block.startCoroutineCancellable(if (receiveMode == RECEIVE_RESULT) ValueOrClosed.value(value) else value, select.completion) {
+                cancelResourceIfNeeded(value) { select.completion.context }
+            }
         }
 
         override fun resumeReceiveClosed(closed: Closed<*>) {
@@ -991,6 +1019,7 @@ internal abstract class Send : LockFreeLinkedListNode() {
     abstract fun tryResumeSend(otherOp: PrepareOp?): Symbol?
     abstract fun completeResumeSend()
     abstract fun resumeSendClosed(closed: Closed<*>)
+    open fun cancelResource() {}
 }
 
 /**
@@ -1021,9 +1050,21 @@ internal class SendElement(
         otherOp?.finishPrepare() // finish preparations
         return RESUME_TOKEN
     }
+
     override fun completeResumeSend() = cont.completeResume(RESUME_TOKEN)
     override fun resumeSendClosed(closed: Closed<*>) = cont.resumeWithException(closed.sendException)
     override fun toString(): String = "SendElement@$hexAddress($pollResult)"
+
+    override fun remove(): Boolean {
+        if (!super.remove()) return false
+        // if the node was successfully removed (meaning it was added but was not received) then cancel resource
+        cancelResource()
+        return true
+    }
+
+    override fun cancelResource() {
+        cancelResourceIfNeeded(pollResult) { cont.context }
+    }
 }
 
 /**
