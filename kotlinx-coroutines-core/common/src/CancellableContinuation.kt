@@ -79,6 +79,14 @@ public interface CancellableContinuation<in T> : Continuation<T> {
     public fun tryResume(value: T, idempotent: Any? = null): Any?
 
     /**
+     * Same as [tryResume] but with [onCancellation] handler that called if and only if the value is not
+     * delivered to the caller because of the dispatch in the process, so that atomicity delivery
+     * guaranteed can be provided by having a cancellation fallback.
+     */
+    @InternalCoroutinesApi
+    public fun tryResumeAtomic(value: T, idempotent: Any?, onCancellation: (cause: Throwable) -> Unit): Any?
+
+    /**
      * Tries to resume this continuation with the specified [exception] and returns a non-null object token if successful,
      * or `null` otherwise (it was already resumed or cancelled). When a non-null object is returned,
      * [completeResume] must be invoked with it.
