@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.channels
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 import org.junit.After
@@ -11,14 +12,13 @@ import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
 import kotlin.random.Random
-import java.util.concurrent.atomic.*
 import kotlin.test.*
 
 /**
  * Tests cancel atomicity for channel send & receive operations, including their select versions.
  */
 @RunWith(Parameterized::class)
-class ChannelAtomicCancelStressTest(private val kind: TestChannelKind) : TestBase() {
+class ChannelResourceCancelStressTest(private val kind: TestChannelKind) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
@@ -30,20 +30,19 @@ class ChannelAtomicCancelStressTest(private val kind: TestChannelKind) : TestBas
     private val dispatcher = newFixedThreadPoolContext(2, "ChannelAtomicCancelStressTest")
     private val scope = CoroutineScope(dispatcher)
 
-    private val channel = kind.create()
+    private val channel = kind.create<Resource<Data>>()
     private val senderDone = Channel<Boolean>(1)
     private val receiverDone = Channel<Boolean>(1)
 
-    private var lastSent = 0
-    private var lastReceived = 0
+    private var lastReceived = -1
 
     private var stoppedSender = 0
     private var stoppedReceiver = 0
 
-    private var missedCnt = 0
-    private var dupCnt = 0
-
-    val failed = AtomicReference<Throwable>()
+    private var sentCnt = 0 // total number of send attempts
+    private var receivedCnt = 0 // actually received successfully
+    private var dupCnt = 0 // duplicates (should never happen)
+    private val cancelledCnt = atomic(0) // out of sent
 
     lateinit var sender: Job
     lateinit var receiver: Job
@@ -53,14 +52,12 @@ class ChannelAtomicCancelStressTest(private val kind: TestChannelKind) : TestBas
         dispatcher.close()
     }
 
-    fun fail(e: Throwable) = failed.compareAndSet(null, e)
-
     private inline fun cancellable(done: Channel<Boolean>, block: () -> Unit) {
         try {
             block()
         } finally {
             if (!done.offer(true))
-                fail(IllegalStateException("failed to offer to done channel"))
+                error(IllegalStateException("failed to offer to done channel"))
         }
     }
 
@@ -70,33 +67,29 @@ class ChannelAtomicCancelStressTest(private val kind: TestChannelKind) : TestBas
         val deadline = System.currentTimeMillis() + TEST_DURATION
         launchSender()
         launchReceiver()
-        while (System.currentTimeMillis() < deadline && failed.get() == null) {
+        while (System.currentTimeMillis() < deadline && !hasError()) {
             when (Random.nextInt(3)) {
-                0 -> { // cancel & restart sender
+                0, 1 -> { // cancel & restart sender
                     stopSender()
                     launchSender()
                 }
-                1 -> { // cancel & restart receiver
-                    stopReceiver()
-                    launchReceiver()
-                }
+//                0, 1 -> { // cancel & restart receiver
+//                    stopReceiver()
+//                    launchReceiver()
+//                }
                 2 -> yield() // just yield (burn a little time)
             }
         }
         stopSender()
         stopReceiver()
-        println("            Sent $lastSent ints to channel")
-        println("        Received $lastReceived ints from channel")
+        println("            Sent $sentCnt times to channel")
+        println("        Received $receivedCnt times from channel")
+        println("       Cancelled ${cancelledCnt.value} deliveries")
         println("  Stopped sender $stoppedSender times")
         println("Stopped receiver $stoppedReceiver times")
-        println("          Missed $missedCnt ints")
-        println("      Duplicated $dupCnt ints")
-        failed.get()?.let { throw it }
+        println("      Duplicated $dupCnt deliveries")
         assertEquals(0, dupCnt)
-        if (!kind.isConflated) {
-            assertEquals(0, missedCnt)
-            assertEquals(lastSent, lastReceived)
-        }
+        assertEquals(sentCnt - cancelledCnt.value, receivedCnt)
     }
 
     private fun launchSender() {
@@ -104,16 +97,18 @@ class ChannelAtomicCancelStressTest(private val kind: TestChannelKind) : TestBas
             cancellable(senderDone) {
                 var counter = 0
                 while (true) {
-                    val trySend = lastSent + 1
+                    val trySendResource = Resource(Data(sentCnt++)) {
+                        it.cancel()
+                    }
+
                     when (Random.nextInt(2)) {
-                        0 -> channel.send(trySend)
-                        1 -> select { channel.onSend(trySend) {} }
+                        0, 1 -> channel.send(trySendResource)
+//                        1 -> select { channel.onSend(trySendResource) {} }
                         else -> error("cannot happen")
                     }
-                    lastSent = trySend // update on success
                     when {
                         // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
-                        kind == TestChannelKind.LINKED_LIST -> while (lastSent > lastReceived + 100) yield()
+                        kind == TestChannelKind.LINKED_LIST -> while (sentCnt > lastReceived + 100) yield()
                         // yield periodically to check cancellation on conflated channels
                         kind.isConflated -> if (counter++ % 100 == 0) yield()
                     }
@@ -132,19 +127,27 @@ class ChannelAtomicCancelStressTest(private val kind: TestChannelKind) : TestBas
         receiver = scope.launch(start = CoroutineStart.ATOMIC) {
             cancellable(receiverDone) {
                 while (true) {
-                    val received = when (Random.nextInt(2)) {
-                        0 -> channel.receive()
-                        1 -> select { channel.onReceive { it } }
+                    val receivedResource = when (Random.nextInt(2)) {
+                        0, 1 -> channel.receive()
+//                        1 -> select { channel.onReceive { it } }
                         else -> error("cannot happen")
                     }
-                    val expected = lastReceived + 1
-                    if (received > expected)
-                        missedCnt++
-                    if (received < expected)
+                    receivedCnt++
+                    val received = receivedResource.value.x
+                    if (received <= lastReceived)
                         dupCnt++
                     lastReceived = received
                 }
             }
+        }
+    }
+
+    private inner class Data(val x: Int) {
+        private val cancelled = atomic(false)
+
+        fun cancel() {
+            check(cancelled.compareAndSet(false, true)) { "Cancelled twice" }
+            cancelledCnt.incrementAndGet()
         }
     }
 

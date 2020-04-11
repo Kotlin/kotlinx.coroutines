@@ -1024,6 +1024,13 @@ internal class SendElement(
     override fun completeResumeSend() = cont.completeResume(RESUME_TOKEN)
     override fun resumeSendClosed(closed: Closed<*>) = cont.resumeWithException(closed.sendException)
     override fun toString(): String = "SendElement@$hexAddress($pollResult)"
+
+    override fun remove(): Boolean {
+        if (!super.remove()) return false
+        // if the node was successfully removed (meaning it was added but was not received) then cancel resource
+        cont.cancelResourceIfNeeded(pollResult)
+        return true
+    }
 }
 
 /**
