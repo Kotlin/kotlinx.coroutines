@@ -121,76 +121,80 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
     }
 
     override suspend fun acquire() {
-        val p = _availablePermits.getAndDecrement()
-        if (p > 0) return // permit acquired
-        addToQueueAndSuspend()
+        while (true) {
+            val p = _availablePermits.getAndDecrement()
+            if (p > 0) return // permit acquired
+            if (addToQueueAndSuspend()) return
+        }
     }
 
     override fun release() {
-        val p = incPermits()
-        if (p >= 0) return // no waiters
-        resumeNextFromQueue()
+        while (true) {
+            val p = _availablePermits.getAndUpdate { cur ->
+                check(cur < permits) { "The number of released permits cannot be greater than $permits" }
+                cur + 1
+            }
+            if (p >= 0) return
+            if (tryResumeNextFromQueue()) return
+        }
     }
 
-    fun incPermits() = _availablePermits.getAndUpdate { cur ->
-        check(cur < permits) { "The number of released permits cannot be greater than $permits" }
-        cur + 1
-    }
-
-    private suspend fun addToQueueAndSuspend() = suspendAtomicCancellableCoroutineReusable<Unit> sc@{ cont ->
+    /**
+     * Returns `false` if the received permit cannot be used and the calling operation should restart.
+     */
+    private suspend fun addToQueueAndSuspend() = suspendAtomicCancellableCoroutineReusable<Boolean> sc@{ cont ->
         val curTail = this.tail.value
         val enqIdx = enqIdx.getAndIncrement()
         val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail,
-                                                          createNewSegment = ::createSegment).run { segment } // cannot be closed
+            createNewSegment = ::createSegment).segment // cannot be closed
         val i = (enqIdx % SEGMENT_SIZE).toInt()
-        if (segment.get(i) === RESUMED || !segment.cas(i, null, cont)) {
-            // already resumed
-            cont.resume(Unit)
+        if (segment.get(i) === PERMIT || !segment.cas(i, null, cont)) {
+            // The permit is already in the queue, try to grab it
+            cont.resume(segment.cas(i, PERMIT, TAKEN))
             return@sc
         }
-        cont.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(this, segment, i).asHandler)
+        cont.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(segment, i).asHandler)
     }
 
     @Suppress("UNCHECKED_CAST")
-    internal fun resumeNextFromQueue() {
-        try_again@ while (true) {
-            val curHead = this.head.value
-            val deqIdx = deqIdx.getAndIncrement()
-            val id = deqIdx / SEGMENT_SIZE
-            val segment = this.head.findSegmentAndMoveForward(id, startFrom = curHead,
-                                                              createNewSegment = ::createSegment).run { segment } // cannot be closed
-            segment.cleanPrev()
-            if (segment.id > id) {
-                this.deqIdx.updateIfLower(segment.id * SEGMENT_SIZE)
-                continue@try_again
+    private fun tryResumeNextFromQueue(): Boolean {
+        val curHead = this.head.value
+        val deqIdx = deqIdx.getAndIncrement()
+        val id = deqIdx / SEGMENT_SIZE
+        val segment = this.head.findSegmentAndMoveForward(id, startFrom = curHead,
+            createNewSegment = ::createSegment).segment // cannot be closed
+        segment.cleanPrev()
+        if (segment.id > id) return false
+        val i = (deqIdx % SEGMENT_SIZE).toInt()
+        val cont = segment.getAndSet(i, PERMIT)
+        if (cont === CANCELLED) return false
+        if (cont === null) {
+            // Wait until an opposite operation comes for a bounded time
+            repeat(MAX_SPIN_CYCLES) {
+                if (segment.get(i) === TAKEN) return true
             }
-            val i = (deqIdx % SEGMENT_SIZE).toInt()
-            val cont = segment.getAndSet(i, RESUMED)
-            if (cont === null) return // just resumed
-            if (cont === CANCELLED) continue@try_again
-            (cont as CancellableContinuation<Unit>).resume(Unit)
-            return
+            // Try to break the slot in order not to wait
+            return !segment.cas(i, PERMIT, BROKEN)
         }
+        return (cont as CancellableContinuation<Boolean>).tryResume()
     }
 }
 
-private inline fun AtomicLong.updateIfLower(value: Long): Unit = loop { cur ->
-    if (cur >= value || compareAndSet(cur, value)) return
+private fun CancellableContinuation<Boolean>.tryResume(): Boolean {
+    val token = tryResume(true) ?: return false
+    completeResume(token)
+    return true
 }
 
 private class CancelSemaphoreAcquisitionHandler(
-    private val semaphore: SemaphoreImpl,
     private val segment: SemaphoreSegment,
     private val index: Int
 ) : CancelHandler() {
     override fun invoke(cause: Throwable?) {
-        val p = semaphore.incPermits()
-        if (p >= 0) return
-        if (segment.cancel(index)) return
-        semaphore.resumeNextFromQueue()
+        segment.cancel(index)
     }
 
-    override fun toString() = "CancelSemaphoreAcquisitionHandler[$semaphore, $segment, $index]"
+    override fun toString() = "CancelSemaphoreAcquisitionHandler[$segment, $index]"
 }
 
 private fun createSegment(id: Long, prev: SemaphoreSegment?) = SemaphoreSegment(id, prev, 0)
@@ -203,6 +207,11 @@ private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int)
     inline fun get(index: Int): Any? = acquirers[index].value
 
     @Suppress("NOTHING_TO_INLINE")
+    inline fun set(index: Int, value: Any?) {
+        acquirers[index].value = value
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
     inline fun cas(index: Int, expected: Any?, value: Any?): Boolean = acquirers[index].compareAndSet(expected, value)
 
     @Suppress("NOTHING_TO_INLINE")
@@ -210,19 +219,23 @@ private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int)
 
     // Cleans the acquirer slot located by the specified index
     // and removes this segment physically if all slots are cleaned.
-    fun cancel(index: Int): Boolean {
-        // Try to cancel the slot
-        val cancelled = getAndSet(index, CANCELLED) !== RESUMED
+    fun cancel(index: Int) {
+        // Clean the slot
+        set(index, CANCELLED)
         // Remove this segment if needed
         onSlotCleaned()
-        return cancelled
     }
 
     override fun toString() = "SemaphoreSegment[id=$id, hashCode=${hashCode()}]"
 }
-
 @SharedImmutable
-private val RESUMED = Symbol("RESUMED")
+private val MAX_SPIN_CYCLES = systemProp("kotlinx.coroutines.semaphore.maxSpinCycles", 100_000)
+@SharedImmutable
+private val PERMIT = Symbol("PERMIT")
+@SharedImmutable
+private val TAKEN = Symbol("TAKEN")
+@SharedImmutable
+private val BROKEN = Symbol("TAKEN")
 @SharedImmutable
 private val CANCELLED = Symbol("CANCELLED")
 @SharedImmutable
