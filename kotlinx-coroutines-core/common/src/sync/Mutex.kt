@@ -383,23 +383,15 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     ) : OpDescriptor() {
         override val atomicOp: AtomicOp<*>? get() = null
 
+        private val successful = atomic<Boolean?>(null)
+
         override fun perform(affected: Any?): Any? {
-            /*
-               Note: queue cannot change while this UnlockOp is in progress, so all concurrent attempts to
-               make a decision will reach it consistently. It does not matter what is a proposed
-               decision when this UnlockOp is no longer active, because in this case the following CAS
-               will fail anyway.
-             */
-            val success = queue.isEmpty
-            val update: Any = if (success) EMPTY_UNLOCKED else queue
+            // Note: queue cannot change while this UnlockOp is in progress,
+            // so all concurrent attempts to make a decision will reach it consistently.
+            successful.compareAndSet(null, queue.isEmpty)
+            val update: Any = if (successful.value!!) EMPTY_UNLOCKED else queue
             (affected as MutexImpl)._state.compareAndSet(this@UnlockOp, update)
-            /*
-                `perform` invocation from the original `unlock` invocation may be coming too late, when
-                some other thread had already helped to complete it (either successfully or not).
-                That operation was unsuccessful if `state` was restored to this `queue` reference and
-                that is what is being checked below.
-             */
-            return if (affected._state.value === queue) UNLOCK_FAIL else null
+            return if (successful.value!!) null else UNLOCK_FAIL
         }
     }
 }
