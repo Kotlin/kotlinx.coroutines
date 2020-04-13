@@ -101,6 +101,8 @@ task jvmStressTest(type: Test, dependsOn: compileTestKotlinJvm) {
     enableAssertions = true
     testLogging.showStandardStreams = true
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
+    systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2'
+    systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '10'
 }
 
 task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
