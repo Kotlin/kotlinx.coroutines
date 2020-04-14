@@ -380,18 +380,13 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     // atomic unlock operation that checks that waiters queue is empty
     private class UnlockOp(
         @JvmField val queue: LockedQueue
-    ) : OpDescriptor() {
-        override val atomicOp: AtomicOp<*>? get() = null
+    ) : AtomicOp<MutexImpl>() {
+        override fun prepare(affected: MutexImpl): Any? =
+            if (queue.isEmpty) null else UNLOCK_FAIL
 
-        private val successful = atomic<Boolean?>(null)
-
-        override fun perform(affected: Any?): Any? {
-            // Note: queue cannot change while this UnlockOp is in progress,
-            // so all concurrent attempts to make a decision will reach it consistently.
-            successful.compareAndSet(null, queue.isEmpty)
-            val update: Any = if (successful.value!!) EMPTY_UNLOCKED else queue
-            (affected as MutexImpl)._state.compareAndSet(this@UnlockOp, update)
-            return if (successful.value!!) null else UNLOCK_FAIL
+        override fun complete(affected: MutexImpl, failure: Any?) {
+            val update: Any = if (failure == null) EMPTY_UNLOCKED else queue
+            affected._state.compareAndSet(this, update)
         }
     }
 }
