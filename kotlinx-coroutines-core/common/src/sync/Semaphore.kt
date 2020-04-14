@@ -121,6 +121,16 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
     }
 
     override suspend fun acquire() {
+        val p = _availablePermits.getAndDecrement()
+        if (p > 0) return // permit acquired
+        // While it looks better when the following function is inlined,
+        // it is important to make `suspend` function invocations in a way
+        // so that the tail-call optimization can be applied.
+        acquireSlowPath()
+    }
+
+    private suspend fun acquireSlowPath() {
+        if (addToQueueAndSuspend()) return
         while (true) {
             val p = _availablePermits.getAndDecrement()
             if (p > 0) return // permit acquired
@@ -229,7 +239,7 @@ private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int)
     override fun toString() = "SemaphoreSegment[id=$id, hashCode=${hashCode()}]"
 }
 @SharedImmutable
-private val MAX_SPIN_CYCLES = systemProp("kotlinx.coroutines.semaphore.maxSpinCycles", 100_000)
+private val MAX_SPIN_CYCLES = systemProp("kotlinx.coroutines.semaphore.maxSpinCycles", 100)
 @SharedImmutable
 private val PERMIT = Symbol("PERMIT")
 @SharedImmutable
