@@ -129,12 +129,15 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
         acquireSlowPath()
     }
 
-    private suspend fun acquireSlowPath() {
-        if (addToQueueAndSuspend()) return
+    private suspend fun acquireSlowPath() = suspendAtomicCancellableCoroutineReusable<Unit> sc@ { cont ->
+        if (addToQueueAndSuspend(cont)) return@sc
         while (true) {
             val p = _availablePermits.getAndDecrement()
-            if (p > 0) return // permit acquired
-            if (addToQueueAndSuspend()) return
+            if (p > 0) { // permit acquired
+                cont.resume(Unit)
+                return@sc
+            }
+            if (addToQueueAndSuspend(cont)) return@sc
         }
     }
 
@@ -152,7 +155,7 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
     /**
      * Returns `false` if the received permit cannot be used and the calling operation should restart.
      */
-    private suspend fun addToQueueAndSuspend() = suspendAtomicCancellableCoroutineReusable<Boolean> sc@{ cont ->
+    private fun addToQueueAndSuspend(cont: CancellableContinuation<Unit>): Boolean {
         val curTail = this.tail.value
         val enqIdx = enqIdx.getAndIncrement()
         val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail,
@@ -160,10 +163,12 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
         val i = (enqIdx % SEGMENT_SIZE).toInt()
         if (segment.get(i) === PERMIT || !segment.cas(i, null, cont)) {
             // The permit is already in the queue, try to grab it
-            cont.resume(segment.cas(i, PERMIT, TAKEN))
-            return@sc
+            val acquired = segment.cas(i, PERMIT, TAKEN)
+            if (acquired) cont.resume(Unit)
+            return acquired
         }
         cont.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(segment, i).asHandler)
+        return true
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -186,12 +191,12 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
             // Try to break the slot in order not to wait
             return !segment.cas(i, PERMIT, BROKEN)
         }
-        return (cont as CancellableContinuation<Boolean>).tryResume()
+        return (cont as CancellableContinuation<Unit>).tryResume()
     }
 }
 
-private fun CancellableContinuation<Boolean>.tryResume(): Boolean {
-    val token = tryResume(true) ?: return false
+private fun CancellableContinuation<Unit>.tryResume(): Boolean {
+    val token = tryResume(Unit) ?: return false
     completeResume(token)
     return true
 }
