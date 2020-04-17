@@ -1,4 +1,5 @@
-.idea
+**/.idea/*
+!/.idea/vcs.xml
 *.iml
 .gradle
 .gradletasknamecache
