@@ -53,7 +53,7 @@ suspend fun main() = coroutineScope {
 * [integration](integration/README.md) &mdash; modules that provide integration with various asynchronous callback- and future-based libraries:
   * JDK8 [CompletionStage.await], Guava [ListenableFuture.await], and Google Play Services [Task.await];
   * SLF4J MDC integration via [MDCContext];
-  * Log4J 2 ThreadContext integration via [Log4JThreadContext].
+  * Log4J 2 ThreadContext integration via [MutableDiagnosticContext] and [immutableDiagnosticContext()].
 
 ## Documentation
 
