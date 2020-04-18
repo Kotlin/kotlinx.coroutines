@@ -53,7 +53,7 @@ suspend fun main() = coroutineScope {
 * [integration](integration/README.md) &mdash; modules that provide integration with various asynchronous callback- and future-based libraries:
   * JDK8 [CompletionStage.await], Guava [ListenableFuture.await], and Google Play Services [Task.await];
   * SLF4J MDC integration via [MDCContext];
-  * Log4J 2 ThreadContext integration via [MutableDiagnosticContext] and [immutableDiagnosticContext()].
+  * Log4J 2 ThreadContext integration via [MutableDiagnosticContext] and [immutableDiagnosticContext].
 
 ## Documentation
 
@@ -273,7 +273,8 @@ The `develop` branch is pushed to `master` during release.
 [MDCContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-slf4j/kotlinx.coroutines.slf4j/-m-d-c-context/index.html
 <!--- MODULE kotlinx-coroutines-log4j -->
 <!--- INDEX kotlinx.coroutines.log4j -->
-[Log4JThreadContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-log4j/kotlinx.coroutines.log4j/-log4-j-thread-context/index.html
+[MutableDiagnosticContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-log4j/kotlinx.coroutines.log4j/-mutable-diagnostic-context/index.html
+[immutableDiagnosticContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-log4j/kotlinx.coroutines.log4j/immutable-diagnostic-context.html
 <!--- MODULE kotlinx-coroutines-jdk8 -->
 <!--- INDEX kotlinx.coroutines.future -->
 [CompletionStage.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.future/java.util.concurrent.-completion-stage/await.html
