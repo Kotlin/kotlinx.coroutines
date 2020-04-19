@@ -19,6 +19,9 @@ import kotlin.coroutines.EmptyCoroutineContext
  */
 public fun Scheduler.asCoroutineDispatcher(): SchedulerCoroutineDispatcher = SchedulerCoroutineDispatcher(this)
 
+/**
+ * Converts an instance of [CoroutineDispatcher] to an implementation of [Scheduler].
+ */
 public fun CoroutineDispatcher.asScheduler(): Scheduler =
         if (this is SchedulerCoroutineDispatcher) {
             scheduler
@@ -26,7 +29,7 @@ public fun CoroutineDispatcher.asScheduler(): Scheduler =
             DispatcherScheduler(this)
         }
 
-public class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) : Scheduler() {
+private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) : Scheduler() {
 
     private val scope = CoroutineScope(SupervisorJob())
 
