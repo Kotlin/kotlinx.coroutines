@@ -41,12 +41,8 @@ public class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) : 
     override fun scheduleDirect(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
         val decoratedRun = RxJavaPlugins.onSchedule(run)
         val job = scope.launch {
-            try {
-                delay(unit.toMillis(delay))
-                dispatcher.dispatch(EmptyCoroutineContext, decoratedRun)
-            } finally {
-                // do nothing
-            }
+            delay(unit.toMillis(delay))
+            dispatcher.dispatch(EmptyCoroutineContext, decoratedRun)
         }
         return createWorker(job)
     }
