@@ -105,10 +105,21 @@ public abstract class AbstractCoroutine<in T>(
     }
 
     /**
+     * Completes execution of this coroutine with the specified state.
+     */
+    public fun completeCoroutine(state: Any?): Any? {
+        var completeState = state
+        context[CoroutineInterruptController]?.let {
+            completeState = it.updateCoroutineCompleteState(completeState)
+        }
+        return makeCompletingOnce(completeState)
+    }
+
+    /**
      * Completes execution of this with coroutine with the specified result.
      */
     public final override fun resumeWith(result: Result<T>) {
-        val state = makeCompletingOnce(result.toState())
+        val state = completeCoroutine(result.toState())
         if (state === COMPLETING_WAITING_CHILDREN) return
         afterResume(state)
     }

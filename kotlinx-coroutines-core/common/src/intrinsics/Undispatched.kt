@@ -125,7 +125,7 @@ private inline fun <T> ScopeCoroutine<T>.undispatchedResult(
      * not a timeout exception.
      */
     if (result === COROUTINE_SUSPENDED) return COROUTINE_SUSPENDED // (1)
-    val state = makeCompletingOnce(result)
+    val state = completeCoroutine(result)
     if (state === COMPLETING_WAITING_CHILDREN) return COROUTINE_SUSPENDED // (2)
     return if (state is CompletedExceptionally) { // (3)
         when {

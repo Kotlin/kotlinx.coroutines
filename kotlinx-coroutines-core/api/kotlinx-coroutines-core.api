@@ -4,6 +4,7 @@ public abstract class kotlinx/coroutines/AbstractCoroutine : kotlinx/coroutines/
 	public synthetic fun <init> (Lkotlin/coroutines/CoroutineContext;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	protected fun afterResume (Ljava/lang/Object;)V
 	protected fun cancellationExceptionMessage ()Ljava/lang/String;
+	public final fun completeCoroutine (Ljava/lang/Object;)Ljava/lang/Object;
 	public final fun getContext ()Lkotlin/coroutines/CoroutineContext;
 	public fun getCoroutineContext ()Lkotlin/coroutines/CoroutineContext;
 	public fun isActive ()Z
@@ -185,6 +186,30 @@ public final class kotlinx/coroutines/CoroutineExceptionHandler$Key : kotlin/cor
 public final class kotlinx/coroutines/CoroutineExceptionHandlerKt {
 	public static final fun CoroutineExceptionHandler (Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/CoroutineExceptionHandler;
 	public static final fun handleCoroutineException (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;)V
+}
+
+public abstract class kotlinx/coroutines/CoroutineInterruptController : kotlin/coroutines/AbstractCoroutineContextElement {
+	public static final field Key Lkotlinx/coroutines/CoroutineInterruptController$Key;
+	public fun <init> ()V
+	public abstract fun updateCoroutineCompleteState (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/CoroutineInterruptController$Key : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public final class kotlinx/coroutines/CoroutineInterruptible : kotlinx/coroutines/CoroutineInterruptController, kotlinx/coroutines/ThreadContextElement {
+	public static final field INSTANCE Lkotlinx/coroutines/CoroutineInterruptible;
+	public synthetic fun restoreThreadContext (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Object;)V
+	public fun restoreThreadContext (Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineInterruptible$ThreadState;)V
+	public fun updateCoroutineCompleteState (Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun updateThreadContext (Lkotlin/coroutines/CoroutineContext;)Ljava/lang/Object;
+	public fun updateThreadContext (Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/CoroutineInterruptible$ThreadState;
+}
+
+public final class kotlinx/coroutines/CoroutineInterruptible$ThreadState {
+	public fun <init> ()V
+	public final fun clearInterrupt ()V
+	public final fun initInterrupt (Lkotlinx/coroutines/Job;)V
 }
 
 public final class kotlinx/coroutines/CoroutineName : kotlin/coroutines/AbstractCoroutineContextElement {
