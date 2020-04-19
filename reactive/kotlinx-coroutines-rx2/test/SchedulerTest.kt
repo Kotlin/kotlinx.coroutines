@@ -9,6 +9,7 @@ import kotlinx.coroutines.*
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.resume
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 
@@ -130,9 +131,13 @@ class SchedulerTest : TestBase() {
 
         val dispatcher = Schedulers.io().asCoroutineDispatcher()
         val scheduler = dispatcher.asScheduler()
-        scheduler.scheduleDirect {
-            finish(3)
+        suspendCancellableCoroutine<Unit> {
+            scheduler.scheduleDirect {
+                finish(3)
+                it.resume(Unit)
+            }
+            expect(2)
         }
-        expect(2)
+        ensureFinished()
     }
 }

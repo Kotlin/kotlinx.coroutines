@@ -42,11 +42,12 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
 
     override fun scheduleDirect(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
         val decoratedRun = RxJavaPlugins.onSchedule(run)
-        val job = scope.launch {
+        val worker = createWorker()
+        scope.launch {
             delay(unit.toMillis(delay))
-            dispatcher.dispatch(EmptyCoroutineContext, decoratedRun)
+            worker.schedule(decoratedRun)
         }
-        return createWorker(job)
+        return worker
     }
 
     private inner class DispatcherWorker(
@@ -81,10 +82,10 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
  * Implements [CoroutineDispatcher] on top of an arbitrary [Scheduler].
  */
 public class SchedulerCoroutineDispatcher(
-    /**
-     * Underlying scheduler of current [CoroutineDispatcher].
-     */
-    public val scheduler: Scheduler
+        /**
+         * Underlying scheduler of current [CoroutineDispatcher].
+         */
+        public val scheduler: Scheduler
 ) : CoroutineDispatcher(), Delay {
     /** @suppress */
     override fun dispatch(context: CoroutineContext, block: Runnable) {
@@ -107,8 +108,10 @@ public class SchedulerCoroutineDispatcher(
 
     /** @suppress */
     override fun toString(): String = scheduler.toString()
+
     /** @suppress */
     override fun equals(other: Any?): Boolean = other is SchedulerCoroutineDispatcher && other.scheduler === scheduler
+
     /** @suppress */
     override fun hashCode(): Int = System.identityHashCode(scheduler)
 }
