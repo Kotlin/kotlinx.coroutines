@@ -8,6 +8,7 @@ targetCompatibility = JavaVersion.VERSION_1_8
 dependencies {
     api project(':kotlinx-coroutines-reactive')
     testImplementation project(':kotlinx-coroutines-reactive').sourceSets.test.output
+    testImplementation project(':kotlinx-coroutines-test')
     testImplementation "org.reactivestreams:reactive-streams-tck:$reactive_streams_version"
     api "io.reactivex.rxjava3:rxjava:$rxjava3_version"
 }
