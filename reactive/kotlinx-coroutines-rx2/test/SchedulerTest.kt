@@ -71,6 +71,7 @@ class SchedulerTest : TestBase() {
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         val delayMillis = 300L
         scheduler.scheduleDirect({
+            expectUnreached()
             val t1 = Thread.currentThread()
             assertSame(t1, mainThread)
         }, delayMillis, TimeUnit.MILLISECONDS)
