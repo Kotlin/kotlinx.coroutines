@@ -43,9 +43,7 @@ public class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) : 
         val job = scope.launch {
             try {
                 delay(unit.toMillis(delay))
-                if (isActive) {
-                    dispatcher.dispatch(EmptyCoroutineContext, decoratedRun)
-                }
+                dispatcher.dispatch(EmptyCoroutineContext, decoratedRun)
             } finally {
                 // do nothing
             }
