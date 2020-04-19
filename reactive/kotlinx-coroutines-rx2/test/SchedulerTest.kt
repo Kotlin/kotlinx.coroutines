@@ -31,4 +31,18 @@ class SchedulerTest : TestBase() {
         }
         finish(4)
     }
+
+    @Test
+    fun `test asScheduler() with no delay`(): Unit = runBlocking {
+        expect(1)
+        val mainThread = Thread.currentThread()
+        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        scheduler.scheduleDirect {
+            val t1 = Thread.currentThread()
+            assertSame(t1, mainThread)
+            expect(2)
+        }
+        yield()
+        finish(3)
+    }
 }
