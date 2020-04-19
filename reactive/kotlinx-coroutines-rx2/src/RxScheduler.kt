@@ -23,7 +23,6 @@ public fun CoroutineDispatcher.asScheduler(): Scheduler =
         if (this is SchedulerCoroutineDispatcher) {
             scheduler
         } else {
-            // what do we do in this case?
             DispatcherScheduler(this)
         }
 
