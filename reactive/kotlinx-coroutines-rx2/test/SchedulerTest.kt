@@ -122,4 +122,16 @@ class SchedulerTest : TestBase() {
         yield()
         finish(3)
     }
+
+    @Test
+    fun `test asScheduler() works with SchedulerCoroutineDispatcher`(): Unit = runBlocking {
+        expect(1)
+
+        val dispatcher = Schedulers.io().asCoroutineDispatcher()
+        val scheduler = dispatcher.asScheduler()
+        scheduler.scheduleDirect {
+            finish(3)
+        }
+        expect(2)
+    }
 }
