@@ -47,6 +47,7 @@ suspend fun main() = coroutineScope {
   * Reactive Streams ([Publisher.collect], [Publisher.awaitSingle], [publish], etc), 
   * Flow (JDK 9) (the same interface as for Reactive Streams),
   * RxJava 2.x ([rxFlowable], [rxSingle], etc), and
+  * RxJava 3.x ([rxFlowable], [rxSingle], etc), and
   * Project Reactor ([flux], [mono], etc).
 * [ui](ui/README.md) &mdash; modules that provide coroutine dispatchers for various single-threaded UI libraries:
   * Android, JavaFX, and Swing.
@@ -288,6 +289,8 @@ The `develop` branch is pushed to `master` during release.
 <!--- INDEX kotlinx.coroutines.rx2 -->
 [rxFlowable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/rx-flowable.html
 [rxSingle]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/rx-single.html
+<!--- MODULE kotlinx-coroutines-rx2 -->
+<!--- INDEX kotlinx.coroutines.rx2 -->
 <!--- MODULE kotlinx-coroutines-reactor -->
 <!--- INDEX kotlinx.coroutines.reactor -->
 [flux]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/flux.html
