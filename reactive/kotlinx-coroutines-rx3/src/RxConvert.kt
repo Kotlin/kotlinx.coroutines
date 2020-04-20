@@ -2,10 +2,10 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.rx2
+package kotlinx.coroutines.rx3
 
-import io.reactivex.*
-import io.reactivex.disposables.*
+import io.reactivex.rxjava3.core.*
+import io.reactivex.rxjava3.disposables.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
@@ -100,7 +100,7 @@ public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
     }
 
     subscribe(observer)
-    awaitClose { disposableRef.getAndSet(Disposables.disposed())?.dispose() }
+    awaitClose { disposableRef.getAndSet(Disposable.disposed())?.dispose() }
 }
 
 /**

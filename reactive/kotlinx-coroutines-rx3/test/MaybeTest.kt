@@ -2,13 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.rx2
+package kotlinx.coroutines.rx3
 
-import io.reactivex.*
-import io.reactivex.disposables.*
-import io.reactivex.exceptions.*
-import io.reactivex.functions.*
-import io.reactivex.internal.functions.Functions.*
+import io.reactivex.rxjava3.core.*
+import io.reactivex.rxjava3.disposables.*
+import io.reactivex.rxjava3.exceptions.*
+import io.reactivex.rxjava3.functions.*
+import io.reactivex.rxjava3.internal.functions.Functions.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
@@ -85,7 +85,7 @@ class MaybeTest : TestBase() {
             expectUnreached()
         }
         expect(2)
-        // nothing is called on a disposed rx2 maybe
+        // nothing is called on a disposed rx3 maybe
         val sub = maybe.subscribe({
             expectUnreached()
         }, {

@@ -2,9 +2,9 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.rx2
+package kotlinx.coroutines.rx3
 
-import io.reactivex.Scheduler
+import io.reactivex.rxjava3.core.Scheduler
 import kotlinx.coroutines.*
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext

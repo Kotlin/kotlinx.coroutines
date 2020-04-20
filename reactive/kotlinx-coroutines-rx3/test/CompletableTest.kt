@@ -2,11 +2,11 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.rx2
+package kotlinx.coroutines.rx3
 
-import io.reactivex.*
-import io.reactivex.disposables.*
-import io.reactivex.exceptions.*
+import io.reactivex.rxjava3.core.*
+import io.reactivex.rxjava3.disposables.*
+import io.reactivex.rxjava3.exceptions.*
 import kotlinx.coroutines.*
 import org.junit.Test
 import kotlin.test.*
@@ -56,7 +56,7 @@ class CompletableTest : TestBase() {
             expectUnreached()
         }
         expect(2)
-        // nothing is called on a disposed rx2 completable
+        // nothing is called on a disposed rx3 completable
         val sub = completable.subscribe({
             expectUnreached()
         }, {

@@ -4,10 +4,10 @@
 
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
-package kotlinx.coroutines.rx2
+package kotlinx.coroutines.rx3
 
-import io.reactivex.*
-import io.reactivex.exceptions.*
+import io.reactivex.rxjava3.core.*
+import io.reactivex.rxjava3.exceptions.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*

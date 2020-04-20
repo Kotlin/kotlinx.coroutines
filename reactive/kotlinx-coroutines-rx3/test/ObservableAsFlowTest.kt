@@ -2,13 +2,13 @@
  * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.rx2
+package kotlinx.coroutines.rx3
 
-import io.reactivex.Observable
-import io.reactivex.ObservableSource
-import io.reactivex.Observer
-import io.reactivex.disposables.Disposables
-import io.reactivex.subjects.PublishSubject
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.ObservableSource
+import io.reactivex.rxjava3.core.Observer
+import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.subjects.PublishSubject
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
@@ -129,7 +129,7 @@ class ObservableAsFlowTest : TestBase() {
         expect(2)
         assertNotNull(observer)
         job.cancel()
-        val disposable = Disposables.empty()
+        val disposable = Disposable.empty()
         observer!!.onSubscribe(disposable)
         assertTrue(disposable.isDisposed)
         finish(3)

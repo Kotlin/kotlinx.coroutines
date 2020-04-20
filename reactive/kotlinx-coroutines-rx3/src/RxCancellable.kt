@@ -2,10 +2,10 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.rx2
+package kotlinx.coroutines.rx3
 
-import io.reactivex.functions.*
-import io.reactivex.plugins.*
+import io.reactivex.rxjava3.functions.*
+import io.reactivex.rxjava3.plugins.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
