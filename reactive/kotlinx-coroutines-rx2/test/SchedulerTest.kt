@@ -4,14 +4,13 @@
 
 package kotlinx.coroutines.rx2
 
-import io.reactivex.schedulers.Schedulers
+import io.reactivex.schedulers.*
 import kotlinx.coroutines.*
-import org.junit.Before
+import org.junit.*
 import org.junit.Test
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.resume
-import kotlin.test.assertNotSame
-import kotlin.test.assertSame
+import java.util.concurrent.*
+import kotlin.coroutines.*
+import kotlin.test.*
 
 class SchedulerTest : TestBase() {
     @Before
@@ -108,11 +107,11 @@ class SchedulerTest : TestBase() {
         val delayMillis = 300L
 
         fun scheduleWork() =
-                scheduler.scheduleDirect({
-                    expectUnreached()
-                    val t1 = Thread.currentThread()
-                    assertSame(t1, mainThread)
-                }, delayMillis, TimeUnit.MILLISECONDS)
+            scheduler.scheduleDirect({
+                expectUnreached()
+                val t1 = Thread.currentThread()
+                assertSame(t1, mainThread)
+            }, delayMillis, TimeUnit.MILLISECONDS)
 
         scheduleWork()
         scheduleWork()
@@ -139,5 +138,37 @@ class SchedulerTest : TestBase() {
             expect(2)
         }
         ensureFinished()
+    }
+
+    @Test
+    fun testAsSchedulerWithAMillionTasks(): Unit = runBlocking {
+        expect(1)
+
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+        val numberOfJobs = 1000000
+        for (i in 0..numberOfJobs) {
+            val disposable = scheduler.scheduleDirect {
+            }
+            disposable.dispose()
+        }
+        yield()
+        finish(2)
+    }
+
+    @Test
+    fun testAsSchedulerWithAMillionTasksWithDelay(): Unit = runBlocking {
+        expect(1)
+
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+        val numberOfJobs = 1000000
+        for (i in 0..numberOfJobs) {
+            val disposable = scheduler.scheduleDirect({
+            }, 300, TimeUnit.MILLISECONDS)
+            disposable.dispose()
+        }
+        yield()
+        finish(2)
     }
 }
