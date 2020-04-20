@@ -4,14 +4,12 @@
 
 package kotlinx.coroutines.rx2
 
-import io.reactivex.Scheduler
-import io.reactivex.disposables.Disposable
-import io.reactivex.disposables.Disposables
-import io.reactivex.plugins.RxJavaPlugins
+import io.reactivex.*
+import io.reactivex.disposables.*
+import io.reactivex.plugins.*
 import kotlinx.coroutines.*
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
+import java.util.concurrent.*
+import kotlin.coroutines.*
 
 /**
  * Converts an instance of [Scheduler] to an implementation of [CoroutineDispatcher]
