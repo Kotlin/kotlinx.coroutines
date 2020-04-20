@@ -21,11 +21,11 @@ public fun Scheduler.asCoroutineDispatcher(): SchedulerCoroutineDispatcher = Sch
  * Converts an instance of [CoroutineDispatcher] to an implementation of [Scheduler].
  */
 public fun CoroutineDispatcher.asScheduler(): Scheduler =
-        if (this is SchedulerCoroutineDispatcher) {
-            scheduler
-        } else {
-            DispatcherScheduler(this)
-        }
+    if (this is SchedulerCoroutineDispatcher) {
+        scheduler
+    } else {
+        DispatcherScheduler(this)
+    }
 
 private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) : Scheduler() {
 
@@ -49,7 +49,7 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
     }
 
     private inner class DispatcherWorker(
-            private val workerJob: Job = Job(scope.coroutineContext[Job])
+        private val workerJob: Job = Job(scope.coroutineContext[Job])
     ) : Worker() {
         override fun isDisposed(): Boolean = !workerJob.isActive
 
@@ -80,10 +80,10 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
  * Implements [CoroutineDispatcher] on top of an arbitrary [Scheduler].
  */
 public class SchedulerCoroutineDispatcher(
-        /**
-         * Underlying scheduler of current [CoroutineDispatcher].
-         */
-        public val scheduler: Scheduler
+    /**
+     * Underlying scheduler of current [CoroutineDispatcher].
+     */
+    public val scheduler: Scheduler
 ) : CoroutineDispatcher(), Delay {
     /** @suppress */
     override fun dispatch(context: CoroutineContext, block: Runnable) {
@@ -106,10 +106,8 @@ public class SchedulerCoroutineDispatcher(
 
     /** @suppress */
     override fun toString(): String = scheduler.toString()
-
     /** @suppress */
     override fun equals(other: Any?): Boolean = other is SchedulerCoroutineDispatcher && other.scheduler === scheduler
-
     /** @suppress */
     override fun hashCode(): Int = System.identityHashCode(scheduler)
 }
