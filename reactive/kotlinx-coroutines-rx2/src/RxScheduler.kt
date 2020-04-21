@@ -59,14 +59,18 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
         }
 
         override fun schedule(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
-            return if (workerScope.isActive) {
-                workerScope.launch {
-                    delay(unit.toMillis(delay))
-                    schedule(run)
-                }
-                return this
+            return if (delay <= 0) {
+                schedule(run)
             } else {
-                Disposables.disposed()
+                if (workerScope.isActive) {
+                    workerScope.launch {
+                        delay(unit.toMillis(delay))
+                        schedule(run)
+                    }
+                    return this
+                } else {
+                    Disposables.disposed()
+                }
             }
         }
 
@@ -108,8 +112,10 @@ public class SchedulerCoroutineDispatcher(
 
     /** @suppress */
     override fun toString(): String = scheduler.toString()
+
     /** @suppress */
     override fun equals(other: Any?): Boolean = other is SchedulerCoroutineDispatcher && other.scheduler === scheduler
+
     /** @suppress */
     override fun hashCode(): Int = System.identityHashCode(scheduler)
 }

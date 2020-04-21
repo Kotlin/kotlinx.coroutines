@@ -68,7 +68,33 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun `testBlockUnreachedIfDelayed`(): Unit = runBlocking {
+    fun testAsSchedulerWithZeroDelay(): Unit = runBlocking {
+        expect(1)
+        val mainThread = Thread.currentThread()
+        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        scheduler.scheduleDirect({
+            val t1 = Thread.currentThread()
+            assertSame(t1, mainThread)
+            finish(2)
+        }, 0, TimeUnit.MILLISECONDS)
+        yield()
+    }
+
+    @Test
+    fun testAsSchedulerWithNegativeDelay(): Unit = runBlocking {
+        expect(1)
+        val mainThread = Thread.currentThread()
+        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        scheduler.scheduleDirect({
+            val t1 = Thread.currentThread()
+            assertSame(t1, mainThread)
+            finish(2)
+        }, -1, TimeUnit.MILLISECONDS)
+        yield()
+    }
+
+    @Test
+    fun testBlockUnreachedIfDelayed(): Unit = runBlocking {
         expect(1)
         val mainThread = Thread.currentThread()
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
