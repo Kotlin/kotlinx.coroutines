@@ -49,17 +49,16 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
 
         override fun isDisposed(): Boolean = !workerScope.isActive
 
-        override fun schedule(run: java.lang.Runnable): Disposable {
-            return if (workerScope.isActive) {
+        override fun schedule(run: java.lang.Runnable): Disposable =
+            if (workerScope.isActive) {
                 dispatcher.dispatch(EmptyCoroutineContext, run)
-                return this
+                this
             } else {
                 Disposables.disposed()
             }
-        }
 
-        override fun schedule(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
-            return if (delay <= 0) {
+        override fun schedule(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable =
+            if (delay <= 0) {
                 schedule(run)
             } else {
                 if (workerScope.isActive) {
@@ -67,12 +66,11 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
                         delay(unit.toMillis(delay))
                         schedule(run)
                     }
-                    return this
+                    this
                 } else {
                     Disposables.disposed()
                 }
             }
-        }
 
         override fun dispose() {
             workerScope.cancel()
