@@ -45,7 +45,7 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
 
     private class DispatcherWorker(private val dispatcher: CoroutineDispatcher) : Worker() {
 
-        private val workerScope = CoroutineScope(Job())
+        private val workerScope = CoroutineScope(SupervisorJob())
 
         override fun isDisposed(): Boolean = !workerScope.isActive
 
