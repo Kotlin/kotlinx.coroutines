@@ -33,6 +33,12 @@ sourceSets {
     }
 }
 
+compileDebugAgentTestKotlin {
+    kotlinOptions {
+        freeCompilerArgs += ["-Xallow-kotlin-package"]
+    }
+}
+
 task npmTest(type: Test) {
     def sourceSet = sourceSets.npmTest
     environment "projectRoot", project.rootDir
