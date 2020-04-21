@@ -107,6 +107,10 @@ internal object DebugProbesImpl {
             .toList()
     }
 
+    /*
+     * Internal (JVM-public) method used by IDEA debugger.
+     * It is equivalent to dumpCoroutines, but returns serializable (and thus less typed) objects.
+     */
     public fun dumpDebuggerInfo() = dumpCoroutinesInfo().map { DebuggerInfo(it) }
 
     public fun dumpCoroutines(out: PrintStream): Unit = synchronized(out) {

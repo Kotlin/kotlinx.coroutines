@@ -179,7 +179,6 @@ class RunningThreadStackMergeTest : DebugTestBase() {
         awaitCoroutineStarted()
         val info = DebugProbesImpl.dumpDebuggerInfo().find { it.state == "RUNNING" }
         assertNotNull(info)
-        @Suppress("INVISIBLE_MEMBER") // IDEA bug
         assertNotNull(info.lastObservedThreadName)
         coroutineBlocker.await()
     }
