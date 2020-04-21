@@ -4,10 +4,13 @@
 
 package kotlinx.coroutines.rx2
 
+import io.reactivex.functions.*
+import io.reactivex.plugins.*
 import io.reactivex.schedulers.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
+import java.lang.Runnable
 import java.util.concurrent.*
 import kotlin.coroutines.*
 import kotlin.test.*
@@ -54,14 +57,14 @@ class SchedulerTest : TestBase() {
         val mainThread = Thread.currentThread()
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         val delayMillis = 300L
-        scheduler.scheduleDirect({
-            val t1 = Thread.currentThread()
-            assertSame(t1, mainThread)
-            expect(2)
-        }, delayMillis, TimeUnit.MILLISECONDS)
-        delay(delayMillis + 50)
-        yield()
-        finish(3)
+        suspendCancellableCoroutine<Unit> {
+            scheduler.scheduleDirect({
+                val t1 = Thread.currentThread()
+                assertSame(t1, mainThread)
+                finish(2)
+                it.resume(Unit)
+            }, delayMillis, TimeUnit.MILLISECONDS)
+        }
     }
 
     @Test
@@ -100,31 +103,6 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun `test asScheduler() properly disposes work after shutdown`(): Unit = runBlocking {
-        expect(1)
-        val mainThread = Thread.currentThread()
-        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
-        val delayMillis = 300L
-
-        fun scheduleWork() =
-            scheduler.scheduleDirect({
-                expectUnreached()
-                val t1 = Thread.currentThread()
-                assertSame(t1, mainThread)
-            }, delayMillis, TimeUnit.MILLISECONDS)
-
-        scheduleWork()
-        scheduleWork()
-
-        delay(100)
-        expect(2)
-        scheduler.shutdown()
-        delay(300)
-        yield()
-        finish(3)
-    }
-
-    @Test
     fun `test asScheduler() works with SchedulerCoroutineDispatcher`(): Unit = runBlocking {
         expect(1)
 
@@ -142,18 +120,19 @@ class SchedulerTest : TestBase() {
 
     @Test
     fun testAsSchedulerWithAMillionTasks(): Unit = runBlocking {
-        expect(1)
+        var counter = 1
+        expect(counter)
 
         val dispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = dispatcher.asScheduler()
         val numberOfJobs = 1000000
         for (i in 0..numberOfJobs) {
-            val disposable = scheduler.scheduleDirect {
+            scheduler.scheduleDirect {
+                expect(++counter)
             }
-            disposable.dispose()
         }
         yield()
-        finish(2)
+        finish(1000003)
     }
 
     @Test
@@ -165,10 +144,43 @@ class SchedulerTest : TestBase() {
         val numberOfJobs = 1000000
         for (i in 0..numberOfJobs) {
             val disposable = scheduler.scheduleDirect({
-            }, 300, TimeUnit.MILLISECONDS)
+                expectUnreached()
+            }, 100, TimeUnit.MILLISECONDS)
             disposable.dispose()
         }
         yield()
         finish(2)
+    }
+
+    @Test
+    fun testExpectRxPluginsCall(): Unit = runBlocking {
+        var expectCounter = 0
+        expect(++expectCounter)
+
+        fun setScheduler(expectCountOnRun: Int) {
+            RxJavaPlugins.setScheduleHandler(Function {
+                Runnable {
+                    expect(expectCountOnRun)
+                    it.run()
+                }
+            })
+        }
+
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+
+        setScheduler(2)
+        scheduler.scheduleDirect {
+            expect(3)
+        }
+
+        setScheduler(4)
+        suspendCancellableCoroutine<Unit> {
+            scheduler.scheduleDirect( {
+                finish(5)
+                RxJavaPlugins.setScheduleHandler(null)
+                it.resume(Unit)
+            }, 300, TimeUnit.MILLISECONDS)
+        }
     }
 }

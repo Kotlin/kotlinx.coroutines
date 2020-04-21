@@ -29,12 +29,9 @@ public fun CoroutineDispatcher.asScheduler(): Scheduler =
 
 private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) : Scheduler() {
 
-    private val scope = CoroutineScope(SupervisorJob())
-
     override fun scheduleDirect(run: java.lang.Runnable): Disposable {
         val decoratedRun = RxJavaPlugins.onSchedule(run)
         val worker = createWorker() as DispatcherWorker
-        worker.setJob(Job(scope.coroutineContext[Job]))
         worker.schedule(decoratedRun)
         return worker
     }
@@ -42,26 +39,18 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
     override fun scheduleDirect(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
         val decoratedRun = RxJavaPlugins.onSchedule(run)
         val worker = createWorker() as DispatcherWorker
-        val job = scope.launch {
-            delay(unit.toMillis(delay))
-            worker.schedule(decoratedRun)
-        }
-        worker.setJob(job)
+        worker.schedule(decoratedRun, delay, unit)
         return worker
     }
 
-    private inner class DispatcherWorker : Worker() {
+    private class DispatcherWorker(private val dispatcher: CoroutineDispatcher) : Worker() {
 
-        private lateinit var workerJob: Job
+        private val workerScope = CoroutineScope(Job())
 
-        fun setJob(job: Job) {
-            workerJob = job
-        }
+        override fun isDisposed(): Boolean = !workerScope.isActive
 
-        override fun isDisposed(): Boolean = !workerJob.isActive
-
-        override fun schedule(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
-            return if (workerJob.isActive) {
+        override fun schedule(run: java.lang.Runnable): Disposable {
+            return if (workerScope.isActive) {
                 dispatcher.dispatch(EmptyCoroutineContext, run)
                 return this
             } else {
@@ -69,16 +58,24 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
             }
         }
 
+        override fun schedule(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
+            return if (workerScope.isActive) {
+                workerScope.launch {
+                    delay(unit.toMillis(delay))
+                    dispatcher.dispatch(EmptyCoroutineContext, run)
+                }
+                return this
+            } else {
+                Disposables.disposed()
+            }
+        }
+
         override fun dispose() {
-            workerJob.cancel()
+            workerScope.cancel()
         }
     }
 
-    override fun createWorker(): Worker = DispatcherWorker()
-
-    override fun shutdown() {
-        scope.cancel()
-    }
+    override fun createWorker(): Worker = DispatcherWorker(dispatcher)
 }
 
 /**
