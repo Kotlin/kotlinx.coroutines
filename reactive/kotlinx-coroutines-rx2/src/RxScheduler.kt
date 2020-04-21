@@ -62,7 +62,7 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
             return if (workerScope.isActive) {
                 workerScope.launch {
                     delay(unit.toMillis(delay))
-                    dispatcher.dispatch(EmptyCoroutineContext, run)
+                    schedule(run)
                 }
                 return this
             } else {
