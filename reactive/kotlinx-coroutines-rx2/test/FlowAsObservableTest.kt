@@ -132,8 +132,8 @@ class FlowAsObservableTest : TestBase() {
         val observable = flow {
             expect(1)
             emit(1)
-            coroutineContext.cancel()
-            coroutineContext.ensureActive()
+            kotlin.coroutines.coroutineContext.cancel()
+            kotlin.coroutines.coroutineContext.ensureActive()
             expectUnreached()
         }.asObservable()
 
