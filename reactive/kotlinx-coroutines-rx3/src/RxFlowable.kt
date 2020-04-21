@@ -11,7 +11,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.reactive.*
 import kotlin.coroutines.*
-import kotlin.internal.*
 
 /**
  * Creates cold [flowable][Flowable] that will run a given [block] in a coroutine.
@@ -40,16 +39,5 @@ public fun <T: Any> rxFlowable(
             "Its lifecycle should be managed via Disposable handle. Had $context" }
     return Flowable.fromPublisher(publishInternal(GlobalScope, context, RX_HANDLER, block))
 }
-
-@Deprecated(
-    message = "CoroutineScope.rxFlowable is deprecated in favour of top-level rxFlowable",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("rxFlowable(context, block)")
-) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
-@LowPriorityInOverloadResolution
-public fun <T: Any> CoroutineScope.rxFlowable(
-    context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Flowable<T> = Flowable.fromPublisher(publishInternal(this, context, RX_HANDLER, block))
 
 private val RX_HANDLER: (Throwable, CoroutineContext) -> Unit = ::handleUndeliverableException

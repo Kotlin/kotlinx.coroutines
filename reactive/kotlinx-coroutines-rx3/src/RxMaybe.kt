@@ -9,7 +9,6 @@ package kotlinx.coroutines.rx3
 import io.reactivex.rxjava3.core.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
-import kotlin.internal.*
 
 /**
  * Creates cold [maybe][Maybe] that will run a given [block] in a coroutine and emits its result.
@@ -28,17 +27,6 @@ public fun <T> rxMaybe(
             "Its lifecycle should be managed via Disposable handle. Had $context" }
     return rxMaybeInternal(GlobalScope, context, block)
 }
-
-@Deprecated(
-    message = "CoroutineScope.rxMaybe is deprecated in favour of top-level rxMaybe",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("rxMaybe(context, block)")
-) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
-@LowPriorityInOverloadResolution
-public fun <T> CoroutineScope.rxMaybe(
-    context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend CoroutineScope.() -> T?
-): Maybe<T> = rxMaybeInternal(this, context, block)
 
 private fun <T> rxMaybeInternal(
     scope: CoroutineScope, // support for legacy rxMaybe in scope

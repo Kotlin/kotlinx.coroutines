@@ -65,21 +65,6 @@ public fun <T : Any> Deferred<T>.asSingle(context: CoroutineContext): Single<T> 
 }
 
 /**
- * Converts a stream of elements received from the channel to the hot reactive observable.
- *
- * Every subscriber receives values from this channel in **fan-out** fashion. If the are multiple subscribers,
- * they'll receive values in round-robin way.
- */
-@Deprecated(
-    message = "Deprecated in the favour of Flow",
-    level = DeprecationLevel.WARNING, replaceWith = ReplaceWith("this.consumeAsFlow().asObservable()")
-)
-public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = rxObservable(context) {
-    for (t in this@asObservable)
-        send(t)
-}
-
-/**
  * Transforms given cold [ObservableSource] into cold [Flow].
  *
  * The resulting flow is _cold_, which means that [ObservableSource.subscribe] is called every time a terminal operator

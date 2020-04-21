@@ -6,6 +6,7 @@ package kotlinx.coroutines.rx3
 
 import io.reactivex.rxjava3.core.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.consumeAsFlow
 import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
@@ -92,7 +93,8 @@ class IntegrationTest(
         assertFailsWith<IllegalArgumentException> { observable.awaitSingle() }
         checkNumbers(n, observable)
         val channel = observable.openSubscription()
-        checkNumbers(n, channel.asObservable(ctx(coroutineContext)))
+        ctx(coroutineContext)
+        checkNumbers(n, channel.consumeAsFlow().asObservable())
         channel.cancel()
     }
 
