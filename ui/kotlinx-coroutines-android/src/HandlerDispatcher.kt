@@ -7,7 +7,7 @@
 package kotlinx.coroutines.android
 
 import android.os.*
-import android.support.annotation.*
+import androidx.annotation.*
 import android.view.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
