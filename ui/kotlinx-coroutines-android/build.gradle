@@ -12,7 +12,7 @@ configurations {
 
 dependencies {
     compileOnly "com.google.android:android:$android_version"
-    compileOnly "com.android.support:support-annotations:$android_support_version"
+    compileOnly "androidx.annotation:annotation:$androidx_annotation_version"
 
     testImplementation "com.google.android:android:$android_version"
     testImplementation "org.robolectric:robolectric:$robolectric_version"
