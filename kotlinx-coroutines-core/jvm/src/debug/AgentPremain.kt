@@ -56,7 +56,7 @@ internal object AgentPremain {
                     // a real debug probes use-case, thus is not guarded against.
                     DebugProbesImpl.dumpCoroutines(System.out)
                 } else {
-                    println("""Cannot perform coroutines dump, debug probes are disabled""")
+                    println("Cannot perform coroutines dump, debug probes are disabled")
                 }
             }
         } catch (t: Throwable) {

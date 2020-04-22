@@ -96,6 +96,6 @@ compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
 
-test {
+check {
     dependsOn([npmTest, mavenTest, debugAgentTest, coreAgentTest])
 }

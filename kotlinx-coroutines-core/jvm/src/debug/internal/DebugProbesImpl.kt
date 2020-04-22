@@ -38,6 +38,17 @@ internal object DebugProbesImpl {
     public var sanitizeStackTraces: Boolean = true
     public var enableCreationStackTraces: Boolean = true
 
+    // Substitute for service loader, DI between core and debug modules
+    private val dynamicAttach = gettDynamicAttach()
+
+    @Suppress("UNCHECKED_CAST")
+    private fun gettDynamicAttach(): Function1<Boolean, Unit>? = runCatching {
+        val clz = Class.forName("kotlinx.coroutines.debug.internal.ByteBuddyDynamicAttach")
+        val ctor = clz.constructors[0]
+        ctor.newInstance() as Function1<Boolean, Unit>
+    }.getOrNull()
+
+
     /*
      * This is an optimization in the face of KT-29997:
      * Consider suspending call stack a()->b()->c() and c() completes its execution and every call is
@@ -50,7 +61,7 @@ internal object DebugProbesImpl {
 
     public fun install(): Unit = coroutineStateLock.write {
         if (++installations > 1) return
-        attach.invoke()
+        dynamicAttach?.invoke(true) // attach
     }
 
     public fun uninstall(): Unit = coroutineStateLock.write {
@@ -58,7 +69,7 @@ internal object DebugProbesImpl {
         if (--installations != 0) return
         capturedCoroutines.clear()
         callerInfoCache.clear()
-        detach.invoke()
+        dynamicAttach?.invoke(false) // detach
     }
 
     public fun hierarchyToString(job: Job): String = coroutineStateLock.write {
