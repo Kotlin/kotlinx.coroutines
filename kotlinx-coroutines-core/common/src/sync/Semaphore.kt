@@ -158,14 +158,13 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
     }
 
     private suspend fun acquireSlowPath() = suspendAtomicCancellableCoroutineReusable<Unit> sc@ { cont ->
-        if (addToQueueAndSuspend(cont)) return@sc
         while (true) {
+            if (addToQueueAndSuspend(cont)) return@sc
             val p = _availablePermits.getAndDecrement()
             if (p > 0) { // permit acquired
                 cont.resume(Unit)
                 return@sc
             }
-            if (addToQueueAndSuspend(cont)) return@sc
         }
     }
 
