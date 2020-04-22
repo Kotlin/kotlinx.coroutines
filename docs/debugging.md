@@ -61,6 +61,7 @@ Exception copy logic is straightforward:
   2) If the exception class has class-specific fields not inherited from Throwable, the exception is not copied.
   3) Otherwise, one of the public exception's constructor is invoked reflectively with an optional `initCause` call.  
 
+In any case, the copied exception *must have the same* `message` field as the original exception.
 ## Debug agent
 
 [kotlinx-coroutines-debug](../kotlinx-coroutines-debug) module provides one of the most powerful debug capabilities in `kotlinx.coroutines`.
