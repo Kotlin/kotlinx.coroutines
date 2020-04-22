@@ -359,7 +359,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         owner: Any?,
         @JvmField val cont: CancellableContinuation<Unit>
     ) : LockWaiter(mutex, owner) {
-        override fun tryResumeLockWaiter() = cont.tryResumeAtomic(Unit, idempotent = null) {
+        override fun tryResumeLockWaiter() = cont.tryResume(Unit, idempotent = null) {
             // if this continuation get's cancelled during dispatch to the caller, then release the lock
             mutex.unlock(owner)
         }

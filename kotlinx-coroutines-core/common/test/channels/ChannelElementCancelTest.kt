@@ -1,13 +1,14 @@
 package kotlinx.coroutines.channels
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-class ResourceChannelTest : TestBase() {
+class ChannelElementCancelTest : TestBase() {
     @Test
     fun testSendSuccessfully() = runAllKindsTest { kind ->
-        val channel = kind.create<Resource<String>>()
-        val res = Resource("OK") {}
+        val channel = kind.create<Resource> { it.cancel() }
+        val res = Resource("OK")
         launch {
             channel.send(res)
         }
@@ -20,8 +21,8 @@ class ResourceChannelTest : TestBase() {
 
     @Test
     fun testRendezvousSendCancelled() = runTest {
-        val channel = Channel<Resource<String>>()
-        val res = Resource("OK") {}
+        val channel = Channel<Resource> { it.cancel() }
+        val res = Resource("OK")
         val sender = launch(start = CoroutineStart.UNDISPATCHED) {
             assertFailsWith<CancellationException> {
                 channel.send(res) // suspends & get cancelled
@@ -33,9 +34,9 @@ class ResourceChannelTest : TestBase() {
 
     @Test
     fun testBufferedSendCancelled() = runTest {
-        val channel = Channel<Resource<String>>(1)
-        val resA = Resource("A") {}
-        val resB = Resource("B") {}
+        val channel = Channel<Resource>(1) { it.cancel() }
+        val resA = Resource("A")
+        val resB = Resource("B")
         val sender = launch(start = CoroutineStart.UNDISPATCHED) {
             channel.send(resA) // goes to buffer
             assertFailsWith<CancellationException> {
@@ -51,9 +52,9 @@ class ResourceChannelTest : TestBase() {
 
     @Test
     fun testConflatedResourceCancelled() = runTest {
-        val channel = Channel<Resource<String>>(Channel.CONFLATED)
-        val resA = Resource("A") {}
-        val resB = Resource("B") {}
+        val channel = Channel<Resource>(Channel.CONFLATED) { it.cancel() }
+        val resA = Resource("A")
+        val resB = Resource("B")
         channel.send(resA)
         assertFalse(resA.isCancelled)
         assertFalse(resB.isCancelled)
@@ -68,9 +69,9 @@ class ResourceChannelTest : TestBase() {
 
     @Test
     fun testSendToClosedChannel() = runAllKindsTest { kind ->
-        val channel = kind.create<Resource<String>>()
+        val channel = kind.create<Resource> { it.cancel() }
         channel.close() // immediately close channel
-        val res = Resource("OK") {}
+        val res = Resource("OK")
         assertFailsWith<ClosedSendChannelException> {
             channel.send(res) // send fails to closed channel
         }
@@ -79,6 +80,7 @@ class ResourceChannelTest : TestBase() {
 
     private fun runAllKindsTest(test: suspend CoroutineScope.(TestChannelKind) -> Unit) {
         for (kind in TestChannelKind.values()) {
+            if (kind.viaBroadcast) continue // does not support onElementCancel
             try {
                 runTest {
                     test(kind)
@@ -86,6 +88,17 @@ class ResourceChannelTest : TestBase() {
             } catch(e: Throwable) {
                 error("$kind: $e", e)
             }
+        }
+    }
+
+    private class Resource(val value: String) {
+        private val _cancelled = atomic(false)
+
+        val isCancelled: Boolean
+            get() = _cancelled.value
+
+        fun cancel() {
+            check(!_cancelled.getAndSet(true)) { "Already cancelled" }
         }
     }
 }

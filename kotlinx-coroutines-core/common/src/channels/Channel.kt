@@ -308,7 +308,7 @@ public interface ReceiveChannel<out E> {
  * @suppress *This is an internal API, do not use*: Inline classes ABI is not stable yet and
  *            [KT-27524](https://youtrack.jetbrains.com/issue/KT-27524) needs to be fixed.
  */
-@Suppress("NON_PUBLIC_PRIMARY_CONSTRUCTOR_OF_INLINE_CLASS")
+@Suppress("NON_PUBLIC_PRIMARY_CONSTRUCTOR_OF_INLINE_CLASS", "EXPERIMENTAL_FEATURE_WARNING")
 @InternalCoroutinesApi // until https://youtrack.jetbrains.com/issue/KT-27524 is fixed
 public inline class ValueOrClosed<out T>
 internal constructor(private val holder: Any?) {
@@ -529,14 +529,20 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
  * @param capacity either a positive channel capacity or one of the constants defined in [Channel.Factory].
  * @throws IllegalArgumentException when [capacity] < -2
  */
-public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> =
+public fun <E> Channel(capacity: Int = RENDEZVOUS, onElementCancel: ((E) -> Unit)? = null): Channel<E> =
     when (capacity) {
-        RENDEZVOUS -> RendezvousChannel()
-        UNLIMITED -> LinkedListChannel()
-        CONFLATED -> ConflatedChannel()
-        BUFFERED -> ArrayChannel(CHANNEL_DEFAULT_CAPACITY)
-        else -> ArrayChannel(capacity)
+        RENDEZVOUS -> RendezvousChannel(onElementCancel)
+        UNLIMITED -> LinkedListChannel(onElementCancel)
+        CONFLATED -> ConflatedChannel(onElementCancel)
+        BUFFERED -> ArrayChannel(CHANNEL_DEFAULT_CAPACITY, onElementCancel)
+        else -> ArrayChannel(capacity, onElementCancel)
     }
+
+/**
+ * @suppress Binary compatibility only, should not be documented
+ */
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
+public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> = Channel(capacity, onElementCancel = null)
 
 /**
  * Indicates an attempt to [send][SendChannel.send] to a [isClosedForSend][SendChannel.isClosedForSend] channel

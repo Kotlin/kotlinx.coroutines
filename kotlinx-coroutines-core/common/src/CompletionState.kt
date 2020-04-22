@@ -21,16 +21,6 @@ internal fun <T> Result<T>.toState(caller: CancellableContinuation<*>): Any? = f
     onFailure = { CompletedExceptionally(recoverStackTrace(it, caller)) }
 )
 
-internal fun DispatchedContinuation<*>.cancelState(state: Any?, cause: Throwable) {
-    when (state) {
-        is CompletedWithCancellation -> {
-            cancelResourceIfNeeded(state.result) { context }
-            state.onCancellation(cause)
-        }
-        else -> cancelResourceIfNeeded(state) { context }
-    }
-}
-
 @Suppress("RESULT_CLASS_IN_RETURN_TYPE", "UNCHECKED_CAST")
 internal fun <T> recoverResult(state: Any?, uCont: Continuation<T>): Result<T> =
     if (state is CompletedExceptionally)

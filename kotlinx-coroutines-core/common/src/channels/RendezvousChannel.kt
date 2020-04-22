@@ -13,7 +13,7 @@ package kotlinx.coroutines.channels
  *
  * This implementation is fully lock-free.
  **/
-internal open class RendezvousChannel<E> : AbstractChannel<E>() {
+internal open class RendezvousChannel<E>(onElementCancel: ((E) -> Unit)?) : AbstractChannel<E>(onElementCancel) {
     protected final override val isBufferAlwaysEmpty: Boolean get() = true
     protected final override val isBufferEmpty: Boolean get() = true
     protected final override val isBufferAlwaysFull: Boolean get() = true

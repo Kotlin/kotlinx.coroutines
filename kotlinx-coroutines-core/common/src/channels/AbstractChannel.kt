@@ -20,6 +20,9 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     /** @suppress **This is unstable API and it is subject to change.** */
     protected val queue = LockFreeLinkedListHead()
 
+    open val onElementCancel: ((E) -> Unit)?
+        get() = null
+
     // ------ extension points for buffered channels ------
 
     /**
@@ -168,7 +171,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     private suspend fun sendSuspend(element: E): Unit = suspendCancellableCoroutineReusable sc@ { cont ->
         loop@ while (true) {
             if (isFullImpl) {
-                val send = SendElement(element, cont)
+                val send = SendElement(element, onElementCancel, cont)
                 val enqueueResult = enqueueSend(send)
                 when {
                     enqueueResult == null -> { // enqueued successfully
@@ -431,7 +434,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     // ------ private ------
 
     private class SendSelect<E, R>(
-        override val pollResult: Any?,
+        override val pollResult: E,
         @JvmField val channel: AbstractSendChannel<E>,
         @JvmField val select: SelectInstance<R>,
         @JvmField val block: suspend (SendChannel<E>) -> R
@@ -446,7 +449,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         override fun dispose() { // invoked on select completion
             if (!remove()) return
             // if the node was successfully removed (meaning it was added but was not received) then cancel resource
-            cancelResource()
+            cancelElement()
         }
 
         override fun resumeSendClosed(closed: Closed<*>) {
@@ -454,8 +457,8 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
                 select.resumeSelectWithException(closed.sendException)
         }
 
-        override fun cancelResource() {
-            cancelResourceIfNeeded(pollResult) { select.completion.context }
+        override fun cancelElement() {
+            channel.onElementCancel?.callElementCancel(pollResult, select.completion.context)
         }
 
         override fun toString(): String = "SendSelect@$hexAddress($pollResult)[$channel, $select]"
@@ -475,7 +478,9 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
 /**
  * Abstract send/receive channel. It is a base class for all channel implementations.
  */
-internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> {
+internal abstract class AbstractChannel<E>(
+    override val onElementCancel: ((E) -> Unit)?
+) : AbstractSendChannel<E>(), Channel<E> {
     // ------ extension points for buffered channels ------
 
     /**
@@ -508,7 +513,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                 return send.pollResult
             }
             // too late, already cancelled, but we removed it from the queue and need to cancel resource
-            send.cancelResource()
+            send.cancelElement()
         }
     }
 
@@ -556,7 +561,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
 
     @Suppress("UNCHECKED_CAST")
     private suspend fun <R> receiveSuspend(receiveMode: Int): R = suspendCancellableCoroutineReusable sc@ { cont ->
-        val receive = ReceiveElement<E>(cont as CancellableContinuation<Any?>, receiveMode)
+        val receive = ReceiveElement(onElementCancel, cont as CancellableContinuation<Any?>, receiveMode)
         while (true) {
             if (enqueueReceive(receive)) {
                 removeReceiveOnCancel(cont, receive)
@@ -569,12 +574,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                 return@sc
             }
             if (result !== POLL_FAILED) {
-                val resumeValue = receive.resumeValue(result as E)
-                val onCancellation = receive.resumeOnCancellation(result as E)
-                if (onCancellation == null) {
-                    cont.resume(resumeValue)
-                } else
-                    cont.resume(resumeValue, onCancellation)
+                cont.resume(receive.resumeValue(result as E), receive.resumeOnCancellationFun(result as E))
                 return@sc
             }
         }
@@ -684,14 +684,15 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         @Suppress("UNCHECKED_CAST")
         override fun onPrepare(prepareOp: PrepareOp): Any? {
             val affected = prepareOp.affected as Send // see "failure" impl
-            val token = affected.tryResumeSend(prepareOp) ?: run {
-                // too late, already cancelled, but we removed it from the queue and need to cancel resource
-                affected.cancelResource()
-                return REMOVE_PREPARED
-            }
+            val token = affected.tryResumeSend(prepareOp) ?: return REMOVE_PREPARED
             if (token === RETRY_ATOMIC) return RETRY_ATOMIC
             assert { token === RESUME_TOKEN }
             return null
+        }
+
+        override fun onRemoved(affected: LockFreeLinkedListNode) {
+            // Called when we removed it from the queue but were too late to resume and need to cancel resource
+            (affected as Send).cancelElement()
         }
     }
 
@@ -832,7 +833,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         }
 
         private suspend fun hasNextSuspend(): Boolean = suspendCancellableCoroutineReusable sc@ { cont ->
-            val receive = ReceiveHasNext(this, cont)
+            val receive = ReceiveHasNext(channel.onElementCancel, this, cont)
             while (true) {
                 if (channel.enqueueReceive(receive)) {
                     channel.removeReceiveOnCancel(cont, receive)
@@ -849,9 +850,8 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                     return@sc
                 }
                 if (result !== POLL_FAILED) {
-                    cont.resume(true) {
-                        cancelResourceIfNeeded(result) { cont.context }
-                    }
+                    @Suppress("UNCHECKED_CAST")
+                    cont.resume(true, channel.onElementCancel?.bindCancellationFun(result as E, cont.context))
                     return@sc
                 }
             }
@@ -871,6 +871,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     }
 
     private class ReceiveElement<in E>(
+        @JvmField val onElementCancel: ((E) -> Unit)?,
         @JvmField val cont: CancellableContinuation<Any?>,
         @JvmField val receiveMode: Int
     ) : Receive<E>() {
@@ -879,14 +880,12 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
             else -> value
         }
 
-        fun resumeOnCancellation(value: E): ((Throwable) -> Unit)? = when (receiveMode) {
-            RECEIVE_RESULT -> { _: Throwable -> cancelResourceIfNeeded(value) { cont.context } }
-            else -> null
-        }
+        fun resumeOnCancellationFun(value: E): ((Throwable) -> Unit)? =
+            onElementCancel?.bindCancellationFun(value, cont.context)
 
         @Suppress("IMPLICIT_CAST_TO_ANY")
         override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol? {
-            val token = cont.tryResumeAtomic(resumeValue(value), otherOp?.desc, resumeOnCancellation(value)) ?: return null
+            val token = cont.tryResume(resumeValue(value), otherOp?.desc, resumeOnCancellationFun(value)) ?: return null
             assert { token === RESUME_TOKEN } // the only other possible result
             // We can call finishPrepare only after successful tryResume, so that only good affected node is saved
             otherOp?.finishPrepare()
@@ -906,13 +905,13 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     }
 
     private class ReceiveHasNext<E>(
+        @JvmField val onElementCancel: ((E) -> Unit)?,
         @JvmField val iterator: Itr<E>,
         @JvmField val cont: CancellableContinuation<Boolean>
     ) : Receive<E>() {
         override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol? {
-            val token = cont.tryResumeAtomic(true, otherOp?.desc) {
-                cancelResourceIfNeeded(value) { cont.context }
-            } ?: return null
+            val token = cont.tryResume(true, otherOp?.desc, onElementCancel?.bindCancellationFun(value, cont.context))
+                ?: return null
             assert { token === RESUME_TOKEN } // the only other possible result
             // We can call finishPrepare only after successful tryResume, so that only good affected node is saved
             otherOp?.finishPrepare()
@@ -953,9 +952,11 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
 
         @Suppress("UNCHECKED_CAST")
         override fun completeResumeReceive(value: E) {
-            block.startCoroutineCancellable(if (receiveMode == RECEIVE_RESULT) ValueOrClosed.value(value) else value, select.completion) {
-                cancelResourceIfNeeded(value) { select.completion.context }
-            }
+            block.startCoroutineCancellable(
+                if (receiveMode == RECEIVE_RESULT) ValueOrClosed.value(value) else value,
+                select.completion,
+                channel.onElementCancel?.bindCancellationFun(value, select.completion.context)
+            )
         }
 
         override fun resumeReceiveClosed(closed: Closed<*>) {
@@ -984,6 +985,10 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
 internal const val RECEIVE_THROWS_ON_CLOSE = 0
 internal const val RECEIVE_NULL_ON_CLOSE = 1
 internal const val RECEIVE_RESULT = 2
+
+@JvmField
+@SharedImmutable
+internal val EMPTY = Symbol("EMPTY") // marker for Conflated & Buffered channels
 
 @JvmField
 @SharedImmutable
@@ -1019,7 +1024,7 @@ internal abstract class Send : LockFreeLinkedListNode() {
     abstract fun tryResumeSend(otherOp: PrepareOp?): Symbol?
     abstract fun completeResumeSend()
     abstract fun resumeSendClosed(closed: Closed<*>)
-    open fun cancelResource() {}
+    open fun cancelElement() {}
 }
 
 /**
@@ -1039,8 +1044,9 @@ internal interface ReceiveOrClosed<in E> {
  * Represents sender for a specific element.
  */
 @Suppress("UNCHECKED_CAST")
-internal class SendElement(
-    override val pollResult: Any?,
+internal class SendElement<E>(
+    override val pollResult: E,
+    @JvmField val onElementCancel: ((E) -> Unit)?,
     @JvmField val cont: CancellableContinuation<Unit>
 ) : Send() {
     override fun tryResumeSend(otherOp: PrepareOp?): Symbol? {
@@ -1058,12 +1064,12 @@ internal class SendElement(
     override fun remove(): Boolean {
         if (!super.remove()) return false
         // if the node was successfully removed (meaning it was added but was not received) then cancel resource
-        cancelResource()
+        cancelElement()
         return true
     }
 
-    override fun cancelResource() {
-        cancelResourceIfNeeded(pollResult) { cont.context }
+    override fun cancelElement() {
+        onElementCancel?.callElementCancel(pollResult, cont.context)
     }
 }
 

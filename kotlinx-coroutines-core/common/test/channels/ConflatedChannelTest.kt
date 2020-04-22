@@ -21,7 +21,7 @@ class ConflatedChannelTest : TestBase() {
 
     @Test
     fun testConflatedSend() = runTest {
-        val q = ConflatedChannel<Int>()
+        val q = Channel<Int>(Channel.CONFLATED)
         q.send(1)
         q.send(2) // shall conflated previously sent
         assertEquals(2, q.receiveOrNull())

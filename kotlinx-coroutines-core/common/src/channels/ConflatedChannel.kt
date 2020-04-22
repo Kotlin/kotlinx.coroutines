@@ -17,7 +17,7 @@ import kotlinx.coroutines.selects.*
  *
  * This channel is created by `Channel(Channel.CONFLATED)` factory function invocation.
  */
-internal open class ConflatedChannel<E> : AbstractChannel<E>() {
+internal open class ConflatedChannel<E>(onElementCancel: ((E) -> Unit)?) : AbstractChannel<E>(onElementCancel) {
     protected final override val isBufferAlwaysEmpty: Boolean get() = false
     protected final override val isBufferEmpty: Boolean get() = value === EMPTY
     protected final override val isBufferAlwaysFull: Boolean get() = false
@@ -28,10 +28,6 @@ internal open class ConflatedChannel<E> : AbstractChannel<E>() {
     private val lock = ReentrantLock()
 
     private var value: Any? = EMPTY
-
-    private companion object {
-        private val EMPTY = Symbol("EMPTY")
-    }
 
     // result is `OFFER_SUCCESS | Closed`
     protected override fun offerInternal(element: E): Any {
@@ -119,20 +115,20 @@ internal open class ConflatedChannel<E> : AbstractChannel<E>() {
     }
 
     protected override fun onCancelIdempotent(wasClosed: Boolean) {
-        var resourceException: ResourceCancellationException? = null // resource cancel exception
+        var elementCancelException: ElementCancelException? = null // resource cancel exception
         lock.withLock {
-            resourceException = updateValueLocked(EMPTY)
+            elementCancelException = updateValueLocked(EMPTY)
         }
         super.onCancelIdempotent(wasClosed)
-        resourceException?.let { throw it } // throw resource exception at the end if there was one
+        elementCancelException?.let { throw it } // throw exception at the end if there was one
     }
 
-    private fun updateValueLocked(element: Any?): ResourceCancellationException? {
-        var resourceException: ResourceCancellationException? = null // resource cancel exception
+    private fun updateValueLocked(element: Any?): ElementCancelException? {
         val old = value
-        if (old is Resource<*>) resourceException = callCancelResourceSafely(old)
+        val elementCancelException = if (old === EMPTY) null else
+            onElementCancel?.callElementCancelCatchingException(old as E)
         value = element
-        return resourceException
+        return elementCancelException
     }
 
     override fun enqueueReceiveInternal(receive: Receive<E>): Boolean = lock.withLock {

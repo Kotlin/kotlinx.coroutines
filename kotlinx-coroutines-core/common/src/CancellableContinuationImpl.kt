@@ -164,9 +164,9 @@ internal open class CancellableContinuationImpl<in T>(
                 }
             }
             else -> {
-                // completed normally without marker class, promote to CompletedContinuation to synchronize cancellation
+                // completed normally without marker class, promote to CompletedContinuation in case
+                // if invokeOnCancellation if called later
                 if (_state.compareAndSet(state, CompletedContinuation(state, cancelCause = cause))) {
-                    cancelResourceIfNeeded(state) { context }
                     return // done
                 }
             }
@@ -289,7 +289,7 @@ internal open class CancellableContinuationImpl<in T>(
     override fun resumeWith(result: Result<T>) =
         resumeImpl(result.toState(this), resumeMode)
 
-    override fun resume(value: T, onCancellation: (cause: Throwable) -> Unit) =
+    override fun resume(value: T, onCancellation: ((cause: Throwable) -> Unit)?) =
         resumeImpl(value, resumeMode, onCancellation)
 
     public override fun invokeOnCancellation(handler: CompletionHandler) {
@@ -399,8 +399,6 @@ internal open class CancellableContinuationImpl<in T>(
                     if (state.makeResumed()) { // check if trying to resume one (otherwise error)
                         // call onCancellation
                         onCancellation?.let { callOnCancellation(it, state.cause) }
-                        // cancel resource
-                        cancelResourceIfNeeded(state) { context }
                         return // done
                     }
                 }
@@ -461,9 +459,9 @@ internal open class CancellableContinuationImpl<in T>(
 
     // Note: Always returns RESUME_TOKEN | null
     override fun tryResume(value: T, idempotent: Any?): Any? =
-        tryResumeImpl(value, idempotent = idempotent, onCancellation = null)
+        tryResumeImpl(value, idempotent, onCancellation = null)
 
-    override fun tryResumeAtomic(value: T, idempotent: Any?, onCancellation: ((cause: Throwable) -> Unit)?): Any? =
+    override fun tryResume(value: T, idempotent: Any?, onCancellation: ((cause: Throwable) -> Unit)?): Any? =
         tryResumeImpl(value, idempotent, onCancellation)
 
     override fun tryResumeWithException(exception: Throwable): Any? =
@@ -533,6 +531,5 @@ private data class CompletedContinuation(
     fun invokeHandlers(cont: CancellableContinuationImpl<*>, cause: Throwable) {
         cancelHandler?.let { cont.callCancelHandler(it, cause) }
         onCancellation?.let { cont.callOnCancellation(it, cause) }
-        cancelResourceIfNeeded(result) { cont.context }
     }
 }

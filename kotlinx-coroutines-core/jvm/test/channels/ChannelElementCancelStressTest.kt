@@ -18,11 +18,14 @@ import kotlin.test.*
  * Tests cancel atomicity for channel send & receive operations, including their select versions.
  */
 @RunWith(Parameterized::class)
-class ChannelResourceCancelStressTest(private val kind: TestChannelKind) : TestBase() {
+class ChannelElementCancelStressTest(private val kind: TestChannelKind) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
-        fun params(): Collection<Array<Any>> = TestChannelKind.values().map { arrayOf<Any>(it) }
+        fun params(): Collection<Array<Any>> =
+            TestChannelKind.values()
+                .filter { !it.viaBroadcast }
+                .map { arrayOf<Any>(it) }
     }
 
     private val TEST_DURATION = 1000L * stressTestMultiplier
@@ -30,7 +33,7 @@ class ChannelResourceCancelStressTest(private val kind: TestChannelKind) : TestB
     private val dispatcher = newFixedThreadPoolContext(2, "ChannelAtomicCancelStressTest")
     private val scope = CoroutineScope(dispatcher)
 
-    private val channel = kind.create<Resource<Data>>()
+    private val channel = kind.create<Data> { it.cancel() }
     private val senderDone = Channel<Boolean>(1)
     private val receiverDone = Channel<Boolean>(1)
 
@@ -97,12 +100,10 @@ class ChannelResourceCancelStressTest(private val kind: TestChannelKind) : TestB
             cancellable(senderDone) {
                 var counter = 0
                 while (true) {
-                    val trySendResource = Resource(Data(sentCnt++)) {
-                        it.cancel()
-                    }
+                    val trySendData = Data(sentCnt++)
                     when (Random.nextInt(2)) {
-                        0 -> channel.send(trySendResource)
-                        1 -> select<Unit> { channel.onSend(trySendResource) {} }
+                        0 -> channel.send(trySendData)
+                        1 -> select<Unit> { channel.onSend(trySendData) {} }
                         else -> error("cannot happen")
                     }
                     when {
@@ -126,7 +127,7 @@ class ChannelResourceCancelStressTest(private val kind: TestChannelKind) : TestB
         receiver = scope.launch(start = CoroutineStart.ATOMIC) {
             cancellable(receiverDone) {
                 while (true) {
-                    val receivedResource = when (Random.nextInt(6)) {
+                    val receivedData = when (Random.nextInt(6)) {
                         0 -> channel.receive()
                         1 -> select { channel.onReceive { it } }
                         2 -> channel.receiveOrNull() ?: error("Should not be closed")
@@ -140,7 +141,7 @@ class ChannelResourceCancelStressTest(private val kind: TestChannelKind) : TestB
                         else -> error("cannot happen")
                     }
                     receivedCnt++
-                    val received = receivedResource.value.x
+                    val received = receivedData.x
                     if (received <= lastReceived)
                         dupCnt++
                     lastReceived = received

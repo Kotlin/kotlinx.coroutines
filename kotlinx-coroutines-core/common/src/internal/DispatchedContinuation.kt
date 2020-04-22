@@ -2,10 +2,10 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines
+package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlin.native.concurrent.*
@@ -214,7 +214,7 @@ internal class DispatchedContinuation<in T>(
 
     // takeState had already cleared the state so we cancel takenState here
     override fun cancelCompletedResult(takenState: Any?, cause: Throwable) {
-        cancelState(takenState, cause)
+        if (takenState is CompletedWithCancellation) takenState.onCancellation(cause)
     }
 
     @Suppress("NOTHING_TO_INLINE")
@@ -222,7 +222,7 @@ internal class DispatchedContinuation<in T>(
         val job = context[Job]
         if (job != null && !job.isActive) {
             val cause = job.getCancellationException()
-            cancelState(state, cause)
+            cancelCompletedResult(state, cause)
             resumeWithException(cause)
             return true
         }

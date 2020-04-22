@@ -46,7 +46,7 @@ public abstract interface class kotlinx/coroutines/CancellableContinuation : kot
 	public abstract fun resumeUndispatched (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/Object;)V
 	public abstract fun resumeUndispatchedWithException (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/Throwable;)V
 	public abstract fun tryResume (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-	public abstract fun tryResumeAtomic (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public abstract fun tryResume (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
 	public abstract fun tryResumeWithException (Ljava/lang/Throwable;)Ljava/lang/Object;
 }
 
@@ -78,7 +78,7 @@ public class kotlinx/coroutines/CancellableContinuationImpl : kotlin/coroutines/
 	public fun resumeWith (Ljava/lang/Object;)V
 	public fun toString ()Ljava/lang/String;
 	public fun tryResume (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun tryResumeAtomic (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public fun tryResume (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
 	public fun tryResumeWithException (Ljava/lang/Throwable;)Ljava/lang/Object;
 }
 
@@ -271,11 +271,6 @@ public final class kotlinx/coroutines/DelayKt {
 	public static final fun awaitCancellation (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun delay-p9JZ4hM (DLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-}
-
-public final class kotlinx/coroutines/DispatchedContinuationKt {
-	public static final fun resumeCancellableWith (Lkotlin/coroutines/Continuation;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun resumeCancellableWith$default (Lkotlin/coroutines/Continuation;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public final class kotlinx/coroutines/Dispatchers {
@@ -496,13 +491,6 @@ public final class kotlinx/coroutines/ParentJob$DefaultImpls {
 	public static fun plus (Lkotlinx/coroutines/ParentJob;Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
 }
 
-public final class kotlinx/coroutines/Resource {
-	public fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
-	public final fun cancel ()V
-	public final fun getValue ()Ljava/lang/Object;
-	public final fun isCancelled ()Z
-}
-
 public final class kotlinx/coroutines/RunnableKt {
 	public static final fun Runnable (Lkotlin/jvm/functions/Function0;)Ljava/lang/Runnable;
 }
@@ -622,8 +610,10 @@ public final class kotlinx/coroutines/channels/ChannelIterator$DefaultImpls {
 }
 
 public final class kotlinx/coroutines/channels/ChannelKt {
-	public static final fun Channel (I)Lkotlinx/coroutines/channels/Channel;
+	public static final synthetic fun Channel (I)Lkotlinx/coroutines/channels/Channel;
+	public static final fun Channel (ILkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/channels/Channel;
 	public static synthetic fun Channel$default (IILjava/lang/Object;)Lkotlinx/coroutines/channels/Channel;
+	public static synthetic fun Channel$default (ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/channels/Channel;
 }
 
 public final class kotlinx/coroutines/channels/ChannelsKt {

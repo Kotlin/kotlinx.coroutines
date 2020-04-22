@@ -181,7 +181,7 @@ internal class ArrayBroadcastChannel<E>(
                             return@withLock // go out of lock to wakeup this sender
                         }
                         // too late, already cancelled, but we removed it from the queue and need to cancel resource
-                        send!!.cancelResource()
+                        send!!.cancelElement()
                     }
                 }
             }
@@ -207,7 +207,7 @@ internal class ArrayBroadcastChannel<E>(
 
     private class Subscriber<E>(
         private val broadcastChannel: ArrayBroadcastChannel<E>
-    ) : AbstractChannel<E>(), ReceiveChannel<E> {
+    ) : AbstractChannel<E>(null), ReceiveChannel<E> {
         private val subLock = ReentrantLock()
 
         private val _subHead = atomic(0L)

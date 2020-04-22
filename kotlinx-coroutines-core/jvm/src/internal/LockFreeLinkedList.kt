@@ -416,6 +416,8 @@ public actual open class LockFreeLinkedListNode {
                 val next = this.next
                 val removed = next.removed()
                 if (affected._next.compareAndSet(this, removed)) {
+                    // The element was actually removed
+                    desc.onRemoved(affected)
                     // Complete removal operation here. It bails out if next node is also removed and it becomes
                     // responsibility of the next's removes to call correctPrev which would help fix all the links.
                     next.correctPrev(null)
@@ -460,6 +462,8 @@ public actual open class LockFreeLinkedListNode {
             finishPrepare(prepareOp)
             return null
         }
+
+        public open fun onRemoved(affected: Node) {} // called once when node was prepared & later removed
 
         @Suppress("UNCHECKED_CAST")
         final override fun prepare(op: AtomicOp<*>): Any? {

@@ -23,8 +23,9 @@ internal open class ArrayChannel<E>(
     /**
      * Buffer capacity.
      */
-    val capacity: Int
-) : AbstractChannel<E>() {
+    val capacity: Int,
+    onElementCancel: ((E) -> Unit)?
+) : AbstractChannel<E>(onElementCancel) {
     init {
         require(capacity >= 1) { "ArrayChannel capacity must be at least 1, but $capacity was specified" }
     }
@@ -34,7 +35,8 @@ internal open class ArrayChannel<E>(
      * Guarded by lock.
      * Allocate minimum of capacity and 16 to avoid excess memory pressure for large channels when it's not necessary.
      */
-    private var buffer: Array<Any?> = arrayOfNulls<Any?>(min(capacity, 8))
+    private var buffer: Array<Any?> = arrayOfNulls<Any?>(min(capacity, 8)).apply { fill(EMPTY) }
+
     private var head: Int = 0
     private val size = atomic(0) // Invariant: size <= capacity
 
@@ -143,6 +145,7 @@ internal open class ArrayChannel<E>(
             for (i in 0 until currentSize) {
                 newBuffer[i] = buffer[(head + i) % buffer.size]
             }
+            newBuffer.fill(EMPTY, currentSize, newSize)
             buffer = newBuffer
             head = 0
         }
@@ -173,7 +176,7 @@ internal open class ArrayChannel<E>(
                         break@loop
                     }
                     // too late, already cancelled, but we removed it from the queue and need to cancel resource
-                    send!!.cancelResource()
+                    send!!.cancelElement()
                 }
             }
             if (replacement !== POLL_FAILED && replacement !is Closed<*>) {
@@ -256,19 +259,23 @@ internal open class ArrayChannel<E>(
     // Note: this function is invoked when channel is already closed
     override fun onCancelIdempotent(wasClosed: Boolean) {
         // clear buffer first, but do not wait for it in helpers
-        var resourceException: ResourceCancellationException? = null // first resource cancel exception, others suppressed
+        val onElementCancel = onElementCancel
+        var elementCancelException: ElementCancelException? = null // first cancel exception, others suppressed
         lock.withLock {
             repeat(size.value) {
                 val value = buffer[head]
-                if (value is Resource<*>) resourceException = callCancelResourceSafely(value, resourceException)
-                buffer[head] = null
+                if (value !== EMPTY && onElementCancel != null) {
+                    @Suppress("UNCHECKED_CAST")
+                    elementCancelException = onElementCancel.callElementCancelCatchingException(value as E, elementCancelException)
+                }
+                buffer[head] = EMPTY
                 head = (head + 1) % buffer.size
             }
             size.value = 0
         }
         // then clean all queued senders
         super.onCancelIdempotent(wasClosed)
-        resourceException?.let { throw it } // throw resource exception at the end if there was one
+        elementCancelException?.let { throw it } // throw cancel exception at the end if there was one
     }
 
     // ------ debug ------
