@@ -6,6 +6,7 @@ package kotlinx.coroutines.debug.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.debug.*
 import java.io.*
 import java.text.*
 import java.util.*
@@ -38,11 +39,14 @@ internal object DebugProbesImpl {
     public var sanitizeStackTraces: Boolean = true
     public var enableCreationStackTraces: Boolean = true
 
-    // Substitute for service loader, DI between core and debug modules
-    private val dynamicAttach = gettDynamicAttach()
+    /*
+     * Substitute for service loader, DI between core and debug modules.
+     * If the agent was installed via command line -javaagent parameter, do not use byte-byddy to avoud
+     */
+    private val dynamicAttach = getDynamicAttach()
 
     @Suppress("UNCHECKED_CAST")
-    private fun gettDynamicAttach(): Function1<Boolean, Unit>? = runCatching {
+    private fun getDynamicAttach(): Function1<Boolean, Unit>? = runCatching {
         val clz = Class.forName("kotlinx.coroutines.debug.internal.ByteBuddyDynamicAttach")
         val ctor = clz.constructors[0]
         ctor.newInstance() as Function1<Boolean, Unit>
@@ -61,6 +65,7 @@ internal object DebugProbesImpl {
 
     public fun install(): Unit = coroutineStateLock.write {
         if (++installations > 1) return
+        if (AgentPremain.isInstalledStatically) return
         dynamicAttach?.invoke(true) // attach
     }
 
@@ -69,6 +74,7 @@ internal object DebugProbesImpl {
         if (--installations != 0) return
         capturedCoroutines.clear()
         callerInfoCache.clear()
+        if (AgentPremain.isInstalledStatically) return
         dynamicAttach?.invoke(false) // detach
     }
 

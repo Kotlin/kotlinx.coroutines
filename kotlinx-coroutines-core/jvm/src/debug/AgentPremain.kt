@@ -13,12 +13,15 @@ import java.security.*
 @Suppress("unused")
 internal object AgentPremain {
 
+    public var isInstalledStatically = false
+
     private val enableCreationStackTraces =
         System.getProperty("kotlinx.coroutines.debug.enable.creation.stack.trace")?.toBoolean()
             ?: DebugProbesImpl.enableCreationStackTraces
 
     @JvmStatic
     public fun premain(args: String?, instrumentation: Instrumentation) {
+        isInstalledStatically = true
         instrumentation.addTransformer(DebugProbesTransformer)
         DebugProbesImpl.enableCreationStackTraces = enableCreationStackTraces
         DebugProbesImpl.install()
@@ -44,6 +47,7 @@ internal object AgentPremain {
              * on the fly (-> get rid of ASM dependency).
              * You can verify its content either by using javap on it or looking at out integration test module.
              */
+            isInstalledStatically = true
             return loader.getResourceAsStream("DebugProbesKt.bin").readBytes()
         }
     }
