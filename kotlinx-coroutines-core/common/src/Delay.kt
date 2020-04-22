@@ -97,5 +97,6 @@ internal val CoroutineContext.delay: Delay get() = get(ContinuationInterceptor) 
  * Positive durations are coerced at least `1`.
  */
 @ExperimentalTime
-internal fun Duration.toDelayMillis(): Long =
+@InternalCoroutinesApi
+public fun Duration.toDelayMillis(): Long =
     if (this > Duration.ZERO) toLongMilliseconds().coerceAtLeast(1) else 0

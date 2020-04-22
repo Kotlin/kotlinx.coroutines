@@ -6,6 +6,10 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.toDelayMillis
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.milliseconds
 
 /**
  * Control the virtual clock time of a [CoroutineDispatcher].
@@ -120,6 +124,45 @@ public interface DelayController {
     @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
     public fun resumeDispatcher()
 }
+/**
+ * Moves the Dispatcher's virtual clock forward by a specified amount of time.
+ *
+ * The amount the clock is progressed may be larger than the requested `delayTime` if the code under test uses
+ * blocking coroutines.
+ *
+ * The virtual clock time will advance once for each delay resumed until the next delay exceeds the requested
+ * `delayTime`. In the following test, the virtual time will progress by 2.seconds then 1.millisecond to resume three
+ * different calls to delay.
+ *
+ * ```
+ * @Test
+ * fun advanceTimeTest() = runBlockingTest {
+ *     foo()
+ *     advanceTimeBy(2.seconds)  // advanceTimeBy(2.seconds) will progress through the first two delays
+ *     // virtual time is 2_000, next resume is at 2_001
+ *     advanceTimeBy(2.milliseconds)  // progress through the last delay of 501 (note 500ms were already advanced)
+ *     // virtual time is 2_0002
+ * }
+ *
+ * fun CoroutineScope.foo() {
+ *     launch {
+ *         delay(1.seconds)  // advanceTimeBy(2.seconds) will progress through this delay (resume @ virtual time 1_000)
+ *         // virtual time is 1_000
+ *         delay(0.5.seconds)  // advanceTimeBy(2.seconds) will progress through this delay (resume @ virtual time 1_500)
+ *         // virtual time is 1_500
+ *         delay(501.milliseconds)  // advanceTimeBy(2.seconds) will not progress through this delay (resume @ virtual time 2_001)
+ *         // virtual time is 2_001
+ *     }
+ * }
+ * ```
+ *
+ * @param delayTime The duration of time to move the CoroutineContext's clock forward.
+ * @return The delay duration that this Dispatcher's clock has been forwarded.
+ */
+@ExperimentalTime
+@ExperimentalCoroutinesApi
+public fun DelayController.advanceTimeBy(delayTime: Duration): Duration =
+    advanceTimeBy(delayTime.toDelayMillis()).milliseconds
 
 /**
  * Thrown when a test has completed and there are tasks that are not completed or cancelled.

@@ -9,6 +9,10 @@ public abstract interface class kotlinx/coroutines/test/DelayController {
 	public abstract fun runCurrent ()V
 }
 
+public final class kotlinx/coroutines/test/DelayControllerKt {
+	public static final fun advanceTimeBy-KbslWfQ (Lkotlinx/coroutines/test/DelayController;D)D
+}
+
 public final class kotlinx/coroutines/test/TestBuildersKt {
 	public static final fun runBlockingTest (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)V
 	public static final fun runBlockingTest (Lkotlinx/coroutines/test/TestCoroutineDispatcher;Lkotlin/jvm/functions/Function2;)V
