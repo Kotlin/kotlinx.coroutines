@@ -89,7 +89,35 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
     // (see `SemaphoreSegment`); each segment contains a fixed number of slots. To determine a slot for each enqueue
     // and dequeue operation, we increment the corresponding counter at the beginning of the operation
     // and use the value before the increment as a slot number. This way, each enqueue-dequeue pair
-    // works with an individual cell.We use the corresponding segment pointer to find the required ones.
+    // works with an individual cell. We use the corresponding segment pointers to find the required ones.
+    //
+    // Here is a state machine for cells. Note that only one `acquire` and at most one `release` operation
+    // can deal with each cell, and that `release` uses `getAndSet(PERMIT)` to perform transitions for perfomance reasons
+    // so that the state `PERMIT` represents different logical states.
+    //
+    //   +------+ `acquire` suspends   +------+   `release` tries    +--------+                    // if `cont.tryResume(..)` succeeds, then
+    //   | NULL | -------------------> | cont | -------------------> | PERMIT | (cont RETRIEVED)   // the corresponding `acquire` operation gets
+    //   +------+                      +------+   to resume `cont`   +--------+                    // a permit and the `release` one completes.
+    //      |                             |
+    //      |                             | `acquire` request is cancelled and the continuation is
+    //      | `release` comes             | replaced with a special `CANCEL` token to avoid memory leaks
+    //      | to the slot before          V
+    //      | `acquire` and puts    +-----------+   `release` has    +--------+
+    //      | a permit into the     | CANCELLED | -----------------> | PERMIT | (RElEASE FAILED)
+    //      | slot, waiting for     +-----------+   been failed      +--------+
+    //      | `acquire` after
+    //      | that.
+    //      |
+    //      |           `acquire` gets   +-------+
+    //      |        +-----------------> | TAKEN | (ELIMINATION HAPPENED)
+    //      V        |    the permit     +-------+
+    //  +--------+   |
+    //  | PERMIT | -<
+    //  +--------+  |
+    //              |  `release` has waited a bounded time,   +--------+
+    //              +---------------------------------------> | BROKEN | (BOTH RELEASE AND ACQUIRE FAILED)
+    //                     but `acquire` has not come         +--------+
+    //
     private val head: AtomicRef<SemaphoreSegment>
     private val deqIdx = atomic(0L)
     private val tail: AtomicRef<SemaphoreSegment>
@@ -250,7 +278,7 @@ private val PERMIT = Symbol("PERMIT")
 @SharedImmutable
 private val TAKEN = Symbol("TAKEN")
 @SharedImmutable
-private val BROKEN = Symbol("TAKEN")
+private val BROKEN = Symbol("BROKEN")
 @SharedImmutable
 private val CANCELLED = Symbol("CANCELLED")
 @SharedImmutable
