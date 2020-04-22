@@ -478,6 +478,25 @@ public interface ChannelIterator<out E> {
  * * When `capacity` is positive but less than [UNLIMITED] &mdash; it creates an array-based channel with the specified capacity.
  *   This channel has an array buffer of a fixed `capacity`.
  *   [Sending][send] suspends only when the buffer is full, and [receiving][receive] suspends only when the buffer is empty.
+ *
+ * ### Transferring resources via channels
+ *
+ * When a closeable resource (like open file or a handle to another native resource) is transferred via channel
+ * from one coroutine to another it can be lost if either send or receive operation are cancelled in transit.
+ * A `Channel()` constructor function has an `onElementCancel` optional parameter.
+ * When `onElementCancel` parameter is set, the corresponding function is called once for each element
+ * that was sent to the channel and is being lost due to cancellation, which can happen in the following cases:
+ *
+ * * [send][SendChannel.send] operation was cancelled before it had a chance to actually send the element.
+ * * [receive][ReceiveChannel.receive] operation retrieved the element from the channel but was cancelled when trying
+ *   to return it the caller.
+ * * The channel was [cancelled][ReceiveChannel.cancel], in which case `onElementCancel` is called on every
+ *   remaining element in the channel's buffer.
+ *
+ * Note, that `onElementCancel` function is called synchronously in an arbitrary context. It should be fast, non-blocking,
+ * and should not throw exceptions. Any exception thrown by `onElementCancel` is wrapped into an internal runtime
+ * exception which is either rethrown or handed off to the exception handler in the current context
+ * (see [CoroutineExceptionHandler]) when one is available.
  */
 public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
     /**
@@ -527,6 +546,7 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
  * See [Channel] interface documentation for details.
  *
  * @param capacity either a positive channel capacity or one of the constants defined in [Channel.Factory].
+ * @param onElementCancel an optional function that is called when element was sent but cancelled in transit to the receiver.
  * @throws IllegalArgumentException when [capacity] < -2
  */
 public fun <E> Channel(capacity: Int = RENDEZVOUS, onElementCancel: ((E) -> Unit)? = null): Channel<E> =
