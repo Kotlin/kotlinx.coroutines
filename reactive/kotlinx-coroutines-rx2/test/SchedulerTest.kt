@@ -209,4 +209,43 @@ class SchedulerTest : TestBase() {
             }, 300, TimeUnit.MILLISECONDS)
         }
     }
+
+    @Test
+    fun testSchedulerSequentialOrdering(): Unit = runTest {
+        expect(1)
+
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+
+        val worker = scheduler.createWorker()
+
+        val job = launch {
+            launch {
+                suspendCancellableCoroutine<Unit> {
+                    worker.schedule(Runnable {
+                        runBlocking {
+                            delay(100)
+                            expect(2)
+                            it.resume(Unit)
+                        }
+                    })
+                }
+            }
+
+            yield()
+            launch {
+                suspendCancellableCoroutine<Unit> {
+                    worker.schedule(Runnable {
+                        expect(3)
+                        it.resume(Unit)
+                    })
+                }
+                yield()
+            }
+            yield()
+        }
+        yield()
+        job.join()
+        finish(4)
+    }
 }
