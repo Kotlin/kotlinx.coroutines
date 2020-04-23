@@ -189,24 +189,18 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
         val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail,
             createNewSegment = ::createSegment).segment // cannot be closed
         val i = (enqIdx % SEGMENT_SIZE).toInt()
-        var cellState = segment.get(i)
-        // Fast path -- if the cell is empty, try to install continuation
-        if (cellState === null) {
-            if (segment.cas(i, null, cont)) { // installed continuation successfully
-                cont.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(segment, i).asHandler)
-                return true
-            }
-            cellState = segment.get(i) // Reread on CAS failure -- it was updated to either PERMIT or BROKEN
+        // the regular (fast) path -- if the cell is empty, try to install continuation
+        if (segment.cas(i, null, cont)) { // installed continuation successfully
+            cont.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(segment, i).asHandler)
+            return true
         }
-        // the cell already has permit from tryResumeNextFromQueue, try to grab it
-        if (cellState === PERMIT) {
-            if (segment.cas(i, PERMIT, TAKEN)) { // took permit thus eliminating acquire/release pair
-                cont.resume(Unit)
-                return true
-            }
-            cellState = segment.get(i) // Reread on CAS failure -- it must be updated to BROKEN
+        // On CAS failure -- the cell must be either PERMIT or BROKEN
+        // If the cell already has PERMIT from tryResumeNextFromQueue, try to grab it
+        if (segment.cas(i, PERMIT, TAKEN)) { // took permit thus eliminating acquire/release pair
+            cont.resume(Unit)
+            return true
         }
-        check(cellState === BROKEN) { "Invalid state $cellState" }
+        assert { segment.get(i) === BROKEN } // it must be broken in this case, no other way around it
         return false // broken cell, need to retry on a different cell
     }
 
