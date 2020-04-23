@@ -36,35 +36,34 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
         return worker
     }
 
-    override fun scheduleDirect(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
-        val decoratedRun = RxJavaPlugins.onSchedule(run)
-        val worker = createWorker() as DispatcherWorker
-        worker.schedule(decoratedRun, delay, unit)
-        return worker
-    }
-
     private class DispatcherWorker(private val dispatcher: CoroutineDispatcher) : Worker() {
 
-        private val workerScope = CoroutineScope(SupervisorJob())
+        val parentJob = SupervisorJob()
+        private val workerScope = CoroutineScope(parentJob)
+        private var previousNonDelayJob: Job? = null
 
         override fun isDisposed(): Boolean = !workerScope.isActive
 
-        override fun schedule(run: java.lang.Runnable): Disposable =
+        override fun schedule(block: java.lang.Runnable): Disposable =
             if (workerScope.isActive) {
-                dispatcher.dispatch(EmptyCoroutineContext, run)
+                workerScope.launch(dispatcher) {
+                    previousNonDelayJob?.join()
+                    previousNonDelayJob = this.coroutineContext[Job]
+                    block.run()
+                }
                 this
             } else {
                 Disposables.disposed()
             }
 
-        override fun schedule(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable =
+        override fun schedule(block: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable =
             if (delay <= 0) {
-                schedule(run)
+                schedule(block)
             } else {
                 if (workerScope.isActive) {
-                    workerScope.launch {
+                    workerScope.launch(dispatcher) {
                         delay(unit.toMillis(delay))
-                        schedule(run)
+                        block.run()
                     }
                     this
                 } else {
@@ -75,6 +74,13 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
         override fun dispose() {
             workerScope.cancel()
         }
+    }
+
+    override fun scheduleDirect(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
+        val decoratedRun = RxJavaPlugins.onSchedule(run)
+        val worker = createWorker() as DispatcherWorker
+        worker.schedule(decoratedRun, delay, unit)
+        return worker
     }
 
     override fun createWorker(): Worker = DispatcherWorker(dispatcher)
@@ -110,8 +116,10 @@ public class SchedulerCoroutineDispatcher(
 
     /** @suppress */
     override fun toString(): String = scheduler.toString()
+
     /** @suppress */
     override fun equals(other: Any?): Boolean = other is SchedulerCoroutineDispatcher && other.scheduler === scheduler
+
     /** @suppress */
     override fun hashCode(): Int = System.identityHashCode(scheduler)
 }
