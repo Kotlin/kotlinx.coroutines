@@ -84,40 +84,41 @@ public suspend inline fun <T> Semaphore.withPermit(action: () -> T): T {
 }
 
 private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Semaphore {
+    /*
+       The queue of waiting acquirers is essentially an infinite array based on the list of segments
+       (see `SemaphoreSegment`); each segment contains a fixed number of slots. To determine a slot for each enqueue
+       and dequeue operation, we increment the corresponding counter at the beginning of the operation
+       and use the value before the increment as a slot number. This way, each enqueue-dequeue pair
+       works with an individual cell. We use the corresponding segment pointers to find the required ones.
 
-    // The queue of waiting acquirers is essentially an infinite array based on the list of segments
-    // (see `SemaphoreSegment`); each segment contains a fixed number of slots. To determine a slot for each enqueue
-    // and dequeue operation, we increment the corresponding counter at the beginning of the operation
-    // and use the value before the increment as a slot number. This way, each enqueue-dequeue pair
-    // works with an individual cell. We use the corresponding segment pointers to find the required ones.
-    //
-    // Here is a state machine for cells. Note that only one `acquire` and at most one `release` operation
-    // can deal with each cell, and that `release` uses `getAndSet(PERMIT)` to perform transitions for perfomance reasons
-    // so that the state `PERMIT` represents different logical states.
-    //
-    //   +------+ `acquire` suspends   +------+   `release` tries    +--------+                    // if `cont.tryResume(..)` succeeds, then
-    //   | NULL | -------------------> | cont | -------------------> | PERMIT | (cont RETRIEVED)   // the corresponding `acquire` operation gets
-    //   +------+                      +------+   to resume `cont`   +--------+                    // a permit and the `release` one completes.
-    //      |                             |
-    //      |                             | `acquire` request is cancelled and the continuation is
-    //      | `release` comes             | replaced with a special `CANCEL` token to avoid memory leaks
-    //      | to the slot before          V
-    //      | `acquire` and puts    +-----------+   `release` has    +--------+
-    //      | a permit into the     | CANCELLED | -----------------> | PERMIT | (RElEASE FAILED)
-    //      | slot, waiting for     +-----------+   been failed      +--------+
-    //      | `acquire` after
-    //      | that.
-    //      |
-    //      |           `acquire` gets   +-------+
-    //      |        +-----------------> | TAKEN | (ELIMINATION HAPPENED)
-    //      V        |    the permit     +-------+
-    //  +--------+   |
-    //  | PERMIT | -<
-    //  +--------+  |
-    //              |  `release` has waited a bounded time,   +--------+
-    //              +---------------------------------------> | BROKEN | (BOTH RELEASE AND ACQUIRE FAILED)
-    //                     but `acquire` has not come         +--------+
-    //
+       Here is a state machine for cells. Note that only one `acquire` and at most one `release` operation
+       can deal with each cell, and that `release` uses `getAndSet(PERMIT)` to perform transitions for performance reasons
+       so that the state `PERMIT` represents different logical states.
+
+         +------+ `acquire` suspends   +------+   `release` tries    +--------+                    // if `cont.tryResume(..)` succeeds, then
+         | NULL | -------------------> | cont | -------------------> | PERMIT | (cont RETRIEVED)   // the corresponding `acquire` operation gets
+         +------+                      +------+   to resume `cont`   +--------+                    // a permit and the `release` one completes.
+            |                             |
+            |                             | `acquire` request is cancelled and the continuation is
+            | `release` comes             | replaced with a special `CANCEL` token to avoid memory leaks
+            | to the slot before          V
+            | `acquire` and puts    +-----------+   `release` has    +--------+
+            | a permit into the     | CANCELLED | -----------------> | PERMIT | (RElEASE FAILED)
+            | slot, waiting for     +-----------+        failed      +--------+
+            | `acquire` after
+            | that.
+            |
+            |           `acquire` gets   +-------+
+            |        +-----------------> | TAKEN | (ELIMINATION HAPPENED)
+            V        |    the permit     +-------+
+        +--------+   |
+        | PERMIT | -<
+        +--------+  |
+                    |  `release` has waited a bounded time,   +--------+
+                    +---------------------------------------> | BROKEN | (BOTH RELEASE AND ACQUIRE FAILED)
+                           but `acquire` has not come         +--------+
+    */
+
     private val head: AtomicRef<SemaphoreSegment>
     private val deqIdx = atomic(0L)
     private val tail: AtomicRef<SemaphoreSegment>
@@ -159,7 +160,7 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
 
     private suspend fun acquireSlowPath() = suspendAtomicCancellableCoroutineReusable<Unit> sc@ { cont ->
         while (true) {
-            if (addToQueueAndSuspend(cont)) return@sc
+            if (addAcquireToQueue(cont)) return@sc
             val p = _availablePermits.getAndDecrement()
             if (p > 0) { // permit acquired
                 cont.resume(Unit)
@@ -182,20 +183,29 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
     /**
      * Returns `false` if the received permit cannot be used and the calling operation should restart.
      */
-    private fun addToQueueAndSuspend(cont: CancellableContinuation<Unit>): Boolean {
+    private fun addAcquireToQueue(cont: CancellableContinuation<Unit>): Boolean {
         val curTail = this.tail.value
         val enqIdx = enqIdx.getAndIncrement()
         val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail,
             createNewSegment = ::createSegment).segment // cannot be closed
         val i = (enqIdx % SEGMENT_SIZE).toInt()
-        if (segment.get(i) === PERMIT || !segment.cas(i, null, cont)) {
-            // The permit is already in the queue, try to grab it
-            val acquired = segment.cas(i, PERMIT, TAKEN)
-            if (acquired) cont.resume(Unit)
-            return acquired
+        while (true) { // cas loop on cell state
+            val cellState = segment.get(i)
+            when {
+                cellState === null -> // the cell if empty, try to install continuation
+                    if (segment.cas(i, null, cont)) { // fast path -- installed continuation successfully
+                        cont.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(segment, i).asHandler)
+                        return true
+                    }
+                cellState === PERMIT -> // the cell already has permit from tryResumeNextFromQueue, try to grab it
+                    if (segment.cas(i, PERMIT, TAKEN)) { // took permit thus eliminating acquire/release pair
+                        cont.resume(Unit)
+                        return true
+                    }
+                cellState === BROKEN -> return false // broken cell, need to retry on a different cell
+                else -> error("Invalid state $cellState") // this cannot happen
+            }
         }
-        cont.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(segment, i).asHandler)
-        return true
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -208,17 +218,20 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
         segment.cleanPrev()
         if (segment.id > id) return false
         val i = (deqIdx % SEGMENT_SIZE).toInt()
-        val cont = segment.getAndSet(i, PERMIT)
-        if (cont === CANCELLED) return false
-        if (cont === null) {
-            // Wait until an opposite operation comes for a bounded time
-            repeat(MAX_SPIN_CYCLES) {
-                if (segment.get(i) === TAKEN) return true
+        val cellState = segment.getAndSet(i, PERMIT) // set PERMIT and retrieve the prev cell state
+        when {
+            cellState === null -> {
+                // Acquire has not touched this cell yet, wait until it comes for a bounded time
+                // The cell state can only transition from PERMIT to TAKEN by addAcquireToQueue
+                repeat(MAX_SPIN_CYCLES) {
+                    if (segment.get(i) === TAKEN) return true
+                }
+                // Try to break the slot in order not to wait
+                return !segment.cas(i, PERMIT, BROKEN)
             }
-            // Try to break the slot in order not to wait
-            return !segment.cas(i, PERMIT, BROKEN)
+            cellState === CANCELLED -> return false // the acquire was already cancelled
+            else -> return (cellState as CancellableContinuation<Unit>).tryResume()
         }
-        return (cont as CancellableContinuation<Unit>).tryResume()
     }
 }
 
