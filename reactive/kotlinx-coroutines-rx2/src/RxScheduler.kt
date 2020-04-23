@@ -8,6 +8,7 @@ import io.reactivex.*
 import io.reactivex.disposables.*
 import io.reactivex.plugins.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
 
@@ -29,27 +30,43 @@ public fun CoroutineDispatcher.asScheduler(): Scheduler =
 
 private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) : Scheduler() {
 
+    val parentJob = SupervisorJob()
+    private val parentScope = CoroutineScope(parentJob)
+
     override fun scheduleDirect(run: java.lang.Runnable): Disposable {
         val decoratedRun = RxJavaPlugins.onSchedule(run)
         val worker = createWorker() as DispatcherWorker
+        worker.startProcessingQueue(parentJob)
         worker.schedule(decoratedRun)
         return worker
     }
 
+    override fun scheduleDirect(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
+        val decoratedRun = RxJavaPlugins.onSchedule(run)
+        val worker = createWorker() as DispatcherWorker
+        worker.startProcessingQueue(parentJob)
+        worker.schedule(decoratedRun, delay, unit)
+        return worker
+    }
+
+    override fun createWorker(): Worker =
+        DispatcherWorker(dispatcher)
+
+    override fun shutdown() {
+        parentScope.cancel()
+    }
+
     private class DispatcherWorker(private val dispatcher: CoroutineDispatcher) : Worker() {
 
-        val parentJob = SupervisorJob()
-        private val workerScope = CoroutineScope(parentJob)
-        private var previousNonDelayJob: Job? = null
+        private lateinit var workerScope: CoroutineScope
+        private val blockChannel = Channel<java.lang.Runnable>()
 
         override fun isDisposed(): Boolean = !workerScope.isActive
 
         override fun schedule(block: java.lang.Runnable): Disposable =
             if (workerScope.isActive) {
                 workerScope.launch(dispatcher) {
-                    previousNonDelayJob?.join()
-                    previousNonDelayJob = this.coroutineContext[Job]
-                    block.run()
+                    blockChannel.send(block)
                 }
                 this
             } else {
@@ -74,16 +91,20 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
         override fun dispose() {
             workerScope.cancel()
         }
-    }
 
-    override fun scheduleDirect(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
-        val decoratedRun = RxJavaPlugins.onSchedule(run)
-        val worker = createWorker() as DispatcherWorker
-        worker.schedule(decoratedRun, delay, unit)
-        return worker
+        fun startProcessingQueue(parentJob: Job) {
+            workerScope = CoroutineScope(SupervisorJob(parentJob))
+            workerScope.launch(dispatcher) {
+                while (true) {
+                    yield()
+                    if (!blockChannel.isEmpty) {
+                        val block = blockChannel.receive()
+                        block.run()
+                    }
+                }
+            }
+        }
     }
-
-    override fun createWorker(): Worker = DispatcherWorker(dispatcher)
 }
 
 /**

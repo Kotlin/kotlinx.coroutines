@@ -68,16 +68,21 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun testAsSchedulerWithZeroDelay(): Unit = runBlocking {
+    fun testAsSchedulerWithZeroDelay(): Unit = runTest {
         expect(1)
         val mainThread = Thread.currentThread()
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
-        scheduler.scheduleDirect({
-            val t1 = Thread.currentThread()
-            assertSame(t1, mainThread)
-            finish(2)
-        }, 0, TimeUnit.MILLISECONDS)
-        yield()
+        suspendCancellableCoroutine<Unit> {
+            scheduler.scheduleDirect({
+                val t1 = Thread.currentThread()
+                assertSame(t1, mainThread)
+                expect(2)
+                it.resume(Unit)
+            }, 0, TimeUnit.MILLISECONDS)
+        }
+
+        scheduler.shutdown()
+        finish(3)
     }
 
     @Test
@@ -219,33 +224,27 @@ class SchedulerTest : TestBase() {
 
         val worker = scheduler.createWorker()
 
+        val iterations = 2
         val job = launch {
-            launch {
-                suspendCancellableCoroutine<Unit> {
-                    worker.schedule(Runnable {
-                        runBlocking {
-                            delay(100)
-                            expect(2)
-                            it.resume(Unit)
-                        }
-                    })
+            for (i in (0..iterations)) {
+                launch {
+                    suspendCancellableCoroutine<Unit> {
+                        worker.schedule(Runnable {
+                            runBlocking {
+                                if (i % 2 == 0) {
+                                    delay(100)
+                                }
+                                expect(2 + i)
+                                it.resume(Unit)
+                            }
+                        })
+                    }
+                    yield()
                 }
             }
-
-            yield()
-            launch {
-                suspendCancellableCoroutine<Unit> {
-                    worker.schedule(Runnable {
-                        expect(3)
-                        it.resume(Unit)
-                    })
-                }
-                yield()
-            }
-            yield()
         }
         yield()
         job.join()
-        finish(4)
+        finish((iterations + 2) + 1)
     }
 }
