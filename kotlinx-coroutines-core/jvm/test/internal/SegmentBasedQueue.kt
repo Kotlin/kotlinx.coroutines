@@ -51,13 +51,15 @@ internal class SegmentBasedQueue<T> {
             val segmentOrClosed = this.head.findSegmentAndMoveForward(id = deqIdx, startFrom = curHead, createNewSegment = ::createSegment)
             if (segmentOrClosed.isClosed) return null
             val s = segmentOrClosed.segment
-            s.cleanPrev()
             if (s.id > deqIdx) continue
             var el = s.element.value
             if (el === null) {
                 if (s.element.compareAndSet(null, BROKEN)) continue
                 else el = s.element.value
             }
+            // The link to the previous segment should be cleaned after retrieving the element;
+            // otherwise, `close()` cannot clean the slot.
+            s.cleanPrev()
             if (el === BROKEN) continue
             @Suppress("UNCHECKED_CAST")
             return el as T

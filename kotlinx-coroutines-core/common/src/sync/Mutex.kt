@@ -380,26 +380,13 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     // atomic unlock operation that checks that waiters queue is empty
     private class UnlockOp(
         @JvmField val queue: LockedQueue
-    ) : OpDescriptor() {
-        override val atomicOp: AtomicOp<*>? get() = null
+    ) : AtomicOp<MutexImpl>() {
+        override fun prepare(affected: MutexImpl): Any? =
+            if (queue.isEmpty) null else UNLOCK_FAIL
 
-        override fun perform(affected: Any?): Any? {
-            /*
-               Note: queue cannot change while this UnlockOp is in progress, so all concurrent attempts to
-               make a decision will reach it consistently. It does not matter what is a proposed
-               decision when this UnlockOp is no longer active, because in this case the following CAS
-               will fail anyway.
-             */
-            val success = queue.isEmpty
-            val update: Any = if (success) EMPTY_UNLOCKED else queue
-            (affected as MutexImpl)._state.compareAndSet(this@UnlockOp, update)
-            /*
-                `perform` invocation from the original `unlock` invocation may be coming too late, when
-                some other thread had already helped to complete it (either successfully or not).
-                That operation was unsuccessful if `state` was restored to this `queue` reference and
-                that is what is being checked below.
-             */
-            return if (affected._state.value === queue) UNLOCK_FAIL else null
+        override fun complete(affected: MutexImpl, failure: Any?) {
+            val update: Any = if (failure == null) EMPTY_UNLOCKED else queue
+            affected._state.compareAndSet(this, update)
         }
     }
 }
