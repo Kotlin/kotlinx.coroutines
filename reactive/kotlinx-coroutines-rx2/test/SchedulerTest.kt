@@ -273,6 +273,7 @@ class SchedulerTest : TestBase() {
                         worker.schedule(Runnable {
                             runBlocking {
                                 if (i % 2 == 0) {
+                                    // add delays to ensure sequential nature
                                     delay(100)
                                 }
                                 expect(2 + i)
