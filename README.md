@@ -203,7 +203,7 @@ to Gradle (in Preferences -> Build, Execution, Deployment -> Build Tools -> Grad
 
 * JDK >= 11 referred to by the `JAVA_HOME` environment variable.
 * JDK 1.6 referred to by the `JDK_16` environment variable. It is okay to have `JDK_16` pointing to `JAVA_HOME` for external contributions.
-* JDK 1.8 referred to by the `JDK_18` environment variable. Only used by nightly stress-tests. It is okay to have `JDK_16` pointing to `JAVA_HOME` for external contributions.
+* JDK 1.8 referred to by the `JDK_18` environment variable. Only used by nightly stress-tests. It is okay to have `JDK_18` pointing to `JAVA_HOME` for external contributions.
 
 ## Contributions and releases
 

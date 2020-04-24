@@ -1,4 +1,6 @@
-.idea
+**/.idea/*
+!/.idea/icon.png
+!/.idea/vcs.xml
 *.iml
 .gradle
 .gradletasknamecache
