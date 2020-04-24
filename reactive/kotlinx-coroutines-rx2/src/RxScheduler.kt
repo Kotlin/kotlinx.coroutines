@@ -16,7 +16,12 @@ import kotlin.coroutines.*
  * Converts an instance of [Scheduler] to an implementation of [CoroutineDispatcher]
  * and provides native support of [delay] and [withTimeout].
  */
-public fun Scheduler.asCoroutineDispatcher(): SchedulerCoroutineDispatcher = SchedulerCoroutineDispatcher(this)
+public fun Scheduler.asCoroutineDispatcher(): CoroutineDispatcher =
+    if (this is DispatcherScheduler) {
+        dispatcher
+    } else {
+        SchedulerCoroutineDispatcher(this)
+    }
 
 /**
  * Converts an instance of [CoroutineDispatcher] to an implementation of [Scheduler].
@@ -28,7 +33,7 @@ public fun CoroutineDispatcher.asScheduler(): Scheduler =
         DispatcherScheduler(this)
     }
 
-private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) : Scheduler() {
+private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) : Scheduler() {
 
     val parentJob = SupervisorJob()
     private val parentScope = CoroutineScope(parentJob)
