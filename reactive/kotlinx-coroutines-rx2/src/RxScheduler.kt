@@ -38,7 +38,7 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
     val parentJob = SupervisorJob()
     private val parentScope = CoroutineScope(parentJob)
 
-    override fun scheduleDirect(run: java.lang.Runnable): Disposable {
+    override fun scheduleDirect(run: Runnable): Disposable {
         val decoratedRun = RxJavaPlugins.onSchedule(run)
         val worker = createWorker() as DispatcherWorker
         return worker.apply {
@@ -46,7 +46,7 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
         }
     }
 
-    override fun scheduleDirect(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
+    override fun scheduleDirect(run: Runnable, delay: Long, unit: TimeUnit): Disposable {
         val decoratedRun = RxJavaPlugins.onSchedule(run)
         val worker = createWorker() as DispatcherWorker
         return worker.apply {
@@ -64,12 +64,12 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
     private class DispatcherWorker(private val dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
 
         private val workerScope = CoroutineScope(SupervisorJob(parentJob) + dispatcher)
-        private val blockChannel = Channel<java.lang.Runnable>()
+        private val blockChannel = Channel<Runnable>()
         private var queueProcessingJob: Job? = null
 
         override fun isDisposed(): Boolean = !workerScope.isActive
 
-        override fun schedule(block: java.lang.Runnable): Disposable {
+        override fun schedule(block: Runnable): Disposable {
             startProcessingQueue()
             if (workerScope.isActive) {
                 workerScope.launch(dispatcher) {
@@ -81,7 +81,7 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
             return Disposables.disposed()
         }
 
-        override fun schedule(block: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
+        override fun schedule(block: Runnable, delay: Long, unit: TimeUnit): Disposable {
             startProcessingQueue()
             if (delay <= 0) {
                 return schedule(block)

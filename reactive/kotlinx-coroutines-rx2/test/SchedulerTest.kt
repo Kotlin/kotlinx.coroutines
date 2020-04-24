@@ -110,7 +110,6 @@ class SchedulerTest : TestBase() {
     @Test
     fun testDisposeDuringDelay(): Unit = runTest {
         expect(1)
-        val mainThread = Thread.currentThread()
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         val delayMillis = 300L
         val disposable = scheduler.scheduleDirect({
@@ -137,6 +136,30 @@ class SchedulerTest : TestBase() {
             }
         }
         finish(3)
+    }
+
+    @Test
+    fun tesConvertDispatcherToOriginalScheduler(): Unit = runTest {
+        expect(1)
+
+        val originalScheduler = Schedulers.io()
+        val dispatcher = originalScheduler.asCoroutineDispatcher()
+        val scheduler = dispatcher.asScheduler()
+        assertEquals(originalScheduler, scheduler)
+
+        finish(2)
+    }
+
+    @Test
+    fun tesConvertSchedulerToOriginalDispatcher(): Unit = runTest {
+        expect(1)
+
+        val originalDispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = originalDispatcher.asScheduler()
+        val dispatcher = scheduler.asCoroutineDispatcher()
+        assertEquals(originalDispatcher, dispatcher)
+
+        finish(2)
     }
 
     @Test
