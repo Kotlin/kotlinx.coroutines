@@ -36,8 +36,7 @@ internal object AgentPremain {
             protectionDomain: ProtectionDomain,
             classfileBuffer: ByteArray?
         ): ByteArray? {
-            val name = className.replace("/", ".")
-            if (name != "kotlin.coroutines.jvm.internal.DebugProbesKt") {
+            if (className != "kotlin/coroutines/jvm/internal/DebugProbesKt") {
                return null
             }
             /*

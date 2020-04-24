@@ -12,6 +12,7 @@ import kotlin.coroutines.jvm.internal.*
 /**
  * Class describing coroutine info such as its context, state and stacktrace.
  */
+@ExperimentalCoroutinesApi
 public class CoroutineInfo internal constructor(delegate: DebugCoroutineInfo) {
     /**
      * [Coroutine context][coroutineContext] of the coroutine
