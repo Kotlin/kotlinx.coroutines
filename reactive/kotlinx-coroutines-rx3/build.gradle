@@ -1,17 +1,26 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+targetCompatibility = JavaVersion.VERSION_1_8
 
 dependencies {
     compile project(':kotlinx-coroutines-reactive')
     testCompile project(':kotlinx-coroutines-reactive').sourceSets.test.output
     testCompile "org.reactivestreams:reactive-streams-tck:$reactive_streams_version"
-    compile "io.reactivex.rxjava2:rxjava:$rxjava2_version"
+    compile "io.reactivex.rxjava3:rxjava:$rxjava3_version"
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
 }
 
 tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
-        url = new URL('http://reactivex.io/RxJava/2.x/javadoc/')
+        url = new URL('http://reactivex.io/RxJava/3.x/javadoc/')
         packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
     }
 }
