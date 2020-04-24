@@ -16,7 +16,7 @@ dependencies {
 tasks {
     val testNG = register<Test>("testNG") {
         useTestNG()
-        reports.html.destination = buildDir.resolve("/reports/testng")
+        reports.html.destination = file("$buildDir/reports/testng")
         include("**/*ReactiveStreamTckTest.*")
         // Skip testNG when tests are filtered with --tests, otherwise it simply fails
         onlyIf {
@@ -29,7 +29,7 @@ tasks {
     }
 
     named<Test>("test") {
-        reports.html.destination = buildDir.resolve("/reports/junit")
+        reports.html.destination = file("$buildDir/reports/junit")
 
         dependsOn(testNG)
     }
