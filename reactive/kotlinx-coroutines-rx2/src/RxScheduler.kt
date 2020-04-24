@@ -36,70 +36,75 @@ private class DispatcherScheduler(private val dispatcher: CoroutineDispatcher) :
     override fun scheduleDirect(run: java.lang.Runnable): Disposable {
         val decoratedRun = RxJavaPlugins.onSchedule(run)
         val worker = createWorker() as DispatcherWorker
-        worker.startProcessingQueue(parentJob)
-        worker.schedule(decoratedRun)
-        return worker
+        return worker.apply {
+            worker.schedule(decoratedRun)
+        }
     }
 
     override fun scheduleDirect(run: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
         val decoratedRun = RxJavaPlugins.onSchedule(run)
         val worker = createWorker() as DispatcherWorker
-        worker.startProcessingQueue(parentJob)
-        worker.schedule(decoratedRun, delay, unit)
-        return worker
+        return worker.apply {
+            schedule(decoratedRun, delay, unit)
+        }
     }
 
     override fun createWorker(): Worker =
-        DispatcherWorker(dispatcher)
+        DispatcherWorker(dispatcher, parentJob)
 
     override fun shutdown() {
         parentScope.cancel()
     }
 
-    private class DispatcherWorker(private val dispatcher: CoroutineDispatcher) : Worker() {
+    private class DispatcherWorker(private val dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
 
-        private lateinit var workerScope: CoroutineScope
+        private val workerScope = CoroutineScope(SupervisorJob(parentJob) + dispatcher)
         private val blockChannel = Channel<java.lang.Runnable>()
+        private var queueProcessingJob: Job? = null
 
         override fun isDisposed(): Boolean = !workerScope.isActive
 
-        override fun schedule(block: java.lang.Runnable): Disposable =
+        override fun schedule(block: java.lang.Runnable): Disposable {
+            startProcessingQueue()
             if (workerScope.isActive) {
                 workerScope.launch(dispatcher) {
                     blockChannel.send(block)
                 }
-                this
-            } else {
-                Disposables.disposed()
+                return this
             }
 
-        override fun schedule(block: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable =
+            return Disposables.disposed()
+        }
+
+        override fun schedule(block: java.lang.Runnable, delay: Long, unit: TimeUnit): Disposable {
+            startProcessingQueue()
             if (delay <= 0) {
-                schedule(block)
-            } else {
-                if (workerScope.isActive) {
-                    workerScope.launch(dispatcher) {
-                        delay(unit.toMillis(delay))
-                        block.run()
-                    }
-                    this
-                } else {
-                    Disposables.disposed()
-                }
+                return schedule(block)
             }
+            if (workerScope.isActive) {
+                workerScope.launch {
+                    delay(unit.toMillis(delay))
+                    block.run()
+                }
+                return this
+            }
+            return Disposables.disposed()
+        }
 
         override fun dispose() {
             workerScope.cancel()
+            blockChannel.close()
         }
 
-        fun startProcessingQueue(parentJob: Job) {
-            workerScope = CoroutineScope(SupervisorJob(parentJob))
-            workerScope.launch(dispatcher) {
-                while (true) {
-                    yield()
-                    if (!blockChannel.isEmpty) {
-                        val block = blockChannel.receive()
-                        block.run()
+        private fun startProcessingQueue() {
+            if (queueProcessingJob == null) {
+                queueProcessingJob = workerScope.launch {
+                    while (true) {
+                        if (isActive && !blockChannel.isEmpty) {
+                            val block = blockChannel.receive()
+                            block.run()
+                        }
+                        yield()
                     }
                 }
             }

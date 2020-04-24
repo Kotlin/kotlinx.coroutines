@@ -9,6 +9,7 @@ import io.reactivex.plugins.*
 import io.reactivex.schedulers.*
 import kotlinx.coroutines.*
 import org.junit.*
+import org.junit.Ignore
 import org.junit.Test
 import java.lang.Runnable
 import java.util.concurrent.*
@@ -22,7 +23,7 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun testIoScheduler(): Unit = runBlocking {
+    fun testIoScheduler(): Unit = runTest {
         expect(1)
         val mainThread = Thread.currentThread()
         withContext(Schedulers.io().asCoroutineDispatcher()) {
@@ -38,21 +39,24 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun testAsSchedulerWithNoDelay(): Unit = runBlocking {
+    fun testAsSchedulerWithNoDelay(): Unit = runTest {
         expect(1)
         val mainThread = Thread.currentThread()
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
-        scheduler.scheduleDirect {
-            val t1 = Thread.currentThread()
-            assertSame(t1, mainThread)
-            expect(2)
+        suspendCancellableCoroutine<Unit> {
+            scheduler.scheduleDirect {
+                val t1 = Thread.currentThread()
+                assertSame(t1, mainThread)
+                expect(2)
+                it.resume(Unit)
+            }
         }
         yield()
         finish(3)
     }
 
     @Test
-    fun testAsSchedulerWithDelay(): Unit = runBlocking {
+    fun testAsSchedulerWithDelay(): Unit = runTest {
         expect(1)
         val mainThread = Thread.currentThread()
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
@@ -61,10 +65,11 @@ class SchedulerTest : TestBase() {
             scheduler.scheduleDirect({
                 val t1 = Thread.currentThread()
                 assertSame(t1, mainThread)
-                finish(2)
+                expect(2)
                 it.resume(Unit)
             }, delayMillis, TimeUnit.MILLISECONDS)
         }
+        finish(3)
     }
 
     @Test
@@ -86,44 +91,30 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun testAsSchedulerWithNegativeDelay(): Unit = runBlocking {
+    fun testAsSchedulerWithNegativeDelay(): Unit = runTest {
         expect(1)
         val mainThread = Thread.currentThread()
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
-        scheduler.scheduleDirect({
-            val t1 = Thread.currentThread()
-            assertSame(t1, mainThread)
-            finish(2)
-        }, -1, TimeUnit.MILLISECONDS)
+        suspendCancellableCoroutine<Unit> {
+            scheduler.scheduleDirect({
+                val t1 = Thread.currentThread()
+                assertSame(t1, mainThread)
+                expect(2)
+                it.resume(Unit)
+            }, -1, TimeUnit.MILLISECONDS)
+        }
         yield()
+        finish(3)
     }
 
     @Test
-    fun testBlockUnreachedIfDelayed(): Unit = runBlocking {
+    fun testDisposeDuringDelay(): Unit = runTest {
         expect(1)
         val mainThread = Thread.currentThread()
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         val delayMillis = 300L
         val disposable = scheduler.scheduleDirect({
             expectUnreached()
-            val t1 = Thread.currentThread()
-            assertSame(t1, mainThread)
-        }, delayMillis, TimeUnit.MILLISECONDS)
-        yield()
-        finish(2)
-        disposable.dispose() // cleanup
-    }
-
-    @Test
-    fun testDisposeDuringDelay(): Unit = runBlocking {
-        expect(1)
-        val mainThread = Thread.currentThread()
-        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
-        val delayMillis = 300L
-        val disposable = scheduler.scheduleDirect({
-            expectUnreached()
-            val t1 = Thread.currentThread()
-            assertSame(t1, mainThread)
         }, delayMillis, TimeUnit.MILLISECONDS)
         delay(100)
         expect(2)
@@ -134,59 +125,80 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun testAsSchedulerWorksWithSchedulerCoroutineDispatcher(): Unit = runBlocking {
+    fun testAsSchedulerWorksWithSchedulerCoroutineDispatcher(): Unit = runTest {
         expect(1)
 
         val dispatcher = Schedulers.io().asCoroutineDispatcher()
         val scheduler = dispatcher.asScheduler()
         suspendCancellableCoroutine<Unit> {
             scheduler.scheduleDirect {
-                finish(3)
+                expect(2)
                 it.resume(Unit)
             }
-            expect(2)
         }
-        ensureFinished()
+        finish(3)
     }
 
     @Test
-    fun testAsSchedulerWithAMillionTasks(): Unit = runBlocking {
-        var counter = 1
-        expect(counter)
-
-        val dispatcher = currentDispatcher() as CoroutineDispatcher
-        val scheduler = dispatcher.asScheduler()
-        val numberOfJobs = 1000000
-        for (i in 0..numberOfJobs) {
-            scheduler.scheduleDirect {
-                expect(++counter)
-            }
-        }
-        yield()
-        finish(1000003)
-    }
-
-    @Test
-    fun testAsSchedulerWithAMillionTasksWithDelay(): Unit = runBlocking {
+    @Ignore
+    fun testAsSchedulerWithAMillionTasks(): Unit = runTest {
         expect(1)
 
         val dispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = dispatcher.asScheduler()
-        val numberOfJobs = 1000000
-        for (i in 0..numberOfJobs) {
-            val disposable = scheduler.scheduleDirect({
-                expectUnreached()
-            }, 100, TimeUnit.MILLISECONDS)
-            disposable.dispose()
+
+        val numberOfJobs = 10000
+        var counter = 0
+        coroutineScope {
+            for (i in 0 until numberOfJobs) {
+                launch {
+                    suspendCancellableCoroutine<Unit> {
+                        scheduler.scheduleDirect {
+                            counter++
+                            it.resume(Unit)
+                        }
+                    }
+                }
+                yield()
+            }
         }
-        yield()
+        scheduler.shutdown()
+        check(counter == numberOfJobs)
         finish(2)
     }
 
     @Test
-    fun testExpectRxPluginsCall(): Unit = runBlocking {
-        var expectCounter = 0
-        expect(++expectCounter)
+    @Ignore
+    fun testAsSchedulerWithAMillionTasksWithDelay(): Unit = runTest {
+        expect(1)
+
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+
+        val numberOfJobs = 100
+        var counter = 0
+        coroutineScope {
+            for (i in 0 until numberOfJobs) {
+                launch {
+                    suspendCancellableCoroutine<Unit> {
+                        val disposable = scheduler.scheduleDirect({
+                            counter++
+                            it.resume(Unit)
+                        }, 100, TimeUnit.MILLISECONDS)
+                        disposable.dispose()
+                    }
+                }
+                yield()
+            }
+        }
+        scheduler.shutdown()
+        check(counter == numberOfJobs)
+        finish(2)
+    }
+
+    @Test
+    fun testExpectRxPluginsCall(): Unit = runTest {
+        expect(1)
 
         fun setScheduler(expectCountOnRun: Int) {
             RxJavaPlugins.setScheduleHandler(Function {
@@ -201,18 +213,24 @@ class SchedulerTest : TestBase() {
         val scheduler = dispatcher.asScheduler()
 
         setScheduler(2)
-        scheduler.scheduleDirect {
-            expect(3)
+
+        suspendCancellableCoroutine<Unit> {
+            scheduler.scheduleDirect {
+                expect(3)
+                it.resume(Unit)
+            }
         }
 
         setScheduler(4)
         suspendCancellableCoroutine<Unit> {
             scheduler.scheduleDirect({
-                finish(5)
+                expect(5)
                 RxJavaPlugins.setScheduleHandler(null)
                 it.resume(Unit)
             }, 300, TimeUnit.MILLISECONDS)
         }
+        scheduler.shutdown()
+        finish(6)
     }
 
     @Test
@@ -224,8 +242,8 @@ class SchedulerTest : TestBase() {
 
         val worker = scheduler.createWorker()
 
-        val iterations = 2
-        val job = launch {
+        val iterations = 5
+        coroutineScope {
             for (i in (0..iterations)) {
                 launch {
                     suspendCancellableCoroutine<Unit> {
@@ -244,7 +262,6 @@ class SchedulerTest : TestBase() {
             }
         }
         yield()
-        job.join()
         finish((iterations + 2) + 1)
     }
 }
