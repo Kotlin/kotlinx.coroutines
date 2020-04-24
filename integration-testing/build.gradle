@@ -25,6 +25,18 @@ sourceSets {
         compileClasspath += sourceSets.test.runtimeClasspath
         runtimeClasspath += sourceSets.test.runtimeClasspath
     }
+
+    coreAgentTest {
+        kotlin
+        compileClasspath += sourceSets.test.runtimeClasspath
+        runtimeClasspath += sourceSets.test.runtimeClasspath
+    }
+}
+
+compileDebugAgentTestKotlin {
+    kotlinOptions {
+        freeCompilerArgs += ["-Xallow-kotlin-package"]
+    }
 }
 
 task npmTest(type: Test) {
@@ -62,6 +74,14 @@ task debugAgentTest(type: Test) {
     classpath = sourceSet.runtimeClasspath
 }
 
+task coreAgentTest(type: Test) {
+    def sourceSet = sourceSets.coreAgentTest
+    dependsOn(project(':kotlinx-coroutines-core').jvmJar)
+    jvmArgs ('-javaagent:' + project(':kotlinx-coroutines-core').jvmJar.outputs.files.getFiles()[0])
+    testClassesDirs = sourceSet.output.classesDirs
+    classpath = sourceSet.runtimeClasspath
+}
+
 dependencies {
     testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testCompile 'junit:junit:4.12'
@@ -69,12 +89,13 @@ dependencies {
     npmTestCompile 'com.google.code.gson:gson:2.8.5'
     debugAgentTestCompile project(':kotlinx-coroutines-core')
     debugAgentTestCompile project(':kotlinx-coroutines-debug')
+    coreAgentTestCompile project(':kotlinx-coroutines-core')
 }
 
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
 
-test {
-    dependsOn([npmTest, mavenTest, debugAgentTest])
+check {
+    dependsOn([npmTest, mavenTest, debugAgentTest, coreAgentTest])
 }

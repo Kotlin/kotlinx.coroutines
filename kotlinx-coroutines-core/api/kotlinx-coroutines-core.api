@@ -832,6 +832,10 @@ public final class kotlinx/coroutines/channels/ValueOrClosed {
 	public final synthetic fun unbox-impl ()Ljava/lang/Object;
 }
 
+public synthetic class kotlinx/coroutines/debug/internal/DebugProbesImplSequenceNumberRefVolatile {
+	public fun <init> (J)V
+}
+
 public abstract class kotlinx/coroutines/flow/AbstractFlow : kotlinx/coroutines/flow/Flow {
 	public fun <init> ()V
 	public final fun collect (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

@@ -1,9 +1,11 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.debug.internal.*
 import org.junit.Test
 import java.util.concurrent.*
 import kotlin.test.*
@@ -175,10 +177,9 @@ class RunningThreadStackMergeTest : DebugTestBase() {
     fun testActiveThread() = runBlocking<Unit> {
         launchCoroutine()
         awaitCoroutineStarted()
-        val info = DebugProbes.dumpCoroutinesInfo().find { it.state == State.RUNNING }
+        val info = DebugProbesImpl.dumpDebuggerInfo().find { it.state == "RUNNING" }
         assertNotNull(info)
-        @Suppress("INVISIBLE_MEMBER") // IDEA bug
-        assertNotNull(info.lastObservedThread)
+        assertNotNull(info.lastObservedThreadName)
         coroutineBlocker.await()
     }
 }
