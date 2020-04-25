@@ -9,7 +9,6 @@ import io.reactivex.plugins.*
 import io.reactivex.schedulers.*
 import kotlinx.coroutines.*
 import org.junit.*
-import org.junit.Ignore
 import org.junit.Test
 import java.lang.Runnable
 import java.util.concurrent.*
@@ -159,63 +158,6 @@ class SchedulerTest : TestBase() {
         val dispatcher = scheduler.asCoroutineDispatcher()
         assertEquals(originalDispatcher, dispatcher)
 
-        finish(2)
-    }
-
-    @Test
-    @Ignore
-    fun testAsSchedulerWithAMillionTasks(): Unit = runTest {
-        expect(1)
-
-        val dispatcher = currentDispatcher() as CoroutineDispatcher
-        val scheduler = dispatcher.asScheduler()
-
-        val numberOfJobs = 10000
-        var counter = 0
-        coroutineScope {
-            for (i in 0 until numberOfJobs) {
-                launch {
-                    suspendCancellableCoroutine<Unit> {
-                        scheduler.scheduleDirect {
-                            counter++
-                            it.resume(Unit)
-                        }
-                    }
-                }
-                yield()
-            }
-        }
-        scheduler.shutdown()
-        check(counter == numberOfJobs)
-        finish(2)
-    }
-
-    @Test
-    @Ignore
-    fun testAsSchedulerWithAMillionTasksWithDelay(): Unit = runTest {
-        expect(1)
-
-        val dispatcher = currentDispatcher() as CoroutineDispatcher
-        val scheduler = dispatcher.asScheduler()
-
-        val numberOfJobs = 100
-        var counter = 0
-        coroutineScope {
-            for (i in 0 until numberOfJobs) {
-                launch {
-                    suspendCancellableCoroutine<Unit> {
-                        val disposable = scheduler.scheduleDirect({
-                            counter++
-                            it.resume(Unit)
-                        }, 100, TimeUnit.MILLISECONDS)
-                        disposable.dispose()
-                    }
-                }
-                yield()
-            }
-        }
-        scheduler.shutdown()
-        check(counter == numberOfJobs)
         finish(2)
     }
 
