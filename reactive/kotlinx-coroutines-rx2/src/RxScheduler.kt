@@ -35,30 +35,44 @@ public fun CoroutineDispatcher.asScheduler(): Scheduler =
 
 private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) : Scheduler() {
 
-    val parentJob = SupervisorJob()
-    private val parentScope = CoroutineScope(parentJob)
+    val job = SupervisorJob()
+    private val scope = CoroutineScope(job)
 
     override fun scheduleDirect(run: Runnable): Disposable {
-        val decoratedRun = RxJavaPlugins.onSchedule(run)
-        val worker = createWorker() as DispatcherWorker
-        return worker.apply {
-            worker.schedule(decoratedRun)
+        if (scope.isActive) {
+            return scope.launch {
+                dispatchBlock(run)
+            }.asDisposable()
         }
+
+        return Disposables.disposed()
     }
 
     override fun scheduleDirect(run: Runnable, delay: Long, unit: TimeUnit): Disposable {
-        val decoratedRun = RxJavaPlugins.onSchedule(run)
-        val worker = createWorker() as DispatcherWorker
-        return worker.apply {
-            schedule(decoratedRun, delay, unit)
+        if (delay <= 0) {
+            return scheduleDirect(run)
         }
+
+        if (scope.isActive) {
+            return scope.launch {
+                delay(unit.toMillis(delay))
+                dispatchBlock(run)
+            }.asDisposable()
+        }
+
+        return Disposables.disposed()
+    }
+
+    private fun dispatchBlock(block: Runnable) {
+        val decoratedRun = RxJavaPlugins.onSchedule(block)
+        dispatcher.dispatch(EmptyCoroutineContext, decoratedRun)
     }
 
     override fun createWorker(): Worker =
-        DispatcherWorker(dispatcher, parentJob)
+        DispatcherWorker(dispatcher, job)
 
     override fun shutdown() {
-        parentScope.cancel()
+        scope.cancel()
     }
 
     private class DispatcherWorker(dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
