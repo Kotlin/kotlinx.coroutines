@@ -104,8 +104,8 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
         private fun startProcessingQueue() {
             if (queueProcessingJob == null) {
                 queueProcessingJob = workerScope.launch {
-                    while (true) {
-                        if (isActive && !blockChannel.isEmpty) {
+                    while (isActive) {
+                        if (!blockChannel.isEmpty) {
                             val job = blockChannel.receive()
                             if (!job.isCancelled) {
                                 job.start()
