@@ -2,7 +2,9 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-compileKotlin {
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+tasks.named<KotlinCompile>("compileKotlin") {
     kotlinOptions {
         freeCompilerArgs += "-Xallow-kotlin-package"
     }
