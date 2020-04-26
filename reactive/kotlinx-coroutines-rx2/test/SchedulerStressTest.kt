@@ -7,6 +7,7 @@ package kotlinx.coroutines.rx2
 import kotlinx.coroutines.*
 import org.junit.*
 import java.util.concurrent.*
+import kotlin.coroutines.*
 
 class SchedulerStressTest : TestBase() {
     @Before
@@ -14,42 +15,40 @@ class SchedulerStressTest : TestBase() {
         ignoreLostThreads("RxCachedThreadScheduler-", "RxCachedWorkerPoolEvictor-", "RxSchedulerPurge-")
     }
 
-    @Ignore
     @Test
     fun testScheduleDirectDisposed(): Unit = runTest {
         expect(1)
 
-        fun keepMe(a: ByteArray) {
-            // does nothing, makes sure the variable is kept in state-machine
-        }
-
-        val d = async {
-            delay(Long.MAX_VALUE)
+        suspend fun keepMe(a: ByteArray) {
+            delay(10)
         }
 
         val dispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = dispatcher.asScheduler()
 
-        val n = 100
+        val n = 2000 * stressTestMultiplier
         coroutineScope {
-            repeat(n) {
+            repeat(n) { i ->
                 launch {
-                    val disposable = scheduler.scheduleDirect {
-                        val a = ByteArray(1000000) //1MB
-                        runBlocking {
-                            d.await()
-                            keepMe(a)
+                    val a = ByteArray(1000000) //1MB
+                    suspendCancellableCoroutine<Unit> {
+                        val disposable = scheduler.scheduleDirect {
+                            runBlocking {
+                                keepMe(a)
+                                it.resume(Unit)
+                            }
                         }
+                        expect(i + 2)
+                        disposable.dispose()
+                        it.resume(Unit)
                     }
-                    disposable.dispose()
-                    check(disposable.isDisposed)
                 }
                 yield()
             }
         }
 
         scheduler.shutdown()
-        finish(2)
+        finish(n + 2)
     }
 
     @Ignore
