@@ -4,7 +4,9 @@
 
 package kotlinx.coroutines.rx2
 
+import io.reactivex.*
 import io.reactivex.functions.*
+import io.reactivex.observers.*
 import io.reactivex.plugins.*
 import io.reactivex.schedulers.*
 import kotlinx.coroutines.*
@@ -210,8 +212,12 @@ class SchedulerTest : TestBase() {
         finish(6)
     }
 
+    /**
+     * Let's test the [Scheduler.Worker] to make sure it satisfies the documented constraint of running all work
+     * sequentially
+     */
     @Test
-    fun testSchedulerSequentialOrdering(): Unit = runTest {
+    fun testSchedulerWorkerSequentialOrdering(): Unit = runTest {
         expect(1)
 
         val scheduler = Dispatchers.Default.asScheduler()
@@ -240,5 +246,44 @@ class SchedulerTest : TestBase() {
         }
         yield()
         finish((iterations + 2) + 1)
+    }
+
+    /**
+     * Let's test the [Scheduler.Worker] to make sure it satisfies the documented constraint of running all work
+     * sequentially using RxJava primitives
+     */
+    @Test
+    fun testSchedulerWorkerSequentialWithObservables(): Unit = runTest {
+        expect(1)
+
+        val scheduler = Dispatchers.Default.asScheduler()
+
+        val testObservable = Observable
+            .create<Int> {
+                it.onNext(1)
+                it.onNext(2)
+                it.onComplete()
+            }
+            .observeOn(scheduler)
+            .map {
+                runBlocking {
+                    if (it == 1) {
+                        // delay by some time. we expect that even with delay this iteration should be first
+                        delay(100)
+                    }
+                    it + 1
+                }
+            }
+            .subscribeOn(scheduler)
+
+        val testObserver = TestObserver<Int>()
+        testObservable.subscribe(testObserver)
+        testObservable.blockingSubscribe()
+        testObserver.apply {
+            assertValueCount(2)
+            assertResult(2, 3)
+            dispose()
+        }
+        finish(2)
     }
 }
