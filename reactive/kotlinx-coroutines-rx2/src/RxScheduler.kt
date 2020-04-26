@@ -35,38 +35,35 @@ public fun CoroutineDispatcher.asScheduler(): Scheduler =
 
 private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) : Scheduler() {
 
-    val job = SupervisorJob()
-    private val scope = CoroutineScope(job)
+    private val job = SupervisorJob()
+    private val scope = CoroutineScope(job + dispatcher)
 
-    override fun scheduleDirect(run: Runnable): Disposable {
+    override fun scheduleDirect(block: Runnable): Disposable {
         if (scope.isActive) {
             return scope.launch {
-                dispatchBlock(run)
+                block.runWithRx()
             }.asDisposable()
         }
 
         return Disposables.disposed()
     }
 
-    override fun scheduleDirect(run: Runnable, delay: Long, unit: TimeUnit): Disposable {
+    override fun scheduleDirect(block: Runnable, delay: Long, unit: TimeUnit): Disposable {
         if (delay <= 0) {
-            return scheduleDirect(run)
+            return scheduleDirect(block)
         }
 
         if (scope.isActive) {
             return scope.launch {
                 delay(unit.toMillis(delay))
-                dispatchBlock(run)
+                block.runWithRx()
             }.asDisposable()
         }
 
         return Disposables.disposed()
     }
 
-    private fun dispatchBlock(block: Runnable) {
-        val decoratedRun = RxJavaPlugins.onSchedule(block)
-        dispatcher.dispatch(EmptyCoroutineContext, decoratedRun)
-    }
+    private fun Runnable.runWithRx() = RxJavaPlugins.onSchedule(this).run()
 
     override fun createWorker(): Worker =
         DispatcherWorker(dispatcher, job)
@@ -86,7 +83,7 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
         override fun schedule(block: Runnable): Disposable {
             startProcessingQueue()
             if (workerScope.isActive) {
-                val job = workerScope.launch(Dispatchers.Unconfined, CoroutineStart.LAZY) {
+                val job = workerScope.launch(start = CoroutineStart.LAZY) {
                     block.run()
                 }
                 blockChannel.offer(job)
@@ -169,7 +166,12 @@ public class SchedulerCoroutineDispatcher(
     override fun hashCode(): Int = System.identityHashCode(scheduler)
 }
 
-private fun Job.asDisposable(): Disposable = object : Disposable {
-    override fun isDisposed(): Boolean = !isActive
-    override fun dispose() = cancel()
+private class JobDisposable(private val job: Job) : Disposable {
+    override fun isDisposed(): Boolean = !job.isActive
+
+    override fun dispose() {
+        job.cancel()
+    }
 }
+
+public fun Job.asDisposable(): Disposable = JobDisposable(this)

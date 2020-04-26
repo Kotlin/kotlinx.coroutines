@@ -7,7 +7,6 @@ package kotlinx.coroutines.rx2
 import kotlinx.coroutines.*
 import org.junit.*
 import java.util.concurrent.*
-import kotlin.coroutines.*
 
 class SchedulerStressTest : TestBase() {
     @Before
@@ -15,6 +14,10 @@ class SchedulerStressTest : TestBase() {
         ignoreLostThreads("RxCachedThreadScheduler-", "RxCachedWorkerPoolEvictor-", "RxSchedulerPurge-")
     }
 
+    /**
+     * Test that we don't get an OOM if we schedule many jobs at once. It's expected that if you don't dispose that you'd
+     * see a OOM error.
+     */
     @Test
     fun testScheduleDirectDisposed(): Unit = runTest {
         expect(1)
@@ -29,20 +32,14 @@ class SchedulerStressTest : TestBase() {
         val n = 2000 * stressTestMultiplier
         coroutineScope {
             repeat(n) { i ->
-                launch {
-                    val a = ByteArray(1000000) //1MB
-                    suspendCancellableCoroutine<Unit> {
-                        val disposable = scheduler.scheduleDirect {
-                            runBlocking {
-                                keepMe(a)
-                                it.resume(Unit)
-                            }
-                        }
-                        expect(i + 2)
-                        disposable.dispose()
-                        it.resume(Unit)
+                val a = ByteArray(1000000) //1MB
+                val disposable = scheduler.scheduleDirect {
+                    runBlocking {
+                        keepMe(a)
                     }
                 }
+                disposable.dispose()
+                expect(i + 2)
                 yield()
             }
         }
@@ -51,13 +48,16 @@ class SchedulerStressTest : TestBase() {
         finish(n + 2)
     }
 
-    @Ignore
+    /**
+     * Test that we don't get an OOM if we schedule many delayed jobs at once. It's expected that if you don't dispose that you'd
+     * see a OOM error.
+     */
     @Test
     fun testScheduleDirectDisposedDuringDelay(): Unit = runTest {
         expect(1)
 
-        fun keepMe(a: ByteArray) {
-            // does nothing, makes sure the variable is kept in state-machine
+        suspend fun keepMe(a: ByteArray) {
+            delay(10)
         }
 
         val dispatcher = currentDispatcher() as CoroutineDispatcher
@@ -65,20 +65,20 @@ class SchedulerStressTest : TestBase() {
 
         val n = 2000 * stressTestMultiplier
         coroutineScope {
-            repeat(n) {
-                launch {
-                    val a = ByteArray(1000000) //1MB
-                    val disposable = scheduler.scheduleDirect({
-                        expectUnreached()
-                    }, 50, TimeUnit.MILLISECONDS)
-                    disposable.dispose()
-                    check(disposable.isDisposed)
-                    delay(60)
-                    keepMe(a)
-                }
+            repeat(n) { i ->
+                val a = ByteArray(1000000) //1MB
+                val disposable = scheduler.scheduleDirect({
+                    runBlocking {
+                        keepMe(a)
+                    }
+                }, 10, TimeUnit.MILLISECONDS)
+                disposable.dispose()
+                expect(i + 2)
+                yield()
             }
         }
 
-        finish(2)
+        scheduler.shutdown()
+        finish(n + 2)
     }
 }
