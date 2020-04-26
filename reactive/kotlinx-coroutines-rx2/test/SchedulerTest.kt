@@ -123,7 +123,7 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun testDisposeDuring(): Unit = runTest {
+    fun testImmediateDispose(): Unit = runTest {
         expect(1)
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         val disposable = scheduler.scheduleDirect {
