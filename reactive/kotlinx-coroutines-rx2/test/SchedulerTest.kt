@@ -123,6 +123,18 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
+    fun testDisposeDuring(): Unit = runTest {
+        expect(1)
+        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        val disposable = scheduler.scheduleDirect {
+            expectUnreached()
+        }
+        disposable.dispose()
+        yield()
+        finish(2)
+    }
+
+    @Test
     fun testAsSchedulerWorksWithSchedulerCoroutineDispatcher(): Unit = runTest {
         expect(1)
 
@@ -202,8 +214,7 @@ class SchedulerTest : TestBase() {
     fun testSchedulerSequentialOrdering(): Unit = runTest {
         expect(1)
 
-        val dispatcher = currentDispatcher() as CoroutineDispatcher
-        val scheduler = dispatcher.asScheduler()
+        val scheduler = Dispatchers.Default.asScheduler()
 
         val worker = scheduler.createWorker()
 

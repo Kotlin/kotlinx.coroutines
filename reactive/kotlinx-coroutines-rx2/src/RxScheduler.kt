@@ -61,10 +61,10 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
         parentScope.cancel()
     }
 
-    private class DispatcherWorker(private val dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
+    private class DispatcherWorker(dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
 
         private val workerScope = CoroutineScope(SupervisorJob(parentJob) + dispatcher)
-        private val blockChannel = Channel<Runnable>()
+        private val blockChannel = Channel<Job>(Channel.UNLIMITED)
         private var queueProcessingJob: Job? = null
 
         override fun isDisposed(): Boolean = !workerScope.isActive
@@ -72,10 +72,11 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
         override fun schedule(block: Runnable): Disposable {
             startProcessingQueue()
             if (workerScope.isActive) {
-                workerScope.launch(dispatcher) {
-                    blockChannel.send(block)
+                val job = workerScope.launch(Dispatchers.Unconfined, CoroutineStart.LAZY) {
+                    block.run()
                 }
-                return this
+                blockChannel.offer(job)
+                return job.asDisposable()
             }
 
             return Disposables.disposed()
@@ -87,11 +88,10 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
                 return schedule(block)
             }
             if (workerScope.isActive) {
-                workerScope.launch {
+                return workerScope.launch {
                     delay(unit.toMillis(delay))
                     block.run()
-                }
-                return this
+                }.asDisposable()
             }
             return Disposables.disposed()
         }
@@ -106,8 +106,11 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
                 queueProcessingJob = workerScope.launch {
                     while (true) {
                         if (isActive && !blockChannel.isEmpty) {
-                            val block = blockChannel.receive()
-                            block.run()
+                            val job = blockChannel.receive()
+                            if (!job.isCancelled) {
+                                job.start()
+                                job.join()
+                            }
                         }
                         yield()
                     }
@@ -153,4 +156,9 @@ public class SchedulerCoroutineDispatcher(
 
     /** @suppress */
     override fun hashCode(): Int = System.identityHashCode(scheduler)
+}
+
+private fun Job.asDisposable(): Disposable = object : Disposable {
+    override fun isDisposed(): Boolean = !isActive
+    override fun dispose() = cancel()
 }
