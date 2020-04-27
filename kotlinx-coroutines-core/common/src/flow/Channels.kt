@@ -84,7 +84,6 @@ private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>,
  * In particular, [produceIn] returns the original channel.
  * Calls to [flowOn] have generally no effect, unless [buffer] is used to explicitly request buffering.
  */
-@ExperimentalCoroutinesApi // since version 1.4.0
 public fun <T> ReceiveChannel<T>.receiveAsFlow(): Flow<T> = ChannelAsFlow(this, consume = false)
 
 /**
@@ -106,7 +105,6 @@ public fun <T> ReceiveChannel<T>.receiveAsFlow(): Flow<T> = ChannelAsFlow(this, 
  * In particular, [produceIn] returns the original channel (but throws [IllegalStateException] on repeated calls).
  * Calls to [flowOn] have generally no effect, unless [buffer] is used to explicitly request buffering.
  */
-@ExperimentalCoroutinesApi // since version 1.3.0
 public fun <T> ReceiveChannel<T>.consumeAsFlow(): Flow<T> = ChannelAsFlow(this, consume = true)
 
 /**
