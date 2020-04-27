@@ -15,14 +15,12 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 /**
  * Returns flow where all subsequent repetitions of the same value are filtered out.
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.distinctUntilChanged(): Flow<T> = distinctUntilChangedBy { it }
 
 /**
  * Returns flow where all subsequent repetitions of the same value are filtered out, when compared
  * with each other via the provided [areEquivalent] function.
  */
-@FlowPreview
 public fun <T> Flow<T>.distinctUntilChanged(areEquivalent: (old: T, new: T) -> Boolean): Flow<T> =
     distinctUntilChangedBy(keySelector = { it }, areEquivalent = areEquivalent)
 
@@ -30,7 +28,6 @@ public fun <T> Flow<T>.distinctUntilChanged(areEquivalent: (old: T, new: T) -> B
  * Returns flow where all subsequent repetitions of the same key are filtered out, where
  * key is extracted with [keySelector] function.
  */
-@FlowPreview
 public fun <T, K> Flow<T>.distinctUntilChangedBy(keySelector: (T) -> K): Flow<T> =
     distinctUntilChangedBy(keySelector = keySelector, areEquivalent = { old, new -> old == new })
 

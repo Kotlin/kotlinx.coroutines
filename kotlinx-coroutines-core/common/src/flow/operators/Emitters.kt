@@ -34,7 +34,6 @@ import kotlin.jvm.*
  * }
  * ```
  */
-@ExperimentalCoroutinesApi
 public inline fun <T, R> Flow<T>.transform(
     @BuilderInference crossinline transform: suspend FlowCollector<R>.(value: T) -> Unit
 ): Flow<R> = flow { // Note: safe flow is used here, because collector is exposed to transform on each operation

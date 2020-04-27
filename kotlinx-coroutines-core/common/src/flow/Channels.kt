@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * This function provides a more efficient shorthand for `channel.consumeEach { value -> emit(value) }`.
  * See [consumeEach][ReceiveChannel.consumeEach].
  */
-@ExperimentalCoroutinesApi // since version 1.3.0
 public suspend fun <T> FlowCollector<T>.emitAll(channel: ReceiveChannel<T>): Unit =
     emitAllImpl(channel, consume = true)
 
