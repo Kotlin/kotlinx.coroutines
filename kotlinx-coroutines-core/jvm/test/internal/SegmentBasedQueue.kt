@@ -87,8 +87,24 @@ internal class SegmentBasedQueue<T> {
     }
 
     fun checkHeadPrevIsCleaned() {
-        check(head.value.prev === null)
+        check(head.value.prev === null) { "head.prev is not null"}
     }
+
+    fun checkAllSegmentsAreNotLogicallyRemoved() {
+        var prev: OneElementSegment<T>? = null
+        var cur = head.value
+        while (true) {
+            check(!cur.logicallyRemoved || cur.isTail) {
+                "This queue contains removed segments, memory leak detected"
+            }
+            check(cur.prev === prev) {
+                "Two neighbour segments are incorrectly linked: S.next.prev != S"
+            }
+            prev = cur
+            cur = cur.next ?: return
+        }
+    }
+
 }
 
 private fun <T> createSegment(id: Long, prev: OneElementSegment<T>?) = OneElementSegment(id, prev, 0)
@@ -98,9 +114,11 @@ internal class OneElementSegment<T>(id: Long, prev: OneElementSegment<T>?, point
 
     override val maxSlots get() = 1
 
+    val logicallyRemoved get() = element.value === BROKEN
+
     fun removeSegment() {
-        element.value = BROKEN
-        onSlotCleaned()
+        val old = element.getAndSet(BROKEN)
+        if (old !== BROKEN) onSlotCleaned()
     }
 }
 
