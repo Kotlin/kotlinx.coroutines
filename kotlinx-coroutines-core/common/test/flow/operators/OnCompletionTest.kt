@@ -50,7 +50,7 @@ class OnCompletionTest : TestBase() {
         }.onEach {
             expect(2)
         }.onCompletion {
-            assertNull(it)
+            assertTrue(it is TestException) // flow fails because of this exception
             expect(4)
         }.onEach {
             expect(3)
@@ -65,7 +65,7 @@ class OnCompletionTest : TestBase() {
     @Test
     fun testMultipleOnCompletions() = runTest {
         flowOf(1).onCompletion {
-            assertNull(it)
+            assertTrue(it is TestException)
             expect(2)
         }.onEach {
             expect(1)
@@ -145,12 +145,12 @@ class OnCompletionTest : TestBase() {
                 .onCompletion { e ->
                     expect(8)
                     assertTrue(e is TestException)
-                    emit(TestData.Done(e))
+                    emit(TestData.Done(e)) // will fail
                 }.collect {
                     collected += it
                 }
         }
-        val expected = (1..5).map { TestData.Value(it) } + TestData.Done(TestException("OK"))
+        val expected: List<TestData> = (1..5).map { TestData.Value(it) }
         assertEquals(expected, collected)
         finish(9)
     }
@@ -171,7 +171,7 @@ class OnCompletionTest : TestBase() {
                     }
                     .onCompletion { e ->
                         expect(8)
-                        assertNull(e)
+                        assertTrue(e is CancellationException)
                         try {
                             emit(TestData.Done(e))
                             expectUnreached()
@@ -197,7 +197,7 @@ class OnCompletionTest : TestBase() {
                 emit(TestData.Value(2))
                 expectUnreached()
             }.onCompletion {
-                assertNull(it)
+                assertSame(cause, it) // flow failed because of the exception in downstream
                 expect(3)
                 try {
                     emit(TestData.Done(it))
@@ -216,7 +216,7 @@ class OnCompletionTest : TestBase() {
     @Test
     fun testFirst() = runTest {
         val value = flowOf(239).onCompletion {
-            assertNull(it)
+            assertNotNull(it) // the flow did not complete normally
             expect(1)
             try {
                 emit(42)
@@ -277,5 +277,17 @@ class OnCompletionTest : TestBase() {
         expect(1)
         assertNull(flow.singleOrNull())
         finish(4)
+    }
+
+    @Test
+    fun testTakeOnCompletion() = runTest {
+        // even though it uses "take" from the outside it completes normally
+        val flow = (1..10).asFlow().take(5)
+        val result = flow.onCompletion { cause ->
+            assertNull(cause)
+            emit(-1)
+        }.toList()
+        val expected = (1..5).toList() + (-1)
+        assertEquals(expected, result)
     }
 }
