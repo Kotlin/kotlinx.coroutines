@@ -12,7 +12,7 @@ import kotlin.browser.*
 import kotlin.coroutines.*
 import kotlin.math.*
 
-fun main(args: Array<String>) {
+fun main() {
     println("Starting example application...")
     document.addEventListener("DOMContentLoaded", {
         Application().start()
@@ -89,7 +89,7 @@ class Application : CoroutineScope {
         val speed = 0.3
         val rs = 20.0
         val turnAfter = 5000.0 // seconds
-        var maxX = sw - rs
+        val maxX = sw - rs
         val maxY = sh - rs
         animation("rect", rs) { rect ->
             println("Started new 'rect' coroutine #$index")
