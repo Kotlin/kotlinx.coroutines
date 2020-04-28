@@ -227,7 +227,7 @@ if (build_snapshot_train) {
  * but publishing plugin does not re-read artifact names for kotlin-jvm projects, so renaming is not applied in pom files
  * for JVM-only projects.
  *
- * We artificially replace "project" dependency with "module" one to have proper names in pom files, but then substitute it 
+ * We artificially replace "project" dependency with "module" one to have proper names in pom files, but then substitute it
  * to have out "project" dependency back.
  */
 configure(subprojects.findAll { it.name != coreModule && it.name != rootModule }) {
@@ -278,11 +278,8 @@ println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompi
 // --------------- Publish only from under JDK11+ ---------------
 task checkJdkForPublish {
     doFirst {
-        String javaVersion = System.properties["java.version"]
-        int i = javaVersion.indexOf('.')
-        int javaVersionMajor =  (i < 0 ? javaVersion : javaVersion.substring(0, i)).toInteger()
-        if (javaVersionMajor < 11) {
-            throw new GradleException("Project can be build for publishing only under JDK 11+, but found ${javaVersion}")
+        if (JavaVersionKt.javaVersionMajor < 11) {
+            throw new GradleException("Project can be build for publishing only under JDK 11+, but found ${JavaVersionKt.javaVersion}")
         }
     }
 }
