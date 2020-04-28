@@ -38,25 +38,17 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(job + dispatcher)
 
-    override fun scheduleDirect(block: Runnable): Disposable {
-        if (!scope.isActive) return Disposables.disposed()
-        return scope.launch {
-            block.runWithRx()
-        }.asDisposable()
-    }
+    override fun scheduleDirect(block: Runnable): Disposable =
+        scheduleDirect(block, 0, TimeUnit.MILLISECONDS)
 
     override fun scheduleDirect(block: Runnable, delay: Long, unit: TimeUnit): Disposable {
-        if (delay <= 0) {
-            return scheduleDirect(block)
-        }
         if (!scope.isActive) return Disposables.disposed()
         return scope.launch {
+            val newBlock = RxJavaPlugins.onSchedule(block)
             delay(unit.toMillis(delay))
-            block.runWithRx()
+            newBlock.run()
         }.asDisposable()
     }
-
-    private fun Runnable.runWithRx() = RxJavaPlugins.onSchedule(this).run()
 
     override fun createWorker(): Worker =
         DispatcherWorker(dispatcher, job)
