@@ -174,4 +174,4 @@ private class JobDisposable(private val job: Job) : Disposable {
     }
 }
 
-public fun Job.asDisposable(): Disposable = JobDisposable(this)
+private fun Job.asDisposable(): Disposable = JobDisposable(this)
