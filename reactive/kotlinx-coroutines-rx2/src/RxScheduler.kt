@@ -167,7 +167,7 @@ public class SchedulerCoroutineDispatcher(
 }
 
 private class JobDisposable(private val job: Job) : Disposable {
-    override fun isDisposed(): Boolean = !job.isActive
+    override fun isDisposed(): Boolean = job.isCancelled || job.isCompleted
 
     override fun dispose() {
         job.cancel()
