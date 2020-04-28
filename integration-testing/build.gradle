@@ -56,7 +56,6 @@ task npmTest(type: Test) {
 task mavenTest(type: Test) {
     def sourceSet = sourceSets.mavenTest
     dependsOn(project(':').getTasksByName("publishToMavenLocal", true))
-    dependsOn.remove(project(':').getTasksByName("dokka", true))
     testClassesDirs = sourceSet.output.classesDirs
     classpath = sourceSet.runtimeClasspath
     // we can't depend on the subprojects because we need to test the classfiles that are published in the end.
