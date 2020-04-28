@@ -13,7 +13,6 @@ import kotlin.jvm.*
 /**
  * Returns the number of elements in this flow.
  */
-@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.count(): Int  {
     var i = 0
     collect {
@@ -26,7 +25,6 @@ public suspend fun <T> Flow<T>.count(): Int  {
 /**
  * Returns the number of elements matching the given predicate.
  */
-@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.count(predicate: suspend (T) -> Boolean): Int {
     var i = 0
     collect { value ->

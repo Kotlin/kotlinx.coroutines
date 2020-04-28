@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * This function is a shorthand for `flow.combineTransform(flow2) { a, b -> emit(transform(a, b)) }
  */
 @JvmName("flowCombine")
-@ExperimentalCoroutinesApi
 public fun <T1, T2, R> Flow<T1>.combine(flow: Flow<T2>, transform: suspend (a: T1, b: T2) -> R): Flow<R> = flow {
     combineTransformInternal(this@combine, flow) { a, b ->
         emit(transform(a, b))
@@ -52,7 +51,6 @@ public fun <T1, T2, R> Flow<T1>.combine(flow: Flow<T2>, transform: suspend (a: T
  *
  * This function is a shorthand for `combineTransform(flow, flow2) { a, b -> emit(transform(a, b)) }
  */
-@ExperimentalCoroutinesApi
 public fun <T1, T2, R> combine(flow: Flow<T1>, flow2: Flow<T2>, transform: suspend (a: T1, b: T2) -> R): Flow<R> =
     flow.combine(flow2, transform)
 
@@ -74,7 +72,6 @@ public fun <T1, T2, R> combine(flow: Flow<T1>, flow2: Flow<T2>, transform: suspe
  * ```
  */
 @JvmName("flowCombineTransform")
-@ExperimentalCoroutinesApi
 public fun <T1, T2, R> Flow<T1>.combineTransform(
     flow: Flow<T2>,
     @BuilderInference transform: suspend FlowCollector<R>.(a: T1, b: T2) -> Unit
@@ -101,7 +98,6 @@ public fun <T1, T2, R> Flow<T1>.combineTransform(
  * }
  * ```
  */
-@ExperimentalCoroutinesApi
 public fun <T1, T2, R> combineTransform(
     flow: Flow<T1>,
     flow2: Flow<T2>,
@@ -117,7 +113,6 @@ public fun <T1, T2, R> combineTransform(
  * Returns a [Flow] whose values are generated with [transform] function by combining
  * the most recently emitted values by each flow.
  */
-@ExperimentalCoroutinesApi
 public inline fun <T1, T2, T3, R> combine(
     flow: Flow<T1>,
     flow2: Flow<T2>,
@@ -137,7 +132,6 @@ public inline fun <T1, T2, T3, R> combine(
  * The receiver of the [transform] is [FlowCollector] and thus `transform` is a
  * generic function that may transform emitted element, skip it or emit it multiple times.
  */
-@ExperimentalCoroutinesApi
 public inline fun <T1, T2, T3, R> combineTransform(
     flow: Flow<T1>,
     flow2: Flow<T2>,
@@ -155,7 +149,6 @@ public inline fun <T1, T2, T3, R> combineTransform(
  * Returns a [Flow] whose values are generated with [transform] function by combining
  * the most recently emitted values by each flow.
  */
-@ExperimentalCoroutinesApi
 public inline fun <T1, T2, T3, T4, R> combine(
     flow: Flow<T1>,
     flow2: Flow<T2>,
@@ -177,7 +170,6 @@ public inline fun <T1, T2, T3, T4, R> combine(
  * The receiver of the [transform] is [FlowCollector] and thus `transform` is a
  * generic function that may transform emitted element, skip it or emit it multiple times.
  */
-@ExperimentalCoroutinesApi
 public inline fun <T1, T2, T3, T4, R> combineTransform(
     flow: Flow<T1>,
     flow2: Flow<T2>,
@@ -197,7 +189,6 @@ public inline fun <T1, T2, T3, T4, R> combineTransform(
  * Returns a [Flow] whose values are generated with [transform] function by combining
  * the most recently emitted values by each flow.
  */
-@ExperimentalCoroutinesApi
 public inline fun <T1, T2, T3, T4, T5, R> combine(
     flow: Flow<T1>,
     flow2: Flow<T2>,
@@ -221,7 +212,6 @@ public inline fun <T1, T2, T3, T4, T5, R> combine(
  * The receiver of the [transform] is [FlowCollector] and thus `transform` is a
  * generic function that may transform emitted element, skip it or emit it multiple times.
  */
-@ExperimentalCoroutinesApi
 public inline fun <T1, T2, T3, T4, T5, R> combineTransform(
     flow: Flow<T1>,
     flow2: Flow<T2>,
@@ -243,7 +233,6 @@ public inline fun <T1, T2, T3, T4, T5, R> combineTransform(
  * Returns a [Flow] whose values are generated with [transform] function by combining
  * the most recently emitted values by each flow.
  */
-@ExperimentalCoroutinesApi
 public inline fun <reified T, R> combine(
     vararg flows: Flow<T>,
     crossinline transform: suspend (Array<T>) -> R
@@ -257,7 +246,6 @@ public inline fun <reified T, R> combine(
  * The receiver of the [transform] is [FlowCollector] and thus `transform` is a
  * generic function that may transform emitted element, skip it or emit it multiple times.
  */
-@ExperimentalCoroutinesApi
 public inline fun <reified T, R> combineTransform(
     vararg flows: Flow<T>,
     @BuilderInference crossinline transform: suspend FlowCollector<R>.(Array<T>) -> Unit
@@ -269,7 +257,6 @@ public inline fun <reified T, R> combineTransform(
  * Returns a [Flow] whose values are generated with [transform] function by combining
  * the most recently emitted values by each flow.
  */
-@ExperimentalCoroutinesApi
 public inline fun <reified T, R> combine(
     flows: Iterable<Flow<T>>,
     crossinline transform: suspend (Array<T>) -> R
@@ -289,7 +276,6 @@ public inline fun <reified T, R> combine(
  * The receiver of the [transform] is [FlowCollector] and thus `transform` is a
  * generic function that may transform emitted element, skip it or emit it multiple times.
  */
-@ExperimentalCoroutinesApi
 public inline fun <reified T, R> combineTransform(
     flows: Iterable<Flow<T>>,
     @BuilderInference crossinline transform: suspend FlowCollector<R>.(Array<T>) -> Unit
@@ -313,5 +299,4 @@ public inline fun <reified T, R> combineTransform(
  * }
  * ```
  */
-@ExperimentalCoroutinesApi
 public fun <T1, T2, R> Flow<T1>.zip(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = zipImpl(this, other, transform)

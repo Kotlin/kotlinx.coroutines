@@ -59,7 +59,6 @@ public inline fun <T, R: Any> Flow<T>.mapNotNull(crossinline transform: suspend 
 /**
  * Returns a flow that wraps each element into [IndexedValue], containing value and its index (starting from zero).
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.withIndex(): Flow<IndexedValue<T>> = flow {
     var index = 0
     collect { value ->

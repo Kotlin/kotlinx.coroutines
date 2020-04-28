@@ -46,7 +46,6 @@ public suspend fun Flow<*>.collect(): Unit = collect(NopCollector)
  *
  * Note that resulting value of [launchIn] is not used the provided scope takes care of cancellation.
  */
-@ExperimentalCoroutinesApi // tentatively stable in 1.3.0
 public fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = scope.launch {
     collect() // tail-call
 }
@@ -80,7 +79,6 @@ public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value
  *
  * See also [collect] and [withIndex].
  */
-@ExperimentalCoroutinesApi
 public suspend inline fun <T> Flow<T>.collectIndexed(crossinline action: suspend (index: Int, value: T) -> Unit): Unit =
     collect(object : FlowCollector<T> {
         private var index = 0
@@ -108,7 +106,6 @@ public suspend inline fun <T> Flow<T>.collectIndexed(crossinline action: suspend
  *
  * prints "Collecting 1, Collecting 2, 2 collected"
  */
-@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.collectLatest(action: suspend (value: T) -> Unit) {
     /*
      * Implementation note:
@@ -131,5 +128,4 @@ public suspend fun <T> Flow<T>.collectLatest(action: suspend (value: T) -> Unit)
  * It is a shorthand for `flow.collect { value -> emit(value) }`.
  */
 @BuilderInference
-@ExperimentalCoroutinesApi
 public suspend inline fun <T> FlowCollector<T>.emitAll(flow: Flow<T>): Unit = flow.collect(this)
