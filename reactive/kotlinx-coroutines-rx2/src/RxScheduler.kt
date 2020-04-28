@@ -92,27 +92,24 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
 
         override fun isDisposed(): Boolean = !workerScope.isActive
 
-        override fun schedule(block: Runnable): Disposable {
+        override fun schedule(block: Runnable): Disposable =
+            schedule(block, 0, TimeUnit.MILLISECONDS)
+
+        override fun schedule(block: Runnable, delay: Long, unit: TimeUnit): Disposable {
             if (workerScope.isActive) {
+                /*
+                    Start job as lazy because we're going to put the job on a Channel to be executed later.
+                    The client may cancel the job while it's in the queue so it's start it lazy and start job
+                    when it's popped off (and not cancelled).
+                 */
                 val job = workerScope.launch(start = CoroutineStart.LAZY) {
+                    if (delay > 0L) {
+                        delay(unit.toMillis(delay))
+                    }
                     block.run()
                 }
                 blockChannel.offer(job)
                 return job.asDisposable()
-            }
-
-            return Disposables.disposed()
-        }
-
-        override fun schedule(block: Runnable, delay: Long, unit: TimeUnit): Disposable {
-            if (delay <= 0) {
-                return schedule(block)
-            }
-            if (workerScope.isActive) {
-                return workerScope.launch {
-                    delay(unit.toMillis(delay))
-                    block.run()
-                }.asDisposable()
             }
             return Disposables.disposed()
         }
