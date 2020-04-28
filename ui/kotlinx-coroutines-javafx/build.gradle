@@ -2,16 +2,10 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-static int javaVersionMajor() {
-    String javaVersion = System.properties["java.version"]
-    int i = javaVersion.indexOf('.')
-    return (i < 0 ? javaVersion : javaVersion.substring(0, i)).toInteger()
-}
-
 // JDK11+ does not bundle JavaFx and the plugin for JavaFx support is compiled with class file version 55.0 (JDK 11)
-if (javaVersionMajor() >= 11) {
+if (JavaVersionKt.javaVersionMajor >= 11) {
     apply plugin: 'org.openjfx.javafxplugin'
-    
+
     javafx {
         version = javafx_version
         modules = ['javafx.controls']
