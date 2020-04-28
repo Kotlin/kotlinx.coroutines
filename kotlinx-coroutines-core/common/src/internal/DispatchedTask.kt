@@ -117,7 +117,7 @@ internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: In
     // slow-path - use delegate
     val state = takeState()
     val exception = getExceptionalResult(state)?.let { recoverStackTrace(it, delegate) }
-    val result = if (exception != null) Result.failure(exception) else Result.success(state as T)
+    val result = if (exception != null) Result.failure(exception) else Result.success(getSuccessfulResult<T>(state))
     when (useMode) {
         MODE_ATOMIC_DEFAULT -> delegate.resumeWith(result)
         MODE_CANCELLABLE -> delegate.resumeCancellableWith(result)
