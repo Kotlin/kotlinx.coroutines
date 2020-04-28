@@ -83,6 +83,7 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
         override fun schedule(block: Runnable, delay: Long, unit: TimeUnit): Disposable {
             if (!workerScope.isActive) return Disposables.disposed()
 
+            val newBlock = RxJavaPlugins.onSchedule(block)
             /*
                 Start job as lazy because we're going to put the job on a Channel to be executed later.
                 The client may cancel the job while it's in the queue so it's start it lazy and start job
@@ -92,7 +93,7 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
                 if (delay > 0L) {
                     delay(unit.toMillis(delay))
                 }
-                block.run()
+                newBlock.run()
             }
             blockChannel.offer(job)
             return job.asDisposable()
