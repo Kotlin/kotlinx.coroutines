@@ -39,28 +39,21 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
     private val scope = CoroutineScope(job + dispatcher)
 
     override fun scheduleDirect(block: Runnable): Disposable {
-        if (scope.isActive) {
-            return scope.launch {
-                block.runWithRx()
-            }.asDisposable()
-        }
-
-        return Disposables.disposed()
+        if (!scope.isActive) return Disposables.disposed()
+        return scope.launch {
+            block.runWithRx()
+        }.asDisposable()
     }
 
     override fun scheduleDirect(block: Runnable, delay: Long, unit: TimeUnit): Disposable {
         if (delay <= 0) {
             return scheduleDirect(block)
         }
-
-        if (scope.isActive) {
-            return scope.launch {
-                delay(unit.toMillis(delay))
-                block.runWithRx()
-            }.asDisposable()
-        }
-
-        return Disposables.disposed()
+        if (!scope.isActive) return Disposables.disposed()
+        return scope.launch {
+            delay(unit.toMillis(delay))
+            block.runWithRx()
+        }.asDisposable()
     }
 
     private fun Runnable.runWithRx() = RxJavaPlugins.onSchedule(this).run()
@@ -96,22 +89,21 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
             schedule(block, 0, TimeUnit.MILLISECONDS)
 
         override fun schedule(block: Runnable, delay: Long, unit: TimeUnit): Disposable {
-            if (workerScope.isActive) {
-                /*
-                    Start job as lazy because we're going to put the job on a Channel to be executed later.
-                    The client may cancel the job while it's in the queue so it's start it lazy and start job
-                    when it's popped off (and not cancelled).
-                 */
-                val job = workerScope.launch(start = CoroutineStart.LAZY) {
-                    if (delay > 0L) {
-                        delay(unit.toMillis(delay))
-                    }
-                    block.run()
+            if (!workerScope.isActive) return Disposables.disposed()
+
+            /*
+                Start job as lazy because we're going to put the job on a Channel to be executed later.
+                The client may cancel the job while it's in the queue so it's start it lazy and start job
+                when it's popped off (and not cancelled).
+             */
+            val job = workerScope.launch(start = CoroutineStart.LAZY) {
+                if (delay > 0L) {
+                    delay(unit.toMillis(delay))
                 }
-                blockChannel.offer(job)
-                return job.asDisposable()
+                block.run()
             }
-            return Disposables.disposed()
+            blockChannel.offer(job)
+            return job.asDisposable()
         }
 
         override fun dispose() {
