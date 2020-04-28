@@ -36,7 +36,9 @@ public fun CoroutineDispatcher.asScheduler(): Scheduler =
 private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) : Scheduler() {
 
     private val job = SupervisorJob()
-    private val scope = CoroutineScope(job + dispatcher)
+    private val scope = CoroutineScope(job + dispatcher + CoroutineExceptionHandler { _, throwable ->
+        RxJavaPlugins.onError(throwable)
+    })
 
     override fun scheduleDirect(block: Runnable): Disposable =
         scheduleDirect(block, 0, TimeUnit.MILLISECONDS)
@@ -136,10 +138,8 @@ public class SchedulerCoroutineDispatcher(
 
     /** @suppress */
     override fun toString(): String = scheduler.toString()
-
     /** @suppress */
     override fun equals(other: Any?): Boolean = other is SchedulerCoroutineDispatcher && other.scheduler === scheduler
-
     /** @suppress */
     override fun hashCode(): Int = System.identityHashCode(scheduler)
 }
