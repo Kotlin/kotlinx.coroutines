@@ -3,5 +3,5 @@
  */
 
 dependencies {
-    testCompile project(':kotlinx-coroutines-jdk8')
+    testCompile(project(":kotlinx-coroutines-jdk8"))
 }
