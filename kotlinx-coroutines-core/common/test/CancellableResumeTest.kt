@@ -138,4 +138,16 @@ class CancellableResumeTest : TestBase() {
         yield() // to coroutine -- throws cancellation exception
         finish(9)
     }
+
+
+    @Test
+    fun testResumeUnconfined() = runTest {
+        val outerScope = this
+        withContext(Dispatchers.Unconfined) {
+            val result = suspendCancellableCoroutine<String> {
+                outerScope.launch { it.resume("OK", {}) }
+            }
+            assertEquals("OK", result)
+        }
+    }
 }
