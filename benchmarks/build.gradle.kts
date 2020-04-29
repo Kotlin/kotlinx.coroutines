@@ -72,7 +72,7 @@ tasks.jmhJar {
 
 dependencies {
     compile("org.openjdk.jmh:jmh-core:1.21")
-    compile("io.projectreactor:reactor-core:${property("reactor_vesion")}")
+    compile("io.projectreactor:reactor-core:${version("reactor")}")
     compile("io.reactivex.rxjava2:rxjava:2.1.9")
     compile("com.github.akarnokd:rxjava2-extensions:0.20.8")
 

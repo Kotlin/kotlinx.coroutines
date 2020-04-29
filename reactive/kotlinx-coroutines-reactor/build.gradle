@@ -3,13 +3,13 @@
  */
 
 dependencies {
-    compile "io.projectreactor:reactor-core:$reactor_vesion"
+    compile "io.projectreactor:reactor-core:$reactor_version"
     compile project(':kotlinx-coroutines-reactive')
 }
 
 tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
-        url = new URL("https://projectreactor.io/docs/core/$reactor_vesion/api/")
+        url = new URL("https://projectreactor.io/docs/core/$reactor_version/api/")
         packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
     }
 }
