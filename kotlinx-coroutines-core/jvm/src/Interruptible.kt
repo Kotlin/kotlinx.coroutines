@@ -16,10 +16,9 @@ import kotlin.coroutines.*
  * Example:
  * ```
  * val blockingJob = launch {
- *     // This function will throw [CancellationException].
+ *     // This function will throw CancellationException
  *     runInterruptible(Dispatchers.IO) {
  *         // This blocking procedure will be interrupted when this coroutine is canceled
- *         // by Exception thrown by the below async block.
  *         doSomethingElseUsefulInterruptible()
  *     }
  * }
