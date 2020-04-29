@@ -83,8 +83,6 @@ buildscript {
 
         // JMH plugins
         classpath "com.github.jengelman.gradle.plugins:shadow:5.1.0"
-        classpath "me.champeau.gradle:jmh-gradle-plugin:0.5.0-rc-2"
-        classpath "net.ltgt.gradle:gradle-apt-plugin:0.21"
     }
 }
 
