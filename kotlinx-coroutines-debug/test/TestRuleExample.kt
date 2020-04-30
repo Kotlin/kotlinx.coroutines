@@ -11,7 +11,7 @@ class TestRuleExample {
 
     @JvmField
     @Rule
-    public val timeout = CoroutinesTimeout.seconds(1)
+    val timeout = CoroutinesTimeout.seconds(1)
 
     private suspend fun someFunctionDeepInTheStack() {
         withContext(Dispatchers.IO) {

@@ -19,16 +19,16 @@ private val VERBOSE = systemProp("test.verbose", false)
 /**
  * Is `true` when running in a nightly stress test mode.
  */
-public actual val isStressTest = System.getProperty("stressTest")?.toBoolean() ?: false
+actual val isStressTest = System.getProperty("stressTest")?.toBoolean() ?: false
 
-public val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
+val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
 
 /**
  * Multiply various constants in stress tests by this factor, so that they run longer during nightly stress test.
  */
-public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
+actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
 
-public val stressTestMultiplierCbrt = cbrt(stressTestMultiplier.toDouble()).roundToInt()
+val stressTestMultiplierCbrt = cbrt(stressTestMultiplier.toDouble()).roundToInt()
 
 /**
  * Base class for tests, so that tests for predictable scheduling of actions in multiple coroutines sharing a single
@@ -49,7 +49,7 @@ public val stressTestMultiplierCbrt = cbrt(stressTestMultiplier.toDouble()).roun
  * }
  * ```
  */
-public actual open class TestBase actual constructor() {
+actual open class TestBase actual constructor() {
     private var actionIndex = AtomicInteger()
     private var finished = AtomicBoolean()
     private var error = AtomicReference<Throwable>()
@@ -65,7 +65,7 @@ public actual open class TestBase actual constructor() {
      * complete successfully even if this exception is consumed somewhere in the test.
      */
     @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-    public actual fun error(message: Any, cause: Throwable? = null): Nothing {
+    actual fun error(message: Any, cause: Throwable? = null): Nothing {
         throw makeError(message, cause)
     }
 
@@ -90,14 +90,14 @@ public actual open class TestBase actual constructor() {
      * Throws [IllegalStateException] when `value` is false like `check` in stdlib, but also ensures that the
      * test will not complete successfully even if this exception is consumed somewhere in the test.
      */
-    public inline fun check(value: Boolean, lazyMessage: () -> Any) {
+    inline fun check(value: Boolean, lazyMessage: () -> Any) {
         if (!value) error(lazyMessage())
     }
 
     /**
      * Asserts that this invocation is `index`-th in the execution sequence (counting from one).
      */
-    public actual fun expect(index: Int) {
+    actual fun expect(index: Int) {
         val wasIndex = actionIndex.incrementAndGet()
         if (VERBOSE) println("expect($index), wasIndex=$wasIndex")
         check(index == wasIndex) { "Expecting action index $index but it is actually $wasIndex" }
@@ -106,14 +106,14 @@ public actual open class TestBase actual constructor() {
     /**
      * Asserts that this line is never executed.
      */
-    public actual fun expectUnreached() {
+    actual fun expectUnreached() {
         error("Should not be reached")
     }
 
     /**
      * Asserts that this it the last action in the test. It must be invoked by any test that used [expect].
      */
-    public actual fun finish(index: Int) {
+    actual fun finish(index: Int) {
         expect(index)
         check(!finished.getAndSet(true)) { "Should call 'finish(...)' at most once" }
     }
@@ -121,11 +121,11 @@ public actual open class TestBase actual constructor() {
     /**
      * Asserts that [finish] was invoked
      */
-    public actual fun ensureFinished() {
+    actual fun ensureFinished() {
         require(finished.get()) { "finish(...) should be caller prior to this check" }
     }
 
-    public actual fun reset() {
+    actual fun reset() {
         check(actionIndex.get() == 0 || finished.get()) { "Expecting that 'finish(...)' was invoked, but it was not" }
         actionIndex.set(0)
         finished.set(false)
@@ -181,7 +181,7 @@ public actual open class TestBase actual constructor() {
     }
 
     @Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-    public actual fun runTest(
+    actual fun runTest(
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit

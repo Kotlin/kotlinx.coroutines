@@ -59,7 +59,7 @@ class ScanTest : TestBase() {
         finish(4)
     }
 
-    public operator fun <T> Collection<T>.plus(element: T): List<T> {
+    operator fun <T> Collection<T>.plus(element: T): List<T> {
         val result = ArrayList<T>(size + 1)
         result.addAll(this)
         result.add(element)

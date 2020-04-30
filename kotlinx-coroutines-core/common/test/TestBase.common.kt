@@ -10,25 +10,25 @@ import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-public expect val isStressTest: Boolean
-public expect val stressTestMultiplier: Int
+expect val isStressTest: Boolean
+expect val stressTestMultiplier: Int
 
-public expect open class TestBase constructor() {
-    public fun error(message: Any, cause: Throwable? = null): Nothing
-    public fun expect(index: Int)
-    public fun expectUnreached()
-    public fun finish(index: Int)
-    public fun ensureFinished() // Ensures that 'finish' was invoked
-    public fun reset() // Resets counter and finish flag. Workaround for parametrized tests absence in common
+expect open class TestBase constructor() {
+    fun error(message: Any, cause: Throwable? = null): Nothing
+    fun expect(index: Int)
+    fun expectUnreached()
+    fun finish(index: Int)
+    fun ensureFinished() // Ensures that 'finish' was invoked
+    fun reset() // Resets counter and finish flag. Workaround for parametrized tests absence in common
 
-    public fun runTest(
+    fun runTest(
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
     )
 }
 
-public suspend inline fun hang(onCancellation: () -> Unit) {
+suspend inline fun hang(onCancellation: () -> Unit) {
     try {
         suspendCancellableCoroutine<Unit> { }
     } finally {
@@ -36,7 +36,7 @@ public suspend inline fun hang(onCancellation: () -> Unit) {
     }
 }
 
-public inline fun <reified T : Throwable> assertFailsWith(block: () -> Unit) {
+inline fun <reified T : Throwable> assertFailsWith(block: () -> Unit) {
     try {
         block()
         error("Should not be reached")
@@ -45,7 +45,7 @@ public inline fun <reified T : Throwable> assertFailsWith(block: () -> Unit) {
     }
 }
 
-public suspend inline fun <reified T : Throwable> assertFailsWith(flow: Flow<*>) {
+suspend inline fun <reified T : Throwable> assertFailsWith(flow: Flow<*>) {
     try {
         flow.collect()
         fail("Should be unreached")
@@ -54,21 +54,21 @@ public suspend inline fun <reified T : Throwable> assertFailsWith(flow: Flow<*>)
     }
 }
 
-public suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }
-public suspend fun Flow<Long>.longSum() = fold(0L) { acc, value -> acc + value }
+suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }
+suspend fun Flow<Long>.longSum() = fold(0L) { acc, value -> acc + value }
 
 
 // data is added to avoid stacktrace recovery because CopyableThrowable is not accessible from common modules
-public class TestException(message: String? = null, private val data: Any? = null) : Throwable(message)
-public class TestException1(message: String? = null, private val data: Any? = null) : Throwable(message)
-public class TestException2(message: String? = null, private val data: Any? = null) : Throwable(message)
-public class TestException3(message: String? = null, private val data: Any? = null) : Throwable(message)
-public class TestCancellationException(message: String? = null, private val data: Any? = null) : CancellationException(message)
-public class TestRuntimeException(message: String? = null, private val data: Any? = null) : RuntimeException(message)
-public class RecoverableTestException(message: String? = null) : RuntimeException(message)
-public class RecoverableTestCancellationException(message: String? = null) : CancellationException(message)
+class TestException(message: String? = null, private val data: Any? = null) : Throwable(message)
+class TestException1(message: String? = null, private val data: Any? = null) : Throwable(message)
+class TestException2(message: String? = null, private val data: Any? = null) : Throwable(message)
+class TestException3(message: String? = null, private val data: Any? = null) : Throwable(message)
+class TestCancellationException(message: String? = null, private val data: Any? = null) : CancellationException(message)
+class TestRuntimeException(message: String? = null, private val data: Any? = null) : RuntimeException(message)
+class RecoverableTestException(message: String? = null) : RuntimeException(message)
+class RecoverableTestCancellationException(message: String? = null) : CancellationException(message)
 
-public fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
+fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
     val dispatcher = context[ContinuationInterceptor] as CoroutineDispatcher
     return object : CoroutineDispatcher() {
         override fun isDispatchNeeded(context: CoroutineContext): Boolean =
@@ -78,7 +78,7 @@ public fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
     }
 }
 
-public suspend fun wrapperDispatcher(): CoroutineContext = wrapperDispatcher(coroutineContext)
+suspend fun wrapperDispatcher(): CoroutineContext = wrapperDispatcher(coroutineContext)
 
 class BadClass {
     override fun equals(other: Any?): Boolean = error("equals")

@@ -66,16 +66,16 @@ class CancellableContinuationJvmTest : TestBase() {
         private var isCancelled = false
 
         @Volatile
-        public var hasSubscriber = false
+        var hasSubscriber = false
 
-        public fun subscribe() {
+        fun subscribe() {
             hasSubscriber = true
             while (!isCancelled) {
                 Thread.sleep(10)
             }
         }
 
-        public fun cancel() {
+        fun cancel() {
             isCancelled = true
         }
     }

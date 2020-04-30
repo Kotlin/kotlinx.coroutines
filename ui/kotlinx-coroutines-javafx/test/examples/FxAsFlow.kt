@@ -33,7 +33,7 @@ class FxAsFlowApp: Application(), CoroutineScope {
     private val spinner = Spinner<Int>()
     private val spinnerChangesLabel = Label()
 
-    public override fun start(  primaryStage: Stage) {
+    override fun start(  primaryStage: Stage) {
         val gridPane = GridPane()
         gridPane.apply {
             hgap = 10.0
@@ -53,7 +53,7 @@ class FxAsFlowApp: Application(), CoroutineScope {
         }
     }
 
-    public override fun stop() {
+    override fun stop() {
         super.stop()
         job.cancel()
         job = Job()

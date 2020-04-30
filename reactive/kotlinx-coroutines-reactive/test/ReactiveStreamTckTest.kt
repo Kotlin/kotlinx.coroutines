@@ -19,10 +19,10 @@ class ReactiveStreamTckTest : TestBase() {
     }
 
     @DataProvider(name = "dispatchers")
-    public fun dispatchers(): Array<Array<Any>> = Dispatcher.values().map { arrayOf<Any>(it) }.toTypedArray()
+    fun dispatchers(): Array<Array<Any>> = Dispatcher.values().map { arrayOf<Any>(it) }.toTypedArray()
 
 
-    public class ReactiveStreamTckTestSuite(
+    class ReactiveStreamTckTestSuite(
         private val dispatcher: Dispatcher
     ) : PublisherVerification<Long>(TestEnvironment(500, 500)) {
 
@@ -37,7 +37,7 @@ class ReactiveStreamTckTest : TestBase() {
             }
 
         @Test
-        public override fun optional_spec105_emptyStreamMustTerminateBySignallingOnComplete() {
+        override fun optional_spec105_emptyStreamMustTerminateBySignallingOnComplete() {
             throw SkipException("Skipped")
         }
 

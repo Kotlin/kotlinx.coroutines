@@ -11,15 +11,15 @@ import kotlin.native.concurrent.*
  * Test dispatchers that emulate multiplatform context tracking.
  */
 @ThreadLocal
-public object NamedDispatchers {
+object NamedDispatchers {
 
     private val stack = ArrayStack()
 
-    public fun name(): String = stack.peek() ?: error("No names on stack")
+    fun name(): String = stack.peek() ?: error("No names on stack")
 
-    public fun nameOr(defaultValue: String): String = stack.peek() ?: defaultValue
+    fun nameOr(defaultValue: String): String = stack.peek() ?: defaultValue
 
-    public operator fun invoke(name: String) = named(name)
+    operator fun invoke(name: String) = named(name)
 
     private fun named(name: String): CoroutineDispatcher = object : CoroutineDispatcher() {
         override fun dispatch(context: CoroutineContext, block: Runnable) {
@@ -38,14 +38,14 @@ private class ArrayStack {
     private var elements = arrayOfNulls<String>(16)
     private var head = 0
 
-    public fun push(value: String) {
+    fun push(value: String) {
         if (elements.size == head - 1) ensureCapacity()
         elements[head++] = value
     }
 
-    public fun peek(): String? = elements.getOrNull(head - 1)
+    fun peek(): String? = elements.getOrNull(head - 1)
 
-    public fun pop(): String? {
+    fun pop(): String? {
         if (head == 0) return null
         return elements[--head]
     }

@@ -12,7 +12,7 @@ class AwaitStressTest : TestBase() {
 
     private val iterations = 50_000 * stressTestMultiplier
     @get:Rule
-    public val pool =  ExecutorRule(4)
+    val pool =  ExecutorRule(4)
 
     @Test
     fun testMultipleExceptions() = runTest {

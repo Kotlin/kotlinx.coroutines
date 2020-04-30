@@ -8,7 +8,7 @@ import org.junit.*
 
 class AwaitJvmTest : TestBase() {
     @Test
-    public fun testSecondLeak() = runTest {
+    fun testSecondLeak() = runTest {
         // This test is to make sure that handlers installed on the second deferred do not leak
         val d1 = CompletableDeferred<Int>()
         val d2 = CompletableDeferred<Int>()

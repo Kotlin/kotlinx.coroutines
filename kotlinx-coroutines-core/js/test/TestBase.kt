@@ -6,10 +6,10 @@ package kotlinx.coroutines
 
 import kotlin.js.*
 
-public actual val isStressTest: Boolean = false
-public actual val stressTestMultiplier: Int = 1
+actual val isStressTest: Boolean = false
+actual val stressTestMultiplier: Int = 1
 
-public actual open class TestBase actual constructor() {
+actual open class TestBase actual constructor() {
     private var actionIndex = 0
     private var finished = false
     private var error: Throwable? = null
@@ -19,7 +19,7 @@ public actual open class TestBase actual constructor() {
      * complete successfully even if this exception is consumed somewhere in the test.
      */
     @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-    public actual fun error(message: Any, cause: Throwable? = null): Nothing {
+    actual fun error(message: Any, cause: Throwable? = null): Nothing {
         if (cause != null) console.log(cause)
         val exception = IllegalStateException(
             if (cause == null) message.toString() else "$message; caused by $cause")
@@ -36,7 +36,7 @@ public actual open class TestBase actual constructor() {
     /**
      * Asserts that this invocation is `index`-th in the execution sequence (counting from one).
      */
-    public actual fun expect(index: Int) {
+    actual fun expect(index: Int) {
         val wasIndex = ++actionIndex
         check(index == wasIndex) { "Expecting action index $index but it is actually $wasIndex" }
     }
@@ -44,14 +44,14 @@ public actual open class TestBase actual constructor() {
     /**
      * Asserts that this line is never executed.
      */
-    public actual fun expectUnreached() {
+    actual fun expectUnreached() {
         error("Should not be reached")
     }
 
     /**
      * Asserts that this it the last action in the test. It must be invoked by any test that used [expect].
      */
-    public actual fun finish(index: Int) {
+    actual fun finish(index: Int) {
         expect(index)
         check(!finished) { "Should call 'finish(...)' at most once" }
         finished = true
@@ -60,11 +60,11 @@ public actual open class TestBase actual constructor() {
     /**
      * Asserts that [finish] was invoked
      */
-    public actual fun ensureFinished() {
+    actual fun ensureFinished() {
         require(finished) { "finish(...) should be caller prior to this check" }
     }
 
-    public actual fun reset() {
+    actual fun reset() {
         check(actionIndex == 0 || finished) { "Expecting that 'finish(...)' was invoked, but it was not" }
         actionIndex = 0
         finished = false
@@ -72,7 +72,7 @@ public actual open class TestBase actual constructor() {
 
     // todo: The dynamic (promise) result is a work-around for missing suspend tests, see KT-22228
     @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-    public actual fun runTest(
+    actual fun runTest(
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit

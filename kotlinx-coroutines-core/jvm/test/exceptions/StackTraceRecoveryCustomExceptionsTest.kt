@@ -13,12 +13,12 @@ class StackTraceRecoveryCustomExceptionsTest : TestBase() {
 
     internal class NonCopyable(val customData: Int) : Throwable() {
         // Bait
-        public constructor(cause: Throwable) : this(42)
+        constructor(cause: Throwable) : this(42)
     }
 
     internal class Copyable(val customData: Int) : Throwable(), CopyableThrowable<Copyable> {
         // Bait
-        public constructor(cause: Throwable) : this(42)
+        constructor(cause: Throwable) : this(42)
 
         override fun createCopy(): Copyable {
             val copy = Copyable(customData)

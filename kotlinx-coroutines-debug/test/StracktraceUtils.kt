@@ -7,7 +7,7 @@ package kotlinx.coroutines.debug
 import java.io.*
 import kotlin.test.*
 
-public fun String.trimStackTrace(): String =
+fun String.trimStackTrace(): String =
     trimIndent()
         .replace(Regex(":[0-9]+"), "")
         .replace(Regex("#[0-9]+"), "")
@@ -16,7 +16,7 @@ public fun String.trimStackTrace(): String =
         .replace("sun.misc.Unsafe.", "jdk.internal.misc.Unsafe.") // JDK8->JDK11
         .applyBackspace()
 
-public fun String.applyBackspace(): String {
+fun String.applyBackspace(): String {
     val array = toCharArray()
     val stack = CharArray(array.size)
     var stackSize = -1
@@ -31,7 +31,7 @@ public fun String.applyBackspace(): String {
     return String(stack, 0, stackSize + 1)
 }
 
-public fun verifyStackTrace(e: Throwable, traces: List<String>) {
+fun verifyStackTrace(e: Throwable, traces: List<String>) {
     val stacktrace = toStackTrace(e)
     val trimmedStackTrace = stacktrace.trimStackTrace()
     traces.forEach {
@@ -46,15 +46,15 @@ public fun verifyStackTrace(e: Throwable, traces: List<String>) {
     assertEquals(causes, traces.map { it.count("Caused by") }.sum())
 }
 
-public fun toStackTrace(t: Throwable): String {
+fun toStackTrace(t: Throwable): String {
     val sw = StringWriter()
     t.printStackTrace(PrintWriter(sw))
     return sw.toString()
 }
 
-public fun String.count(substring: String): Int = split(substring).size - 1
+fun String.count(substring: String): Int = split(substring).size - 1
 
-public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null, finally: () -> Unit) {
+fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null, finally: () -> Unit) {
     try {
         verifyDump(*traces, ignoredCoroutine = ignoredCoroutine)
     } finally {
@@ -87,7 +87,7 @@ private fun cleanBlockHoundTraces(frames: List<String>): List<String> {
     return result
 }
 
-public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
+fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
     val baos = ByteArrayOutputStream()
     DebugProbes.dumpCoroutines(PrintStream(baos))
     val trace = baos.toString().split("\n\n")
@@ -119,9 +119,9 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
     }
 }
 
-public fun String.trimPackage() = replace("kotlinx.coroutines.debug.", "")
+fun String.trimPackage() = replace("kotlinx.coroutines.debug.", "")
 
-public fun verifyPartialDump(createdCoroutinesCount: Int, vararg frames: String) {
+fun verifyPartialDump(createdCoroutinesCount: Int, vararg frames: String) {
     val baos = ByteArrayOutputStream()
     DebugProbes.dumpCoroutines(PrintStream(baos))
     val dump = baos.toString()

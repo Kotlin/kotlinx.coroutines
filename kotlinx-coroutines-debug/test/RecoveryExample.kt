@@ -16,7 +16,7 @@ object PublicApiImplementation : CoroutineScope by CoroutineScope(CoroutineName(
         return doWork() + 1
     }
 
-    public suspend fun awaitAsynchronousWorkInMainThread() {
+    suspend fun awaitAsynchronousWorkInMainThread() {
         val task = async(Dispatchers.Default) {
             asynchronousWork()
         }

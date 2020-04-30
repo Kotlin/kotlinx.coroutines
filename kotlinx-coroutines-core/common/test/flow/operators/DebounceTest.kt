@@ -11,7 +11,7 @@ import kotlin.time.*
 
 class DebounceTest : TestBase() {
     @Test
-    public fun testBasic() = withVirtualTime {
+    fun testBasic() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(3)
@@ -202,7 +202,7 @@ class DebounceTest : TestBase() {
 
     @ExperimentalTime
     @Test
-    public fun testDurationBasic() = withVirtualTime {
+    fun testDurationBasic() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(3)

@@ -12,7 +12,7 @@ class CoroutinesTimeoutEagerTest : TestBase() {
 
     @Rule
     @JvmField
-    public val validation = TestFailureValidation(
+    val validation = TestFailureValidation(
         500, true, true,
         TestResultSpec(
             "hangingTest", expectedOutParts = listOf(

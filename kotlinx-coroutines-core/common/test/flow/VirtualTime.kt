@@ -75,7 +75,7 @@ private class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : CoroutineD
  *    return from [withVirtualTime] before the test is executed completely.
  *    To decrease the probability of such error, additional `finish` constraint is added.
  */
-public fun TestBase.withVirtualTime(block: suspend CoroutineScope.() -> Unit) = runTest {
+fun TestBase.withVirtualTime(block: suspend CoroutineScope.() -> Unit) = runTest {
     withContext(Dispatchers.Unconfined) {
         // Create a platform-independent event loop
         val dispatcher = VirtualTimeDispatcher(this)

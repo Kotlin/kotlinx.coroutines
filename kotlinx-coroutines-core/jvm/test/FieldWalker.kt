@@ -31,9 +31,9 @@ object FieldWalker {
      * Reflectively starts to walk through object graph and returns identity set of all reachable objects.
      * Use [walkRefs] if you need a path from root for debugging.
      */
-    public fun walk(root: Any?): Set<Any> = walkRefs(root).keys
+    fun walk(root: Any?): Set<Any> = walkRefs(root).keys
 
-    public fun assertReachableCount(expected: Int, root: Any?, predicate: (Any) -> Boolean) {
+    fun assertReachableCount(expected: Int, root: Any?, predicate: (Any) -> Boolean) {
         val visited = walkRefs(root)
         val actual = visited.keys.filter(predicate)
         if (actual.size != expected) {

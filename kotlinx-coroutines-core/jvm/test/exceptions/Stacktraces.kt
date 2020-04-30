@@ -4,7 +4,7 @@ import kotlinx.coroutines.*
 import java.io.*
 import kotlin.test.*
 
-public fun verifyStackTrace(e: Throwable, vararg traces: String) {
+fun verifyStackTrace(e: Throwable, vararg traces: String) {
     val stacktrace = toStackTrace(e)
     val normalizedActual = stacktrace.normalizeStackTrace()
     traces.forEach {
@@ -20,19 +20,19 @@ public fun verifyStackTrace(e: Throwable, vararg traces: String) {
     assertEquals(traces.map { it.count("Caused by") }.sum(), causes)
 }
 
-public fun verifyStackTrace(path: String, e: Throwable) {
+fun verifyStackTrace(path: String, e: Throwable) {
     val resource = Job::class.java.classLoader.getResourceAsStream("stacktraces/$path.txt")
     val lines = resource.reader().readLines()
     verifyStackTrace(e, *lines.toTypedArray())
 }
 
-public fun toStackTrace(t: Throwable): String {
+fun toStackTrace(t: Throwable): String {
     val sw = StringWriter() as Writer
     t.printStackTrace(PrintWriter(sw))
     return sw.toString()
 }
 
-public fun String.normalizeStackTrace(): String =
+fun String.normalizeStackTrace(): String =
     applyBackspace()
     .replace(Regex(":[0-9]+"), "") // remove line numbers
     .replace("kotlinx_coroutines_core_main", "") // yay source sets
@@ -40,7 +40,7 @@ public fun String.normalizeStackTrace(): String =
     .replace(Regex("@[0-9a-f]+"), "") // remove hex addresses in debug toStrings
     .lines().joinToString("\n") // normalize line separators
 
-public fun String.applyBackspace(): String {
+fun String.applyBackspace(): String {
     val array = toCharArray()
     val stack = CharArray(array.size)
     var stackSize = -1
@@ -54,4 +54,4 @@ public fun String.applyBackspace(): String {
     return String(stack, 0, stackSize)
 }
 
-public fun String.count(substring: String): Int = split(substring).size - 1
+fun String.count(substring: String): Int = split(substring).size - 1

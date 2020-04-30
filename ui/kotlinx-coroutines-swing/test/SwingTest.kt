@@ -36,7 +36,7 @@ class SwingTest : TestBase() {
     private class SwingComponent(coroutineContext: CoroutineContext = EmptyCoroutineContext) :
         CoroutineScope by MainScope() + coroutineContext
     {
-        public var executed = false
+        var executed = false
         fun testLaunch(): Job = launch {
             check(SwingUtilities.isEventDispatchThread())
             executed = true

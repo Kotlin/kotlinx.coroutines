@@ -8,12 +8,12 @@ import kotlinx.coroutines.*
 import kotlin.jvm.*
 import kotlin.reflect.*
 
-public typealias Handler<T> = suspend CoroutineScope.(T) -> Unit
+typealias Handler<T> = suspend CoroutineScope.(T) -> Unit
 
 /*
  * Design of this builder is not yet stable, so leaving it as is.
  */
-public class LaunchFlowBuilder<T> {
+class LaunchFlowBuilder<T> {
     /*
      * NB: this implementation is a temporary ad-hoc (and slightly incorrect)
      * solution until coroutine-builders are ready
@@ -27,21 +27,21 @@ public class LaunchFlowBuilder<T> {
     @PublishedApi
     internal var exceptionHandlers = LinkedHashMap<KClass<*>, Handler<Throwable>>()
 
-    public fun onEach(action: suspend CoroutineScope.(value: T) -> Unit) {
+    fun onEach(action: suspend CoroutineScope.(value: T) -> Unit) {
         check(onEach == null) { "onEach block is already registered" }
         check(exceptionHandlers.isEmpty()) { "onEach block should be registered before exceptionHandlers block" }
         check(finally == null) { "onEach block should be registered before finally block" }
         onEach = action
     }
 
-    public inline fun <reified T : Throwable> catch(noinline action: suspend CoroutineScope.(T) -> Unit) {
+    inline fun <reified T : Throwable> catch(noinline action: suspend CoroutineScope.(T) -> Unit) {
         check(onEach != null) { "onEach block should be registered first" }
         check(finally == null) { "exceptionHandlers block should be registered before finally block" }
         @Suppress("UNCHECKED_CAST")
             exceptionHandlers[T::class] = action as Handler<Throwable>
     }
 
-    public fun finally(action: suspend CoroutineScope.(cause: Throwable?) -> Unit) {
+    fun finally(action: suspend CoroutineScope.(cause: Throwable?) -> Unit) {
         check(finally == null) { "Finally block is already registered" }
         check(onEach != null) { "onEach block should be registered before finally block" }
         if (finally == null) finally = action
@@ -92,7 +92,7 @@ private fun <T> CoroutineScope.launchFlow(
     }
 }
 
-public fun <T> Flow<T>.launchIn(
+fun <T> Flow<T>.launchIn(
     scope: CoroutineScope,
     builder: LaunchFlowBuilder<T>.() -> Unit
 ): Job = scope.launchFlow(this, builder)

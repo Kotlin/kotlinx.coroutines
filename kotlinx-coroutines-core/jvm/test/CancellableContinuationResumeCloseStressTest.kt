@@ -12,7 +12,7 @@ import kotlin.test.Test
 
 class CancellableContinuationResumeCloseStressTest : TestBase() {
     @get:Rule
-    public val dispatcher = ExecutorRule(2)
+    val dispatcher = ExecutorRule(2)
 
     private val startBarrier = CyclicBarrier(3)
     private val doneBarrier = CyclicBarrier(2)
