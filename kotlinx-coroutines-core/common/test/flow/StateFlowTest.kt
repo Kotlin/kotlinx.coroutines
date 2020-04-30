@@ -9,26 +9,26 @@ import kotlin.test.*
 
 class StateFlowTest : TestBase() {
     @Test
-    fun testNullAndNormalClose() = runTest {
+    fun testNormalAndNull() = runTest {
         expect(1)
-        val state = StateFlow<Int?>(0)
-        assertFalse(state.isClosed)
-        launch(start = CoroutineStart.UNDISPATCHED) {
+        val state = MutableStateFlow<Int?>(0)
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            state.collect { value ->
-                when (value) {
-                    0 -> expect(3)
-                    1 -> expect(5)
-                    null -> expect(8)
-                    2 -> expect(10)
-                    else -> expectUnreached()
+            assertFailsWith<CancellationException> {
+                state.collect { value ->
+                    when (value) {
+                        0 -> expect(3)
+                        1 -> expect(5)
+                        null -> expect(8)
+                        2 -> expect(10)
+                        else -> expectUnreached()
+                    }
                 }
             }
             expect(12)
         }
         expect(4) // collector is waiting
         state.value = 1 // fire in the hole!
-        assertFalse(state.isClosed)
         assertEquals(1, state.value)
         yield()
         expect(6)
@@ -36,85 +36,32 @@ class StateFlowTest : TestBase() {
         yield()
         expect(7)
         state.value = null // null value
-        assertFalse(state.isClosed)
         assertNull(state.value)
         yield()
         expect(9)
         state.value = 2 // another value
-        assertFalse(state.isClosed)
         assertEquals(2, state.value)
         yield()
         expect(11)
-        state.close()
-        assertTrue(state.isClosed)
-        assertEquals(2, state.value) // the last value is still there
+        job.cancel()
         yield()
         finish(13)
     }
 
     @Test
-    fun testCloseWithException() = runTest {
-        expect(1)
-        val state = StateFlow("A")
-        assertFalse(state.isClosed)
-        assertEquals("A", state.value)
-        launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            try {
-                state.collect { value ->
-                    when (value) {
-                        "A" -> expect(3)
-                        "B" -> expect(5)
-                        else -> expectUnreached()
-                    }
-                }
-            } catch (e: TestException) {
-                expect(7)
-                return@launch
-            }
-            expectUnreached()
-        }
-        expect(4)
-        state.value = "B"
-        assertFalse(state.isClosed)
-        assertEquals("B", state.value)
-        yield()
-        expect(6)
-        state.close(TestException("OK"))
-        assertTrue(state.isClosed)
-        assertEquals("B", state.value) // the last value is still there
-        yield()
-        finish(8)
-    }
-
-    @Test
-    fun testCollectClosed() = runTest {
-        expect(1)
-        val state = StateFlow(0)
-        launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            assertEquals(listOf(0, 42), state.toList()) // collects initial value and update
-            expect(3)
-        }
-        state.value = 42 // update
-        state.close() // and immediately close
-        yield()
-        assertEquals(listOf(42), state.toList()) // last value only when collecting from closed state flow
-        finish(4)
-    }
-
-    @Test
     fun testEqualsConflation() = runTest {
         expect(1)
-        val state = StateFlow(Data(0))
-        launch(start = CoroutineStart.UNDISPATCHED) {
+        val state = MutableStateFlow(Data(0))
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            state.collect { value ->
-                when(value.i) {
-                    0 -> expect(3) // initial value
-                    2 -> expect(5)
-                    4 -> expect(7)
-                    else -> error("Unexpected $value")
+            assertFailsWith<CancellationException> {
+                state.collect { value ->
+                    when(value.i) {
+                        0 -> expect(3) // initial value
+                        2 -> expect(5)
+                        4 -> expect(7)
+                        else -> error("Unexpected $value")
+                    }
                 }
             }
             expect(9)
@@ -132,8 +79,8 @@ class StateFlowTest : TestBase() {
         state.value = Data(4) // delivered
         expect(6)
         yield()
-        state.close() // last value will not repeat as a side-effect of close!
         expect(8)
+        job.cancel()
         yield()
         finish(10)
     }
@@ -155,7 +102,7 @@ class StateFlowTest : TestBase() {
 
     class CounterModel {
         // private data flow
-        private val _counter = StateFlow(0)
+        private val _counter = MutableStateFlow(0)
         // publicly exposed as a flow
         val counter: StateFlow<Int> get() = _counter
 

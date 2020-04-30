@@ -982,8 +982,6 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun skip (Lkotlinx/coroutines/flow/Flow;I)Lkotlinx/coroutines/flow/Flow;
 	public static final fun startWith (Lkotlinx/coroutines/flow/Flow;Ljava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun startWith (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;)Lkotlinx/coroutines/flow/Flow;
-	public static final fun stateIn (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/CoroutineScope;Ljava/lang/Object;)Lkotlinx/coroutines/flow/StateFlowJob;
-	public static final fun stateIn (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun subscribe (Lkotlinx/coroutines/flow/Flow;)V
 	public static final fun subscribe (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;)V
 	public static final fun subscribe (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)V
@@ -1004,34 +1002,16 @@ public final class kotlinx/coroutines/flow/FlowKt {
 }
 
 public abstract interface class kotlinx/coroutines/flow/MutableStateFlow : kotlinx/coroutines/flow/StateFlow {
-	public abstract fun close (Ljava/lang/Throwable;)Z
 	public abstract fun getValue ()Ljava/lang/Object;
 	public abstract fun setValue (Ljava/lang/Object;)V
 }
 
-public final class kotlinx/coroutines/flow/MutableStateFlow$DefaultImpls {
-	public static synthetic fun close$default (Lkotlinx/coroutines/flow/MutableStateFlow;Ljava/lang/Throwable;ILjava/lang/Object;)Z
-}
-
 public abstract interface class kotlinx/coroutines/flow/StateFlow : kotlinx/coroutines/flow/Flow {
 	public abstract fun getValue ()Ljava/lang/Object;
-	public abstract fun isClosed ()Z
-}
-
-public abstract interface class kotlinx/coroutines/flow/StateFlowJob : kotlinx/coroutines/Job, kotlinx/coroutines/flow/StateFlow {
-}
-
-public final class kotlinx/coroutines/flow/StateFlowJob$DefaultImpls {
-	public static synthetic fun cancel (Lkotlinx/coroutines/flow/StateFlowJob;)V
-	public static fun fold (Lkotlinx/coroutines/flow/StateFlowJob;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
-	public static fun get (Lkotlinx/coroutines/flow/StateFlowJob;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
-	public static fun minusKey (Lkotlinx/coroutines/flow/StateFlowJob;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
-	public static fun plus (Lkotlinx/coroutines/flow/StateFlowJob;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
-	public static fun plus (Lkotlinx/coroutines/flow/StateFlowJob;Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
 }
 
 public final class kotlinx/coroutines/flow/StateFlowKt {
-	public static final fun StateFlow (Ljava/lang/Object;)Lkotlinx/coroutines/flow/MutableStateFlow;
+	public static final fun MutableStateFlow (Ljava/lang/Object;)Lkotlinx/coroutines/flow/MutableStateFlow;
 }
 
 public abstract class kotlinx/coroutines/flow/internal/ChannelFlow : kotlinx/coroutines/flow/internal/FusibleFlow {

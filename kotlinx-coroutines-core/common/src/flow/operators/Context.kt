@@ -196,9 +196,6 @@ public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
  *
  * Note that an instance of [StateFlow] does not have an execution context by itself,
  * so applying `flowOn` to a `StateFlow` has not effect. See [StateFlow] documentation on Operator Fusion.
- * If you use [stateIn] operator and need to change the execution context of the flow that this operator
- * is applied to, then put `flowOn` before `stateIn` or pass the scope with the appropriate context directly
- * to the [stateIn] operator.
  *
  * @throws [IllegalArgumentException] if provided context contains [Job] instance.
  */

@@ -10,7 +10,7 @@ import kotlin.random.*
 
 class StateFlowStressTest : TestBase() {
     private val nSeconds = 3 * stressTestMultiplier
-    private val state = StateFlow<Long>(0)
+    private val state = MutableStateFlow<Long>(0)
     private lateinit var pool: ExecutorCoroutineDispatcher
 
     @After
@@ -33,12 +33,13 @@ class StateFlowStressTest : TestBase() {
                             val emitter = (value % nEmitters).toInt()
                             val current = value / nEmitters
                             // the first value in batch is allowed to repeat, but cannot go back
-                            val ok = if (index == 0) current >= c[emitter] else current > c[emitter]
+                            val ok = if (index++ == 0) current >= c[emitter] else current > c[emitter]
                             check(ok) {
                                 "Values must be monotonic, but $current is not, " +
                                     "was ${c[emitter]} in collector #$collector from emitter #$emitter"
                             }
                             c[emitter] = current
+
                         }.take(batchSize).map { 1 }.sum()
                     } while (cnt == batchSize)
                 }
@@ -64,8 +65,7 @@ class StateFlowStressTest : TestBase() {
             println("$second: emitted=${emitted.sum()}, collected=${cs.min()}..${cs.max()}")
         }
         emitters.cancelAndJoin()
-        state.close()
-        collectors.join()
+        collectors.cancelAndJoin()
         // make sure nothing hanged up
         require(collected.all { c ->
             c.withIndex().all { (emitter, current) -> current > emitted[emitter] / 2 }
