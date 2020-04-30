@@ -135,9 +135,9 @@ import kotlin.native.concurrent.*
  *
  * ### Operator fusion
  *
- * Application of [flowOn], [conflate],
+ * Application of [flowOn][Flow.flowOn], [conflate][Flow.conflate],
  * [buffer] with [CONFLATED][Channel.CONFLATED] or [RENDEZVOUS][Channel.RENDEZVOUS] capacity,
- * or a [distinctUntilChanged] operator has no effect on the state flow.
+ * or a [distinctUntilChanged][Flow.distinctUntilChanged] operator has no effect on the state flow.
  * 
  * ### Implementation notes
  *

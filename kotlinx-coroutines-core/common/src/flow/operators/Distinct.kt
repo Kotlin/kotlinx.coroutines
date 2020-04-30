@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  *
  * Note that any instance of [StateFlow] already behaves as if `distinctUtilChanged` operator is
  * applied to it, so applying `distinctUntilChanged` to a `StateFlow` has not effect.
+ * See [StateFlow] documentation on Operator Fusion.
  */
 public fun <T> Flow<T>.distinctUntilChanged(): Flow<T> =
     when (this) {

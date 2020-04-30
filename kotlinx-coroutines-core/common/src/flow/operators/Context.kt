@@ -145,6 +145,10 @@ public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> {
  * Adjacent applications of `conflate`/[buffer], [channelFlow], [flowOn], [produceIn], and [broadcastIn] are
  * always fused so that only one properly configured channel is used for execution.
  * **Conflation takes precedence over `buffer()` calls with any other capacity.**
+ *
+ * Note that any instance of [StateFlow] already behaves as if `conflate` operator is
+ * applied to it, so applying `conflate` to a `StateFlow` has not effect.
+ * See [StateFlow] documentation on Operator Fusion.
  */
 public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
 
@@ -189,6 +193,12 @@ public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
  *     .flowOn(Dispatchers.IO) // This one takes precedence
  *     .flowOn(Dispatchers.Default)
  * ```
+ *
+ * Note that an instance of [StateFlow] does not have an execution context by itself,
+ * so applying `flowOn` to a `StateFlow` has not effect. See [StateFlow] documentation on Operator Fusion.
+ * If you use [stateIn] operator and need to change the execution context of the flow that this operator
+ * is applied to, then put `flowOn` before `stateIn` or pass the scope with the appropriate context directly
+ * to the [stateIn] operator.
  *
  * @throws [IllegalArgumentException] if provided context contains [Job] instance.
  */
