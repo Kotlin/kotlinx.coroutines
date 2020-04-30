@@ -1,4 +1,4 @@
-    /*
+/*
  * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
@@ -75,12 +75,13 @@ import kotlin.native.concurrent.*
  *
  * ### Strong equality-based conflation
  *
- * Values in state flow are conflated using [Any.equals] comparison. It is used to conflate incoming updates
+ * Values in state flow are conflated using [Any.equals] comparison in a similar way to
+ * [distinctUntilChanged] operator. It is used to conflate incoming updates
  * to [value][MutableStateFlow.value] in [MutableStateFlow] and to suppress emission of the values to collectors
  * when new value is equal to the previously emitted one. State flow behavior with classes that violate
  * the contract for [Any.equals] is unspecified.
  *
- * Note, that this conflation logic is stronger that the conflation that is used by [Flow.conflate] operator,
+ * Note, that this conflation logic is stronger that the conflation that is used by [conflate] operator,
  * which is based on object identity. For example, consider this flow of strings that are emitted
  * every 100ms:
  *
@@ -121,8 +122,8 @@ import kotlin.native.concurrent.*
  * * `StateFlow` conflation works similarly to [Flow.conflate] operator in that the last emitted value
  *    before close is received by collectors and is always available afterwards, unlike
  *    `ConflatedBroadcastChannel` that does not keep the last value when closed.
- * * `StateFlow` conflation is based on equality, unlike conflation in `ConflatedBroadcastChannel`
- *    that is based on reference identity.
+ * * `StateFlow` conflation is based on equality like [distinctUntilChanged] operator,
+ *    unlike conflation in `ConflatedBroadcastChannel` that is based on reference identity.
  *
  * `StateFlow` is designed to better cover typical use-cases of keeping track of state changes in time, taking
  * more pragmatic design choices for the sake of convenience.
@@ -134,9 +135,9 @@ import kotlin.native.concurrent.*
  *
  * ### Operator fusion
  *
- * Application of [flowOn], [conflate], and
- * [buffer] with [CONFLATED][Channel.CONFLATED] or [RENDEZVOUS][Channel.RENDEZVOUS] capacity
- * has no effect on the state flow.
+ * Application of [flowOn], [conflate],
+ * [buffer] with [CONFLATED][Channel.CONFLATED] or [RENDEZVOUS][Channel.RENDEZVOUS] capacity,
+ * or a [distinctUntilChanged] operator has no effect on the state flow.
  * 
  * ### Implementation notes
  *
