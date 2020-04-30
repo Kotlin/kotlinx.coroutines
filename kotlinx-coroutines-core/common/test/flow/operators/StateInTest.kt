@@ -12,6 +12,26 @@ class StateInTest : TestBase() {
     }
 
     @Test
+    fun testEmptyFlowNullValue() = runTest {
+        val state = emptyFlow<Int>().stateIn(this, null)
+        assertEquals(null, state.value)
+        assertFalse(state.isClosed)
+        yield()
+        assertEquals(null, state.value)
+        assertTrue(state.isClosed)
+    }
+
+    @Test
+    fun testEmptyFlowZeroValue() = runTest {
+        val state = emptyFlow<Int>().stateIn(this, 0)
+        assertEquals(0, state.value)
+        assertFalse(state.isClosed)
+        yield()
+        assertEquals(0, state.value)
+        assertTrue(state.isClosed)
+    }
+
+    @Test
     fun testFailingFlow() = runTest {
         assertFailsWith<TestException> {
             flow<Int> { throw TestException() }.stateIn(this)
@@ -19,9 +39,38 @@ class StateInTest : TestBase() {
     }
 
     @Test
+    fun testFailingFlowValue() = runTest {
+        expect(1)
+        val state = flow<Int> { throw TestException() }.stateIn(this, 42)
+        assertEquals(42, state.value)
+        assertFalse(state.isClosed)
+        yield()
+        assertEquals(42, state.value)
+        assertTrue(state.isClosed)
+        assertFailsWith<TestException> {
+            expect(2)
+            state.collect { value ->
+                assertEquals(42, value)
+                expect(3)
+            }
+        }
+        finish(4)
+    }
+
+    @Test
     fun testOneElementFlow() = runTest {
         val state = flowOf("OK").onCompletion { yield() }.stateIn(this)
         assertEquals("OK", state.value)
+        assertFalse(state.isClosed)
+        yield()
+        assertEquals("OK", state.value)
+        assertTrue(state.isClosed)
+    }
+
+    @Test
+    fun testOneElementFlowValue() = runTest {
+        val state = flowOf("OK").stateIn(this, "INIT")
+        assertEquals("INIT", state.value)
         assertFalse(state.isClosed)
         yield()
         assertEquals("OK", state.value)

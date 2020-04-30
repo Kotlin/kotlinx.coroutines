@@ -147,7 +147,7 @@ import kotlin.native.concurrent.*
  * cost, where `N` is the number of active collectors.
  */
 @ExperimentalCoroutinesApi
-public interface StateFlow<T> : Flow<T> {
+public interface StateFlow<out T> : Flow<T> {
     /**
      * The current value of this state flow.
      */
