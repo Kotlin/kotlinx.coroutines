@@ -240,11 +240,20 @@ configure(subprojects.findAll { it.name != coreModule && it.name != rootModule }
 
 // Redefine source sets because we are not using 'kotlin/main/fqn' folder convention
 configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != "benchmarks" && it.name != coreModule }) {
-    sourceSets {
-        main.kotlin.srcDirs = ['src']
-        test.kotlin.srcDirs = ['test']
-        main.resources.srcDirs = ['resources']
-        test.resources.srcDirs = ['test-resources']
+    if (it.name == 'example-frontend-js') {
+        kotlin.sourceSets {
+            main.kotlin.srcDirs = ['src']
+            test.kotlin.srcDirs = ['test']
+            main.resources.srcDirs = ['resources']
+            test.resources.srcDirs = ['test-resources']
+        }
+    } else {
+        sourceSets {
+            main.kotlin.srcDirs = ['src']
+            test.kotlin.srcDirs = ['test']
+            main.resources.srcDirs = ['resources']
+            test.resources.srcDirs = ['test-resources']
+        }
     }
 }
 
