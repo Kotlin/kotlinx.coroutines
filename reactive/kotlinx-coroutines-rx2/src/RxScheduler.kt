@@ -65,10 +65,9 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
 
         private val workerScope = CoroutineScope(SupervisorJob(parentJob) + dispatcher)
         private val blockChannel = Channel<Job>(Channel.UNLIMITED)
-        private var queueProcessingJob: Job? = null
 
         init {
-            queueProcessingJob = workerScope.launch {
+            workerScope.launch {
                 while (isActive) {
                     val job = blockChannel.receive()
                     if (!job.isCancelled) {
