@@ -13,15 +13,6 @@ def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'js-stub', 'stdlib-s
 // Not published
 def unpublished = internal + ['example-frontend-js', 'android-unit-tests']
 
-static def platformOf(project) {
-    def name = project.name
-    if (name.endsWith("-js")) return "js"
-    if (name.endsWith("-common") || name.endsWith("-native")) {
-        throw IllegalStateException("$name platform is not supported")
-    }
-    return "jvm"
-}
-
 buildscript {
     /*
      * These property group is used to build kotlinx.coroutines against Kotlin compiler snapshot.
@@ -164,7 +155,7 @@ allprojects {
 // Add dependency to core source sets. Core is configured in kx-core/build.gradle
 configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != coreModule }) {
     evaluationDependsOn(":$coreModule")
-    def platform = platformOf(it)
+    def platform = PlatformKt.platformOf(it)
     apply from: rootProject.file("gradle/compile-${platform}.gradle")
     dependencies {
         // See comment below for rationale, it will be replaced with "project" dependency
