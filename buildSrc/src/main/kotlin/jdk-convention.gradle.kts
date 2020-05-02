@@ -1,3 +1,8 @@
 if (javaVersionMajor < 11) {
-    throw GradleException("Project required JDK 11+, but found $javaVersion")
+    val message = "Project required JDK 11+, but found $javaVersion"
+    if (Idea.active) {
+        logger.error(message)
+    } else {
+        throw GradleException(message)
+    }
 }
