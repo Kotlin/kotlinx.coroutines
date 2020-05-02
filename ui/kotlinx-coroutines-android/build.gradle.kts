@@ -21,59 +21,20 @@ dependencies {
     "r8"("com.android.tools.build:builder:4.0.0-alpha06") // Contains r8-2.0.4-dev
 }
 
-open class RunR8Task : JavaExec() {
-
-    @OutputDirectory
-    lateinit var outputDex: File
-
-    @InputFile
-    lateinit var inputConfig: File
-
-    @InputFile
-    val inputConfigCommon: File = File("testdata/r8-test-common.pro")
-
-    @InputFiles
-    val jarFile: File = project.tasks.named<Zip>("jar").get().archivePath
-
-    init {
-        classpath = project.configurations["r8"]
-        main = "com.android.tools.r8.R8"
-    }
-
-    override fun exec() {
-        // Resolve classpath only during execution
-        val arguments = mutableListOf(
-            "--release",
-            "--no-desugaring",
-            "--output", outputDex.absolutePath,
-            "--pg-conf", inputConfig.absolutePath
-        )
-        arguments.addAll(project.configurations.runtimeClasspath.files.map { it.absolutePath })
-        arguments.add(jarFile.absolutePath)
-
-        args = arguments
-
-        project.delete(outputDex)
-        outputDex.mkdirs()
-
-        super.exec()
-    }
-}
-
 val optimizedDexDir = File(buildDir, "dex-optim/")
 val unOptimizedDexDir = File(buildDir, "dex-unoptim/")
 
 val optimizedDexFile = File(optimizedDexDir, "classes.dex")
 val unOptimizedDexFile = File(unOptimizedDexDir, "classes.dex")
 
-val runR8 = tasks.register<RunR8Task>("runR8") {
+val runR8 by tasks.registering(RunR8::class) {
     outputDex = optimizedDexDir
     inputConfig = file("testdata/r8-test-rules.pro")
 
     dependsOn("jar")
 }
 
-val runR8NoOptim = tasks.register<RunR8Task>("runR8NoOptim") {
+val runR8NoOptim by tasks.registering(RunR8::class) {
     outputDex = unOptimizedDexDir
     inputConfig = file("testdata/r8-test-rules-no-optim.pro")
 
@@ -96,9 +57,6 @@ tasks.test {
     }
 }
 
-tasks.withType<DokkaTask>().configureEach {
-    externalDocumentationLink(delegateClosureOf<ExternalDocumentationLink.Builder> {
-        url = URL("https://developer.android.com/reference/")
-        packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
-    })
-}
+externalDocumentationLink(
+    url = "https://developer.android.com/reference/"
+)
