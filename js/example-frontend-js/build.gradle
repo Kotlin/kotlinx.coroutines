@@ -5,36 +5,19 @@
 apply plugin: 'kotlin-dce-js'
 apply from: rootProject.file('gradle/node-js.gradle')
 
-// Workaround resolving new Gradle metadata with kotlin2js
-// TODO: Remove once KT-37188 is fixed
-try {
-    def jsCompilerType = Class.forName("org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute")
-    def jsCompilerAttr = Attribute.of("org.jetbrains.kotlin.js.compiler", jsCompilerType)
-    project.dependencies.attributesSchema.attribute(jsCompilerAttr)
-    configurations {
-        matching {
-            it.name.endsWith("Classpath")
-        }.forEach {
-            it.attributes.attribute(jsCompilerAttr, jsCompilerType.legacy)
-        }
-    }
-} catch (java.lang.ClassNotFoundException e) {
-    // org.jetbrains.kotlin.gradle.targets.js.JsCompilerType is missing in 1.3.x
-    // But 1.3.x doesn't generate Gradle metadata, so this workaround is not needed
-}
-
 dependencies {
     compile "org.jetbrains.kotlinx:kotlinx-html-js:$html_version"
 }
 
-compileKotlin2Js {
+compileKotlinJs {
     kotlinOptions {
         main = "call"
     }
 }
 
-task bundle(type: NpmTask, dependsOn: [npmInstall, runDceKotlinJs]) {
+task bundle(type: NpmTask, dependsOn: [npmInstall, build]) {
     inputs.files(fileTree("$buildDir/kotlin-js-min/main"))
+    inputs.files(fileTree("$buildDir/kotlin-js-min/legacy/main"))
     inputs.files(fileTree(file("src/main/web")))
     inputs.file("npm/webpack.config.js")
     outputs.dir("$buildDir/dist")
@@ -43,12 +26,4 @@ task bundle(type: NpmTask, dependsOn: [npmInstall, runDceKotlinJs]) {
 
 task start(type: NpmTask, dependsOn: bundle) {
     args = ["run", "start"]
-}
-
-// we have not tests but kotlin-dce-js still tries to work with them and crashed.
-// todo: Remove when KT-22028 is fixed
-afterEvaluate {
-    if (tasks.findByName('unpackDependenciesTestKotlinJs')) {
-        tasks.unpackDependenciesTestKotlinJs.enabled = false
-    }
 }
