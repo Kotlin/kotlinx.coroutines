@@ -47,7 +47,9 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
         if (!scope.isActive) return Disposables.disposed()
         return scope.launch {
             val newBlock = RxJavaPlugins.onSchedule(block)
-            delay(unit.toMillis(delay))
+            if (delay > 0) {
+                delay(unit.toMillis(delay))
+            }
             newBlock.run()
         }.asDisposable()
     }
@@ -138,8 +140,10 @@ public class SchedulerCoroutineDispatcher(
 
     /** @suppress */
     override fun toString(): String = scheduler.toString()
+
     /** @suppress */
     override fun equals(other: Any?): Boolean = other is SchedulerCoroutineDispatcher && other.scheduler === scheduler
+
     /** @suppress */
     override fun hashCode(): Int = System.identityHashCode(scheduler)
 }
