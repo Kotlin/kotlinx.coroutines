@@ -10,6 +10,7 @@ import io.reactivex.observers.*
 import io.reactivex.plugins.*
 import io.reactivex.schedulers.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.test.*
 import org.junit.*
 import org.junit.Test
 import java.lang.Runnable
@@ -176,11 +177,12 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun testExpectRxPluginsCall(): Unit = runTest {
+    fun testExpectRxPluginsCall(): Unit = runBlockingTest {
         expect(1)
 
-        fun setScheduler(expectCountOnRun: Int) {
+        fun setScheduler(expectedCountOnSchedule: Int, expectCountOnRun: Int) {
             RxJavaPlugins.setScheduleHandler(Function {
+                expect(expectedCountOnSchedule)
                 Runnable {
                     expect(expectCountOnRun)
                     it.run()
@@ -191,25 +193,34 @@ class SchedulerTest : TestBase() {
         val dispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = dispatcher.asScheduler()
 
-        setScheduler(2)
+        setScheduler(2, 4)
 
-        suspendCancellableCoroutine<Unit> {
-            scheduler.scheduleDirect {
+        pauseDispatcher {
+            suspendCancellableCoroutine<Unit> {
+                scheduler.scheduleDirect {
+                    expect(5)
+                    it.resume(Unit)
+                }
                 expect(3)
-                it.resume(Unit)
+                resumeDispatcher()
             }
         }
 
-        setScheduler(4)
-        suspendCancellableCoroutine<Unit> {
-            scheduler.scheduleDirect({
-                expect(5)
-                RxJavaPlugins.setScheduleHandler(null)
-                it.resume(Unit)
-            }, 300, TimeUnit.MILLISECONDS)
+        setScheduler(6, 8)
+        pauseDispatcher {
+            suspendCancellableCoroutine<Unit> {
+                scheduler.scheduleDirect({
+                    expect(9)
+                    RxJavaPlugins.setScheduleHandler(null)
+                    it.resume(Unit)
+                }, 300, TimeUnit.MILLISECONDS)
+                expect(7)
+                resumeDispatcher()
+            }
         }
+
         scheduler.shutdown()
-        finish(6)
+        finish(10)
     }
 
     /**

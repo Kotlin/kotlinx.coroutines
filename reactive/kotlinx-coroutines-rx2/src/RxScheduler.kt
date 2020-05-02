@@ -45,8 +45,8 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
 
     override fun scheduleDirect(block: Runnable, delay: Long, unit: TimeUnit): Disposable {
         if (!scope.isActive) return Disposables.disposed()
+        val newBlock = RxJavaPlugins.onSchedule(block)
         return scope.launch {
-            val newBlock = RxJavaPlugins.onSchedule(block)
             if (delay > 0) {
                 delay(unit.toMillis(delay))
             }
