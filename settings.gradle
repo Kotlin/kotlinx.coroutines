@@ -2,6 +2,13 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+pluginManagement {
+    plugins {
+        id "net.ltgt.apt" version "0.21"
+        id "me.champeau.gradle.jmh" version "0.5.0-rc-2"
+    }
+}
+
 rootProject.name = 'kotlinx.coroutines'
 enableFeaturePreview('GRADLE_METADATA')
 
