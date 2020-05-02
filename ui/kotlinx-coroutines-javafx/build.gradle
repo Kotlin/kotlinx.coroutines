@@ -2,15 +2,14 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// JDK11+ does not bundle JavaFx and the plugin for JavaFx support is compiled with class file version 55.0 (JDK 11)
-if (JavaVersionKt.javaVersionMajor >= 11) {
-    apply plugin: 'org.openjfx.javafxplugin'
+plugins {
+  id 'org.openjfx.javafxplugin'
+}
 
-    javafx {
-        version = javafx_version
-        modules = ['javafx.controls']
-        configuration = 'compile'
-    }
+javafx {
+    version = javafx_version
+    modules = ['javafx.controls']
+    configuration = 'compile'
 }
 
 task checkJdk8() {
