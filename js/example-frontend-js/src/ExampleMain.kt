@@ -11,6 +11,7 @@ import org.w3c.dom.*
 import kotlin.browser.*
 import kotlin.coroutines.*
 import kotlin.math.*
+import kotlin.random.Random
 
 fun main() {
     println("Starting example application...")
@@ -35,8 +36,7 @@ private fun HTMLElement.setPosition(x: Double, y: Double) {
     }
 }
 
-@Suppress("DEPRECATION")
-private fun random() = kotlin.js.Math.random()
+private fun random():Double = Random.nextDouble()
 
 class Application : CoroutineScope {
     private val body get() = document.body!!
