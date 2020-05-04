@@ -22,10 +22,6 @@ class SchedulerStressTest : TestBase() {
     fun testScheduleDirectDisposed(): Unit = runTest {
         expect(1)
 
-        suspend fun keepMe(a: ByteArray) {
-            delay(10)
-        }
-
         val dispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = dispatcher.asScheduler()
 
@@ -49,16 +45,19 @@ class SchedulerStressTest : TestBase() {
     }
 
     /**
+     * Test function that holds a reference. Used for testing OOM situations
+     */
+    private suspend fun keepMe(a: ByteArray) {
+        delay(10)
+    }
+
+    /**
      * Test that we don't get an OOM if we schedule many delayed jobs at once. It's expected that if you don't dispose that you'd
      * see a OOM error.
      */
     @Test
     fun testScheduleDirectDisposedDuringDelay(): Unit = runTest {
         expect(1)
-
-        suspend fun keepMe(a: ByteArray) {
-            delay(10)
-        }
 
         val dispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = dispatcher.asScheduler()
