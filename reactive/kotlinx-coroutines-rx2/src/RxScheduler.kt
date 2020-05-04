@@ -119,13 +119,17 @@ private class SchedulerChannelTask(
     }
 
     fun execute() {
-        if (!delayJob.isCompleted) {
+        if (job.isCancelled) {
+            return
+        }
+
+        if (delayJob.isCompleted) {
+            block.run()
+        } else {
             taskScope.launch {
                 delayJob.join()
                 block.run()
             }
-        } else {
-            block.run()
         }
     }
 }
