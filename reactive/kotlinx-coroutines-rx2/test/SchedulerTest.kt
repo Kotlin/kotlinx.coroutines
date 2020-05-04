@@ -43,12 +43,9 @@ class SchedulerTest : TestBase() {
     @Test
     fun testAsSchedulerWithNoDelay(): Unit = runTest {
         expect(1)
-        val mainThread = Thread.currentThread()
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         suspendCancellableCoroutine<Unit> {
             scheduler.scheduleDirect {
-                val t1 = Thread.currentThread()
-                assertSame(t1, mainThread)
                 expect(2)
                 it.resume(Unit)
             }
@@ -60,13 +57,10 @@ class SchedulerTest : TestBase() {
     @Test
     fun testAsSchedulerWithDelay(): Unit = runTest {
         expect(1)
-        val mainThread = Thread.currentThread()
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         val delayMillis = 300L
         suspendCancellableCoroutine<Unit> {
             scheduler.scheduleDirect({
-                val t1 = Thread.currentThread()
-                assertSame(t1, mainThread)
                 expect(2)
                 it.resume(Unit)
             }, delayMillis, TimeUnit.MILLISECONDS)
@@ -77,12 +71,9 @@ class SchedulerTest : TestBase() {
     @Test
     fun testAsSchedulerWithZeroDelay(): Unit = runTest {
         expect(1)
-        val mainThread = Thread.currentThread()
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         suspendCancellableCoroutine<Unit> {
             scheduler.scheduleDirect({
-                val t1 = Thread.currentThread()
-                assertSame(t1, mainThread)
                 expect(2)
                 it.resume(Unit)
             }, 0, TimeUnit.MILLISECONDS)
@@ -95,12 +86,9 @@ class SchedulerTest : TestBase() {
     @Test
     fun testAsSchedulerWithNegativeDelay(): Unit = runTest {
         expect(1)
-        val mainThread = Thread.currentThread()
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         suspendCancellableCoroutine<Unit> {
             scheduler.scheduleDirect({
-                val t1 = Thread.currentThread()
-                assertSame(t1, mainThread)
                 expect(2)
                 it.resume(Unit)
             }, -1, TimeUnit.MILLISECONDS)
