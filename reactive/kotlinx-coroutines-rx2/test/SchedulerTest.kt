@@ -235,23 +235,15 @@ class SchedulerTest : TestBase() {
 
         val worker = scheduler.createWorker()
 
-        val iterations = 5
+        val iterations = 2
         coroutineScope {
             for (i in (0..iterations)) {
-                launch {
-                    suspendCancellableCoroutine<Unit> {
-                        worker.schedule(Runnable {
-                            runBlocking {
-                                if (i % 2 == 0) {
-                                    // add delays to ensure sequential nature
-                                    delay(100)
-                                }
-                                expect(2 + i)
-                                it.resume(Unit)
-                            }
-                        })
-                    }
-                    yield()
+                suspendCancellableCoroutine<Unit> {
+                    worker.schedule(Runnable {
+                        println("iteration: $i")
+                        expect(2 + i)
+                        it.resume(Unit)
+                    })
                 }
             }
         }

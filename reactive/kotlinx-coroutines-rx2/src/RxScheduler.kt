@@ -63,17 +63,16 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
 
     private class DispatcherWorker(dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
 
-        private val workerScope = CoroutineScope(SupervisorJob(parentJob) + dispatcher)
-        private val blockChannel = Channel<Job>(Channel.UNLIMITED)
+        val workerJob = SupervisorJob(parentJob)
+        private val workerScope = CoroutineScope(workerJob + dispatcher)
+        private val blockChannel = Channel<SchedulerChannelTask>(Channel.UNLIMITED)
 
         init {
             workerScope.launch {
                 while (isActive) {
-                    val job = blockChannel.receive()
-                    if (!job.isCancelled) {
-                        job.start()
-                        job.join()
-                    }
+                    val task = blockChannel.receive()
+                    println(Thread.currentThread())
+                    task.execute()
                 }
             }
         }
@@ -87,25 +86,45 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
             if (!workerScope.isActive) return Disposables.disposed()
 
             val newBlock = RxJavaPlugins.onSchedule(block)
-            /*
-                Start job as lazy because we're going to put the job on a Channel to be executed later.
-                The client may cancel the job while it's in the queue so it's start it lazy and start job
-                when it's popped off (and not cancelled).
-             */
-            val job = workerScope.launch(start = CoroutineStart.LAZY) {
-                if (delay > 0L) {
-                    delay(unit.toMillis(delay))
-                }
-                newBlock.run()
-            }
-            blockChannel.offer(job)
-            return job.asDisposable()
+            val task = SchedulerChannelTask(delay, newBlock, workerJob)
+            blockChannel.offer(task)
+            return task.job.asDisposable()
         }
 
         override fun dispose() {
             workerScope.cancel()
             blockChannel.close()
         }
+    }
+}
+
+/**
+ * Represents a task to be queued sequentially on a [Channel] for a [Scheduler.Worker].
+ *
+ * Delayed tasks do not block [Channel] from processing other tasks
+ */
+private class SchedulerChannelTask(
+    private val delayMillis: Long,
+    private val block: Runnable,
+    parentJob: Job
+) {
+    val job = Job(parentJob)
+    private val taskScope = CoroutineScope(job)
+    private val delayJob: Job
+
+    init {
+        delayJob = taskScope.launch {
+            delay(delayMillis)
+        }
+    }
+
+    suspend fun execute() = coroutineScope {
+        if (delayJob.isActive) {
+            launch {
+                delayJob.join()
+                block.run()
+            }
+        } else block.run()
     }
 }
 
