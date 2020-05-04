@@ -252,7 +252,6 @@ class SchedulerTest : TestBase() {
             for (i in (0..iterations)) {
                 suspendCancellableCoroutine<Unit> {
                     worker.schedule(Runnable {
-                        println("iteration: $i")
                         expect(2 + i)
                         it.resume(Unit)
                     })
@@ -261,6 +260,73 @@ class SchedulerTest : TestBase() {
         }
         yield()
         finish((iterations + 2) + 1)
+    }
+
+    /**
+     * @see [testSchedulerWorkerSequentialOrdering]
+     */
+    @Test
+    fun testSchedulerWorkerSequentialOrderingDelayed(): Unit = runTest {
+        expect(1)
+
+        val scheduler = Dispatchers.Default.asScheduler()
+
+        val worker = scheduler.createWorker()
+
+        val iterations = 2
+        coroutineScope {
+            for (i in (0..iterations)) {
+                suspendCancellableCoroutine<Unit> {
+                    worker.schedule(Runnable {
+                        expect(2 + i)
+                        it.resume(Unit)
+                    }, 10, TimeUnit.MILLISECONDS)
+                }
+            }
+        }
+        yield()
+        finish((iterations + 2) + 1)
+    }
+
+    /**
+     * Test that ensures that delays are actually respected (tasks scheduled sooner in the future run before tasks scheduled later,
+     * even when the later task is submitted before the earlier one)
+     *
+     * NOTE: not using [runBlockingTest] because of infamous "this job has not completed yet" error:
+     *
+     * https://github.com/Kotlin/kotlinx.coroutines/issues/1204
+     */
+    @Test
+    fun testSchedulerWorkerRespectsDelays(): Unit = runTest {
+        expect(1)
+
+        val scheduler = Dispatchers.Default.asScheduler()
+
+        val worker = scheduler.createWorker()
+
+        coroutineScope {
+            launch {
+                suspendCancellableCoroutine<Unit> {
+                    worker.schedule(Runnable {
+                        println("running block for scheduler #1")
+                        expect(3)
+                        it.resume(Unit)
+                    }, 100, TimeUnit.MILLISECONDS)
+                }
+            }
+
+            launch {
+                suspendCancellableCoroutine<Unit> {
+                    worker.schedule(Runnable {
+                        println("running block for scheduler #2")
+                        expect(2)
+                        it.resume(Unit)
+                    }, 1, TimeUnit.MILLISECONDS)
+                }
+            }
+        }
+
+        finish(4)
     }
 
     /**

@@ -118,13 +118,15 @@ private class SchedulerChannelTask(
         }
     }
 
-    suspend fun execute() = coroutineScope {
-        if (delayJob.isActive) {
-            launch {
+    fun execute() {
+        if (!delayJob.isCompleted) {
+            taskScope.launch {
                 delayJob.join()
                 block.run()
             }
-        } else block.run()
+        } else {
+            block.run()
+        }
     }
 }
 
