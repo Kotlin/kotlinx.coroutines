@@ -110,7 +110,7 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun testDisposeDuringDelay(): Unit = runTest {
+    fun testDisposeDuringDelay(): Unit = runBlockingTest {
         expect(1)
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         val delayMillis = 300L
@@ -256,7 +256,7 @@ class SchedulerTest : TestBase() {
      * sequentially using RxJava primitives
      */
     @Test
-    fun testSchedulerWorkerSequentialWithObservables(): Unit = runTest {
+    fun testSchedulerWorkerSequentialWithObservables(): Unit = runBlockingTest {
         expect(1)
 
         val scheduler = Dispatchers.Default.asScheduler()
