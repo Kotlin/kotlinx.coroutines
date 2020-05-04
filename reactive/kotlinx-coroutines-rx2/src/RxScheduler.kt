@@ -71,7 +71,6 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
             workerScope.launch {
                 while (isActive) {
                     val task = blockChannel.receive()
-                    println(Thread.currentThread())
                     task.execute()
                 }
             }
