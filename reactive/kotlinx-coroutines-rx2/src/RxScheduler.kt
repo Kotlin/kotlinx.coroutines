@@ -63,7 +63,7 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
 
     private class DispatcherWorker(dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
 
-        val workerJob = SupervisorJob(parentJob)
+        private val workerJob = SupervisorJob(parentJob)
         private val workerScope = CoroutineScope(workerJob + dispatcher)
         private val blockChannel = Channel<SchedulerChannelTask>(Channel.UNLIMITED)
 
@@ -160,10 +160,8 @@ public class SchedulerCoroutineDispatcher(
 
     /** @suppress */
     override fun toString(): String = scheduler.toString()
-
     /** @suppress */
     override fun equals(other: Any?): Boolean = other is SchedulerCoroutineDispatcher && other.scheduler === scheduler
-
     /** @suppress */
     override fun hashCode(): Int = System.identityHashCode(scheduler)
 }
