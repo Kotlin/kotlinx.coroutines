@@ -194,21 +194,45 @@ class SchedulerTest : TestBase() {
             }
         }
 
-        setScheduler(6, 8)
+        RxJavaPlugins.setScheduleHandler(null)
+        scheduler.shutdown()
+        finish(6)
+    }
+
+    @Test
+    fun testExpectRxPluginsCallWithDelay(): Unit = runBlockingTest {
+        expect(1)
+
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+
+        setScheduler(2, 4)
+
         pauseDispatcher {
             suspendCancellableCoroutine<Unit> {
                 scheduler.scheduleDirect({
-                    expect(9)
+                    expect(5)
                     RxJavaPlugins.setScheduleHandler(null)
                     it.resume(Unit)
                 }, 300, TimeUnit.MILLISECONDS)
-                expect(7)
+                expect(3)
                 resumeDispatcher()
             }
         }
 
+        RxJavaPlugins.setScheduleHandler(null)
         scheduler.shutdown()
-        finish(10)
+        finish(6)
+    }
+
+    private fun setScheduler(expectedCountOnSchedule: Int, expectCountOnRun: Int) {
+        RxJavaPlugins.setScheduleHandler(Function {
+            expect(expectedCountOnSchedule)
+            Runnable {
+                expect(expectCountOnRun)
+                it.run()
+            }
+        })
     }
 
     /**
