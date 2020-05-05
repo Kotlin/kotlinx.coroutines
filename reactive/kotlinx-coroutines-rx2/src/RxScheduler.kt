@@ -79,7 +79,6 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
                     task.execute()
                 }
             }
-
         }
 
         override fun isDisposed(): Boolean = !workerScope.isActive

@@ -5,6 +5,7 @@
 package kotlinx.coroutines.rx2
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.test.*
 import org.junit.*
 import java.util.concurrent.*
 
@@ -19,7 +20,20 @@ class SchedulerStressTest : TestBase() {
      * see a OOM error.
      */
     @Test
-    fun testScheduleDirectDisposed(): Unit = runTest {
+    fun testSchedulerDisposed(): Unit = runTest {
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+        testRunnableDisposed(scheduler::scheduleDirect)
+    }
+
+    @Test
+    fun testSchedulerWorkerDisposed(): Unit = runTest {
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+        testRunnableDisposed(scheduler.createWorker()::schedule)
+    }
+
+    private suspend fun testRunnableDisposed(block: RxSchedulerBlockNoDelay) {
         expect(1)
 
         val dispatcher = currentDispatcher() as CoroutineDispatcher
@@ -29,11 +43,11 @@ class SchedulerStressTest : TestBase() {
         coroutineScope {
             repeat(n) { i ->
                 val a = ByteArray(1000000) //1MB
-                val disposable = scheduler.scheduleDirect {
+                val disposable = block(Runnable {
                     runBlocking {
                         keepMe(a)
                     }
-                }
+                })
                 disposable.dispose()
                 expect(i + 2)
                 yield()
@@ -56,7 +70,20 @@ class SchedulerStressTest : TestBase() {
      * see a OOM error.
      */
     @Test
-    fun testScheduleDirectDisposedDuringDelay(): Unit = runTest {
+    fun testSchedulerDisposedDuringDelay(): Unit = runBlockingTest {
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+        testRunnableDisposedDuringDelay(scheduler::scheduleDirect)
+    }
+
+    @Test
+    fun testSchedulerWorkerDisposedDuringDelay(): Unit = runBlockingTest {
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+        testRunnableDisposedDuringDelay(scheduler.createWorker()::schedule)
+    }
+
+    private suspend fun TestCoroutineScope.testRunnableDisposedDuringDelay(block: RxSchedulerBlockWithDelay) {
         expect(1)
 
         val dispatcher = currentDispatcher() as CoroutineDispatcher
@@ -66,12 +93,14 @@ class SchedulerStressTest : TestBase() {
         coroutineScope {
             repeat(n) { i ->
                 val a = ByteArray(1000000) //1MB
-                val disposable = scheduler.scheduleDirect({
+                val delayMillis: Long = 10
+                val disposable = block(Runnable {
                     runBlocking {
                         keepMe(a)
                     }
-                }, 10, TimeUnit.MILLISECONDS)
+                }, delayMillis, TimeUnit.MILLISECONDS)
                 disposable.dispose()
+                advanceTimeBy(delayMillis)
                 expect(i + 2)
                 yield()
             }

@@ -53,7 +53,7 @@ class SchedulerTest : TestBase() {
         testRunnableWithNoDelay(scheduler.createWorker()::schedule)
     }
 
-    private suspend fun testRunnableWithNoDelay(block: RunnableNoDelay) {
+    private suspend fun testRunnableWithNoDelay(block: RxSchedulerBlockNoDelay) {
         expect(1)
         suspendCancellableCoroutine<Unit> {
             block(Runnable {
@@ -89,7 +89,7 @@ class SchedulerTest : TestBase() {
         testRunnableWithDelay(scheduler.createWorker()::schedule)
     }
 
-    private suspend fun testRunnableWithDelay(block: RunnableWithDelay, delayMillis: Long = 0) {
+    private suspend fun testRunnableWithDelay(block: RxSchedulerBlockWithDelay, delayMillis: Long = 0) {
         expect(1)
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         suspendCancellableCoroutine<Unit> {
@@ -127,7 +127,7 @@ class SchedulerTest : TestBase() {
         testRunnableDisposeDuringDelay(scheduler.createWorker()::schedule)
     }
 
-    private suspend fun testRunnableDisposeDuringDelay(block: RunnableWithDelay) {
+    private suspend fun testRunnableDisposeDuringDelay(block: RxSchedulerBlockWithDelay) {
         expect(1)
         val delayMillis = 300L
         val disposable = block(Runnable {
@@ -153,7 +153,7 @@ class SchedulerTest : TestBase() {
         testRunnableImmediateDispose(scheduler.createWorker()::schedule)
     }
 
-    private suspend fun testRunnableImmediateDispose(block: RunnableNoDelay) {
+    private suspend fun testRunnableImmediateDispose(block: RxSchedulerBlockNoDelay) {
         expect(1)
         val disposable = block(Runnable {
             expectUnreached()
@@ -166,25 +166,13 @@ class SchedulerTest : TestBase() {
     @Test
     fun testSchedulerWorksWithSchedulerCoroutineDispatcher(): Unit = runTest {
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
-        testRunnableWorksWithSchedulerCoroutineDispatcher(scheduler::scheduleDirect)
-    }
-
-    @Test
-    fun testSchedulerWorkerWorksWithSchedulerCoroutineDispatcher(): Unit = runTest {
-        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
-        testRunnableWorksWithSchedulerCoroutineDispatcher(scheduler.createWorker()::schedule)
-    }
-
-    private suspend fun testRunnableWorksWithSchedulerCoroutineDispatcher(block: RunnableNoDelay) {
         expect(1)
-
         suspendCancellableCoroutine<Unit> {
-            block(Runnable {
+            scheduler.scheduleDirect(Runnable {
                 expect(2)
                 it.resume(Unit)
             })
         }
-
         finish(3)
     }
 
@@ -226,7 +214,7 @@ class SchedulerTest : TestBase() {
         testRunnableExpectRxPluginsCall(scheduler.createWorker()::schedule)
     }
 
-    private suspend fun TestCoroutineScope.testRunnableExpectRxPluginsCall(block: RunnableNoDelay) {
+    private suspend fun TestCoroutineScope.testRunnableExpectRxPluginsCall(block: RxSchedulerBlockNoDelay) {
         expect(1)
 
         fun setScheduler(expectedCountOnSchedule: Int, expectCountOnRun: Int) {
@@ -275,7 +263,7 @@ class SchedulerTest : TestBase() {
         testRunnableExpectRxPluginsCallDelay(worker::schedule)
     }
 
-    private suspend fun TestCoroutineScope.testRunnableExpectRxPluginsCallDelay(block: RunnableWithDelay) {
+    private suspend fun TestCoroutineScope.testRunnableExpectRxPluginsCallDelay(block: RxSchedulerBlockWithDelay) {
         expect(1)
 
         val dispatcher = currentDispatcher() as CoroutineDispatcher
@@ -422,14 +410,13 @@ class SchedulerTest : TestBase() {
         testRunnableRespectsDelays(scheduler.createWorker()::schedule)
     }
 
-    private suspend fun testRunnableRespectsDelays(block: RunnableWithDelay) {
+    private suspend fun testRunnableRespectsDelays(block: RxSchedulerBlockWithDelay) {
         expect(1)
 
         coroutineScope {
             launch {
                 suspendCancellableCoroutine<Unit> {
                     block(Runnable {
-                        println("running block for scheduler #1")
                         expect(3)
                         it.resume(Unit)
                     }, 100, TimeUnit.MILLISECONDS)
@@ -439,7 +426,6 @@ class SchedulerTest : TestBase() {
             launch {
                 suspendCancellableCoroutine<Unit> {
                     block(Runnable {
-                        println("running block for scheduler #2")
                         expect(2)
                         it.resume(Unit)
                     }, 1, TimeUnit.MILLISECONDS)
@@ -451,5 +437,5 @@ class SchedulerTest : TestBase() {
     }
 }
 
-private typealias RunnableNoDelay = (Runnable) -> Disposable
-private typealias RunnableWithDelay = (Runnable, Long, TimeUnit) -> Disposable
+typealias RxSchedulerBlockNoDelay = (Runnable) -> Disposable
+typealias RxSchedulerBlockWithDelay = (Runnable, Long, TimeUnit) -> Disposable
