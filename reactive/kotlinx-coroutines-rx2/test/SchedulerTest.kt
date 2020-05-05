@@ -47,6 +47,12 @@ class SchedulerTest : TestBase() {
         testRunnableWithNoDelay(scheduler::scheduleDirect)
     }
 
+    @Test
+    fun testSchedulerWorkerWithNoDelay(): Unit = runTest {
+        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        testRunnableWithNoDelay(scheduler.createWorker()::schedule)
+    }
+
     private suspend fun testRunnableWithNoDelay(block: RunnableNoDelay) {
         expect(1)
         suspendCancellableCoroutine<Unit> {
@@ -66,9 +72,21 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
+    fun testSchedulerWorkerWithDelay(): Unit = runTest {
+        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        testRunnableWithDelay(scheduler.createWorker()::schedule, 300)
+    }
+
+    @Test
     fun testSchedulerWithZeroDelay(): Unit = runTest {
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         testRunnableWithDelay(scheduler::scheduleDirect)
+    }
+
+    @Test
+    fun testSchedulerWorkerWithZeroDelay(): Unit = runTest {
+        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        testRunnableWithDelay(scheduler.createWorker()::schedule)
     }
 
     private suspend fun testRunnableWithDelay(block: RunnableWithDelay, delayMillis: Long = 0) {
@@ -92,9 +110,21 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
+    fun testAsSchedulerWorkerWithNegativeDelay(): Unit = runTest {
+        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        testRunnableWithDelay(scheduler.createWorker()::schedule, -1)
+    }
+
+    @Test
     fun testSchedulerDisposeDuringDelay(): Unit = runBlockingTest {
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         testRunnableDisposeDuringDelay(scheduler::scheduleDirect)
+    }
+
+    @Test
+    fun testSchedulerWorkerDisposeDuringDelay(): Unit = runBlockingTest {
+        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        testRunnableDisposeDuringDelay(scheduler.createWorker()::schedule)
     }
 
     private suspend fun testRunnableDisposeDuringDelay(block: RunnableWithDelay) {
@@ -117,6 +147,12 @@ class SchedulerTest : TestBase() {
         testRunnableImmediateDispose(scheduler::scheduleDirect)
     }
 
+    @Test
+    fun testSchedulerWorkerImmediateDispose(): Unit = runTest {
+        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        testRunnableImmediateDispose(scheduler.createWorker()::schedule)
+    }
+
     private suspend fun testRunnableImmediateDispose(block: RunnableNoDelay) {
         expect(1)
         val disposable = block(Runnable {
@@ -131,6 +167,12 @@ class SchedulerTest : TestBase() {
     fun testSchedulerWorksWithSchedulerCoroutineDispatcher(): Unit = runTest {
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         testRunnableWorksWithSchedulerCoroutineDispatcher(scheduler::scheduleDirect)
+    }
+
+    @Test
+    fun testSchedulerWorkerWorksWithSchedulerCoroutineDispatcher(): Unit = runTest {
+        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        testRunnableWorksWithSchedulerCoroutineDispatcher(scheduler.createWorker()::schedule)
     }
 
     private suspend fun testRunnableWorksWithSchedulerCoroutineDispatcher(block: RunnableNoDelay) {
@@ -177,6 +219,13 @@ class SchedulerTest : TestBase() {
         testRunnableExpectRxPluginsCall(scheduler::scheduleDirect)
     }
 
+    @Test
+    fun testSchedulerWorkerExpectRxPluginsCall(): Unit = runBlockingTest {
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+        testRunnableExpectRxPluginsCall(scheduler.createWorker()::schedule)
+    }
+
     private suspend fun TestCoroutineScope.testRunnableExpectRxPluginsCall(block: RunnableNoDelay) {
         expect(1)
 
@@ -216,6 +265,14 @@ class SchedulerTest : TestBase() {
         val dispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = dispatcher.asScheduler()
         testRunnableExpectRxPluginsCallDelay(scheduler::scheduleDirect)
+    }
+
+    @Test
+    fun testSchedulerWorkerExpectRxPluginsCallWithDelay(): Unit = runBlockingTest {
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+        val worker = scheduler.createWorker()
+        testRunnableExpectRxPluginsCallDelay(worker::schedule)
     }
 
     private suspend fun TestCoroutineScope.testRunnableExpectRxPluginsCallDelay(block: RunnableWithDelay) {
@@ -354,11 +411,15 @@ class SchedulerTest : TestBase() {
      * https://github.com/Kotlin/kotlinx.coroutines/issues/1204
      */
     @Test
+    fun testSchedulerRespectsDelays(): Unit = runTest {
+        val scheduler = Dispatchers.Default.asScheduler()
+        testRunnableRespectsDelays(scheduler::scheduleDirect)
+    }
+
+    @Test
     fun testSchedulerWorkerRespectsDelays(): Unit = runTest {
         val scheduler = Dispatchers.Default.asScheduler()
-        val worker = scheduler.createWorker()
-
-        testRunnableRespectsDelays(worker::schedule)
+        testRunnableRespectsDelays(scheduler.createWorker()::schedule)
     }
 
     private suspend fun testRunnableRespectsDelays(block: RunnableWithDelay) {

@@ -35,8 +35,9 @@ public fun CoroutineDispatcher.asScheduler(): Scheduler =
 
 private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) : Scheduler() {
 
-    private val job = SupervisorJob()
-    private val scope = CoroutineScope(job + dispatcher + CoroutineExceptionHandler { _, throwable ->
+    private val schedulerJob = SupervisorJob()
+
+    private val scope = CoroutineScope(schedulerJob + dispatcher + CoroutineExceptionHandler { _, throwable ->
         RxJavaPlugins.onError(throwable)
     })
 
@@ -55,25 +56,30 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
     }
 
     override fun createWorker(): Worker =
-        DispatcherWorker(dispatcher, job)
+        DispatcherWorker(dispatcher, schedulerJob)
 
     override fun shutdown() {
         scope.cancel()
     }
 
-    private class DispatcherWorker(dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
+    private class DispatcherWorker(private val dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
 
         private val workerJob = SupervisorJob(parentJob)
         private val workerScope = CoroutineScope(workerJob + dispatcher)
         private val blockChannel = Channel<SchedulerChannelTask>(Channel.UNLIMITED)
 
         init {
+            workerJob.invokeOnCompletion {
+                blockChannel.close()
+            }
+
             workerScope.launch {
                 while (isActive) {
                     val task = blockChannel.receive()
                     task.execute()
                 }
             }
+
         }
 
         override fun isDisposed(): Boolean = !workerScope.isActive
@@ -85,9 +91,9 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
             if (!workerScope.isActive) return Disposables.disposed()
 
             val newBlock = RxJavaPlugins.onSchedule(block)
-            val task = SchedulerChannelTask(delay, newBlock, workerJob)
+            val task = SchedulerChannelTask(delay, newBlock, dispatcher, workerJob)
             blockChannel.offer(task)
-            return task.job.asDisposable()
+            return task
         }
 
         override fun dispose() {
@@ -105,10 +111,10 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
 private class SchedulerChannelTask(
     private val delayMillis: Long,
     private val block: Runnable,
+    dispatcher: CoroutineDispatcher,
     parentJob: Job
-) {
-    val job = Job(parentJob)
-    private val taskScope = CoroutineScope(job)
+) : Disposable {
+    private val taskScope = CoroutineScope(dispatcher + Job(parentJob))
     private val delayJob: Job
 
     init {
@@ -118,18 +124,22 @@ private class SchedulerChannelTask(
     }
 
     fun execute() {
-        if (job.isCancelled) {
-            return
-        }
-
-        if (delayJob.isCompleted) {
+        if (delayJob.isCompleted && taskScope.isActive) {
             block.run()
         } else {
             taskScope.launch {
                 delayJob.join()
+                yield()
                 block.run()
             }
         }
+    }
+
+    override fun isDisposed(): Boolean =
+        !taskScope.isActive
+
+    override fun dispose() {
+        taskScope.cancel()
     }
 }
 
