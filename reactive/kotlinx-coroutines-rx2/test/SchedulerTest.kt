@@ -5,6 +5,7 @@
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
+import io.reactivex.disposables.*
 import io.reactivex.functions.*
 import io.reactivex.observers.*
 import io.reactivex.plugins.*
@@ -41,42 +42,43 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun testAsSchedulerWithNoDelay(): Unit = runTest {
-        expect(1)
+    fun testSchedulerWithNoDelay(): Unit = runTest {
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        testRunnableWithNoDelay(scheduler::scheduleDirect)
+    }
+
+    private suspend fun testRunnableWithNoDelay(block: RunnableNoDelay) {
+        expect(1)
         suspendCancellableCoroutine<Unit> {
-            scheduler.scheduleDirect {
+            block(Runnable {
                 expect(2)
                 it.resume(Unit)
-            }
+            })
         }
         yield()
         finish(3)
     }
 
     @Test
-    fun testAsSchedulerWithDelay(): Unit = runTest {
-        expect(1)
+    fun testSchedulerWithDelay(): Unit = runTest {
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
-        val delayMillis = 300L
-        suspendCancellableCoroutine<Unit> {
-            scheduler.scheduleDirect({
-                expect(2)
-                it.resume(Unit)
-            }, delayMillis, TimeUnit.MILLISECONDS)
-        }
-        finish(3)
+        testRunnableWithDelay(scheduler::scheduleDirect, 300)
     }
 
     @Test
-    fun testAsSchedulerWithZeroDelay(): Unit = runTest {
+    fun testSchedulerWithZeroDelay(): Unit = runTest {
+        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        testRunnableWithDelay(scheduler::scheduleDirect)
+    }
+
+    private suspend fun testRunnableWithDelay(block: RunnableWithDelay, delayMillis: Long = 0) {
         expect(1)
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         suspendCancellableCoroutine<Unit> {
-            scheduler.scheduleDirect({
+            block(Runnable {
                 expect(2)
                 it.resume(Unit)
-            }, 0, TimeUnit.MILLISECONDS)
+            }, delayMillis, TimeUnit.MILLISECONDS)
         }
 
         scheduler.shutdown()
@@ -85,24 +87,20 @@ class SchedulerTest : TestBase() {
 
     @Test
     fun testAsSchedulerWithNegativeDelay(): Unit = runTest {
-        expect(1)
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
-        suspendCancellableCoroutine<Unit> {
-            scheduler.scheduleDirect({
-                expect(2)
-                it.resume(Unit)
-            }, -1, TimeUnit.MILLISECONDS)
-        }
-        yield()
-        finish(3)
+        testRunnableWithDelay(scheduler::scheduleDirect, -1)
     }
 
     @Test
-    fun testDisposeDuringDelay(): Unit = runBlockingTest {
-        expect(1)
+    fun testSchedulerDisposeDuringDelay(): Unit = runBlockingTest {
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        testRunnableDisposeDuringDelay(scheduler::scheduleDirect)
+    }
+
+    private suspend fun testRunnableDisposeDuringDelay(block: RunnableWithDelay) {
+        expect(1)
         val delayMillis = 300L
-        val disposable = scheduler.scheduleDirect({
+        val disposable = block(Runnable {
             expectUnreached()
         }, delayMillis, TimeUnit.MILLISECONDS)
         delay(100)
@@ -114,29 +112,37 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun testImmediateDispose(): Unit = runTest {
-        expect(1)
+    fun testSchedulerImmediateDispose(): Unit = runTest {
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
-        val disposable = scheduler.scheduleDirect {
+        testRunnableImmediateDispose(scheduler::scheduleDirect)
+    }
+
+    private suspend fun testRunnableImmediateDispose(block: RunnableNoDelay) {
+        expect(1)
+        val disposable = block(Runnable {
             expectUnreached()
-        }
+        })
         disposable.dispose()
         yield()
         finish(2)
     }
 
     @Test
-    fun testAsSchedulerWorksWithSchedulerCoroutineDispatcher(): Unit = runTest {
+    fun testSchedulerWorksWithSchedulerCoroutineDispatcher(): Unit = runTest {
+        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
+        testRunnableWorksWithSchedulerCoroutineDispatcher(scheduler::scheduleDirect)
+    }
+
+    private suspend fun testRunnableWorksWithSchedulerCoroutineDispatcher(block: RunnableNoDelay) {
         expect(1)
 
-        val dispatcher = Schedulers.io().asCoroutineDispatcher()
-        val scheduler = dispatcher.asScheduler()
         suspendCancellableCoroutine<Unit> {
-            scheduler.scheduleDirect {
+            block(Runnable {
                 expect(2)
                 it.resume(Unit)
-            }
+            })
         }
+
         finish(3)
     }
 
@@ -165,7 +171,13 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun testExpectRxPluginsCall(): Unit = runBlockingTest {
+    fun testSchedulerExpectRxPluginsCall(): Unit = runBlockingTest {
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+        testRunnableExpectRxPluginsCall(scheduler::scheduleDirect)
+    }
+
+    private suspend fun TestCoroutineScope.testRunnableExpectRxPluginsCall(block: RunnableNoDelay) {
         expect(1)
 
         fun setScheduler(expectedCountOnSchedule: Int, expectCountOnRun: Int) {
@@ -185,10 +197,10 @@ class SchedulerTest : TestBase() {
 
         pauseDispatcher {
             suspendCancellableCoroutine<Unit> {
-                scheduler.scheduleDirect {
+                block(Runnable {
                     expect(5)
                     it.resume(Unit)
-                }
+                })
                 expect(3)
                 resumeDispatcher()
             }
@@ -200,7 +212,13 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun testExpectRxPluginsCallWithDelay(): Unit = runBlockingTest {
+    fun testSchedulerExpectRxPluginsCallWithDelay(): Unit = runBlockingTest {
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+        testRunnableExpectRxPluginsCallDelay(scheduler::scheduleDirect)
+    }
+
+    private suspend fun TestCoroutineScope.testRunnableExpectRxPluginsCallDelay(block: RunnableWithDelay) {
         expect(1)
 
         val dispatcher = currentDispatcher() as CoroutineDispatcher
@@ -210,7 +228,7 @@ class SchedulerTest : TestBase() {
 
         pauseDispatcher {
             suspendCancellableCoroutine<Unit> {
-                scheduler.scheduleDirect({
+                block(Runnable {
                     expect(5)
                     RxJavaPlugins.setScheduleHandler(null)
                     it.resume(Unit)
@@ -289,47 +307,6 @@ class SchedulerTest : TestBase() {
     }
 
     /**
-     * Test that ensures that delays are actually respected (tasks scheduled sooner in the future run before tasks scheduled later,
-     * even when the later task is submitted before the earlier one)
-     *
-     * NOTE: not using [runBlockingTest] because of infamous "this job has not completed yet" error:
-     *
-     * https://github.com/Kotlin/kotlinx.coroutines/issues/1204
-     */
-    @Test
-    fun testSchedulerWorkerRespectsDelays(): Unit = runTest {
-        expect(1)
-
-        val scheduler = Dispatchers.Default.asScheduler()
-
-        val worker = scheduler.createWorker()
-
-        coroutineScope {
-            launch {
-                suspendCancellableCoroutine<Unit> {
-                    worker.schedule(Runnable {
-                        println("running block for scheduler #1")
-                        expect(3)
-                        it.resume(Unit)
-                    }, 100, TimeUnit.MILLISECONDS)
-                }
-            }
-
-            launch {
-                suspendCancellableCoroutine<Unit> {
-                    worker.schedule(Runnable {
-                        println("running block for scheduler #2")
-                        expect(2)
-                        it.resume(Unit)
-                    }, 1, TimeUnit.MILLISECONDS)
-                }
-            }
-        }
-
-        finish(4)
-    }
-
-    /**
      * Let's test the [Scheduler.Worker] to make sure it satisfies the documented constraint of running all work
      * sequentially using RxJava primitives
      */
@@ -367,4 +344,51 @@ class SchedulerTest : TestBase() {
         }
         finish(2)
     }
+
+    /**
+     * Test that ensures that delays are actually respected (tasks scheduled sooner in the future run before tasks scheduled later,
+     * even when the later task is submitted before the earlier one)
+     *
+     * NOTE: not using [runBlockingTest] because of infamous "this job has not completed yet" error:
+     *
+     * https://github.com/Kotlin/kotlinx.coroutines/issues/1204
+     */
+    @Test
+    fun testSchedulerWorkerRespectsDelays(): Unit = runTest {
+        val scheduler = Dispatchers.Default.asScheduler()
+        val worker = scheduler.createWorker()
+
+        testRunnableRespectsDelays(worker::schedule)
+    }
+
+    private suspend fun testRunnableRespectsDelays(block: RunnableWithDelay) {
+        expect(1)
+
+        coroutineScope {
+            launch {
+                suspendCancellableCoroutine<Unit> {
+                    block(Runnable {
+                        println("running block for scheduler #1")
+                        expect(3)
+                        it.resume(Unit)
+                    }, 100, TimeUnit.MILLISECONDS)
+                }
+            }
+
+            launch {
+                suspendCancellableCoroutine<Unit> {
+                    block(Runnable {
+                        println("running block for scheduler #2")
+                        expect(2)
+                        it.resume(Unit)
+                    }, 1, TimeUnit.MILLISECONDS)
+                }
+            }
+        }
+
+        finish(4)
+    }
 }
+
+private typealias RunnableNoDelay = (Runnable) -> Disposable
+private typealias RunnableWithDelay = (Runnable, Long, TimeUnit) -> Disposable
