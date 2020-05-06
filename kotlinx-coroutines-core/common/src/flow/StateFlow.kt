@@ -260,7 +260,6 @@ private class StateFlowImpl<T>(initialValue: Any) : SynchronizedObject(), Mutabl
             }
         }
 
-    @Suppress("UNCHECKED_CAST")
     override suspend fun collect(collector: FlowCollector<T>) {
         val slot = allocateSlot()
         var prevState: Any? = null // previously emitted T!! | NULL (null -- nothing emitted yet)
