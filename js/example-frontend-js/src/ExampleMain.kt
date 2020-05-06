@@ -36,8 +36,6 @@ private fun HTMLElement.setPosition(x: Double, y: Double) {
     }
 }
 
-private fun random(): Double = Random.nextDouble()
-
 class Application : CoroutineScope {
     private val body get() = document.body!!
     private val scene get() = document.getElementById("scene") as HTMLElement
@@ -125,7 +123,7 @@ class Application : CoroutineScope {
                     timer.delay(1000) // pause a bit
                     // flip direction
                     val t = vx
-                    if (random() > 0.5) {
+                    if (Random.nextDouble() > 0.5) {
                         vx = vy
                         vy = -t
                     } else {
@@ -150,11 +148,11 @@ class Application : CoroutineScope {
         animation("circle", radius) { circle ->
             println("Started new 'circle' coroutine #$index")
             val timer = AnimationTimer()
-            val initialAngle = random() * 2 * PI
+            val initialAngle = Random.nextDouble() * 2 * PI
             var vx = sin(initialAngle) * initialSpeed
             var vy = cos(initialAngle) * initialSpeed
-            var x = (random() * initialRange + (1 - initialRange) / 2) * sw
-            var y = (random() * initialRange + (1 - initialRange) / 2) * sh
+            var x = (Random.nextDouble() * initialRange + (1 - initialRange) / 2) * sw
+            var y = (Random.nextDouble() * initialRange + (1 - initialRange) / 2) * sh
             while (true) {
                 val dt = timer.await()
                 val dx = sw / 2 - x
