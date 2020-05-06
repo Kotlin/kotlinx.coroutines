@@ -36,7 +36,7 @@ private fun HTMLElement.setPosition(x: Double, y: Double) {
     }
 }
 
-private fun random():Double = Random.nextDouble()
+private fun random(): Double = Random.nextDouble()
 
 class Application : CoroutineScope {
     private val body get() = document.body!!
