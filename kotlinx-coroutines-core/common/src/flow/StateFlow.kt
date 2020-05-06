@@ -22,7 +22,7 @@ import kotlin.native.concurrent.*
  * Updates to the [value] are always [conflated][Flow.conflate]. So a slow collector skips fast updates,
  * but always collects the most recently emitted value.
  *
- * [StateFlow] is useful as a data-model class to represented any kind of state.
+ * [StateFlow] is useful as a data-model class to represent any kind of state.
  * Derived values can be defined using various operators on the flows, with [combine] operator being especially
  * useful to combine values from multiple state flows using arbitrary functions.
  *
