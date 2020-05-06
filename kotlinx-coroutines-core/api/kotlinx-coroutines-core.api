@@ -490,6 +490,35 @@ public final class kotlinx/coroutines/ParentJob$DefaultImpls {
 	public static fun plus (Lkotlinx/coroutines/ParentJob;Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
 }
 
+public abstract class kotlinx/coroutines/RateLimiter {
+	public fun <init> ()V
+	public final fun addTokens (J)V
+	protected abstract fun addTokens (JJ)V
+	public final fun consume (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun consume$default (Lkotlinx/coroutines/RateLimiter;JLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun consume-jb84aEg (JDLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun consumeTokens (J)V
+	protected abstract fun relinquishTokens (JJJ)V
+	protected abstract fun requestTimeSlot (JJJ)J
+	public final fun tryConsume (J)Z
+	public static synthetic fun tryConsume$default (Lkotlinx/coroutines/RateLimiter;JILjava/lang/Object;)Z
+}
+
+public final class kotlinx/coroutines/RateLimiterBuilder {
+	public fun <init> ()V
+	public final fun periodic (JJJJ)V
+	public static synthetic fun periodic$default (Lkotlinx/coroutines/RateLimiterBuilder;JJJJILjava/lang/Object;)V
+	public final fun periodic-sh68zkA (JDJJ)V
+	public static synthetic fun periodic-sh68zkA$default (Lkotlinx/coroutines/RateLimiterBuilder;JDJJILjava/lang/Object;)V
+	public final fun smooth (JJ)V
+	public final fun smooth-pTJri5U (JD)V
+}
+
+public final class kotlinx/coroutines/RateLimiterKt {
+	public static final fun rateLimit (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/RateLimiter;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun rateLimiter (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/RateLimiter;
+}
+
 public final class kotlinx/coroutines/RunnableKt {
 	public static final fun Runnable (Lkotlin/jvm/functions/Function0;)Ljava/lang/Runnable;
 }
