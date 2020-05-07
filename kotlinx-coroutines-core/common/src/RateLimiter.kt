@@ -12,13 +12,14 @@ public abstract class RateLimiter {
     protected abstract fun requestTimeSlot(atTime: Long, tokens: Long, maxDelay: Long): Long
     protected abstract fun relinquishTokens(atTime: Long, takenAtTime: Long, tokens: Long)
     protected abstract fun addTokens(atTime: Long, tokens: Long)
+    protected abstract fun nextAvailableTime(atTime: Long, tokens: Long): Long
 
     private suspend fun consume(tokens: Long, maxDelay: Long) {
         require(tokens > 0)
         val currentTime = nanoTime()
         val nextSlot = requestTimeSlot(currentTime, tokens, maxDelay)
         if (nextSlot == Long.MAX_VALUE) {
-            throw UnsupportedOperationException("Could not allocate $tokens tokens to be available in $maxDelay")
+            throw IllegalArgumentException("Could not allocate $tokens tokens to be available in $maxDelay")
         }
         val toSleep = nextSlot - currentTime
         try {
@@ -29,7 +30,7 @@ public abstract class RateLimiter {
     }
 
     public fun addTokens(tokens: Long): Unit = addTokens(nanoTime(), tokens)
-    public fun consumeTokens(tokens: Long): Unit = addTokens(-tokens)
+    public fun removeTokens(tokens: Long): Unit = addTokens(-tokens)
 
     public fun tryConsume(tokens: Long = 1): Boolean {
         require(tokens > 0)
@@ -70,14 +71,14 @@ internal data class Bandwidth(
 
 internal class TokenBucketRateLimiter(bandwidths: Array<Bandwidth>): RateLimiter() {
 
-    internal class State(internal val bandwidths: Array<Bandwidth>,
+    internal class State(private val bandwidths: Array<Bandwidth>,
                          private val tokensPerBandwidth: Array<Long> =
                              Array(bandwidths.size) { bandwidths[it].initialAmount },
                          private val lastUpdateTimes: Array<Long> = run {
                              val currentTime = nanoTime()
                              Array(bandwidths.size) { currentTime }
                          },
-                         var lastEventTime: Long = nanoTime())
+                         private var lastEventTime: Long = nanoTime())
     {
         init { require(bandwidths.isNotEmpty()) }
 
@@ -86,6 +87,10 @@ internal class TokenBucketRateLimiter(bandwidths: Array<Bandwidth>): RateLimiter
         val availableTokens get() = tokensPerBandwidth.reduce { a, b -> min(a, b) }
 
         fun refill(atTime: Long) {
+            if (atTime <= lastEventTime) {
+                return
+            }
+            lastEventTime = atTime
             for (i in 0..bandwidths.size) {
                 val bandwidth = bandwidths[i]
                 val previousUpdate = lastUpdateTimes[i]
@@ -182,6 +187,12 @@ internal class TokenBucketRateLimiter(bandwidths: Array<Bandwidth>): RateLimiter
     override fun addTokens(atTime: Long, tokens: Long) = withState { currentState ->
         currentState.refill(atTime)
         currentState.addTokens(tokens)
+    }
+
+    override fun nextAvailableTime(atTime: Long, tokens: Long): Long {
+        val currentState = state.value
+        currentState.refill(atTime)
+        return currentState.nextDeficitCompensationTime(tokens)
     }
 
     override fun relinquishTokens(atTime: Long, takenAtTime: Long, tokens: Long) = withState { currentState ->
