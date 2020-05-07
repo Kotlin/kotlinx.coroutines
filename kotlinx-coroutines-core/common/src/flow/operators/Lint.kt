@@ -2,13 +2,9 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:JvmMultifileClass
-@file:JvmName("FlowKt")
-
 package kotlinx.coroutines.flow
 
 import kotlin.coroutines.*
-import kotlin.jvm.*
 
 /**
  * Returns this.
@@ -16,11 +12,11 @@ import kotlin.jvm.*
  * See [StateFlow] documentation on Operator Fusion.
  */
 @Deprecated(
-    level = DeprecationLevel.WARNING,
+    level = DeprecationLevel.ERROR,
     message = "Applying flowOn operator to StateFlow has no effect. See StateFlow documentation on Operator Fusion.",
     replaceWith = ReplaceWith("this")
 )
-public fun <T> StateFlow<T>.flowOn(context: CoroutineContext): Flow<T> = this
+public fun <T> StateFlow<T>.flowOn(context: CoroutineContext): Flow<T> = noImpl()
 
 /**
  * Returns this.
@@ -28,11 +24,11 @@ public fun <T> StateFlow<T>.flowOn(context: CoroutineContext): Flow<T> = this
  * See [StateFlow] documentation on Operator Fusion.
  */
 @Deprecated(
-    level = DeprecationLevel.WARNING,
+    level = DeprecationLevel.ERROR,
     message = "Applying conflate operator to StateFlow has no effect. See StateFlow documentation on Operator Fusion.",
     replaceWith = ReplaceWith("this")
 )
-public fun <T> StateFlow<T>.conflate(): Flow<T> = this
+public fun <T> StateFlow<T>.conflate(): Flow<T> = noImpl()
 
 /**
  * Returns this.
@@ -40,8 +36,8 @@ public fun <T> StateFlow<T>.conflate(): Flow<T> = this
  * See [StateFlow] documentation on Operator Fusion.
  */
 @Deprecated(
-    level = DeprecationLevel.WARNING,
+    level = DeprecationLevel.ERROR,
     message = "Applying distinctUntilChanged operator to StateFlow has no effect. See StateFlow documentation on Operator Fusion.",
     replaceWith = ReplaceWith("this")
 )
-public fun <T> StateFlow<T>.distinctUntilChanged(): Flow<T> = this
+public fun <T> StateFlow<T>.distinctUntilChanged(): Flow<T> = noImpl()
