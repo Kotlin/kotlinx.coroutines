@@ -16,7 +16,27 @@ internal fun <T> Flow<T>.asChannelFlow(): ChannelFlow<T> =
     this as? ChannelFlow ?: ChannelFlowOperatorImpl(this)
 
 /**
- * Operators that use channels extend this ChannelFlow and are always fused with each other.
+ * Operators that can fuse with [buffer] and [flowOn] operators implement this interface.
+ *
+ * @suppress **This an internal API and should not be used from general code.**
+ */
+@InternalCoroutinesApi
+public interface FusibleFlow<T> : Flow<T> {
+    /**
+     * This function is called by [flowOn] (with context) and [buffer] (with capacity) operators
+     * that are applied to this flow.
+     */
+    public fun fuse(
+        context: CoroutineContext = EmptyCoroutineContext,
+        capacity: Int = Channel.OPTIONAL_CHANNEL
+    ): FusibleFlow<T>
+}
+
+/**
+ * Operators that use channels extend this `ChannelFlow` and are always fused with each other.
+ * This class servers as a skeleton implementation of [FusibleFlow] and provides other cross-cutting
+ * methods like ability to [produceIn] and [broadcastIn] the corresponding flow, thus making it
+ * possible to directly use the backing channel if it exists (hence the `ChannelFlow` name).
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
@@ -26,7 +46,7 @@ public abstract class ChannelFlow<T>(
     @JvmField public val context: CoroutineContext,
     // buffer capacity between upstream and downstream context
     @JvmField public val capacity: Int
-) : Flow<T> {
+) : FusibleFlow<T> {
 
     // shared code to create a suspend lambda from collectTo function in one place
     internal val collectToFun: suspend (ProducerScope<T>) -> Unit
@@ -35,10 +55,7 @@ public abstract class ChannelFlow<T>(
     private val produceCapacity: Int
         get() = if (capacity == Channel.OPTIONAL_CHANNEL) Channel.BUFFERED else capacity
 
-    public fun update(
-        context: CoroutineContext = EmptyCoroutineContext,
-        capacity: Int = Channel.OPTIONAL_CHANNEL
-    ): ChannelFlow<T> {
+    public override fun fuse(context: CoroutineContext, capacity: Int): FusibleFlow<T> {
         // note: previous upstream context (specified before) takes precedence
         val newContext = context + this.context
         val newCapacity = when {

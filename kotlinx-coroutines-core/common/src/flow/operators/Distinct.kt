@@ -7,15 +7,22 @@
 
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
 import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
  * Returns flow where all subsequent repetitions of the same value are filtered out.
+ *
+ * Note that any instance of [StateFlow] already behaves as if `distinctUtilChanged` operator is
+ * applied to it, so applying `distinctUntilChanged` to a `StateFlow` has no effect.
+ * See [StateFlow] documentation on Operator Fusion.
  */
-public fun <T> Flow<T>.distinctUntilChanged(): Flow<T> = distinctUntilChangedBy { it }
+public fun <T> Flow<T>.distinctUntilChanged(): Flow<T> =
+    when (this) {
+        is StateFlow<*> -> this
+        else -> distinctUntilChangedBy { it }
+    }
 
 /**
  * Returns flow where all subsequent repetitions of the same value are filtered out, when compared

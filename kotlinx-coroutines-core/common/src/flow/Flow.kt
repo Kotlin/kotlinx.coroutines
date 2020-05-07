@@ -156,6 +156,12 @@ import kotlin.coroutines.*
  *
  * Flow is [Reactive Streams](http://www.reactive-streams.org/) compliant, you can safely interop it with
  * reactive streams using [Flow.asPublisher] and [Publisher.asFlow] from `kotlinx-coroutines-reactive` module.
+ *
+ * ### Not stable for inheritance
+ *
+ * **`Flow` interface is not stable for inheritance in 3rd party libraries**, as new methods
+ * might be added to this interface in the future, but is stable for use.
+ * Use `flow { ... }` builder function to create an implementation.
  */
 public interface Flow<out T> {
     /**

@@ -108,10 +108,10 @@ public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> {
     require(capacity >= 0 || capacity == BUFFERED || capacity == CONFLATED) {
         "Buffer size should be non-negative, BUFFERED, or CONFLATED, but was $capacity"
     }
-    return if (this is ChannelFlow)
-        update(capacity = capacity)
-    else
-        ChannelFlowOperatorImpl(this, capacity = capacity)
+    return when (this) {
+        is FusibleFlow -> fuse(capacity = capacity)
+        else -> ChannelFlowOperatorImpl(this, capacity = capacity)
+    }
 }
 
 /**
@@ -145,6 +145,10 @@ public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> {
  * Adjacent applications of `conflate`/[buffer], [channelFlow], [flowOn], [produceIn], and [broadcastIn] are
  * always fused so that only one properly configured channel is used for execution.
  * **Conflation takes precedence over `buffer()` calls with any other capacity.**
+ *
+ * Note that any instance of [StateFlow] already behaves as if `conflate` operator is
+ * applied to it, so applying `conflate` to a `StateFlow` has not effect.
+ * See [StateFlow] documentation on Operator Fusion.
  */
 public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
 
@@ -190,13 +194,16 @@ public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
  *     .flowOn(Dispatchers.Default)
  * ```
  *
+ * Note that an instance of [StateFlow] does not have an execution context by itself,
+ * so applying `flowOn` to a `StateFlow` has not effect. See [StateFlow] documentation on Operator Fusion.
+ *
  * @throws [IllegalArgumentException] if provided context contains [Job] instance.
  */
 public fun <T> Flow<T>.flowOn(context: CoroutineContext): Flow<T> {
     checkFlowContext(context)
     return when {
         context == EmptyCoroutineContext -> this
-        this is ChannelFlow -> update(context = context)
+        this is FusibleFlow -> fuse(context = context)
         else -> ChannelFlowOperatorImpl(this, context = context)
     }
 }
