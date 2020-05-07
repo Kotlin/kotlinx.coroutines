@@ -114,22 +114,23 @@ private class SchedulerChannelTask(
     parentJob: Job
 ) : Disposable {
     private val taskScope = CoroutineScope(dispatcher + Job(parentJob))
-    private val delayJob: Job
+    private val delayResult: Deferred<Unit>
 
     init {
-        delayJob = taskScope.launch {
+        delayResult = taskScope.async {
             delay(delayMillis)
         }
     }
 
     fun execute() {
-        if (delayJob.isCompleted && taskScope.isActive) {
-            block.run()
-        } else {
-            taskScope.launch {
-                delayJob.join()
-                yield()
+        if (taskScope.isActive) {
+            if (delayResult.isCompleted) {
                 block.run()
+            } else {
+                taskScope.launch {
+                    delayResult.await()
+                    block.run()
+                }
             }
         }
     }

@@ -42,14 +42,17 @@ class SchedulerStressTest : TestBase() {
         val n = 2000 * stressTestMultiplier
         coroutineScope {
             repeat(n) { i ->
-                val a = ByteArray(1000000) //1MB
-                val disposable = block(Runnable {
-                    runBlocking {
-                        keepMe(a)
-                    }
-                })
-                disposable.dispose()
-                expect(i + 2)
+                launch {
+                    val a = ByteArray(1000000) //1MB
+                    val disposable = block(Runnable {
+                        expectUnreached()
+                        runBlocking {
+                            keepMe(a)
+                        }
+                    })
+                    disposable.dispose()
+                    expect(i + 2)
+                }
                 yield()
             }
         }

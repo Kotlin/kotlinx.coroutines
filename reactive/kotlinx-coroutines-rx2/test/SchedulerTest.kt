@@ -313,11 +313,13 @@ class SchedulerTest : TestBase() {
         val iterations = 2
         coroutineScope {
             for (i in (0..iterations)) {
-                suspendCancellableCoroutine<Unit> {
-                    worker.schedule(Runnable {
-                        expect(2 + i)
-                        it.resume(Unit)
-                    })
+                launch {
+                    suspendCancellableCoroutine<Unit> {
+                        worker.schedule(Runnable {
+                            expect(2 + i)
+                            it.resume(Unit)
+                        })
+                    }
                 }
             }
         }
