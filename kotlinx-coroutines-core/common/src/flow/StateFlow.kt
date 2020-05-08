@@ -101,7 +101,7 @@ import kotlin.native.concurrent.*
  * Use `MutableStateFlow()` constructor function to create an implementation.
  */
 @ExperimentalCoroutinesApi
-public interface StateFlow<out T> : Flow<T> {
+public interface StateFlow<out T> : SharedFlow<T> {
     /**
      * The current value of this state flow.
      */
@@ -120,7 +120,7 @@ public interface StateFlow<out T> : Flow<T> {
  * Use `MutableStateFlow()` constructor function to create an implementation.
  */
 @ExperimentalCoroutinesApi
-public interface MutableStateFlow<T> : StateFlow<T> {
+public interface MutableStateFlow<T> : StateFlow<T>, MutableSharedFlow<T> {
     /**
      * The current value of this state flow.
      *
@@ -144,14 +144,12 @@ private val NONE = Symbol("NONE")
 @SharedImmutable
 private val PENDING = Symbol("PENDING")
 
-private const val INITIAL_SIZE = 2 // optimized for just a few collectors
-
 // StateFlow slots are allocated for its collectors
-private class StateFlowSlot {
+private class StateFlowSlot : AbstractHotFlowSlot<StateFlowImpl<*>>() {
     /**
      * Each slot can have one of the following states:
      *
-     * * `null` -- it is not used right now. Can [allocate] to new collector.
+     * * `null` -- it is not used right now. Can [allocateLocked] to new collector.
      * * `NONE` -- used by a collector, but neither suspended nor has pending value.
      * * `PENDING` -- pending to process new value.
      * * `CancellableContinuationImpl<Unit>` -- suspended waiting for new value.
@@ -161,15 +159,16 @@ private class StateFlowSlot {
      */
     private val _state = atomic<Any?>(null)
 
-    fun allocate(): Boolean {
+    override fun allocateLocked(flow: StateFlowImpl<*>): Boolean {
         // No need for atomic check & update here, since allocated happens under StateFlow lock
         if (_state.value != null) return false // not free
         _state.value = NONE // allocated
         return true
     }
 
-    fun free() {
+    override fun freeLocked(flow: StateFlowImpl<*>): List<Continuation<Unit>>? {
         _state.value = null // free now
+        return null // nothing more to do
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -207,58 +206,74 @@ private class StateFlowSlot {
     }
 }
 
-private class StateFlowImpl<T>(initialValue: Any) : SynchronizedObject(), MutableStateFlow<T>, FusibleFlow<T> {
-    private val _state = atomic(initialValue) // T | NULL
+private class StateFlowImpl<T>(
+    private val initialState: Any // T | NULL
+) : AbstractHotFlow<StateFlowSlot>(), MutableStateFlow<T>, FusibleFlow<T> {
+    private val _state = atomic(initialState) // T | NULL
     private var sequence = 0 // serializes updates, value update is in process when sequence is odd
-    private var slots = arrayOfNulls<StateFlowSlot?>(INITIAL_SIZE)
-    private var nSlots = 0 // number of allocated (!free) slots
-    private var nextIndex = 0 // oracle for the next free slot index
 
     @Suppress("UNCHECKED_CAST")
     public override var value: T
         get() = NULL.unbox(_state.value)
-        set(value) {
-            var curSequence = 0
-            var curSlots: Array<StateFlowSlot?> = this.slots // benign race, we will not use it
-            val newState = value ?: NULL
-            synchronized(this) {
-                val oldState = _state.value
-                if (oldState == newState) return // Don't do anything if value is not changing
-                _state.value = newState
-                curSequence = sequence
-                if (curSequence and 1 == 0) { // even sequence means quiescent state flow (no ongoing update)
-                    curSequence++ // make it odd
-                    sequence = curSequence
-                } else {
-                    // update is already in process, notify it, and return
-                    sequence = curSequence + 2 // change sequence to notify, keep it odd
-                    return
-                }
-                curSlots = slots // read current reference to collectors under lock
+        set(value) = updateState(value ?: NULL)
+
+    private fun updateState(newState: Any) {
+        var curSequence = 0
+        var curSlots: Array<StateFlowSlot?>? = this.slots // benign race, we will not use it
+        synchronized(this) {
+            val oldState = _state.value
+            if (oldState == newState) return // Don't do anything if value is not changing
+            _state.value = newState
+            curSequence = sequence
+            if (curSequence and 1 == 0) { // even sequence means quiescent state flow (no ongoing update)
+                curSequence++ // make it odd
+                sequence = curSequence
+            } else {
+                // update is already in process, notify it, and return
+                sequence = curSequence + 2 // change sequence to notify, keep it odd
+                return
             }
-            /*
-               Fire value updates outside of the lock to avoid deadlocks with unconfined coroutines
-               Loop until we're done firing all the changes. This is sort of simple flat combining that
-               ensures sequential firing of concurrent updates and avoids the storm of collector resumes
-               when updates happen concurrently from many threads.
-             */
-            while (true) {
-                // Benign race on element read from array
-                for (col in curSlots) {
-                    col?.makePending()
+            curSlots = slots // read current reference to collectors under lock
+        }
+        /*
+           Fire value updates outside of the lock to avoid deadlocks with unconfined coroutines
+           Loop until we're done firing all the changes. This is sort of simple flat combining that
+           ensures sequential firing of concurrent updates and avoids the storm of collector resumes
+           when updates happen concurrently from many threads.
+         */
+        while (true) {
+            // Benign race on element read from array
+            curSlots?.forEach {
+                it?.makePending()
+            }
+            // check if the value was updated again while we were updating the old one
+            synchronized(this) {
+                if (sequence == curSequence) { // nothing changed, we are done
+                    sequence = curSequence + 1 // make sequence even again
+                    return // done
                 }
-                // check if the value was updated again while we were updating the old one
-                synchronized(this) {
-                    if (sequence == curSequence) { // nothing changed, we are done
-                        sequence = curSequence + 1 // make sequence even again
-                        return // done
-                    }
-                    // reread everything for the next loop under the lock
-                    curSequence = sequence
-                    curSlots = slots
-                }
+                // reread everything for the next loop under the lock
+                curSequence = sequence
+                curSlots = slots
             }
         }
+    }
+
+    override val replayCache: List<T>
+        get() = listOf(value)
+
+    override fun tryEmit(value: T): Boolean {
+        this.value = value
+        return true
+    }
+
+    override suspend fun emit(value: T) {
+        this.value = value
+    }
+
+    override fun resetCache() {
+        updateState(initialState)
+    }
 
     override suspend fun collect(collector: FlowCollector<T>) {
         val slot = allocateSlot()
@@ -284,26 +299,8 @@ private class StateFlowImpl<T>(initialValue: Any) : SynchronizedObject(), Mutabl
         }
     }
 
-    private fun allocateSlot(): StateFlowSlot = synchronized(this) {
-        val size = slots.size
-        if (nSlots >= size) slots = slots.copyOf(2 * size)
-        var index = nextIndex
-        var slot: StateFlowSlot
-        while (true) {
-            slot = slots[index] ?: StateFlowSlot().also { slots[index] = it }
-            index++
-            if (index >= slots.size) index = 0
-            if (slot.allocate()) break // break when found and allocated free slot
-        }
-        nextIndex = index
-        nSlots++
-        slot
-    }
-
-    private fun freeSlot(slot: StateFlowSlot): Unit = synchronized(this) {
-        slot.free()
-        nSlots--
-    }
+    override fun createSlot() = StateFlowSlot()
+    override fun createSlotArray(size: Int): Array<StateFlowSlot?> = arrayOfNulls(size)
 
     override fun fuse(context: CoroutineContext, capacity: Int): FusibleFlow<T> {
         // context is irrelevant for state flow and it is always conflated
