@@ -37,7 +37,7 @@ public final class kotlinx/coroutines/BuildersKt {
 public abstract interface class kotlinx/coroutines/CancellableContinuation : kotlin/coroutines/Continuation {
 	public abstract fun cancel (Ljava/lang/Throwable;)Z
 	public abstract fun completeResume (Ljava/lang/Object;)V
-	public abstract synthetic fun initCancellability ()V
+	public abstract fun initCancellability ()V
 	public abstract fun invokeOnCancellation (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun isActive ()Z
 	public abstract fun isCancelled ()Z
@@ -63,7 +63,7 @@ public class kotlinx/coroutines/CancellableContinuationImpl : kotlin/coroutines/
 	public fun getContinuationCancellationCause (Lkotlinx/coroutines/Job;)Ljava/lang/Throwable;
 	public final fun getResult ()Ljava/lang/Object;
 	public fun getStackTraceElement ()Ljava/lang/StackTraceElement;
-	public synthetic fun initCancellability ()V
+	public fun initCancellability ()V
 	public fun invokeOnCancellation (Lkotlin/jvm/functions/Function1;)V
 	public fun isActive ()Z
 	public fun isCancelled ()Z
@@ -326,6 +326,11 @@ public final class kotlinx/coroutines/GlobalScope : kotlinx/coroutines/Coroutine
 }
 
 public abstract interface annotation class kotlinx/coroutines/InternalCoroutinesApi : java/lang/annotation/Annotation {
+}
+
+public final class kotlinx/coroutines/InterruptibleKt {
+	public static final fun runInterruptible (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun runInterruptible$default (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public abstract interface class kotlinx/coroutines/Job : kotlin/coroutines/CoroutineContext$Element {
@@ -832,6 +837,10 @@ public final class kotlinx/coroutines/channels/ValueOrClosed {
 	public final synthetic fun unbox-impl ()Ljava/lang/Object;
 }
 
+public synthetic class kotlinx/coroutines/debug/internal/DebugProbesImplSequenceNumberRefVolatile {
+	public fun <init> (J)V
+}
+
 public abstract class kotlinx/coroutines/flow/AbstractFlow : kotlinx/coroutines/flow/Flow {
 	public fun <init> ()V
 	public final fun collect (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -942,6 +951,7 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final synthetic fun onCompletion (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun onCompletion (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun onEach (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun onEmpty (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun onErrorCollect (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/Flow;
 	public static synthetic fun onErrorCollect$default (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun onErrorResume (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;)Lkotlinx/coroutines/flow/Flow;
@@ -988,7 +998,26 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun zip (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 }
 
-public abstract class kotlinx/coroutines/flow/internal/ChannelFlow : kotlinx/coroutines/flow/Flow {
+public final class kotlinx/coroutines/flow/LintKt {
+	public static final fun conflate (Lkotlinx/coroutines/flow/StateFlow;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun distinctUntilChanged (Lkotlinx/coroutines/flow/StateFlow;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun flowOn (Lkotlinx/coroutines/flow/StateFlow;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/flow/Flow;
+}
+
+public abstract interface class kotlinx/coroutines/flow/MutableStateFlow : kotlinx/coroutines/flow/StateFlow {
+	public abstract fun getValue ()Ljava/lang/Object;
+	public abstract fun setValue (Ljava/lang/Object;)V
+}
+
+public abstract interface class kotlinx/coroutines/flow/StateFlow : kotlinx/coroutines/flow/Flow {
+	public abstract fun getValue ()Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/flow/StateFlowKt {
+	public static final fun MutableStateFlow (Ljava/lang/Object;)Lkotlinx/coroutines/flow/MutableStateFlow;
+}
+
+public abstract class kotlinx/coroutines/flow/internal/ChannelFlow : kotlinx/coroutines/flow/internal/FusibleFlow {
 	public final field capacity I
 	public final field context Lkotlin/coroutines/CoroutineContext;
 	public fun <init> (Lkotlin/coroutines/CoroutineContext;I)V
@@ -997,10 +1026,9 @@ public abstract class kotlinx/coroutines/flow/internal/ChannelFlow : kotlinx/cor
 	public fun collect (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	protected abstract fun collectTo (Lkotlinx/coroutines/channels/ProducerScope;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	protected abstract fun create (Lkotlin/coroutines/CoroutineContext;I)Lkotlinx/coroutines/flow/internal/ChannelFlow;
+	public fun fuse (Lkotlin/coroutines/CoroutineContext;I)Lkotlinx/coroutines/flow/internal/FusibleFlow;
 	public fun produceImpl (Lkotlinx/coroutines/CoroutineScope;)Lkotlinx/coroutines/channels/ReceiveChannel;
 	public fun toString ()Ljava/lang/String;
-	public final fun update (Lkotlin/coroutines/CoroutineContext;I)Lkotlinx/coroutines/flow/internal/ChannelFlow;
-	public static synthetic fun update$default (Lkotlinx/coroutines/flow/internal/ChannelFlow;Lkotlin/coroutines/CoroutineContext;IILjava/lang/Object;)Lkotlinx/coroutines/flow/internal/ChannelFlow;
 }
 
 public final class kotlinx/coroutines/flow/internal/CombineKt {
@@ -1009,6 +1037,14 @@ public final class kotlinx/coroutines/flow/internal/CombineKt {
 
 public final class kotlinx/coroutines/flow/internal/FlowExceptions_commonKt {
 	public static final fun checkIndexOverflow (I)I
+}
+
+public abstract interface class kotlinx/coroutines/flow/internal/FusibleFlow : kotlinx/coroutines/flow/Flow {
+	public abstract fun fuse (Lkotlin/coroutines/CoroutineContext;I)Lkotlinx/coroutines/flow/internal/FusibleFlow;
+}
+
+public final class kotlinx/coroutines/flow/internal/FusibleFlow$DefaultImpls {
+	public static synthetic fun fuse$default (Lkotlinx/coroutines/flow/internal/FusibleFlow;Lkotlin/coroutines/CoroutineContext;IILjava/lang/Object;)Lkotlinx/coroutines/flow/internal/FusibleFlow;
 }
 
 public final class kotlinx/coroutines/flow/internal/SafeCollector_commonKt {

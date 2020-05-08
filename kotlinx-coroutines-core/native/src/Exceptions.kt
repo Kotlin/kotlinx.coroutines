@@ -14,7 +14,7 @@ public actual open class CancellationException(
     message: String?,
     cause: Throwable?
 ) : IllegalStateException(message, cause) {
-    actual constructor(message: String?) : this(message, null)
+    public actual constructor(message: String?) : this(message, null)
 }
 
 /**

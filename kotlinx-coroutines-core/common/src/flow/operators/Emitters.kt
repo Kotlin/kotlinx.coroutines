@@ -34,7 +34,6 @@ import kotlin.jvm.*
  * }
  * ```
  */
-@ExperimentalCoroutinesApi
 public inline fun <T, R> Flow<T>.transform(
     @BuilderInference crossinline transform: suspend FlowCollector<R>.(value: T) -> Unit
 ): Flow<R> = flow { // Note: safe flow is used here, because collector is exposed to transform on each operation
@@ -56,9 +55,9 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
 }
 
 /**
- * Invokes the given [action] when the this flow starts to be collected.
+ * Invokes the given [action] when this flow starts to be collected.
  *
- * The receiver of the [action] is [FlowCollector] and thus `onStart` can emit additional elements.
+ * The receiver of the [action] is [FlowCollector], so `onStart` can emit additional elements.
  * For example:
  *
  * ```
@@ -67,7 +66,7 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
  *     .collect { println(it) } // prints Begin, a, b, c
  * ```
  */
-@ExperimentalCoroutinesApi // tentatively stable in 1.3.0
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.onStart(
     action: suspend FlowCollector<T>.() -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke start action
@@ -81,8 +80,8 @@ public fun <T> Flow<T>.onStart(
 }
 
 /**
- * Invokes the given [action] when the given flow is completed or cancelled, using
- * the exception from the upstream (if any) as cause parameter of [action].
+ * Invokes the given [action] when the given flow is completed or cancelled, passing
+ * the cancellation exception or failure as cause parameter of [action].
  *
  * Conceptually, `onCompletion` is similar to wrapping the flow collection into a `finally` block,
  * for example the following imperative snippet:
@@ -106,53 +105,86 @@ public fun <T> Flow<T>.onStart(
  *     .collect()
  * ```
  *
- * This operator is *transparent* to exceptions that occur in downstream flow
- * and does not observe exceptions that are thrown to cancel the flow,
- * while any exception from the [action] will be thrown downstream.
- * This behaviour can be demonstrated by the following example:
+ * Unlike [catch], this operator reports exception that occur both upstream and downstream
+ * and observe exceptions that are thrown to cancel the flow. Exception is empty if and only if
+ * the flow had fully completed successfully. Conceptually, the following code:
  *
  * ```
- * flow { emitData() }
- *     .map { computeOne(it) }
- *     .onCompletion { println(it) } // Can print exceptions from emitData and computeOne
- *     .map { computeTwo(it) }
- *     .onCompletion { println(it) } // Can print exceptions from emitData, computeOne, onCompletion and computeTwo
+ * myFlow.collect { value ->
+ *     println(value)
+ * }
+ * println("Completed successfully")
+ * ```
+ *
+ * can be replaced with:
+ *
+ * ```
+ * myFlow
+ *     .onEach { println(it) }
+ *     .onCompletion { if (it == null) println("Completed successfully") }
  *     .collect()
  * ```
  *
  * The receiver of the [action] is [FlowCollector] and this operator can be used to emit additional
- * elements at the end of the collection. For example:
+ * elements at the end if it completed successfully. For example:
  *
  * ```
  * flowOf("a", "b", "c")
  *     .onCompletion { emit("Done") }
  *     .collect { println(it) } // prints a, b, c, Done
  * ```
+ *
+ * In case of failure or cancellation, any attempt to emit additional elements throws the corresponding exception.
+ * Use [catch] if you need to suppress failure and replace it with emission of elements.
  */
-@ExperimentalCoroutinesApi // tentatively stable in 1.3.0
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.onCompletion(
     action: suspend FlowCollector<T>.(cause: Throwable?) -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke completion action
-    val exception = try {
-        catchImpl(this)
+    try {
+        collect(this)
     } catch (e: Throwable) {
         /*
-         * Exception from the downstream.
          * Use throwing collector to prevent any emissions from the
          * completion sequence when downstream has failed, otherwise it may
          * lead to a non-sequential behaviour impossible with `finally`
          */
-        ThrowingCollector(e).invokeSafely(action, null)
+        ThrowingCollector(e).invokeSafely(action, e)
         throw e
     }
-    // Exception from the upstream or normal completion
-    val safeCollector = SafeCollector(this, coroutineContext)
-    try {
-        safeCollector.invokeSafely(action, exception)
-    } finally {
-        safeCollector.releaseIntercepted()
+    // Normal completion
+    SafeCollector(this, coroutineContext).invokeSafely(action, null)
+}
+
+/**
+ * Invokes the given [action] when this flow completes without emitting any elements.
+ * The receiver of the [action] is [FlowCollector], so `onEmpty` can emit additional elements.
+ * For example:
+ *
+ * ```
+ * emptyFlow<Int>().onEmpty {
+ *     emit(1)
+ *     emit(2)
+ * }.collect { println(it) } // prints 1, 2
+ * ```
+ */
+@ExperimentalCoroutinesApi
+public fun <T> Flow<T>.onEmpty(
+    action: suspend FlowCollector<T>.() -> Unit
+): Flow<T> = unsafeFlow {
+    var isEmpty = true
+    collect {
+        isEmpty = false
+        emit(it)
     }
-    exception?.let { throw it }
+    if (isEmpty) {
+        val collector = SafeCollector(this, coroutineContext)
+        try {
+            collector.action()
+        } finally {
+            collector.releaseIntercepted()
+        }
+    }
 }
 
 private class ThrowingCollector(private val e: Throwable) : FlowCollector<Any?> {
@@ -164,7 +196,7 @@ private class ThrowingCollector(private val e: Throwable) : FlowCollector<Any?> 
 // It was only released in 1.3.0-M2, remove in 1.4.0
 /** @suppress */
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility with a version w/o FlowCollector receiver")
-public fun <T> Flow<T>.onCompletion(action: suspend (cause: Throwable?) -> Unit) =
+public fun <T> Flow<T>.onCompletion(action: suspend (cause: Throwable?) -> Unit): Flow<T> =
     onCompletion { action(it) }
 
 private suspend fun <T> FlowCollector<T>.invokeSafely(
@@ -174,7 +206,7 @@ private suspend fun <T> FlowCollector<T>.invokeSafely(
     try {
         action(cause)
     } catch (e: Throwable) {
-        if (cause !== null) e.addSuppressedThrowable(cause)
+        if (cause !== null && cause !== e) e.addSuppressedThrowable(cause)
         throw e
     }
 }

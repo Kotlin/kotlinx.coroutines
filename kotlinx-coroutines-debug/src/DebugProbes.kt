@@ -2,7 +2,7 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("unused")
+@file:Suppress("UNUSED", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
 package kotlinx.coroutines.debug
 
@@ -10,7 +10,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.internal.*
 import java.io.*
 import java.lang.management.*
-import java.util.*
 import kotlin.coroutines.*
 
 /**
@@ -41,7 +40,11 @@ public object DebugProbes {
      * Sanitization removes all frames from `kotlinx.coroutines` package except
      * the first one and the last one to simplify diagnostic.
      */
-    public var sanitizeStackTraces: Boolean = true
+    public var sanitizeStackTraces: Boolean
+        get() = DebugProbesImpl.sanitizeStackTraces
+        set(value) {
+            DebugProbesImpl.sanitizeStackTraces = value
+        }
 
     /**
      * Whether coroutine creation stack traces should be captured.
@@ -50,7 +53,11 @@ public object DebugProbes {
      * This option can be useful during local debug sessions, but is recommended
      * to be disabled in production environments to avoid stack trace dumping overhead.
      */
-    public var enableCreationStackTraces: Boolean = true
+    public var enableCreationStackTraces: Boolean
+        get() = DebugProbesImpl.enableCreationStackTraces
+        set(value) {
+            DebugProbesImpl.enableCreationStackTraces = value
+        }
 
     /**
      * Determines whether debug probes were [installed][DebugProbes.install].
@@ -114,7 +121,7 @@ public object DebugProbes {
      * Returns all existing coroutines info.
      * The resulting collection represents a consistent snapshot of all existing coroutines at the moment of invocation.
      */
-    public fun dumpCoroutinesInfo(): List<CoroutineInfo> = DebugProbesImpl.dumpCoroutinesInfo()
+    public fun dumpCoroutinesInfo(): List<CoroutineInfo> = DebugProbesImpl.dumpCoroutinesInfo().map { CoroutineInfo(it) }
 
     /**
      * Dumps all active coroutines into the given output stream, providing a consistent snapshot of all existing coroutines at the moment of invocation.
@@ -131,11 +138,10 @@ public object DebugProbes {
      *     at MyClass.createIoRequest(MyClass.kt:142)
      *     at MyClass.fetchData(MyClass.kt:154)
      *     at MyClass.showData(MyClass.kt:31)
-     *
      * ...
      * ```
      */
-    public fun dumpCoroutines(out: PrintStream = System.out) = DebugProbesImpl.dumpCoroutines(out)
+    public fun dumpCoroutines(out: PrintStream = System.out): Unit = DebugProbesImpl.dumpCoroutines(out)
 }
 
 // Stubs which are injected as coroutine probes. Require direct match of signatures

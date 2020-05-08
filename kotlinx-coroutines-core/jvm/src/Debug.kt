@@ -33,7 +33,7 @@ import kotlin.internal.InlineOnly
  * Debugging facilities are implemented by [newCoroutineContext][CoroutineScope.newCoroutineContext] function that
  * is used in all coroutine builders to create context of a new coroutine.
  */
-public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
+public const val DEBUG_PROPERTY_NAME: String = "kotlinx.coroutines.debug"
 
 /**
  * Name of the boolean property that controls stacktrace recovery (enabled by default) on JVM.
@@ -51,17 +51,17 @@ internal const val STACKTRACE_RECOVERY_PROPERTY_NAME = "kotlinx.coroutines.stack
 /**
  * Automatic debug configuration value for [DEBUG_PROPERTY_NAME].
  */
-public const val DEBUG_PROPERTY_VALUE_AUTO = "auto"
+public const val DEBUG_PROPERTY_VALUE_AUTO: String = "auto"
 
 /**
  * Debug turned on value for [DEBUG_PROPERTY_NAME].
  */
-public const val DEBUG_PROPERTY_VALUE_ON = "on"
+public const val DEBUG_PROPERTY_VALUE_ON: String = "on"
 
 /**
  * Debug turned on value for [DEBUG_PROPERTY_NAME].
  */
-public const val DEBUG_PROPERTY_VALUE_OFF = "off"
+public const val DEBUG_PROPERTY_VALUE_OFF: String = "off"
 
 // @JvmField: Don't use JvmField here to enable R8 optimizations via "assumenosideeffects"
 internal val ASSERTIONS_ENABLED = CoroutineId::class.java.desiredAssertionStatus()

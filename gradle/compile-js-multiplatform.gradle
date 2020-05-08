@@ -9,9 +9,9 @@ kotlin {
         fromPreset(presets.js, 'js') {
             // Enable built-in test runner only for IR target.
             // These runners don't support changing js module name change.
-            if (js.hasProperty("irTarget")) {
+            if (js.hasProperty("irTarget") && irTarget != null) {
                 irTarget.nodejs()
-                irTarget?.compilations['main']?.dependencies {
+                irTarget.compilations['main']?.dependencies {
                     api "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
                 }
             }

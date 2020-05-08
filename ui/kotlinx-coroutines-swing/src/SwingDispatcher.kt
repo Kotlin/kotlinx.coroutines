@@ -25,7 +25,7 @@ public val Dispatchers.Swing : SwingDispatcher
  */
 public sealed class SwingDispatcher : MainCoroutineDispatcher(), Delay {
     /** @suppress */
-    override fun dispatch(context: CoroutineContext, block: Runnable) = SwingUtilities.invokeLater(block)
+    override fun dispatch(context: CoroutineContext, block: Runnable): Unit = SwingUtilities.invokeLater(block)
 
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {

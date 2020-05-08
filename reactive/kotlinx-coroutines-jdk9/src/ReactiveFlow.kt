@@ -35,5 +35,5 @@ public fun <T : Any> Flow<T>.asPublisher(): JFlow.Publisher<T> {
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  * Cancels subscription if any exception happens during collect.
  */
-public suspend inline fun <T> JFlow.Publisher<T>.collect(action: (T) -> Unit) =
+public suspend inline fun <T> JFlow.Publisher<T>.collect(action: (T) -> Unit): Unit =
     FlowAdapters.toPublisher(this).collect(action)

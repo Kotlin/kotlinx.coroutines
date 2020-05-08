@@ -29,10 +29,10 @@ private val REMOVE_FUTURE_ON_CANCEL: Method? = try {
 @Suppress("NAME_SHADOWING")
 internal fun removeFutureOnCancel(executor: Executor): Boolean {
     try {
-        val executor = executor as? ScheduledExecutorService ?: return false
+        val executor = executor as? ScheduledThreadPoolExecutor ?: return false
         (REMOVE_FUTURE_ON_CANCEL ?: return false).invoke(executor, true)
         return true
     } catch (e: Throwable) {
-        return true
+        return false // failed to setRemoveOnCancelPolicy, assume it does not removes future on cancel
     }
 }

@@ -2,6 +2,13 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+pluginManagement {
+    plugins {
+        id "net.ltgt.apt" version "0.21"
+        id "me.champeau.gradle.jmh" version "0.5.0-rc-2"
+    }
+}
+
 rootProject.name = 'kotlinx.coroutines'
 enableFeaturePreview('GRADLE_METADATA')
 
@@ -34,6 +41,7 @@ module('reactive/kotlinx-coroutines-reactive')
 module('reactive/kotlinx-coroutines-reactor')
 module('reactive/kotlinx-coroutines-jdk9')
 module('reactive/kotlinx-coroutines-rx2')
+module('reactive/kotlinx-coroutines-rx3')
 module('ui/kotlinx-coroutines-android')
 module('ui/kotlinx-coroutines-android/android-unit-tests')
 module('ui/kotlinx-coroutines-javafx')
@@ -45,4 +53,4 @@ if (!build_snapshot_train) {
     include('site')
 }
 
-module('publication-validator')
+module('integration-testing')

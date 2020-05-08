@@ -33,7 +33,7 @@ import kotlin.coroutines.*
 @Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
         ReplaceWith("TestCoroutineScope", "kotlin.coroutines.test"),
         level = DeprecationLevel.WARNING)
-class TestCoroutineContext(private val name: String? = null) : CoroutineContext {
+public class TestCoroutineContext(private val name: String? = null) : CoroutineContext {
     private val uncaughtExceptions = mutableListOf<Throwable>()
 
     private val ctxDispatcher = Dispatcher()
@@ -80,7 +80,7 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
      * @param unit The [TimeUnit] in which the clock-time must be returned.
      * @return The virtual clock-time
      */
-    public fun now(unit: TimeUnit = TimeUnit.MILLISECONDS)=
+    public fun now(unit: TimeUnit = TimeUnit.MILLISECONDS): Long=
         unit.convert(time, TimeUnit.NANOSECONDS)
 
     /**
@@ -105,7 +105,7 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
      * @param targetTime The point in time to which to move the CoroutineContext's clock.
      * @param unit The [TimeUnit] in which [targetTime] is expressed.
      */
-    fun advanceTimeTo(targetTime: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
+    public fun advanceTimeTo(targetTime: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
         val nanoTime = unit.toNanos(targetTime)
         triggerActions(nanoTime)
         if (nanoTime > time) time = nanoTime
@@ -115,7 +115,7 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
      * Triggers any actions that have not yet been triggered and that are scheduled to be triggered at or
      * before this CoroutineContext's present virtual clock-time.
      */
-    public fun triggerActions() = triggerActions(time)
+    public fun triggerActions(): Unit = triggerActions(time)
 
     /**
      * Cancels all not yet triggered actions. Be careful calling this, since it can seriously

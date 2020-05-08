@@ -25,7 +25,7 @@ public interface ActorScope<E> : CoroutineScope, ReceiveChannel<E> {
      * All the [ReceiveChannel] functions on this interface delegate to
      * the channel instance returned by this function.
      */
-    val channel: Channel<E>
+    public val channel: Channel<E>
 }
 
 /**

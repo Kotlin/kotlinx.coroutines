@@ -23,6 +23,12 @@ repositories {
     maven { url "https://dl.bintray.com/devexperts/Maven/" }
 }
 
+compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs += ['-Xexplicit-api=strict']
+    }
+}
+
 tasks.withType(Test) {
     testLogging {
         showStandardStreams = true

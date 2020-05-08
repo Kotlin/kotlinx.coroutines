@@ -16,17 +16,37 @@ internal fun <T> Flow<T>.asChannelFlow(): ChannelFlow<T> =
     this as? ChannelFlow ?: ChannelFlowOperatorImpl(this)
 
 /**
- * Operators that use channels extend this ChannelFlow and are always fused with each other.
+ * Operators that can fuse with [buffer] and [flowOn] operators implement this interface.
+ *
+ * @suppress **This an internal API and should not be used from general code.**
+ */
+@InternalCoroutinesApi
+public interface FusibleFlow<T> : Flow<T> {
+    /**
+     * This function is called by [flowOn] (with context) and [buffer] (with capacity) operators
+     * that are applied to this flow.
+     */
+    public fun fuse(
+        context: CoroutineContext = EmptyCoroutineContext,
+        capacity: Int = Channel.OPTIONAL_CHANNEL
+    ): FusibleFlow<T>
+}
+
+/**
+ * Operators that use channels extend this `ChannelFlow` and are always fused with each other.
+ * This class servers as a skeleton implementation of [FusibleFlow] and provides other cross-cutting
+ * methods like ability to [produceIn] and [broadcastIn] the corresponding flow, thus making it
+ * possible to directly use the backing channel if it exists (hence the `ChannelFlow` name).
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
 @InternalCoroutinesApi
 public abstract class ChannelFlow<T>(
     // upstream context
-    @JvmField val context: CoroutineContext,
+    @JvmField public val context: CoroutineContext,
     // buffer capacity between upstream and downstream context
-    @JvmField val capacity: Int
-) : Flow<T> {
+    @JvmField public val capacity: Int
+) : FusibleFlow<T> {
 
     // shared code to create a suspend lambda from collectTo function in one place
     internal val collectToFun: suspend (ProducerScope<T>) -> Unit
@@ -35,10 +55,7 @@ public abstract class ChannelFlow<T>(
     private val produceCapacity: Int
         get() = if (capacity == Channel.OPTIONAL_CHANNEL) Channel.BUFFERED else capacity
 
-    public fun update(
-        context: CoroutineContext = EmptyCoroutineContext,
-        capacity: Int = Channel.OPTIONAL_CHANNEL
-    ): ChannelFlow<T> {
+    public override fun fuse(context: CoroutineContext, capacity: Int): FusibleFlow<T> {
         // note: previous upstream context (specified before) takes precedence
         val newContext = context + this.context
         val newCapacity = when {
@@ -65,7 +82,7 @@ public abstract class ChannelFlow<T>(
 
     protected abstract suspend fun collectTo(scope: ProducerScope<T>)
 
-    open fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =
+    public open fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =
         scope.broadcast(context, produceCapacity, start, block = collectToFun)
 
     /**
@@ -76,15 +93,15 @@ public abstract class ChannelFlow<T>(
      * handlers, while the pipeline before does not, because it was cancelled during its dispatch.
      * Thus `onCompletion` and `finally` blocks won't be executed and it may lead to a different kinds of memory leaks.
      */
-    open fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
+    public open fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
         scope.produce(context, produceCapacity, start = CoroutineStart.ATOMIC, block = collectToFun)
 
-    override suspend fun collect(collector: FlowCollector<T>) =
+    override suspend fun collect(collector: FlowCollector<T>): Unit =
         coroutineScope {
             collector.emitAll(produceImpl(this))
         }
 
-    open fun additionalToStringProps() = ""
+    public open fun additionalToStringProps(): String = ""
 
     // debug toString
     override fun toString(): String =

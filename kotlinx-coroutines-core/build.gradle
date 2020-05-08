@@ -92,6 +92,13 @@ jvmTest {
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
 }
 
+jvmJar {
+    manifest {
+        attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
+        attributes "Can-Retransform-Classes": "true"
+    }
+}
+
 task jvmStressTest(type: Test, dependsOn: compileTestKotlinJvm) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
@@ -101,6 +108,8 @@ task jvmStressTest(type: Test, dependsOn: compileTestKotlinJvm) {
     enableAssertions = true
     testLogging.showStandardStreams = true
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
+    systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2'
+    systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '10'
 }
 
 task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {

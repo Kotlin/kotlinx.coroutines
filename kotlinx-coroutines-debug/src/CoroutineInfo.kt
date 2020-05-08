@@ -1,12 +1,11 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
-@file:Suppress("PropertyName")
-
+@file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNUSED")
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.debug.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.*
 
@@ -14,11 +13,16 @@ import kotlin.coroutines.jvm.internal.*
  * Class describing coroutine info such as its context, state and stacktrace.
  */
 @ExperimentalCoroutinesApi
-public class CoroutineInfo internal constructor(
-    val context: CoroutineContext,
-    private val creationStackBottom: CoroutineStackFrame?,
-    @JvmField internal val sequenceNumber: Long
-) {
+public class CoroutineInfo internal constructor(delegate: DebugCoroutineInfo) {
+    /**
+     * [Coroutine context][coroutineContext] of the coroutine
+     */
+    public val context: CoroutineContext = delegate.context
+    /**
+     * Last observed state of the coroutine
+     */
+    public val state: State = State.valueOf(delegate.state)
+    private val creationStackBottom: CoroutineStackFrame? = delegate.creationStackBottom
 
     /**
      * [Job] associated with a current coroutine or null.
@@ -32,24 +36,7 @@ public class CoroutineInfo internal constructor(
      */
     public val creationStackTrace: List<StackTraceElement> get() = creationStackTrace()
 
-    /**
-     * Last observed [state][State] of the coroutine.
-     */
-    public val state: State get() = _state
-
-    private var _state: State = State.CREATED
-
-    @JvmField
-    internal var lastObservedThread: Thread? = null
-
-    @JvmField
-    internal var lastObservedFrame: CoroutineStackFrame? = null
-
-    public fun copy(): CoroutineInfo = CoroutineInfo(context, creationStackBottom, sequenceNumber).also {
-        it._state = _state
-        it.lastObservedFrame = lastObservedFrame
-        it.lastObservedThread = lastObservedThread
-    }
+    private val lastObservedFrame: CoroutineStackFrame? = delegate.lastObservedFrame
 
     /**
      * Last observed stacktrace of the coroutine captured on its suspension or resumption point.
@@ -78,18 +65,6 @@ public class CoroutineInfo internal constructor(
         val caller = frame.callerFrame
         if (caller != null) {
             yieldFrames(caller)
-        }
-    }
-
-    internal fun updateState(state: State, frame: Continuation<*>) {
-        // Propagate only duplicating transitions to running for KT-29997
-        if (_state == state && state == State.SUSPENDED && lastObservedFrame != null) return
-        _state = state
-        lastObservedFrame = frame as? CoroutineStackFrame
-        if (state == State.RUNNING) {
-            lastObservedThread = Thread.currentThread()
-        } else {
-            lastObservedThread = null
         }
     }
 

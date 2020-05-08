@@ -13,7 +13,7 @@ public fun String.trimStackTrace(): String =
         .replace(Regex("#[0-9]+"), "")
         .replace(Regex("(?<=\tat )[^\n]*/"), "")
         .replace(Regex("\t"), "")
-        .replace("sun.misc.Unsafe.park", "jdk.internal.misc.Unsafe.park") // JDK8->JDK11
+        .replace("sun.misc.Unsafe.", "jdk.internal.misc.Unsafe.") // JDK8->JDK11
         .applyBackspace()
 
 public fun String.applyBackspace(): String {
@@ -62,6 +62,31 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null, f
     }
 }
 
+/** Clean the stacktraces from artifacts of BlockHound instrumentation
+ *
+ * BlockHound works by switching a native call by a class generated with ByteBuddy, which, if the blocking
+ * call is allowed in this context, in turn calls the real native call that is now available under a
+ * different name.
+ *
+ * The traces thus undergo the following two changes when the execution is instrumented:
+ *   - The original native call is replaced with a non-native one with the same FQN, and
+ *   - An additional native call is placed on top of the stack, with the original name that also has
+ *     `$$BlockHound$$_` prepended at the last component.
+ */
+private fun cleanBlockHoundTraces(frames: List<String>): List<String> {
+    var result = mutableListOf<String>()
+    val blockHoundSubstr = "\$\$BlockHound\$\$_"
+    var i = 0
+    while (i < frames.size) {
+        result.add(frames[i].replace(blockHoundSubstr, ""))
+        if (frames[i].contains(blockHoundSubstr)) {
+            i += 1
+        }
+        i += 1
+    }
+    return result
+}
+
 public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
     val baos = ByteArrayOutputStream()
     DebugProbes.dumpCoroutines(PrintStream(baos))
@@ -85,7 +110,7 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
         expected.withIndex().forEach { (index, trace) ->
             val actualTrace = actual[index].trimStackTrace().sanitizeAddresses()
             val expectedTrace = trace.trimStackTrace().sanitizeAddresses()
-            val actualLines = actualTrace.split("\n")
+            val actualLines = cleanBlockHoundTraces(actualTrace.split("\n"))
             val expectedLines = expectedTrace.split("\n")
             for (i in expectedLines.indices) {
                 assertEquals(expectedLines[i], actualLines[i])
