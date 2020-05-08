@@ -486,28 +486,45 @@ public interface ChannelIterator<out E> {
  * Conceptually, a channel is similar to Java's [BlockingQueue][java.util.concurrent.BlockingQueue],
  * but it has suspending operations instead of blocking ones and can be [closed][SendChannel.close].
  *
+ * ### Creating channels
+ *
  * The `Channel(capacity)` factory function is used to create channels of different kinds depending on
  * the value of the `capacity` integer:
  *
- * * When `capacity` is 0 &mdash; it creates a `RendezvousChannel`.
+ * * When `capacity` is 0 &mdash; it creates a _rendezvous_ channel.
  *   This channel does not have any buffer at all. An element is transferred from the sender
  *   to the receiver only when [send] and [receive] invocations meet in time (rendezvous), so [send] suspends
  *   until another coroutine invokes [receive], and [receive] suspends until another coroutine invokes [send].
  *
- * * When `capacity` is [Channel.UNLIMITED] &mdash; it creates a `LinkedListChannel`.
+ * * When `capacity` is [Channel.UNLIMITED] &mdash; it creates a channel with effectively unlimited buffer.
  *   This channel has a linked-list buffer of unlimited capacity (limited only by available memory).
  *   [Sending][send] to this channel never suspends, and [offer] always returns `true`.
  *
- * * When `capacity` is [Channel.CONFLATED] &mdash; it creates a `ConflatedChannel`.
+ * * When `capacity` is [Channel.CONFLATED] &mdash; it creates a _conflated_ channel
  *   This channel buffers at most one element and conflates all subsequent `send` and `offer` invocations,
  *   so that the receiver always gets the last element sent.
- *   Back-to-send sent elements are _conflated_ &mdash; only the last sent element is received,
+ *   Back-to-send sent elements are conflated &mdash; only the last sent element is received,
  *   while previously sent elements **are lost**.
  *   [Sending][send] to this channel never suspends, and [offer] always returns `true`.
  *
  * * When `capacity` is positive but less than [UNLIMITED] &mdash; it creates an array-based channel with the specified capacity.
  *   This channel has an array buffer of a fixed `capacity`.
  *   [Sending][send] suspends only when the buffer is full, and [receiving][receive] suspends only when the buffer is empty.
+ *
+ * Buffered channels can be configured with an additional [`onBufferOverflow`][BufferOverflow] parameter. It controls the behaviour
+ * of the channel's [send][Channel.send] function on buffer overflow:
+ *
+ * * [SUSPEND][BufferOverflow.SUSPEND] &mdash; the default, suspend `send` on buffer overflow until there is
+ *   free space in the buffer.
+ * * [DROP_OLDEST][BufferOverflow.DROP_OLDEST] &mdash; do not suspend the `send`, add the latest value to the buffer,
+ *   drop the oldest one from the buffer.
+ *   A channel with `capacity = 1` and `onBufferOverflow = DROP_OLDEST` is a _conflated_ channel.
+ * * [DROP_LATEST][BufferOverflow.DROP_LATEST] &mdash; do not suspend the `send`, drop the value that is being sent,
+ *   keep the buffer contents intact.
+ *
+ * A non-default `onBufferOverflow` implicitly creates a channel with at least one buffered element and
+ * is ignored for a channel with unlimited buffer. It cannot be specified for `capacity = CONFLATED`, which
+ * is a shortcut by itself.
  */
 public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
     /**
@@ -515,25 +532,26 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
      */
     public companion object Factory {
         /**
-         * Requests a channel with an unlimited capacity buffer in the `Channel(...)` factory function
+         * Requests a channel with an unlimited capacity buffer in the `Channel(...)` factory function.
          */
         public const val UNLIMITED: Int = Int.MAX_VALUE
 
         /**
-         * Requests a rendezvous channel in the `Channel(...)` factory function &mdash; a `RendezvousChannel` gets created.
+         * Requests a rendezvous channel in the `Channel(...)` factory function &mdash; a channel that does not have a buffer.
          */
         public const val RENDEZVOUS: Int = 0
 
         /**
-         * Requests a conflated channel in the `Channel(...)` factory function &mdash; a `ConflatedChannel` gets created.
+         * Requests a conflated channel in the `Channel(...)` factory function. This is a shortcut to creating
+         * a channel with [`onBufferOverflow = DROP_OLDEST`][BufferOverflow.DROP_OLDEST].
          */
         public const val CONFLATED: Int = -1
 
         /**
-         * Requests a buffered channel with the default buffer capacity in the `Channel(...)` factory function &mdash;
-         * an `ArrayChannel` gets created with the default capacity.
-         * The default capacity is 64 and can be overridden by setting
-         * [DEFAULT_BUFFER_PROPERTY_NAME] on JVM.
+         * Requests a buffered channel with the default buffer capacity in the `Channel(...)` factory function.
+         * The default capacity for a channel that [suspends][BufferOverflow.SUSPEND] on overflow
+         * is 64 and can be overridden by setting [DEFAULT_BUFFER_PROPERTY_NAME] on JVM.
+         * For non-suspending channels, a buffer of capacity 1 is used.
          */
         public const val BUFFERED: Int = -2
 
@@ -557,16 +575,40 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
  * See [Channel] interface documentation for details.
  *
  * @param capacity either a positive channel capacity or one of the constants defined in [Channel.Factory].
+ * @param onBufferOverflow configures an action on buffer overflow (optional, defaults to
+ *   a [suspending][BufferOverflow.SUSPEND] attempt to [send][Channel.send] a value,
+ *   supported only when `capacity >= 0` or `capacity == Channel.BUFFERED`,
+ *   implicitly creates a channel with at least one buffered element).
  * @throws IllegalArgumentException when [capacity] < -2
  */
-public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> =
+public fun <E> Channel(capacity: Int = RENDEZVOUS, onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND): Channel<E> =
     when (capacity) {
-        RENDEZVOUS -> RendezvousChannel()
-        UNLIMITED -> LinkedListChannel()
-        CONFLATED -> ConflatedChannel()
-        BUFFERED -> ArrayChannel(CHANNEL_DEFAULT_CAPACITY)
-        else -> ArrayChannel(capacity)
+        RENDEZVOUS -> {
+            if (onBufferOverflow == BufferOverflow.SUSPEND)
+                RendezvousChannel() // an efficient implementation of rendezvous channel
+            else
+                ArrayChannel(1, onBufferOverflow) // support buffer overflow with buffered channel
+        }
+        CONFLATED -> {
+            require(onBufferOverflow == BufferOverflow.SUSPEND) {
+                "CONFLATED capacity cannot be used with non-default onBufferOverflow"
+            }
+            ConflatedChannel()
+        }
+        UNLIMITED -> LinkedListChannel() // ignores onBufferOverflow: it has buffer, but it never overflows
+        BUFFERED -> ArrayChannel( // uses default capacity with SUSPEND
+            if (onBufferOverflow == BufferOverflow.SUSPEND) CHANNEL_DEFAULT_CAPACITY else 1, onBufferOverflow
+        )
+        else -> {
+            if (capacity == 1 && onBufferOverflow == BufferOverflow.DROP_OLDEST)
+                ConflatedChannel() // conflated implementation is more efficient but appears to work in the same way
+            else
+                ArrayChannel(capacity, onBufferOverflow)
+        }
     }
+
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "For binary compatibility")
+public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> = Channel(capacity)
 
 /**
  * Indicates an attempt to [send][SendChannel.send] to a [isClosedForSend][SendChannel.isClosedForSend] channel

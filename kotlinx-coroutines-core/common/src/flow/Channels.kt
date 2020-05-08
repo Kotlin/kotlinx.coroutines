@@ -116,8 +116,9 @@ private class ChannelAsFlow<T>(
     private val channel: ReceiveChannel<T>,
     private val consume: Boolean,
     context: CoroutineContext = EmptyCoroutineContext,
-    capacity: Int = Channel.OPTIONAL_CHANNEL
-) : ChannelFlow<T>(context, capacity) {
+    capacity: Int = Channel.OPTIONAL_CHANNEL,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
+) : ChannelFlow<T>(context, capacity, onBufferOverflow) {
     private val consumed = atomic(false)
 
     private fun markConsumed() {
@@ -126,8 +127,11 @@ private class ChannelAsFlow<T>(
         }
     }
     
-    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
-        ChannelAsFlow(channel, consume, context, capacity)
+    override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
+        ChannelAsFlow(channel, consume, context, capacity, onBufferOverflow)
+
+    override fun dropChannelOperators(): Flow<T>? =
+        ChannelAsFlow(channel, consume)
 
     override suspend fun collectTo(scope: ProducerScope<T>) =
         SendingCollector(scope).emitAllImpl(channel, consume) // use efficient channel receiving code from emitAll
@@ -154,7 +158,7 @@ private class ChannelAsFlow<T>(
         }
     }
 
-    override fun additionalToStringProps(): String = "channel=$channel, "
+    override fun additionalToStringProps(): String = "channel=$channel"
 }
 
 /**
@@ -181,6 +185,9 @@ public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
  * Use [buffer] operator on the flow before calling `broadcastIn` to specify a value other than
  * default and to control what happens when data is produced faster than it is consumed,
  * that is to control backpressure behavior.
+ *
+ * **Note: This API is obsolete.** It will be deprecated and replaced with
+ * the [Flow.shareIn] operator when it becomes stable.
  */
 @FlowPreview
 public fun <T> Flow<T>.broadcastIn(
