@@ -8,43 +8,53 @@ import kotlinx.coroutines.flow.*
 import kotlin.math.*
 import kotlin.time.*
 
-public abstract class RateLimiter {
-    protected abstract fun requestTimeSlot(atTime: Long, tokens: Long, maxDelay: Long): Long
-    protected abstract fun relinquishTokens(atTime: Long, takenAtTime: Long, tokens: Long)
-    protected abstract fun addTokens(atTime: Long, tokens: Long)
-    protected abstract fun nextAvailableTime(atTime: Long, tokens: Long): Long
+public interface RateLimitingAlgorithm {
+    public fun requestTimeSlot(atTime: Long, tokens: Long, maxDelay: Long): Long
+    public fun relinquishTokens(atTime: Long, takenAtTime: Long, tokens: Long)
+    public fun addTokens(atTime: Long, tokens: Long)
+    public fun nextAvailableTime(atTime: Long, tokens: Long): Long
+}
+
+private const val NANOS_PER_MILLI = 1_000_000L
+
+@ExperimentalTime
+public class RateLimiter constructor(private val algorithm: RateLimitingAlgorithm, timeSource: kotlin.time.TimeSource = kotlin.time.TimeSource.Monotonic) {
+
+    private val timeMark = timeSource.markNow()
+
+    private fun timeSinceInitialization(): Long = timeMark.elapsedNow().toLongNanoseconds()
 
     private suspend fun consume(tokens: Long, maxDelay: Long) {
         require(tokens > 0)
-        val currentTime = nanoTime()
-        val nextSlot = requestTimeSlot(currentTime, tokens, maxDelay)
+        val currentTime = timeSinceInitialization()
+        val nextSlot = algorithm.requestTimeSlot(currentTime, tokens, maxDelay)
         if (nextSlot == Long.MAX_VALUE) {
             throw IllegalArgumentException("Could not allocate $tokens tokens to be available in $maxDelay")
         }
         val toSleep = nextSlot - currentTime
         try {
-            delay(toSleep)
+            delay(toSleep / NANOS_PER_MILLI)
         } catch (e: CancellationException) {
-            relinquishTokens(nanoTime(), currentTime, tokens)
+            algorithm.relinquishTokens(timeSinceInitialization(), currentTime, tokens)
         }
     }
 
-    public fun addTokens(tokens: Long): Unit = addTokens(nanoTime(), tokens)
+    public fun addTokens(tokens: Long): Unit = algorithm.addTokens(timeSinceInitialization(), tokens)
     public fun removeTokens(tokens: Long): Unit = addTokens(-tokens)
 
     public fun tryConsume(tokens: Long = 1): Boolean {
         require(tokens > 0)
-        return requestTimeSlot(nanoTime(), tokens, 0) != Long.MAX_VALUE
+        return algorithm.requestTimeSlot(timeSinceInitialization(), tokens, 0) != Long.MAX_VALUE
     }
 
     public suspend fun consume(tokens: Long = 1): Unit =
         consume(tokens, Long.MAX_VALUE)
 
-    @ExperimentalTime
     public suspend fun consume(tokens: Long, maxDelay: Duration): Unit =
         consume(tokens, maxDelay.toLongNanoseconds())
 }
 
+@ExperimentalTime
 internal class RateLimitedFlow<T>(
     val flow: Flow<T>, private val rateLimiter: RateLimiter, private val tokensPerValue: (T) -> Long): Flow<T> {
     @InternalCoroutinesApi
@@ -56,6 +66,7 @@ internal class RateLimitedFlow<T>(
     }
 }
 
+@ExperimentalTime
 public fun <T> Flow<T>.rateLimit(rateLimiter: RateLimiter, tokensPerValue: (T) -> Long): Flow<T> =
     RateLimitedFlow(this, rateLimiter, tokensPerValue)
 
@@ -69,16 +80,12 @@ internal data class Bandwidth(
     }
 }
 
-internal class TokenBucketRateLimiter(bandwidths: Array<Bandwidth>): RateLimiter() {
+internal class TokenBucketRateLimiter(initTime: Long, bandwidths: Array<Bandwidth>): RateLimitingAlgorithm {
 
     internal class State(private val bandwidths: Array<Bandwidth>,
-                         private val tokensPerBandwidth: Array<Long> =
-                             Array(bandwidths.size) { bandwidths[it].initialAmount },
-                         private val lastUpdateTimes: Array<Long> = run {
-                             val currentTime = nanoTime()
-                             Array(bandwidths.size) { currentTime }
-                         },
-                         private var lastEventTime: Long = nanoTime())
+                         private val tokensPerBandwidth: Array<Long>,
+                         private val lastUpdateTimes: Array<Long>,
+                         private var lastEventTime: Long)
     {
         init { require(bandwidths.isNotEmpty()) }
 
@@ -110,7 +117,6 @@ internal class TokenBucketRateLimiter(bandwidths: Array<Bandwidth>): RateLimiter
 
         fun addTokens(tokens: Long) {
             for (i in 0..bandwidths.size) {
-                val bandwidth = bandwidths[i]
                 val capacity = bandwidths[i].capacity
                 val newTokens = tokensPerBandwidth[i] + tokens // TODO: check overflow
                 tokensPerBandwidth[i] = if (newTokens >= capacity) capacity else newTokens
@@ -157,7 +163,11 @@ internal class TokenBucketRateLimiter(bandwidths: Array<Bandwidth>): RateLimiter
         }
     }
 
-    val state: AtomicRef<State> = atomic(State(bandwidths))
+    val state: AtomicRef<State> = atomic(State(
+        bandwidths,
+        Array(bandwidths.size) { bandwidths[it].initialAmount },
+        Array(bandwidths.size) { initTime },
+        Long.MIN_VALUE))
 
     private inline fun <T> withState(block: (State) -> T): T {
         while (true) {
@@ -204,12 +214,14 @@ internal class TokenBucketRateLimiter(bandwidths: Array<Bandwidth>): RateLimiter
     }
 }
 
+@ExperimentalTime
 public fun rateLimiter(@BuilderInference block: RateLimiterBuilder.() -> Unit): RateLimiter {
     val builder = RateLimiterBuilder()
     builder.block()
     return builder.build()
 }
 
+@ExperimentalTime
 public class RateLimiterBuilder {
 
     private val bandwidths = mutableListOf<Bandwidth>()
@@ -223,14 +235,14 @@ public class RateLimiterBuilder {
         smooth(capacity, refillPeriod.toLongNanoseconds())
     }
 
-    public fun periodic(capacity: Long, refillPeriod: Long, quantum: Long = 1, initialAmount: Long = capacity) {
+    public fun periodic(capacity: Long, refillPeriod: Long, quantum: Long = capacity, initialAmount: Long = capacity) {
         bandwidths.add(Bandwidth(capacity, refillPeriod, quantum, initialAmount))
     }
 
     @ExperimentalTime
-    public fun periodic(capacity: Long, refillPeriod: Duration, quantum: Long = 1, initialAmount: Long = capacity) {
+    public fun periodic(capacity: Long, refillPeriod: Duration, quantum: Long = capacity, initialAmount: Long = capacity) {
         periodic(capacity, refillPeriod.toLongNanoseconds(), quantum, initialAmount)
     }
 
-    internal fun build(): RateLimiter = TokenBucketRateLimiter(bandwidths.toTypedArray())
+    internal fun build(): RateLimiter = RateLimiter(TokenBucketRateLimiter(0, bandwidths.toTypedArray()))
 }
