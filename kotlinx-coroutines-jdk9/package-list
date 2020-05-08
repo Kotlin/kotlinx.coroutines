@@ -1,0 +1,12 @@
+$dokka.format:kotlin-website
+$dokka.linkExtension:html
+$dokka.location:kotlinx.coroutines.jdk9$asFlow(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.asFlow.T)))kotlinx.coroutines.jdk9/java.util.concurrent.-flow.-publisher/as-flow.html
+$dokka.location:kotlinx.coroutines.jdk9$asPublisher(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.jdk9.asPublisher.T)))kotlinx.coroutines.jdk9/kotlinx.coroutines.flow.-flow/as-publisher.html
+$dokka.location:kotlinx.coroutines.jdk9$awaitFirst(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.awaitFirst.T)))kotlinx.coroutines.jdk9/java.util.concurrent.-flow.-publisher/await-first.html
+$dokka.location:kotlinx.coroutines.jdk9$awaitFirstOrDefault(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.awaitFirstOrDefault.T)), kotlinx.coroutines.jdk9.awaitFirstOrDefault.T)kotlinx.coroutines.jdk9/java.util.concurrent.-flow.-publisher/await-first-or-default.html
+$dokka.location:kotlinx.coroutines.jdk9$awaitFirstOrElse(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.awaitFirstOrElse.T)), kotlin.Function0((kotlinx.coroutines.jdk9.awaitFirstOrElse.T)))kotlinx.coroutines.jdk9/java.util.concurrent.-flow.-publisher/await-first-or-else.html
+$dokka.location:kotlinx.coroutines.jdk9$awaitFirstOrNull(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.awaitFirstOrNull.T)))kotlinx.coroutines.jdk9/java.util.concurrent.-flow.-publisher/await-first-or-null.html
+$dokka.location:kotlinx.coroutines.jdk9$awaitLast(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.awaitLast.T)))kotlinx.coroutines.jdk9/java.util.concurrent.-flow.-publisher/await-last.html
+$dokka.location:kotlinx.coroutines.jdk9$awaitSingle(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.awaitSingle.T)))kotlinx.coroutines.jdk9/java.util.concurrent.-flow.-publisher/await-single.html
+$dokka.location:kotlinx.coroutines.jdk9$collect(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.collect.T)), kotlin.Function1((kotlinx.coroutines.jdk9.collect.T, kotlin.Unit)))kotlinx.coroutines.jdk9/java.util.concurrent.-flow.-publisher/collect.html
+kotlinx.coroutines.jdk9

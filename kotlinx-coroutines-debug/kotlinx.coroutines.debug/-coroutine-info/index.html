@@ -50,6 +50,8 @@
 <td>
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">context</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
 
+        <p><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html">Coroutine context</a> of the coroutine</p>
+
       </td>
 </tr>
 <tr>
@@ -61,7 +63,8 @@
 <td>
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">creationStackTrace</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="http://docs.oracle.com/javase/8/docs/api/java/lang/StackTraceElement.html"><span class="identifier">StackTraceElement</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Creation stacktrace of the coroutine.</p>
+        <p>Creation stacktrace of the coroutine.
+Can be empty if <a href="../-debug-probes/enable-creation-stack-traces.html">DebugProbes.enableCreationStackTraces</a> is not set.</p>
 
       </td>
 </tr>
@@ -88,7 +91,7 @@ May be later used in <a href="../-debug-probes/print-job.html">DebugProbes.print
 <td>
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">state</span><span class="symbol">: </span><a href="../-state/index.html"><span class="identifier">State</span></a></code></div>
 
-        <p>Last observed <a href="../-state/index.html">state</a> of the coroutine.</p>
+        <p>Last observed state of the coroutine</p>
 
       </td>
 </tr>
@@ -99,17 +102,6 @@ May be later used in <a href="../-debug-probes/print-job.html">DebugProbes.print
 
 <table class="api-docs-table">
 <tbody>
-<tr>
-<td>
-
-        <p><a href="copy.html">copy</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">copy</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">CoroutineInfo</span></a></code></div>
-
-      </td>
-</tr>
 <tr>
 <td>
 

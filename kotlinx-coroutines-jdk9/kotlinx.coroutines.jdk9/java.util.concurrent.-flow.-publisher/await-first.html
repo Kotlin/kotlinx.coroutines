@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>awaitFirst - kotlinx-coroutines-jdk9</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk9/kotlinx.coroutines.jdk9/java.util.concurrent.-flow.-publisher/await-first.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-jdk9</a> / <a href="../index.html">kotlinx.coroutines.jdk9</a> / <a href="index.html">java.util.concurrent.Flow.Publisher</a> / <a href="./await-first.html">awaitFirst</a></div>
+
+<h1 id="awaitfirst">awaitFirst</h1>
+
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="await-first.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirst</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await-first.html#T"><span class="identifier">T</span></a></code></div>
+
+<p>Awaits for the first value from the given publisher without blocking a thread and
+returns the resulting value or throws the corresponding exception if this publisher had produced error.</p>
+
+<p>This suspending function is cancellable.
+If the <a href="#">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+immediately resumes with <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CancellationException.html">CancellationException</a>.</p>
+
+<h3 id="exceptions">Exceptions</h3>
+
+<p><code>NoSuchElementException</code> - if publisher does not emit any value</p>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

@@ -38,7 +38,7 @@
 <p>Add <code>kotlinx-coroutines-test</code> to your project test dependencies:</p>
 
 <pre>dependencies {
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.3.4'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.3.6'
 }
 </pre>
 
@@ -314,7 +314,7 @@ important to ensure that <a href="https://kotlin.github.io/kotlinx.coroutines/ko
 
 <div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">TestClass</span> <span class="p">{</span>
     <span class="k">private</span> <span class="kd">val</span> <span class="py">testScope</span> <span class="p">=</span> <span class="nc">TestCoroutineScope</span><span class="p">()</span>
-    <span class="k">private</span> <span class="k">lateinit</span> <span class="kd">var</span> <span class="py">subject</span><span class="p">:</span> <span class="nc">Subject</span> <span class="p">=</span> <span class="k">null</span> 
+    <span class="k">private</span> <span class="k">lateinit</span> <span class="kd">var</span> <span class="py">subject</span><span class="p">:</span> <span class="nc">Subject</span>
     
     <span class="nd">@Before</span>
     <span class="k">fun</span> <span class="nf">setup</span><span class="p">()</span> <span class="p">{</span>

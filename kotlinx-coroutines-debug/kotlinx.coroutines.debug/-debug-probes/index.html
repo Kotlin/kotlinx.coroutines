@@ -53,15 +53,33 @@ All introspecting methods throw <a href="https://kotlinlang.org/api/latest/jvm/s
 <p>Overhead:</p>
 
 <ul>
-  <li>Every created coroutine is stored in a weak hash map, thus adding additional GC pressure.</li>
-  <li>On every created coroutine, stacktrace of the current thread is dumped.</li>
-  <li>On every <code>resume</code> and <code>suspend</code>, <a href="http://docs.oracle.com/javase/8/docs/api/java/util/WeakHashMap.html">WeakHashMap</a> is updated under a global lock.</li>
+  <li>Every created coroutine is stored in a concurrent hash map and hash map is looked up and
+  updated on each suspension and resumption.</li>
+  <li>If <a href="enable-creation-stack-traces.html">DebugProbes.enableCreationStackTraces</a> is enabled, stack trace of the current thread is captured on
+  each created coroutine that is a rough equivalent of throwing an exception per each created coroutine.</li>
 </ul>
 
 <h3 id="properties">Properties</h3>
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+
+        <p><a href="enable-creation-stack-traces.html">enableCreationStackTraces</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">var </span><span class="identifier">enableCreationStackTraces</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Whether coroutine creation stack traces should be captured.
+When enabled, for each created coroutine a stack trace of the current
+thread is captured and attached to the coroutine.
+This option can be useful during local debug sessions, but is recommended
+to be disabled in production environments to avoid stack trace dumping overhead.</p>
+
+      </td>
+</tr>
 <tr>
 <td>
 
@@ -84,7 +102,7 @@ All introspecting methods throw <a href="https://kotlinlang.org/api/latest/jvm/s
 <td>
         <div class="signature"><code><span class="keyword">var </span><span class="identifier">sanitizeStackTraces</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Whether coroutine creation stacktraces should be sanitized.
+        <p>Whether coroutine creation stack traces should be sanitized.
 Sanitization removes all frames from <code>kotlinx.coroutines</code> package except
 the first one and the last one to simplify diagnostic.</p>
 

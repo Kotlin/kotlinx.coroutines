@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kotlinx-coroutines-rx3</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <p>Utilities for <a href="https://github.com/ReactiveX/RxJava">RxJava 3.x</a>.</p>
+
+<p>Coroutine builders:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Name</strong></th>
+      <th><strong>Result</strong></th>
+      <th><strong>Scope</strong></th>
+      <th><strong>Description</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/rx-completable.html">rxCompletable</a></td>
+      <td><code>Completable</code></td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a></td>
+      <td>Cold completable that starts coroutine on subscribe</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/rx-maybe.html">rxMaybe</a></td>
+      <td><code>Maybe</code></td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a></td>
+      <td>Cold maybe that starts coroutine on subscribe</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/rx-single.html">rxSingle</a></td>
+      <td><code>Single</code></td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a></td>
+      <td>Cold single that starts coroutine on subscribe</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/rx-observable.html">rxObservable</a></td>
+      <td><code>Observable</code></td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a></td>
+      <td>Cold observable that starts coroutine on subscribe</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/rx-flowable.html">rxFlowable</a></td>
+      <td><code>Flowable</code></td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a></td>
+      <td>Cold observable that starts coroutine on subscribe with <strong>backpressure</strong> support</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Integration with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Name</strong></th>
+      <th><strong>Result</strong></th>
+      <th><strong>Description</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/kotlinx.coroutines.flow.-flow/as-flowable.html">Flow.asFlowable</a></td>
+      <td><code>Flowable</code></td>
+      <td>Converts the given flow to a cold Flowable.</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/kotlinx.coroutines.flow.-flow/as-observable.html">Flow.asObservable</a></td>
+      <td><code>Observable</code></td>
+      <td>Converts the given flow to a cold Observable.</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/as-flow.html">ObservableSource.asFlow</a></td>
+      <td><code>Flow</code></td>
+      <td>Converts the given cold ObservableSource to flow</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Suspending extension functions and suspending iteration:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Name</strong></th>
+      <th><strong>Description</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-completable-source/await.html">CompletableSource.await</a></td>
+      <td>Awaits for completion of the completable value</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-maybe-source/await.html">MaybeSource.await</a></td>
+      <td>Awaits for the value of the maybe and returns it or null</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-maybe-source/await-or-default.html">MaybeSource.awaitOrDefault</a></td>
+      <td>Awaits for the value of the maybe and returns it or default</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-single-source/await.html">SingleSource.await</a></td>
+      <td>Awaits for completion of the single value and returns it</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/await-first.html">ObservableSource.awaitFirst</a></td>
+      <td>Awaits for the first value from the given observable</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/await-first-or-default.html">ObservableSource.awaitFirstOrDefault</a></td>
+      <td>Awaits for the first value from the given observable or default</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/await-first-or-else.html">ObservableSource.awaitFirstOrElse</a></td>
+      <td>Awaits for the first value from the given observable or default from a function</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/await-first-or-null.html">ObservableSource.awaitFirstOrNull</a></td>
+      <td>Awaits for the first value from the given observable or null</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/await-first.html">ObservableSource.awaitLast</a></td>
+      <td>Awaits for the last value from the given observable</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/await-single.html">ObservableSource.awaitSingle</a></td>
+      <td>Awaits for the single value from the given observable</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Note that <code>Flowable</code> is a subclass of <a href="https://www.reactive-streams.org">Reactive Streams</a>
+<code>Publisher</code> and extensions for it are covered by
+<a href="../kotlinx-coroutines-reactive">kotlinx-coroutines-reactive</a> module.</p>
+
+<p>Conversion functions:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Name</strong></th>
+      <th><strong>Description</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/kotlinx.coroutines.-job/as-completable.html">Job.asCompletable</a></td>
+      <td>Converts job to hot completable</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/kotlinx.coroutines.-deferred/as-single.html">Deferred.asSingle</a></td>
+      <td>Converts deferred value to hot single</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx3/kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-scheduler/as-coroutine-dispatcher.html">Scheduler.asCoroutineDispatcher</a></td>
+      <td>Converts scheduler to <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="packages">Packages</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="kotlinx.coroutines.rx3/index.html">kotlinx.coroutines.rx3</a></p>
+
+      </td>
+<td>
+
+        <p>Utilities for <a href="https://github.com/ReactiveX/RxJava">RxJava 3.x</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="index">Index</h3>
+
+<p><a href="alltypes/index.html">All Types</a></p>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

@@ -33,7 +33,7 @@
 
 <h1 id="selectbuilder">SelectBuilder</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SelectBuilder</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">R</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/selects/Select.kt#L21">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SelectBuilder</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">R</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/selects/Select.kt#L22">(source)</a></div>
 
 <p>Scope for <a href="../select.html">select</a> invocation.</p>
 
@@ -78,6 +78,27 @@ with the <code>null</code> value for this parameter that selects value of type <
 
         <p>Clause that selects the given <a href="on-timeout.html#kotlinx.coroutines.selects.SelectBuilder$onTimeout(kotlin.Long, kotlin.SuspendFunction0((kotlinx.coroutines.selects.SelectBuilder.R)))/block">block</a> after a specified timeout passes.
 If timeout is negative or zero, <a href="on-timeout.html#kotlinx.coroutines.selects.SelectBuilder$onTimeout(kotlin.Long, kotlin.SuspendFunction0((kotlinx.coroutines.selects.SelectBuilder.R)))/block">block</a> is selected immediately.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="extension-functions">Extension Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="../on-timeout.html">onTimeout</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><a href="../on-timeout.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.selects$onTimeout(kotlinx.coroutines.selects.SelectBuilder((kotlinx.coroutines.selects.onTimeout.R)), , kotlin.SuspendFunction0((kotlinx.coroutines.selects.onTimeout.R)))/timeout">timeout</span><span class="symbol">:</span>&nbsp;<span class="identifier">&lt;ERROR CLASS&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.selects$onTimeout(kotlinx.coroutines.selects.SelectBuilder((kotlinx.coroutines.selects.onTimeout.R)), , kotlin.SuspendFunction0((kotlinx.coroutines.selects.onTimeout.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../on-timeout.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Clause that selects the given <a href="../on-timeout.html#kotlinx.coroutines.selects$onTimeout(kotlinx.coroutines.selects.SelectBuilder((kotlinx.coroutines.selects.onTimeout.R)), , kotlin.SuspendFunction0((kotlinx.coroutines.selects.onTimeout.R)))/block">block</a> after the specified <a href="../on-timeout.html#kotlinx.coroutines.selects$onTimeout(kotlinx.coroutines.selects.SelectBuilder((kotlinx.coroutines.selects.onTimeout.R)), , kotlin.SuspendFunction0((kotlinx.coroutines.selects.onTimeout.R)))/timeout">timeout</a> passes.
+If timeout is negative or zero, <a href="../on-timeout.html#kotlinx.coroutines.selects$onTimeout(kotlinx.coroutines.selects.SelectBuilder((kotlinx.coroutines.selects.onTimeout.R)), , kotlin.SuspendFunction0((kotlinx.coroutines.selects.onTimeout.R)))/block">block</a> is selected immediately.</p>
 
       </td>
 </tr>

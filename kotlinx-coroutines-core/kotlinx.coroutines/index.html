@@ -117,7 +117,7 @@ For additional information about stacktrace recovery see <a href="#">STACKTRACE_
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineExceptionHandler</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code></div>
 
-        <p>An optional element in the coroutine context to handle uncaught exceptions.</p>
+        <p>An optional element in the coroutine context to handle <strong>uncaught</strong> exceptions.</p>
 
       </td>
 </tr>
@@ -144,9 +144,9 @@ See <a href="new-coroutine-context.html">newCoroutineContext</a> for the descrip
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineScope</span></code></div>
 
-        <p>Defines a scope for new coroutines. Every coroutine builder
+        <p>Defines a scope for new coroutines. Every <strong>coroutine builder</strong> (like <a href="launch.html">launch</a>, <a href="async.html">async</a>, etc)
 is an extension on <a href="-coroutine-scope/index.html">CoroutineScope</a> and inherits its <a href="-coroutine-scope/coroutine-context.html">coroutineContext</a>
-to automatically propagate both context elements and cancellation.</p>
+to automatically propagate all its elements and cancellation.</p>
 
       </td>
 </tr>
@@ -805,7 +805,7 @@ This is a shortcut for the following code with slightly more efficient implement
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-completable-deferred/index.html"><span class="identifier">CompletableDeferred</span></a><span class="symbol">&lt;</span><a href="complete-with.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">completeWith</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$completeWith(kotlinx.coroutines.CompletableDeferred((kotlinx.coroutines.completeWith.T)), kotlin.Result((kotlinx.coroutines.completeWith.T)))/result">result</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-result/index.html"><span class="identifier">Result</span></a><span class="symbol">&lt;</span><a href="complete-with.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">&lt;ERROR CLASS&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-completable-deferred/index.html"><span class="identifier">CompletableDeferred</span></a><span class="symbol">&lt;</span><a href="complete-with.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">completeWith</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$completeWith(kotlinx.coroutines.CompletableDeferred((kotlinx.coroutines.completeWith.T)), kotlin.Result((kotlinx.coroutines.completeWith.T)))/result">result</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-result/index.html"><span class="identifier">Result</span></a><span class="symbol">&lt;</span><a href="complete-with.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Completes this deferred value with the value or exception in the given <a href="complete-with.html#kotlinx.coroutines$completeWith(kotlinx.coroutines.CompletableDeferred((kotlinx.coroutines.completeWith.T)), kotlin.Result((kotlinx.coroutines.completeWith.T)))/result">result</a>. Returns <code>true</code> if this deferred
 was completed as a result of this invocation and <code>false</code> otherwise (if it was already completed).</p>
@@ -837,6 +837,13 @@ the context’s <a href="-job/index.html">Job</a>.</p>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">delay</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines$delay(kotlin.Long)/timeMillis">timeMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
+This suspending function is cancellable.
+If the <a href="-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+immediately resumes with <a href="-cancellation-exception/index.html">CancellationException</a>.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">delay</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines$delay()/duration">duration</span><span class="symbol">:</span>&nbsp;<span class="identifier">&lt;ERROR CLASS&gt;</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Delays coroutine for a given <a href="delay.html#kotlinx.coroutines$delay()/duration">duration</a> without blocking a thread and resumes it after the specified time.
 This suspending function is cancellable.
 If the <a href="-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
 immediately resumes with <a href="-cancellation-exception/index.html">CancellationException</a>.</p>
@@ -996,6 +1003,19 @@ This function should not be used from a coroutine. It is designed to bridge regu
 to libraries that are written in suspending style, to be used in <code>main</code> functions and in tests.</p>
 
       </td>
+</tr><tr data-platform="JVM"><td>
+
+        <p><a href="run-interruptible.html">runInterruptible</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">runInterruptible</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$runInterruptible(kotlin.coroutines.CoroutineContext, kotlin.Function0((kotlinx.coroutines.runInterruptible.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$runInterruptible(kotlin.coroutines.CoroutineContext, kotlin.Function0((kotlinx.coroutines.runInterruptible.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="run-interruptible.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="run-interruptible.html#T"><span class="identifier">T</span></a></code></div>
+
+        <p>Calls the specified <a href="run-interruptible.html#kotlinx.coroutines$runInterruptible(kotlin.coroutines.CoroutineContext, kotlin.Function0((kotlinx.coroutines.runInterruptible.T)))/block">block</a> with a given coroutine context in a interruptible manner.
+The blocking code block will be interrupted and this function will throw <a href="-cancellation-exception/index.html">CancellationException</a>
+if the coroutine is cancelled.</p>
+
+      </td>
 </tr><tr>
 <td>
 
@@ -1051,6 +1071,11 @@ the result.</p>
         <p>Runs a given suspending <a href="with-timeout.html#kotlinx.coroutines$withTimeout(kotlin.Long, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeout.T)))/block">block</a> of code inside a coroutine with a specified <a href="with-timeout.html#kotlinx.coroutines$withTimeout(kotlin.Long, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeout.T)))/timeMillis">timeout</a> and throws
 a <a href="-timeout-cancellation-exception/index.html">TimeoutCancellationException</a> if the timeout was exceeded.</p>
 
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">withTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$withTimeout(, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeout.T)))/timeout">timeout</span><span class="symbol">:</span>&nbsp;<span class="identifier">&lt;ERROR CLASS&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$withTimeout(, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeout.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="with-timeout.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="with-timeout.html#T"><span class="identifier">T</span></a></code></div>
+
+        <p>Runs a given suspending <a href="with-timeout.html#kotlinx.coroutines$withTimeout(, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeout.T)))/block">block</a> of code inside a coroutine with the specified <a href="with-timeout.html#kotlinx.coroutines$withTimeout(, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeout.T)))/timeout">timeout</a> and throws
+a <a href="-timeout-cancellation-exception/index.html">TimeoutCancellationException</a> if the timeout was exceeded.</p>
+
       </td>
 </tr>
 <tr>
@@ -1063,6 +1088,11 @@ a <a href="-timeout-cancellation-exception/index.html">TimeoutCancellationExcept
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">withTimeoutOrNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$withTimeoutOrNull(kotlin.Long, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeoutOrNull.T)))/timeMillis">timeMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$withTimeoutOrNull(kotlin.Long, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeoutOrNull.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="with-timeout-or-null.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="with-timeout-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
 
         <p>Runs a given suspending block of code inside a coroutine with a specified <a href="with-timeout-or-null.html#kotlinx.coroutines$withTimeoutOrNull(kotlin.Long, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeoutOrNull.T)))/timeMillis">timeout</a> and returns
+<code>null</code> if this timeout was exceeded.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">withTimeoutOrNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$withTimeoutOrNull(, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeoutOrNull.T)))/timeout">timeout</span><span class="symbol">:</span>&nbsp;<span class="identifier">&lt;ERROR CLASS&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$withTimeoutOrNull(, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeoutOrNull.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="with-timeout-or-null.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="with-timeout-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
+
+        <p>Runs a given suspending block of code inside a coroutine with the specified <a href="with-timeout-or-null.html#kotlinx.coroutines$withTimeoutOrNull(, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.withTimeoutOrNull.T)))/timeout">timeout</a> and returns
 <code>null</code> if this timeout was exceeded.</p>
 
       </td>

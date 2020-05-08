@@ -236,7 +236,7 @@ For additional information about stacktrace recovery see <a href="#">STACKTRACE_
       </td>
 <td>
 
-        <p>An optional element in the coroutine context to handle uncaught exceptions.</p>
+        <p>An optional element in the coroutine context to handle <strong>uncaught</strong> exceptions.</p>
 
       </td>
 </tr>
@@ -257,9 +257,9 @@ See <a href="../kotlinx.coroutines/new-coroutine-context.html">newCoroutineConte
       </td>
 <td>
 
-        <p>Defines a scope for new coroutines. Every coroutine builder
+        <p>Defines a scope for new coroutines. Every <strong>coroutine builder</strong> (like <a href="../kotlinx.coroutines/launch.html">launch</a>, <a href="../kotlinx.coroutines/async.html">async</a>, etc)
 is an extension on <a href="../kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a> and inherits its <a href="../kotlinx.coroutines/-coroutine-scope/coroutine-context.html">coroutineContext</a>
-to automatically propagate both context elements and cancellation.</p>
+to automatically propagate all its elements and cancellation.</p>
 
       </td>
 </tr>
@@ -478,6 +478,16 @@ and used for any UI-based activities. Instance of <code>MainDispatcher</code> ca
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.flow/-mutable-state-flow/index.html">kotlinx.coroutines.flow.MutableStateFlow</a></p>
+      </td>
+<td>
+
+        <p>A mutable <a href="../kotlinx.coroutines.flow/-state-flow/index.html">StateFlow</a> that provides a setter for <a href="../kotlinx.coroutines.flow/-mutable-state-flow/value.html">value</a> and a method to <a href="#">close</a> the flow.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.sync/-mutex/index.html">kotlinx.coroutines.sync.Mutex</a></p>
       </td>
 <td>
@@ -616,6 +626,18 @@ Semaphore is fair and maintains a FIFO order of acquirers.</p>
         <p><a href="../kotlinx.coroutines.flow/kotlin.sequences.-sequence/index.html">kotlin.sequences.Sequence</a> (extensions in package kotlinx.coroutines.flow)</p>
       </td>
 <td>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.flow/-state-flow/index.html">kotlinx.coroutines.flow.StateFlow</a></p>
+      </td>
+<td>
+
+        <p>A <a href="../kotlinx.coroutines.flow/-flow/index.html">Flow</a> that represents a read-only state with a single updatable data <a href="../kotlinx.coroutines.flow/-state-flow/value.html">value</a> that emits updates
+to the value to its collectors. The current value can be retrieved via <a href="../kotlinx.coroutines.flow/-state-flow/value.html">value</a> property.
+The flow of future updates to the value can be observed by collecting values from this flow.</p>
 
       </td>
 </tr>

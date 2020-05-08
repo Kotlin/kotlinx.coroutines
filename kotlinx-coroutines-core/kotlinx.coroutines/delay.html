@@ -33,20 +33,38 @@
 
 <h1 id="delay">delay</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">delay</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines$delay(kotlin.Long)/timeMillis">timeMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Delay.kt#L71">(source)</a></div>
+<div class="overload-group">
 
-<p>Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
+  <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">delay</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines$delay(kotlin.Long)/timeMillis">timeMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Delay.kt#L72">(source)</a></div>
+
+  <p>Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
 This suspending function is cancellable.
 If the <a href="-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
 immediately resumes with <a href="-cancellation-exception/index.html">CancellationException</a>.</p>
 
-<p>Note that delay can be used in <a href="../kotlinx.coroutines.selects/select.html">select</a> invocation with <a href="../kotlinx.coroutines.selects/-select-builder/on-timeout.html">onTimeout</a> clause.</p>
+  <p>Note that delay can be used in <a href="../kotlinx.coroutines.selects/select.html">select</a> invocation with <a href="../kotlinx.coroutines.selects/-select-builder/on-timeout.html">onTimeout</a> clause.</p>
 
-<p>Implementation note: how exactly time is tracked is an implementation detail of <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in the context.</p>
+  <p>Implementation note: how exactly time is tracked is an implementation detail of <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in the context.</p>
 
-<h3 id="parameters">Parameters</h3>
+  <h3 id="parameters">Parameters</h3>
 
-<p><code>timeMillis</code> - time in milliseconds.</p>
+  <p><code>timeMillis</code> - time in milliseconds.</p>
+
+</div>
+<div class="overload-group">
+
+  <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">delay</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines$delay()/duration">duration</span><span class="symbol">:</span>&nbsp;<span class="identifier">&lt;ERROR CLASS&gt;</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Delay.kt#L90">(source)</a></div>
+
+  <p>Delays coroutine for a given <a href="delay.html#kotlinx.coroutines$delay()/duration">duration</a> without blocking a thread and resumes it after the specified time.
+This suspending function is cancellable.
+If the <a href="-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+immediately resumes with <a href="-cancellation-exception/index.html">CancellationException</a>.</p>
+
+  <p>Note that delay can be used in <a href="../kotlinx.coroutines.selects/select.html">select</a> invocation with <a href="../kotlinx.coroutines.selects/-select-builder/on-timeout.html">onTimeout</a> clause.</p>
+
+  <p>Implementation note: how exactly time is tracked is an implementation detail of <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in the context.</p>
+
+</div>
 
       </div>
     </main>

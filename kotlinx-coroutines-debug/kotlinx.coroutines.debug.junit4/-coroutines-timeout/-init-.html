@@ -33,18 +33,27 @@
 
 <h1 id="init">&lt;init&gt;</h1>
 
-<div class="signature"><code><span class="identifier">CoroutinesTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean)/testTimeoutMs">testTimeoutMs</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean)/cancelOnTimeout">cancelOnTimeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">)</span></code></div>
+<div class="overload-group">
 
-<p>Coroutines timeout rule for JUnit4 that is applied to all methods in the class.
+  <div class="signature"><code><span class="identifier">CoroutinesTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean)/testTimeoutMs">testTimeoutMs</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean)/cancelOnTimeout">cancelOnTimeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">)</span></code></div>
+
+</div>
+<div class="overload-group">
+
+  <div class="signature"><code><span class="identifier">CoroutinesTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean, kotlin.Boolean)/testTimeoutMs">testTimeoutMs</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean, kotlin.Boolean)/cancelOnTimeout">cancelOnTimeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean, kotlin.Boolean)/enableCoroutineCreationStackTraces">enableCoroutineCreationStackTraces</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;true<span class="symbol">)</span></code></div>
+
+  <p>Coroutines timeout rule for JUnit4 that is applied to all methods in the class.
 This rule is very similar to <a href="#">Timeout</a> rule: it runs tests in a separate thread,
 fails tests after the given timeout and interrupts test thread.</p>
 
-<p>Additionally, this rule installs <a href="../../kotlinx.coroutines.debug/-debug-probes/index.html">DebugProbes</a> and dumps all coroutines at the moment of the timeout.
-It may cancel coroutines on timeout if <a href="-init-.html#kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean)/cancelOnTimeout">cancelOnTimeout</a> set to <code>true</code>.</p>
+  <p>Additionally, this rule installs <a href="../../kotlinx.coroutines.debug/-debug-probes/index.html">DebugProbes</a> and dumps all coroutines at the moment of the timeout.
+It may cancel coroutines on timeout if <a href="-init-.html#kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean, kotlin.Boolean)/cancelOnTimeout">cancelOnTimeout</a> set to <code>true</code>.
+<a href="-init-.html#kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean, kotlin.Boolean)/enableCoroutineCreationStackTraces">enableCoroutineCreationStackTraces</a> controls the corresponding <a href="../../kotlinx.coroutines.debug/-debug-probes/enable-creation-stack-traces.html">DebugProbes.enableCreationStackTraces</a> property
+and can be optionally disabled to speed-up tests if creation stack traces are not needed.</p>
 
-<p>Example of usage:</p>
+  <p>Example of usage:</p>
 
-<pre>class HangingTest {
+  <pre>class HangingTest {
     @get:Rule
     val timeout = CoroutinesTimeout.seconds(5)
 
@@ -56,6 +65,8 @@ It may cancel coroutines on timeout if <a href="-init-.html#kotlinx.coroutines.d
     }
 }
 </pre>
+
+</div>
 
       </div>
     </main>

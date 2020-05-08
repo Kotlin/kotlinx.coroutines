@@ -33,10 +33,10 @@
 
 <h1 id="oncompletion">onCompletion</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-completion.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onCompletion.T)), kotlin.Throwable, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="on-completion.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-completion.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Emitters.kt#L133">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-completion.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onCompletion.T)), kotlin.Throwable, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="on-completion.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-completion.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Emitters.kt#L141">(source)</a></div>
 
-<p>Invokes the given <a href="on-completion.html#kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onCompletion.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> when the given flow is completed or cancelled, using
-the exception from the upstream (if any) as cause parameter of <a href="on-completion.html#kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onCompletion.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a>.</p>
+<p>Invokes the given <a href="on-completion.html#kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onCompletion.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> when the given flow is completed or cancelled, passing
+the cancellation exception or failure as cause parameter of <a href="on-completion.html#kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onCompletion.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a>.</p>
 
 <p>Conceptually, <code>onCompletion</code> is similar to wrapping the flow collection into a <code>finally</code> block,
 for example the following imperative snippet:</p>
@@ -58,26 +58,35 @@ for example the following imperative snippet:</p>
     .collect()
 </pre>
 
-<p>This operator is <em>transparent</em> to exceptions that occur in downstream flow
-and does not observe exceptions that are thrown to cancel the flow,
-while any exception from the <a href="on-completion.html#kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onCompletion.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> will be thrown downstream.
-This behaviour can be demonstrated by the following example:</p>
+<p>Unlike <a href="catch.html">catch</a>, this operator reports exception that occur both upstream and downstream
+and observe exceptions that are thrown to cancel the flow. Exception is empty if and only if
+the flow had fully completed successfully. Conceptually, the following code:</p>
 
-<pre>flow { emitData() }
-    .map { computeOne(it) }
-    .onCompletion { println(it) } // Can print exceptions from emitData and computeOne
-    .map { computeTwo(it) }
-    .onCompletion { println(it) } // Can print exceptions from emitData, computeOne, onCompletion and computeTwo
+<pre>myFlow.collect { value -&gt;
+    println(value)
+}
+println("Completed successfully")
+</pre>
+
+<p>can be replaced with:</p>
+
+<pre>myFlow
+    .onEach { println(it) }
+    .onCompletion { if (it == null) println("Completed successfully") }
     .collect()
 </pre>
 
 <p>The receiver of the <a href="on-completion.html#kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onCompletion.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> is <a href="-flow-collector/index.html">FlowCollector</a> and this operator can be used to emit additional
-elements at the end of the collection. For example:</p>
+elements at the end if it completed successfully. For example:</p>
 
 <pre>flowOf("a", "b", "c")
     .onCompletion { emit("Done") }
     .collect { println(it) } // prints a, b, c, Done
 </pre>
+
+<p>In case of failure or cancellation, any attempt to emit additional elements throws the corresponding exception.
+Use <a href="catch.html">catch</a> if you need to suppress failure and replace it with emission of elements.</p>
+
 
       </div>
     </main>

@@ -1,0 +1,22 @@
+$dokka.format:kotlin-website
+$dokka.linkExtension:html
+$dokka.location:kotlinx.coroutines.rx3$asCompletable(kotlinx.coroutines.Job, kotlin.coroutines.CoroutineContext)kotlinx.coroutines.rx3/kotlinx.coroutines.-job/as-completable.html
+$dokka.location:kotlinx.coroutines.rx3$asCoroutineDispatcher(io.reactivex.rxjava3.core.Scheduler)kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-scheduler/as-coroutine-dispatcher.html
+$dokka.location:kotlinx.coroutines.rx3$asFlow(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.asFlow.T)))kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/as-flow.html
+$dokka.location:kotlinx.coroutines.rx3$asFlowable(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.rx3.asFlowable.T)))kotlinx.coroutines.rx3/kotlinx.coroutines.flow.-flow/as-flowable.html
+$dokka.location:kotlinx.coroutines.rx3$asMaybe(kotlinx.coroutines.Deferred((kotlinx.coroutines.rx3.asMaybe.T)), kotlin.coroutines.CoroutineContext)kotlinx.coroutines.rx3/kotlinx.coroutines.-deferred/as-maybe.html
+$dokka.location:kotlinx.coroutines.rx3$asObservable(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.rx3.asObservable.T)))kotlinx.coroutines.rx3/kotlinx.coroutines.flow.-flow/as-observable.html
+$dokka.location:kotlinx.coroutines.rx3$asSingle(kotlinx.coroutines.Deferred((kotlinx.coroutines.rx3.asSingle.T)), kotlin.coroutines.CoroutineContext)kotlinx.coroutines.rx3/kotlinx.coroutines.-deferred/as-single.html
+$dokka.location:kotlinx.coroutines.rx3$await(io.reactivex.rxjava3.core.CompletableSource)kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-completable-source/await.html
+$dokka.location:kotlinx.coroutines.rx3$await(io.reactivex.rxjava3.core.MaybeSource((kotlinx.coroutines.rx3.await.T)))kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-maybe-source/await.html
+$dokka.location:kotlinx.coroutines.rx3$await(io.reactivex.rxjava3.core.SingleSource((kotlinx.coroutines.rx3.await.T)))kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-single-source/await.html
+$dokka.location:kotlinx.coroutines.rx3$awaitFirst(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.awaitFirst.T)))kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/await-first.html
+$dokka.location:kotlinx.coroutines.rx3$awaitFirstOrDefault(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.awaitFirstOrDefault.T)), kotlinx.coroutines.rx3.awaitFirstOrDefault.T)kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/await-first-or-default.html
+$dokka.location:kotlinx.coroutines.rx3$awaitFirstOrElse(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.awaitFirstOrElse.T)), kotlin.Function0((kotlinx.coroutines.rx3.awaitFirstOrElse.T)))kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/await-first-or-else.html
+$dokka.location:kotlinx.coroutines.rx3$awaitFirstOrNull(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.awaitFirstOrNull.T)))kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/await-first-or-null.html
+$dokka.location:kotlinx.coroutines.rx3$awaitLast(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.awaitLast.T)))kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/await-last.html
+$dokka.location:kotlinx.coroutines.rx3$awaitOrDefault(io.reactivex.rxjava3.core.MaybeSource((kotlinx.coroutines.rx3.awaitOrDefault.T)), kotlinx.coroutines.rx3.awaitOrDefault.T)kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-maybe-source/await-or-default.html
+$dokka.location:kotlinx.coroutines.rx3$awaitSingle(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.awaitSingle.T)))kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/await-single.html
+$dokka.location:kotlinx.coroutines.rx3$collect(io.reactivex.rxjava3.core.MaybeSource((kotlinx.coroutines.rx3.collect.T)), kotlin.Function1((kotlinx.coroutines.rx3.collect.T, kotlin.Unit)))kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-maybe-source/collect.html
+$dokka.location:kotlinx.coroutines.rx3$collect(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.collect.T)), kotlin.Function1((kotlinx.coroutines.rx3.collect.T, kotlin.Unit)))kotlinx.coroutines.rx3/io.reactivex.rxjava3.core.-observable-source/collect.html
+kotlinx.coroutines.rx3
