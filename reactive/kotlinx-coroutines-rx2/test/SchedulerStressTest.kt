@@ -104,7 +104,6 @@ class SchedulerStressTest : TestBase() {
                 }, delayMillis, TimeUnit.MILLISECONDS)
                 disposable.dispose()
                 advanceTimeBy(delayMillis)
-                expect(i + 2)
                 yield()
             }
         }
