@@ -109,6 +109,6 @@ class SchedulerStressTest : TestBase() {
         }
 
         scheduler.shutdown()
-        finish(n + 2)
+        finish(2)
     }
 }

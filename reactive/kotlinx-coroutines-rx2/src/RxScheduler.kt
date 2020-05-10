@@ -69,10 +69,6 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
         private val blockChannel = Channel<SchedulerChannelTask>(Channel.UNLIMITED)
 
         init {
-            workerJob.invokeOnCompletion {
-                blockChannel.close()
-            }
-
             workerScope.launch {
                 while (isActive) {
                     val task = blockChannel.receive()
@@ -113,7 +109,6 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
 
         override fun dispose() {
             workerScope.cancel()
-            blockChannel.close()
         }
     }
 }
