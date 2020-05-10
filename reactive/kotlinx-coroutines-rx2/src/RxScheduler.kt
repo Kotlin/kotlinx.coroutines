@@ -62,7 +62,7 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
         scope.cancel()
     }
 
-    private class DispatcherWorker(private val dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
+    private class DispatcherWorker(dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
 
         private val workerJob = SupervisorJob(parentJob)
         private val workerScope = CoroutineScope(workerJob + dispatcher)
@@ -90,9 +90,25 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
             if (!workerScope.isActive) return Disposables.disposed()
 
             val newBlock = RxJavaPlugins.onSchedule(block)
-            val task = SchedulerChannelTask(delay, newBlock, dispatcher, workerJob)
-            blockChannel.offer(task)
-            return task
+
+            fun addTaskToQueue(job: Job) {
+                val task = SchedulerChannelTask(newBlock, job)
+                blockChannel.offer(task)
+            }
+
+            val job = if(delay == 0L) {
+                Job(workerJob).also {
+                    addTaskToQueue(it)
+                }
+            } else {
+                workerScope.launch {
+                    delay(unit.toMillis(delay))
+                    val task = SchedulerChannelTask(newBlock, checkNotNull(coroutineContext[Job]))
+                    blockChannel.offer(task)
+                }
+            }
+
+            return job.asDisposable()
         }
 
         override fun dispose() {
@@ -108,38 +124,30 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
  * Delayed tasks do not block [Channel] from processing other tasks
  */
 private class SchedulerChannelTask(
-    private val delayMillis: Long,
     private val block: Runnable,
-    dispatcher: CoroutineDispatcher,
-    parentJob: Job
+    job: Job
 ) : Disposable {
-    private val taskScope = CoroutineScope(dispatcher + Job(parentJob))
-    private val delayResult: Deferred<Unit>
+    private var isActive = true
 
     init {
-        delayResult = taskScope.async {
-            delay(delayMillis)
-        }
-    }
-
-    fun execute() {
-        if (taskScope.isActive) {
-            if (delayResult.isCompleted) {
-                block.run()
-            } else {
-                taskScope.launch {
-                    delayResult.await()
-                    block.run()
-                }
+        job.invokeOnCompletion {
+            if (it is kotlinx.coroutines.CancellationException) {
+                isActive = false
             }
         }
     }
 
+    fun execute() {
+        if (isActive) {
+            block.run()
+        }
+    }
+
     override fun isDisposed(): Boolean =
-        !taskScope.isActive
+        !isActive
 
     override fun dispose() {
-        taskScope.cancel()
+        isActive = false
     }
 }
 

@@ -320,6 +320,7 @@ class SchedulerTest : TestBase() {
                             it.resume(Unit)
                         })
                     }
+                    yield()
                 }
             }
         }
