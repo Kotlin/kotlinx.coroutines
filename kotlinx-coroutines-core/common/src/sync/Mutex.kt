@@ -107,6 +107,10 @@ public fun Mutex(locked: Boolean = false): Mutex =
  * @return the return value of the action.
  */
 public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T): T {
+    contract { 
+        callsInPlace(action, InvocationKind.EXACTLY_ONCE)
+    }
+
     lock(owner)
     try {
         return action()
