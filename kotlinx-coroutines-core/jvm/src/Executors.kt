@@ -139,7 +139,7 @@ internal abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispa
     }
 
     private fun cancelJobOnRejection(context: CoroutineContext, exception: RejectedExecutionException) {
-        context[Job]?.cancel(CancellationException("The task was rejected", exception))
+        context.cancel(CancellationException("The task was rejected", exception))
     }
 
     override fun close() {
