@@ -14,7 +14,7 @@ import kotlin.coroutines.*
 import kotlin.jvm.*
 
 // ------------------ WARNING ------------------
-//   These emitting operators must use safe flow builder, because their allow
+//   These emitting operators must use safe flow builder, because they allow
 //   user code to directly emit to the underlying FlowCollector.
 
 /**
