@@ -5,8 +5,10 @@
 package kotlinx.coroutines.sync
 
 import kotlinx.coroutines.*
+import kotlin.contracts.ExperimentalContracts
 import kotlin.test.*
 
+@ExperimentalContracts
 class MutexTest : TestBase() {
     @Test
     fun testSimple() = runTest {

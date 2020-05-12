@@ -1,6 +1,7 @@
 package kotlinx.coroutines.sync
 
 import kotlinx.coroutines.*
+import kotlin.contracts.ExperimentalContracts
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -59,6 +60,7 @@ class SemaphoreTest : TestBase() {
         assertEquals(0, semaphore.availablePermits)
     }
 
+    @ExperimentalContracts
     @Test
     fun withSemaphoreTest() = runTest {
         val semaphore = Semaphore(1)
