@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
@@ -60,9 +62,15 @@ task mavenTest(type: Test) {
     classpath = sourceSet.runtimeClasspath
     // we can't depend on the subprojects because we need to test the classfiles that are published in the end.
     // also, we can't put this in the `dependencies` block because the resolution would happen before publication.
-    classpath += project.configurations.detachedConfiguration(
+    def mavenTestClasspathConfiguration = project.configurations.detachedConfiguration(
             project.dependencies.create("org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"),
             project.dependencies.create("org.jetbrains.kotlinx:kotlinx-coroutines-android:$version"))
+
+    mavenTestClasspathConfiguration.attributes {
+        attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
+    }
+
+    classpath += mavenTestClasspathConfiguration
 }
 
 task debugAgentTest(type: Test) {
