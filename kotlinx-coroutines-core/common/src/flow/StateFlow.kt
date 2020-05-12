@@ -109,7 +109,7 @@ public interface StateFlow<out T> : Flow<T> {
 }
 
 /**
- * A mutable [StateFlow] that provides a setter for [value] and a method to [close] the flow.
+ * A mutable [StateFlow] that provides a setter for [value].
  *
  * See [StateFlow] documentation for details.
  *
