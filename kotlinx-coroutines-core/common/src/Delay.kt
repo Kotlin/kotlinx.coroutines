@@ -54,8 +54,8 @@ public interface Delay {
      *
      * This implementation uses a built-in single-threaded scheduled executor service.
      */
-    public fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
-        DefaultDelay.invokeOnTimeout(timeMillis, block)
+    public fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+        DefaultDelay.invokeOnTimeout(timeMillis, block, context)
 }
 
 /**

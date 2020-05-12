@@ -82,6 +82,7 @@ internal abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispa
             executor.execute(wrapTask(block))
         } catch (e: RejectedExecutionException) {
             unTrackTask()
+            cancelJobOnRejection(context, e)
             DefaultExecutor.enqueue(block)
         }
     }
@@ -93,7 +94,7 @@ internal abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispa
      */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val future = if (removesFutureOnCancellation) {
-            scheduleBlock(ResumeUndispatchedRunnable(this, continuation), timeMillis, TimeUnit.MILLISECONDS)
+            scheduleBlock(ResumeUndispatchedRunnable(this, continuation), continuation.context, timeMillis)
         } else {
             null
         }
@@ -106,22 +107,29 @@ internal abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispa
         DefaultExecutor.scheduleResumeAfterDelay(timeMillis, continuation)
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         val future = if (removesFutureOnCancellation) {
-            scheduleBlock(block, timeMillis, TimeUnit.MILLISECONDS)
+            scheduleBlock(block, context, timeMillis)
         } else {
             null
         }
-
-        return if (future != null ) DisposableFutureHandle(future) else DefaultExecutor.invokeOnTimeout(timeMillis, block)
+        return when {
+            future != null -> DisposableFutureHandle(future)
+            else -> DefaultExecutor.invokeOnTimeout(timeMillis, block, context)
+        }
     }
 
-    private fun scheduleBlock(block: Runnable, time: Long, unit: TimeUnit): ScheduledFuture<*>? {
+    private fun scheduleBlock(block: Runnable, context: CoroutineContext, timeMillis: Long): ScheduledFuture<*>? {
         return try {
-            (executor as? ScheduledExecutorService)?.schedule(block, time, unit)
+            (executor as? ScheduledExecutorService)?.schedule(block, timeMillis, TimeUnit.MILLISECONDS)
         } catch (e: RejectedExecutionException) {
+            cancelJobOnRejection(context, e)
             null
         }
+    }
+
+    private fun cancelJobOnRejection(context: CoroutineContext, exception: RejectedExecutionException) {
+        context[Job]?.cancel(CancellationException("The task was rejected", exception))
     }
 
     override fun close() {

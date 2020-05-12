@@ -1,7 +1,7 @@
 public abstract class kotlinx/coroutines/android/HandlerDispatcher : kotlinx/coroutines/MainCoroutineDispatcher, kotlinx/coroutines/Delay {
 	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getImmediate ()Lkotlinx/coroutines/android/HandlerDispatcher;
-	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
+	public fun invokeOnTimeout (JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
 }
 
 public final class kotlinx/coroutines/android/HandlerDispatcherKt {

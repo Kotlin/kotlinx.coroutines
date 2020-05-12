@@ -36,7 +36,7 @@ public sealed class SwingDispatcher : MainCoroutineDispatcher(), Delay {
     }
 
     /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         val timer = schedule(timeMillis, TimeUnit.MILLISECONDS, ActionListener {
             block.run()
         })
