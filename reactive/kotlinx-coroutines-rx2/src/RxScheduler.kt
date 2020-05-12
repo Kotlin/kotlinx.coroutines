@@ -87,24 +87,29 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
 
             val newBlock = RxJavaPlugins.onSchedule(block)
 
-            fun addTaskToQueue(job: Job) {
-                val task = SchedulerChannelTask(newBlock, job)
+            val taskJob = Job(workerJob)
+
+            fun addTaskToQueue() {
+                val task = SchedulerChannelTask(newBlock, taskJob)
                 blockChannel.offer(task)
             }
 
-            val job = if(delay == 0L) {
-                Job(workerJob).also {
-                    addTaskToQueue(it)
-                }
+            if (delay == 0L) {
+                addTaskToQueue()
             } else {
-                workerScope.launch {
+                // Use `taskJob` as the parent here so the delay will also get cancelled if the Disposable
+                // is disposed.
+                workerScope.launch(taskJob) {
+                    // Delay *before* enqueuing the task, so other tasks (e.g. via schedule without delay)
+                    // aren't blocked by the delay.
                     delay(unit.toMillis(delay))
-                    val task = SchedulerChannelTask(newBlock, checkNotNull(coroutineContext[Job]))
-                    blockChannel.offer(task)
+                    // Once the task is ready to run, it still needs to be executed via the queue to comply
+                    // with the Scheduler contract of running all worker tasks in a non-overlapping manner.
+                    addTaskToQueue()
                 }
             }
 
-            return job.asDisposable()
+            return taskJob.asDisposable()
         }
 
         override fun dispose() {
@@ -120,29 +125,19 @@ private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) 
  */
 private class SchedulerChannelTask(
     private val block: Runnable,
-    job: Job
+    private val job: Job
 ) : Disposable {
-    private var isActive = true
-
-    init {
-        job.invokeOnCompletion {
-            if (it is kotlinx.coroutines.CancellationException) {
-                isActive = false
-            }
-        }
-    }
-
     fun execute() {
-        if (isActive) {
+        if (job.isActive) {
             block.run()
         }
     }
 
     override fun isDisposed(): Boolean =
-        !isActive
+        !job.isActive
 
     override fun dispose() {
-        isActive = false
+        job.cancel()
     }
 }
 
