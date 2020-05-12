@@ -79,6 +79,14 @@ internal data class Bandwidth(
         require(quantum > 0)
         require(initialAmount >= 0)
     }
+
+    internal fun timeToCreateTokens(tokens: Long): Long {
+        val periods = run { // rounding up deficit / bandwidth.quantum
+            val a = tokens / quantum
+            if (a * quantum != tokens) { a + 1 } else { a }
+        }
+        return periods * refillPeriod
+    }
 }
 
 internal class TokenBucketRateLimiter(initTime: Long, bandwidths: Array<Bandwidth>): RateLimitingAlgorithm {
@@ -101,8 +109,13 @@ internal class TokenBucketRateLimiter(initTime: Long, bandwidths: Array<Bandwidt
             }
         }
 
-        fun unregisterTokenAcquisition(eventTime: Long, tokens: Long) {
-            if (eventTime == lastEventTime) {
+        // Inspired by https://github.com/golang/time
+        private fun unregisterTokenAcquisition(atTime: Long, reservationTime: Long, tokens: Long) {
+            if (reservationTime == lastEventTime) {
+                val previousEvent = lastEventTime - bandwidths.map { b -> b.timeToCreateTokens(tokens) }.min()!!
+                if (previousEvent > atTime) {
+                    lastEventTime = previousEvent
+                }
             }
         }
 
@@ -145,18 +158,13 @@ internal class TokenBucketRateLimiter(initTime: Long, bandwidths: Array<Bandwidt
                         // an overflow occurred: the existing debt is too large.
                         return@map Long.MAX_VALUE
                     }
-                    val bandwidth = bandwidths[i]
-                    val periods = run { // rounding up deficit / bandwidth.quantum
-                        val a = deficit / bandwidth.quantum
-                        if (a * bandwidth.quantum != deficit) { a + 1 } else { a }
-                    }
-                    periods * bandwidth.refillPeriod
+                    bandwidths[i].timeToCreateTokens(deficit)
                 }
                 lastUpdateTimes[i] + timeToWaitSinceLastUpdate
             }
             .reduce { a, b -> max(a, b) }
 
-        fun returnTokens(reservationTime: Long, tokens: Long): Boolean {
+        fun returnTokens(atTime: Long, reservationTime: Long, tokens: Long): Boolean {
             val tokensAlreadyCreated = bandwidths.indices
                 .map { i ->
                     val bandwidth = bandwidths[i]
@@ -167,6 +175,7 @@ internal class TokenBucketRateLimiter(initTime: Long, bandwidths: Array<Bandwidt
             val tokensToRestore = tokens - tokensAlreadyCreated
             if (tokensToRestore > 0) {
                 addTokens(tokensToRestore)
+                unregisterTokenAcquisition(atTime, reservationTime, tokens)
                 return true
             }
             return false
@@ -218,7 +227,7 @@ internal class TokenBucketRateLimiter(initTime: Long, bandwidths: Array<Bandwidt
     override fun relinquishTokens(atTime: Long, reservationTime: Long, tokens: Long) = withState { currentState ->
         require(tokens > 0)
         currentState.refill(atTime)
-        if (!currentState.returnTokens(reservationTime, tokens)) {
+        if (!currentState.returnTokens(atTime, reservationTime, tokens)) {
             return // do not loop even if CAS fails
         }
     }
