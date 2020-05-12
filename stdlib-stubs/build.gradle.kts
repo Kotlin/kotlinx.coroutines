@@ -3,5 +3,5 @@
  */
 
 plugins {
-    `stub-convention`
+    `stdlib-stub-convention`
 }
