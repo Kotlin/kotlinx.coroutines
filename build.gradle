@@ -132,7 +132,6 @@ apiValidation {
 
 // Configure repositories
 allprojects {
-    String projectName = it.name
     repositories {
         /*
          * google should be first in the repository list because some of the play services
