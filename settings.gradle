@@ -4,6 +4,9 @@
 
 pluginManagement {
     plugins {
+        id "org.openjfx.javafxplugin" version javafx_plugin_version
+
+        // JMH
         id "net.ltgt.apt" version "0.21"
         id "me.champeau.gradle.jmh" version "0.5.0-rc-2"
     }
