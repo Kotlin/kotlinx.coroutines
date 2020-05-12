@@ -17,6 +17,7 @@ compileKotlinJs {
 
 task bundle(type: NpmTask, dependsOn: [npmInstall, build]) {
     inputs.files(fileTree("$buildDir/kotlin-js-min/main"))
+    inputs.files(fileTree("$buildDir/kotlin-js-min/legacy/main"))
     inputs.files(fileTree(file("src/main/web")))
     inputs.file("npm/webpack.config.js")
     outputs.dir("$buildDir/dist")
