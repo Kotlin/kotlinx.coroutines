@@ -38,6 +38,7 @@ module.exports = {
     resolve: {
         modules: [
             path.resolve(__dirname, "kotlin-js-min/main"),
+            path.resolve(__dirname, "kotlin-js-min/legacy/main"),
             path.resolve(__dirname, "../src/main/web/")
         ]
     },
