@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+import kotlin.coroutines.*
 import kotlin.system.*
 
 internal actual abstract class EventLoopImplPlatform: EventLoop() {
@@ -13,7 +14,7 @@ internal actual abstract class EventLoopImplPlatform: EventLoop() {
 }
 
 internal class EventLoopImpl: EventLoopImplBase() {
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         scheduleInvokeOnTimeout(timeMillis, block)
 }
 
