@@ -1,16 +1,17 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-package kotlinx.coroutines
+package kotlinx.coroutines.rateLimiter
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.flow.*
 import kotlin.math.*
 import kotlin.time.*
+import kotlinx.coroutines.*
 
 public interface RateLimitingAlgorithm {
     public fun requestTimeSlot(atTime: Long, tokens: Long, maxDelay: Long): Long
-    public fun relinquishTokens(atTime: Long, takenAtTime: Long, tokens: Long)
+    public fun relinquishTokens(atTime: Long, reservationTime: Long, tokens: Long)
     public fun addTokens(atTime: Long, tokens: Long)
     public fun nextAvailableTime(atTime: Long, tokens: Long): Long
 }
@@ -33,9 +34,9 @@ public class RateLimiter constructor(private val algorithm: RateLimitingAlgorith
         }
         val toSleep = nextSlot - currentTime
         try {
-            delay(toSleep / NANOS_PER_MILLI)
+            delay((toSleep + NANOS_PER_MILLI / 2) / NANOS_PER_MILLI)
         } catch (e: CancellationException) {
-            algorithm.relinquishTokens(timeSinceInitialization(), currentTime, tokens)
+            algorithm.relinquishTokens(timeSinceInitialization(), nextSlot, tokens)
         }
     }
 
@@ -93,12 +94,20 @@ internal class TokenBucketRateLimiter(initTime: Long, bandwidths: Array<Bandwidt
 
         val availableTokens get() = tokensPerBandwidth.reduce { a, b -> min(a, b) }
 
-        fun refill(atTime: Long) {
-            if (atTime <= lastEventTime) {
-                return
+        fun registerTokenAcquisition(atTime: Long, tokens: Long) {
+            consume(tokens)
+            if (atTime > lastEventTime) {
+                lastEventTime = atTime
             }
-            lastEventTime = atTime
-            for (i in 0..bandwidths.size) {
+        }
+
+        fun unregisterTokenAcquisition(eventTime: Long, tokens: Long) {
+            if (eventTime == lastEventTime) {
+            }
+        }
+
+        fun refill(atTime: Long) {
+            for (i in bandwidths.indices) {
                 val bandwidth = bandwidths[i]
                 val previousUpdate = lastUpdateTimes[i]
                 if (atTime <= previousUpdate) {
@@ -108,7 +117,7 @@ internal class TokenBucketRateLimiter(initTime: Long, bandwidths: Array<Bandwidt
                 lastUpdateTimes[i] = previousUpdate + completePeriods * bandwidth.refillPeriod // <= atTime, no overflow
                 val currentTokens = tokensPerBandwidth[i] + completePeriods * bandwidth.quantum // TODO: check overflow
                 tokensPerBandwidth[i] = if (currentTokens > bandwidth.capacity) {
-                    currentTokens % bandwidth.capacity
+                    bandwidth.capacity
                 } else {
                     currentTokens
                 }
@@ -116,7 +125,7 @@ internal class TokenBucketRateLimiter(initTime: Long, bandwidths: Array<Bandwidt
         }
 
         fun addTokens(tokens: Long) {
-            for (i in 0..bandwidths.size) {
+            for (i in bandwidths.indices) {
                 val capacity = bandwidths[i].capacity
                 val newTokens = tokensPerBandwidth[i] + tokens // TODO: check overflow
                 tokensPerBandwidth[i] = if (newTokens >= capacity) capacity else newTokens
@@ -125,15 +134,16 @@ internal class TokenBucketRateLimiter(initTime: Long, bandwidths: Array<Bandwidt
 
         fun consume(tokens: Long) = addTokens(-tokens)
 
-        fun nextDeficitCompensationTime(tokens: Long): Long = (0..bandwidths.size)
+        fun nextDeficitCompensationTime(tokens: Long): Long = bandwidths.indices
             .map { i ->
                 val currentTokens = tokensPerBandwidth[i]
                 val timeToWaitSinceLastUpdate = if (currentTokens >= tokens) {
                     0L
                 } else {
                     val deficit = tokens - currentTokens
-                    if (deficit <= 0) { // TODO: an overflow happened
-                        return@map 0L
+                    if (deficit <= 0) {
+                        // an overflow occurred: the existing debt is too large.
+                        return@map Long.MAX_VALUE
                     }
                     val bandwidth = bandwidths[i]
                     val periods = run { // rounding up deficit / bandwidth.quantum
@@ -146,11 +156,11 @@ internal class TokenBucketRateLimiter(initTime: Long, bandwidths: Array<Bandwidt
             }
             .reduce { a, b -> max(a, b) }
 
-        fun returnTokens(takenAtTime: Long, tokens: Long): Boolean {
-            val tokensAlreadyCreated = (0..bandwidths.size)
+        fun returnTokens(reservationTime: Long, tokens: Long): Boolean {
+            val tokensAlreadyCreated = bandwidths.indices
                 .map { i ->
                     val bandwidth = bandwidths[i]
-                    val completePeriods = (lastEventTime - takenAtTime) / bandwidth.refillPeriod
+                    val completePeriods = (lastEventTime - reservationTime) / bandwidth.refillPeriod
                     completePeriods * bandwidth.quantum // TODO: check overflow
                 }
                 .reduce { a, b -> max(a, b) }
@@ -190,7 +200,7 @@ internal class TokenBucketRateLimiter(initTime: Long, bandwidths: Array<Bandwidt
         if (deficitCompensationTime - atTime > maxDelay) {
             return Long.MAX_VALUE
         }
-        currentState.consume(tokens)
+        currentState.registerTokenAcquisition(deficitCompensationTime, tokens)
         deficitCompensationTime
     }
 
@@ -205,10 +215,10 @@ internal class TokenBucketRateLimiter(initTime: Long, bandwidths: Array<Bandwidt
         return currentState.nextDeficitCompensationTime(tokens)
     }
 
-    override fun relinquishTokens(atTime: Long, takenAtTime: Long, tokens: Long) = withState { currentState ->
+    override fun relinquishTokens(atTime: Long, reservationTime: Long, tokens: Long) = withState { currentState ->
         require(tokens > 0)
         currentState.refill(atTime)
-        if (!currentState.returnTokens(takenAtTime, tokens)) {
+        if (!currentState.returnTokens(reservationTime, tokens)) {
             return // do not loop even if CAS fails
         }
     }
