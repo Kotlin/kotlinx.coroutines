@@ -1,6 +1,7 @@
 **/.idea/*
 !/.idea/icon.png
 !/.idea/vcs.xml
+!/.idea/copyright
 *.iml
 .gradle
 .gradletasknamecache
