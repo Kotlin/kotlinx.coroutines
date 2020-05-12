@@ -9,8 +9,14 @@ import sun.misc.*
 import java.lang.instrument.*
 import java.lang.instrument.ClassFileTransformer
 import java.security.*
+import android.annotation.*
 
+/*
+ * This class is loaded if and only if kotlinx-coroutines-core was used as -javaagent argument,
+ * but Android complains anyway (java.lang.instrument.*), so we suppress all lint checks here
+ */
 @Suppress("unused")
+@SuppressLint("all")
 internal object AgentPremain {
 
     public var isInstalledStatically = false
