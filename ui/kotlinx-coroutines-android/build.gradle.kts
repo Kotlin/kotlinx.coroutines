@@ -2,10 +2,6 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import org.jetbrains.dokka.DokkaConfiguration.ExternalDocumentationLink
-import org.jetbrains.dokka.gradle.DokkaTask
-import java.net.URL
-
 repositories {
     google()
 }
@@ -100,9 +96,6 @@ tasks.test {
     }
 }
 
-tasks.withType<DokkaTask>().configureEach {
-    externalDocumentationLink(delegateClosureOf<ExternalDocumentationLink.Builder> {
-        url = URL("https://developer.android.com/reference/")
-        packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
-    })
-}
+externalDocumentationLink(
+    url = "https://developer.android.com/reference/"
+)
