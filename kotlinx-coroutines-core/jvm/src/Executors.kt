@@ -41,7 +41,7 @@ public abstract class ExecutorCoroutineDispatcher: CoroutineDispatcher(), Closea
  *
  * Note, that if the underlying executor uses limited queues and throws [RejectedExecutionException] on
  * attempt to submit a task, then the [Job] of the affected task is [cancelled][Job.cancel] and the
- * task is submitted to the default single-threaded executor, so that the affected coroutine can cleanup its
+ * task is submitted to the [Dispatchers.IO], so that the affected coroutine can cleanup its
  * resources and promptly complete.
  */
 @JvmName("from") // this is for a nice Java API, see issue #255
@@ -53,7 +53,7 @@ public fun ExecutorService.asCoroutineDispatcher(): ExecutorCoroutineDispatcher 
  *
  * Note, that if the underlying executor uses limited queues and throws [RejectedExecutionException] on
  * attempt to submit a task, then the [Job] of the affected task is [cancelled][Job.cancel] and the
- * task is submitted to the default single-threaded executor, so that the affected coroutine can cleanup its
+ * task is submitted to the [Dispatchers.IO], so that the affected coroutine can cleanup its
  * resources and promptly complete.
  */
 @JvmName("from") // this is for a nice Java API, see issue #255
@@ -93,7 +93,7 @@ internal abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispa
         } catch (e: RejectedExecutionException) {
             unTrackTask()
             cancelJobOnRejection(context, e)
-            DefaultExecutor.enqueue(block)
+            Dispatchers.IO.dispatch(context, block)
         }
     }
 
