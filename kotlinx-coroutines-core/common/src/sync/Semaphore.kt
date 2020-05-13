@@ -7,9 +7,7 @@ package kotlinx.coroutines.sync
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.InvocationKind
-import kotlin.contracts.contract
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.math.*
 import kotlin.native.concurrent.SharedImmutable

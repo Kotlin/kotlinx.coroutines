@@ -7,7 +7,7 @@ package kotlinx.coroutines.guide.exampleSync06
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
-import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.*
 import kotlin.system.*
 
 suspend fun massiveRun(action: suspend () -> Unit) {

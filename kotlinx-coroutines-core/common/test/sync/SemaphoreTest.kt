@@ -1,7 +1,7 @@
 package kotlinx.coroutines.sync
 
 import kotlinx.coroutines.*
-import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
