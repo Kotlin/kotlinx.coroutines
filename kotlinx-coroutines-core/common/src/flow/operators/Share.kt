@@ -19,17 +19,17 @@ public fun <T> Flow<T>.shareIn(
     val sharedFlow = cache.createMutableSharedFlow<T>()
     scope.launch { // the single coroutine to rule the sharing
         try {
-            start.commandFlow(sharedFlow.numberOfCollectors)
+            start.commandFlow(sharedFlow.collectorsCount)
                 .distinctUntilChanged()
                 .collectLatest { // cancels block on new emission
                     when (it) {
                         SharingCommand.START -> upstreamFlow.collect(sharedFlow) // can be cancelled
                         SharingCommand.STOP -> {} // just cancel collection and do nothing else
-                        SharingCommand.RESET_CACHE -> sharedFlow.resetCache()
+                        SharingCommand.RESET_CACHE -> sharedFlow.resetBuffer()
                     }
                 }
         } finally {
-            sharedFlow.resetCache() // on any completion/cancellation/failure of sharing
+            sharedFlow.resetBuffer() // on any completion/cancellation/failure of sharing
         }
     }
     return sharedFlow
@@ -106,16 +106,4 @@ public fun main() {
     ss.createMutableSharedFlow<String?>()
     ss.createMutableSharedFlow<Any?>()
     val ff = flow.shareIn(scope, cache = ss)
-}
-
-
-class Event
-
-class EventBus {
-    private val _events = MutableSharedFlow<Event>(0)
-    public val events: Flow<Event> get() = _events // expose as flow
-
-    suspend fun produceEvent(event: Event) {
-        _events.emit(event) // suspend until all collectors receive it
-    }
 }

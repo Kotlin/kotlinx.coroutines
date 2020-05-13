@@ -127,6 +127,9 @@ public interface MutableStateFlow<T> : StateFlow<T>, MutableSharedFlow<T> {
      * Setting a value that is [equal][Any.equals] to the previous one does nothing.
      */
     public override var value: T
+
+    // todo: docs
+    public fun compareAndSet(expect: T, update: T): Boolean
 }
 
 /**
@@ -215,14 +218,18 @@ private class StateFlowImpl<T>(
     @Suppress("UNCHECKED_CAST")
     public override var value: T
         get() = NULL.unbox(_state.value)
-        set(value) = updateState(value ?: NULL)
+        set(value) { updateState(null, value ?: NULL) }
 
-    private fun updateState(newState: Any) {
+    override fun compareAndSet(expect: T, update: T): Boolean =
+        updateState(expect ?: NULL, update ?: NULL)
+
+    private fun updateState(expectedState: Any?, newState: Any): Boolean {
         var curSequence = 0
         var curSlots: Array<StateFlowSlot?>? = this.slots // benign race, we will not use it
         synchronized(this) {
             val oldState = _state.value
-            if (oldState == newState) return // Don't do anything if value is not changing
+            if (expectedState != null && oldState != expectedState) return false // CAS support
+            if (oldState == newState) return true // Don't do anything if value is not changing, but CAS -> true
             _state.value = newState
             curSequence = sequence
             if (curSequence and 1 == 0) { // even sequence means quiescent state flow (no ongoing update)
@@ -231,7 +238,7 @@ private class StateFlowImpl<T>(
             } else {
                 // update is already in process, notify it, and return
                 sequence = curSequence + 2 // change sequence to notify, keep it odd
-                return
+                return true // updated
             }
             curSlots = slots // read current reference to collectors under lock
         }
@@ -250,7 +257,7 @@ private class StateFlowImpl<T>(
             synchronized(this) {
                 if (sequence == curSequence) { // nothing changed, we are done
                     sequence = curSequence + 1 // make sequence even again
-                    return // done
+                    return true // done, updated
                 }
                 // reread everything for the next loop under the lock
                 curSequence = sequence
@@ -271,8 +278,8 @@ private class StateFlowImpl<T>(
         this.value = value
     }
 
-    override fun resetCache() {
-        updateState(initialState)
+    override fun resetBuffer() {
+        updateState(null, initialState)
     }
 
     override suspend fun collect(collector: FlowCollector<T>) {
@@ -309,5 +316,12 @@ private class StateFlowImpl<T>(
             Channel.CONFLATED, Channel.RENDEZVOUS -> this
             else -> ChannelFlowOperatorImpl(this, context, capacity)
         }
+    }
+}
+
+internal fun MutableStateFlow<Int>.increment(delta: Int) {
+    while (true) { // CAS loop
+        val current = value
+        if (compareAndSet(current, current + delta)) return
     }
 }

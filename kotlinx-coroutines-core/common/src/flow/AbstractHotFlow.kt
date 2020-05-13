@@ -15,12 +15,13 @@ internal abstract class AbstractHotFlow<S : AbstractHotFlowSlot<*>> : Synchroniz
     protected var nCollectors = 0 // number of allocated (!free) slots
         private set
     private var nextIndex = 0 // oracle for the next free slot index
-    private var _numberOfCollectors: MutableStateFlow<Int>? = null // init on first need
+    private var _collectorsCount: MutableStateFlow<Int>? = null // init on first need
 
-    val numberOfCollectors: StateFlow<Int>
+    val collectorsCount: StateFlow<Int>
         get() = synchronized(this) {
-            _numberOfCollectors ?: MutableStateFlow(nCollectors).also {
-                _numberOfCollectors = it
+            // allocate under lock in sync with nCollectors variable
+            _collectorsCount ?: MutableStateFlow(nCollectors).also {
+                _collectorsCount = it
             }
         }
 
@@ -30,6 +31,7 @@ internal abstract class AbstractHotFlow<S : AbstractHotFlowSlot<*>> : Synchroniz
 
     @Suppress("UNCHECKED_CAST")
     protected fun allocateSlot(): S {
+        var collectorsCount: MutableStateFlow<Int>? = null
         val slot = synchronized(this) {
             val slots = when(val curSlots = slots) {
                 null -> createSlotArray(2).also { slots = it }
@@ -49,19 +51,22 @@ internal abstract class AbstractHotFlow<S : AbstractHotFlowSlot<*>> : Synchroniz
             }
             nextIndex = index
             nCollectors++
+            collectorsCount = _collectorsCount // retrieve under lock if initialized
             slot
         }
-        // todo: update _numberOfCollectors
+        collectorsCount?.increment(1)
         return slot
     }
 
     @Suppress("UNCHECKED_CAST")
     protected fun freeSlot(slot: S): Unit {
+        var collectorsCount: MutableStateFlow<Int>? = null
         val resumeList = synchronized(this) {
             nCollectors--
+            collectorsCount = _collectorsCount // retrieve under lock if initialized
             (slot as AbstractHotFlowSlot<Any>).freeLocked(this)
         }
-        // todo: update _numberOfCollectors
         resumeList?.forEach { it.resume(Unit) }
+        collectorsCount?.increment(-1)
     }
 }

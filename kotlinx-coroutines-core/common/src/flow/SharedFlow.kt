@@ -12,8 +12,8 @@ public interface SharedFlow<out T> : Flow<T> {
 
 public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
     public fun tryEmit(value: T): Boolean
-    public val numberOfCollectors: StateFlow<Int>
-    public fun resetCache()
+    public val collectorsCount: StateFlow<Int>
+    public fun resetBuffer()
 }
 
 /**
@@ -341,7 +341,7 @@ private class SharedFlowImpl<T>(
     override fun createSlot() = SharedFlowSlot()
     override fun createSlotArray(size: Int): Array<SharedFlowSlot?> = arrayOfNulls(size)
 
-    override fun resetCache() {
+    override fun resetBuffer() {
         TODO("Not yet implemented")
     }
 
