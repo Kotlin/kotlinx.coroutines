@@ -69,4 +69,11 @@ internal abstract class AbstractHotFlow<S : AbstractHotFlowSlot<*>> : Synchroniz
         resumeList?.forEach { it.resume(Unit) }
         collectorsCount?.increment(-1)
     }
+
+    protected inline fun forEachSlotLocked(block: (S) -> Unit) {
+        if (nCollectors == 0) return
+        slots?.forEach { slot ->
+            if (slot != null) block(slot)
+        }
+    }
 }

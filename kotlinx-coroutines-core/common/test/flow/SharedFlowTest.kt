@@ -8,6 +8,8 @@ class SharedFlowTest : TestBase() {
     fun testSyncSharedFlowBasic() = runTest {
         expect(1)
         val sh = MutableSharedFlow<Int?>(0)
+        assertTrue(sh.replayCache.isEmpty())
+        assertEquals(0, sh.collectorsCount.value)
         sh.emit(1) // no suspend
         assertTrue(sh.replayCache.isEmpty())
         assertEquals(0, sh.collectorsCount.value)
@@ -73,6 +75,46 @@ class SharedFlowTest : TestBase() {
         assertEquals(0, sh.collectorsCount.value)
         assertTrue(sh.replayCache.isEmpty())
         finish(25)
+    }
+
+    @Test
+    fun testLastOneSharedFlowBasic() = runTest {
+        expect(1)
+        val sh = MutableSharedFlow<Int?>(1)
+        assertTrue(sh.replayCache.isEmpty())
+        assertEquals(0, sh.collectorsCount.value)
+        sh.emit(1) // no suspend
+        assertEquals(listOf(1), sh.replayCache)
+        assertEquals(0, sh.collectorsCount.value)
+        expect(2)
+        sh.emit(2) // no suspend
+        assertEquals(listOf(2), sh.replayCache)
+        expect(3)
+        // one collector
+        val job1 = launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(4)
+            sh.collect {
+                when(it) {
+                    2 -> expect(5) // got it immediately from replay cache
+                    6 -> expect(8)
+                    else -> expectUnreached()
+                }
+            }
+            expectUnreached() // does not complete normally
+        }
+        expect(6)
+        assertEquals(1, sh.collectorsCount.value)
+        sh.emit(6) // does not suspend, but buffers
+        assertEquals(listOf(6), sh.replayCache)
+        expect(7)
+        yield()
+        expect(9)
+
+
+
+
+        job1.cancel()
+        finish(10)
     }
 
 

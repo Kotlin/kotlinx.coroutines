@@ -32,14 +32,14 @@ public fun <T> MutableSharedFlow(
 
 private class SharedFlowSlot : AbstractHotFlowSlot<SharedFlowImpl<*>>() {
     @JvmField
-    var index = -1L // сurrent "to-be-emitted" index, -1 means the slot is free now
+    var index = -1L // current "to-be-emitted" index, -1 means the slot is free now
 
     @JvmField
     var cont: Continuation<Unit>? = null // collector waiting for new value
 
     override fun allocateLocked(flow: SharedFlowImpl<*>): Boolean {
         if (index >= 0) return false // not free
-        index = flow.replayIndexLocked
+        index = flow.updateNewCollectorIndexLocked()
         return true
     }
 
@@ -48,7 +48,7 @@ private class SharedFlowSlot : AbstractHotFlowSlot<SharedFlowImpl<*>>() {
         val oldIndex = index
         index = -1L
         cont = null // cleanup continuation reference
-        return flow.updateHeadLocked(oldIndex)
+        return flow.updateCollectorIndexLocked(oldIndex)
     }
 }
 
@@ -83,16 +83,18 @@ private class SharedFlowImpl<T>(
                |           |           |                      |
               head         |      head + bufferCapacity  head + size
                |           |           |
-         index of the      |       index of the
-       slowest collector   |     fastest collector
-                           |
-               replayIndex - new collector's index
-
+     index of the slowest  |    index of the fastest
+      possible collector   |     possible collector
+               |           |
+               |     replayIndex - new collector's index
+               \---------------------- /
+          range of possible minCollectorIndex
      */
 
     private var buffer: Array<Any?>? = null // allocated when needed, allocated size always power of two
     private var head = 0L // long, never overflows, used to track collectors
     private var size = 0
+    private var minCollectorIndex = 0L
 
     override val replayCache: List<T>
         get() = synchronized(this) {
@@ -102,7 +104,7 @@ private class SharedFlowImpl<T>(
             val buffer = buffer!! // must be allocated, because size > 0
             val replayIndex = replayIndexLocked
             @Suppress("UNCHECKED_CAST")
-            for (i in 0 until replaySize) result[i] = buffer.getBufferAt(replayIndex + i) as T
+            for (i in 0 until replaySize) result += buffer.getBufferAt(replayIndex + i) as T
             result
         }
 
@@ -113,7 +115,7 @@ private class SharedFlowImpl<T>(
     private val bufferSizeLocked: Int
         get() = minOf(bufferCapacity, size)
 
-    internal val replayIndexLocked: Long
+    private val replayIndexLocked: Long
         get() = head + bufferSizeLocked - replaySizeLocked
 
     @Suppress("UNCHECKED_CAST")
@@ -157,8 +159,12 @@ private class SharedFlowImpl<T>(
         // Fast path without collectors
         if (nCollectors == 0) return tryEmitNoCollectorsLocked(value)
         // With collectors we'll have to buffer
-        if (size >= bufferCapacity) return false // buffer is already full, cannot emit
+        assert { minCollectorIndex >= head }
+        if (size > bufferCapacity) return false // cannot emit now, already have waiting emitters
+        if (size == bufferCapacity && minCollectorIndex == head) return false // blocked by slow collector
         enqueueLocked(value)
+        // drop oldest from the buffer if it became more than bufferCapacity
+        if (size > bufferCapacity) dropOldestLocked()
         return true
     }
 
@@ -166,12 +172,16 @@ private class SharedFlowImpl<T>(
         assert { nCollectors == 0 }
         if (replayCapacity == 0) return true // no need to replay, just forget it now
         enqueueLocked(value) // enqueue to replayCache
-        // drop oldest from the buffer if it's more than replayCapacity
-        if (size > replayCapacity) {
-            buffer!!.setBufferAt(head, null)
-            head++
-        }
+        // drop oldest from the buffer if it became more than replayCapacity
+        if (size > replayCapacity) dropOldestLocked()
+        minCollectorIndex = head + size // a default value (max allowed)
         return true
+    }
+
+    private fun dropOldestLocked() {
+        buffer!!.setBufferAt(head, null)
+        head++
+        size--
     }
 
     private fun enqueueLocked(value: Any?) {
@@ -223,19 +233,27 @@ private class SharedFlowImpl<T>(
         cleanupTailLocked()
     }
 
+    internal fun updateNewCollectorIndexLocked(): Long {
+        val index = replayIndexLocked
+        if (index < minCollectorIndex) minCollectorIndex = index
+        return index
+    }
+
     // returns a list of continuation to resume after lock
-    internal fun updateHeadLocked(oldIndex: Long): List<Continuation<Unit>>? {
-        assert { oldIndex >= head }
-        if (oldIndex > head) return null // nothing changes, it was not head
-        var newHead = replayIndexLocked // cannot go past replay index
-        if (bufferCapacity == 0 && size > 0) newHead++ // for a special case of sync shared flow can go past 1st queued emitter
-        slots?.forEach { slot ->
-            if (slot == null) return@forEach
-            val slotIndex = slot.index
-            if (slotIndex in 0 until newHead) newHead = slotIndex
+    internal fun updateCollectorIndexLocked(oldIndex: Long): List<Continuation<Unit>>? {
+        assert { oldIndex >= minCollectorIndex }
+        if (oldIndex > minCollectorIndex) return null // nothing changes, it was not min
+        // takes into account a special case of sync shared flow that can go past 1st queued emitter
+        val syncAdjustment = if (bufferCapacity == 0 && size > 0) 1 else 0
+        var newMinIndex = head + bufferCapacity + syncAdjustment
+        forEachSlotLocked { slot ->
+            if (slot.index in 0 until newMinIndex) newMinIndex = slot.index
         }
-        assert { newHead >= head }
-        if (newHead <= head) return null // nothing changes
+        assert { newMinIndex >= minCollectorIndex }
+        if (newMinIndex <= minCollectorIndex) return null // nothing changes
+        minCollectorIndex = newMinIndex
+        // Now compute newHead
+        val newHead = minOf(replayIndexLocked + syncAdjustment, newMinIndex)
         // We can resume up to count waiting emitters if we have them
         val count = (newHead - head).toInt()
         var resumeList: ArrayList<Continuation<Unit>>? = null
@@ -286,7 +304,7 @@ private class SharedFlowImpl<T>(
                 val oldIndex = slot.index
                 getPeekedValueLockedAt(index).also {
                     slot.index = index + 1 // points to the next index after peeked one
-                    resumeList = updateHeadLocked(oldIndex)
+                    resumeList = updateCollectorIndexLocked(oldIndex)
                 }
             }
         }
@@ -327,10 +345,9 @@ private class SharedFlowImpl<T>(
 
     private fun findSlotsToResumeLocked(): List<Continuation<Unit>>? {
         var result: ArrayList<Continuation<Unit>>? = null
-        slots?.forEach { slot ->
-            if (slot == null) return@forEach
-            val cont = slot.cont ?: return@forEach // only waiting slots
-            if (tryPeekLocked(slot) < 0) return@forEach // only slots that can peek a value
+        forEachSlotLocked loop@{ slot ->
+            val cont = slot.cont ?: return@loop // only waiting slots
+            if (tryPeekLocked(slot) < 0) return@loop // only slots that can peek a value
             val a = result ?: ArrayList<Continuation<Unit>>(2).also { result = it }
             a.add(cont)
             slot.cont = null // not waiting anymore
