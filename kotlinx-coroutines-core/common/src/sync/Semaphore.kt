@@ -75,7 +75,7 @@ public fun Semaphore(permits: Int, acquiredPermits: Int = 0): Semaphore = Semaph
  *
  * @return the return value of the [action].
  */
-@ExperimentalContracts
+@OptIn(ExperimentalContracts::class)
 public suspend inline fun <T> Semaphore.withPermit(action: () -> T): T {
     contract {
         callsInPlace(action, InvocationKind.EXACTLY_ONCE)

@@ -7,7 +7,6 @@ package kotlinx.coroutines.guide.exampleSync06
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
-import kotlin.contracts.*
 import kotlin.system.*
 
 suspend fun massiveRun(action: suspend () -> Unit) {
@@ -28,7 +27,6 @@ suspend fun massiveRun(action: suspend () -> Unit) {
 val mutex = Mutex()
 var counter = 0
 
-@ExperimentalContracts
 fun main() = runBlocking {
     withContext(Dispatchers.Default) {
         massiveRun {
