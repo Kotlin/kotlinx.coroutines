@@ -4,31 +4,35 @@
 package kotlinx.coroutines.rateLimiter
 
 import kotlinx.atomicfu.*
+import kotlin.time.*
 import kotlinx.coroutines.flow.*
 import kotlin.math.*
-import kotlin.time.*
 import kotlinx.coroutines.*
-
-public interface RateLimitingAlgorithm {
-    public fun requestTimeSlot(atTime: Long, tokens: Long, maxDelay: Long): Long
-    public fun relinquishTokens(atTime: Long, reservationTime: Long, tokens: Long)
-    public fun addTokens(atTime: Long, tokens: Long)
-    public fun nextAvailableTime(atTime: Long, tokens: Long): Long
-}
 
 private const val NANOS_PER_MILLI = 1_000_000L
 
 @ExperimentalTime
-public class RateLimiter constructor(private val algorithm: RateLimitingAlgorithm, timeSource: kotlin.time.TimeSource = kotlin.time.TimeSource.Monotonic) {
+public interface RateLimiter {
+    public fun addTokens(tokens: Long)
+    public fun removeTokens(tokens: Long): Unit = addTokens(-tokens)
+    public fun tryConsume(tokens: Long = 1): Boolean
+    public suspend fun consume(tokens: Long = 1, maxDelay: Duration = Duration.INFINITE)
+}
 
-    private val timeMark = timeSource.markNow()
+@ExperimentalTime
+public abstract class RateLimiterImplBase: RateLimiter
+{
+    public abstract fun requestTimeSlot(atTime: Long, tokens: Long, maxDelay: Long): Long
+    public abstract fun relinquishTokens(atTime: Long, reservationTime: Long, tokens: Long)
+    public abstract fun addTokens(atTime: Long, tokens: Long)
+    public abstract fun nextAvailableTime(atTime: Long, tokens: Long): Long
 
-    private fun timeSinceInitialization(): Long = timeMark.elapsedNow().toLongNanoseconds()
+    public abstract fun timeSinceInitialization(): Long
 
     private suspend fun consume(tokens: Long, maxDelay: Long) {
         require(tokens > 0)
         val currentTime = timeSinceInitialization()
-        val nextSlot = algorithm.requestTimeSlot(currentTime, tokens, maxDelay)
+        val nextSlot = requestTimeSlot(currentTime, tokens, maxDelay)
         if (nextSlot == Long.MAX_VALUE) {
             throw IllegalArgumentException("Could not allocate $tokens tokens to be available in $maxDelay")
         }
@@ -36,22 +40,18 @@ public class RateLimiter constructor(private val algorithm: RateLimitingAlgorith
         try {
             delay((toSleep + NANOS_PER_MILLI / 2) / NANOS_PER_MILLI)
         } catch (e: CancellationException) {
-            algorithm.relinquishTokens(timeSinceInitialization(), nextSlot, tokens)
+            relinquishTokens(timeSinceInitialization(), nextSlot, tokens)
         }
     }
 
-    public fun addTokens(tokens: Long): Unit = algorithm.addTokens(timeSinceInitialization(), tokens)
-    public fun removeTokens(tokens: Long): Unit = addTokens(-tokens)
+    public override fun addTokens(tokens: Long): Unit = addTokens(timeSinceInitialization(), tokens)
 
-    public fun tryConsume(tokens: Long = 1): Boolean {
+    public override fun tryConsume(tokens: Long): Boolean {
         require(tokens > 0)
-        return algorithm.requestTimeSlot(timeSinceInitialization(), tokens, 0) != Long.MAX_VALUE
+        return requestTimeSlot(timeSinceInitialization(), tokens, 0) != Long.MAX_VALUE
     }
 
-    public suspend fun consume(tokens: Long = 1): Unit =
-        consume(tokens, Long.MAX_VALUE)
-
-    public suspend fun consume(tokens: Long, maxDelay: Duration): Unit =
+    public override suspend fun consume(tokens: Long, maxDelay: Duration): Unit =
         consume(tokens, maxDelay.toLongNanoseconds())
 }
 
@@ -89,7 +89,15 @@ internal data class Bandwidth(
     }
 }
 
-internal class TokenBucketRateLimiter(initTime: Long, bandwidths: Array<Bandwidth>): RateLimitingAlgorithm {
+@ExperimentalTime
+internal class TokenBucketRateLimiter(bandwidths: Array<Bandwidth>,
+                                      timeSource: kotlin.time.TimeSource = kotlin.time.TimeSource.Monotonic):
+    RateLimiterImplBase()
+{
+    private val timeMark = timeSource.markNow()
+    private val initTime = timeMark.elapsedNow().toLongNanoseconds()
+
+    override fun timeSinceInitialization(): Long = timeMark.elapsedNow().toLongNanoseconds()
 
     internal class State(private val bandwidths: Array<Bandwidth>,
                          private val tokensPerBandwidth: Array<Long>,
@@ -263,5 +271,5 @@ public class RateLimiterBuilder {
         periodic(capacity, refillPeriod.toLongNanoseconds(), quantum, initialAmount)
     }
 
-    internal fun build(): RateLimiter = RateLimiter(TokenBucketRateLimiter(0, bandwidths.toTypedArray()))
+    internal fun build(): RateLimiter = TokenBucketRateLimiter(bandwidths.toTypedArray())
 }

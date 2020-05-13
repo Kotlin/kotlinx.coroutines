@@ -7,9 +7,10 @@ import kotlinx.coroutines.rateLimiter.*
 import kotlin.test.*
 import kotlin.time.*
 
+@ExperimentalTime
 class RateLimiterTest : TestBase() {
 
-    private fun zeroWait(limiter: RateLimitingAlgorithm, start: Long, refillPeriod: Long, tokens: Long): Long {
+    private fun zeroWait(limiter: RateLimiterImplBase, start: Long, refillPeriod: Long, tokens: Long): Long {
         val n = 10
         for (i in 1..n) {
             val time = start + refillPeriod * i
@@ -19,7 +20,7 @@ class RateLimiterTest : TestBase() {
         return start + refillPeriod * n
     }
 
-    private fun fullWait(limiter: RateLimitingAlgorithm, start: Long, refillPeriod: Long, tokens: Long): Long {
+    private fun fullWait(limiter: RateLimiterImplBase, start: Long, refillPeriod: Long, tokens: Long): Long {
         val slot = limiter.requestTimeSlot(start + refillPeriod, tokens, Long.MAX_VALUE)
         val n = 10
         for (i in 1..n) {
@@ -29,7 +30,7 @@ class RateLimiterTest : TestBase() {
         return slot + refillPeriod * n
     }
 
-    private fun exceedCapacity(limiter: RateLimitingAlgorithm, start: Long, refillPeriod: Long, tokens: Long): Long {
+    private fun exceedCapacity(limiter: RateLimiterImplBase, start: Long, refillPeriod: Long, tokens: Long): Long {
         val n = 10
         val k = 3
         for (i in 1..n) {
@@ -44,9 +45,9 @@ class RateLimiterTest : TestBase() {
 
     @Test
     fun tokenBucketTest() {
-        val algo = TokenBucketRateLimiter(0,
-            arrayOf(Bandwidth(3, 5, 2, 1)))
-        val t1 = zeroWait(algo, 1, 5, 2)
+        val algo = TokenBucketRateLimiter(arrayOf(Bandwidth(3, 5, 2, 1)))
+        val t0 = algo.timeSinceInitialization()
+        val t1 = zeroWait(algo, t0, 5, 2)
         val t2 = fullWait(algo, t1, 5, 2)
         val t3 = exceedCapacity(algo, t2, 5, 2)
     }
