@@ -1,7 +1,6 @@
 package flow
 
 import kotlinx.coroutines.TestBase
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -37,17 +36,14 @@ class TickerFlowTest : TestBase() {
         val inbox = mutableListOf<Unit>()
 
         // WHEN
-        val periodicTicker =
-                tickerFlow(100, 100).onEach {
-                    inbox.add(Unit)
-                }.launchIn(this)
+        tickerFlow(100, 200).onEach {
+            inbox.add(Unit)
+        }.launchIn(this)
 
         delay(500)
 
         // THEN
         assertEquals(4, inbox.size)
-
-        periodicTicker.cancelAndJoin()
     }
 
     @Test
@@ -56,17 +52,14 @@ class TickerFlowTest : TestBase() {
         val inbox = mutableListOf<Unit>()
 
         // WHEN
-        val periodicTicker =
-                tickerFlow(100, 0).onEach {
-                    inbox.add(Unit)
-                }.launchIn(this)
+        tickerFlow(100, 0).onEach {
+            inbox.add(Unit)
+        }.launchIn(this)
 
         delay(500)
 
         // THEN
-        assertEquals(5, inbox.size)
-
-        periodicTicker.cancelAndJoin()
+        assertEquals(6, inbox.size)
     }
 
 
@@ -76,17 +69,14 @@ class TickerFlowTest : TestBase() {
         val inbox = mutableListOf<Unit>()
 
         // WHEN
-        val periodicTicker =
-                tickerFlow(100).onEach {
-                    inbox.add(Unit)
-                }.launchIn(this)
+        tickerFlow(100).onEach {
+            inbox.add(Unit)
+        }.launchIn(this)
 
         delay(500)
 
         // THEN
-        assertEquals(4, inbox.size)
-
-        periodicTicker.cancelAndJoin()
+        assertEquals(5, inbox.size)
     }
 
     @Test
@@ -106,6 +96,4 @@ class TickerFlowTest : TestBase() {
         // THEN
         assertEquals(0, inbox.size)
     }
-
-
 }

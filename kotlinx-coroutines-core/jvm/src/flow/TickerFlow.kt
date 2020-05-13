@@ -1,9 +1,11 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.TickerMode
+import kotlinx.coroutines.channels.ticker
 import java.util.*
-import kotlin.concurrent.schedule
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Creates a flow that produces the first item after the given initial delay and subsequent items with the
@@ -13,21 +15,17 @@ import kotlin.concurrent.schedule
  *
  * This Flow stops producing elements immediately after [Job.cancel] invocation.
  *
- * @param period period between each element in milliseconds.
- * @param initialDelay delay after which the first element will be produced (it is equal to [period] by default) in milliseconds.
+ * @param delayMillis delay between each element in milliseconds.
+ * @param initialDelayMillis delay after which the first element will be produced (it is equal to [delayMillis] by default) in milliseconds.
+ * @param context context of the producing coroutine.
+ * @param mode specifies behavior when elements are not received ([FIXED_PERIOD][TickerMode.FIXED_PERIOD] by default).
  */
 public fun tickerFlow(
-        period: Long,
-        initialDelay: Long = period
-): Flow<Unit> = callbackFlow {
-    require(period > 0)
-    require(initialDelay > -1)
-
-    val timer = Timer()
-    timer.schedule(initialDelay, period) {
-        offer(Unit)
-    }
-
-    awaitClose { timer.cancel() }
+        delayMillis: Long,
+        initialDelayMillis: Long = delayMillis,
+        context: CoroutineContext = EmptyCoroutineContext,
+        mode: TickerMode = TickerMode.FIXED_PERIOD
+): Flow<Unit> {
+    require(delayMillis > 0)
+    return ticker(delayMillis, initialDelayMillis, context, mode).receiveAsFlow()
 }
-
