@@ -58,6 +58,7 @@ class FlatMapMergeTest : FlatMapMergeBaseTest() {
                 }
                 launch {
                     expect(2)
+                    yield()
                     job.cancel()
                 }
             }

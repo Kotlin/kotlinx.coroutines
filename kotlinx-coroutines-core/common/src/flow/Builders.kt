@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  *
  * fibonacci().take(100).collect { println(it) }
  * ```
+ * Emissions from [flow] builder are [cancellable] by default.
  *
  * `emit` should happen strictly in the dispatchers of the [block] in order to preserve the flow context.
  * For example, the following code will result in an [IllegalStateException]:
