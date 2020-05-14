@@ -24,9 +24,10 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
 public fun <T> MutableSharedFlow(
     bufferCapacity: Int,
     replayCapacity: Int = bufferCapacity,
-    initialValue: T = NO_VALUE as T
+    initialValue: T = NO_VALUE as T,
+    distinctUntilChanged: ValueEquivalence<T> = Equivalent.Never
 ): MutableSharedFlow<T> =
-    SharedFlowImpl(bufferCapacity, replayCapacity, initialValue)
+    SharedFlowImpl(bufferCapacity, replayCapacity, initialValue, distinctUntilChanged)
 
 // ------------------------------------ Implementation ------------------------------------
 
@@ -55,7 +56,8 @@ private class SharedFlowSlot : AbstractHotFlowSlot<SharedFlowImpl<*>>() {
 private class SharedFlowImpl<T>(
     private val bufferCapacity: Int,
     private val replayCapacity: Int,
-    private val initialValue: Any?
+    private val initialValue: Any?,
+    private val distinctUntilChanged: ValueEquivalence<T>
 ) : AbstractHotFlow<SharedFlowSlot>(), MutableSharedFlow<T> {
     init {
         require(replayCapacity >= 0) {
@@ -64,8 +66,11 @@ private class SharedFlowImpl<T>(
         require(bufferCapacity >= replayCapacity) {
             "bufferCapacity($bufferCapacity) cannot be smaller than replayCapacity($replayCapacity)"
         }
-        require(initialValue === NO_VALUE || replayCapacity >= 1) {
-            "replayCapacity($replayCapacity) must be at least one with initialValue($initialValue)"
+        require(replayCapacity > 0 || initialValue === NO_VALUE) {
+            "replayCapacity($replayCapacity) must positive  with initialValue($initialValue)"
+        }
+        require(replayCapacity > 0 || distinctUntilChanged === Equivalent.Never) {
+            "replayCapacity($replayCapacity) must positive with distinctUntilChanged($distinctUntilChanged)"
         }
     }
 
@@ -155,6 +160,7 @@ private class SharedFlowImpl<T>(
         emitSuspend(value)
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun tryEmitLocked(value: T): Boolean {
         // Fast path without collectors
         if (nCollectors == 0) return tryEmitNoCollectorsLocked(value)
@@ -162,6 +168,11 @@ private class SharedFlowImpl<T>(
         assert { minCollectorIndex >= head }
         if (size > bufferCapacity) return false // cannot emit now, already have waiting emitters
         if (size == bufferCapacity && minCollectorIndex == head) return false // blocked by slow collector
+        if (size > 0) {
+            // have a previous element, check distinctUntilChanged policy
+            val previous = buffer!!.getBufferAt(head + size - 1) as T
+            if (distinctUntilChanged(previous, value)) return true // drop it as equivalent to the previous one
+        }
         enqueueLocked(value)
         // drop oldest from the buffer if it became more than bufferCapacity
         if (size > bufferCapacity) dropOldestLocked()
