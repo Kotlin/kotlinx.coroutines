@@ -17,24 +17,27 @@ public interface RateLimiter {
     public fun removeTokens(tokens: Long): Unit = addTokens(-tokens)
     public fun tryConsume(tokens: Long = 1): Boolean
     public suspend fun consume(tokens: Long = 1, maxDelay: Duration = Duration.INFINITE)
+    public fun nextAvailableTime(tokens: Long): TimeMark?
 }
 
 @ExperimentalTime
-public abstract class RateLimiterImplBase: RateLimiter
+internal abstract class RateLimiterImplBase: RateLimiter
 {
-    public abstract fun requestTimeSlot(atTime: Long, tokens: Long, maxDelay: Long): Long
-    public abstract fun relinquishTokens(atTime: Long, reservationTime: Long, tokens: Long)
-    public abstract fun addTokens(atTime: Long, tokens: Long)
-    public abstract fun nextAvailableTime(atTime: Long, tokens: Long): Long
+    abstract fun requestTimeSlot(atTime: Long, tokens: Long, maxDelay: Long): Long
+    abstract fun relinquishTokens(atTime: Long, reservationTime: Long, tokens: Long)
+    abstract fun addTokens(atTime: Long, tokens: Long)
+    abstract fun nextAvailableTime(atTime: Long, tokens: Long): Long
 
-    public abstract fun timeSinceInitialization(): Long
+    abstract val timeMark: TimeMark
+
+    fun timeSinceInitialization(): Long = timeMark.elapsedNow().toLongNanoseconds()
 
     private suspend fun consume(tokens: Long, maxDelay: Long) {
         require(tokens > 0)
         val currentTime = timeSinceInitialization()
         val nextSlot = requestTimeSlot(currentTime, tokens, maxDelay)
         if (nextSlot == Long.MAX_VALUE) {
-            throw IllegalArgumentException("Could not allocate $tokens tokens to be available in $maxDelay")
+            throw TimeoutCancellationException("Could not allocate $tokens tokens to be available in $maxDelay")
         }
         val toSleep = nextSlot - currentTime
         try {
@@ -44,15 +47,25 @@ public abstract class RateLimiterImplBase: RateLimiter
         }
     }
 
-    public override fun addTokens(tokens: Long): Unit = addTokens(timeSinceInitialization(), tokens)
+    override fun addTokens(tokens: Long): Unit = addTokens(timeSinceInitialization(), tokens)
 
-    public override fun tryConsume(tokens: Long): Boolean {
+    override fun tryConsume(tokens: Long): Boolean {
         require(tokens > 0)
         return requestTimeSlot(timeSinceInitialization(), tokens, 0) != Long.MAX_VALUE
     }
 
-    public override suspend fun consume(tokens: Long, maxDelay: Duration): Unit =
+    override suspend fun consume(tokens: Long, maxDelay: Duration): Unit =
         consume(tokens, maxDelay.toLongNanoseconds())
+
+    override fun nextAvailableTime(tokens: Long): TimeMark? {
+        val currentTime = timeSinceInitialization()
+        val nextSlot = nextAvailableTime(currentTime, tokens)
+        return if (nextSlot == Long.MAX_VALUE) {
+            null
+        } else {
+            timeMark + nextSlot.nanoseconds
+        }
+    }
 }
 
 @ExperimentalTime
@@ -94,10 +107,8 @@ internal class TokenBucketRateLimiter(bandwidths: Array<Bandwidth>,
                                       timeSource: kotlin.time.TimeSource = kotlin.time.TimeSource.Monotonic):
     RateLimiterImplBase()
 {
-    private val timeMark = timeSource.markNow()
+    override val timeMark = timeSource.markNow()
     private val initTime = timeMark.elapsedNow().toLongNanoseconds()
-
-    override fun timeSinceInitialization(): Long = timeMark.elapsedNow().toLongNanoseconds()
 
     internal class State(private val bandwidths: Array<Bandwidth>,
                          private val tokensPerBandwidth: Array<Long>,

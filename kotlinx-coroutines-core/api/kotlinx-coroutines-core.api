@@ -1037,6 +1037,7 @@ public final class kotlinx/coroutines/intrinsics/CancellableKt {
 public abstract interface class kotlinx/coroutines/rateLimiter/RateLimiter {
 	public abstract fun addTokens (J)V
 	public abstract fun consume-jb84aEg (JDLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun nextAvailableTime (J)Lkotlin/time/TimeMark;
 	public abstract fun removeTokens (J)V
 	public abstract fun tryConsume (J)Z
 }
@@ -1055,19 +1056,6 @@ public final class kotlinx/coroutines/rateLimiter/RateLimiterBuilder {
 	public static synthetic fun periodic-sh68zkA$default (Lkotlinx/coroutines/rateLimiter/RateLimiterBuilder;JDJJILjava/lang/Object;)V
 	public final fun smooth (JJ)V
 	public final fun smooth-pTJri5U (JD)V
-}
-
-public abstract class kotlinx/coroutines/rateLimiter/RateLimiterImplBase : kotlinx/coroutines/rateLimiter/RateLimiter {
-	public fun <init> ()V
-	public fun addTokens (J)V
-	public abstract fun addTokens (JJ)V
-	public fun consume-jb84aEg (JDLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract fun nextAvailableTime (JJ)J
-	public abstract fun relinquishTokens (JJJ)V
-	public fun removeTokens (J)V
-	public abstract fun requestTimeSlot (JJJ)J
-	public abstract fun timeSinceInitialization ()J
-	public fun tryConsume (J)Z
 }
 
 public final class kotlinx/coroutines/rateLimiter/RateLimiterKt {

@@ -10,6 +10,11 @@ import kotlin.time.*
 @ExperimentalTime
 class RateLimiterTest : TestBase() {
 
+    val limiter = rateLimiter {
+        periodic(capacity = 1000, refillPeriod = 1.minutes, quantum = 500, initialAmount = 0)
+        smooth(capacity = 50, refillPeriod = 1.seconds)
+    }
+
     private fun zeroWait(limiter: RateLimiterImplBase, start: Long, refillPeriod: Long, tokens: Long): Long {
         val n = 10
         for (i in 1..n) {
