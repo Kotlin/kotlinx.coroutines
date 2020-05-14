@@ -254,6 +254,7 @@ private class SharedFlowImpl<T>(
         minCollectorIndex = newMinIndex
         // Now compute newHead
         val newHead = minOf(replayIndexLocked + syncAdjustment, newMinIndex)
+        if (newHead == head) return null // nothing changes
         // We can resume up to count waiting emitters if we have them
         val count = (newHead - head).toInt()
         var resumeList: ArrayList<Continuation<Unit>>? = null
