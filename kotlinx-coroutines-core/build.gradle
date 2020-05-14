@@ -55,6 +55,10 @@ compileKotlinMetadata {
 }
 
 kotlin.sourceSets {
+    jvm.dependencies {
+        compileOnly "com.google.android:annotations:4.1.1.4"
+    }
+
     jvmTest.dependencies {
         api "org.jetbrains.kotlinx:lincheck:$lincheck_version"
         api "org.jetbrains.kotlinx:kotlinx-knit-test:$knit_version"
