@@ -2,7 +2,7 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.*
 
 plugins {
     id("net.ltgt.apt")
@@ -12,6 +12,11 @@ plugins {
 
 repositories {
     maven("https://repo.typesafe.com/typesafe/releases/")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 tasks.withType<KotlinCompile>().configureEach {
