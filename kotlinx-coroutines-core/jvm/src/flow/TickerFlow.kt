@@ -3,7 +3,6 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.TickerMode
 import kotlinx.coroutines.channels.ticker
-import java.util.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -11,7 +10,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  * Creates a flow that produces the first item after the given initial delay and subsequent items with the
  * given delay between them.
  *
- * The resulting flow is a callback flow, which basically listens @see [Timer.schedule]
+ * The resulting flow is basically using [ticker]
  *
  * This Flow stops producing elements immediately after [Job.cancel] invocation.
  *
