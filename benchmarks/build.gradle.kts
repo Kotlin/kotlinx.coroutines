@@ -46,7 +46,7 @@ val removeRedundantFiles = tasks.register<Delete>("removeRedundantFiles") {
     delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleOpt\$play\$histoOfLetters\$1\$\$special\$\$inlined\$fold\$1\$1.class")
     delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleBase\$play\$buildHistoOnScore\$1\$\$special\$\$inlined\$filter\$1\$1.class")
     delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleBase\$play\$histoOfLetters\$1\$\$special\$\$inlined\$fold\$1\$1.class")
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble//SaneFlowPlaysScrabble\$play\$buildHistoOnScore\$1\$\$special\$\$inlined\$filter\$1\$1.class")
+    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/SaneFlowPlaysScrabble\$play\$buildHistoOnScore\$1\$\$special\$\$inlined\$filter\$1\$1.class")
 
     // Primes
     delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/misc/Numbers\$\$special\$\$inlined\$filter\$1\$2\$1.class")
@@ -83,7 +83,6 @@ dependencies {
     compile("io.reactivex.rxjava2:rxjava:2.1.9")
     compile("com.github.akarnokd:rxjava2-extensions:0.20.8")
 
-    compile("org.openjdk.jmh:jmh-core:1.21")
     compile("com.typesafe.akka:akka-actor_2.12:2.5.0")
     compile(project(":kotlinx-coroutines-core"))
 
