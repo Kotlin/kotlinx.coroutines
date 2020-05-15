@@ -41,13 +41,13 @@ class BackpressureTest : TestBase() {
     @Test
     fun testCooperativeCancellation() = runTest {
         val flow = Flux.fromIterable((0L..Long.MAX_VALUE)).asFlow()
-        flow.onEach { if (it > 10) currentContext().cancel() }.launchIn(this + Dispatchers.Default).join()
+        flow.onEach { if (it > 10) currentCoroutineContext().cancel() }.launchIn(this + Dispatchers.Default).join()
     }
 
     @Test
     fun testCooperativeCancellationForBuffered() = runTest(expected = { it is CancellationException }) {
         val flow = Flux.fromIterable((0L..Long.MAX_VALUE)).asFlow()
-        val channel = flow.onEach { if (it > 10) currentContext().cancel() }.produceIn(this + Dispatchers.Default)
+        val channel = flow.onEach { if (it > 10) currentCoroutineContext().cancel() }.produceIn(this + Dispatchers.Default)
         channel.consumeEach { /* Do nothing, just consume elements */ }
     }
 }

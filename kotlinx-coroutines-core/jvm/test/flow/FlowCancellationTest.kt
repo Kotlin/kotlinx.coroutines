@@ -33,7 +33,7 @@ class FlowCancellationTest : TestBase() {
         val job = flow<Unit> {
             expect(1)
             latch.send(Unit)
-            while (currentContext().isActive) {
+            while (currentCoroutineContext().isActive) {
                 // Do nothing
             }
         }.launchIn(this + Dispatchers.Default)

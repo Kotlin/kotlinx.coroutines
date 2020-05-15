@@ -18,7 +18,7 @@ internal actual class SafeCollector<T> actual constructor(
     private var lastEmissionContext: CoroutineContext? = null
 
     override suspend fun emit(value: T) {
-        val currentContext = currentContext()
+        val currentContext = currentCoroutineContext()
         currentContext.ensureActive()
         if (lastEmissionContext !== currentContext) {
             checkContext(currentContext)

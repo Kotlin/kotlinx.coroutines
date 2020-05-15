@@ -214,7 +214,7 @@ public final class kotlinx/coroutines/CoroutineScopeKt {
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/CoroutineScope;Ljava/util/concurrent/CancellationException;ILjava/lang/Object;)V
 	public static final fun coroutineScope (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun currentContext (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun currentCoroutineContext (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun ensureActive (Lkotlinx/coroutines/CoroutineScope;)V
 	public static final fun isActive (Lkotlinx/coroutines/CoroutineScope;)Z
 	public static final fun plus (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/CoroutineScope;

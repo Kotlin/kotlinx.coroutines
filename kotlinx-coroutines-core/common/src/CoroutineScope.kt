@@ -242,10 +242,10 @@ public fun CoroutineScope.ensureActive(): Unit = coroutineContext.ensureActive()
  * ```
  * launch { // this: CoroutineScope
  *     val flow = flow<Unit> {
- *         coroutineContext // Resolves into the context of outer launch, which is incorrect, see KT
- *         currentContext() // Retrieves actual context whe the flow is collected
+ *         coroutineContext // Resolves into the context of outer launch, which is incorrect, see KT-38033
+ *         currentCoroutineContext() // Retrieves actual context where the flow is collected
  *     }
  * }
  * ```
  */
-public suspend inline fun currentContext(): CoroutineContext = coroutineContext
+public suspend inline fun currentCoroutineContext(): CoroutineContext = coroutineContext

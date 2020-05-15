@@ -50,14 +50,9 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 public fun <T> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> = SafeFlow(block)
 
 // Named anonymous object
-private class SafeFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit) : Flow<T> {
-    override suspend fun collect(collector: FlowCollector<T>) {
-        val safeCollector = SafeCollector(collector, coroutineContext)
-        try {
-            safeCollector.block()
-        } finally {
-            safeCollector.releaseIntercepted()
-        }
+private class SafeFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit) : AbstractFlow<T>() {
+    override suspend fun collectSafely(collector: FlowCollector<T>) {
+        collector.block()
     }
 }
 
