@@ -27,7 +27,12 @@ public fun <T> MutableSharedFlow(
     initialValue: T = NO_VALUE as T,
     distinctUntilChanged: ValueEquivalence<T> = Equivalent.Never
 ): MutableSharedFlow<T> =
-    SharedFlowImpl(bufferCapacity, replayCapacity, initialValue, distinctUntilChanged)
+    SharedFlowImpl(
+        bufferCapacity,
+        replayCapacity,
+        initialValue,
+        distinctUntilChanged.takeIf { it !== Equivalent.Never }
+    )
 
 // ------------------------------------ Implementation ------------------------------------
 
@@ -57,7 +62,7 @@ private class SharedFlowImpl<T>(
     private val bufferCapacity: Int,
     private val replayCapacity: Int,
     private val initialValue: Any?,
-    private val distinctUntilChanged: ValueEquivalence<T>
+    private val distinctUntilChanged: ValueEquivalence<T>? // optimization Never -> null
 ) : AbstractHotFlow<SharedFlowSlot>(), MutableSharedFlow<T> {
     init {
         require(replayCapacity >= 0) {
@@ -69,7 +74,7 @@ private class SharedFlowImpl<T>(
         require(replayCapacity > 0 || initialValue === NO_VALUE) {
             "replayCapacity($replayCapacity) must positive  with initialValue($initialValue)"
         }
-        require(replayCapacity > 0 || distinctUntilChanged === Equivalent.Never) {
+        require(replayCapacity > 0 || distinctUntilChanged == null) {
             "replayCapacity($replayCapacity) must positive with distinctUntilChanged($distinctUntilChanged)"
         }
     }
@@ -162,17 +167,17 @@ private class SharedFlowImpl<T>(
 
     @Suppress("UNCHECKED_CAST")
     private fun tryEmitLocked(value: T): Boolean {
+        // If have a previous element, then check distinctUntilChanged policy first (if set)
+        if (size > 0) distinctUntilChanged?.let { areEquivalent ->
+            val previous = buffer!!.getBufferAt(head + size - 1) as T
+            if (areEquivalent(previous, value)) return true // drop it as equivalent to the previous one
+        }
         // Fast path without collectors
         if (nCollectors == 0) return tryEmitNoCollectorsLocked(value)
         // With collectors we'll have to buffer
         assert { minCollectorIndex >= head }
         if (size > bufferCapacity) return false // cannot emit now, already have waiting emitters
         if (size == bufferCapacity && minCollectorIndex == head) return false // blocked by slow collector
-        if (size > 0) {
-            // have a previous element, check distinctUntilChanged policy
-            val previous = buffer!!.getBufferAt(head + size - 1) as T
-            if (distinctUntilChanged(previous, value)) return true // drop it as equivalent to the previous one
-        }
         enqueueLocked(value)
         // drop oldest from the buffer if it became more than bufferCapacity
         if (size > bufferCapacity) dropOldestLocked()
@@ -254,43 +259,49 @@ private class SharedFlowImpl<T>(
     internal fun updateCollectorIndexLocked(oldIndex: Long): List<Continuation<Unit>>? {
         assert { oldIndex >= minCollectorIndex }
         if (oldIndex > minCollectorIndex) return null // nothing changes, it was not min
-        // takes into account a special case of sync shared flow that can go past 1st queued emitter
-        val syncAdjustment = if (bufferCapacity == 0 && size > 0) 1 else 0
-        var newMinIndex = head + bufferCapacity + syncAdjustment
+        // start computing new minimal index of active collectors
+        var newMinIndex = head + bufferCapacity
+        // take into account a special case of sync shared flow that can go past 1st queued emitter
+        if (bufferCapacity == 0 && size > 0) newMinIndex++
         forEachSlotLocked { slot ->
             if (slot.index in 0 until newMinIndex) newMinIndex = slot.index
         }
-        assert { newMinIndex >= minCollectorIndex }
+        assert { newMinIndex >= minCollectorIndex } // can only grow
         if (newMinIndex <= minCollectorIndex) return null // nothing changes
         minCollectorIndex = newMinIndex
-        // Now compute newHead
-        val newHead = minOf(replayIndexLocked + syncAdjustment, newMinIndex)
-        if (newHead == head) return null // nothing changes
-        // We can resume up to count waiting emitters if we have them
-        val count = (newHead - head).toInt()
+        // Compute new buffer size if we drop items we no longer need and no emitter is resumed:
+        // We must keep all the items from newMinIndex to the end of buffer
+        val oldBufferSize = bufferSizeLocked
+        var curBufferEndIndex = head + oldBufferSize // var to grow when waiters are resumed
+        val newBufferSize0 = (curBufferEndIndex - newMinIndex).toInt()
+        // We can resume up to maxResumeCount waiting emitters
+        // a) size - oldBufferSize -> that's how many waiting emitters we have
+        // b) bufferCapacity - newBufferSize0 -> that's how many we can afford to add w/o exceeding bufferCapacity
+        val maxResumeCount = minOf(size - oldBufferSize, bufferCapacity - newBufferSize0)
         var resumeList: ArrayList<Continuation<Unit>>? = null
         val buffer = buffer!!
-        if (size > bufferCapacity) { // collect waiters to resume if we have them
-            resumeList = ArrayList(minOf(count, size - bufferCapacity))
-            var valueOffset = bufferCapacity // where to put value
-            var emitterOffset = bufferCapacity // what emitter to wakeup
-            while (resumeList.size < count && emitterOffset < size) {
-                val emitter = buffer.getBufferAt(head + emitterOffset)
+        if (maxResumeCount > 0) { // collect waiters to resume if we have them
+            resumeList = ArrayList(maxResumeCount)
+            var curEmitterIndex = head + bufferCapacity // what emitter to wakeup
+            while (resumeList.size < maxResumeCount) {
+                val emitter = buffer.getBufferAt(curEmitterIndex)
                 if (emitter !== NO_VALUE) {
                     emitter as Emitter // must have Emitter class
                     resumeList.add(emitter.cont)
-                    buffer.setBufferAt(head + emitterOffset, NO_VALUE) // make as canceled if we moved ahead
-                    buffer.setBufferAt(head + valueOffset, emitter.value)
-                    valueOffset++
+                    buffer.setBufferAt(curEmitterIndex, NO_VALUE) // make as canceled if we moved ahead
+                    buffer.setBufferAt(curBufferEndIndex, emitter.value)
+                    curBufferEndIndex++
                 }
-                emitterOffset++
+                curEmitterIndex++
             }
         }
-        // cleanup count items we don't have to buffer anymore (because head moved)
-        for (i in 0 until count) buffer.setBufferAt(head + i, null)
+        // now compute new head: take slowest collector into account, and the need to keep replay cache
+        val newHead = minOf(newMinIndex, curBufferEndIndex - replayCapacity)
+        // cleanup items we don't have to buffer anymore (because head moved)
+        for (index in head until newHead) buffer.setBufferAt(index, null)
         // update buffer pointers
+        size -= (newHead - head).toInt()
         head = newHead
-        size -= count
         cleanupTailLocked() // just in case we've moved all buffered emitters and have NO_VALUE's at the tail now
         return resumeList
     }

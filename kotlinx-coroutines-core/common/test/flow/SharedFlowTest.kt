@@ -1,6 +1,7 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlin.random.*
 import kotlin.test.*
 
 class SharedFlowTest : TestBase() {
@@ -205,4 +206,66 @@ class SharedFlowTest : TestBase() {
         assertEquals(ecRange.toList().takeLast(replayCapacity), sh.replayCache)
         finish(1 + ofs)
     }
+
+    /**
+     * Tests that `distinctUntilChanged` parameter is equivalent to the effect of [distinctUntilChanged] operator.
+     * It also tests a base-line of just transferring a large list of data via a shared flow with [Equivalent.Never].
+     */
+    @Test
+    fun testDistinctUntilChangedEquivalence() {
+        for (bufferCapacity in 1..10) {
+            for (replayCapacity in 1..bufferCapacity) {
+                for (eq in listOf(Equivalent.Never, Equivalent.ByValue, Equivalent.ByReference)) {
+                    try {
+                        testDistinctUntilChangedEquivalence(bufferCapacity, replayCapacity, eq)
+                    } catch (e: Throwable) {
+                        error("Failed for bufferCapacity=$bufferCapacity, replayCapacity=$replayCapacity with distinctUntilChanged($eq)", e)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun testDistinctUntilChangedEquivalence(
+        bufferCapacity: Int,
+        replayCapacity: Int,
+        eq: ValueEquivalence<Any?>
+    ) = runTest {
+        val rnd = Random(1)
+        val list = List(100) { rnd.nextData() }
+        val flow = list.asFlow() // generate a source list once
+        val expected = flow.distinctUntilChanged(eq).toList()
+        val actual = processFlow(flow, MutableSharedFlow(bufferCapacity, replayCapacity, distinctUntilChanged = eq))
+        assertSameList(expected, actual)
+    }
+
+    private suspend fun <T> processFlow(flow: Flow<T>, sharedFlow: MutableSharedFlow<T>): List<T> = coroutineScope {
+        val result = ArrayList<T>()
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            sharedFlow.collect { item ->
+                result.add(item)
+            }
+        }
+        sharedFlow.emitAll(flow)
+        yield() // finish processing
+        job.cancelAndJoin()
+        result
+    }
+
+    private fun <T> assertSameList(expected: List<T>, actual: List<T>) {
+        assertEquals(expected.size, actual.size)
+        for (i in expected.indices) assertSame(expected[i], actual[i])
+    }
+
+    data class Data(val x: Int)
+    private val dataCache = (1..5).associateWith { Data(it) }
+
+    // Note that we test proper null support here, too
+    private fun Random.nextData(): Data? {
+        val x = nextInt(0..5)
+        if (x == 0) return null
+        // randomly reuse ref or create a new instance
+        return if(nextBoolean()) dataCache[x] else Data(x)
+    }
 }
+
