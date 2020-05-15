@@ -238,7 +238,7 @@ internal class TokenBucketRateLimiter(bandwidths: Array<Bandwidth>,
     }
 
     override fun nextAvailableTime(atTime: Long, tokens: Long): Long {
-        val currentState = state.value
+        val currentState = state.value.copyOf()
         currentState.refill(atTime)
         return currentState.nextDeficitCompensationTime(tokens)
     }
