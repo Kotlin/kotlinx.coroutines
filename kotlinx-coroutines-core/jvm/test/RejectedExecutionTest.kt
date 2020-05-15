@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.scheduling.*
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
@@ -36,7 +37,7 @@ class RejectedExecutionTest : TestBase() {
         val job = launch(executor.asCoroutineDispatcher(), start = CoroutineStart.ATOMIC) {
             expect(2)
             assertEquals(true, coroutineContext[Job]?.isCancelled)
-            assertNotSame(threadName, Thread.currentThread().name) // should have got dispatched on the DefaultExecutor
+            assertIoThread() // was rejected on start, but start was atomic
         }
         assertEquals(1, executor.submittedTasks)
         job.join()
@@ -60,14 +61,19 @@ class RejectedExecutionTest : TestBase() {
         expect(1)
         executor.acceptTasks = 1 // accept one task
         assertFailsWith<CancellationException> {
-            withContext(executor.asCoroutineDispatcher()) {
-                expect(2)
-                withContext(Dispatchers.Default) {
-                    expect(3)
+                withContext(executor.asCoroutineDispatcher()) {
+                    expect(2)
+                    assertExecutorThread()
+                    try {
+                        withContext(Dispatchers.Default) {
+                            expect(3)
+                        }
+                        // cancelled on resume back
+                    } finally {
+                        assertIoThread()
+                    }
+                    expectUnreached()
                 }
-                // cancelled on resume back
-                expectUnreached()
-            }
         }
         assertEquals(2, executor.submittedTasks)
         finish(4)
@@ -80,7 +86,13 @@ class RejectedExecutionTest : TestBase() {
         assertFailsWith<CancellationException> {
             withContext(executor.asCoroutineDispatcher()) {
                 expect(2)
-                delay(10) // cancelled
+                assertExecutorThread()
+                try {
+                    delay(10) // cancelled
+                } finally {
+                    // Since it was cancelled on attempt to delay, it still stays on the same thread
+                    assertExecutorThread()
+                }
                 expectUnreached()
             }
         }
@@ -95,6 +107,7 @@ class RejectedExecutionTest : TestBase() {
         assertFailsWith<CancellationException> {
             withContext(executor.asCoroutineDispatcher()) {
                 expect(2)
+                assertExecutorThread()
                 withTimeout(1000) {
                     expect(3) // atomic entry into the block (legacy behavior, it seem to be Ok with way)
                     assertEquals(true, coroutineContext[Job]?.isCancelled) // but the job is already cancelled
@@ -115,5 +128,16 @@ class RejectedExecutionTest : TestBase() {
             if (submittedTasks > acceptTasks) throw RejectedExecutionException()
             return super.schedule(command, delay, unit)
         }
+    }
+
+    private fun assertExecutorThread() {
+        val thread = Thread.currentThread()
+        if (!thread.name.startsWith(threadName)) error("Not an executor thread: $thread")
+    }
+
+    private fun assertIoThread() {
+        val thread = Thread.currentThread()
+        if (thread !is CoroutineScheduler.Worker) error("Not a thread from Dispatchers.IO: $thread")
+        assertEquals(CoroutineScheduler.WorkerState.BLOCKING, thread.state)
     }
 }
