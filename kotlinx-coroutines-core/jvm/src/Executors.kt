@@ -39,8 +39,9 @@ public abstract class ExecutorCoroutineDispatcher: CoroutineDispatcher(), Closea
 /**
  * Converts an instance of [ExecutorService] to an implementation of [ExecutorCoroutineDispatcher].
  *
- * Note, that if the underlying executor throws [RejectedExecutionException] on
- * attempt to submit a continuation task (it typically happens on executor shutdown or when it uses limited queues),
+ * If the underlying executor throws [RejectedExecutionException] on
+ * attempt to submit a continuation task (it happens when [closing][ExecutorCoroutineDispatcher.close] the
+ * resulting dispatcher, on underlying executor [shutdown][ExecutorService.shutdown], or when it uses limited queues),
  * then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
  * [Dispatchers.IO], so that the affected coroutine can cleanup its resources and promptly complete.
  */
@@ -51,8 +52,9 @@ public fun ExecutorService.asCoroutineDispatcher(): ExecutorCoroutineDispatcher 
 /**
  * Converts an instance of [Executor] to an implementation of [CoroutineDispatcher].
  *
- * Note, that if the underlying executor throws [RejectedExecutionException] on
- * attempt to submit a continuation task (it typically happens on executor shutdown or when it uses limited queues),
+ * If the underlying executor throws [RejectedExecutionException] on
+ * attempt to submit a continuation task (it happens when [closing][ExecutorCoroutineDispatcher.close] the
+ * resulting dispatcher, on underlying executor [shutdown][ExecutorService.shutdown], or when it uses limited queues),
  * then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
  * [Dispatchers.IO], so that the affected coroutine can cleanup its resources and promptly complete.
  */
