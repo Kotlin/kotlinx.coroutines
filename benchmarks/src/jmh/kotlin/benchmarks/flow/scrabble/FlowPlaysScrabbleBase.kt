@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.*
 import org.openjdk.jmh.annotations.*
 import java.lang.Long.max
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.TimeUnit
 import kotlin.math.*
 
 @Warmup(iterations = 7, time = 1, timeUnit = TimeUnit.SECONDS)
