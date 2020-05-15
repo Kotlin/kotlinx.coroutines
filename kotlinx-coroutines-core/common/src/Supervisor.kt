@@ -1,13 +1,14 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
+@file:OptIn(ExperimentalContracts::class)
 @file:Suppress("DEPRECATION_ERROR")
 
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
@@ -47,11 +48,15 @@ public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
  * A failure of the scope itself (exception thrown in the [block] or cancellation) fails the scope with all its children,
  * but does not cancel parent job.
  */
-public suspend fun <R>  supervisorScope(block: suspend CoroutineScope.() -> R): R =
-    suspendCoroutineUninterceptedOrReturn { uCont ->
+public suspend fun <R> supervisorScope(block: suspend CoroutineScope.() -> R): R {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    return suspendCoroutineUninterceptedOrReturn { uCont ->
         val coroutine = SupervisorCoroutine(uCont.context, uCont)
         coroutine.startUndispatchedOrReturn(coroutine, block)
     }
+}
 
 private class SupervisorJobImpl(parent: Job?) : JobImpl(parent) {
     override fun childCancelled(cause: Throwable): Boolean = false
