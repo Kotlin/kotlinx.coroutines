@@ -152,7 +152,11 @@ class SharedFlowTest : TestBase() {
         for (bufferCapacity in 1..10) {
             for (replayCapacity in 0..bufferCapacity) {
                 try {
-                    testCapacityCombo(bufferCapacity, replayCapacity)
+                    val sh = MutableSharedFlow<Int>(bufferCapacity, replayCapacity)
+                    // repeat the whole test a few times to make sure it works correctly when slots are reused
+                    repeat(3) {
+                        testCapacityCombo(sh, replayCapacity)
+                    }
                 } catch (e: Throwable) {
                     error("Failed for bufferCapacity=$bufferCapacity, replayCapacity=$replayCapacity", e)
                 }
@@ -160,11 +164,10 @@ class SharedFlowTest : TestBase() {
         }
     }
 
-    private fun testCapacityCombo(bufferCapacity: Int, replayCapacity: Int) = runTest {
+    private fun testCapacityCombo(sh: MutableSharedFlow<Int>, replayCapacity: Int) = runTest {
         reset()
         expect(1)
-        val sh = MutableSharedFlow<Int>(bufferCapacity, replayCapacity)
-        val n = 100 // initially emitted
+        val n = 100 // initially emitted to fill buffer
         for (i in 1..n) assertTrue(sh.tryEmit(i))
         // initial expected replayCache
         val rcStart = n - replayCapacity + 1
@@ -205,6 +208,63 @@ class SharedFlowTest : TestBase() {
         // replay cache is still there
         assertEquals(ecRange.toList().takeLast(replayCapacity), sh.replayCache)
         finish(1 + ofs)
+    }
+
+    @Test
+    fun testDropLatest() = testDropLatestOrOldest(SharedBufferOverflow.DROP_LATEST)
+
+    @Test
+    fun testDropOldest() = testDropLatestOrOldest(SharedBufferOverflow.DROP_OLDEST)
+
+    private fun testDropLatestOrOldest(bufferOverflow: SharedBufferOverflow) = runTest {
+        reset()
+        expect(1)
+        val sh = MutableSharedFlow<Int?>(1, bufferOverflow = bufferOverflow)
+        sh.emit(1)
+        sh.emit(2)
+        // always keeps last w/o collectors
+        assertEquals(listOf(2), sh.replayCache)
+        assertEquals(0, sh.collectorsCount.value)
+        // one collector
+        val valueAfterOverflow = when (bufferOverflow) {
+            SharedBufferOverflow.DROP_OLDEST -> 5
+            SharedBufferOverflow.DROP_LATEST -> 4
+            else -> error("not supported in this test: $bufferOverflow")
+        }
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            sh.collect {
+                when(it) {
+                    2 -> { // replayed
+                        expect(3)
+                        yield() // and suspends, busy waiting
+                    }
+                    valueAfterOverflow -> expect(7)
+                    8 -> expect(9)
+                    else -> expectUnreached()
+                }
+            }
+            expectUnreached() // does not complete normally
+        }
+        expect(4)
+        assertEquals(1, sh.collectorsCount.value)
+        assertEquals(listOf(2), sh.replayCache)
+        sh.emit(4) // buffering, collector is busy
+        assertEquals(listOf(4), sh.replayCache)
+        expect(5)
+        sh.emit(5) // Buffer overflow here, will not suspend
+        assertEquals(listOf(valueAfterOverflow), sh.replayCache)
+        expect(6)
+        yield() // to the job
+        expect(8)
+        sh.emit(8) // not busy now
+        assertEquals(listOf(8), sh.replayCache) // byffered
+        yield() // to process
+        expect(10)
+        job.cancel() // cancel the job
+        yield()
+        assertEquals(0, sh.collectorsCount.value)
+        finish(11)
     }
 
     /**

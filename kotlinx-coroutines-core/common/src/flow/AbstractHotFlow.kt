@@ -3,6 +3,7 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
+// Note: Always guarantee FIFO processing of slots by keeping a doubly-linked list of them
 internal abstract class AbstractHotFlowSlot<F> {
     abstract fun allocateLocked(flow: F): Boolean
     abstract fun freeLocked(flow: F): List<Continuation<Unit>>? // returns a list of continuation to resume after lock
@@ -64,6 +65,8 @@ internal abstract class AbstractHotFlow<S : AbstractHotFlowSlot<*>> : Synchroniz
         val resumeList = synchronized(this) {
             nCollectors--
             collectorsCount = _collectorsCount // retrieve under lock if initialized
+            // Reset next index oracle if we have no more active collectors for more predictable behavior next time
+            if (nCollectors == 0) nextIndex = 0
             (slot as AbstractHotFlowSlot<Any>).freeLocked(this)
         }
         resumeList?.forEach { it.resume(Unit) }

@@ -25,14 +25,22 @@ public fun <T> MutableSharedFlow(
     bufferCapacity: Int,
     replayCapacity: Int = bufferCapacity,
     initialValue: T = NO_VALUE as T,
-    distinctUntilChanged: ValueEquivalence<T> = Equivalent.Never
+    distinctUntilChanged: ValueEquivalence<T> = Equivalent.Never,
+    bufferOverflow: SharedBufferOverflow = SharedBufferOverflow.SUSPEND
 ): MutableSharedFlow<T> =
     SharedFlowImpl(
         bufferCapacity,
         replayCapacity,
         initialValue,
-        distinctUntilChanged.takeIf { it !== Equivalent.Never }
+        distinctUntilChanged.takeIf { it !== Equivalent.Never },
+        bufferOverflow
     )
+
+public enum class SharedBufferOverflow {
+    SUSPEND, // regular
+    DROP_LATEST, // ~ dropWhenBusy() operator
+    DROP_OLDEST // ~ conflate() operator
+}
 
 // ------------------------------------ Implementation ------------------------------------
 
@@ -62,7 +70,8 @@ private class SharedFlowImpl<T>(
     private val bufferCapacity: Int,
     private val replayCapacity: Int,
     private val initialValue: Any?,
-    private val distinctUntilChanged: ValueEquivalence<T>? // optimization Never -> null
+    private val distinctUntilChanged: ValueEquivalence<T>?, // optimization Never -> null
+    private val bufferOverflow: SharedBufferOverflow
 ) : AbstractHotFlow<SharedFlowSlot>(), MutableSharedFlow<T> {
     init {
         require(replayCapacity >= 0) {
@@ -76,6 +85,9 @@ private class SharedFlowImpl<T>(
         }
         require(replayCapacity > 0 || distinctUntilChanged == null) {
             "replayCapacity($replayCapacity) must positive with distinctUntilChanged($distinctUntilChanged)"
+        }
+        require(bufferCapacity > 0 || bufferOverflow == SharedBufferOverflow.SUSPEND) {
+            "bufferCapacity($bufferCapacity) must positive with bufferOverflow($bufferOverflow)"
         }
     }
 
@@ -173,11 +185,17 @@ private class SharedFlowImpl<T>(
             if (areEquivalent(previous, value)) return true // drop it as equivalent to the previous one
         }
         // Fast path without collectors
-        if (nCollectors == 0) return tryEmitNoCollectorsLocked(value)
+        if (nCollectors == 0) return tryEmitNoCollectorsLocked(value) // always returns true
         // With collectors we'll have to buffer
         assert { minCollectorIndex >= head }
-        if (size > bufferCapacity) return false // cannot emit now, already have waiting emitters
-        if (size == bufferCapacity && minCollectorIndex == head) return false // blocked by slow collector
+        // cannot emit now if buffer is full && blocked by a slow collectors
+        if (size >= bufferCapacity && minCollectorIndex == head) {
+            when (bufferOverflow) {
+                SharedBufferOverflow.SUSPEND -> return false // will suspend
+                SharedBufferOverflow.DROP_LATEST -> return true // just drop incoming
+                SharedBufferOverflow.DROP_OLDEST -> {} // force enqueue & drop oldest
+            }
+        }
         enqueueLocked(value)
         // drop oldest from the buffer if it became more than bufferCapacity
         if (size > bufferCapacity) dropOldestLocked()
@@ -198,6 +216,16 @@ private class SharedFlowImpl<T>(
         buffer!!.setBufferAt(head, null)
         head++
         size--
+        if (head > minCollectorIndex) correctCollectorIndexesOnDropOldest()
+    }
+
+    private fun correctCollectorIndexesOnDropOldest() {
+        assert { head > minCollectorIndex }
+        forEachSlotLocked loop@{ slot ->
+            if (slot.index !in 0 until head) return@loop
+            slot.index = head // force move it up (this collector was too slow and missed the value at its index)
+        }
+        minCollectorIndex = head
     }
 
     private fun enqueueLocked(value: Any?) {
@@ -260,7 +288,8 @@ private class SharedFlowImpl<T>(
         assert { oldIndex >= minCollectorIndex }
         if (oldIndex > minCollectorIndex) return null // nothing changes, it was not min
         // start computing new minimal index of active collectors
-        var newMinIndex = head + bufferCapacity
+        val oldBufferSize = bufferSizeLocked
+        var newMinIndex = head + oldBufferSize
         // take into account a special case of sync shared flow that can go past 1st queued emitter
         if (bufferCapacity == 0 && size > 0) newMinIndex++
         forEachSlotLocked { slot ->
@@ -271,7 +300,6 @@ private class SharedFlowImpl<T>(
         minCollectorIndex = newMinIndex
         // Compute new buffer size if we drop items we no longer need and no emitter is resumed:
         // We must keep all the items from newMinIndex to the end of buffer
-        val oldBufferSize = bufferSizeLocked
         var curBufferEndIndex = head + oldBufferSize // var to grow when waiters are resumed
         val newBufferSize0 = (curBufferEndIndex - newMinIndex).toInt()
         // We can resume up to maxResumeCount waiting emitters
