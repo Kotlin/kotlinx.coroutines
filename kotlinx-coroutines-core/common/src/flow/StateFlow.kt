@@ -284,7 +284,7 @@ private class StateFlowImpl<T>(
 
     override suspend fun collect(collector: FlowCollector<T>) {
         val slot = allocateSlot()
-        var prevState: Any? = null // previously emitted T!! | NULL (null -- nothing emitted yet)
+        var oldState: Any? = null // previously emitted T!! | NULL (null -- nothing emitted yet)
         try {
             // The loop is arranged so that it starts delivering current value without waiting first
             while (true) {
@@ -292,9 +292,9 @@ private class StateFlowImpl<T>(
                 // so we use the most recent state here to ensure the best possible conflation of stale values
                 val newState = _state.value
                 // Conflate value emissions using equality
-                if (prevState == null || newState != prevState) {
+                if (oldState == null || oldState != newState) {
                     collector.emit(NULL.unbox(newState))
-                    prevState = newState
+                    oldState = newState
                 }
                 // Note: if awaitPending is cancelled, then it bails out of this loop and calls freeSlot
                 if (!slot.takePending()) { // try fast-path without suspending first

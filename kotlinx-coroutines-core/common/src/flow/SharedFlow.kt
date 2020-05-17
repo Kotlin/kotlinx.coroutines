@@ -44,7 +44,7 @@ public enum class SharedBufferOverflow {
 
 // ------------------------------------ Implementation ------------------------------------
 
-private class SharedFlowSlot : AbstractHotFlowSlot<SharedFlowImpl<*>>() {
+internal class SharedFlowSlot : AbstractHotFlowSlot<SharedFlowImpl<*>>() {
     @JvmField
     var index = -1L // current "to-be-emitted" index, -1 means the slot is free now
 
@@ -66,7 +66,8 @@ private class SharedFlowSlot : AbstractHotFlowSlot<SharedFlowImpl<*>>() {
     }
 }
 
-private class SharedFlowImpl<T>(
+// Internal for one specific test to check that is can model StateFlow's behavior
+internal class SharedFlowImpl<T>(
     private val bufferCapacity: Int,
     private val replayCapacity: Int,
     private val initialValue: Any?,
@@ -143,15 +144,26 @@ private class SharedFlowImpl<T>(
     @Suppress("UNCHECKED_CAST")
     override suspend fun collect(collector: FlowCollector<T>) {
         val slot = allocateSlot()
+        // prevValue is only used for distinctUntilChanged with DROP_OLDEST
+        var oldValue: Any? = when {
+            distinctUntilChanged != null && bufferOverflow == SharedBufferOverflow.DROP_OLDEST -> NO_VALUE
+            else -> EMIT_ALL // otherwise, emit all values with additional checks
+        }
         try {
             while (true) {
-                var value: Any?
+                var newValue: Any?
                 while (true) {
-                    value = tryTakeValue(slot) // attempt no-suspend fast path first
-                    if (value !== NO_VALUE) break
+                    newValue = tryTakeValue(slot) // attempt no-suspend fast path first
+                    if (newValue !== NO_VALUE) break
                     awaitValue(slot) // await signal that the new value is available
                 }
-                collector.emit(value as T)
+                // Need to check distinctUntilChanged before emission, too, since this collector might have missed
+                // some values, so that equaivalent values are going to be emitted
+                if (oldValue !== EMIT_ALL) {
+                    if (oldValue !== NO_VALUE && distinctUntilChanged!!.invoke(oldValue as T, newValue as T)) continue
+                    oldValue = newValue
+                }
+                collector.emit(newValue as T)
             }
         } finally {
             freeSlot(slot)
@@ -426,6 +438,9 @@ private class SharedFlowImpl<T>(
 @SharedImmutable
 @JvmField
 internal val NO_VALUE = Symbol("NO_VALUE")
+
+@SharedImmutable
+private val EMIT_ALL = Symbol("EMIT_ALL")
 
 private fun Array<Any?>.getBufferAt(index: Long) = get(index.toInt() and (size - 1))
 private fun Array<Any?>.setBufferAt(index: Long, value: Any?) = set(index.toInt() and (size - 1), value)

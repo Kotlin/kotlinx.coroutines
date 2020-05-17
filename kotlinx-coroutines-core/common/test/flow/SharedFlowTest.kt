@@ -312,6 +312,57 @@ class SharedFlowTest : TestBase() {
         result
     }
 
+    @Test
+    fun testStateFlowModel() = runTest {
+        val stateFlow = MutableStateFlow<Data?>(null)
+        val expect = modelLog(stateFlow)
+        val sharedFlow = SharedFlowImpl<Data?>(
+            bufferCapacity = 1,
+            replayCapacity = 1,
+            initialValue = null,
+            distinctUntilChanged = Equivalent.ByValue,
+            bufferOverflow = SharedBufferOverflow.DROP_OLDEST
+        )
+        val actual = modelLog(sharedFlow)
+        assertEquals(expect, actual)
+    }
+
+    private suspend fun modelLog(sh: MutableSharedFlow<Data?>): List<String> = coroutineScope {
+        val rnd = Random(1)
+        val result = ArrayList<String>()
+        val job = launch {
+            sh.collect { value ->
+                result.add("Collect: $value")
+                repeat(rnd.nextInt(0..2)) {
+                    result.add("Collect: yield")
+                    yield()
+                }
+            }
+        }
+        repeat(1000) { index ->
+            val value = rnd.nextData()
+            if (index % 100 == 50) {
+//                result.add("resetBuffer")
+//                sh.resetBuffer()
+                // todo: when resetBuffer is implemented
+            } else {
+                result.add("Emit: $value")
+                sh.emit(value)
+            }
+            repeat(rnd.nextInt(0..2)) {
+                result.add("Emit: yield")
+                yield()
+            }
+        }
+        result.add("main: cancel")
+        job.cancel()
+        result.add("main: yield")
+        yield()
+        result.add("main: join")
+        job.join()
+        result
+    }
+
     private fun <T> assertSameList(expected: List<T>, actual: List<T>) {
         assertEquals(expected.size, actual.size)
         for (i in expected.indices) assertSame(expected[i], actual[i])
