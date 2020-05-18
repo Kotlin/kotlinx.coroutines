@@ -211,12 +211,12 @@ class SharedFlowTest : TestBase() {
     }
 
     @Test
-    fun testDropLatest() = testDropLatestOrOldest(SharedBufferOverflow.DROP_LATEST)
+    fun testDropLatest() = testDropLatestOrOldest(BufferOverflow.DROP_LATEST)
 
     @Test
-    fun testDropOldest() = testDropLatestOrOldest(SharedBufferOverflow.DROP_OLDEST)
+    fun testDropOldest() = testDropLatestOrOldest(BufferOverflow.DROP_OLDEST)
 
-    private fun testDropLatestOrOldest(bufferOverflow: SharedBufferOverflow) = runTest {
+    private fun testDropLatestOrOldest(bufferOverflow: BufferOverflow) = runTest {
         reset()
         expect(1)
         val sh = MutableSharedFlow<Int?>(1, bufferOverflow = bufferOverflow)
@@ -227,8 +227,8 @@ class SharedFlowTest : TestBase() {
         assertEquals(0, sh.collectorsCount.value)
         // one collector
         val valueAfterOverflow = when (bufferOverflow) {
-            SharedBufferOverflow.DROP_OLDEST -> 5
-            SharedBufferOverflow.DROP_LATEST -> 4
+            BufferOverflow.DROP_OLDEST -> 5
+            BufferOverflow.DROP_LATEST -> 4
             else -> error("not supported in this test: $bufferOverflow")
         }
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
@@ -321,7 +321,7 @@ class SharedFlowTest : TestBase() {
             replayCapacity = 1,
             initialValue = null,
             distinctUntilChanged = Equivalent.ByValue,
-            bufferOverflow = SharedBufferOverflow.DROP_OLDEST
+            bufferOverflow = BufferOverflow.DROP_OLDEST
         )
         val actual = modelLog(sharedFlow)
         assertEquals(expect, actual)

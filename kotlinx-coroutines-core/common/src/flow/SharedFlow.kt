@@ -26,7 +26,7 @@ public fun <T> MutableSharedFlow(
     replayCapacity: Int = bufferCapacity,
     initialValue: T = NO_VALUE as T,
     distinctUntilChanged: ValueEquivalence<T> = Equivalent.Never,
-    bufferOverflow: SharedBufferOverflow = SharedBufferOverflow.SUSPEND
+    bufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
 ): MutableSharedFlow<T> =
     SharedFlowImpl(
         bufferCapacity,
@@ -36,8 +36,8 @@ public fun <T> MutableSharedFlow(
         bufferOverflow
     )
 
-public enum class SharedBufferOverflow {
-    SUSPEND, // regular
+public enum class BufferOverflow {
+    SUSPEND, // default behavior
     DROP_LATEST, // ~ dropWhenBusy() operator
     DROP_OLDEST // ~ conflate() operator
 }
@@ -72,7 +72,7 @@ internal class SharedFlowImpl<T>(
     private val replayCapacity: Int,
     private val initialValue: Any?,
     private val distinctUntilChanged: ValueEquivalence<T>?, // optimization Never -> null
-    private val bufferOverflow: SharedBufferOverflow
+    private val bufferOverflow: BufferOverflow
 ) : AbstractHotFlow<SharedFlowSlot>(), MutableSharedFlow<T> {
     init {
         require(replayCapacity >= 0) {
@@ -87,7 +87,7 @@ internal class SharedFlowImpl<T>(
         require(replayCapacity > 0 || distinctUntilChanged == null) {
             "replayCapacity($replayCapacity) must positive with distinctUntilChanged($distinctUntilChanged)"
         }
-        require(bufferCapacity > 0 || bufferOverflow == SharedBufferOverflow.SUSPEND) {
+        require(bufferCapacity > 0 || bufferOverflow == BufferOverflow.SUSPEND) {
             "bufferCapacity($bufferCapacity) must positive with bufferOverflow($bufferOverflow)"
         }
     }
@@ -146,7 +146,7 @@ internal class SharedFlowImpl<T>(
         val slot = allocateSlot()
         // prevValue is only used for distinctUntilChanged with DROP_OLDEST
         var oldValue: Any? = when {
-            distinctUntilChanged != null && bufferOverflow == SharedBufferOverflow.DROP_OLDEST -> NO_VALUE
+            distinctUntilChanged != null && bufferOverflow == BufferOverflow.DROP_OLDEST -> NO_VALUE
             else -> EMIT_ALL // otherwise, emit all values with additional checks
         }
         try {
@@ -203,9 +203,9 @@ internal class SharedFlowImpl<T>(
         // cannot emit now if buffer is full && blocked by a slow collectors
         if (size >= bufferCapacity && minCollectorIndex == head) {
             when (bufferOverflow) {
-                SharedBufferOverflow.SUSPEND -> return false // will suspend
-                SharedBufferOverflow.DROP_LATEST -> return true // just drop incoming
-                SharedBufferOverflow.DROP_OLDEST -> {} // force enqueue & drop oldest
+                BufferOverflow.SUSPEND -> return false // will suspend
+                BufferOverflow.DROP_LATEST -> return true // just drop incoming
+                BufferOverflow.DROP_OLDEST -> {} // force enqueue & drop oldest
             }
         }
         enqueueLocked(value)
