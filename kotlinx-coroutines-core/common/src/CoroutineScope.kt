@@ -239,3 +239,19 @@ public fun CoroutineScope.cancel(message: String, cause: Throwable? = null): Uni
  * ```
  */
 public fun CoroutineScope.ensureActive(): Unit = coroutineContext.ensureActive()
+
+
+/**
+ * Returns the current [CoroutineContext] retrieved by using [kotlin.coroutines.coroutineContext].
+ * This function is an alias to avoid name clash with [CoroutineScope.coroutineContext] in a receiver position:
+ *
+ * ```
+ * launch { // this: CoroutineScope
+ *     val flow = flow<Unit> {
+ *         coroutineContext // Resolves into the context of outer launch, which is incorrect, see KT-38033
+ *         currentCoroutineContext() // Retrieves actual context where the flow is collected
+ *     }
+ * }
+ * ```
+ */
+public suspend inline fun currentCoroutineContext(): CoroutineContext = coroutineContext
