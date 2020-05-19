@@ -4,12 +4,12 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 // Note: Always guarantee FIFO processing of slots by keeping a doubly-linked list of them
-internal abstract class AbstractHotFlowSlot<F> {
+internal abstract class AbstractSharedFlowSlot<F> {
     abstract fun allocateLocked(flow: F): Boolean
     abstract fun freeLocked(flow: F): List<Continuation<Unit>>? // returns a list of continuation to resume after lock
 }
 
-internal abstract class AbstractHotFlow<S : AbstractHotFlowSlot<*>> : SynchronizedObject() {
+internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : SynchronizedObject() {
     @Suppress("UNCHECKED_CAST")
     protected var slots: Array<S?>? = null // allocated when needed
         private set
@@ -32,7 +32,8 @@ internal abstract class AbstractHotFlow<S : AbstractHotFlowSlot<*>> : Synchroniz
 
     @Suppress("UNCHECKED_CAST")
     protected fun allocateSlot(): S {
-        var collectorsCount: MutableStateFlow<Int>? = null
+        // Actually create slot under lock
+        var collectorCount: MutableStateFlow<Int>? = null
         val slot = synchronized(this) {
             val slots = when(val curSlots = slots) {
                 null -> createSlotArray(2).also { slots = it }
@@ -48,29 +49,33 @@ internal abstract class AbstractHotFlow<S : AbstractHotFlowSlot<*>> : Synchroniz
                 slot = slots[index] ?: createSlot().also { slots[index] = it }
                 index++
                 if (index >= slots.size) index = 0
-                if ((slot as AbstractHotFlowSlot<Any>).allocateLocked(this)) break // break when found and allocated free slot
+                if ((slot as AbstractSharedFlowSlot<Any>).allocateLocked(this)) break // break when found and allocated free slot
             }
             nextIndex = index
             nCollectors++
-            collectorsCount = _collectorCount // retrieve under lock if initialized
+            collectorCount = _collectorCount // retrieve under lock if initialized
             slot
         }
-        collectorsCount?.increment(1)
+        // increments collector count
+        collectorCount?.increment(1)
         return slot
     }
 
     @Suppress("UNCHECKED_CAST")
     protected fun freeSlot(slot: S): Unit {
-        var collectorsCount: MutableStateFlow<Int>? = null
+        // Release slot under lock
+        var collectorCount: MutableStateFlow<Int>? = null
         val resumeList = synchronized(this) {
             nCollectors--
-            collectorsCount = _collectorCount // retrieve under lock if initialized
+            collectorCount = _collectorCount // retrieve under lock if initialized
             // Reset next index oracle if we have no more active collectors for more predictable behavior next time
             if (nCollectors == 0) nextIndex = 0
-            (slot as AbstractHotFlowSlot<Any>).freeLocked(this)
+            (slot as AbstractSharedFlowSlot<Any>).freeLocked(this)
         }
+        // Resume suspended coroutines
         resumeList?.forEach { it.resume(Unit) }
-        collectorsCount?.increment(-1)
+        // decrement collector count
+        collectorCount?.increment(-1)
     }
 
     protected inline fun forEachSlotLocked(block: (S) -> Unit) {

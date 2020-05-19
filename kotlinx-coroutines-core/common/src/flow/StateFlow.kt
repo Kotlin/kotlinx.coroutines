@@ -148,7 +148,7 @@ private val NONE = Symbol("NONE")
 private val PENDING = Symbol("PENDING")
 
 // StateFlow slots are allocated for its collectors
-private class StateFlowSlot : AbstractHotFlowSlot<StateFlowImpl<*>>() {
+private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
     /**
      * Each slot can have one of the following states:
      *
@@ -211,7 +211,7 @@ private class StateFlowSlot : AbstractHotFlowSlot<StateFlowImpl<*>>() {
 
 private class StateFlowImpl<T>(
     private val initialState: Any // T | NULL
-) : AbstractHotFlow<StateFlowSlot>(), MutableStateFlow<T>, FusibleFlow<T> {
+) : AbstractSharedFlow<StateFlowSlot>(), MutableStateFlow<T>, FusibleFlow<T> {
     private val _state = atomic(initialState) // T | NULL
     private var sequence = 0 // serializes updates, value update is in process when sequence is odd
 
@@ -284,6 +284,7 @@ private class StateFlowImpl<T>(
 
     override suspend fun collect(collector: FlowCollector<T>) {
         val slot = allocateSlot()
+        if (collector is OnStartedSharedCollector) collector.onStarted()
         var oldState: Any? = null // previously emitted T!! | NULL (null -- nothing emitted yet)
         try {
             // The loop is arranged so that it starts delivering current value without waiting first

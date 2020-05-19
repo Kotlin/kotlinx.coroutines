@@ -44,7 +44,7 @@ public enum class BufferOverflow {
 
 // ------------------------------------ Implementation ------------------------------------
 
-internal class SharedFlowSlot : AbstractHotFlowSlot<SharedFlowImpl<*>>() {
+internal class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
     @JvmField
     var index = -1L // current "to-be-emitted" index, -1 means the slot is free now
 
@@ -73,7 +73,7 @@ internal class SharedFlowImpl<T>(
     private val initialValue: Any?,
     private val distinctUntilChanged: ValueEquivalence<T>?, // optimization Never -> null
     private val bufferOverflow: BufferOverflow
-) : AbstractHotFlow<SharedFlowSlot>(), MutableSharedFlow<T> {
+) : AbstractSharedFlow<SharedFlowSlot>(), MutableSharedFlow<T> {
     init {
         require(replayCapacity >= 0) {
             "replayCapacity($replayCapacity) cannot be negative"
@@ -148,7 +148,8 @@ internal class SharedFlowImpl<T>(
     @Suppress("UNCHECKED_CAST")
     override suspend fun collect(collector: FlowCollector<T>) {
         val slot = allocateSlot()
-        // prevValue is only used for distinctUntilChanged with DROP_OLDEST
+        if (collector is OnStartedSharedCollector) collector.onStarted()
+        // oldValue is only used for distinctUntilChanged with DROP_OLDEST
         var oldValue: Any? = when {
             distinctUntilChanged != null && bufferOverflow == BufferOverflow.DROP_OLDEST -> NO_VALUE
             else -> EMIT_ALL // otherwise, emit all values with additional checks

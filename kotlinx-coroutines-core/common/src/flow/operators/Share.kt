@@ -8,7 +8,20 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
+
+public fun <T> SharedFlow<T>.onStarted(block: suspend () -> Unit): Flow<T> = unsafeFlow {
+    this@onStarted.collect(OnStartedSharedCollector(this, block))
+}
+
+internal class OnStartedSharedCollector<T>(
+    private val collector: FlowCollector<T>,
+    private val block: suspend () -> Unit
+) : FlowCollector<T>  {
+    suspend fun onStarted() = block()
+    override suspend fun emit(value: T) = collector.emit(value)
+}
 
 public fun <T> Flow<T>.shareIn(
     scope: CoroutineScope,
