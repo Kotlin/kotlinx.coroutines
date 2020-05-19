@@ -7,6 +7,12 @@ package kotlinx.coroutines
 /**
  * A job that can be completed using [complete()] function.
  * It is returned by [Job()][Job] and [SupervisorJob()][SupervisorJob] constructor functions.
+ *
+ * All functions on this interface are **thread-safe** and can
+ * be safely invoked from concurrent coroutines without external synchronization.
+ *
+ * **`CompletableJob` interface is not stable for inheritance in 3rd party libraries**,
+ * as new methods might be added to this interface in the future, but is stable for use.
  */
 public interface CompletableJob : Job {
     /**
