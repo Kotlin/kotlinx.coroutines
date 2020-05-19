@@ -1,6 +1,7 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:OptIn(ExperimentalContracts::class)
 
 package kotlinx.coroutines.selects
 
@@ -10,6 +11,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.sync.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
@@ -199,8 +201,11 @@ public interface SelectInstance<in R> {
  * Note that this function does not check for cancellation when it is not suspended.
  * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
  */
-public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() -> Unit): R =
-    suspendCoroutineUninterceptedOrReturn { uCont ->
+public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() -> Unit): R {
+    contract {
+        callsInPlace(builder, InvocationKind.EXACTLY_ONCE)
+    }
+    return suspendCoroutineUninterceptedOrReturn { uCont ->
         val scope = SelectBuilderImpl(uCont)
         try {
             builder(scope)
@@ -209,6 +214,7 @@ public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() ->
         }
         scope.getResult()
     }
+}
 
 
 @SharedImmutable

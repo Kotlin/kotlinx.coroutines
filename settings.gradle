@@ -4,8 +4,11 @@
 
 pluginManagement {
     plugins {
+        id "org.openjfx.javafxplugin" version javafx_plugin_version
+
+        // JMH
         id "net.ltgt.apt" version "0.21"
-        id "me.champeau.gradle.jmh" version "0.5.0-rc-2"
+        id "me.champeau.gradle.jmh" version "0.5.0"
     }
 }
 
@@ -44,7 +47,9 @@ module('reactive/kotlinx-coroutines-rx2')
 module('reactive/kotlinx-coroutines-rx3')
 module('ui/kotlinx-coroutines-android')
 module('ui/kotlinx-coroutines-android/android-unit-tests')
-module('ui/kotlinx-coroutines-javafx')
+if (JavaVersion.current().isJava11Compatible()) {
+    module('ui/kotlinx-coroutines-javafx')
+}
 module('ui/kotlinx-coroutines-swing')
 
 module('js/js-stub')

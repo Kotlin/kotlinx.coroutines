@@ -1,12 +1,14 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:OptIn(ExperimentalContracts::class)
 
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
@@ -27,6 +29,9 @@ import kotlin.time.*
  * @param timeMillis timeout time in milliseconds.
  */
 public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineScope.() -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
     if (timeMillis <= 0L) throw TimeoutCancellationException("Timed out immediately")
     return suspendCoroutineUninterceptedOrReturn { uCont ->
         setupTimeout(TimeoutCoroutine(timeMillis, uCont), block)
@@ -46,8 +51,12 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
  */
 @ExperimentalTime
-public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineScope.() -> T): T =
-        withTimeout(timeout.toDelayMillis(), block)
+public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineScope.() -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    return withTimeout(timeout.toDelayMillis(), block)
+}
 
 /**
  * Runs a given suspending block of code inside a coroutine with a specified [timeout][timeMillis] and returns

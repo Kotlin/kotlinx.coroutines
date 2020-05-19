@@ -209,6 +209,21 @@ public fun <T> Flow<T>.flowOn(context: CoroutineContext): Flow<T> {
 }
 
 /**
+ * Returns a flow which checks cancellation status on each emission and throws
+ * the corresponding cancellation cause if flow collector was cancelled.
+ * Note that [flow] builder is [cancellable] by default.
+ */
+public fun <T> Flow<T>.cancellable(): Flow<T> {
+    if (this is AbstractFlow<*>) return this // Fast-path, already cancellable
+    return unsafeFlow {
+        collect {
+            currentCoroutineContext().ensureActive()
+            emit(it)
+        }
+    }
+}
+
+/**
  * The operator that changes the context where all transformations applied to the given flow within a [builder] are executed.
  * This operator is context preserving and does not affect the context of the preceding and subsequent operations.
  *
@@ -256,7 +271,7 @@ public fun <T, R> Flow<T>.flowWith(
          * All builders are written using scoping and no global coroutines are launched, so it is safe not to provide explicit Job.
          * It is also necessary not to mess with cancellation if multiple flowWith are used.
          */
-        val originalContext = coroutineContext.minusKey(Job)
+        val originalContext = currentCoroutineContext().minusKey(Job)
         val prepared = source.flowOn(originalContext).buffer(bufferSize)
         builder(prepared).flowOn(flowContext).buffer(bufferSize).collect { value ->
             return@collect emit(value)

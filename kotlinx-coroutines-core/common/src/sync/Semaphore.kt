@@ -7,6 +7,7 @@ package kotlinx.coroutines.sync
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.math.*
 import kotlin.native.concurrent.SharedImmutable
@@ -74,7 +75,12 @@ public fun Semaphore(permits: Int, acquiredPermits: Int = 0): Semaphore = Semaph
  *
  * @return the return value of the [action].
  */
+@OptIn(ExperimentalContracts::class)
 public suspend inline fun <T> Semaphore.withPermit(action: () -> T): T {
+    contract {
+        callsInPlace(action, InvocationKind.EXACTLY_ONCE)
+    }
+
     acquire()
     try {
         return action()

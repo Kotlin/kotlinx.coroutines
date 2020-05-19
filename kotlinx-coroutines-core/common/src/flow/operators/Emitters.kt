@@ -10,11 +10,10 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
-import kotlin.coroutines.*
 import kotlin.jvm.*
 
 // ------------------ WARNING ------------------
-//   These emitting operators must use safe flow builder, because their allow
+//   These emitting operators must use safe flow builder, because they allow
 //   user code to directly emit to the underlying FlowCollector.
 
 /**
@@ -70,7 +69,7 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
 public fun <T> Flow<T>.onStart(
     action: suspend FlowCollector<T>.() -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke start action
-    val safeCollector = SafeCollector<T>(this, coroutineContext)
+    val safeCollector = SafeCollector<T>(this, currentCoroutineContext())
     try {
         safeCollector.action()
     } finally {
@@ -153,7 +152,7 @@ public fun <T> Flow<T>.onCompletion(
         throw e
     }
     // Normal completion
-    SafeCollector(this, coroutineContext).invokeSafely(action, null)
+    SafeCollector(this, currentCoroutineContext()).invokeSafely(action, null)
 }
 
 /**
@@ -178,7 +177,7 @@ public fun <T> Flow<T>.onEmpty(
         emit(it)
     }
     if (isEmpty) {
-        val collector = SafeCollector(this, coroutineContext)
+        val collector = SafeCollector(this, currentCoroutineContext())
         try {
             collector.action()
         } finally {

@@ -1,5 +1,14 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.3.7
+
+* Fixed problem that triggered Android Lint failure (#2004).
+* New `Flow.cancellable()` operator for cooperative cancellation (#2026).
+* Emissions from `flow` builder now check cancellation status and are properly cancellable (#2026).
+* New `currentCoroutineContext` function to use unambiguously in the contexts with `CoroutineScope` in receiver position (#2026). 
+* `EXACTLY_ONCE` contract support in coroutine builders.
+* Various documentation improvements.
+
 ## Version 1.3.6
 
 ### Flow

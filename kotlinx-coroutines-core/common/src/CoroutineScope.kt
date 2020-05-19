@@ -1,11 +1,13 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:OptIn(ExperimentalContracts::class)
 
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
@@ -183,11 +185,15 @@ public object GlobalScope : CoroutineScope {
  * or may throw a corresponding unhandled [Throwable] if there is any unhandled exception in this scope
  * (for example, from a crashed coroutine that was started with [launch][CoroutineScope.launch] in this scope).
  */
-public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R =
-    suspendCoroutineUninterceptedOrReturn { uCont ->
+public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    return suspendCoroutineUninterceptedOrReturn { uCont ->
         val coroutine = ScopeCoroutine(uCont.context, uCont)
         coroutine.startUndispatchedOrReturn(coroutine, block)
     }
+}
 
 /**
  * Creates a [CoroutineScope] that wraps the given coroutine [context].
@@ -233,3 +239,19 @@ public fun CoroutineScope.cancel(message: String, cause: Throwable? = null): Uni
  * ```
  */
 public fun CoroutineScope.ensureActive(): Unit = coroutineContext.ensureActive()
+
+
+/**
+ * Returns the current [CoroutineContext] retrieved by using [kotlin.coroutines.coroutineContext].
+ * This function is an alias to avoid name clash with [CoroutineScope.coroutineContext] in a receiver position:
+ *
+ * ```
+ * launch { // this: CoroutineScope
+ *     val flow = flow<Unit> {
+ *         coroutineContext // Resolves into the context of outer launch, which is incorrect, see KT-38033
+ *         currentCoroutineContext() // Retrieves actual context where the flow is collected
+ *     }
+ * }
+ * ```
+ */
+public suspend inline fun currentCoroutineContext(): CoroutineContext = coroutineContext

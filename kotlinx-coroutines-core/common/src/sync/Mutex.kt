@@ -9,6 +9,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlin.native.concurrent.*
@@ -106,7 +107,12 @@ public fun Mutex(locked: Boolean = false): Mutex =
  *
  * @return the return value of the action.
  */
+@OptIn(ExperimentalContracts::class)
 public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T): T {
+    contract { 
+        callsInPlace(action, InvocationKind.EXACTLY_ONCE)
+    }
+
     lock(owner)
     try {
         return action()
