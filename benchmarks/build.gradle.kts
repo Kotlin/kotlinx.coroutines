@@ -33,7 +33,7 @@ tasks.named<KotlinCompile>("compileJmhKotlin") {
  * Due to a bug in the inliner it sometimes does not remove inlined symbols (that are later renamed) from unused code paths,
  * and it breaks JMH that tries to post-process these symbols and fails because they are renamed.
  */
-val removeRedundantFiles = tasks.register<Delete>("removeRedundantFiles") {
+val removeRedundantFiles by tasks.registering(Delete::class) {
     delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleOpt\$play\$buildHistoOnScore\$1\$\$special\$\$inlined\$filter\$1\$1.class")
     delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleOpt\$play\$nBlanks\$1\$\$special\$\$inlined\$map\$1\$1.class")
     delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleOpt\$play\$score2\$1\$\$special\$\$inlined\$map\$1\$1.class")

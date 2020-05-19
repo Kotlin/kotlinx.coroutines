@@ -5,7 +5,7 @@
 val buildDocsDir = "$buildDir/docs"
 val jekyllDockerImage = "jekyll/jekyll:${version("jekyll")}"
 
-val copyDocs = tasks.register<Copy>("copyDocs") {
+val copyDocs by tasks.registering(Copy::class) {
     val dokkaTasks = rootProject.getTasksByName("dokka", true)
 
     from(dokkaTasks.map { "${it.project.buildDir}/dokka" }) {
@@ -18,7 +18,7 @@ val copyDocs = tasks.register<Copy>("copyDocs") {
     dependsOn(dokkaTasks)
 }
 
-val copyExampleFrontendJs = tasks.register<Copy>("copyExampleFrontendJs") {
+val copyExampleFrontendJs by tasks.registering(Copy::class) {
     val srcBuildDir = project(":example-frontend-js").buildDir
     from("$srcBuildDir/dist")
     into("$buildDocsDir/example-frontend-js")
