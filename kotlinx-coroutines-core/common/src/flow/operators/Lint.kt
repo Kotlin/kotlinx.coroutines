@@ -9,15 +9,15 @@ import kotlin.coroutines.*
 
 /**
  * Returns this.
- * Applying [flowOn][Flow.flowOn] operator to [StateFlow] has no effect.
- * See [StateFlow] documentation on Operator Fusion.
+ * Applying [flowOn][Flow.flowOn] operator to [SharedFlow] has no effect.
+ * See [SharedFlow] documentation on Operator Fusion.
  */
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Applying flowOn operator to StateFlow has no effect. See StateFlow documentation on Operator Fusion.",
+    message = "Applying flowOn operator to SharedFlow has no effect. See SharedFlow documentation on Operator Fusion.",
     replaceWith = ReplaceWith("this")
 )
-public fun <T> StateFlow<T>.flowOn(context: CoroutineContext): Flow<T> = noImpl()
+public fun <T> SharedFlow<T>.flowOn(context: CoroutineContext): Flow<T> = noImpl()
 
 /**
  * Returns this.
