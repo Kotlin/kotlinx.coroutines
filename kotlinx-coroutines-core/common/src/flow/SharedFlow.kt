@@ -24,9 +24,9 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
 public fun <T> MutableSharedFlow(
     bufferCapacity: Int,
     replayCapacity: Int = bufferCapacity,
-    initialValue: T = NO_VALUE as T,
+    bufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
     distinctUntilChanged: ValueEquivalence<T> = Equivalent.Never,
-    bufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
+    initialValue: T = NO_VALUE as T
 ): MutableSharedFlow<T> =
     SharedFlowImpl(
         bufferCapacity,

@@ -367,7 +367,7 @@ class SharedFlowTest : TestBase() {
         assertEquals(listOf(3, 4), sh.replayCache)
         assertTrue(sh.tryEmit(5)) // can buffer now
         assertEquals(listOf(4, 5), sh.replayCache)
-        assertTrue(sh.tryEmit(0)) // can buffer one more, let it be equal to inital
+        assertTrue(sh.tryEmit(0)) // can buffer one more, let it be equal to initial
         assertEquals(listOf(5, 0), sh.replayCache)
         expect(10)
         assertFalse(sh.tryEmit(10)) // cannot buffer anymore!
