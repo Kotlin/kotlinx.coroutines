@@ -148,7 +148,7 @@ internal class SharedFlowImpl<T>(
     @Suppress("UNCHECKED_CAST")
     override suspend fun collect(collector: FlowCollector<T>) {
         val slot = allocateSlot()
-        if (collector is OnStartedSharedCollector) collector.onStarted()
+        if (collector is StartedFlowCollector) collector.onStarted()
         // oldValue is only used for distinctUntilChanged with DROP_OLDEST
         var oldValue: Any? = when {
             distinctUntilChanged != null && bufferOverflow == BufferOverflow.DROP_OLDEST -> NO_VALUE

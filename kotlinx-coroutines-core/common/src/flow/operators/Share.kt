@@ -8,18 +8,31 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
 
-public fun <T> SharedFlow<T>.onStarted(block: suspend () -> Unit): Flow<T> = unsafeFlow {
-    this@onStarted.collect(OnStartedSharedCollector(this, block))
+public fun <T> SharedFlow<T>.onStarted(block: suspend () -> Unit): SharedFlow<T> =
+    StartedSharedFlow(this, block)
+
+internal class StartedSharedFlow<T>(
+    private val sharedFlow: SharedFlow<T>,
+    private val block: suspend () -> Unit
+) : SharedFlow<T> by sharedFlow {
+    override suspend fun collect(collector: FlowCollector<T>) =
+        sharedFlow.collect(StartedFlowCollector(collector, block))
 }
 
-internal class OnStartedSharedCollector<T>(
+internal class StartedFlowCollector<T>(
     private val collector: FlowCollector<T>,
     private val block: suspend () -> Unit
 ) : FlowCollector<T>  {
-    suspend fun onStarted() = block()
+    suspend fun onStarted() {
+        var cur = this
+        while(true) {
+            block()
+            cur = cur.collector as? StartedFlowCollector<T> ?: break
+        }
+    }
+
     override suspend fun emit(value: T) = collector.emit(value)
 }
 

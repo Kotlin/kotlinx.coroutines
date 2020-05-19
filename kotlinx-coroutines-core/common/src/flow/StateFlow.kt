@@ -284,7 +284,7 @@ private class StateFlowImpl<T>(
 
     override suspend fun collect(collector: FlowCollector<T>) {
         val slot = allocateSlot()
-        if (collector is OnStartedSharedCollector) collector.onStarted()
+        if (collector is StartedFlowCollector) collector.onStarted()
         var oldState: Any? = null // previously emitted T!! | NULL (null -- nothing emitted yet)
         try {
             // The loop is arranged so that it starts delivering current value without waiting first
