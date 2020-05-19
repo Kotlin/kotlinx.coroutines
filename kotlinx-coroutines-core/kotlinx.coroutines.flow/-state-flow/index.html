@@ -196,6 +196,21 @@ This method should never be implemented or used directly.</p>
 <tr>
 <td>
 
+        <p><a href="../cancellable.html">cancellable</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../cancellable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">cancellable</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../cancellable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow which checks cancellation status on each emission and throws
+the corresponding cancellation cause if flow collector was cancelled.
+Note that <a href="#">flow</a> builder is <a href="../cancellable.html">cancellable</a> by default.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../catch.html">catch</a></p>
 
       </td>
@@ -981,7 +996,7 @@ The resulting flow completes as soon as one of the flows completes and cancel is
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">MutableStateFlow</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="../-mutable-state-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>A mutable <a href="./index.md">StateFlow</a> that provides a setter for <a href="../-mutable-state-flow/value.html">value</a> and a method to <a href="#">close</a> the flow.</p>
+        <p>A mutable <a href="./index.md">StateFlow</a> that provides a setter for <a href="../-mutable-state-flow/value.html">value</a>.</p>
 
       </td>
 </tr>

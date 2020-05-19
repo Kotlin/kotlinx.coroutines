@@ -247,6 +247,21 @@ This method should never be implemented or used directly.</p>
 <tr>
 <td>
 
+        <p><a href="../cancellable.html">cancellable</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../cancellable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">cancellable</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../cancellable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow which checks cancellation status on each emission and throws
+the corresponding cancellation cause if flow collector was cancelled.
+Note that <a href="#">flow</a> builder is <a href="../cancellable.html">cancellable</a> by default.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../catch.html">catch</a></p>
 
       </td>

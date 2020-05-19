@@ -35,7 +35,7 @@
 
 <div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">interface </span><span class="identifier">MutableStateFlow</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-state-flow/index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/StateFlow.kt#L123">(source)</a></div>
 
-<p>A mutable <a href="../-state-flow/index.html">StateFlow</a> that provides a setter for <a href="value.html">value</a> and a method to <a href="#">close</a> the flow.</p>
+<p>A mutable <a href="../-state-flow/index.html">StateFlow</a> that provides a setter for <a href="value.html">value</a>.</p>
 
 <p>See <a href="../-state-flow/index.html">StateFlow</a> documentation for details.</p>
 
@@ -92,6 +92,21 @@ Use <code>MutableStateFlow()</code> constructor function to create an implementa
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../buffer.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">buffer</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$buffer(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.buffer.T)), kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;BUFFERED<span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../buffer.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Buffers flow emissions via channel of a specified capacity and runs collector in a separate coroutine.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../cancellable.html">cancellable</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../cancellable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">cancellable</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../cancellable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow which checks cancellation status on each emission and throws
+the corresponding cancellation cause if flow collector was cancelled.
+Note that <a href="#">flow</a> builder is <a href="../cancellable.html">cancellable</a> by default.</p>
 
       </td>
 </tr>

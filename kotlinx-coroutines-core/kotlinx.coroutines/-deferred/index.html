@@ -33,7 +33,7 @@
 
 <h1 id="deferred">Deferred</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Deferred.kt#L34">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Deferred.kt#L37">(source)</a></div>
 
 <p>Deferred value is a non-blocking cancellable future — it is a <a href="../-job/index.html">Job</a> with a result.</p>
 
@@ -58,6 +58,9 @@ of <a href="../async.html">async</a> builder represents the coroutine itself.</p
 
 <p>All functions on this interface and on all interfaces derived from it are <strong>thread-safe</strong> and can
 be safely invoked from concurrent coroutines without external synchronization.</p>
+
+<p><strong><code>Deferred</code> interface and all its derived interfaces are not stable for inheritance in 3rd party libraries</strong>,
+as new methods might be added to this interface in the future, but is stable for use.</p>
 
 <h3 id="properties">Properties</h3>
 

@@ -33,10 +33,16 @@
 
 <h1 id="completablejob">CompletableJob</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CompletableJob</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CompletableJob.kt#L11">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CompletableJob</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CompletableJob.kt#L17">(source)</a></div>
 
 <p>A job that can be completed using <a href="complete.html">complete</a> function.
 It is returned by <a href="../-job/index.html">Job()</a> and <a href="../-supervisor-job.html">SupervisorJob()</a> constructor functions.</p>
+
+<p>All functions on this interface are <strong>thread-safe</strong> and can
+be safely invoked from concurrent coroutines without external synchronization.</p>
+
+<p><strong><code>CompletableJob</code> interface is not stable for inheritance in 3rd party libraries</strong>,
+as new methods might be added to this interface in the future, but is stable for use.</p>
 
 <h3 id="inherited-properties">Inherited Properties</h3>
 

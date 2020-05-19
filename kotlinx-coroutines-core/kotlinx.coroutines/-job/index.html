@@ -33,22 +33,29 @@
 
 <h1 id="job">Job</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Job.kt#L84">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Job.kt#L112">(source)</a></div>
 
 <p>A background job. Conceptually, a job is a cancellable thing with a life-cycle that
 culminates in its completion.</p>
 
 <p>Jobs can be arranged into parent-child hierarchies where cancellation
-of a parent leads to immediate cancellation of all its <a href="children.html">children</a>. Failure or cancellation of a child
-with an exception other than <a href="../-cancellation-exception/index.html">CancellationException</a> immediately cancels its parent. This way, a parent
-can <a href="cancel.html">cancel</a> its own children (including all their children recursively) without cancelling itself.</p>
+of a parent leads to immediate cancellation of all its <a href="children.html">children</a> recursively.
+Failure of a child with an exception other than <a href="../-cancellation-exception/index.html">CancellationException</a> immediately cancels its parent and,
+consequently, all its other children. This behavior can be customized using <a href="../-supervisor-job.html">SupervisorJob</a>.</p>
 
-<p>The most basic instances of <a href="./index.md">Job</a> are created with <a href="../launch.html">launch</a> coroutine builder or with a
-<code>Job()</code> factory function. By default, a failure of any of the job’s children leads to an immediate failure
-of its parent and cancellation of the rest of its children. This behavior can be customized using <a href="../-supervisor-job.html">SupervisorJob</a>.</p>
+<p>The most basic instances of <code>Job</code> interface are created like this:</p>
 
-<p>Conceptually, an execution of the job does not produce a result value. Jobs are launched solely for their
+<ul>
+  <li><strong>Coroutine job</strong> is created with <a href="../launch.html">launch</a> coroutine builder.
+It runs a specified block of code and completes on completion of this block.</li>
+  <li><strong><a href="../-completable-job/index.html">CompletableJob</a></strong> is created with a <code>Job()</code> factory function.
+It is completed by calling <a href="../-completable-job/complete.html">CompletableJob.complete</a>.</li>
+</ul>
+
+<p>Conceptually, an execution of a job does not produce a result value. Jobs are launched solely for their
 side-effects. See <a href="../-deferred/index.html">Deferred</a> interface for a job that produces a result.</p>
+
+<h3 id="job-states">Job states</h3>
 
 <p>A job has the following states:</p>
 
@@ -101,13 +108,23 @@ side-effects. See <a href="../-deferred/index.html">Deferred</a> interface for a
   </tbody>
 </table>
 
-<p>Usually, a job is created in <em>active</em> state (it is created and started). However, coroutine builders
-that provide an optional <code>start</code> parameter create a coroutine in <em>new</em> state when this parameter is set to
+<p>Usually, a job is created in the <em>active</em> state (it is created and started). However, coroutine builders
+that provide an optional <code>start</code> parameter create a coroutine in the <em>new</em> state when this parameter is set to
 <a href="../-coroutine-start/-l-a-z-y.html">CoroutineStart.LAZY</a>. Such a job can be made <em>active</em> by invoking <a href="start.html">start</a> or <a href="join.html">join</a>.</p>
 
-<p>A job is <em>active</em> while the coroutine is working. Failure of the job with exception makes it <em>cancelling</em>.
+<p>A job is <em>active</em> while the coroutine is working or until <a href="../-completable-job/index.html">CompletableJob</a> is completed,
+or until it fails or cancelled.</p>
+
+<p>Failure of an <em>active</em> job with an exception makes it <em>cancelling</em>.
 A job can be cancelled at any time with <a href="cancel.html">cancel</a> function that forces it to transition to
-<em>cancelling</em> state immediately. The job becomes <em>cancelled</em>  when it finishes executing its work.</p>
+the <em>cancelling</em> state immediately. The job becomes <em>cancelled</em>  when it finishes executing its work and
+all its children complete.</p>
+
+<p>Completion of an <em>active</em> coroutine’s body or a call to <a href="../-completable-job/complete.html">CompletableJob.complete</a> transitions the job to
+the <em>completing</em> state. It waits in the <em>completing</em> state for all its children to complete before
+transitioning to the <em>completed</em> state.
+Note that <em>completing</em> state is purely internal to the job. For an outside observer a <em>completing</em> job is still
+active, while internally it is waiting for its children.</p>
 
 <pre>                                          wait children
     +-----+ start  +--------+ complete   +-------------+  finish  +-----------+
@@ -126,19 +143,32 @@ A job can be cancelled at any time with <a href="cancel.html">cancel</a> functio
 <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html">coroutineContext</a>
 represents the coroutine itself.</p>
 
-<p>A job can have a <em>parent</em> job. A job with a parent is cancelled when its parent is cancelled.
-Parent job waits in <em>completing</em> or <em>cancelling</em> state for all its children to complete before finishing.
-Note that <em>completing</em> state is purely internal to the job. For an outside observer a <em>completing</em> job is still
-active, while internally it is waiting for its children.</p>
+<h3 id="cancellation-cause">Cancellation cause</h3>
 
-<p>Normal cancellation of a job is distinguished from its failure by the type of its cancellation exception cause.
-If the cause of cancellation is <a href="../-cancellation-exception/index.html">CancellationException</a>, then the job is considered to be <em>cancelled normally</em>.
-This usually happens when <a href="cancel.html">cancel</a> is invoked without additional parameters. If the cause of cancellation is
-a different exception, then the job is considered to have <em>failed</em>. This usually happens when the code of the job
-encounters some problem and throws an exception.</p>
+<p>A coroutine job is said to <em>complete exceptionally</em> when its body throws an exception;
+a <a href="../-completable-job/index.html">CompletableJob</a> is completed exceptionally by calling <a href="../-completable-job/complete-exceptionally.html">CompletableJob.completeExceptionally</a>.
+An exceptionally completed job is cancelled and the corresponding exception becomes the <em>cancellation cause</em> of the job.</p>
+
+<p>Normal cancellation of a job is distinguished from its failure by the type of this exception that caused its cancellation.
+A coroutine that threw <a href="../-cancellation-exception/index.html">CancellationException</a> is considered to be <em>cancelled normally</em>.
+If a cancellation cause is a different exception type, then the job is considered to have <em>failed</em>.
+When a job has <em>failed</em>, then its parent gets cancelled with the exception of the same type,
+thus ensuring transparency in delegating parts of the job to its children.</p>
+
+<p>Note, that <a href="cancel.html">cancel</a> function on a job only accepts <a href="../-cancellation-exception/index.html">CancellationException</a> as a cancellation cause, thus
+calling <a href="cancel.html">cancel</a> always results in a normal cancellation of a job, which does not lead to cancellation
+of its parent. This way, a parent can <a href="cancel.html">cancel</a> its own children (cancelling all their children recursively, too)
+without cancelling itself.</p>
+
+<h3 id="concurrency-and-synchronization">Concurrency and synchronization</h3>
 
 <p>All functions on this interface and on all interfaces derived from it are <strong>thread-safe</strong> and can
 be safely invoked from concurrent coroutines without external synchronization.</p>
+
+<h3 id="not-stable-for-inheritance">Not stable for inheritance</h3>
+
+<p><strong><code>Job</code> interface and all its derived interfaces are not stable for inheritance in 3rd party libraries</strong>,
+as new methods might be added to this interface in the future, but is stable for use.</p>
 
 <h3 id="types">Types</h3>
 

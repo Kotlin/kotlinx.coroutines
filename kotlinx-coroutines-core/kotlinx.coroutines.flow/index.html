@@ -91,7 +91,7 @@ an entity that accepts values emitted by the <a href="-flow/index.html">Flow</a>
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">MutableStateFlow</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-state-flow/index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="-mutable-state-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>A mutable <a href="-state-flow/index.html">StateFlow</a> that provides a setter for <a href="-mutable-state-flow/value.html">value</a> and a method to <a href="#">close</a> the flow.</p>
+        <p>A mutable <a href="-state-flow/index.html">StateFlow</a> that provides a setter for <a href="-mutable-state-flow/value.html">value</a>.</p>
 
       </td>
 </tr>
@@ -323,6 +323,21 @@ Every flow collector will trigger a new broadcast channel subscription.</p>
         <p>Creates an instance of the cold <a href="-flow/index.html">Flow</a> with elements that are sent to a <a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>
 provided to the builder’s <a href="callback-flow.html#kotlinx.coroutines.flow$callbackFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.callbackFlow.T)), kotlin.Unit)))/block">block</a> of code via <a href="../kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>. It allows elements to be
 produced by code that is running in a different context or concurrently.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="cancellable.html">cancellable</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="cancellable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">cancellable</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="cancellable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow which checks cancellation status on each emission and throws
+the corresponding cancellation cause if flow collector was cancelled.
+Note that <a href="#">flow</a> builder is <a href="cancellable.html">cancellable</a> by default.</p>
 
       </td>
 </tr>

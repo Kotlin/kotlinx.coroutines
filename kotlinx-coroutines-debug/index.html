@@ -51,7 +51,7 @@ please follow the BlockHound <a href="https://github.com/reactor/BlockHound/blob
 <p>Add <code>kotlinx-coroutines-debug</code> to your project test dependencies:</p>
 
 <pre>dependencies {
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.3.6'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.3.7'
 }
 </pre>
 
@@ -88,7 +88,7 @@ stacktraces will be dumped to the console.</p>
 <h3 id="using-as-jvm-agent">Using as JVM agent</h3>
 
 <p>Debug module can also be used as a standalone JVM agent to enable debug probes on the application startup.
-You can run your application with an additional argument: <code>-javaagent:kotlinx-coroutines-debug-1.3.6.jar</code>.
+You can run your application with an additional argument: <code>-javaagent:kotlinx-coroutines-debug-1.3.7.jar</code>.
 Additionally, on Linux and Mac OS X you can use <code>kill -5 $pid</code> command in order to force your application to print all alive coroutines.
 When used as Java agent, <code>"kotlinx.coroutines.debug.enable.creation.stack.trace"</code> system property can be used to control 
 <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/enable-creation-stack-traces.html">DebugProbes.enableCreationStackTraces</a> along with agent startup.</p>
