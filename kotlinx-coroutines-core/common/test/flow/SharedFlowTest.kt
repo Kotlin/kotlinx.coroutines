@@ -10,10 +10,10 @@ class SharedFlowTest : TestBase() {
         expect(1)
         val sh = MutableSharedFlow<Int?>(0)
         assertTrue(sh.replayCache.isEmpty())
-        assertEquals(0, sh.collectorsCount.value)
+        assertEquals(0, sh.collectorCount.value)
         sh.emit(1) // no suspend
         assertTrue(sh.replayCache.isEmpty())
-        assertEquals(0, sh.collectorsCount.value)
+        assertEquals(0, sh.collectorCount.value)
         expect(2)
         // one collector
         val job1 = launch(start = CoroutineStart.UNDISPATCHED) {
@@ -30,7 +30,7 @@ class SharedFlowTest : TestBase() {
             expectUnreached() // does not complete normally
         }
         expect(4)
-        assertEquals(1, sh.collectorsCount.value)
+        assertEquals(1, sh.collectorCount.value)
         sh.emit(4)
         assertTrue(sh.replayCache.isEmpty())
         expect(6)
@@ -52,7 +52,7 @@ class SharedFlowTest : TestBase() {
             expectUnreached() // does not complete normally
         }
         expect(10)
-        assertEquals(2, sh.collectorsCount.value)
+        assertEquals(2, sh.collectorCount.value)
         sh.emit(10) // to both collectors now!
         assertTrue(sh.replayCache.isEmpty())
         expect(13)
@@ -60,7 +60,7 @@ class SharedFlowTest : TestBase() {
         expect(16)
         job1.cancel() // cancel the first collector
         yield()
-        assertEquals(1, sh.collectorsCount.value)
+        assertEquals(1, sh.collectorCount.value)
         expect(17)
         sh.emit(17) // only to second collector
         expect(19)
@@ -70,10 +70,10 @@ class SharedFlowTest : TestBase() {
         expect(23)
         job2.cancel() // cancel the second collector
         yield()
-        assertEquals(0, sh.collectorsCount.value)
+        assertEquals(0, sh.collectorCount.value)
         expect(24)
         sh.emit(24) // does not go anywhere
-        assertEquals(0, sh.collectorsCount.value)
+        assertEquals(0, sh.collectorCount.value)
         assertTrue(sh.replayCache.isEmpty())
         finish(25)
     }
@@ -83,10 +83,10 @@ class SharedFlowTest : TestBase() {
         expect(1)
         val sh = MutableSharedFlow<Int?>(1)
         assertTrue(sh.replayCache.isEmpty())
-        assertEquals(0, sh.collectorsCount.value)
+        assertEquals(0, sh.collectorCount.value)
         sh.emit(1) // no suspend
         assertEquals(listOf(1), sh.replayCache)
-        assertEquals(0, sh.collectorsCount.value)
+        assertEquals(0, sh.collectorCount.value)
         expect(2)
         sh.emit(2) // no suspend
         assertEquals(listOf(2), sh.replayCache)
@@ -106,7 +106,7 @@ class SharedFlowTest : TestBase() {
             expectUnreached() // does not complete normally
         }
         expect(6)
-        assertEquals(1, sh.collectorsCount.value)
+        assertEquals(1, sh.collectorCount.value)
         sh.emit(6) // does not suspend, but buffers
         assertEquals(listOf(6), sh.replayCache)
         expect(7)
@@ -125,7 +125,7 @@ class SharedFlowTest : TestBase() {
             expectUnreached() // does not complete normally
         }
         expect(12)
-        assertEquals(2, sh.collectorsCount.value)
+        assertEquals(2, sh.collectorCount.value)
         sh.emit(null)
         expect(13)
         assertEquals(listOf(null), sh.replayCache)
@@ -134,7 +134,7 @@ class SharedFlowTest : TestBase() {
         expect(16)
         job2.cancel()
         yield()
-        assertEquals(1, sh.collectorsCount.value)
+        assertEquals(1, sh.collectorCount.value)
         expect(17)
         sh.emit(17)
         assertEquals(listOf(17), sh.replayCache)
@@ -142,7 +142,7 @@ class SharedFlowTest : TestBase() {
         expect(19)
         job1.cancel()
         yield()
-        assertEquals(0, sh.collectorsCount.value)
+        assertEquals(0, sh.collectorCount.value)
         assertEquals(listOf(17), sh.replayCache)
         finish(20)
     }
@@ -224,7 +224,7 @@ class SharedFlowTest : TestBase() {
         sh.emit(2)
         // always keeps last w/o collectors
         assertEquals(listOf(2), sh.replayCache)
-        assertEquals(0, sh.collectorsCount.value)
+        assertEquals(0, sh.collectorCount.value)
         // one collector
         val valueAfterOverflow = when (bufferOverflow) {
             BufferOverflow.DROP_OLDEST -> 5
@@ -247,7 +247,7 @@ class SharedFlowTest : TestBase() {
             expectUnreached() // does not complete normally
         }
         expect(4)
-        assertEquals(1, sh.collectorsCount.value)
+        assertEquals(1, sh.collectorCount.value)
         assertEquals(listOf(2), sh.replayCache)
         sh.emit(4) // buffering, collector is busy
         assertEquals(listOf(4), sh.replayCache)
@@ -263,7 +263,7 @@ class SharedFlowTest : TestBase() {
         expect(10)
         job.cancel() // cancel the job
         yield()
-        assertEquals(0, sh.collectorsCount.value)
+        assertEquals(0, sh.collectorCount.value)
         finish(11)
     }
 

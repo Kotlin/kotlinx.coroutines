@@ -19,7 +19,7 @@ public fun <T> Flow<T>.shareIn(
     val sharedFlow = cache.createMutableSharedFlow<T>()
     scope.launch { // the single coroutine to rule the sharing
         try {
-            start.commandFlow(sharedFlow.collectorsCount)
+            start.commandFlow(sharedFlow.collectorCount)
                 .distinctUntilChanged()
                 .collectLatest { // cancels block on new emission
                     when (it) {

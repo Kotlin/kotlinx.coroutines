@@ -12,7 +12,7 @@ public interface SharedFlow<out T> : Flow<T> {
 
 public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
     public fun tryEmit(value: T): Boolean
-    public val collectorsCount: StateFlow<Int>
+    public val collectorCount: StateFlow<Int>
     public fun resetBuffer()
 }
 

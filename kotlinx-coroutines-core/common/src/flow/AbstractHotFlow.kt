@@ -16,13 +16,13 @@ internal abstract class AbstractHotFlow<S : AbstractHotFlowSlot<*>> : Synchroniz
     protected var nCollectors = 0 // number of allocated (!free) slots
         private set
     private var nextIndex = 0 // oracle for the next free slot index
-    private var _collectorsCount: MutableStateFlow<Int>? = null // init on first need
+    private var _collectorCount: MutableStateFlow<Int>? = null // init on first need
 
-    val collectorsCount: StateFlow<Int>
+    val collectorCount: StateFlow<Int>
         get() = synchronized(this) {
             // allocate under lock in sync with nCollectors variable
-            _collectorsCount ?: MutableStateFlow(nCollectors).also {
-                _collectorsCount = it
+            _collectorCount ?: MutableStateFlow(nCollectors).also {
+                _collectorCount = it
             }
         }
 
@@ -52,7 +52,7 @@ internal abstract class AbstractHotFlow<S : AbstractHotFlowSlot<*>> : Synchroniz
             }
             nextIndex = index
             nCollectors++
-            collectorsCount = _collectorsCount // retrieve under lock if initialized
+            collectorsCount = _collectorCount // retrieve under lock if initialized
             slot
         }
         collectorsCount?.increment(1)
@@ -64,7 +64,7 @@ internal abstract class AbstractHotFlow<S : AbstractHotFlowSlot<*>> : Synchroniz
         var collectorsCount: MutableStateFlow<Int>? = null
         val resumeList = synchronized(this) {
             nCollectors--
-            collectorsCount = _collectorsCount // retrieve under lock if initialized
+            collectorsCount = _collectorCount // retrieve under lock if initialized
             // Reset next index oracle if we have no more active collectors for more predictable behavior next time
             if (nCollectors == 0) nextIndex = 0
             (slot as AbstractHotFlowSlot<Any>).freeLocked(this)
