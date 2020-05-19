@@ -5,10 +5,6 @@
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
-repositories {
-    maven { url "https://dl.bintray.com/devexperts/Maven/" }
-}
-
 kotlin {
     targets {
         fromPreset(presets.jvm, 'jvm')
