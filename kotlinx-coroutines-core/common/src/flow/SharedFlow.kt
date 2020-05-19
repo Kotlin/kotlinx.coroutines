@@ -119,6 +119,10 @@ internal class SharedFlowImpl<T>(
     private var size = 0
     private var minCollectorIndex = 0L
 
+    init {
+        if (initialValue !== NO_VALUE) enqueueLocked(initialValue)
+    }
+
     override val replayCache: List<T>
         get() = synchronized(this) {
             val replaySize = replaySizeLocked
@@ -297,6 +301,9 @@ internal class SharedFlowImpl<T>(
 
     // returns a list of continuation to resume after lock
     internal fun updateCollectorIndexLocked(oldIndex: Long): List<Continuation<Unit>>? {
+        if (oldIndex < minCollectorIndex) {
+            println("!!!")
+        }
         assert { oldIndex >= minCollectorIndex }
         if (oldIndex > minCollectorIndex) return null // nothing changes, it was not min
         // start computing new minimal index of active collectors
@@ -422,7 +429,70 @@ internal class SharedFlowImpl<T>(
     override fun createSlotArray(size: Int): Array<SharedFlowSlot?> = arrayOfNulls(size)
 
     override fun resetBuffer() {
-        TODO("Not yet implemented")
+        val resumeList= synchronized(this) {
+            // resume all waiting emitters and drop their values
+            val oldBufferSize = bufferSizeLocked
+            val oldBufferEndIndex = head + oldBufferSize
+            var resumeList: ArrayList<Continuation<Unit>>? = null
+            if (size > oldBufferSize) {
+                val buffer = buffer!!
+                resumeList = ArrayList(size - oldBufferSize)
+                for (emitterIndex in oldBufferEndIndex until head + size) {
+                    val emitter = buffer.getBufferAt(emitterIndex)
+                    if (emitter !== NO_VALUE) {
+                        emitter as Emitter // must have Emitter class
+                        resumeList.add(emitter.cont)
+                    }
+                    buffer.setBufferAt(emitterIndex, null) // clear this slot
+                }
+                size = oldBufferSize // dropped all emitters
+            }
+            // enqueue initial value at the end
+            val hasInitialValue = initialValue !== NO_VALUE
+            if (hasInitialValue) {
+                assert { replayCapacity > 0 } // only supporting initial value with replay
+                assert { size > 0 } // cannot have an empty buffer with initial value
+                // Enqueue unless we already have it at the end of replay buffer and are using distinctUntilChanged
+                val oldValue = buffer!!.getBufferAt(oldBufferEndIndex - 1)
+                if (distinctUntilChanged == null || !distinctUntilChanged.invoke(oldValue as T, initialValue as T)) {
+                    enqueueLocked(initialValue)
+                }
+            }
+            // compute new index for all collectors and new min index among them
+            val newReplayIndex = if (hasInitialValue) head + size - 1 else head + size
+            var newMinIndex = head + size
+            // update all collectors indexes and wakeup for new initial value if needed
+            forEachSlotLocked { slot ->
+                // index only grows forward (if already collected initial value don't deliver it again)
+                if (newReplayIndex > slot.index) {
+                    slot.index = newReplayIndex // move index up to drop the rest of the buffer
+                }
+                if (hasInitialValue && slot.index == newReplayIndex) { // has not got initial value yet
+                    val cont = slot.cont
+                    if (cont != null) { // .. and it is suspended now
+                        slot.cont = null // resume it to get initial value
+                        val list = resumeList ?: ArrayList<Continuation<Unit>>(2).also {
+                            resumeList = it
+                        }
+                        list.add(cont)
+                    }
+                }
+                newMinIndex = minOf(newMinIndex, slot.index)
+            }
+            // update min collector index
+            minCollectorIndex = newMinIndex
+            // cleanup the rest of the buffer
+            if (newReplayIndex > head) {
+                val buffer = buffer!!
+                for (index in head until newReplayIndex) buffer.setBufferAt(index, null)
+            }
+            // update buffer head and size
+            head = newReplayIndex
+            size = if (hasInitialValue) 1 else 0
+            // update buffer head and size
+            resumeList
+        }
+        resumeList?.forEach { it.resume(Unit) }
     }
 
     private class Emitter(
