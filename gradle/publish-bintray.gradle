@@ -91,6 +91,10 @@ publishing {
     }
 }
 
+tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication"}.configureEach {
+    dependsOn(tasks["generatePomFileForJvmPublication"])
+}
+
 task publishDevelopSnapshot() {
     def branch = System.getenv('currentBranch')
     if (branch == "develop") {
