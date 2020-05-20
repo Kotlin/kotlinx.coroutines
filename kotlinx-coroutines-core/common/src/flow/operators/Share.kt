@@ -41,23 +41,23 @@ internal class SubscribedFlowCollector<T>(
 public fun <T> Flow<T>.shareIn(
     scope: CoroutineScope,
     replay: Int = 0,
-    start: SharingStart = SharingStart.Eager,
+    started: SharingStarted = SharingStarted.Eagerly,
     initialValue: T = NO_VALUE as T
 ): SharedFlow<T> {
     val sharedFlow = MutableSharedFlow<T>(replay, initialValue = initialValue)
-    launchSharing(scope, start, sharedFlow, this)
+    launchSharing(scope, started, sharedFlow, this)
     return sharedFlow
 }
 
 private fun <T> launchSharing(
     scope: CoroutineScope,
-    start: SharingStart,
+    started: SharingStarted,
     sharedFlow: MutableSharedFlow<T>,
     upstreamFlow: Flow<T>
 ) {
     scope.launch { // the single coroutine to rule the sharing
         try {
-            start.commandFlow(sharedFlow.subscriptionCount)
+            started.commandFlow(sharedFlow.subscriptionCount)
                 .distinctUntilChanged()
                 .collectLatest { // cancels block on new emission
                     when (it) {
@@ -75,33 +75,33 @@ private fun <T> launchSharing(
 
 public fun <T> Flow<T>.stateIn(
     scope: CoroutineScope,
-    start: SharingStart = SharingStart.Eager,
-    value: T
+    started: SharingStarted = SharingStarted.Eagerly,
+    initialValue: T
 ): StateFlow<T> {
-    val stateFlow = MutableStateFlow(value)
-    launchSharing(scope, start, stateFlow, this)
+    val stateFlow = MutableStateFlow(initialValue)
+    launchSharing(scope, started, stateFlow, this)
     return stateFlow
 }
 
 public suspend fun <T> Flow<T>.stateIn(scope: CoroutineScope): StateFlow<T> = TODO()
 
-public interface SharingStart {
+public interface SharingStarted {
     public companion object {
-        public val Eager: SharingStart = TODO()
-        public val Lazy: SharingStart = TODO()
-        public val OnDemand: SharingStart = TODO()
-        public fun OnDemand(stopTimeout: Long = 0, cacheExpiration: Long = 0): SharingStart = TODO()
+        public val Eagerly: SharingStarted = TODO()
+        public val Lazily: SharingStarted = TODO()
+        public val WhileSubscribed: SharingStarted = TODO()
+        public fun WhileSubscribed(stopTimeout: Long = 0, cacheExpiration: Long = 0): SharingStarted = TODO()
     }
 
-    public fun commandFlow(collectorCount: StateFlow<Int>): Flow<SharingCommand>
+    public fun commandFlow(subscriptionCount: StateFlow<Int>): Flow<SharingCommand>
 }
 
 public enum class SharingCommand { START, STOP, RESET_BUFFER }
 
-public fun SharingStart.Companion.Lazy(waitCollectors: Int): SharingStart = object : SharingStart {
-    override fun commandFlow(collectorCount: StateFlow<Int>) =
-        collectorCount
-            .map { if (it >= waitCollectors) SharingCommand.START else SharingCommand.STOP }
+public fun SharingStarted.Companion.Lazily(waitSubscribers: Int): SharingStarted = object : SharingStarted {
+    override fun commandFlow(subscriptionCount: StateFlow<Int>) =
+        subscriptionCount
+            .map { if (it >= waitSubscribers) SharingCommand.START else SharingCommand.STOP }
             .distinctUntilChanged { old, new -> old == SharingCommand.START } // keep START once it is there
 }
 
@@ -112,20 +112,20 @@ public fun main() {
 
     // Basic event sharing
     flow.shareIn(scope) // Eager connect
-    flow.shareIn(scope, 0, SharingStart.Lazy) // Lazy auto-connect
-    flow.shareIn(scope, 0, SharingStart.OnDemand) // refCount
-    flow.shareIn(scope, 0, SharingStart.OnDemand(stopTimeout = 1000L)) // refCount with timeout
+    flow.shareIn(scope, 0, SharingStarted.Lazily) // Lazy auto-connect
+    flow.shareIn(scope, 0, SharingStarted.WhileSubscribed) // refCount
+    flow.shareIn(scope, 0, SharingStarted.WhileSubscribed(stopTimeout = 1000L)) // refCount with timeout
     // State sharing
     flow.shareIn(scope, 1) // Eager connect
-    flow.shareIn(scope, 1, SharingStart.Lazy) // Lazy auto-connect
-    flow.shareIn(scope, 1, SharingStart.OnDemand) // refCount
-    flow.shareIn(scope, 1, SharingStart.OnDemand(stopTimeout = 1000L)) // refCount with timeout
-    flow.shareIn(scope, 1, SharingStart.OnDemand(cacheExpiration = 1000L)) // refCount with expiration
-    flow.shareIn(scope, 1, SharingStart.OnDemand, initialValue = null) // refCount with initial value
+    flow.shareIn(scope, 1, SharingStarted.Lazily) // Lazy auto-connect
+    flow.shareIn(scope, 1, SharingStarted.WhileSubscribed) // refCount
+    flow.shareIn(scope, 1, SharingStarted.WhileSubscribed(stopTimeout = 1000L)) // refCount with timeout
+    flow.shareIn(scope, 1, SharingStarted.WhileSubscribed(cacheExpiration = 1000L)) // refCount with expiration
+    flow.shareIn(scope, 1, SharingStarted.WhileSubscribed, initialValue = null) // refCount with initial value
     // Log sharing (cache last 100)
     flow.shareIn(scope, 100) // Eager connect
-    flow.shareIn(scope, 100, SharingStart.Lazy) // Lazy auto-connect
-    flow.shareIn(scope, 100, SharingStart.OnDemand) // refCount
-    flow.shareIn(scope, 100, SharingStart.OnDemand(stopTimeout = 1000L)) // refCount with timeout
-    flow.shareIn(scope, 100, SharingStart.OnDemand(cacheExpiration = 1000L)) // refCount with expiration
+    flow.shareIn(scope, 100, SharingStarted.Lazily) // Lazy auto-connect
+    flow.shareIn(scope, 100, SharingStarted.WhileSubscribed) // refCount
+    flow.shareIn(scope, 100, SharingStarted.WhileSubscribed(stopTimeout = 1000L)) // refCount with timeout
+    flow.shareIn(scope, 100, SharingStarted.WhileSubscribed(cacheExpiration = 1000L)) // refCount with expiration
 }
