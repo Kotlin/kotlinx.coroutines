@@ -8,29 +8,33 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.internal.SafeCollector
+import kotlin.coroutines.*
 import kotlin.jvm.*
 
-public fun <T> SharedFlow<T>.onStarted(block: suspend () -> Unit): SharedFlow<T> =
-    StartedSharedFlow(this, block)
+public fun <T> SharedFlow<T>.onStarted(action: suspend FlowCollector<T>.() -> Unit): SharedFlow<T> =
+    StartedSharedFlow(this, action)
 
-internal class StartedSharedFlow<T>(
+private class StartedSharedFlow<T>(
     private val sharedFlow: SharedFlow<T>,
-    private val block: suspend () -> Unit
+    private val action: suspend FlowCollector<T>.() -> Unit
 ) : SharedFlow<T> by sharedFlow {
     override suspend fun collect(collector: FlowCollector<T>) =
-        sharedFlow.collect(StartedFlowCollector(collector, block))
+        sharedFlow.collect(StartedFlowCollector(collector, action))
 }
 
 internal class StartedFlowCollector<T>(
     private val collector: FlowCollector<T>,
-    private val block: suspend () -> Unit
+    private val action: suspend FlowCollector<T>.() -> Unit
 ) : FlowCollector<T>  {
     suspend fun onStarted() {
-        var cur = this
-        while(true) {
-            block()
-            cur = cur.collector as? StartedFlowCollector<T> ?: break
+        val safeCollector = SafeCollector(collector, coroutineContext)
+        try {
+            safeCollector.action()
+        } finally {
+            safeCollector.releaseIntercepted()
         }
+        (collector as? StartedFlowCollector<T>)?.onStarted()
     }
 
     override suspend fun emit(value: T) = collector.emit(value)

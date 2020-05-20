@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
@@ -506,6 +510,44 @@ class SharedFlowTest : TestBase() {
         yield()
         assertEquals(0, sh.collectorCount.value)
         finish(11)
+    }
+
+    @Test
+    public fun testOnStarted() = runTest {
+        expect(1)
+        val sh = MutableSharedFlow<String>(1)
+        sh
+            .onStarted {
+                emit("collector->A")
+                sh.tryEmit("shared->A")
+            }
+            .onStarted {
+                emit("collector->B")
+                sh.tryEmit("shared->B")
+            }
+            .onStart {
+                emit("collector->C")
+                sh.tryEmit("shared->C")
+            }
+            .onStart {
+                emit("collector->D")
+                sh.tryEmit("shared->D")
+            }
+            .onEach {
+                when (it) {
+                    "collector->D" -> expect(2)
+                    "collector->C" -> expect(3)
+                    "collector->A" -> expect(4)
+                    "collector->B" -> expect(5)
+                    "shared->C" -> {
+                        expect(6)
+                        currentCoroutineContext().cancel()
+                    }
+                }
+            }
+            .launchIn(this)
+            .join()
+        finish(7)
     }
 
     /**
