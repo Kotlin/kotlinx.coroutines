@@ -12,32 +12,30 @@ import kotlinx.coroutines.flow.internal.SafeCollector
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
-public fun <T> SharedFlow<T>.onStarted(action: suspend FlowCollector<T>.() -> Unit): SharedFlow<T> =
-    StartedSharedFlow(this, action)
+public fun <T> SharedFlow<T>.onSubscription(action: suspend FlowCollector<T>.() -> Unit): SharedFlow<T> =
+    SubscribedSharedFlow(this, action)
 
-private class StartedSharedFlow<T>(
+private class SubscribedSharedFlow<T>(
     private val sharedFlow: SharedFlow<T>,
     private val action: suspend FlowCollector<T>.() -> Unit
 ) : SharedFlow<T> by sharedFlow {
     override suspend fun collect(collector: FlowCollector<T>) =
-        sharedFlow.collect(StartedFlowCollector(collector, action))
+        sharedFlow.collect(SubscribedFlowCollector(collector, action))
 }
 
-internal class StartedFlowCollector<T>(
+internal class SubscribedFlowCollector<T>(
     private val collector: FlowCollector<T>,
     private val action: suspend FlowCollector<T>.() -> Unit
-) : FlowCollector<T>  {
-    suspend fun onStarted() {
+) : FlowCollector<T> by collector {
+    suspend fun onSubscription() {
         val safeCollector = SafeCollector(collector, coroutineContext)
         try {
             safeCollector.action()
         } finally {
             safeCollector.releaseIntercepted()
         }
-        (collector as? StartedFlowCollector<T>)?.onStarted()
+        if (collector is SubscribedFlowCollector) collector.onSubscription()
     }
-
-    override suspend fun emit(value: T) = collector.emit(value)
 }
 
 public fun <T> Flow<T>.shareIn(
@@ -59,7 +57,7 @@ private fun <T> launchSharing(
 ) {
     scope.launch { // the single coroutine to rule the sharing
         try {
-            start.commandFlow(sharedFlow.collectorCount)
+            start.commandFlow(sharedFlow.subscriptionCount)
                 .distinctUntilChanged()
                 .collectLatest { // cancels block on new emission
                     when (it) {
@@ -95,14 +93,14 @@ public interface SharingStart {
         public fun OnDemand(stopTimeout: Long = 0, cacheExpiration: Long = 0): SharingStart = TODO()
     }
 
-    public fun commandFlow(collectCount: StateFlow<Int>): Flow<SharingCommand>
+    public fun commandFlow(collectorCount: StateFlow<Int>): Flow<SharingCommand>
 }
 
 public enum class SharingCommand { START, STOP, RESET_BUFFER }
 
 public fun SharingStart.Companion.Lazy(waitCollectors: Int): SharingStart = object : SharingStart {
-    override fun commandFlow(collectCount: StateFlow<Int>) =
-        collectCount
+    override fun commandFlow(collectorCount: StateFlow<Int>) =
+        collectorCount
             .map { if (it >= waitCollectors) SharingCommand.START else SharingCommand.STOP }
             .distinctUntilChanged { old, new -> old == SharingCommand.START } // keep START once it is there
 }

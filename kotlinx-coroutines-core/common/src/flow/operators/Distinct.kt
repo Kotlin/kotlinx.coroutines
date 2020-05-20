@@ -21,32 +21,31 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 public fun <T> Flow<T>.distinctUntilChanged(): Flow<T> =
     when (this) {
         is StateFlow<*> -> this
-        else -> distinctUntilChangedBy(keySelector = idKeySelector, areEquivalent = Equivalent.ByValue)
+        else -> distinctUntilChangedBy { it }
     }
 
 /**
  * Returns flow where all subsequent repetitions of the same value are filtered out, when compared
  * with each other via the provided [areEquivalent] function.
  */
-public fun <T> Flow<T>.distinctUntilChanged(areEquivalent: ValueEquivalence<T>): Flow<T> =
-    @Suppress("UNCHECKED_CAST")
-    distinctUntilChangedBy(keySelector = idKeySelector as ((T) -> T), areEquivalent = areEquivalent)
+public fun <T> Flow<T>.distinctUntilChanged(areEquivalent: (old: T, new: T) -> Boolean): Flow<T> =
+    distinctUntilChangedBy(keySelector = { it }, areEquivalent = areEquivalent)
 
 /**
  * Returns flow where all subsequent repetitions of the same key are filtered out, where
  * key is extracted with [keySelector] function.
  */
 public fun <T, K> Flow<T>.distinctUntilChangedBy(keySelector: (T) -> K): Flow<T> =
-    distinctUntilChangedBy(keySelector = keySelector, areEquivalent = Equivalent.ByValue)
+    distinctUntilChangedBy(keySelector = keySelector, areEquivalent = { old, new -> old == new })
 
 /**
  * Returns flow where all subsequent repetitions of the same key are filtered out, where
  * keys are extracted with [keySelector] function and compared with each other via the
  * provided [areEquivalent] function.
  */
-private fun <T, K> Flow<T>.distinctUntilChangedBy(
-    keySelector: (T) -> K,
-    areEquivalent: (old: K, new: K) -> Boolean
+private inline fun <T, K> Flow<T>.distinctUntilChangedBy(
+    crossinline keySelector: (T) -> K,
+    crossinline areEquivalent: (old: K, new: K) -> Boolean
 ): Flow<T> =
     flow {
         var previousKey: Any? = NULL
@@ -59,5 +58,3 @@ private fun <T, K> Flow<T>.distinctUntilChangedBy(
             }
         }
     }
-
-private val idKeySelector: (Any?) -> Any? = { it }

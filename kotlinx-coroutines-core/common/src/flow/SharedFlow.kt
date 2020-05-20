@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
@@ -12,7 +16,7 @@ public interface SharedFlow<out T> : Flow<T> {
 
 public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
     public fun tryEmit(value: T): Boolean
-    public val collectorCount: StateFlow<Int>
+    public val subscriptionCount: StateFlow<Int>
     public fun resetBuffer()
 }
 
@@ -24,22 +28,20 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
 public fun <T> MutableSharedFlow(
     bufferCapacity: Int,
     replayCapacity: Int = bufferCapacity,
-    bufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
-    distinctUntilChanged: ValueEquivalence<T> = Equivalent.Never,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
     initialValue: T = NO_VALUE as T
 ): MutableSharedFlow<T> =
     SharedFlowImpl(
         bufferCapacity,
         replayCapacity,
-        initialValue,
-        distinctUntilChanged.takeIf { it !== Equivalent.Never },
-        bufferOverflow
+        onBufferOverflow,
+        initialValue
     )
 
 public enum class BufferOverflow {
     SUSPEND, // default behavior
+    KEEP_LATEST, // ~ conflate() operator
     DROP_LATEST, // ~ dropWhenBusy() operator
-    DROP_OLDEST // ~ conflate() operator
 }
 
 // ------------------------------------ Implementation ------------------------------------
@@ -70,9 +72,8 @@ internal class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
 internal class SharedFlowImpl<T>(
     private val bufferCapacity: Int,
     private val replayCapacity: Int,
-    private val initialValue: Any?,
-    private val distinctUntilChanged: ValueEquivalence<T>?, // optimization Never -> null
-    private val bufferOverflow: BufferOverflow
+    private val onBufferOverflow: BufferOverflow,
+    private val initialValue: Any?
 ) : AbstractSharedFlow<SharedFlowSlot>(), MutableSharedFlow<T> {
     init {
         require(replayCapacity >= 0) {
@@ -84,11 +85,8 @@ internal class SharedFlowImpl<T>(
         require(replayCapacity > 0 || initialValue === NO_VALUE) {
             "replayCapacity($replayCapacity) must positive  with initialValue($initialValue)"
         }
-        require(replayCapacity > 0 || distinctUntilChanged == null) {
-            "replayCapacity($replayCapacity) must positive with distinctUntilChanged($distinctUntilChanged)"
-        }
-        require(bufferCapacity > 0 || bufferOverflow == BufferOverflow.SUSPEND) {
-            "bufferCapacity($bufferCapacity) must positive with bufferOverflow($bufferOverflow)"
+        require(bufferCapacity > 0 || onBufferOverflow == BufferOverflow.SUSPEND) {
+            "bufferCapacity($bufferCapacity) must positive with onBufferOverflow($onBufferOverflow)"
         }
     }
 
@@ -148,25 +146,14 @@ internal class SharedFlowImpl<T>(
     @Suppress("UNCHECKED_CAST")
     override suspend fun collect(collector: FlowCollector<T>) {
         val slot = allocateSlot()
-        if (collector is StartedFlowCollector) collector.onStarted()
-        // oldValue is only used for distinctUntilChanged with DROP_OLDEST
-        var oldValue: Any? = when {
-            distinctUntilChanged != null && bufferOverflow == BufferOverflow.DROP_OLDEST -> NO_VALUE
-            else -> EMIT_ALL // otherwise, emit all values with additional checks
-        }
         try {
+            if (collector is SubscribedFlowCollector) collector.onSubscription()
             while (true) {
                 var newValue: Any?
                 while (true) {
                     newValue = tryTakeValue(slot) // attempt no-suspend fast path first
                     if (newValue !== NO_VALUE) break
                     awaitValue(slot) // await signal that the new value is available
-                }
-                // Need to check distinctUntilChanged before emission, too, since this collector might have missed
-                // some values, so that equaivalent values are going to be emitted
-                if (oldValue !== EMIT_ALL) {
-                    if (oldValue !== NO_VALUE && distinctUntilChanged!!.invoke(oldValue as T, newValue as T)) continue
-                    oldValue = newValue
                 }
                 collector.emit(newValue as T)
             }
@@ -196,21 +183,16 @@ internal class SharedFlowImpl<T>(
 
     @Suppress("UNCHECKED_CAST")
     private fun tryEmitLocked(value: T): Boolean {
-        // If have a previous element, then check distinctUntilChanged policy first (if set)
-        if (size > 0) distinctUntilChanged?.let { areEquivalent ->
-            val previous = buffer!!.getBufferAt(head + size - 1) as T
-            if (areEquivalent(previous, value)) return true // drop it as equivalent to the previous one
-        }
         // Fast path without collectors
         if (nCollectors == 0) return tryEmitNoCollectorsLocked(value) // always returns true
         // With collectors we'll have to buffer
         assert { minCollectorIndex >= head }
         // cannot emit now if buffer is full && blocked by a slow collectors
         if (size >= bufferCapacity && minCollectorIndex == head) {
-            when (bufferOverflow) {
+            when (onBufferOverflow) {
                 BufferOverflow.SUSPEND -> return false // will suspend
                 BufferOverflow.DROP_LATEST -> return true // just drop incoming
-                BufferOverflow.DROP_OLDEST -> {} // force enqueue & drop oldest
+                BufferOverflow.KEEP_LATEST -> {} // force enqueue & drop oldest
             }
         }
         enqueueLocked(value)
@@ -453,11 +435,8 @@ internal class SharedFlowImpl<T>(
             if (hasInitialValue) {
                 assert { replayCapacity > 0 } // only supporting initial value with replay
                 assert { size > 0 } // cannot have an empty buffer with initial value
-                // Enqueue unless we already have it at the end of replay buffer and are using distinctUntilChanged
-                val oldValue = buffer!!.getBufferAt(oldBufferEndIndex - 1)
-                if (distinctUntilChanged == null || !distinctUntilChanged.invoke(oldValue as T, initialValue as T)) {
-                    enqueueLocked(initialValue)
-                }
+                // Enqueue it
+                enqueueLocked(initialValue)
             }
             // compute new index for all collectors and new min index among them
             val newReplayIndex = if (hasInitialValue) head + size - 1 else head + size
@@ -509,9 +488,6 @@ internal class SharedFlowImpl<T>(
 @SharedImmutable
 @JvmField
 internal val NO_VALUE = Symbol("NO_VALUE")
-
-@SharedImmutable
-private val EMIT_ALL = Symbol("EMIT_ALL")
 
 private fun Array<Any?>.getBufferAt(index: Long) = get(index.toInt() and (size - 1))
 private fun Array<Any?>.setBufferAt(index: Long, value: Any?) = set(index.toInt() and (size - 1), value)

@@ -284,9 +284,9 @@ private class StateFlowImpl<T>(
 
     override suspend fun collect(collector: FlowCollector<T>) {
         val slot = allocateSlot()
-        if (collector is StartedFlowCollector) collector.onStarted()
-        var oldState: Any? = null // previously emitted T!! | NULL (null -- nothing emitted yet)
         try {
+            if (collector is SubscribedFlowCollector) collector.onSubscription()
+            var oldState: Any? = null // previously emitted T!! | NULL (null -- nothing emitted yet)
             // The loop is arranged so that it starts delivering current value without waiting first
             while (true) {
                 // Here the coroutine could have waited for a while to be dispatched,
