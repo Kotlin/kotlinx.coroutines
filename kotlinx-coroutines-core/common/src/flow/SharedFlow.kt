@@ -192,7 +192,7 @@ internal class SharedFlowImpl<T>(
             when (onBufferOverflow) {
                 BufferOverflow.SUSPEND -> return false // will suspend
                 BufferOverflow.DROP_LATEST -> return true // just drop incoming
-                BufferOverflow.KEEP_LATEST -> {} // force enqueue & drop oldest
+                BufferOverflow.KEEP_LATEST -> {} // force enqueue & drop oldest instead
             }
         }
         enqueueLocked(value)
@@ -284,9 +284,6 @@ internal class SharedFlowImpl<T>(
 
     // returns a list of continuation to resume after lock
     internal fun updateCollectorIndexLocked(oldIndex: Long): List<Continuation<Unit>>? {
-        if (oldIndex < minCollectorIndex) {
-            println("!!!")
-        }
         assert { oldIndex >= minCollectorIndex }
         if (oldIndex > minCollectorIndex) return null // nothing changes, it was not min
         // start computing new minimal index of active collectors
@@ -435,19 +432,15 @@ internal class SharedFlowImpl<T>(
             if (hasInitialValue) {
                 assert { replayCapacity > 0 } // only supporting initial value with replay
                 assert { size > 0 } // cannot have an empty buffer with initial value
-                // Enqueue it
-                enqueueLocked(initialValue)
+                enqueueLocked(initialValue) // Enqueue it
             }
             // compute new index for all collectors and new min index among them
             val newReplayIndex = if (hasInitialValue) head + size - 1 else head + size
-            var newMinIndex = head + size
             // update all collectors indexes and wakeup for new initial value if needed
             forEachSlotLocked { slot ->
-                // index only grows forward (if already collected initial value don't deliver it again)
-                if (newReplayIndex > slot.index) {
-                    slot.index = newReplayIndex // move index up to drop the rest of the buffer
-                }
-                if (hasInitialValue && slot.index == newReplayIndex) { // has not got initial value yet
+                assert { newReplayIndex >= slot.index } // index only grows forward
+                slot.index = newReplayIndex // move index up to drop the rest of the buffer
+                if (hasInitialValue) { // need to get initial value
                     val cont = slot.cont
                     if (cont != null) { // .. and it is suspended now
                         slot.cont = null // resume it to get initial value
@@ -457,10 +450,9 @@ internal class SharedFlowImpl<T>(
                         list.add(cont)
                     }
                 }
-                newMinIndex = minOf(newMinIndex, slot.index)
             }
             // update min collector index
-            minCollectorIndex = newMinIndex
+            minCollectorIndex = newReplayIndex
             // cleanup the rest of the buffer
             if (newReplayIndex > head) {
                 val buffer = buffer!!
