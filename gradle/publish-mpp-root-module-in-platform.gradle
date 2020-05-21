@@ -3,14 +3,18 @@
  */
 
 
-/** Publish the platform JAR and POM so that consumers who depend on this module and can't read Gradle module
-   metadata can still get the platform artifact and transitive dependencies from the POM: */
+/*
+ * Publish the platform JAR and POM so that consumers who depend on this module and can't read Gradle module metadata
+ * can still get the platform artifact and transitive dependencies from the POM.
+ *
+ * See the full rationale here https://youtrack.jetbrains.com/issue/KMM-237#focus=streamItem-27-4115233.0-0
+ */
 project.ext.publishPlatformArtifactsInRootModule = { platformPublication ->
     def platformPomBuilder = null
 
     platformPublication.pom.withXml { platformPomBuilder = asString() }
 
-    publishing.publications.kotlinMultiplatform {
+    publishing.publications.kotlinMultiplatform  {
         platformPublication.artifacts.forEach {
             artifact(it)
         }
