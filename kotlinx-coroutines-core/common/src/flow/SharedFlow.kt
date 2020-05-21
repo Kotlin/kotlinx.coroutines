@@ -46,7 +46,7 @@ public enum class BufferOverflow {
 
 // ------------------------------------ Implementation ------------------------------------
 
-internal class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
+private class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
     @JvmField
     var index = -1L // current "to-be-emitted" index, -1 means the slot is free now
 
@@ -68,8 +68,7 @@ internal class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
     }
 }
 
-// Internal for one specific test to check that is can model StateFlow's behavior
-internal class SharedFlowImpl<T>(
+private class SharedFlowImpl<T>(
     private val bufferCapacity: Int,
     private val replayCapacity: Int,
     private val onBufferOverflow: BufferOverflow,

@@ -579,7 +579,7 @@ class SharedFlowTest : TestBase() {
     fun testStateFlowModel() = runTest {
         val stateFlow = MutableStateFlow<Data?>(null)
         val expect = modelLog(stateFlow)
-        val sharedFlow = SharedFlowImpl<Data?>(
+        val sharedFlow = MutableSharedFlow<Data?>(
             bufferCapacity = 1,
             replayCapacity = 1,
             onBufferOverflow = BufferOverflow.KEEP_LATEST,
