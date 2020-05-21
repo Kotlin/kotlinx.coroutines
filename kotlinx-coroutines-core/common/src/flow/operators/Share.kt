@@ -12,63 +12,31 @@ import kotlinx.coroutines.flow.internal.SafeCollector
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
-public fun <T> SharedFlow<T>.onSubscription(action: suspend FlowCollector<T>.() -> Unit): SharedFlow<T> =
-    SubscribedSharedFlow(this, action)
-
-private class SubscribedSharedFlow<T>(
-    private val sharedFlow: SharedFlow<T>,
-    private val action: suspend FlowCollector<T>.() -> Unit
-) : SharedFlow<T> by sharedFlow {
-    override suspend fun collect(collector: FlowCollector<T>) =
-        sharedFlow.collect(SubscribedFlowCollector(collector, action))
-}
-
-internal class SubscribedFlowCollector<T>(
-    private val collector: FlowCollector<T>,
-    private val action: suspend FlowCollector<T>.() -> Unit
-) : FlowCollector<T> by collector {
-    suspend fun onSubscription() {
-        val safeCollector = SafeCollector(collector, coroutineContext)
-        try {
-            safeCollector.action()
-        } finally {
-            safeCollector.releaseIntercepted()
-        }
-        if (collector is SubscribedFlowCollector) collector.onSubscription()
-    }
-}
-
 public fun <T> Flow<T>.shareIn(
     scope: CoroutineScope,
-    replay: Int = 0,
+    replay: Int,
     started: SharingStarted = SharingStarted.Eagerly,
     initialValue: T = NO_VALUE as T
 ): SharedFlow<T> {
-    val sharedFlow = MutableSharedFlow<T>(replay, initialValue = initialValue)
-    launchSharing(scope, started, sharedFlow, this)
-    return sharedFlow
+    val shared = MutableSharedFlow<T>(replay, initialValue = initialValue)
+    scope.launchSharing(this, shared, started)
+    return shared
 }
 
-private fun <T> launchSharing(
-    scope: CoroutineScope,
-    started: SharingStarted,
-    sharedFlow: MutableSharedFlow<T>,
-    upstreamFlow: Flow<T>
-) {
-    scope.launch { // the single coroutine to rule the sharing
+private fun <T> CoroutineScope.launchSharing(upstream: Flow<T>, shared: MutableSharedFlow<T>, started: SharingStarted) {
+    launch { // the single coroutine to rule the sharing
         try {
-            started.commandFlow(sharedFlow.subscriptionCount)
+            started.commandFlow(shared.subscriptionCount)
                 .distinctUntilChanged()
                 .collectLatest { // cancels block on new emission
                     when (it) {
-                        SharingCommand.START -> upstreamFlow.collect(sharedFlow) // can be cancelled
-                        SharingCommand.STOP -> {
-                        } // just cancel collection and do nothing else
-                        SharingCommand.RESET_BUFFER -> sharedFlow.resetBuffer()
+                        SharingCommand.START -> upstream.collect(shared) // can be cancelled
+                        SharingCommand.STOP -> { /* just cancel collection and do nothing else */ }
+                        SharingCommand.RESET_BUFFER -> shared.resetBuffer()
                     }
                 }
         } finally {
-            sharedFlow.resetBuffer() // on any completion/cancellation/failure of sharing
+            shared.resetBuffer() // on any completion/cancellation/failure of sharing
         }
     }
 }
@@ -78,12 +46,29 @@ public fun <T> Flow<T>.stateIn(
     started: SharingStarted = SharingStarted.Eagerly,
     initialValue: T
 ): StateFlow<T> {
-    val stateFlow = MutableStateFlow(initialValue)
-    launchSharing(scope, started, stateFlow, this)
-    return stateFlow
+    val state = MutableStateFlow(initialValue)
+    scope.launchSharing(this, state, started)
+    return state
 }
 
-public suspend fun <T> Flow<T>.stateIn(scope: CoroutineScope): StateFlow<T> = TODO()
+public suspend fun <T> Flow<T>.stateIn(scope: CoroutineScope): StateFlow<T> {
+    val result = CompletableDeferred<StateFlow<T>>()
+    scope.launchSharingDeferred(this, result)
+    return result.await()
+}
+
+private fun <T> CoroutineScope.launchSharingDeferred(upstream: Flow<T>, result: CompletableDeferred<StateFlow<T>>) {
+    launch {
+        var state: MutableStateFlow<T>? = null
+        upstream.collect { value ->
+            state?.let { it.value = value } ?: run {
+                state = MutableStateFlow(value).also {
+                    result.complete(it)
+                }
+            }
+        }
+    }
+}
 
 public interface SharingStarted {
     public companion object {
@@ -111,7 +96,7 @@ public fun main() {
     val scope: CoroutineScope = GlobalScope
 
     // Basic event sharing
-    flow.shareIn(scope) // Eager connect
+    flow.shareIn(scope, 0) // Eager connect
     flow.shareIn(scope, 0, SharingStarted.Lazily) // Lazy auto-connect
     flow.shareIn(scope, 0, SharingStarted.WhileSubscribed) // refCount
     flow.shareIn(scope, 0, SharingStarted.WhileSubscribed(stopTimeout = 1000L)) // refCount with timeout
@@ -129,3 +114,30 @@ public fun main() {
     flow.shareIn(scope, 100, SharingStarted.WhileSubscribed(stopTimeout = 1000L)) // refCount with timeout
     flow.shareIn(scope, 100, SharingStarted.WhileSubscribed(cacheExpiration = 1000L)) // refCount with expiration
 }
+
+public fun <T> SharedFlow<T>.onSubscription(action: suspend FlowCollector<T>.() -> Unit): SharedFlow<T> =
+    SubscribedSharedFlow(this, action)
+
+private class SubscribedSharedFlow<T>(
+    private val sharedFlow: SharedFlow<T>,
+    private val action: suspend FlowCollector<T>.() -> Unit
+) : SharedFlow<T> by sharedFlow {
+    override suspend fun collect(collector: FlowCollector<T>) =
+        sharedFlow.collect(SubscribedFlowCollector(collector, action))
+}
+
+internal class SubscribedFlowCollector<T>(
+    private val collector: FlowCollector<T>,
+    private val action: suspend FlowCollector<T>.() -> Unit
+) : FlowCollector<T> by collector {
+    suspend fun onSubscription() {
+        val safeCollector = SafeCollector(collector, coroutineContext)
+        try {
+            safeCollector.action()
+        } finally {
+            safeCollector.releaseIntercepted()
+        }
+        if (collector is SubscribedFlowCollector) collector.onSubscription()
+    }
+}
+
