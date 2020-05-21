@@ -1,3 +1,5 @@
+import org.gradle.util.VersionNumber
+
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
@@ -11,6 +13,7 @@ apply plugin: 'maven-publish'
 
 def isMultiplatform = project.name == "kotlinx-coroutines-core"
 def isBom = project.name == "kotlinx-coroutines-bom"
+def isKotlin137x = VersionNumber.parse(kotlin_version) <= VersionNumber.parse("1.3.79")
 
 if (!isBom) {
     apply plugin: "com.github.johnrengelman.shadow"
@@ -88,6 +91,14 @@ publishing {
                 it.artifactId = "$project.name-$type"
                 break
         }
+        // Hierarchical project structures are not fully supported in 1.3.7x MPP
+        if (isKotlin137x) {
+            // disable metadata everywhere, but in native and js modules
+            if (type == 'maven' || type == 'metadata' || type == 'jvm') {
+                moduleDescriptorGenerator = null
+            }
+        }
+
     }
 }
 
