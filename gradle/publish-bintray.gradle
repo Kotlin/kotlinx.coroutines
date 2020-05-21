@@ -76,9 +76,13 @@ publishing {
         def type = it.name
         switch (type) {
             case 'kotlinMultiplatform':
-                it.artifactId = "$project.name"
-                apply from: "$rootDir/gradle/publish-mpp-root-module-in-platform.gradle"
-                publishPlatformArtifactsInRootModule(publications["jvm"])
+                // With Kotlin 1.4 & HMPP, the root module should have no suffix in the ID, but for compatibility with
+                // the consumers who can't read Gradle module metadata, we publish the JVM artifacts in it, too
+                it.artifactId = isKotlin137x ? "$project.name-native" : project.name
+                if (!isKotlin137x) {
+                    apply from: "$rootDir/gradle/publish-mpp-root-module-in-platform.gradle"
+                    publishPlatformArtifactsInRootModule(publications["jvm"])
+                }
                 break
             case 'metadata':
                 // As the old -common dependencies will fail to resolve with Gradle module metadata, rename the module
@@ -86,7 +90,7 @@ publishing {
                 it.artifactId = isKotlin137x ? "$project.name-common" : "$project.name-metadata"
                 break
             case 'jvm':
-                it.artifactId = "$project.name-jvm"
+                it.artifactId = isKotlin137x ? project.name : "$project.name-jvm"
                 break
             case 'js':
             case 'native':
