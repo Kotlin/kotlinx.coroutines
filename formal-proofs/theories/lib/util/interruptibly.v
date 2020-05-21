@@ -148,7 +148,9 @@ Proof.
     iModIntro. wp_pures. iApply "HPost". by rewrite /interrupt_sent.
   - wp_cmpxchg_fail; first done.
     iMod (own_update with "HOwn") as "[HOwn HFrag]".
-    { apply (auth_update_core_id _ (1%nat: mnatUR)). apply mnat_included. lia. }
+    { apply auth_update_core_id with (b := (1%nat: mnatUR)).
+      by apply mnat_core_id.
+      apply mnat_included. lia. }
     iMod ("HClose" with "[Hℓ HOwn]") as "_". by eauto with iFrame.
     iModIntro. wp_pures. iApply "HPost". by rewrite /interrupt_sent.
  Qed.

@@ -361,7 +361,7 @@ Proof.
   split.
   {
     intros HEv. specialize (HEv i). move: HEv.
-    rewrite list_lookup_singletonM. destruct (l !! i) as [x'|].
+    rewrite list_lookup_singleton. destruct (l !! i) as [x'|].
     2: by intros HContra; apply included_None in HContra.
     rewrite Some_included_total. eauto.
   }
@@ -375,7 +375,7 @@ Proof.
     destruct (decide (i = i')%nat).
     {
       subst.
-      rewrite list_lookup_singletonM. rewrite HEl.
+      rewrite list_lookup_singleton. rewrite HEl.
       by apply Some_included_total.
     }
     {
@@ -787,7 +787,7 @@ Proof.
   {
     assert (length x = length (y' ⋅ x)) as ->.
     by rewrite -Hx'Eq.
-    rewrite list_op_length.
+    rewrite list_length_op.
     lia.
   }
   symmetry.
@@ -817,16 +817,16 @@ Proof.
 Qed.
 
 Lemma quot_of_nat n m:
-  Z.quot (Z.of_nat n) (Z.of_nat m) = Z.of_nat (n `div` m).
+  Z.quot (Z.of_nat n) (Z.of_nat m) = Z.of_nat (n `div` m)%nat.
 Proof.
   destruct m. destruct n; done.
-  rewrite Z2Nat_inj_div; apply Z.quot_div_nonneg; lia.
+  rewrite Nat2Z_inj_div; apply Z.quot_div_nonneg; lia.
 Qed.
 
 Lemma rem_of_nat n m:
   Z.rem (Z.of_nat n) (Z.of_nat (S m)) = Z.of_nat (n `mod` S m).
 Proof.
-  rewrite Z2Nat_inj_mod; apply Z.rem_mod_nonneg; lia.
+  rewrite Nat2Z_inj_mod; apply Z.rem_mod_nonneg; lia.
 Qed.
 
 Theorem count_matching_find_index_Some A (P: A -> Prop) (H': forall x, Decision (P x)) l:

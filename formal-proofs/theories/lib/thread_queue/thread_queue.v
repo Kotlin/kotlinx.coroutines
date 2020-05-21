@@ -320,7 +320,7 @@ Lemma rendezvous_state_op γtq i (r r': cellStateUR):
    rendezvous_state γtq i (r ⋅ r'))%I.
 Proof.
   rewrite /rendezvous_state -own_op -auth_frag_op -pair_op ucmra_unit_left_id.
-  by rewrite list_op_singletonM.
+  by rewrite list_singleton_op.
 Qed.
 
 Global Instance rendezvous_state_persistent γtq i (r: cellStateUR):
@@ -425,7 +425,7 @@ Proof.
   rewrite list_lookup_op.
 
   rewrite lookup_app_r. all: rewrite replicate_length. 2: done.
-  rewrite minus_diag. simpl. rewrite list_lookup_singletonM.
+  rewrite minus_diag. simpl. rewrite list_lookup_singleton.
   rewrite -Some_op Some_valid.
   move=> HValid.
   repeat (apply pair_valid in HValid; destruct HValid as [HValid _]).
@@ -1509,7 +1509,7 @@ Proof.
           inhabitant_token' γtq i (1/2)%Qp ∗
           inhabitant_token' γtq i (1/2)%Qp)%I as Hsplit_inh_token.
   {
-    rewrite -own_op -auth_frag_op -pair_op list_op_singletonM ucmra_unit_left_id.
+    rewrite -own_op -auth_frag_op -pair_op list_singleton_op ucmra_unit_left_id.
     rewrite -pair_op ucmra_unit_right_id.
     replace (own γtq _) with (inhabitant_token γtq i). done.
     congr (own γtq (◯ (ε, {[ i := (Some _, ε, ε, ε, ε)]}))).
@@ -1525,10 +1525,10 @@ Proof.
           ) as Hupdate_ra_map.
   { move: HEl. clear. intros HInh.
     apply list_lookup_local_update.
-    intros j. rewrite lookup_nil map_lookup map_lookup list_op_singletonM.
+    intros j. rewrite lookup_nil map_lookup map_lookup list_singleton_op.
     destruct (decide (i = j)); first subst.
     {
-      rewrite list_lookup_singletonM list_lookup_alter.
+      rewrite list_lookup_singleton list_lookup_alter.
       rewrite HInh. simpl.
       apply option_local_update', prod_local_update; simpl.
       2: by apply alloc_option_local_update.
@@ -1649,8 +1649,8 @@ Proof.
       iExists γt, th. iApply (own_mono with "HFrag").
       apply auth_included; split; first done.
       apply prod_included'; split; first by apply ucmra_unit_least.
-      rewrite list_op_singletonM. apply list_singletonM_included.
-      rewrite list_lookup_singletonM.
+      rewrite list_singleton_op. apply list_singletonM_included.
+      rewrite list_lookup_singleton.
       eexists. split; first done.
       apply prod_included'; split; simpl; last done.
       apply prod_included'; split; simpl; last done.
@@ -1693,9 +1693,9 @@ Proof.
     iApply (own_mono with "HFrag").
     apply auth_included; split; first done.
     apply prod_included'; split; simpl; first done.
-    rewrite list_op_singletonM. rewrite ucmra_unit_right_id.
+    rewrite list_singleton_op. rewrite ucmra_unit_right_id.
     apply list_singletonM_included.
-    rewrite list_lookup_singletonM.
+    rewrite list_lookup_singleton.
     eexists. split; first done.
     apply prod_included'; split; simpl; last by apply ucmra_unit_least.
     apply prod_included'; split; simpl. done.
@@ -1736,7 +1736,7 @@ Proof.
   }
   subst.
   rewrite HEl.
-  rewrite list_lookup_singletonM.
+  rewrite list_lookup_singleton.
   apply Some_included_total.
   simpl.
   destruct d; first done. destruct Hd as [|[? Hd]]; simplify_eq.
@@ -1896,7 +1896,7 @@ Proof.
     destruct (decide (i = j)).
     {
       subst.
-      rewrite list_lookup_singletonM.
+      rewrite list_lookup_singleton.
       assert (is_Some (l !! j)) as [? ->].
       by apply lookup_lt_is_Some; lia.
       simpl.
@@ -1973,7 +1973,7 @@ Proof.
                          )
             with "HAuth") as "[HAuth [HFrag1 HFrag2]]".
     {
-      rewrite -auth_frag_op -pair_op list_op_singletonM ucmra_unit_left_id.
+      rewrite -auth_frag_op -pair_op list_singleton_op ucmra_unit_left_id.
       rewrite -pair_op ucmra_unit_right_id -core_id_dup.
       apply auth_update_alloc. unfold cell_list_contents_auth_ra.
       replace (length l') with (length l).
@@ -1991,7 +1991,7 @@ Proof.
       destruct (nat_eq_dec i i').
       {
         subst. rewrite list_lookup_alter. repeat rewrite map_lookup.
-        rewrite list_lookup_singletonM.
+        rewrite list_lookup_singleton.
         rewrite HIsSome. simpl.
         apply option_local_update'.
         apply prod_local_update; simpl.
@@ -2019,7 +2019,7 @@ Proof.
       remember (l !! i') as Z.
 
       rewrite lookup_ge_None_2 //.
-      rewrite list_singletonM_length. lia.
+      rewrite list_singleton_length. lia.
     }
     iSplitR "HFrag2".
     2: {
@@ -2149,7 +2149,7 @@ Proof.
       repeat rewrite drop_app_ge take_length_le; try lia.
       rewrite Z. simpl. done.
     }
-    rewrite -auth_frag_op -pair_op ucmra_unit_right_id list_op_singletonM.
+    rewrite -auth_frag_op -pair_op ucmra_unit_right_id list_singleton_op.
 
     apply auth_update_alloc, prod_local_update'; simpl.
     {
@@ -2483,7 +2483,7 @@ Proof.
   simpl in *.
   move: HValid. rewrite list_lookup_included. move=> HValid.
   specialize (HValid i).
-  rewrite list_lookup_singletonM in HValid.
+  rewrite list_lookup_singleton in HValid.
   rewrite map_lookup in HValid.
   destruct (l !! i) as [s|] eqn:Z.
   2: {
@@ -3508,7 +3508,7 @@ Proof.
     {
       remember (cells !! i) as K. clear HeqK.
       rewrite lookup_ge_None_2.
-      2: rewrite list_singletonM_length; lia.
+      2: rewrite list_singleton_length; lia.
       by apply option_included; left.
     }
     assert (i < length cells)%nat as HEl by lia.
@@ -3516,7 +3516,7 @@ Proof.
     destruct HEl as [? ->]. simpl.
     destruct (decide (i = enqIdx)).
     {
-      subst. rewrite list_lookup_singletonM.
+      subst. rewrite list_lookup_singleton.
       apply Some_included_total, ucmra_unit_least.
     }
     assert (forall (A: ucmraT) (i i': nat) (x: A),
@@ -3626,7 +3626,7 @@ Proof.
       exfalso.
       move: HValid. rewrite list_lookup_included. move=> HValid.
       specialize (HValid enqIdx). move: HValid.
-      rewrite list_lookup_singletonM map_lookup HEl /= Some_included_total.
+      rewrite list_lookup_singleton map_lookup HEl /= Some_included_total.
       intros HValid.
       apply prod_included in HValid; simpl in *; destruct HValid as [HValid _].
       apply prod_included in HValid; simpl in *; destruct HValid as [_ HValid].
@@ -3806,9 +3806,9 @@ Proof.
     iIntros "HResTok HResTok'".
     iDestruct (own_valid_2 with "HResTok HResTok'") as %HH.
     rewrite -auth_frag_op in HH. exfalso. move: HH.
-    rewrite auth_frag_valid pair_valid list_op_singletonM list_lookup_valid /=.
+    rewrite auth_frag_valid pair_valid list_singleton_op list_lookup_valid /=.
     intros [_ HValid]. specialize (HValid i). move: HValid.
-    rewrite list_lookup_singletonM.
+    rewrite list_lookup_singleton.
     intros HValid.
     destruct HValid as [[[_ []] _] _].
   }
@@ -4040,7 +4040,7 @@ Proof.
     iDestruct (own_valid_3 with "HInhTok1 HInhTok2 HInhTok3") as %HValid.
     iPureIntro.
     move: HValid. rewrite -auth_frag_op -pair_op.
-    repeat rewrite list_op_singletonM.
+    repeat rewrite list_singleton_op.
     rewrite auth_frag_valid /=. rewrite pair_valid.
     rewrite list_singleton_valid. intros [_ [[[[HPairValid _] _] _] _]].
     by compute.
