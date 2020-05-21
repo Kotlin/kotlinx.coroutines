@@ -7,8 +7,6 @@
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
-apply from: project.rootProject.file('gradle/maven-central.gradle')
-
 // ------------- tasks
 
 def isMultiplatform = project.name == "kotlinx-coroutines-core"
@@ -64,7 +62,7 @@ publishing {
     }
 
     publications.all {
-        pom.withXml(configureMavenCentralMetadata)
+        MavenCentralKt.configureMavenCentralMetadata(pom, project)
 
         // add empty javadocs (no need for MPP root publication which publishes only pom file)
         if (it.name != 'kotlinMultiplatform' && !isBom) {

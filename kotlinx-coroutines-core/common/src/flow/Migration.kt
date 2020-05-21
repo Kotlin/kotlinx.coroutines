@@ -22,7 +22,7 @@ import kotlin.jvm.*
  * Deprecated functions also are moved here when they renamed. The difference is that they have
  * a body with their implementation while pure stubs have [noImpl].
  */
-private fun noImpl(): Nothing =
+internal fun noImpl(): Nothing =
     throw UnsupportedOperationException("Not implemented, should not be called")
 
 /**

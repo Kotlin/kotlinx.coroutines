@@ -19,16 +19,21 @@ import kotlin.jvm.*
  * culminates in its completion.
  *
  * Jobs can be arranged into parent-child hierarchies where cancellation
- * of a parent leads to immediate cancellation of all its [children]. Failure or cancellation of a child
- * with an exception other than [CancellationException] immediately cancels its parent. This way, a parent
- * can [cancel] its own children (including all their children recursively) without cancelling itself.
+ * of a parent leads to immediate cancellation of all its [children] recursively.
+ * Failure of a child with an exception other than [CancellationException] immediately cancels its parent and,
+ * consequently, all its other children. This behavior can be customized using [SupervisorJob].
  *
- * The most basic instances of [Job] are created with [launch][CoroutineScope.launch] coroutine builder or with a
- * `Job()` factory function. By default, a failure of any of the job's children leads to an immediate failure
- * of its parent and cancellation of the rest of its children. This behavior can be customized using [SupervisorJob].
+ * The most basic instances of `Job` interface are created like this:
  *
- * Conceptually, an execution of the job does not produce a result value. Jobs are launched solely for their
+ * * **Coroutine job** is created with [launch][CoroutineScope.launch] coroutine builder.
+ *   It runs a specified block of code and completes on completion of this block.
+ * * **[CompletableJob]** is created with a `Job()` factory function.
+ *   It is completed by calling [CompletableJob.complete].
+ *
+ * Conceptually, an execution of a job does not produce a result value. Jobs are launched solely for their
  * side-effects. See [Deferred] interface for a job that produces a result.
+ *
+ * ### Job states
  *
  * A job has the following states:
  *
@@ -41,13 +46,23 @@ import kotlin.jvm.*
  * | _Cancelled_ (final state)        | `false`    | `true`        | `true`        |
  * | _Completed_ (final state)        | `false`    | `true`        | `false`       |
  *
- * Usually, a job is created in _active_ state (it is created and started). However, coroutine builders
- * that provide an optional `start` parameter create a coroutine in _new_ state when this parameter is set to
+ * Usually, a job is created in the _active_ state (it is created and started). However, coroutine builders
+ * that provide an optional `start` parameter create a coroutine in the _new_ state when this parameter is set to
  * [CoroutineStart.LAZY]. Such a job can be made _active_ by invoking [start] or [join].
  *
- * A job is _active_ while the coroutine is working. Failure of the job with exception makes it _cancelling_.
+ * A job is _active_ while the coroutine is working or until [CompletableJob] is completed,
+ * or until it fails or cancelled.
+ *
+ * Failure of an _active_ job with an exception makes it _cancelling_.
  * A job can be cancelled at any time with [cancel] function that forces it to transition to
- * _cancelling_ state immediately. The job becomes _cancelled_  when it finishes executing its work.
+ * the _cancelling_ state immediately. The job becomes _cancelled_  when it finishes executing its work and
+ * all its children complete.
+ *
+ * Completion of an _active_ coroutine's body or a call to [CompletableJob.complete] transitions the job to
+ * the _completing_ state. It waits in the _completing_ state for all its children to complete before
+ * transitioning to the _completed_ state.
+ * Note that _completing_ state is purely internal to the job. For an outside observer a _completing_ job is still
+ * active, while internally it is waiting for its children.
  *
  * ```
  *                                       wait children
@@ -67,19 +82,32 @@ import kotlin.jvm.*
  * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html)
  * represents the coroutine itself.
  *
- * A job can have a _parent_ job. A job with a parent is cancelled when its parent is cancelled.
- * Parent job waits in _completing_ or _cancelling_ state for all its children to complete before finishing.
- * Note that _completing_ state is purely internal to the job. For an outside observer a _completing_ job is still
- * active, while internally it is waiting for its children.
+ * ### Cancellation cause
  *
- * Normal cancellation of a job is distinguished from its failure by the type of its cancellation exception cause.
- * If the cause of cancellation is [CancellationException], then the job is considered to be _cancelled normally_.
- * This usually happens when [cancel] is invoked without additional parameters. If the cause of cancellation is
- * a different exception, then the job is considered to have _failed_. This usually happens when the code of the job
- * encounters some problem and throws an exception.
+ * A coroutine job is said to _complete exceptionally_ when its body throws an exception;
+ * a [CompletableJob] is completed exceptionally by calling [CompletableJob.completeExceptionally].
+ * An exceptionally completed job is cancelled and the corresponding exception becomes the _cancellation cause_ of the job.
+ *
+ * Normal cancellation of a job is distinguished from its failure by the type of this exception that caused its cancellation.
+ * A coroutine that threw [CancellationException] is considered to be _cancelled normally_.
+ * If a cancellation cause is a different exception type, then the job is considered to have _failed_.
+ * When a job has _failed_, then its parent gets cancelled with the exception of the same type,
+ * thus ensuring transparency in delegating parts of the job to its children.
+ *
+ * Note, that [cancel] function on a job only accepts [CancellationException] as a cancellation cause, thus
+ * calling [cancel] always results in a normal cancellation of a job, which does not lead to cancellation
+ * of its parent. This way, a parent can [cancel] its own children (cancelling all their children recursively, too)
+ * without cancelling itself.
+ *
+ * ### Concurrency and synchronization
  *
  * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
+ *
+ * ### Not stable for inheritance
+ *
+ * **`Job` interface and all its derived interfaces are not stable for inheritance in 3rd party libraries**,
+ * as new methods might be added to this interface in the future, but is stable for use.
  */
 public interface Job : CoroutineContext.Element {
     /**

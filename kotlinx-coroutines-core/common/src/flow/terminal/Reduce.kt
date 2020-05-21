@@ -17,7 +17,6 @@ import kotlin.jvm.*
  * Accumulates value starting with the first element and applying [operation] to current accumulator value and each element.
  * Throws [NoSuchElementException] if flow was empty.
  */
-@ExperimentalCoroutinesApi
 public suspend fun <S, T : S> Flow<T>.reduce(operation: suspend (accumulator: S, value: T) -> S): S {
     var accumulator: Any? = NULL
 
@@ -38,7 +37,6 @@ public suspend fun <S, T : S> Flow<T>.reduce(operation: suspend (accumulator: S,
 /**
  * Accumulates value starting with [initial] value and applying [operation] current accumulator value and each element
  */
-@ExperimentalCoroutinesApi
 public suspend inline fun <T, R> Flow<T>.fold(
     initial: R,
     crossinline operation: suspend (acc: R, value: T) -> R

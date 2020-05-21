@@ -76,7 +76,7 @@ The main coroutines guide has moved to the [docs folder](docs/coroutines-guide.m
   * <a name='flow-completion'></a>[Flow completion](docs/flow.md#flow-completion)
     * <a name='imperative-finally-block'></a>[Imperative finally block](docs/flow.md#imperative-finally-block)
     * <a name='declarative-handling'></a>[Declarative handling](docs/flow.md#declarative-handling)
-    * <a name='upstream-exceptions-only'></a>[Upstream exceptions only](docs/flow.md#upstream-exceptions-only)
+    * <a name='successful-completion'></a>[Successful completion](docs/flow.md#successful-completion)
   * <a name='imperative-versus-declarative'></a>[Imperative versus declarative](docs/flow.md#imperative-versus-declarative)
   * <a name='launching-flow'></a>[Launching flow](docs/flow.md#launching-flow)
   * <a name='flow-and-reactive-streams'></a>[Flow and Reactive Streams](docs/flow.md#flow-and-reactive-streams)

@@ -7,22 +7,27 @@
 
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
 import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
  * Returns flow where all subsequent repetitions of the same value are filtered out.
+ *
+ * Note that any instance of [StateFlow] already behaves as if `distinctUtilChanged` operator is
+ * applied to it, so applying `distinctUntilChanged` to a `StateFlow` has no effect.
+ * See [StateFlow] documentation on Operator Fusion.
  */
-@ExperimentalCoroutinesApi
-public fun <T> Flow<T>.distinctUntilChanged(): Flow<T> = distinctUntilChangedBy { it }
+public fun <T> Flow<T>.distinctUntilChanged(): Flow<T> =
+    when (this) {
+        is StateFlow<*> -> this
+        else -> distinctUntilChangedBy { it }
+    }
 
 /**
  * Returns flow where all subsequent repetitions of the same value are filtered out, when compared
  * with each other via the provided [areEquivalent] function.
  */
-@FlowPreview
 public fun <T> Flow<T>.distinctUntilChanged(areEquivalent: (old: T, new: T) -> Boolean): Flow<T> =
     distinctUntilChangedBy(keySelector = { it }, areEquivalent = areEquivalent)
 
@@ -30,7 +35,6 @@ public fun <T> Flow<T>.distinctUntilChanged(areEquivalent: (old: T, new: T) -> B
  * Returns flow where all subsequent repetitions of the same key are filtered out, where
  * key is extracted with [keySelector] function.
  */
-@FlowPreview
 public fun <T, K> Flow<T>.distinctUntilChangedBy(keySelector: (T) -> K): Flow<T> =
     distinctUntilChangedBy(keySelector = keySelector, areEquivalent = { old, new -> old == new })
 

@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.flow.internal
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
@@ -62,6 +63,7 @@ internal actual class SafeCollector<T> actual constructor(
 
     private fun emit(uCont: Continuation<Unit>, value: T): Any? {
         val currentContext = uCont.context
+        currentContext.ensureActive()
         // This check is triggered once per flow on happy path.
         val previousContext = lastEmissionContext
         if (previousContext !== currentContext) {

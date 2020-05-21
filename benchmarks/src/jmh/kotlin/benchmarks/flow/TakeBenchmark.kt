@@ -7,7 +7,7 @@ package benchmarks.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.openjdk.jmh.annotations.*
-import java.util.concurrent.*
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.CancellationException
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*

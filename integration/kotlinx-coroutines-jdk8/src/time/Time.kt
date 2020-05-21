@@ -1,6 +1,8 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:OptIn(ExperimentalContracts::class)
+
 package kotlinx.coroutines.time
 
 import kotlinx.coroutines.*
@@ -8,6 +10,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.*
 import java.time.*
 import java.time.temporal.*
+import kotlin.contracts.*
 
 /**
  * "java.time" adapter method for [kotlinx.coroutines.delay].
@@ -35,8 +38,12 @@ public fun <R> SelectBuilder<R>.onTimeout(duration: Duration, block: suspend () 
 /**
  * "java.time" adapter method for [kotlinx.coroutines.withTimeout].
  */
-public suspend fun <T> withTimeout(duration: Duration, block: suspend CoroutineScope.() -> T): T =
-        kotlinx.coroutines.withTimeout(duration.coerceToMillis(), block)
+public suspend fun <T> withTimeout(duration: Duration, block: suspend CoroutineScope.() -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    return kotlinx.coroutines.withTimeout(duration.coerceToMillis(), block)
+}
 
 /**
  * "java.time" adapter method for [kotlinx.coroutines.withTimeoutOrNull].

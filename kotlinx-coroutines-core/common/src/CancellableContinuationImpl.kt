@@ -32,8 +32,8 @@ internal open class CancellableContinuationImpl<in T>(
     /*
      * Implementation notes
      *
-     * AbstractContinuation is a subset of Job with following limitations:
-     * 1) It can have only cancellation listeners
+     * CancellableContinuationImpl is a subset of Job with following limitations:
+     * 1) It can have only cancellation listener (no "on cancelling")
      * 2) It always invokes cancellation listener if it's cancelled (no 'invokeImmediately')
      * 3) It can have at most one cancellation listener
      * 4) Its cancellation listeners cannot be deregistered
@@ -82,7 +82,7 @@ internal open class CancellableContinuationImpl<in T>(
     public override val isCancelled: Boolean get() = state is CancelledContinuation
 
     public override fun initCancellability() {
-        // This method does nothing. Leftover for binary compatibility with old compiled code
+        setupCancellation()
     }
 
     private fun isReusable(): Boolean = delegate is DispatchedContinuation<*> && delegate.isReusable(this)
@@ -107,7 +107,8 @@ internal open class CancellableContinuationImpl<in T>(
 
     /**
      * Setups parent cancellation and checks for postponed cancellation in the case of reusable continuations.
-     * It is only invoked from an internal [getResult] function.
+     * It is only invoked from an internal [getResult] function for reusable continuations
+     * and from [suspendCancellableCoroutine] to establish a cancellation before registering CC anywhere.
      */
     private fun setupCancellation() {
         if (checkCompleted()) return
@@ -453,4 +454,3 @@ private class CompletedWithCancellation(
 ) {
     override fun toString(): String = "CompletedWithCancellation[$result]"
 }
-

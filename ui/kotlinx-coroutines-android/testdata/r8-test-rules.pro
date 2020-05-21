@@ -6,6 +6,7 @@
 -checkdiscard class kotlinx.coroutines.internal.FastServiceLoader
 -checkdiscard class kotlinx.coroutines.DebugKt
 -checkdiscard class kotlinx.coroutines.internal.StackTraceRecoveryKt
+-checkdiscard class kotlinx.coroutines.debug.DebugProbesKt
 
 # Real android projects do not keep this class, but somehow it is kept in this test (R8 bug)
 # -checkdiscard class kotlinx.coroutines.internal.MissingMainCoroutineDispatcher
