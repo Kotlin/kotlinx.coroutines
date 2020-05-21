@@ -514,23 +514,24 @@ class SharedFlowTest : TestBase() {
     @Test
     public fun testOnSubscription() = runTest {
         expect(1)
-        val sh = MutableSharedFlow<String>(1)
+        val sh = MutableSharedFlow<String>(0)
+        fun share(s: String) { launch(start = CoroutineStart.UNDISPATCHED) { sh.emit(s) } }
         sh
             .onSubscription {
                 emit("collector->A")
-                sh.tryEmit("shared->A")
+                share("share->A")
             }
             .onSubscription {
                 emit("collector->B")
-                sh.tryEmit("shared->B")
+                share("share->B")
             }
             .onStart {
                 emit("collector->C")
-                sh.tryEmit("shared->C")
+                share("share->C") // get's lost, no subscribers yet
             }
             .onStart {
                 emit("collector->D")
-                sh.tryEmit("shared->D")
+                share("share->D") // get's lost, no subscribers yet
             }
             .onEach {
                 when (it) {
@@ -538,15 +539,40 @@ class SharedFlowTest : TestBase() {
                     "collector->C" -> expect(3)
                     "collector->A" -> expect(4)
                     "collector->B" -> expect(5)
-                    "shared->C" -> {
-                        expect(6)
+                    "share->A" -> expect(6)
+                    "share->B" -> {
+                        expect(7)
                         currentCoroutineContext().cancel()
                     }
+                    else -> expectUnreached()
                 }
             }
             .launchIn(this)
             .join()
-        finish(7)
+        finish(8)
+    }
+
+    @Test
+    fun onSubscriptionThrows() = runTest {
+        expect(1)
+        val sh = MutableSharedFlow<String>(1)
+        sh.tryEmit("OK") // buffer a string
+        assertEquals(listOf("OK"), sh.replayCache)
+        sh
+            .onSubscription {
+                expect(2)
+                throw TestException()
+            }
+            .catch { e ->
+                assertTrue(e is TestException)
+                expect(3)
+            }
+            .collect {
+                // onSubscription throw before replay is emitted, so no value is collected if it throws
+                expectUnreached()
+            }
+        assertEquals(0, sh.subscriptionCount.value)
+        finish(4)
     }
 
     @Test
