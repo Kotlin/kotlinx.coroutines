@@ -81,7 +81,9 @@ publishing {
                 publishPlatformArtifactsInRootModule(publications["jvm"])
                 break
             case 'metadata':
-                it.artifactId = "$project.name-common"
+                // As the old -common dependencies will fail to resolve with Gradle module metadata, rename the module
+                // to '*-metadata' so that the resolution failure are more clear
+                it.artifactId = isKotlin137x ? "$project.name-common" : "$project.name-metadata"
                 break
             case 'jvm':
                 it.artifactId = "$project.name-jvm"
