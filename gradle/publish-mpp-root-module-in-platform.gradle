@@ -1,0 +1,39 @@
+/*
+ * Copyright 2014-2020 JetBrains s.r.o and contributors. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+
+/*
+ * Publish the platform JAR and POM so that consumers who depend on this module and can't read Gradle module metadata
+ * can still get the platform artifact and transitive dependencies from the POM.
+ *
+ * See the full rationale here https://youtrack.jetbrains.com/issue/KMM-237#focus=streamItem-27-4115233.0-0
+ */
+project.ext.publishPlatformArtifactsInRootModule = { platformPublication ->
+    def platformPomBuilder = null
+
+    platformPublication.pom.withXml { platformPomBuilder = asString() }
+
+    publishing.publications.kotlinMultiplatform  {
+        platformPublication.artifacts.forEach {
+            artifact(it)
+        }
+
+        pom.withXml {
+            def pomStringBuilder = asString()
+            pomStringBuilder.setLength(0)
+            // The platform POM needs its artifact ID replaced with the artifact ID of the root module:
+            def platformPomString = platformPomBuilder.toString()
+            platformPomString.eachLine { line ->
+                if (!line.contains("<!--")) { // Remove the Gradle module metadata marker as it will be added anew
+                    pomStringBuilder.append(line.replace(platformPublication.artifactId, artifactId))
+                    pomStringBuilder.append("\n")
+                }
+            }
+        }
+    }
+
+    tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication"}.configureEach {
+        dependsOn(tasks["generatePomFileFor${platformPublication.name.capitalize()}Publication"])
+    }
+}
