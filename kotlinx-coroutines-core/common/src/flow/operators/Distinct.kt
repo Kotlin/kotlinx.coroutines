@@ -9,7 +9,6 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
  * Returns flow where all subsequent repetitions of the same value are filtered out.
@@ -19,40 +18,46 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * See [StateFlow] documentation on Operator Fusion.
  */
 public fun <T> Flow<T>.distinctUntilChanged(): Flow<T> =
-    when (this) {
-        is StateFlow<*> -> this
-        else -> distinctUntilChangedBy { it }
+    when {
+        this is DistinctFlow<*> && isDefaultEquivalence -> this // some other internal impls beyond StateFlow are distinct, too
+        else -> distinctUntilChangedBy(keySelector = defaultKeySelector, areEquivalent = defaultAreEquivalent)
     }
 
 /**
  * Returns flow where all subsequent repetitions of the same value are filtered out, when compared
  * with each other via the provided [areEquivalent] function.
  */
+@Suppress("UNCHECKED_CAST")
 public fun <T> Flow<T>.distinctUntilChanged(areEquivalent: (old: T, new: T) -> Boolean): Flow<T> =
-    distinctUntilChangedBy(keySelector = { it }, areEquivalent = areEquivalent)
+    distinctUntilChangedBy(keySelector = defaultKeySelector, areEquivalent = areEquivalent as (Any?, Any?) -> Boolean)
 
 /**
  * Returns flow where all subsequent repetitions of the same key are filtered out, where
  * key is extracted with [keySelector] function.
  */
 public fun <T, K> Flow<T>.distinctUntilChangedBy(keySelector: (T) -> K): Flow<T> =
-    distinctUntilChangedBy(keySelector = keySelector, areEquivalent = { old, new -> old == new })
+    distinctUntilChangedBy(keySelector = keySelector, areEquivalent = defaultAreEquivalent)
+
+private val defaultKeySelector: (Any?) -> Any? = { it }
+private val defaultAreEquivalent: (Any?, Any?) -> Boolean = { old, new -> old == new }
 
 /**
  * Returns flow where all subsequent repetitions of the same key are filtered out, where
  * keys are extracted with [keySelector] function and compared with each other via the
  * provided [areEquivalent] function.
+ *
+ * NOTE: It is non-inline to share a single implelenting class.
  */
-private inline fun <T, K> Flow<T>.distinctUntilChangedBy(
-    crossinline keySelector: (T) -> K,
-    crossinline areEquivalent: (old: K, new: K) -> Boolean
+private fun <T> Flow<T>.distinctUntilChangedBy(
+    keySelector: (T) -> Any?,
+    areEquivalent: (old: Any?, new: Any?) -> Boolean
 ): Flow<T> =
-    flow {
+    unsafeDistinctFlow(keySelector === defaultKeySelector && areEquivalent === defaultAreEquivalent) {
         var previousKey: Any? = NULL
         collect { value ->
             val key = keySelector(value)
             @Suppress("UNCHECKED_CAST")
-            if (previousKey === NULL || !areEquivalent(previousKey as K, key)) {
+            if (previousKey === NULL || !areEquivalent(previousKey, key)) {
                 previousKey = key
                 emit(value)
             }
