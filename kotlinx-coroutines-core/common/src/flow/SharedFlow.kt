@@ -5,6 +5,7 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
@@ -37,12 +38,6 @@ public fun <T> MutableSharedFlow(
         onBufferOverflow,
         initialValue
     )
-
-public enum class BufferOverflow {
-    SUSPEND, // default behavior
-    KEEP_LATEST, // ~ conflate() operator
-    DROP_LATEST, // ~ dropWhenBusy() operator
-}
 
 // ------------------------------------ Implementation ------------------------------------
 
