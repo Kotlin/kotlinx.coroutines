@@ -1870,7 +1870,7 @@ import kotlinx.coroutines.flow.*
 
 //sampleStart           
 fun main() = runBlocking<Unit> {
-    (1..5).asFlow().().collect { value -> 
+    (1..5).asFlow().cancellable().collect { value -> 
         if (value == 3) cancel()  
         println(value)
     } 
