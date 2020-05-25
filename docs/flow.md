@@ -1792,7 +1792,10 @@ import kotlinx.coroutines.flow.*
 
 //sampleStart           
 fun foo(): Flow<Int> = flow { 
-    for (i in 1..5) { emit(i) }
+    for (i in 1..5) {
+        println("Emitting $i") 
+        emit(i) 
+    }
 }
 
 fun main() = runBlocking<Unit> {
@@ -1808,12 +1811,16 @@ fun main() = runBlocking<Unit> {
 
 > You can get the full code from [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-37.kt).
 
-We get only numbers up to 3 and a [CancellationException]:
+We get only numbers up to 3 and a [CancellationException] after trying to emit number 4:
 
-```text
+```text 
+Emitting 1
 1
+Emitting 2
 2
+Emitting 3
 3
+Emitting 4
 Exception in thread "main" kotlinx.coroutines.JobCancellationException: BlockingCoroutine was cancelled; job="coroutine#1":BlockingCoroutine{Cancelled}@6d7b4f4c
 ```
 

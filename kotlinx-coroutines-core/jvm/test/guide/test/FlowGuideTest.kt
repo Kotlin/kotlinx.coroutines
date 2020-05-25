@@ -385,9 +385,13 @@ class FlowGuideTest {
     @Test
     fun testExampleFlow37() {
         test("ExampleFlow37") { kotlinx.coroutines.guide.exampleFlow37.main() }.verifyExceptions(
+            "Emitting 1",
             "1",
+            "Emitting 2",
             "2",
+            "Emitting 3",
             "3",
+            "Emitting 4",
             "Exception in thread \"main\" kotlinx.coroutines.JobCancellationException: BlockingCoroutine was cancelled; job=\"coroutine#1\":BlockingCoroutine{Cancelled}@6d7b4f4c"
         )
     }
