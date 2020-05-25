@@ -67,16 +67,18 @@ class RejectedExecutionTest : TestBase() {
                     try {
                         withContext(Dispatchers.Default) {
                             expect(3)
+                            assertDefaultDispatcherThread()
                         }
                         // cancelled on resume back
                     } finally {
+                        expect(4)
                         assertIoThread()
                     }
                     expectUnreached()
                 }
         }
         assertEquals(2, executor.submittedTasks)
-        finish(4)
+        finish(5)
     }
 
     @Test
@@ -133,6 +135,12 @@ class RejectedExecutionTest : TestBase() {
     private fun assertExecutorThread() {
         val thread = Thread.currentThread()
         if (!thread.name.startsWith(threadName)) error("Not an executor thread: $thread")
+    }
+
+    private fun assertDefaultDispatcherThread() {
+        val thread = Thread.currentThread()
+        if (thread !is CoroutineScheduler.Worker) error("Not a thread from Dispatchers.Default: $thread")
+        assertEquals(CoroutineScheduler.WorkerState.CPU_ACQUIRED, thread.state)
     }
 
     private fun assertIoThread() {
