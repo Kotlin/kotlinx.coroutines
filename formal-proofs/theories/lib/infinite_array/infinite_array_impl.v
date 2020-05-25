@@ -174,133 +174,25 @@ Let cell_invariant_persistent:= p_cell_invariant_persistent array_parameters.
 Existing Instance cell_is_done_persistent.
 Existing Instance cell_invariant_persistent.
 
-Global Instance list_core_id' {A: ucmraT} (l: listUR A) :
-  (forall x, x ∈ l -> CoreId x) -> CoreId l.
-Proof.
-  intros Hyp. constructor. apply list_equiv_lookup=> i.
-  rewrite list_lookup_core.
-  destruct (l !! i) eqn:E; rewrite E.
-  2: done.
-  apply Hyp.
-  eapply elem_of_list_lookup; by eauto.
-Qed.
-
-Section ias_segment_info.
-
-Definition ias_segment_info (id: nat) (s: segment_algebra):
-  listUR segment_algebra := replicate id ε ++ [s].
-
-Theorem ias_segment_info_lookup (id: nat) (s: segment_algebra):
-  ias_segment_info id s !! id = Some s.
-Proof. rewrite /ias_segment_info. induction id; auto. Qed.
-
-Theorem ias_segment_info_alter (id: nat) s f:
-  list_alter f id (ias_segment_info id s) = ias_segment_info id (f s).
-Proof.
-  apply list_eq.
-  intros i.
-  destruct (nat_eq_dec i id).
-  - subst.
-    rewrite list_lookup_alter.
-    by repeat rewrite ias_segment_info_lookup.
-  - rewrite list_lookup_alter_ne; auto.
-    rewrite /ias_segment_info.
-    generalize dependent i.
-    induction id; destruct i; simpl; auto.
-    contradiction.
-Qed.
-
-Theorem ias_segment_info_op id s s':
-  ias_segment_info id (s ⋅ s') =
-  ias_segment_info id s ⋅ ias_segment_info id s'.
-Proof.
-  rewrite /ias_segment_info.
-  induction id; simpl.
-  2: rewrite IHid.
-  all: apply list_eq; case; simpl; trivial.
-Qed.
-
-Global Instance ias_segment_info_core_id (id: nat) (s: segment_algebra):
-  CoreId s -> CoreId (ias_segment_info id s).
-Proof.
-  intro SegHyp.
-  rewrite /ias_segment_info.
-  apply list_core_id'.
-  intros ? HElemOf.
-  induction id; simpl in *.
-  all: inversion HElemOf; subst; first by apply _.
-  - exfalso. by eapply not_elem_of_nil.
-  - by apply IHid.
-Qed.
-
-Theorem ias_segment_info_valid (id: nat) (s: segment_algebra):
-  ✓ (ias_segment_info id s) <-> ✓ s.
-Proof.
-  rewrite /ias_segment_info.
-  split.
-  - intro Hev.
-    induction id; simpl in *; by inversion Hev; auto.
-  - intros.
-    apply list_lookup_valid.
-    induction id; simpl; first by case.
-    case; simpl; trivial.
-    by compute.
-Qed.
-
-End ias_segment_info.
-
-Ltac segment_info_persistent :=
-  apply own_core_persistent; apply auth_frag_core_id;
-  apply ias_segment_info_core_id; repeat apply pair_core_id; try apply _.
-
 Section ias_cell_info.
 
 Definition ias_cell_info' (id_seg id_cell: nat) (c: cell_algebra):
-  listUR segment_algebra :=
-  ias_segment_info id_seg (ε, replicate id_cell ε ++ [c]).
+  listUR segment_algebra := {[ id_seg := (ε, {[ id_cell := c ]}) ]}.
 
 Theorem ias_cell_info'_op ns nc s s':
-  ias_cell_info' ns nc (s ⋅ s') =
+  ias_cell_info' ns nc (s ⋅ s') ≡
   ias_cell_info' ns nc s ⋅ ias_cell_info' ns nc s'.
-Proof.
-  rewrite /ias_cell_info'.
-  rewrite -ias_segment_info_op.
-  congr (ias_segment_info ns).
-  rewrite -pair_op.
-  replace ((replicate nc ε ++ [s]) ⋅ (replicate nc ε ++ [s']))
-          with (replicate nc ε ++ [s ⋅ s']).
-  remember (_ ++ _) as k; by compute.
-  induction nc; simpl.
-  2: rewrite IHnc.
-  all: apply list_eq; by case.
-Qed.
+Proof. by rewrite list_singleton_op -pair_op list_singleton_op. Qed.
 
 Global Instance ias_cell_info'_core_id (ids idc: nat) (c: cell_algebra):
   CoreId c -> CoreId (ias_cell_info' ids idc c).
-Proof.
-  intro CellHyp.
-  apply ias_segment_info_core_id.
-  apply pair_core_id; first by apply _.
-  apply list_core_id'.
-  induction idc; intros ? HElemOf; simpl in *.
-  all: inversion HElemOf; first by apply _.
-  - exfalso. by eapply not_elem_of_nil.
-  - by apply IHidc.
-Qed.
+Proof. apply _. Qed.
 
 Theorem ias_cell_info'_valid (ns nc: nat) (s: cell_algebra):
   ✓ (ias_cell_info' ns nc s) <-> ✓ s.
 Proof.
-  rewrite /ias_cell_info'.
-  split.
-  - intros Hev.
-    apply ias_segment_info_valid in Hev.
-    destruct Hev as [_ Hev]. simpl in *.
-    induction nc; inversion Hev; by auto.
-  - intros. apply ias_segment_info_valid.
-    apply pair_valid; split; first by compute.
-    apply list_lookup_valid.
-    induction nc; case; done.
+  rewrite list_singleton_valid pair_valid list_singleton_valid.
+  split; by [done|case].
 Qed.
 
 Definition ias_cell_info_view {A: Type} f id: A :=
@@ -313,54 +205,44 @@ Theorem ias_cell_info_view_eq {A: Type} ns nc n (f: nat -> nat -> A):
   n = (nc + ns * Pos.to_nat segment_size)%nat ->
   f ns nc = ias_cell_info_view f n.
 Proof.
-  rewrite /ias_cell_info_view.
-  intros Hlt Heq. subst.
-  replace ((nc + ns * Pos.to_nat segment_size) `div` Pos.to_nat segment_size)%nat
-    with ns.
-  replace ((nc + ns * Pos.to_nat segment_size) `mod` Pos.to_nat segment_size)%nat
-    with nc.
-  done.
-  { rewrite Nat.mod_add. by rewrite Nat.mod_small.
-    assert (O < Pos.to_nat segment_size)%nat by apply Pos2Nat.is_pos; lia. }
-  { rewrite Nat.div_add. by rewrite Nat.div_small.
-    assert (O < Pos.to_nat segment_size)%nat by apply Pos2Nat.is_pos; lia. }
+  move=> HLt ->. rewrite /ias_cell_info_view.
+  congr f.
+  - rewrite Nat.div_add; last lia. by rewrite Nat.div_small.
+  - rewrite Nat.mod_add; last lia. by rewrite Nat.mod_small.
 Qed.
 
 End ias_cell_info.
 
-Ltac cell_info_persistent :=
-  apply own_core_persistent; apply auth_frag_core_id;
-  apply ias_cell_info'_core_id; repeat apply pair_core_id; try apply _.
-
-Definition segment_exists γ id := own γ (◯ (ias_segment_info id ε)).
+Definition segment_exists γ id := own γ (◯ ({[ id := ε ]})).
 
 Global Instance segment_exists_persistent γ id: Persistent (segment_exists γ id).
 Proof. apply _. Qed.
 
 Theorem segment_exists_from_segment_info γ id p:
-  own γ (◯ (ias_segment_info id p)) -∗
-      own γ (◯ (ias_segment_info id p)) ∗ segment_exists γ id.
+  own γ (◯ {[ id := p ]}) -∗
+      own γ (◯ {[ id := p ]}) ∗ segment_exists γ id.
 Proof.
-  rewrite /segment_exists -own_op -auth_frag_op -ias_segment_info_op.
-  rewrite ucmra_unit_right_id. done.
+  rewrite /segment_exists -own_op -auth_frag_op list_singleton_op.
+  by rewrite ucmra_unit_right_id.
 Qed.
 
 Section locations.
 
 Definition segment_locations γ id ℓs: iProp :=
-  own γ (◯ (ias_segment_info id (Some (to_agree ℓs), nil))).
+  own γ (◯ {[id := (Some (to_agree ℓs), nil)]}).
 
 Global Instance segment_locations_persistent γ id ℓs:
   Persistent (segment_locations γ id ℓs).
-Proof. by segment_info_persistent. Qed.
+Proof. apply _. Qed.
 
 Theorem segment_locations_agree γ id ℓs ℓs':
   segment_locations γ id ℓs -∗ segment_locations γ id ℓs' -∗ ⌜ℓs = ℓs'⌝.
 Proof.
   iIntros "HLoc1 HLoc2".
-  iDestruct (own_valid_2 with "HLoc1 HLoc2") as %HValid. iPureIntro.
-  revert HValid.
-  rewrite auth_frag_valid -ias_segment_info_op ias_segment_info_valid.
+  iDestruct (own_valid_2 with "HLoc1 HLoc2") as %HValid.
+  iPureIntro.
+  move: HValid.
+  rewrite auth_frag_valid list_singleton_op list_singleton_valid.
   repeat case; simpl; intros.
   by apply agree_op_invL'.
 Qed.
@@ -584,7 +466,7 @@ Definition is_segment γ (id: nat) (ℓ: loc) (pl nl: val) : iProp :=
           ⌜cancelled = length (List.filter (fun i => i) (vec_to_list cells))⌝ ∗
           cells_are_cancelled γ id cells ∗ cell_cancellation_parts γ id cells))%I.
 
-Definition can_not_be_tail γ id := own γ (◯ (ias_segment_info (S id) ε)).
+Definition can_not_be_tail γ id := own γ (◯ {[ S id := ε ]}).
 
 Definition is_normal_segment γ (ℓ: loc) (id: nat): iProp :=
   (∃ pl nl, is_segment γ id ℓ pl nl ∗ is_valid_next γ id nl)%I.
@@ -753,20 +635,19 @@ Proof.
 Qed.
 
 Lemma segment_info_to_cell_info' l γ id:
-  forall k, own γ (◯ ias_segment_info id (ε, replicate k ε ++ l)) ≡
+  forall k, own γ (◯ {[ id := (ε, replicate k ε ++ l) ]}) ≡
   (([∗ list] i ↦ e ∈ l, own γ (◯ ias_cell_info' id (k+i)%nat e)) ∗
-  own γ (◯ ias_segment_info id (ε, replicate (k + length l)%nat ε)))%I.
+  own γ (◯ {[ id := (ε, replicate (k + length l)%nat ε) ]}))%I.
 Proof.
   induction l; simpl; intros.
   { by rewrite -plus_n_O app_nil_r bi.emp_sep. }
   rewrite -plus_n_O -plus_n_Sm.
   assert (
-      own γ (◯ ias_segment_info id (ε, replicate k ε ++ a :: l)) ≡
-      (own γ (◯ ias_segment_info id (ε, replicate (S k) ε ++ l)) ∗
+      own γ (◯ {[ id := (ε, replicate k ε ++ a :: l) ]}) ≡
+      (own γ (◯ {[ id := (ε, replicate (S k) ε ++ l) ]}) ∗
        own γ (◯ ias_cell_info' id k a))%I) as ->.
   {
-    rewrite -own_op /ias_cell_info' -auth_frag_op -ias_segment_info_op -pair_op.
-    rewrite ucmra_unit_left_id.
+    rewrite -own_op -auth_frag_op list_singleton_op -pair_op ucmra_unit_left_id.
     assert (((replicate (S k) ε ++ l) ⋅ (replicate k ε ++ [a])) ≡
             replicate k ε ++ a :: l) as ->.
     { apply list_equiv_lookup.
@@ -846,11 +727,11 @@ Proof.
     by (symmetry; apply Qp_quarter_three_quarter).
   iMod (own_update_2 with "HAuth HCancPermit") as "[HAuth HSeg]".
   { apply auth_update.
-    apply (let update_list := list_alter (fun _ => Some (Cinl (to_agree ()))) cid in
+    apply (let update_list := alter (fun _ => Some (Cinl (to_agree ()))) cid in
            let auth_fn x := (x.1, update_list x.2) in
            let frag_fn x := (x.1, update_list x.2)
            in list_alter_local_update id auth_fn frag_fn).
-    rewrite ias_segment_info_lookup.
+    rewrite list_lookup_singleton.
     simpl.
     unfold lookup.
     destruct (list_lookup id segments); simpl.
@@ -871,15 +752,9 @@ Proof.
     - apply alloc_option_local_update.
       done.
   }
-  rewrite ias_segment_info_alter.
+  rewrite /ias_cell_info' list_alter_singleton.
   simpl.
-  replace (list_alter _ cid _) with (replicate cid ε ++ [Some (Cinl (to_agree ()))]).
-  2: {
-    apply list_eq; intros.
-    clear.
-    generalize dependent i.
-    induction cid; destruct i; simpl; auto.
-  }
+  rewrite list_alter_singleton.
   iAssert (cell_is_cancelled' γ id cid) with "HSeg" as "#HSeg'".
   iClear "HSeg".
   iAssert (cells_are_cancelled γ id cancelled_cells')%I as "HCancLoc'".
@@ -999,7 +874,7 @@ Proof.
         as %[HValid _]%auth_both_valid.
       exfalso. revert HValid. rewrite list_lookup_included.
       intro HValid. specialize (HValid hid).
-      rewrite ias_segment_info_lookup in HValid.
+      rewrite list_lookup_singleton in HValid.
       assert (length segments' <= hid)%nat as HIsNil by lia.
       apply lookup_ge_None in HIsNil. rewrite HIsNil in HValid.
       apply option_included in HValid.
@@ -1124,7 +999,7 @@ Proof.
           as %[HValid _]%auth_both_valid.
         iPureIntro. revert HValid. rewrite list_lookup_included.
         intro HValid. specialize (HValid id).
-        rewrite ias_segment_info_lookup in HValid.
+        rewrite list_lookup_singleton in HValid.
         apply option_included in HValid.
         destruct HValid as [[=]|[a [b [_ [HHH _]]]]].
         apply lookup_lt_is_Some_1. by eexists _.
@@ -1223,7 +1098,7 @@ Proof.
     exfalso. move: HContra.
     rewrite auth_both_valid; case. rewrite list_lookup_included.
     intros HContra _. specialize (HContra (S id)). revert HContra.
-    rewrite ias_segment_info_lookup.
+    rewrite list_lookup_singleton.
     assert (length segments' <= S id)%nat as HIsNil by lia.
     apply lookup_ge_None in HIsNil. rewrite HIsNil.
     rewrite option_included. intros HValid.
@@ -1257,11 +1132,9 @@ Proof.
   rewrite /segment_locations. remember (_, _) as K.
   rewrite /can_not_be_tail.
   clear HeqK.
-  iAssert (ias_segment_info nid K ≡ ias_segment_info nid K ⋅
-                            ias_segment_info (S id) ε)%I as "HH".
-  { iClear "SegLoc". rewrite /ias_segment_info.
-    iPureIntro. apply list_equiv_lookup. intros i.
-    simpl. rewrite list_lookup_op. generalize dependent i.
+  iAssert ({[ nid := K ]} ≡ list_singletonM nid K ⋅ {[ (S id) := ε ]})%I as %->.
+  { iPureIntro. rewrite /singletonM. apply list_equiv_lookup.
+    intros i. rewrite list_lookup_op. generalize dependent i.
     generalize dependent id.
     induction nid as [|nid']; intros; first by lia.
     simpl. destruct i; first done; simpl.
@@ -1270,7 +1143,6 @@ Proof.
     - by rewrite -Some_op ucmra_unit_right_id.
     - by destruct ((replicate nid' _ ++ _) !! _).
   }
-  iRewrite "HH" in "SegLoc".
   rewrite auth_frag_op own_op.
   iDestruct "SegLoc" as "[_ $]".
 Qed.
@@ -2046,7 +1918,7 @@ Proof.
           as %[HValid _]%auth_both_valid.
         exfalso. revert HValid. rewrite list_lookup_included.
         intro HValid. specialize (HValid (S m)).
-        rewrite ias_segment_info_lookup in HValid.
+        rewrite list_lookup_singleton in HValid.
         assert (length segments' <= (S m))%nat as HIsNil by lia.
         apply lookup_ge_None in HIsNil. rewrite HIsNil in HValid.
         apply option_included in HValid.
@@ -2133,15 +2005,10 @@ Proof.
 Qed.
 
 Lemma segment_info_to_cell_info l γ id:
-  own γ (◯ ias_segment_info id (ε, l)) ≡
+  own γ (◯ {[ id := (ε, l) ]}) ≡
   (([∗ list] i ↦ e ∈ l, own γ (◯ ias_cell_info' id i e)) ∗
-  own γ (◯ ias_segment_info id (ε, replicate (length l)%nat ε)))%I.
-Proof.
-  replace (ias_segment_info id (ε, l)) with
-      (ias_segment_info id (ε, replicate O ε ++ l)).
-  2: by auto.
-  by rewrite segment_info_to_cell_info'.
-Qed.
+  own γ (◯ {[ id := (ε, replicate (length l)%nat ε) ]}))%I.
+Proof. by apply segment_info_to_cell_info' with (k := O). Qed.
 
 Lemma algebra_append_new_segment p γ segments:
   own γ (● segments) -∗
@@ -2171,19 +2038,15 @@ Proof.
         case; done. }
     subst; apply local_update_refl.
   }
-  remember (Some _, _) as K.
-  replace (replicate _ _ ++ _) with (ias_segment_info (length segments) K).
-  all: subst K. 2: rewrite /ias_segment_info.
-  2: apply list_eq; induction (length segments); case; done.
   iModIntro. iExists _. iFrame.
   replace (Some _, replicate _ _) with
       ((Some (to_agree p), ε)
          ⋅ (ε, replicate (Pos.to_nat segment_size) (Some (Cinr 1%Qp)))) by done.
-  rewrite ias_segment_info_op auth_frag_op own_op.
+  rewrite -[replicate _ _ ++ _]list_singleton_op auth_frag_op own_op.
   iDestruct "HFrag" as "[HSegLoc HCanc]".
   rewrite /segment_locations. iFrame "HSegLoc".
   replace (1%Qp) with ((1/4)%Qp ⋅ (3/4)%Qp) by apply Qp_quarter_three_quarter.
-  rewrite Cinr_op Some_op replicate_op pair_op_2 ias_segment_info_op auth_frag_op own_op.
+  rewrite Cinr_op Some_op replicate_op pair_op_2 -list_singleton_op auth_frag_op own_op.
   iDestruct "HCanc" as "[HCancParts HCancHandles]".
   iSplitL "HCancParts".
   {
@@ -2352,7 +2215,7 @@ Proof.
         as %[HValid _]%auth_both_valid.
       exfalso. revert HValid. rewrite list_lookup_included.
       intro HValid. specialize (HValid (S m)).
-      rewrite ias_segment_info_lookup in HValid.
+      rewrite list_lookup_singleton in HValid.
       assert (length segments' <= S m)%nat as HIsNil by lia.
       apply lookup_ge_None in HIsNil. rewrite HIsNil in HValid.
       apply option_included in HValid.

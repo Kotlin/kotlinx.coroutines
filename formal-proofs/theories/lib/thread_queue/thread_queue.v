@@ -586,7 +586,7 @@ Theorem cell_list_contents_done_agree γ l (deqFront: nat) i c:
 Proof.
   iIntros "HAuth HFrag".
   iDestruct (own_valid_2 with "HAuth HFrag")
-    as %[[_ (v&HEl&HInc)%list_singletonM_included]%prod_included _]%auth_both_valid.
+    as %[[_ (v&HEl&HInc)%list_singleton_included]%prod_included _]%auth_both_valid.
   simpl in *. iPureIntro.
 
   rewrite map_lookup in HEl.
@@ -622,7 +622,7 @@ Theorem cell_list_contents_ra_locs γ l deqFront i γt th:
 Proof.
   iIntros "HAuth HFrag".
   iDestruct (own_valid_2 with "HAuth HFrag")
-    as %[[_ (v&HEl&HInc)%list_singletonM_included]%prod_included _]%auth_both_valid.
+    as %[[_ (v&HEl&HInc)%list_singleton_included]%prod_included _]%auth_both_valid.
   simpl in *. iPureIntro.
 
   rewrite map_lookup in HEl.
@@ -676,7 +676,7 @@ Proof.
   iDestruct (own_valid_2 with "HAuth HExistsEl")
     as %[[_ HH]%prod_included _]%auth_both_valid.
   simpl in *. iPureIntro.
-  apply list_singletonM_included in HH.
+  apply list_singleton_included in HH.
   destruct HH as (v & HMap & _). rewrite map_lookup in HMap.
   destruct (l !! i); simpl in *; [eauto|done].
 Qed.
@@ -1538,8 +1538,8 @@ Proof.
       by apply mnat_local_update; lia.
     }
     destruct (decide (i < j)%nat).
-    by rewrite list_lookup_singletonM_gt // list_lookup_alter_ne //.
-    rewrite list_lookup_alter_ne // list_lookup_singletonM_lt; last by lia.
+    by rewrite list_lookup_singleton_gt // list_lookup_alter_ne //.
+    rewrite list_lookup_alter_ne // list_lookup_singleton_lt; last by lia.
     assert (i < length l)%nat. by apply lookup_lt_is_Some; eauto.
     assert (is_Some (l !! j)) as [? ->]. by apply lookup_lt_is_Some; lia.
     by apply option_local_update'.
@@ -1649,7 +1649,7 @@ Proof.
       iExists γt, th. iApply (own_mono with "HFrag").
       apply auth_included; split; first done.
       apply prod_included'; split; first by apply ucmra_unit_least.
-      rewrite list_singleton_op. apply list_singletonM_included.
+      rewrite list_singleton_op. apply list_singleton_included.
       rewrite list_lookup_singleton.
       eexists. split; first done.
       apply prod_included'; split; simpl; last done.
@@ -1694,7 +1694,7 @@ Proof.
     apply auth_included; split; first done.
     apply prod_included'; split; simpl; first done.
     rewrite list_singleton_op. rewrite ucmra_unit_right_id.
-    apply list_singletonM_included.
+    apply list_singleton_included.
     rewrite list_lookup_singleton.
     eexists. split; first done.
     apply prod_included'; split; simpl; last by apply ucmra_unit_least.
@@ -1722,7 +1722,7 @@ Proof.
   by apply lookup_lt_is_Some; eauto.
   destruct (decide (j < i)%nat).
   {
-    rewrite list_lookup_singletonM_lt; last done.
+    rewrite list_lookup_singleton_lt; last done.
     assert (is_Some (l !! j)) as [? ->].
     by apply lookup_lt_is_Some; lia.
     simpl.
@@ -1731,7 +1731,7 @@ Proof.
   }
   destruct (decide (j = i)).
   2: {
-    rewrite list_lookup_singletonM_gt; try lia.
+    rewrite list_lookup_singleton_gt; try lia.
     rewrite option_included. left. done.
   }
   subst.

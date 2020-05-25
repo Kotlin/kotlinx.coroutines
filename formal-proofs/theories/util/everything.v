@@ -1,23 +1,6 @@
 From iris.heap_lang Require Import proofmode notation lang.
 From iris.algebra Require Import cmra auth list agree csum excl gset frac.
 
-Theorem elem_of_map {A B} {f: A -> B} (l: list A) x:
-  x ∈ f <$> l -> (exists y, y ∈ l /\ x = f y).
-Proof.
-  intros Hel.
-  destruct l; first by inversion Hel.
-  simpl in Hel.
-  remember (f a :: list_fmap A B f l) as l'.
-  generalize dependent l.
-  generalize dependent a.
-  induction Hel as [|x ? l'' Hel]; intros; inversion Heql'; subst; simpl in *.
-  - exists a; split; econstructor.
-  - destruct l; first by inversion Hel.
-    simpl in *.
-    destruct (IHHel _ _ eq_refl) as [y' [Hy'el Hy'eq]]; subst.
-    eexists _; split; by econstructor.
-Qed.
-
 Lemma list_lookup_local_update {A: ucmraT}:
   forall (x y x' y': list A),
     (forall i, (x !! i, y !! i) ~l~> (x' !! i, y' !! i)) ->
@@ -60,7 +43,7 @@ Qed.
 Lemma list_alter_local_update {A: ucmraT}:
   forall n f g (x y: list A),
     (x !! n, y !! n) ~l~> (f <$> (x !! n), g <$> (y !! n)) ->
-    (x, y) ~l~> (list_alter f n x, list_alter g n y).
+    (x, y) ~l~> (alter f n x, alter g n y).
 Proof.
   intros ? ? ? ? ? Hup.
   apply list_lookup_local_update.
@@ -80,7 +63,7 @@ Proof.
 Qed.
 
 Lemma map_lookup: forall {A B: Type} (f: A -> B) l i, map f l !! i = option_map f (l !! i).
-Proof. induction l; destruct i; simpl; auto. Qed.
+Proof. intros. apply list_lookup_fmap. Qed.
 
 Lemma big_opL_forall' {M: ofeT} {o: M -> M -> M} {H': Monoid o} {A B: Type}
       R f g (l: list A) (l': list B):
@@ -98,7 +81,7 @@ Qed.
 Lemma big_sepL_forall_2 {PROP: bi} {A B: Type}
       (f: nat -> A -> PROP) (g: nat -> B -> PROP)
       (l: list A) (l': list B):
-  strings.length l = strings.length l' ->
+  length l = length l' ->
   (∀ (k : nat) y y', l !! k = Some y → l' !! k = Some y' → f k y ≡ g k y') ->
   ([∗ list] k ↦ y ∈ l, f k y)%I ≡ ([∗ list] k ↦ y ∈ l', g k y)%I.
 Proof. intros. apply big_opL_forall'; eauto; try apply _. Qed.
@@ -337,58 +320,8 @@ Proof.
   intros (? & ? & _ & HContra & _). discriminate.
 Qed.
 
-Lemma list_lookup_singletonM_lt:
-    forall (A: ucmraT) (i i': nat) (x: A),
-                (i' < i)%nat -> list_singletonM i x !! i' = Some (ε: A).
-Proof.
-  induction i; intros [|i']; naive_solver auto with lia.
-Qed.
-
-Lemma list_lookup_singletonM_gt:
-    forall (A: ucmraT) (i i': nat) (x: A),
-                (i < i')%nat -> list_singletonM i x !! i' = None.
-Proof.
-  induction i; intros [|i']; naive_solver auto with lia.
-Qed.
-
 Lemma None_least (A: cmraT) (a: option A): None ≼ a.
 Proof. by apply option_included; left. Qed.
-
-Lemma list_singletonM_included {A: ucmraT} (i: nat) (x: A) (l: list A):
-  {[i := x]} ≼ l <-> (exists v, l !! i = Some v ∧ x ≼ v).
-Proof.
-  rewrite list_lookup_included.
-  split.
-  {
-    intros HEv. specialize (HEv i). move: HEv.
-    rewrite list_lookup_singleton. destruct (l !! i) as [x'|].
-    2: by intros HContra; apply included_None in HContra.
-    rewrite Some_included_total. eauto.
-  }
-  {
-    intros (v & HEl & HInc) i'.
-    destruct (decide (i < i')%nat).
-    {
-      rewrite list_lookup_singletonM_gt //.
-      apply None_least.
-    }
-    destruct (decide (i = i')%nat).
-    {
-      subst.
-      rewrite list_lookup_singleton. rewrite HEl.
-      by apply Some_included_total.
-    }
-    {
-      rewrite list_lookup_singletonM_lt; last lia.
-      assert (i < length l)%nat.
-      by apply lookup_lt_is_Some; eauto.
-      assert (is_Some (l !! i')) as [? HEl'].
-      by apply lookup_lt_is_Some; lia.
-      rewrite HEl' Some_included_total.
-      apply ucmra_unit_least.
-    }
-  }
-Qed.
 
 Fixpoint find_index {A} (P: A -> Prop) {H': forall x, Decision (P x)}
          (l: list A): option nat :=
