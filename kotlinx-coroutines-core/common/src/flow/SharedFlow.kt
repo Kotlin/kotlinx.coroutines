@@ -142,6 +142,7 @@ private class SharedFlowImpl<T>(
         val slot = allocateSlot()
         try {
             if (collector is SubscribedFlowCollector) collector.onSubscription()
+            val collectorJob = currentCoroutineContext()[Job]
             while (true) {
                 var newValue: Any?
                 while (true) {
@@ -149,6 +150,7 @@ private class SharedFlowImpl<T>(
                     if (newValue !== NO_VALUE) break
                     awaitValue(slot) // await signal that the new value is available
                 }
+                collectorJob?.ensureActive()
                 collector.emit(newValue as T)
             }
         } finally {
@@ -317,7 +319,8 @@ private class SharedFlowImpl<T>(
             }
         }
         // now compute new head: take slowest collector into account, and the need to keep replay cache
-        val newHead = minOf(newMinIndex, curBufferEndIndex - replayCapacity)
+        val newHead = minOf(newMinIndex, curBufferEndIndex - minOf(replayCapacity, oldBufferSize))
+        assert { newHead >= head }
         // cleanup items we don't have to buffer anymore (because head moved)
         for (index in head until newHead) buffer.setBufferAt(index, null)
         // update buffer pointers
@@ -346,10 +349,10 @@ private class SharedFlowImpl<T>(
                 NO_VALUE
             } else {
                 val oldIndex = slot.index
-                getPeekedValueLockedAt(index).also {
-                    slot.index = index + 1 // points to the next index after peeked one
-                    resumeList = updateCollectorIndexLocked(oldIndex)
-                }
+                val newValue = getPeekedValueLockedAt(index)
+                slot.index = index + 1 // points to the next index after peeked one
+                resumeList = updateCollectorIndexLocked(oldIndex)
+                newValue
             }
         }
         resumeList?.forEach { it.resume(Unit) }

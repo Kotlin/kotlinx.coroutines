@@ -289,6 +289,7 @@ private class StateFlowImpl<T>(
         val slot = allocateSlot()
         try {
             if (collector is SubscribedFlowCollector) collector.onSubscription()
+            val collectorJob = currentCoroutineContext()[Job]
             var oldState: Any? = null // previously emitted T!! | NULL (null -- nothing emitted yet)
             // The loop is arranged so that it starts delivering current value without waiting first
             while (true) {
@@ -297,6 +298,7 @@ private class StateFlowImpl<T>(
                 val newState = _state.value
                 // Conflate value emissions using equality
                 if (oldState == null || oldState != newState) {
+                    collectorJob?.ensureActive()
                     collector.emit(NULL.unbox(newState))
                     oldState = newState
                 }
