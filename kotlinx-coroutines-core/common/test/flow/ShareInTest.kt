@@ -5,9 +5,10 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlin.test.*
 
-class StateInTest : TestBase() {
+class ShareInTest : TestBase() {
     @Test
     fun testZeroReplayEager() = runTest {
         expect(1)
@@ -74,5 +75,61 @@ class StateInTest : TestBase() {
         expect(4 + n + replayOfs)
         sharingJob.cancel()
         finish(5 + n + replayOfs)
+    }
+
+    @Test
+    fun testWhileSubscribedBasic() = runTest {
+        expect(1)
+        val flowState = FlowState()
+        val log = Channel<String>(10)
+        val flow = flow<String> {
+            flowState.track {
+                emit("OK")
+                delay(Long.MAX_VALUE) // await forever
+            }
+        }
+        val sharingJob = Job()
+        val shared = flow.shareIn(this + sharingJob, 0, started = SharingStarted.WhileSubscribed)
+        repeat(3) { // repeat chenario 3 times
+            yield()
+            assertFalse(flowState.started) // flow is not running even if we yield
+            val sub1 = shared
+                .onEach { value -> log.offer("sub1: $value") }
+                .onCompletion { log.offer("sub1: completion") }
+                .launchIn(this)
+            flowState.awaitStart() // must eventually start the flow
+            assertEquals("sub1: OK", log.receive()) // must receive the value
+            val sub2 = shared
+                .onEach { expectUnreached() }
+                .onCompletion { log.offer("sub2: completion") }
+                .launchIn(this)
+            assertTrue(flowState.started) // flow is still running
+            sub1.cancel() // cancel 1st subscriber
+            assertEquals("sub1: completion", log.receive()) // must eventually complete
+            assertTrue(flowState.started) // flow is still running
+            sub2.cancel() // cancel 2nd subscriber
+            assertEquals("sub2: completion", log.receive()) // must eventually complete
+            flowState.awaitStop() // upstream flow must be eventually stopped
+        }
+        sharingJob.cancel() // cancel sharing job
+        finish(2)
+    }
+
+    private class FlowState {
+        private val _started = MutableStateFlow(false)
+        val started: Boolean get() = _started.value
+        fun start() = check(_started.compareAndSet(expect = false, update = true))
+        fun stop() = check(_started.compareAndSet(expect = true, update = false))
+        suspend fun awaitStart() = _started.first { it }
+        suspend fun awaitStop() = _started.first { !it }
+    }
+
+    private suspend fun FlowState.track(block: suspend () -> Unit) {
+        start()
+        try {
+            block()
+        } finally {
+            stop()
+        }
     }
 }
