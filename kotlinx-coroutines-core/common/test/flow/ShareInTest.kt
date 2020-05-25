@@ -90,7 +90,7 @@ class ShareInTest : TestBase() {
         }
         val sharingJob = Job()
         val shared = flow.shareIn(this + sharingJob, 0, started = SharingStarted.WhileSubscribed)
-        repeat(3) { // repeat chenario 3 times
+        repeat(3) { // repeat scenario 3 times
             yield()
             assertFalse(flowState.started) // flow is not running even if we yield
             val sub1 = shared

@@ -27,7 +27,7 @@ public fun <T> Flow<T>.shareIn(
         initialValue = initialValue
     )
     scope.launchSharing(this, shared, started)
-    return shared
+    return shared.asSharedFlow()
 }
 
 internal fun <T> CoroutineScope.launchSharing(upstream: Flow<T>, shared: MutableSharedFlow<T>, started: SharingStarted) {
@@ -57,7 +57,7 @@ public fun <T> Flow<T>.stateIn(
 ): StateFlow<T> {
     val state = MutableStateFlow(initialValue)
     scope.launchSharing(this, state, started)
-    return state
+    return state.asStateFlow()
 }
 
 public suspend fun <T> Flow<T>.stateIn(scope: CoroutineScope): StateFlow<T> {
@@ -72,7 +72,7 @@ private fun <T> CoroutineScope.launchSharingDeferred(upstream: Flow<T>, result: 
         upstream.collect { value ->
             state?.let { it.value = value } ?: run {
                 state = MutableStateFlow(value).also {
-                    result.complete(it)
+                    result.complete(it.asStateFlow())
                 }
             }
         }
