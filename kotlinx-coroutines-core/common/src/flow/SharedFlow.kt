@@ -296,14 +296,19 @@ private class SharedFlowImpl<T>(
         // Compute new buffer size if we drop items we no longer need and no emitter is resumed:
         // We must keep all the items from newMinIndex to the end of buffer
         var curBufferEndIndex = head + oldBufferSize // var to grow when waiters are resumed
-        val newBufferSize0 = (curBufferEndIndex - newMinIndex).toInt()
-        // We can resume up to maxResumeCount waiting emitters
-        // a) size - oldBufferSize -> that's how many waiting emitters we have
-        // b) bufferCapacity - newBufferSize0 -> that's how many we can afford to add w/o exceeding bufferCapacity
-        val maxResumeCount = minOf(size - oldBufferSize, bufferCapacity - newBufferSize0)
+        val maxResumeCount = if (nCollectors > 0) {
+            // If we have collectors we can resume up to maxResumeCount waiting emitters
+            // a) size - oldBufferSize -> that's how many waiting emitters we have
+            // b) bufferCapacity - newBufferSize0 -> that's how many we can afford to resume to add w/o exceeding bufferCapacity
+            val newBufferSize0 = (curBufferEndIndex - newMinIndex).toInt()
+            minOf(size - oldBufferSize, bufferCapacity - newBufferSize0)
+        } else {
+            // If we don't have collectors anymore we must resume all waiting emitters
+            size - oldBufferSize // that's how many waiting emitters we have (at most)
+        }
         var resumeList: ArrayList<Continuation<Unit>>? = null
         val buffer = buffer!!
-        if (maxResumeCount > 0) { // collect waiters to resume if we have them
+        if (maxResumeCount > 0) { // collect emitters to resume if we have them
             resumeList = ArrayList(maxResumeCount)
             var curEmitterIndex = head + bufferCapacity // what emitter to wakeup
             while (resumeList.size < maxResumeCount) {
@@ -318,8 +323,18 @@ private class SharedFlowImpl<T>(
                 curEmitterIndex++
             }
         }
-        // now compute new head: take slowest collector into account, and the need to keep replay cache
-        val newHead = minOf(newMinIndex, curBufferEndIndex - minOf(replayCapacity, oldBufferSize))
+        // Compute new buffer size and new replay index
+        val newBufferSize = (curBufferEndIndex - head).toInt() // how many values we now actually have
+        val newReplayIndex = curBufferEndIndex - minOf(replayCapacity, newBufferSize)
+        // now compute new head
+        val newHead = if (nCollectors > 0) {
+            // take slowest collector into account, and also keep replay cache for new collectors
+            minOf(newMinIndex, newReplayIndex)
+        } else {
+            // no collectors -> patch minCollectorIndex to new replay index (drop the rest)
+            minCollectorIndex = newReplayIndex
+            newReplayIndex
+        }
         assert { newHead >= head }
         // cleanup items we don't have to buffer anymore (because head moved)
         for (index in head until newHead) buffer.setBufferAt(index, null)

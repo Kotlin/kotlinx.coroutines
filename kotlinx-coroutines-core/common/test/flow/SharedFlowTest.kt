@@ -392,6 +392,38 @@ class SharedFlowTest : TestBase() {
     }
 
     @Test
+    fun testBufferNoReplayCancelWhileBuffering() = runTest {
+        val n = 123
+        val sh = MutableSharedFlow<Int>(bufferCapacity = n, replayCapacity = 0)
+        repeat(3) {
+            val m = n / 2 // collect half, then suspend
+            val barrier = Channel<Int>(1)
+            val collectorJob = sh
+                .onSubscription {
+                    barrier.send(1)
+                }
+                .onEach { value ->
+                    if (value == m) {
+                        barrier.send(2)
+                        delay(Long.MAX_VALUE)
+                    }
+                }
+                .launchIn(this)
+            assertEquals(1, barrier.receive()) // make sure it subscribes
+            val emitterJob = launch(start = CoroutineStart.UNDISPATCHED) {
+                for (i in 0 until n + m) sh.emit(i) // these emits should go Ok
+                barrier.send(3)
+                sh.emit(n + 4) // this emit will suspend on buffer overflow
+                barrier.send(4)
+            }
+            assertEquals(2, barrier.receive()) // wait until m collected
+            assertEquals(3, barrier.receive()) // wait until all are emitted
+            collectorJob.cancel() // cancelling collector job must clear buffer and resume emitter
+            assertEquals(4, barrier.receive()) // verify that emitter resumes
+        }
+    }
+
+    @Test
     fun testCapacityCombos() {
         for (bufferCapacity in 1..10) {
             for (replayCapacity in 0..bufferCapacity) {
@@ -573,6 +605,59 @@ class SharedFlowTest : TestBase() {
             }
         assertEquals(0, sh.subscriptionCount.value)
         finish(4)
+    }
+
+    @Test
+    fun testBigReplayManySubscribers() = testManySubscribers(true)
+
+    @Test
+    fun testBigBufferManySubscribers() = testManySubscribers(false)
+
+    private fun testManySubscribers(replay: Boolean) = runTest {
+        val n = 100
+        val rnd = Random(replay.hashCode())
+        val sh = MutableSharedFlow<Int>(
+            replayCapacity = if (replay) n else 0,
+            bufferCapacity = n
+        )
+        val subs = ArrayList<SubJob>()
+        for (i in 1..n) {
+            sh.emit(i)
+            val subBarrier = Channel<Unit>()
+            val subJob = SubJob()
+            subs += subJob
+            // will receive all starting from replay or from new emissions only
+            subJob.lastReceived = if (replay) 0 else i
+            subJob.job = sh
+                .onSubscription {
+                    subBarrier.send(Unit) // signal subscribed
+                }
+                .onEach { value ->
+                    assertEquals(subJob.lastReceived + 1, value)
+                    subJob.lastReceived = value
+                }
+                .launchIn(this)
+            subBarrier.receive() // wait until subscribed
+            // must have also receive all from the replay buffer dirctly after being subscribed
+            assertEquals(subJob.lastReceived, i)
+            // 50% of time cancel one subscriber
+            if (i % 2 == 0) {
+                val victim = subs.removeAt(rnd.nextInt(subs.size))
+                yield() // make sure victim processed all emissions
+                assertEquals(victim.lastReceived, i)
+                victim.job.cancel()
+            }
+        }
+        yield() // make sure the last emission is processed
+        for (subJob in subs) {
+            assertEquals(subJob.lastReceived, n)
+            subJob.job.cancel()
+        }
+    }
+
+    private class SubJob {
+        lateinit var job: Job
+        var lastReceived = 0
     }
 
     @Test

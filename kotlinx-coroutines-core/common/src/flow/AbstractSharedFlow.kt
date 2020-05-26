@@ -66,7 +66,7 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
     }
 
     @Suppress("UNCHECKED_CAST")
-    protected fun freeSlot(slot: S): Unit {
+    protected fun freeSlot(slot: S) {
         // Release slot under lock
         var subscriptionCount: MutableStateFlow<Int>? = null
         val resumeList = synchronized(this) {

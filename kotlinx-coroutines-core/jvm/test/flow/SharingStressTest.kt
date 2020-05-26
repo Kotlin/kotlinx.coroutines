@@ -19,7 +19,7 @@ class SharingStressTest : TestBase() {
     val emitterDispatcher = ExecutorRule(1)
     
     @get:Rule
-    val subscriberDispatcher = ExecutorRule(4)
+    val subscriberDispatcher = ExecutorRule(nSubscribers)
 
     @Test
     public fun testNoReplayLazy() = testStress(0, started = SharingStarted.Lazily)
@@ -45,6 +45,7 @@ class SharingStressTest : TestBase() {
     private fun testStress(replay: Int, started: SharingStarted) = runTest {
         val random = Random(1)
         val emitIndex = AtomicLong()
+        // at most one copy of upstream can be running at any time
         val isRunning = AtomicInteger(0)
         val upstream = flow {
             assertEquals(0, isRunning.getAndIncrement())
