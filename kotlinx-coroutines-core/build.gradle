@@ -60,10 +60,17 @@ kotlin.sourceSets {
     }
 
     jvmTest.dependencies {
-        api "org.jetbrains.kotlinx:lincheck:$lincheck_version"
+        // This is a workaround for https://youtrack.jetbrains.com/issue/KT-39037
+        def excludingCurrentProject = { dependency ->
+            def result = project.dependencies.create(dependency)
+            result.exclude(module: project.name)
+            return result
+        }
+
+        api(excludingCurrentProject("org.jetbrains.kotlinx:lincheck:$lincheck_version"))
         api "org.jetbrains.kotlinx:kotlinx-knit-test:$knit_version"
         api "com.esotericsoftware:kryo:4.0.0"
-        implementation project (":android-unit-tests")
+        implementation(excludingCurrentProject(project(":android-unit-tests")))
     }
 }
 
