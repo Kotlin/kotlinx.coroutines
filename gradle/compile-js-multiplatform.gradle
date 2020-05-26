@@ -6,10 +6,10 @@ apply from: rootProject.file('gradle/node-js.gradle')
 
 kotlin {
     js {
-        if (hasProperty("moduleName")) {
+        if (it.hasProperty("moduleName")) {
             moduleName = project.name
         }
-        if (hasProperty("irTarget") && irTarget != null) {
+        if (it.hasProperty("irTarget") && it.irTarget != null) {
             irTarget.nodejs()
             irTarget.compilations['main']?.dependencies {
                 api "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
