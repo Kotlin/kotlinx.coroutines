@@ -30,7 +30,7 @@ task preparePublishNpm(type: Copy) {
         }
     }
     // we must publish output that is transformed by atomicfu
-    from(kotlin.targets.js.compilations.main.output.allOutputs)
+    from(kotlin.js().compilations.main.output.allOutputs)
     into npmDeployDir
 }
 

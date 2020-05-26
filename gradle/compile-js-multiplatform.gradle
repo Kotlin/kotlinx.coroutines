@@ -5,16 +5,11 @@
 apply from: rootProject.file('gradle/node-js.gradle')
 
 kotlin {
-    targets {
-        fromPreset(presets.js, 'js') {
-            // Enable built-in test runner only for IR target.
-            // These runners don't support changing js module name change.
-            if (js.hasProperty("irTarget") && irTarget != null) {
-                irTarget.nodejs()
-                irTarget.compilations['main']?.dependencies {
-                    api "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
-                }
-            }
+    js {
+        moduleName = project.name
+        nodejs()
+        irTarget.compilations['main']?.dependencies {
+            api "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
         }
     }
 
@@ -32,7 +27,7 @@ kotlin {
 // When source sets are configured
 apply from: rootProject.file('gradle/test-mocha-js.gradle')
 
-compileKotlinJs {
+compileKotlinJsLegacy {
     kotlinOptions.metaInfo = true
     kotlinOptions.sourceMap = true
     kotlinOptions.moduleKind = 'umd'
@@ -44,21 +39,21 @@ compileKotlinJs {
     }
 }
 
-compileTestKotlinJs {
+compileTestKotlinJsLegacy {
     kotlinOptions.metaInfo = true
     kotlinOptions.sourceMap = true
     kotlinOptions.moduleKind = 'umd'
 }
 
 
-task populateNodeModules(type: Copy, dependsOn: compileTestKotlinJs) {
+task populateNodeModules(type: Copy, dependsOn: compileTestKotlinJsLegacy) {
     // we must copy output that is transformed by atomicfu
-    from(kotlin.targets.js.compilations.main.output.allOutputs)
+    from(kotlin.js().compilations.main.output.allOutputs)
     into "$node.nodeModulesDir/node_modules"
 
-    def configuration = configurations.hasProperty("legacyjsTestRuntimeClasspath")
-            ? configurations.legacyjsTestRuntimeClasspath
-            : configurations.jsTestRuntimeClasspath
+    def configuration = configurations.hasProperty("jsLegacyTestRuntimeClasspath")
+            ? configurations.jsLegacyTestRuntimeClasspath
+            : configurations.jsIrTestRuntimeClasspath
 
     from(files {
         configuration.collect { File file ->
