@@ -8,9 +8,7 @@
 
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
-import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 import kotlin.jvm.*
 
 /**
@@ -84,17 +82,9 @@ public suspend fun <T: Any> Flow<T>.singleOrNull(): T? {
  */
 public suspend fun <T> Flow<T>.first(): T {
     var result: Any? = NULL
-    val collector = object : FlowCollector<T> {
-        override suspend fun emit(value: T) {
-            result = value
-            throw AbortFlowException(this)
-        }
-    }
-    try {
-        collect(collector)
-    } catch (e: AbortFlowException) {
-        // Do not suppress other cancellation sources
-        e.checkOwnership(collector)
+    collectWhile {
+        result = it
+        true
     }
     if (result === NULL) throw NoSuchElementException("Expected at least one element")
     return result as T
@@ -106,19 +96,13 @@ public suspend fun <T> Flow<T>.first(): T {
  */
 public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
     var result: Any? = NULL
-    val collector = object : FlowCollector<T> {
-        override suspend fun emit(value: T) {
-            if (predicate(value)) {
-                result = value
-                throw AbortFlowException(this)
-            }
+    collectWhile {
+        if (predicate(it)) {
+            result = it
+            true
+        } else {
+            false
         }
-    }
-    try {
-        collect(collector)
-    } catch (e: AbortFlowException) {
-        // Do not suppress other cancellation sources
-        e.checkOwnership(collector)
     }
     if (result === NULL) throw NoSuchElementException("Expected at least one element matching the predicate $predicate")
     return result as T
@@ -130,17 +114,9 @@ public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
  */
 public suspend fun <T : Any> Flow<T>.firstOrNull(): T? {
     var result: T? = null
-    val collector = object : FlowCollector<T> {
-        override suspend fun emit(value: T) {
-            result = value
-            throw AbortFlowException(this)
-        }
-    }
-    try {
-        collect(collector)
-    } catch (e: AbortFlowException) {
-        // Do not suppress other cancellation sources
-        e.checkOwnership(collector)
+    collectWhile {
+        result = it
+        true
     }
     return result
 }
@@ -151,10 +127,21 @@ public suspend fun <T : Any> Flow<T>.firstOrNull(): T? {
  */
 public suspend fun <T : Any> Flow<T>.firstOrNull(predicate: suspend (T) -> Boolean): T? {
     var result: T? = null
+    collectWhile {
+        if (predicate(it)) {
+            result = it
+            true
+        } else {
+            false
+        }
+    }
+    return result
+}
+
+internal suspend inline fun <T> Flow<T>.collectWhile(crossinline block: suspend (value: T) -> Boolean) {
     val collector = object : FlowCollector<T> {
         override suspend fun emit(value: T) {
-            if (predicate(value)) {
-                result = value
+            if (block(value)) {
                 throw AbortFlowException(this)
             }
         }
@@ -162,8 +149,6 @@ public suspend fun <T : Any> Flow<T>.firstOrNull(predicate: suspend (T) -> Boole
     try {
         collect(collector)
     } catch (e: AbortFlowException) {
-        // Do not suppress other cancellation sources
         e.checkOwnership(collector)
     }
-    return result
 }
