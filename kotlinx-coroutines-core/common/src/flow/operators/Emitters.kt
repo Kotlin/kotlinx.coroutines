@@ -11,6 +11,7 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
+import kotlinx.coroutines.flow.flow as safeFlow
 
 // ------------------ WARNING ------------------
 //   These emitting operators must use safe flow builder, because they allow
@@ -19,10 +20,11 @@ import kotlin.jvm.*
 /**
  * Applies [transform] function to each value of the given flow.
  *
- * The receiver of the [transform] is [FlowCollector] and thus `transform` is a
- * generic function that may transform emitted element, skip it or emit it multiple times.
+ * The receiver of the `transform` is [FlowCollector] and thus `transform` is a
+ * flexible function that may transform emitted element, skip it or emit it multiple times.
  *
- * This operator can be used as a building block for other operators, for example:
+ * This operator generalizes [filter] and [map] operators and
+ * can be used as a building block for other operators, for example:
  *
  * ```
  * fun Flow<Int>.skipOddAndDuplicateEven(): Flow<Int> = transform { value ->
@@ -35,7 +37,7 @@ import kotlin.jvm.*
  */
 public inline fun <T, R> Flow<T>.transform(
     @BuilderInference crossinline transform: suspend FlowCollector<R>.(value: T) -> Unit
-): Flow<R> = flow { // Note: safe flow is used here, because collector is exposed to transform on each operation
+): Flow<R> = safeFlow { // Note: safe flow is used here, because collector is exposed to transform on each operation
     collect { value ->
         // kludge, without it Unit will be returned and TCE won't kick in, KT-28938
         return@collect transform(value)
