@@ -187,7 +187,7 @@ suspend fun massiveRun(action: suspend () -> Unit) {
 }
 
 //sampleStart
-var counter = AtomicInteger()
+val counter = AtomicInteger()
 
 fun main() = runBlocking {
     withContext(Dispatchers.Default) {

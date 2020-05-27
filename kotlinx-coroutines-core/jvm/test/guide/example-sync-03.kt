@@ -24,7 +24,7 @@ suspend fun massiveRun(action: suspend () -> Unit) {
     println("Completed ${n * k} actions in $time ms")    
 }
 
-var counter = AtomicInteger()
+val counter = AtomicInteger()
 
 fun main() = runBlocking {
     withContext(Dispatchers.Default) {
