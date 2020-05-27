@@ -82,9 +82,9 @@ public suspend fun <T: Any> Flow<T>.singleOrNull(): T? {
  */
 public suspend fun <T> Flow<T>.first(): T {
     var result: Any? = NULL
-    collectUntil {
+    collectWhile {
         result = it
-        true
+        false
     }
     if (result === NULL) throw NoSuchElementException("Expected at least one element")
     return result as T
@@ -96,12 +96,12 @@ public suspend fun <T> Flow<T>.first(): T {
  */
 public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
     var result: Any? = NULL
-    collectUntil {
+    collectWhile {
         if (predicate(it)) {
             result = it
-            true
-        } else {
             false
+        } else {
+            true
         }
     }
     if (result === NULL) throw NoSuchElementException("Expected at least one element matching the predicate $predicate")
@@ -114,9 +114,9 @@ public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
  */
 public suspend fun <T : Any> Flow<T>.firstOrNull(): T? {
     var result: T? = null
-    collectUntil {
+    collectWhile {
         result = it
-        true
+        false
     }
     return result
 }
@@ -127,28 +127,13 @@ public suspend fun <T : Any> Flow<T>.firstOrNull(): T? {
  */
 public suspend fun <T : Any> Flow<T>.firstOrNull(predicate: suspend (T) -> Boolean): T? {
     var result: T? = null
-    collectUntil {
+    collectWhile {
         if (predicate(it)) {
             result = it
-            true
-        } else {
             false
+        } else {
+            true
         }
     }
     return result
-}
-
-internal suspend inline fun <T> Flow<T>.collectUntil(crossinline block: suspend (value: T) -> Boolean) {
-    val collector = object : FlowCollector<T> {
-        override suspend fun emit(value: T) {
-            if (block(value)) {
-                throw AbortFlowException(this)
-            }
-        }
-    }
-    try {
-        collect(collector)
-    } catch (e: AbortFlowException) {
-        e.checkOwnership(collector)
-    }
 }
