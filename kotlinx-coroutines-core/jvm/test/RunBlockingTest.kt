@@ -162,13 +162,4 @@ class RunBlockingTest : TestBase() {
 
         handle.dispose()
     }
-
-    @Test
-    fun testContract() {
-        val rb: Int
-        runBlocking {
-            rb = 42
-        }
-        rb.hashCode() // unused
-    }
 }

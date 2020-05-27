@@ -4,12 +4,10 @@
 
 @file:JvmMultifileClass
 @file:JvmName("BuildersKt")
-@file:OptIn(ExperimentalContracts::class)
 
 package kotlinx.coroutines
 
 import java.util.concurrent.locks.*
-import kotlin.contracts.*
 import kotlin.coroutines.*
 
 /**
@@ -36,9 +34,6 @@ import kotlin.coroutines.*
  */
 @Throws(InterruptedException::class)
 public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
-    contract {
-        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
-    }
     val currentThread = Thread.currentThread()
     val contextInterceptor = context[ContinuationInterceptor]
     val eventLoop: EventLoop?
