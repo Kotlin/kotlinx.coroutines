@@ -82,7 +82,7 @@ public suspend fun <T: Any> Flow<T>.singleOrNull(): T? {
  */
 public suspend fun <T> Flow<T>.first(): T {
     var result: Any? = NULL
-    collectWhile {
+    collectUntil {
         result = it
         true
     }
@@ -96,7 +96,7 @@ public suspend fun <T> Flow<T>.first(): T {
  */
 public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
     var result: Any? = NULL
-    collectWhile {
+    collectUntil {
         if (predicate(it)) {
             result = it
             true
@@ -114,7 +114,7 @@ public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
  */
 public suspend fun <T : Any> Flow<T>.firstOrNull(): T? {
     var result: T? = null
-    collectWhile {
+    collectUntil {
         result = it
         true
     }
@@ -127,7 +127,7 @@ public suspend fun <T : Any> Flow<T>.firstOrNull(): T? {
  */
 public suspend fun <T : Any> Flow<T>.firstOrNull(predicate: suspend (T) -> Boolean): T? {
     var result: T? = null
-    collectWhile {
+    collectUntil {
         if (predicate(it)) {
             result = it
             true
@@ -138,7 +138,7 @@ public suspend fun <T : Any> Flow<T>.firstOrNull(predicate: suspend (T) -> Boole
     return result
 }
 
-internal suspend inline fun <T> Flow<T>.collectWhile(crossinline block: suspend (value: T) -> Boolean) {
+internal suspend inline fun <T> Flow<T>.collectUntil(crossinline block: suspend (value: T) -> Boolean) {
     val collector = object : FlowCollector<T> {
         override suspend fun emit(value: T) {
             if (block(value)) {
