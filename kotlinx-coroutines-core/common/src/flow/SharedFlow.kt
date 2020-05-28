@@ -6,15 +6,72 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlin.native.concurrent.*
 
+/**
+ * A _hot_ [Flow] that shares emitted values among all its collectors in a broadcast fashion, so that all collectors
+ * get all emitted values. A shared flow is called _hot_ because its active instance exists independently of the
+ * presence of collectors. This is opposed to a regular [Flow], such as defined by the [`flow { ... }`][flow] function,
+ * which is _cold_ and is started separately for each collector.
+ *
+ * **Shared flow never completes**. A call to [Flow.collect] on a shared flow never completes normally and
+ * so does a coroutine started by [Flow.launchIn] function. An active collector of a shared flow is called a _subscriber_.
+ *
+ * A subscriber of a shared flow can be cancelled, which usually happens when the scope the coroutine is running
+ * in is cancelled. A subscriber to a shared flow in always [cancellable][Flow.cancellable] and checks for
+ * cancellation before each emission. Note that most terminal operators like [Flow.toList] would not complete, too,
+ * when applied to a shared flow, but flow-truncating operators like [Flow.take] and [Flow.takeWhile] can be used on a
+ * shared flow to turn it into a completing one.
+ *
+ * A [mutable shared flow][MutableSharedFlow] is created using [MutableSharedFlow(...)] constructor function.
+ * Its state can be updated by [emitting][MutableSharedFlow.emit] values to it and performing other operations.
+ * See [MutableSharedFlow] documentation for details.
+ *
+ * ### Replay cache and extra buffer
+ *
+ * A shared flow keeps a specific number of the most recent values in its _replay cache_. Every new subscribers first
+ * gets the values from the replay cache and then gets new emitted values. The maximal size of the replay cache is
+ * specified when the shared flow is created by the `replay` parameter. A snapshot of the current replay cache
+ * is available via [replayCache] property.
+ *
+ * ### Operator fusion
+ *
+ * Application of [flowOn][Flow.flowOn], [buffer] with [RENDEZVOUS][Channel.RENDEZVOUS] capacity,
+ * or [cancellable] operators has no effect on a shared flow.
+ *
+ * ### Implementation notes
+ *
+ * Shared flow implementation uses a lock to ensure thread-safety, but suspending collector and emitter coroutines are
+ * resumed outside of this lock to avoid dead-locks when using unconfined coroutines. Adding new subscribers
+ * has `O(1)` amortized cost, but emitting has `O(N)` cost, where `N` is the number of subscribers.
+ *
+ * ### Not stable for inheritance
+ *
+ * **`SharedFlow` interface is not stable for inheritance in 3rd party libraries**, as new methods
+ * might be added to this interface in the future, but is stable for use.
+ * Use `MutableSharedFlow(replay, ...)` constructor function to create an implementation.
+ */
 public interface SharedFlow<out T> : Flow<T> {
     public val replayCache: List<T>
 }
 
+/**
+ * A mutable [SharedFlow] that provides functions to [emit] values to the flow.
+ * Its instance with the given configuration parameters can be created using `MutableSharedFlow(...)`
+ * constructor function.
+ *
+ * See [SharedFlow] documentation for details on shared flows.
+ *
+ * ### Not stable for inheritance
+ *
+ * **`MutableSharedFlow` interface is not stable for inheritance in 3rd party libraries**, as new methods
+ * might be added to this interface in the future, but is stable for use.
+ * Use `MutableSharedFlow(...)` constructor function to create an implementation.
+ */
 public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
     public fun tryEmit(value: T): Boolean
     public val subscriptionCount: StateFlow<Int>
@@ -27,17 +84,27 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
 @Suppress("FunctionName", "UNCHECKED_CAST")
 @ExperimentalCoroutinesApi
 public fun <T> MutableSharedFlow(
-    bufferCapacity: Int,
-    replayCapacity: Int = bufferCapacity,
+    replay: Int,
+    extraBufferCapacity: Int = 0,
     onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
     initialValue: T = NO_VALUE as T
-): MutableSharedFlow<T> =
-    SharedFlowImpl(
-        bufferCapacity,
-        replayCapacity,
-        onBufferOverflow,
-        initialValue
-    )
+): MutableSharedFlow<T> {
+    require(replay >= 0) {
+        "replay($replay) cannot be negative"
+    }
+    require(extraBufferCapacity >= 0) {
+        "extraBufferCapacity($extraBufferCapacity) cannot be negative"
+    }
+    require(replay > 0 || initialValue === NO_VALUE) {
+        "replay($replay) must positive with initialValue($initialValue)"
+    }
+    require(replay > 0 || extraBufferCapacity > 0 || onBufferOverflow == BufferOverflow.SUSPEND) {
+        "replay($replay) or extraBufferCapacity($extraBufferCapacity) must positive with onBufferOverflow($onBufferOverflow)"
+    }
+    val bufferCapacity0 = replay + extraBufferCapacity
+    val bufferCapacity = if (bufferCapacity0 < 0) Int.MAX_VALUE else bufferCapacity0 // coerce to MAX_VALUE on overflow
+    return SharedFlowImpl(replay, bufferCapacity, onBufferOverflow, initialValue)
+}
 
 // ------------------------------------ Implementation ------------------------------------
 
@@ -64,26 +131,11 @@ private class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
 }
 
 private class SharedFlowImpl<T>(
+    private val replay: Int,
     private val bufferCapacity: Int,
-    private val replayCapacity: Int,
     private val onBufferOverflow: BufferOverflow,
     private val initialValue: Any?
-) : AbstractSharedFlow<SharedFlowSlot>(), MutableSharedFlow<T> {
-    init {
-        require(replayCapacity >= 0) {
-            "replayCapacity($replayCapacity) cannot be negative"
-        }
-        require(bufferCapacity >= replayCapacity) {
-            "bufferCapacity($bufferCapacity) cannot be smaller than replayCapacity($replayCapacity)"
-        }
-        require(replayCapacity > 0 || initialValue === NO_VALUE) {
-            "replayCapacity($replayCapacity) must positive  with initialValue($initialValue)"
-        }
-        require(bufferCapacity > 0 || onBufferOverflow == BufferOverflow.SUSPEND) {
-            "bufferCapacity($bufferCapacity) must positive with onBufferOverflow($onBufferOverflow)"
-        }
-    }
-
+) : AbstractSharedFlow<SharedFlowSlot>(), MutableSharedFlow<T>, FusibleFlow<T>, CancellableFlow<T> {
     /*
         Logical structure of the buffer
 
@@ -129,7 +181,7 @@ private class SharedFlowImpl<T>(
 
 
     private val replaySizeLocked: Int
-        get() = minOf(replayCapacity, size)
+        get() = minOf(replay, size)
 
     private val bufferSizeLocked: Int
         get() = minOf(bufferCapacity, size)
@@ -199,10 +251,10 @@ private class SharedFlowImpl<T>(
 
     private fun tryEmitNoCollectorsLocked(value: T): Boolean {
         assert { nCollectors == 0 }
-        if (replayCapacity == 0) return true // no need to replay, just forget it now
+        if (replay == 0) return true // no need to replay, just forget it now
         enqueueLocked(value) // enqueue to replayCache
-        // drop oldest from the buffer if it became more than replayCapacity
-        if (size > replayCapacity) dropOldestLocked()
+        // drop oldest from the buffer if it became more than replay
+        if (size > replay) dropOldestLocked()
         minCollectorIndex = head + size // a default value (max allowed)
         return true
     }
@@ -325,7 +377,7 @@ private class SharedFlowImpl<T>(
         }
         // Compute new buffer size and new replay index
         val newBufferSize = (curBufferEndIndex - head).toInt() // how many values we now actually have
-        val newReplayIndex = curBufferEndIndex - minOf(replayCapacity, newBufferSize)
+        val newReplayIndex = curBufferEndIndex - minOf(replay, newBufferSize)
         // now compute new head
         val newHead = if (nCollectors > 0) {
             // take slowest collector into account, and also keep replay cache for new collectors
@@ -442,7 +494,7 @@ private class SharedFlowImpl<T>(
             // enqueue initial value at the end
             val hasInitialValue = initialValue !== NO_VALUE
             if (hasInitialValue) {
-                assert { replayCapacity > 0 } // only supporting initial value with replay
+                assert { replay > 0 } // only supporting initial value with replay
                 assert { size > 0 } // cannot have an empty buffer with initial value
                 enqueueLocked(initialValue) // Enqueue it
             }
@@ -477,6 +529,14 @@ private class SharedFlowImpl<T>(
             resumeList
         }
         resumeList?.forEach { it.resume(Unit) }
+    }
+
+    override fun fuse(context: CoroutineContext, capacity: Int): FusibleFlow<T> {
+        // context is irrelevant for shared flow and making additional rendezvous is meaningless
+        return when (capacity) {
+            Channel.RENDEZVOUS, Channel.OPTIONAL_CHANNEL -> this
+            else -> ChannelFlowOperatorImpl(this, context, capacity)
+        }
     }
 
     private class Emitter(

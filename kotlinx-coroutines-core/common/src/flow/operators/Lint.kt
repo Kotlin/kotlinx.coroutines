@@ -4,11 +4,20 @@
 
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
 /**
- * Returns this.
+ * Applying [cancellable][Flow.cancellable] operator to [SharedFlow] has no effect.
+ * See [SharedFlow] documentation on Operator Fusion.
+ */
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Applying cancellable operator to SharedFlow has no effect. See SharedFlow documentation on Operator Fusion.",
+    replaceWith = ReplaceWith("this")
+)
+public fun <T> SharedFlow<T>.cancellable(): Flow<T> = noImpl()
+
+/**
  * Applying [flowOn][Flow.flowOn] operator to [SharedFlow] has no effect.
  * See [SharedFlow] documentation on Operator Fusion.
  */
@@ -20,7 +29,6 @@ import kotlin.coroutines.*
 public fun <T> SharedFlow<T>.flowOn(context: CoroutineContext): Flow<T> = noImpl()
 
 /**
- * Returns this.
  * Applying [conflate][Flow.conflate] operator to [StateFlow] has no effect.
  * See [StateFlow] documentation on Operator Fusion.
  */
@@ -32,7 +40,6 @@ public fun <T> SharedFlow<T>.flowOn(context: CoroutineContext): Flow<T> = noImpl
 public fun <T> StateFlow<T>.conflate(): Flow<T> = noImpl()
 
 /**
- * Returns this.
  * Applying [distinctUntilChanged][Flow.distinctUntilChanged] operator to [StateFlow] has no effect.
  * See [StateFlow] documentation on Operator Fusion.
  */

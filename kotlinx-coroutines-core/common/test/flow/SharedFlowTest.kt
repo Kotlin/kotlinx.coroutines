@@ -329,11 +329,11 @@ class SharedFlowTest : TestBase() {
     }
 
     @Test
-    fun test3BufferAnd2ReplayWithInitialValue() = runTest {
+    fun testReplay2Extra1WithInitialValue() = runTest {
         expect(1)
         val sh = MutableSharedFlow(
-            bufferCapacity = 3,
-            replayCapacity = 2,
+            replay = 2,
+            extraBufferCapacity = 1,
             initialValue = 0
         )
         assertEquals(listOf(0), sh.replayCache)
@@ -394,7 +394,7 @@ class SharedFlowTest : TestBase() {
     @Test
     fun testBufferNoReplayCancelWhileBuffering() = runTest {
         val n = 123
-        val sh = MutableSharedFlow<Int>(bufferCapacity = n, replayCapacity = 0)
+        val sh = MutableSharedFlow<Int>(replay = 0, extraBufferCapacity = n)
         repeat(3) {
             val m = n / 2 // collect half, then suspend
             val barrier = Channel<Int>(1)
@@ -410,7 +410,7 @@ class SharedFlowTest : TestBase() {
                 }
                 .launchIn(this)
             assertEquals(1, barrier.receive()) // make sure it subscribes
-            val emitterJob = launch(start = CoroutineStart.UNDISPATCHED) {
+            launch(start = CoroutineStart.UNDISPATCHED) {
                 for (i in 0 until n + m) sh.emit(i) // these emits should go Ok
                 barrier.send(3)
                 sh.emit(n + 4) // this emit will suspend on buffer overflow
@@ -424,29 +424,30 @@ class SharedFlowTest : TestBase() {
     }
 
     @Test
-    fun testCapacityCombos() {
-        for (bufferCapacity in 1..10) {
-            for (replayCapacity in 0..bufferCapacity) {
+    fun testDifferentBufferedFlowCapacities() {
+        for (replay in 0..10) {
+            for (extraBufferCapacity in 0..5) {
+                if (replay == 0 && extraBufferCapacity == 0) continue // test only buffered shared flows
                 try {
-                    val sh = MutableSharedFlow<Int>(bufferCapacity, replayCapacity)
+                    val sh = MutableSharedFlow<Int>(replay, extraBufferCapacity)
                     // repeat the whole test a few times to make sure it works correctly when slots are reused
                     repeat(3) {
-                        testCapacityCombo(sh, replayCapacity)
+                        testBufferedFlow(sh, replay)
                     }
                 } catch (e: Throwable) {
-                    error("Failed for bufferCapacity=$bufferCapacity, replayCapacity=$replayCapacity", e)
+                    error("Failed for replay=$replay, extraBufferCapacity=$extraBufferCapacity", e)
                 }
             }
         }
     }
 
-    private fun testCapacityCombo(sh: MutableSharedFlow<Int>, replayCapacity: Int) = runTest {
+    private fun testBufferedFlow(sh: MutableSharedFlow<Int>, replay: Int) = runTest {
         reset()
         expect(1)
         val n = 100 // initially emitted to fill buffer
         for (i in 1..n) assertTrue(sh.tryEmit(i))
         // initial expected replayCache
-        val rcStart = n - replayCapacity + 1
+        val rcStart = n - replay + 1
         val rcRange = rcStart..n
         val rcSize = n - rcStart + 1
         assertEquals(rcRange.toList(), sh.replayCache)
@@ -477,12 +478,12 @@ class SharedFlowTest : TestBase() {
             ofs += 2 + m
             expect(ofs)
         }
-        assertEquals(ecRange.toList().takeLast(replayCapacity), sh.replayCache)
+        assertEquals(ecRange.toList().takeLast(replay), sh.replayCache)
         // cancel all collectors
         jobs.forEach { it.cancel() }
         yield()
         // replay cache is still there
-        assertEquals(ecRange.toList().takeLast(replayCapacity), sh.replayCache)
+        assertEquals(ecRange.toList().takeLast(replay), sh.replayCache)
         finish(1 + ofs)
     }
 
@@ -617,8 +618,8 @@ class SharedFlowTest : TestBase() {
         val n = 100
         val rnd = Random(replay.hashCode())
         val sh = MutableSharedFlow<Int>(
-            replayCapacity = if (replay) n else 0,
-            bufferCapacity = n
+            replay = if (replay) n else 0,
+            extraBufferCapacity = if (replay) 0 else n
         )
         val subs = ArrayList<SubJob>()
         for (i in 1..n) {
@@ -638,7 +639,7 @@ class SharedFlowTest : TestBase() {
                 }
                 .launchIn(this)
             subBarrier.receive() // wait until subscribed
-            // must have also receive all from the replay buffer dirctly after being subscribed
+            // must have also receive all from the replay buffer directly after being subscribed
             assertEquals(subJob.lastReceived, i)
             // 50% of time cancel one subscriber
             if (i % 2 == 0) {
@@ -665,8 +666,7 @@ class SharedFlowTest : TestBase() {
         val stateFlow = MutableStateFlow<Data?>(null)
         val expect = modelLog(stateFlow)
         val sharedFlow = MutableSharedFlow<Data?>(
-            bufferCapacity = 1,
-            replayCapacity = 1,
+            replay = 1,
             onBufferOverflow = BufferOverflow.KEEP_LATEST,
             initialValue = null
         )
@@ -727,6 +727,14 @@ class SharedFlowTest : TestBase() {
         if (x == 0) return null
         // randomly reuse ref or create a new instance
         return if(nextBoolean()) dataCache[x] else Data(x)
+    }
+
+    @Test
+    fun testOperatorFusion() {
+        val sh = MutableSharedFlow<String>(0)
+        assertSame(sh, (sh as Flow<*>).cancellable())
+        assertSame(sh, (sh as Flow<*>).flowOn(Dispatchers.Default))
+        assertSame(sh, sh.buffer(Channel.RENDEZVOUS))
     }
 }
 

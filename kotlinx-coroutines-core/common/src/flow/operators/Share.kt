@@ -9,7 +9,7 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.flow.internal.SafeCollector
+import kotlinx.coroutines.flow.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -22,8 +22,8 @@ public fun <T> Flow<T>.shareIn(
     initialValue: T = NO_VALUE as T
 ): SharedFlow<T> {
     val shared = MutableSharedFlow<T>(
-        bufferCapacity = maxOf(Channel.CHANNEL_DEFAULT_CAPACITY, replay),
-        replayCapacity = replay,
+        replay = replay,
+        extraBufferCapacity = Channel.CHANNEL_DEFAULT_CAPACITY,
         initialValue = initialValue
     )
     scope.launchSharing(this, shared, started)

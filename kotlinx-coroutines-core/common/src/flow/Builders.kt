@@ -16,9 +16,11 @@ import kotlin.jvm.*
 import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
- * Creates a flow from the given suspendable [block].
+ * Creates a _cold_ flow from the given suspendable [block].
+ * The flow is _cold_ means that the [block] is called every time a terminal operator is applied to the resulting flow.
  *
  * Example of usage:
+ *
  * ```
  * fun fibonacci(): Flow<BigInteger> = flow {
  *     var x = BigInteger.ZERO
@@ -33,10 +35,12 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  *
  * fibonacci().take(100).collect { println(it) }
  * ```
+ * 
  * Emissions from [flow] builder are [cancellable] by default.
  *
  * `emit` should happen strictly in the dispatchers of the [block] in order to preserve the flow context.
  * For example, the following code will result in an [IllegalStateException]:
+ *
  * ```
  * flow {
  *     emit(1) // Ok
@@ -45,6 +49,7 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  *     }
  * }
  * ```
+ * 
  * If you want to switch the context of execution of a flow, use the [flowOn] operator.
  */
 public fun <T> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> = SafeFlow(block)
@@ -57,7 +62,7 @@ private class SafeFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit
 }
 
 /**
- * Creates a flow that produces a single value from the given functional type.
+ * Creates a _cold_ flow that produces a single value from the given functional type.
  */
 @FlowPreview
 public fun <T> (() -> T).asFlow(): Flow<T> = flow {
@@ -65,8 +70,10 @@ public fun <T> (() -> T).asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a flow that produces a single value from the given functional type.
+ * Creates a _cold flow that produces a single value from the given functional type.
+ *
  * Example of usage:
+ *
  * ```
  * suspend fun remoteCall(): R = ...
  * fun remoteCallFlow(): Flow<R> = ::remoteCall.asFlow()
@@ -78,7 +85,7 @@ public fun <T> (suspend () -> T).asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a flow that produces values from the given iterable.
+ * Creates a _cold_ flow that produces values from the given iterable.
  */
 public fun <T> Iterable<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
@@ -87,7 +94,7 @@ public fun <T> Iterable<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a flow that produces values from the given iterator.
+ * Creates a _cold_ flow that produces values from the given iterator.
  */
 public fun <T> Iterator<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
@@ -96,7 +103,7 @@ public fun <T> Iterator<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a flow that produces values from the given sequence.
+ * Creates a _cold_ flow that produces values from the given sequence.
  */
 public fun <T> Sequence<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
@@ -108,6 +115,7 @@ public fun <T> Sequence<T>.asFlow(): Flow<T> = flow {
  * Creates a flow that produces values from the specified `vararg`-arguments.
  *
  * Example of usage:
+ *
  * ```
  * flowOf(1, 2, 3)
  * ```
@@ -119,7 +127,7 @@ public fun <T> flowOf(vararg elements: T): Flow<T> = flow {
 }
 
 /**
- * Creates flow that produces the given [value].
+ * Creates a flow that produces the given [value].
  */
 public fun <T> flowOf(value: T): Flow<T> = flow {
     /*
@@ -139,7 +147,9 @@ private object EmptyFlow : Flow<Nothing> {
 }
 
 /**
- * Creates a flow that produces values from the given array.
+ * Creates a _cold_ flow that produces values from the given array.
+ * The flow is _cold_ means that the array components are read every time a terminal operator is applied
+ * to the resulting flow.
  */
 public fun <T> Array<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
@@ -148,7 +158,9 @@ public fun <T> Array<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a flow that produces values from the array.
+ * Creates a _cold_ flow that produces values from the array.
+ * The flow is _cold_ means that the array components are read every time a terminal operator is applied
+ * to the resulting flow.
  */
 public fun IntArray.asFlow(): Flow<Int> = flow {
     forEach { value ->
@@ -157,7 +169,9 @@ public fun IntArray.asFlow(): Flow<Int> = flow {
 }
 
 /**
- * Creates a flow that produces values from the array.
+ * Creates a _cold_ flow that produces values from the given array.
+ * The flow is _cold_ means that the array components are read every time a terminal operator is applied
+ * to the resulting flow.
  */
 public fun LongArray.asFlow(): Flow<Long> = flow {
     forEach { value ->
@@ -203,7 +217,7 @@ public fun <T> flowViaChannel(
 }
 
 /**
- * Creates an instance of the cold [Flow] with elements that are sent to a [SendChannel]
+ * Creates an instance of a _cold_ [Flow] with elements that are sent to a [SendChannel]
  * provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
  * produced by code that is running in a different context or concurrently.
  * The resulting flow is _cold_, which means that [block] is called every time a terminal operator
@@ -251,7 +265,7 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
     ChannelFlowBuilder(block)
 
 /**
- * Creates an instance of the cold [Flow] with elements that are sent to a [SendChannel]
+ * Creates an instance of a _cold_ [Flow] with elements that are sent to a [SendChannel]
  * provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
  * produced by code that is running in a different context or concurrently.
  *

@@ -5,6 +5,7 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlin.test.*
 
 class StateFlowTest : TestBase() {
@@ -150,5 +151,16 @@ class StateFlowTest : TestBase() {
             .join()
         assertEquals(0, state.subscriptionCount.value)
         finish(7)
+    }
+
+    @Test
+    fun testOperatorFusion() {
+        val state = MutableStateFlow(String)
+        assertSame(state, (state as Flow<*>).cancellable())
+        assertSame(state, (state as Flow<*>).distinctUntilChanged())
+        assertSame(state, (state as Flow<*>).flowOn(Dispatchers.Default))
+        assertSame(state, (state as Flow<*>).conflate())
+        assertSame(state, state.buffer(Channel.CONFLATED))
+        assertSame(state, state.buffer(Channel.RENDEZVOUS))
     }
 }

@@ -13,9 +13,12 @@ import kotlin.coroutines.*
 import kotlin.native.concurrent.*
 
 /**
- * A [Flow] that represents a read-only state with a single updatable data [value] that emits updates
- * to the value to its collectors. The current value can be retrieved via [value] property.
- * The flow of future updates to the value can be observed by collecting values from this flow.
+ * A [SharedFlow] that represents a read-only state with a single updatable data [value] that emits updates
+ * to the value to its collectors. A state flow is a _hot_ flow because its active instance exists independently
+ * of the presence of collectors. Its current value can be retrieved via [value] property.
+ *
+ * **State flow never completes**. A call to [Flow.collect] on a state flow never completes normally and
+ * so does a coroutine started by [Flow.launchIn] function. An active collector of a state flow is called a _subscriber_.
  *
  * A [mutable state flow][MutableStateFlow] is created using `MutableStateFlow(value)` constructor function with
  * the initial value. The value of mutable state flow can be  updated by setting its [value] property.
@@ -55,6 +58,29 @@ import kotlin.native.concurrent.*
  * when new value is equal to the previously emitted one. State flow behavior with classes that violate
  * the contract for [Any.equals] is unspecified.
  *
+ * ### State flow is a shared flow
+ *
+ * State flow is a special-purpose, high-performance, and efficient implementation [SharedFlow] for narrow,
+ * but widely used case of sharing a state. See [SharedFlow] documentation for the basic rules,
+ * constraints, and operators that are applicable to all shared flows.
+ *
+ * State flow always has an initial value, replays one most recent value to new subscribers, and does not buffer any
+ * more values, but keeps the last emitted one. A state flow behaves identically to a shared flow when it is created
+ * with the following parameters and [distinctUntilChanged] operator is applied to it:
+ *
+ * ```
+ * // MutableStateFlow(initialValue) is a shared flow with the following parameters:
+ * MutableSharedFlow(
+ *     replay = 1,
+ *     onBufferOverflow = BufferOverflow.KEEP_LATEST,
+ *     initialValue = initialValue
+ * )
+ * // apply .distinctUntilChanged() to get StateFlow-like behavior
+ * ```
+ *
+ * Use [SharedFlow] when you need a [StateFlow] with tweaks in its behavior such as extra buffering, replaying more
+ * values, or missing initial value. 
+ * 
  * ### StateFlow vs ConflatedBroadcastChannel
  *
  * Conceptually state flow is similar to
@@ -85,20 +111,20 @@ import kotlin.native.concurrent.*
  *
  * Application of [flowOn][Flow.flowOn], [conflate][Flow.conflate],
  * [buffer] with [CONFLATED][Channel.CONFLATED] or [RENDEZVOUS][Channel.RENDEZVOUS] capacity,
- * or a [distinctUntilChanged][Flow.distinctUntilChanged] operator has no effect on the state flow.
+ * [distinctUntilChanged][Flow.distinctUntilChanged], or [cancellable] operators has no effect on a state flow.
  * 
  * ### Implementation notes
  *
  * State flow implementation is optimized for memory consumption and allocation-freedom. It uses a lock to ensure
  * thread-safety, but suspending collector coroutines are resumed outside of this lock to avoid dead-locks when
- * using unconfined coroutines. Adding new collectors has `O(1)` amortized cost, but updating a [value] has `O(N)`
- * cost, where `N` is the number of active collectors.
+ * using unconfined coroutines. Adding new subscribers has `O(1)` amortized cost, but updating a [value] has `O(N)`
+ * cost, where `N` is the number of active subscribers.
  *
  * ### Not stable for inheritance
  *
  * **`StateFlow` interface is not stable for inheritance in 3rd party libraries**, as new methods
  * might be added to this interface in the future, but is stable for use.
- * Use `MutableStateFlow()` constructor function to create an implementation.
+ * Use `MutableStateFlow(value)` constructor function to create an implementation.
  */
 @ExperimentalCoroutinesApi
 public interface StateFlow<out T> : SharedFlow<T> {
@@ -110,8 +136,10 @@ public interface StateFlow<out T> : SharedFlow<T> {
 
 /**
  * A mutable [StateFlow] that provides a setter for [value].
+ * Its instance with the given initial `value` can be created using
+ * `MutableStateFlow(value)` constructor function.
  *
- * See [StateFlow] documentation for details.
+ * See [StateFlow] documentation for details on state flows.
  *
  * ### Not stable for inheritance
  *
@@ -128,7 +156,10 @@ public interface MutableStateFlow<T> : StateFlow<T>, MutableSharedFlow<T> {
      */
     public override var value: T
 
-    // todo: docs
+    /**
+     * Atomically compares the current [value] with [expect] and sets it to [update] if it is equal to the [expect].
+     * The result is `true` if the [value] was equal to [update] and `false` otherwise. 
+     */
     public fun compareAndSet(expect: T, update: T): Boolean
 }
 
@@ -211,7 +242,7 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
 
 private class StateFlowImpl<T>(
     private val initialState: Any // T | NULL
-) : AbstractSharedFlow<StateFlowSlot>(), MutableStateFlow<T>, FusibleFlow<T>, DistinctFlow<T> {
+) : AbstractSharedFlow<StateFlowSlot>(), MutableStateFlow<T>, FusibleFlow<T>, DistinctFlow<T>, CancellableFlow<T> {
     private val _state = atomic(initialState) // T | NULL
     private var sequence = 0 // serializes updates, value update is in process when sequence is odd
 
@@ -319,7 +350,7 @@ private class StateFlowImpl<T>(
         // context is irrelevant for state flow and it is always conflated
         // so it should not do anything unless buffering is requested
         return when (capacity) {
-            Channel.CONFLATED, Channel.RENDEZVOUS -> this
+            Channel.CONFLATED, Channel.RENDEZVOUS, Channel.OPTIONAL_CHANNEL -> this
             else -> ChannelFlowOperatorImpl(this, context, capacity)
         }
     }

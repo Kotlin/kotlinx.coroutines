@@ -194,8 +194,8 @@ public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
  *     .flowOn(Dispatchers.Default)
  * ```
  *
- * Note that an instance of [StateFlow] does not have an execution context by itself,
- * so applying `flowOn` to a `StateFlow` has not effect. See [StateFlow] documentation on Operator Fusion.
+ * Note that an instance of [SharedFlow] does not have an execution context by itself,
+ * so applying `flowOn` to a `SharedFlow` has not effect. See [SharedFlow] documentation on Operator Fusion.
  *
  * @throws [IllegalArgumentException] if provided context contains [Job] instance.
  */
@@ -211,14 +211,26 @@ public fun <T> Flow<T>.flowOn(context: CoroutineContext): Flow<T> {
 /**
  * Returns a flow which checks cancellation status on each emission and throws
  * the corresponding cancellation cause if flow collector was cancelled.
- * Note that [flow] builder is [cancellable] by default.
+ * Note that [flow] builder and all implementations of [SharedFlow] are [cancellable] by default.
  */
 public fun <T> Flow<T>.cancellable(): Flow<T> {
-    if (this is AbstractFlow<*>) return this // Fast-path, already cancellable
-    return unsafeFlow {
-        collect {
+    if (this is CancellableFlow<*>) return this // Fast-path, already cancellable
+    return CancellableFlowImpl(this)
+}
+
+/**
+ * Internal marker for flows that are [cancellable].
+ */
+internal interface CancellableFlow<out T> : Flow<T>
+
+/**
+ * Named implementation class for a flow that is defined by [cancellable] function.
+ */
+private class CancellableFlowImpl<T>(val flow: Flow<T>) : CancellableFlow<T> {
+    override suspend fun collect(collector: FlowCollector<T>) {
+        flow.collect {
             currentCoroutineContext().ensureActive()
-            emit(it)
+            collector.emit(it)
         }
     }
 }
