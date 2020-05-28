@@ -51,7 +51,8 @@ public fun <T> Flow<T>.take(count: Int): Flow<T> {
     require(count > 0) { "Requested element count $count should be positive" }
     return flow {
         var consumed = 0
-        collectWhile { value ->
+        // This return is needed to work around a bug in JS BE
+        return@flow collectWhile { value ->
             emit(value)
             ++consumed < count
         }
@@ -65,7 +66,8 @@ public fun <T> Flow<T>.take(count: Int): Flow<T> {
  * See [transformWhile] for a more flexible operator.
  */
 public fun <T> Flow<T>.takeWhile(predicate: suspend (T) -> Boolean): Flow<T> = flow {
-    collectWhile { value ->
+    // This return is needed to work around a bug in JS BE
+    return@flow collectWhile { value ->
         if (predicate(value)) {
             emit(value)
             true
