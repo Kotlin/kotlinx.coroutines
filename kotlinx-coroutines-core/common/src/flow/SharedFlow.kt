@@ -89,17 +89,11 @@ public fun <T> MutableSharedFlow(
     onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
     initialValue: T = NO_VALUE as T
 ): MutableSharedFlow<T> {
-    require(replay >= 0) {
-        "replay($replay) cannot be negative"
-    }
-    require(extraBufferCapacity >= 0) {
-        "extraBufferCapacity($extraBufferCapacity) cannot be negative"
-    }
-    require(replay > 0 || initialValue === NO_VALUE) {
-        "replay($replay) must positive with initialValue($initialValue)"
-    }
+    require(replay >= 0) { "replay cannot be negative" }
+    require(extraBufferCapacity >= 0) { "extraBufferCapacity cannot be negative" }
+    require(replay > 0 || initialValue === NO_VALUE) { "replay must positive with initialValue" }
     require(replay > 0 || extraBufferCapacity > 0 || onBufferOverflow == BufferOverflow.SUSPEND) {
-        "replay($replay) or extraBufferCapacity($extraBufferCapacity) must positive with onBufferOverflow($onBufferOverflow)"
+        "replay or extraBufferCapacity must positive with non-default onBufferOverflow strategy"
     }
     val bufferCapacity0 = replay + extraBufferCapacity
     val bufferCapacity = if (bufferCapacity0 < 0) Int.MAX_VALUE else bufferCapacity0 // coerce to MAX_VALUE on overflow

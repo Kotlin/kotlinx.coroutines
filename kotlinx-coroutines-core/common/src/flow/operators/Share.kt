@@ -39,7 +39,7 @@ internal fun <T> CoroutineScope.launchSharing(upstream: Flow<T>, shared: Mutable
                     when (it) {
                         SharingCommand.START -> upstream.collect(shared) // can be cancelled
                         SharingCommand.STOP -> { /* just cancel and do nothing else */ }
-                        SharingCommand.RESET_BUFFER -> shared.resetBuffer()
+                        SharingCommand.STOP_AND_RESET_BUFFER -> shared.resetBuffer()
                     }
                 }
         } finally {

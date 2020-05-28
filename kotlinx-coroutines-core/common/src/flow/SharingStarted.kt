@@ -26,7 +26,7 @@ public enum class SharingCommand {
     /**
      * Stop the sharing coroutine and [reset buffer][MutableSharedFlow.resetBuffer] of the shared flow.
      */
-    RESET_BUFFER
+    STOP_AND_RESET_BUFFER
 }
 
 /**
@@ -49,23 +49,28 @@ public interface SharingStarted {
 
         /**
          * Sharing is started when the first subscriber appears, immediately stops when the last
-         * subscriber disappears and [resets then buffer][MutableSharedFlow.resetBuffer].
+         * subscriber disappears, keeping the replay cache forever.
          */
         @ExperimentalCoroutinesApi
-        public val WhileSubscribed: SharingStarted by lazy { startedWhileSubscribed(0L, 0L) }
+        public val WhileSubscribed: SharingStarted by lazy { startedWhileSubscribed(0L, Long.MAX_VALUE) }
 
         /**
          * Sharing is started when the first subscriber appears, stops when the last
          * subscriber disappears and [stopTimeoutMillis] had passed,
-         * after [cacheExpirationMillis] more passed [resets then buffer][MutableSharedFlow.resetBuffer].
+         * after [replayExpirationMillis] more passed [resets then buffer][MutableSharedFlow.resetBuffer].
          *
-         * This function throws [IllegalArgumentException] when either [stopTimeoutMillis] or [cacheExpirationMillis]
+         * This function throws [IllegalArgumentException] when either [stopTimeoutMillis] or [replayExpirationMillis]
          * are negative.
+         *
+         * @param stopTimeoutMillis time to wait (in milliseconds) before stopping sharing coroutine after
+         *        the number of subscribers becomes zero. It defaults to zero (stop immediately).
+         * @param replayExpirationMillis time to wait (in milliseconds) after stopping sharing before
+         *        resetting the buffer. It defaults to `Long.MAX_VALUE` (keep replay cache forever, never reset buffer).
          */
         @Suppress("FunctionName")
         @ExperimentalCoroutinesApi
-        public fun WhileSubscribed(stopTimeoutMillis: Long = 0, cacheExpirationMillis: Long = 0): SharingStarted =
-            startedWhileSubscribed(stopTimeoutMillis, cacheExpirationMillis)
+        public fun WhileSubscribed(stopTimeoutMillis: Long = 0, replayExpirationMillis: Long = Long.MAX_VALUE): SharingStarted =
+            startedWhileSubscribed(stopTimeoutMillis, replayExpirationMillis)
     }
 
     /**
@@ -95,9 +100,9 @@ private fun startedLazily() = object : SharingStarted {
     }
 }
 
-private fun startedWhileSubscribed(stopTimeout: Long = 0, cacheExpiration: Long = 0): SharingStarted {
+private fun startedWhileSubscribed(stopTimeout: Long = 0, replayExpiration: Long = 0): SharingStarted {
     require(stopTimeout >= 0) { "stopTimeout cannot be negative" }
-    require(cacheExpiration >= 0) { "cacheExpiration cannot be negative" }
+    require(replayExpiration >= 0) { "replayExpiration cannot be negative" }
     return object : SharingStarted {
         override fun commandFlow(subscriptionCount: StateFlow<Int>): Flow<SharingCommand> = subscriptionCount
             .transformLatest { count ->
@@ -105,11 +110,11 @@ private fun startedWhileSubscribed(stopTimeout: Long = 0, cacheExpiration: Long 
                     emit(SharingCommand.START)
                 } else {
                     delay(stopTimeout)
-                    if (cacheExpiration > 0) {
+                    if (replayExpiration > 0) {
                         emit(SharingCommand.STOP)
-                        delay(cacheExpiration)
+                        delay(replayExpiration)
                     }
-                    emit(SharingCommand.RESET_BUFFER)
+                    emit(SharingCommand.STOP_AND_RESET_BUFFER)
                 }
             }
             .dropWhile { it != SharingCommand.START } // don't emit any STOP/RESET_BUFFER to start with, only START
