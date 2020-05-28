@@ -102,7 +102,8 @@ public fun <T, R> Flow<T>.transformWhile(
     @BuilderInference transform: suspend FlowCollector<R>.(value: T) -> Boolean
 ): Flow<R> =
     safeFlow { // Note: safe flow is used here, because collector is exposed to transform on each operation
-        collectWhile { value ->
+        // This return is needed to work around a bug in JS BE: KT-39227
+        return@safeFlow collectWhile { value ->
             transform(value)
         }
     }
