@@ -61,7 +61,7 @@ public fun <T> Flow<T>.take(count: Int): Flow<T> {
 /**
  * Returns a flow that contains first elements satisfying the given [predicate].
  *
- * Note, that the resulting flow does not contain the element on which the [predicate] returned `true`.
+ * Note, that the resulting flow does not contain the element on which the [predicate] returned `false`.
  * See [transformWhile] for a more flexible operator.
  */
 public fun <T> Flow<T>.takeWhile(predicate: suspend (T) -> Boolean): Flow<T> = flow {
