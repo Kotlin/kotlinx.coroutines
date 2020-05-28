@@ -8,6 +8,9 @@
 ./theories/lib/thread_queue/thread_queue_as_counter.v
 ./theories/lib/thread_queue/thread_queue_spec.v
 ./theories/lib/interruptible_semaphore/interruptible_semaphore.v
+./theories/lib/concurrent_linked_list/impl.v
+./theories/lib/util/addAndGet.v
+./theories/lib/util/addConditionally.v
 ./theories/lib/util/getAndSet.v
 ./theories/lib/util/interruptibly.v
 ./theories/lib/barrier/barrier.v
