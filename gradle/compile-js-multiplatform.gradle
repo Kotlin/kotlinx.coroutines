@@ -5,15 +5,22 @@
 apply from: rootProject.file('gradle/node-js.gradle')
 
 kotlin {
-    targets {
-        fromPreset(presets.js, 'js') {
-            // Enable built-in test runner only for IR target.
-            // These runners don't support changing js module name change.
-            if (js.hasProperty("irTarget") && irTarget != null) {
-                irTarget.nodejs()
-                irTarget.compilations['main']?.dependencies {
-                    api "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
-                }
+    js {
+        // In 1.3.7x js() has not member `moduleName`
+        // In 1.4.x it has and allow to safety set compiler output file name and does not break test integration
+        if (it.hasProperty("moduleName")) {
+            moduleName = project.name
+        }
+
+        // In 1.3.7x js() has not member `irTarget`
+        // In 1.4.x it has in `both` and `legacy` mode and js() is of type `KotlinJsTarget`
+        // `irTarget` is non-null in `both` mode
+        // and contains appropriate `irTarget` with type `KotlinJsIrTarget`
+        // `irTarget` is null in `legacy` mode
+        if (it.hasProperty("irTarget") && it.irTarget != null) {
+            irTarget.nodejs()
+            irTarget.compilations['main']?.dependencies {
+                api "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
             }
         }
     }
@@ -32,7 +39,15 @@ kotlin {
 // When source sets are configured
 apply from: rootProject.file('gradle/test-mocha-js.gradle')
 
-compileKotlinJs {
+def compileJsLegacy = tasks.hasProperty("compileKotlinJsLegacy")
+        ? compileKotlinJsLegacy
+        : compileKotlinJs
+
+def compileTestJsLegacy = tasks.hasProperty("compileTestKotlinJsLegacy")
+        ? compileTestKotlinJsLegacy
+        : compileTestKotlinJs
+
+compileJsLegacy.configure {
     kotlinOptions.metaInfo = true
     kotlinOptions.sourceMap = true
     kotlinOptions.moduleKind = 'umd'
@@ -44,20 +59,20 @@ compileKotlinJs {
     }
 }
 
-compileTestKotlinJs {
+compileTestJsLegacy.configure {
     kotlinOptions.metaInfo = true
     kotlinOptions.sourceMap = true
     kotlinOptions.moduleKind = 'umd'
 }
 
 
-task populateNodeModules(type: Copy, dependsOn: compileTestKotlinJs) {
+task populateNodeModules(type: Copy, dependsOn: compileTestJsLegacy) {
     // we must copy output that is transformed by atomicfu
-    from(kotlin.targets.js.compilations.main.output.allOutputs)
+    from(kotlin.js().compilations.main.output.allOutputs)
     into "$node.nodeModulesDir/node_modules"
 
-    def configuration = configurations.hasProperty("legacyjsTestRuntimeClasspath")
-            ? configurations.legacyjsTestRuntimeClasspath
+    def configuration = configurations.hasProperty("jsLegacyTestRuntimeClasspath")
+            ? configurations.jsLegacyTestRuntimeClasspath
             : configurations.jsTestRuntimeClasspath
 
     from(files {
