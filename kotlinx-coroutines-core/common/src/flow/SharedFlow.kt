@@ -348,9 +348,11 @@ private class SharedFlowImpl<T>(
 
     private fun correctCollectorIndexesOnDropOldest() {
         assert { head > minCollectorIndex }
-        forEachSlotLocked loop@{ slot ->
-            if (slot.index !in 0 until head) return@loop
-            slot.index = head // force move it up (this collector was too slow and missed the value at its index)
+        forEachSlotLocked { slot ->
+            @Suppress("ConvertTwoComparisonsToRangeCheck") // Bug in JS backend
+            if (slot.index >= 0 && slot.index < head) {
+                slot.index = head // force move it up (this collector was too slow and missed the value at its index)
+            }
         }
         minCollectorIndex = head
     }
@@ -420,7 +422,8 @@ private class SharedFlowImpl<T>(
         // take into account a special case of sync shared flow that can go past 1st queued emitter
         if (bufferCapacity == 0 && size > 0) newMinIndex++
         forEachSlotLocked { slot ->
-            if (slot.index in 0 until newMinIndex) newMinIndex = slot.index
+            @Suppress("ConvertTwoComparisonsToRangeCheck") // Bug in JS backend
+            if (slot.index >= 0 && slot.index < newMinIndex) newMinIndex = slot.index
         }
         assert { newMinIndex >= minCollectorIndex } // can only grow
         if (newMinIndex <= minCollectorIndex) return null // nothing changes
