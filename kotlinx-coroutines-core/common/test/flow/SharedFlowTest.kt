@@ -736,5 +736,15 @@ class SharedFlowTest : TestBase() {
         assertSame(sh, (sh as Flow<*>).flowOn(Dispatchers.Default))
         assertSame(sh, sh.buffer(Channel.RENDEZVOUS))
     }
+
+    @Test
+    fun testIllegalArgumentException() {
+        assertFailsWith<IllegalArgumentException> { MutableSharedFlow<Int>(-1) }
+        assertFailsWith<IllegalArgumentException> { MutableSharedFlow<Int>(0, extraBufferCapacity = -1) }
+        assertFailsWith<IllegalArgumentException> { MutableSharedFlow<Int>(0, onBufferOverflow = BufferOverflow.DROP_LATEST) }
+        assertFailsWith<IllegalArgumentException> { MutableSharedFlow<Int>(0, onBufferOverflow = BufferOverflow.KEEP_LATEST) }
+        assertFailsWith<IllegalArgumentException> { MutableSharedFlow<Int>(0, initialValue = 0) }
+        assertFailsWith<IllegalArgumentException> { MutableSharedFlow<Int>(0, extraBufferCapacity = 1, initialValue = 0) }
+    }
 }
 

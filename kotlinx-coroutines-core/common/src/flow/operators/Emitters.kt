@@ -54,7 +54,10 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
 }
 
 /**
- * Invokes the given [action] when this flow starts to be collected.
+ * Returns a flow that invokes the given [action] **before** this flow starts to be collected.
+ * The [action] is called before the upstream flow is started, so if it is used with a [SharedFlow]
+ * there is **no guarantee** that future emissions to the upstream flow will be collected
+ * (see [onSubscription] for an alternative operator on shared flows).
  *
  * The receiver of the [action] is [FlowCollector], so `onStart` can emit additional elements.
  * For example:
@@ -79,7 +82,7 @@ public fun <T> Flow<T>.onStart(
 }
 
 /**
- * Invokes the given [action] when the given flow is completed or cancelled, passing
+ * Returns a flow that invokes the given [action] **after** the flow is completed or cancelled, passing
  * the cancellation exception or failure as cause parameter of [action].
  *
  * Conceptually, `onCompletion` is similar to wrapping the flow collection into a `finally` block,
@@ -125,7 +128,7 @@ public fun <T> Flow<T>.onStart(
  * ```
  *
  * The receiver of the [action] is [FlowCollector] and this operator can be used to emit additional
- * elements at the end if it completed successfully. For example:
+ * elements at the end **if it completed successfully**. For example:
  *
  * ```
  * flowOf("a", "b", "c")

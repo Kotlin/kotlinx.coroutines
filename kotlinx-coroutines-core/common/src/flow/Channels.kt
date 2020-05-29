@@ -181,6 +181,9 @@ public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
  * Use [buffer] operator on the flow before calling `broadcastIn` to specify a value other than
  * default and to control what happens when data is produced faster than it is consumed,
  * that is to control backpressure behavior.
+ *
+ * **Note: This API is obsolete.** It will be deprecated and replaced with
+ * [Flow.shareIn] operator when it becomes stable.
  */
 @FlowPreview
 public fun <T> Flow<T>.broadcastIn(

@@ -34,7 +34,7 @@ import kotlin.native.concurrent.*
  * ```
  * class CounterModel {
  *     private val _counter = MutableStateFlow(0) // private mutable state flow
- *     val counter: StateFlow<Int> get() = _counter // publicly exposed as read-only state flow
+ *     val counter get() = _counter.asStateFlow() // publicly exposed as read-only state flow
  *
  *     fun inc() {
  *         _counter.value++
@@ -49,6 +49,9 @@ import kotlin.native.concurrent.*
  * val bModel = CounterModel()
  * val sumFlow: Flow<Int> = aModel.counter.combine(bModel.counter) { a, b -> a + b }
  * ```
+ *
+ * As an alternative to the above usage with `MutableStateFlow(...)` constructor function,
+ * any _cold_ [Flow] can be converted to a state flow using [stateIn] operator.
  *
  * ### Strong equality-based conflation
  *
@@ -83,10 +86,9 @@ import kotlin.native.concurrent.*
  * 
  * ### StateFlow vs ConflatedBroadcastChannel
  *
- * Conceptually state flow is similar to
- * [ConflatedBroadcastChannel][kotlinx.coroutines.channels.ConflatedBroadcastChannel]
+ * Conceptually state flow is similar to [ConflatedBroadcastChannel]
  * and is designed to completely replace `ConflatedBroadcastChannel` in the future.
- * It has the following important difference:
+ * It has the following important differences:
  *
  * * `StateFlow` is simpler, because it does not have to implement all the [Channel] APIs, which allows
  *   for faster, garbage-free implementation, unlike `ConflatedBroadcastChannel` implementation that
@@ -96,22 +98,28 @@ import kotlin.native.concurrent.*
  * * `StateFlow` has a clear separation into a read-only `StateFlow` interface and a [MutableStateFlow].
  * * `StateFlow` conflation is based on equality like [distinctUntilChanged] operator,
  *    unlike conflation in `ConflatedBroadcastChannel` that is based on reference identity.
- * * `StateFlow` cannot be currently closed like `ConflatedBroadcastChannel` and can never represent a failure.
- *    This feature might be added in the future if enough compelling use-cases are found.
+ * * `StateFlow` cannot be closed like `ConflatedBroadcastChannel` and can never represent a failure.
+ *    All errors and completion signals shall be explicitly _materialized_ if needed.
  *
  * `StateFlow` is designed to better cover typical use-cases of keeping track of state changes in time, taking
  * more pragmatic design choices for the sake of convenience.
  *
+ * To migrate [ConflatedBroadcastChannel] usage to [StateFlow] start by replacing `ConflatedBroadcastChannel()`
+ * constructor with `MutableStateFlow(initialValue)`, using `null` as an initial value if you don't have one.
+ * Replace [send][ConflatedBroadcastChannel.send] and [offer][ConflatedBroadcastChannel.offer] calls
+ * with updates to state flow's [MutableStateFlow.value] and convert subscribers' code to flow operators.
+ * You can use [filterNotNull] operator to mimic behavior of `ConflatedBroadcastChannel` without initial value.
+ *
  * ### Concurrency
  *
- * All methods of data flow are **thread-safe** and can be safely invoked from concurrent coroutines without
+ * All methods of state flow are **thread-safe** and can be safely invoked from concurrent coroutines without
  * external synchronization.
  *
  * ### Operator fusion
  *
  * Application of [flowOn][Flow.flowOn], [conflate][Flow.conflate],
  * [buffer] with [CONFLATED][Channel.CONFLATED] or [RENDEZVOUS][Channel.RENDEZVOUS] capacity,
- * [distinctUntilChanged][Flow.distinctUntilChanged], or [cancellable] operators has no effect on a state flow.
+ * [distinctUntilChanged][Flow.distinctUntilChanged], or [cancellable] operators to a state flow has no effect.
  * 
  * ### Implementation notes
  *
