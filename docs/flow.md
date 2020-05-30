@@ -1110,7 +1110,7 @@ Now if we have a flow of three integers and call `requestFlow` for each of them 
 
 Then we end up with a flow of flows (`Flow<Flow<String>>`) that needs to be _flattened_ into a single flow for 
 further processing. Collections and sequences have [flatten][Sequence.flatten] and [flatMap][Sequence.flatMap]
-operators for this. However, due the asynchronous nature of flows they call for different _modes_ of flattening, 
+operators for this. However, due to the asynchronous nature of flows they call for different _modes_ of flattening, 
 as such, there is a family of flattening operators on flows.
 
 #### flatMapConcat
