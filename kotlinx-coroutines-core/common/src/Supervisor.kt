@@ -69,6 +69,6 @@ private class SupervisorJobImpl(parent: Job?) : JobImpl(parent) {
 private class SupervisorCoroutine<in T>(
     context: CoroutineContext,
     uCont: Continuation<T>
-) : ScopeCoroutine<T>(context, uCont) {
+) : ScopeCoroutine<T>(context, uCont, true) {
     override fun childCancelled(cause: Throwable): Boolean = false
 }

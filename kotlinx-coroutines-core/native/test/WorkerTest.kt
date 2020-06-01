@@ -9,22 +9,26 @@ import kotlin.native.concurrent.*
 import kotlin.test.*
 
 class WorkerTest : TestBase() {
+    val worker = Worker.start()
+
+    @AfterTest
+    fun tearDown() {
+        worker.requestTermination().result
+    }
 
     @Test
     fun testLaunchInWorker() {
-        val worker = Worker.start()
         worker.execute(TransferMode.SAFE, { }) {
             runBlocking {
                 launch { }.join()
                 delay(1)
+                println("Done")
             }
         }.result
-        worker.requestTermination()
     }
 
     @Test
     fun testLaunchInWorkerTroughGlobalScope() {
-        val worker = Worker.start()
         worker.execute(TransferMode.SAFE, { }) {
             runBlocking {
                 CoroutineScope(EmptyCoroutineContext).launch {
@@ -32,6 +36,5 @@ class WorkerTest : TestBase() {
                 }.join()
             }
         }.result
-        worker.requestTermination()
     }
 }

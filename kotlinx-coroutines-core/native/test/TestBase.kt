@@ -1,16 +1,18 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
+
+import kotlinx.atomicfu.*
 
 public actual val isStressTest: Boolean = false
 public actual val stressTestMultiplier: Int = 1
 
 public actual open class TestBase actual constructor() {
-    private var actionIndex = 0
-    private var finished = false
-    private var error: Throwable? = null
+    private val actionIndex = atomic(0)
+    private val finished = atomic(false)
+    private val error = atomic<Throwable?>(null)
 
     /**
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
@@ -19,20 +21,21 @@ public actual open class TestBase actual constructor() {
     @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
     public actual fun error(message: Any, cause: Throwable? = null): Nothing {
         val exception = IllegalStateException(message.toString(), cause)
-        if (error == null) error = exception
+        error.compareAndSet(null, exception)
         throw exception
     }
 
     private fun printError(message: String, cause: Throwable) {
-        if (error == null) error = cause
-        println("$message: $cause")
+        error.compareAndSet(null, cause)
+        println(message)
+        cause.printStackTrace()
     }
 
     /**
      * Asserts that this invocation is `index`-th in the execution sequence (counting from one).
      */
     public actual fun expect(index: Int) {
-        val wasIndex = ++actionIndex
+        val wasIndex = actionIndex.incrementAndGet()
         check(index == wasIndex) { "Expecting action index $index but it is actually $wasIndex" }
     }
 
@@ -48,21 +51,21 @@ public actual open class TestBase actual constructor() {
      */
     public actual fun finish(index: Int) {
         expect(index)
-        check(!finished) { "Should call 'finish(...)' at most once" }
-        finished = true
+        val old = finished.getAndSet(true)
+        check(!old) { "Should call 'finish(...)' at most once" }
     }
 
     /**
      * Asserts that [finish] was invoked
      */
     public actual fun ensureFinished() {
-        require(finished) { "finish(...) should be caller prior to this check" }
+        require(finished.value) { "finish(...) should be caller prior to this check" }
     }
 
     public actual fun reset() {
-        check(actionIndex == 0 || finished) { "Expecting that 'finish(...)' was invoked, but it was not" }
-        actionIndex = 0
-        finished = false
+        check(actionIndex.value == 0 || finished.value) { "Expecting that 'finish(...)' was invoked, but it was not" }
+        actionIndex.value = 0
+        finished.value = false
     }
 
     @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
@@ -71,30 +74,30 @@ public actual open class TestBase actual constructor() {
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
     ) {
-        var exCount = 0
-        var ex: Throwable? = null
+        val exCount = atomic(0)
+        val ex = atomic<Throwable?>(null)
         try {
-            runBlocking(block = block, context = CoroutineExceptionHandler { context, e ->
+            runBlocking(block = block, context = CoroutineExceptionHandler { _, e ->
                 if (e is CancellationException) return@CoroutineExceptionHandler // are ignored
-                exCount++
+                val result = exCount.incrementAndGet()
                 when {
-                    exCount > unhandled.size ->
-                        printError("Too many unhandled exceptions $exCount, expected ${unhandled.size}, got: $e", e)
-                    !unhandled[exCount - 1](e) ->
+                    result > unhandled.size ->
+                        printError("Too many unhandled exceptions $result, expected ${unhandled.size}, got: $e", e)
+                    !unhandled[result - 1](e) ->
                         printError("Unhandled exception was unexpected: $e", e)
                 }
             })
         } catch (e: Throwable) {
-            ex = e
+            ex.value = e
             if (expected != null) {
                 if (!expected(e))
                     error("Unexpected exception: $e", e)
             } else
                 throw e
         } finally {
-            if (ex == null && expected != null) error("Exception was expected but none produced")
+            if (ex.value == null && expected != null) error("Exception was expected but none produced")
         }
-        if (exCount < unhandled.size)
+        if (exCount.value < unhandled.size)
             error("Too few unhandled exceptions $exCount, expected ${unhandled.size}")
     }
 }
