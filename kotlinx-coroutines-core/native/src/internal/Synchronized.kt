@@ -18,3 +18,6 @@ public actual typealias SynchronizedObject = kotlinx.atomicfu.locks.Synchronized
  */
 @InternalCoroutinesApi
 public actual inline fun <T> synchronized(lock: SynchronizedObject, block: () -> T): T = lock.withLock2(block)
+
+@OptIn(ExperimentalStdlibApi::class)
+internal actual val isNativeMt: Boolean = !kotlin.native.isExperimentalMM()

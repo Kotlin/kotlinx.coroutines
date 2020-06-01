@@ -4,23 +4,11 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.multithreadingSupported
 import kotlin.coroutines.*
 
 internal actual fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher =
     MissingMainDispatcher
-
-internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DefaultDispatcher
-
-private object DefaultDispatcher : CoroutineDispatcher() {
-
-    // Delegated, so users won't be able to downcast and call 'close'
-    // The precise number of threads cannot be obtained until KT-48179 is implemented, 4 is just "good enough" number.
-    private val ctx = newFixedThreadPoolContext(4, "Dispatchers.Default")
-
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        ctx.dispatch(context, block)
-    }
-}
 
 private object MissingMainDispatcher : MainCoroutineDispatcher() {
     override val immediate: MainCoroutineDispatcher
@@ -31,5 +19,3 @@ private object MissingMainDispatcher : MainCoroutineDispatcher() {
 
     private fun notImplemented(): Nothing = TODO("Dispatchers.Main is missing on the current platform")
 }
-
-internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit) = block()

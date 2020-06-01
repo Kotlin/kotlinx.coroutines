@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
+@NoNative
 class RunTestTest {
 
     /** Tests that [withContext] that sends work to other threads works in [runTest]. */

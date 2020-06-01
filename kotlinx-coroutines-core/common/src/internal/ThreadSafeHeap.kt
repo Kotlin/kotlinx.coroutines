@@ -5,6 +5,7 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
+import kotlinx.atomicfu.locks.*
 import kotlinx.coroutines.*
 
 /**

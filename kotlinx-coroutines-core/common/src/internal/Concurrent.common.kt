@@ -16,11 +16,4 @@ internal typealias SubscribersList<E> = MutableList<E>
     "and K/JS platforms and it is unsafe to use it anywhere else")
 internal expect fun <E> subscriberList(): SubscribersList<E>
 
-internal expect class ReentrantLock() {
-    fun tryLock(): Boolean
-    fun unlock(): Unit
-}
-
-internal expect inline fun <T> ReentrantLock.withLock(action: () -> T): T
-
 internal expect fun <E> identitySet(expectedSize: Int): MutableSet<E>

@@ -6,6 +6,8 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.internal.SuppressSupportingThrowableImpl
+import kotlinx.atomicfu.*
+import kotlin.native.ref.*
 
 /**
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled while it is suspending.
@@ -23,8 +25,12 @@ public actual typealias CancellationException = kotlin.coroutines.cancellation.C
 internal actual class JobCancellationException public actual constructor(
     message: String,
     cause: Throwable?,
-    internal actual val job: Job
+    job: Job
 ) : CancellationException(message, cause) {
+    private val ref = WeakReference(job)
+    internal actual val job: Job?
+        get() = ref.get()
+
     override fun toString(): String = "${super.toString()}; job=$job"
     override fun equals(other: Any?): Boolean =
         other === this ||
@@ -33,8 +39,7 @@ internal actual class JobCancellationException public actual constructor(
         (message!!.hashCode() * 31 + job.hashCode()) * 31 + (cause?.hashCode() ?: 0)
 }
 
-@Suppress("NOTHING_TO_INLINE")
-internal actual inline fun Throwable.addSuppressedThrowable(other: Throwable) {
+internal actual fun Throwable.addSuppressedThrowable(other: Throwable) {
     if (this is SuppressSupportingThrowableImpl) addSuppressed(other)
 }
 

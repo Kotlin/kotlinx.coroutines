@@ -5,10 +5,11 @@
 package kotlinx.coroutines
 
 import java.util.concurrent.*
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.*
 
 /**
- * Creates a coroutine execution context using a single thread with built-in [yield] support.
+ * Creates a coroutine execution context using a single thread.
+ *
  * **NOTE: The resulting [ExecutorCoroutineDispatcher] owns native resources (its thread).
  * Resources are reclaimed by [ExecutorCoroutineDispatcher.close].**
  *
@@ -59,7 +60,7 @@ public actual fun newSingleThreadContext(name: String): ExecutorCoroutineDispatc
  * @param name the base name of the created threads.
  */
 @DelicateCoroutinesApi
-public actual fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
+public fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
     require(nThreads >= 1) { "Expected at least one thread, but $nThreads specified" }
     val threadNo = AtomicInteger()
     val executor = Executors.newScheduledThreadPool(nThreads) { runnable ->

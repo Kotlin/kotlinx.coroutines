@@ -6,6 +6,7 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.internal.*
 import kotlin.test.*
 
 class ShareInTest : TestBase() {
@@ -213,6 +214,7 @@ class ShareInTest : TestBase() {
 
     @Test
     fun testShouldStart() = runTest {
+        if (isNativeMt) return@runTest
         val flow = flow {
             expect(2)
             emit(1)
@@ -229,6 +231,7 @@ class ShareInTest : TestBase() {
 
     @Test
     fun testShouldStartScalar() = runTest {
+        if (isNativeMt) return@runTest
         val j = Job()
         val shared = flowOf(239).stateIn(this + j, SharingStarted.Lazily, 42)
         assertEquals(42, shared.first())

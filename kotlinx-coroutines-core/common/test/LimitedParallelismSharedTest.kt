@@ -4,12 +4,14 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
 import kotlin.test.*
 
 class LimitedParallelismSharedTest : TestBase() {
 
     @Test
     fun testLimitedDefault() = runTest {
+        if (!isReuseSupportedInPlatform()) return@runTest
         // Test that evaluates the very basic completion of tasks in limited dispatcher
         // for all supported platforms.
         // For more specific and concurrent tests, see 'concurrent' package.

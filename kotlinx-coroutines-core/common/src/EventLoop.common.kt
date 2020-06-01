@@ -66,7 +66,9 @@ internal abstract class EventLoop : CoroutineDispatcher() {
     public fun processUnconfinedEvent(): Boolean {
         val queue = unconfinedQueue ?: return false
         val task = queue.removeFirstOrNull() ?: return false
-        task.run()
+        platformAutoreleasePool {
+            task.run()
+        }
         return true
     }
     /**
@@ -235,14 +237,14 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         val timeNanos = delayToNanos(timeMillis)
         if (timeNanos < MAX_DELAY_NS) {
             val now = nanoTime()
-            DelayedResumeTask(now + timeNanos, continuation).also { task ->
+            DelayedResumeTask(now + timeNanos, continuation, asShareable()).also { task ->
                 /*
-                 * Order is important here: first we schedule the heap and only then
-                 * publish it to continuation. Otherwise, `DelayedResumeTask` would
-                 * have to know how to be disposed of even when it wasn't scheduled yet.
-                 */
+                * Order is important here: first we schedule the heap and only then
+                * publish it to continuation. Otherwise, `DelayedResumeTask` would
+                * have to know how to be disposed of even when it wasn't scheduled yet.
+                */
                 schedule(now, task)
-                continuation.disposeOnCancellation(task)
+                continuation.disposeOnCancellation(task.asShareable())
             }
         }
     }
@@ -253,7 +255,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             val now = nanoTime()
             DelayedRunnableTask(now + timeNanos, block).also { task ->
                 schedule(now, task)
-            }
+            }.asShareable()
         } else {
             NonDisposableHandle
         }
@@ -414,7 +416,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
          * into heap to avoid overflow and corruption of heap data structure.
          */
         @JvmField var nanoTime: Long
-    ) : Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
+    ) : ShareableRefHolder(), Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
         @Volatile
         private var _heap: Any? = null // null | ThreadSafeHeap | DISPOSED_TASK
 
@@ -488,25 +490,31 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             @Suppress("UNCHECKED_CAST")
             (heap as? DelayedTaskQueue)?.remove(this) // remove if it is in heap (first)
             _heap = DISPOSED_TASK // never add again to any heap
+            disposeSharedRef()
         }
 
-        override fun toString(): String = "Delayed[nanos=$nanoTime]"
+        override fun toString(): String = "Delayed@$hexAddress[nanos=$nanoTime]"
     }
 
-    private inner class DelayedResumeTask(
+    private class DelayedResumeTask(
         nanoTime: Long,
-        private val cont: CancellableContinuation<Unit>
+        private val cont: CancellableContinuation<Unit>,
+        private val dispatcher: CoroutineDispatcher
     ) : DelayedTask(nanoTime) {
-        override fun run() { with(cont) { resumeUndispatched(Unit) } }
-        override fun toString(): String = super.toString() + cont.toString()
+        override fun run() {
+            disposeSharedRef()
+            with(cont) { dispatcher.resumeUndispatched(Unit) }
+        }
     }
 
     private class DelayedRunnableTask(
         nanoTime: Long,
         private val block: Runnable
     ) : DelayedTask(nanoTime) {
-        override fun run() { block.run() }
-        override fun toString(): String = super.toString() + block.toString()
+        override fun run() {
+            disposeSharedRef()
+            block.run()
+        }
     }
 
     /**
@@ -531,12 +539,6 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
 
 internal expect fun createEventLoop(): EventLoop
 
-internal expect fun nanoTime(): Long
-
-internal expect object DefaultExecutor {
-    public fun enqueue(task: Runnable)
-}
-
 /**
  * Used by Darwin targets to wrap a [Runnable.run] call in an Objective-C Autorelease Pool. It is a no-op on JVM, JS and
  * non-Darwin native targets.
@@ -547,3 +549,10 @@ internal expect object DefaultExecutor {
  * pool management, it must manage the pool creation and pool drainage manually.
  */
 internal expect inline fun platformAutoreleasePool(crossinline block: () -> Unit)
+
+internal expect fun nanoTime(): Long
+
+internal expect object DefaultExecutor {
+    public fun enqueue(task: Runnable)
+}
+

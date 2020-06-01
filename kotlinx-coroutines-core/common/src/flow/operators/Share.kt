@@ -10,6 +10,7 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -204,8 +205,9 @@ private fun <T> CoroutineScope.launchSharing(
      * * Delayed sharing strategies have a chance to immediately observe consecutive subscriptions.
      *   E.g. in the cases like `flow.shareIn(...); flow.take(1)` we want sharing strategy to see the initial subscription
      * * Eager sharing does not start immediately, so the subscribers have actual chance to subscribe _prior_ to sharing.
+     * // TODO: kludge: native-mt doesn't support undispatched
      */
-    val start = if (started == SharingStarted.Eagerly) CoroutineStart.DEFAULT else CoroutineStart.UNDISPATCHED
+    val start = if (started == SharingStarted.Eagerly || isNativeMt) CoroutineStart.DEFAULT else CoroutineStart.UNDISPATCHED
     return launch(context, start = start) { // the single coroutine to rule the sharing
         // Optimize common built-in started strategies
         when {

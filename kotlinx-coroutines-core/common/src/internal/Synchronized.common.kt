@@ -17,3 +17,5 @@ public expect open class SynchronizedObject() // marker abstract class
  */
 @InternalCoroutinesApi
 public expect inline fun <T> synchronized(lock: SynchronizedObject, block: () -> T): T
+
+internal expect val isNativeMt: Boolean

@@ -55,6 +55,6 @@ internal actual val CoroutineContext.coroutineName: String? get() = null // not 
 internal actual class UndispatchedCoroutine<in T> actual constructor(
     context: CoroutineContext,
     uCont: Continuation<T>
-) : ScopeCoroutine<T>(context, uCont) {
+) : ScopeCoroutine<T>(context, uCont, true) {
     override fun afterResume(state: Any?) = uCont.resumeWith(recoverResult(state, uCont))
 }

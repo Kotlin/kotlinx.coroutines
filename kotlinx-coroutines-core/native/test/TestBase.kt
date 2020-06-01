@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -17,9 +17,9 @@ public actual typealias TestResult = Unit
 
 public actual open class TestBase actual constructor() {
     public actual val isBoundByJsTestTimeout = false
-    private var actionIndex = atomic(0)
-    private var finished = atomic(false)
-    private var error: Throwable? = null
+    private val actionIndex = atomic(0)
+    private val finished = atomic(false)
+    private val error = atomic<Throwable?>(null)
 
     /**
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
@@ -28,13 +28,14 @@ public actual open class TestBase actual constructor() {
     @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
     public actual fun error(message: Any, cause: Throwable? = null): Nothing {
         val exception = IllegalStateException(message.toString(), cause)
-        if (error == null) error = exception
+        error.compareAndSet(null, exception)
         throw exception
     }
 
     private fun printError(message: String, cause: Throwable) {
-        if (error == null) error = cause
-        println("$message: $cause")
+        error.compareAndSet(null, cause)
+        println(message)
+        cause.printStackTrace()
     }
 
     /**
@@ -80,30 +81,30 @@ public actual open class TestBase actual constructor() {
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
     ): TestResult {
-        var exCount = 0
-        var ex: Throwable? = null
+        val exCount = atomic(0)
+        val ex = atomic<Throwable?>(null)
         try {
             runBlocking(block = block, context = CoroutineExceptionHandler { _, e ->
                 if (e is CancellationException) return@CoroutineExceptionHandler // are ignored
-                exCount++
+                val result = exCount.incrementAndGet()
                 when {
-                    exCount > unhandled.size ->
-                        printError("Too many unhandled exceptions $exCount, expected ${unhandled.size}, got: $e", e)
-                    !unhandled[exCount - 1](e) ->
+                    result > unhandled.size ->
+                        printError("Too many unhandled exceptions $result, expected ${unhandled.size}, got: $e", e)
+                    !unhandled[result - 1](e) ->
                         printError("Unhandled exception was unexpected: $e", e)
                 }
             })
         } catch (e: Throwable) {
-            ex = e
+            ex.value = e
             if (expected != null) {
                 if (!expected(e))
                     error("Unexpected exception: $e", e)
             } else
                 throw e
         } finally {
-            if (ex == null && expected != null) error("Exception was expected but none produced")
+            if (ex.value == null && expected != null) error("Exception was expected but none produced")
         }
-        if (exCount < unhandled.size)
+        if (exCount.value < unhandled.size)
             error("Too few unhandled exceptions $exCount, expected ${unhandled.size}")
     }
 }

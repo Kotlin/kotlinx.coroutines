@@ -260,7 +260,7 @@ public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R 
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
     return suspendCoroutineUninterceptedOrReturn { uCont ->
-        val coroutine = ScopeCoroutine(uCont.context, uCont)
+        val coroutine = ScopeCoroutine(uCont.context, uCont, true)
         coroutine.startUndispatchedOrReturn(coroutine, block)
     }
 }

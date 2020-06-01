@@ -6,6 +6,3 @@ package kotlinx.coroutines
 
 @ExperimentalCoroutinesApi
 public expect fun newSingleThreadContext(name: String): CloseableCoroutineDispatcher
-
-@ExperimentalCoroutinesApi
-public expect fun newFixedThreadPoolContext(nThreads: Int, name: String): CloseableCoroutineDispatcher

@@ -9,6 +9,7 @@ import kotlin.test.*
 
 /** These are tests that we want to fail. They are here so that, when the issue is fixed, their failure indicates that
  * everything is better now. */
+@NoNative
 class FailingTests {
     @Test
     fun testRunTestLoopShutdownOnTimeout() = testResultMap({ fn ->

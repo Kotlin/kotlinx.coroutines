@@ -8,6 +8,8 @@ import kotlin.coroutines.*
 
 internal actual fun createEventLoop(): EventLoop = UnconfinedEventLoop()
 
+internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit) = block()
+
 internal actual fun nanoTime(): Long = unsupported()
 
 internal class UnconfinedEventLoop : EventLoop() {
@@ -25,5 +27,3 @@ internal actual object DefaultExecutor {
 
 private fun unsupported(): Nothing =
     throw UnsupportedOperationException("runBlocking event loop is not supported")
-
-internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit) = block()

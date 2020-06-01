@@ -7,9 +7,9 @@ package kotlinx.coroutines.internal
 import kotlinx.atomicfu.*
 
 @Suppress("UNCHECKED_CAST")
-internal class CopyOnWriteList<E> : AbstractMutableList<E>() {
+internal class CopyOnWriteList<E>() : AbstractMutableList<E>() {
 
-    private val _array = atomic(arrayOfNulls<Any?>(0))
+    private val _array = atomic<Array<Any?>>(arrayOfNulls<Any?>(0))
     private var array: Array<Any?>
         get() = _array.value
         set(value) { _array.value = value }
@@ -59,7 +59,7 @@ internal class CopyOnWriteList<E> : AbstractMutableList<E>() {
     override fun isEmpty(): Boolean = size == 0
     override fun set(index: Int, element: E): E = throw UnsupportedOperationException("Operation is not supported")
     override fun get(index: Int): E = array[rangeCheck(index)] as E
-
+    
     private class IteratorImpl<E>(private val array: Array<E>) : MutableIterator<E> {
         private var current = 0
 

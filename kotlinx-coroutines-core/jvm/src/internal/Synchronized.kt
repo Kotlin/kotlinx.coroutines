@@ -18,3 +18,5 @@ public actual typealias SynchronizedObject = Any
 @InternalCoroutinesApi
 public actual inline fun <T> synchronized(lock: SynchronizedObject, block: () -> T): T =
     kotlin.synchronized(lock, block)
+
+internal actual val isNativeMt: Boolean = false

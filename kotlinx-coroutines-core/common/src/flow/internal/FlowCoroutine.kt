@@ -54,7 +54,7 @@ internal fun <R> scopedFlow(@BuilderInference block: suspend CoroutineScope.(Flo
 private class FlowCoroutine<T>(
     context: CoroutineContext,
     uCont: Continuation<T>
-) : ScopeCoroutine<T>(context, uCont) {
+) : ScopeCoroutine<T>(context, uCont, true) {
     override fun childCancelled(cause: Throwable): Boolean {
         if (cause is ChildCancelledException) return true
         return cancelImpl(cause)

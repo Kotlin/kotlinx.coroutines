@@ -5,8 +5,22 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.scheduling.*
+import kotlinx.coroutines.scheduling.DefaultScheduler
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.CoroutineStackFrame
+
+internal const val COROUTINES_SCHEDULER_PROPERTY_NAME = "kotlinx.coroutines.scheduler"
+
+internal val useCoroutinesScheduler = systemProp(COROUTINES_SCHEDULER_PROPERTY_NAME).let { value ->
+    when (value) {
+        null, "", "on" -> true
+        "off" -> false
+        else -> error("System property '$COROUTINES_SCHEDULER_PROPERTY_NAME' has unrecognized value '$value'")
+    }
+}
+
+internal fun createDefaultDispatcher(): CoroutineDispatcher = DefaultScheduler
 
 /**
  * Creates a context for a new coroutine. It installs [Dispatchers.Default] when no other dispatcher or
@@ -165,7 +179,7 @@ private object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Ke
 internal actual class UndispatchedCoroutine<in T>actual constructor (
     context: CoroutineContext,
     uCont: Continuation<T>
-) : ScopeCoroutine<T>(if (context[UndispatchedMarker] == null) context + UndispatchedMarker else context, uCont) {
+) : ScopeCoroutine<T>(if (context[UndispatchedMarker] == null) context + UndispatchedMarker else context, uCont, true) {
 
     /*
      * The state is thread-local because this coroutine can be used concurrently.

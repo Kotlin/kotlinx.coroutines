@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.test
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
@@ -165,18 +166,18 @@ internal class TestScopeImpl(context: CoroutineContext) :
 
     override val testScheduler get() = context[TestCoroutineScheduler]!!
 
-    private var entered = false
-    private var finished = false
+    private val entered = atomic(false)
+    private val finished = atomic(false)
     private val uncaughtExceptions = mutableListOf<Throwable>()
     private val lock = SynchronizedObject()
 
     /** Called upon entry to [runTest]. Will throw if called more than once. */
     fun enter() {
         val exceptions = synchronized(lock) {
-            if (entered)
+            if (entered.value)
                 throw IllegalStateException("Only a single call to `runTest` can be performed during one test.")
-            entered = true
-            check(!finished)
+            entered.value = true
+            check(!finished.value)
             uncaughtExceptions
         }
         if (exceptions.isNotEmpty()) {
@@ -190,9 +191,9 @@ internal class TestScopeImpl(context: CoroutineContext) :
     /** Called at the end of the test. May only be called once. */
     fun leave(): List<Throwable> {
         val exceptions = synchronized(lock) {
-            if(!entered || finished)
+            if(!entered.value || finished.value)
                 throw IllegalStateException("An internal error. Please report to the Kotlinx Coroutines issue tracker")
-            finished = true
+            finished.value = true
             uncaughtExceptions
         }
         val activeJobs = children.filter { it.isActive }.toList() // only non-empty if used with `runBlockingTest`
@@ -215,11 +216,11 @@ internal class TestScopeImpl(context: CoroutineContext) :
     /** Stores an exception to report after [runTest], or rethrows it if not inside [runTest]. */
     fun reportException(throwable: Throwable) {
         synchronized(lock) {
-            if (finished) {
+            if (finished.value) {
                 throw throwable
             } else {
                 uncaughtExceptions.add(throwable)
-                if (!entered)
+                if (!entered.value)
                     throw UncaughtExceptionsBeforeTest().apply { addSuppressed(throwable) }
             }
         }
@@ -229,7 +230,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
     fun tryGetCompletionCause(): Throwable? = completionCause
 
     override fun toString(): String =
-        "TestScope[" + (if (finished) "test ended" else if (entered) "test started" else "test not started") + "]"
+        "TestScope[" + (if (finished.value) "test ended" else if (entered.value) "test started" else "test not started") + "]"
 }
 
 /** Use the knowledge that any [TestScope] that we receive is necessarily a [TestScopeImpl]. */

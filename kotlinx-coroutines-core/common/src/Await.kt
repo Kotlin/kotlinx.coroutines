@@ -75,12 +75,12 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
             val deferred = deferreds[i]
             deferred.start() // To properly await lazily started deferreds
             AwaitAllNode(cont).apply {
-                handle = deferred.invokeOnCompletion(asHandler)
+                setHandle(deferred.invokeOnCompletion(asHandler))
             }
         }
         val disposer = DisposeHandlersOnCancel(nodes)
         // Step 2: Set disposer to each node
-        nodes.forEach { it.disposer = disposer }
+        nodes.forEach { it.setDisposer(disposer) }
         // Here we know that if any code the nodes complete, it will dispose the rest
         // Step 3: Now we can check if continuation is complete
         if (cont.isCompleted) {
@@ -93,7 +93,7 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
 
     private inner class DisposeHandlersOnCancel(private val nodes: Array<AwaitAllNode>) : CancelHandler() {
         fun disposeAll() {
-            nodes.forEach { it.handle.dispose() }
+            nodes.forEach { it.disposeHandle() }
         }
 
         override fun invoke(cause: Throwable?) { disposeAll() }
@@ -101,13 +101,17 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
     }
 
     private inner class AwaitAllNode(private val continuation: CancellableContinuation<List<T>>) : JobNode() {
-        lateinit var handle: DisposableHandle
-
+        private val _handle = atomic<DisposableHandle?>(null)
         private val _disposer = atomic<DisposeHandlersOnCancel?>(null)
-        var disposer: DisposeHandlersOnCancel?
-            get() = _disposer.value
-            set(value) { _disposer.value = value }
-        
+
+        fun setHandle(handle: DisposableHandle) { _handle.value = handle }
+        fun setDisposer(disposer: DisposeHandlersOnCancel) { _disposer.value = disposer }
+
+        fun disposeHandle() {
+            _handle.value?.dispose()
+            _handle.value = null
+        }
+
         override fun invoke(cause: Throwable?) {
             if (cause != null) {
                 val token = continuation.tryResumeWithException(cause)
@@ -115,12 +119,15 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
                     continuation.completeResume(token)
                     // volatile read of disposer AFTER continuation is complete
                     // and if disposer was already set (all handlers where already installed, then dispose them all)
-                    disposer?.disposeAll()
+                    _disposer.value?.disposeAll()
                 }
             } else if (notCompletedCount.decrementAndGet() == 0) {
                 continuation.resume(deferreds.map { it.getCompleted() })
                 // Note that all deferreds are complete here, so we don't need to dispose their nodes
             }
+            // Release all the refs for Kotlin/Native
+            _handle.value = null
+            _disposer.value = null
         }
     }
 }

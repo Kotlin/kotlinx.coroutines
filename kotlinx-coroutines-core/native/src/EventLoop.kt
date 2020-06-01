@@ -5,36 +5,68 @@
 package kotlinx.coroutines
 
 import kotlinx.cinterop.*
-import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.internal.multithreadingSupported
-import platform.posix.*
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
 import kotlin.system.*
 
-internal actual abstract class EventLoopImplPlatform : EventLoop() {
-
-    private val current = Worker.current
-
+internal actual abstract class EventLoopImplPlatform: EventLoop() {
     protected actual fun unpark() {
-        current.executeAfter(0L, {})// send an empty task to unpark the waiting event loop
+        /*
+         * Does nothing, because we only work with EventLoop in Kotlin/Native from a single thread where
+         * it was created. All tasks that come from other threads are passed into the owner thread via
+         * Worker.execute and its queueing mechanics.
+         */
     }
 
-    protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
-        if (multithreadingSupported) {
-            DefaultExecutor.invokeOnTimeout(now, delayedTask, EmptyCoroutineContext)
-        } else {
-            error("Cannot execute task because event loop was shut down")
-        }
-    }
+    protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask): Unit =
+        loopWasShutDown()
 }
 
 internal class EventLoopImpl: EventLoopImplBase() {
+    init { ensureNeverFrozen() }
+
+    val shareable = ShareableEventLoop(StableRef.create(this), Worker.current)
+
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+        scheduleInvokeOnTimeout(timeMillis, block)
+
+    override fun shutdown() {
+        super.shutdown()
+        shareable.ref.dispose()
+    }
+}
+
+internal class ShareableEventLoop(
+    val ref: StableRef<EventLoopImpl>,
+    private val worker: Worker
+) : CoroutineDispatcher(), Delay, ThreadBoundInterceptor {
+    override val thread: Thread = WorkerThread(worker)
+
+    init { freeze() }
+
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+        checkCurrentThread()
+        ref.get().scheduleResumeAfterDelay(timeMillis, continuation)
+    }
+
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        if (!multithreadingSupported) {
-            return scheduleInvokeOnTimeout(timeMillis, block)
-        }
-        return DefaultDelay.invokeOnTimeout(timeMillis, block, context)
+        checkCurrentThread()
+        return ref.get().invokeOnTimeout(timeMillis, block, context)
+    }
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        checkCurrentThread()
+        ref.get().dispatch(context, block)
+    }
+
+    override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
+        checkCurrentThread()
+        return ref.get().interceptContinuation(continuation)
+    }
+
+    override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
+        checkCurrentThread()
+        ref.get().releaseInterceptedContinuation(continuation)
     }
 }
 
