@@ -5,6 +5,7 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.atomicfu.*
+import kotlinx.atomicfu.locks.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
@@ -39,8 +40,7 @@ internal class ArrayBroadcastChannel<E>(
      *    - Read "tail" (volatile), then read element from buffer
      *  So read/writes to buffer need not be volatile
      */
-    private val bufferLock = ReentrantLock()
-    private val buffer = arrayOfNulls<Any?>(capacity)
+    private val state = ArrayBufferState(capacity)
 
     // head & tail are Long (64 bits) and we assume that they never wrap around
     // head, tail, and size are guarded by bufferLock
@@ -91,13 +91,13 @@ internal class ArrayBroadcastChannel<E>(
 
     // result is `OFFER_SUCCESS | OFFER_FAILED | Closed`
     override fun offerInternal(element: E): Any {
-        bufferLock.withLock {
+        state.withLock {
             // check if closed for send (under lock, so size cannot change)
             closedForSend?.let { return it }
             val size = this.size
             if (size >= capacity) return OFFER_FAILED
             val tail = this.tail
-            buffer[(tail % capacity).toInt()] = element
+            state.setBufferAt((tail % capacity).toInt(), element)
             this.size = size + 1
             this.tail = tail + 1
         }
@@ -108,7 +108,7 @@ internal class ArrayBroadcastChannel<E>(
 
     // result is `ALREADY_SELECTED | OFFER_SUCCESS | OFFER_FAILED | Closed`
     override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
-        bufferLock.withLock {
+        state.withLock {
             // check if closed for send (under lock, so size cannot change)
             closedForSend?.let { return it }
             val size = this.size
@@ -118,7 +118,7 @@ internal class ArrayBroadcastChannel<E>(
                 return ALREADY_SELECTED
             }
             val tail = this.tail
-            buffer[(tail % capacity).toInt()] = element
+            state.setBufferAt((tail % capacity).toInt(), element)
             this.size = size + 1
             this.tail = tail + 1
         }
@@ -143,7 +143,7 @@ internal class ArrayBroadcastChannel<E>(
     private tailrec fun updateHead(addSub: Subscriber<E>? = null, removeSub: Subscriber<E>? = null) {
         // update head in a tail rec loop
         var send: Send? = null
-        bufferLock.withLock {
+        state.withLock {
             if (addSub != null) {
                 addSub.subHead = tail // start from last element
                 val wasEmpty = subscribers.isEmpty()
@@ -162,7 +162,7 @@ internal class ArrayBroadcastChannel<E>(
             var size = this.size
             // clean up removed (on not need if we don't have any subscribers anymore)
             while (head < targetHead) {
-                buffer[(head % capacity).toInt()] = null
+                state.setBufferAt((head % capacity).toInt(), null)
                 val wasFull = size >= capacity
                 // update the size before checking queue (no more senders can queue up)
                 this.head = ++head
@@ -175,7 +175,7 @@ internal class ArrayBroadcastChannel<E>(
                         if (token != null) {
                             assert { token === RESUME_TOKEN }
                             // put sent element to the buffer
-                            buffer[(tail % capacity).toInt()] = (send as Send).pollResult
+                            state.setBufferAt((tail % capacity).toInt(), (send as Send).pollResult)
                             this.size = size + 1
                             this.tail = tail + 1
                             return@withLock // go out of lock to wakeup this sender
@@ -202,13 +202,10 @@ internal class ArrayBroadcastChannel<E>(
         return minHead
     }
 
-    @Suppress("UNCHECKED_CAST")
-    private fun elementAt(index: Long): E = buffer[(index % capacity).toInt()] as E
-
     private class Subscriber<E>(
         private val broadcastChannel: ArrayBroadcastChannel<E>
     ) : AbstractChannel<E>(null), ReceiveChannel<E> {
-        private val subLock = ReentrantLock()
+        private val subLock = reentrantLock()
 
         private val _subHead = atomic(0L)
         var subHead: Long // guarded by subLock
@@ -362,7 +359,8 @@ internal class ArrayBroadcastChannel<E>(
             }
             // Get tentative result. This result may be wrong (completely invalid value, including null),
             // because this subscription might get closed, moving channel's head past this subscription's head.
-            val result = broadcastChannel.elementAt(subHead)
+            @Suppress("UNCHECKED_CAST")
+            val result = broadcastChannel.state.getBufferAt((subHead % broadcastChannel.capacity).toInt()) as E
             // now check if this subscription was closed
             val closedSub = this.closedForReceive
             if (closedSub != null) return closedSub
@@ -374,5 +372,7 @@ internal class ArrayBroadcastChannel<E>(
     // ------ debug ------
 
     override val bufferDebugString: String
-        get() = "(buffer:capacity=${buffer.size},size=$size)"
+        get() = state.withLock {
+            "(buffer:capacity=${state.bufferSize},size=$size)"
+        }
 }

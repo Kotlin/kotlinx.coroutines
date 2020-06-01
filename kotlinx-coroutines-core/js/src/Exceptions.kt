@@ -25,8 +25,9 @@ public actual open class CancellationException(
 internal actual class JobCancellationException public actual constructor(
     message: String,
     cause: Throwable?,
-    internal actual val job: Job
+    job: Job
 ) : CancellationException(message, cause) {
+    internal actual val job: Job? = job
     override fun toString(): String = "${super.toString()}; job=$job"
     override fun equals(other: Any?): Boolean =
         other === this ||

@@ -7,18 +7,10 @@ package kotlinx.coroutines.internal
 import java.lang.reflect.*
 import java.util.*
 import java.util.concurrent.*
-import kotlin.concurrent.withLock as withLockJvm
 
 internal actual fun <E> subscriberList(): SubscribersList<E> = CopyOnWriteArrayList<E>()
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
-internal actual typealias ReentrantLock = java.util.concurrent.locks.ReentrantLock
-
-internal actual inline fun <T> ReentrantLock.withLock(action: () -> T) = this.withLockJvm(action)
-
-@Suppress("NOTHING_TO_INLINE") // So that R8 can completely remove ConcurrentKt class
-internal actual inline fun <E> identitySet(expectedSize: Int): MutableSet<E> =
-    Collections.newSetFromMap(IdentityHashMap(expectedSize))
+internal actual fun <E> identitySet(expectedSize: Int): MutableSet<E> = Collections.newSetFromMap(IdentityHashMap(expectedSize))
 
 private val REMOVE_FUTURE_ON_CANCEL: Method? = try {
     ScheduledThreadPoolExecutor::class.java.getMethod("setRemoveOnCancelPolicy", Boolean::class.java)

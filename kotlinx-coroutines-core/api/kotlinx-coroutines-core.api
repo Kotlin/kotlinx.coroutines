@@ -13,7 +13,6 @@ public abstract class kotlinx/coroutines/AbstractCoroutine : kotlinx/coroutines/
 	protected fun onStart ()V
 	public final fun resumeWith (Ljava/lang/Object;)V
 	public final fun start (Lkotlinx/coroutines/CoroutineStart;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
-	public final fun start (Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function1;)V
 }
 
 public final class kotlinx/coroutines/AwaitKt {
@@ -64,6 +63,7 @@ public class kotlinx/coroutines/CancellableContinuationImpl : kotlin/coroutines/
 	public fun getCallerFrame ()Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;
 	public fun getContext ()Lkotlin/coroutines/CoroutineContext;
 	public fun getContinuationCancellationCause (Lkotlinx/coroutines/Job;)Ljava/lang/Throwable;
+	public synthetic fun getDelegate$kotlinx_coroutines_core ()Lkotlin/coroutines/Continuation;
 	public final fun getResult ()Ljava/lang/Object;
 	public fun getStackTraceElement ()Ljava/lang/StackTraceElement;
 	public fun initCancellability ()V
@@ -157,7 +157,7 @@ public abstract class kotlinx/coroutines/CoroutineDispatcher : kotlin/coroutines
 	public abstract fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun dispatchYield (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
-	public final fun interceptContinuation (Lkotlin/coroutines/Continuation;)Lkotlin/coroutines/Continuation;
+	public fun interceptContinuation (Lkotlin/coroutines/Continuation;)Lkotlin/coroutines/Continuation;
 	public fun isDispatchNeeded (Lkotlin/coroutines/CoroutineContext;)Z
 	public fun minusKey (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
 	public final fun plus (Lkotlinx/coroutines/CoroutineDispatcher;)Lkotlinx/coroutines/CoroutineDispatcher;
@@ -226,8 +226,6 @@ public final class kotlinx/coroutines/CoroutineStart : java/lang/Enum {
 	public static final field DEFAULT Lkotlinx/coroutines/CoroutineStart;
 	public static final field LAZY Lkotlinx/coroutines/CoroutineStart;
 	public static final field UNDISPATCHED Lkotlinx/coroutines/CoroutineStart;
-	public final fun invoke (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)V
-	public final fun invoke (Lkotlin/jvm/functions/Function2;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)V
 	public final fun isLazy ()Z
 	public static fun valueOf (Ljava/lang/String;)Lkotlinx/coroutines/CoroutineStart;
 	public static fun values ()[Lkotlinx/coroutines/CoroutineStart;

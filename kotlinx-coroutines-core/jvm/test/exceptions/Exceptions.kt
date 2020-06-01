@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.exceptions
@@ -15,7 +15,7 @@ import kotlin.test.*
  * but run only under JDK 1.8
  */
 @Suppress("ConflictingExtensionProperty")
-val Throwable.suppressed: Array<Throwable> get() {
+actual val Throwable.suppressed: Array<Throwable> get() {
     val method = this::class.java.getMethod("getSuppressed") ?: error("This test can only be run using JDK 1.7")
     @Suppress("UNCHECKED_CAST")
     return method.invoke(this) as Array<Throwable>

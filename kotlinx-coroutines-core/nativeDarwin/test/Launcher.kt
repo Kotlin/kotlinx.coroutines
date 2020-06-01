@@ -24,5 +24,7 @@ fun mainBackground(args: Array<String>) {
 fun mainNoExit(args: Array<String>) {
     workerMain { // autoreleasepool to make sure interop objects are properly freed
         testLauncherEntryPoint(args)
+        mainThread.shutdown()
+        DefaultDispatcher.shutdown()
     }
 }

@@ -230,8 +230,8 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         val timeNanos = delayToNanos(timeMillis)
         if (timeNanos < MAX_DELAY_NS) {
             val now = nanoTime()
-            DelayedResumeTask(now + timeNanos, continuation).also { task ->
-                continuation.disposeOnCancellation(task)
+            DelayedResumeTask(now + timeNanos, continuation, asShareable()).also { task ->
+                continuation.disposeOnCancellation(task.asShareable())
                 schedule(now, task)
             }
         }
@@ -243,7 +243,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             val now = nanoTime()
             DelayedRunnableTask(now + timeNanos, block).also { task ->
                 schedule(now, task)
-            }
+            }.asShareable()
         } else {
             NonDisposableHandle
         }
@@ -404,7 +404,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
          * into heap to avoid overflow and corruption of heap data structure.
          */
         @JvmField var nanoTime: Long
-    ) : Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
+    ) : ShareableRefHolder(), Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
         private var _heap: Any? = null // null | ThreadSafeHeap | DISPOSED_TASK
 
         override var heap: ThreadSafeHeap<*>?
@@ -477,25 +477,31 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             @Suppress("UNCHECKED_CAST")
             (heap as? DelayedTaskQueue)?.remove(this) // remove if it is in heap (first)
             _heap = DISPOSED_TASK // never add again to any heap
+            disposeSharedRef()
         }
 
-        override fun toString(): String = "Delayed[nanos=$nanoTime]"
+        override fun toString(): String = "Delayed@$hexAddress[nanos=$nanoTime]"
     }
 
-    private inner class DelayedResumeTask(
+    private class DelayedResumeTask(
         nanoTime: Long,
-        private val cont: CancellableContinuation<Unit>
+        private val cont: CancellableContinuation<Unit>,
+        private val dispatcher: CoroutineDispatcher
     ) : DelayedTask(nanoTime) {
-        override fun run() { with(cont) { resumeUndispatched(Unit) } }
-        override fun toString(): String = super.toString() + cont.toString()
+        override fun run() {
+            disposeSharedRef()
+            with(cont) { dispatcher.resumeUndispatched(Unit) }
+        }
     }
 
     private class DelayedRunnableTask(
         nanoTime: Long,
         private val block: Runnable
     ) : DelayedTask(nanoTime) {
-        override fun run() { block.run() }
-        override fun toString(): String = super.toString() + block.toString()
+        override fun run() {
+            disposeSharedRef()
+            block.run()
+        }
     }
 
     /**

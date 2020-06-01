@@ -24,16 +24,13 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 
 internal fun loopWasShutDown(): Nothing = error("Cannot execute task because event loop was shut down")
 
-internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
-    DefaultExecutor
-
 @SharedImmutable
 internal actual val DefaultDelay: Delay = DefaultExecutor
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = coroutineContext + context
-    return if (combined !== DefaultExecutor && combined[ContinuationInterceptor] == null)
-        combined + DefaultExecutor else combined
+    return if (combined !== Dispatchers.Default && combined[ContinuationInterceptor] == null)
+        combined + Dispatchers.Default else combined
 }
 
 // No debugging facilities on native

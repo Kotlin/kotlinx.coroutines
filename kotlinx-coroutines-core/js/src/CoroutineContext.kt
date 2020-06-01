@@ -11,7 +11,7 @@ private external val navigator: dynamic
 private const val UNDEFINED = "undefined"
 internal external val process: dynamic
 
-internal actual fun createDefaultDispatcher(): CoroutineDispatcher = when {
+internal fun createDefaultDispatcher(): CoroutineDispatcher = when {
     // Check if we are running under ReactNative. We have to use NodeDispatcher under it.
     // The problem is that ReactNative has a `window` object with `addEventListener`, but it does not  really work.
     // For details see https://github.com/Kotlin/kotlinx.coroutines/issues/236

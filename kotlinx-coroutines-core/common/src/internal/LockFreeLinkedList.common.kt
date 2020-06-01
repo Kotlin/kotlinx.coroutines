@@ -69,7 +69,7 @@ public expect open class RemoveFirstDesc<T>(queue: LockFreeLinkedListNode): Abst
 public expect abstract class AbstractAtomicDesc : AtomicDesc {
     final override fun prepare(op: AtomicOp<*>): Any?
     final override fun complete(op: AtomicOp<*>, failure: Any?)
-    protected open fun failure(affected: LockFreeLinkedListNode): Any?
+    protected open fun failure(affected: LockFreeLinkedListNode?): Any?  // must fail on null for unlinked nodes on K/N
     protected open fun retry(affected: LockFreeLinkedListNode, next: Any): Boolean
     public abstract fun finishPrepare(prepareOp: PrepareOp) // non-null on failure
     public open fun onPrepare(prepareOp: PrepareOp): Any? // non-null on failure

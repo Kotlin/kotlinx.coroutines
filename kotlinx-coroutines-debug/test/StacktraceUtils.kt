@@ -113,7 +113,14 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
             val actualLines = cleanBlockHoundTraces(actualTrace.split("\n"))
             val expectedLines = expectedTrace.split("\n")
             for (i in expectedLines.indices) {
-                assertEquals(expectedLines[i], actualLines[i])
+                if (expectedLines[i] != actualLines[i]) {
+                    println("----- Expected")
+                    expectedLines.forEach { println(it) }
+                    println("----- Actual")
+                    actualLines.forEach { println(it) }
+                    println("-----")
+                    assertEquals(expectedLines[i], actualLines[i])
+                }
             }
         }
     }

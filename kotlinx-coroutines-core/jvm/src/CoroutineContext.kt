@@ -6,7 +6,6 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
-import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
 internal const val COROUTINES_SCHEDULER_PROPERTY_NAME = "kotlinx.coroutines.scheduler"
@@ -19,7 +18,7 @@ internal val useCoroutinesScheduler = systemProp(COROUTINES_SCHEDULER_PROPERTY_N
     }
 }
 
-internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
+internal fun createDefaultDispatcher(): CoroutineDispatcher =
     if (useCoroutinesScheduler) DefaultScheduler else CommonPool
 
 /**
