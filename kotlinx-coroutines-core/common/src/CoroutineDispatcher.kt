@@ -96,10 +96,10 @@ public abstract class CoroutineDispatcher :
      * This method should generally be exception-safe. An exception thrown from this method
      * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
      */
-    public final override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
+    public override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
         DispatchedContinuation(this, continuation)
 
-    public final override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
+    public override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
         /*
          * Unconditional cast is safe here: we only return DispatchedContinuation from `interceptContinuation`,
          * any ClassCastException can only indicate compiler bug

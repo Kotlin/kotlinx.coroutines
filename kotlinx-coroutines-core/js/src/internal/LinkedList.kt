@@ -146,7 +146,7 @@ public actual abstract class AbstractAtomicDesc : AtomicDesc() {
     }
 
     actual final override fun complete(op: AtomicOp<*>, failure: Any?) = onComplete()
-    protected actual open fun failure(affected: LockFreeLinkedListNode): Any? = null // Never fails by default
+    protected actual open fun failure(affected: LockFreeLinkedListNode?): Any? = null // Never fails by default  // must fail on null for unlinked nodes on K/N
     protected actual open fun retry(affected: LockFreeLinkedListNode, next: Any): Boolean = false // Always succeeds
     protected actual abstract fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)
 }

@@ -362,16 +362,27 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     }
 
     private class LockedQueue(
-        @JvmField var owner: Any
+        owner: Any,
     ) : LockFreeLinkedListHead() {
+        private val _owner = atomic(owner)
+        var owner: Any
+            get() = _owner.value
+            set(value) { _owner.value = value }
+
         override fun toString(): String = "LockedQueue[$owner]"
     }
 
     private abstract inner class LockWaiter(
-        @JvmField val owner: Any?
+        owner: Any?
     ) : LockFreeLinkedListNode(), DisposableHandle {
+        private val _owner = atomic(owner)
+        var owner: Any?
+            get() = _owner.value
+            set(value) { _owner.value = value }
+
         private val isTaken = atomic<Boolean>(false)
         fun take(): Boolean = isTaken.compareAndSet(false, true)
+
         final override fun dispose() { remove() }
         abstract fun tryResumeLockWaiter(): Boolean
         abstract fun completeResumeLockWaiter()
@@ -401,10 +412,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     ) : LockWaiter(owner) {
         override fun tryResumeLockWaiter(): Boolean = take() && select.trySelect()
         override fun completeResumeLockWaiter() {
-            block.startCoroutineCancellable(receiver = this@MutexImpl, completion = select.completion) {
-                // if this continuation gets cancelled during dispatch to the caller, then release the lock
-                unlock(owner)
-            }
+            startCoroutine(CoroutineStart.DEFAULT, this@MutexImpl, select.completion, { unlock(owner) }, block)
         }
         override fun toString(): String = "LockSelect[$owner, $select] for ${this@MutexImpl}"
     }

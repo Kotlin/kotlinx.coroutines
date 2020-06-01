@@ -66,7 +66,7 @@ internal fun <T> CoroutineScope.flowProduce(
 private class FlowCoroutine<T>(
     context: CoroutineContext,
     uCont: Continuation<T>
-) : ScopeCoroutine<T>(context, uCont) {
+) : ScopeCoroutine<T>(context, uCont, true) {
     public override fun childCancelled(cause: Throwable): Boolean {
         if (cause is ChildCancelledException) return true
         return cancelImpl(cause)

@@ -12,7 +12,7 @@ private external val navigator: dynamic
 private const val UNDEFINED = "undefined"
 internal external val process: dynamic
 
-internal actual fun createDefaultDispatcher(): CoroutineDispatcher = when {
+internal fun createDefaultDispatcher(): CoroutineDispatcher = when {
     // Check if we are running under jsdom. WindowDispatcher doesn't work under jsdom because it accesses MessageEvent#source.
     // It is not implemented in jsdom, see https://github.com/jsdom/jsdom/blob/master/Changelog.md
     // "It's missing a few semantics, especially around origins, as well as MessageEvent source."
@@ -51,6 +51,6 @@ internal actual val CoroutineContext.coroutineName: String? get() = null // not 
 internal actual class UndispatchedCoroutine<in T> actual constructor(
     context: CoroutineContext,
     uCont: Continuation<T>
-) : ScopeCoroutine<T>(context, uCont) {
+) : ScopeCoroutine<T>(context, uCont, true) {
     override fun afterResume(state: Any?) = uCont.resumeWith(recoverResult(state, uCont))
 }
