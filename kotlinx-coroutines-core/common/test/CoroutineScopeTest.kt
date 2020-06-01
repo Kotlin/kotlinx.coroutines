@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("UNREACHABLE_CODE")
@@ -104,13 +104,17 @@ class CoroutineScopeTest : TestBase() {
             launch {
                 expect(3)
                 try {
+                    println("1")
                     delay(Long.MAX_VALUE)
                 } finally {
+                    println("F")
                     expect(4)
                 }
             }
 
+            println("E?")
             expect(2)
+            println("3")
             delay(Long.MAX_VALUE)
             42
         }
@@ -118,9 +122,11 @@ class CoroutineScopeTest : TestBase() {
         val outerJob = launch(NonCancellable) {
             expect(1)
             try {
+                println("2")
                 callJobScoped()
                 expectUnreached()
             } catch (e: JobCancellationException) {
+                println("4")
                 expect(5)
                 if (RECOVER_STACK_TRACES) {
                     val cause = e.cause as JobCancellationException // shall be recovered JCE
@@ -131,8 +137,11 @@ class CoroutineScopeTest : TestBase() {
             }
         }
         repeat(3) { yield() } // let everything to start properly
+        println("C")
         outerJob.cancel()
+        println("J")
         outerJob.join()
+        println("D")
         finish(6)
     }
 

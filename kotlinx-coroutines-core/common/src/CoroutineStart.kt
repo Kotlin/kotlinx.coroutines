@@ -4,8 +4,6 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.CoroutineStart.*
-import kotlinx.coroutines.intrinsics.*
-import kotlin.coroutines.*
 
 /**
  * Defines start options for coroutines builders.
@@ -74,44 +72,6 @@ public enum class CoroutineStart {
      * an event loop that otherwise prevents potential stack overflow in case of unlimited nesting.
      */
     UNDISPATCHED;
-
-    /**
-     * Starts the corresponding block as a coroutine with this coroutine's start strategy.
-     *
-     * * [DEFAULT] uses [startCoroutineCancellable].
-     * * [ATOMIC] uses [startCoroutine].
-     * * [UNDISPATCHED] uses [startCoroutineUndispatched].
-     * * [LAZY] does nothing.
-     *
-     * @suppress **This an internal API and should not be used from general code.**
-     */
-    @InternalCoroutinesApi
-    public operator fun <T> invoke(block: suspend () -> T, completion: Continuation<T>): Unit =
-        when (this) {
-            DEFAULT -> block.startCoroutineCancellable(completion)
-            ATOMIC -> block.startCoroutine(completion)
-            UNDISPATCHED -> block.startCoroutineUndispatched(completion)
-            LAZY -> Unit // will start lazily
-        }
-
-    /**
-     * Starts the corresponding block with receiver as a coroutine with this coroutine start strategy.
-     *
-     * * [DEFAULT] uses [startCoroutineCancellable].
-     * * [ATOMIC] uses [startCoroutine].
-     * * [UNDISPATCHED] uses [startCoroutineUndispatched].
-     * * [LAZY] does nothing.
-     *
-     * @suppress **This an internal API and should not be used from general code.**
-     */
-    @InternalCoroutinesApi
-    public operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>): Unit =
-        when (this) {
-            DEFAULT -> block.startCoroutineCancellable(receiver, completion)
-            ATOMIC -> block.startCoroutine(receiver, completion)
-            UNDISPATCHED -> block.startCoroutineUndispatched(receiver, completion)
-            LAZY -> Unit // will start lazily
-        }
 
     /**
      * Returns `true` when [LAZY].

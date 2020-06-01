@@ -96,7 +96,7 @@ public abstract class CoroutineDispatcher :
      * This method should generally be exception-safe. An exception thrown from this method
      * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
      */
-    public final override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
+    public override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
         DispatchedContinuation(this, continuation)
 
     @InternalCoroutinesApi

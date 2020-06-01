@@ -105,7 +105,7 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
         }
     } catch (e: TimeoutCancellationException) {
         // Return null if it's our exception, otherwise propagate it upstream (e.g. in case of nested withTimeouts)
-        if (e.coroutine === coroutine) {
+        if (e.coroutine.unweakRef() === coroutine) {
             return null
         }
         throw e
@@ -151,7 +151,12 @@ private fun <U, T: U> setupTimeout(
 private class TimeoutCoroutine<U, in T: U>(
     @JvmField val time: Long,
     uCont: Continuation<U> // unintercepted continuation
-) : ScopeCoroutine<T>(uCont.context, uCont), Runnable {
+) : ScopeCoroutine<T>(uCont.context, uCont, false), Runnable {
+    init {
+        // Kludge for native
+        if (!isReuseSupportedInPlatform()) initParentForNativeUndispatchedCoroutine()
+    }
+
     override fun run() {
         cancelCoroutine(TimeoutCancellationException(time, this))
     }
@@ -165,7 +170,7 @@ private class TimeoutCoroutine<U, in T: U>(
  */
 public class TimeoutCancellationException internal constructor(
     message: String,
-    @JvmField internal val coroutine: Job?
+    @JvmField internal val coroutine: Any?
 ) : CancellationException(message), CopyableThrowable<TimeoutCancellationException> {
     /**
      * Creates a timeout exception with the given message.
@@ -183,4 +188,4 @@ public class TimeoutCancellationException internal constructor(
 internal fun TimeoutCancellationException(
     time: Long,
     coroutine: Job
-) : TimeoutCancellationException = TimeoutCancellationException("Timed out waiting for $time ms", coroutine)
+) : TimeoutCancellationException = TimeoutCancellationException("Timed out waiting for $time ms", coroutine.weakRef())

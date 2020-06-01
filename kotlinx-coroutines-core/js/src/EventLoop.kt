@@ -8,6 +8,8 @@ import kotlin.coroutines.*
 
 internal actual fun createEventLoop(): EventLoop = UnconfinedEventLoop()
 
+internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit) = block()
+
 internal actual fun nanoTime(): Long = unsupported()
 
 internal class UnconfinedEventLoop : EventLoop() {
