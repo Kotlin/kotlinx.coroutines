@@ -6,8 +6,11 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.CoroutineStart.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.internal.isReuseSupportedInPlatform
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
+import kotlin.jvm.*
 
 /**
  * Abstract base class for implementation of coroutines in coroutine builders.
@@ -35,21 +38,10 @@ import kotlin.coroutines.*
  */
 @InternalCoroutinesApi
 public abstract class AbstractCoroutine<in T>(
-    parentContext: CoroutineContext,
+    @JvmField internal val parentContext: CoroutineContext,
     initParentJob: Boolean,
     active: Boolean
 ) : JobSupport(active), Job, Continuation<T>, CoroutineScope {
-
-    init {
-        /*
-         * Setup parent-child relationship between the parent in the context and the current coroutine.
-         * It may cause this coroutine to become _cancelling_ if the parent is already cancelled.
-         * It is dangerous to install parent-child relationship here if the coroutine class
-         * operates its state from within onCancelled or onCancelling
-         * (with exceptions for rx integrations that can't have any parent)
-         */
-        if (initParentJob) initParentJob(parentContext[Job])
-    }
 
     /**
      * The context of this coroutine that includes this coroutine as a [Job].
@@ -63,6 +55,18 @@ public abstract class AbstractCoroutine<in T>(
     public override val coroutineContext: CoroutineContext get() = context
 
     override val isActive: Boolean get() = super.isActive
+
+    init {
+        /*
+         * Setup parent-child relationship between the parent in the context and the current coroutine.
+         * It may cause this coroutine to become _cancelling_ if the parent is already cancelled.
+         * It is dangerous to install parent-child relationship here if the coroutine class
+         * operates its state from within onCancelled or onCancelling
+         * (with exceptions for rx integrations that can't have any parent)
+         */
+        // KLUDGE for native late binding
+        if (initParentJob && isReuseSupportedInPlatform()) initParentJob(parentContext[Job])
+    }
 
     /**
      * This function is invoked once when the job was completed normally with the specified [value],
@@ -123,6 +127,6 @@ public abstract class AbstractCoroutine<in T>(
      * * [LAZY] does nothing.
      */
     public fun <R> start(start: CoroutineStart, receiver: R, block: suspend R.() -> T) {
-        start(block, receiver, this)
+        startAbstractCoroutine(start, receiver, this, block)
     }
 }

@@ -7,6 +7,7 @@ package kotlinx.coroutines
 import platform.CoreFoundation.*
 import kotlin.native.concurrent.*
 import kotlin.native.internal.test.*
+import kotlin.native.Platform
 import kotlin.system.*
 
 // This is a separate entry point for tests in background
@@ -22,7 +23,10 @@ fun mainBackground(args: Array<String>) {
 
 // This is a separate entry point for tests with leak checker
 fun mainNoExit(args: Array<String>) {
+    Platform.isMemoryLeakCheckerActive = true
     workerMain { // autoreleasepool to make sure interop objects are properly freed
         testLauncherEntryPoint(args)
+        mainThread.shutdown()
+        DefaultDispatcher.shutdown()
     }
 }
