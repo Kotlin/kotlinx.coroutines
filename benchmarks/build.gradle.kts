@@ -82,10 +82,15 @@ dependencies {
     compile("io.projectreactor:reactor-core:${version("reactor")}")
     compile("io.reactivex.rxjava2:rxjava:2.1.9")
     compile("com.github.akarnokd:rxjava2-extensions:0.20.8")
-
     compile("com.typesafe.akka:akka-actor_2.12:2.5.0")
+    compile("org.nield:kotlin-statistics:1.2.1")
     compile(project(":kotlinx-coroutines-core"))
 
     // add jmh dependency on main
     "jmhImplementation"(sourceSets.main.get().runtimeClasspath)
+}
+
+tasks.register<JavaExec>("runChanProdConsMCBench") {
+    main = "benchmarks.macro.ChannelProdConsMonteCarloBenchmark"
+    classpath = sourceSets.main.get().runtimeClasspath
 }
