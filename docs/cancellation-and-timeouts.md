@@ -49,7 +49,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-01.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-01.kt).
 
 It produces the following output:
 
@@ -104,7 +104,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-02.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-02.kt).
 
 Run it to see that it continues to print "I'm sleeping" even after cancellation
 until the job completes by itself after five iterations.
@@ -156,7 +156,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-03.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-03.kt).
 
 As you can see, now this loop is cancelled. [isActive] is an extension property 
 available inside the coroutine via the [CoroutineScope] object.
@@ -203,7 +203,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-04.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-04.kt).
 
 Both [join][Job.join] and [cancelAndJoin] wait for all finalization actions to complete, 
 so the example above produces the following output:
@@ -259,7 +259,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-05.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-05.kt).
 
 <!--- TEST
 job: I'm sleeping 0 ...
@@ -298,7 +298,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-06.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-06.kt).
 
 It produces the following output:
 
@@ -342,7 +342,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-07.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-07.kt).
 
 There is no longer an exception when running this code:
 

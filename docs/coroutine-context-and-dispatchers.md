@@ -65,7 +65,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-01.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-01.kt).
 
 It produces the following output (maybe in different order):
 
@@ -129,7 +129,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-02.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-02.kt).
 
 Produces the output: 
  
@@ -186,7 +186,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-03.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-03.kt).
 
 There are three coroutines. The main coroutine (#1) inside `runBlocking` 
 and two coroutines computing the deferred values `a` (#2) and `b` (#3).
@@ -238,7 +238,7 @@ fun main() {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-04.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-04.kt).
 
 It demonstrates several new techniques. One is using [runBlocking] with an explicitly specified context, and
 the other one is using the [withContext] function to change the context of a coroutine while still staying in the
@@ -274,7 +274,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-05.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-05.kt).
 
 In the [debug mode](#debugging-coroutines-and-threads), it outputs something like this:
 
@@ -332,7 +332,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-06.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-06.kt).
 
 The output of this code is:
 
@@ -375,7 +375,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-07.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-07.kt).
 
 The result is going to be:
 
@@ -427,7 +427,7 @@ fun main() = runBlocking(CoroutineName("main")) {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-08.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-08.kt).
 
 The output it produces with `-Dkotlinx.coroutines.debug` JVM option is similar to:
  
@@ -462,7 +462,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-09.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-09.kt).
 
 The output of this code with the `-Dkotlinx.coroutines.debug` JVM option is: 
 
@@ -566,7 +566,7 @@ fun main() = runBlocking<Unit> {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-10.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-10.kt).
 
 The output of this example is:
 
@@ -620,7 +620,7 @@ fun main() = runBlocking<Unit> {
 
 </div>                                                                                       
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-11.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-11.kt).
 
 In this example we launch a new coroutine in a background thread pool using [Dispatchers.Default], so
 it works on a different thread from the thread pool, but it still has the value of the thread local variable
