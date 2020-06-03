@@ -381,4 +381,40 @@ class FlowGuideTest {
             "Event: 3"
         )
     }
+
+    @Test
+    fun testExampleFlow37() {
+        test("ExampleFlow37") { kotlinx.coroutines.guide.exampleFlow37.main() }.verifyExceptions(
+            "Emitting 1",
+            "1",
+            "Emitting 2",
+            "2",
+            "Emitting 3",
+            "3",
+            "Emitting 4",
+            "Exception in thread \"main\" kotlinx.coroutines.JobCancellationException: BlockingCoroutine was cancelled; job=\"coroutine#1\":BlockingCoroutine{Cancelled}@6d7b4f4c"
+        )
+    }
+
+    @Test
+    fun testExampleFlow38() {
+        test("ExampleFlow38") { kotlinx.coroutines.guide.exampleFlow38.main() }.verifyExceptions(
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "Exception in thread \"main\" kotlinx.coroutines.JobCancellationException: BlockingCoroutine was cancelled; job=\"coroutine#1\":BlockingCoroutine{Cancelled}@3327bd23"
+        )
+    }
+
+    @Test
+    fun testExampleFlow39() {
+        test("ExampleFlow39") { kotlinx.coroutines.guide.exampleFlow39.main() }.verifyExceptions(
+            "1",
+            "2",
+            "3",
+            "Exception in thread \"main\" kotlinx.coroutines.JobCancellationException: BlockingCoroutine was cancelled; job=\"coroutine#1\":BlockingCoroutine{Cancelled}@5ec0a365"
+        )
+    }
 }

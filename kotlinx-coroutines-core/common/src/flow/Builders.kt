@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * Creates a flow from the given suspendable [block].
  *
  * Example of usage:
+ *
  * ```
  * fun fibonacci(): Flow<BigInteger> = flow {
  *     var x = BigInteger.ZERO
@@ -33,10 +34,13 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  *
  * fibonacci().take(100).collect { println(it) }
  * ```
- * Emissions from [flow] builder are [cancellable] by default.
+ *
+ * Emissions from [flow] builder are [cancellable] by default &mdash; each call to [emit][FlowCollector.emit]
+ * also calls [ensureActive][CoroutineContext.ensureActive].
  *
  * `emit` should happen strictly in the dispatchers of the [block] in order to preserve the flow context.
  * For example, the following code will result in an [IllegalStateException]:
+ *
  * ```
  * flow {
  *     emit(1) // Ok
@@ -45,6 +49,7 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  *     }
  * }
  * ```
+ *
  * If you want to switch the context of execution of a flow, use the [flowOn] operator.
  */
 public fun <T> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> = SafeFlow(block)

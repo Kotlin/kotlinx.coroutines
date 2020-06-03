@@ -47,7 +47,7 @@ The main coroutines guide has moved to the [docs folder](docs/coroutines-guide.m
     * <a name='suspending-functions'></a>[Suspending functions](docs/flow.md#suspending-functions)
     * <a name='flows'></a>[Flows](docs/flow.md#flows)
   * <a name='flows-are-cold'></a>[Flows are cold](docs/flow.md#flows-are-cold)
-  * <a name='flow-cancellation'></a>[Flow cancellation](docs/flow.md#flow-cancellation)
+  * <a name='flow-cancellation-basics'></a>[Flow cancellation basics](docs/flow.md#flow-cancellation-basics)
   * <a name='flow-builders'></a>[Flow builders](docs/flow.md#flow-builders)
   * <a name='intermediate-flow-operators'></a>[Intermediate flow operators](docs/flow.md#intermediate-flow-operators)
     * <a name='transform-operator'></a>[Transform operator](docs/flow.md#transform-operator)
@@ -79,6 +79,8 @@ The main coroutines guide has moved to the [docs folder](docs/coroutines-guide.m
     * <a name='successful-completion'></a>[Successful completion](docs/flow.md#successful-completion)
   * <a name='imperative-versus-declarative'></a>[Imperative versus declarative](docs/flow.md#imperative-versus-declarative)
   * <a name='launching-flow'></a>[Launching flow](docs/flow.md#launching-flow)
+  * <a name='flow-cancellation-checks'></a>[Flow cancellation checks](docs/flow.md#flow-cancellation-checks)
+    * <a name='making-busy-flow-cancellable'></a>[Making busy flow cancellable](docs/flow.md#making-busy-flow-cancellable)
   * <a name='flow-and-reactive-streams'></a>[Flow and Reactive Streams](docs/flow.md#flow-and-reactive-streams)
 <!--- TOC_REF docs/channels.md -->
 * <a name='channels'></a>[Channels](docs/channels.md#channels)
