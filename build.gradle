@@ -132,6 +132,7 @@ apiValidation {
     if (build_snapshot_train) {
         ignoredProjects.remove("site")
         ignoredProjects.remove("example-frontend-js")
+        ignoredProjects.add("kotlinx-coroutines-core")
     }
     ignoredPackages += "kotlinx.coroutines.internal"
 }
