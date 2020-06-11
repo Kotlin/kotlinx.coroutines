@@ -335,9 +335,10 @@ internal class SelectBuilderImpl<in R>(
     }
 
     private inner class SelectOnCancelling : JobCancellingNode() {
+        private val _invoked = atomic(false)
         // Note: may be invoked multiple times, but only the first trySelect succeeds anyway
         override fun invoke(cause: Throwable?) {
-            if (trySelect())
+            if (_invoked.compareAndSet(false, true) && trySelect())
                 resumeSelectWithException(job.getCancellationException())
         }
     }

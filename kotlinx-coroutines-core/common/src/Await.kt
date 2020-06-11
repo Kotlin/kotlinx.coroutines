@@ -107,19 +107,23 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
         var disposer: DisposeHandlersOnCancel?
             get() = _disposer.value
             set(value) { _disposer.value = value }
-        
+
+        private val _invoked = atomic(false)
+
         override fun invoke(cause: Throwable?) {
-            if (cause != null) {
-                val token = continuation.tryResumeWithException(cause)
-                if (token != null) {
-                    continuation.completeResume(token)
-                    // volatile read of disposer AFTER continuation is complete
-                    // and if disposer was already set (all handlers where already installed, then dispose them all)
-                    disposer?.disposeAll()
+            if (_invoked.compareAndSet(false, true)) {
+                if (cause != null) {
+                    val token = continuation.tryResumeWithException(cause)
+                    if (token != null) {
+                        continuation.completeResume(token)
+                        // volatile read of disposer AFTER continuation is complete
+                        // and if disposer was already set (all handlers where already installed, then dispose them all)
+                        disposer?.disposeAll()
+                    }
+                } else if (notCompletedCount.decrementAndGet() == 0) {
+                    continuation.resume(deferreds.map { it.getCompleted() })
+                    // Note that all deferreds are complete here, so we don't need to dispose their nodes
                 }
-            } else if (notCompletedCount.decrementAndGet() == 0) {
-                continuation.resume(deferreds.map { it.getCompleted() })
-                // Note that all deferreds are complete here, so we don't need to dispose their nodes
             }
         }
     }
