@@ -55,7 +55,7 @@ compileKotlinMetadata {
 }
 
 kotlin.sourceSets {
-    jvm.dependencies {
+    jvmMain.dependencies {
         compileOnly "com.google.android:annotations:4.1.1.4"
     }
 

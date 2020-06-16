@@ -212,6 +212,9 @@ public fun <T> Flow<T>.flowOn(context: CoroutineContext): Flow<T> {
  * Returns a flow which checks cancellation status on each emission and throws
  * the corresponding cancellation cause if flow collector was cancelled.
  * Note that [flow] builder is [cancellable] by default.
+ *
+ * This operator provides a shortcut for `.onEach { currentCoroutineContext().ensureActive() }`.
+ * See [ensureActive][CoroutineContext.ensureActive] for details.
  */
 public fun <T> Flow<T>.cancellable(): Flow<T> {
     if (this is AbstractFlow<*>) return this // Fast-path, already cancellable

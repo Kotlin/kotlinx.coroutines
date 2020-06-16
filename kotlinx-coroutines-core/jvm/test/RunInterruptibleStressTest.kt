@@ -4,12 +4,15 @@
 
 package kotlinx.coroutines
 
+import org.junit.*
+import org.junit.Test
 import java.util.concurrent.atomic.*
 import kotlin.test.*
 
 class RunInterruptibleStressTest : TestBase() {
 
-    private val dispatcher = Dispatchers.IO
+    @get:Rule
+    val dispatcher = ExecutorRule(4)
     private val REPEAT_TIMES = 1000 * stressTestMultiplier
 
     @Test
@@ -17,10 +20,9 @@ class RunInterruptibleStressTest : TestBase() {
         val interruptLeak = AtomicBoolean(false)
         val enterCount = AtomicInteger(0)
         val interruptedCount = AtomicInteger(0)
-        val otherExceptionCount = AtomicInteger(0)
 
-        repeat(REPEAT_TIMES) { repeat ->
-            val job = launch(dispatcher, start = CoroutineStart.LAZY) {
+        repeat(REPEAT_TIMES) {
+            val job = launch(dispatcher) {
                 try {
                     runInterruptible {
                         enterCount.incrementAndGet()
@@ -32,27 +34,21 @@ class RunInterruptibleStressTest : TestBase() {
                         }
                     }
                 } catch (e: CancellationException) {
-                } catch (e: Throwable) {
-                    otherExceptionCount.incrementAndGet()
+                    // Expected
                 } finally {
                     interruptLeak.set(interruptLeak.get() || Thread.currentThread().isInterrupted)
                 }
             }
-
-            val cancelJob = launch(dispatcher, start = CoroutineStart.LAZY) {
+            // Add dispatch delay
+            val cancelJob = launch(dispatcher) {
                 job.cancel()
             }
 
             job.start()
-            val canceller = launch(dispatcher) {
-                cancelJob.start()
-            }
-
-            joinAll(job, cancelJob, canceller)
+            joinAll(job, cancelJob)
         }
 
         assertFalse(interruptLeak.get())
         assertEquals(enterCount.get(), interruptedCount.get())
-        assertEquals(0, otherExceptionCount.get())
     }
 }
