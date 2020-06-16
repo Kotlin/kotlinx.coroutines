@@ -146,6 +146,8 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
     private val _availablePermits = atomic(permits - acquiredPermits)
     override val availablePermits: Int get() = max(_availablePermits.value, 0)
 
+    private val onCancellationRelease = { _: Throwable -> release() }
+
     override fun tryAcquire(): Boolean {
         _availablePermits.loop { p ->
             if (p <= 0) return false
@@ -201,7 +203,8 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
         // On CAS failure -- the cell must be either PERMIT or BROKEN
         // If the cell already has PERMIT from tryResumeNextFromQueue, try to grab it
         if (segment.cas(i, PERMIT, TAKEN)) { // took permit thus eliminating acquire/release pair
-            cont.resume(Unit)
+            val result = cont.tryResumeAcquire()
+            assert { result } // must always succeed, since continuation was not published yet
             return true
         }
         assert { segment.get(i) === BROKEN } // it must be broken in this case, no other way around it
@@ -230,15 +233,15 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
                 return !segment.cas(i, PERMIT, BROKEN)
             }
             cellState === CANCELLED -> return false // the acquire was already cancelled
-            else -> return (cellState as CancellableContinuation<Unit>).tryResume()
+            else -> return (cellState as CancellableContinuation<Unit>).tryResumeAcquire()
         }
     }
-}
 
-private fun CancellableContinuation<Unit>.tryResume(): Boolean {
-    val token = tryResume(Unit) ?: return false
-    completeResume(token)
-    return true
+    private fun CancellableContinuation<Unit>.tryResumeAcquire(): Boolean {
+        val token = tryResume(Unit, null, onCancellationRelease) ?: return false
+        completeResume(token)
+        return true
+    }
 }
 
 private class CancelSemaphoreAcquisitionHandler(
