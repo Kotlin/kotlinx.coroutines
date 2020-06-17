@@ -151,7 +151,7 @@ class FlowGuideTest {
         test("ExampleFlow14") { kotlinx.coroutines.guide.exampleFlow14.main() }.verifyExceptions(
             "Exception in thread \"main\" java.lang.IllegalStateException: Flow invariant is violated:",
             "\t\tFlow was collected in [CoroutineId(1), \"coroutine#1\":BlockingCoroutine{Active}@5511c7f8, BlockingEventLoop@2eac3323],",
-            "\t\tbut emission happened in [CoroutineId(1), \"coroutine#1\":DispatchedCoroutine{Active}@2dae0000, DefaultDispatcher].",
+            "\t\tbut emission happened in [CoroutineId(1), \"coroutine#1\":DispatchedCoroutine{Active}@2dae0000, Dispatchers.Default].",
             "\t\tPlease refer to 'flow' documentation or use 'flowOn' instead",
             "\tat ..."
         )

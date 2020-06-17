@@ -272,6 +272,7 @@ internal object DebugProbesImpl {
     internal fun probeCoroutineSuspended(frame: Continuation<*>) = updateState(frame, SUSPENDED)
 
     private fun updateState(frame: Continuation<*>, state: String) {
+        if (!isInstalled) return
         // KT-29997 is here only since 1.3.30
         if (state == RUNNING && KotlinVersion.CURRENT.isAtLeast(1, 3, 30)) {
             val stackFrame = frame as? CoroutineStackFrame ?: return

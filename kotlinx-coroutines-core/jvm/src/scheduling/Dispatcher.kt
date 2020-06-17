@@ -14,13 +14,18 @@ import kotlin.coroutines.*
  * Default instance of coroutine dispatcher.
  */
 internal object DefaultScheduler : ExperimentalCoroutineDispatcher() {
-    val IO = blocking(systemProp(IO_PARALLELISM_PROPERTY_NAME, 64.coerceAtLeast(AVAILABLE_PROCESSORS)))
+    val IO: CoroutineDispatcher = LimitingDispatcher(
+        this,
+        systemProp(IO_PARALLELISM_PROPERTY_NAME, 64.coerceAtLeast(AVAILABLE_PROCESSORS)),
+        "Dispatchers.IO",
+        TASK_PROBABLY_BLOCKING
+    )
 
     override fun close() {
-        throw UnsupportedOperationException("$DEFAULT_SCHEDULER_NAME cannot be closed")
+        throw UnsupportedOperationException("$DEFAULT_DISPATCHER_NAME cannot be closed")
     }
 
-    override fun toString(): String = DEFAULT_SCHEDULER_NAME
+    override fun toString(): String = DEFAULT_DISPATCHER_NAME
 
     @InternalCoroutinesApi
     @Suppress("UNUSED")
@@ -85,7 +90,7 @@ public open class ExperimentalCoroutineDispatcher(
      */
     public fun blocking(parallelism: Int = BLOCKING_DEFAULT_PARALLELISM): CoroutineDispatcher {
         require(parallelism > 0) { "Expected positive parallelism level, but have $parallelism" }
-        return LimitingDispatcher(this, parallelism, TASK_PROBABLY_BLOCKING)
+        return LimitingDispatcher(this, parallelism, null, TASK_PROBABLY_BLOCKING)
     }
 
     /**
@@ -98,7 +103,7 @@ public open class ExperimentalCoroutineDispatcher(
     public fun limited(parallelism: Int): CoroutineDispatcher {
         require(parallelism > 0) { "Expected positive parallelism level, but have $parallelism" }
         require(parallelism <= corePoolSize) { "Expected parallelism level lesser than core pool size ($corePoolSize), but have $parallelism" }
-        return LimitingDispatcher(this, parallelism, TASK_NON_BLOCKING)
+        return LimitingDispatcher(this, parallelism, null, TASK_NON_BLOCKING)
     }
 
     internal fun dispatchWithContext(block: Runnable, context: TaskContext, tailDispatch: Boolean) {
@@ -130,8 +135,9 @@ public open class ExperimentalCoroutineDispatcher(
 }
 
 private class LimitingDispatcher(
-    val dispatcher: ExperimentalCoroutineDispatcher,
-    val parallelism: Int,
+    private val dispatcher: ExperimentalCoroutineDispatcher,
+    private val parallelism: Int,
+    private val name: String?,
     override val taskMode: Int
 ) : ExecutorCoroutineDispatcher(), TaskContext, Executor {
 
@@ -190,7 +196,7 @@ private class LimitingDispatcher(
     }
 
     override fun toString(): String {
-        return "${super.toString()}[dispatcher = $dispatcher]"
+        return name ?: "${super.toString()}[dispatcher = $dispatcher]"
     }
 
     /**
