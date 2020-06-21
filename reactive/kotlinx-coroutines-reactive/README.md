@@ -6,14 +6,14 @@ Coroutine builders:
 
 | **Name**        | **Result**                    | **Scope**        | **Description**
 | --------------- | ----------------------------- | ---------------- | ---------------
-| [publish]       | `Publisher`                   | [ProducerScope] | Cold reactive publisher that starts coroutine on subscribe
+| [publish]       | `Publisher`                   | [ProducerScope] | Cold reactive publisher that starts the coroutine on subscribe
 
 Integration with [Flow]:
 
 | **Name**            | **Result**        | **Description**
 | ---------------     | --------------    | ---------------
-| [Publisher.asFlow]  | `Flow`            | Converts the given publisher to flow
-| [Flow.asPublisher]  | `Publisher`       | Converts the given flow to the TCK-compliant publisher
+| [Publisher.asFlow]  | `Flow`            | Converts the given publisher to a flow
+| [Flow.asPublisher]  | `Publisher`       | Converts the given flow to a TCK-compliant publisher
 
 If these adapters are used along with `kotlinx-coroutines-reactor` in the classpath, then Reactor's `Context` is properly
 propagated as coroutine context element (`ReactorContext`) and vice versa.

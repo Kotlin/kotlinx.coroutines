@@ -63,30 +63,30 @@ class ExceptionsGuideTest {
     @Test
     fun testExampleSupervision01() {
         test("ExampleSupervision01") { kotlinx.coroutines.guide.exampleSupervision01.main() }.verifyLines(
-            "First child is failing",
-            "First child is cancelled: true, but second one is still active",
-            "Cancelling supervisor",
-            "Second child is cancelled because supervisor is cancelled"
+            "The first child is failing",
+            "The first child is cancelled: true, but the second one is still active",
+            "Cancelling the supervisor",
+            "The second child is cancelled because the supervisor was cancelled"
         )
     }
 
     @Test
     fun testExampleSupervision02() {
         test("ExampleSupervision02") { kotlinx.coroutines.guide.exampleSupervision02.main() }.verifyLines(
-            "Child is sleeping",
-            "Throwing exception from scope",
-            "Child is cancelled",
-            "Caught assertion error"
+            "The child is sleeping",
+            "Throwing an exception from the scope",
+            "The child is cancelled",
+            "Caught an assertion error"
         )
     }
 
     @Test
     fun testExampleSupervision03() {
         test("ExampleSupervision03") { kotlinx.coroutines.guide.exampleSupervision03.main() }.verifyLines(
-            "Scope is completing",
-            "Child throws an exception",
+            "The scope is completing",
+            "The child throws an exception",
             "CoroutineExceptionHandler got java.lang.AssertionError",
-            "Scope is completed"
+            "The scope is completed"
         )
     }
 }
