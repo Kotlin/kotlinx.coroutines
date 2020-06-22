@@ -51,12 +51,27 @@ public fun <T> Flow<T>.take(count: Int): Flow<T> {
     require(count > 0) { "Requested element count $count should be positive" }
     return flow {
         var consumed = 0
-        // This return is needed to work around a bug in JS BE: KT-39227
-        return@flow collectWhile { value ->
-            emit(value)
-            ++consumed < count
+        try {
+            collect { value ->
+                // Note: this for take is not written via collectWhile on purpose.
+                // It checks condition first and then makes a tail-call to either emit or emitAbort.
+                // This way normal execution does not require a state machine, only a termination (emitAbort).
+                // See "TakeBenchmark" for comparision of different approaches.
+                if (++consumed < count) {
+                    return@collect emit(value)
+                } else {
+                    return@collect emitAbort(value)
+                }
+            }
+        } catch (e: AbortFlowException) {
+            e.checkOwnership(owner = this)
         }
     }
+}
+
+private suspend fun <T> FlowCollector<T>.emitAbort(value: T) {
+    emit(value)
+    throw AbortFlowException(this)
 }
 
 /**
@@ -108,11 +123,15 @@ public fun <T, R> Flow<T>.transformWhile(
         }
     }
 
-// Internal building block for all flow-truncating operators
+// Internal building block for non-tailcalling flow-truncating operators
 internal suspend inline fun <T> Flow<T>.collectWhile(crossinline predicate: suspend (value: T) -> Boolean) {
     val collector = object : FlowCollector<T> {
         override suspend fun emit(value: T) {
-            if (!predicate(value)) throw AbortFlowException(this)
+            // Note: we are checking predicate first, then throw. If the predicate does suspend (calls emit, for example)
+            // the the resulting code is never tail-suspending and produces a state-machine
+            if (!predicate(value)) {
+                throw AbortFlowException(this)
+            }
         }
     }
     try {

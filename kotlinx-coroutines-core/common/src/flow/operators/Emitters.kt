@@ -11,7 +11,6 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.flow as safeFlow
 
 // ------------------ WARNING ------------------
 //   These emitting operators must use safe flow builder, because they allow
@@ -37,7 +36,7 @@ import kotlinx.coroutines.flow.flow as safeFlow
  */
 public inline fun <T, R> Flow<T>.transform(
     @BuilderInference crossinline transform: suspend FlowCollector<R>.(value: T) -> Unit
-): Flow<R> = safeFlow { // Note: safe flow is used here, because collector is exposed to transform on each operation
+): Flow<R> = flow { // Note: safe flow is used here, because collector is exposed to transform on each operation
     collect { value ->
         // kludge, without it Unit will be returned and TCE won't kick in, KT-28938
         return@collect transform(value)
