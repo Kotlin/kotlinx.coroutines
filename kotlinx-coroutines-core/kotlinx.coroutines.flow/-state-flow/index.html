@@ -44,7 +44,7 @@ the initial value. The value of mutable state flow can be  updated by setting it
 Updates to the <a href="value.html">value</a> are always <a href="../conflate.html">conflated</a>. So a slow collector skips fast updates,
 but always collects the most recently emitted value.</p>
 
-<p><a href="./index.md">StateFlow</a> is useful as a data-model class to represent any kind of state.
+<p><a href="./index.html">StateFlow</a> is useful as a data-model class to represent any kind of state.
 Derived values can be defined using various operators on the flows, with <a href="../combine.html">combine</a> operator being especially
 useful to combine values from multiple state flows using arbitrary functions.</p>
 
@@ -322,11 +322,11 @@ the most recently emitted values by each flow.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="../conflate.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">conflate</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../conflate.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="../conflate.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">conflate</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../conflate.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Returns this.
-Applying <a href="../conflate.html">conflate</a> operator to <a href="./index.md">StateFlow</a> has no effect.
-See <a href="./index.md">StateFlow</a> documentation on Operator Fusion.</p>
+Applying <a href="../conflate.html">conflate</a> operator to <a href="./index.html">StateFlow</a> has no effect.
+See <a href="./index.html">StateFlow</a> documentation on Operator Fusion.</p>
 
       </td>
 </tr>
@@ -375,11 +375,11 @@ The latest value is always emitted.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="../distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">distinctUntilChanged</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="../distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">distinctUntilChanged</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Returns this.
-Applying <a href="../distinct-until-changed.html">distinctUntilChanged</a> operator to <a href="./index.md">StateFlow</a> has no effect.
-See <a href="./index.md">StateFlow</a> documentation on Operator Fusion.</p>
+Applying <a href="../distinct-until-changed.html">distinctUntilChanged</a> operator to <a href="./index.html">StateFlow</a> has no effect.
+See <a href="./index.html">StateFlow</a> documentation on Operator Fusion.</p>
 
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">distinctUntilChanged</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$distinctUntilChanged(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.distinctUntilChanged.T)), kotlin.Function2((kotlinx.coroutines.flow.distinctUntilChanged.T, , kotlin.Boolean)))/areEquivalent">areEquivalent</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">old</span><span class="symbol">:</span>&nbsp;<a href="../distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">new</span><span class="symbol">:</span>&nbsp;<a href="../distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
@@ -568,11 +568,11 @@ and then merging and flattening these flows.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="../flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">flowOn</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.StateFlow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="../flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">flowOn</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.StateFlow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Returns this.
-Applying <a href="../flow-on.html">flowOn</a> operator to <a href="./index.md">StateFlow</a> has no effect.
-See <a href="./index.md">StateFlow</a> documentation on Operator Fusion.</p>
+Applying <a href="../flow-on.html">flowOn</a> operator to <a href="./index.html">StateFlow</a> has no effect.
+See <a href="./index.html">StateFlow</a> documentation on Operator Fusion.</p>
 
       </td>
 </tr>
@@ -994,9 +994,9 @@ The resulting flow completes as soon as one of the flows completes and cancel is
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">MutableStateFlow</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="../-mutable-state-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">MutableStateFlow</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="../-mutable-state-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>A mutable <a href="./index.md">StateFlow</a> that provides a setter for <a href="../-mutable-state-flow/value.html">value</a>.</p>
+        <p>A mutable <a href="./index.html">StateFlow</a> that provides a setter for <a href="../-mutable-state-flow/value.html">value</a>.</p>
 
       </td>
 </tr>

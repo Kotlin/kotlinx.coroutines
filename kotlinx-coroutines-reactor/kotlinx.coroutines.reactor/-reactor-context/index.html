@@ -41,7 +41,7 @@ Coroutine context element that propagates information about Reactor’s <a href=
 
 <p>This context element is implicitly propagated through subscriber’s context by all Reactive integrations, such as <a href="../mono.html">mono</a>, <a href="../flux.html">flux</a>,
 <a href="#">Publisher.asFlow</a>, <a href="#">Flow.asPublisher</a> and <a href="../kotlinx.coroutines.channels.-receive-channel/as-flux.html">Flow.asFlux</a>.
-Functions that subscribe to the reactive stream (e.g. <a href="#">Publisher.awaitFirst</a>) also propagate <a href="./index.md">ReactorContext</a> to the
+Functions that subscribe to the reactive stream (e.g. <a href="#">Publisher.awaitFirst</a>) also propagate <a href="./index.html">ReactorContext</a> to the
 subscriber’s <a href="https://projectreactor.io/docs/core/3.2.5.RELEASE/api/reactor/util/context/Context.html">Context</a>.</p>
 
 <h3 id="examples-of-reactive-context-integration">Examples of Reactive context integration.</h3>
@@ -83,7 +83,7 @@ flow.asFlux()
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">companion</span> <span class="keyword">object </span><span class="identifier">Key</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html"><span class="identifier">Key</span></a><span class="symbol">&lt;</span><a href="./index.md"><span class="identifier">ReactorContext</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">companion</span> <span class="keyword">object </span><span class="identifier">Key</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html"><span class="identifier">Key</span></a><span class="symbol">&lt;</span><a href="./index.html"><span class="identifier">ReactorContext</span></a><span class="symbol">&gt;</span></code></div>
 
       </td>
 </tr>

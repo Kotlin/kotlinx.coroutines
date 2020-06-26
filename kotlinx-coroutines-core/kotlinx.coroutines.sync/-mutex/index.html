@@ -42,8 +42,8 @@ It is <strong>non-reentrant</strong>, that is invoking <a href="lock.html">lock<
 the lock still suspends the invoker.</p>
 
 <p>JVM API note:
-Memory semantic of the <a href="./index.md">Mutex</a> is similar to <code>synchronized</code> block on JVM:
-An unlock on a <a href="./index.md">Mutex</a> happens-before every subsequent successful lock on that <a href="./index.md">Mutex</a>.
+Memory semantic of the <a href="./index.html">Mutex</a> is similar to <code>synchronized</code> block on JVM:
+An unlock on a <a href="./index.html">Mutex</a> happens-before every subsequent successful lock on that <a href="./index.html">Mutex</a>.
 Unsuccessful call to <a href="try-lock.html">tryLock</a> do not have any memory effects.</p>
 
 <h3 id="properties">Properties</h3>
@@ -70,7 +70,7 @@ Unsuccessful call to <a href="try-lock.html">tryLock</a> do not have any memory 
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">onLock</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.selects/-select-clause2.html"><span class="identifier">SelectClause2</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span><span class="symbol">,</span>&nbsp;<a href="./index.md"><span class="identifier">Mutex</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">onLock</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.selects/-select-clause2.html"><span class="identifier">SelectClause2</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span><span class="symbol">,</span>&nbsp;<a href="./index.html"><span class="identifier">Mutex</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Clause for <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of <a href="lock.html">lock</a> suspending function that selects when the mutex is locked.
 Additional parameter for the clause in the <code>owner</code> (see <a href="lock.html">lock</a>) and when the clause is selected
@@ -152,7 +152,7 @@ was locked with a different owner token (by identity).</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Mutex</span></a><span class="symbol">.</span><span class="identifier">withLock</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.sync$withLock(kotlinx.coroutines.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.sync.withLock.T)))/owner">owner</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.sync$withLock(kotlinx.coroutines.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.sync.withLock.T)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../with-lock.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../with-lock.html#T"><span class="identifier">T</span></a></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">Mutex</span></a><span class="symbol">.</span><span class="identifier">withLock</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.sync$withLock(kotlinx.coroutines.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.sync.withLock.T)))/owner">owner</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.sync$withLock(kotlinx.coroutines.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.sync.withLock.T)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../with-lock.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../with-lock.html#T"><span class="identifier">T</span></a></code></div>
 
         <p>Executes the given <a href="../with-lock.html#kotlinx.coroutines.sync$withLock(kotlinx.coroutines.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.sync.withLock.T)))/action">action</a> under this mutex’s lock.</p>
 

@@ -75,13 +75,13 @@ with the exception (exception is now <em>caught</em>), retry the operation, and/
   <li>Otherwise:
     <ul>
       <li>if there is a <a href="../-job/index.html">Job</a> in the context, then <a href="../-job/cancel.html">Job.cancel</a> is invoked;</li>
-      <li>Otherwise, all instances of <a href="./index.md">CoroutineExceptionHandler</a> found via <a href="#">ServiceLoader</a></li>
+      <li>Otherwise, all instances of <a href="./index.html">CoroutineExceptionHandler</a> found via <a href="#">ServiceLoader</a></li>
       <li>and current thread’s <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#uncaughtExceptionHandler">Thread.uncaughtExceptionHandler</a> are invoked.</li>
     </ul>
   </li>
 </ul>
 
-<p><a href="./index.md">CoroutineExceptionHandler</a> can be invoked from an arbitrary thread.</p>
+<p><a href="./index.html">CoroutineExceptionHandler</a> can be invoked from an arbitrary thread.</p>
 
 <h3 id="types">Types</h3>
 
@@ -94,9 +94,9 @@ with the exception (exception is now <em>caught</em>), retry the operation, and/
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">companion</span> <span class="keyword">object </span><span class="identifier">Key</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html"><span class="identifier">Key</span></a><span class="symbol">&lt;</span><a href="./index.md"><span class="identifier">CoroutineExceptionHandler</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">companion</span> <span class="keyword">object </span><span class="identifier">Key</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html"><span class="identifier">Key</span></a><span class="symbol">&lt;</span><a href="./index.html"><span class="identifier">CoroutineExceptionHandler</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Key for <a href="./index.md">CoroutineExceptionHandler</a> instance in the coroutine context.</p>
+        <p>Key for <a href="./index.html">CoroutineExceptionHandler</a> instance in the coroutine context.</p>
 
       </td>
 </tr>

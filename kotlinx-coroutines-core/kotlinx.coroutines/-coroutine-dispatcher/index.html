@@ -93,7 +93,7 @@ corresponding suspending function, without confining it to any specific thread o
         <p>Dispatches execution of a runnable <a href="dispatch.html#kotlinx.coroutines.CoroutineDispatcher$dispatch(kotlin.coroutines.CoroutineContext, java.lang.Runnable)/block">block</a> onto another thread in the given <a href="dispatch.html#kotlinx.coroutines.CoroutineDispatcher$dispatch(kotlin.coroutines.CoroutineContext, java.lang.Runnable)/context">context</a>.
 This method should guarantee that the given <a href="dispatch.html#kotlinx.coroutines.CoroutineDispatcher$dispatch(kotlin.coroutines.CoroutineContext, java.lang.Runnable)/block">block</a> will be eventually invoked,
 otherwise the system may reach a deadlock state and never leave it.
-Cancellation mechanism is transparent for <a href="./index.md">CoroutineDispatcher</a> and is managed by <a href="dispatch.html#kotlinx.coroutines.CoroutineDispatcher$dispatch(kotlin.coroutines.CoroutineContext, java.lang.Runnable)/block">block</a> internals.</p>
+Cancellation mechanism is transparent for <a href="./index.html">CoroutineDispatcher</a> and is managed by <a href="dispatch.html#kotlinx.coroutines.CoroutineDispatcher$dispatch(kotlin.coroutines.CoroutineContext, java.lang.Runnable)/block">block</a> internals.</p>
 
       </td>
 </tr>
@@ -169,9 +169,9 @@ The default behavior for most dispatchers is to return <code>true</code>.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="./index.md"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">.</span><span class="identifier">asExecutor</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html"><span class="identifier">Executor</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><a href="./index.html"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">.</span><span class="identifier">asExecutor</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html"><span class="identifier">Executor</span></a></code></div>
 
-        <p>Converts an instance of <a href="./index.md">CoroutineDispatcher</a> to an implementation of <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html">Executor</a>.</p>
+        <p>Converts an instance of <a href="./index.html">CoroutineDispatcher</a> to an implementation of <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html">Executor</a>.</p>
 
       </td>
 </tr><tr>
@@ -224,9 +224,9 @@ Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-sta
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">.</span><span class="identifier">invoke</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$invoke(kotlinx.coroutines.CoroutineDispatcher, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.invoke.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../invoke.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../invoke.html#T"><span class="identifier">T</span></a></code></div>
+        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">.</span><span class="identifier">invoke</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$invoke(kotlinx.coroutines.CoroutineDispatcher, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.invoke.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../invoke.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../invoke.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>Calls the specified suspending block with the given <a href="./index.md">CoroutineDispatcher</a>, suspends until it
+        <p>Calls the specified suspending block with the given <a href="./index.html">CoroutineDispatcher</a>, suspends until it
 completes, and returns the result.</p>
 
       </td>
@@ -244,9 +244,9 @@ completes, and returns the result.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">ExecutorCoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="./index.md"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><span class="identifier">Closeable</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">ExecutorCoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="./index.html"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><span class="identifier">Closeable</span></a></code></div>
 
-        <p><a href="./index.md">CoroutineDispatcher</a> that has underlying <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html">Executor</a> for dispatching tasks.
+        <p><a href="./index.html">CoroutineDispatcher</a> that has underlying <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html">Executor</a> for dispatching tasks.
 Instances of <a href="../-executor-coroutine-dispatcher/index.html">ExecutorCoroutineDispatcher</a> should be closed by the owner of the dispatcher.</p>
 
       </td>
@@ -257,9 +257,9 @@ Instances of <a href="../-executor-coroutine-dispatcher/index.html">ExecutorCoro
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">MainCoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">CoroutineDispatcher</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">MainCoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.html"><span class="identifier">CoroutineDispatcher</span></a></code></div>
 
-        <p>Base class for special <a href="./index.md">CoroutineDispatcher</a> which is confined to application “Main” or “UI” thread
+        <p>Base class for special <a href="./index.html">CoroutineDispatcher</a> which is confined to application “Main” or “UI” thread
 and used for any UI-based activities. Instance of <code>MainDispatcher</code> can be obtained by <a href="../-dispatchers/-main.html">Dispatchers.Main</a>.</p>
 
       </td>
