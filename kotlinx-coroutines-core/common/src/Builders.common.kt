@@ -111,8 +111,9 @@ private class LazyDeferredCoroutine<T>(
     private var continuation: Continuation<Unit>? = block.createCoroutineUnintercepted(this, this)
 
     override fun onStart() {
-        continuation!!.startCoroutineCancellable(this)
-        continuation = null
+        val continuation = checkNotNull(this.continuation) { "Already started!" }
+        this.continuation = null
+        continuation.startCoroutineCancellable(this)
     }
 }
 
@@ -203,8 +204,9 @@ private class LazyStandaloneCoroutine(
     private var continuation: Continuation<Unit>? = block.createCoroutineUnintercepted(this, this)
 
     override fun onStart() {
-        continuation!!.startCoroutineCancellable(this)
-        continuation = null
+        val continuation = checkNotNull(this.continuation) { "Already started!" }
+        this.continuation = null
+        continuation.startCoroutineCancellable(this)
     }
 }
 
