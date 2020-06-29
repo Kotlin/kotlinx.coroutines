@@ -108,10 +108,11 @@ private class LazyDeferredCoroutine<T>(
     parentContext: CoroutineContext,
     block: suspend CoroutineScope.() -> T
 ) : DeferredCoroutine<T>(parentContext, active = false) {
-    private val continuation = block.createCoroutineUnintercepted(this, this)
+    private var continuation: Continuation<Unit>? = block.createCoroutineUnintercepted(this, this)
 
     override fun onStart() {
-        continuation.startCoroutineCancellable(this)
+        continuation!!.startCoroutineCancellable(this)
+        continuation = null
     }
 }
 
@@ -199,10 +200,11 @@ private class LazyStandaloneCoroutine(
     parentContext: CoroutineContext,
     block: suspend CoroutineScope.() -> Unit
 ) : StandaloneCoroutine(parentContext, active = false) {
-    private val continuation = block.createCoroutineUnintercepted(this, this)
+    private var continuation: Continuation<Unit>? = block.createCoroutineUnintercepted(this, this)
 
     override fun onStart() {
-        continuation.startCoroutineCancellable(this)
+        continuation!!.startCoroutineCancellable(this)
+        continuation = null
     }
 }
 
