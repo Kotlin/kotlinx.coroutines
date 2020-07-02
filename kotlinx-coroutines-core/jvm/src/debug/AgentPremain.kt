@@ -69,7 +69,7 @@ internal object AgentPremain {
                 }
             }
         } catch (t: Throwable) {
-            System.err.println("Failed to install signal handler: $t")
+            // Do nothing, signal cannot be installed, e.g. because we are on Windows
         }
     }
 }
