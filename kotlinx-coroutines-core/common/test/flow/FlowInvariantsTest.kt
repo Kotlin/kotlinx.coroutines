@@ -6,7 +6,6 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
 import kotlin.reflect.*
 import kotlin.test.*
@@ -243,16 +242,8 @@ class FlowInvariantsTest : TestBase() {
             return result
         }
 
-        val result = runSuspendFun { collector() }
+        val result = withEmptyContext { collector() }
         assertEquals(2, result)
         finish(3)
-    }
-
-    private suspend fun runSuspendFun(block: suspend () -> Int): Int {
-        val baseline = Result.failure<Int>(IllegalStateException("Block was suspended"))
-        var result: Result<Int> = baseline
-        block.startCoroutineUnintercepted(Continuation(EmptyCoroutineContext) { result = it })
-        while (result == baseline) yield()
-        return result.getOrThrow()
     }
 }
