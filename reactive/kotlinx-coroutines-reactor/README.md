@@ -6,29 +6,29 @@ Coroutine builders:
 
 | **Name**        | **Result**  | **Scope**        | **Description**
 | --------------- | ------------| ---------------- | ---------------
-| [mono]          | `Mono`      | [CoroutineScope] | Cold mono that starts coroutine on subscribe
-| [flux]          | `Flux`      | [CoroutineScope] | Cold flux that starts coroutine on subscribe
+| [mono]          | `Mono`      | [CoroutineScope] | A cold Mono that starts the coroutine on subscription
+| [flux]          | `Flux`      | [CoroutineScope] | A cold Flux that starts the coroutine on subscription
 
-Note that `Mono` and `Flux` are a subclass of [Reactive Streams](https://www.reactive-streams.org)
-`Publisher` and extensions for it are covered by
+Note that `Mono` and `Flux` are subclasses of [Reactive Streams](https://www.reactive-streams.org)'
+`Publisher` and extensions for it are covered by the
 [kotlinx-coroutines-reactive](../kotlinx-coroutines-reactive) module.
 
 Integration with [Flow]:
 
 | **Name**        | **Result**     | **Description**
 | --------------- | -------------- | ---------------
-| [Flow.asFlux]   | `Flux`         | Converts the given flow to the TCK-compliant Flux.
+| [Flow.asFlux]   | `Flux`         | Converts the given flow to a TCK-compliant Flux.
 
-This adapter is integrated with Reactor's `Context` and coroutines [ReactorContext].
+This adapter is integrated with Reactor's `Context` and coroutines' [ReactorContext].
 
 Conversion functions:
 
 | **Name** | **Description**
 | -------- | ---------------
-| [Job.asMono][kotlinx.coroutines.Job.asMono] | Converts job to hot mono
-| [Deferred.asMono][kotlinx.coroutines.Deferred.asMono] | Converts deferred value to hot mono
-| [ReceiveChannel.asFlux][kotlinx.coroutines.channels.ReceiveChannel.asFlux] | Converts streaming channel to hot flux
-| [Scheduler.asCoroutineDispatcher][reactor.core.scheduler.Scheduler.asCoroutineDispatcher] | Converts scheduler to [CoroutineDispatcher]
+| [Job.asMono][kotlinx.coroutines.Job.asMono] | Converts a job to a hot Mono
+| [Deferred.asMono][kotlinx.coroutines.Deferred.asMono] | Converts a deferred value to a hot Mono
+| [ReceiveChannel.asFlux][kotlinx.coroutines.channels.ReceiveChannel.asFlux] | Converts a streaming channel to a hot Flux
+| [Scheduler.asCoroutineDispatcher][reactor.core.scheduler.Scheduler.asCoroutineDispatcher] | Converts a scheduler to a [CoroutineDispatcher]
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->

@@ -625,7 +625,7 @@ fun main() = runBlocking<Unit> {
 In this example we launch a new coroutine in a background thread pool using [Dispatchers.Default], so
 it works on a different thread from the thread pool, but it still has the value of the thread local variable
 that we specified using `threadLocal.asContextElement(value = "launch")`,
-no matter on what thread the coroutine is executed.
+no matter which thread the coroutine is executed on.
 Thus, the output (with [debug](#debugging-coroutines-and-threads)) is:
 
 ```text

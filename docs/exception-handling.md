@@ -28,7 +28,7 @@ coroutine throw an exception.
 Coroutine builders come in two flavors: propagating exceptions automatically ([launch] and [actor]) or
 exposing them to users ([async] and [produce]).
 When these builders are used to create a _root_ coroutine, that is not a _child_ of another coroutine,
-the former builder treat exceptions as **uncaught** exceptions, similar to Java's `Thread.uncaughtExceptionHandler`,
+the former builders treat exceptions as **uncaught** exceptions, similar to Java's `Thread.uncaughtExceptionHandler`,
 while the latter are relying on the user to consume the final
 exception, for example via [await][Deferred.await] or [receive][ReceiveChannel.receive] 
 ([produce] and [receive][ReceiveChannel.receive] are covered later in [Channels](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/channels.md) section).
@@ -246,7 +246,7 @@ CoroutineExceptionHandler got java.lang.ArithmeticException
 
 ### Exceptions aggregation
 
-When multiple children of a coroutine fail with an exception the
+When multiple children of a coroutine fail with an exception, the
 general rule is "the first exception wins", so the first exception gets handled.
 All additional exceptions that happen after the first one are attached to the first exception as suppressed ones. 
 
@@ -296,8 +296,8 @@ CoroutineExceptionHandler got java.io.IOException with suppressed [java.lang.Ari
 
 <!--- TEST-->
 
-> Note, this mechanism currently works only on Java version 1.7+. 
-Limitation on JS and Native is temporary and will be fixed in the future.
+> Note that this mechanism currently only works on Java version 1.7+. 
+The JS and Native restrictions are temporary and will be lifted in the future.
 
 Cancellation exceptions are transparent and are unwrapped by default:
 
@@ -353,14 +353,14 @@ A good example of such a requirement is a UI component with the job defined in i
 have failed, it is not always necessary to cancel (effectively kill) the whole UI component,
 but if UI component is destroyed (and its job is cancelled), then it is necessary to fail all child jobs as their results are no longer needed.
 
-Another example is a server process that spawns several children jobs and needs to _supervise_
-their execution, tracking their failures and restarting just those children jobs that had failed.
+Another example is a server process that spawns multiple child jobs and needs to _supervise_
+their execution, tracking their failures and only restarting the failed ones.
 
 #### Supervision job
 
-For these purposes [SupervisorJob][SupervisorJob()] can be used. 
+The [SupervisorJob][SupervisorJob()] can be used for these purposes. 
 It is similar to a regular [Job][Job()] with the only exception that cancellation is propagated
-only downwards. It is easy to demonstrate with an example:
+only downwards. This can easily be demonstrated using the following example:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -372,24 +372,24 @@ fun main() = runBlocking {
     with(CoroutineScope(coroutineContext + supervisor)) {
         // launch the first child -- its exception is ignored for this example (don't do this in practice!)
         val firstChild = launch(CoroutineExceptionHandler { _, _ ->  }) {
-            println("First child is failing")
-            throw AssertionError("First child is cancelled")
+            println("The first child is failing")
+            throw AssertionError("The first child is cancelled")
         }
         // launch the second child
         val secondChild = launch {
             firstChild.join()
             // Cancellation of the first child is not propagated to the second child
-            println("First child is cancelled: ${firstChild.isCancelled}, but second one is still active")
+            println("The first child is cancelled: ${firstChild.isCancelled}, but the second one is still active")
             try {
                 delay(Long.MAX_VALUE)
             } finally {
                 // But cancellation of the supervisor is propagated
-                println("Second child is cancelled because supervisor is cancelled")
+                println("The second child is cancelled because the supervisor was cancelled")
             }
         }
         // wait until the first child fails & completes
         firstChild.join()
-        println("Cancelling supervisor")
+        println("Cancelling the supervisor")
         supervisor.cancel()
         secondChild.join()
     }
@@ -403,18 +403,18 @@ fun main() = runBlocking {
 The output of this code is:
 
 ```text
-First child is failing
-First child is cancelled: true, but second one is still active
-Cancelling supervisor
-Second child is cancelled because supervisor is cancelled
+The first child is failing
+The first child is cancelled: true, but the second one is still active
+Cancelling the supervisor
+The second child is cancelled because the supervisor was cancelled
 ```
 <!--- TEST-->
 
 
 #### Supervision scope
 
-For _scoped_ concurrency [supervisorScope] can be used instead of [coroutineScope] for the same purpose. It propagates cancellation
-in one direction only and cancels all children only if it has failed itself. It also waits for all children before completion
+Instead of [coroutineScope], we can use [supervisorScope] for _scoped_ concurrency. It propagates the cancellation
+in one direction only and cancels all its children only if it failed itself. It also waits for all children before completion
 just like [coroutineScope] does.
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
@@ -428,19 +428,19 @@ fun main() = runBlocking {
         supervisorScope {
             val child = launch {
                 try {
-                    println("Child is sleeping")
+                    println("The child is sleeping")
                     delay(Long.MAX_VALUE)
                 } finally {
-                    println("Child is cancelled")
+                    println("The child is cancelled")
                 }
             }
             // Give our child a chance to execute and print using yield 
             yield()
-            println("Throwing exception from scope")
+            println("Throwing an exception from the scope")
             throw AssertionError()
         }
     } catch(e: AssertionError) {
-        println("Caught assertion error")
+        println("Caught an assertion error")
     }
 }
 ```
@@ -452,21 +452,21 @@ fun main() = runBlocking {
 The output of this code is:
 
 ```text
-Child is sleeping
-Throwing exception from scope
-Child is cancelled
-Caught assertion error
+The child is sleeping
+Throwing an exception from the scope
+The child is cancelled
+Caught an assertion error
 ```
 <!--- TEST-->
 
 #### Exceptions in supervised coroutines
 
 Another crucial difference between regular and supervisor jobs is exception handling.
-Every child should handle its exceptions by itself via exception handling mechanism.
-This difference comes from the fact that child's failure is not propagated to the parent.
-It means that coroutines launched directly inside [supervisorScope] _do_ use the [CoroutineExceptionHandler]
+Every child should handle its exceptions by itself via the exception handling mechanism.
+This difference comes from the fact that child's failure does not propagate to the parent.
+It means that coroutines launched directly inside the [supervisorScope] _do_ use the [CoroutineExceptionHandler]
 that is installed in their scope in the same way as root coroutines do
-(see [CoroutineExceptionHandler](#coroutineexceptionhandler) section for details). 
+(see the [CoroutineExceptionHandler](#coroutineexceptionhandler) section for details). 
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -480,12 +480,12 @@ fun main() = runBlocking {
     }
     supervisorScope {
         val child = launch(handler) {
-            println("Child throws an exception")
+            println("The child throws an exception")
             throw AssertionError()
         }
-        println("Scope is completing")
+        println("The scope is completing")
     }
-    println("Scope is completed")
+    println("The scope is completed")
 }
 ```
 
@@ -496,10 +496,10 @@ fun main() = runBlocking {
 The output of this code is:
 
 ```text
-Scope is completing
-Child throws an exception
+The scope is completing
+The child throws an exception
 CoroutineExceptionHandler got java.lang.AssertionError
-Scope is completed
+The scope is completed
 ```
 <!--- TEST-->
 
@@ -517,8 +517,8 @@ Scope is completed
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
 [SupervisorJob()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-supervisor-job.html
 [Job()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job.html
-[supervisorScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/supervisor-scope.html
 [coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
+[supervisorScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/supervisor-scope.html
 <!--- INDEX kotlinx.coroutines.channels -->
 [actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/actor.html
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/produce.html
