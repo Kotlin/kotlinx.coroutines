@@ -1,3 +1,5 @@
+import groovy.lang.*
+
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
@@ -14,6 +16,7 @@ val copyDocs = tasks.register<Copy>("copyDocs") {
     }
     from("docs")
     into(buildDocsDir)
+    filter { it.replace("/index.md\"", "/index.html\"") }
 
     dependsOn(dokkaTasks)
 }
