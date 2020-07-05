@@ -30,6 +30,12 @@ public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.c
 public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.coerceToMillis())
 
 /**
+ * "java.time" adapter method for [kotlinx.coroutines.flow.throttleFirst].
+ */
+@FlowPreview
+public fun <T> Flow<T>.throttleFirst(timeout: Duration): Flow<T> = throttleFirst(timeout.coerceToMillis())
+
+/**
  * "java.time" adapter method for [SelectBuilder.onTimeout].
  */
 public fun <R> SelectBuilder<R>.onTimeout(duration: Duration, block: suspend () -> R): Unit =
