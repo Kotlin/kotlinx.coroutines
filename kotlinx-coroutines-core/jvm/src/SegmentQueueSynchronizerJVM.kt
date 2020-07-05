@@ -2,19 +2,20 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.internal
+package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.internal.SegmentQueueSynchronizer.ResumeMode.ASYNC
-import kotlinx.coroutines.internal.SegmentQueueSynchronizer.ResumeMode.SYNC
-import kotlinx.coroutines.internal.SegmentQueueSynchronizer.CancellationMode.*
+import kotlinx.coroutines.SegmentQueueSynchronizerJVM.ResumeMode.ASYNC
+import kotlinx.coroutines.SegmentQueueSynchronizerJVM.ResumeMode.SYNC
+import kotlinx.coroutines.SegmentQueueSynchronizerJVM.CancellationMode.*
+import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.sync.*
+import java.util.concurrent.*
+import java.util.concurrent.locks.*
 import kotlin.coroutines.*
-import kotlin.native.concurrent.*
 
 /**
- * [SegmentQueueSynchronizer] is an abstraction for implementing _fair_ synchronization
+ * [SegmentQueueSynchronizerJVM] is an abstraction for implementing _fair_ synchronization
  * and communication primitives. It maintains a FIFO queue of waiting requests and is
  * provided with two main functions:
  * + [suspend] that stores the specified waiter into the queue, and
@@ -26,7 +27,7 @@ import kotlin.native.concurrent.*
  * continuation into the cell. At the same time, [resume] increments its own counter and comes to the
  * corresponding cell.
  *
- * A typical implementation via [SegmentQueueSynchronizer] performs some synchronization at first,
+ * A typical implementation via [SegmentQueueSynchronizerJVM] performs some synchronization at first,
  * (e.g., [Semaphore] modifies the number of available permits), and invokes [suspend] or [resume]
  * after that. Following this pattern, it is possible in a concurrent environment that [resume]
  * is executed before [suspend] (similarly to the race between `park` and `unpark` for threads),
@@ -47,7 +48,7 @@ import kotlin.native.concurrent.*
  * described above, while in smart modes ([SMART_SYNC] and [SMART_ASYNC]) [resume] skips cells in the
  * [cancelled][CANCELLED] state. However, if cancellation happens concurrently with [resume], it can be illegal
  * to simply skip the cell and resume the next waiter, e.g., if this cancelled waiter is the last one.
- * Thus, it is possible for [SegmentQueueSynchronizer] to refuse this [resume]. In order to support this logic,
+ * Thus, it is possible for [SegmentQueueSynchronizerJVM] to refuse this [resume]. In order to support this logic,
  * users should implement  [onCancellation] function, which returns `true` if the cell can be
  * moved to the [cancelled][CANCELLED] state, or `false` if the [resume] that comes to this cell
  * should be refused. In the last case, [tryReturnRefusedValue] is invoked, so that the value
@@ -106,7 +107,7 @@ import kotlin.native.concurrent.*
  *  finds the required segment starting from the initially read one.
  */
 @InternalCoroutinesApi
-internal abstract class SegmentQueueSynchronizer<T : Any> {
+public abstract class SegmentQueueSynchronizerJVM<T : Any> {
     private val head: AtomicRef<SQSSegment>
     private val deqIdx = atomic(0L)
     private val tail: AtomicRef<SQSSegment>
@@ -140,22 +141,22 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
      * It returns `true` if the cancellation succeeds and the cell can be
      * marked as [CANCELLED]. This way, a concurrent [resume] skips this cell,
      * and the value stays in the waiting queue. However, if the concurrent
-     * [resume] should be refused by this [SegmentQueueSynchronizer],
+     * [resume] should be refused by this [SegmentQueueSynchronizerJVM],
      * [onCancellation] should return false. In this case, [tryReturnRefusedValue]
      * is invoked with the value of [resume], following by [returnValue]
      * if the attempt fails.
      */
-    open fun onCancellation() : Boolean = false
+    protected open fun onCancellation() : Boolean = false
 
     /**
      * This function specifies how the refused by
-     * this [SegmentQueueSynchronizer] value should
+     * this [SegmentQueueSynchronizerJVM] value should
      * be returned back to the data structure. It
      * returns `true` if succeeds or `false` if the
      * attempt failed, so that [returnValue] should
      * be used to complete the returning.
      */
-    open fun tryReturnRefusedValue(value: T): Boolean = true
+    protected open fun tryReturnRefusedValue(value: T): Boolean = true
 
     /**
      * This function specifies how the value from
@@ -164,7 +165,7 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
      * that invokes [resume] (e.g., [release][Semaphore.release]
      * in [Semaphore]).
      */
-    open fun returnValue(value: T) {}
+    protected open fun returnValue(value: T) {}
 
     /**
      * This is a short-cut for [tryReturnRefusedValue] and
@@ -186,7 +187,7 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
      * failed on [suspend] and the one that failed on [resume], from the beginning.
      */
     @Suppress("UNCHECKED_CAST")
-    fun suspend(cont: Continuation<T>): Boolean {
+    protected fun suspend(cont: Continuation<T>): Boolean {
         // Increment `enqIdx` and find the segment
         // with the corresponding id. It is guaranteed
         // that this segment is not removed since at
@@ -200,6 +201,20 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
         // Try to install the continuation in the cell,
         // this is the regular path.
         val i = (enqIdx % SEGMENT_SIZE).toInt()
+        // Optimization: spin for a while
+        repeat(500) {
+            val value = segment.get(i)
+            if (value != null) {
+                if (value !== BROKEN && segment.cas(i, value, TAKEN)) {
+                    // The elimination is successfully performed,
+                    // resume the continuation with the value and complete.
+                    cont.resume(value as T)
+                    return true
+                }
+                // The cell is broken, this can happen only in `SYNC` resumption mode.
+                return false
+            }
+        }
         if (segment.cas(i, null, cont)) {
             // The continuation is successfully installed,
             // add a cancellation handler if it is cancellable
@@ -227,6 +242,73 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
         return false
     }
 
+    // false -> failed
+    // true -> success
+    protected fun suspendCurThread(): T? {
+        val t = Thread.currentThread()
+        // Increment `enqIdx` and find the segment
+        // with the corresponding id. It is guaranteed
+        // that this segment is not removed since at
+        // least the cell for this [suspend] invocation
+        // is not in the `CANCELLED` state.
+        val curTail = this.tail.value
+        val enqIdx = enqIdx.getAndIncrement()
+        val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail,
+            createNewSegment = ::createSegment).segment
+        assert { segment.id == enqIdx / SEGMENT_SIZE }
+        // Try to install the continuation in the cell,
+        // this is the regular path.
+        val i = (enqIdx % SEGMENT_SIZE).toInt()
+        // Spin-loop optimization here
+        var x = 1
+        while (x < 100) {
+            val value = segment.get(i)
+            if (value != null) {
+                if (value !== BROKEN && segment.cas(i, value, TAKEN)) {
+                    // The elimination is successfully performed,
+                    // resume the continuation with the value and complete.
+                    return value as T
+                }
+                // The cell is broken, this can happen only in `SYNC` resumption mode.
+                return null
+            }
+            doGeomDistrWork(x*x)
+            x++
+        }
+        if (segment.cas(i, null, t)) {
+            do {
+                LockSupport.park()
+            } while (segment.get(i) === t)
+            val value = segment.get(i) as T
+            segment.set(i, RESUMED)
+            return value
+        }
+        // The continuation installation failed. This can happen only
+        // if a concurrent `resume` comes earlier to this cell and put
+        // its value into it. Note, that in `SYNC` resumption mode
+        // this concurrent `resume` can mark the cell as broken.
+        //
+        // Try to grab the value if the cell is not in the `BROKEN` state.
+        val value = segment.get(i)
+        if (value !== BROKEN && segment.cas(i, value, TAKEN)) {
+            // The elimination is successfully performed,
+            // resume the continuation with the value and complete.
+            return value as T
+        }
+        // The cell is broken, this can happen only in `SYNC` resumption mode.
+        return null
+    }
+
+    public fun doGeomDistrWork(work: Int) {
+        // We use geometric distribution here. We also checked on macbook pro 13" (2017) that the resulting work times
+        // are distributed geometrically, see https://github.com/Kotlin/kotlinx.coroutines/pull/1464#discussion_r355705325
+        val p = 1.0 / work
+        val r = ThreadLocalRandom.current()
+        while (true) {
+            if (r.nextDouble() < p) break
+        }
+    }
+
     /**
      * Tries to resume the next waiter and returns `true` if
      * the resumption succeeds. However, it can fail due to
@@ -242,7 +324,7 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
      * case of unsuccessful elimination due to [synchronous][SYNC]
      * resumption mode.
      */
-    fun resume(value: T): Boolean {
+    protected fun resume(value: T): Boolean {
         // Should we skip cancelled cells?
         val skipCancelled = cancellationMode != SIMPLE
         while (true) {
@@ -336,6 +418,11 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
                     returnRefusedValue(value)
                     return TRY_RESUME_SUCCESS
                 }
+                cellState is Thread -> {
+                    segment.set(i, value)
+                    LockSupport.unpark(cellState)
+                    return TRY_RESUME_SUCCESS
+                }
                 // Does the cell store a cancellable continuation?
                 cellState is CancellableContinuation<*> -> {
                     // Try to resume the continuation.
@@ -413,7 +500,7 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
      * and fails, so that the corresponding [suspend] invocation finds the cell
      * [broken][BROKEN] and fails as well.
      */
-    internal enum class ResumeMode { SYNC, ASYNC }
+    public enum class ResumeMode { SYNC, ASYNC }
 
     /**
      * These modes define the mode that should be used for cancellation.
@@ -424,7 +511,7 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
      * cancellation handler in order not to wait, so that the element can be "hung"
      * for a while.
      */
-    internal enum class CancellationMode { SIMPLE, SMART_SYNC, SMART_ASYNC }
+    public enum class CancellationMode { SIMPLE, SMART_SYNC, SMART_ASYNC }
 
     /**
      * This cancellation handler is invoked when
@@ -491,7 +578,7 @@ private fun <T> CancellableContinuation<T>.tryResume0(value: T): Boolean {
 private fun createSegment(id: Long, prev: SQSSegment?) = SQSSegment(id, prev, 0)
 
 /**
- * The queue of waiters in [SegmentQueueSynchronizer]
+ * The queue of waiters in [SegmentQueueSynchronizerJVM]
  * is represented as a linked list of these segments.
  */
 private class SQSSegment(id: Long, prev: SQSSegment?, pointers: Int) : Segment<SQSSegment>(id, prev, pointers) {
@@ -524,8 +611,8 @@ private class SQSSegment(id: Long, prev: SQSSegment?, pointers: Int) : Segment<S
      *
      * If the whole segment contains [CANCELLED] markers after
      * this invocation, [onSlotCleaned] is invoked and this segment
-     * is going to be removed if [head][SegmentQueueSynchronizer.head]
-     * and [tail][SegmentQueueSynchronizer.tail] do not reference it.
+     * is going to be removed if [head][SegmentQueueSynchronizerJVM.head]
+     * and [tail][SegmentQueueSynchronizerJVM.tail] do not reference it.
      * Note that the segments that are not stored physically are still
      * considered as logically stored but being full of cancelled waiters.
      */
@@ -536,10 +623,10 @@ private class SQSSegment(id: Long, prev: SQSSegment?, pointers: Int) : Segment<S
     /**
      * Marks the cell as refused and returns `null`, so that
      * the [resume] that comes to the cell should notice
-     * that its value is refused by the [SegmentQueueSynchronizer],
-     * and [SegmentQueueSynchronizer.tryReturnRefusedValue]
+     * that its value is refused by the [SegmentQueueSynchronizerJVM],
+     * and [SegmentQueueSynchronizerJVM.tryReturnRefusedValue]
      * is invoked in this case (if it fails, the value is put back via
-     * [SegmentQueueSynchronizer.returnValue]). Since in [SMART_ASYNC]
+     * [SegmentQueueSynchronizerJVM.returnValue]). Since in [SMART_ASYNC]
      * cancellation mode [resume] that comes to the cell with cancelled
      * continuation asynchronously puts its value into the cell.
      * In this case, [markRefused] returns this non-null value.
@@ -574,31 +661,24 @@ private class SQSSegment(id: Long, prev: SQSSegment?, pointers: Int) : Segment<S
 }
 
 /**
- * In the [smart asynchronous cancellation mode][SegmentQueueSynchronizer.CancellationMode.SMART_ASYNC]
+ * In the [smart asynchronous cancellation mode][SegmentQueueSynchronizerJVM.CancellationMode.SMART_ASYNC]
  * it is possible that [resume] comes to the cell with cancelled continuation and
  * asynchronously puts its value into the cell, so that the cancellation handler decides whether
  * this value should be used for resuming the next waiter or be refused. When this
  * value is a continuation, it is hard to distinguish it with the one related to the cancelled
  * waiter. Thus, such values are wrapped with [WrappedContinuationValue] in this case. Note, that the
- * wrapper is required only in [SegmentQueueSynchronizer.CancellationMode.SMART_ASYNC] mode
+ * wrapper is required only in [SegmentQueueSynchronizerJVM.CancellationMode.SMART_ASYNC] mode
  * and is used in the asynchronous race resolution logic between cancellation and [resume]
  * invocation; this way, it is used relatively rare.
  */
 private class WrappedContinuationValue(val cont: Continuation<*>)
 
-@SharedImmutable
 private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.sqs.segmentSize", 16)
-@SharedImmutable
 private val MAX_SPIN_CYCLES = systemProp("kotlinx.coroutines.sqs.maxSpinCycles", 100)
-@SharedImmutable
 private val TAKEN = Symbol("TAKEN")
-@SharedImmutable
 private val BROKEN = Symbol("BROKEN")
-@SharedImmutable
 private val CANCELLED = Symbol("CANCELLED")
-@SharedImmutable
 private val REFUSE = Symbol("REFUSE")
-@SharedImmutable
 private val RESUMED = Symbol("RESUMED")
 
 private const val TRY_RESUME_SUCCESS = 0
