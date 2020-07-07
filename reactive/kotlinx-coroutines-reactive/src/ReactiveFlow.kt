@@ -197,19 +197,18 @@ public class FlowSubscription<T>(
      */
     private suspend fun consumeFlow() {
         flow.collect { value ->
-            /*
-             * Flow is scopeless, thus if it's not active, its subscription was cancelled.
-             * No intermediate "child failed, but flow coroutine is not" states are allowed.
-             */
-            coroutineContext.ensureActive()
-            if (requested.value <= 0L) {
+            // Emit the value
+            subscriber.onNext(value)
+            // Suspend if needed before requesting the next value
+            if (requested.decrementAndGet() <= 0) {
                 suspendCancellableCoroutine<Unit> {
                     producer.value = it
                     if (requested.value != 0L) it.resumeSafely()
                 }
+            } else {
+                // check for cancellation if we don't suspend
+                coroutineContext.ensureActive()
             }
-            requested.decrementAndGet()
-            subscriber.onNext(value)
         }
     }
 
