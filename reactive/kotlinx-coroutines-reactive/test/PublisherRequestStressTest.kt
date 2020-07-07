@@ -13,12 +13,28 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
+/**
+ * This stress-test is self-contained reproducer for the race in [Flow.asPublisher] extension
+ * that was originally reported in the issue
+ * [#2109](https://github.com/Kotlin/kotlinx.coroutines/issues/2109).
+ * The original reproducer used a flow that loads a file using AsynchronousFileChannel
+ * (that issues completion callbacks from multiple threads)
+ * and uploads it to S3 via Amazon SDK, which internally uses netty for I/O
+ * (which uses a single thread for connection-related callbacks).
+ *
+ * This stress-test essentially mimics the logic in multiple interacting threads: several emitter threads that form
+ * the flow and a single requesting thread works on the subscriber's side to periodically request more
+ * values when the number of items requested drops below the threshold.
+ */
 @Suppress("ReactiveStreamsSubscriberImplementation")
 class PublisherRequestStressTest : TestBase() {
     private val testDurationSec = 3 * stressTestMultiplier
 
+    // Original code in Amazon SDK uses 4 and 16 as low/high watermarks.
+    // There constants were chosen so that problem reproduces asap with particular this code.
     private val minDemand = 8L
     private val maxDemand = 10L
+    
     private val nEmitThreads = 4
 
     private val emitThreadNo = AtomicInteger()
