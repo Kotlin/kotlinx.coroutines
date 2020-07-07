@@ -12,6 +12,7 @@ import org.reactivestreams.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
+import kotlin.random.*
 
 /**
  * This stress-test is self-contained reproducer for the race in [Flow.asPublisher] extension
@@ -33,7 +34,7 @@ class PublisherRequestStressTest : TestBase() {
     // Original code in Amazon SDK uses 4 and 16 as low/high watermarks.
     // There constants were chosen so that problem reproduces asap with particular this code.
     private val minDemand = 8L
-    private val maxDemand = 10L
+    private val maxDemand = 16L
     
     private val nEmitThreads = 4
 
@@ -83,8 +84,9 @@ class PublisherRequestStressTest : TestBase() {
 
             private fun maybeRequestMore() {
                 if (demand >= minDemand) return
-                val more = maxDemand - demand
-                demand = maxDemand
+                val nextDemand = Random.nextLong(minDemand + 1..maxDemand)
+                val more = nextDemand - demand
+                demand = nextDemand
                 requestedTill.addAndGet(more)
                 subscription.request(more)
             }
@@ -110,10 +112,14 @@ class PublisherRequestStressTest : TestBase() {
                 error("Failed", ex)
             }
         })
+        var prevExpected = -1L
         for (second in 1..testDurationSec) {
             if (error) break
             Thread.sleep(1000)
-            println("$second: nextValue = ${nextValue.get()}, expectedValue = ${expectedValue.get()}")
+            val expected = expectedValue.get()
+            println("$second: expectedValue = $expected")
+            check(expected > prevExpected) // should have progress
+            prevExpected = expected
         }
         if (!error) {
             subscription.cancel()
