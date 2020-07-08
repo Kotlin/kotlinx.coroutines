@@ -155,8 +155,8 @@ class RunningThreadStackMergeTest : DebugTestBase() {
                 "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.dumpCoroutinesSynchronized(DebugProbesImpl.kt:122)\n" +
                 "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.dumpCoroutines(DebugProbesImpl.kt:109)\n" +
                 "\tat kotlinx.coroutines.debug.DebugProbes.dumpCoroutines(DebugProbes.kt:122)\n" +
-                "\tat kotlinx.coroutines.debug.StracktraceUtilsKt.verifyDump(StracktraceUtils.kt)\n" +
-                "\tat kotlinx.coroutines.debug.StracktraceUtilsKt.verifyDump\$default(StracktraceUtils.kt)\n" +
+                "\tat kotlinx.coroutines.debug.StacktraceUtilsKt.verifyDump(StacktraceUtils.kt)\n" +
+                "\tat kotlinx.coroutines.debug.StacktraceUtilsKt.verifyDump\$default(StacktraceUtils.kt)\n" +
                 "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$testRunBlocking\$1.invokeSuspend(RunningThreadStackMergeTest.kt:112)\n" +
                 "\t(Coroutine creation stacktrace)\n" +
                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n")

@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.debug.internal
 
+import java.lang.ref.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.*
 
@@ -12,10 +13,18 @@ internal const val RUNNING = "RUNNING"
 internal const val SUSPENDED = "SUSPENDED"
 
 internal class DebugCoroutineInfo(
-    public val context: CoroutineContext,
+    context: CoroutineContext?,
     public val creationStackBottom: CoroutineStackFrame?,
     @JvmField internal val sequenceNumber: Long
 ) {
+    /**
+     * We cannot keep a strong reference to the context, because with the [Job] in the context it will indirectly
+     * keep a reference to the last frame of an abandoned coroutine which the debugger should not be preventing
+     * garbage-collection of. The reference to context will not disappear as long as the coroutine itself is not lost.
+     */
+    private val _context = WeakReference(context)
+    public val context: CoroutineContext? // can be null when the coroutine was already garbage-collected
+        get() = _context.get()
 
     public val creationStackTrace: List<StackTraceElement> get() = creationStackTrace()
 
@@ -28,8 +37,15 @@ internal class DebugCoroutineInfo(
 
     @JvmField
     internal var lastObservedThread: Thread? = null
-    @JvmField
-    internal var lastObservedFrame: CoroutineStackFrame? = null
+
+    /**
+     * We cannot keep a strong reference to the last observed frame of the coroutine, because this will
+     * prevent garbage-collection of a coroutine that was lost.
+     */
+    private var _lastObservedFrame: WeakReference<CoroutineStackFrame>? = null
+    internal var lastObservedFrame: CoroutineStackFrame?
+        get() = _lastObservedFrame?.get()
+        set(value) { _lastObservedFrame = value?.let { WeakReference(it) } }
 
     public fun copy(): DebugCoroutineInfo = DebugCoroutineInfo(
         context,
