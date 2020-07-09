@@ -52,7 +52,7 @@ class DebugLeaksTest : DebugTestBase() {
     private suspend fun suspendForever() = suspendCancellableCoroutine<Unit> {  }
 
     private fun assertNoCapturedReference() {
-        DebugProbesImpl.cleanWeakRefs()
+        DebugProbesImpl.cleanWeakRefsOnce()
         FieldWalker.assertReachableCount(0, DebugProbesImpl, rootStatics = true) { it is Captured }
     }
 }

@@ -26,7 +26,8 @@ internal object DebugProbesImpl {
 
     private var weakRefCleanerThread: Thread? = null
 
-    private val capturedCoroutinesMap = ConcurrentWeakMap<CoroutineOwner<*>, Boolean>()
+    private val weakRefQueue = ConcurrentWeakMapQueue()
+    private val capturedCoroutinesMap = ConcurrentWeakMap<CoroutineOwner<*>, Boolean>(weakRefQueue)
     private val capturedCoroutines: Set<CoroutineOwner<*>> get() = capturedCoroutinesMap.keys
 
     @Volatile
@@ -73,7 +74,7 @@ internal object DebugProbesImpl {
      * Then at least three RUNNING -> RUNNING transitions will occur consecutively and complexity of each is O(depth).
      * To avoid that quadratic complexity, we are caching lookup result for such chains in this map and update it incrementally.
      */
-    private val callerInfoCache = ConcurrentWeakMap<CoroutineStackFrame, DebugCoroutineInfoImpl>()
+    private val callerInfoCache = ConcurrentWeakMap<CoroutineStackFrame, DebugCoroutineInfoImpl>(weakRefQueue)
 
     public fun install(): Unit = coroutineStateLock.write {
         if (++installations > 1) return
@@ -94,11 +95,7 @@ internal object DebugProbesImpl {
 
     private fun startWeakRefCleanerThread() {
         weakRefCleanerThread = thread(isDaemon = true, name = "DebugProbesWeakRefCleaner") {
-            while (true) {
-                try { Thread.sleep(100) }
-                catch (e: InterruptedException) { break }
-                cleanWeakRefs()
-            }
+            weakRefQueue.runCleaningLoopUntilInterrupted()
         }
     }
 
@@ -107,9 +104,8 @@ internal object DebugProbesImpl {
         weakRefCleanerThread = null
     }
 
-    public fun cleanWeakRefs() {
-        capturedCoroutinesMap.cleanWeakRefs()
-        callerInfoCache.cleanWeakRefs()
+    fun cleanWeakRefsOnce() {
+        weakRefQueue.cleanOnce()
     }
 
     public fun hierarchyToString(job: Job): String = coroutineStateLock.write {

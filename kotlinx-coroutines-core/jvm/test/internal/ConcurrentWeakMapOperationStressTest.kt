@@ -27,6 +27,7 @@ class ConcurrentWeakMapOperationStressTest : TestBase() {
 
     @Test
     fun testOperations() {
+        // We don't create queue here, because concurrent operations are enough to make it clean itself
         val m = ConcurrentWeakMap<Key, Long>()
         val threads = Array(nThreads) { index ->
             thread(start = false, name = "ConcurrentWeakMapOperationStressTest-$index") {
