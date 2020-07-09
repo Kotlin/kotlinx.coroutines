@@ -12,9 +12,10 @@ import kotlinx.coroutines.*
 
 /*
  * This class represents all the data required by IDEA debugger.
- * It is serializable in order to speedup JDWP interactions
+ * It is serializable in order to speedup JDWP interactions.
+ * **DO NOT MAKE BINARY-INCOMPATIBLE CHANGES TO THIS CLASS**.
  */
-internal class DebuggerInfo(source: DebugCoroutineInfo, context: CoroutineContext) : Serializable {
+internal class DebuggerInfo(source: DebugCoroutineInfoImpl, context: CoroutineContext) : Serializable {
     public val coroutineId: Long? = context[CoroutineId]?.id
     public val dispatcher: String? = context[ContinuationInterceptor]?.toString()
     public val name: String? = context[CoroutineName]?.name

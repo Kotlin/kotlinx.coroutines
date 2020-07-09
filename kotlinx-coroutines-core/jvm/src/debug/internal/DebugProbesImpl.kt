@@ -31,7 +31,13 @@ internal object DebugProbesImpl {
 
     @Volatile
     private var installations = 0
+
+    /**
+     * This internal method is used by IDEA debugger under the JVM name of
+     * "isInstalled$kotlinx_coroutines_debug".
+     */
     internal val isInstalled: Boolean get() = installations > 0
+
     // To sort coroutines by creation order, used as unique id
     private val sequenceNumber = atomic(0L)
     /*
@@ -67,7 +73,7 @@ internal object DebugProbesImpl {
      * Then at least three RUNNING -> RUNNING transitions will occur consecutively and complexity of each is O(depth).
      * To avoid that quadratic complexity, we are caching lookup result for such chains in this map and update it incrementally.
      */
-    private val callerInfoCache = ConcurrentWeakMap<CoroutineStackFrame, DebugCoroutineInfo>()
+    private val callerInfoCache = ConcurrentWeakMap<CoroutineStackFrame, DebugCoroutineInfoImpl>()
 
     public fun install(): Unit = coroutineStateLock.write {
         if (++installations > 1) return
@@ -116,7 +122,7 @@ internal object DebugProbesImpl {
         }
     }
 
-    private fun Job.build(map: Map<Job, DebugCoroutineInfo>, builder: StringBuilder, indent: String) {
+    private fun Job.build(map: Map<Job, DebugCoroutineInfoImpl>, builder: StringBuilder, indent: String) {
         val info = map[this]
         val newIndent: String
         if (info == null) { // Append coroutine without stacktrace
@@ -144,22 +150,38 @@ internal object DebugProbesImpl {
     @Suppress("DEPRECATION_ERROR") // JobSupport
     private val Job.debugString: String get() = if (this is JobSupport) toDebugString() else toString()
 
-    public fun dumpCoroutinesInfo(): List<DebugCoroutineInfo> = coroutineStateLock.write {
-        check(isInstalled) { "Debug probes are not installed" }
-        return capturedCoroutines.asSequence()
-            .map { it.info.copy() } // Copy as CoroutineInfo can be mutated concurrently by DebugProbes
-            .sortedBy { it.sequenceNumber }
-            .toList()
-    }
+    /**
+     * Private method that dumps coroutines so that different public-facing method can use
+     * to produce different result types. The [transform] lambda is performed under the lock.
+     */
+    private fun <T> dumpCoroutinesInfoImpl(transform: (Sequence<CoroutineOwner<*>>) -> T): T =
+        coroutineStateLock.write {
+            check(isInstalled) { "Debug probes are not installed" }
+            return transform(capturedCoroutines.asSequence())
+        }
 
     /*
-     * Internal (JVM-public) method used by IDEA debugger.
-     * It is equivalent to dumpCoroutines, but returns serializable (and thus less typed) objects.
+     * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3.
      */
-    public fun dumpDebuggerInfo() = dumpCoroutinesInfo().mapNotNull { info ->
-        // Leave in the dump only the coroutines that were not collected while we were dumping them
-        info.context?.let { context -> DebuggerInfo(info, context) }
-    }
+    public fun dumpCoroutinesInfo(): List<DebugCoroutineInfo> =
+        dumpCoroutinesInfoImpl { seq ->
+            // Leave in the dump only the coroutines that were not collected while we were dumping them
+            seq.mapNotNull { owner -> owner.info.context?.let { context -> DebugCoroutineInfo(owner.info, context) } }
+                .sortedBy { it.sequenceNumber }
+                .toList()
+        }
+
+    /*
+     * Internal (JVM-public) method to be used by IDEA debugger in the future (not used as of 1.4-M3).
+     * It is equivalent to [dumpCoroutinesInfo], but returns serializable (and thus less typed) objects.
+     */
+    public fun dumpDebuggerInfo(): List<DebuggerInfo> =
+        dumpCoroutinesInfoImpl { seq ->
+            // Leave in the dump only the coroutines that were not collected while we were dumping them
+            seq.mapNotNull { owner -> owner.info.context?.let { context -> DebuggerInfo(owner.info, context) } }
+                .sortedBy { it.sequenceNumber }
+                .toList()
+        }
 
     public fun dumpCoroutines(out: PrintStream): Unit = synchronized(out) {
         /*
@@ -181,7 +203,7 @@ internal object DebugProbesImpl {
             .forEach { owner ->
                 val info = owner.info
                 val observedStackTrace = info.lastObservedStackTrace()
-                val enhancedStackTrace = enhanceStackTraceWithThreadDump(info, observedStackTrace)
+                val enhancedStackTrace = enhanceStackTraceWithThreadDumpImpl(info.state, info.lastObservedThread, observedStackTrace)
                 val state = if (info.state == RUNNING && enhancedStackTrace === observedStackTrace)
                     "${info.state} (Last suspension stacktrace, not an actual stacktrace)"
                 else
@@ -202,18 +224,29 @@ internal object DebugProbesImpl {
         }
     }
 
+    /*
+     * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3.
+     * It is similar to [enhanceStackTraceWithThreadDumpImpl], but uses debugger-facing [DebugCoroutineInfo] type.
+     */
+    @Suppress("unused")
+    public fun enhanceStackTraceWithThreadDump(
+        info: DebugCoroutineInfo,
+        coroutineTrace: List<StackTraceElement>
+    ): List<StackTraceElement> =
+        enhanceStackTraceWithThreadDumpImpl(info.state, info.lastObservedThread, coroutineTrace)
+
     /**
-     * Tries to enhance [coroutineTrace] (obtained by call to [DebugCoroutineInfo.lastObservedStackTrace]) with
-     * thread dump of [DebugCoroutineInfo.lastObservedThread].
+     * Tries to enhance [coroutineTrace] (obtained by call to [DebugCoroutineInfoImpl.lastObservedStackTrace]) with
+     * thread dump of [DebugCoroutineInfoImpl.lastObservedThread].
      *
      * Returns [coroutineTrace] if enhancement was unsuccessful or the enhancement result.
      */
-    private fun enhanceStackTraceWithThreadDump(
-        info: DebugCoroutineInfo,
+    private fun enhanceStackTraceWithThreadDumpImpl(
+        state: String,
+        thread: Thread?,
         coroutineTrace: List<StackTraceElement>
     ): List<StackTraceElement> {
-        val thread = info.lastObservedThread
-        if (info.state != RUNNING || thread == null) return coroutineTrace
+        if (state != RUNNING || thread == null) return coroutineTrace
         // Avoid security manager issues
         val actualTrace = runCatching { thread.stackTrace }.getOrNull()
             ?: return coroutineTrace
@@ -319,7 +352,7 @@ internal object DebugProbesImpl {
     private fun updateRunningState(frame: CoroutineStackFrame, state: String): Unit = coroutineStateLock.read {
         if (!isInstalled) return
         // Lookup coroutine info in cache or by traversing stack frame
-        val info: DebugCoroutineInfo
+        val info: DebugCoroutineInfoImpl
         val cached = callerInfoCache.remove(frame)
         if (cached != null) {
             info = cached
@@ -389,7 +422,7 @@ internal object DebugProbesImpl {
 
     private fun <T> createOwner(completion: Continuation<T>, frame: CoroutineStackFrame?): Continuation<T> {
         if (!isInstalled) return completion
-        val info = DebugCoroutineInfo(completion.context, frame, sequenceNumber.incrementAndGet())
+        val info = DebugCoroutineInfoImpl(completion.context, frame, sequenceNumber.incrementAndGet())
         val owner = CoroutineOwner(completion, info, frame)
         capturedCoroutinesMap[owner] = true
         if (!isInstalled) capturedCoroutinesMap.clear()
@@ -413,7 +446,7 @@ internal object DebugProbesImpl {
      */
     private class CoroutineOwner<T>(
         @JvmField val delegate: Continuation<T>,
-        @JvmField val info: DebugCoroutineInfo,
+        @JvmField val info: DebugCoroutineInfoImpl,
         private val frame: CoroutineStackFrame?
     ) : Continuation<T> by delegate, CoroutineStackFrame {
 
