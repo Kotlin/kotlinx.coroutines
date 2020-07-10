@@ -155,4 +155,10 @@ class HandlerDispatcherTest : TestBase() {
         yield() // yield back
         finish(5)
     }
+
+    @Test
+    fun testMainDispatcherToString() {
+        assertEquals("Dispatchers.Main", Dispatchers.Main.toString())
+        assertEquals("Dispatchers.Main.immediate", Dispatchers.Main.immediate.toString())
+    }
 }

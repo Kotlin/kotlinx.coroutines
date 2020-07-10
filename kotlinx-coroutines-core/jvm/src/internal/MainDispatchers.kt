@@ -114,7 +114,7 @@ private class MissingMainCoroutineDispatcher(
         }
     }
 
-    override fun toString(): String = "Main[missing${if (cause != null) ", cause=$cause" else ""}]"
+    override fun toString(): String = "Dispatchers.Main[missing${if (cause != null) ", cause=$cause" else ""}]"
 }
 
 /**

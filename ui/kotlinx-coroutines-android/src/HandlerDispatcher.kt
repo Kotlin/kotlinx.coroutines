@@ -149,12 +149,13 @@ internal class HandlerContext private constructor(
         }
     }
 
-    override fun toString(): String =
+    override fun toString(): String = toStringInternalImpl() ?: run {
         if (name != null) {
-            if (invokeImmediately) "$name [immediate]" else name
+            if (invokeImmediately) "$name.immediate" else name
         } else {
             handler.toString()
         }
+    }
 
     override fun equals(other: Any?): Boolean = other is HandlerContext && other.handler === handler
     override fun hashCode(): Int = System.identityHashCode(handler)

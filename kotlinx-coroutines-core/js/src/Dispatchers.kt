@@ -26,5 +26,5 @@ private class JsMainDispatcher(val delegate: CoroutineDispatcher) : MainCoroutin
 
     override fun dispatchYield(context: CoroutineContext, block: Runnable) = delegate.dispatchYield(context, block)
 
-    override fun toString(): String = delegate.toString()
+    override fun toString(): String = toStringInternalImpl() ?: delegate.toString()
 }

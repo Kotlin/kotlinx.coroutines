@@ -67,7 +67,7 @@ private object ImmediateSwingDispatcher : SwingDispatcher() {
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = !SwingUtilities.isEventDispatchThread()
 
-    override fun toString() = "Swing [immediate]"
+    override fun toString() = toStringInternalImpl() ?: "Swing.immediate"
 }
 
 /**
@@ -77,5 +77,5 @@ internal object Swing : SwingDispatcher() {
     override val immediate: MainCoroutineDispatcher
         get() = ImmediateSwingDispatcher
 
-    override fun toString() = "Swing"
+    override fun toString() = toStringInternalImpl() ?: "Swing"
 }
