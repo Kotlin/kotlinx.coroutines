@@ -17,10 +17,9 @@ class ConcurrentWeakMapCollectionStressTest : TestBase() {
     @Test
     fun testCollected() {
         // use very big arrays as values
-        val queue = ConcurrentWeakMapQueue()
-        val m = ConcurrentWeakMap<Key, ByteArray>(queue)
+        val m = ConcurrentWeakMap<Key, ByteArray>(weakRefQueue = true)
         for (i in 1..nElements) {
-            queue.cleanOnce() // clean queue before every put
+            m.cleanWeakRefQueueOnce() // clean values before every put
             m.put(Key(i), ByteArray(size))
         }
         assertTrue(m.size < nElements) // some of it was collected for sure

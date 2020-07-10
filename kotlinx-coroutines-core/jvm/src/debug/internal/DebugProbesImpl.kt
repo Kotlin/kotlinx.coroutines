@@ -26,8 +26,8 @@ internal object DebugProbesImpl {
 
     private var weakRefCleanerThread: Thread? = null
 
-    private val weakRefQueue = ConcurrentWeakMapQueue()
-    private val capturedCoroutinesMap = ConcurrentWeakMap<CoroutineOwner<*>, Boolean>(weakRefQueue)
+    // Values are boolean, so this map does not need to use a weak reference queue
+    private val capturedCoroutinesMap = ConcurrentWeakMap<CoroutineOwner<*>, Boolean>()
     private val capturedCoroutines: Set<CoroutineOwner<*>> get() = capturedCoroutinesMap.keys
 
     @Volatile
@@ -73,8 +73,11 @@ internal object DebugProbesImpl {
      *
      * Then at least three RUNNING -> RUNNING transitions will occur consecutively and complexity of each is O(depth).
      * To avoid that quadratic complexity, we are caching lookup result for such chains in this map and update it incrementally.
+     *
+     * [DebugCoroutineInfoImpl] keeps a lot of auxiliary information about a coroutine, so we use a weak reference queue
+     * to promptly release the corresponding memory when the reference to the coroutine itself was already collected.
      */
-    private val callerInfoCache = ConcurrentWeakMap<CoroutineStackFrame, DebugCoroutineInfoImpl>(weakRefQueue)
+    private val callerInfoCache = ConcurrentWeakMap<CoroutineStackFrame, DebugCoroutineInfoImpl>(weakRefQueue = true)
 
     public fun install(): Unit = coroutineStateLock.write {
         if (++installations > 1) return
@@ -95,17 +98,13 @@ internal object DebugProbesImpl {
 
     private fun startWeakRefCleanerThread() {
         weakRefCleanerThread = thread(isDaemon = true, name = "DebugProbesWeakRefCleaner") {
-            weakRefQueue.runCleaningLoopUntilInterrupted()
+            callerInfoCache.runWeakRefQueueCleaningLoopUntilInterrupted()
         }
     }
 
     private fun stopWeakRefCleanerThread() {
         weakRefCleanerThread?.interrupt()
         weakRefCleanerThread = null
-    }
-
-    fun cleanWeakRefsOnce() {
-        weakRefQueue.cleanOnce()
     }
 
     public fun hierarchyToString(job: Job): String = coroutineStateLock.write {

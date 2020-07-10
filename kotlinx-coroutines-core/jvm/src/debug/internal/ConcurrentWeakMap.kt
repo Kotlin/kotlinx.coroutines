@@ -5,7 +5,6 @@
 package kotlinx.coroutines.debug.internal
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import java.lang.ref.*
 import java.util.concurrent.atomic.*
@@ -14,18 +13,21 @@ import java.util.concurrent.atomic.*
 // It has lock-free get and put with synchronized rehash for simplicity (and better CPU usage on contention)
 @OptIn(ExperimentalStdlibApi::class)
 @Suppress("UNCHECKED_CAST")
-internal class ConcurrentWeakMap<K : Any, V: Any>(private val queue: ConcurrentWeakMapQueue? = null) : AbstractMutableMap<K, V>() {
+internal class ConcurrentWeakMap<K : Any, V: Any>(
+    /**
+     * Weak reference queue is needed when a small key is mapped to a large value and we need to promptly release a
+     * reference to the value when the key was already disposed.
+     */
+    weakRefQueue: Boolean = false
+) : AbstractMutableMap<K, V>() {
     private val _size = atomic(0)
     private val core = atomic(Core(MIN_CAPACITY))
+    private val weakRefQueue: ReferenceQueue<K>? = if (weakRefQueue) ReferenceQueue() else null
 
     override val size: Int
         get() = _size.value
 
     private fun decrementSize() { _size.decrementAndGet() }
-
-    fun cleanWeakRef(w: HashedWeakRef<*>) {
-        core.value.cleanWeakRef(w)
-    }
 
     override fun get(key: K): V? = core.value.getImpl(key)
 
@@ -64,6 +66,28 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(private val queue: ConcurrentW
     // We don't care much about clear's efficiency
     override fun clear() {
         for (k in keys) remove(k)
+    }
+
+    fun runWeakRefQueueCleaningLoopUntilInterrupted() {
+        check(weakRefQueue != null) { "Must be created with weakRefQueue = true" }
+        try {
+            while (true) {
+                cleanWeakRef(weakRefQueue.remove() as HashedWeakRef<*>)
+            }
+        } catch(e: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
+    }
+
+    fun cleanWeakRefQueueOnce() {
+        check(weakRefQueue != null) { "Must be created with weakRefQueue = true" }
+        while (true) {
+            cleanWeakRef((weakRefQueue.poll() as HashedWeakRef<*>?) ?: break)
+        }
+    }
+
+    private fun cleanWeakRef(w: HashedWeakRef<*>) {
+        core.value.cleanWeakRef(w)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -120,7 +144,7 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(private val queue: ConcurrentW
                         }
                         loadIncremented = true
                     }
-                    if (weakKey == null) weakKey = HashedWeakRef(key, queue, this@ConcurrentWeakMap)
+                    if (weakKey == null) weakKey = HashedWeakRef(key, weakRefQueue)
                     if (keys.compareAndSet(index, null, weakKey)) break // slot reserved !!!
                     continue // retry at this slot on CAS failure (somebody already reserved this slot)
                 }
@@ -232,10 +256,6 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(private val queue: ConcurrentW
         override fun add(element: E): Boolean = noImpl()
         override fun iterator(): MutableIterator<E> = core.value.keyValueIterator(factory)
     }
-
-    private fun noImpl(): Nothing {
-        throw UnsupportedOperationException("not implemented")
-    }
 }
 
 private const val MAGIC = 2654435769L.toInt() // golden ratio
@@ -249,32 +269,10 @@ private val MARKED_TRUE = Marked(true) // When using map as set "true" used as v
  * from the hashtable even in the absence of ongoing modifications.
  */
 internal class HashedWeakRef<T>(
-    ref: T, queue: ConcurrentWeakMapQueue?,
-    @JvmField
-    val container: ConcurrentWeakMap<*, *>
+    ref: T, queue: ReferenceQueue<T>?
 ) : WeakReference<T>(ref, queue) {
     @JvmField
     val hash = ref.hashCode()
-}
-
-internal class ConcurrentWeakMapQueue : ReferenceQueue<Any?>() {
-    fun runCleaningLoopUntilInterrupted() {
-        try {
-            while (true) {
-                val w = remove() as HashedWeakRef<*>
-                w.container.cleanWeakRef(w)
-            }
-        } catch(e: InterruptedException) {
-            Thread.currentThread().interrupt()
-        }
-    }
-
-    fun cleanOnce() {
-        while (true) {
-            val w = (poll() as HashedWeakRef<*>?) ?: break
-            w.container.cleanWeakRef(w)
-        }
-    }
 }
 
 /**
@@ -289,3 +287,6 @@ private fun Any?.mark(): Marked = when(this) {
     else -> Marked(this)
 }
 
+private fun noImpl(): Nothing {
+    throw UnsupportedOperationException("not implemented")
+}
