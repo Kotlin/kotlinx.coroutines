@@ -114,7 +114,10 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(private val queue: ConcurrentW
                     if (value == null) return null // removing missing value, nothing to do here
                     if (!loadIncremented) {
                         // We must increment load before we even try to occupy a slot to avoid overfill during concurrent put
-                        if (load.incrementAndGet() >= threshold) return REHASH
+                        load.update { n ->
+                            if (n >= threshold) return REHASH // the load is already too big -- rehash
+                            n + 1 // otherwise increment
+                        }
                         loadIncremented = true
                     }
                     if (weakKey == null) weakKey = HashedWeakRef(key, queue, this@ConcurrentWeakMap)
@@ -140,7 +143,7 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(private val queue: ConcurrentW
             return oldValue as V?
         }
 
-        // only one thread can rehash, put maybe concurrent puts/gets
+        // only one thread can rehash, but may have concurrent puts/gets
         fun rehash(): Core {
             // use size to approximate new required capacity to have at least 25-50% fill factor,
             // may fail due to concurrent modification, will retry
