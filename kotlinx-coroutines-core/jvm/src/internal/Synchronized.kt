@@ -1,12 +1,20 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
 
-@Suppress("ACTUAL_WITHOUT_EXPECT") // visibility
-internal actual typealias SynchronizedObject = Any
+import kotlinx.coroutines.*
 
-@PublishedApi
-internal actual inline fun <T> synchronized(lock: SynchronizedObject, block: () -> T): T =
+/**
+ * @suppress **This an internal API and should not be used from general code.**
+ */
+@InternalCoroutinesApi
+public actual typealias SynchronizedObject = Any
+
+/**
+ * @suppress **This an internal API and should not be used from general code.**
+ */
+@InternalCoroutinesApi
+public actual inline fun <T> synchronized(lock: SynchronizedObject, block: () -> T): T =
     kotlin.synchronized(lock, block)

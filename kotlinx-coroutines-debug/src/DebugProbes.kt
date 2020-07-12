@@ -1,8 +1,8 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("unused")
+@file:Suppress("UNUSED", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
 package kotlinx.coroutines.debug
 
@@ -10,7 +10,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.internal.*
 import java.io.*
 import java.lang.management.*
-import java.util.*
 import kotlin.coroutines.*
 
 /**
@@ -19,6 +18,7 @@ import kotlin.coroutines.*
  * Debug probes is a dynamic attach mechanism which installs multiple hooks into coroutines machinery.
  * It slows down all coroutine-related code, but in return provides a lot of diagnostic information, including
  * asynchronous stack-traces and coroutine dumps (similar to [ThreadMXBean.dumpAllThreads] and `jstack` via [DebugProbes.dumpCoroutines].
+ * All introspecting methods throw [IllegalStateException] if debug probes were not installed.
  *
  * Installed hooks:
  *
@@ -27,19 +27,42 @@ import kotlin.coroutines.*
  * * `probeCoroutineCreated` is invoked on every coroutine creation using stdlib intrinsics.
  *
  * Overhead:
- *  * Every created coroutine is stored in a weak hash map, thus adding additional GC pressure.
- *  * On every created coroutine, stacktrace of the current thread is dumped.
- *  * On every `resume` and `suspend`, [WeakHashMap] is updated under a global lock.
+ *  * Every created coroutine is stored in a concurrent hash map and hash map is looked up and
+ *    updated on each suspension and resumption.
+ *  * If [DebugProbes.enableCreationStackTraces] is enabled, stack trace of the current thread is captured on
+ *    each created coroutine that is a rough equivalent of throwing an exception per each created coroutine.
  */
 @ExperimentalCoroutinesApi
 public object DebugProbes {
 
     /**
-     * Whether coroutine creation stacktraces should be sanitized.
+     * Whether coroutine creation stack traces should be sanitized.
      * Sanitization removes all frames from `kotlinx.coroutines` package except
      * the first one and the last one to simplify diagnostic.
      */
-    public var sanitizeStackTraces: Boolean = true
+    public var sanitizeStackTraces: Boolean
+        get() = DebugProbesImpl.sanitizeStackTraces
+        set(value) {
+            DebugProbesImpl.sanitizeStackTraces = value
+        }
+
+    /**
+     * Whether coroutine creation stack traces should be captured.
+     * When enabled, for each created coroutine a stack trace of the current
+     * thread is captured and attached to the coroutine.
+     * This option can be useful during local debug sessions, but is recommended
+     * to be disabled in production environments to avoid stack trace dumping overhead.
+     */
+    public var enableCreationStackTraces: Boolean
+        get() = DebugProbesImpl.enableCreationStackTraces
+        set(value) {
+            DebugProbesImpl.enableCreationStackTraces = value
+        }
+
+    /**
+     * Determines whether debug probes were [installed][DebugProbes.install].
+     */
+    public val isInstalled: Boolean get() = DebugProbesImpl.isInstalled
 
     /**
      * Installs a [DebugProbes] instead of no-op stdlib probes by redefining
@@ -98,7 +121,7 @@ public object DebugProbes {
      * Returns all existing coroutines info.
      * The resulting collection represents a consistent snapshot of all existing coroutines at the moment of invocation.
      */
-    public fun dumpCoroutinesInfo(): List<CoroutineInfo> = DebugProbesImpl.dumpCoroutinesInfo()
+    public fun dumpCoroutinesInfo(): List<CoroutineInfo> = DebugProbesImpl.dumpCoroutinesInfo().map { CoroutineInfo(it) }
 
     /**
      * Dumps all active coroutines into the given output stream, providing a consistent snapshot of all existing coroutines at the moment of invocation.
@@ -115,16 +138,15 @@ public object DebugProbes {
      *     at MyClass.createIoRequest(MyClass.kt:142)
      *     at MyClass.fetchData(MyClass.kt:154)
      *     at MyClass.showData(MyClass.kt:31)
-     *
      * ...
      * ```
      */
-    public fun dumpCoroutines(out: PrintStream = System.out) = DebugProbesImpl.dumpCoroutines(out)
+    public fun dumpCoroutines(out: PrintStream = System.out): Unit = DebugProbesImpl.dumpCoroutines(out)
 }
 
 // Stubs which are injected as coroutine probes. Require direct match of signatures
 internal fun probeCoroutineResumed(frame: Continuation<*>) = DebugProbesImpl.probeCoroutineResumed(frame)
 
 internal fun probeCoroutineSuspended(frame: Continuation<*>) = DebugProbesImpl.probeCoroutineSuspended(frame)
-internal fun <T> probeCoroutineCreated(completion: kotlin.coroutines.Continuation<T>): kotlin.coroutines.Continuation<T> =
+internal fun <T> probeCoroutineCreated(completion: Continuation<T>): Continuation<T> =
     DebugProbesImpl.probeCoroutineCreated(completion)

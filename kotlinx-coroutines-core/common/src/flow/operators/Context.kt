@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -104,15 +104,14 @@ import kotlin.jvm.*
  * [RENDEZVOUS][Channel.RENDEZVOUS], [UNLIMITED][Channel.UNLIMITED] or a non-negative value indicating
  * an explicitly requested size.
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> {
     require(capacity >= 0 || capacity == BUFFERED || capacity == CONFLATED) {
         "Buffer size should be non-negative, BUFFERED, or CONFLATED, but was $capacity"
     }
-    return if (this is ChannelFlow)
-        update(capacity = capacity)
-    else
-        ChannelFlowOperatorImpl(this, capacity = capacity)
+    return when (this) {
+        is FusibleFlow -> fuse(capacity = capacity)
+        else -> ChannelFlowOperatorImpl(this, capacity = capacity)
+    }
 }
 
 /**
@@ -146,12 +145,15 @@ public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> {
  * Adjacent applications of `conflate`/[buffer], [channelFlow], [flowOn], [produceIn], and [broadcastIn] are
  * always fused so that only one properly configured channel is used for execution.
  * **Conflation takes precedence over `buffer()` calls with any other capacity.**
+ *
+ * Note that any instance of [StateFlow] already behaves as if `conflate` operator is
+ * applied to it, so applying `conflate` to a `StateFlow` has not effect.
+ * See [StateFlow] documentation on Operator Fusion.
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
 
 /**
- * The operator that changes the context where this flow is executed to the given [context].
+ * Changes the context where this flow is executed to the given [context].
  * This operator is composable and affects only preceding operators that do not have its own context.
  * This operator is context preserving: [context] **does not** leak into the downstream flow.
  *
@@ -192,15 +194,32 @@ public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
  *     .flowOn(Dispatchers.Default)
  * ```
  *
+ * Note that an instance of [StateFlow] does not have an execution context by itself,
+ * so applying `flowOn` to a `StateFlow` has not effect. See [StateFlow] documentation on Operator Fusion.
+ *
  * @throws [IllegalArgumentException] if provided context contains [Job] instance.
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.flowOn(context: CoroutineContext): Flow<T> {
     checkFlowContext(context)
     return when {
         context == EmptyCoroutineContext -> this
-        this is ChannelFlow -> update(context = context)
+        this is FusibleFlow -> fuse(context = context)
         else -> ChannelFlowOperatorImpl(this, context = context)
+    }
+}
+
+/**
+ * Returns a flow which checks cancellation status on each emission and throws
+ * the corresponding cancellation cause if flow collector was cancelled.
+ * Note that [flow] builder is [cancellable] by default.
+ */
+public fun <T> Flow<T>.cancellable(): Flow<T> {
+    if (this is AbstractFlow<*>) return this // Fast-path, already cancellable
+    return unsafeFlow {
+        collect {
+            currentCoroutineContext().ensureActive()
+            emit(it)
+        }
     }
 }
 
@@ -238,7 +257,7 @@ public fun <T> Flow<T>.flowOn(context: CoroutineContext): Flow<T> {
  * 4) It can be confused with [flowOn] operator, though [flowWith] is much rarer.
  */
 @FlowPreview
-@Deprecated(message = "flowWith is deprecated without replacement, please refer to its KDoc for an explanation", level = DeprecationLevel.WARNING) // Error in beta release, removal in 1.4
+@Deprecated(message = "flowWith is deprecated without replacement, please refer to its KDoc for an explanation", level = DeprecationLevel.ERROR) // Error in beta release, removal in 1.4
 public fun <T, R> Flow<T>.flowWith(
     flowContext: CoroutineContext,
     bufferSize: Int = BUFFERED,
@@ -252,7 +271,7 @@ public fun <T, R> Flow<T>.flowWith(
          * All builders are written using scoping and no global coroutines are launched, so it is safe not to provide explicit Job.
          * It is also necessary not to mess with cancellation if multiple flowWith are used.
          */
-        val originalContext = coroutineContext.minusKey(Job)
+        val originalContext = currentCoroutineContext().minusKey(Job)
         val prepared = source.flowOn(originalContext).buffer(bufferSize)
         builder(prepared).flowOn(flowContext).buffer(bufferSize).collect { value ->
             return@collect emit(value)
@@ -265,4 +284,3 @@ private fun checkFlowContext(context: CoroutineContext) {
         "Flow context cannot contain job in it. Had $context"
     }
 }
-

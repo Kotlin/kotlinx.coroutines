@@ -8,7 +8,7 @@ import org.junit.Test
 import java.util.concurrent.*
 import kotlin.test.*
 
-class DebugProbesTest : TestBase() {
+class DebugProbesTest : DebugTestBase() {
 
     private fun CoroutineScope.createDeferred(): Deferred<*> = async(NonCancellable) {
         throw ExecutionException(null)

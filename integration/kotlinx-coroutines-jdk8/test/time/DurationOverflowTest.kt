@@ -65,4 +65,15 @@ class DurationOverflowTest : TestBase() {
         assertNull(result)
     }
 
+    @Test
+    fun testZeroDurationWithTimeout() = runTest {
+        assertFailsWith<TimeoutCancellationException> { withTimeout(0L) {} }
+        assertFailsWith<TimeoutCancellationException> { withTimeout(Duration.ZERO) {} }
+    }
+
+    @Test
+    fun testZeroDurationWithTimeoutOrNull() = runTest {
+        assertNull(withTimeoutOrNull(0L) {})
+        assertNull(withTimeoutOrNull(Duration.ZERO) {})
+    }
 }

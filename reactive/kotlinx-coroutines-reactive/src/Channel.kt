@@ -1,46 +1,51 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.reactive
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import org.reactivestreams.*
 
 /**
  * Subscribes to this [Publisher] and returns a channel to receive elements emitted by it.
  * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this publisher.
+
+ * @param request how many items to request from publisher in advance (optional, one by default).
  *
- * **Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.**
- *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
- *
- * @param request how many items to request from publisher in advance (optional, on-demand request by default).
+ * This method is deprecated in the favor of [Flow].
+ * Instead of iterating over the resulting channel please use [collect][Flow.collect]:
+ * ```
+ * asFlow().collect { value ->
+ *     // process value
+ * }
+ * ```
  */
-@ObsoleteCoroutinesApi
-@Suppress("CONFLICTING_OVERLOADS")
-public fun <T> Publisher<T>.openSubscription(request: Int = 0): ReceiveChannel<T> {
+@Deprecated(
+    message = "Transforming publisher to channel is deprecated, use asFlow() instead",
+    level = DeprecationLevel.WARNING) // Will be error in 1.4
+public fun <T> Publisher<T>.openSubscription(request: Int = 1): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>(request)
     subscribe(channel)
     return channel
 }
 
 // Will be promoted to error in 1.3.0, removed in 1.4.0
-@Deprecated(message = "Use collect instead", level = DeprecationLevel.WARNING, replaceWith = ReplaceWith("this.collect(action)"))
-public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) =
+@Deprecated(message = "Use collect instead", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("this.collect(action)"))
+public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
 
 /**
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  * Cancels subscription if any exception happens during collect.
  */
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit) =
+public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
 
-@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
 private class SubscriptionChannel<T>(
     private val request: Int
 ) : LinkedListChannel<T>(), Subscriber<T> {

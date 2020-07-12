@@ -1,16 +1,15 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.context04
+// This file was automatically generated from coroutine-context-and-dispatchers.md by Knit tool. Do not edit.
+package kotlinx.coroutines.guide.exampleContext04
 
 import kotlinx.coroutines.*
 
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
 fun main() {
-//sampleStart
     newSingleThreadContext("Ctx1").use { ctx1 ->
         newSingleThreadContext("Ctx2").use { ctx2 ->
             runBlocking(ctx1) {
@@ -22,5 +21,4 @@ fun main() {
             }
         }
     }
-//sampleEnd    
 }

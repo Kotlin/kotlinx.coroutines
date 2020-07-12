@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.flow.internal
@@ -11,7 +11,7 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
+import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
  * Creates a [CoroutineScope] and calls the specified suspend block with this scope.
@@ -48,21 +48,18 @@ internal suspend fun <R> flowScope(@BuilderInference block: suspend CoroutineSco
  */
 internal fun <R> scopedFlow(@BuilderInference block: suspend CoroutineScope.(FlowCollector<R>) -> Unit): Flow<R> =
     flow {
-        val collector = this
-        flowScope { block(collector) }
+        flowScope { block(this@flow) }
     }
 
-/*
- * Shortcut for produce { flowScope {block() } }
- */
 internal fun <T> CoroutineScope.flowProduce(
     context: CoroutineContext,
-    capacity: Int = 0, @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+    capacity: Int = 0,
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): ReceiveChannel<T> {
     val channel = Channel<T>(capacity)
     val newContext = newCoroutineContext(context)
     val coroutine = FlowProduceCoroutine(newContext, channel)
-    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
+    coroutine.start(CoroutineStart.ATOMIC, coroutine, block)
     return coroutine
 }
 
@@ -70,7 +67,6 @@ private class FlowCoroutine<T>(
     context: CoroutineContext,
     uCont: Continuation<T>
 ) : ScopeCoroutine<T>(context, uCont) {
-
     public override fun childCancelled(cause: Throwable): Boolean {
         if (cause is ChildCancelledException) return true
         return cancelImpl(cause)
@@ -81,7 +77,6 @@ private class FlowProduceCoroutine<T>(
     parentContext: CoroutineContext,
     channel: Channel<T>
 ) : ProducerCoroutine<T>(parentContext, channel) {
-
     public override fun childCancelled(cause: Throwable): Boolean {
         if (cause is ChildCancelledException) return true
         return cancelImpl(cause)

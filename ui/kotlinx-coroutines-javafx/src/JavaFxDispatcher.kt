@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.javafx
@@ -11,6 +11,7 @@ import javafx.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.javafx.JavaFx.delay
+import java.lang.UnsupportedOperationException
 import java.lang.reflect.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
@@ -30,7 +31,7 @@ public val Dispatchers.JavaFx: JavaFxDispatcher
 public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
 
     /** @suppress */
-    override fun dispatch(context: CoroutineContext, block: Runnable) = Platform.runLater(block)
+    override fun dispatch(context: CoroutineContext, block: Runnable): Unit = Platform.runLater(block)
 
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
@@ -115,36 +116,42 @@ private class PulseTimer : AnimationTimer() {
     }
 }
 
-internal fun initPlatform(): Boolean {
-    /*
-     * Try to instantiate JavaFx platform in a way which works
-     * both on Java 8 and Java 11 and does not produce "illegal reflective access":
-     *
-     * 1) Try to invoke javafx.application.Platform.startup if this class is
-     *    present in a classpath.
-     * 2) If it is not successful and does not because it is already started,
-     *    fallback to PlatformImpl.
-     *
-     * Ignore exception anyway in case of unexpected changes in API, in that case
-     * user will have to instantiate it manually.
-     */
-    val runnable = Runnable {}
-    return runCatching {
-        // Invoke public API if it is present
-        Class.forName("javafx.application.Platform")
-            .getMethod("startup", java.lang.Runnable::class.java)
-            .invoke(null, runnable)
-    }.recoverCatching { exception ->
-        // Recover -> check re-initialization
-        val cause = exception.cause
-        if (exception is InvocationTargetException && cause is IllegalStateException
-            && "Toolkit already initialized" == cause.message) {
-            // Toolkit is already initialized -> success, return
-            Unit
-        } else { // Fallback to Java 8 API
+/** @return true if initialized successfully, and false if no display is detected */
+internal fun initPlatform(): Boolean = PlatformInitializer.success
+
+// Lazily try to initialize JavaFx platform just once
+private object PlatformInitializer {
+    val success = run {
+        /*
+         * Try to instantiate JavaFx platform in a way which works
+         * both on Java 8 and Java 11 and does not produce "illegal reflective access".
+         */
+        try {
+            val runnable = Runnable {}
+            // Invoke the public API if it is present.
+            runCatching {
+                Class.forName("javafx.application.Platform")
+                        .getMethod("startup", java.lang.Runnable::class.java)
+            }.map { method ->
+                method.invoke(null, runnable)
+                return@run true
+            }
+            // If we are here, it means the public API is not present. Try the private API.
             Class.forName("com.sun.javafx.application.PlatformImpl")
-                .getMethod("startup", java.lang.Runnable::class.java)
-                .invoke(null, runnable)
+                    .getMethod("startup", java.lang.Runnable::class.java)
+                    .invoke(null, runnable)
+            true
+        } catch (exception: InvocationTargetException) {
+            // Can only happen as a result of [Method.invoke].
+            val cause = exception.cause!!
+            when {
+                // Maybe the problem is that JavaFX is already initialized? Everything is good then.
+                cause is IllegalStateException && "Toolkit already initialized" == cause.message -> true
+                // If the problem is the headless environment, it is okay.
+                cause is UnsupportedOperationException && "Unable to open DISPLAY" == cause.message -> false
+                // Otherwise, the exception demonstrates an anomaly.
+                else -> throw cause
+            }
         }
-    }.isSuccess
+    }
 }

@@ -1,23 +1,20 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
 
 @file:JvmMultifileClass
 @file:JvmName("FlowKt")
 
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
+import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
  * Returns a flow that ignores first [count] elements.
  * Throws [IllegalArgumentException] if [count] is negative.
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.drop(count: Int): Flow<T> {
     require(count >= 0) { "Drop count should be non-negative, but had $count" }
     return flow {
@@ -31,7 +28,6 @@ public fun <T> Flow<T>.drop(count: Int): Flow<T> {
 /**
  * Returns a flow containing all elements except first elements that satisfy the given predicate.
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.dropWhile(predicate: suspend (T) -> Boolean): Flow<T> = flow {
     var matched = false
     collect { value ->
@@ -49,35 +45,39 @@ public fun <T> Flow<T>.dropWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
  * When [count] elements are consumed, the original flow is cancelled.
  * Throws [IllegalArgumentException] if [count] is not positive.
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.take(count: Int): Flow<T> {
     require(count > 0) { "Requested element count $count should be positive" }
     return flow {
         var consumed = 0
         try {
             collect { value ->
-                emit(value)
-                if (++consumed == count) {
-                    throw AbortFlowException()
+                if (++consumed < count) {
+                    return@collect emit(value)
+                } else {
+                    return@collect emitAbort(value)
                 }
             }
         } catch (e: AbortFlowException) {
-            // Nothing, bail out
+            e.checkOwnership(owner = this)
         }
     }
+}
+
+private suspend fun <T> FlowCollector<T>.emitAbort(value: T) {
+    emit(value)
+    throw AbortFlowException(this)
 }
 
 /**
  * Returns a flow that contains first elements satisfying the given [predicate].
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.takeWhile(predicate: suspend (T) -> Boolean): Flow<T> = flow {
     try {
         collect { value ->
             if (predicate(value)) emit(value)
-            else throw AbortFlowException()
+            else throw AbortFlowException(this)
         }
     } catch (e: AbortFlowException) {
-        // Nothing, bail out
+        e.checkOwnership(owner = this)
     }
 }

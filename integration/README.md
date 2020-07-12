@@ -23,5 +23,6 @@ Follow the following simple guidelines when contributing integration with your f
   * List of modules in this document.
   * List of modules in top-level [`settings.gradle`](../settings.gradle).
   * List of modules at the root of documentation site in [`site/docs/index.md`](../site/docs/index.md).
+  * List of integrations in the root [README.md](../README.md).
 * Update links to documentation website as explained [here](../knit/README.md#usage).
 * Squash your contribution to a single commit and create pull request to `develop` branch.

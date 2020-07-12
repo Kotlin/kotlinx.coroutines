@@ -1,0 +1,10 @@
+kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 200 ms
+	(Coroutine boundary)
+	at kotlinx.coroutines.exceptions.StackTraceRecoveryWithTimeoutTest.suspendForever(StackTraceRecoveryWithTimeoutTest.kt:42)
+	at kotlinx.coroutines.exceptions.StackTraceRecoveryWithTimeoutTest$outerWithTimeout$2.invokeSuspend(StackTraceRecoveryWithTimeoutTest.kt:32)
+	at kotlinx.coroutines.exceptions.StackTraceRecoveryWithTimeoutTest.outerWithTimeout(StackTraceRecoveryWithTimeoutTest.kt:31)
+	at kotlinx.coroutines.exceptions.StackTraceRecoveryWithTimeoutTest$testStacktraceIsRecoveredFromSuspensionPoint$1.invokeSuspend(StackTraceRecoveryWithTimeoutTest.kt:19)
+Caused by: kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 200 ms
+	at kotlinx.coroutines.TimeoutKt.TimeoutCancellationException(Timeout.kt:116)
+	at kotlinx.coroutines.TimeoutCoroutine.run(Timeout.kt:86)
+	at kotlinx.coroutines.EventLoopImplBase$DelayedRunnableTask.run(EventLoop.common.kt:492)

@@ -6,11 +6,13 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.*
+import io.reactivex.exceptions.*
+import io.reactivex.functions.*
 import kotlinx.coroutines.*
-import org.hamcrest.core.*
 import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import java.util.concurrent.*
+import kotlin.test.*
 
 class SingleTest : TestBase() {
     @Before
@@ -21,14 +23,14 @@ class SingleTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking {
         expect(1)
-        val single = rxSingle {
+        val single = rxSingle(currentDispatcher()) {
             expect(4)
             "OK"
         }
         expect(2)
         single.subscribe { value ->
             expect(5)
-            Assert.assertThat(value, IsEqual("OK"))
+            assertEquals("OK", value)
         }
         expect(3)
         yield() // to started coroutine
@@ -38,7 +40,7 @@ class SingleTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val single = rxSingle(NonCancellable) {
+        val single = rxSingle(currentDispatcher()) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -47,8 +49,8 @@ class SingleTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            Assert.assertThat(error, IsInstanceOf(RuntimeException::class.java))
-            Assert.assertThat(error.message, IsEqual("OK"))
+            assertTrue(error is RuntimeException)
+            assertEquals("OK", error.message)
         })
         expect(3)
         yield() // to started coroutine
@@ -59,7 +61,7 @@ class SingleTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val single = rxSingle {
+        val single = rxSingle(currentDispatcher()) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
@@ -82,7 +84,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testSingleNoWait() {
-        val single = GlobalScope.rxSingle {
+        val single = rxSingle {
             "OK"
         }
 
@@ -98,7 +100,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testSingleEmitAndAwait() {
-        val single = GlobalScope.rxSingle {
+        val single = rxSingle {
             Single.just("O").await() + "K"
         }
 
@@ -109,7 +111,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testSingleWithDelay() {
-        val single = GlobalScope.rxSingle {
+        val single = rxSingle {
             Observable.timer(50, TimeUnit.MILLISECONDS).map { "O" }.awaitSingle() + "K"
         }
 
@@ -120,7 +122,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testSingleException() {
-        val single = GlobalScope.rxSingle {
+        val single = rxSingle {
             Observable.just("O", "K").awaitSingle() + "K"
         }
 
@@ -131,7 +133,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testAwaitFirst() {
-        val single = GlobalScope.rxSingle {
+        val single = rxSingle {
             Observable.just("O", "#").awaitFirst() + "K"
         }
 
@@ -142,7 +144,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testAwaitLast() {
-        val single = GlobalScope.rxSingle {
+        val single = rxSingle {
             Observable.just("#", "O").awaitLast() + "K"
         }
 
@@ -153,7 +155,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testExceptionFromObservable() {
-        val single = GlobalScope.rxSingle {
+        val single = rxSingle {
             try {
                 Observable.error<String>(RuntimeException("O")).awaitFirst()
             } catch (e: RuntimeException) {
@@ -168,7 +170,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testExceptionFromCoroutine() {
-        val single = GlobalScope.rxSingle<String> {
+        val single = rxSingle<String> {
             throw IllegalStateException(Observable.just("O").awaitSingle() + "K")
         }
 
@@ -179,21 +181,8 @@ class SingleTest : TestBase() {
     }
 
     @Test
-    fun testCancelsParentOnFailure() = runTest(
-        expected = { it is RuntimeException && it.message == "OK" }
-    ) {
-        // has parent, so should cancel it on failure
-        rxSingle<Unit> {
-            throw RuntimeException("OK")
-        }.subscribe(
-            { expectUnreached() },
-            { assert(it is RuntimeException) }
-        )
-    }
-
-    @Test
     fun testSuppressedException() = runTest {
-        val single = rxSingle(NonCancellable) {
+        val single = rxSingle(currentDispatcher()) {
             launch(start = CoroutineStart.ATOMIC) {
                 throw TestException() // child coroutine fails
             }
@@ -212,12 +201,40 @@ class SingleTest : TestBase() {
     }
 
     @Test
-    fun testUnhandledException() = runTest(
-        unhandled = listOf { it -> it is TestException }
-    ) {
+    fun testFatalExceptionInSubscribe() = runTest {
+        val handler = { e: Throwable ->
+            assertTrue(e is UndeliverableException && e.cause is LinkageError)
+            expect(2)
+        }
+        withExceptionHandler(handler) {
+            rxSingle(Dispatchers.Unconfined) {
+                expect(1)
+                42
+            }.subscribe(Consumer {
+                throw LinkageError()
+            })
+            finish(3)
+        }
+    }
+
+    @Test
+    fun testFatalExceptionInSingle() = runTest {
+        rxSingle(Dispatchers.Unconfined) {
+            throw LinkageError()
+        }.subscribe({ _, e ->  assertTrue(e is LinkageError); expect(1) })
+
+        finish(2)
+    }
+
+    @Test
+    fun testUnhandledException() = runTest {
         expect(1)
         var disposable: Disposable? = null
-        val single = rxSingle(NonCancellable) {
+        val handler = { e: Throwable ->
+            assertTrue(e is UndeliverableException && e.cause is TestException)
+            expect(5)
+        }
+        val single = rxSingle(currentDispatcher()) {
             expect(4)
             disposable!!.dispose() // cancel our own subscription, so that delay will get cancelled
             try {
@@ -226,16 +243,24 @@ class SingleTest : TestBase() {
                 throw TestException() // would not be able to handle it since mono is disposed
             }
         }
-        single.subscribe(object : SingleObserver<Unit> {
-            override fun onSubscribe(d: Disposable) {
-                expect(2)
-                disposable = d
-            }
-            override fun onSuccess(t: Unit) { expectUnreached() }
-            override fun onError(t: Throwable) { expectUnreached() }
-        })
-        expect(3)
-        yield() // run coroutine
-        finish(5)
+        withExceptionHandler(handler) {
+            single.subscribe(object : SingleObserver<Unit> {
+                override fun onSubscribe(d: Disposable) {
+                    expect(2)
+                    disposable = d
+                }
+
+                override fun onSuccess(t: Unit) {
+                    expectUnreached()
+                }
+
+                override fun onError(t: Throwable) {
+                    expectUnreached()
+                }
+            })
+            expect(3)
+            yield() // run coroutine
+            finish(6)
+        }
     }
 }

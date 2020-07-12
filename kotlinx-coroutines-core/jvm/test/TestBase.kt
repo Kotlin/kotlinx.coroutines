@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -7,25 +7,42 @@ package kotlinx.coroutines
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
 import org.junit.*
+import java.lang.Math.*
 import java.util.*
 import java.util.concurrent.atomic.*
+import kotlin.coroutines.*
+import kotlin.math.*
 import kotlin.test.*
 
 private val VERBOSE = systemProp("test.verbose", false)
+
+/**
+ * Is `true` when running in a nightly stress test mode.
+ */
+public actual val isStressTest = System.getProperty("stressTest")?.toBoolean() ?: false
+
+public val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
+
+/**
+ * Multiply various constants in stress tests by this factor, so that they run longer during nightly stress test.
+ */
+public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
+
+public val stressTestMultiplierCbrt = cbrt(stressTestMultiplier.toDouble()).roundToInt()
 
 /**
  * Base class for tests, so that tests for predictable scheduling of actions in multiple coroutines sharing a single
  * thread can be written. Use it like this:
  *
  * ```
- * class MyTest {
+ * class MyTest : TestBase() {
  *    @Test
- *    fun testSomething() = runBlocking<Unit> { // run in the context of the main thread
+ *    fun testSomething() = runBlocking { // run in the context of the main thread
  *        expect(1) // initiate action counter
- *        val job = launch(context) { // use the context of the main thread
+ *        launch { // use the context of the main thread
  *           expect(3) // the body of this coroutine in going to be executed in the 3rd step
  *        }
- *        expect(2) // launch just scheduled coroutine for exectuion later, so this line is executed second
+ *        expect(2) // launch just scheduled coroutine for execution later, so this line is executed second
  *        yield() // yield main thread to the launched job
  *        finish(4) // fourth step is the last one. `finish` must be invoked or test fails
  *    }
@@ -33,18 +50,6 @@ private val VERBOSE = systemProp("test.verbose", false)
  * ```
  */
 public actual open class TestBase actual constructor() {
-    /**
-     * Is `true` when running in a nightly stress test mode.
-     */
-    public actual val isStressTest = System.getProperty("stressTest") != null
-
-    public val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
-
-    /**
-     * Multiply various constants in stress tests by this factor, so that they run longer during nightly stress test.
-     */
-    public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
-
     private var actionIndex = AtomicInteger()
     private var finished = AtomicBoolean()
     private var error = AtomicReference<Throwable>()
@@ -53,7 +58,7 @@ public actual open class TestBase actual constructor() {
     private lateinit var threadsBefore: Set<Thread>
     private val uncaughtExceptions = Collections.synchronizedList(ArrayList<Throwable>())
     private var originalUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
-    private val SHUTDOWN_TIMEOUT = 10_000L // 10s at most to wait
+    private val SHUTDOWN_TIMEOUT = 1_000L // 1s at most to wait per thread
 
     /**
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
@@ -143,7 +148,7 @@ public actual open class TestBase actual constructor() {
         // onCompletion should not throw exceptions before it finishes all cleanup, so that other tests always
         // start in a clear, restored state
         if (actionIndex.get() != 0 && !finished.get()) {
-            makeError("Expecting that 'finish(...)' was invoked, but it was not")
+            makeError("Expecting that 'finish(${actionIndex.get() + 1})' was invoked, but it was not")
         }
         // Shutdown all thread pools
         shutdownPoolsAfterTest()
@@ -213,4 +218,6 @@ public actual open class TestBase actual constructor() {
         assertTrue(result.exceptionOrNull() is T, "Expected ${T::class}, but had $result")
         return result.exceptionOrNull()!! as T
     }
+
+    protected suspend fun currentDispatcher() = coroutineContext[ContinuationInterceptor]!!
 }

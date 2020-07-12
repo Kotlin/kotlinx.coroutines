@@ -1,13 +1,14 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.rx2
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Assert
+import org.junit.Test
+import kotlin.test.*
 
 class ConvertTest : TestBase() {
     @Test
@@ -16,7 +17,7 @@ class ConvertTest : TestBase() {
         val job = launch {
             expect(3)
         }
-        val completable = job.asCompletable(coroutineContext)
+        val completable = job.asCompletable(coroutineContext.minusKey(Job))
         completable.subscribe {
             expect(4)
         }
@@ -32,7 +33,7 @@ class ConvertTest : TestBase() {
             expect(3)
             throw RuntimeException("OK")
         }
-        val completable = job.asCompletable(coroutineContext)
+        val completable = job.asCompletable(coroutineContext.minusKey(Job))
         completable.subscribe {
             expect(4)
         }
@@ -64,9 +65,9 @@ class ConvertTest : TestBase() {
             null
         }
         val maybe1 = d.asMaybe(Dispatchers.Unconfined)
-        checkMaybeValue(maybe1, ::assertNull)
+        checkMaybeValue(maybe1, Assert::assertNull)
         val maybe2 = d.asMaybe(Dispatchers.Unconfined)
-        checkMaybeValue(maybe2, ::assertNull)
+        checkMaybeValue(maybe2, Assert::assertNull)
     }
 
     @Test
@@ -140,10 +141,10 @@ class ConvertTest : TestBase() {
             throw TestException("K")
         }
         val observable = c.asObservable(Dispatchers.Unconfined)
-        val single = GlobalScope.rxSingle(Dispatchers.Unconfined) {
+        val single = rxSingle(Dispatchers.Unconfined) {
             var result = ""
             try {
-                observable.consumeEach { result += it }
+                observable.collect { result += it }
             } catch(e: Throwable) {
                 check(e is TestException)
                 result += e.message

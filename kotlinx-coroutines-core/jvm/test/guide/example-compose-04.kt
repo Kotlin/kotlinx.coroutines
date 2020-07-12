@@ -1,14 +1,13 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.compose04
+// This file was automatically generated from composing-suspending-functions.md by Knit tool. Do not edit.
+package kotlinx.coroutines.guide.exampleCompose04
 
 import kotlinx.coroutines.*
 import kotlin.system.*
 
-//sampleStart
 // note that we don't have `runBlocking` to the right of `main` in this example
 fun main() {
     val time = measureTimeMillis {
@@ -23,7 +22,6 @@ fun main() {
     }
     println("Completed in $time ms")
 }
-//sampleEnd
 
 fun somethingUsefulOneAsync() = GlobalScope.async {
     doSomethingUsefulOne()

@@ -1,14 +1,13 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.cancel04
+// This file was automatically generated from cancellation-and-timeouts.md by Knit tool. Do not edit.
+package kotlinx.coroutines.guide.exampleCancel04
 
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
-//sampleStart
     val job = launch {
         try {
             repeat(1000) { i ->
@@ -23,5 +22,4 @@ fun main() = runBlocking {
     println("main: I'm tired of waiting!")
     job.cancelAndJoin() // cancels the job and waits for its completion
     println("main: Now I can quit.")
-//sampleEnd    
 }

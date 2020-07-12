@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -9,7 +9,7 @@ import java.util.concurrent.*
 internal actual val DefaultDelay: Delay = DefaultExecutor
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-internal object DefaultExecutor : EventLoopImplBase(), Runnable {
+internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
     const val THREAD_NAME = "kotlinx.coroutines.DefaultExecutor"
 
     init {
@@ -55,11 +55,11 @@ internal object DefaultExecutor : EventLoopImplBase(), Runnable {
      * but it's not exposed as public API.
      */
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
-        DelayedRunnableTask(timeMillis, block).also { schedule(it) }
+        scheduleInvokeOnTimeout(timeMillis, block)
 
     override fun run() {
         ThreadLocalEventLoop.setEventLoop(this)
-        timeSource.registerTimeLoopThread()
+        registerTimeLoopThread()
         try {
             var shutdownNanos = Long.MAX_VALUE
             if (!notifyStartup()) return
@@ -68,25 +68,23 @@ internal object DefaultExecutor : EventLoopImplBase(), Runnable {
                 var parkNanos = processNextEvent()
                 if (parkNanos == Long.MAX_VALUE) {
                     // nothing to do, initialize shutdown timeout
-                    if (shutdownNanos == Long.MAX_VALUE) {
-                        val now = timeSource.nanoTime()
-                        if (shutdownNanos == Long.MAX_VALUE) shutdownNanos = now + KEEP_ALIVE_NANOS
-                        val tillShutdown = shutdownNanos - now
-                        if (tillShutdown <= 0) return // shut thread down
-                        parkNanos = parkNanos.coerceAtMost(tillShutdown)
-                    } else
-                        parkNanos = parkNanos.coerceAtMost(KEEP_ALIVE_NANOS) // limit wait time anyway
-                }
+                    val now = nanoTime()
+                    if (shutdownNanos == Long.MAX_VALUE) shutdownNanos = now + KEEP_ALIVE_NANOS
+                    val tillShutdown = shutdownNanos - now
+                    if (tillShutdown <= 0) return // shut thread down
+                    parkNanos = parkNanos.coerceAtMost(tillShutdown)
+                } else
+                    shutdownNanos = Long.MAX_VALUE
                 if (parkNanos > 0) {
                     // check if shutdown was requested and bail out in this case
                     if (isShutdownRequested) return
-                    timeSource.parkNanos(this, parkNanos)
+                    parkNanos(this, parkNanos)
                 }
             }
         } finally {
             _thread = null // this thread is dead
             acknowledgeShutdownIfNeeded()
-            timeSource.unregisterTimeLoopThread()
+            unregisterTimeLoopThread()
             // recheck if queues are empty after _thread reference was set to null (!!!)
             if (!isEmpty) thread // recreate thread if it is needed
         }
@@ -104,8 +102,8 @@ internal object DefaultExecutor : EventLoopImplBase(), Runnable {
     // used for tests
     @Synchronized
     internal fun ensureStarted() {
-        assert(_thread == null) // ensure we are at a clean state
-        assert(debugStatus == FRESH || debugStatus == SHUTDOWN_ACK)
+        assert { _thread == null } // ensure we are at a clean state
+        assert { debugStatus == FRESH || debugStatus == SHUTDOWN_ACK }
         debugStatus = FRESH
         createThreadSync() // create fresh thread
         while (debugStatus == FRESH) (this as Object).wait()
@@ -126,7 +124,7 @@ internal object DefaultExecutor : EventLoopImplBase(), Runnable {
         if (!isShutdownRequested) debugStatus = SHUTDOWN_REQ
         // loop while there is anything to do immediately or deadline passes
         while (debugStatus != SHUTDOWN_ACK && _thread != null) {
-            _thread?.let { timeSource.unpark(it) } // wake up thread if present
+            _thread?.let { unpark(it) } // wake up thread if present
             val remaining = deadline - System.currentTimeMillis()
             if (remaining <= 0) break
             (this as Object).wait(timeout)
@@ -142,4 +140,7 @@ internal object DefaultExecutor : EventLoopImplBase(), Runnable {
         resetAll() // clear queues
         (this as Object).notifyAll()
     }
+
+    internal val isThreadPresent
+        get() = _thread != null
 }

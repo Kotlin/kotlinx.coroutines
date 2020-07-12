@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -27,7 +27,7 @@ import kotlin.coroutines.*
  * @param name the base name of the created thread.
  */
 @ObsoleteCoroutinesApi
-fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
+public fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
     newFixedThreadPoolContext(1, name)
 
 /**
@@ -49,7 +49,7 @@ fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
  * @param name the base name of the created threads.
  */
 @ObsoleteCoroutinesApi
-fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
+public fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
     require(nThreads >= 1) { "Expected at least one thread, but $nThreads specified" }
     return ThreadPoolDispatcher(nThreads, name)
 }

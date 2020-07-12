@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.reactor
@@ -22,7 +22,7 @@ import kotlin.coroutines.*
  * @param context -- the coroutine context from which the resulting mono is going to be signalled
  */
 @ExperimentalCoroutinesApi
-public fun Job.asMono(context: CoroutineContext): Mono<Unit> = GlobalScope.mono(context) { this@asMono.join() }
+public fun Job.asMono(context: CoroutineContext): Mono<Unit> = mono(context) { this@asMono.join() }
 /**
  * Converts this deferred value to the hot reactive mono that signals
  * [success][MonoSink.success] or [error][MonoSink.error].
@@ -36,21 +36,19 @@ public fun Job.asMono(context: CoroutineContext): Mono<Unit> = GlobalScope.mono(
  * @param context -- the coroutine context from which the resulting mono is going to be signalled
  */
 @ExperimentalCoroutinesApi
-public fun <T> Deferred<T?>.asMono(context: CoroutineContext): Mono<T> = GlobalScope.mono(context) { this@asMono.await() }
+public fun <T> Deferred<T?>.asMono(context: CoroutineContext): Mono<T> = mono(context) { this@asMono.await() }
 
 /**
  * Converts a stream of elements received from the channel to the hot reactive flux.
  *
  * Every subscriber receives values from this channel in **fan-out** fashion. If the are multiple subscribers,
  * they'll receive values in round-robin way.
- *
- * **Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.**
- *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
- *
  * @param context -- the coroutine context from which the resulting flux is going to be signalled
  */
-@ObsoleteCoroutinesApi
-public fun <T> ReceiveChannel<T>.asFlux(context: CoroutineContext = EmptyCoroutineContext): Flux<T> = GlobalScope.flux(context) {
+@Deprecated(message = "Deprecated in the favour of consumeAsFlow()",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("this.consumeAsFlow().asFlux()"))
+public fun <T> ReceiveChannel<T>.asFlux(context: CoroutineContext = EmptyCoroutineContext): Flux<T> = flux(context) {
     for (t in this@asFlux)
         send(t)
 }

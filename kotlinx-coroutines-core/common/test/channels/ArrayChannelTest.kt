@@ -48,7 +48,7 @@ class ArrayChannelTest : TestBase() {
             assertEquals(42, q.receiveOrNull())
             expect(6)
             check(!q.isEmpty && q.isClosedForSend && q.isClosedForReceive)
-            assertEquals(null, q.receiveOrNull())
+            assertNull(q.receiveOrNull())
             expect(7)
         }
         expect(2)
@@ -86,7 +86,7 @@ class ArrayChannelTest : TestBase() {
     }
 
     @Test
-    fun testOfferAndPool() = runTest {
+    fun testOfferAndPoll() = runTest {
         val q = Channel<Int>(1)
         assertTrue(q.offer(1))
         expect(1)
@@ -94,13 +94,13 @@ class ArrayChannelTest : TestBase() {
             expect(3)
             assertEquals(1, q.poll())
             expect(4)
-            assertEquals(null, q.poll())
+            assertNull(q.poll())
             expect(5)
             assertEquals(2, q.receive()) // suspends
             expect(9)
             assertEquals(3, q.poll())
             expect(10)
-            assertEquals(null, q.poll())
+            assertNull(q.poll())
             expect(11)
         }
         expect(2)
@@ -143,5 +143,52 @@ class ArrayChannelTest : TestBase() {
         val channel = Channel<Int>(5)
         channel.cancel(TestCancellationException())
         channel.receiveOrNull()
+    }
+
+    @Test
+    fun testBufferSize() = runTest {
+        val capacity = 42
+        val channel = Channel<Int>(capacity)
+        checkBufferChannel(channel, capacity)
+    }
+
+    @Test
+    fun testBufferSizeFromTheMiddle() = runTest {
+        val capacity = 42
+        val channel = Channel<Int>(capacity)
+        repeat(4) {
+            channel.offer(-1)
+        }
+        repeat(4) {
+            channel.receiveOrNull()
+        }
+        checkBufferChannel(channel, capacity)
+    }
+
+    private suspend fun CoroutineScope.checkBufferChannel(
+        channel: Channel<Int>,
+        capacity: Int
+    ) {
+        launch {
+            expect(2)
+            repeat(42) {
+                channel.send(it)
+            }
+            expect(3)
+            channel.send(42)
+            expect(5)
+            channel.close()
+        }
+
+        expect(1)
+        yield()
+
+        expect(4)
+        val result = ArrayList<Int>(42)
+        channel.consumeEach {
+            result.add(it)
+        }
+        assertEquals((0..capacity).toList(), result)
+        finish(6)
     }
 }

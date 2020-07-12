@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.swing
@@ -25,7 +25,7 @@ public val Dispatchers.Swing : SwingDispatcher
  */
 public sealed class SwingDispatcher : MainCoroutineDispatcher(), Delay {
     /** @suppress */
-    override fun dispatch(context: CoroutineContext, block: Runnable) = SwingUtilities.invokeLater(block)
+    override fun dispatch(context: CoroutineContext, block: Runnable): Unit = SwingUtilities.invokeLater(block)
 
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {

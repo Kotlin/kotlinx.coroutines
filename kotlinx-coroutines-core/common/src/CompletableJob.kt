@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -7,6 +7,12 @@ package kotlinx.coroutines
 /**
  * A job that can be completed using [complete()] function.
  * It is returned by [Job()][Job] and [SupervisorJob()][SupervisorJob] constructor functions.
+ *
+ * All functions on this interface are **thread-safe** and can
+ * be safely invoked from concurrent coroutines without external synchronization.
+ *
+ * **`CompletableJob` interface is not stable for inheritance in 3rd party libraries**,
+ * as new methods might be added to this interface in the future, but is stable for use.
  */
 public interface CompletableJob : Job {
     /**
@@ -31,6 +37,9 @@ public interface CompletableJob : Job {
      * This function transitions this job into _cancelled_ state if it was not completed or cancelled yet.
      * However, that if this job has children, then it transitions into _cancelling_ state and becomes _cancelled_
      * once all its children are [complete][isCompleted]. See [Job] for details.
+     *
+     * Its responsibility of the caller to properly handle and report the given [exception], all job's children will receive
+     * a [CancellationException] with the [exception] as a cause for the sake of diagnostic.
      */
     public fun completeExceptionally(exception: Throwable): Boolean
 }

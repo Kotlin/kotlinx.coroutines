@@ -1,10 +1,8 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.flow
-
-import kotlinx.coroutines.*
 
 /**
  * [FlowCollector] is used as an intermediate or a terminal collector of the flow and represents
@@ -13,7 +11,6 @@ import kotlinx.coroutines.*
  * This interface should usually not be implemented directly, but rather used as a receiver in a [flow] builder when implementing a custom operator.
  * Implementations of this interface are not thread-safe.
  */
-@ExperimentalCoroutinesApi
 public interface FlowCollector<in T> {
 
     /**

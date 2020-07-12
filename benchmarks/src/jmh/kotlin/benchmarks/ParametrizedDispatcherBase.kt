@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package benchmarks
 
-import benchmarks.actors.CORES_COUNT
+import benchmarks.akka.CORES_COUNT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.scheduling.*
 import org.openjdk.jmh.annotations.Param
@@ -22,14 +22,14 @@ abstract class ParametrizedDispatcherBase : CoroutineScope {
 
     abstract var dispatcher: String
     override lateinit var coroutineContext: CoroutineContext
-    var closeable: Closeable? = null
+    private var closeable: Closeable? = null
 
-    @UseExperimental(InternalCoroutinesApi::class)
     @Setup
+    @UseExperimental(InternalCoroutinesApi::class)
     open fun setup() {
         coroutineContext = when {
             dispatcher == "fjp" -> ForkJoinPool.commonPool().asCoroutineDispatcher()
-            dispatcher == "experimental" -> {
+            dispatcher == "scheduler" -> {
                 ExperimentalCoroutineDispatcher(CORES_COUNT).also { closeable = it }
             }
             dispatcher.startsWith("ftp") -> {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -9,6 +9,7 @@ import kotlin.coroutines.*
 
 private external val navigator: dynamic
 private const val UNDEFINED = "undefined"
+internal external val process: dynamic
 
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher = when {
     // Check if we are running under ReactNative. We have to use NodeDispatcher under it.
@@ -24,6 +25,8 @@ internal actual fun createDefaultDispatcher(): CoroutineDispatcher = when {
     // Check if we are in the browser and must use window.postMessage to avoid setTimeout throttling
     jsTypeOf(window) != UNDEFINED && window.asDynamic() != null && jsTypeOf(window.asDynamic().addEventListener) != UNDEFINED ->
         window.asCoroutineDispatcher()
+    // If process is undefined (e.g. in NativeScript, #1404), use SetTimeout-based dispatcher
+    jsTypeOf(process) == UNDEFINED -> SetTimeoutDispatcher
     // Fallback to NodeDispatcher when browser environment is not detected
     else -> NodeDispatcher
 }

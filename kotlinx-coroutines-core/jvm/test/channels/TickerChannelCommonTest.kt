@@ -112,18 +112,15 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
         var sum = 0
         var n = 0
         whileSelect {
-            this@averageInTimeWindow.onReceiveOrNull {
-                when (it) {
-                    null -> {
-                        // Send leftovers and bail out
-                        if (n != 0) send(sum / n.toDouble())
-                        false
-                    }
-                    else -> {
-                        sum += it
-                        ++n
-                        true
-                    }
+            this@averageInTimeWindow.onReceiveOrClosed {
+                if (it.isClosed) {
+                    // Send leftovers and bail out
+                    if (n != 0) send(sum / n.toDouble())
+                    false
+                } else {
+                    sum += it.value
+                    ++n
+                    true
                 }
             }
 

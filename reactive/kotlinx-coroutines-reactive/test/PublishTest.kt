@@ -5,16 +5,15 @@
 package kotlinx.coroutines.reactive
 
 import kotlinx.coroutines.*
-import org.hamcrest.core.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import org.reactivestreams.*
+import kotlin.test.*
 
 class PublishTest : TestBase() {
     @Test
     fun testBasicEmpty() = runTest {
         expect(1)
-        val publisher = publish<Int> {
+        val publisher = publish<Int>(currentDispatcher()) {
             expect(5)
         }
         expect(2)
@@ -32,7 +31,7 @@ class PublishTest : TestBase() {
     @Test
     fun testBasicSingle() = runTest {
         expect(1)
-        val publisher = publish {
+        val publisher = publish(currentDispatcher()) {
             expect(5)
             send(42)
             expect(7)
@@ -45,7 +44,7 @@ class PublishTest : TestBase() {
             }
             override fun onNext(t: Int) {
                 expect(6)
-                assertThat(t, IsEqual(42))
+                assertEquals(42, t)
             }
             override fun onComplete() { expect(8) }
             override fun onError(t: Throwable?) { expectUnreached() }
@@ -58,7 +57,7 @@ class PublishTest : TestBase() {
     @Test
     fun testBasicError() = runTest {
         expect(1)
-        val publisher = publish<Int>(NonCancellable) {
+        val publisher = publish<Int>(currentDispatcher()) {
             expect(5)
             throw RuntimeException("OK")
         }
@@ -72,8 +71,8 @@ class PublishTest : TestBase() {
             override fun onComplete() { expectUnreached() }
             override fun onError(t: Throwable) {
                 expect(6)
-                assertThat(t, IsInstanceOf(RuntimeException::class.java))
-                assertThat(t.message, IsEqual("OK"))
+                assertTrue(t is RuntimeException)
+                assertEquals("OK", t.message)
             }
         })
         expect(4)
@@ -82,23 +81,14 @@ class PublishTest : TestBase() {
     }
 
     @Test
-    fun testCancelsParentOnFailure() = runTest(
-        expected = { it is RuntimeException && it.message == "OK" }
-    ) {
-        // has parent, so should cancel it on failure
-        publish<Unit> {
-            throw RuntimeException("OK")
-        }.openSubscription()
-    }
-
-    @Test
-    fun testHandleFailureAfterCancel() = runTest(
-        unhandled = listOf({ it -> it is RuntimeException && it.message == "FAILED" })
-    ){
+    fun testHandleFailureAfterCancel() = runTest {
         expect(1)
-        // Exception should be delivered to CoroutineExceptionHandler, because we create publisher
-        // with the NonCancellable parent
-        val publisher = publish<Unit>(NonCancellable + Dispatchers.Unconfined) {
+
+        val eh = CoroutineExceptionHandler { _, t ->
+            assertTrue(t is RuntimeException)
+            expect(6)
+        }
+        val publisher = publish<Unit>(Dispatchers.Unconfined + eh) {
             try {
                 expect(3)
                 delay(10000)
@@ -128,95 +118,13 @@ class PublishTest : TestBase() {
         })
         expect(4)
         sub!!.cancel()
-        finish(6)
-    }
-
-    @Test
-    fun testParentHandlesFailure() = runTest {
-        expect(1)
-        val deferred = CompletableDeferred<Unit>()
-        val publisher = publish<Unit>(deferred + Dispatchers.Unconfined) {
-            try {
-                expect(3)
-                delay(10000)
-            } finally {
-                expect(5)
-                throw TestException("FAILED")
-            }
-        }
-        var sub: Subscription? = null
-        publisher.subscribe(object : Subscriber<Unit> {
-            override fun onComplete() {
-                expectUnreached()
-            }
-
-            override fun onSubscribe(s: Subscription) {
-                expect(2)
-                sub = s
-            }
-
-            override fun onNext(t: Unit?) {
-                expectUnreached()
-            }
-
-            override fun onError(t: Throwable?) {
-                expectUnreached()
-            }
-        })
-        expect(4)
-        sub!!.cancel()
-
-        try {
-            deferred.await()
-            expectUnreached()
-        } catch (e: TestException) {
-            expect(6)
-        }
-
         finish(7)
-    }
-
-    @Test
-    fun testPublishFailureCancelsParent() = runTest(
-        expected = { it is TestException }
-    ) {
-        expect(1)
-        val publisher = publish<Unit> {
-            expect(5)
-            throw TestException()
-        }
-        expect(2)
-        publisher.subscribe(object : Subscriber<Unit> {
-            override fun onComplete() {
-                expectUnreached()
-            }
-
-            override fun onSubscribe(s: Subscription) {
-                expect(3)
-            }
-
-            override fun onNext(t: Unit?) {
-                expectUnreached()
-            }
-
-            override fun onError(t: Throwable?) {
-                assertTrue(t is TestException)
-                expect(6)
-            }
-        })
-        expect(4)
-        try {
-            yield() // to coroutine, will crash because it is a cancelled parent coroutine
-        } finally {
-            finish(7)
-        }
-        expectUnreached()
     }
 
     @Test
     fun testOnNextError() = runTest {
         expect(1)
-        val publisher = publish<String>(NonCancellable) {
+        val publisher = publish(currentDispatcher()) {
             expect(4)
             try {
                 send("OK")
@@ -255,7 +163,7 @@ class PublishTest : TestBase() {
 
     @Test
     fun testFailingConsumer() = runTest {
-        val pub = publish {
+        val pub = publish(currentDispatcher()) {
             repeat(3) {
                 expect(it + 1) // expect(1), expect(2) *should* be invoked
                 send(it)
@@ -268,5 +176,10 @@ class PublishTest : TestBase() {
         } catch (e: TestException) {
             finish(3)
         }
+    }
+
+    @Test
+    fun testIllegalArgumentException() {
+        assertFailsWith<IllegalArgumentException> { publish<Int>(Job()) { } }
     }
 }
