@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.selects
@@ -284,10 +284,139 @@ class SelectArrayChannelTest : TestBase() {
         finish(10)
     }
 
+    @Test
+    fun testSelectReceiveOrClosedWaitClosed() = runTest {
+        expect(1)
+        val channel = Channel<String>(1)
+        launch {
+            expect(3)
+            channel.close()
+            expect(4)
+        }
+        expect(2)
+        select<Unit> {
+            channel.onReceiveOrClosed {
+                expect(5)
+                assertTrue(it.isClosed)
+                assertNull(it.closeCause)
+            }
+        }
+
+        finish(6)
+    }
+
+    @Test
+    fun testSelectReceiveOrClosedWaitClosedWithCause() = runTest {
+        expect(1)
+        val channel = Channel<String>(1)
+        launch {
+            expect(3)
+            channel.close(TestException())
+            expect(4)
+        }
+        expect(2)
+        select<Unit> {
+            channel.onReceiveOrClosed {
+                expect(5)
+                assertTrue(it.isClosed)
+                assertTrue(it.closeCause is TestException)
+            }
+        }
+
+        finish(6)
+    }
+
+    @Test
+    fun testSelectReceiveOrClosed() = runTest {
+        val c = Channel<Int>(1)
+        val iterations = 10
+        expect(1)
+        val job = launch {
+            repeat(iterations) {
+                select<Unit> {
+                    c.onReceiveOrClosed { v ->
+                        expect(4 + it * 2)
+                        assertEquals(it, v.value)
+                    }
+                }
+            }
+        }
+
+        expect(2)
+        repeat(iterations) {
+            expect(3 + it * 2)
+            c.send(it)
+            yield()
+        }
+
+        job.join()
+        finish(3 + iterations * 2)
+    }
+
+    @Test
+    fun testSelectReceiveOrClosedDispatch() = runTest {
+        val c = Channel<Int>(1)
+        expect(1)
+        launch {
+            expect(3)
+            val res = select<String> {
+                c.onReceiveOrClosed { v ->
+                    expect(6)
+                    assertEquals(42, v.value)
+                    yield() // back to main
+                    expect(8)
+                    "OK"
+                }
+            }
+            expect(9)
+            assertEquals("OK", res)
+        }
+        expect(2)
+        yield() // to launch
+        expect(4)
+        c.send(42) // do not suspend
+        expect(5)
+        yield() // to receive
+        expect(7)
+        yield() // again
+        finish(10)
+    }
+
     // only for debugging
     internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {
         this as SelectBuilderImpl // type assertion
-        if (!trySelect(null)) return
+        if (!trySelect()) return
         block.startCoroutineUnintercepted(this)
+    }
+
+    @Test
+    fun testSelectReceiveOrClosedForClosedChannel() = runTest {
+        val channel = Channel<Int>(1)
+        channel.close()
+        expect(1)
+        select<Unit> {
+            expect(2)
+            channel.onReceiveOrClosed {
+                assertTrue(it.isClosed)
+                assertNull(it.closeCause)
+                finish(3)
+            }
+        }
+    }
+
+    @Test
+    fun testSelectReceiveOrClosedForClosedChannelWithValue() = runTest {
+        val channel = Channel<Int>(1)
+        channel.send(42)
+        channel.close()
+        expect(1)
+        select<Unit> {
+            expect(2)
+            channel.onReceiveOrClosed {
+                assertFalse(it.isClosed)
+                assertEquals(42, it.value)
+                finish(3)
+            }
+        }
     }
 }

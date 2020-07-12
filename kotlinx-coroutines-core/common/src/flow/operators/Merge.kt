@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -10,26 +10,23 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.channels.Channel.Factory.OPTIONAL_CHANNEL
 import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.sync.*
-import kotlin.coroutines.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
+import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
  * Name of the property that defines the value of [DEFAULT_CONCURRENCY].
  */
 @FlowPreview
-public const val DEFAULT_CONCURRENCY_PROPERTY_NAME = "kotlinx.coroutines.flow.defaultConcurrency"
+public const val DEFAULT_CONCURRENCY_PROPERTY_NAME: String = "kotlinx.coroutines.flow.defaultConcurrency"
 
 /**
  * Default concurrency limit that is used by [flattenMerge] and [flatMapMerge] operators.
  * It is 16 by default and can be changed on JVM using [DEFAULT_CONCURRENCY_PROPERTY_NAME] property.
  */
 @FlowPreview
-public val DEFAULT_CONCURRENCY = systemProp(DEFAULT_CONCURRENCY_PROPERTY_NAME,
+public val DEFAULT_CONCURRENCY: Int = systemProp(DEFAULT_CONCURRENCY_PROPERTY_NAME,
     16, 1, Int.MAX_VALUE
 )
 
@@ -85,6 +82,42 @@ public fun <T> Flow<Flow<T>>.flattenConcat(): Flow<T> = flow {
 }
 
 /**
+ * Merges the given flows into a single flow without preserving an order of elements.
+ * All flows are merged concurrently, without limit on the number of simultaneously collected flows.
+ *
+ * ### Operator fusion
+ *
+ * Applications of [flowOn], [buffer], [produceIn], and [broadcastIn] _after_ this operator are fused with
+ * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
+ */
+@ExperimentalCoroutinesApi
+public fun <T> Iterable<Flow<T>>.merge(): Flow<T> {
+    /*
+     * This is a fuseable implementation of the following operator:
+     * channelFlow {
+     *    forEach { flow ->
+     *        launch {
+     *            flow.collect { send(it) }
+     *        }
+     *    }
+     * }
+     */
+    return ChannelLimitedFlowMerge(this)
+}
+
+/**
+ * Merges the given flows into a single flow without preserving an order of elements.
+ * All flows are merged concurrently, without limit on the number of simultaneously collected flows.
+ *
+ * ### Operator fusion
+ *
+ * Applications of [flowOn], [buffer], [produceIn], and [broadcastIn] _after_ this operator are fused with
+ * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
+ */
+@ExperimentalCoroutinesApi
+public fun <T> merge(vararg flows: Flow<T>): Flow<T> = flows.asIterable().merge()
+
+/**
  * Flattens the given flow of flows into a single flow with a [concurrency] limit on the number of
  * concurrently collected flows.
  *
@@ -106,8 +139,8 @@ public fun <T> Flow<Flow<T>>.flattenMerge(concurrency: Int = DEFAULT_CONCURRENCY
 }
 
 /**
- * Returns a flow that switches to a new flow produced by [transform] function every time the original flow emits a value.
- * When switch on the a flow is performed, the previous one is cancelled.
+ * Returns a flow that produces element by [transform] function every time the original flow emits a value.
+ * When the original flow emits a new value, the previous `transform` block is cancelled, thus the name `transformLatest`.
  *
  * For example, the following flow:
  * ```
@@ -115,69 +148,67 @@ public fun <T> Flow<Flow<T>>.flattenMerge(concurrency: Int = DEFAULT_CONCURRENCY
  *     emit("a")
  *     delay(100)
  *     emit("b")
- * }.switchMap { value ->
+ * }.transformLatest { value ->
+ *     emit(value)
+ *     delay(200)
+ *     emit(value + "_last")
+ * }
+ * ```
+ * produces `a b b_last`.
+ *
+ * This operator is [buffered][buffer] by default
+ * and size of its output buffer can be changed by applying subsequent [buffer] operator.
+ */
+@ExperimentalCoroutinesApi
+public fun <T, R> Flow<T>.transformLatest(@BuilderInference transform: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> =
+    ChannelFlowTransformLatest(transform, this)
+
+/**
+ * Returns a flow that switches to a new flow produced by [transform] function every time the original flow emits a value.
+ * When the original flow emits a new value, the previous flow produced by `transform` block is cancelled.
+ *
+ * For example, the following flow:
+ * ```
+ * flow {
+ *     emit("a")
+ *     delay(100)
+ *     emit("b")
+ * }.flatMapLatest { value ->
  *     flow {
- *         emit(value + value)
+ *         emit(value)
  *         delay(200)
  *         emit(value + "_last")
  *     }
  * }
  * ```
- * produces `aa bb b_last`
+ * produces `a b b_last`
+ *
+ * This operator is [buffered][buffer] by default and size of its output buffer can be changed by applying subsequent [buffer] operator.
  */
 @ExperimentalCoroutinesApi
-public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): Flow<R> = scopedFlow { downstream ->
-    var previousFlow: Job? = null
-    collect { value ->
-        // Linearize calls to emit as alternative to the channel. Bonus points for never-overlapping channels.
-        previousFlow?.cancel(ChildCancelledException())
-        previousFlow?.join()
-        // Undispatched to have better user experience in case of synchronous flows
-        previousFlow = launch(start = CoroutineStart.UNDISPATCHED) {
-            downstream.emitAll(transform(value))
-        }
-    }
-}
+public inline fun <T, R> Flow<T>.flatMapLatest(@BuilderInference crossinline transform: suspend (value: T) -> Flow<R>): Flow<R> =
+    transformLatest { emitAll(transform(it)) }
 
-private class ChannelFlowMerge<T>(
-    flow: Flow<Flow<T>>,
-    private val concurrency: Int,
-    context: CoroutineContext = EmptyCoroutineContext,
-    capacity: Int = OPTIONAL_CHANNEL
-) : ChannelFlowOperator<Flow<T>, T>(flow, context, capacity) {
-    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
-        ChannelFlowMerge(flow, concurrency, context, capacity)
-
-    // The actual merge implementation with concurrency limit
-    private suspend fun mergeImpl(scope: CoroutineScope, collector: ConcurrentFlowCollector<T>) {
-        val semaphore = Semaphore(concurrency)
-        @Suppress("UNCHECKED_CAST")
-        flow.collect { inner ->
-            semaphore.acquire() // Acquire concurrency permit
-            scope.launch {
-                try {
-                    inner.collect(collector)
-                } finally {
-                    semaphore.release() // Release concurrency permit
-                }
-            }
-        }
-    }
-
-    // Fast path in ChannelFlowOperator calls this function (channel was not created yet)
-    override suspend fun flowCollect(collector: FlowCollector<T>) {
-        // this function should not have been invoked when channel was explicitly requested
-        check(capacity == OPTIONAL_CHANNEL)
-        flowScope {
-            mergeImpl(this, collector.asConcurrentFlowCollector())
-        }
-    }
-
-    // Slow path when output channel is required (and was created)
-    override suspend fun collectTo(scope: ProducerScope<T>) =
-        mergeImpl(scope, SendingCollector(scope))
-
-    override fun additionalToStringProps(): String =
-        "concurrency=$concurrency, "
-}
-
+/**
+ * Returns a flow that emits elements from the original flow transformed by [transform] function.
+ * When the original flow emits a new value, computation of the [transform] block for previous value is cancelled.
+ *
+ * For example, the following flow:
+ * ```
+ * flow {
+ *     emit("a")
+ *     delay(100)
+ *     emit("b")
+ * }.mapLatest { value ->
+ *     println("Started computing $value")
+ *     delay(200)
+ *     "Computed $value"
+ * }
+ * ```
+ * will print "Started computing a" and "Started computing b", but the resulting flow will contain only "Computed b" value.
+ *
+ * This operator is [buffered][buffer] by default and size of its output buffer can be changed by applying subsequent [buffer] operator.
+ */
+@ExperimentalCoroutinesApi
+public fun <T, R> Flow<T>.mapLatest(@BuilderInference transform: suspend (value: T) -> R): Flow<R> =
+    transformLatest { emit(transform(it)) }

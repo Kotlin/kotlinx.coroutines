@@ -1,14 +1,13 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.context06
+// This file was automatically generated from coroutine-context-and-dispatchers.md by Knit tool. Do not edit.
+package kotlinx.coroutines.guide.exampleContext06
 
 import kotlinx.coroutines.*
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     // launch a coroutine to process some kind of incoming request
     val request = launch {
         // it spawns two other jobs, one with GlobalScope
@@ -29,5 +28,4 @@ fun main() = runBlocking<Unit> {
     request.cancel() // cancel processing of the request
     delay(1000) // delay a second to see what happens
     println("main: Who has survived request cancellation?")
-//sampleEnd
 }

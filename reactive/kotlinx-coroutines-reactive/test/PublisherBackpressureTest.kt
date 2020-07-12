@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.reactive
@@ -12,7 +12,7 @@ class PublisherBackpressureTest : TestBase() {
     @Test
     fun testCancelWhileBPSuspended() = runBlocking {
         expect(1)
-        val observable = publish {
+        val observable = publish(currentDispatcher()) {
             expect(5)
             send("A") // will not suspend, because an item was requested
             expect(7)

@@ -1,9 +1,9 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.sync07
+// This file was automatically generated from shared-mutable-state-and-concurrency.md by Knit tool. Do not edit.
+package kotlinx.coroutines.guide.exampleSync07
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -40,8 +40,7 @@ fun CoroutineScope.counterActor() = actor<CounterMsg> {
     }
 }
 
-//sampleStart
-fun main() = runBlocking {
+fun main() = runBlocking<Unit> {
     val counter = counterActor() // create the actor
     withContext(Dispatchers.Default) {
         massiveRun {
@@ -54,4 +53,3 @@ fun main() = runBlocking {
     println("Counter = ${response.await()}")
     counter.close() // shutdown the actor
 }
-//sampleEnd    

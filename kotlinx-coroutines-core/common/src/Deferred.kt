@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -30,6 +30,9 @@ import kotlinx.coroutines.selects.*
  *
  * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
+ *
+ * **`Deferred` interface and all its derived interfaces are not stable for inheritance in 3rd party libraries**,
+ * as new methods might be added to this interface in the future, but is stable for use.
  */
 public interface Deferred<out T> : Job {
 

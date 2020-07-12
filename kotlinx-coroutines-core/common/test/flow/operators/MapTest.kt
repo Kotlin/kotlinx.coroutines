@@ -37,12 +37,12 @@ class MapTest : TestBase() {
                     hang { cancelled = true }
                 }
                 emit(1)
+                expectUnreached()
             }
-        }.map {
+        }.map<Int, Int> {
             latch.receive()
             throw TestException()
-            it + 1
-        }.onErrorReturn(42)
+        }.catch { emit(42) }
 
         assertEquals(42, flow.single())
         assertTrue(cancelled)

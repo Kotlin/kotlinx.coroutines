@@ -1,25 +1,10 @@
-<!--- INCLUDE .*/example-([a-z]+)-([0-9a-z]+)\.kt 
-/*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
+<!--- TEST_NAME CancellationGuideTest -->
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.$$1$$2
--->
-<!--- KNIT     ../kotlinx-coroutines-core/jvm/test/guide/.*\.kt -->
-<!--- TEST_OUT ../kotlinx-coroutines-core/jvm/test/guide/test/CancellationTimeOutsGuideTest.kt
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.test
-
-import org.junit.Test
-
-class CancellationTimeOutsGuideTest {
---> 
 **Table of contents**
 
 <!--- TOC -->
 
-* [Cancellation and timeouts](#cancellation-and-timeouts)
+* [Cancellation and Timeouts](#cancellation-and-timeouts)
   * [Cancelling coroutine execution](#cancelling-coroutine-execution)
   * [Cancellation is cooperative](#cancellation-is-cooperative)
   * [Making computation code cancellable](#making-computation-code-cancellable)
@@ -27,9 +12,9 @@ class CancellationTimeOutsGuideTest {
   * [Run non-cancellable block](#run-non-cancellable-block)
   * [Timeout](#timeout)
 
-<!--- END_TOC -->
+<!--- END -->
 
-## Cancellation and timeouts
+## Cancellation and Timeouts
 
 This section covers coroutine cancellation and timeouts.
 
@@ -64,7 +49,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-01.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-01.kt).
 
 It produces the following output:
 
@@ -119,7 +104,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-02.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-02.kt).
 
 Run it to see that it continues to print "I'm sleeping" even after cancellation
 until the job completes by itself after five iterations.
@@ -171,7 +156,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-03.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-03.kt).
 
 As you can see, now this loop is cancelled. [isActive] is an extension property 
 available inside the coroutine via the [CoroutineScope] object.
@@ -218,7 +203,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-04.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-04.kt).
 
 Both [join][Job.join] and [cancelAndJoin] wait for all finalization actions to complete, 
 so the example above produces the following output:
@@ -274,7 +259,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-05.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-05.kt).
 
 <!--- TEST
 job: I'm sleeping 0 ...
@@ -313,7 +298,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-06.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-06.kt).
 
 It produces the following output:
 
@@ -357,7 +342,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-07.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-07.kt).
 
 There is no longer an exception when running this code:
 

@@ -1,9 +1,8 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // Configures generation of JavaDoc & Dokka artifacts
-
 
 def makeLinkMapping(dokka, projectDir) {
     dokka.linkMapping {
@@ -16,6 +15,7 @@ def makeLinkMapping(dokka, projectDir) {
 
 configurations {
     dokkaStubs.extendsFrom compileOnly
+    configureKotlinJvmPlatform(dokkaStubs)
 }
 
 apply plugin: 'org.jetbrains.dokka'
@@ -35,10 +35,18 @@ dokka {
     outputFormat = 'kotlin-website'
     dependsOn(project.configurations.dokkaStubs)
 
+    noStdlibLink = true
+    
+    externalDocumentationLink {
+        packageListUrl = rootProject.projectDir.toPath().resolve("site/stdlib.package.list").toUri().toURL()
+        url = new URL("https://kotlinlang.org/api/latest/jvm/stdlib/")
+    }
+
     if (project.name != "kotlinx-coroutines-core") {
         dependsOn(project.configurations.compileClasspath)
         dependsOn(project.sourceSets.main.output)
-        afterEvaluate {
+        doFirst {
+            // resolve classpath only during execution
             classpath = project.configurations.dokkaStubs.files + project.configurations.compileClasspath.files + project.sourceSets.main.output.files
         }
     }
@@ -82,15 +90,4 @@ if (project.name == "kotlinx-coroutines-core") {
                     project.kotlin.targets.jvm.compilations.main.output.allOutputs
         }
     }
-}
-
-// real xxx-javadoc.jar for JVM
-task dokkaJavadoc(type: dokka.getClass()) {
-    outputFormat = 'javadoc'
-    outputDirectory = "$buildDir/javadoc"
-}
-
-task javadocJar(type: Jar, dependsOn: dokkaJavadoc) {
-    classifier = 'javadoc'
-    from "$buildDir/javadoc"
 }

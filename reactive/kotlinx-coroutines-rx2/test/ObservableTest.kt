@@ -4,24 +4,32 @@
 
 package kotlinx.coroutines.rx2
 
+import io.reactivex.*
+import io.reactivex.plugins.*
 import kotlinx.coroutines.*
-import org.hamcrest.core.*
+import kotlinx.coroutines.CancellationException
 import org.junit.*
 import org.junit.Test
+import java.util.concurrent.*
 import kotlin.test.*
 
 class ObservableTest : TestBase() {
+    @Before
+    fun setup() {
+        ignoreLostThreads("RxComputationThreadPool-", "RxCachedWorkerPoolEvictor-", "RxSchedulerPurge-")
+    }
+
     @Test
     fun testBasicSuccess() = runBlocking {
         expect(1)
-        val observable = rxObservable {
+        val observable = rxObservable(currentDispatcher()) {
             expect(4)
             send("OK")
         }
         expect(2)
         observable.subscribe { value ->
             expect(5)
-            Assert.assertThat(value, IsEqual("OK"))
+            assertEquals("OK", value)
         }
         expect(3)
         yield() // to started coroutine
@@ -31,7 +39,7 @@ class ObservableTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val observable = rxObservable<String>(NonCancellable) {
+        val observable = rxObservable<String>(currentDispatcher()) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -40,8 +48,8 @@ class ObservableTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            Assert.assertThat(error, IsInstanceOf(RuntimeException::class.java))
-            Assert.assertThat(error.message, IsEqual("OK"))
+            assertTrue(error is RuntimeException)
+            assertEquals("OK", error.message)
         })
         expect(3)
         yield() // to started coroutine
@@ -51,7 +59,7 @@ class ObservableTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val observable = rxObservable<String> {
+        val observable = rxObservable<String>(currentDispatcher()) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
@@ -71,23 +79,10 @@ class ObservableTest : TestBase() {
     }
 
     @Test
-    fun testCancelsParentOnFailure() = runTest(
-        expected = { it is RuntimeException && it.message == "OK" }
-    ) {
-        // has parent, so should cancel it on failure
-        rxObservable<Unit> {
-            throw RuntimeException("OK")
-        }.subscribe(
-            { expectUnreached() },
-            { assert(it is RuntimeException) }
-        )
-    }
-
-    @Test
     fun testNotifyOnceOnCancellation() = runTest {
         expect(1)
         val observable =
-            rxObservable {
+            rxObservable(currentDispatcher()) {
                 expect(5)
                 send("OK")
                 try {
@@ -124,7 +119,7 @@ class ObservableTest : TestBase() {
     @Test
     fun testFailingConsumer() = runTest {
         expect(1)
-        val pub = rxObservable {
+        val pub = rxObservable(currentDispatcher()) {
             expect(2)
             send("OK")
             try {
@@ -142,4 +137,28 @@ class ObservableTest : TestBase() {
             expect(4)
         }
     }
+
+    @Test
+    fun testExceptionAfterCancellation() {
+        // Test that no exceptions were reported to the global EH (it will fail the test if so)
+        val handler = { e: Throwable ->
+            assertFalse(e is CancellationException)
+        }
+        withExceptionHandler(handler) {
+            RxJavaPlugins.setErrorHandler {
+                require(it !is CancellationException)
+            }
+            Observable
+                .interval(1, TimeUnit.MILLISECONDS)
+                .take(1000)
+                .switchMapSingle {
+                    rxSingle {
+                        timeBomb().await()
+                    }
+                }
+                .blockingSubscribe({}, {})
+        }
+    }
+
+    private fun timeBomb() = Single.timer(1, TimeUnit.MILLISECONDS).doOnSuccess { throw TestException() }
 }

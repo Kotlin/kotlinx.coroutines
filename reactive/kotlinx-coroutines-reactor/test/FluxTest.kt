@@ -5,8 +5,8 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
-import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Test
 import kotlin.test.*
@@ -15,14 +15,14 @@ class FluxTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking {
         expect(1)
-        val flux = flux {
+        val flux = flux(currentDispatcher()) {
             expect(4)
             send("OK")
         }
         expect(2)
         flux.subscribe { value ->
             expect(5)
-            Assert.assertThat(value, IsEqual("OK"))
+            assertEquals("OK", value)
         }
         expect(3)
         yield() // to started coroutine
@@ -32,7 +32,7 @@ class FluxTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val flux = flux<String>(NonCancellable) {
+        val flux = flux<String>(currentDispatcher()) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -41,8 +41,8 @@ class FluxTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            Assert.assertThat(error, IsInstanceOf(RuntimeException::class.java))
-            Assert.assertThat(error.message, IsEqual("OK"))
+            assertTrue(error is RuntimeException)
+            assertEquals("OK", error.message)
         })
         expect(3)
         yield() // to started coroutine
@@ -52,7 +52,7 @@ class FluxTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val flux = flux<String> {
+        val flux = flux<String>(currentDispatcher()) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
@@ -72,23 +72,10 @@ class FluxTest : TestBase() {
     }
 
     @Test
-    fun testCancelsParentOnFailure() = runTest(
-        expected = { it is RuntimeException && it.message == "OK" }
-    ) {
-        // has parent, so should cancel it on failure
-        flux<Unit> {
-            throw RuntimeException("OK")
-        }.subscribe(
-            { expectUnreached() },
-            { assert(it is RuntimeException) }
-        )
-    }
-
-    @Test
     fun testNotifyOnceOnCancellation() = runTest {
         expect(1)
         val observable =
-            flux {
+            flux(currentDispatcher()) {
                 expect(5)
                 send("OK")
                 try {
@@ -124,7 +111,7 @@ class FluxTest : TestBase() {
 
     @Test
     fun testFailingConsumer() = runTest {
-        val pub = flux {
+        val pub = flux(currentDispatcher()) {
             repeat(3) {
                 expect(it + 1) // expect(1), expect(2) *should* be invoked
                 send(it)
@@ -136,6 +123,22 @@ class FluxTest : TestBase() {
             }
         } catch (e: TestException) {
             finish(3)
+        }
+    }
+
+    @Test
+    fun testIllegalArgumentException() {
+        assertFailsWith<IllegalArgumentException> { flux<Int>(Job()) { } }
+    }
+
+    @Test
+    fun testLeakedException() = runBlocking {
+        // Test exception is not reported to global handler
+        val flow = flux<Unit> { throw TestException() }.asFlow()
+        repeat(2000) {
+            combine(flow, flow) { _, _ -> Unit }
+                .catch {}
+                .collect { }
         }
     }
 }

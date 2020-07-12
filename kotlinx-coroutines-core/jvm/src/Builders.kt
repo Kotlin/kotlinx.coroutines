@@ -1,13 +1,15 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
 @file:JvmName("BuildersKt")
+@file:OptIn(ExperimentalContracts::class)
 
 package kotlinx.coroutines
 
 import java.util.concurrent.locks.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 
 /**
@@ -34,6 +36,9 @@ import kotlin.coroutines.*
  */
 @Throws(InterruptedException::class)
 public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
     val currentThread = Thread.currentThread()
     val contextInterceptor = context[ContinuationInterceptor]
     val eventLoop: EventLoop?
@@ -61,7 +66,7 @@ private class BlockingCoroutine<T>(
 ) : AbstractCoroutine<T>(parentContext, true) {
     override val isScopedCoroutine: Boolean get() = true
 
-    override fun afterCompletionInternal(state: Any?, mode: Int) {
+    override fun afterCompletion(state: Any?) {
         // wake up blocked thread
         if (Thread.currentThread() != blockedThread)
             LockSupport.unpark(blockedThread)
@@ -69,7 +74,7 @@ private class BlockingCoroutine<T>(
 
     @Suppress("UNCHECKED_CAST")
     fun joinBlocking(): T {
-        timeSource.registerTimeLoopThread()
+        registerTimeLoopThread()
         try {
             eventLoop?.incrementUseCount()
             try {
@@ -79,13 +84,13 @@ private class BlockingCoroutine<T>(
                     val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
                     // note: process next even may loose unpark flag, so check if completed before parking
                     if (isCompleted) break
-                    timeSource.parkNanos(this, parkNanos)
+                    parkNanos(this, parkNanos)
                 }
             } finally { // paranoia
                 eventLoop?.decrementUseCount()
             }
         } finally { // paranoia
-            timeSource.unregisterTimeLoopThread()
+            unregisterTimeLoopThread()
         }
         // now return result
         val state = this.state.unboxState()

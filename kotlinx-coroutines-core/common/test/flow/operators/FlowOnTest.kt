@@ -261,6 +261,69 @@ class FlowOnTest : TestBase() {
         finish(3)
     }
 
+    @Test
+    fun testCancellation() = runTest {
+        val result = flow {
+            emit(1)
+            emit(2)
+            emit(3)
+            expectUnreached()
+            emit(4)
+        }.flowOn(wrapperDispatcher())
+            .buffer(0)
+            .take(2)
+            .toList()
+        assertEquals(listOf(1, 2), result)
+    }
+
+    @Test
+    fun testAtomicStart() = runTest {
+        try {
+            coroutineScope {
+                val job = coroutineContext[Job]!!
+                val flow = flow {
+                    expect(3)
+                    emit(1)
+                }
+                    .onCompletion { expect(4) }
+                    .flowOn(wrapperDispatcher())
+                    .onCompletion { expect(5) }
+
+                launch {
+                    expect(1)
+                    flow.collect()
+                }
+                launch {
+                    expect(2)
+                    job.cancel()
+                }
+            }
+        } catch (e: CancellationException) {
+            finish(6)
+        }
+    }
+
+    @Test
+    fun testException() = runTest {
+        val flow = flow {
+            emit(314)
+            delay(Long.MAX_VALUE)
+        }.flowOn(NamedDispatchers("upstream"))
+            .map {
+                throw TestException()
+            }
+
+        assertFailsWith<TestException> { flow.single() }
+        assertFailsWith<TestException>(flow)
+        ensureActive()
+    }
+
+    @Test
+    fun testIllegalArgumentException() {
+        val flow = emptyFlow<Int>()
+        assertFailsWith<IllegalArgumentException> { flow.flowOn(Job()) }
+    }
+
     private inner class Source(private val value: Int) {
         public var contextName: String = "unknown"
 

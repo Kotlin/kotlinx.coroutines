@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("unused")
@@ -14,7 +14,7 @@ import kotlin.coroutines.*
 /**
  * Name of the property that defines the maximal number of threads that are used by [Dispatchers.IO] coroutines dispatcher.
  */
-public const val IO_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.io.parallelism"
+public const val IO_PARALLELISM_PROPERTY_NAME: String = "kotlinx.coroutines.io.parallelism"
 
 /**
  * Groups various implementations of [CoroutineDispatcher].
@@ -71,9 +71,9 @@ public actual object Dispatchers {
      *
      * For example, the following code:
      * ```
-     * withContext(Dispatcher.Unconfined) {
+     * withContext(Dispatchers.Unconfined) {
      *    println(1)
-     *    withContext(Dispatcher.Unconfined) { // Nested unconfined
+     *    withContext(Dispatchers.Unconfined) { // Nested unconfined
      *        println(2)
      *    }
      *    println(3)
@@ -100,6 +100,11 @@ public actual object Dispatchers {
      * The number of threads used by this dispatcher is limited by the value of
      * "`kotlinx.coroutines.io.parallelism`" ([IO_PARALLELISM_PROPERTY_NAME]) system property.
      * It defaults to the limit of 64 threads or the number of cores (whichever is larger).
+     *
+     * Moreover, the maximum configurable number of threads is capped by the
+     * `kotlinx.coroutines.scheduler.max.pool.size` system property.
+     * If you need a higher number of parallel threads,
+     * you should use a custom dispatcher backed by your own thread pool.
      *
      * This dispatcher shares threads with a [Default][Dispatchers.Default] dispatcher, so using
      * `withContext(Dispatchers.IO) { ... }` does not lead to an actual switching to another thread &mdash;

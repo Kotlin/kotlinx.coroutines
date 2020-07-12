@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -21,7 +21,6 @@ private val handlers: List<CoroutineExceptionHandler> = ServiceLoader.load(
         CoroutineExceptionHandler::class.java,
         CoroutineExceptionHandler::class.java.classLoader
 ).iterator().asSequence().toList()
-
 
 internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) {
     // use additional extension handlers

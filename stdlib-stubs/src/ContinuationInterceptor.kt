@@ -1,11 +1,11 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 package kotlin.coroutines
 
 // DOKKA STUB
 public interface ContinuationInterceptor : CoroutineContext.Element {
-    companion object Key : CoroutineContext.Key<ContinuationInterceptor>
+    public companion object Key : CoroutineContext.Key<ContinuationInterceptor>
     public fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T>
     public fun releaseInterceptedContinuation(continuation: Continuation<*>): Continuation<*> {
         return continuation

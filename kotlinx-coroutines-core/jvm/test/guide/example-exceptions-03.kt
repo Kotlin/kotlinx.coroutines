@@ -1,14 +1,13 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.exceptions03
+// This file was automatically generated from exception-handling.md by Knit tool. Do not edit.
+package kotlinx.coroutines.guide.exampleExceptions03
 
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
-//sampleStart
     val job = launch {
         val child = launch {
             try {
@@ -25,5 +24,4 @@ fun main() = runBlocking {
         println("Parent is not cancelled")
     }
     job.join()
-//sampleEnd    
 }

@@ -47,17 +47,17 @@ class TickerChannelTest : TestBase() {
     @Test
     fun testDelayChannelBackpressure2() = withVirtualTimeSource {
         runTest {
-            val delayChannel = ticker(delayMillis = 1000, initialDelayMillis = 0)
+            val delayChannel = ticker(delayMillis = 200, initialDelayMillis = 0)
             delayChannel.checkNotEmpty()
             delayChannel.checkEmpty()
 
-            delay(2500)
+            delay(500)
             delayChannel.checkNotEmpty()
-            delay(510)
+            delay(110)
             delayChannel.checkNotEmpty()
-            delay(510)
+            delay(110)
             delayChannel.checkEmpty()
-            delay(510)
+            delay(110)
             delayChannel.checkNotEmpty()
             delayChannel.cancel()
         }

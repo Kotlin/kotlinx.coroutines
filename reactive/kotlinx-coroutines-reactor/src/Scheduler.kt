@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.reactor
@@ -13,7 +13,7 @@ import kotlin.coroutines.CoroutineContext
 /**
  * Converts an instance of [Scheduler] to an implementation of [CoroutineDispatcher].
  */
-fun Scheduler.asCoroutineDispatcher(): SchedulerCoroutineDispatcher = SchedulerCoroutineDispatcher(this)
+public fun Scheduler.asCoroutineDispatcher(): SchedulerCoroutineDispatcher = SchedulerCoroutineDispatcher(this)
 
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary [Scheduler].

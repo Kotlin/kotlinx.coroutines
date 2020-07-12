@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -12,27 +12,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
-import kotlinx.coroutines.flow.unsafeFlow as flow
-
-/**
- * Delays the emission of values from this flow for the given [timeMillis].
- */
-@ExperimentalCoroutinesApi
-public fun <T> Flow<T>.delayFlow(timeMillis: Long): Flow<T> = flow {
-    delay(timeMillis)
-    collect(this@flow)
-}
-
-/**
- * Delays each element emitted by the given flow for the given [timeMillis].
- */
-@ExperimentalCoroutinesApi
-public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = flow {
-    collect { value ->
-        delay(timeMillis)
-        emit(value)
-    }
-}
+import kotlin.time.*
 
 /**
  * Returns a flow that mirrors the original flow, but filters out values
@@ -43,13 +23,13 @@ public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = flow {
  * ```
  * flow {
  *     emit(1)
- *     delay(99)
+ *     delay(90)
  *     emit(2)
- *     delay(99)
+ *     delay(90)
  *     emit(3)
- *     delay(1001)
+ *     delay(1010)
  *     emit(4)
- *     delay(1001)
+ *     delay(1010)
  *     emit(5)
  * }.debounce(1000)
  * ```
@@ -62,18 +42,21 @@ public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = flow {
 public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
     require(timeoutMillis > 0) { "Debounce timeout should be positive" }
     return scopedFlow { downstream ->
-        val values = Channel<Any?>(Channel.CONFLATED) // Actually Any, KT-30796
-        // Channel is not closed deliberately as there is no close with value
-        val collector = async {
-            collect { value -> values.send(value ?: NULL) }
+        // Actually Any, KT-30796
+        val values = produce<Any?>(capacity = Channel.CONFLATED) {
+            collect { value -> send(value ?: NULL) }
         }
-
-        var isDone = false
         var lastValue: Any? = null
-        while (!isDone) {
+        while (lastValue !== DONE) {
             select<Unit> {
-                values.onReceive {
-                    lastValue = it
+                // Should be receiveOrClosed when boxing issues are fixed
+                values.onReceiveOrNull {
+                    if (it == null) {
+                        if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
+                        lastValue = DONE
+                    } else {
+                        lastValue = it
+                    }
                 }
 
                 lastValue?.let { value ->
@@ -83,16 +66,38 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
                         downstream.emit(NULL.unbox(value))
                     }
                 }
-
-                // Close with value 'idiom'
-                collector.onAwait {
-                    if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
-                    isDone = true
-                }
             }
         }
     }
 }
+
+/**
+ * Returns a flow that mirrors the original flow, but filters out values
+ * that are followed by the newer values within the given [timeout].
+ * The latest value is always emitted.
+ *
+ * Example:
+ * ```
+ * flow {
+ *     emit(1)
+ *     delay(90.milliseconds)
+ *     emit(2)
+ *     delay(90.milliseconds)
+ *     emit(3)
+ *     delay(1010.milliseconds)
+ *     emit(4)
+ *     delay(1010.milliseconds)
+ *     emit(5)
+ * }.debounce(1000.milliseconds)
+ * ```
+ * produces `3, 4, 5`.
+ *
+ * Note that the resulting flow does not emit anything as long as the original flow emits
+ * items faster than every [timeout] milliseconds.
+ */
+@ExperimentalTime
+@FlowPreview
+public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.toDelayMillis())
 
 /**
  * Returns a flow that emits only the latest value emitted by the original flow during the given sampling [period][periodMillis].
@@ -118,16 +123,14 @@ public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
             // Actually Any, KT-30796
             collect { value -> send(value ?: NULL) }
         }
-
-        var isDone = false
         var lastValue: Any? = null
         val ticker = fixedPeriodTicker(periodMillis)
-        while (!isDone) {
+        while (lastValue !== DONE) {
             select<Unit> {
                 values.onReceiveOrNull {
                     if (it == null) {
                         ticker.cancel(ChildCancelledException())
-                        isDone = true
+                        lastValue = DONE
                     } else {
                         lastValue = it
                     }
@@ -158,3 +161,23 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMil
         }
     }
 }
+
+/**
+ * Returns a flow that emits only the latest value emitted by the original flow during the given sampling [period].
+ *
+ * Example:
+ * ```
+ * flow {
+ *     repeat(10) {
+ *         emit(it)
+ *         delay(50.milliseconds)
+ *     }
+ * }.sample(100.milliseconds)
+ * ```
+ * produces `1, 3, 5, 7, 9`.
+ *
+ * Note that the latest element is not emitted if it does not fit into the sampling window.
+ */
+@ExperimentalTime
+@FlowPreview
+public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())

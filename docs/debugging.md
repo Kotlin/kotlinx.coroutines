@@ -8,11 +8,12 @@
   * [Stacktrace recovery machinery](#stacktrace-recovery-machinery)
 * [Debug agent](#debug-agent)
   * [Debug agent and Android](#debug-agent-and-android)
+* [Android optimization](#android-optimization)
 
-<!--- END_TOC -->
-
+<!--- END -->
 
 ## Debugging coroutines
+
 Debugging asynchronous programs is challenging, because multiple concurrent coroutines are typically working at the same time.
 To help with that, `kotlinx.coroutines` comes with additional features for debugging: debug mode, stacktrace recovery 
 and debug agent.
@@ -45,7 +46,7 @@ It is easy to demonstrate with actual stacktraces of the same program that await
 
 The only downside of this approach is losing referential transparency of the exception. 
 
-### Stacktrace recovery machinery
+### Stacktrace recovery machinery   
 
 This section explains the inner mechanism of stacktrace recovery and can be skipped.
 
@@ -56,6 +57,7 @@ and then throws the resulting exception instead of the original one.
 
 Exception copy logic is straightforward:
   1) If the exception class implements [CopyableThrowable], [CopyableThrowable.createCopy] is used.
+     `null` can be returned from `createCopy` to opt-out specific exception from being recovered.
   2) If the exception class has class-specific fields not inherited from Throwable, the exception is not copied.
   3) Otherwise, one of the public exception's constructor is invoked reflectively with an optional `initCause` call.  
 
@@ -85,6 +87,14 @@ java.lang.NoClassDefFoundError: Failed resolution of: Ljava/lang/management/Mana
         at kotlinx.coroutines.debug.internal.DebugProbesImpl.install(DebugProbesImpl.kt:39)
         at kotlinx.coroutines.debug.DebugProbes.install(DebugProbes.kt:49)
 -->
+
+## Android optimization
+
+In optimized (release) builds with R8 version 1.6.0 or later both 
+[Debugging mode](../../docs/debugging.md#debug-mode) and 
+[Stacktrace recovery](../../docs/debugging.md#stacktrace-recovery) 
+are permanently turned off. 
+For more details see ["Optimization" section for Android](../ui/kotlinx-coroutines-android/README.md#optimization). 
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->

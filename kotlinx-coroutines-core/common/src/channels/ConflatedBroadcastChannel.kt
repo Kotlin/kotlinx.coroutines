@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -10,6 +10,7 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
+import kotlin.native.concurrent.*
 
 /**
  * Broadcasts the most recently sent element (aka [value]) to all [openSubscription] subscribers.
@@ -36,7 +37,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
      * It is as a shortcut to creating an instance with a default constructor and
      * immediately sending an element: `ConflatedBroadcastChannel().apply { offer(value) }`.
      */
-    constructor(value: E) : this() {
+    public constructor(value: E) : this() {
         _state.lazySet(State<E>(value, null))
     }
 
@@ -46,9 +47,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     private val onCloseHandler = atomic<Any?>(null)
 
     private companion object {
-        @SharedImmutable
         private val CLOSED = Closed(null)
-        @SharedImmutable
         private val UNDEFINED = Symbol("UNDEFINED")
         private val INITIAL_STATE = State<Any?>(UNDEFINED, null)
     }
@@ -90,7 +89,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
      */
     public val valueOrNull: E? get() = when (val state = _state.value) {
         is Closed -> null
-        is State<*> -> UNDEFINED.unbox(state.value)
+        is State<*> -> UNDEFINED.unbox<E?>(state.value)
         else -> error("Invalid state $state")
     }
 
@@ -142,11 +141,18 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     private fun removeSubscriber(list: Array<Subscriber<E>>, subscriber: Subscriber<E>): Array<Subscriber<E>>? {
         val n = list.size
         val i = list.indexOf(subscriber)
-        check(i >= 0)
+        assert { i >= 0 }
         if (n == 1) return null
         val update = arrayOfNulls<Subscriber<E>>(n - 1)
-        arraycopy(list, 0, update, 0, i)
-        arraycopy(list, i + 1, update, i, n - i - 1)
+        list.copyInto(
+            destination = update,
+            endIndex = i
+        )
+        list.copyInto(
+            destination = update,
+            destinationOffset = i,
+            startIndex = i + 1
+        )
         return update as Array<Subscriber<E>>
     }
 
@@ -266,9 +272,9 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         }
 
     private fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend (SendChannel<E>) -> R) {
-        if (!select.trySelect(null)) return
+        if (!select.trySelect()) return
         offerInternal(element)?.let {
-            select.resumeSelectCancellableWithException(it.sendException)
+            select.resumeSelectWithException(it.sendException)
             return
         }
         block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
@@ -277,10 +283,12 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>
     ) : ConflatedChannel<E>(), ReceiveChannel<E> {
-        override fun cancelInternal(cause: Throwable?): Boolean =
-            close(cause).also { closed ->
-                if (closed) broadcastChannel.closeSubscriber(this)
+
+        override fun onCancelIdempotent(wasClosed: Boolean) {
+            if (wasClosed) {
+                broadcastChannel.closeSubscriber(this)
             }
+        }
 
         public override fun offerInternal(element: E): Any = super.offerInternal(element)
     }

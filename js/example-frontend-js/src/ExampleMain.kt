@@ -1,21 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
-
-/*
- * Copyright 2016-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 import kotlinx.coroutines.*
@@ -27,8 +11,9 @@ import org.w3c.dom.*
 import kotlin.browser.*
 import kotlin.coroutines.*
 import kotlin.math.*
+import kotlin.random.Random
 
-fun main(args: Array<String>) {
+fun main() {
     println("Starting example application...")
     document.addEventListener("DOMContentLoaded", {
         Application().start()
@@ -50,9 +35,6 @@ private fun HTMLElement.setPosition(x: Double, y: Double) {
         top = y.px
     }
 }
-
-@Suppress("DEPRECATION")
-private fun random() = kotlin.js.Math.random()
 
 class Application : CoroutineScope {
     private val body get() = document.body!!
@@ -105,7 +87,7 @@ class Application : CoroutineScope {
         val speed = 0.3
         val rs = 20.0
         val turnAfter = 5000.0 // seconds
-        var maxX = sw - rs
+        val maxX = sw - rs
         val maxY = sh - rs
         animation("rect", rs) { rect ->
             println("Started new 'rect' coroutine #$index")
@@ -141,7 +123,7 @@ class Application : CoroutineScope {
                     timer.delay(1000) // pause a bit
                     // flip direction
                     val t = vx
-                    if (random() > 0.5) {
+                    if (Random.nextDouble() > 0.5) {
                         vx = vy
                         vy = -t
                     } else {
@@ -166,11 +148,11 @@ class Application : CoroutineScope {
         animation("circle", radius) { circle ->
             println("Started new 'circle' coroutine #$index")
             val timer = AnimationTimer()
-            val initialAngle = random() * 2 * PI
+            val initialAngle = Random.nextDouble() * 2 * PI
             var vx = sin(initialAngle) * initialSpeed
             var vy = cos(initialAngle) * initialSpeed
-            var x = (random() * initialRange + (1 - initialRange) / 2) * sw
-            var y = (random() * initialRange + (1 - initialRange) / 2) * sh
+            var x = (Random.nextDouble() * initialRange + (1 - initialRange) / 2) * sw
+            var y = (Random.nextDouble() * initialRange + (1 - initialRange) / 2) * sh
             while (true) {
                 val dt = timer.await()
                 val dx = sw / 2 - x

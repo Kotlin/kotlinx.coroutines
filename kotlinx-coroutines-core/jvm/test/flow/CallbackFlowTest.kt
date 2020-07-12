@@ -39,7 +39,7 @@ class CallbackFlowTest : TestBase() {
             runCatching {  it.offer(++i) }
         }
 
-        val flow = channelFlow<Int> {
+        val flow = callbackFlow<Int> {
             api.start(channel)
             awaitClose {
                 api.stop()
@@ -83,7 +83,7 @@ class CallbackFlowTest : TestBase() {
             }
         }
 
-        val flow = channelFlow<Int> {
+        val flow = callbackFlow<Int>() {
             api.start(channel)
             awaitClose {
                 api.stop()

@@ -5,15 +5,14 @@
 package kotlinx.coroutines.reactive
 
 import kotlinx.coroutines.*
-import org.hamcrest.core.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
+import kotlin.test.*
 
 class PublisherMultiTest : TestBase() {
     @Test
     fun testConcurrentStress() = runBlocking {
         val n = 10_000 * stressTestMultiplier
-        val observable = GlobalScope.publish {
+        val observable = publish {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch
@@ -27,6 +26,6 @@ class PublisherMultiTest : TestBase() {
         observable.collect {
             assertTrue(resultSet.add(it))
         }
-        assertThat(resultSet.size, IsEqual(n))
+        assertEquals(n, resultSet.size)
     }
 }

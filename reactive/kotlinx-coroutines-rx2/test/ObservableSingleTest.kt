@@ -7,13 +7,19 @@ package kotlinx.coroutines.rx2
 import io.reactivex.*
 import kotlinx.coroutines.*
 import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import java.util.concurrent.*
+import kotlin.test.*
 
-class ObservableSingleTest {
+class ObservableSingleTest : TestBase() {
+    @Before
+    fun setup() {
+        ignoreLostThreads("RxComputationThreadPool-", "RxCachedWorkerPoolEvictor-", "RxSchedulerPurge-")
+    }
+
     @Test
     fun testSingleNoWait() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             send("OK")
         }
 
@@ -29,7 +35,7 @@ class ObservableSingleTest {
 
     @Test
     fun testSingleEmitAndAwait() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             send(Observable.just("O").awaitSingle() + "K")
         }
 
@@ -40,7 +46,7 @@ class ObservableSingleTest {
 
     @Test
     fun testSingleWithDelay() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             send(Observable.timer(50, TimeUnit.MILLISECONDS).map { "O" }.awaitSingle() + "K")
         }
 
@@ -51,7 +57,7 @@ class ObservableSingleTest {
 
     @Test
     fun testSingleException() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             send(Observable.just("O", "K").awaitSingle() + "K")
         }
 
@@ -62,7 +68,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitFirst() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             send(Observable.just("O", "#").awaitFirst() + "K")
         }
 
@@ -73,7 +79,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitFirstOrDefault() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             send(Observable.empty<String>().awaitFirstOrDefault("O") + "K")
         }
 
@@ -84,7 +90,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitFirstOrDefaultWithValues() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             send(Observable.just("O", "#").awaitFirstOrDefault("!") + "K")
         }
 
@@ -95,7 +101,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitFirstOrNull() {
-        val observable = GlobalScope.rxObservable<String> {
+        val observable = rxObservable<String> {
             send(Observable.empty<String>().awaitFirstOrNull() ?: "OK")
         }
 
@@ -106,7 +112,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitFirstOrNullWithValues() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             send((Observable.just("O", "#").awaitFirstOrNull() ?: "!") + "K")
         }
 
@@ -117,7 +123,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitFirstOrElse() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             send(Observable.empty<String>().awaitFirstOrElse { "O" } + "K")
         }
 
@@ -128,7 +134,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitFirstOrElseWithValues() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             send(Observable.just("O", "#").awaitFirstOrElse { "!" } + "K")
         }
 
@@ -139,7 +145,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitLast() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             send(Observable.just("#", "O").awaitLast() + "K")
         }
 
@@ -150,7 +156,7 @@ class ObservableSingleTest {
 
     @Test
     fun testExceptionFromObservable() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             try {
                 send(Observable.error<String>(RuntimeException("O")).awaitFirst())
             } catch (e: RuntimeException) {
@@ -165,8 +171,8 @@ class ObservableSingleTest {
 
     @Test
     fun testExceptionFromCoroutine() {
-        val observable = GlobalScope.rxObservable<String> {
-            error(Observable.just("O").awaitSingle() + "K")
+        val observable = rxObservable<String> {
+            throw IllegalStateException(Observable.just("O").awaitSingle() + "K")
         }
 
         checkErroneous(observable) {
@@ -177,7 +183,7 @@ class ObservableSingleTest {
 
     @Test
     fun testObservableIteration() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             var result = ""
             Observable.just("O", "K").collect { result += it }
             send(result)
@@ -190,7 +196,7 @@ class ObservableSingleTest {
 
     @Test
     fun testObservableIterationFailure() {
-        val observable = GlobalScope.rxObservable {
+        val observable = rxObservable {
             try {
                 Observable.error<String>(RuntimeException("OK")).collect { fail("Should not be here") }
                 send("Fail")

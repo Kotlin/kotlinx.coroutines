@@ -1,46 +1,60 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:OptIn(ExperimentalContracts::class)
 
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
 /**
- * Defines a scope for new coroutines. Every coroutine builder
+ * Defines a scope for new coroutines. Every **coroutine builder** (like [launch], [async], etc)
  * is an extension on [CoroutineScope] and inherits its [coroutineContext][CoroutineScope.coroutineContext]
- * to automatically propagate both context elements and cancellation.
+ * to automatically propagate all its elements and cancellation.
  *
  * The best ways to obtain a standalone instance of the scope are [CoroutineScope()] and [MainScope()] factory functions.
  * Additional context elements can be appended to the scope using the [plus][CoroutineScope.plus] operator.
  *
- * Manual implementation of this interface is not recommended, implementation by delegation should be preferred instead.
- * By convention, the [context of a scope][CoroutineScope.coroutineContext] should contain an instance of a [job][Job] to enforce structured concurrency.
+ * ### Convention for structured concurrency
  *
- * Every coroutine builder (like [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc)
+ * Manual implementation of this interface is not recommended, implementation by delegation should be preferred instead.
+ * By convention, the [context of a scope][CoroutineScope.coroutineContext] should contain an instance of a
+ * [job][Job] to enforce the discipline of **structured concurrency** with propagation of cancellation.
+ *
+ * Every coroutine builder (like [launch], [async], etc)
  * and every scoping function (like [coroutineScope], [withContext], etc) provides _its own_ scope
  * with its own [Job] instance into the inner block of code it runs.
  * By convention, they all wait for all the coroutines inside their block to complete before completing themselves,
- * thus enforcing the discipline of **structured concurrency**.
+ * thus enforcing the structured concurrency. See [Job] documentation for more details.
  *
- * [CoroutineScope] should be implemented (or used as a field) on entities with a well-defined lifecycle that are responsible
- * for launching children coroutines. Example of such entity on Android is Activity.
- * Usage of this interface may look like this:
+ * ### Android usage
+ *
+ * Android has first-party support for coroutine scope in all entities with the lifecycle.
+ * See [the corresponding documentation](https://developer.android.com/topic/libraries/architecture/coroutines#lifecyclescope).
+ *
+ * ### Custom usage
+ *
+ * [CoroutineScope] should be implemented or declared as a property on entities with a well-defined lifecycle that are
+ * responsible for launching children coroutines, for example:
  *
  * ```
- * class MyActivity : AppCompatActivity(), CoroutineScope by MainScope() {
- *     override fun onDestroy() {
- *         cancel() // cancel is extension on CoroutineScope
+ * class MyUIClass {
+ *     val scope = MainScope() // the scope of MyUIClass
+ *
+ *     fun destroy() { // destroys an instance of MyUIClass
+ *         scope.cancel() // cancels all coroutines launched in this scope
+ *         // ... do the rest of cleanup here ...
  *     }
  *
  *     /*
- *      * Note how coroutine builders are scoped: if activity is destroyed or any of the launched coroutines
+ *      * Note: if this instance is destroyed or any of the launched coroutines
  *      * in this method throws an exception, then all nested coroutines are cancelled.
  *      */
- *     fun showSomeData() = launch { // <- extension on current activity, launched in the main thread
+ *     fun showSomeData() = scope.launch { // launched in the main thread
  *        // ... here we can use suspending functions or coroutine builders with other dispatchers
  *        draw(data) // draw in the main thread
  *     }
@@ -73,14 +87,13 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  * Example of use:
  * ```
  * class MyAndroidActivity {
- *   private val scope = MainScope()
+ *     private val scope = MainScope()
  *
- *   override fun onDestroy() {
- *     super.onDestroy()
- *     scope.cancel()
- *   }
+ *     override fun onDestroy() {
+ *         super.onDestroy()
+ *         scope.cancel()
+ *     }
  * }
- *
  * ```
  *
  * The resulting scope has [SupervisorJob] and [Dispatchers.Main] context elements.
@@ -128,7 +141,6 @@ public val CoroutineScope.isActive: Boolean
  *         send(Math.sqrt(number))
  *     }
  * }
- *
  * ```
  */
 public object GlobalScope : CoroutineScope {
@@ -151,16 +163,15 @@ public object GlobalScope : CoroutineScope {
  *
  * ```
  * suspend fun showSomeData() = coroutineScope {
- *
- *   val data = async(Dispatchers.IO) { // <- extension on current scope
+ *     val data = async(Dispatchers.IO) { // <- extension on current scope
  *      ... load some UI data for the Main thread ...
- *   }
+ *     }
  *
- *   withContext(Dispatchers.Main) {
- *     doSomeWork()
- *     val result = data.await()
- *     display(result)
- *   }
+ *     withContext(Dispatchers.Main) {
+ *         doSomeWork()
+ *         val result = data.await()
+ *         display(result)
+ *     }
  * }
  * ```
  *
@@ -174,17 +185,21 @@ public object GlobalScope : CoroutineScope {
  * or may throw a corresponding unhandled [Throwable] if there is any unhandled exception in this scope
  * (for example, from a crashed coroutine that was started with [launch][CoroutineScope.launch] in this scope).
  */
-public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R =
-    suspendCoroutineUninterceptedOrReturn { uCont ->
+public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    return suspendCoroutineUninterceptedOrReturn { uCont ->
         val coroutine = ScopeCoroutine(uCont.context, uCont)
         coroutine.startUndispatchedOrReturn(coroutine, block)
     }
+}
 
 /**
  * Creates a [CoroutineScope] that wraps the given coroutine [context].
  *
  * If the given [context] does not contain a [Job] element, then a default `Job()` is created.
- * This way, cancellation or failure or any child coroutine in this scope cancels all the other children,
+ * This way, cancellation or failure of any child coroutine in this scope cancels all the other children,
  * just like inside [coroutineScope] block.
  */
 @Suppress("FunctionName")
@@ -203,6 +218,13 @@ public fun CoroutineScope.cancel(cause: CancellationException? = null) {
 }
 
 /**
+ * Cancels this scope, including its job and all its children with a specified diagnostic error [message].
+ * A [cause] can be specified to provide additional details on a cancellation reason for debugging purposes.
+ * Throws [IllegalStateException] if the scope does not have a job in it.
+ */
+public fun CoroutineScope.cancel(message: String, cause: Throwable? = null): Unit = cancel(CancellationException(message, cause))
+
+/**
  * Ensures that current scope is [active][CoroutineScope.isActive].
  * Throws [IllegalStateException] if the context does not have a job in it.
  *
@@ -217,3 +239,19 @@ public fun CoroutineScope.cancel(cause: CancellationException? = null) {
  * ```
  */
 public fun CoroutineScope.ensureActive(): Unit = coroutineContext.ensureActive()
+
+
+/**
+ * Returns the current [CoroutineContext] retrieved by using [kotlin.coroutines.coroutineContext].
+ * This function is an alias to avoid name clash with [CoroutineScope.coroutineContext] in a receiver position:
+ *
+ * ```
+ * launch { // this: CoroutineScope
+ *     val flow = flow<Unit> {
+ *         coroutineContext // Resolves into the context of outer launch, which is incorrect, see KT-38033
+ *         currentCoroutineContext() // Retrieves actual context where the flow is collected
+ *     }
+ * }
+ * ```
+ */
+public suspend inline fun currentCoroutineContext(): CoroutineContext = coroutineContext

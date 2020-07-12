@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("DEPRECATION_ERROR")
 
@@ -115,4 +115,9 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      */
     @InternalCoroutinesApi
     override fun attachChild(child: ChildJob): ChildHandle = NonDisposableHandle
+
+    /** @suppress */
+    override fun toString(): String {
+        return "NonCancellable"
+    }
 }

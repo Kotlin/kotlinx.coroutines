@@ -6,16 +6,16 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.*
+import io.reactivex.exceptions.*
 import kotlinx.coroutines.*
-import org.hamcrest.core.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
+import kotlin.test.*
 
 class CompletableTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking {
         expect(1)
-        val completable = rxCompletable {
+        val completable = rxCompletable(currentDispatcher()) {
             expect(4)
         }
         expect(2)
@@ -30,7 +30,7 @@ class CompletableTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val completable = rxCompletable(NonCancellable) {
+        val completable = rxCompletable(currentDispatcher()) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -39,8 +39,8 @@ class CompletableTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            assertThat(error, IsInstanceOf(RuntimeException::class.java))
-            assertThat(error.message, IsEqual("OK"))
+            assertTrue(error is RuntimeException)
+            assertEquals("OK", error.message)
         })
         expect(3)
         yield() // to completable coroutine
@@ -50,7 +50,7 @@ class CompletableTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val completable = rxCompletable {
+        val completable = rxCompletable(currentDispatcher()) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
@@ -73,7 +73,7 @@ class CompletableTest : TestBase() {
     @Test
     fun testAwaitSuccess() = runBlocking {
         expect(1)
-        val completable = rxCompletable {
+        val completable = rxCompletable(currentDispatcher()) {
             expect(3)
         }
         expect(2)
@@ -84,7 +84,7 @@ class CompletableTest : TestBase() {
     @Test
     fun testAwaitFailure() = runBlocking {
         expect(1)
-        val completable = rxCompletable(NonCancellable) {
+        val completable = rxCompletable(currentDispatcher()) {
             expect(3)
             throw RuntimeException("OK")
         }
@@ -94,26 +94,13 @@ class CompletableTest : TestBase() {
             expectUnreached()
         } catch (e: RuntimeException) {
             finish(4)
-            assertThat(e.message, IsEqual("OK"))
+            assertEquals("OK", e.message)
         }
     }
 
     @Test
-    fun testCancelsParentOnFailure() = runTest(
-        expected = { it is RuntimeException && it.message == "OK" }
-    ) {
-        // has parent, so should cancel it on failure
-        rxCompletable {
-            throw RuntimeException("OK")
-        }.subscribe(
-            { expectUnreached() },
-            { assert(it is RuntimeException) }
-        )
-    }
-
-    @Test
     fun testSuppressedException() = runTest {
-        val completable = rxCompletable(NonCancellable) {
+        val completable = rxCompletable(currentDispatcher()) {
             launch(start = CoroutineStart.ATOMIC) {
                 throw TestException() // child coroutine fails
             }
@@ -132,12 +119,14 @@ class CompletableTest : TestBase() {
     }
 
     @Test
-    fun testUnhandledException() = runTest(
-        unhandled = listOf { it -> it is TestException }
-    ) {
+    fun testUnhandledException() = runTest() {
         expect(1)
         var disposable: Disposable? = null
-        val completable = rxCompletable(NonCancellable) {
+        val handler = { e: Throwable ->
+            assertTrue(e is UndeliverableException && e.cause is TestException)
+            expect(5)
+        }
+        val completable = rxCompletable(currentDispatcher()) {
             expect(4)
             disposable!!.dispose() // cancel our own subscription, so that delay will get cancelled
             try {
@@ -146,16 +135,47 @@ class CompletableTest : TestBase() {
                 throw TestException() // would not be able to handle it since mono is disposed
             }
         }
-        completable.subscribe(object : CompletableObserver {
-            override fun onSubscribe(d: Disposable) {
-                expect(2)
-                disposable = d
-            }
-            override fun onComplete() { expectUnreached() }
-            override fun onError(t: Throwable) { expectUnreached() }
-        })
-        expect(3)
-        yield() // run coroutine
-        finish(5)
+        withExceptionHandler(handler) {
+            completable.subscribe(object : CompletableObserver {
+                override fun onSubscribe(d: Disposable) {
+                    expect(2)
+                    disposable = d
+                }
+
+                override fun onComplete() {
+                    expectUnreached()
+                }
+
+                override fun onError(t: Throwable) {
+                    expectUnreached()
+                }
+            })
+            expect(3)
+            yield() // run coroutine
+            finish(6)
+        }
+    }
+
+    @Test
+    fun testFatalExceptionInSubscribe() = runTest {
+        val handler: (Throwable) -> Unit = { e ->
+            assertTrue(e is UndeliverableException && e.cause is LinkageError); expect(2)
+        }
+
+        withExceptionHandler(handler) {
+            rxCompletable(Dispatchers.Unconfined) {
+                expect(1)
+                42
+            }.subscribe({ throw LinkageError() })
+            finish(3)
+        }
+    }
+
+    @Test
+    fun testFatalExceptionInSingle() = runTest {
+        rxCompletable(Dispatchers.Unconfined) {
+            throw LinkageError()
+        }.subscribe({ expectUnreached()  }, { expect(1); assertTrue(it is LinkageError) })
+        finish(2)
     }
 }

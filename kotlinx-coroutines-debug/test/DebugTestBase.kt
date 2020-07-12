@@ -12,12 +12,13 @@ open class DebugTestBase : TestBase() {
 
     @JvmField
     @Rule
-    val timeout = CoroutinesTimeout.seconds(10)
+    val timeout = CoroutinesTimeout.seconds(60)
 
     @Before
     open fun setUp() {
         before()
         DebugProbes.sanitizeStackTraces = false
+        DebugProbes.enableCreationStackTraces = true
         DebugProbes.install()
     }
 

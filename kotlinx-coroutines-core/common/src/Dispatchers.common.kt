@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -54,9 +54,9 @@ public expect object Dispatchers {
      *
      * For example, the following code:
      * ```
-     * withContext(Dispatcher.Unconfined) {
+     * withContext(Dispatchers.Unconfined) {
      *    println(1)
-     *    withContext(Dispatcher.Unconfined) { // Nested unconfined
+     *    withContext(Dispatchers.Unconfined) { // Nested unconfined
      *        println(2)
      *    }
      *    println(3)
@@ -66,7 +66,7 @@ public expect object Dispatchers {
      * Can print both "1 2 3" and "1 3 2", this is an implementation detail that can be changed.
      * But it is guaranteed that "Done" will be printed only when both `withContext` calls are completed.
      *
-     * Note that if you need your coroutine to be confined to a particular thread or a thread-pool after resumption,
+     * If you need your coroutine to be confined to a particular thread or a thread-pool after resumption,
      * but still want to execute it in the current call-frame until its first suspension, then you can use
      * an optional [CoroutineStart] parameter in coroutine builders like
      * [launch][CoroutineScope.launch] and [async][CoroutineScope.async] setting it to

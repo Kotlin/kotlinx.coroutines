@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.reactive
@@ -10,6 +10,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
+import java.util.*
 import kotlin.coroutines.*
 
 /**
@@ -93,7 +94,7 @@ private suspend fun <T> Publisher<T>.awaitOne(
     mode: Mode,
     default: T? = null
 ): T = suspendCancellableCoroutine { cont ->
-    subscribe(object : Subscriber<T> {
+    injectCoroutineContext(cont.context).subscribe(object : Subscriber<T> {
         private lateinit var subscription: Subscription
         private var value: T? = null
         private var seenValue = false

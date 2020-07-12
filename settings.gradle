@@ -1,6 +1,16 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+
+pluginManagement {
+    plugins {
+        id "org.openjfx.javafxplugin" version javafx_plugin_version
+
+        // JMH
+        id "net.ltgt.apt" version "0.21"
+        id "me.champeau.gradle.jmh" version "0.5.0"
+    }
+}
 
 rootProject.name = 'kotlinx.coroutines'
 enableFeaturePreview('GRADLE_METADATA')
@@ -11,20 +21,19 @@ def module(String path) {
     include(name)
     project(":$name").projectDir = file(path)
 }
-
+def prop = System.getProperty("build_snapshot_train")
+ext.build_snapshot_train = prop != null && prop != ""
 // ---------------------------
 
 include('benchmarks')
-include('knit')
-include('site')
-
-module('binary-compatibility-validator')
 
 include "kotlinx-coroutines-core"
 
 module('kotlinx-coroutines-test')
 module('kotlinx-coroutines-debug')
 module('stdlib-stubs')
+module('kotlinx-coroutines-bom')
+
 
 module('integration/kotlinx-coroutines-guava')
 module('integration/kotlinx-coroutines-jdk8')
@@ -33,13 +42,20 @@ module('integration/kotlinx-coroutines-play-services')
 
 module('reactive/kotlinx-coroutines-reactive')
 module('reactive/kotlinx-coroutines-reactor')
+module('reactive/kotlinx-coroutines-jdk9')
 module('reactive/kotlinx-coroutines-rx2')
-module('reactive/kotlinx-coroutines-rx-example')
-
+module('reactive/kotlinx-coroutines-rx3')
 module('ui/kotlinx-coroutines-android')
 module('ui/kotlinx-coroutines-android/android-unit-tests')
-module('ui/kotlinx-coroutines-javafx')
+if (JavaVersion.current().isJava11Compatible()) {
+    module('ui/kotlinx-coroutines-javafx')
+}
 module('ui/kotlinx-coroutines-swing')
 
 module('js/js-stub')
-module('js/example-frontend-js')
+if (!build_snapshot_train) {
+    module('js/example-frontend-js')
+    include('site')
+}
+
+module('integration-testing')

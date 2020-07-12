@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -52,11 +52,38 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
     }
 
 /**
- * An optional element in the coroutine context to handle uncaught exceptions.
+ * An optional element in the coroutine context to handle **uncaught** exceptions.
  *
- * Normally, uncaught exceptions can only result from coroutines created using the [launch][CoroutineScope.launch] builder.
+ * Normally, uncaught exceptions can only result from _root_ coroutines created using the [launch][CoroutineScope.launch] builder.
+ * All _children_ coroutines (coroutines created in the context of another [Job]) delegate handling of their
+ * exceptions to their parent coroutine, which also delegates to the parent, and so on until the root,
+ * so the `CoroutineExceptionHandler` installed in their context is never used.
+ * Coroutines running with [SupervisorJob] do not propagate exceptions to their parent and are treated like root coroutines.
  * A coroutine that was created using [async][CoroutineScope.async] always catches all its exceptions and represents them
- * in the resulting [Deferred] object.
+ * in the resulting [Deferred] object, so it cannot result in uncaught exceptions.
+ *
+ * ### Handling coroutine exceptions
+ *
+ * `CoroutineExceptionHandler` is a last-resort mechanism for global "catch all" behavior.
+ * You cannot recover from the exception in the `CoroutineExceptionHandler`. The coroutine had already completed
+ * with the corresponding exception when the handler is called. Normally, the handler is used to
+ * log the exception, show some kind of error message, terminate, and/or restart the application.
+ *
+ * If you need to handle exception in a specific part of the code, it is recommended to use `try`/`catch` around
+ * the corresponding code inside your coroutine. This way you can prevent completion of the coroutine
+ * with the exception (exception is now _caught_), retry the operation, and/or take other arbitrary actions:
+ *
+ * ```
+ * scope.launch { // launch child coroutine in a scope
+ *     try {
+ *          // do something
+ *     } catch (e: Throwable) {
+ *          // handle exception
+ *     }
+ * }
+ * ```
+ *
+ * ### Implementation details
  *
  * By default, when no handler is installed, uncaught exception are handled in the following way:
  * * If exception is [CancellationException] then it is ignored
@@ -65,7 +92,9 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  *     * if there is a [Job] in the context, then [Job.cancel] is invoked;
  *     * Otherwise, all instances of [CoroutineExceptionHandler] found via [ServiceLoader]
  *     * and current thread's [Thread.uncaughtExceptionHandler] are invoked.
- **/
+ *
+ * [CoroutineExceptionHandler] can be invoked from an arbitrary thread.
+ */
 public interface CoroutineExceptionHandler : CoroutineContext.Element {
     /**
      * Key for [CoroutineExceptionHandler] instance in the coroutine context.

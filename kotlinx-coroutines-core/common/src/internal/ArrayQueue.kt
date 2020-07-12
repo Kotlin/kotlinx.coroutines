@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -36,9 +36,15 @@ internal open class ArrayQueue<T : Any> {
         val currentSize = elements.size
         val newCapacity = currentSize shl 1
         val newElements = arrayOfNulls<Any>(newCapacity)
-        val remaining = elements.size - head
-        arraycopy(elements, head, newElements, 0, remaining)
-        arraycopy(elements, 0, newElements, remaining, head)
+        elements.copyInto(
+            destination = newElements,
+            startIndex = head
+        )
+        elements.copyInto(
+            destination = newElements,
+            destinationOffset = elements.size - head,
+            endIndex = head
+        )
         elements = newElements
         head = 0
         tail = currentSize

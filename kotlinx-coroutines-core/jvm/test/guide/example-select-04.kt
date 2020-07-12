@@ -1,9 +1,9 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.select04
+// This file was automatically generated from select-expression.md by Knit tool. Do not edit.
+package kotlinx.coroutines.guide.exampleSelect04
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
@@ -20,7 +20,6 @@ fun CoroutineScope.asyncStringsList(): List<Deferred<String>> {
 }
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     val list = asyncStringsList()
     val result = select<String> {
         list.withIndex().forEach { (index, deferred) ->
@@ -32,5 +31,4 @@ fun main() = runBlocking<Unit> {
     println(result)
     val countActive = list.count { it.isActive }
     println("$countActive coroutines are still active")
-//sampleEnd
 }

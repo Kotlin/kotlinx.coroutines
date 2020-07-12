@@ -1,13 +1,11 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
-@file:Suppress("PropertyName")
-
+@file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNUSED")
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.internal.sanitize
+import kotlinx.coroutines.debug.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.*
 
@@ -15,11 +13,16 @@ import kotlin.coroutines.jvm.internal.*
  * Class describing coroutine info such as its context, state and stacktrace.
  */
 @ExperimentalCoroutinesApi
-public data class CoroutineInfo internal constructor(
-    val context: CoroutineContext,
-    private val creationStackBottom: CoroutineStackFrame,
-    @JvmField internal val sequenceNumber: Long
-) {
+public class CoroutineInfo internal constructor(delegate: DebugCoroutineInfo) {
+    /**
+     * [Coroutine context][coroutineContext] of the coroutine
+     */
+    public val context: CoroutineContext = delegate.context
+    /**
+     * Last observed state of the coroutine
+     */
+    public val state: State = State.valueOf(delegate.state)
+    private val creationStackBottom: CoroutineStackFrame? = delegate.creationStackBottom
 
     /**
      * [Job] associated with a current coroutine or null.
@@ -29,31 +32,11 @@ public data class CoroutineInfo internal constructor(
 
     /**
      * Creation stacktrace of the coroutine.
+     * Can be empty if [DebugProbes.enableCreationStackTraces] is not set.
      */
     public val creationStackTrace: List<StackTraceElement> get() = creationStackTrace()
 
-    /**
-     * Last observed [state][State] of the coroutine.
-     */
-    public val state: State get() = _state
-
-    private var _state: State = State.CREATED
-
-    @JvmField
-    internal var lastObservedThread: Thread? = null
-
-    @JvmField
-    internal var lastObservedFrame: CoroutineStackFrame? = null
-
-    // Copy constructor
-    internal constructor(coroutine: Continuation<*>, state: CoroutineInfo) : this(
-        coroutine.context,
-        state.creationStackBottom,
-        state.sequenceNumber
-    ) {
-        _state = state.state
-        this.lastObservedFrame = state.lastObservedFrame
-    }
+    private val lastObservedFrame: CoroutineStackFrame? = delegate.lastObservedFrame
 
     /**
      * Last observed stacktrace of the coroutine captured on its suspension or resumption point.
@@ -64,15 +47,16 @@ public data class CoroutineInfo internal constructor(
         var frame: CoroutineStackFrame? = lastObservedFrame ?: return emptyList()
         val result = ArrayList<StackTraceElement>()
         while (frame != null) {
-            frame.getStackTraceElement()?.let { result.add(sanitize(it)) }
+            frame.getStackTraceElement()?.let { result.add(it) }
             frame = frame.callerFrame
         }
         return result
     }
 
     private fun creationStackTrace(): List<StackTraceElement> {
+        val bottom = creationStackBottom ?: return emptyList()
         // Skip "Coroutine creation stacktrace" frame
-        return sequence<StackTraceElement> { yieldFrames(creationStackBottom.callerFrame) }.toList()
+        return sequence<StackTraceElement> { yieldFrames(bottom.callerFrame) }.toList()
     }
 
     private tailrec suspend fun SequenceScope<StackTraceElement>.yieldFrames(frame: CoroutineStackFrame?) {
@@ -84,17 +68,7 @@ public data class CoroutineInfo internal constructor(
         }
     }
 
-    internal fun updateState(state: State, frame: Continuation<*>) {
-        // Propagate only duplicating transitions to running for KT-29997
-        if (_state == state && state == State.SUSPENDED && lastObservedFrame != null) return
-        _state = state
-        lastObservedFrame = frame as? CoroutineStackFrame
-        if (state == State.RUNNING) {
-            lastObservedThread = Thread.currentThread()
-        } else {
-            lastObservedThread = null
-        }
-    }
+    override fun toString(): String = "CoroutineInfo(state=$state,context=$context)"
 }
 
 /**

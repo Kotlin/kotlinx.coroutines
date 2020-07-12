@@ -1,9 +1,9 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.select05
+// This file was automatically generated from select-expression.md by Knit tool. Do not edit.
+package kotlinx.coroutines.guide.exampleSelect05
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -36,7 +36,6 @@ fun CoroutineScope.asyncString(str: String, time: Long) = async {
 }
 
 fun main() = runBlocking<Unit> {
-//sampleStart
     val chan = Channel<Deferred<String>>() // the channel for test
     launch { // launch printing coroutine
         for (s in switchMapDeferreds(chan)) 
@@ -52,5 +51,4 @@ fun main() = runBlocking<Unit> {
     delay(1000) // give it time to process
     chan.close() // close the channel ... 
     delay(500) // and wait some time to let it finish
-//sampleEnd
 }

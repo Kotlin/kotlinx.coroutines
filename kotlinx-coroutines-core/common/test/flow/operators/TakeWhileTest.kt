@@ -62,7 +62,6 @@ class TakeWhileTest : TestBase() {
 
         assertFailsWith<TestException>(flow)
         assertTrue(cancelled)
-        assertEquals(42, flow.onErrorReturn(42).single())
-        assertEquals(42, flow.onErrorCollect(flowOf(42)).single())
+        assertEquals(42, flow.catch { emit(42) }.single())
     }
 }
