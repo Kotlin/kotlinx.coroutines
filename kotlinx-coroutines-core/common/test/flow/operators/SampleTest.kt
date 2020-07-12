@@ -10,10 +10,11 @@ import kotlinx.coroutines.flow.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.time.*
 
 class SampleTest : TestBase() {
     @Test
-    public fun testBasic() = withVirtualTime {
+    fun testBasic() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(3)
@@ -295,14 +296,13 @@ class SampleTest : TestBase() {
             emit(1)
             expect(2)
             throw TestException()
-        }.flowWith(NamedDispatchers("unused")) {
-            sample(flow {
+        }.flowOn(NamedDispatchers("unused")).sample(flow {
                 delay(Long.MAX_VALUE)
                 emit(1)
             }).map {
                 expectUnreached()
             }
-        }
+
 
         assertFailsWith<TestException>(flow)
         finish(3)
@@ -355,7 +355,7 @@ class SampleTest : TestBase() {
 
     @ExperimentalTime
     @Test
-    public fun testDurationBasic() = withVirtualTime {
+    fun testDurationBasic() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(3)

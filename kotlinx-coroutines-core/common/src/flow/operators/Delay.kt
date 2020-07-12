@@ -160,27 +160,24 @@ public fun <T, R> Flow<T>.sample(sampler: Flow<R>): Flow<T> {
                 value -> send(value)
             }
         }
-        var isDone = false
         var lastValue: Any? = null
         while (lastValue !== DONE) {
             select<Unit> {
                 values.onReceiveOrNull {
                     if (it == null) {
-                        isDone = true
+                        lastValue = DONE
                         otherChannel.cancel(ChildCancelledException())
                     } else {
                         lastValue = it
                     }
                 }
-
-                // todo: shall be start sampling only when an element arrives or sample aways as here?
                 otherChannel.onReceiveOrNull {
                     if(it != null) {
                         val value = lastValue ?: return@onReceiveOrNull
                         lastValue = null // Consume the value
                         downstream.emit(NULL.unbox(value))
                     }else{
-                        isDone = true
+                        lastValue = DONE
                     }
                 }
             }
