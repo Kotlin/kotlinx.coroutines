@@ -787,7 +787,7 @@ public abstract interface class kotlinx/coroutines/channels/ReceiveChannel {
 	public abstract fun iterator ()Lkotlinx/coroutines/channels/ChannelIterator;
 	public abstract fun poll ()Ljava/lang/Object;
 	public abstract fun receive (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract fun receiveOrClosed (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun receiveOrClosed-ZYPwvRU (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun receiveOrNull (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
