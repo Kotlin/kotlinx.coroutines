@@ -430,3 +430,11 @@ public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = onEach { delay(tim
     replaceWith = ReplaceWith("this.flatMapLatest(transform)")
 )
 public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): Flow<R> = flatMapLatest(transform)
+
+@Deprecated(
+    level = DeprecationLevel.WARNING, // Since 1.3.8, was experimental when deprecated
+    message = "'scanReduce' was renamed to 'runningReduce' to be consistent with Kotlin standard library",
+    replaceWith = ReplaceWith("runningReduce(operation)")
+)
+@ExperimentalCoroutinesApi
+public fun <T> Flow<T>.scanReduce(operation: suspend (accumulator: T, value: T) -> T): Flow<T> = runningReduce(operation)
