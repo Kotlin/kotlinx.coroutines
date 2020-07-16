@@ -8,7 +8,7 @@ package kotlinx.coroutines.guide.exampleFlow29
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun foo(): Flow<Int> = flow {
+fun simple(): Flow<Int> = flow {
     for (i in 1..3) {
         println("Emitting $i")
         emit(i)
@@ -16,7 +16,7 @@ fun foo(): Flow<Int> = flow {
 }
 
 fun main() = runBlocking<Unit> {
-    foo()
+    simple()
         .catch { e -> println("Caught $e") } // does not catch downstream exceptions
         .collect { value ->
             check(value <= 1) { "Collected $value" }                 
