@@ -16,10 +16,10 @@ class FlowAsPublisherTest : TestBase() {
     fun testErrorOnCancellationIsReported() {
         expect(1)
         flow<Int> {
-            emit(2)
             try {
-                hang { expect(3) }
+                emit(2)
             } finally {
+                expect(3)
                 throw TestException()
             }
         }.asPublisher().subscribe(object : Subscriber<Int> {
@@ -52,12 +52,11 @@ class FlowAsPublisherTest : TestBase() {
         expect(1)
         flow<Int>    {
             emit(2)
-            hang { expect(3) }
         }.asPublisher().subscribe(object : Subscriber<Int> {
             private lateinit var subscription: Subscription
 
             override fun onComplete() {
-                expect(4)
+                expect(3)
             }
 
             override fun onSubscribe(s: Subscription?) {
@@ -74,6 +73,6 @@ class FlowAsPublisherTest : TestBase() {
                 expectUnreached()
             }
         })
-        finish(5)
+        finish(4)
     }
 }
