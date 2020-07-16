@@ -1,5 +1,25 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.3.8
+
+### New experimental features
+
+* Added `Flow.transformWhile operator` (#2065).
+* Replaced `scanReduce` with `runningReduce` to be consistent with the Kotlin standard library (#2139).
+
+### Bug fixes and improvements
+
+* Improve user experience for the upcoming coroutines debugger (#2093, #2118, #2131).
+* Debugger no longer retains strong references to the running coroutines (#2129).
+* Fixed race in `Flow.asPublisher` (#2109).
+* Fixed `ensureActive` to work in the empty context case to fix `IllegalStateException` when using flow from `suspend fun main` (#2044).
+* Fixed a problem with `AbortFlowException` in the `Flow.first` operator to avoid erroneous `NoSuchElementException` (#2051).
+* Fixed JVM dependency on Android annotations (#2075).
+* Removed keep rules mentioning `kotlinx.coroutines.android` from core module (#2061 by @mkj-gram).
+* Corrected some docs and examples (#2062, #2071, #2076, #2107, #2098, #2127, #2078, #2135).                                                                          
+* Improved the docs and guide on flow cancellation (#2043).
+* Updated Gradle version to `6.3` (it only affects multiplatform artifacts in this release).
+
 ## Version 1.3.7
 
 * Fixed problem that triggered Android Lint failure (#2004).
