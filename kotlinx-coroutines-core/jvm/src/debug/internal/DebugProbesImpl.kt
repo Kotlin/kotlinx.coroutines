@@ -147,7 +147,7 @@ internal object DebugProbesImpl {
 
     /**
      * Private method that dumps coroutines so that different public-facing method can use
-     * to produce different result types. The [transform] lambda is performed under the lock.
+     * to produce different result types.
      */
     private inline fun <R : Any> dumpCoroutinesInfoImpl(create: (CoroutineOwner<*>, CoroutineContext) -> R): List<R> =
         coroutineStateLock.write {
@@ -383,33 +383,25 @@ internal object DebugProbesImpl {
         val owner = completion.owner()
         if (owner != null) return completion
         /*
-         * Here we replace completion with a sequence of CoroutineStackFrame objects
+         * Here we replace completion with a sequence of StackTraceFrame objects
          * which represents creation stacktrace, thus making stacktrace recovery mechanism
          * even more verbose (it will attach coroutine creation stacktrace to all exceptions),
          * and then using CoroutineOwner completion as unique identifier of coroutineSuspended/resumed calls.
          */
-
         val frame = if (enableCreationStackTraces) {
-            val stacktrace = sanitizeStackTrace(Exception())
-            stacktrace.foldRight<StackTraceElement, CoroutineStackFrame?>(null) { frame, acc ->
-                StackTraceFrame(acc, frame)
-            }
+            sanitizeStackTrace(Exception()).toStackTraceFrame()
         } else {
             null
         }
-
         return createOwner(completion, frame)
     }
 
-    // Named class for better debugging
-    private class StackTraceFrame(
-        override val callerFrame: CoroutineStackFrame?,
-        private val stackTraceElement: StackTraceElement
-    ) : CoroutineStackFrame {
-        override fun getStackTraceElement(): StackTraceElement = stackTraceElement
-    }
+    private fun List<StackTraceElement>.toStackTraceFrame(): StackTraceFrame? =
+        foldRight<StackTraceElement, StackTraceFrame?>(null) { frame, acc ->
+            StackTraceFrame(acc, frame)
+        }
 
-    private fun <T> createOwner(completion: Continuation<T>, frame: CoroutineStackFrame?): Continuation<T> {
+    private fun <T> createOwner(completion: Continuation<T>, frame: StackTraceFrame?): Continuation<T> {
         if (!isInstalled) return completion
         val info = DebugCoroutineInfoImpl(completion.context, frame, sequenceNumber.incrementAndGet())
         val owner = CoroutineOwner(completion, info, frame)

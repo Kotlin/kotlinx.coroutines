@@ -17,7 +17,11 @@ internal const val SUSPENDED = "SUSPENDED"
  */
 internal class DebugCoroutineInfoImpl(
     context: CoroutineContext?,
-    public val creationStackBottom: CoroutineStackFrame?,
+    /**
+     * A reference to a stack-trace that is converted to a [StackTraceFrame] which implements [CoroutineStackFrame].
+     * The actual reference to the coroutine is not stored here, so we keep a strong reference.
+     */
+    public val creationStackBottom: StackTraceFrame?,
     @JvmField internal val sequenceNumber: Long
 ) {
     /**
