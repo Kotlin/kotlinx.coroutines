@@ -41,7 +41,7 @@ open class TakeWhileBenchmark {
         (0L..Long.MAX_VALUE).asFlow().takeWhileViaCollectWhile { it < size }.consume()
     }
 
-    // Direct implemenatation by checking predicate and throwing AbortFlowException
+    // Direct implementation by checking predicate and throwing AbortFlowException
     private fun <T> Flow<T>.takeWhileDirect(predicate: suspend (T) -> Boolean): Flow<T> = unsafeFlow {
         try {
             collect { value ->
