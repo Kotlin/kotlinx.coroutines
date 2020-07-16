@@ -18,10 +18,12 @@ public class CoroutineInfo internal constructor(delegate: DebugCoroutineInfo) {
      * [Coroutine context][coroutineContext] of the coroutine
      */
     public val context: CoroutineContext = delegate.context
+
     /**
      * Last observed state of the coroutine
      */
     public val state: State = State.valueOf(delegate.state)
+
     private val creationStackBottom: CoroutineStackFrame? = delegate.creationStackBottom
 
     /**

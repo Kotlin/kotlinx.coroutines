@@ -840,8 +840,32 @@ public final class kotlinx/coroutines/channels/ValueOrClosed {
 	public final synthetic fun unbox-impl ()Ljava/lang/Object;
 }
 
+public final class kotlinx/coroutines/debug/internal/DebugCoroutineInfo {
+	public fun <init> (Lkotlinx/coroutines/debug/internal/DebugCoroutineInfoImpl;Lkotlin/coroutines/CoroutineContext;)V
+	public final fun getContext ()Lkotlin/coroutines/CoroutineContext;
+	public final fun getCreationStackBottom ()Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;
+	public final fun getCreationStackTrace ()Ljava/util/List;
+	public final fun getLastObservedFrame ()Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;
+	public final fun getLastObservedThread ()Ljava/lang/Thread;
+	public final fun getSequenceNumber ()J
+	public final fun getState ()Ljava/lang/String;
+	public final fun lastObservedStackTrace ()Ljava/util/List;
+}
+
 public synthetic class kotlinx/coroutines/debug/internal/DebugProbesImplSequenceNumberRefVolatile {
 	public fun <init> (J)V
+}
+
+public final class kotlinx/coroutines/debug/internal/DebuggerInfo : java/io/Serializable {
+	public fun <init> (Lkotlinx/coroutines/debug/internal/DebugCoroutineInfoImpl;Lkotlin/coroutines/CoroutineContext;)V
+	public final fun getCoroutineId ()Ljava/lang/Long;
+	public final fun getDispatcher ()Ljava/lang/String;
+	public final fun getLastObservedStackTrace ()Ljava/util/List;
+	public final fun getLastObservedThreadName ()Ljava/lang/String;
+	public final fun getLastObservedThreadState ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getSequenceNumber ()J
+	public final fun getState ()Ljava/lang/String;
 }
 
 public abstract class kotlinx/coroutines/flow/AbstractFlow : kotlinx/coroutines/flow/Flow {
