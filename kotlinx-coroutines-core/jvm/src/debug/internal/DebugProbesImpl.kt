@@ -187,7 +187,6 @@ internal object DebugProbesImpl {
         check(isInstalled) { "Debug probes are not installed" }
         out.print("Coroutines dump ${dateFormat.format(System.currentTimeMillis())}")
         capturedCoroutines
-            .asSequence()
             .sortedBy { it.info.sequenceNumber }
             .forEach { owner ->
                 val info = owner.info
