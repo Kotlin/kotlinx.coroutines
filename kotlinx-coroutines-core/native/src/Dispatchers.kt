@@ -26,5 +26,5 @@ private class NativeMainDispatcher(val delegate: CoroutineDispatcher) : MainCoro
 
     override fun dispatchYield(context: CoroutineContext, block: Runnable) = delegate.dispatchYield(context, block)
 
-    override fun toString(): String = delegate.toString()
+    override fun toString(): String = toStringInternalImpl() ?: delegate.toString()
 }

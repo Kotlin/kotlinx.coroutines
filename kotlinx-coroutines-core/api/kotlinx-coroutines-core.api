@@ -446,6 +446,8 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 public abstract class kotlinx/coroutines/MainCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher {
 	public fun <init> ()V
 	public abstract fun getImmediate ()Lkotlinx/coroutines/MainCoroutineDispatcher;
+	public fun toString ()Ljava/lang/String;
+	protected final fun toStringInternalImpl ()Ljava/lang/String;
 }
 
 public final class kotlinx/coroutines/NonCancellable : kotlin/coroutines/AbstractCoroutineContextElement, kotlinx/coroutines/Job {
