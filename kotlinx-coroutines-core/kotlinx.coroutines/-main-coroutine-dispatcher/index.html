@@ -82,6 +82,28 @@ and used for any UI-based activities. Instance of <code>MainDispatcher</code> ca
 </tbody>
 </table>
 
+<h3 id="functions">Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="to-string.html">toString</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
+
+        <p>Returns a name of this main dispatcher for debugging purposes. This implementation returns
+<code>Dispatchers.Main</code> or <code>Dispatchers.Main.immediate</code> if it is the same as the corresponding
+reference in <a href="../-dispatchers/index.html">Dispatchers</a> or a short class-name representation with address otherwise.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="inherited-functions">Inherited Functions</h3>
 
 <table class="api-docs-table">
@@ -206,8 +228,7 @@ It does not do anything if there is no job in the context or it has no children.
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">ensureActive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Ensures that job in the current context is <a href="../-job/is-active.html">active</a>.
-Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the context does not have a job in it.</p>
+        <p>Ensures that job in the current context is <a href="../-job/is-active.html">active</a>.</p>
 
       </td>
 </tr>

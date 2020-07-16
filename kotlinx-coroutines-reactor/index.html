@@ -47,19 +47,19 @@
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/mono.html">mono</a></td>
       <td><code>Mono</code></td>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a></td>
-      <td>Cold mono that starts coroutine on subscribe</td>
+      <td>A cold Mono that starts the coroutine on subscription</td>
     </tr>
     <tr>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/flux.html">flux</a></td>
       <td><code>Flux</code></td>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a></td>
-      <td>Cold flux that starts coroutine on subscribe</td>
+      <td>A cold Flux that starts the coroutine on subscription</td>
     </tr>
   </tbody>
 </table>
 
-<p>Note that <code>Mono</code> and <code>Flux</code> are a subclass of <a href="https://www.reactive-streams.org">Reactive Streams</a>
-<code>Publisher</code> and extensions for it are covered by
+<p>Note that <code>Mono</code> and <code>Flux</code> are subclasses of <a href="https://www.reactive-streams.org">Reactive Streams</a>’
+<code>Publisher</code> and extensions for it are covered by the
 <a href="../kotlinx-coroutines-reactive">kotlinx-coroutines-reactive</a> module.</p>
 
 <p>Integration with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>:</p>
@@ -76,12 +76,12 @@
     <tr>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/kotlinx.coroutines.flow.-flow/as-flux.html">Flow.asFlux</a></td>
       <td><code>Flux</code></td>
-      <td>Converts the given flow to the TCK-compliant Flux.</td>
+      <td>Converts the given flow to a TCK-compliant Flux.</td>
     </tr>
   </tbody>
 </table>
 
-<p>This adapter is integrated with Reactor’s <code>Context</code> and coroutines <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/-reactor-context/index.html">ReactorContext</a>.</p>
+<p>This adapter is integrated with Reactor’s <code>Context</code> and coroutines’ <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/-reactor-context/index.html">ReactorContext</a>.</p>
 
 <p>Conversion functions:</p>
 
@@ -95,19 +95,19 @@
   <tbody>
     <tr>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/kotlinx.coroutines.-job/as-mono.html">Job.asMono</a></td>
-      <td>Converts job to hot mono</td>
+      <td>Converts a job to a hot Mono</td>
     </tr>
     <tr>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/kotlinx.coroutines.-deferred/as-mono.html">Deferred.asMono</a></td>
-      <td>Converts deferred value to hot mono</td>
+      <td>Converts a deferred value to a hot Mono</td>
     </tr>
     <tr>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/kotlinx.coroutines.channels.-receive-channel/as-flux.html">ReceiveChannel.asFlux</a></td>
-      <td>Converts streaming channel to hot flux</td>
+      <td>Converts a streaming channel to a hot Flux</td>
     </tr>
     <tr>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/reactor.core.scheduler.-scheduler/as-coroutine-dispatcher.html">Scheduler.asCoroutineDispatcher</a></td>
-      <td>Converts scheduler to <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a></td>
+      <td>Converts a scheduler to a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a></td>
     </tr>
   </tbody>
 </table>

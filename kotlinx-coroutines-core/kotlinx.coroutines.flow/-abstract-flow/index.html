@@ -722,6 +722,21 @@ in downstream flow and does not retry on exceptions that are thrown to cancel th
 <tr>
 <td>
 
+        <p><a href="../running-reduce.html">runningReduce</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../running-reduce.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">runningReduce</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$runningReduce(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.runningReduce.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.runningReduce.T, , )))/operation">operation</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">accumulator</span><span class="symbol">:</span>&nbsp;<a href="../running-reduce.html#T"><span class="identifier">T</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../running-reduce.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../running-reduce.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../running-reduce.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Reduces the given flow with <a href="../running-reduce.html#kotlinx.coroutines.flow$runningReduce(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.runningReduce.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.runningReduce.T, , )))/operation">operation</a>, emitting every intermediate result, including initial value.
+The first element is taken as initial value for operation accumulator.
+This operator has a sibling with initial value – <a href="../scan.html">scan</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../sample.html">sample</a></p>
 
       </td>
@@ -758,11 +773,7 @@ For example:</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../scan-reduce.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">scanReduce</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$scanReduce(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.scanReduce.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.scanReduce.T, , )))/operation">operation</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">accumulator</span><span class="symbol">:</span>&nbsp;<a href="../scan-reduce.html#T"><span class="identifier">T</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../scan-reduce.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../scan-reduce.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../scan-reduce.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Reduces the given flow with <a href="../scan-reduce.html#kotlinx.coroutines.flow$scanReduce(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.scanReduce.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.scanReduce.T, , )))/operation">operation</a>, emitting every intermediate result, including initial value.
-The first element is taken as initial value for operation accumulator.
-This operator has a sibling with initial value – <a href="../scan.html">scan</a>.</p>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../scan-reduce.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">scanReduce</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$scanReduce(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.scanReduce.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.scanReduce.T, , )))/operation">operation</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">accumulator</span><span class="symbol">:</span>&nbsp;<a href="../scan-reduce.html#T"><span class="identifier">T</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../scan-reduce.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../scan-reduce.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../scan-reduce.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
       </td>
 </tr>
@@ -897,6 +908,20 @@ Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-arg
 
         <p>Returns a flow that produces element by <a href="../transform-latest.html#kotlinx.coroutines.flow$transformLatest(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.transformLatest.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.transformLatest.R)), kotlinx.coroutines.flow.transformLatest.T, kotlin.Unit)))/transform">transform</a> function every time the original flow emits a value.
 When the original flow emits a new value, the previous <code>transform</code> block is cancelled, thus the name <code>transformLatest</code>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../transform-while.html">transformWhile</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../transform-while.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">transformWhile</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$transformWhile(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.transformWhile.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.transformWhile.R)), kotlinx.coroutines.flow.transformWhile.T, kotlin.Boolean)))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="../transform-while.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../transform-while.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../transform-while.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Applies <a href="../transform-while.html#kotlinx.coroutines.flow$transformWhile(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.transformWhile.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.transformWhile.R)), kotlinx.coroutines.flow.transformWhile.T, kotlin.Boolean)))/transform">transform</a> function to each value of the given flow while this
+function returns <code>true</code>.</p>
 
       </td>
 </tr>

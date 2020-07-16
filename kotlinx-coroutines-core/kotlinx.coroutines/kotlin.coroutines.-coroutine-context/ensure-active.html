@@ -35,11 +35,11 @@
 
 <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">ensureActive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Job.kt#L602">(source)</a></div>
 
-<p>Ensures that job in the current context is <a href="../-job/is-active.html">active</a>.
-Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the context does not have a job in it.</p>
+<p>Ensures that job in the current context is <a href="../-job/is-active.html">active</a>.</p>
 
 <p>If the job is no longer active, throws <a href="../-cancellation-exception/index.html">CancellationException</a>.
-If the job was cancelled, thrown exception contains the original cancellation cause.</p>
+If the job was cancelled, thrown exception contains the original cancellation cause.
+This function does not do anything if there is no <a href="../-job/index.html">Job</a> in the context, since such a coroutine cannot be cancelled.</p>
 
 <p>This method is a drop-in replacement for the following code, but with more precise exception:</p>
 

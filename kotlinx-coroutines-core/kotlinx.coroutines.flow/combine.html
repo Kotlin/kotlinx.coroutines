@@ -42,8 +42,8 @@ the most recently emitted values by each flow.</p>
 
   <p>It can be demonstrated with the following example:</p>
 
-  <pre>val flow = flowOf(1, 2).delayEach(10)
-val flow2 = flowOf("a", "b", "c").delayEach(15)
+  <pre>val flow = flowOf(1, 2).onEach { delay(10) }
+val flow2 = flowOf("a", "b", "c").onEach { delay(15) }
 flow.combine(flow2) { i, s -&gt; i.toString() + s }.collect {
     println(it) // Will print "1a 2a 2b 2c"
 }
