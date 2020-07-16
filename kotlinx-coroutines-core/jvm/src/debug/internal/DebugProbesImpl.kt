@@ -97,7 +97,7 @@ internal object DebugProbesImpl {
     }
 
     private fun startWeakRefCleanerThread() {
-        weakRefCleanerThread = thread(isDaemon = true, name = "DebugProbesWeakRefCleaner") {
+        weakRefCleanerThread = thread(isDaemon = true, name = "Coroutines Debugger Cleaner") {
             callerInfoCache.runWeakRefQueueCleaningLoopUntilInterrupted()
         }
     }

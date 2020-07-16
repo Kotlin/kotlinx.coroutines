@@ -8,6 +8,7 @@ import junit.framework.Assert.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.internal.*
 import org.junit.*
+import kotlin.concurrent.*
 
 class ConcurrentWeakMapCollectionStressTest : TestBase() {
     private data class Key(val i: Int)
@@ -16,12 +17,16 @@ class ConcurrentWeakMapCollectionStressTest : TestBase() {
     
     @Test
     fun testCollected() {
-        // use very big arrays as values
+        // use very big arrays as values, we'll need a queue and a cleaner thread to handle them
         val m = ConcurrentWeakMap<Key, ByteArray>(weakRefQueue = true)
+        val cleaner = thread(name = "ConcurrentWeakMapCollectionStressTest-Cleaner") {
+            m.runWeakRefQueueCleaningLoopUntilInterrupted()
+        }
         for (i in 1..nElements) {
-            m.cleanWeakRefQueueOnce() // clean values before every put
             m.put(Key(i), ByteArray(size))
         }
         assertTrue(m.size < nElements) // some of it was collected for sure
+        cleaner.interrupt()
+        cleaner.join()
     }
 }
