@@ -14,6 +14,7 @@ import kotlin.coroutines.jvm.internal.*
  * **DO NOT MAKE BINARY-INCOMPATIBLE CHANGES TO THIS CLASS**.
  */
 @Suppress("unused")
+@PublishedApi
 internal class DebugCoroutineInfo(
     source: DebugCoroutineInfoImpl,
     public val context: CoroutineContext // field is used as of 1.4-M3

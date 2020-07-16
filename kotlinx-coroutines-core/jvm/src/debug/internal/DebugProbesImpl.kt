@@ -149,34 +149,28 @@ internal object DebugProbesImpl {
      * Private method that dumps coroutines so that different public-facing method can use
      * to produce different result types. The [transform] lambda is performed under the lock.
      */
-    private fun <T> dumpCoroutinesInfoImpl(transform: (Sequence<CoroutineOwner<*>>) -> T): T =
+    private inline fun <R : Any> dumpCoroutinesInfoImpl(create: (CoroutineOwner<*>, CoroutineContext) -> R): List<R> =
         coroutineStateLock.write {
             check(isInstalled) { "Debug probes are not installed" }
-            return transform(capturedCoroutines.asSequence())
+            capturedCoroutines
+                // Stable ordering of coroutines by their sequence number
+                .sortedBy { it.info.sequenceNumber }
+                // Leave in the dump only the coroutines that were not collected while we were dumping them
+                .mapNotNull { owner -> owner.info.context?.let { context -> create(owner, context) } }
         }
 
     /*
      * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3.
      */
     public fun dumpCoroutinesInfo(): List<DebugCoroutineInfo> =
-        dumpCoroutinesInfoImpl { seq ->
-            // Leave in the dump only the coroutines that were not collected while we were dumping them
-            seq.mapNotNull { owner -> owner.info.context?.let { context -> DebugCoroutineInfo(owner.info, context) } }
-                .sortedBy { it.sequenceNumber }
-                .toList()
-        }
+        dumpCoroutinesInfoImpl { owner, context -> DebugCoroutineInfo(owner.info, context) }
 
     /*
      * Internal (JVM-public) method to be used by IDEA debugger in the future (not used as of 1.4-M3).
      * It is equivalent to [dumpCoroutinesInfo], but returns serializable (and thus less typed) objects.
      */
     public fun dumpDebuggerInfo(): List<DebuggerInfo> =
-        dumpCoroutinesInfoImpl { seq ->
-            // Leave in the dump only the coroutines that were not collected while we were dumping them
-            seq.mapNotNull { owner -> owner.info.context?.let { context -> DebuggerInfo(owner.info, context) } }
-                .sortedBy { it.sequenceNumber }
-                .toList()
-        }
+        dumpCoroutinesInfoImpl { owner, context -> DebuggerInfo(owner.info, context) }
 
     public fun dumpCoroutines(out: PrintStream): Unit = synchronized(out) {
         /*

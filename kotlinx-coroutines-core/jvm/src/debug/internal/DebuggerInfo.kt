@@ -15,6 +15,7 @@ import kotlinx.coroutines.*
  * It is serializable in order to speedup JDWP interactions.
  * **DO NOT MAKE BINARY-INCOMPATIBLE CHANGES TO THIS CLASS**.
  */
+@PublishedApi
 internal class DebuggerInfo(source: DebugCoroutineInfoImpl, context: CoroutineContext) : Serializable {
     public val coroutineId: Long? = context[CoroutineId]?.id
     public val dispatcher: String? = context[ContinuationInterceptor]?.toString()
