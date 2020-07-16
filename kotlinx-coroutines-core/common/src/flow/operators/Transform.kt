@@ -100,12 +100,12 @@ public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend 
  *
  * For example:
  * ```
- * flowOf(1, 2, 3, 4).scanReduce { (v1, v2) -> v1 + v2 }.toList()
+ * flowOf(1, 2, 3, 4).runningReduce { (v1, v2) -> v1 + v2 }.toList()
  * ```
  * will produce `[1, 3, 6, 10]`
  */
 @ExperimentalCoroutinesApi
-public fun <T> Flow<T>.scanReduce(operation: suspend (accumulator: T, value: T) -> T): Flow<T> = flow {
+public fun <T> Flow<T>.runningReduce(operation: suspend (accumulator: T, value: T) -> T): Flow<T> = flow {
     var accumulator: Any? = NULL
     collect { value ->
         accumulator = if (accumulator === NULL) {
