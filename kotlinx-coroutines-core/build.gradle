@@ -131,6 +131,7 @@ task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
     exclude '**/*LCStressTest.*' // lin-check tests use LinChecker which needs JDK8
     exclude '**/exceptions/**'   // exceptions tests check suppressed exception which needs JDK8
     exclude '**/ExceptionsGuideTest.*'
+    exclude '**/RunInterruptibleStressTest.*' // fails on JDK 1.6 due to JDK bug
 }
 
 // Run these tests only during nightly stress test
