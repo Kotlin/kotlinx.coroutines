@@ -20,6 +20,11 @@ import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 import kotlin.synchronized
 import kotlinx.coroutines.internal.artificialFrame as createArtificialFrame // IDEA bug workaround
 
+/*
+ * This class implement debugger infrastructure is directly used by IDEA debugger.
+ * **DO NOT MAKE BINARY-INCOMPATIBLE CHANGES TO THIS CLASS**.
+ */
+@PublishedApi
 internal object DebugProbesImpl {
     private const val ARTIFICIAL_FRAME_MESSAGE = "Coroutine creation stacktrace"
     private val dateFormat = SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
@@ -27,17 +32,16 @@ internal object DebugProbesImpl {
     private var weakRefCleanerThread: Thread? = null
 
     // Values are boolean, so this map does not need to use a weak reference queue
-    private val capturedCoroutinesMap = ConcurrentWeakMap<CoroutineOwner<*>, Boolean>()
-    private val capturedCoroutines: Set<CoroutineOwner<*>> get() = capturedCoroutinesMap.keys
+    private val capturedCoroutinesMap = ConcurrentWeakMap<CoroutineOwnerImpl<*>, Boolean>()
+    private val capturedCoroutines: Set<CoroutineOwnerImpl<*>> get() = capturedCoroutinesMap.keys
 
     @Volatile
     private var installations = 0
 
     /**
-     * This internal method is used by IDEA debugger under the JVM name of
-     * "isInstalled$kotlinx_coroutines_debug".
+     * Internal (JVM-public) getter is used by IDEA debugger.
      */
-    internal val isInstalled: Boolean get() = installations > 0
+    public val isInstalled: Boolean get() = installations > 0
 
     // To sort coroutines by creation order, used as unique id
     private val sequenceNumber = atomic(0L)
@@ -50,8 +54,8 @@ internal object DebugProbesImpl {
      */
     private val coroutineStateLock = ReentrantReadWriteLock()
 
-    public var sanitizeStackTraces: Boolean = true
-    public var enableCreationStackTraces: Boolean = true
+    internal var sanitizeStackTraces: Boolean = true
+    internal var enableCreationStackTraces: Boolean = true
 
     /*
      * Substitute for service loader, DI between core and debug modules.
@@ -79,14 +83,14 @@ internal object DebugProbesImpl {
      */
     private val callerInfoCache = ConcurrentWeakMap<CoroutineStackFrame, DebugCoroutineInfoImpl>(weakRefQueue = true)
 
-    public fun install(): Unit = coroutineStateLock.write {
+    internal fun install(): Unit = coroutineStateLock.write {
         if (++installations > 1) return
         startWeakRefCleanerThread()
         if (AgentPremain.isInstalledStatically) return
         dynamicAttach?.invoke(true) // attach
     }
 
-    public fun uninstall(): Unit = coroutineStateLock.write {
+    internal fun uninstall(): Unit = coroutineStateLock.write {
         check(isInstalled) { "Agent was not installed" }
         if (--installations != 0) return
         stopWeakRefCleanerThread()
@@ -107,7 +111,7 @@ internal object DebugProbesImpl {
         weakRefCleanerThread = null
     }
 
-    public fun hierarchyToString(job: Job): String = coroutineStateLock.write {
+    internal fun hierarchyToString(job: Job): String = coroutineStateLock.write {
         check(isInstalled) { "Debug probes are not installed" }
         val jobToStack = capturedCoroutines
             .filter { it.delegate.context[Job] != null }
@@ -149,7 +153,7 @@ internal object DebugProbesImpl {
      * Private method that dumps coroutines so that different public-facing method can use
      * to produce different result types.
      */
-    private inline fun <R : Any> dumpCoroutinesInfoImpl(create: (CoroutineOwner<*>, CoroutineContext) -> R): List<R> =
+    private inline fun <R : Any> dumpCoroutinesInfoImpl(create: (CoroutineOwnerImpl<*>, CoroutineContext) -> R): List<R> =
         coroutineStateLock.write {
             check(isInstalled) { "Debug probes are not installed" }
             capturedCoroutines
@@ -172,7 +176,7 @@ internal object DebugProbesImpl {
     public fun dumpDebuggerInfo(): List<DebuggerInfo> =
         dumpCoroutinesInfoImpl { owner, context -> DebuggerInfo(owner.info, context) }
 
-    public fun dumpCoroutines(out: PrintStream): Unit = synchronized(out) {
+    internal fun dumpCoroutines(out: PrintStream): Unit = synchronized(out) {
         /*
          * This method synchronizes both on `out` and `this` for a reason:
          * 1) Taking a write lock is required to have a consistent snapshot of coroutines.
@@ -213,7 +217,7 @@ internal object DebugProbesImpl {
     }
 
     /*
-     * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3.
+     * This method used by IDEA debugger as of 1.4-M3.
      * It is similar to [enhanceStackTraceWithThreadDumpImpl], but uses debugger-facing [DebugCoroutineInfo] type.
      */
     @Suppress("unused")
@@ -362,15 +366,15 @@ internal object DebugProbesImpl {
         return if (caller.getStackTraceElement() != null) caller else caller.realCaller()
     }
 
-    private fun updateState(owner: CoroutineOwner<*>, frame: Continuation<*>, state: String) = coroutineStateLock.read {
+    private fun updateState(owner: CoroutineOwnerImpl<*>, frame: Continuation<*>, state: String) = coroutineStateLock.read {
         if (!isInstalled) return
         owner.info.updateState(state, frame)
     }
 
-    private fun Continuation<*>.owner(): CoroutineOwner<*>? = (this as? CoroutineStackFrame)?.owner()
+    private fun Continuation<*>.owner(): CoroutineOwnerImpl<*>? = (this as? CoroutineStackFrame)?.owner()
 
-    private tailrec fun CoroutineStackFrame.owner(): CoroutineOwner<*>? =
-        if (this is CoroutineOwner<*>) this else callerFrame?.owner()
+    private tailrec fun CoroutineStackFrame.owner(): CoroutineOwnerImpl<*>? =
+        if (this is CoroutineOwnerImpl<*>) this else callerFrame?.owner()
 
     // Not guarded by the lock at all, does not really affect consistency
     internal fun <T> probeCoroutineCreated(completion: Continuation<T>): Continuation<T> {
@@ -403,14 +407,14 @@ internal object DebugProbesImpl {
     private fun <T> createOwner(completion: Continuation<T>, frame: StackTraceFrame?): Continuation<T> {
         if (!isInstalled) return completion
         val info = DebugCoroutineInfoImpl(completion.context, frame, sequenceNumber.incrementAndGet())
-        val owner = CoroutineOwner(completion, info, frame)
+        val owner = CoroutineOwnerImpl(completion, info, frame)
         capturedCoroutinesMap[owner] = true
         if (!isInstalled) capturedCoroutinesMap.clear()
         return owner
     }
 
     // Not guarded by the lock at all, does not really affect consistency
-    private fun probeCoroutineCompleted(owner: CoroutineOwner<*>) {
+    private fun probeCoroutineCompleted(owner: CoroutineOwnerImpl<*>) {
         capturedCoroutinesMap.remove(owner)
         /*
          * This removal is a guard against improperly implemented CoroutineStackFrame
@@ -424,11 +428,11 @@ internal object DebugProbesImpl {
      * This class is injected as completion of all continuations in [probeCoroutineCompleted].
      * It is owning the coroutine info and responsible for managing all its external info related to debug agent.
      */
-    private class CoroutineOwner<T>(
+    private class CoroutineOwnerImpl<T>(
         @JvmField val delegate: Continuation<T>,
         @JvmField val info: DebugCoroutineInfoImpl,
         private val frame: CoroutineStackFrame?
-    ) : Continuation<T> by delegate, CoroutineStackFrame {
+    ) : Continuation<T> by delegate, CoroutineStackFrame, CoroutineOwner<T> {
 
         override val callerFrame: CoroutineStackFrame?
             get() = frame?.callerFrame
@@ -441,6 +445,11 @@ internal object DebugProbesImpl {
         }
 
         override fun toString(): String = delegate.toString()
+
+        /** Implements method for IDEA debugger from [CoroutineOwner] interface. */
+        override fun getCoroutineInfo(): DebugCoroutineInfo = DebugCoroutineInfo(info, context)
+        /** Implements method for IDEA debugger from [CoroutineOwner] interface. */
+        override fun getDebuggerInfo(): DebuggerInfo = DebuggerInfo(info, context)
     }
 
     private fun <T : Throwable> sanitizeStackTrace(throwable: T): List<StackTraceElement> {

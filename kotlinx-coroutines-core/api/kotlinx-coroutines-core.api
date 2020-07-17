@@ -840,6 +840,11 @@ public final class kotlinx/coroutines/channels/ValueOrClosed {
 	public final synthetic fun unbox-impl ()Ljava/lang/Object;
 }
 
+public abstract interface class kotlinx/coroutines/debug/internal/CoroutineOwner : kotlin/coroutines/Continuation {
+	public abstract fun getCoroutineInfo ()Lkotlinx/coroutines/debug/internal/DebugCoroutineInfo;
+	public abstract fun getDebuggerInfo ()Lkotlinx/coroutines/debug/internal/DebuggerInfo;
+}
+
 public final class kotlinx/coroutines/debug/internal/DebugCoroutineInfo {
 	public fun <init> (Lkotlinx/coroutines/debug/internal/DebugCoroutineInfoImpl;Lkotlin/coroutines/CoroutineContext;)V
 	public final fun getContext ()Lkotlin/coroutines/CoroutineContext;
@@ -850,6 +855,14 @@ public final class kotlinx/coroutines/debug/internal/DebugCoroutineInfo {
 	public final fun getSequenceNumber ()J
 	public final fun getState ()Ljava/lang/String;
 	public final fun lastObservedStackTrace ()Ljava/util/List;
+}
+
+public final class kotlinx/coroutines/debug/internal/DebugProbesImpl {
+	public static final field INSTANCE Lkotlinx/coroutines/debug/internal/DebugProbesImpl;
+	public final fun dumpCoroutinesInfo ()Ljava/util/List;
+	public final fun dumpDebuggerInfo ()Ljava/util/List;
+	public final fun enhanceStackTraceWithThreadDump (Lkotlinx/coroutines/debug/internal/DebugCoroutineInfo;Ljava/util/List;)Ljava/util/List;
+	public final fun isInstalled ()Z
 }
 
 public synthetic class kotlinx/coroutines/debug/internal/DebugProbesImplSequenceNumberRefVolatile {
