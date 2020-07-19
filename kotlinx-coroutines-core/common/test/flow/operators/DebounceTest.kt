@@ -11,7 +11,7 @@ import kotlin.time.*
 
 class DebounceTest : TestBase() {
     @Test
-    public fun testBasic() = withVirtualTime {
+    fun testBasic() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(3)
@@ -175,7 +175,6 @@ class DebounceTest : TestBase() {
             expect(2)
             yield()
             throw TestException()
-            it
         }
 
         assertFailsWith<TestException>(flow)
@@ -193,7 +192,6 @@ class DebounceTest : TestBase() {
             expect(2)
             yield()
             throw TestException()
-            it
         }
 
         assertFailsWith<TestException>(flow)
@@ -202,7 +200,7 @@ class DebounceTest : TestBase() {
 
     @ExperimentalTime
     @Test
-    public fun testDurationBasic() = withVirtualTime {
+    fun testDurationBasic() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(3)
@@ -222,5 +220,48 @@ class DebounceTest : TestBase() {
         val result = flow.debounce(1000.milliseconds).toList()
         assertEquals(listOf("A", "D", "E"), result)
         finish(5)
+    }
+
+    @Test
+    fun testDebounceSelector() = withVirtualTime {
+        expect(1)
+        val flow = flow {
+            expect(3)
+            emit("A")
+            delay(1500)
+            emit("B")
+            delay(500)
+            emit("C")
+            delay(250)
+            emit("D")
+            delay(800)
+            emit("E")
+            expect(4)
+        }
+
+        expect(2)
+        val result = flow.debounce {
+            if (it == "C") {
+                1
+            } else {
+                1000
+            }
+        }.toList()
+
+        assertEquals(listOf("A", "C", "E"), result)
+        finish(5)
+    }
+
+    @Test
+    fun testZeroDebounceTime() = withVirtualTime {
+        expect(1)
+        val flow = flow {
+            expect(2)
+            emit("A")
+            delay(10)
+            emit("B")
+        }
+        assertFailsWith<IllegalArgumentException>(flow.debounce(0))
+        finish(3)
     }
 }

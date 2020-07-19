@@ -16,7 +16,7 @@ import kotlin.time.*
 
 /**
  * Returns a flow that mirrors the original flow, but filters out values
- * that are followed by the newer values within the given [timeout][timeoutMillis].
+ * that are followed by the newer values within the given [timeoutMillis].
  * The latest value is always emitted.
  *
  * Example:
@@ -37,39 +37,45 @@ import kotlin.time.*
  *
  * Note that the resulting flow does not emit anything as long as the original flow emits
  * items faster than every [timeoutMillis] milliseconds.
+ * @param timeoutMillis must be positive
  */
 @FlowPreview
-public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
-    require(timeoutMillis > 0) { "Debounce timeout should be positive" }
-    return scopedFlow { downstream ->
-        // Actually Any, KT-30796
-        val values = produce<Any?>(capacity = Channel.CONFLATED) {
-            collect { value -> send(value ?: NULL) }
-        }
-        var lastValue: Any? = null
-        while (lastValue !== DONE) {
-            select<Unit> {
-                // Should be receiveOrClosed when boxing issues are fixed
-                values.onReceiveOrNull {
-                    if (it == null) {
-                        if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
-                        lastValue = DONE
-                    } else {
-                        lastValue = it
-                    }
-                }
+public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> = debounceInternal { timeoutMillis }
 
-                lastValue?.let { value ->
-                    // set timeout when lastValue != null
-                    onTimeout(timeoutMillis) {
-                        lastValue = null // Consume the value
-                        downstream.emit(NULL.unbox(value))
-                    }
-                }
-            }
-        }
+/**
+ * A variation of [debounce] that allows specifying the timeout value dynamically.
+ *
+ * Example:
+ * ```
+ * flow {
+ *     emit(1)
+ *     delay(100)
+ *     emit(2)
+ *     delay(100)
+ *     emit(3)
+ *     delay(1000)
+ *     emit(4)
+ *     delay(100)
+ *     emit(5)
+ *     delay(100)
+ *     emit(6)
+ * }.debounce {
+ *     if (it == 4) {
+ *         1L
+ *     } else {
+ *         300L
+ *     }
+ * }
+ * ```
+ * produces `3, 4, 6`.
+ *
+ * @param timeoutMillisSelector [T] is the emitted value and the return value must be a positive timeout in milliseconds
+ */
+@FlowPreview
+public fun <T> Flow<T>.debounce(timeoutMillisSelector: (T) -> Long): Flow<T> =
+    debounceInternal { emittedItem ->
+        timeoutMillisSelector(emittedItem)
     }
-}
 
 /**
  * Returns a flow that mirrors the original flow, but filters out values
@@ -98,6 +104,39 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
 @ExperimentalTime
 @FlowPreview
 public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.toDelayMillis())
+
+private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long) : Flow<T> =
+    scopedFlow { downstream ->
+        // Actually Any, KT-30796
+        val values = produce<Any?>(capacity = Channel.CONFLATED) {
+            collect { value -> send(value ?: NULL) }
+        }
+        var lastValue: Any? = null
+        while (lastValue !== DONE) {
+            select<Unit> {
+                // Should be receiveOrClosed when boxing issues are fixed
+                values.onReceiveOrNull {
+                    if (it == null) {
+                        if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
+                        lastValue = DONE
+                    } else {
+                        lastValue = it
+                    }
+                }
+
+                lastValue?.let { value ->
+                    val unboxedValue: T = NULL.unbox(value)
+                    val timeoutMillis = timeoutMillisSelector(unboxedValue)
+                    require(timeoutMillis > 0) { "Debounce timeout should be positive" }
+                    // set timeout when lastValue != null
+                    onTimeout(timeoutMillis) {
+                        lastValue = null // Consume the value
+                        downstream.emit(unboxedValue)
+                    }
+                }
+            }
+        }
+    }
 
 /**
  * Returns a flow that emits only the latest value emitted by the original flow during the given sampling [period][periodMillis].
