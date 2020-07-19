@@ -40,7 +40,10 @@ import kotlin.time.*
  * @param timeoutMillis must be positive
  */
 @FlowPreview
-public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> = debounceInternal { timeoutMillis }
+public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
+    require(timeoutMillis > 0) { "Debounce timeout should be positive" }
+    return debounceInternal { timeoutMillis }
+}
 
 /**
  * A variation of [debounce] that allows specifying the timeout value dynamically.
@@ -61,7 +64,7 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> = debounceInternal
  *     emit(6)
  * }.debounce {
  *     if (it == 4) {
- *         1L
+ *         0L
  *     } else {
  *         300L
  *     }
@@ -69,12 +72,14 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> = debounceInternal
  * ```
  * produces `3, 4, 6`.
  *
- * @param timeoutMillisSelector [T] is the emitted value and the return value must be a positive timeout in milliseconds
+ * @param timeoutMillisSelector [T] is the emitted value and the return value is timeout in milliseconds. 0ms timeout is allowed.
  */
 @FlowPreview
 public fun <T> Flow<T>.debounce(timeoutMillisSelector: (T) -> Long): Flow<T> =
     debounceInternal { emittedItem ->
-        timeoutMillisSelector(emittedItem)
+        val timeoutMillis = timeoutMillisSelector(emittedItem)
+        require(timeoutMillis >= 0) { "Debounce timeout should not be negative" }
+        timeoutMillis
     }
 
 /**
@@ -127,7 +132,6 @@ private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long) : F
                 lastValue?.let { value ->
                     val unboxedValue: T = NULL.unbox(value)
                     val timeoutMillis = timeoutMillisSelector(unboxedValue)
-                    require(timeoutMillis > 0) { "Debounce timeout should be positive" }
                     // set timeout when lastValue != null
                     onTimeout(timeoutMillis) {
                         lastValue = null // Consume the value

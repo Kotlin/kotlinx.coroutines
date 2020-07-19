@@ -232,7 +232,7 @@ class DebounceTest : TestBase() {
             emit("B")
             delay(500)
             emit("C")
-            delay(250)
+            delay(1)
             emit("D")
             delay(800)
             emit("E")
@@ -242,7 +242,7 @@ class DebounceTest : TestBase() {
         expect(2)
         val result = flow.debounce {
             if (it == "C") {
-                1
+                0
             } else {
                 1000
             }
@@ -253,15 +253,21 @@ class DebounceTest : TestBase() {
     }
 
     @Test
-    fun testZeroDebounceTime() = withVirtualTime {
+    fun testZeroDebounceTime() = runTest {
+        assertFailsWith<IllegalArgumentException> {
+            flowOf<Int>().debounce(0)
+        }
+    }
+
+    @Test
+    fun testNegativeDebounceTimeSelector() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(2)
             emit("A")
-            delay(10)
-            emit("B")
+            delay(1)
         }
-        assertFailsWith<IllegalArgumentException>(flow.debounce(0))
+        assertFailsWith<IllegalArgumentException>(flow.debounce { -1 })
         finish(3)
     }
 }
