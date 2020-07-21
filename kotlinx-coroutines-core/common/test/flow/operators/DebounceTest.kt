@@ -223,7 +223,7 @@ class DebounceTest : TestBase() {
     }
 
     @Test
-    fun testDebounceSelector() = withVirtualTime {
+    fun testDebounceSelectorBasic() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(3)
@@ -253,21 +253,36 @@ class DebounceTest : TestBase() {
     }
 
     @Test
-    fun testZeroDebounceTime() = runTest {
-        assertFailsWith<IllegalArgumentException> {
-            flowOf<Int>().debounce(0)
+    fun testZeroDebounceTime() = withVirtualTime {
+        expect(1)
+        val flow = flow {
+            expect(2)
+            emit("A")
+            emit("B")
+            emit("C")
+            expect(3)
         }
+
+        val result = flow.debounce(0).toList()
+
+        assertEquals(listOf("A", "B", "C"), result)
+        finish(4)
     }
 
     @Test
-    fun testNegativeDebounceTimeSelector() = withVirtualTime {
+    fun testZeroDebounceTimeSelector() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(2)
             emit("A")
             delay(1)
+            emit("B")
+            expect(3)
         }
-        assertFailsWith<IllegalArgumentException>(flow.debounce { -1 })
-        finish(3)
+
+        val result = flow.debounce { 0 }.toList()
+
+        assertEquals(listOf("A", "B"), result)
+        finish(4)
     }
 }

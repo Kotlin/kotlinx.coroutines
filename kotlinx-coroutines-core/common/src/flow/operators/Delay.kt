@@ -37,11 +37,10 @@ import kotlin.time.*
  *
  * Note that the resulting flow does not emit anything as long as the original flow emits
  * items faster than every [timeoutMillis] milliseconds.
- * @param timeoutMillis must be positive
  */
 @FlowPreview
 public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
-    require(timeoutMillis > 0) { "Debounce timeout should be positive" }
+    if (timeoutMillis <= 0) return this
     return debounceInternal { timeoutMillis }
 }
 
@@ -72,14 +71,12 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
  * ```
  * produces `3, 4, 6`.
  *
- * @param timeoutMillisSelector [T] is the emitted value and the return value is timeout in milliseconds. 0ms timeout is allowed.
+ * @param timeoutMillisSelector [T] is the emitted value and the return value is timeout in milliseconds.
  */
 @FlowPreview
 public fun <T> Flow<T>.debounce(timeoutMillisSelector: (T) -> Long): Flow<T> =
     debounceInternal { emittedItem ->
-        val timeoutMillis = timeoutMillisSelector(emittedItem)
-        require(timeoutMillis >= 0) { "Debounce timeout should not be negative" }
-        timeoutMillis
+        timeoutMillisSelector(emittedItem)
     }
 
 /**
