@@ -49,6 +49,20 @@ public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -
 }
 
 /**
+ * Returns a flow iterating the results of applying the given [transform] function to each value of the original flow.
+ * entityRepository.getAll() // List<Entity>
+ *  .mapIterable { it.toView() } // View
+ *  .toCollection(mutableListOf()) // List<View>
+ */
+public inline fun<T, R> Flow<Collection<T>>.mapIterable(mapBlock: (t: T) -> R): Flow<R> = flow<R> {
+    this@mapIterable.collect {
+        it.forEach { value ->
+            emit(mapBlock(value))
+        }
+    }
+}
+
+/**
  * Returns a flow that contains only non-null results of applying the given [transform] function to each value of the original flow.
  */
 public inline fun <T, R: Any> Flow<T>.mapNotNull(crossinline transform: suspend (value: T) -> R?): Flow<R> = transform { value ->
