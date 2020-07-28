@@ -22,7 +22,7 @@ kotlin {
             addTarget(presets.iosX64)
             addTarget(presets.macosX64)
             addTarget(presets.mingwX64)
-            addTarget(presets.mingwX84)
+            addTarget(presets.mingwX86)
             addTarget(presets.tvosArm64)
             addTarget(presets.tvosX64)
             addTarget(presets.watchosArm32)
