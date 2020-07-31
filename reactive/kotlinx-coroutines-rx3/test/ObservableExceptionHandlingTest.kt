@@ -4,6 +4,8 @@
 
 package kotlinx.coroutines.rx3
 
+import io.reactivex.rxjava3.core.*
+import io.reactivex.rxjava3.disposables.*
 import io.reactivex.rxjava3.exceptions.*
 import kotlinx.coroutines.*
 import org.junit.*
@@ -130,5 +132,47 @@ class ObservableExceptionHandlingTest : TestBase() {
                 throw LinkageError()
             }, { expect(3) })
         finish(5)
+    }
+
+    @Test
+    fun testUnhandledException() = runTest {
+        expect(1)
+        var disposable: Disposable? = null
+        val handler = { e: Throwable ->
+            assertTrue(e is UndeliverableException && e.cause is TestException)
+            expect(5)
+        }
+        val observable = rxObservable<Nothing>(currentDispatcher()) {
+            expect(4)
+            disposable!!.dispose() // cancel our own subscription, so that delay will get cancelled
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                throw TestException() // would not be able to handle it since mono is disposed
+            }
+        }
+        withExceptionHandler(handler) {
+            observable.subscribe(object : Observer<Nothing> {
+                override fun onSubscribe(d: Disposable) {
+                    expect(2)
+                    disposable = d
+                }
+
+                override fun onNext(t: Nothing) {
+                    expectUnreached()
+                }
+
+                override fun onError(t: Throwable) {
+                    expectUnreached()
+                }
+
+                override fun onComplete() {
+                    expectUnreached()
+                }
+            })
+            expect(3)
+            yield() // run coroutine
+            finish(6)
+        }
     }
 }

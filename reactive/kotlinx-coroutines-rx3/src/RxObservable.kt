@@ -150,12 +150,10 @@ private class RxObservableCoroutine<T: Any>(
                          * Such behaviour is inconsistent, leads to silent failures and we can't possibly know whether
                          * the cause will be handled by onError (and moreover, it depends on whether a fatal exception was
                          * thrown by subscriber or upstream).
-                         * To make behaviour consistent and least surprising, we always handle fatal exceptions
-                         * by coroutines machinery, anyway, they should not be present in regular program flow,
-                         * thus our goal here is just to expose it as soon as possible.
+                         * To make behaviour consistent and least surprising, we always deliver fatal exceptions to the
+                         * RX global exception handler.
                          */
-                        subscriber.tryOnError(cause)
-                        if (!handled && cause.isFatal()) {
+                        if (!subscriber.tryOnError(cause) || (!handled && cause.isFatal())) {
                             handleUndeliverableException(cause, context)
                         }
                     }

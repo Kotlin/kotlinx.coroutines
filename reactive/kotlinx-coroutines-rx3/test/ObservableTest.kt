@@ -4,14 +4,10 @@
 
 package kotlinx.coroutines.rx3
 
-import io.reactivex.rxjava3.core.*
-import io.reactivex.rxjava3.exceptions.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import org.junit.*
 import org.junit.Test
-import java.util.concurrent.*
-import java.util.concurrent.atomic.*
 import kotlin.test.*
 
 class ObservableTest : TestBase() {
@@ -138,30 +134,4 @@ class ObservableTest : TestBase() {
             expect(4)
         }
     }
-
-    @Test
-    fun testExceptionAfterCancellation() {
-        // Test that no exceptions were reported to the coroutine EH (it will fail the test if so)
-        val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ -> expectUnreached() }
-        val rxExceptionHandlerInvocations = AtomicInteger()
-        val rxExceptionHandler: (Throwable) -> Unit = { error ->
-            assertTrue(error is UndeliverableException)
-            assertTrue(error.cause is TestException)
-            rxExceptionHandlerInvocations.getAndIncrement()
-        }
-        withExceptionHandler(rxExceptionHandler) {
-            Observable
-                .interval(1, TimeUnit.MILLISECONDS)
-                .take(1000)
-                .switchMapSingle {
-                    rxSingle(coroutineExceptionHandler) {
-                        timeBomb().await()
-                    }
-                }
-                .blockingSubscribe({}, {})
-        }
-        assertTrue(rxExceptionHandlerInvocations.get() > 0)
-    }
-
-    private fun timeBomb() = Single.timer(1, TimeUnit.MILLISECONDS).doOnSuccess { throw TestException() }
 }
