@@ -652,7 +652,7 @@ stored in a thread-local variable. However, in this case you are fully responsib
 potentially concurrent modifications to the variable in this mutable box.
 
 For advanced usage, for example for integration with logging MDC, transactional contexts or any other libraries
-which internally use thread-locals for passing data, see documentation of the [ThreadContextElement] interface 
+which internally use thread-locals for passing data, see the documentation of the [ThreadContextElement] interface 
 that should be implemented. 
 
 <!--- MODULE kotlinx-coroutines-core -->
