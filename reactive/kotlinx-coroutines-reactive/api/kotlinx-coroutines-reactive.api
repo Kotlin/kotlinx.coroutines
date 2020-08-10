@@ -32,7 +32,7 @@ public final class kotlinx/coroutines/reactive/FlowKt {
 public final class kotlinx/coroutines/reactive/FlowSubscription : kotlinx/coroutines/AbstractCoroutine, org/reactivestreams/Subscription {
 	public final field flow Lkotlinx/coroutines/flow/Flow;
 	public final field subscriber Lorg/reactivestreams/Subscriber;
-	public fun <init> (Lkotlinx/coroutines/flow/Flow;Lorg/reactivestreams/Subscriber;)V
+	public fun <init> (Lkotlinx/coroutines/flow/Flow;Lorg/reactivestreams/Subscriber;Lkotlin/coroutines/CoroutineContext;)V
 	public fun cancel ()V
 	public fun request (J)V
 }
@@ -65,5 +65,7 @@ public final class kotlinx/coroutines/reactive/PublisherCoroutine : kotlinx/coro
 public final class kotlinx/coroutines/reactive/ReactiveFlowKt {
 	public static final fun asFlow (Lorg/reactivestreams/Publisher;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun asPublisher (Lkotlinx/coroutines/flow/Flow;)Lorg/reactivestreams/Publisher;
+	public static final fun asPublisher (Lkotlinx/coroutines/flow/Flow;Lkotlin/coroutines/CoroutineContext;)Lorg/reactivestreams/Publisher;
+	public static synthetic fun asPublisher$default (Lkotlinx/coroutines/flow/Flow;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lorg/reactivestreams/Publisher;
 }
 
