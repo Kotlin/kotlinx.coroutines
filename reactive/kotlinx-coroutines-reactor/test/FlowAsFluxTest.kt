@@ -10,6 +10,7 @@ import reactor.util.context.Context
 import java.util.concurrent.*
 import kotlin.test.*
 
+@Suppress("ReactiveStreamsSubscriberImplementation")
 class FlowAsFluxTest : TestBase() {
     @Test
     fun testFlowAsFluxContextPropagation() {

@@ -11,6 +11,7 @@ import org.reactivestreams.*
 import java.util.concurrent.*
 import kotlin.test.*
 
+@Suppress("ReactiveStreamsSubscriberImplementation")
 class FlowAsFlowableTest : TestBase() {
     @Test
     fun testUnconfinedDefaultContext() {

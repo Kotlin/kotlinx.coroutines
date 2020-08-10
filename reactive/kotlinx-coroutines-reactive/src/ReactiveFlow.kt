@@ -160,7 +160,7 @@ internal fun <T> Publisher<T>.injectCoroutineContext(coroutineContext: Coroutine
  * Adapter that transforms [Flow] into TCK-complaint [Publisher].
  * [cancel] invocation cancels the original flow.
  */
-@Suppress("PublisherImplementation")
+@Suppress("ReactiveStreamsPublisherImplementation")
 private class FlowAsPublisher<T : Any>(
     private val flow: Flow<T>,
     private val context: CoroutineContext
