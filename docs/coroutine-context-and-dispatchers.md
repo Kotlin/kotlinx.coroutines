@@ -162,7 +162,6 @@ figure out what the coroutine was doing, where, and when if you don't have speci
 The Coroutine Debugger of the Kotlin plugin simplifies debugging coroutines in IntelliJ IDEA.
 
 > Debugging works for versions 1.3.8 or later of `kotlinx-coroutines-core`.
-{:.note}
 
 The **Debug Tool Window** contains a **Coroutines** tab. In this tab, you can find information about both currently 
 running and suspended coroutines. The coroutines are grouped by the dispatcher they are running on. 
