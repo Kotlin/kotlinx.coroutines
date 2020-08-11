@@ -167,7 +167,7 @@ The Coroutine Debugger of the Kotlin plugin simplifies debugging coroutines.
 The **Debug Tool Window** contains a **Coroutines** tab. In this tab, you can find information about both currently 
 running and suspended coroutines. The coroutines are grouped by the dispatcher they are running on. 
 
-![Debugging coroutines](images/coroutine-debugger-wn.png)
+![Debugging coroutines](images/coroutine-debugger.png)
 
 You can:
 * Easily check the state of each coroutine.
@@ -177,8 +177,6 @@ variable values, even those that would be lost during standard debugging.
 
 If you need a full report containing the state of each coroutine and its stack, right-click inside the **Coroutines** tab, and then
 click **Get Coroutines Dump**.
-
-<img class="img-responsive" src="images/coroutines-dump-wn.png" alt="Coroutines Dump" width="400"/>
 
 Learn more about debugging coroutines in [this blog post](https://blog.jetbrains.com/kotlin/2020/07/kotlin-1-4-rc-debugging-coroutines/)
 and [IntelliJ IDEA documentation](https://www.jetbrains.com/help/idea/debug-kotlin-coroutines.html).
