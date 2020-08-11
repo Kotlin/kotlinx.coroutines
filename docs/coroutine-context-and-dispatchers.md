@@ -159,7 +159,7 @@ figure out what the coroutine was doing, where, and when if you don't have speci
 
 #### Debugging with special tooling 
 
-The Coroutine Debugger of the Kotlin plugin simplifies debugging coroutines.
+The Coroutine Debugger of the Kotlin plugin simplifies debugging coroutines in IntelliJ IDEA.
 
 > Debugging works for versions 1.3.8 or later of `kotlinx-coroutines-core`.
 {:.note}
