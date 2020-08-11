@@ -355,9 +355,12 @@ Lemma cell_invariant_persistent:
   forall γtq γ n ℓ, Persistent (inv N (cell_invariant γtq γ n ℓ)).
 Proof. apply _. Qed.
 
+Lemma truth_persistent γd (n: nat): Persistent (True ∨ iterator_counter_at_least γd n).
+Proof. apply _. Qed.
+
 Definition tq_ap (γtq γd: gname) :=
   {|
-    p_cell_is_done_persistent := iterator_counter_at_least_persistent γd;
+    p_cell_is_done_persistent := truth_persistent γd;
     p_cell_invariant_persistent := cell_invariant_persistent γtq;
   |}.
 
@@ -3217,18 +3220,7 @@ Proof.
   {
     iApply big_sepL_forall. iIntros (k d' HEl).
     iRight. simpl.
-    iApply (iterator_counter_at_least_mono with "HDAtLeast").
-    apply seq_lookup' in HEl.
-    simpl in *. destruct HEl as [<- HEl].
-    assert (forall a x, (a > 0)%nat -> (x `div` a * a <= x)%nat) as HOk.
-    {
-      clear. intros ? ? H.
-      rewrite Nat.mul_comm.
-      apply Nat.mul_div_le.
-      lia.
-    }
-    specialize (HOk (Pos.to_nat segment_size) d).
-    lia.
+    iLeft. done.
   }
   {
     iIntros "HIsSeg".

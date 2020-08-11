@@ -380,6 +380,12 @@ Proof.
   apply Some_validN. auto.
 Qed.
 
+Lemma option_local_update''' {A: cmraT} (x y z: A):
+  z ≡ y ⋅ x ->
+  (forall n, ✓{n} x -> ✓{n} (y ⋅ x)) ->
+  (Some x, ε) ~l~> (Some z, Some y).
+Proof. intros ->. apply option_local_update''. Qed.
+
 Theorem prod_included':
   forall (A B: cmraT) (x y: (A * B)), x.1 ≼ y.1 ∧ x.2 ≼ y.2 -> x ≼ y.
 Proof.
