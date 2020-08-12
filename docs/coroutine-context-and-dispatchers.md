@@ -8,6 +8,8 @@
   * [Dispatchers and threads](#dispatchers-and-threads)
   * [Unconfined vs confined dispatcher](#unconfined-vs-confined-dispatcher)
   * [Debugging coroutines and threads](#debugging-coroutines-and-threads)
+    * [Debugging with IDEA](#debugging-with-idea)
+    * [Debugging using logging](#debugging-using-logging)
   * [Jumping between threads](#jumping-between-threads)
   * [Job in the context](#job-in-the-context)
   * [Children of a coroutine](#children-of-a-coroutine)
@@ -157,7 +159,7 @@ Coroutines can suspend on one thread and resume on another thread.
 Even with a single-threaded dispatcher it might be hard to
 figure out what the coroutine was doing, where, and when if you don't have special tooling. 
 
-#### Debugging with special tooling 
+#### Debugging with IDEA
 
 The Coroutine Debugger of the Kotlin plugin simplifies debugging coroutines in IntelliJ IDEA.
 
