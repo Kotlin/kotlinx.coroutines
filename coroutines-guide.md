@@ -32,6 +32,8 @@ The main coroutines guide has moved to the [docs folder](docs/coroutines-guide.m
   * <a name='dispatchers-and-threads'></a>[Dispatchers and threads](docs/coroutine-context-and-dispatchers.md#dispatchers-and-threads)
   * <a name='unconfined-vs-confined-dispatcher'></a>[Unconfined vs confined dispatcher](docs/coroutine-context-and-dispatchers.md#unconfined-vs-confined-dispatcher)
   * <a name='debugging-coroutines-and-threads'></a>[Debugging coroutines and threads](docs/coroutine-context-and-dispatchers.md#debugging-coroutines-and-threads)
+    * <a name='debugging-with-idea'></a>[Debugging with IDEA](docs/coroutine-context-and-dispatchers.md#debugging-with-idea)
+    * <a name='debugging-using-logging'></a>[Debugging using logging](docs/coroutine-context-and-dispatchers.md#debugging-using-logging)
   * <a name='jumping-between-threads'></a>[Jumping between threads](docs/coroutine-context-and-dispatchers.md#jumping-between-threads)
   * <a name='job-in-the-context'></a>[Job in the context](docs/coroutine-context-and-dispatchers.md#job-in-the-context)
   * <a name='children-of-a-coroutine'></a>[Children of a coroutine](docs/coroutine-context-and-dispatchers.md#children-of-a-coroutine)
