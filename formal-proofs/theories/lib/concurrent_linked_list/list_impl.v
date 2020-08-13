@@ -161,4 +161,10 @@ Definition findSegmentAndMoveForward : val :=
                                    else "loop" #()
                      end) #().
 
+Definition onSlotCleaned : val :=
+  λ: "ptr", if: FAA (getCleanedAndPointersLoc impl "ptr") #1 + #1 =
+                #(maxSlots impl)
+            then remove "ptr"
+            else #().
+
 End Segment.
