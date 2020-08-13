@@ -1,5 +1,11 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.3.9
+
+* Support of `CoroutineContext` in `Flow.asPublisher` and similar reactive builders (#2155).
+* Transition to new HMPP publication scheme for multiplatform usages.
+* Kotlin updated to 1.4.0.
+
 ## Version 1.3.8
 
 ### New experimental features
