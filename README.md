@@ -146,9 +146,14 @@ Make sure that you have either `jcenter()` or `mavenCentral()` in the list of re
 
 Core modules of `kotlinx.coroutines` are also available for 
 [Kotlin/JS](#js) and [Kotlin/Native](#native).
-In common code that should get compiled for different platforms, add dependency to  
-[`kotlinx-coroutines-core-common`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-common/1.3.9/jar)
-(follow the link to get the dependency declaration snippet).
+In common code that should get compiled for different platforms, you can add dependency to `kotlinx-coroutines-core` right to the `commonMain` source set:
+```groovy
+commonMain {
+    dependencies {
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
+    }
+}
+```
 
 ### Android
 
