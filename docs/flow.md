@@ -50,7 +50,7 @@
 
 ## Asynchronous Flow
 
-Suspending functions asynchronously returns a single value, but how can we return
+A suspending function asynchronously returns a single value, but how can we return
 multiple asynchronously computed values? This is where Kotlin Flows come in.
 
 ### Representing multiple values
