@@ -153,7 +153,7 @@ This code prints the numbers after waiting for a second.
 #### Flows
 
 Using the `List<Int>` result type, means we can only return all the values at once. To represent
-the stream of values that are being asynchronously computed, we can use a [`Flow<Int>`][Flow] type just like we would the `Sequence<Int>` type for synchronously computed values:
+the stream of values that are being asynchronously computed, we can use a [`Flow<Int>`][Flow] type just like we would use the `Sequence<Int>` type for synchronously computed values:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
