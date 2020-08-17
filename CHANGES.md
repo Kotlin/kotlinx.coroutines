@@ -1,5 +1,14 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.3.9
+
+* Support of `CoroutineContext` in `Flow.asPublisher` and similar reactive builders (#2155).
+* Kotlin updated to 1.4.0.
+* Transition to new HMPP publication scheme for multiplatform usages:
+    * Artifacts `kotlinx-coroutines-core-common` and `kotlinx-coroutines-core-native` are removed.
+    * For multiplatform usages, it's enough to [depend directly](README.md#multiplatform) on `kotlinx-coroutines-core` in `commonMain` source-set.
+    * The same artifact coordinates can be used to depend on platform-specific artifact in platform-specific source-set.
+
 ## Version 1.3.8
 
 ### New experimental features

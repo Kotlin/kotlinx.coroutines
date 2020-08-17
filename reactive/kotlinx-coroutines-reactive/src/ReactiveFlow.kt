@@ -34,8 +34,15 @@ public fun <T : Any> Publisher<T>.asFlow(): Flow<T> =
  *
  * This function is integrated with `ReactorContext` from `kotlinx-coroutines-reactor` module,
  * see its documentation for additional details.
+ *
+ * An optional [context] can be specified to control the execution context of calls to [Subscriber] methods.
+ * You can set a [CoroutineDispatcher] to confine them to a specific thread and/or various [ThreadContextElement] to
+ * inject additional context into the caller thread. By default, the [Unconfined][Dispatchers.Unconfined] dispatcher
+ * is used, so calls are performed from an arbitrary thread.
  */
-public fun <T : Any> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
+@JvmOverloads // binary compatibility
+public fun <T : Any> Flow<T>.asPublisher(context: CoroutineContext = EmptyCoroutineContext): Publisher<T> =
+    FlowAsPublisher(this, Dispatchers.Unconfined + context)
 
 private class PublisherAsFlow<T : Any>(
     private val publisher: Publisher<T>,
@@ -153,11 +160,14 @@ internal fun <T> Publisher<T>.injectCoroutineContext(coroutineContext: Coroutine
  * Adapter that transforms [Flow] into TCK-complaint [Publisher].
  * [cancel] invocation cancels the original flow.
  */
-@Suppress("PublisherImplementation")
-private class FlowAsPublisher<T : Any>(private val flow: Flow<T>) : Publisher<T> {
+@Suppress("ReactiveStreamsPublisherImplementation")
+private class FlowAsPublisher<T : Any>(
+    private val flow: Flow<T>,
+    private val context: CoroutineContext
+) : Publisher<T> {
     override fun subscribe(subscriber: Subscriber<in T>?) {
         if (subscriber == null) throw NullPointerException()
-        subscriber.onSubscribe(FlowSubscription(flow, subscriber))
+        subscriber.onSubscribe(FlowSubscription(flow, subscriber, context))
     }
 }
 
@@ -165,8 +175,9 @@ private class FlowAsPublisher<T : Any>(private val flow: Flow<T>) : Publisher<T>
 @InternalCoroutinesApi
 public class FlowSubscription<T>(
     @JvmField public val flow: Flow<T>,
-    @JvmField public val subscriber: Subscriber<in T>
-) : Subscription, AbstractCoroutine<Unit>(Dispatchers.Unconfined, true) {
+    @JvmField public val subscriber: Subscriber<in T>,
+    context: CoroutineContext
+) : Subscription, AbstractCoroutine<Unit>(context, true) {
     private val requested = atomic(0L)
     private val producer = atomic<Continuation<Unit>?>(createInitialContinuation())
 
