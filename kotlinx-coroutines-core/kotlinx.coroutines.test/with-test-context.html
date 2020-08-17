@@ -42,13 +42,13 @@
 <p>Executes a block of code in which a unit-test can be written using the provided <a href="-test-coroutine-context/index.html">TestCoroutineContext</a>. The provided
 <a href="-test-coroutine-context/index.html">TestCoroutineContext</a> is available in the <a href="with-test-context.html#kotlinx.coroutines.test$withTestContext(kotlinx.coroutines.test.TestCoroutineContext, kotlin.Function1((kotlinx.coroutines.test.TestCoroutineContext, kotlin.Unit)))/testBody">testBody</a> as the <code>this</code> receiver.</p>
 
-<p>The <a href="with-test-context.html#kotlinx.coroutines.test$withTestContext(kotlinx.coroutines.test.TestCoroutineContext, kotlin.Function1((kotlinx.coroutines.test.TestCoroutineContext, kotlin.Unit)))/testBody">testBody</a> is executed and an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-assertion-error/index.html">AssertionError</a> is thrown if the list of unhandled exceptions is not empty and
+<p>The <a href="with-test-context.html#kotlinx.coroutines.test$withTestContext(kotlinx.coroutines.test.TestCoroutineContext, kotlin.Function1((kotlinx.coroutines.test.TestCoroutineContext, kotlin.Unit)))/testBody">testBody</a> is executed and an <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/AssertionError.html">AssertionError</a> is thrown if the list of unhandled exceptions is not empty and
 contains any exception that is not a <a href="../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.</p>
 
 <p>If the <a href="with-test-context.html#kotlinx.coroutines.test$withTestContext(kotlinx.coroutines.test.TestCoroutineContext, kotlin.Function1((kotlinx.coroutines.test.TestCoroutineContext, kotlin.Unit)))/testBody">testBody</a> successfully executes one of the <a href="-test-coroutine-context/assert-all-unhandled-exceptions.html">TestCoroutineContext.assertAllUnhandledExceptions</a>,
 <a href="-test-coroutine-context/assert-any-unhandled-exception.html">TestCoroutineContext.assertAnyUnhandledException</a>, <a href="-test-coroutine-context/assert-unhandled-exception.html">TestCoroutineContext.assertUnhandledException</a> or
 <a href="-test-coroutine-context/assert-exceptions.html">TestCoroutineContext.assertExceptions</a>, the list of unhandled exceptions will have been cleared and this method will
-not throw an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-assertion-error/index.html">AssertionError</a>.</p>
+not throw an <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/AssertionError.html">AssertionError</a>.</p>
 
 <p><strong>Note: This API will become obsolete in future updates due to integration with structured concurrency.</strong>
     See <a href="https://github.com/Kotlin/kotlinx.coroutines/issues/541">issue #541</a>.</p>

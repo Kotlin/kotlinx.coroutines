@@ -8,8 +8,8 @@ $dokka.location:kotlinx.coroutines$asDeferred(kotlin.js.Promise((kotlinx.corouti
 $dokka.location:kotlinx.coroutines$await(kotlin.js.Promise((kotlinx.coroutines.await.T)))kotlinx.coroutines/kotlin.js.-promise/await.html
 $dokka.location:kotlinx.coroutines$awaitAll(kotlin.collections.Collection((kotlinx.coroutines.Deferred((kotlinx.coroutines.awaitAll.T)))))kotlinx.coroutines/kotlin.collections.-collection/await-all.html
 $dokka.location:kotlinx.coroutines$awaitAnimationFrame(org.w3c.dom.Window)kotlinx.coroutines/org.w3c.dom.-window/await-animation-frame.html
-$dokka.location:kotlinx.coroutines$cancel(kotlin.coroutines.CoroutineContext, java.util.concurrent.CancellationException)kotlinx.coroutines/kotlin.coroutines.-coroutine-context/cancel.html
-$dokka.location:kotlinx.coroutines$cancelChildren(kotlin.coroutines.CoroutineContext, java.util.concurrent.CancellationException)kotlinx.coroutines/kotlin.coroutines.-coroutine-context/cancel-children.html
+$dokka.location:kotlinx.coroutines$cancel(kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CancellationException)kotlinx.coroutines/kotlin.coroutines.-coroutine-context/cancel.html
+$dokka.location:kotlinx.coroutines$cancelChildren(kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CancellationException)kotlinx.coroutines/kotlin.coroutines.-coroutine-context/cancel-children.html
 $dokka.location:kotlinx.coroutines$ensureActive(kotlin.coroutines.CoroutineContext)kotlinx.coroutines/kotlin.coroutines.-coroutine-context/ensure-active.html
 $dokka.location:kotlinx.coroutines$ensurePresent(java.lang.ThreadLocal((kotlin.Any)))kotlinx.coroutines/java.lang.-thread-local/ensure-present.html
 $dokka.location:kotlinx.coroutines$id(kotlin.Any)kotlinx.coroutines/kotlin.-any/id.html

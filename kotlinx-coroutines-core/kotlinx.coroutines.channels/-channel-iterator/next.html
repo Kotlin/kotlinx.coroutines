@@ -36,7 +36,7 @@
 <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">operator</span> <span class="keyword">fun </span><span class="identifier">next</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#E"><span class="identifier">E</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L481">(source)</a></div>
 
 <p>Retrieves the element removed from the channel by a preceding call to <a href="has-next.html">hasNext</a>, or
-throws an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if <a href="has-next.html">hasNext</a> was not invoked.
+throws an <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> if <a href="has-next.html">hasNext</a> was not invoked.
 This method should only be used in pair with <a href="has-next.html">hasNext</a>:</p>
 
 <pre>while (iterator.hasNext()) {

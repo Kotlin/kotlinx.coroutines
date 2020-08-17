@@ -92,7 +92,7 @@ All suspending acquirers are processed in first-in-first-out (FIFO) order.</p>
 
         <p>Releases a permit, returning it into this semaphore. Resumes the first
 suspending acquirer if there is one at the point of invocation.
-Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the number of <a href="release.html">release</a> invocations is greater than the number of preceding <a href="acquire.html">acquire</a>.</p>
+Throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> if the number of <a href="release.html">release</a> invocations is greater than the number of preceding <a href="acquire.html">acquire</a>.</p>
 
       </td>
 </tr>

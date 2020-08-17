@@ -37,7 +37,7 @@
 
 <p>Represents the given receive channel as a hot flow and <a href="../kotlinx.coroutines.channels/consume.html">consumes</a> the channel
 on the first collection from this flow. The resulting flow can be collected just once and throws
-<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> when trying to collect it more than once.</p>
+<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> when trying to collect it more than once.</p>
 
 <p>See also <a href="receive-as-flow.html">receiveAsFlow</a> which supports multiple collectors of the resulting flow.</p>
 
@@ -52,7 +52,7 @@ on the first collection from this flow. The resulting flow can be collected just
 <h3 id="operator-fusion">Operator fusion</h3>
 
 <p>Adjacent applications of <a href="flow-on.html">flowOn</a>, <a href="buffer.html">buffer</a>, <a href="conflate.html">conflate</a>, and <a href="produce-in.html">produceIn</a> to the result of <code>consumeAsFlow</code> are fused.
-In particular, <a href="produce-in.html">produceIn</a> returns the original channel (but throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> on repeated calls).
+In particular, <a href="produce-in.html">produceIn</a> returns the original channel (but throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> on repeated calls).
 Calls to <a href="flow-on.html">flowOn</a> have generally no effect, unless <a href="buffer.html">buffer</a> is used to explicitly request buffering.</p>
 
 

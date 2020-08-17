@@ -41,7 +41,7 @@ Every time the returned observable is subscribed, it starts a new coroutine.
 Unsubscribing cancels running coroutine.
 Coroutine context can be specified with <a href="rx-maybe.html#kotlinx.coroutines.rx3$rxMaybe(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.rx3.rxMaybe.T)))/context">context</a> argument.
 If the context does not have any dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a>, then <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html">Dispatchers.Default</a> is used.
-Method throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-argument-exception/index.html">IllegalArgumentException</a> if provided <a href="rx-maybe.html#kotlinx.coroutines.rx3$rxMaybe(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.rx3.rxMaybe.T)))/context">context</a> contains a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> instance.</p>
+Method throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgumentException.html">IllegalArgumentException</a> if provided <a href="rx-maybe.html#kotlinx.coroutines.rx3$rxMaybe(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.rx3.rxMaybe.T)))/context">context</a> contains a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> instance.</p>
 
 
       </div>

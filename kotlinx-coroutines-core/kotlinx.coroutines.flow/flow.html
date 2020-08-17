@@ -57,7 +57,7 @@ fibonacci().take(100).collect { println(it) }
 also calls <a href="../kotlinx.coroutines/kotlin.coroutines.-coroutine-context/ensure-active.html">ensureActive</a>.</p>
 
 <p><code>emit</code> should happen strictly in the dispatchers of the <a href="flow.html#kotlinx.coroutines.flow$flow(kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.flow.T)), kotlin.Unit)))/block">block</a> in order to preserve the flow context.
-For example, the following code will result in an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a>:</p>
+For example, the following code will result in an <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a>:</p>
 
 <pre>flow {
     emit(1) // Ok

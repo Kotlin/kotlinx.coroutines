@@ -37,7 +37,7 @@
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
-<p>Checks whether current thread local is present in the coroutine context and throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if it is not.
+<p>Checks whether current thread local is present in the coroutine context and throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> if it is not.
 It is a good practice to validate that thread local is present in the context, especially in large code-bases,
 to avoid stale thread-local values and to have a strict invariants.</p>
 

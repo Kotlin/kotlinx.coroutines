@@ -52,7 +52,7 @@ or when a callback-based API invokes <a href="../kotlinx.coroutines.channels/-se
 to cleanup the resources after the completion, e.g. unregister a callback.
 Using <a href="../kotlinx.coroutines.channels/await-close.html">awaitClose</a> is mandatory in order to prevent memory leaks when the flow collection is cancelled,
 otherwise the callback may keep running even when the flow collector is already completed.
-To avoid such leaks, this method throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if block returns, but the channel
+To avoid such leaks, this method throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> if block returns, but the channel
 is not closed yet.</p>
 
 <p>A channel with the <a href="../kotlinx.coroutines.channels/-channel/-b-u-f-f-e-r-e-d.html">default</a> buffer size is used. Use the <a href="buffer.html">buffer</a> operator on the

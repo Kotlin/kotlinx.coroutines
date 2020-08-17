@@ -44,7 +44,7 @@ This function <a href="consume.html">consumes</a> all elements of the original <
 when <code>capacity</code> is positive (1 by default), but less than <a href="-channel/-u-n-l-i-m-i-t-e-d.html">UNLIMITED</a> – uses <code>ArrayBroadcastChannel</code> with a buffer of given capacity,
 when <code>capacity</code> is <a href="-channel/-c-o-n-f-l-a-t-e-d.html">CONFLATED</a> – uses <a href="-conflated-broadcast-channel/index.html">ConflatedBroadcastChannel</a> that conflates back-to-back sends;
 Note that resulting channel behaves like <a href="-conflated-broadcast-channel/index.html">ConflatedBroadcastChannel</a> but is not an instance of <a href="-conflated-broadcast-channel/index.html">ConflatedBroadcastChannel</a>.
-otherwise – throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-argument-exception/index.html">IllegalArgumentException</a>.</p>
+otherwise – throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgumentException.html">IllegalArgumentException</a>.</p>
 
   <h3 id="cancelling-broadcast">Cancelling broadcast</h3>
 
@@ -93,7 +93,7 @@ the resulting channel becomes <em>failed</em>, so that any attempt to receive fr
     <li>when <code>capacity</code> is positive (1 by default), but less than <a href="-channel/-u-n-l-i-m-i-t-e-d.html">UNLIMITED</a> – uses <code>ArrayBroadcastChannel</code> with a buffer of given capacity,</li>
     <li>when <code>capacity</code> is <a href="-channel/-c-o-n-f-l-a-t-e-d.html">CONFLATED</a> – uses <a href="-conflated-broadcast-channel/index.html">ConflatedBroadcastChannel</a> that conflates back-to-back sends;
 Note that resulting channel behaves like <a href="-conflated-broadcast-channel/index.html">ConflatedBroadcastChannel</a> but is not an instance of <a href="-conflated-broadcast-channel/index.html">ConflatedBroadcastChannel</a>.</li>
-    <li>otherwise – throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-argument-exception/index.html">IllegalArgumentException</a>.</li>
+    <li>otherwise – throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgumentException.html">IllegalArgumentException</a>.</li>
   </ul>
 
   <p><strong>Note:</strong> By default, the coroutine does not start until the first subscriber appears via <a href="-broadcast-channel/open-subscription.html">BroadcastChannel.openSubscription</a>

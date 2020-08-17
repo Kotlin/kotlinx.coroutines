@@ -33,7 +33,7 @@
 
 <h1 id="cancellablecontinuation">CancellableContinuation</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CancellableContinuation</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L49">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CancellableContinuation</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L47">(source)</a></div>
 
 <p>Cancellable continuation. It is <em>completed</em> when resumed or cancelled.
 When the <a href="cancel.html">cancel</a> function is explicitly invoked, this continuation immediately resumes with a <a href="../-cancellation-exception/index.html">CancellationException</a> or
@@ -73,14 +73,12 @@ the specified cancel cause.</p>
 </table>
 
 <p>Invocation of <a href="cancel.html">cancel</a> transitions this continuation from <em>active</em> to <em>cancelled</em> state, while
-invocation of <a href="resume.html">resume</a> or <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/resume-with-exception.html">resumeWithException</a> transitions it from <em>active</em> to <em>resumed</em> state.</p>
+invocation of <a href="resume.html">resume</a> or <a href="#">resumeWithException</a> transitions it from <em>active</em> to <em>resumed</em> state.</p>
 
 <p>A <a href="is-cancelled.html">cancelled</a> continuation implies that it is <a href="is-completed.html">completed</a>.</p>
 
-<p>Invocation of <a href="resume.html">resume</a> or <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/resume-with-exception.html">resumeWithException</a> in <em>resumed</em> state produces an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a>.
-Invocation of <a href="resume.html">resume</a> in <em>cancelled</em> state is ignored (it is a trivial race between resume from the continuation owner and
-outer job’s cancellation, and the cancellation wins).
-Invocation of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/resume-with-exception.html">resumeWithException</a> in <em>cancelled</em> state triggers exception handling of the passed exception.</p>
+<p>Invocation of <a href="resume.html">resume</a> or <a href="#">resumeWithException</a> in <em>resumed</em> state produces an <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a>,
+but is ignored in <em>cancelled</em> state.</p>
 
 <pre>    +-----------+   resume    +---------+
     |  Active   | ----------&gt; | Resumed |

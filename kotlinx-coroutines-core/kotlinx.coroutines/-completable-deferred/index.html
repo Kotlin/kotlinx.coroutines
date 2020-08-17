@@ -133,7 +133,7 @@ returning the resulting value or throwing the corresponding exception if the def
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getCompleted</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-deferred/index.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>Returns <em>completed</em> result or throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if this deferred value has not
+        <p>Returns <em>completed</em> result or throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> if this deferred value has not
 <a href="../-job/is-completed.html">completed</a> yet. It throws the corresponding exception if this deferred was <a href="../-job/is-cancelled.html">cancelled</a>.</p>
 
       </td>
@@ -148,7 +148,7 @@ returning the resulting value or throwing the corresponding exception if the def
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getCompletionExceptionOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span></code></div>
 
         <p>Returns <em>completion exception</em> result if this deferred was <a href="../-job/is-cancelled.html">cancelled</a> and has <a href="../-job/is-completed.html">completed</a>,
-<code>null</code> if it had completed normally, or throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if this deferred value has not
+<code>null</code> if it had completed normally, or throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> if this deferred value has not
 <a href="../-job/is-completed.html">completed</a> yet.</p>
 
       </td>
@@ -188,7 +188,7 @@ returning the resulting value or throwing the corresponding exception if the def
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlin.coroutines.CoroutineContext, java.util.concurrent.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Cancels <a href="../-job/index.html">Job</a> of this context with an optional cancellation cause.
 See <a href="../-job/cancel.html">Job.cancel</a> for details.</p>

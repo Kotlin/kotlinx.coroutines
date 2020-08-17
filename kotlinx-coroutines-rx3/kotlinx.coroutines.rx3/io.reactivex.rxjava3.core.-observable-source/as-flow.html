@@ -40,9 +40,9 @@
 <p>The resulting flow is <em>cold</em>, which means that <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/ObservableSource.html#subscribe(io.reactivex.rxjava3.core.Observer&lt;? super T&gt;)">ObservableSource.subscribe</a> is called every time a terminal operator
 is applied to the resulting flow.</p>
 
-<p>A channel with the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/-factory/-b-u-f-f-e-r-e-d.html">default</a> buffer size is used. Use the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/buffer.html">buffer</a> operator on the
+<p>A channel with the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/-factory/-b-u-f-f-e-r-e-d.html">default</a> buffer size is used. Use the <a href="#">buffer</a> operator on the
 resulting flow to specify a user-defined value and to control what happens when data is produced faster
-than consumed, i.e. to control the back-pressure behavior. Check <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/callback-flow.html">callbackFlow</a> for more details.</p>
+than consumed, i.e. to control the back-pressure behavior. Check <a href="#">callbackFlow</a> for more details.</p>
 
 
       </div>

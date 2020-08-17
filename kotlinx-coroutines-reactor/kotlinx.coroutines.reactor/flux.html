@@ -45,7 +45,7 @@ Unsubscribing cancels running coroutine.</p>
 <p>Invocations of <code>send</code> are suspended appropriately when subscribers apply back-pressure and to ensure that
 <code>onNext</code> is not invoked concurrently.</p>
 
-<p>Method throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-argument-exception/index.html">IllegalArgumentException</a> if provided <a href="flux.html#kotlinx.coroutines.reactor$flux(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.reactor.flux.T)), kotlin.Unit)))/context">context</a> contains a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> instance.</p>
+<p>Method throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgumentException.html">IllegalArgumentException</a> if provided <a href="flux.html#kotlinx.coroutines.reactor$flux(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.reactor.flux.T)), kotlin.Unit)))/context">context</a> contains a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> instance.</p>
 
 <p><strong>Note: This is an experimental api.</strong> Behaviour of publishers that work as children in a parent scope with respect
     to cancellation and error handling may change in the future.</p>

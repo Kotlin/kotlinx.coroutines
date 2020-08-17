@@ -42,7 +42,7 @@ and implements <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coro
 immediately executed. If they were scheduled with a delay, the virtual clock-time must be advanced via one of the
 methods on <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-delay-controller/index.html">DelayController</a>.</p>
 
-<p>When switched to lazy execution using <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-test-coroutine-dispatcher/pause-dispatcher.html">pauseDispatcher</a> any coroutines started via <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html">launch</a> or <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html">async</a> will
+<p>When switched to lazy execution using <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-test-coroutine-dispatcher/pause-dispatcher.html">pauseDispatcher</a> any coroutines started via <a href="#">launch</a> or <a href="#">async</a> will
 not execute until a call to <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-delay-controller/run-current.html">DelayController.runCurrent</a> or the virtual clock-time has been advanced via one of the
 methods on <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-delay-controller/index.html">DelayController</a>.</p>
 

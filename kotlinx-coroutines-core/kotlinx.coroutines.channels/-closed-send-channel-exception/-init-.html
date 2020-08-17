@@ -39,7 +39,7 @@
 that was closed without a cause. A <em>failed</em> channel rethrows the original <a href="../-send-channel/close.html">close</a> cause
 exception on send attempts.</p>
 
-<p>This exception is a subclass of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a>, because, conceptually, it is the sender’s responsibility
+<p>This exception is a subclass of <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a>, because, conceptually, it is the sender’s responsibility
 to close the channel and not try to send anything thereafter. Attempts to
 send to a closed channel indicate a logical error in the sender’s code.</p>
 

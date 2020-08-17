@@ -40,12 +40,12 @@
 <p>Debug probes is a dynamic attach mechanism which installs multiple hooks into coroutines machinery.
 It slows down all coroutine-related code, but in return provides a lot of diagnostic information, including
 asynchronous stack-traces and coroutine dumps (similar to <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/management/ThreadMXBean.html#dumpAllThreads(boolean, boolean)">ThreadMXBean.dumpAllThreads</a> and <code>jstack</code> via <a href="dump-coroutines.html">DebugProbes.dumpCoroutines</a>.
-All introspecting methods throw <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if debug probes were not installed.</p>
+All introspecting methods throw <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> if debug probes were not installed.</p>
 
 <p>Installed hooks:</p>
 
 <ul>
-  <li><code>probeCoroutineResumed</code> is invoked on every <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/resume.html">Continuation.resume</a>.</li>
+  <li><code>probeCoroutineResumed</code> is invoked on every <a href="#">Continuation.resume</a>.</li>
   <li><code>probeCoroutineSuspended</code> is invoked on every continuation suspension.</li>
   <li><code>probeCoroutineCreated</code> is invoked on every coroutine creation using stdlib intrinsics.</li>
 </ul>
@@ -195,7 +195,7 @@ Hierarchy is printed from the <a href="job-to-string.html#kotlinx.coroutines.deb
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">printScope</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.DebugProbes$printScope(kotlinx.coroutines.CoroutineScope, java.io.PrintStream)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.DebugProbes$printScope(kotlinx.coroutines.CoroutineScope, java.io.PrintStream)/out">out</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/io/PrintStream.html"><span class="identifier">PrintStream</span></a>&nbsp;<span class="symbol">=</span>&nbsp;System.out<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Prints all coroutines launched within the given <a href="print-scope.html#kotlinx.coroutines.debug.DebugProbes$printScope(kotlinx.coroutines.CoroutineScope, java.io.PrintStream)/scope">scope</a>.
-Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the scope has no a job in it.</p>
+Throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> if the scope has no a job in it.</p>
 
       </td>
 </tr>
@@ -209,7 +209,7 @@ Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-sta
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">scopeToString</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.debug.DebugProbes$scopeToString(kotlinx.coroutines.CoroutineScope)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
 
         <p>Returns string representation of all coroutines launched within the given <a href="scope-to-string.html#kotlinx.coroutines.debug.DebugProbes$scopeToString(kotlinx.coroutines.CoroutineScope)/scope">scope</a>.
-Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the scope has no a job in it.</p>
+Throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> if the scope has no a job in it.</p>
 
       </td>
 </tr>
