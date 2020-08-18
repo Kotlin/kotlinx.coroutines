@@ -1471,6 +1471,8 @@ Exception in thread "main" java.lang.IllegalStateException: Collected 2
 	at ...
 ```
 
+<!--- TEST EXCEPTION -->
+
 #### Catching declaratively
 
 We can combine the declarative nature of the [catch] operator with a desire to handle all the exceptions, by moving the body
@@ -1516,6 +1518,8 @@ Emitting 1
 Emitting 2
 Caught java.lang.IllegalStateException: Collected 2
 ```
+
+<!--- TEST -->
 
 ### Flow completion
 
