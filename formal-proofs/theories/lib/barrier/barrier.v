@@ -48,7 +48,7 @@ Require Import SegmentQueue.util.everything.
 
 From iris.base_logic.lib Require Import invariants.
 From iris.algebra Require Import auth.
-From iris.algebra Require Import list gset excl csum.
+From iris.algebra Require Import list gset excl csum numbers.
 From iris.program_logic Require Import atomic.
 From iris.heap_lang Require Import proofmode.
 
@@ -226,7 +226,7 @@ Proof.
   }
 
   wp_faa.
-  replace (n + 1) with (Z.of_nat (S n)) by lia.
+  replace (n + 1)%Z with (Z.of_nat (S n)) by lia.
   destruct (decide (n = Pos.to_nat limit - 1)%nat).
   {
     replace (n `mod` Pos.to_nat limit)%nat with (n);
@@ -467,7 +467,7 @@ Proof.
           last by symmetry; apply Nat.mod_small; lia.
         rewrite Nat.sub_0_r decide_True; last lia.
         iFrame "HEntries HTq HAuth".
-        replace (S n' - 1) with (Z.of_nat n') by lia.
+        replace (S n' - 1)%Z with (Z.of_nat n') by lia.
         iFrame.
       }
       iModIntro. wp_pures.

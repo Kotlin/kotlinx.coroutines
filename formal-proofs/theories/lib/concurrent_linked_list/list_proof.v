@@ -1,5 +1,5 @@
 From iris.program_logic Require Import atomic.
-From iris.algebra Require Import cmra auth list agree csum.
+From iris.algebra Require Import cmra auth list agree csum numbers.
 From iris.base_logic Require Import lib.invariants.
 From SegmentQueue.lib.concurrent_linked_list
      Require Export segment_spec list_spec list_impl.
@@ -61,7 +61,7 @@ Section segment_state.
     iDestruct (own_valid_2 with "HCanc HPointed") as %HValid.
     iPureIntro.
     move: HValid.
-    rewrite -auth_frag_op auth_frag_valid list_singleton_op list_singleton_valid.
+    rewrite -auth_frag_op auth_frag_valid list_singletonM_op list_singletonM_valid.
     by case.
   Qed.
 
@@ -82,7 +82,7 @@ Proof.
     iDestruct (own_valid_2 with "H1 H2") as %HValid.
     iPureIntro.
     move: HValid.
-    rewrite -auth_frag_op list_singleton_op auth_frag_valid list_singleton_valid.
+    rewrite -auth_frag_op list_singletonM_op auth_frag_valid list_singletonM_valid.
     case. rewrite /= -Some_op Some_valid=> HAgree.
     by apply agree_op_invL' in HAgree.
 Defined.
@@ -180,7 +180,7 @@ Proof.
   iIntros "HFrag HAuth".
   iDestruct (own_valid_2 with "HAuth HFrag") as
       %[(segment_params & HMapElem & HAgree)
-          %list_singleton_included _]
+          %list_singletonM_included _]
        %auth_both_valid.
   iPureIntro.
   rewrite list_lookup_fmap in HMapElem.
@@ -258,7 +258,7 @@ Proof.
   - destruct known_is_removed.
     * iDestruct (own_valid_2 with "Hγ HKnownRemoved")
         as %[(? & HLookup' & [_ HIncluded]%pair_included)
-               %list_singleton_included _]%auth_both_valid.
+               %list_singletonM_included _]%auth_both_valid.
       exfalso.
       rewrite map_lookup HLookup /= in HLookup'.
       simplify_eq.
@@ -356,7 +356,7 @@ Proof.
         first apply auth_update_core_id;
         last by iFrame.
       - apply _.
-      - apply list_singleton_included. rewrite list_lookup_fmap HLookup /=.
+      - apply list_singletonM_included. rewrite list_lookup_fmap HLookup /=.
         eexists. split; first done. apply prod_included. rewrite /=; split.
         + apply ucmra_unit_least.
         + done.
@@ -459,10 +459,10 @@ Lemma later_segment_in_list_not_tail γ id id' s':
   (id < id')%nat → own γ (◯ {[ id' := s' ]}) -∗ segment_is_not_tail γ id.
 Proof.
   iIntros (HLt) "HFrag". iApply (own_mono with "HFrag").
-  apply auth_frag_mono, list_singleton_included.
+  apply auth_frag_mono, list_singletonM_included.
   destruct (decide (id' = S id)) as [->|HNe].
-  - eexists. split; first by apply list_lookup_singleton. apply ucmra_unit_least.
-  - exists ε. split; last done. apply list_lookup_singleton_lt. lia.
+  - eexists. split; first by apply list_lookup_singletonM. apply ucmra_unit_least.
+  - exists ε. split; last done. apply list_lookup_singletonM_lt. lia.
 Qed.
 
 Lemma getNext_spec (known_not_tail: bool) γ γs id v:
@@ -487,7 +487,7 @@ Proof.
   destruct (decide (length list = S id)) as [HIsTail|HNotTail].
   - destruct known_not_tail.
     { iDestruct (own_valid_2 with "Hγ HNotTail")
-        as %[[? [HValid _]]%list_singleton_included _]%auth_both_valid.
+        as %[[? [HValid _]]%list_singletonM_included _]%auth_both_valid.
       exfalso.
       apply list_lookup_fmap_inv in HValid.
       destruct HValid as [? [_ HLookup']].
@@ -770,8 +770,8 @@ Proof.
       move: (max_slots_bound _ _ segment_spec)=> HBound.
       rewrite decide_False; last lia.
       destruct (maxSlots _); first lia.
-      rewrite /= list_singleton_op -pair_op.
-      by apply list_alloc_singleton_local_update.
+      rewrite /= list_singletonM_op -pair_op.
+      by apply list_alloc_singletonM_local_update.
     }
     iSpecialize ("HNSeg" with "HNHasSlots").
     iAssert (segment_in_list γ γs (S id) nv) as "#HNListSeg";
@@ -1084,7 +1084,7 @@ Proof.
   { (* Impossible: we have evidence of at least one pointer existing. *)
     destruct slots.
     * iDestruct (own_valid_2 with "Hγ HPtr") as
-          %[(? & HLookup' & HInc)%list_singleton_included _]%auth_both_valid.
+          %[(? & HLookup' & HInc)%list_singletonM_included _]%auth_both_valid.
       rewrite map_lookup HLookup /= in HLookup'. simplify_eq.
       apply prod_included in HInc. destruct HInc as [_ HInc].
       apply Some_included in HInc. exfalso.
@@ -1097,7 +1097,7 @@ Proof.
       iCombine "HSlot" "HPtr" as "HFrag".
       iDestruct (own_valid_2 with "Hγ HFrag") as %[HValid _]%auth_both_valid.
       exfalso. move: HValid.
-      rewrite list_singleton_op list_singleton_included map_lookup HLookup /=.
+      rewrite list_singletonM_op list_singletonM_included map_lookup HLookup /=.
       intros (? & HLookup' & HInc); simplify_eq.
       apply prod_included in HInc. destruct HInc as [_ HInc].
       apply Some_included in HInc.
@@ -1138,9 +1138,9 @@ Proof.
       rewrite list_fmap_insert map_lookup.
       destruct (lt_eq_lt_dec i id) as [[HLt| ->]|HGt].
       - rewrite list_lookup_insert_ne; last lia.
-        rewrite !list_lookup_singleton_lt; try lia.
+        rewrite !list_lookup_singletonM_lt; try lia.
         by rewrite map_lookup.
-      - rewrite !list_lookup_singleton.
+      - rewrite !list_lookup_singletonM.
         rewrite list_lookup_insert;
           last by rewrite fmap_length; eapply lookup_lt_Some.
         rewrite HLookup /=.
@@ -1149,7 +1149,7 @@ Proof.
         apply option_local_update, replace_local_update; try done.
         apply _.
       - rewrite list_lookup_insert_ne; last lia.
-        rewrite !list_lookup_singleton_gt; try lia.
+        rewrite !list_lookup_singletonM_gt; try lia.
         by rewrite map_lookup.
     }
     iSplitR "HIsCancelled"; iModIntro.
@@ -1167,9 +1167,9 @@ Proof.
       rewrite list_fmap_insert map_lookup.
       destruct (lt_eq_lt_dec i id) as [[HLt| ->]|HGt].
       - rewrite list_lookup_insert_ne; last lia.
-        rewrite !list_lookup_singleton_lt; try lia.
+        rewrite !list_lookup_singletonM_lt; try lia.
         by rewrite map_lookup.
-      - rewrite !list_lookup_singleton.
+      - rewrite !list_lookup_singletonM.
         rewrite list_lookup_insert;
           last by rewrite fmap_length; eapply lookup_lt_Some.
         rewrite HLookup /=.
@@ -1184,7 +1184,7 @@ Proof.
         rewrite Cinr_op Some_op /=.
         by apply (cancel_local_update_unit (Some (Cinr 1%positive))), _.
       - rewrite list_lookup_insert_ne; last lia.
-        rewrite !list_lookup_singleton_gt; try lia.
+        rewrite !list_lookup_singletonM_gt; try lia.
         by rewrite map_lookup.
     }
     iSplitR ""; iModIntro.
@@ -1275,7 +1275,7 @@ Proof.
     iRight. iDestruct "Hr" as ([-> ->]) "Hcℓ". iExists false. iFrame "HPointer".
     iMod (own_update with "Hγ") as "[Hγ $]".
     { apply auth_update_core_id; first by apply _.
-      apply list_singleton_included. eexists.
+      apply list_singletonM_included. eexists.
       rewrite list_lookup_fmap HLookup /=.
       split; first done.
       apply pair_included. split; first by apply ucmra_unit_least.
@@ -1302,7 +1302,7 @@ Proof.
     apply list_lookup_local_update. intros i.
     rewrite lookup_nil map_lookup.
     destruct (lt_eq_lt_dec i id) as [[HLt| ->]|HLt].
-    - rewrite list_lookup_singleton_lt; last done.
+    - rewrite list_lookup_singletonM_lt; last done.
       rewrite list_lookup_insert_ne; last lia.
       rewrite map_lookup.
       assert (is_Some (list !! i)) as [? ->].
@@ -1311,7 +1311,7 @@ Proof.
       apply option_local_update'''.
       by rewrite ucmra_unit_left_id.
       intros ?. by rewrite ucmra_unit_left_id.
-    - rewrite HLookup list_lookup_singleton list_lookup_insert /=.
+    - rewrite HLookup list_lookup_singletonM list_lookup_insert /=.
       2: by rewrite fmap_length; eapply lookup_lt_Some.
       simpl.
       apply option_local_update'''.
@@ -1326,7 +1326,7 @@ Proof.
         apply Some_valid.
         rewrite decide_False; last lia.
         done.
-    - rewrite list_lookup_singleton_gt; last done.
+    - rewrite list_lookup_singletonM_gt; last done.
       rewrite list_lookup_insert_ne; last lia.
       by rewrite map_lookup.
   }
@@ -1425,15 +1425,15 @@ Proof.
       apply auth_update. apply list_lookup_local_update. intros i.
       rewrite list_fmap_insert.
       destruct (lt_eq_lt_dec i id) as [[HLt| ->]|HGt].
-      - rewrite !list_lookup_singleton_lt; try lia.
+      - rewrite !list_lookup_singletonM_lt; try lia.
         by rewrite list_lookup_insert_ne; last lia.
-      - rewrite !list_lookup_singleton list_lookup_insert;
+      - rewrite !list_lookup_singletonM list_lookup_insert;
           last by rewrite fmap_length; eapply lookup_lt_Some.
         rewrite map_lookup HLookup /segment_algebra_from_state /=.
         replace (Pos.of_nat 1) with 1%positive by (compute; done).
         apply option_local_update, prod_local_update_2, option_local_update.
         apply replace_local_update; try done. apply _.
-      - rewrite !list_lookup_singleton_gt; try lia.
+      - rewrite !list_lookup_singletonM_gt; try lia.
         by rewrite list_lookup_insert_ne; last lia.
     }
     iMod ("HCloseUpdater" $! (cleanedAndPointers_contents 0 (S k)) with
@@ -1467,9 +1467,9 @@ Proof.
         apply auth_update. apply list_lookup_local_update. intros i.
         rewrite list_fmap_insert.
         destruct (lt_eq_lt_dec i id) as [[HLt| ->]|HGt].
-        - rewrite !list_lookup_singleton_lt; try lia.
+        - rewrite !list_lookup_singletonM_lt; try lia.
           by rewrite list_lookup_insert_ne; last lia.
-        - rewrite !list_lookup_singleton list_lookup_insert;
+        - rewrite !list_lookup_singletonM list_lookup_insert;
             last by rewrite fmap_length; eapply lookup_lt_Some.
           rewrite map_lookup HLookup /segment_algebra_from_state /=.
           apply option_local_update, prod_local_update_2.
@@ -1481,7 +1481,7 @@ Proof.
             by rewrite pos_op_plus Pplus_one_succ_l //.
           rewrite Cinr_op Some_op /=.
           by apply (cancel_local_update_unit (Some (Cinr 1%positive))), _.
-        - rewrite !list_lookup_singleton_gt; try lia.
+        - rewrite !list_lookup_singletonM_gt; try lia.
           by rewrite list_lookup_insert_ne; last lia.
       }
       iMod ("HClose" with "[HRestore HSeg Hγ]") as "_".
@@ -1612,11 +1612,11 @@ Proof.
                                     segment_algebra ]})))
     as (γ) "[Hγ [#Hγs HPointer]]".
   {
-    rewrite -auth_frag_op list_singleton_op -pair_op.
+    rewrite -auth_frag_op list_singletonM_op -pair_op.
     rewrite ucmra_unit_left_id ucmra_unit_right_id.
     rewrite /auth_ra /segment_algebra_from_state /=.
     apply auth_both_valid. split.
-    - apply list_singleton_included.
+    - apply list_singletonM_included.
       eexists. split; first done.
       apply prod_included=> /=. split; first done.
       rewrite decide_False; last lia.
@@ -1637,7 +1637,7 @@ Proof.
       replace (Pos.of_nat 1) with 1%positive; first by iFrame.
       by compute.
     - replace (Pos.of_nat (S (S k))) with (1%positive ⋅ Pos.of_nat (S k)).
-      * rewrite Cinr_op Some_op pair_op_2 -list_singleton_op auth_frag_op.
+      * rewrite Cinr_op Some_op pair_op_2 -list_singletonM_op auth_frag_op.
         iDestruct "HPointer" as "[$ HInd]".
         by iApply "IH".
       * rewrite -!Pos.of_nat_succ /= pos_op_plus Pos.add_1_l //.

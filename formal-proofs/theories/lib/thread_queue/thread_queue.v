@@ -87,7 +87,7 @@ Definition new_thread_queue: val :=
 End impl.
 
 From iris.heap_lang Require Import proofmode.
-From iris.algebra Require Import auth.
+From iris.algebra Require Import auth numbers.
 
 Section parking.
 
@@ -163,15 +163,15 @@ Variable ap: @infinite_array_parameters Σ.
 
 Context `{iArrayG Σ}.
 
-Class iArrayPtrG Σ := IArrayPtrG { iarrayptr_inG :> inG Σ (authUR mnatUR) }.
-Definition iArrayPtrΣ : gFunctors := #[GFunctor (authUR mnatUR)].
+Class iArrayPtrG Σ := IArrayPtrG { iarrayptr_inG :> inG Σ (authUR max_natUR) }.
+Definition iArrayPtrΣ : gFunctors := #[GFunctor (authUR max_natUR)].
 Instance subG_iArrayPtrΣ : subG iArrayPtrΣ Σ -> iArrayPtrG Σ.
 Proof. solve_inG. Qed.
 
 Context `{iArrayPtrG Σ}.
 
 Definition ptr_points_to_segment γa γ ℓ id :=
-  (∃ (ℓ': loc), ℓ ↦ #ℓ' ∗ segment_location γa id ℓ' ∗ own γ (● (id: mnatUR)))%I.
+  (∃ (ℓ': loc), ℓ ↦ #ℓ' ∗ segment_location γa id ℓ' ∗ own γ (● (MaxNat id)))%I.
 
 Theorem move_ptr_forward_spec γa γ (v: loc) id ℓ:
   segment_location γa id ℓ -∗
@@ -189,7 +189,7 @@ Proof.
   iDestruct "HPtr" as (ℓ') "(Htl & #HLoc & HAuth)".
   wp_load.
   iMod (own_update with "HAuth") as "[HAuth HFrag]".
-  { apply auth_update_core_id with (b := id'); try done. apply _. }
+  { apply auth_update_core_id with (b := MaxNat id'); try done. apply _. }
   iMod ("HClose" with "[HIsInf Htl HLoc HAuth]") as "AU";
     first by eauto with iFrame.
   iModIntro. wp_pures.
@@ -221,8 +221,8 @@ Proof.
     { iAssert (⌜id' <= id''⌝)%I with "[HFrag HPtr]" as %HLt.
       { iDestruct "HPtr" as (?) "(_ & _ & HAuth)".
         iDestruct (own_valid_2 with "HAuth HFrag")
-          as %[HH%mnat_included _]%auth_both_valid.
-        iPureIntro. lia.
+          as %[HH%max_nat_included _]%auth_both_valid.
+        iPureIntro. simpl in *. lia.
       }
       replace (id `max` id'')%nat with id''. done. lia. }
     iIntros "HΦ !> HProc". wp_pures. rewrite bool_decide_decide E. by wp_pures.
@@ -239,7 +239,8 @@ Proof.
     wp_cmpxchg_suc.
     iDestruct (segment_location_id_agree with "HIsInf HLoc HLocs") as %<-.
     iMod (own_update with "HAuth") as "[HAuth _]".
-    { apply auth_update_alloc. apply (mnat_local_update _ _ id). lia. }
+    { apply auth_update_alloc. apply (max_nat_local_update _ _ (MaxNat id)).
+      simpl. lia. }
     iMod ("HClose" with "[HIsInf Htl HAuth]") as "HΦ".
     { rewrite Max.max_l. iFrame. iExists _. by iFrame. lia. }
     iModIntro. by wp_pures.
@@ -260,7 +261,7 @@ From iris.algebra Require Import list gset excl csum.
 
 Section proof.
 
-Notation iteratorUR := (prodUR (optionUR positiveR) mnatUR).
+Notation iteratorUR := (prodUR (optionUR positiveR) max_natUR).
 Notation deqIteratorUR := iteratorUR.
 Notation enqIteratorUR := iteratorUR.
 
@@ -273,11 +274,11 @@ Inductive cellState :=
 | cellFilled
 | cellInhabited : gname -> loc -> option inhabitedCellTerminalState -> cellState.
 
-Notation cellProgressUR := mnatUR (only parsing).
-Notation cellUninitializedO := (0%nat: mnatUR) (only parsing).
-Notation cellInitializedO := (1%nat: mnatUR) (only parsing).
-Notation cellInhabitedO := (2%nat: mnatUR) (only parsing).
-Notation cellDoneO := (3%nat: mnatUR) (only parsing).
+Notation cellProgressUR := max_natUR (only parsing).
+Notation cellUninitializedO := (MaxNat 0) (only parsing).
+Notation cellInitializedO := (MaxNat 1) (only parsing).
+Notation cellInhabitedO := (MaxNat 2) (only parsing).
+Notation cellDoneO := (MaxNat 3) (only parsing).
 
 Canonical Structure cellTerminalStateO := leibnizO cellState.
 
@@ -297,7 +298,7 @@ Notation cellStateUR := (prodUR (prodUR (prodUR cellInhabitantUR cellResumerUR)
 Notation queueContentsUR := (listUR cellStateUR).
 
 Notation enqueueUR := natUR.
-Notation dequeueUR := (prodUR natUR mnatUR).
+Notation dequeueUR := (prodUR natUR max_natUR).
 Notation algebra := (authUR (prodUR (prodUR enqueueUR dequeueUR) queueContentsUR)).
 
 Class threadQueueG Σ := ThreadQueueG { thread_queue_inG :> inG Σ algebra }.
@@ -320,7 +321,7 @@ Lemma rendezvous_state_op γtq i (r r': cellStateUR):
    rendezvous_state γtq i (r ⋅ r'))%I.
 Proof.
   rewrite /rendezvous_state -own_op -auth_frag_op -pair_op ucmra_unit_left_id.
-  by rewrite list_singleton_op.
+  by rewrite list_singletonM_op.
 Qed.
 
 Global Instance rendezvous_state_persistent γtq i (r: cellStateUR):
@@ -428,7 +429,7 @@ Proof.
   rewrite list_lookup_op.
 
   rewrite lookup_app_r. all: rewrite replicate_length. 2: done.
-  rewrite minus_diag. simpl. rewrite list_lookup_singleton.
+  rewrite minus_diag. simpl. rewrite list_lookup_singletonM.
   rewrite -Some_op Some_valid.
   move=> HValid.
   repeat (apply pair_valid in HValid; destruct HValid as [HValid _]).
@@ -438,7 +439,7 @@ Proof.
 Qed.
 
 Definition deq_front_at_least γtq (n: nat) :=
-  own γtq (◯ (ε, (ε, n: mnatUR), ε)).
+  own γtq (◯ (ε, (ε, MaxNat n), ε)).
 
 Definition rendezvous_thread_locs_state (γtq γt: gname) (th: loc) (i: nat): iProp
   := rendezvous_state γtq i (ε, Some (to_agree (γt, th)), ε, ε, ε).
@@ -580,7 +581,7 @@ Definition cell_resources E R γtq γa γe γd i k :=
 
 Definition cell_list_contents_auth_ra l (deqFront: nat) :=
   (length l, ((deqFront + count_matching (fun b => not (still_present b)) (drop deqFront l))%nat,
-              deqFront: mnatUR), map cell_state_to_RA l).
+              MaxNat deqFront), map cell_state_to_RA l).
 
 Theorem cell_list_contents_done_agree γ l (deqFront: nat) i c:
   own γ (● (cell_list_contents_auth_ra l deqFront)) -∗
@@ -589,7 +590,7 @@ Theorem cell_list_contents_done_agree γ l (deqFront: nat) i c:
 Proof.
   iIntros "HAuth HFrag".
   iDestruct (own_valid_2 with "HAuth HFrag")
-    as %[[_ (v&HEl&HInc)%list_singleton_included]%prod_included _]%auth_both_valid.
+    as %[[_ (v&HEl&HInc)%list_singletonM_included]%prod_included _]%auth_both_valid.
   simpl in *. iPureIntro.
 
   rewrite map_lookup in HEl.
@@ -615,7 +616,7 @@ Proof.
   }
   destruct HInc as [HInc _]. apply prod_included in HInc; simpl.
   destruct HInc as [_ HInc]. move: HInc. simpl.
-  rewrite mnat_included. lia.
+  rewrite max_nat_included. simpl. lia.
 Qed.
 
 Theorem cell_list_contents_ra_locs γ l deqFront i γt th:
@@ -625,7 +626,7 @@ Theorem cell_list_contents_ra_locs γ l deqFront i γt th:
 Proof.
   iIntros "HAuth HFrag".
   iDestruct (own_valid_2 with "HAuth HFrag")
-    as %[[_ (v&HEl&HInc)%list_singleton_included]%prod_included _]%auth_both_valid.
+    as %[[_ (v&HEl&HInc)%list_singletonM_included]%prod_included _]%auth_both_valid.
   simpl in *. iPureIntro.
 
   rewrite map_lookup in HEl.
@@ -679,7 +680,7 @@ Proof.
   iDestruct (own_valid_2 with "HAuth HExistsEl")
     as %[[_ HH]%prod_included _]%auth_both_valid.
   simpl in *. iPureIntro.
-  apply list_singleton_included in HH.
+  apply list_singletonM_included in HH.
   destruct HH as (v & HMap & _). rewrite map_lookup in HMap.
   destruct (l !! i); simpl in *; [eauto|done].
 Qed.
@@ -734,7 +735,7 @@ Theorem deq_front_at_least__cell_list_contents γtq n l deqFront :
 Proof.
   iIntros "H1 H2".
   iDestruct (own_valid_2 with "H2 H1") as
-      %[[[_ [_ HValid%mnat_included]%prod_included]%prod_included
+      %[[[_ [_ HValid%max_nat_included]%prod_included]%prod_included
                                                    _]%prod_included
                                                      _]%auth_both_valid.
   iPureIntro; simpl in *; lia.
@@ -752,14 +753,14 @@ Proof.
   by repeat apply pair_core_id; apply _.
   repeat (apply prod_included'; split); simpl.
   all: try apply ucmra_unit_least.
-  apply mnat_included. lia.
+  apply max_nat_included. simpl. lia.
 Qed.
 
 Lemma deque_register_ra_update l deqFront:
   forall i, find_index still_present (drop deqFront l) = Some i ->
   ● cell_list_contents_auth_ra l deqFront ~~>
     ● cell_list_contents_auth_ra l (deqFront + S i)
-    ⋅ (◯ (ε, (1%nat, ε), ε) ⋅ ◯ (ε, (ε, (deqFront + S i)%nat : mnatUR), ε)).
+    ⋅ (◯ (ε, (1%nat, ε), ε) ⋅ ◯ (ε, (ε, MaxNat (deqFront + S i)), ε)).
 Proof.
   intros i HFindSome.
 
@@ -777,7 +778,7 @@ Proof.
 
   apply auth_update_alloc, prod_local_update_1, prod_local_update_2,
     prod_local_update'.
-  2: apply mnat_local_update; lia.
+  2: apply max_nat_local_update; simpl; lia.
   apply nat_local_update.
 
   rewrite -plus_n_O -Nat.add_assoc Nat.add_1_r -Nat.add_assoc /=.
@@ -922,12 +923,12 @@ Proof.
 
   rewrite drop_app_ge take_length_le; try lia. rewrite minus_diag drop_0.
 
-  assert (forall k, ⊢ own γd (● (GSet (set_seq 0 deqIdx), deqIdx: mnatUR)) -∗
+  assert (forall k, ⊢ own γd (● (GSet (set_seq 0 deqIdx), MaxNat deqIdx)) -∗
                       iterator_issued γd (deqIdx + k) -∗ False)%I as HContra.
   {
     iIntros (k) "HCtrAuth HIsSus".
     iDestruct (own_valid_2 with "HCtrAuth HIsSus") as
-        %[[_ HValid%mnat_included]%prod_included _]%auth_both_valid.
+        %[[_ HValid%max_nat_included]%prod_included _]%auth_both_valid.
     simpl in *. lia.
   }
   iAssert (⌜forall j, (deqFront <= j < length l)%nat ->
@@ -1154,7 +1155,7 @@ Proof.
     case HContra.
     intros HContra' _. apply prod_included in HContra'. simpl in *.
     case HContra'.
-    rewrite mnat_included; lia.
+    rewrite max_nat_included /=; lia.
   }
   destruct c as [|? ? c]; simpl; first done.
   iExFalso.
@@ -1242,7 +1243,7 @@ Proof.
     rewrite HCMl. rewrite HCMl'.
     iMod (own_update _ _ ((● cell_list_contents_auth_ra
           l' deqFront
-          ⋅ ◯ (ε, {[i := (Some 1%Qp, Some (to_agree (γt, th)), ε, 2%nat: mnatUR, None)]}
+          ⋅ ◯ (ε, {[i := (Some 1%Qp, Some (to_agree (γt, th)), ε, MaxNat 2, None)]}
               ))
                          ) with "HAuth") as "[HAuth HFrag]".
     { simpl. apply auth_update_alloc.
@@ -1293,7 +1294,7 @@ Proof.
     }
     iSpecialize ("HH" with "[HIsSus Hℓ HCancHandle HThreadNoPerms]").
     { iFrame. iExists _. iFrame "HArrMapsto Hℓ HRendThread HTh". }
-    iAssert (own γtq (◯ (ε, {[i := (ε, 1%nat: mnatUR, None)]})))
+    iAssert (own γtq (◯ (ε, {[i := (ε, MaxNat 1, None)]})))
       with "[-]" as "#HInit".
     {
       iApply (own_mono with "HFrag").
@@ -1304,7 +1305,7 @@ Proof.
       apply Some_included; right. apply prod_included.
       split; try done. simpl.
       apply prod_included'. simpl. split.
-      apply ucmra_unit_least. rewrite mnat_included. lia. }
+      apply ucmra_unit_least. rewrite max_nat_included /=. lia. }
     iFrame.
 
     iMod ("HClose" with "[-]") as "$".
@@ -1512,7 +1513,7 @@ Proof.
           inhabitant_token' γtq i (1/2)%Qp ∗
           inhabitant_token' γtq i (1/2)%Qp)%I as Hsplit_inh_token.
   {
-    rewrite -own_op -auth_frag_op -pair_op list_singleton_op ucmra_unit_left_id.
+    rewrite -own_op -auth_frag_op -pair_op list_singletonM_op ucmra_unit_left_id.
     rewrite -pair_op ucmra_unit_right_id.
     replace (own γtq _) with (inhabitant_token γtq i). done.
     congr (own γtq (◯ (ε, {[ i := (Some _, ε, ε, ε, ε)]}))).
@@ -1521,28 +1522,28 @@ Proof.
 
   assert ((map cell_state_to_RA l, ε) ~l~>
           (map cell_state_to_RA (alter (fun _ => Some (cellInhabited γt th (Some cellCancelled))) i l),
-            {[ i := (ε, (cellDoneO: mnatUR),
+            {[ i := (ε, cellDoneO,
                      Some (to_agree (cellInhabited γt th (Some cellCancelled))))]}
               ⋅ {[ i := (ε, Excl' (), ε, ε)]}
           )
           ) as Hupdate_ra_map.
   { move: HEl. clear. intros HInh.
     apply list_lookup_local_update.
-    intros j. rewrite lookup_nil map_lookup map_lookup list_singleton_op.
+    intros j. rewrite lookup_nil map_lookup map_lookup list_singletonM_op.
     destruct (decide (i = j)); first subst.
     {
-      rewrite list_lookup_singleton list_lookup_alter.
+      rewrite list_lookup_singletonM list_lookup_alter.
       rewrite HInh. simpl.
       apply option_local_update', prod_local_update; simpl.
       2: by apply alloc_option_local_update.
       apply prod_local_update; simpl.
       by apply prod_local_update_2, alloc_option_local_update.
       rewrite ucmra_unit_right_id.
-      by apply mnat_local_update; lia.
+      by apply max_nat_local_update; simpl; lia.
     }
     destruct (decide (i < j)%nat).
-    by rewrite list_lookup_singleton_gt // list_lookup_alter_ne //.
-    rewrite list_lookup_alter_ne // list_lookup_singleton_lt; last by lia.
+    by rewrite list_lookup_singletonM_gt // list_lookup_alter_ne //.
+    rewrite list_lookup_alter_ne // list_lookup_singletonM_lt; last by lia.
     assert (i < length l)%nat. by apply lookup_lt_is_Some; eauto.
     assert (is_Some (l !! j)) as [? ->]. by apply lookup_lt_is_Some; lia.
     by apply option_local_update'.
@@ -1652,8 +1653,8 @@ Proof.
       iExists γt, th. iApply (own_mono with "HFrag").
       apply auth_included; split; first done.
       apply prod_included'; split; first by apply ucmra_unit_least.
-      rewrite list_singleton_op. apply list_singleton_included.
-      rewrite list_lookup_singleton.
+      rewrite list_singletonM_op. apply list_singletonM_included.
+      rewrite list_lookup_singletonM.
       eexists. split; first done.
       apply prod_included'; split; simpl; last done.
       apply prod_included'; split; simpl; last done.
@@ -1696,9 +1697,9 @@ Proof.
     iApply (own_mono with "HFrag").
     apply auth_included; split; first done.
     apply prod_included'; split; simpl; first done.
-    rewrite list_singleton_op. rewrite ucmra_unit_right_id.
-    apply list_singleton_included.
-    rewrite list_lookup_singleton.
+    rewrite list_singletonM_op. rewrite ucmra_unit_right_id.
+    apply list_singletonM_included.
+    rewrite list_lookup_singletonM.
     eexists. split; first done.
     apply prod_included'; split; simpl; last by apply ucmra_unit_least.
     apply prod_included'; split; simpl. done.
@@ -1725,7 +1726,7 @@ Proof.
   by apply lookup_lt_is_Some; eauto.
   destruct (decide (j < i)%nat).
   {
-    rewrite list_lookup_singleton_lt; last done.
+    rewrite list_lookup_singletonM_lt; last done.
     assert (is_Some (l !! j)) as [? ->].
     by apply lookup_lt_is_Some; lia.
     simpl.
@@ -1734,12 +1735,12 @@ Proof.
   }
   destruct (decide (j = i)).
   2: {
-    rewrite list_lookup_singleton_gt; try lia.
+    rewrite list_lookup_singletonM_gt; try lia.
     rewrite option_included. left. done.
   }
   subst.
   rewrite HEl.
-  rewrite list_lookup_singleton.
+  rewrite list_lookup_singletonM.
   apply Some_included_total.
   simpl.
   destruct d; first done. destruct Hd as [|[? Hd]]; simplify_eq.
@@ -1899,7 +1900,7 @@ Proof.
     destruct (decide (i = j)).
     {
       subst.
-      rewrite list_lookup_singleton.
+      rewrite list_lookup_singletonM.
       assert (is_Some (l !! j)) as [? ->].
       by apply lookup_lt_is_Some; lia.
       simpl.
@@ -1952,7 +1953,7 @@ Proof.
         destruct HH as [HH _].
         apply prod_included in HH; simpl in HH.
         destruct HH as [_ HH].
-        apply mnat_included in HH.
+        apply max_nat_included in HH. simpl in *.
         lia.
       - done.
     }
@@ -1976,7 +1977,7 @@ Proof.
                          )
             with "HAuth") as "[HAuth [HFrag1 HFrag2]]".
     {
-      rewrite -auth_frag_op -pair_op list_singleton_op ucmra_unit_left_id.
+      rewrite -auth_frag_op -pair_op list_singletonM_op ucmra_unit_left_id.
       rewrite -pair_op ucmra_unit_right_id -core_id_dup.
       apply auth_update_alloc. unfold cell_list_contents_auth_ra.
       replace (length l') with (length l).
@@ -1994,13 +1995,13 @@ Proof.
       destruct (nat_eq_dec i i').
       {
         subst. rewrite list_lookup_alter. repeat rewrite map_lookup.
-        rewrite list_lookup_singleton.
+        rewrite list_lookup_singletonM.
         rewrite HIsSome. simpl.
         apply option_local_update'.
         apply prod_local_update; simpl.
         2: by apply alloc_option_local_update.
         apply prod_local_update_2.
-        apply mnat_local_update. lia.
+        apply max_nat_local_update. simpl. lia.
       }
       rewrite list_lookup_alter_ne; try done.
       rewrite map_lookup.
@@ -2022,7 +2023,7 @@ Proof.
       remember (l !! i') as Z.
 
       rewrite lookup_ge_None_2 //.
-      rewrite list_singleton_length. lia.
+      rewrite list_singletonM_length. lia.
     }
     iSplitR "HFrag2".
     2: {
@@ -2036,7 +2037,7 @@ Proof.
       induction i; case; try done. simpl.
       apply Some_included_total, prod_included; simpl. split; try done.
       apply prod_included'; simpl. split; first done.
-      apply mnat_included. lia.
+      apply max_nat_included. simpl. lia.
     }
     iLeft.
     repeat (iSplitR; first done).
@@ -2152,7 +2153,7 @@ Proof.
       repeat rewrite drop_app_ge take_length_le; try lia.
       rewrite Z. simpl. done.
     }
-    rewrite -auth_frag_op -pair_op ucmra_unit_right_id list_singleton_op.
+    rewrite -auth_frag_op -pair_op ucmra_unit_right_id list_singletonM_op.
 
     apply auth_update_alloc, prod_local_update'; simpl.
     {
@@ -2191,10 +2192,10 @@ Proof.
       apply option_local_update'.
       apply prod_local_update'; simpl.
       2: by apply alloc_option_local_update.
-      apply prod_local_update, mnat_local_update; simpl.
+      apply prod_local_update, max_nat_local_update; simpl.
       apply prod_local_update_2. simpl.
       by apply alloc_option_local_update.
-      by rewrite ucmra_unit_right_id; lia.
+      lia.
   }
 
   iDestruct (big_sepL_lookup_acc with "[HCellResources]")
@@ -2439,7 +2440,7 @@ Proof.
   2: by apply alloc_option_local_update.
   apply prod_local_update'.
   done.
-  apply mnat_local_update.
+  apply max_nat_local_update. simpl.
   lia.
 Qed.
 
@@ -2454,7 +2455,7 @@ Proof.
   rewrite prod_included; simpl.
   split.
   by apply ucmra_unit_least.
-  apply mnat_included; lia.
+  apply max_nat_included; simpl; lia.
 Qed.
 
 Lemma read_iterator γa γ ℓ pℓ v:
@@ -2486,7 +2487,7 @@ Proof.
   simpl in *.
   move: HValid. rewrite list_lookup_included. move=> HValid.
   specialize (HValid i).
-  rewrite list_lookup_singleton in HValid.
+  rewrite list_lookup_singletonM in HValid.
   rewrite map_lookup in HValid.
   destruct (l !! i) as [s|] eqn:Z.
   2: {
@@ -2501,7 +2502,7 @@ Proof.
     apply prod_included in HH; destruct HH as [HH _].
     apply prod_included in HH; destruct HH as [_ HH].
     move: HH. simpl.
-    rewrite mnat_included. lia.
+    rewrite max_nat_included /=. lia.
   }
   iDestruct (big_sepL_lookup with "HRRs") as "HR"; first done.
   simpl.
@@ -2710,7 +2711,7 @@ Proof.
           as "#HEv".
   {
     repeat rewrite big_sepL_forall.
-    iIntros (k x HEv).
+    iIntros (k ? HEv).
     apply seq_lookup' in HEv. destruct HEv as [-> HEv].
     iSplit.
     - iSpecialize ("HSegInv" $! ((deqIdx' + k) `div` Pos.to_nat segment_size)%nat _).
@@ -2747,14 +2748,14 @@ Proof.
     iIntros "!>".
     remember (seq _ _) as l'.
     iClear "IH HSegLoc HCounter HSegLoc'". clear.
-    iInduction l' as [|x l'] "IH"; simpl; first done.
+    iInduction l' as [|? l'] "IH"; simpl; first done.
     iDestruct ("HEv" $! O with "[]") as "[HInv HCanc]"; first by eauto.
     iDestruct "HInv" as (?) "#HInv".
     iSplitL.
     2: {
       iApply "IH".
       iIntros "!>" (k ? HEl).
-      iApply ("HEv" $! (S k) a).
+      iApply ("HEv" $! (S k)).
       by simpl.
     }
     iInv N as ">HOpen" "HClose".
@@ -2843,12 +2844,11 @@ Proof.
     with "[HPerms']" as "HIsss".
   {
     iClear "IH HSegLoc HCounter HSegLoc' HEv".
-    rewrite big_sepL_sep.
+    iEval (rewrite big_sepL_sep).
     iSplitL.
     2: {
       repeat rewrite big_sepL_forall.
-      iIntros (? x HEl).
-      iSpecialize ("HEv'" $! _ x).
+      iIntros (? ? HEl).
       iDestruct ("HEv'" with "[]") as "[$ _]".
       iPureIntro.
       apply seq_lookup' in HEl. destruct HEl as [-> HLt].
@@ -2868,16 +2868,16 @@ Proof.
     assert (X = (max (S (start + (deqIdx' + S d))) X)%nat) as HEqX
         by (subst; lia).
     rewrite HEqX.
-    rewrite -mnat_op_max -gset_disj_union.
+    rewrite -max_nat_op_max -gset_disj_union.
     2: by apply set_seq_S_start_disjoint.
     rewrite pair_op auth_frag_op own_op.
     iDestruct "HPerms'" as "[$ HRec]".
     change (S (start + (deqIdx' + S d)))%nat with
         ((1 + start) + (deqIdx' + S d))%nat.
     iApply ("IH" with "[] [HRec]").
-    2: by rewrite mnat_op_max /= -HEqX.
+    2: by rewrite max_nat_op_max /= -HEqX.
     iPureIntro.
-    simpl in *. rewrite /op /mnat_op.
+    simpl in *. rewrite /op /max_nat_op.
     lia.
   }
 
@@ -3091,7 +3091,7 @@ Lemma iterator_counter_at_least_mono γ i j:
 Proof.
   intros HLe. apply own_mono, auth_included; simpl; split; try done.
   apply prod_included'; simpl; split; try done.
-  by apply mnat_included.
+  by apply max_nat_included.
 Qed.
 
 Theorem iterator_move_ptr_forward_spec ap γa γ cℓ (ℓ: loc) (pℓ: loc) i id:
@@ -3289,19 +3289,19 @@ Proof.
     apply auth_update_core_id.
     by repeat (apply pair_core_id; try apply _).
     repeat (apply prod_included'; simpl; split; try apply ucmra_unit_least).
-    by apply mnat_included.
+    by apply max_nat_included.
   }
   simpl.
   iAssert (▷ deq_front_at_least γtq (S d))%I as "#HDeqFront".
   {
     iDestruct "HRest" as "(_ & HH)".
-    iDestruct "HH" as (? deqIdx) "(_ & [>HDeqCtr _] & _ & _ & >%)".
+    iDestruct "HH" as (? ?) "(_ & [>HDeqCtr _] & _ & _ & >%)".
     iDestruct (iterator_points_to_at_least with "HDAtLeast HDeqCtr") as "%".
     iApply (own_mono with "HFrag").
 
     apply auth_included. simpl. split; first done.
     repeat (apply prod_included'; simpl; split; try done).
-    apply mnat_included. lia.
+    apply max_nat_included=>/=. lia.
   }
   iFrame.
   iIntros "!> AU !>".
@@ -3341,8 +3341,8 @@ Proof.
       rewrite list_lookup_alter_ne in HEl; try done.
       by eauto.
     }
-    iDestruct "HRest" as (enqIdx deqIdx) "HH".
-    iExists enqIdx, deqIdx.
+    iDestruct "HRest" as (? ?) "HH".
+    iExists _, _.
     by rewrite alter_length.
   }
 
@@ -3461,15 +3461,15 @@ Proof.
   wp_pures.
   awp_apply iterator_value_faa. iApply (aacc_aupd_abort with "AU"); first done.
   iIntros (cells ?) "(HInfArr & HListContents & >% & HRest)".
-  iDestruct "HRest" as (enqIdx ?) "(>HEnqIt & >HDeqIt & HAwaks & >HSusps & >%)".
+  iDestruct "HRest" as (senqIdx ?) "(>HEnqIt & >HDeqIt & HAwaks & >HSusps & >%)".
   iDestruct "HListContents" as "(HLC1 & HLC2 & >HAuth & HLC3)".
-  iAssert (⌜(enqIdx < length cells)%nat⌝)%I as %HEnqLtLen.
+  iAssert (⌜(senqIdx < length cells)%nat⌝)%I as %HEnqLtLen.
   {
     rewrite /suspension_permit.
-    iAssert (own γtq (◯ (S enqIdx,ε, ε))) with "[HSusp HSusps]" as "HSusp".
+    iAssert (own γtq (◯ (S senqIdx,ε, ε))) with "[HSusp HSusps]" as "HSusp".
     {
       clear.
-      iInduction enqIdx as [|enqIdx'] "IH"; first done. simpl.
+      iInduction senqIdx as [|enqIdx'] "IH"; first done. simpl.
       iDestruct "HSusps" as "[HSusp' HSusps]".
       change (S (S enqIdx')) with (1 ⋅ S enqIdx')%nat.
       rewrite pair_op_1 pair_op_1 auth_frag_op own_op.
@@ -3486,7 +3486,7 @@ Proof.
     lia.
   }
   iMod (own_update with "HAuth") as "[HAuth HFrag]".
-  2: iAssert (exists_list_element γtq enqIdx) with "HFrag" as "#HElExists".
+  2: iAssert (exists_list_element γtq senqIdx) with "HFrag" as "#HElExists".
   {
     apply auth_update_core_id; first by apply _.
     apply prod_included; simpl; split.
@@ -3496,19 +3496,19 @@ Proof.
     clear.
     intros ? i.
     rewrite -fmap_is_map list_lookup_fmap.
-    destruct (decide (i >= S enqIdx)%Z).
+    destruct (decide (i >= S senqIdx)%Z).
     {
       remember (cells !! i) as K. clear HeqK.
       rewrite lookup_ge_None_2.
-      2: rewrite list_singleton_length; lia.
+      2: rewrite list_singletonM_length; lia.
       by apply option_included; left.
     }
     assert (i < length cells)%nat as HEl by lia.
     apply lookup_lt_is_Some in HEl.
     destruct HEl as [? ->]. simpl.
-    destruct (decide (i = enqIdx)).
+    destruct (decide (i = senqIdx)).
     {
-      subst. rewrite list_lookup_singleton.
+      subst. rewrite list_lookup_singletonM.
       apply Some_included_total, ucmra_unit_least.
     }
     assert (forall (A: ucmraT) (i i': nat) (x: A),
@@ -3534,13 +3534,13 @@ Proof.
   iClear "HEnqAtLeast".
   iMod (iterator_counter_is_at_least with "HEnqCtr") as "[HEnqCtr #HEnqAtLeast]".
   iClear "HFrag".
-  change (own _ (◯ _)) with (iterator_issued γe enqIdx).
+  change (own _ (◯ _)) with (iterator_issued γe senqIdx).
   iFrame.
   iSplitR "HIsSus HNoPerms".
   {
     iSplitR; first done.
     iExists _, _. simpl.
-    iAssert ([∗ list] _ ∈ seq O (S enqIdx), suspension_permit γtq)%I
+    iAssert ([∗ list] _ ∈ seq O (S senqIdx), suspension_permit γtq)%I
             with "[HSusps HSusp]" as "$".
     {
       simpl. iFrame.
@@ -3563,12 +3563,12 @@ Proof.
     iFrame. iIntros "$ !> $ !> //".
   }
   iIntros (segId ?) "(HInfArr & #HInvs & #HSegLoc' & #HRest')".
-  iAssert (⌜(enqIdx `div` Pos.to_nat segment_size <= segId)%nat⌝)%I as "%".
+  iAssert (⌜(senqIdx `div` Pos.to_nat segment_size <= segId)%nat⌝)%I as "%".
   by iDestruct "HRest'" as "[(% & <-)|(% & % & _)]"; iPureIntro; lia.
-  iDestruct (big_sepL_lookup _ _ (enqIdx `div` Pos.to_nat segment_size)%nat with "HInvs") as "HInv".
+  iDestruct (big_sepL_lookup _ _ (senqIdx `div` Pos.to_nat segment_size)%nat with "HInvs") as "HInv".
   by apply seq_lookup; lia.
   iDestruct (cell_invariant_by_segment_invariant
-               _ _ _ _ (enqIdx `mod` Pos.to_nat segment_size)%nat with "HInv") as "HInv'".
+               _ _ _ _ (senqIdx `mod` Pos.to_nat segment_size)%nat with "HInv") as "HInv'".
   by apply Nat.mod_upper_bound; lia.
   simpl.
   rewrite Nat.mul_comm -Nat.div_mod; try lia.
@@ -3578,14 +3578,14 @@ Proof.
 
   wp_pures.
 
-  destruct (decide (enqIdx `div` Pos.to_nat segment_size = segId)%nat).
+  destruct (decide (senqIdx `div` Pos.to_nat segment_size = segId)%nat).
   2: {
     iDestruct "HRest'" as "[[% ->]|HC]".
     {
       exfalso.
-      assert (enqIdx `div` Pos.to_nat segment_size < segId)%nat by lia.
+      assert (senqIdx `div` Pos.to_nat segment_size < segId)%nat by lia.
       assert ((segId * Pos.to_nat segment_size) `div` Pos.to_nat segment_size <=
-              enqIdx `div` Pos.to_nat segment_size)%nat as HContra.
+              senqIdx `div` Pos.to_nat segment_size)%nat as HContra.
       by apply Nat.div_le_mono; lia.
       rewrite Nat.div_mul in HContra; lia.
     }
@@ -3593,13 +3593,13 @@ Proof.
     rewrite segments_cancelled__cells_cancelled.
     remember (Pos.to_nat segment_size) as P.
     iAssert (cell_is_cancelled segment_size γa
-              (P * enqIdx `div` P + enqIdx `mod` P)%nat) as "HCellCanc".
+              (P * senqIdx `div` P + senqIdx `mod` P)%nat) as "HCellCanc".
     {
       rewrite Nat.mul_comm.
       iApply (big_sepL_lookup with "HCanc").
       apply seq_lookup.
-      assert (enqIdx `mod` P < P)%nat by (apply Nat.mod_upper_bound; lia).
-      destruct (segId - enqIdx `div` P)%nat eqn:Z; try lia.
+      assert (senqIdx `mod` P < P)%nat by (apply Nat.mod_upper_bound; lia).
+      destruct (segId - senqIdx `div` P)%nat eqn:Z; try lia.
       simpl.
       lia.
     }
@@ -3617,12 +3617,12 @@ Proof.
       simpl in *.
       exfalso.
       move: HValid. rewrite list_lookup_included. move=> HValid.
-      specialize (HValid enqIdx). move: HValid.
-      rewrite list_lookup_singleton map_lookup HEl /= Some_included_total.
+      specialize (HValid senqIdx). move: HValid.
+      rewrite list_lookup_singletonM map_lookup HEl /= Some_included_total.
       intros HValid.
       apply prod_included in HValid; simpl in *; destruct HValid as [HValid _].
       apply prod_included in HValid; simpl in *; destruct HValid as [_ HValid].
-      apply mnat_included in HValid. lia.
+      apply max_nat_included in HValid. simpl in *; lia.
     }
     iDestruct (big_sepL_lookup with "HCellRRs") as "HR".
     done.
@@ -3641,7 +3641,7 @@ Proof.
   iClear "HRest' HInvs HSegLoc HInv". clear.
 
   awp_apply (iterator_move_ptr_forward_spec with "[%] [$] [$]").
-  by move: (Nat.mul_div_le enqIdx (Pos.to_nat segment_size)); lia.
+  by move: (Nat.mul_div_le senqIdx (Pos.to_nat segment_size)); lia.
   iApply (aacc_aupd_abort with "AU"); first done.
   iIntros (? ?) "(HInfArr & HListContents & HLog1 & HRest)".
   iDestruct "HRest" as (? ?) "(>HEnqIt & >HDeqIt & HAwaks & >HSusps & HLog2)".
@@ -3658,7 +3658,7 @@ Proof.
   iIntros "!> AU !>".
 
   wp_pures. wp_lam. wp_pures.
-  replace (Z.rem enqIdx _) with (Z.of_nat (enqIdx `mod` Pos.to_nat segment_size)%nat).
+  replace (Z.rem senqIdx _) with (Z.of_nat (senqIdx `mod` Pos.to_nat segment_size)%nat).
   2: {
     destruct (Pos.to_nat segment_size) eqn:Z; try lia.
     by rewrite rem_of_nat.
@@ -3706,7 +3706,7 @@ Proof.
   rewrite /cell_invariant.
   iPureIntro.
   intros (HLt & γt' & th' & HEl).
-  destruct (decide (enqIdx = (deqFront - 1)%nat)).
+  destruct (decide (senqIdx = (deqFront - 1)%nat)).
   {
     subst. rewrite list_lookup_alter in HEl.
     destruct (_ !! (deqFront - 1)%nat); simpl in *; discriminate.
@@ -3722,11 +3722,11 @@ Theorem new_thread_queue_spec S R:
 Proof.
   iIntros (Φ) "_ HPost".
   wp_lam.
-  iMod (own_alloc (● (GSet (set_seq 0 0), 0%nat: mnatUR))) as (γd) "HAuthD".
+  iMod (own_alloc (● (GSet (set_seq 0 0), MaxNat 0))) as (γd) "HAuthD".
   { simpl. apply auth_auth_valid, pair_valid; split; done. }
-  iMod (own_alloc (● (GSet (set_seq 0 0), 0%nat: mnatUR))) as (γe) "HAuthE".
+  iMod (own_alloc (● (GSet (set_seq 0 0), MaxNat 0))) as (γe) "HAuthE".
   { simpl. apply auth_auth_valid, pair_valid; split; done. }
-  iMod (own_alloc (● (0%nat, (0%nat, 0%nat: mnatUR), []))) as (γtq) "HAuth".
+  iMod (own_alloc (● (0%nat, (0%nat, MaxNat 0), []))) as (γtq) "HAuth".
   { apply auth_auth_valid, pair_valid; split; try done.
     apply list_lookup_valid; intro. rewrite lookup_nil //. }
   iMod (own_alloc (● [])) as (γa) "HAuthTq".
@@ -3798,13 +3798,13 @@ Proof.
     iIntros "HResTok HResTok'".
     iDestruct (own_valid_2 with "HResTok HResTok'") as %HH.
     rewrite -auth_frag_op in HH. exfalso. move: HH.
-    rewrite auth_frag_valid pair_valid list_singleton_op list_lookup_valid /=.
+    rewrite auth_frag_valid pair_valid list_singletonM_op list_lookup_valid /=.
     intros [_ HValid]. specialize (HValid i). move: HValid.
-    rewrite list_lookup_singleton.
+    rewrite list_lookup_singletonM.
     intros HValid.
     destruct HValid as [[[_ []] _] _].
   }
-  iDestruct "HRes" as (ℓ) "(HArrMapsto & HTH & HIsSus & HIsRes & HCancHandle &
+  iDestruct "HRes" as (?) "(HArrMapsto & HTH & HIsSus & HIsRes & HCancHandle &
                             HConds)".
   iDestruct "HConds" as "[[HInhTok [HNoPerms|>HResTok']]|
                           [Hℓ [HR [[HE >HResTok']|HNoPerms]]]]";
@@ -4032,9 +4032,9 @@ Proof.
     iDestruct (own_valid_3 with "HInhTok1 HInhTok2 HInhTok3") as %HValid.
     iPureIntro.
     move: HValid. rewrite -auth_frag_op -pair_op.
-    repeat rewrite list_singleton_op.
+    repeat rewrite list_singletonM_op.
     rewrite auth_frag_valid /=. rewrite pair_valid.
-    rewrite list_singleton_valid. intros [_ [[[[HPairValid _] _] _] _]].
+    rewrite list_singletonM_valid. intros [_ [[[[HPairValid _] _] _] _]].
     by compute.
   }
   iDestruct "HH" as "[(Hℓ & HResTok & HE & HCancHandle & HNoPerms & HAwak)|

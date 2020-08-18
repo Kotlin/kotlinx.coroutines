@@ -182,7 +182,7 @@ Definition ias_cell_info' (id_seg id_cell: nat) (c: cell_algebra):
 Theorem ias_cell_info'_op ns nc s s':
   ias_cell_info' ns nc (s ⋅ s') ≡
   ias_cell_info' ns nc s ⋅ ias_cell_info' ns nc s'.
-Proof. by rewrite list_singleton_op -pair_op list_singleton_op. Qed.
+Proof. by rewrite list_singletonM_op -pair_op list_singletonM_op. Qed.
 
 Global Instance ias_cell_info'_core_id (ids idc: nat) (c: cell_algebra):
   CoreId c -> CoreId (ias_cell_info' ids idc c).
@@ -191,7 +191,7 @@ Proof. apply _. Qed.
 Theorem ias_cell_info'_valid (ns nc: nat) (s: cell_algebra):
   ✓ (ias_cell_info' ns nc s) <-> ✓ s.
 Proof.
-  rewrite list_singleton_valid pair_valid list_singleton_valid.
+  rewrite list_singletonM_valid pair_valid list_singletonM_valid.
   split; by [done|case].
 Qed.
 
@@ -222,7 +222,7 @@ Theorem segment_exists_from_segment_info γ id p:
   own γ (◯ {[ id := p ]}) -∗
       own γ (◯ {[ id := p ]}) ∗ segment_exists γ id.
 Proof.
-  rewrite /segment_exists -own_op -auth_frag_op list_singleton_op.
+  rewrite /segment_exists -own_op -auth_frag_op list_singletonM_op.
   by rewrite ucmra_unit_right_id.
 Qed.
 
@@ -242,7 +242,7 @@ Proof.
   iDestruct (own_valid_2 with "HLoc1 HLoc2") as %HValid.
   iPureIntro.
   move: HValid.
-  rewrite auth_frag_valid list_singleton_op list_singleton_valid.
+  rewrite auth_frag_valid list_singletonM_op list_singletonM_valid.
   repeat case; simpl; intros.
   by apply agree_op_invL'.
 Qed.
@@ -647,7 +647,7 @@ Proof.
       (own γ (◯ {[ id := (ε, replicate (S k) ε ++ l) ]}) ∗
        own γ (◯ ias_cell_info' id k a))%I) as ->.
   {
-    rewrite -own_op -auth_frag_op list_singleton_op -pair_op ucmra_unit_left_id.
+    rewrite -own_op -auth_frag_op list_singletonM_op -pair_op ucmra_unit_left_id.
     assert (((replicate (S k) ε ++ l) ⋅ (replicate k ε ++ [a])) ≡
             replicate k ε ++ a :: l) as ->.
     { apply list_equiv_lookup.
@@ -731,7 +731,7 @@ Proof.
            let auth_fn x := (x.1, update_list x.2) in
            let frag_fn x := (x.1, update_list x.2)
            in list_alter_local_update id auth_fn frag_fn).
-    rewrite list_lookup_singleton.
+    rewrite list_lookup_singletonM.
     simpl.
     unfold lookup.
     destruct (list_lookup id segments); simpl.
@@ -752,9 +752,9 @@ Proof.
     - apply alloc_option_local_update.
       done.
   }
-  rewrite /ias_cell_info' list_alter_singleton.
+  rewrite /ias_cell_info' list_alter_singletonM.
   simpl.
-  rewrite list_alter_singleton.
+  rewrite list_alter_singletonM.
   iAssert (cell_is_cancelled' γ id cid) with "HSeg" as "#HSeg'".
   iClear "HSeg".
   iAssert (cells_are_cancelled γ id cancelled_cells')%I as "HCancLoc'".
@@ -874,7 +874,7 @@ Proof.
         as %[HValid _]%auth_both_valid.
       exfalso. revert HValid. rewrite list_lookup_included.
       intro HValid. specialize (HValid hid).
-      rewrite list_lookup_singleton in HValid.
+      rewrite list_lookup_singletonM in HValid.
       assert (length segments' <= hid)%nat as HIsNil by lia.
       apply lookup_ge_None in HIsNil. rewrite HIsNil in HValid.
       apply option_included in HValid.
@@ -999,7 +999,7 @@ Proof.
           as %[HValid _]%auth_both_valid.
         iPureIntro. revert HValid. rewrite list_lookup_included.
         intro HValid. specialize (HValid id).
-        rewrite list_lookup_singleton in HValid.
+        rewrite list_lookup_singletonM in HValid.
         apply option_included in HValid.
         destruct HValid as [[=]|[a [b [_ [HHH _]]]]].
         apply lookup_lt_is_Some_1. by eexists _.
@@ -1098,7 +1098,7 @@ Proof.
     exfalso. move: HContra.
     rewrite auth_both_valid; case. rewrite list_lookup_included.
     intros HContra _. specialize (HContra (S id)). revert HContra.
-    rewrite list_lookup_singleton.
+    rewrite list_lookup_singletonM.
     assert (length segments' <= S id)%nat as HIsNil by lia.
     apply lookup_ge_None in HIsNil. rewrite HIsNil.
     rewrite option_included. intros HValid.
@@ -1238,21 +1238,21 @@ Proof.
   wp_bind (CmpXchg _ _ _). iMod "AU" as "[HInfArr HClose]".
   iDestruct (normal_segment_by_location with "HSegLoc HNotTail HInfArr")
     as "[HIsNormSeg HArrRestore]".
-  iDestruct "HIsNormSeg" as (pl nl) "(HIsSeg & #HValidNext)".
+  iDestruct "HIsNormSeg" as (spl snl) "(HIsSeg & #HValidNext)".
   iDestruct "HIsSeg" as (? ? ? nℓ' ?) "(HIsSeg' & >#HLocs & HCancS)".
   iAssert (segment_next_location γ id nℓ') as "#HNextLoc'";
     first by eauto 6 with iFrame.
   iDestruct (segment_next_location_agree with "HNextLoc' HNextLoc") as %->.
   iClear "HNextLoc'".
   iDestruct "HIsSeg'" as "([[HMem'' Hnl] HMem'] & HCells)".
-  destruct (decide (nl = InjRV #nextℓ)); subst.
+  destruct (decide (snl = InjRV #nextℓ)); subst.
   {
     wp_cmpxchg_suc. iDestruct "HClose" as "[_ HClose]".
     iMod ("HClose" with "[-]") as "HΦ".
     2: by iModIntro; wp_pures.
     iApply "HArrRestore".
     rewrite /is_normal_segment /is_segment /is_segment'.
-    iExists pl, (InjRV _). iSplitL.
+    iExists spl, (InjRV _). iSplitL.
     by eauto 10 with iFrame.
     rewrite /is_valid_next. eauto 10 with iFrame.
   }
@@ -1320,14 +1320,14 @@ Proof.
     wp_bind (CmpXchg _ _ _). iMod "AU" as "[HInfArr HClose]".
     iDestruct (is_segment_by_location_prev with "HSegLoc HInfArr")
       as (?) "[HIsSeg HArrRestore]".
-    iDestruct "HIsSeg" as (pl) "HIsSeg".
+    iDestruct "HIsSeg" as (spl) "HIsSeg".
 
     iDestructHIsSeg.
     iAssert (segment_prev_location γ id pℓ) as "#HPrevLoc'";
       first by eauto 6 with iFrame.
     iDestruct (segment_prev_location_agree with "HPrevLoc HPrevLoc'") as %->.
     iClear "HPrevLoc'".
-    destruct (decide (pl = InjRV #opℓ)); subst.
+    destruct (decide (spl = InjRV #opℓ)); subst.
     { wp_cmpxchg_suc. iDestruct "HClose" as "[_ HClose]".
       iMod ("HClose" with "[-]") as "HΦ".
       2: by iModIntro; wp_pures.
@@ -1385,14 +1385,14 @@ Proof.
     wp_bind (CmpXchg _ _ _). iMod "AU" as "[HInfArr HClose]".
     iDestruct (is_segment_by_location_prev with "HSegLoc HInfArr")
       as (?) "[HIsSeg HArrRestore]".
-    iDestruct "HIsSeg" as (pl) "HIsSeg".
+    iDestruct "HIsSeg" as (spl) "HIsSeg".
 
     iDestructHIsSeg.
     iAssert (segment_prev_location γ id pℓ) as "#HPrevLoc'";
       first by eauto 6 with iFrame.
     iDestruct (segment_prev_location_agree with "HPrevLoc HPrevLoc'") as %->.
     iClear "HPrevLoc'".
-    destruct (decide (pl = InjRV #opℓ)); subst.
+    destruct (decide (spl = InjRV #opℓ)); subst.
     { wp_cmpxchg_suc. iDestruct "HClose" as "[_ HClose]".
       iMod ("HClose" with "[-]") as "HΦ".
       2: by iModIntro; wp_pures.
@@ -1443,7 +1443,7 @@ Proof.
     rewrite -vlookup_lookup'. exists HKLt. done. }
   rewrite Nat.add_comm. rewrite -(@seq_nth (Pos.to_nat segment_size) _ _ O).
   2: by eauto.
-  apply nth_lookup_Some with (d := O) in a.
+  symmetry. apply nth_lookup_Some with (d := O).
   done.
 Qed.
 
@@ -1794,7 +1794,7 @@ Proof.
   iDestruct (segment_by_location with "HSegLoc HInfArr")
     as "[[HIsNSeg HArrRestore]|[HIsTSeg HArrRestore]]".
   2: {
-    iDestruct "HIsTSeg" as (pl) "HIsSeg".
+    iDestruct "HIsTSeg" as (?) "HIsSeg".
     iAaccIntro with "HIsSeg". all: iIntros "HIsSeg !>".
     { iSplitL. 2: by eauto. iApply "HArrRestore". iExists _. iFrame. }
     iRight. iExists _. iSplitL. iSplitL.
@@ -1862,7 +1862,7 @@ Proof.
   iIntros "$"; by eauto with iFrame.
   iIntros "[$ RemoveInv] !>".
 
-  iDestruct "RemoveInv" as (nℓ nid) "(#HSegLoc & Hnlℓ & Hplℓ)".
+  iDestruct "RemoveInv" as (? ?) "(#HSegLoc & Hnlℓ & Hplℓ)".
   iDestruct "Hplℓ" as (p) "[Hplℓ #HValidPrev]".
 
   iExists _. iSplitR.
@@ -1906,7 +1906,7 @@ Proof.
         (∀ pl' ss', ⌜length ss' = length ss⌝ -∗ own γ (● ss') -∗
                           (is_segment γ id s pl' nl) -∗
                           is_infinite_array γ)))%I with "[HInfArr]"
-    as (pl nl ss) "(>HAuth & HIsSeg & HInfArrRestore)".
+    as (? ? ?) "(>HAuth & HIsSeg & HInfArrRestore)".
   {
     iDestruct "HInfArr" as (segments) "[HNormSegs [HTailSeg HAuth]]".
     iDestruct "HAuth" as (segments') "[>% >HAuth]".
@@ -1918,13 +1918,13 @@ Proof.
           as %[HValid _]%auth_both_valid.
         exfalso. revert HValid. rewrite list_lookup_included.
         intro HValid. specialize (HValid (S m)).
-        rewrite list_lookup_singleton in HValid.
+        rewrite list_lookup_singletonM in HValid.
         assert (length segments' <= (S m))%nat as HIsNil by lia.
         apply lookup_ge_None in HIsNil. rewrite HIsNil in HValid.
         apply option_included in HValid.
         destruct HValid as [[=]|[a [b [_ [[=] _]]]]].
       }
-      iDestruct "HTailSeg" as (ℓ pl) "HIsSeg".
+      iDestruct "HTailSeg" as (ℓ ?) "HIsSeg".
       iExists _, _, _. iFrame "HAuth".
       iSplitL "HIsSeg".
       {
@@ -2042,11 +2042,11 @@ Proof.
   replace (Some _, replicate _ _) with
       ((Some (to_agree p), ε)
          ⋅ (ε, replicate (Pos.to_nat segment_size) (Some (Cinr 1%Qp)))) by done.
-  rewrite -[replicate _ _ ++ _]list_singleton_op auth_frag_op own_op.
+  rewrite -[replicate _ _ ++ _]list_singletonM_op auth_frag_op own_op.
   iDestruct "HFrag" as "[HSegLoc HCanc]".
   rewrite /segment_locations. iFrame "HSegLoc".
   replace (1%Qp) with ((1/4)%Qp ⋅ (3/4)%Qp) by apply Qp_quarter_three_quarter.
-  rewrite Cinr_op Some_op replicate_op pair_op_2 -list_singleton_op auth_frag_op own_op.
+  rewrite Cinr_op Some_op replicate_op pair_op_2 -list_singletonM_op auth_frag_op own_op.
   iDestruct "HCanc" as "[HCancParts HCancHandles]".
   iSplitL "HCancParts".
   {
@@ -2215,7 +2215,7 @@ Proof.
         as %[HValid _]%auth_both_valid.
       exfalso. revert HValid. rewrite list_lookup_included.
       intro HValid. specialize (HValid (S m)).
-      rewrite list_lookup_singleton in HValid.
+      rewrite list_lookup_singletonM in HValid.
       assert (length segments' <= S m)%nat as HIsNil by lia.
       apply lookup_ge_None in HIsNil. rewrite HIsNil in HValid.
       apply option_included in HValid.
@@ -2387,7 +2387,7 @@ Proof.
     iSplitL. iApply "HArrRestore"; iExists _, _; by iFrame.
     iIntros "AU !>".
     iDestruct "HValidNext" as (nnid ?) "(>% & >-> & >#SegLoc & #HSegCanc)".
-    wp_alloc nextℓ as "Hnextℓ". wp_pures. wp_load.
+    wp_alloc snextℓ as "Hnextℓ". wp_pures. wp_load.
     wp_pures. wp_load.
     iApply ("IH'" with "[] AU").
     rewrite /is_valid_next.
@@ -2403,7 +2403,7 @@ Proof.
   iSplitL. iApply "HArrRestore"; iExists _; by iFrame.
   iIntros "AU !>".
 
-  wp_alloc nextℓ as "Hnextℓ". wp_pures. wp_load. wp_pures.
+  wp_alloc snextℓ as "Hnextℓ". wp_pures. wp_load. wp_pures.
 
   awp_apply segment_id_spec. iApply (aacc_aupd_abort with "AU"); first done.
   iIntros "HInfArr".

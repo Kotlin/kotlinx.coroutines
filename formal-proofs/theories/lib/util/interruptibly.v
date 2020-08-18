@@ -25,15 +25,15 @@ Definition interruptibly: val :=
 Notation "'loop:' b 'interrupted:' h" :=
   (λ: "H", interruptibly "H" b h)%V (at level 100): expr_scope.
 
-From iris.algebra Require Import cmra excl auth.
+From iris.algebra Require Import cmra excl auth numbers.
 
 Class interruptiblyG Σ := InterruptiblyG {
   (* interruptibly_ownerG :> inG Σ (exclR unitO); *)
-  interruptibly_stateG :> inG Σ (authR mnatUR);
+  interruptibly_stateG :> inG Σ (authR max_natUR);
 }.
 
 Definition interruptiblyΣ : gFunctors :=
-  #[GFunctor (authR mnatUR)].
+  #[GFunctor (authR max_natUR)].
 
 Instance subG_interruptiblyΣ {Σ} : subG interruptiblyΣ Σ -> interruptiblyG Σ.
 Proof. solve_inG. Qed.
@@ -43,14 +43,14 @@ Section interruptibly_proof.
 Context `{heapG Σ} `{interruptiblyG Σ} (N: namespace).
 
 Definition interrupt_handle_inv γ (ℓ: loc) :=
-  (∃ (n: nat), ℓ ↦ #n ∗ own γ (● (n: mnatUR)) ∧ ⌜n <= 2⌝)%I.
+  (∃ (n: nat), ℓ ↦ #n ∗ own γ (● (MaxNat n)) ∧ ⌜n <= 2⌝)%I.
 
 Definition is_interrupt_handle γ H :=
   (∃ (ℓ: loc), ⌜H = #ℓ⌝ ∧ inv N (interrupt_handle_inv γ ℓ))%I.
 
-Definition interrupted γ := own γ (◯ (2%nat : mnatUR)).
+Definition interrupted γ := own γ (◯ (MaxNat 2)).
 
-Definition interrupt_sent γ := own γ (◯ (1%nat : mnatUR)).
+Definition interrupt_sent γ := own γ (◯ (MaxNat 1)).
 
 Global Instance is_interrupt_handle_persistent γ handle:
   Persistent (is_interrupt_handle γ handle).
@@ -87,8 +87,8 @@ Proof.
     iInv N as (n') "[Hℓ [HOwn >%]]" "HClose".
     wp_store.
     iMod (own_update with "HOwn") as "[HOwn HFrag]".
-    { apply (auth_update_alloc _ (2%nat: mnatUR) (2%nat: mnatUR)).
-      apply mnat_local_update. lia. }
+    { apply (auth_update_alloc _ (MaxNat 2) (MaxNat 2)).
+      apply max_nat_local_update. simpl. lia. }
     iMod ("HClose" with "[Hℓ HOwn]") as "_"; first by eauto 10 with iFrame.
     iModIntro. wp_pures. iApply "HPost". iLeft. rewrite /interrupted.
     eauto with iFrame.
@@ -121,7 +121,7 @@ Lemma new_handle_spec:
   {{{ γ H, RET H; is_interrupt_handle γ H }}}.
 Proof.
   iIntros (Φ) "_ HPost". wp_lam.
-  iMod (own_alloc (● (O: mnatUR))) as (γ) "HOwn";
+  iMod (own_alloc (● (MaxNat 0))) as (γ) "HOwn";
     first by apply auth_auth_valid.
   rewrite -wp_fupd.
   wp_alloc ℓ as "Hℓ".
@@ -142,15 +142,15 @@ Proof.
   destruct n.
   - wp_cmpxchg_suc.
     iMod (own_update with "HOwn") as "[HOwn HFrag]".
-    { apply (auth_update_alloc _ (1%nat: mnatUR) (1%nat: mnatUR)).
-      apply mnat_local_update. lia. }
+    { apply (auth_update_alloc _ (MaxNat 1) (MaxNat 1)).
+      apply max_nat_local_update. simpl. lia. }
     iMod ("HClose" with "[Hℓ HOwn]") as "_". by iExists _; iFrame; eauto.
     iModIntro. wp_pures. iApply "HPost". by rewrite /interrupt_sent.
   - wp_cmpxchg_fail; first done.
     iMod (own_update with "HOwn") as "[HOwn HFrag]".
-    { apply auth_update_core_id with (b := (1%nat: mnatUR)).
-      by apply mnat_core_id.
-      apply mnat_included. lia. }
+    { apply auth_update_core_id with (b := (MaxNat 1)).
+      by apply max_nat_core_id.
+      apply max_nat_included. simpl. lia. }
     iMod ("HClose" with "[Hℓ HOwn]") as "_". by eauto with iFrame.
     iModIntro. wp_pures. iApply "HPost". by rewrite /interrupt_sent.
  Qed.

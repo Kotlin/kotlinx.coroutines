@@ -39,7 +39,7 @@ Definition iterator_step_skipping_cancelled: val :=
 End impl.
 
 From iris.program_logic Require Import atomic.
-From iris.algebra Require Import cmra auth list agree csum excl gset frac.
+From iris.algebra Require Import cmra auth list agree csum excl gset frac numbers.
 
 Section proof.
 
@@ -55,7 +55,7 @@ Existing Instance cell_is_processed_persistent.
 
 Context `{iArrayG Σ}.
 
-Notation algebra := (authR (prodUR (gset_disjUR nat) mnatUR)).
+Notation algebra := (authR (prodUR (gset_disjUR nat) max_natUR)).
 
 Class iteratorG Σ := IIteratorG { iterator_inG :> inG Σ algebra }.
 Definition iteratorΣ : gFunctors := #[GFunctor algebra].
@@ -67,10 +67,10 @@ Context `{iteratorG Σ}.
 Notation iProp := (iProp Σ).
 
 Definition iterator_counter γ fℓ (n: nat): iProp :=
-  (fℓ ↦ #n ∗ own γ (● (GSet (set_seq 0 n), n: mnatUR)))%I.
+  (fℓ ↦ #n ∗ own γ (● (GSet (set_seq 0 n), MaxNat n)))%I.
 
 Definition iterator_counter_at_least γ (n: nat): iProp :=
-  own γ (◯ (ε, n: mnatUR)).
+  own γ (◯ (ε, MaxNat n)).
 
 Lemma iterator_counter_at_least_persistent γ n:
   Persistent (iterator_counter_at_least γ n).
@@ -86,7 +86,7 @@ Definition is_iterator γa γ fℓ ℓ: iProp :=
   (∃ n, iterator_points_to γa γ fℓ ℓ n)%I.
 
 Definition iterator_issued γ n :=
-  own γ (◯ (GSet {[ n ]}, S n: mnatUR)).
+  own γ (◯ (GSet {[ n ]}, MaxNat (S n))).
 
 Theorem iterator_issued_timeless γ n: Timeless (iterator_issued γ n).
 Proof. apply _. Qed.
@@ -102,12 +102,12 @@ Proof.
 Qed.
 
 Lemma iterator_value_increase (n m: nat):
-  ● (GSet (set_seq 0 n), n: mnatUR) ~~>
-  ● (GSet (set_seq 0 (n + m)%nat), (n + m)%nat: mnatUR) ⋅
-  ◯ (GSet (set_seq n m), (n + m)%nat: mnatUR).
+  ● (GSet (set_seq 0 n), MaxNat n) ~~>
+  ● (GSet (set_seq 0 (n + m)%nat), MaxNat (n + m)) ⋅
+  ◯ (GSet (set_seq n m), MaxNat (n + m)).
 Proof.
   apply auth_update_alloc, prod_local_update'.
-  2: by apply mnat_local_update; lia.
+  2: by apply max_nat_local_update; simpl; lia.
   eapply transitivity.
   apply (gset_disj_alloc_empty_local_update
             _ (set_seq (O + n)%nat m)).
@@ -119,7 +119,7 @@ Theorem iterator_value_faa γa γ (fℓ ℓ: loc) (m: nat):
   ⊢ <<< ∀ (n: nat), iterator_points_to γa γ fℓ ℓ n >>>
     FAA #fℓ #m @ ⊤
   <<< iterator_points_to γa γ fℓ ℓ (n+m)%nat ∗
-    own γ (◯ (GSet (set_seq n m), (n + m)%nat: mnatUR)), RET #n >>>.
+    own γ (◯ (GSet (set_seq n m), MaxNat (n + m))), RET #n >>>.
 Proof.
   iIntros (Φ) "AU".
 
@@ -142,7 +142,7 @@ Lemma iterator_points_to_at_least γ ℓ n m:
 Proof.
   iIntros "HLeast [_ HAuth]".
   by iDestruct (own_valid_2 with "HAuth HLeast")
-    as %[[_ HValid%mnat_included]%prod_included _]%auth_both_valid.
+    as %[[_ HValid%max_nat_included]%prod_included _]%auth_both_valid.
 Qed.
 
 Lemma find_segment_id_bound a p n n':
@@ -185,7 +185,7 @@ Proof.
   iDestruct "HSeg" as (? ? ?) "(#HSegLoc & Hℓ)".
   wp_load.
   iMod (own_update with "HAuth") as "[HAuth HSent]". {
-    apply auth_update_core_id with (b := (ε, n': mnatUR)).
+    apply auth_update_core_id with (b := (ε, MaxNat n')).
     apply _.
     rewrite prod_included /=; split; rewrite //.
     apply gset_disj_included. done.
@@ -223,7 +223,7 @@ Proof.
   iAaccIntro with "HInfArr".
   { iIntros "HInfArr". iFrame. eauto. }
 
-  iIntros (? ?) "(HInfArr & HSegInv & #HSegLoc'' & #HFindSegRet)".
+  iIntros (x ?) "(HInfArr & HSegInv & #HSegLoc'' & #HFindSegRet)".
 
   iExists (n `mod` Pos.to_nat segment_size)%nat, _. iFrame.
   iSplitL.
@@ -237,7 +237,7 @@ Proof.
   by rewrite /= union_empty_r_L Nat.add_1_r /iterator_issued.
   iSplitL "HSegInv".
   {
-    iAssert (⌜seq O (S a) !! _ =
+    iAssert (⌜seq O (S x) !! _ =
              Some (O + n `div` Pos.to_nat segment_size)%nat⌝)%I as %HEl.
     {
       iDestruct "HFindSegRet" as "[[% ->]|(% & % & #HCanc)]";
@@ -255,7 +255,7 @@ Proof.
   iDestruct "HFindSegRet" as "[[% ->]|(% & % & #HCanc)]".
 
   {
-    assert (a = n `div` Pos.to_nat segment_size)%nat as ->. {
+    assert (x = n `div` Pos.to_nat segment_size)%nat as ->. {
       eapply find_segment_id_bound. lia. all: done.
     }
 
@@ -264,7 +264,7 @@ Proof.
     lia.
   }
 
-  destruct (decide (a = n `div` Pos.to_nat segment_size)%nat); subst.
+  destruct (decide (x = n `div` Pos.to_nat segment_size)%nat); subst.
   {
     iLeft. iPureIntro.
     rewrite Nat.mul_comm -Nat.div_mod /= //.
@@ -285,7 +285,7 @@ Qed.
 Theorem increase_value_to_spec γ (fℓ: loc) (n: nat):
   ⊢ <<< ∀ m, iterator_counter γ fℓ m >>>
     (increase_value_to #fℓ #n) @ ⊤
-  <<< own γ (◯ (GSet (set_seq m (n-m)%nat), n: mnatUR)) ∗
+  <<< own γ (◯ (GSet (set_seq m (n-m)%nat), MaxNat n)) ∗
       (⌜m >= n⌝ ∧ iterator_counter γ fℓ m ∨
        ⌜m < n⌝ ∧ iterator_counter γ fℓ n), RET #() >>>. Proof.
   iIntros (Φ) "AU". wp_lam. wp_pures. wp_bind (!_)%E.
@@ -294,11 +294,11 @@ Theorem increase_value_to_spec γ (fℓ: loc) (n: nat):
 
   2: {
     iMod (own_update with "HAuth") as "[HAuth HOk]".
-    { apply auth_update_core_id with (b := (ε, n: mnatUR)).
+    { apply auth_update_core_id with (b := (ε, MaxNat n)).
       by apply _.
       rewrite prod_included. split; simpl.
       by apply gset_disj_included.
-      apply mnat_included. lia.
+      apply max_nat_included; simpl. lia.
     }
     iMod ("HClose" with "[-]") as "HΦ".
     { replace (n - m)%nat with O by lia. simpl.
@@ -338,11 +338,11 @@ Theorem increase_value_to_spec γ (fℓ: loc) (n: nat):
 
     2: {
       iMod (own_update with "HAuth") as "[HAuth HOk]".
-      { apply auth_update_core_id with (b := (ε, n: mnatUR)).
+      { apply auth_update_core_id with (b := (ε, MaxNat n)).
         by apply _.
         rewrite prod_included. split; simpl.
         by apply gset_disj_included.
-        apply mnat_included. lia.
+        apply max_nat_included=>/=. lia.
       }
       iMod ("HClose" with "[-Htℓ]") as "HΦ".
       { replace (n - m'')%nat with O by lia. simpl.

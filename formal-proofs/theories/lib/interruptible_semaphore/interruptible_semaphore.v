@@ -255,8 +255,8 @@ Proof.
   iInv "HPermInv" as (?) ">HFrag" "HPermsClose".
   iDestruct (own_valid_2 with "HAuth HFrag") as
         %[->%Excl_included%leibniz_equiv _]%auth_both_valid.
-  remember (availablePermits - _) as oldP.
-  destruct (decide (0 < oldP)).
+  remember (availablePermits - _)%Z as oldP.
+  destruct (decide (0 < oldP)%Z).
   {
     iMod (own_update_2 with "HAuth HFrag") as "[HAuth HFrag]".
     {
@@ -275,7 +275,7 @@ Proof.
     {
       iExists _, _.
       rewrite Nat.sub_0_r big_opL_irrelevant_element' seq_length.
-      replace (oldP + -1) with (availablePermits - v) by lia.
+      replace (oldP + -1)%Z with (availablePermits - v)%Z by lia.
       iFrame.
       iPureIntro.
       eauto.
@@ -292,7 +292,7 @@ Proof.
   iMod ("HPermsClose" with "[HFrag]") as "_"; first by eauto.
   iMod ("HInvClose" with "[-HIsSusp HNoPerms HΦ]") as "_".
   {
-    iExists _, _. iFrame. replace (0%nat - S v) with (-v + - 1) by lia.
+    iExists _, _. iFrame. replace (0%nat - S v)%Z with (-v + - 1)%Z by lia.
     iFrame.
     iPureIntro. lia.
   }
@@ -329,6 +329,7 @@ Proof.
                                (fun v => ⌜v = #()⌝ ∧ interrupted γi)%I
               with "[HInhToken]").
   {
+
     iFrame "HIntHandle HInhToken".
     iSplit.
     {
@@ -363,8 +364,8 @@ Proof.
       iInv "HSemInv" as (availablePermits v)
                           "(HPerms & >HAuth & HTq & Hp & >HPure)" "HInvClose".
 
-      remember (availablePermits - _) as oldP.
-      destruct (decide (0 <= oldP)) as [HLt|HGt].
+      remember (availablePermits - _)%Z as oldP.
+      destruct (decide (0 <= oldP)%Z) as [HLt|HGt].
       {
         wp_faa.
         iInv "HPermInv" as (?) ">HFrag" "HPermsClose".
@@ -406,7 +407,8 @@ Proof.
           iExists _, _. iFrame.
           iSplitR "HPure"; last by iDestruct "HPure" as "[->|%]"; iPureIntro; lia.
           subst.
-          by replace (availablePermits - v + 1) with (availablePermits - (v - 1)%nat) by lia.
+          by replace (availablePermits - v + 1)%Z
+            with (availablePermits - (v - 1)%nat)%Z by lia.
         }
         iModIntro. wp_pures. rewrite bool_decide_decide decide_False //.
         wp_pures. wp_lam. wp_lam. wp_pures.
@@ -450,7 +452,8 @@ Proof.
         iExists _, _. iFrame.
         iSplitL "Hp"; last by iDestruct "HPure" as "[->|%]"; by (iPureIntro; lia).
         subst.
-        by replace (availablePermits - v + 1) with (availablePermits - (v - 1)%nat) by lia.
+        by replace (availablePermits - v + 1)%Z with
+            (availablePermits - (v - 1)%nat)%Z by lia.
       }
 
       iModIntro. wp_pures. rewrite bool_decide_decide decide_False //. wp_pures.
