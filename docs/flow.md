@@ -1519,7 +1519,7 @@ Emitting 2
 Caught java.lang.IllegalStateException: Collected 2
 ```
 
-<!--- TEST -->
+<!--- TEST EXCEPTION -->
 
 ### Flow completion
 
