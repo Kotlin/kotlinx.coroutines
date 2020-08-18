@@ -27,7 +27,7 @@ Record listSpec Σ `{!heapG Σ} {impl: segmentInterface}
       moveForward: val;
       onSlotCleaned: val;
       newList_spec N (k: nat):
-        {{{ ⌜k > 0⌝ }}}
+        {{{ ⌜k > 0⌝ ∧ initialization_requirements _ _ segment_spec }}}
           newList #k
         {{{ γ ℓ, RET #ℓ; is_concurrentLinkedList N γ ∗
                         [∗ list] i ∈ seq 0 k,
@@ -57,9 +57,9 @@ Record listSpec Σ `{!heapG Σ} {impl: segmentInterface}
       onSlotCleaned_spec N Ψ γ γs id p:
         is_concurrentLinkedList N γ -∗
         segment_in_list γ γs id p -∗
-        <<< (∀ n, segment_content _ _ segment_spec γs id n ==∗
+        <<< (∀ n, segment_content _ _ segment_spec γs n ==∗
             Ψ ∗ ∃ n', ⌜(n = S n')%nat⌝ ∧
-                      segment_content _ _ segment_spec γs id n') >>>
+                      segment_content _ _ segment_spec γs n') >>>
           onSlotCleaned p @ ⊤ ∖ ↑N
         <<< Ψ, RET #() >>>;
       pointer_location_load γ (ℓ: loc):
@@ -73,6 +73,6 @@ Record listSpec Σ `{!heapG Σ} {impl: segmentInterface}
         segment_in_list γ γs id ptr -∗
         (if known_is_removed then segment_is_cancelled γ id else True) -∗
         |={E, E ∖ ↑N}=> ∃ n, ⌜known_is_removed = false ∨ n = 0⌝ ∧
-                            ▷ segment_content _ _ _ γs id n ∗
-                            (▷ segment_content _ _ _ γs id n ={E ∖ ↑N, E}=∗ emp);
+                            ▷ segment_content _ _ _ γs n ∗
+                            (▷ segment_content _ _ _ γs n ={E ∖ ↑N, E}=∗ emp);
     }.

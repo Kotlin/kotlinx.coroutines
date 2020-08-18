@@ -129,7 +129,7 @@ End cleanedAndPointers_pure.
 
 Definition is_segment (γ: gname) (is_tail: bool) (id: nat)
            (γs: segment_name) (pointers slots: nat): iProp :=
-  (segment_content _ _ _ γs id slots ∗
+  (segment_content _ _ _ γs slots ∗
    match slots with | 0 => True | S _ => segment_has_slots γ id end)
   ∗ (∃ node, is_linkedListNode _ _ _ γs node)
   ∗ has_value (id_uniqueValue _ _ _) γs id
@@ -315,10 +315,11 @@ Qed.
 
 
 Definition is_concurrentLinkedList (γ: gname): iProp :=
-  inv N (concurrentLinkedList_invariant γ).
+  inv N (concurrentLinkedList_invariant γ) ∗
+  initialization_requirements _ _ segment_spec.
 
 Lemma getIsRemoved_spec (known_is_removed: bool) γ γs id v:
-  {{{ is_concurrentLinkedList γ ∗ segment_in_list γ γs id v ∗
+  {{{ inv N (concurrentLinkedList_invariant γ) ∗ segment_in_list γ γs id v ∗
       if known_is_removed then segment_is_cancelled γ id else True }}}
     getIsRemoved segment_interface v
   {{{ (v: bool), RET #v; if v then segment_is_cancelled γ id
@@ -378,7 +379,7 @@ Proof.
 Qed.
 
 Lemma getPrev_spec γ γs id v:
-  {{{ is_concurrentLinkedList γ ∗ segment_in_list γ γs id v }}}
+  {{{ inv N (concurrentLinkedList_invariant γ) ∗ segment_in_list γ γs id v }}}
     getPrev (base segment_interface) v
   {{{ r, RET r; ⌜r = NONEV⌝ ∨
                 ∃ (id': nat) (v': val),
@@ -414,7 +415,7 @@ Proof.
 Qed.
 
 Lemma leftmostAliveNodeInternal_spec γ γs id v:
-  {{{ is_concurrentLinkedList γ ∗ segment_in_list γ γs id v }}}
+  {{{ inv N (concurrentLinkedList_invariant γ) ∗ segment_in_list γ γs id v }}}
     leftmostAliveNodeInternal segment_interface v
   {{{ r, RET r; ⌜r = NONEV⌝ ∨
                 ∃ (id': nat) (v': val),
@@ -466,7 +467,7 @@ Proof.
 Qed.
 
 Lemma getNext_spec (known_not_tail: bool) γ γs id v:
-  {{{ is_concurrentLinkedList γ ∗ segment_in_list γ γs id v ∗
+  {{{ inv N (concurrentLinkedList_invariant γ) ∗ segment_in_list γ γs id v ∗
       if known_not_tail then segment_is_not_tail γ id else True }}}
     ! (getNextLoc (base segment_interface) v)
   {{{ r, RET r; ⌜r = NONEV ∧ known_not_tail = false⌝ ∨
@@ -516,7 +517,7 @@ Proof.
 Qed.
 
 Lemma isTail_spec (known_not_tail: bool) γ γs id v:
-  {{{ is_concurrentLinkedList γ ∗ segment_in_list γ γs id v ∗
+  {{{ inv N (concurrentLinkedList_invariant γ) ∗ segment_in_list γ γs id v ∗
       if known_not_tail then segment_is_not_tail γ id else True }}}
     isTail (base segment_interface) v
   {{{ (r: bool), RET #r; if r then ⌜known_not_tail = false⌝
@@ -532,7 +533,7 @@ Proof.
 Qed.
 
 Lemma rightmostAliveNodeInternal_spec γ γs id v:
-  {{{ is_concurrentLinkedList γ ∗ segment_in_list γ γs id v ∗
+  {{{ inv N (concurrentLinkedList_invariant γ) ∗ segment_in_list γ γs id v ∗
       segment_is_not_tail γ id }}}
     rightmostAliveNodeInternal segment_interface v
   {{{ (id': nat) (v': val), RET v'; ⌜(id < id')%nat⌝ ∧
@@ -590,7 +591,7 @@ Proof.
 Qed.
 
 Lemma remove_spec γ γs id v:
-  {{{ is_concurrentLinkedList γ ∗ segment_in_list γ γs id v ∗
+  {{{ inv N (concurrentLinkedList_invariant γ) ∗ segment_in_list γ γs id v ∗
       segment_is_cancelled γ id }}}
     list_impl.remove segment_interface v
   {{{ RET #(); True }}}.
@@ -715,7 +716,7 @@ Proof.
 Qed.
 
 Lemma trySetNext_spec γ γsp γs (v nv: val) (id: nat):
-  {{{ is_concurrentLinkedList γ ∗ segment_in_list γ γsp id v
+  {{{ inv N (concurrentLinkedList_invariant γ) ∗ segment_in_list γ γsp id v
       ∗ (segment_has_slots γ (S id) -∗
          is_segment γ true (S id) γs 0 (maxSlots segment_interface))
       ∗ has_value (id_uniqueValue _ _ _) γs (S id)
@@ -833,15 +834,16 @@ Proof.
 Qed.
 
 Lemma list_newSegment_spec γ γs id pv (k: nat):
-  {{{ (∃ v, ⌜pv = SOMEV v⌝ ∧ segment_in_list γ γs id v) ∨ ⌜pv = NONEV⌝ }}}
+  {{{ ((∃ v, ⌜pv = SOMEV v⌝ ∧ segment_in_list γ γs id v) ∨ ⌜pv = NONEV⌝) ∗
+      initialization_requirements _ _ segment_spec }}}
     newSegment segment_interface #(S id) pv #k
   {{{ γs v', RET v'; (segment_has_slots γ (S id) -∗
                       is_segment γ true (S id) γs k (maxSlots segment_interface))
                                 ∗ has_value (id_uniqueValue _ _ _) γs (S id)
                                 ∗ is_linkedListNode _ _ _ γs v' }}}.
 Proof.
-  iIntros (Φ) "#HSegInList HΦ".
-  iApply (newSegment_spec with "[% //]").
+  iIntros (Φ) "[#HSegInList HInitReq] HΦ".
+  iApply (newSegment_spec with "HInitReq").
   iIntros (nγs nnode npℓ nnℓ ncℓ) "!> HNext".
   iApply "HΦ".
   iDestruct "HNext" as "(#HNIsNode & HNContent & #HNId & HRest)".
@@ -885,7 +887,7 @@ Theorem findSegmentInternal_spec γ γs' (start_id id: nat) v:
       ∗ ∀ i, (⌜max start_id id ≤ i < id'⌝)%nat -∗ segment_is_cancelled γ i
   }}}.
 Proof.
-  iIntros (Φ) "#[HList HSeg] HΦ".
+  iIntros (Φ) "#[[HList HInitReq] HSeg] HΦ".
   wp_lam. wp_pures.
   move HEqX: (start_id) => current_id.
   rewrite -HEqX.
@@ -977,7 +979,7 @@ Proof.
 
   wp_bind (newSegment _ _ _ _). rewrite -Nat2Z.inj_add.
   iApply (list_newSegment_spec with "[]");
-    first by iLeft; iExists _; by iSplit.
+    first by iFrame "HInitReq"; iLeft; iExists _; by iSplit.
   iIntros (nγs nv) "!> (HNextSeg & HNextId & HNextNode)".
 
   wp_pures. wp_bind (trySetNext _ _ _).
@@ -1054,7 +1056,7 @@ Proof.
 Qed.
 
 Lemma decPointers_spec γ γs p id:
-  {{{ is_concurrentLinkedList γ ∗ segment_in_list γ γs id p ∗
+  {{{ inv N (concurrentLinkedList_invariant γ) ∗ segment_in_list γ γs id p ∗
       segment_is_pointed_to γ id }}}
     decPointers segment_interface p
   {{{ (r: bool), RET #r; if r then segment_is_cancelled γ id else True }}}.
@@ -1206,7 +1208,7 @@ Theorem moveForward_spec γ γs (ℓ: loc) id p:
                    else ▷ pointer_location γ ℓ id' ∗ segment_is_cancelled γ id,
       RET #r >>>.
 Proof.
-  iIntros "#HList #HSeg" (Φ) "AU". wp_lam. wp_pures. wp_pures. iLöb as "IH".
+  iIntros "#[HList _] #HSeg" (Φ) "AU". wp_lam. wp_pures. wp_pures. iLöb as "IH".
   wp_bind (!_)%E. iMod "AU" as (id') "[Hp HClose]".
   iDestruct "Hp" as (p' ?) "(Hℓ & #HSeg' & HPtr')".
   wp_load.
@@ -1377,11 +1379,11 @@ Proof.
 Qed.
 
 Lemma cancelCell_spec Ψ γ γs id p (k: nat):
-  is_concurrentLinkedList γ -∗
+  inv N (concurrentLinkedList_invariant γ) -∗
   segment_in_list γ γs id p -∗
-  <<< (∀ n, segment_content _ _ segment_spec γs id n ==∗
+  <<< (∀ n, segment_content _ _ segment_spec γs n ==∗
        Ψ ∗ ∃ n', ⌜(n = S k + n')%nat⌝ ∧
-                 segment_content _ _ segment_spec γs id n') >>>
+                 segment_content _ _ segment_spec γs n') >>>
     FAA (getCleanedAndPointersLoc segment_interface p) #(S k) @ ⊤ ∖ ↑N
   <<< ∃ (v: nat), Ψ ∗ if decide (v + S k = maxSlots segment_interface)%nat
                       then segment_is_cancelled γ id
@@ -1510,16 +1512,16 @@ Proof.
       done.
 Qed.
 
-Lemma onSlotCleaned_spec Ψ γ γs id p:
+Theorem onSlotCleaned_spec Ψ γ γs id p:
   is_concurrentLinkedList γ -∗
   segment_in_list γ γs id p -∗
-  <<< (∀ n, segment_content _ _ segment_spec γs id n ==∗
+  <<< (∀ n, segment_content _ _ segment_spec γs n ==∗
        Ψ ∗ ∃ n', ⌜(n = S n')%nat⌝ ∧
-                 segment_content _ _ segment_spec γs id n') >>>
+                 segment_content _ _ segment_spec γs n') >>>
     onSlotCleaned segment_interface p @ ⊤ ∖ ↑N
   <<< Ψ, RET #() >>>.
 Proof.
-  iIntros "#HList #HSeg" (Φ) "AU". wp_lam.
+  iIntros "#[HList _] #HSeg" (Φ) "AU". wp_lam.
   wp_bind (FAA _ _). replace 1%Z with (Z.of_nat 1) by lia.
   awp_apply (cancelCell_spec with "HList HSeg").
   iApply (aacc_aupd_commit with "AU"); first done.
@@ -1542,10 +1544,10 @@ Theorem access_segment (known_is_removed: bool) E γ γs id ptr:
   segment_in_list γ γs id ptr -∗
   (if known_is_removed then segment_is_cancelled γ id else True) -∗
   |={E, E ∖ ↑N}=> ∃ n, ⌜known_is_removed = false ∨ n = 0⌝ ∧
-                       ▷ segment_content _ _ _ γs id n ∗
-                       (▷ segment_content _ _ _ γs id n ={E ∖ ↑N, E}=∗ emp).
+                       ▷ segment_content _ _ _ γs n ∗
+                       (▷ segment_content _ _ _ γs n ={E ∖ ↑N, E}=∗ emp).
 Proof.
-  iIntros (HSubset) "HList HSeg HKnownRemoved".
+  iIntros (HSubset) "[HList _] HSeg HKnownRemoved".
   iInv "HList" as "HOpen" "HClose".
   iDestruct "HSeg" as "(Hγs & _ & _)".
   iDestruct (concurrentLinkedList_lookup_acc_known_removed
@@ -1564,7 +1566,7 @@ Theorem cleanPrev_spec γ γs id ptr:
     cleanPrev (base segment_interface) ptr
   {{{ RET #(); True }}}.
 Proof.
-  iIntros (Φ) "[#HList (Hγs & HId & HNode)] HΦ". wp_lam.
+  iIntros (Φ) "[#[HList _] (Hγs & HId & HNode)] HΦ". wp_lam.
   wp_bind (getPrevLoc _ _). iApply (getPrevLoc_spec with "HNode").
   iIntros (pℓ) "!> #HValpℓ".
   iInv "HList" as "HOpen" "HClose".
@@ -1581,7 +1583,7 @@ Proof.
   iApply "HRestore". iFrame. iExists _. iFrame "HValpℓ". by iLeft.
 Qed.
 
-Theorem read_pointer_location γ (ℓ: loc):
+Lemma read_pointer_location γ (ℓ: loc):
   ⊢ <<< ∀ id, ▷ pointer_location γ ℓ id >>>
     ! #ℓ @ ⊤
   <<< ∃ γs p, pointer_location γ ℓ id ∗ segment_in_list γ γs id p, RET p >>>.
@@ -1595,14 +1597,14 @@ Proof.
 Qed.
 
 Theorem newList_spec (k: nat):
-  {{{ ⌜k > 0⌝ }}}
+  {{{ ⌜k > 0⌝ ∧ initialization_requirements _ _ segment_spec }}}
     (λ: "k", AllocN "k" (newSegment segment_interface #0%nat NONEV "k"))%V #k
   {{{ γ ℓ, RET #ℓ; is_concurrentLinkedList γ ∗
                    [∗ list] i ∈ seq 0 k, pointer_location γ (ℓ +ₗ Z.of_nat i) 0
   }}}.
 Proof.
-  iIntros (Φ) "% HΦ". rewrite -wp_fupd. wp_pures.
-  wp_bind (newSegment _ _ _ _). iApply (newSegment_spec with "[% //]").
+  iIntros (Φ) "[% #HInitReq] HΦ". rewrite -wp_fupd. wp_pures.
+  wp_bind (newSegment _ _ _ _). iApply (newSegment_spec with "HInitReq").
   iIntros (γs node pℓ nℓ cℓ) "!> HSeg".
   iDestruct "HSeg" as "(#HIsNode & HContent & #HId & HRest)".
   wp_alloc dℓ as "Hdℓ"; first lia. rewrite /array.
@@ -1666,7 +1668,7 @@ Proof.
   iMod (inv_alloc N _ (concurrentLinkedList_invariant γ) with "[Hγ HIsSeg]")
     as "#HInv".
   { iExists _. iFrame "Hγ HIsSeg". simpl. done. }
-  iApply "HΦ". iFrame "HInv". iModIntro.
+  iApply "HΦ". iFrame "HInv HInitReq". iModIntro.
 
   rewrite Nat2Z.id. clear.
 

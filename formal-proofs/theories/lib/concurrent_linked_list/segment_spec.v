@@ -48,7 +48,10 @@ Record segmentSpec Σ `{!heapG Σ} (impl: segmentInterface) :=
                         Σ (linkedListNode_name _ _ linkedListNode_base) loc;
       max_slots_bound: (0 < maxSlots impl < 2 ^ pointerShift impl)%nat;
       segment_content: linkedListNode_name _ _ linkedListNode_base →
-                       ∀ (id alive_slots: nat), iProp Σ;
+                       ∀ (alive_slots: nat), iProp Σ;
+      initialization_requirements: iProp Σ;
+      initialization_requirements_Persistent:
+        Persistent initialization_requirements;
       node_induces_id γ γ' node id id':
         has_value id_uniqueValue γ id -∗
         has_value id_uniqueValue γ' id' -∗
@@ -64,11 +67,11 @@ Record segmentSpec Σ `{!heapG Σ} (impl: segmentInterface) :=
           getCleanedAndPointersLoc impl node
         {{{ cℓ, RET #cℓ; has_value cleanedAndPointers_uniqueValue γ cℓ }}};
       newSegment_spec (id: nat) (prev: val) (pointers: nat):
-        {{{ True }}}
+        {{{ initialization_requirements }}}
           newSegment impl #id prev #pointers
         {{{ γ node pℓ nℓ cℓ, RET node;
             is_linkedListNode _ _ _ γ node
-            ∗ segment_content γ id (maxSlots impl)
+            ∗ segment_content γ (maxSlots impl)
             ∗ has_value id_uniqueValue γ id
             ∗ has_value cleanedAndPointers_uniqueValue γ cℓ
             ∗ has_value (prev_uniqueValue _ _ _) γ pℓ
@@ -76,3 +79,5 @@ Record segmentSpec Σ `{!heapG Σ} (impl: segmentInterface) :=
             ∗ pℓ ↦ prev ∗ nℓ ↦ NONEV ∗ cℓ ↦ #(pointers ≪ pointerShift impl)
         }}}
     }.
+
+Existing Instance initialization_requirements_Persistent.
