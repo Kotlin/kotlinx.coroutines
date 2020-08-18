@@ -2,6 +2,7 @@
 -arg -w -arg -convert_concl_no_check
 -arg -w -arg -ambiguous-paths
 -arg -w -arg -redundant-canonical-projection
+-arg -w -arg -projection-no-head-constant
 ./theories/lib/infinite_array/infinite_array_impl.v
 ./theories/lib/infinite_array/iterator.v
 ./theories/lib/thread_queue/thread_queue.v
@@ -11,6 +12,7 @@
 ./theories/lib/concurrent_linked_list/segment_spec.v
 ./theories/lib/concurrent_linked_list/segment_interfaces.v
 ./theories/lib/concurrent_linked_list/list_impl.v
+./theories/lib/concurrent_linked_list/list_spec.v
 ./theories/lib/concurrent_linked_list/list_proof.v
 ./theories/lib/concurrent_linked_list/infinite_array/array_spec.v
 ./theories/lib/concurrent_linked_list/infinite_array/array_impl.v

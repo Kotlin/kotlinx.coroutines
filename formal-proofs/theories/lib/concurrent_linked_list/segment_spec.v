@@ -1,7 +1,7 @@
 From SegmentQueue.lib.concurrent_linked_list Require Export segment_interfaces.
 From iris.heap_lang Require Export proofmode notation lang.
 
-Record uniqueValue {Σ} `{!heapG Σ} {name value: Type} :=
+Record uniqueValue {Σ} {name value: Type} :=
   UniqueValue {
       has_value (γ: name) (value: value): iProp Σ;
       has_value_persistent (γ: name) (value: value):
@@ -20,8 +20,8 @@ Record linkedListNodeSpec Σ `{!heapG Σ} (impl: linkedListNodeInterface) :=
       linkedListNode_name: Type;
       linkedListNode_name_inhabited: Inhabited linkedListNode_name;
       is_linkedListNode (γ: linkedListNode_name) (node: val): iProp Σ;
-      prev_uniqueValue: @uniqueValue Σ _ linkedListNode_name loc;
-      next_uniqueValue: @uniqueValue Σ _ linkedListNode_name loc;
+      prev_uniqueValue: @uniqueValue Σ linkedListNode_name loc;
+      next_uniqueValue: @uniqueValue Σ linkedListNode_name loc;
       is_linkedListNode_persistent γ node:
         Persistent (is_linkedListNode γ node);
       getPrevLoc_spec γ node:
@@ -43,9 +43,9 @@ Record segmentSpec Σ `{!heapG Σ} (impl: segmentInterface) :=
   SegmentSpec {
       linkedListNode_base: @linkedListNodeSpec Σ _ (base impl);
       id_uniqueValue: @uniqueValue
-                        Σ _ (linkedListNode_name _ _ linkedListNode_base) nat;
+                        Σ (linkedListNode_name _ _ linkedListNode_base) nat;
       cleanedAndPointers_uniqueValue: @uniqueValue
-                        Σ _ (linkedListNode_name _ _ linkedListNode_base) loc;
+                        Σ (linkedListNode_name _ _ linkedListNode_base) loc;
       max_slots_bound: (0 < maxSlots impl < 2 ^ pointerShift impl)%nat;
       segment_content: linkedListNode_name _ _ linkedListNode_base →
                        ∀ (id alive_slots: nat), iProp Σ;
@@ -53,7 +53,7 @@ Record segmentSpec Σ `{!heapG Σ} (impl: segmentInterface) :=
         has_value id_uniqueValue γ id -∗
         has_value id_uniqueValue γ' id' -∗
         is_linkedListNode _ _ _ γ node -∗
-        is_linkedListNode _ _ _ γ' node -∗
+        is_linkedListNode _ _ _ γ' node ==∗
         ⌜id = id'⌝;
       getId_spec γ node:
         {{{ is_linkedListNode _ _ _ γ node }}}

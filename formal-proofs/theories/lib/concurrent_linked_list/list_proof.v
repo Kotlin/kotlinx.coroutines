@@ -71,7 +71,7 @@ Section segment_state.
 End segment_state.
 
 Definition segment_name_uniqueValue (γ: gname):
-  @uniqueValue Σ _ nat (leibnizO segment_name).
+  @uniqueValue Σ nat (leibnizO segment_name).
 Proof.
   eapply UniqueValue with
       (has_value :=
@@ -1346,10 +1346,11 @@ Proof.
   iDestruct "Hp''Unboxed" as %Hp''Unboxed.
   iDestruct (linkedListNode_unboxed with "HNode'") as %Hp'Unboxed.
   destruct (decide (p' = p'')) as [->|HNeq].
-  - wp_cmpxchg_suc. iDestruct "HClose" as "[_ HClose]".
+  - wp_cmpxchg_suc.
+    iDestruct (node_induces_id with "HId' HId'' HNode' HNode''") as ">->".
+    iDestruct "HClose" as "[_ HClose]".
     iMod ("HClose" $! true with "[-HPtr'']") as "HΦ".
     {
-      iAssert (⌜id' = id''⌝)%I as "->"; first by iApply node_induces_id.
       rewrite Nat.max_l; last lia.
       iExists _. iFrame. iExists _. iFrame "Hγs HId HNode".
     }
