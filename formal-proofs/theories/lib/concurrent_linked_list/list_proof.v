@@ -23,7 +23,8 @@ Notation segment_contents_algebra :=
                positiveR)).
 
 Notation segment_algebra :=
-  (prodUR (optionUR (agreeR (leibnizO segment_name))) segment_contents_algebra).
+  (prodUR (optionUR (agreeR (prodO (leibnizO segment_name) valO)))
+          segment_contents_algebra).
 
 Notation algebra := (authUR (listUR segment_algebra)).
 
@@ -71,7 +72,7 @@ Section segment_state.
 End segment_state.
 
 Definition segment_name_uniqueValue (γ: gname):
-  @uniqueValue Σ nat (leibnizO segment_name).
+  @uniqueValue Σ nat (prodO (leibnizO segment_name) valO).
 Proof.
   eapply UniqueValue with
       (has_value :=
@@ -88,17 +89,15 @@ Proof.
 Defined.
 
 Definition segment_in_list γ γs id node: iProp :=
-  has_value (segment_name_uniqueValue γ) id γs
-  ∗ has_value (id_uniqueValue _ _ _) γs id
-  ∗ is_linkedListNode _ _ _ γs node.
+  has_value (segment_name_uniqueValue γ) id (γs, node).
 
 Global Instance segment_in_list_persistent γ γs id ptr:
   Persistent (segment_in_list γ γs id ptr).
 Proof. apply _. Qed.
 
 Definition segment_algebra_from_state (γs: leibnizO segment_name)
-           (pointers slots: nat): segment_algebra :=
-  (Some (to_agree γs),
+           (value: val) (pointers slots: nat): segment_algebra :=
+  (Some (to_agree (γs, value)),
    Some (if decide (pointers = 0 ∧ slots = 0)
          then Cinl (to_agree tt)
          else Cinr (Pos.of_nat
@@ -127,11 +126,16 @@ Section cleanedAndPointers_pure.
 
 End cleanedAndPointers_pure.
 
+Variable segment_parameter:
+  linkedListNode_parameters _ _ (linkedListNode_base _ _ segment_spec).
+
+Let isListNode := is_linkedListNode _ _ _ segment_parameter.
+
 Definition is_segment (γ: gname) (is_tail: bool) (id: nat)
-           (γs: segment_name) (pointers slots: nat): iProp :=
+           (γs: segment_name) (node: val) (pointers slots: nat): iProp :=
   (segment_content _ _ _ γs slots ∗
    match slots with | 0 => True | S _ => segment_has_slots γ id end)
-  ∗ (∃ node, is_linkedListNode _ _ _ γs node)
+  ∗ isListNode γs node
   ∗ has_value (id_uniqueValue _ _ _) γs id
   ∗ (∃ cℓ, has_value (cleanedAndPointers_uniqueValue _ _ _) γs cℓ
             ∗ cℓ ↦ #(cleanedAndPointers_contents pointers slots))
@@ -154,28 +158,28 @@ Definition is_segment (γ: gname) (is_tail: bool) (id: nat)
                         ∗ nℓ ↦ SOMEV ptr))
   ∗ ⌜slots ≤ maxSlots segment_interface⌝.
 
-Notation list_state := (list (leibnizO segment_name * (nat * nat))).
+Notation list_state := (list ((leibnizO segment_name * val) * (nat * nat))).
 
 Definition auth_ra (state: list_state) :=
   ● @fmap list list_fmap _ _
     (fun p => match p with
-                (γs, (pointers, slots)) =>
-                segment_algebra_from_state γs pointers slots
+                ((γs, node), (pointers, slots)) =>
+                segment_algebra_from_state γs node pointers slots
               end) state.
 
 Definition concurrentLinkedList_invariant (γ: gname): iProp :=
-  ∃ (state: list_state), own γ (auth_ra state) ∗ [∗ list] id ↦ p ∈ state,
-  match p with
-    (γs, (pointers, slots)) =>
-    is_segment γ (length state =? S id) id γs pointers slots
+  ∃ (state: list_state), own γ (auth_ra state) ∗ [∗ list] id ↦ x ∈ state,
+  match x with
+    ((γs, node), (pointers, slots)) =>
+    is_segment γ (length state =? S id) id γs node pointers slots
   end.
 
 Lemma concurrentLinkedList_lookup_auth_ra state γ id s:
   own γ (◯ {[ id := s ]}) -∗
   own γ (auth_ra state) -∗
-  ∃ γs pointers slots,
-    ⌜s ≼ segment_algebra_from_state γs pointers slots ∧
-    state !! id = Some (γs, (pointers, slots))⌝.
+  ∃ γs node pointers slots,
+    ⌜s ≼ segment_algebra_from_state γs node pointers slots ∧
+    state !! id = Some ((γs, node), (pointers, slots))⌝.
 Proof.
   iIntros "HFrag HAuth".
   iDestruct (own_valid_2 with "HAuth HFrag") as
@@ -184,8 +188,8 @@ Proof.
        %auth_both_valid.
   iPureIntro.
   rewrite list_lookup_fmap in HMapElem.
-  destruct (state !! id) as [[p1 [p2 p3]]|]; simpl in *; simplify_eq.
-  eauto.
+  destruct (state !! id) as [[[p1 p4] [p2 p3]]|]; simpl in *; simplify_eq.
+  eauto 10.
 Qed.
 
 Section not_tail.
@@ -200,30 +204,31 @@ Section not_tail.
   Proof.
     iIntros "HNotTail HAuth".
     iDestruct (concurrentLinkedList_lookup_auth_ra with "HNotTail HAuth")
-              as %(? & ? & ? & ? & HLookup).
+              as %(? & ? & ? & ? & ? & HLookup).
     iPureIntro. by eapply lookup_lt_Some.
   Qed.
 
 End not_tail.
 
-Lemma concurrentLinkedList_insert γ γs id:
-  has_value (segment_name_uniqueValue γ) id γs -∗
+Lemma concurrentLinkedList_insert γ γs node id:
+  has_value (segment_name_uniqueValue γ) id (γs, node) -∗
   concurrentLinkedList_invariant γ -∗
   (∃ list pointers slots,
-      ⌜list !! id = Some (γs, (pointers, slots))⌝ ∗
-      is_segment γ (length list =? S id) id γs pointers slots ∗
+      ⌜list !! id = Some ((γs, node), (pointers, slots))⌝ ∗
+      is_segment γ (length list =? S id) id γs node pointers slots ∗
       own γ (auth_ra list) ∗
       ((∃ pointers' slots',
-           is_segment γ (length list =? S id) id γs pointers' slots' ∗
-          own γ (auth_ra (<[ id := (γs, (pointers', slots')) ]> list)))
+           is_segment γ (length list =? S id) id γs node pointers' slots' ∗
+          own γ (auth_ra (<[ id := ((γs, node), (pointers', slots')) ]> list)))
          -∗ concurrentLinkedList_invariant γ)).
 Proof.
   iIntros "Hγs HInv".
   iDestruct "HInv" as (s) "[Hγ HSegments]".
   iDestruct (concurrentLinkedList_lookup_auth_ra with "Hγs Hγ")
-    as %(γs' & pointers & slots & [HAgree _]%pair_included & HLookup).
+    as %(γs' & node' & pointers & slots & [HAgree _]%pair_included & HLookup).
   move: HAgree. rewrite Some_included_total to_agree_included.
-  intros HEquiv. apply leibniz_equiv in HEquiv. move: HEquiv. intros <-.
+  intros HEquiv. apply leibniz_equiv in HEquiv. move: HEquiv. intros.
+  simplify_eq.
   iDestruct (big_sepL_insert_acc with "HSegments") as "[HSeg HRestore]";
     first done.
   iExists s, _, _. iFrame "HSeg Hγ". iSplitR; first by iPureIntro.
@@ -233,18 +238,19 @@ Proof.
   by iApply "HRestore".
 Qed.
 
-Lemma concurrentLinkedList_insert_known_removed (known_is_removed: bool) γ γs id:
-  has_value (segment_name_uniqueValue γ) id γs -∗
+Lemma concurrentLinkedList_insert_known_removed
+      (known_is_removed: bool) γ γs node id:
+  has_value (segment_name_uniqueValue γ) id (γs, node) -∗
   (if known_is_removed then segment_is_cancelled γ id else True) -∗
   concurrentLinkedList_invariant γ -∗
   (∃ list pointers slots,
-      ⌜list !! id = Some (γs, (pointers, slots))⌝ ∗
+      ⌜list !! id = Some ((γs, node), (pointers, slots))⌝ ∗
       ⌜known_is_removed = false ∨ (pointers = 0 ∧ slots = 0)⌝ ∗
-      is_segment γ (length list =? S id) id γs pointers slots ∗
+      is_segment γ (length list =? S id) id γs node pointers slots ∗
       own γ (auth_ra list) ∗
       ((∃ pointers' slots',
-           is_segment γ (length list =? S id) id γs pointers' slots' ∗
-          own γ (auth_ra (<[ id := (γs, (pointers', slots')) ]> list)))
+           is_segment γ (length list =? S id) id γs node pointers' slots' ∗
+          own γ (auth_ra (<[ id := ((γs, node), (pointers', slots')) ]> list)))
          -∗ concurrentLinkedList_invariant γ)).
 Proof.
   iIntros "Hγs HKnownRemoved HInv".
@@ -274,12 +280,12 @@ Proof.
       iFrame "Hγ HSeg HRestore".
 Qed.
 
-Lemma concurrentLinkedList_lookup_acc γ γs id:
-  has_value (segment_name_uniqueValue γ) id γs -∗
+Lemma concurrentLinkedList_lookup_acc γ γs node id:
+  has_value (segment_name_uniqueValue γ) id (γs, node) -∗
   concurrentLinkedList_invariant γ -∗
   (∃ is_tail pointers slots,
-      is_segment γ is_tail id γs pointers slots ∗
-      (is_segment γ is_tail id γs pointers slots
+      is_segment γ is_tail id γs node pointers slots ∗
+      (is_segment γ is_tail id γs node pointers slots
          -∗ concurrentLinkedList_invariant γ)).
 Proof.
   iIntros "Hγs HInv".
@@ -292,14 +298,14 @@ Proof.
 Qed.
 
 Lemma concurrentLinkedList_lookup_acc_known_removed
-      (known_is_removed: bool) γ γs id:
-  has_value (segment_name_uniqueValue γ) id γs -∗
+      (known_is_removed: bool) γ γs node id:
+  has_value (segment_name_uniqueValue γ) id (γs, node) -∗
   (if known_is_removed then segment_is_cancelled γ id else True) -∗
   concurrentLinkedList_invariant γ -∗
   (∃ is_tail pointers slots,
       ⌜known_is_removed = false ∨ (pointers = 0 ∧ slots = 0)⌝ ∗
-      is_segment γ is_tail id γs pointers slots ∗
-      (is_segment γ is_tail id γs pointers slots
+      is_segment γ is_tail id γs node pointers slots ∗
+      (is_segment γ is_tail id γs node pointers slots
          -∗ concurrentLinkedList_invariant γ)).
 Proof.
   iIntros "Hγs HKnownRemoved HInv".
@@ -313,6 +319,18 @@ Proof.
   rewrite list_insert_id; last done. by iFrame.
 Qed.
 
+Lemma getSegmentInfo γ γs id node:
+  segment_in_list γ γs id node -∗
+  concurrentLinkedList_invariant γ -∗
+  isListNode γs node ∗
+  has_value (id_uniqueValue _ _ _) γs id ∗
+  concurrentLinkedList_invariant γ.
+Proof.
+  iIntros "HSeg HInv".
+  iDestruct (concurrentLinkedList_lookup_acc with "HSeg HInv") as
+      (? ? ?) "[(HContent & #HNode & #HId & HRest) HRestore]".
+  iFrame "HNode HId". iApply "HRestore". iFrame. iFrame "HNode HId".
+Qed.
 
 Definition is_concurrentLinkedList (γ: gname): iProp :=
   inv N (concurrentLinkedList_invariant γ) ∗
@@ -325,8 +343,11 @@ Lemma getIsRemoved_spec (known_is_removed: bool) γ γs id v:
   {{{ (v: bool), RET #v; if v then segment_is_cancelled γ id
                               else ⌜known_is_removed = false⌝ }}}.
 Proof.
-  iIntros (Φ) "(#HList & #HSeg & HKnownRemoved) HΦ".
-  iDestruct "HSeg" as "(Hγs' & HId & HNode)".
+  iIntros (Φ) "(#HList & #Hγs' & HKnownRemoved) HΦ".
+  rewrite -fupd_wp. iInv "HList" as "HOpen" "HClose".
+  iDestruct (getSegmentInfo with "Hγs' HOpen") as "(#HNode & _ & HOpen)".
+  iMod ("HClose" with "HOpen") as "_". iModIntro.
+
   wp_lam.
   wp_apply (getCleanedAndPointersLoc_spec with "HNode").
   iIntros (cℓ) "#HValcℓ".
@@ -343,7 +364,7 @@ Proof.
 
   wp_load.
 
-  iAssert (is_segment γ (length list =? S id) id γs pointers slots ∗
+  iAssert (is_segment γ (length list =? S id) id γs v pointers slots ∗
           own γ (auth_ra list) -∗
           concurrentLinkedList_invariant γ)%I with "[HRestore]" as "HRestore".
   { iIntros "[HSeg Hγ]". iApply "HRestore". iExists pointers, slots.
@@ -388,9 +409,12 @@ Lemma getPrev_spec γ γs id v:
                   ∀ i, ⌜(id' < i < id)%nat⌝ -∗ segment_is_cancelled γ i
   }}}.
 Proof.
-  iIntros (Φ) "#[HList HSeg] HΦ".
+  iIntros (Φ) "#[HList Hγs] HΦ".
+  rewrite -fupd_wp. iInv "HList" as "HOpen" "HClose".
+  iDestruct (getSegmentInfo with "Hγs HOpen") as "(#HNode & _ & HOpen)".
+  iMod ("HClose" with "HOpen") as "_". iModIntro.
+
   wp_lam. wp_bind (getPrevLoc _ _).
-  iDestruct "HSeg" as "(Hγs & HId & HNode)".
   iApply (getPrevLoc_spec with "HNode").
   iIntros (pℓ) "!> #HValpℓ".
   iInv "HList" as "HOpen" "HClose".
@@ -468,6 +492,7 @@ Qed.
 
 Lemma getNext_spec (known_not_tail: bool) γ γs id v:
   {{{ inv N (concurrentLinkedList_invariant γ) ∗ segment_in_list γ γs id v ∗
+      isListNode γs v ∗
       if known_not_tail then segment_is_not_tail γ id else True }}}
     ! (getNextLoc (base segment_interface) v)
   {{{ r, RET r; ⌜r = NONEV ∧ known_not_tail = false⌝ ∨
@@ -475,8 +500,8 @@ Lemma getNext_spec (known_not_tail: bool) γ γs id v:
                           (∃ γsn, segment_in_list γ γsn id' v') ∗
                           ∀ i, ⌜id < i < id'⌝ -∗ segment_is_cancelled γ i }}}.
 Proof.
-  iIntros (Φ) "(#HList & #HSeg & HNotTail) HΦ".
-  iDestruct "HSeg" as "(Hγs & HId & HNode)". wp_bind (getNextLoc _ _).
+  iIntros (Φ) "(#HList & #Hγs & #HNode & HNotTail) HΦ".
+  wp_bind (getNextLoc _ _).
   iApply (getNextLoc_spec with "HNode"). iIntros (nℓ) "!> #HValnℓ".
   iInv "HList" as "HOpen" "HClose".
   iDestruct (concurrentLinkedList_insert with "Hγs HOpen")
@@ -523,13 +548,18 @@ Lemma isTail_spec (known_not_tail: bool) γ γs id v:
   {{{ (r: bool), RET #r; if r then ⌜known_not_tail = false⌝
                               else segment_is_not_tail γ id }}}.
 Proof.
-  iIntros (Φ) "H HΦ". wp_lam. wp_lam. wp_pures. wp_lam. wp_pures.
-  wp_bind (!_)%E. iApply (getNext_spec known_not_tail with "H").
+  iIntros (Φ) "(#HList & #Hγs & HNotTail) HΦ".
+  rewrite -fupd_wp. iInv "HList" as "HOpen" "HClose".
+  iDestruct (getSegmentInfo with "Hγs HOpen") as "(#HNode & _ & HOpen)".
+  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  wp_lam. wp_lam. wp_pures. wp_lam. wp_pures.
+  wp_bind (!_)%E. iApply (getNext_spec known_not_tail with "[HNotTail]").
+  by iFrame "HNode Hγs HList HNotTail".
   iIntros (r) "!> [[-> ->]|H]".
   - wp_pures. by iApply "HΦ".
   - iDestruct "H" as (? ? [-> ?]) "[H _]".
-    wp_pures. iApply "HΦ". iDestruct "H" as (?) "(Hγ & _ & _)".
-    by iDestruct (later_segment_in_list_not_tail with "Hγ") as "$".
+    wp_pures. iApply "HΦ". iDestruct "H" as (?) "Hγs'".
+    by iDestruct (later_segment_in_list_not_tail with "Hγs'") as "$".
 Qed.
 
 Lemma rightmostAliveNodeInternal_spec γ γs id v:
@@ -555,8 +585,11 @@ Proof.
           with "[]" as "#HCanc"; first by iIntros (? ?); lia.
   iClear "HSeg HNotTail Hr". clear Heqcurrent_id.
   iLöb as "IH" forall (current_id γs v HIdLeCId) "HΦ HSeg' HNotTail' HCanc".
-
-  wp_lam. wp_pures. wp_lam. wp_pures. wp_bind (!_)%E.
+  wp_lam. wp_pures. wp_lam.
+  rewrite -fupd_wp. iInv "HList" as "HOpen" "HClose".
+  iDestruct (getSegmentInfo with "HSeg' HOpen") as "(#HNode' & _ & HOpen)".
+  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  wp_pures. wp_bind (!_)%E.
   iApply (getNext_spec true with "[$]").
   iIntros (r) "!> [[_ %]|Hr]"; first done.
   iDestruct "Hr" as (id' v' [-> HCIdLtId']) "#[HNSeg HCanc']".
@@ -610,9 +643,13 @@ Proof.
   iIntros (prevv) "!> #HPrevVal". wp_pures.
   wp_bind (rightmostAliveNodeInternal _ _).
   iApply (rightmostAliveNodeInternal_spec with "[$]").
-  iIntros (nextId nextv) "!> #HNextVal". wp_pures.
+  iIntros (nextId nextv) "!> #HNextVal".
   iDestruct "HNextVal" as (HIdLtNextId) "[HNSeg HNCanc]".
-  iDestruct "HNSeg" as (γsn) "(Hγsn & HNextId & HNextNode)".
+  iDestruct "HNSeg" as (γsn) "Hγsn".
+  iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
+  iDestruct (getSegmentInfo with "Hγsn HOpen") as "(#HNextNode & _ & HOpen)".
+  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  wp_pures.
 
   wp_bind (getPrevLoc _ _). iApply (getPrevLoc_spec with "HNextNode").
   iIntros (nextpℓ) "!> #HNextpℓVal".
@@ -647,7 +684,10 @@ Proof.
   {
     iDestruct "HPrevVal" as "[->|HPrevVal]"; first by wp_pures.
     iDestruct "HPrevVal" as (prevId prevv' [-> HLt]) "[HPSeg HPCanc]".
-    iDestruct "HPSeg" as (γsp) "(Hγsp & HPrevId & HPrevNode)".
+    iDestruct "HPSeg" as (γsp) "Hγsp".
+    iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
+    iDestruct (getSegmentInfo with "Hγsp HOpen") as "(#HPrevNode & _ & HOpen)".
+    iMod ("HClose" with "HOpen") as "_". iModIntro.
     wp_pures.
     wp_bind (getNextLoc _ _). iApply (getNextLoc_spec with "HPrevNode").
     iIntros (prevnℓ) "!> HPrevnℓVal".
@@ -718,32 +758,32 @@ Qed.
 Lemma trySetNext_spec γ γsp γs (v nv: val) (id: nat):
   {{{ inv N (concurrentLinkedList_invariant γ) ∗ segment_in_list γ γsp id v
       ∗ (segment_has_slots γ (S id) -∗
-         is_segment γ true (S id) γs 0 (maxSlots segment_interface))
-      ∗ has_value (id_uniqueValue _ _ _) γs (S id)
-      ∗ is_linkedListNode _ _ _ γs nv }}}
+         is_segment γ true (S id) γs nv 0 (maxSlots segment_interface)) }}}
     trySetNext (base segment_interface) v nv
   {{{ (r: bool), RET #r;
       if r then segment_in_list γ γs (S id) nv
            else (segment_has_slots γ (S id) -∗
-                 is_segment γ true (S id) γs 0 (maxSlots segment_interface)) ∗
+                 is_segment γ true (S id) γs nv 0 (maxSlots segment_interface)) ∗
                 ∃ nid, (∃ γsn ptr, segment_in_list γ γsn nid ptr) ∗ ⌜id < nid⌝ ∗
                        ∀ cid : nat, ⌜id < cid ∧ cid < nid⌝ -∗
                                     segment_is_cancelled γ cid }}}.
 Proof.
-  iIntros (Φ) "(#HList & #HSeg & HNSeg & #HNId & #HNNode) HΦ".
+  iIntros (Φ) "(#HList & #Hγsp & HNSeg) HΦ".
+  iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
+  iDestruct (getSegmentInfo with "Hγsp HOpen") as "(#HNode & _ & HOpen)".
+  iMod ("HClose" with "HOpen") as "_". iModIntro.
   wp_lam. wp_pures.
   wp_bind (getNextLoc _ _).
-  iDestruct "HSeg" as "(Hγsp & HId & HNode)".
   iApply (getNextLoc_spec with "HNode").
   iIntros (nℓ) "!> #HValnℓ".
   wp_bind (CmpXchg _ _ _).
   iInv N as (list) "[Hγ HSegments]" "HClose".
   iDestruct (concurrentLinkedList_lookup_auth_ra with "Hγsp Hγ")
     as "#>HH".
-  iDestruct "HH" as %(γs'' & pointers & slots &
+  iDestruct "HH" as %(? & ? & pointers & slots &
                       [HIncluded _]%prod_included & HLookup).
   move: HIncluded. rewrite Some_included_total to_agree_included.
-  move=> HEq. apply leibniz_equiv in HEq. subst γs''.
+  move=> HEq. apply leibniz_equiv in HEq. symmetry in HEq; simplify_eq.
   rewrite big_opL_take_drop_middle; last done.
   rewrite /=.
 
@@ -755,12 +795,12 @@ Proof.
   destruct (decide (length list = S id)) as [HIsTail|HNotTail].
   - iEval (rewrite HIsTail Nat.eqb_refl) in "Hnℓ'". iClear "HSegmentsTail".
     wp_cmpxchg_suc.
-    pose new_list := list ++ [(γs, (0, maxSlots segment_interface))].
+    pose new_list := list ++ [((γs, nv), (0, maxSlots segment_interface))].
     (* Next, allocate the new segment in Hγ. *)
     iAssert (|==> own γ (auth_ra new_list) ∗
-             has_value (segment_name_uniqueValue γ) (S id) γs ∗
+             has_value (segment_name_uniqueValue γ) (S id) (γs, nv) ∗
              segment_has_slots γ (S id))%I
-      with "[Hγ]" as ">(Hγ & #HNSegName & HNHasSlots)".
+      with "[Hγ]" as ">(Hγ & #HNListSeg & HNHasSlots)".
     {
       iMod (own_update with "Hγ") as "($ & $ & $)"; last done.
       apply auth_update_alloc.
@@ -775,9 +815,7 @@ Proof.
       by apply list_alloc_singletonM_local_update.
     }
     iSpecialize ("HNSeg" with "HNHasSlots").
-    iAssert (segment_in_list γ γs (S id) nv) as "#HNListSeg";
-      first by iFrame "HNSegName HNNode HNId".
-    iAssert (is_segment γ false id γsp pointers slots)
+    iAssert (is_segment γ false id γsp v pointers slots)
       with "[HContent HId' Hcℓ Hpℓ Hnℓ' HRest]" as "HSegment".
     {
       iFrame "HContent HId' Hcℓ Hpℓ HNode' HRest". iExists nℓ.
@@ -787,12 +825,12 @@ Proof.
     }
     iAssert ([∗ list] id ↦ p ∈ new_list,
              match p with
-               (γs, (pointers, slots)) =>
-               is_segment γ (length (new_list) =? S id) id γs pointers slots
+               ((γs, v), (pointers, slots)) =>
+               is_segment γ (length (new_list) =? S id) id γs v pointers slots
              end)%I with "[HSegmentsInit HSegment HNSeg]" as "HSegments".
     {
       remember (take id list) as init_part.
-      assert (list = init_part ++ [(γsp, (pointers, slots))]) as ->.
+      assert (list = init_part ++ [((γsp, v), (pointers, slots))]) as ->.
       {
         subst. replace nil with (drop (S id) list).
         by rewrite take_drop_middle.
@@ -838,9 +876,8 @@ Lemma list_newSegment_spec γ γs id pv (k: nat):
       initialization_requirements _ _ segment_spec }}}
     newSegment segment_interface #(S id) pv #k
   {{{ γs v', RET v'; (segment_has_slots γ (S id) -∗
-                      is_segment γ true (S id) γs k (maxSlots segment_interface))
-                                ∗ has_value (id_uniqueValue _ _ _) γs (S id)
-                                ∗ is_linkedListNode _ _ _ γs v' }}}.
+                      is_segment γ true (S id) γs v' k
+                          (maxSlots segment_interface)) }}}.
 Proof.
   iIntros (Φ) "[#HSegInList HInitReq] HΦ".
   iApply (newSegment_spec with "HInitReq").
@@ -851,7 +888,6 @@ Proof.
   iIntros "HHasSlots".
   iSplitL "HHasSlots".
   { destruct (maxSlots _). done. iFrame. }
-  iSplit; first by iExists _.
   iDestruct "HRest" as "(#HValcℓ & #HValpℓ & #HValnℓ & Hpℓ & Hnℓ & Hcℓ)".
   iSplitL "Hcℓ"; last iSplitL "Hpℓ"; last iSplitL.
   - iExists ncℓ.
@@ -887,19 +923,20 @@ Theorem findSegmentInternal_spec γ γs' (start_id id: nat) v:
       ∗ ∀ i, (⌜max start_id id ≤ i < id'⌝)%nat -∗ segment_is_cancelled γ i
   }}}.
 Proof.
-  iIntros (Φ) "#[[HList HInitReq] HSeg] HΦ".
+  iIntros (Φ) "#[[HList HInitReq] Hγs'] HΦ".
+  iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
+  iDestruct (getSegmentInfo with "Hγs' HOpen") as "(#HNode & #HId & HOpen)".
+  iMod ("HClose" with "HOpen") as "_". iModIntro.
   wp_lam. wp_pures.
   move HEqX: (start_id) => current_id.
   rewrite -HEqX.
-  iEval (subst start_id) in "HSeg".
+  iEval (subst start_id) in "Hγs'". iEval (subst start_id) in "HId".
   iAssert (∀ i, (⌜max start_id id ≤ i < current_id⌝)%nat -∗
           segment_is_cancelled γ i)%I with "[]" as "#HCancelled".
   { subst. iIntros (? ?). lia. }
   assert (start_id ≤ current_id)%nat as HSIdLeCId by lia.
   clear HEqX.
-  iLöb as "IH" forall (current_id γs' v HSIdLeCId) "HSeg HCancelled".
-  iAssert (segment_in_list γ γs' current_id v) with "HSeg" as "HSegCopy".
-  iDestruct "HSegCopy" as "(Hγs' & HId & HNode)".
+  iLöb as "IH" forall (current_id γs' v HSIdLeCId) "Hγs' HNode HId HCancelled".
 
   (* Query the ID of the current segment *)
   wp_bind (getId _ _).
@@ -919,7 +956,7 @@ Proof.
   {
     rewrite bool_decide_decide.
     destruct (decide _) as [HLe|HGt]; wp_pures.
-    - wp_apply (getIsRemoved_spec false); first by iFrame "HList HSeg".
+    - wp_apply (getIsRemoved_spec false); first by iFrame "Hγs'".
       iIntros (r).
       destruct r; [iIntros "#HIsCancelled"|iIntros "_"]; wp_pures.
       + iRight. iSplitR; first done.
@@ -959,13 +996,17 @@ Proof.
   iClear "HExitReason".
 
   iModIntro. wp_pures. wp_bind (!_)%E.
-  iApply (getNext_spec false with "[]"); first by iFrame "HList HSeg".
+  iApply (getNext_spec false with "[]"); first by iFrame "HList HNode Hγs'".
   iIntros (r) "!> [[-> _]|HNext]".
   2: {
     iDestruct "HNext" as (nid nptr [-> HC]) "(#HNInList & #HTravCanc)".
-    wp_pures.
     iDestruct "HNInList" as (?) "HNInList".
-    iApply ("IH" with "[%] HΦ HNInList"); first lia.
+    iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
+    iDestruct (getSegmentInfo with "HNInList HOpen")
+      as "(#HNNode & #HNId & HOpen)".
+    iMod ("HClose" with "HOpen") as "_". iModIntro.
+    wp_pures.
+    iApply ("IH" with "[%] HΦ HNInList HNNode HNId"); first lia.
     iModIntro.
     iApply "HNewCancelled". iApply "HTravCanc".
   }
@@ -980,26 +1021,32 @@ Proof.
   wp_bind (newSegment _ _ _ _). rewrite -Nat2Z.inj_add.
   iApply (list_newSegment_spec with "[]");
     first by iFrame "HInitReq"; iLeft; iExists _; by iSplit.
-  iIntros (nγs nv) "!> (HNextSeg & HNextId & HNextNode)".
+  iIntros (nγs nv) "!> HNextSeg".
 
   wp_pures. wp_bind (trySetNext _ _ _).
-  iApply (trySetNext_spec with "[HNextSeg HNextId HNextNode]").
-  by iFrame "HList HNextSeg HNextId HNextNode HSeg".
+  iApply (trySetNext_spec with "[HNextSeg]").
+  iFrame "HList HNextSeg Hγs'".
   iIntros (r) "!> HCasResult".
-  destruct r; wp_pures; last by iApply ("IH" with "[% //] HΦ HSeg HCancelled").
+  destruct r; wp_pures; last by
+      iApply ("IH" with "[% //] HΦ Hγs' HNode HId HCancelled").
 
   iDestruct "HCasResult" as "#HNSeg".
 
   wp_bind (if: _ then _ else _)%E.
   iApply (wp_strong_mono NotStuck _ ⊤ _ _ (fun v => True)%I); [done|done| |].
   2: {
-    iIntros (?) "_ !>". wp_pures.
-    iApply ("IH" with "[%] HΦ HNSeg []"); first lia.
+    iIntros (?) "_ !>".
+    iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
+    iDestruct (getSegmentInfo with "HNSeg HOpen")
+      as "(#HNNode & #HNId & HOpen)".
+    iMod ("HClose" with "HOpen") as "_". iModIntro.
+    wp_pures.
+    iApply ("IH" with "[%] HΦ HNSeg HNNode HNId []"); first lia.
     iModIntro. iApply "HNewCancelled". iIntros (? ?); lia.
   }
 
   wp_bind (getIsRemoved _ _).
-  iApply (getIsRemoved_spec false with "[]"); first by iFrame "HList HSeg".
+  iApply (getIsRemoved_spec false with "[]"); first by iFrame "HList Hγs'".
   iIntros (isRemoved) "!> HIsRemoved".
   destruct (isRemoved); wp_pures; last done.
   iApply (remove_spec with "[$]"). done.
@@ -1061,10 +1108,13 @@ Lemma decPointers_spec γ γs p id:
     decPointers segment_interface p
   {{{ (r: bool), RET #r; if r then segment_is_cancelled γ id else True }}}.
 Proof.
-  iIntros (Φ) "(#HList & #HSeg & HPtr) HΦ". wp_lam. wp_pures.
+  iIntros (Φ) "(#HList & #Hγs & HPtr) HΦ".
+  iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
+  iDestruct (getSegmentInfo with "Hγs HOpen") as "(#HNode & _ & HOpen)".
+  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  wp_lam. wp_pures.
 
   wp_bind (getCleanedAndPointersLoc _ _).
-  iDestruct "HSeg" as "(Hγs & HId & HNode)".
   iApply (getCleanedAndPointersLoc_spec with "HNode").
   iIntros (cℓ) "!> #HValcℓ".
 
@@ -1124,14 +1174,14 @@ Proof.
     congr Z.of_nat. lia.
   }
 
-  iAssert (▷ is_segment γ (length list =? S id) id γs pointers' slots)%I
+  iAssert (▷ is_segment γ (length list =? S id) id γs _ pointers' slots)%I
     with "[-HRestore HPtr Hγ]" as "HSeg".
   {
     iFrame "HContents HSlot HNode' HId' HRest".
     iExists cℓ. by iFrame.
   }
   destruct (decide (pointers' = 0 ∧ slots = 0)) as [[-> ->]|HNeq].
-  - iAssert (|==> own γ (auth_ra (<[id := (γs, (0, 0))]> list))
+  - iAssert (|==> own γ (auth_ra (<[id := ((γs, _), (0, 0))]> list))
                   ∗ segment_is_cancelled γ id)%I
       with "[Hγ HPtr]" as ">[Hγ HIsCancelled]".
     {
@@ -1160,7 +1210,7 @@ Proof.
       rewrite cleanedAndPointers_contents_zero.
       iApply "HΦ".
       rewrite bool_decide_true //.
-  - iAssert (|==> own γ (auth_ra (<[id := (γs, (pointers', slots))]> list))
+  - iAssert (|==> own γ (auth_ra (<[id := ((γs, _), (pointers', slots))]> list))
             ∗ own γ (◯ {[ id := ε ]}))%I
       with "[Hγ HPtr]" as ">[Hγ _]".
     {
@@ -1208,17 +1258,21 @@ Theorem moveForward_spec γ γs (ℓ: loc) id p:
                    else ▷ pointer_location γ ℓ id' ∗ segment_is_cancelled γ id,
       RET #r >>>.
 Proof.
-  iIntros "#[HList _] #HSeg" (Φ) "AU". wp_lam. wp_pures. wp_pures. iLöb as "IH".
+  iIntros "#[HList _] #Hγs" (Φ) "AU". wp_lam. wp_pures. wp_pures. iLöb as "IH".
+  iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
+  iDestruct (getSegmentInfo with "Hγs HOpen") as "(#HNode & #HId & HOpen)".
+  iMod ("HClose" with "HOpen") as "_". iModIntro.
   wp_bind (!_)%E. iMod "AU" as (id') "[Hp HClose]".
-  iDestruct "Hp" as (p' ?) "(Hℓ & #HSeg' & HPtr')".
+  iDestruct "Hp" as (p' ?) "(Hℓ & #Hγs' & HPtr')".
   wp_load.
-  iDestruct "HSeg" as "(#Hγs & #HId & #HNode)".
-  iDestruct "HSeg'" as  "(#Hγs' & #HId' & #HNode')".
   destruct (decide (id ≤ id')) as [HIdLeId'|HIdGtId'].
   { iDestruct "HClose" as "[_ HClose]".
     iMod ("HClose" $! true with "[-]") as "HΦ".
     { rewrite Nat.max_r; last lia. iExists p'; iFrame.
-      iExists _. iFrame "Hγs' HId' HNode'". }
+      iExists _. iFrame "Hγs'". }
+    iInv "HList" as "HOpen" "HClose".
+    iDestruct (getSegmentInfo with "Hγs' HOpen") as "(#HNode' & #HId' & HOpen)".
+    iMod ("HClose" with "HOpen") as "_".
     iModIntro. wp_pures.
 
     wp_bind (getId _ _). iApply (getId_spec with "HNode'").
@@ -1233,8 +1287,11 @@ Proof.
   }
   iDestruct "HClose" as "[HClose _]".
   iMod ("HClose" with "[-]") as "AU".
-  { iExists _. iFrame. iExists _. iFrame "Hγs' HId' HNode'". }
+  { iExists _. iFrame. iExists _. iFrame "Hγs'". }
 
+  iInv "HList" as "HOpen" "HClose".
+  iDestruct (getSegmentInfo with "Hγs' HOpen") as "(#HNode' & #HId' & HOpen)".
+  iMod ("HClose" with "HOpen") as "_".
   iModIntro. wp_pures.
 
   wp_bind (getId _ _). iApply (getId_spec with "HNode'").
@@ -1294,7 +1351,7 @@ Proof.
   }
   iLeft. iFrame "HPointer". iIntros "!> AU".
   iDestruct "Hr" as (?) "Hcℓ".
-  iAssert (|==> own γ (auth_ra (<[id := (γs, (S pointers, slots))]> list)) ∗
+  iAssert (|==> own γ (auth_ra (<[id := ((γs, _), (S pointers, slots))]> list)) ∗
                 segment_is_pointed_to γ id)%I
           with "[Hγ]" as ">[Hγ HSegmentPtr]".
   {
@@ -1308,7 +1365,8 @@ Proof.
       rewrite list_lookup_insert_ne; last lia.
       rewrite map_lookup.
       assert (is_Some (list !! i)) as [? ->].
-      { apply lookup_lt_is_Some. apply lookup_lt_Some in HLookup. lia. }
+      { apply lookup_lt_is_Some.
+        assert (id < length list) as ? by eapply lookup_lt_Some=>//. lia. }
       simpl.
       apply option_local_update'''.
       by rewrite ucmra_unit_left_id.
@@ -1321,7 +1379,9 @@ Proof.
         rewrite decide_False; last lia.
         rewrite -Cinr_op pos_op_plus.
         replace 1%positive with (Pos.of_nat 1) by (compute; done).
-        rewrite -Nat2Pos.inj_add; try done.
+        rewrite -Nat2Pos.inj_add.
+        by rewrite /segment_algebra_from_state /=.
+        done.
         destruct slots; lia.
       * intros. apply cmra_valid_validN.
         rewrite -pair_op. apply pair_valid. split; first done.
@@ -1341,21 +1401,24 @@ Proof.
   iModIntro.
 
   wp_pures. wp_bind (CmpXchg _ _ _).
+  iInv "HList" as "HOpen" "HCloseInv".
   iMod "AU" as (id'') "[Hp'' HClose]".
-  iDestruct "Hp''" as (p'' ?) "(Hℓ & #HSeg'' & >HPtr'')".
-  iDestruct "HSeg''" as "(#Hγs'' & #HId'' & #HNode'')".
+  iDestruct "Hp''" as (p'' ?) "(Hℓ & #Hγs'' & >HPtr'')".
+  iDestruct (getSegmentInfo with "Hγs'' HOpen") as "(#HNode'' & #HId'' & HOpen)".
   iDestruct (linkedListNode_unboxed with "HNode''") as ">Hp''Unboxed".
   iDestruct "Hp''Unboxed" as %Hp''Unboxed.
   iDestruct (linkedListNode_unboxed with "HNode'") as %Hp'Unboxed.
+  iSpecialize ("HCloseInv" with "HOpen").
   destruct (decide (p' = p'')) as [->|HNeq].
   - wp_cmpxchg_suc.
     iDestruct (node_induces_id with "HId' HId'' HNode' HNode''") as ">->".
     iDestruct "HClose" as "[_ HClose]".
-    iMod ("HClose" $! true with "[-HPtr'']") as "HΦ".
+    iMod ("HClose" $! true with "[-HPtr'' HCloseInv]") as "HΦ".
     {
       rewrite Nat.max_l; last lia.
       iExists _. iFrame. iExists _. iFrame "Hγs HId HNode".
     }
+    iModIntro. iMod ("HCloseInv") as "_".
 
     iModIntro. wp_pures. wp_bind (decPointers _ _).
     iApply (decPointers_spec with "[HPtr'']").
@@ -1365,9 +1428,9 @@ Proof.
     by iFrame "HList Hr Hγs'' HId'' HNode''".
     iIntros "!> _". wp_pures. done.
   - wp_cmpxchg_fail. iDestruct "HClose" as "[HClose _]".
-    iMod ("HClose" with "[-HSegmentPtr]") as "AU".
+    iMod ("HClose" with "[-HSegmentPtr HCloseInv]") as "AU".
     { iExists _. iFrame. iExists _. iFrame "Hγs'' HId'' HNode''". }
-    iModIntro. wp_pures.
+    iModIntro. iMod ("HCloseInv") as "_". iModIntro. wp_pures.
     wp_bind (decPointers _ _).
     iApply (decPointers_spec with "[HSegmentPtr]").
     by iFrame "HList HSegmentPtr Hγs HId HNode".
@@ -1381,6 +1444,7 @@ Qed.
 Lemma cancelCell_spec Ψ γ γs id p (k: nat):
   inv N (concurrentLinkedList_invariant γ) -∗
   segment_in_list γ γs id p -∗
+  isListNode γs p -∗
   <<< (∀ n, segment_content _ _ segment_spec γs n ==∗
        Ψ ∗ ∃ n', ⌜(n = S k + n')%nat⌝ ∧
                  segment_content _ _ segment_spec γs n') >>>
@@ -1389,7 +1453,7 @@ Lemma cancelCell_spec Ψ γ γs id p (k: nat):
                       then segment_is_cancelled γ id
                       else True, RET #v >>>.
 Proof.
-  iIntros "#HList #(Hγs & HId & HNode)" (Φ) "AU".
+  iIntros "#HList #Hγs #HNode" (Φ) "AU".
   wp_bind (getCleanedAndPointersLoc _ _).
   iApply (getCleanedAndPointersLoc_spec with "HNode").
   iIntros (cℓ) "!> HValcℓ".
@@ -1408,7 +1472,7 @@ Proof.
   iDestruct "Hn'" as (n' ->) "HContent".
 
   iAssert ((match n' with 0 => True | S _ => segment_has_slots γ id end) -∗
-           is_segment γ (length list =? S id) id γs pointers n')%I
+           is_segment γ (length list =? S id) id γs _ pointers n')%I
            with "[-HCloseUpdater HClose HSlots Hγ HRestore HΨ]" as "HSeg".
   {
     replace (_ + S k)%Z with (Z.of_nat (cleanedAndPointers_contents pointers n'))
@@ -1419,7 +1483,7 @@ Proof.
   }
   simpl.
   destruct (decide (pointers = 0 ∧ n' = 0)%nat) as [[-> ->]|HNotEq].
-  - iAssert (|==> own γ (auth_ra (<[id := (γs, (0, 0))]> list)) ∗
+  - iAssert (|==> own γ (auth_ra (<[id := ((γs, _), (0, 0))]> list)) ∗
                   segment_is_cancelled γ id)%I with "[Hγ HSlots]"
       as ">[Hγ HIsCancelled]".
     {
@@ -1461,7 +1525,7 @@ Proof.
     }
     iModIntro.
     destruct n' as [|n''].
-    * iAssert (|==> own γ (auth_ra (<[id := (γs, (pointers, 0))]> list)) ∗
+    * iAssert (|==> own γ (auth_ra (<[id := ((γs, _), (pointers, 0))]> list)) ∗
                     own γ (◯ ({[ id := ε ]})))%I
         with "[Hγ HSlots]" as ">[Hγ _]".
       {
@@ -1493,7 +1557,7 @@ Proof.
       }
       done.
     * replace (auth_ra list) with
-          (auth_ra (<[id := (γs, (pointers, S n''))]> list)).
+          (auth_ra (<[id := ((γs, p), (pointers, S n''))]> list)).
       2: {
         rewrite /auth_ra. congr auth_auth. rewrite list_fmap_insert.
         apply list_eq. intros i.
@@ -1521,9 +1585,13 @@ Theorem onSlotCleaned_spec Ψ γ γs id p:
     onSlotCleaned segment_interface p @ ⊤ ∖ ↑N
   <<< Ψ, RET #() >>>.
 Proof.
-  iIntros "#[HList _] #HSeg" (Φ) "AU". wp_lam.
+  iIntros "#[HList _] #HSeg" (Φ) "AU".
+  iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
+  iDestruct (getSegmentInfo with "HSeg HOpen") as "(#HNode & _ & HOpen)".
+  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  wp_lam.
   wp_bind (FAA _ _). replace 1%Z with (Z.of_nat 1) by lia.
-  awp_apply (cancelCell_spec with "HList HSeg").
+  awp_apply (cancelCell_spec with "HList HSeg HNode").
   iApply (aacc_aupd_commit with "AU"); first done.
   iIntros "HUpdater". iAaccIntro with "HUpdater".
   by iIntros "$ !> $".
@@ -1547,9 +1615,8 @@ Theorem access_segment (known_is_removed: bool) E γ γs id ptr:
                        ▷ segment_content _ _ _ γs n ∗
                        (▷ segment_content _ _ _ γs n ={E ∖ ↑N, E}=∗ emp).
 Proof.
-  iIntros (HSubset) "[HList _] HSeg HKnownRemoved".
+  iIntros (HSubset) "[HList _] Hγs HKnownRemoved".
   iInv "HList" as "HOpen" "HClose".
-  iDestruct "HSeg" as "(Hγs & _ & _)".
   iDestruct (concurrentLinkedList_lookup_acc_known_removed
                with "Hγs HKnownRemoved HOpen")
     as (is_tail pointers slots) "(>HR & [[HContent HSlots] HRest] & HRestore)".
@@ -1566,8 +1633,11 @@ Theorem cleanPrev_spec γ γs id ptr:
     cleanPrev (base segment_interface) ptr
   {{{ RET #(); True }}}.
 Proof.
-  iIntros (Φ) "[#[HList _] (Hγs & HId & HNode)] HΦ". wp_lam.
-  wp_bind (getPrevLoc _ _). iApply (getPrevLoc_spec with "HNode").
+  iIntros (Φ) "[#[HList _] #Hγs] HΦ".
+  iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
+  iDestruct (getSegmentInfo with "Hγs HOpen") as "(#HNode & _ & HOpen)".
+  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  wp_lam. wp_bind (getPrevLoc _ _). iApply (getPrevLoc_spec with "HNode").
   iIntros (pℓ) "!> #HValpℓ".
   iInv "HList" as "HOpen" "HClose".
   iDestruct (concurrentLinkedList_lookup_acc with "Hγs HOpen")
@@ -1603,13 +1673,15 @@ Theorem newList_spec (k: nat):
                    [∗ list] i ∈ seq 0 k, pointer_location γ (ℓ +ₗ Z.of_nat i) 0
   }}}.
 Proof.
-  iIntros (Φ) "[% #HInitReq] HΦ". rewrite -wp_fupd. wp_pures.
+  iIntros (Φ) "[HK #HInitReq] HΦ". rewrite -wp_fupd. wp_pures.
+  iDestruct "HK" as %HK.
   wp_bind (newSegment _ _ _ _). iApply (newSegment_spec with "HInitReq").
   iIntros (γs node pℓ nℓ cℓ) "!> HSeg".
   iDestruct "HSeg" as "(#HIsNode & HContent & #HId & HRest)".
   wp_alloc dℓ as "Hdℓ"; first lia. rewrite /array.
-  iMod (own_alloc (auth_ra [(γs, (k, maxSlots segment_interface))] ⋅
-                   (◯ {[ 0%nat := (Some (to_agree γs), ε): segment_algebra ]} ⋅
+  iMod (own_alloc (auth_ra [((γs, node), (k, maxSlots segment_interface))] ⋅
+                   (◯ {[ 0%nat := (Some (to_agree (γs, node)), ε):
+                                    segment_algebra ]} ⋅
                     ◯ {[ 0%nat := (ε, Some (Cinr (Pos.of_nat (S k)))):
                                     segment_algebra ]})))
     as (γ) "[Hγ [#Hγs HPointer]]".
@@ -1634,7 +1706,7 @@ Proof.
   iAssert ([∗] replicate (S k) (segment_is_pointed_to γ 0))%I
     with "[HPointer]" as "HPointedTo".
   {
-    clear. iInduction (k) as [|k] "IH"; rewrite //=.
+    clear HK. iInduction (k) as [|k] "IH"; rewrite //=.
     - rewrite /segment_is_pointed_to.
       replace (Pos.of_nat 1) with 1%positive; first by iFrame.
       by compute.
@@ -1646,16 +1718,15 @@ Proof.
   }
   simpl.
   iDestruct "HPointedTo" as "[HSlots HPointedTo]".
-  iAssert (segment_in_list γ γs 0 node) with "[]" as "#HSeg".
-  by iFrame "HIsNode HId Hγs".
-  iAssert (is_segment γ true 0 γs k (maxSlots segment_interface))
+  iAssert (segment_in_list γ γs 0 node) with "Hγs" as "#HSeg".
+  iAssert (is_segment γ true 0 γs _ k (maxSlots segment_interface))
           with "[HContent HRest HSlots]" as "HIsSeg".
   {
     iFrame "HContent HId".
     iSplitL "HSlots".
     { move: (max_slots_bound _ _ segment_spec)=> ?.
       destruct (maxSlots _); [lia|done]. }
-    iSplitR; first by iExists _.
+    iSplitR; first done.
     iDestruct "HRest" as "(#HValcℓ & #HValpℓ & #HValnℓ & Hpℓ & Hnℓ & Hcℓ)".
     iSplitL "Hcℓ"; last iSplitL "Hpℓ"; last iSplitL; last by iPureIntro.
     - iExists cℓ. iFrame "HValcℓ". rewrite /cleanedAndPointers_contents.

@@ -200,14 +200,14 @@ Definition id_uniqueValue :=
 Definition dataLocation_uniqueValue :=
   segmentDataLocation <$> immutableValues_uniqueValue.
 
+Variable (N: namespace).
+
 Variable (cell_is_owned: nat -> iProp).
 
 Definition segment_invariant (γ: gname) (values: immutableValues): iProp :=
   [∗ list] i ∈ seq 0 segment_size_nat,
   (cell_is_owned (segmentId values * segment_size_nat + i) ∨
    (segmentDataLocation values +ₗ i) ↦ NONEV ∗ cell_cancellation_handle γ i)%I.
-
-Variable (N: namespace).
 
 Definition is_node γ (node: val): iProp :=
   ∃ (ℓ: loc), ⌜node = #ℓ⌝ ∧
@@ -285,11 +285,6 @@ Qed.
 Theorem node_unboxed γ node:
   is_node γ node -∗ ⌜val_is_unboxed node⌝.
 Proof. iIntros "#HNode". by iDestruct "HNode" as (ℓ ->) "_". Qed.
-
-Definition node_linkedListNode: linkedListNodeSpec Σ (base impl) :=
-  {| segment_spec.getPrevLoc_spec := getPrevLoc_spec;
-     segment_spec.getNextLoc_spec := getNextLoc_spec;
-     segment_spec.linkedListNode_unboxed := node_unboxed |}.
 
 Theorem node_induces_id γ γ' node id id':
   has_value id_uniqueValue γ id -∗
@@ -481,22 +476,35 @@ Proof. rewrite /impl /=. split; first lia; last done. Qed.
 
 End infinite_array_segment_proof.
 
+Section proofs.
+
+Variable (segment_size pointer_shift: positive).
+Variable (N: namespace).
+
+Definition node_linkedListNode `{!heapG Σ} `{!iSegmentG Σ}:
+  linkedListNodeSpec Σ (base (SQSegment segment_size pointer_shift)) :=
+  {| segment_spec.getPrevLoc_spec := getPrevLoc_spec segment_size N;
+     segment_spec.getNextLoc_spec := getNextLoc_spec segment_size N;
+     segment_spec.linkedListNode_unboxed := node_unboxed segment_size N;
+     segment_spec.is_linkedListNode_persistent := is_node_persistent segment_size N;
+  |}.
+
+Variable (limit: Pos.to_nat segment_size < 2 ^ Pos.to_nat pointer_shift).
+
 Canonical Structure node_segment `{!heapG Σ}
-          (cell_is_owned: nat -> iProp Σ) (N: namespace)
-          {segment_size pointer_shift: positive}
-          (limit: Pos.to_nat segment_size < 2 ^ Pos.to_nat pointer_shift)
           `{!iSegmentG Σ}: segmentSpec Σ (SQSegment segment_size pointer_shift) :=
   {|
-  segment_spec.linkedListNode_base :=
-    node_linkedListNode segment_size pointer_shift cell_is_owned N;
+  segment_spec.linkedListNode_base := node_linkedListNode;
   segment_spec.getId_spec :=
-    getId_spec segment_size pointer_shift cell_is_owned N;
+    getId_spec segment_size pointer_shift N;
   segment_spec.getCleanedAndPointersLoc_spec :=
-    getCleanedAndPointersLoc_spec segment_size pointer_shift cell_is_owned N;
+    getCleanedAndPointersLoc_spec segment_size pointer_shift N;
   segment_spec.newSegment_spec :=
-    newSegment_spec segment_size pointer_shift cell_is_owned N;
+    newSegment_spec segment_size pointer_shift N;
   segment_spec.max_slots_bound :=
     max_slots_bound segment_size pointer_shift limit;
   segment_spec.node_induces_id :=
-    node_induces_id segment_size cell_is_owned N;
+    node_induces_id segment_size N;
   |}.
+
+End proofs.

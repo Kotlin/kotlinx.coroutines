@@ -19,21 +19,23 @@ Record linkedListNodeSpec Σ `{!heapG Σ} (impl: linkedListNodeInterface) :=
   LinkedListNodeSpec {
       linkedListNode_name: Type;
       linkedListNode_name_inhabited: Inhabited linkedListNode_name;
-      is_linkedListNode (γ: linkedListNode_name) (node: val): iProp Σ;
+      linkedListNode_parameters: Type;
+      is_linkedListNode (p: linkedListNode_parameters) (γ: linkedListNode_name)
+                        (node: val): iProp Σ;
       prev_uniqueValue: @uniqueValue Σ linkedListNode_name loc;
       next_uniqueValue: @uniqueValue Σ linkedListNode_name loc;
-      is_linkedListNode_persistent γ node:
-        Persistent (is_linkedListNode γ node);
-      getPrevLoc_spec γ node:
-        {{{ is_linkedListNode γ node }}}
+      is_linkedListNode_persistent p γ node:
+        Persistent (is_linkedListNode p γ node);
+      getPrevLoc_spec p γ node:
+        {{{ is_linkedListNode p γ node }}}
           getPrevLoc impl node
         {{{ pℓ, RET #pℓ; has_value prev_uniqueValue γ pℓ }}};
-      getNextLoc_spec γ node:
-        {{{ is_linkedListNode γ node }}}
+      getNextLoc_spec p γ node:
+        {{{ is_linkedListNode p γ node }}}
           getNextLoc impl node
         {{{ nℓ, RET #nℓ; has_value next_uniqueValue γ nℓ }}};
-      linkedListNode_unboxed γ node:
-        is_linkedListNode γ node -∗ ⌜val_is_unboxed node⌝;
+      linkedListNode_unboxed p γ node:
+        is_linkedListNode p γ node -∗ ⌜val_is_unboxed node⌝;
     }.
 
 Existing Instance linkedListNode_name_inhabited.
@@ -52,25 +54,25 @@ Record segmentSpec Σ `{!heapG Σ} (impl: segmentInterface) :=
       initialization_requirements: iProp Σ;
       initialization_requirements_Persistent:
         Persistent initialization_requirements;
-      node_induces_id γ γ' node id id':
+      node_induces_id p γ γ' node id id':
         has_value id_uniqueValue γ id -∗
         has_value id_uniqueValue γ' id' -∗
-        is_linkedListNode _ _ _ γ node -∗
-        is_linkedListNode _ _ _ γ' node ==∗
+        is_linkedListNode _ _ _ p γ node -∗
+        is_linkedListNode _ _ _ p γ' node ==∗
         ⌜id = id'⌝;
-      getId_spec γ node:
-        {{{ is_linkedListNode _ _ _ γ node }}}
+      getId_spec p γ node:
+        {{{ is_linkedListNode _ _ _ p γ node }}}
           getId impl node
         {{{ id, RET #id; has_value id_uniqueValue γ id }}};
-      getCleanedAndPointersLoc_spec γ node:
-        {{{ is_linkedListNode _ _ _ γ node }}}
+      getCleanedAndPointersLoc_spec p γ node:
+        {{{ is_linkedListNode _ _ _ p γ node }}}
           getCleanedAndPointersLoc impl node
         {{{ cℓ, RET #cℓ; has_value cleanedAndPointers_uniqueValue γ cℓ }}};
-      newSegment_spec (id: nat) (prev: val) (pointers: nat):
+      newSegment_spec p (id: nat) (prev: val) (pointers: nat):
         {{{ initialization_requirements }}}
           newSegment impl #id prev #pointers
         {{{ γ node pℓ nℓ cℓ, RET node;
-            is_linkedListNode _ _ _ γ node
+            is_linkedListNode _ _ _ p γ node
             ∗ segment_content γ (maxSlots impl)
             ∗ has_value id_uniqueValue γ id
             ∗ has_value cleanedAndPointers_uniqueValue γ cℓ
