@@ -322,14 +322,23 @@ Qed.
 Lemma getSegmentInfo γ γs id node:
   segment_in_list γ γs id node -∗
   concurrentLinkedList_invariant γ -∗
-  isListNode γs node ∗
-  has_value (id_uniqueValue _ _ _) γs id ∗
-  concurrentLinkedList_invariant γ.
+  isListNode γs node ∗ has_value (id_uniqueValue _ _ _) γs id.
 Proof.
   iIntros "HSeg HInv".
   iDestruct (concurrentLinkedList_lookup_acc with "HSeg HInv") as
       (? ? ?) "[(HContent & #HNode & #HId & HRest) HRestore]".
-  iFrame "HNode HId". iApply "HRestore". iFrame. iFrame "HNode HId".
+  iFrame "HNode HId".
+Qed.
+
+Lemma getSegmentInfo' E γ γs id node:
+  ↑N ⊆ E →
+  segment_in_list γ γs id node -∗
+  inv N (concurrentLinkedList_invariant γ) ={E}=∗
+  ▷ isListNode γs node ∗ has_value (id_uniqueValue _ _ _) γs id.
+Proof.
+  iIntros (?) "HSeg HInv". iInv "HInv" as "HOpen" "HClose".
+  iDestruct (getSegmentInfo with "HSeg HOpen") as "#[$ >$]".
+  by iMod ("HClose" with "HOpen") as "_".
 Qed.
 
 Definition is_concurrentLinkedList (γ: gname): iProp :=
@@ -344,9 +353,7 @@ Lemma getIsRemoved_spec (known_is_removed: bool) γ γs id v:
                               else ⌜known_is_removed = false⌝ }}}.
 Proof.
   iIntros (Φ) "(#HList & #Hγs' & HKnownRemoved) HΦ".
-  rewrite -fupd_wp. iInv "HList" as "HOpen" "HClose".
-  iDestruct (getSegmentInfo with "Hγs' HOpen") as "(#HNode & _ & HOpen)".
-  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  iMod (getSegmentInfo' with "Hγs' HList") as "[#HNode _]"; first done.
 
   wp_lam.
   wp_apply (getCleanedAndPointersLoc_spec with "HNode").
@@ -410,9 +417,7 @@ Lemma getPrev_spec γ γs id v:
   }}}.
 Proof.
   iIntros (Φ) "#[HList Hγs] HΦ".
-  rewrite -fupd_wp. iInv "HList" as "HOpen" "HClose".
-  iDestruct (getSegmentInfo with "Hγs HOpen") as "(#HNode & _ & HOpen)".
-  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  iMod (getSegmentInfo' with "Hγs HList") as "[#HNode _]"; first done.
 
   wp_lam. wp_bind (getPrevLoc _ _).
   iApply (getPrevLoc_spec with "HNode").
@@ -549,9 +554,7 @@ Lemma isTail_spec (known_not_tail: bool) γ γs id v:
                               else segment_is_not_tail γ id }}}.
 Proof.
   iIntros (Φ) "(#HList & #Hγs & HNotTail) HΦ".
-  rewrite -fupd_wp. iInv "HList" as "HOpen" "HClose".
-  iDestruct (getSegmentInfo with "Hγs HOpen") as "(#HNode & _ & HOpen)".
-  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  iMod (getSegmentInfo' with "Hγs HList") as "[#HNode _]"; first done.
   wp_lam. wp_lam. wp_pures. wp_lam. wp_pures.
   wp_bind (!_)%E. iApply (getNext_spec known_not_tail with "[HNotTail]").
   by iFrame "HNode Hγs HList HNotTail".
@@ -586,9 +589,7 @@ Proof.
   iClear "HSeg HNotTail Hr". clear Heqcurrent_id.
   iLöb as "IH" forall (current_id γs v HIdLeCId) "HΦ HSeg' HNotTail' HCanc".
   wp_lam. wp_pures. wp_lam.
-  rewrite -fupd_wp. iInv "HList" as "HOpen" "HClose".
-  iDestruct (getSegmentInfo with "HSeg' HOpen") as "(#HNode' & _ & HOpen)".
-  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  iMod (getSegmentInfo' with "HSeg' HList") as "[#HNode' _]"; first done.
   wp_pures. wp_bind (!_)%E.
   iApply (getNext_spec true with "[$]").
   iIntros (r) "!> [[_ %]|Hr]"; first done.
@@ -646,9 +647,7 @@ Proof.
   iIntros (nextId nextv) "!> #HNextVal".
   iDestruct "HNextVal" as (HIdLtNextId) "[HNSeg HNCanc]".
   iDestruct "HNSeg" as (γsn) "Hγsn".
-  iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
-  iDestruct (getSegmentInfo with "Hγsn HOpen") as "(#HNextNode & _ & HOpen)".
-  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  iMod (getSegmentInfo' with "Hγsn HList") as "[#HNextNode _]"; first done.
   wp_pures.
 
   wp_bind (getPrevLoc _ _). iApply (getPrevLoc_spec with "HNextNode").
@@ -685,9 +684,7 @@ Proof.
     iDestruct "HPrevVal" as "[->|HPrevVal]"; first by wp_pures.
     iDestruct "HPrevVal" as (prevId prevv' [-> HLt]) "[HPSeg HPCanc]".
     iDestruct "HPSeg" as (γsp) "Hγsp".
-    iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
-    iDestruct (getSegmentInfo with "Hγsp HOpen") as "(#HPrevNode & _ & HOpen)".
-    iMod ("HClose" with "HOpen") as "_". iModIntro.
+    iMod (getSegmentInfo' with "Hγsp HList") as "[#HPrevNode _]"; first done.
     wp_pures.
     wp_bind (getNextLoc _ _). iApply (getNextLoc_spec with "HPrevNode").
     iIntros (prevnℓ) "!> HPrevnℓVal".
@@ -769,9 +766,7 @@ Lemma trySetNext_spec γ γsp γs (v nv: val) (id: nat):
                                     segment_is_cancelled γ cid }}}.
 Proof.
   iIntros (Φ) "(#HList & #Hγsp & HNSeg) HΦ".
-  iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
-  iDestruct (getSegmentInfo with "Hγsp HOpen") as "(#HNode & _ & HOpen)".
-  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  iMod (getSegmentInfo' with "Hγsp HList") as "[#HNode _]"; first done.
   wp_lam. wp_pures.
   wp_bind (getNextLoc _ _).
   iApply (getNextLoc_spec with "HNode").
@@ -924,9 +919,7 @@ Theorem findSegmentInternal_spec γ γs' (start_id id: nat) v:
   }}}.
 Proof.
   iIntros (Φ) "#[[HList HInitReq] Hγs'] HΦ".
-  iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
-  iDestruct (getSegmentInfo with "Hγs' HOpen") as "(#HNode & #HId & HOpen)".
-  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  iMod (getSegmentInfo' with "Hγs' HList") as "#[HNode HId]"; first done.
   wp_lam. wp_pures.
   move HEqX: (start_id) => current_id.
   rewrite -HEqX.
@@ -1001,10 +994,7 @@ Proof.
   2: {
     iDestruct "HNext" as (nid nptr [-> HC]) "(#HNInList & #HTravCanc)".
     iDestruct "HNInList" as (?) "HNInList".
-    iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
-    iDestruct (getSegmentInfo with "HNInList HOpen")
-      as "(#HNNode & #HNId & HOpen)".
-    iMod ("HClose" with "HOpen") as "_". iModIntro.
+    iMod (getSegmentInfo' with "HNInList HList") as "#[HNNode HNId]"; first done.
     wp_pures.
     iApply ("IH" with "[%] HΦ HNInList HNNode HNId"); first lia.
     iModIntro.
@@ -1036,10 +1026,7 @@ Proof.
   iApply (wp_strong_mono NotStuck _ ⊤ _ _ (fun v => True)%I); [done|done| |].
   2: {
     iIntros (?) "_ !>".
-    iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
-    iDestruct (getSegmentInfo with "HNSeg HOpen")
-      as "(#HNNode & #HNId & HOpen)".
-    iMod ("HClose" with "HOpen") as "_". iModIntro.
+    iMod (getSegmentInfo' with "HNSeg HList") as "#[HNNode HNId]"; first done.
     wp_pures.
     iApply ("IH" with "[%] HΦ HNSeg HNNode HNId []"); first lia.
     iModIntro. iApply "HNewCancelled". iIntros (? ?); lia.
@@ -1109,9 +1096,7 @@ Lemma decPointers_spec γ γs p id:
   {{{ (r: bool), RET #r; if r then segment_is_cancelled γ id else True }}}.
 Proof.
   iIntros (Φ) "(#HList & #Hγs & HPtr) HΦ".
-  iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
-  iDestruct (getSegmentInfo with "Hγs HOpen") as "(#HNode & _ & HOpen)".
-  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  iMod (getSegmentInfo' with "Hγs HList") as "#[HNode _]"; first done.
   wp_lam. wp_pures.
 
   wp_bind (getCleanedAndPointersLoc _ _).
@@ -1259,9 +1244,7 @@ Theorem moveForward_spec γ γs (ℓ: loc) id p:
       RET #r >>>.
 Proof.
   iIntros "#[HList _] #Hγs" (Φ) "AU". wp_lam. wp_pures. wp_pures. iLöb as "IH".
-  iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
-  iDestruct (getSegmentInfo with "Hγs HOpen") as "(#HNode & #HId & HOpen)".
-  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  iMod (getSegmentInfo' with "Hγs HList") as "#[HNode HId]"; first done.
   wp_bind (!_)%E. iMod "AU" as (id') "[Hp HClose]".
   iDestruct "Hp" as (p' ?) "(Hℓ & #Hγs' & HPtr')".
   wp_load.
@@ -1270,9 +1253,7 @@ Proof.
     iMod ("HClose" $! true with "[-]") as "HΦ".
     { rewrite Nat.max_r; last lia. iExists p'; iFrame.
       iExists _. iFrame "Hγs'". }
-    iInv "HList" as "HOpen" "HClose".
-    iDestruct (getSegmentInfo with "Hγs' HOpen") as "(#HNode' & #HId' & HOpen)".
-    iMod ("HClose" with "HOpen") as "_".
+    iMod (getSegmentInfo' with "Hγs' HList") as "#[HNode' HId']"; first done.
     iModIntro. wp_pures.
 
     wp_bind (getId _ _). iApply (getId_spec with "HNode'").
@@ -1289,9 +1270,7 @@ Proof.
   iMod ("HClose" with "[-]") as "AU".
   { iExists _. iFrame. iExists _. iFrame "Hγs'". }
 
-  iInv "HList" as "HOpen" "HClose".
-  iDestruct (getSegmentInfo with "Hγs' HOpen") as "(#HNode' & #HId' & HOpen)".
-  iMod ("HClose" with "HOpen") as "_".
+  iMod (getSegmentInfo' with "Hγs' HList") as "#[HNode' HId']"; first done.
   iModIntro. wp_pures.
 
   wp_bind (getId _ _). iApply (getId_spec with "HNode'").
@@ -1404,7 +1383,7 @@ Proof.
   iInv "HList" as "HOpen" "HCloseInv".
   iMod "AU" as (id'') "[Hp'' HClose]".
   iDestruct "Hp''" as (p'' ?) "(Hℓ & #Hγs'' & >HPtr'')".
-  iDestruct (getSegmentInfo with "Hγs'' HOpen") as "(#HNode'' & #HId'' & HOpen)".
+  iDestruct (getSegmentInfo with "Hγs'' HOpen") as "#(HNode'' & HId'')".
   iDestruct (linkedListNode_unboxed with "HNode''") as ">Hp''Unboxed".
   iDestruct "Hp''Unboxed" as %Hp''Unboxed.
   iDestruct (linkedListNode_unboxed with "HNode'") as %Hp'Unboxed.
@@ -1586,9 +1565,7 @@ Theorem onSlotCleaned_spec Ψ γ γs id p:
   <<< Ψ, RET #() >>>.
 Proof.
   iIntros "#[HList _] #HSeg" (Φ) "AU".
-  iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
-  iDestruct (getSegmentInfo with "HSeg HOpen") as "(#HNode & _ & HOpen)".
-  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  iMod (getSegmentInfo' with "HSeg HList") as "#[HNode _]"; first done.
   wp_lam.
   wp_bind (FAA _ _). replace 1%Z with (Z.of_nat 1) by lia.
   awp_apply (cancelCell_spec with "HList HSeg HNode").
@@ -1634,9 +1611,7 @@ Theorem cleanPrev_spec γ γs id ptr:
   {{{ RET #(); True }}}.
 Proof.
   iIntros (Φ) "[#[HList _] #Hγs] HΦ".
-  iApply fupd_wp. iInv "HList" as "HOpen" "HClose".
-  iDestruct (getSegmentInfo with "Hγs HOpen") as "(#HNode & _ & HOpen)".
-  iMod ("HClose" with "HOpen") as "_". iModIntro.
+  iMod (getSegmentInfo' with "Hγs HList") as "#[HNode _]"; first done.
   wp_lam. wp_bind (getPrevLoc _ _). iApply (getPrevLoc_spec with "HNode").
   iIntros (pℓ) "!> #HValpℓ".
   iInv "HList" as "HOpen" "HClose".

@@ -58,14 +58,14 @@ Record infiniteArraySpec Σ `{!heapG Σ} :=
         {{{ ℓ, RET #ℓ; infinite_array_mapsto γ i ℓ }}};
       cutoffMoveForward_spec γ (p v: val) i:
         is_infinite_array_cell_pointer γ p i -∗
-        <<< ∀ start_index, is_infinite_array_cutoff γ v start_index >>>
+        <<< ∀ start_index, ▷ is_infinite_array_cutoff γ v start_index >>>
           cutoffMoveForward v p @ ⊤
         <<< ∃ (success: bool), if success
             then is_infinite_array_cutoff γ v (max start_index i)
             else ▷ is_infinite_array_cutoff γ v start_index ∗
                 cell_is_cancelled γ start_index, RET #success >>>;
       cutoffGetPointer_spec γ (v: val):
-        ⊢ <<< ∀ start_index, is_infinite_array_cutoff γ v start_index >>>
+        ⊢ <<< ∀ start_index, ▷ is_infinite_array_cutoff γ v start_index >>>
           cutoffGetPointer v @ ⊤
         <<< ∃ (p: val), is_infinite_array_cutoff γ v start_index ∗
                         is_infinite_array_cell_pointer γ p start_index, RET p >>>

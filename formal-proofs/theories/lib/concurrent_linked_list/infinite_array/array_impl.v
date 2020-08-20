@@ -476,9 +476,10 @@ Proof. rewrite /impl /=. split; first lia; last done. Qed.
 
 End infinite_array_segment_proof.
 
-Section proofs.
+Section segment_specs.
 
 Variable (segment_size pointer_shift: positive).
+Variable (limit: Pos.to_nat segment_size < 2 ^ Pos.to_nat pointer_shift).
 Variable (N: namespace).
 
 Definition node_linkedListNode `{!heapG Σ} `{!iSegmentG Σ}:
@@ -486,14 +487,13 @@ Definition node_linkedListNode `{!heapG Σ} `{!iSegmentG Σ}:
   {| segment_spec.getPrevLoc_spec := getPrevLoc_spec segment_size N;
      segment_spec.getNextLoc_spec := getNextLoc_spec segment_size N;
      segment_spec.linkedListNode_unboxed := node_unboxed segment_size N;
-     segment_spec.is_linkedListNode_persistent := is_node_persistent segment_size N;
+     segment_spec.is_linkedListNode_persistent :=
+       is_node_persistent segment_size N;
   |}.
 
-Variable (limit: Pos.to_nat segment_size < 2 ^ Pos.to_nat pointer_shift).
-
 Canonical Structure node_segment `{!heapG Σ}
-          `{!iSegmentG Σ}: segmentSpec Σ (SQSegment segment_size pointer_shift) :=
-  {|
+          `{!iSegmentG Σ}: segmentSpec Σ (SQSegment segment_size pointer_shift)
+  := {|
   segment_spec.linkedListNode_base := node_linkedListNode;
   segment_spec.getId_spec :=
     getId_spec segment_size pointer_shift N;
@@ -507,4 +507,4 @@ Canonical Structure node_segment `{!heapG Σ}
     node_induces_id segment_size N;
   |}.
 
-End proofs.
+End segment_specs.
