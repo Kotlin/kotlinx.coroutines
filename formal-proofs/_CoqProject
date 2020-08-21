@@ -11,6 +11,7 @@
 ./theories/lib/interruptible_semaphore/interruptible_semaphore.v
 ./theories/lib/concurrent_linked_list/segment_spec.v
 ./theories/lib/concurrent_linked_list/segment_interfaces.v
+./theories/lib/concurrent_linked_list/list_interfaces.v
 ./theories/lib/concurrent_linked_list/list_impl.v
 ./theories/lib/concurrent_linked_list/list_spec.v
 ./theories/lib/concurrent_linked_list/list_proof.v

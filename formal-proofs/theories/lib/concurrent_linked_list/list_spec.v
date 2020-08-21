@@ -1,10 +1,13 @@
-From SegmentQueue.lib.concurrent_linked_list Require Export segment_spec.
+From SegmentQueue.lib.concurrent_linked_list
+     Require Export list_interfaces segment_spec.
 From iris.program_logic Require Import atomic.
 From iris.heap_lang Require Export proofmode notation lang.
 Open Scope nat.
 
-Record listSpec Σ `{!heapG Σ} {impl: segmentInterface}
-       (segment_spec: segmentSpec Σ impl) :=
+Record listSpec Σ `{!heapG Σ}
+       (impl: listInterface)
+       {seg_impl: segmentInterface}
+       (segment_spec: segmentSpec Σ seg_impl) :=
   ListSpec {
       list_name: Type;
       is_concurrentLinkedList:
@@ -20,25 +23,23 @@ Record listSpec Σ `{!heapG Σ} {impl: segmentInterface}
         (v: val): iProp Σ;
       segment_in_list_persistent γ γs id v:
         Persistent (segment_in_list γ γs id v);
+      segment_in_list_agree γ id γs v γs' v':
+        segment_in_list γ γs id v -∗ segment_in_list γ γs' id v' -∗
+                        ⌜v = v' ∧ γs = γs'⌝;
       segment_is_cancelled: list_name -> nat -> iProp Σ;
       segment_is_cancelled_persistent γ id:
         Persistent (segment_is_cancelled γ id);
       pointer_location: list_name -> loc -> nat -> iProp Σ;
-      newList: val;
-      cleanPrev: val;
-      findSegment: val;
-      moveForward: val;
-      onSlotCleaned: val;
       newList_spec N p (k: nat):
         {{{ ⌜k > 0⌝ ∧ initialization_requirements _ _ segment_spec }}}
-          newList #k
+          newList impl #k
         {{{ γ ℓ, RET #ℓ; is_concurrentLinkedList N p γ ∗
                         [∗ list] i ∈ seq 0 k,
                             pointer_location γ (ℓ +ₗ (i: nat)) 0
         }}};
       findSegment_spec N p γ γs' (start_id id: nat) v:
         {{{ is_concurrentLinkedList N p γ ∗ segment_in_list γ γs' start_id v }}}
-          findSegment v #id
+          findSegment impl v #id
         {{{ (v': val) (id': nat), RET (SOMEV v');
           (∃ γs, segment_in_list γ γs id' v')
           ∗ ⌜(start_id ≤ id' ∧ id ≤ id')%nat⌝
@@ -48,14 +49,14 @@ Record listSpec Σ `{!heapG Σ} {impl: segmentInterface}
         is_concurrentLinkedList N p γ -∗
         segment_in_list γ γs id v -∗
         <<< ∀ id', ▷ pointer_location γ ℓ id' >>>
-          moveForward #ℓ v @ ⊤ ∖ ↑N
+          moveForward impl #ℓ v @ ⊤ ∖ ↑N
         <<< ∃ (r: bool), if r then pointer_location γ ℓ (max id id')
                               else ▷ pointer_location γ ℓ id'
                                    ∗ segment_is_cancelled γ id,
             RET #r >>>;
       cleanPrev_spec N p γ γs id ptr:
         {{{ is_concurrentLinkedList N p γ ∗ segment_in_list γ γs id ptr }}}
-          cleanPrev ptr
+          cleanPrev impl ptr
         {{{ RET #(); True }}};
       onSlotCleaned_spec N pars Ψ γ γs id p:
         is_concurrentLinkedList N pars γ -∗
@@ -63,7 +64,7 @@ Record listSpec Σ `{!heapG Σ} {impl: segmentInterface}
         <<< (∀ n, segment_content _ _ segment_spec γs n ==∗
             Ψ ∗ ∃ n', ⌜(n = S n')%nat⌝ ∧
                       segment_content _ _ segment_spec γs n') >>>
-          onSlotCleaned p @ ⊤ ∖ ↑N
+          onSlotCleaned impl p @ ⊤ ∖ ↑N
         <<< Ψ, RET #() >>>;
       pointer_location_load γ (ℓ: loc):
         ⊢ <<< ∀ id, ▷ pointer_location γ ℓ id >>>
@@ -79,3 +80,7 @@ Record listSpec Σ `{!heapG Σ} {impl: segmentInterface}
                             ▷ segment_content _ _ _ γs n ∗
                             (▷ segment_content _ _ _ γs n ={E ∖ ↑N, E}=∗ emp);
     }.
+
+Existing Instances is_concurrentLinkedList_persistent
+         segment_in_list_persistent
+         segment_is_cancelled_persistent.

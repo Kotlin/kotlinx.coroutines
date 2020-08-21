@@ -23,6 +23,9 @@ Definition getCleanedAndPointersLoc: val :=
 Definition getId: val :=
   λ: "this", Fst (Fst (Fst (Fst (!"this")))).
 
+Definition getDataLoc: val :=
+  λ: "this", Snd (!"this").
+
 Definition SQSegmentListNode :=
   {| segment_interfaces.getPrevLoc := getPrevLoc;
      segment_interfaces.getNextLoc := getNextLoc;
@@ -105,7 +108,7 @@ Proof. apply _. Qed.
 Definition cell_cancellation_handle γ id :=
   own γ (◯ {[ id := Some (cell_algebra_from_state cellAlive) ]}, ε).
 
-Theorem cell_cancellation_handle_exclusize γ id:
+Theorem cell_cancellation_handle_exclusive γ id:
   cell_cancellation_handle γ id -∗ cell_cancellation_handle γ id -∗ False.
 Proof.
   iIntros "H1 H2".
@@ -476,6 +479,8 @@ Proof. rewrite /impl /=. split; first lia; last done. Qed.
 
 End infinite_array_segment_proof.
 
+Require Import SegmentQueue.lib.concurrent_linked_list.list_interfaces.
+
 Section segment_specs.
 
 Variable (segment_size pointer_shift: positive).
@@ -507,4 +512,174 @@ Canonical Structure node_segment `{!heapG Σ}
     node_induces_id segment_size N;
   |}.
 
+Variable list_impl: listInterface.
+
+Definition newInfiniteArray: val :=
+  newList list_impl.
+
+Definition cancelCell: val :=
+  λ: "ptr", onSlotCleaned list_impl (Snd "ptr").
+
+Definition findCell: val :=
+  λ: "ptr" "id",
+  let: "sid" := "id" `rem` #(Pos.to_nat segment_size) in
+  let: "cid" := "id" `quot` #(Pos.to_nat segment_size) in
+  let: "seg" := findSegment list_impl (Fst "ptr") "sid" in
+  if: getId (SQSegment segment_size pointer_shift) "seg" = "sid" then
+    if: "cid" < Snd "ptr" then "ptr" else ("seg", "cid")
+  else ("seg", #0).
+
+Definition derefCellPointer: val :=
+  λ: "ptr", let: "seg" := Fst "ptr" in
+            let: "ix" := Snd "ptr" in
+            getDataLoc "seg" +ₗ "ix".
+
+Definition cellPointerCleanPrev: val :=
+  λ: "ptr", cleanPrev list_impl (Fst "ptr").
+
+Definition cutoffMoveForward: val :=
+  λ: "cutoff" "ptr", moveForward list_impl "cutoff" (Fst "ptr").
+
+Definition cutoffGetPointer: val :=
+  λ: "cutoff", (!"cutoff", #0).
+
 End segment_specs.
+
+Require Import SegmentQueue.lib.concurrent_linked_list.list_spec.
+
+Section array_impl.
+
+Context `{heapG Σ} `{iSegmentG Σ}.
+
+Variable (segment_size pointer_shift: positive).
+Variable (limit: Pos.to_nat segment_size < 2 ^ Pos.to_nat pointer_shift).
+Variable (N: namespace).
+Variable list_impl: listInterface.
+Variable list_spec: listSpec Σ list_impl
+                             (node_segment segment_size pointer_shift limit N).
+
+Definition is_infinite_array γ
+           (cell_is_owned: nat -> iProp Σ) :=
+  is_concurrentLinkedList _ _ _ list_spec N cell_is_owned γ.
+
+Global Instance is_infinite_array_persistent γ cell_is_owned:
+  Persistent (is_infinite_array γ cell_is_owned).
+Proof. apply _. Qed.
+
+Let segment_size_nat := Pos.to_nat segment_size.
+
+Definition segment_view γ i f: iProp Σ :=
+  ∃ γs v, segment_in_list _ _ _ list_spec γ γs (i `div` segment_size_nat) v ∗
+          f γs (i `mod` segment_size_nat) v.
+
+Definition infinite_array_mapsto γ i ℓ: iProp Σ :=
+  segment_view γ i (fun γs ix v =>
+  ∃ dℓ, has_value dataLocation_uniqueValue γs dℓ ∗ ⌜ℓ = dℓ +ₗ ix⌝)%I.
+
+Global Instance infinite_array_mapsto_persistent γ i ℓ:
+  Persistent (infinite_array_mapsto γ i ℓ).
+Proof. apply _. Qed.
+
+Theorem infinite_array_mapsto_agree γ i ℓ ℓ':
+  infinite_array_mapsto γ i ℓ -∗ infinite_array_mapsto γ i ℓ' -∗ ⌜ℓ = ℓ'⌝.
+Proof.
+  iIntros "H1 H2". rewrite /infinite_array_mapsto.
+  iDestruct "H1" as (? ?) "(H1 & H1Rest)".
+  iDestruct "H2" as (? ?) "(H2 & H2Rest)".
+  iDestruct (segment_in_list_agree with "H1 H2") as "[-> ->]".
+  iDestruct "H1Rest" as (?) "[H1dℓ ->]".
+  iDestruct "H2Rest" as (?) "[H2dℓ ->]".
+  iDestruct (has_value_agrees with "H1dℓ H2dℓ") as %->.
+  by iPureIntro.
+Qed.
+
+Definition is_infinite_array_cell_pointer γ (p: val) (i: nat): iProp Σ :=
+  segment_view γ i (fun γs ix v => ⌜p = (v, #ix)%V⌝)%I.
+
+Global Instance is_infinite_array_cell_pointer_persistent γ p i:
+  Persistent (is_infinite_array_cell_pointer γ p i).
+Proof. apply _. Qed.
+
+Definition is_infinite_array_cutoff γ (v: val) (i: nat): iProp Σ :=
+  ∃ (ℓ: loc), ⌜v = #ℓ⌝ ∧ segment_view γ i (fun γs ix v => ℓ ↦ v).
+
+Definition cell_is_cancelled' γ i: iProp Σ :=
+  segment_view γ i (fun γs ix v => cell_is_cancelled γs ix).
+
+Global Instance cell_is_cancelled'_persistent γ i:
+  Persistent (cell_is_cancelled' γ i).
+Proof. apply _. Qed.
+
+Definition cell_cancellation_handle' γ i: iProp Σ :=
+  segment_view γ i (fun γs ix v => cell_cancellation_handle γs ix).
+
+Theorem cell_cancellation_handle'_exclusive γ i:
+  cell_cancellation_handle' γ i -∗ cell_cancellation_handle' γ i -∗ False.
+Proof.
+  iIntros "H1 H2". rewrite /infinite_array_mapsto.
+  iDestruct "H1" as (? ?) "(H1 & H1Rest)".
+  iDestruct "H2" as (? ?) "(H2 & H2Rest)".
+  iDestruct (segment_in_list_agree with "H1 H2") as "[-> ->]".
+  iDestruct (cell_cancellation_handle_exclusive with "H1Rest H2Rest") as %[].
+Qed.
+
+Theorem cell_cancellation_handle'_not_cancelled γ i:
+  cell_is_cancelled' γ i -∗ cell_cancellation_handle' γ i -∗ False.
+Proof.
+  iIntros "H1 H2". rewrite /infinite_array_mapsto.
+  iDestruct "H1" as (? ?) "(H1 & H1Rest)".
+  iDestruct "H2" as (? ?) "(H2 & H2Rest)".
+  iDestruct (segment_in_list_agree with "H1 H2") as "[-> ->]".
+  iDestruct (cell_with_handle_not_cancelled with "H1Rest H2Rest") as %[].
+Qed.
+
+Theorem acquire_cell γ cell_is_owned i ℓ:
+    is_infinite_array γ cell_is_owned -∗
+    infinite_array_mapsto γ i ℓ -∗
+    ∀ Φ, (cell_is_owned i ∨ ℓ ↦ NONEV ∗ cell_cancellation_handle' γ i
+    ={⊤∖↑N}=∗ cell_is_owned i ∗ Φ) ={↑N}=∗ Φ.
+Proof.
+  iIntros "#HArr #HMapsto" (Φ) "HΦ".
+  iDestruct "HMapsto" as (? ?) "[HSeg HRest]".
+  rewrite /is_infinite_array.
+  iMod (access_segment _ _ _ list_spec _ _ false with "HArr HSeg [% //]")
+    as (n) "(_ & HSegContent & HRestore)"; first done.
+  rewrite /segment_content /= /array_impl.segment_content /=.
+Abort.
+
+End array_impl.
+
+(*
+      cancelCell_spec N γ co p i:
+        is_infinite_array N γ co -∗
+        is_infinite_array_cell_pointer γ p i -∗
+        <<< cell_cancellation_handle γ i >>>
+            cancelCell p @ ⊤
+        <<< cell_is_cancelled γ i, RET #() >>>;
+      findCell_spec N γ co p (source_id id: nat):
+        {{{ is_infinite_array N γ co ∗
+            is_infinite_array_cell_pointer γ p source_id }}}
+        findCell p #id @ ⊤
+        {{{ p' id', RET p'; is_infinite_array_cell_pointer γ p' id'
+            ∗ (⌜source_id <= id <= id'⌝ ∨
+              ⌜source_id > id ∧ id' = source_id⌝)%nat
+            ∗ [∗ list] i ∈ seq id (id' - id), cell_is_cancelled γ i
+        }}};
+      derefCellPointer_spec γ (p: val) i:
+        {{{ is_infinite_array_cell_pointer γ p i }}}
+          derefCellPointer p
+        {{{ ℓ, RET #ℓ; infinite_array_mapsto γ i ℓ }}};
+      cutoffMoveForward_spec γ (p v: val) i:
+        is_infinite_array_cell_pointer γ p i -∗
+        <<< ∀ start_index, ▷ is_infinite_array_cutoff γ v start_index >>>
+          cutoffMoveForward v p @ ⊤
+        <<< ∃ (success: bool), if success
+            then ∃ i', ⌜start_index ≤ i' ≤ i⌝ ∧ is_infinite_array_cutoff γ v i'
+            else ▷ is_infinite_array_cutoff γ v start_index ∗
+                cell_is_cancelled γ start_index, RET #success >>>;
+      cutoffGetPointer_spec γ (v: val):
+        ⊢ <<< ∀ i, ▷ is_infinite_array_cutoff γ v i >>>
+          cutoffGetPointer v @ ⊤
+        <<< ∃ (p: val), is_infinite_array_cutoff γ v i ∗
+                        is_infinite_array_cell_pointer γ p i, RET p >>>
+ *)

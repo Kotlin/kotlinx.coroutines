@@ -95,6 +95,15 @@ Global Instance segment_in_list_persistent γ γs id ptr:
   Persistent (segment_in_list γ γs id ptr).
 Proof. apply _. Qed.
 
+Theorem segment_in_list_agree γ id γs v γs' v':
+  segment_in_list γ γs id v -∗ segment_in_list γ γs' id v' -∗
+                  ⌜v = v' ∧ γs = γs'⌝.
+Proof.
+  iIntros "H1 H2".
+  iDestruct (has_value_agrees with "H1 H2") as %HH.
+  simplify_eq. by iPureIntro.
+Qed.
+
 Definition segment_algebra_from_state (γs: leibnizO segment_name)
            (value: val) (pointers slots: nat): segment_algebra :=
   (Some (to_agree (γs, value)),
@@ -912,7 +921,7 @@ Qed.
 
 Theorem findSegmentInternal_spec γ γs' (start_id id: nat) v:
   {{{ is_concurrentLinkedList γ ∗ segment_in_list γ γs' start_id v }}}
-    findSegmentInternal segment_interface v #id
+    findSegment (list_impl segment_interface) v #id
   {{{ (v': val) (id': nat), RET (SOMEV v'); (∃ γs, segment_in_list γ γs id' v')
       ∗ ⌜(start_id ≤ id' ∧ id ≤ id')%nat⌝
       ∗ ∀ i, (⌜max start_id id ≤ i < id'⌝)%nat -∗ segment_is_cancelled γ i
@@ -1237,7 +1246,7 @@ Theorem moveForward_spec γ γs (ℓ: loc) id p:
   is_concurrentLinkedList γ -∗
   segment_in_list γ γs id p -∗
   <<< ∀ id', ▷ pointer_location γ ℓ id' >>>
-    moveForward segment_interface #ℓ p @ ⊤ ∖ ↑N
+    list_interfaces.moveForward (list_impl segment_interface) #ℓ p @ ⊤ ∖ ↑N
   <<< ∃ (r: bool), if r
                    then pointer_location γ ℓ (max id id')
                    else ▷ pointer_location γ ℓ id' ∗ segment_is_cancelled γ id,
@@ -1561,7 +1570,7 @@ Theorem onSlotCleaned_spec Ψ γ γs id p:
   <<< (∀ n, segment_content _ _ segment_spec γs n ==∗
        Ψ ∗ ∃ n', ⌜(n = S n')%nat⌝ ∧
                  segment_content _ _ segment_spec γs n') >>>
-    onSlotCleaned segment_interface p @ ⊤ ∖ ↑N
+    list_interfaces.onSlotCleaned (list_impl segment_interface) p @ ⊤ ∖ ↑N
   <<< Ψ, RET #() >>>.
 Proof.
   iIntros "#[HList _] #HSeg" (Φ) "AU".
@@ -1607,7 +1616,7 @@ Qed.
 
 Theorem cleanPrev_spec γ γs id ptr:
   {{{ is_concurrentLinkedList γ ∗ segment_in_list γ γs id ptr }}}
-    cleanPrev (base segment_interface) ptr
+    list_interfaces.cleanPrev (list_impl segment_interface) ptr
   {{{ RET #(); True }}}.
 Proof.
   iIntros (Φ) "[#[HList _] #Hγs] HΦ".
@@ -1643,12 +1652,12 @@ Qed.
 
 Theorem newList_spec (k: nat):
   {{{ ⌜k > 0⌝ ∧ initialization_requirements _ _ segment_spec }}}
-    (λ: "k", AllocN "k" (newSegment segment_interface #0%nat NONEV "k"))%V #k
+    list_interfaces.newList (list_impl segment_interface) #k
   {{{ γ ℓ, RET #ℓ; is_concurrentLinkedList γ ∗
                    [∗ list] i ∈ seq 0 k, pointer_location γ (ℓ +ₗ Z.of_nat i) 0
   }}}.
 Proof.
-  iIntros (Φ) "[HK #HInitReq] HΦ". rewrite -wp_fupd. wp_pures.
+  iIntros (Φ) "[HK #HInitReq] HΦ". rewrite -wp_fupd. wp_lam.
   iDestruct "HK" as %HK.
   wp_bind (newSegment _ _ _ _). iApply (newSegment_spec with "HInitReq").
   iIntros (γs node pℓ nℓ cℓ) "!> HSeg".
@@ -1740,7 +1749,7 @@ End concurrentLinkedListProof.
 
 Canonical Structure list_impl `{!heapG Σ}
           {impl: segmentInterface} (segment_spec: segmentSpec Σ impl)
-          `{!iLinkedListG segment_spec Σ}: listSpec Σ segment_spec :=
+          `{!iLinkedListG segment_spec Σ} :=
   {|
      list_spec.findSegment_spec := findSegmentInternal_spec segment_spec;
      list_spec.moveForward_spec := moveForward_spec segment_spec;
@@ -1749,4 +1758,5 @@ Canonical Structure list_impl `{!heapG Σ}
      list_spec.pointer_location_load := read_pointer_location segment_spec;
      list_spec.onSlotCleaned_spec := onSlotCleaned_spec segment_spec;
      list_spec.newList_spec := newList_spec segment_spec;
+     list_spec.segment_in_list_agree := segment_in_list_agree segment_spec;
   |}.

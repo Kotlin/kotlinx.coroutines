@@ -1,6 +1,7 @@
 From iris.heap_lang Require Export proofmode notation lang.
 From SegmentQueue.lib.util Require Export addAndGet addConditionally.
-From SegmentQueue.lib.concurrent_linked_list Require Export segment_interfaces.
+From SegmentQueue.lib.concurrent_linked_list
+     Require Export segment_interfaces list_interfaces.
 
 Definition CLOSED: val := #0.
 
@@ -166,5 +167,16 @@ Definition onSlotCleaned : val :=
                 #(maxSlots impl)
             then remove "ptr"
             else #().
+
+Definition newList : val :=
+  λ: "k", AllocN "k" (newSegment impl #0%nat NONEV "k").
+
+Canonical Structure list_impl: listInterface :=
+  {| list_interfaces.newList := newList;
+     list_interfaces.cleanPrev := cleanPrev (base impl);
+     list_interfaces.findSegment := findSegmentInternal;
+     list_interfaces.moveForward := moveForward;
+     list_interfaces.onSlotCleaned := onSlotCleaned;
+  |}.
 
 End Segment.
