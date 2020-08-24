@@ -14,7 +14,7 @@ import kotlin.coroutines.*
  * Instances of [ExecutorCoroutineDispatcher] should be closed by the owner of the dispatcher.
  *
  * This class is generally used as a bridge between coroutine-based API and
- * asynchronous API which requires instance of the [Executor].
+ * asynchronous API that requires an instance of the [Executor].
  */
 public abstract class ExecutorCoroutineDispatcher: CoroutineDispatcher(), Closeable {
     /** @suppress */

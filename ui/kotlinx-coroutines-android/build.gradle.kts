@@ -6,10 +6,6 @@ import org.jetbrains.dokka.DokkaConfiguration.ExternalDocumentationLink
 import org.jetbrains.dokka.gradle.DokkaTask
 import java.net.URL
 
-repositories {
-    google()
-}
-
 configurations {
     create("r8")
 }
