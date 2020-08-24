@@ -10,6 +10,9 @@ import org.jetbrains.dokka.gradle.DokkaTask
 import java.io.File
 import java.net.URL
 
+/**
+ * Package-list by external URL for documentation generation.
+ */
 fun Project.externalDocumentationLink(
     url: String,
     packageList: File = projectDir.resolve("package.list")

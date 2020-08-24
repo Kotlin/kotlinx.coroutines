@@ -2,28 +2,32 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-apply plugin: 'kotlin-dce-js'
-apply from: rootProject.file('gradle/node-js.gradle')
-
-dependencies {
-    compile "org.jetbrains.kotlinx:kotlinx-html-js:$html_version"
-}
-
-compileKotlinJs {
-    kotlinOptions {
-        main = "call"
+project.kotlin {
+    js(LEGACY) {
+        binaries.executable()
+        browser {
+            distribution {
+                directory = new File(directory.parentFile, "dist")
+            }
+            webpackTask {
+                cssSupport.enabled = true
+            }
+            runTask {
+                cssSupport.enabled = true
+            }
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                    webpackConfig.cssSupport.enabled = true
+                }
+            }
+        }
     }
-}
 
-task bundle(type: NpmTask, dependsOn: [npmInstall, build]) {
-    inputs.files(fileTree("$buildDir/kotlin-js-min/main"))
-    inputs.files(fileTree("$buildDir/kotlin-js-min/legacy/main"))
-    inputs.files(fileTree(file("src/main/web")))
-    inputs.file("npm/webpack.config.js")
-    outputs.dir("$buildDir/dist")
-    args = ["run", "bundle"]
-}
-
-task start(type: NpmTask, dependsOn: bundle) {
-    args = ["run", "start"]
+    sourceSets {
+        main.dependencies {
+            implementation "org.jetbrains.kotlinx:kotlinx-html-js:$html_version"
+            implementation(npm("html-webpack-plugin", "3.2.0"))
+        }
+    }
 }

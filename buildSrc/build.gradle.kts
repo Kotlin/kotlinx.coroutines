@@ -14,7 +14,7 @@ kotlinDslPluginOptions {
     experimentalWarning.set(false)
 }
 
-val props = Properties().apply {
+private val props = Properties().apply {
     file("../gradle.properties").inputStream().use { load(it) }
 }
 

@@ -7,6 +7,11 @@ import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.named
 import java.io.File
 
+/*
+ * Task used by our ui/android tests to test minification results
+ * and keep track of size of the binary.
+ * TODO move back to kotlinx-coroutines-android when it's migrated to the kts
+ */
 open class RunR8 : JavaExec() {
 
     @OutputDirectory

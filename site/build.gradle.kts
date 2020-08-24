@@ -26,7 +26,7 @@ val copyExampleFrontendJs by tasks.registering(Copy::class) {
     from("$srcBuildDir/dist")
     into("$buildDocsDir/example-frontend-js")
 
-    dependsOn(":example-frontend-js:bundle")
+    dependsOn(":example-frontend-js:browserDistribution")
 }
 
 tasks.register<Exec>("site") {
