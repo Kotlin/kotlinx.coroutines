@@ -252,7 +252,14 @@ configure(subprojects.findAll { it.name != coreModule && it.name != rootModule }
 }
 
 // Redefine source sets because we are not using 'kotlin/main/fqn' folder convention
-configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != "benchmarks" && it.name != 'example-frontend-js' && it.name != coreModule }) {
+configure(subprojects.findAll {
+    !sourceless.contains(it.name) &&
+            it.name != "benchmarks" &&
+            it.name != coreModule &&
+            it.name != "example-frontend-js"
+}) {
+    // Pure JS and pure MPP doesn't have this notion and are configured separately
+    // TODO detect it via platformOf and migrate benchmarks to the same scheme
     sourceSets {
         main.kotlin.srcDirs = ['src']
         test.kotlin.srcDirs = ['test']

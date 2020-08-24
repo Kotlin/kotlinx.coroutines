@@ -7,7 +7,7 @@
 import org.gradle.api.Project
 import org.gradle.api.publish.maven.MavenPom
 
-// --------------- pom configuration ---------------
+// Pom configuration
 
 fun MavenPom.configureMavenCentralMetadata(project: Project) {
     name by project.name
