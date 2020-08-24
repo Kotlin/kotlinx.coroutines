@@ -768,6 +768,11 @@ Proof.
   rewrite Nat2Z_inj_mod; apply Z.rem_mod_nonneg; lia.
 Qed.
 
+Lemma rem_of_nat' n m:
+  m > 0 →
+  Z.rem (Z.of_nat n) (Z.of_nat m) = Z.of_nat (n `mod` m).
+Proof. intros ?. destruct m; first lia. apply rem_of_nat. Qed.
+
 Theorem count_matching_find_index_Some A (P: A -> Prop) (H': forall x, Decision (P x)) l:
   (count_matching P l > 0)%nat -> is_Some (find_index P l).
 Proof.

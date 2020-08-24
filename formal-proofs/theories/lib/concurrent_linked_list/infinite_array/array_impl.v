@@ -479,6 +479,9 @@ Proof. rewrite /impl /=. split; first lia; last done. Qed.
 
 End infinite_array_segment_proof.
 
+From stdpp Require Import namespaces.
+From iris.program_logic Require Import atomic.
+From iris.heap_lang Require Export proofmode notation lang.
 Require Import SegmentQueue.lib.concurrent_linked_list.list_interfaces.
 
 Section segment_specs.
@@ -518,13 +521,19 @@ Definition newInfiniteArray: val :=
   newList list_impl.
 
 Definition cancelCell: val :=
-  λ: "ptr", onSlotCleaned list_impl (Snd "ptr").
+  λ: "ptr", onSlotCleaned list_impl (Fst "ptr").
+
+Definition fromSome: val :=
+  λ: "this", match: "this" with
+               InjL "v" => "undefined"
+             | InjR "v" => "v"
+             end.
 
 Definition findCell: val :=
   λ: "ptr" "id",
-  let: "sid" := "id" `rem` #(Pos.to_nat segment_size) in
-  let: "cid" := "id" `quot` #(Pos.to_nat segment_size) in
-  let: "seg" := findSegment list_impl (Fst "ptr") "sid" in
+  let: "sid" := "id" `quot` #(Pos.to_nat segment_size) in
+  let: "cid" := "id" `rem` #(Pos.to_nat segment_size) in
+  let: "seg" := fromSome (findSegment list_impl (Fst "ptr") "sid") in
   if: getId (SQSegment segment_size pointer_shift) "seg" = "sid" then
     if: "cid" < Snd "ptr" then "ptr" else ("seg", "cid")
   else ("seg", #0).
@@ -554,13 +563,15 @@ Context `{heapG Σ} `{iSegmentG Σ}.
 Variable (segment_size pointer_shift: positive).
 Variable (limit: Pos.to_nat segment_size < 2 ^ Pos.to_nat pointer_shift).
 Variable (N: namespace).
+Let NList := N .@ "list".
+Let NNode := N .@ "node".
+Let node_spec := (node_segment segment_size pointer_shift limit NNode).
 Variable list_impl: listInterface.
-Variable list_spec: listSpec Σ list_impl
-                             (node_segment segment_size pointer_shift limit N).
+Variable list_spec: listSpec Σ list_impl node_spec.
 
 Definition is_infinite_array γ
            (cell_is_owned: nat -> iProp Σ) :=
-  is_concurrentLinkedList _ _ _ list_spec N cell_is_owned γ.
+  is_concurrentLinkedList _ _ _ list_spec NList cell_is_owned γ.
 
 Global Instance is_infinite_array_persistent γ cell_is_owned:
   Persistent (is_infinite_array γ cell_is_owned).
@@ -570,22 +581,24 @@ Let segment_size_nat := Pos.to_nat segment_size.
 
 Definition segment_view γ i f: iProp Σ :=
   ∃ γs v, segment_in_list _ _ _ list_spec γ γs (i `div` segment_size_nat) v ∗
+          has_value (id_uniqueValue _ _ _) γs (i `div` segment_size_nat) ∗
           f γs (i `mod` segment_size_nat) v.
 
-Definition infinite_array_mapsto γ i ℓ: iProp Σ :=
+Definition infinite_array_mapsto cell_is_owned γ i ℓ: iProp Σ :=
   segment_view γ i (fun γs ix v =>
+  is_node segment_size NNode cell_is_owned γs v ∗
   ∃ dℓ, has_value dataLocation_uniqueValue γs dℓ ∗ ⌜ℓ = dℓ +ₗ ix⌝)%I.
 
-Global Instance infinite_array_mapsto_persistent γ i ℓ:
-  Persistent (infinite_array_mapsto γ i ℓ).
+Global Instance infinite_array_mapsto_persistent co γ i ℓ:
+  Persistent (infinite_array_mapsto co γ i ℓ).
 Proof. apply _. Qed.
 
-Theorem infinite_array_mapsto_agree γ i ℓ ℓ':
-  infinite_array_mapsto γ i ℓ -∗ infinite_array_mapsto γ i ℓ' -∗ ⌜ℓ = ℓ'⌝.
+Theorem infinite_array_mapsto_agree co γ i ℓ ℓ':
+  infinite_array_mapsto co γ i ℓ -∗ infinite_array_mapsto co γ i ℓ' -∗ ⌜ℓ = ℓ'⌝.
 Proof.
   iIntros "H1 H2". rewrite /infinite_array_mapsto.
-  iDestruct "H1" as (? ?) "(H1 & H1Rest)".
-  iDestruct "H2" as (? ?) "(H2 & H2Rest)".
+  iDestruct "H1" as (? ?) "(H1 & _ & [_ H1Rest])".
+  iDestruct "H2" as (? ?) "(H2 & _ & [_ H2Rest])".
   iDestruct (segment_in_list_agree with "H1 H2") as "[-> ->]".
   iDestruct "H1Rest" as (?) "[H1dℓ ->]".
   iDestruct "H2Rest" as (?) "[H2dℓ ->]".
@@ -617,8 +630,8 @@ Theorem cell_cancellation_handle'_exclusive γ i:
   cell_cancellation_handle' γ i -∗ cell_cancellation_handle' γ i -∗ False.
 Proof.
   iIntros "H1 H2". rewrite /infinite_array_mapsto.
-  iDestruct "H1" as (? ?) "(H1 & H1Rest)".
-  iDestruct "H2" as (? ?) "(H2 & H2Rest)".
+  iDestruct "H1" as (? ?) "(H1 & _ & H1Rest)".
+  iDestruct "H2" as (? ?) "(H2 & _ & H2Rest)".
   iDestruct (segment_in_list_agree with "H1 H2") as "[-> ->]".
   iDestruct (cell_cancellation_handle_exclusive with "H1Rest H2Rest") as %[].
 Qed.
@@ -627,44 +640,132 @@ Theorem cell_cancellation_handle'_not_cancelled γ i:
   cell_is_cancelled' γ i -∗ cell_cancellation_handle' γ i -∗ False.
 Proof.
   iIntros "H1 H2". rewrite /infinite_array_mapsto.
-  iDestruct "H1" as (? ?) "(H1 & H1Rest)".
-  iDestruct "H2" as (? ?) "(H2 & H2Rest)".
+  iDestruct "H1" as (? ?) "(H1 & _ & H1Rest)".
+  iDestruct "H2" as (? ?) "(H2 & _ & H2Rest)".
   iDestruct (segment_in_list_agree with "H1 H2") as "[-> ->]".
   iDestruct (cell_with_handle_not_cancelled with "H1Rest H2Rest") as %[].
 Qed.
 
-Theorem acquire_cell γ cell_is_owned i ℓ:
-    is_infinite_array γ cell_is_owned -∗
-    infinite_array_mapsto γ i ℓ -∗
-    ∀ Φ, (cell_is_owned i ∨ ℓ ↦ NONEV ∗ cell_cancellation_handle' γ i
-    ={⊤∖↑N}=∗ cell_is_owned i ∗ Φ) ={↑N}=∗ Φ.
+Theorem acquire_cell cell_is_owned E γ i ℓ:
+    ↑N ⊆ E →
+    infinite_array_mapsto cell_is_owned γ i ℓ ={E, E∖↑N}=∗
+    ▷ (cell_is_owned i ∨ ℓ ↦ NONEV ∗ cell_cancellation_handle' γ i) ∗
+    (▷ cell_is_owned i ={E∖↑N, E}=∗ True).
 Proof.
-  iIntros "#HArr #HMapsto" (Φ) "HΦ".
-  iDestruct "HMapsto" as (? ?) "[HSeg HRest]".
-  rewrite /is_infinite_array.
-  iMod (access_segment _ _ _ list_spec _ _ false with "HArr HSeg [% //]")
-    as (n) "(_ & HSegContent & HRestore)"; first done.
-  rewrite /segment_content /= /array_impl.segment_content /=.
-Abort.
+  iIntros (HMask) "#HMapsto".
+  iDestruct "HMapsto" as (? ?) "[HSeg (HId & HNode & Hdℓ)]".
+  iDestruct "Hdℓ" as (dℓ) "[Hdℓ ->]".
+  iDestruct "HNode" as (?) "[-> HRest]".
+  iDestruct "HRest" as (values) "(#HInv & #HValues & #HHeap & Hℓ)".
+  iDestruct "HId" as (v'') "[HValues'' %]".
+  iDestruct "Hdℓ" as (v') "[HValues' <-]".
+  iDestruct (own_valid_2 with "HValues HValues'") as %[_ HValid]%pair_valid.
+  iDestruct (own_valid_2 with "HValues HValues''") as %[_ HValid']%pair_valid.
+  move: HValid HValid'=> /=. rewrite -!Some_op !Some_valid=> HAgree HAgree'.
+  apply agree_op_invL' in HAgree. apply agree_op_invL' in HAgree'. subst v' v''.
+  rewrite /NNode.
+  iInv "HInv" as "HOpen" "HClose".
+  iAssert (|={E ∖ ↑N.@"node", E ∖ ↑N}=> |={E ∖ ↑N, E ∖ ↑N.@"node"}=> emp)%I
+    as ">HMod".
+  { iApply (fupd_intro_mask'). apply difference_mono_l, nclose_subseteq. }
+  iDestruct (big_sepL_lookup_acc _ _ (i `mod` Pos.to_nat segment_size)
+               with "HOpen") as "[HElement HRestore]".
+  { rewrite lookup_seq /=. split; first done.
+    apply Nat.mod_upper_bound. lia. }
+  rewrite /segment_invariant.
+  replace (segmentId values) with (i `div` Pos.to_nat segment_size) by auto.
+  replace ((_ `div` _) * _ + (_ `mod` _)) with i;
+    last by rewrite Nat.mul_comm -Nat.div_mod; lia.
+  iModIntro. iSplitL "HElement".
+  {
+    iDestruct "HElement" as "[HElement|HElement]"; first by iLeft.
+    iRight. iDestruct "HElement" as "[$ HCanc]".
+    rewrite /cell_cancellation_handle' /= /segment_view /=.
+    iExists _, _. iFrame "HSeg HCanc".
+    iExists values. iFrame "HValues". by iPureIntro.
+  }
+  iIntros "HOwned". iMod "HMod" as "_".
+  iMod ("HClose" with "[-]"); last done.
+  iApply "HRestore". by iLeft.
+Qed.
+
+Theorem cancelCell_spec γ co p i:
+  is_infinite_array γ co -∗
+  is_infinite_array_cell_pointer γ p i -∗
+  <<< cell_cancellation_handle' γ i >>>
+  cancelCell list_impl p @ ⊤ ∖ ↑N
+  <<< cell_is_cancelled' γ i, RET #() >>>.
+Proof.
+  iIntros "#HArr #HCellPointer" (Φ) "AU". wp_lam.
+  rewrite /is_infinite_array_cell_pointer.
+  iDestruct "HCellPointer" as (? ?) "(#HInList & #HId & ->)".
+  wp_pures.
+  awp_apply (onSlotCleaned_spec with "HArr HInList").
+  {
+    iIntros "HCancHandle !>" (n) "HSegContent".
+    iMod (cancel_cell with "HCancHandle HSegContent") as
+        "[#HCellCancelled HSegContent']"; try done.
+    iSplitR. by iApply "HCellCancelled".
+    iDestruct "HSegContent'" as (? ->) "HSegContent". iExists _.
+    iSplitR; first by iPureIntro. done.
+  }
+  iApply (aacc_aupd_commit with "AU").
+  by apply difference_mono_l, nclose_subseteq.
+  iIntros "HCancHandle".
+  iDestruct "HCancHandle" as (? ?) "(#HInList' & #HId' & HCancHandle)".
+  iDestruct (segment_in_list_agree with "HInList HInList'") as %[-> ->].
+  iAaccIntro with "HCancHandle".
+  {
+    iIntros "HCancHandle !>". iSplitL; last by iIntros "$ //".
+    iExists _, _. by iFrame "HInList HId'".
+  }
+  iIntros "#HCellCancelled !>". iSplit.
+  - iExists _, _. by iFrame "HInList HId' HCellCancelled".
+  - iIntros "$ !> //".
+Qed.
+
+Theorem findCell_spec γ co p (source_id id: nat):
+  {{{ is_infinite_array γ co ∗
+      is_infinite_array_cell_pointer γ p source_id }}}
+  findCell segment_size pointer_shift list_impl p #id @ ⊤
+  {{{ p' id', RET p'; is_infinite_array_cell_pointer γ p' id'
+      ∗ (⌜source_id <= id <= id'⌝ ∨
+        ⌜source_id > id ∧ id' = source_id⌝)%nat
+      ∗ [∗ list] i ∈ seq id (id' - id), cell_is_cancelled' γ i
+  }}}.
+Proof.
+  iIntros (Φ) "[#HArr #HCellPointer] HΦ".
+  rewrite /is_infinite_array_cell_pointer.
+  iDestruct "HCellPointer" as (? ?) "(#HInList & #HId & ->)".
+
+  wp_lam. wp_pures. wp_bind (findSegment _ _ _).
+  rewrite quot_of_nat.
+  iApply (findSegment_spec with "[]"); first by iFrame "HArr HInList".
+  iIntros (v' id') "!> HResult".
+  iDestruct "HResult" as "(HInList' & HFound & #HCancelled)".
+  iDestruct "HFound" as %HFound. iDestruct "HInList'" as (γs') "#HInList'".
+  iMod (segment_in_list_is_node with "HArr HInList'") as "#[HNode' HId']";
+    first done.
+  wp_lam. wp_pures. wp_bind (array_impl.getId v').
+  iApply (getId_spec _ _ node_spec with "HNode'").
+  iIntros (id'') "!> HId''".
+  iDestruct (has_value_agrees with "HId' HId''") as "<-".
+
+  wp_pures. iApply fupd_wp.
+
+  (*
+      access_segment N pars (known_is_removed: bool) E γ γs id ptr:
+        ↑N ⊆ E ->
+        is_concurrentLinkedList N pars γ -∗
+        segment_in_list γ γs id ptr -∗
+        (if known_is_removed then segment_is_cancelled γ id else True) -∗
+        |={E, E ∖ ↑N}=> ∃ n, ⌜known_is_removed = false ∨ n = 0⌝ ∧
+                            ▷ segment_content _ _ _ γs n ∗
+                            (▷ segment_content _ _ _ γs n ={E ∖ ↑N, E}=∗ emp); *)
 
 End array_impl.
 
 (*
-      cancelCell_spec N γ co p i:
-        is_infinite_array N γ co -∗
-        is_infinite_array_cell_pointer γ p i -∗
-        <<< cell_cancellation_handle γ i >>>
-            cancelCell p @ ⊤
-        <<< cell_is_cancelled γ i, RET #() >>>;
-      findCell_spec N γ co p (source_id id: nat):
-        {{{ is_infinite_array N γ co ∗
-            is_infinite_array_cell_pointer γ p source_id }}}
-        findCell p #id @ ⊤
-        {{{ p' id', RET p'; is_infinite_array_cell_pointer γ p' id'
-            ∗ (⌜source_id <= id <= id'⌝ ∨
-              ⌜source_id > id ∧ id' = source_id⌝)%nat
-            ∗ [∗ list] i ∈ seq id (id' - id), cell_is_cancelled γ i
-        }}};
       derefCellPointer_spec γ (p: val) i:
         {{{ is_infinite_array_cell_pointer γ p i }}}
           derefCellPointer p

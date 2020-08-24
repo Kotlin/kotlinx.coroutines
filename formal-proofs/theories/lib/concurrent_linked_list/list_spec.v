@@ -30,6 +30,12 @@ Record listSpec Σ `{!heapG Σ}
       segment_is_cancelled_persistent γ id:
         Persistent (segment_is_cancelled γ id);
       pointer_location: list_name -> loc -> nat -> iProp Σ;
+      segment_in_list_is_node N p E γ γs id v:
+        ↑N ⊆ E →
+        is_concurrentLinkedList N p γ -∗
+        segment_in_list γ γs id v ={E}=∗
+        ▷ is_linkedListNode _ _ (linkedListNode_base _ _ segment_spec) p γs v ∗
+        ▷ has_value (id_uniqueValue _ _ segment_spec) γs id;
       newList_spec N p (k: nat):
         {{{ ⌜k > 0⌝ ∧ initialization_requirements _ _ segment_spec }}}
           newList impl #k
@@ -58,12 +64,12 @@ Record listSpec Σ `{!heapG Σ}
         {{{ is_concurrentLinkedList N p γ ∗ segment_in_list γ γs id ptr }}}
           cleanPrev impl ptr
         {{{ RET #(); True }}};
-      onSlotCleaned_spec N pars Ψ γ γs id p:
+      onSlotCleaned_spec N pars Ψ P γ γs id p:
         is_concurrentLinkedList N pars γ -∗
         segment_in_list γ γs id p -∗
-        <<< (∀ n, segment_content _ _ segment_spec γs n ==∗
-            Ψ ∗ ∃ n', ⌜(n = S n')%nat⌝ ∧
-                      segment_content _ _ segment_spec γs n') >>>
+        (P ==∗ ∀ n, segment_content _ _ segment_spec γs n ==∗
+         Ψ ∗ ∃ n', ⌜(n = S n')%nat⌝ ∧ segment_content _ _ segment_spec γs n') -∗
+        <<< P >>>
           onSlotCleaned impl p @ ⊤ ∖ ↑N
         <<< Ψ, RET #() >>>;
       pointer_location_load γ (ℓ: loc):

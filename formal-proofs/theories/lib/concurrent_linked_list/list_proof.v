@@ -1048,6 +1048,58 @@ Proof.
   iApply (remove_spec with "[$]"). done.
 Qed.
 
+Theorem segment_implies_preceding_segments E γ γs id v:
+  ↑N ⊆ E →
+  is_concurrentLinkedList γ -∗
+  segment_in_list γ γs id v ={E}=∗
+  ∀ i, ⌜i ≤ id⌝ -∗ ∃ γs' v', segment_in_list γ γs' i v'.
+Proof.
+  iIntros (HMask) "#[HList _] #HSeg". iInv "HList" as "HOpen" "HClose".
+  iDestruct (concurrentLinkedList_insert with "HSeg HOpen") as
+      (list pointers slots) "(>HLookup & HSeg' & >H● & HRestore)".
+  iDestruct "HLookup" as %HLookup.
+  pose extract_core := (fun (p: ((leibnizO segment_name * val) * (nat * nat))) =>
+                          match p with ((γs', v'), (pointers', slots')) =>
+                                       (Some (to_agree (γs', v')), None):
+                                         segment_algebra end).
+  assert (∀ l, CoreId (map extract_core l)).
+  {
+    intros l.
+    apply list_core_id'.
+    intros value HValue.
+    eapply elem_of_list_fmap_2 in HValue.
+    destruct HValue as [[[? ?] [? ?]] [-> HElem]].
+    simpl. apply _.
+  }
+  iMod (own_update with "H●") as "[H● H◯]".
+  {
+    apply auth_update_core_id with (b := extract_core <$> list); first done.
+    apply list_lookup_included=> i.
+    rewrite !map_lookup.
+    destruct (list !! i) as [[[? ?] [? ?]]|] => /=; last done.
+    rewrite /segment_algebra_from_state /=.
+    apply Some_included. right. apply prod_included=> /=.
+    split; first done. by apply None_least.
+  }
+  iDestruct "H◯" as "#H◯".
+  iMod ("HClose" with "[-]") as "_".
+  {
+    iApply "HRestore". iExists _, _. rewrite list_insert_id; last done.
+    iFrame.
+  }
+  iModIntro. iIntros (i Hi).
+  assert (is_Some (list !! i)) as [[[γsi nodei] [? ?]] HLookup'].
+  {
+    apply lookup_lt_is_Some.
+    assert (id < length list) by (eapply lookup_lt_Some; done).
+    lia.
+  }
+  iExists γsi, nodei. iApply (own_mono with "H◯").
+  apply auth_included; split; first done. simpl.
+  apply list_singletonM_included. eexists.
+  rewrite map_lookup HLookup' /=. by split.
+Qed.
+
 Definition pointer_location γ ℓ id: iProp :=
   ∃ p γs, ℓ ↦ p ∗ segment_in_list γ γs id p ∗ segment_is_pointed_to γ id.
 
@@ -1429,24 +1481,25 @@ Proof.
     by iApply "IH".
 Qed.
 
-Lemma cancelCell_spec Ψ γ γs id p (k: nat):
+Lemma cancelCell_spec Ψ P γ γs id p (k: nat):
   inv N (concurrentLinkedList_invariant γ) -∗
   segment_in_list γ γs id p -∗
   isListNode γs p -∗
-  <<< (∀ n, segment_content _ _ segment_spec γs n ==∗
-       Ψ ∗ ∃ n', ⌜(n = S k + n')%nat⌝ ∧
-                 segment_content _ _ segment_spec γs n') >>>
+  (P ==∗ (∀ n, segment_content _ _ segment_spec γs n ==∗
+   Ψ ∗ ∃ n', ⌜(n = S k + n')%nat⌝ ∧
+   segment_content _ _ segment_spec γs n')) -∗
+  <<< P >>>
     FAA (getCleanedAndPointersLoc segment_interface p) #(S k) @ ⊤ ∖ ↑N
   <<< ∃ (v: nat), Ψ ∗ if decide (v + S k = maxSlots segment_interface)%nat
                       then segment_is_cancelled γ id
                       else True, RET #v >>>.
 Proof.
-  iIntros "#HList #Hγs #HNode" (Φ) "AU".
+  iIntros "#HList #Hγs #HNode HPUpdater" (Φ) "AU".
   wp_bind (getCleanedAndPointersLoc _ _).
   iApply (getCleanedAndPointersLoc_spec with "HNode").
   iIntros (cℓ) "!> HValcℓ".
   iInv "HList" as "HOpen" "HClose".
-  iMod "AU" as "[HUpdater [_ HCloseUpdater]]".
+  iMod "AU" as "[HP [_ HCloseUpdater]]".
   iDestruct (concurrentLinkedList_insert with "Hγs HOpen")
     as (list pointers slots) "(>HLookup & HSeg & Hγ & HRestore)".
   iDestruct "HLookup" as %HLookup.
@@ -1456,7 +1509,7 @@ Proof.
   iDestruct "Hcℓ" as (cℓ') "(>HValcℓ' & Hcℓ)".
   iDestruct (has_value_agrees with "HValcℓ HValcℓ'") as %<-.
   wp_faa.
-  iMod ("HUpdater" with "HContent") as "[HΨ Hn']".
+  iMod ("HPUpdater" with "HP HContent") as ">[HΨ Hn']".
   iDestruct "Hn'" as (n' ->) "HContent".
 
   iAssert ((match n' with 0 => True | S _ => segment_has_slots γ id end) -∗
@@ -1564,20 +1617,21 @@ Proof.
       done.
 Qed.
 
-Theorem onSlotCleaned_spec Ψ γ γs id p:
+Theorem onSlotCleaned_spec Ψ P γ γs id p:
   is_concurrentLinkedList γ -∗
   segment_in_list γ γs id p -∗
-  <<< (∀ n, segment_content _ _ segment_spec γs n ==∗
-       Ψ ∗ ∃ n', ⌜(n = S n')%nat⌝ ∧
-                 segment_content _ _ segment_spec γs n') >>>
+  (P ==∗ (∀ n, segment_content _ _ segment_spec γs n ==∗
+   Ψ ∗ ∃ n', ⌜(n = S n')%nat⌝ ∧
+   segment_content _ _ segment_spec γs n')) -∗
+  <<< P >>>
     list_interfaces.onSlotCleaned (list_impl segment_interface) p @ ⊤ ∖ ↑N
   <<< Ψ, RET #() >>>.
 Proof.
-  iIntros "#[HList _] #HSeg" (Φ) "AU".
+  iIntros "#[HList _] #HSeg HPUpdater" (Φ) "AU".
   iMod (getSegmentInfo' with "HSeg HList") as "#[HNode _]"; first done.
   wp_lam.
   wp_bind (FAA _ _). replace 1%Z with (Z.of_nat 1) by lia.
-  awp_apply (cancelCell_spec with "HList HSeg HNode").
+  awp_apply (cancelCell_spec with "HList HSeg HNode [HPUpdater]"); first done.
   iApply (aacc_aupd_commit with "AU"); first done.
   iIntros "HUpdater". iAaccIntro with "HUpdater".
   by iIntros "$ !> $".
@@ -1745,6 +1799,14 @@ Proof.
     by rewrite -!Nat2Z.inj_add -plus_n_Sm.
 Qed.
 
+Lemma segment_in_list_is_node E γ γs id v:
+  ↑N ⊆ E → is_concurrentLinkedList γ -∗ segment_in_list γ γs id v ={E}=∗
+  ▷ isListNode γs v ∗ ▷ has_value (id_uniqueValue _ _ _) γs id.
+Proof.
+  iIntros (HMask) "#[HList _] #HSeg".
+  by iMod (getSegmentInfo' with "HSeg HList") as "[$ $]".
+Qed.
+
 End concurrentLinkedListProof.
 
 Canonical Structure list_impl `{!heapG Σ}
@@ -1759,4 +1821,5 @@ Canonical Structure list_impl `{!heapG Σ}
      list_spec.onSlotCleaned_spec := onSlotCleaned_spec segment_spec;
      list_spec.newList_spec := newList_spec segment_spec;
      list_spec.segment_in_list_agree := segment_in_list_agree segment_spec;
+     list_spec.segment_in_list_is_node := segment_in_list_is_node segment_spec;
   |}.
