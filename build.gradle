@@ -46,7 +46,6 @@ buildscript {
     if (using_snapshot_version) {
         repositories {
             mavenLocal()
-            maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         }
     }
 
@@ -59,6 +58,8 @@ buildscript {
                 password = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY') ?: ""
             }
         }
+        // Future replacement for kotlin-dev, with cache redirector
+        maven { url "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
         maven {
             url "https://kotlin.bintray.com/kotlin-dev"
             credentials {
@@ -145,7 +146,6 @@ apiValidation {
 
 // Configure repositories
 allprojects {
-    String projectName = it.name
     repositories {
         /*
          * google should be first in the repository list because some of the play services
@@ -153,6 +153,8 @@ allprojects {
          */
         google()
         jcenter()
+        // Future replacement for kotlin-dev, with cache redirector
+        maven { url "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
         maven {
             url "https://kotlin.bintray.com/kotlin-dev"
             credentials {
