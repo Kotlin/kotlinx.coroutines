@@ -36,6 +36,11 @@ Record listSpec Σ `{!heapG Σ}
         segment_in_list γ γs id v ={E}=∗
         ▷ is_linkedListNode _ _ (linkedListNode_base _ _ segment_spec) p γs v ∗
         ▷ has_value (id_uniqueValue _ _ segment_spec) γs id;
+      segment_implies_preceding_segments N p E γ γs id v:
+        ↑N ⊆ E →
+        is_concurrentLinkedList N p γ -∗
+        segment_in_list γ γs id v ={E}=∗
+        ∀ i, ⌜i ≤ id⌝ -∗ ∃ γs' v', segment_in_list γ γs' i v';
       newList_spec N p (k: nat):
         {{{ ⌜k > 0⌝ ∧ initialization_requirements _ _ segment_spec }}}
           newList impl #k

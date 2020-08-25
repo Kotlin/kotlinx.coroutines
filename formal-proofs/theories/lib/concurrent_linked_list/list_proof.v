@@ -1822,4 +1822,6 @@ Canonical Structure list_impl `{!heapG Σ}
      list_spec.newList_spec := newList_spec segment_spec;
      list_spec.segment_in_list_agree := segment_in_list_agree segment_spec;
      list_spec.segment_in_list_is_node := segment_in_list_is_node segment_spec;
+     list_spec.segment_implies_preceding_segments :=
+       segment_implies_preceding_segments segment_spec;
   |}.
