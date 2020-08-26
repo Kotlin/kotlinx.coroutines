@@ -157,6 +157,23 @@ Lemma big_opL_irrelevant_element'
   ([^o list] i ↦ k ∈ l, P i)%I = ([^o list] i ∈ seq 0 (length l), P i%nat)%I.
 Proof. by rewrite -big_opL_irrelevant_element. Qed.
 
+Lemma big_opL_take_drop_middle (M: ofeT) (o : M → M → M) (H': Monoid o) (A: Type)
+      (f: nat → A → M) (l: list A) (id: nat) (x: A):
+  l !! id = Some x →
+  ([^o list] k ↦ y ∈ l, f k y) ≡
+    (o ([^o list] k ↦ y ∈ take id l, f k y)
+       (o (f id x) ([^o list] k ↦ y ∈ drop (S id) l, f (id + S k) y))).
+Proof.
+  intros HEl.
+  erewrite <-(take_drop_middle l); last done.
+  assert (id < length l)%nat by (eapply lookup_lt_Some; eassumption).
+  rewrite big_opL_app take_app_alt.
+  rewrite drop_app_ge.
+  all: rewrite take_length_le //=; try lia.
+  replace (S id - id)%nat with 1 by lia. simpl.
+  by rewrite drop_0 Nat.add_0_r.
+Qed.
+
 Lemma list_filter_length_le {A} p (l: list A):
   length (List.filter p l) <= length l.
 Proof.

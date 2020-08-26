@@ -744,23 +744,6 @@ Proof.
   iApply "HΦ".
 Qed.
 
-Lemma big_opL_take_drop_middle (M: ofeT) (o : M → M → M) (H': Monoid o) (A: Type)
-      (f: nat → A → M) (l: list A) (id: nat) (x: A):
-  l !! id = Some x →
-  ([^o list] k ↦ y ∈ l, f k y) ≡
-    (o ([^o list] k ↦ y ∈ take id l, f k y)
-       (o (f id x) ([^o list] k ↦ y ∈ drop (S id) l, f (id + S k) y))).
-Proof.
-  intros HEl.
-  erewrite <-(take_drop_middle l); last done.
-  assert (id < length l)%nat by (eapply lookup_lt_Some; eassumption).
-  rewrite big_opL_app take_app_alt.
-  rewrite drop_app_ge.
-  all: rewrite take_length_le //=; try lia.
-  replace (S id - id)%nat with 1 by lia. simpl.
-  by rewrite drop_0 Nat.add_0_r.
-Qed.
-
 Lemma trySetNext_spec γ γsp γs (v nv: val) (id: nat):
   {{{ inv N (concurrentLinkedList_invariant γ) ∗ segment_in_list γ γsp id v
       ∗ (segment_has_slots γ (S id) -∗

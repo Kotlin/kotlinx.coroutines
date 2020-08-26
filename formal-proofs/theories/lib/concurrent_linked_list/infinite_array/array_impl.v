@@ -1010,6 +1010,3 @@ Proof.
 Qed.
 
 End array_impl.
-
-(*
- *)

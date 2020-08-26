@@ -7,7 +7,6 @@
 ./theories/lib/infinite_array/iterator.v
 ./theories/lib/thread_queue/thread_queue.v
 ./theories/lib/thread_queue/thread_queue_as_counter.v
-./theories/lib/thread_queue/thread_queue_spec.v
 ./theories/lib/interruptible_semaphore/interruptible_semaphore.v
 ./theories/lib/concurrent_linked_list/segment_spec.v
 ./theories/lib/concurrent_linked_list/segment_interfaces.v

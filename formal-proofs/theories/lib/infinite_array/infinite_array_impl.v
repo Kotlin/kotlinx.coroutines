@@ -105,13 +105,6 @@ Definition new_infinite_array : val :=
 Definition array_tail : val :=
   λ: "arr", "arr".
 
-Definition move_tail_forward : val :=
-  rec: "loop" "arr" "tail" := let: "curTail" := !(array_tail "arr") in
-                              if: segment_id "tail" ≤ segment_id "curTail"
-                              then #() else
-                                if: CAS (array_tail "arr") "curTail" "tail"
-                                then #() else "loop" "arr" "tail".
-
 Definition find_segment : val :=
   rec: "loop" "cur" "fid" :=
     if: "fid" ≤ segment_id "cur" then "cur" else

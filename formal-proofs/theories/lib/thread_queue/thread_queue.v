@@ -152,111 +152,6 @@ Qed.
 
 End parking.
 
-Section moving_pointers.
-
-Context `{heapG Σ}.
-
-Variable cell_is_processed: nat -> iProp Σ.
-
-Variable segment_size: positive.
-Variable ap: @infinite_array_parameters Σ.
-
-Context `{iArrayG Σ}.
-
-Class iArrayPtrG Σ := IArrayPtrG { iarrayptr_inG :> inG Σ (authUR max_natUR) }.
-Definition iArrayPtrΣ : gFunctors := #[GFunctor (authUR max_natUR)].
-Instance subG_iArrayPtrΣ : subG iArrayPtrΣ Σ -> iArrayPtrG Σ.
-Proof. solve_inG. Qed.
-
-Context `{iArrayPtrG Σ}.
-
-Definition ptr_points_to_segment γa γ ℓ id :=
-  (∃ (ℓ': loc), ℓ ↦ #ℓ' ∗ segment_location γa id ℓ' ∗ own γ (● (MaxNat id)))%I.
-
-Theorem move_ptr_forward_spec γa γ (v: loc) id ℓ:
-  segment_location γa id ℓ -∗
-  ([∗ list] j ∈ seq 0 (id * Pos.to_nat segment_size), cell_is_processed j) -∗
-  <<< ∀ (id': nat), ▷ is_infinite_array segment_size ap γa ∗
-                      ptr_points_to_segment γa γ v id' >>>
-    move_ptr_forward #v #ℓ @ ⊤
-    <<< ▷ is_infinite_array segment_size ap γa ∗
-      ptr_points_to_segment γa γ v (id `max` id'),
-  RET #() >>>.
-Proof.
-  iIntros "#HSegLoc HProc" (Φ) "AU". wp_lam. wp_pures. iLöb as "IH".
-  wp_bind (!_)%E.
-  iMod "AU" as (id') "[[HIsInf HPtr] [HClose _]]".
-  iDestruct "HPtr" as (ℓ') "(Htl & #HLoc & HAuth)".
-  wp_load.
-  iMod (own_update with "HAuth") as "[HAuth HFrag]".
-  { apply auth_update_core_id with (b := MaxNat id'); try done. apply _. }
-  iMod ("HClose" with "[HIsInf Htl HLoc HAuth]") as "AU";
-    first by eauto with iFrame.
-  iModIntro. wp_pures.
-  wp_bind (segment_id #ℓ').
-
-  awp_apply segment_id_spec without "HProc".
-  iApply (aacc_aupd_abort with "AU"); first done.
-  iIntros (?) "[HIsInf HPtr]".
-  iDestruct (is_segment_by_location with "HLoc HIsInf")
-    as (? ?) "[HIsSeg HArrRestore]".
-  iAaccIntro with "HIsSeg"; iFrame; iIntros "HIsSeg"; iModIntro;
-    iDestruct (bi.later_wand with "HArrRestore HIsSeg") as "$".
-  by eauto.
-
-  iIntros "AU !> HProc".
-
-  awp_apply segment_id_spec without "HProc".
-  iApply (aacc_aupd with "AU"); first done.
-  iIntros (id'') "[HIsInf HPtr]".
-  iDestruct (is_segment_by_location with "HSegLoc HIsInf")
-    as (? ?) "[HIsSeg HArrRestore]".
-  iAaccIntro with "HIsSeg"; iFrame; iIntros "HIsSeg"; iModIntro;
-    iDestruct (bi.later_wand with "HArrRestore HIsSeg") as "$".
-  by eauto.
-
-  destruct (decide (id <= id')%Z) eqn:E.
-  {
-    iRight. iSplitL.
-    { iAssert (⌜id' <= id''⌝)%I with "[HFrag HPtr]" as %HLt.
-      { iDestruct "HPtr" as (?) "(_ & _ & HAuth)".
-        iDestruct (own_valid_2 with "HAuth HFrag")
-          as %[HH%max_nat_included _]%auth_both_valid.
-        iPureIntro. simpl in *. lia.
-      }
-      replace (id `max` id'')%nat with id''. done. lia. }
-    iIntros "HΦ !> HProc". wp_pures. rewrite bool_decide_decide E. by wp_pures.
-  }
-  iLeft. iFrame. iIntros "AU !> HProc". wp_pures. rewrite bool_decide_decide E.
-  wp_pures.
-
-  wp_bind (CmpXchg _ _ _).
-  iMod "AU" as (?) "[[HIsInf HPtr] HClose]".
-  iDestruct "HPtr" as (ℓ'') "(Htl & #HLocs & HAuth)".
-
-  destruct (decide (ℓ'' = ℓ')); subst.
-  {
-    wp_cmpxchg_suc.
-    iDestruct (segment_location_id_agree with "HIsInf HLoc HLocs") as %<-.
-    iMod (own_update with "HAuth") as "[HAuth _]".
-    { apply auth_update_alloc. apply (max_nat_local_update _ _ (MaxNat id)).
-      simpl. lia. }
-    iMod ("HClose" with "[HIsInf Htl HAuth]") as "HΦ".
-    { rewrite Max.max_l. iFrame. iExists _. by iFrame. lia. }
-    iModIntro. by wp_pures.
-  }
-  {
-    wp_cmpxchg_fail.
-    iDestruct "HClose" as "[HClose _]".
-    iMod ("HClose" with "[HIsInf Htl HAuth]") as "AU";
-      first by eauto with iFrame.
-    iModIntro. wp_pures. wp_lam. wp_pures.
-    iApply ("IH" with "HProc AU").
-  }
-Qed.
-
-End moving_pointers.
-
 From iris.algebra Require Import list gset excl csum.
 
 Section proof.
@@ -352,17 +247,10 @@ Definition cell_invariant (γtq γa: gname) (n: nat) (ℓ: loc): iProp :=
   (cell_cancellation_handle segment_size γa n ∗ ℓ ↦ NONEV ∨
    rendezvous_initialized γtq n)%I.
 
-Lemma cell_invariant_persistent:
-  forall γtq γ n ℓ, Persistent (inv N (cell_invariant γtq γ n ℓ)).
-Proof. apply _. Qed.
-
-Lemma truth_persistent γd (n: nat): Persistent (True ∨ iterator_counter_at_least γd n).
-Proof. apply _. Qed.
-
 Definition tq_ap (γtq γd: gname) :=
   {|
-    p_cell_is_done_persistent := truth_persistent γd;
-    p_cell_invariant_persistent := cell_invariant_persistent γtq;
+    p_cell_is_done := (fun n => True)%I;
+    p_cell_invariant := fun γ n ℓ => inv N (cell_invariant γtq γ n ℓ);
   |}.
 
 Theorem tq_cell_init γtq γd:
@@ -3218,9 +3106,8 @@ Proof.
   2: iDestruct "HIsSeg" as (?) "HIsSeg".
   2: iAaccIntro with "HIsSeg".
   {
-    iApply big_sepL_forall. iIntros (k d' HEl).
-    iRight. simpl.
-    iLeft. done.
+    iApply big_sepL_forall. iIntros (k d' HEl). simpl.
+    by iRight.
   }
   {
     iIntros "HIsSeg".
