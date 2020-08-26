@@ -537,18 +537,22 @@ Definition findCell: val :=
   λ: "ptr" "id",
   let: "sid" := "id" `quot` #(Pos.to_nat segment_size) in
   let: "cid" := "id" `rem` #(Pos.to_nat segment_size) in
-  let: "seg" := fromSome (findSegment list_impl (Fst "ptr") "sid") in
-  let: "nseg" := getId (SQSegment segment_size pointer_shift) "seg" in
-  if: ("nseg" = getId (SQSegment segment_size pointer_shift) (Fst "ptr"))
-      && (("sid" < "nseg") || ("cid" < Snd "ptr"))
-  then "ptr"
-  else if: "nseg" = "sid" then ("seg", "cid")
+  let: "seg" := fromSome (findSegment list_impl "ptr" "sid") in
+  if: getId (SQSegment segment_size pointer_shift) "seg" = "sid"
+  then ("seg", "cid")
   else ("seg", #0).
 
 Definition derefCellPointer: val :=
   λ: "ptr", let: "seg" := Fst "ptr" in
             let: "ix" := Snd "ptr" in
             getDataLoc "seg" +ₗ "ix".
+
+Definition cellPointerId: val :=
+  λ: "ptr", let: "seg" := Fst "ptr" in
+            let: "ix" := Snd "ptr" in
+            getId (SQSegment segment_size pointer_shift) "seg" *
+            #(Pos.to_nat segment_size) +
+            "ix".
 
 Definition cellPointerCleanPrev: val :=
   λ: "ptr", cleanPrev list_impl (Fst "ptr").
@@ -557,7 +561,7 @@ Definition cutoffMoveForward: val :=
   λ: "cutoff" "ptr", moveForward list_impl "cutoff" (Fst "ptr").
 
 Definition cutoffGetPointer: val :=
-  λ: "cutoff", (!"cutoff", #0).
+  λ: "cutoff", !"cutoff".
 
 End segment_specs.
 
@@ -620,8 +624,16 @@ Global Instance is_infinite_array_cell_pointer_persistent γ p i:
   Persistent (is_infinite_array_cell_pointer γ p i).
 Proof. apply _. Qed.
 
+Definition is_infinite_array_cutoff_reading γ (p: val) (i: nat): iProp Σ :=
+  ∃ γs, segment_in_list _ _ _ list_spec γ γs (i `div` segment_size_nat) p ∗
+        ⌜i `mod` segment_size_nat = 0⌝.
+
+Global Instance is_infinite_array_cutoff_reading_persistent γ p i:
+  Persistent (is_infinite_array_cutoff_reading γ p i).
+Proof. apply _. Qed.
+
 Definition is_infinite_array_cutoff γ (v: val) (i: nat): iProp Σ :=
-  ∃ (ℓ: loc), ⌜v = #ℓ⌝ ∧
+  ∃ (ℓ: loc), ⌜v = #ℓ ∧ i `mod` segment_size_nat = 0⌝ ∧
               pointer_location _ _ _ list_spec γ ℓ (i `div` segment_size_nat).
 
 Definition cell_is_cancelled' γ i: iProp Σ :=
@@ -734,16 +746,15 @@ Qed.
 
 Theorem findCell_spec γ co p (source_id id: nat):
   {{{ is_infinite_array γ co ∗
-      is_infinite_array_cell_pointer γ p source_id }}}
+      is_infinite_array_cutoff_reading γ p source_id }}}
   findCell segment_size pointer_shift list_impl p #id @ ⊤
   {{{ p' id', RET p'; is_infinite_array_cell_pointer γ p' id'
-      ∗ ⌜(source_id ≤ id' ∧ id ≤ id')%nat⌝
+      ∗ ⌜(id ≤ id')%nat⌝
       ∗ ∀ i, (⌜max source_id id ≤ i < id'⌝)%nat -∗ cell_is_cancelled' γ i
   }}}.
 Proof.
   iIntros (Φ) "[#HArr #HCellPointer] HΦ".
-  rewrite /is_infinite_array_cell_pointer.
-  iDestruct "HCellPointer" as (? ?) "(#HInList & #HId & ->)".
+  iDestruct "HCellPointer" as (?) "[#HInList _]".
 
   wp_lam. wp_pures. wp_bind (findSegment _ _ _).
   rewrite quot_of_nat.
@@ -841,109 +852,38 @@ Proof.
   iClear "HCellCanc''".
   iModIntro. rewrite rem_of_nat'; last lia.
 
-  iMod (segment_in_list_is_node with "HArr HInList") as "#[HNode _]";
+  iMod (segment_in_list_is_node with "HArr HInList") as "#[HNode HId]";
     first done.
+
   wp_pures.
-  wp_bind (if: _ then _ else #false)%E.
-  iApply (wp_strong_mono NotStuck _ ⊤ _ _
-          (fun v => ∃ (b: bool), ⌜v = #b ∧ if b
-          then id' * segment_size_nat ≤ source_id ∧ id < source_id
-          else source_id < id' * segment_size_nat ∨
-               source_id ≤ id⌝)%I); [done|done| |].
-  {
-    wp_bind (array_impl.getId _).
-    iApply (getId_spec _ _ node_spec with "HNode").
-    iIntros (source_id') "!> HId''".
-    iDestruct (has_value_agrees with "HId HId''") as "<-".
-    wp_pures.
-    rewrite bool_decide_decide. destruct (decide _) as [HEq|HNeq]; wp_pures.
-    * inversion HEq as [HEq']. clear HEq. apply Nat2Z.inj_iff in HEq'. subst.
-      rewrite [_ * segment_size_nat]Nat.mul_comm.
-      rewrite [in source_id in _ ≤ source_id](
-                Nat.div_mod source_id segment_size_nat); last lia.
-      rewrite bool_decide_decide. destruct (decide _) as [HSLt|HSGe]; wp_pures.
-      - iExists _. iSplitR; first done. iPureIntro. split; first lia.
-        rewrite (Nat.div_mod id segment_size_nat); last lia.
-        rewrite (Nat.div_mod source_id segment_size_nat); last lia.
-        apply Nat2Z.inj_lt, nat_lt_sum in HSLt.
-        destruct HSLt as [z HEq]. rewrite HEq -plus_n_Sm -mult_n_Sm.
-        rewrite Nat.mul_add_distr_l.
-        assert (id `mod` segment_size_nat < segment_size_nat).
-        by apply Nat.mod_upper_bound; lia.
-        unfold segment_size_nat in *. lia.
-      - iExists _. iSplitR; first done. iPureIntro.
-        rewrite bool_decide_decide. destruct (decide _) as [HLt|HGe].
-        + split; first lia.
-          rewrite (Nat.div_mod id segment_size_nat); last lia.
-          rewrite (Nat.div_mod source_id segment_size_nat); last lia.
-          unfold segment_size_nat in *.
-          apply plus_le_lt_compat; last lia.
-          apply mult_le_compat_l. lia.
-        + right.
-          rewrite (Nat.div_mod id segment_size_nat); last lia.
-          rewrite (Nat.div_mod source_id segment_size_nat); last lia.
-          assert (source_id `div` segment_size_nat = id `div` segment_size_nat);
-            by unfold segment_size_nat in *; lia.
-    * iExists _. iSplitR; first done. iPureIntro.
-      assert (source_id `div` segment_size_nat < id') as HLt.
+
+  rewrite bool_decide_decide. destruct (decide _) as [HEq|HNeq]; wp_pures.
+  - simplify_eq.
+    iApply "HΦ"; repeat iSplit.
+    + iExists _, _. by iFrame "HInList' HId'".
+    + by iPureIntro; lia.
+    + iIntros (i HBound). iApply "HCellCanc". iPureIntro. lia.
+  - iApply ("HΦ" $! _ (id' * segment_size_nat)).
+    assert (id ≤ id' * segment_size_nat) as HLt'.
+    {
+      assert (id `div` segment_size_nat < id') as HLt.
       {
-        destruct (decide (source_id `div` segment_size_nat = id'))
-          as [HContra|HH].
+        destruct (decide (id' = id `div` segment_size_nat)) as [HContra|HH].
         - rewrite -HContra in HNeq. exfalso. apply HNeq. done.
         - unfold segment_size_nat in *. lia.
       }
-      move: HLt. clear=> HLt.
-      rewrite (Nat.div_mod source_id segment_size_nat); last lia.
-      assert (source_id `mod` segment_size_nat < segment_size_nat).
+      move: HLt. clear=> HLt. apply nat_lt_sum in HLt.
+      destruct HLt as [z ->]. rewrite Nat.mul_add_distr_r /=.
+      rewrite [in id in id ≤ _](Nat.div_mod id segment_size_nat); last lia.
+      assert (id `mod` segment_size_nat < segment_size_nat).
       by apply Nat.mod_upper_bound; lia.
-      assert (∃ z, source_id `div` segment_size_nat + S z = id') as (z & HL);
-        last lia.
-      apply nat_lt_sum in HLt. destruct HLt as [z ->].
-      by exists z.
-  }
-
-  iIntros (?) "HResult". iDestruct "HResult" as %[b [-> HSourceId]].
-  iModIntro.
-  destruct b; wp_pures.
-  - iApply "HΦ"; repeat iSplit.
-    + iExists _, _. by iFrame "HInList HId".
-    + iPureIntro; lia.
-    + iPureIntro; lia.
+      lia.
+    }
+    repeat iSplit.
+    + iExists _, _. rewrite Nat.div_mul; last lia. iFrame "HInList' HId'".
+      iPureIntro. rewrite Nat.mod_mul; last lia. done.
+    + iPureIntro. lia.
     + iIntros (i HBound). iApply "HCellCanc". iPureIntro. lia.
-  - rewrite bool_decide_decide.
-    destruct (decide _) as [HEq|HNeq]; wp_pures.
-    * simplify_eq. iApply "HΦ"; repeat iSplit.
-      + iExists _, _. by iFrame "HInList' HId'".
-      + iPureIntro. destruct HSourceId as [HSourceId|HSourceId]; last lia.
-        transitivity (id `div` Pos.to_nat segment_size * Pos.to_nat segment_size);
-          first lia.
-        rewrite Nat.mul_comm.
-        rewrite [in id in _ ≤ id](Nat.div_mod id segment_size_nat); last lia.
-        unfold segment_size_nat in *. lia.
-      + iPureIntro; lia.
-      + iIntros (i HBound). iApply "HCellCanc". iPureIntro. lia.
-    * iApply ("HΦ" $! _ (id' * segment_size_nat)).
-      assert (id ≤ id' * segment_size_nat) as HLt'.
-      {
-        assert (id `div` segment_size_nat < id') as HLt.
-        {
-          destruct (decide (id' = id `div` segment_size_nat)) as [HContra|HH].
-          - rewrite -HContra in HNeq. exfalso. apply HNeq. done.
-          - unfold segment_size_nat in *. lia.
-        }
-        move: HLt. clear=> HLt. apply nat_lt_sum in HLt.
-        destruct HLt as [z ->]. rewrite Nat.mul_add_distr_r /=.
-        rewrite [in id in id ≤ _](Nat.div_mod id segment_size_nat); last lia.
-        assert (id `mod` segment_size_nat < segment_size_nat).
-        by apply Nat.mod_upper_bound; lia.
-        lia.
-      }
-      repeat iSplit.
-      + iExists _, _. rewrite Nat.div_mul; last lia. iFrame "HInList' HId'".
-        iPureIntro. rewrite Nat.mod_mul; last lia. done.
-      + iPureIntro. lia.
-      + iPureIntro. lia.
-      + iIntros (i HBound). iApply "HCellCanc". iPureIntro. lia.
 Qed.
 
 Theorem derefCellPointer_spec co γ (p: val) i:
@@ -982,7 +922,7 @@ Proof.
   iIntros "#HArr #HCellPointer" (Φ) "AU".
   iDestruct "HCellPointer" as (? ?) "(#HInList & #HId & ->)".
   iApply fupd_wp. iMod "AU" as (?) "[HOpen [HClose _]]".
-  iDestruct "HOpen" as (ℓ) "[>-> HView]".
+  iDestruct "HOpen" as (ℓ) "[>[-> %] HView]".
   iMod ("HClose" with "[HView]") as "AU"; first by iExists ℓ; by iSplitR.
   iModIntro. wp_lam. wp_pures.
   awp_apply (moveForward_spec with "HArr HInList").
@@ -990,7 +930,7 @@ Proof.
   { apply difference_mono_l, nclose_subseteq. }
   iIntros (start_index) "HCutoff".
   iDestruct "HCutoff" as (ℓ') "[>Hℓ' HView]".
-  iDestruct "Hℓ'" as %Hℓ'; simplify_eq.
+  iDestruct "Hℓ'" as %[Hℓ' HMod]; simplify_eq.
   iAaccIntro with "HView".
   {
     iIntros "HPtr !>". iSplitL; last by iIntros "$ !> //".
@@ -999,22 +939,77 @@ Proof.
   iIntros (result) "HResult". iExists result.
   iSplitL; last by iIntros "!> $ !> //".
   destruct result.
-  - iExists (max i start_index).
-    iSplitR. by iPureIntro; lia.
-    iExists _; iSplitR; first done.
-    destruct (decide (start_index ≤ i)) as [HLe|HGt].
-    * rewrite !Nat.max_l //; try lia. apply Nat.div_le_mono; lia.
-    * rewrite !Nat.max_r //; try lia. apply Nat.div_le_mono; lia.
+  - destruct (decide (i ≤ start_index)) as [HLe|HGt].
+    * rewrite !Nat.max_r.
+      2: lia.
+      2: apply Nat.div_le_mono; lia.
+      iExists start_index. iSplitR; first done.
+      iExists _. iFrame; done.
+    * rewrite !Nat.max_l.
+      2: lia.
+      2: apply Nat.div_le_mono; lia.
+      iExists (segment_size_nat * (i `div` segment_size_nat)).
+      iSplitR.
+      + iPureIntro. split.
+        2: by rewrite [in i in _ ≤ i] (Nat.div_mod i segment_size_nat); lia.
+        rewrite [in start_index] (Nat.div_mod start_index segment_size_nat);
+          last lia.
+        rewrite HMod Nat.add_0_r.
+        apply mult_le_compat_l, Nat.div_le_mono; lia.
+      + iExists _.
+        rewrite Nat.mul_comm Nat.mod_mul; last lia.
+        rewrite Nat.div_mul; last lia.
+        by iFrame "HResult".
   - iDestruct "HResult" as "[HPointerLoc #HSegmentCanc]".
     by iExists _; iSplitR.
+Qed.
+
+Theorem cutoffGetPointer_spec γ (v: val):
+  ⊢ <<< ∀ i, ▷ is_infinite_array_cutoff γ v i >>>
+    cutoffGetPointer v @ ⊤
+  <<< ∃ (p: val), is_infinite_array_cutoff γ v i ∗
+      is_infinite_array_cutoff_reading γ p i, RET p >>>.
+Proof.
+  iIntros (Φ) "AU". iApply fupd_wp.
+  iMod "AU" as (?) "[HOpen [HClose _]]".
+  iDestruct "HOpen" as (ℓ') "[>[-> HMod] HOpen]".
+  iDestruct "HMod" as %HMod1.
+  iMod ("HClose" with "[HOpen]") as "AU"; first by iExists _; iSplitR.
+  iModIntro. wp_lam.
+  awp_apply pointer_location_load.
+  iApply (aacc_aupd_commit with "AU"); first done.
+  iIntros (start_index) "HCutoff".
+  iDestruct "HCutoff" as (ℓ) "[>[% %] HOpen]"; simplify_eq.
+  iAaccIntro with "HOpen".
+  {
+    iIntros "H !>". iSplitL; last by iIntros "$ !> //".
+    iExists _. by iSplitR.
+  }
+  iIntros (? ?) "[HPointerLoc #HInList]".
+  iExists _. iSplitL; last by iIntros "!> HΦ !>"; wp_pures.
+  iSplitL.
+  by iExists _; iSplitR.
+  iExists _. by iFrame "HInList".
+Qed.
+
+Theorem cellPointerId_spec co γ (p: val) i:
+  {{{ is_infinite_array γ co ∗ is_infinite_array_cell_pointer γ p i }}}
+    cellPointerId segment_size pointer_shift p
+  {{{ RET #i; True }}}.
+Proof.
+  iIntros (Φ) "[#HArr #HCellPointer] HΦ". wp_lam.
+  iDestruct "HCellPointer" as (? ?) "(#HInList & #HId & ->)".
+  iMod (segment_in_list_is_node with "HArr HInList") as "#[HNode _]";
+    first done.
+  wp_pures.
+  wp_apply (getId_spec _ _ node_spec with "HNode").
+  iIntros (id) "HId'".
+  iDestruct (has_value_agrees with "HId HId'") as %<-. wp_pures.
+  rewrite -Nat2Z.inj_mul -Nat2Z.inj_add /segment_size_nat Nat.mul_comm.
+  rewrite -Nat.div_mod; last lia. iApply "HΦ"; last done.
 Qed.
 
 End array_impl.
 
 (*
-      cutoffGetPointer_spec γ (v: val):
-        ⊢ <<< ∀ i, ▷ is_infinite_array_cutoff γ v i >>>
-          cutoffGetPointer v @ ⊤
-        <<< ∃ (p: val), is_infinite_array_cutoff γ v i ∗
-                        is_infinite_array_cell_pointer γ p i, RET p >>>
  *)
