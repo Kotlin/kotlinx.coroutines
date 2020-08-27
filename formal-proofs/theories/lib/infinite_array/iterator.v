@@ -82,9 +82,6 @@ Definition iterator_points_to γa γ fℓ ℓ n: iProp :=
                                   (∃ (ℓ': loc), segment_location γa id ℓ'
                                                                  ∗ ℓ ↦ #ℓ'))%I.
 
-Definition is_iterator γa γ fℓ ℓ: iProp :=
-  (∃ n, iterator_points_to γa γ fℓ ℓ n)%I.
-
 Definition iterator_issued γ n :=
   own γ (◯ (GSet {[ n ]}, MaxNat (S n))).
 
@@ -160,126 +157,6 @@ Proof.
   assert (n `mod` p < p)%nat; first by (apply Nat.mod_upper_bound; lia).
   assert ((a - k) * p < p)%nat as HC'' by lia.
   destruct (a - k)%nat eqn:E; simpl in *; lia.
-Qed.
-
-Theorem iterator_step_spec γa γ (ℓ fℓ: loc):
-  ⊢ cell_init segment_size ap ∅ -∗
-  <<< ▷ is_infinite_array segment_size ap γa ∗ is_iterator γa γ fℓ ℓ >>>
-     (iterator_step segment_size) #ℓ #fℓ @ ⊤
-  <<< ∃ (ix: nat) (sℓ: loc),
-    ▷ is_infinite_array segment_size ap γa ∗ is_iterator γa γ fℓ ℓ ∗
-    ∃ (id: nat) (n: nat),
-    ⌜(ix < Pos.to_nat segment_size)%nat⌝ ∗
-    segment_location γa id sℓ ∗
-    iterator_issued γ n ∗
-    (∃ ℓ, ▷ p_cell_invariant ap γa n ℓ ∗ array_mapsto segment_size γa n ℓ) ∗
-    (⌜n = (id * Pos.to_nat segment_size + ix)%nat⌝ ∨
-      cell_is_cancelled segment_size γa n), RET (#sℓ, #ix) >>>.
-Proof.
-  iIntros "#HCellInit".
-  iIntros (Φ) "AU". wp_lam. wp_pures.
-
-  wp_bind (!_)%E.
-  iMod "AU" as "[[HInfArr HIsIter] [HClose _]]".
-  iDestruct "HIsIter" as (n') "([Hfℓ HAuth] & HSeg)".
-  iDestruct "HSeg" as (? ? ?) "(#HSegLoc & Hℓ)".
-  wp_load.
-  iMod (own_update with "HAuth") as "[HAuth HSent]". {
-    apply auth_update_core_id with (b := (ε, MaxNat n')).
-    apply _.
-    rewrite prod_included /=; split; rewrite //.
-    apply gset_disj_included. done.
-  }
-  iMod ("HClose" with "[- HSent]") as "AU". {
-    rewrite /is_iterator. repeat (iFrame; iExists _).
-    iSplitR. 2: by iExists _; iFrame. done.
-  }
-  iModIntro. wp_pures.
-
-  awp_apply (iterator_value_faa). iApply (aacc_aupd_abort with "AU"); first done.
-  iIntros "[HInfArray HIsIter]".
-  iDestruct "HIsIter" as (n) "HIsIter".
-  iDestruct (iterator_points_to_at_least with "HSent [HIsIter]") as %Hn'LNp1.
-  by iDestruct "HIsIter" as "[$ _]".
-  iAaccIntro with "HIsIter".
-  {
-    iIntros "HIsIter !>". iSplitR "HSent".
-    iFrame "HInfArray"; iExists _; iFrame "HIsIter".
-    iIntros "$". iFrame "HSent". done.
-  }
-  iIntros "[HIsIter HPerms]".
-  iFrame "HInfArray". iSplitL "HIsIter".
-  { iExists _. auto. }
-  iIntros "!> AU !>". wp_pures.
-
-  wp_bind (find_segment _ _ _).
-  replace (Z.quot (Z.of_nat n) (Z.of_nat (Pos.to_nat segment_size))) with
-      (Z.of_nat (n `div` Pos.to_nat segment_size)%nat).
-  2: by rewrite quot_of_nat.
-
-  awp_apply find_segment_spec; try done.
-  iApply (aacc_aupd_commit with "AU"); first done.
-  iIntros "[HInfArr HIsIter]".
-  iAaccIntro with "HInfArr".
-  { iIntros "HInfArr". iFrame. eauto. }
-
-  iIntros (x ?) "(HInfArr & HSegInv & #HSegLoc'' & #HFindSegRet)".
-
-  iExists (n `mod` Pos.to_nat segment_size)%nat, _. iFrame.
-  iSplitL.
-  2: {
-    iIntros "!> HΦ !>". wp_pures.
-    destruct (Pos.to_nat segment_size) as [|o'] eqn:HC.
-    exfalso; lia. rewrite rem_of_nat; done. }
-  iExists _, _. iFrame "HSegLoc''".
-  iSplitR. iPureIntro; apply Nat.mod_upper_bound; lia.
-  iSplitL "HPerms".
-  by rewrite /= union_empty_r_L Nat.add_1_r /iterator_issued.
-  iSplitL "HSegInv".
-  {
-    iAssert (⌜seq O (S x) !! _ =
-             Some (O + n `div` Pos.to_nat segment_size)%nat⌝)%I as %HEl.
-    {
-      iDestruct "HFindSegRet" as "[[% ->]|(% & % & #HCanc)]";
-        iPureIntro; apply seq_lookup; lia.
-    }
-    iDestruct (big_sepL_lookup with "HSegInv") as "HSegInv"; first done.
-    iDestruct (cell_invariant_by_segment_invariant with "HSegInv")
-      as (cℓ) "[HCellInv >HArrMapsto]".
-    by eapply Nat.mod_upper_bound; lia.
-    iExists _. iModIntro.
-    rewrite /array_mapsto /ias_cell_info_view.
-    iFrame "HArrMapsto".
-    rewrite Nat.mul_comm -Nat.div_mod. done. lia. }
-
-  iDestruct "HFindSegRet" as "[[% ->]|(% & % & #HCanc)]".
-
-  {
-    assert (x = n `div` Pos.to_nat segment_size)%nat as ->. {
-      eapply find_segment_id_bound. lia. all: done.
-    }
-
-    iLeft. iPureIntro.
-    rewrite Nat.mul_comm -Nat.div_mod /= //.
-    lia.
-  }
-
-  destruct (decide (x = n `div` Pos.to_nat segment_size)%nat); subst.
-  {
-    iLeft. iPureIntro.
-    rewrite Nat.mul_comm -Nat.div_mod /= //.
-    lia.
-  }
-
-  iRight. iModIntro.
-
-  iDestruct (segments_cancelled__cells_cancelled with "HCanc") as "HCanc'".
-  iApply (big_sepL_lookup _ _ (n `mod` Pos.to_nat segment_size)%nat with "HCanc'").
-  rewrite seq_lookup.
-  - rewrite Nat.mul_comm -Nat.div_mod. done. lia.
-  - apply Nat.lt_le_trans with (m := (1 * Pos.to_nat segment_size)%nat).
-    by rewrite Nat.mul_1_l; apply Nat.mod_upper_bound; lia.
-    by apply mult_le_compat_r; lia.
 Qed.
 
 Theorem increase_value_to_spec γ (fℓ: loc) (n: nat):

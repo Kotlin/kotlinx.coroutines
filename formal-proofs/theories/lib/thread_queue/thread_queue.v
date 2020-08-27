@@ -766,7 +766,7 @@ Definition is_thread_queue (S R: iProp) γa γtq γe γd eℓ epℓ dℓ dpℓ l
    iterator_points_to segment_size γa γd dℓ dpℓ deqIdx ∗
    ([∗ list] i ∈ seq 0 deqIdx, awakening_permit γtq) ∗
    ([∗ list] i ∈ seq 0 enqIdx, suspension_permit γtq) ∗
-   ⌜deqIdx <= deqFront <= length l⌝ ∧ ⌜enqIdx <= length l⌝
+   ⌜deqIdx <= deqFront <= length l⌝
   )%I.
 
 Theorem thread_queue_append E R γa γtq γe γd l deqFront eℓ epℓ dℓ dpℓ:
@@ -2514,7 +2514,7 @@ Proof.
   { iSplitR; first done.
     iExists _, _. iFrame.
     rewrite seq_add big_sepL_app.
-    iDestruct "HRest'" as "([% %] & %)".
+    iDestruct "HRest'" as "[% %]".
     simpl.
     iFrame.
     iPureIntro.
@@ -2711,7 +2711,7 @@ Proof.
     rewrite -plus_n_O.
     iDestruct (cancelled_cell_is_cancelled_rendezvous' with
                    "HCanc HInit HListContents") as (? ?) "#>%".
-    iDestruct "HRest" as "(HAwak & HSusp & >[[% %] %])".
+    iDestruct "HRest" as "(HAwak & HSusp & >[% %])".
     repeat rewrite big_sepL_later.
     iDestruct (awakening_permit_from_cancelled_cell with "HCanc HPerms HListContents")
               as "[HAwaken $]"; first done.
