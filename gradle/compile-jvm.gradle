@@ -4,7 +4,7 @@
 
 // Platform-specific configuration to compile JVM modules
 
-apply plugin: 'kotlin'
+apply plugin: 'org.jetbrains.kotlin.jvm'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
