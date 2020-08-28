@@ -1,5 +1,6 @@
 From iris.heap_lang Require Export proofmode notation lang.
 Require Import SegmentQueue.lib.concurrent_linked_list.segment_interfaces.
+Require Import SegmentQueue.lib.concurrent_linked_list.infinite_array.array_spec.
 
 Section SQSegment_impl.
 
@@ -573,12 +574,14 @@ Context `{heapG Σ} `{iSegmentG Σ}.
 
 Variable (segment_size pointer_shift: positive).
 Variable (limit: Pos.to_nat segment_size < 2 ^ Pos.to_nat pointer_shift).
+Variable list_impl: listInterface.
+Let node_spec' := node_segment segment_size pointer_shift limit.
+Variable list_spec': ∀ N, listSpec Σ list_impl (node_spec' N _ _ _).
 Variable (N: namespace).
 Let NList := N .@ "list".
 Let NNode := N .@ "node".
-Let node_spec := (node_segment segment_size pointer_shift limit NNode).
-Variable list_impl: listInterface.
-Variable list_spec: listSpec Σ list_impl node_spec.
+Let list_spec := list_spec' NNode.
+Let node_spec := node_spec' NNode _ _ _.
 
 Definition is_infinite_array γ
            (cell_is_owned: nat -> iProp Σ) :=
@@ -757,8 +760,8 @@ Proof.
   iDestruct "HCellPointer" as (?) "[#HInList _]".
 
   wp_lam. wp_pures. wp_bind (findSegment _ _ _).
-  rewrite quot_of_nat.
-  iApply (findSegment_spec with "[]"); first by iFrame "HArr HInList".
+  rewrite quot_of_nat /is_infinite_array.
+  iApply (findSegment_spec with "[]"); first by iFrame "HInList HArr".
   iIntros (v' id') "!> HResult".
   iDestruct "HResult" as "(HInList' & HFound & #HCancelled)".
   iDestruct "HFound" as %HFound. iDestruct "HInList'" as (γs') "#HInList'".
@@ -1009,4 +1012,44 @@ Proof.
   rewrite -Nat.div_mod; last lia. iApply "HΦ"; last done.
 Qed.
 
+Theorem newInfiniteArray_spec co k:
+  {{{ ⌜(k > 0)%nat⌝ ∧ inv_heap_inv }}}
+    newInfiniteArray list_impl #k
+  {{{ γ ℓ, RET #ℓ; is_infinite_array γ co ∗
+                   [∗ list] i ∈ seq 0 k,
+                     is_infinite_array_cutoff γ #(ℓ +ₗ Z.of_nat i) 0
+  }}}.
+Proof.
+  iIntros (Φ) "HInit HΦ". rewrite /newInfiniteArray.
+  iApply (newList_spec with "HInit").
+  iIntros (γ ℓ) "!> [HList HPtrs]". iApply "HΦ".
+  iFrame "HList". iApply (big_sepL_mono with "HPtrs").
+  iIntros (? ? HLookup) "HPtrLoc".
+  iExists _.
+  rewrite Nat.div_0_l; last lia. rewrite Nat.mod_0_l; last lia.
+  iFrame "HPtrLoc". done.
+Qed.
+
 End array_impl.
+
+Canonical Structure array_impl
+          (segment_size pointer_shift: positive)
+          (limit: Pos.to_nat segment_size < 2 ^ Pos.to_nat pointer_shift)
+          {list_impl: listInterface}
+          `{!heapG Σ} `{iSegmentG Σ}
+          (list_spec: ∀ (N: namespace), listSpec Σ list_impl (node_segment segment_size pointer_shift limit N))
+          {impl: segmentInterface} (segment_spec: segmentSpec Σ impl)
+          `{!iLinkedListG segment_spec Σ} :=
+  {|
+  array_spec.newInfiniteArray_spec := newInfiniteArray_spec segment_size pointer_shift limit list_impl list_spec;
+  array_spec.findCell_spec := findCell_spec segment_size pointer_shift limit list_impl list_spec;
+  array_spec.cancelCell_spec := cancelCell_spec segment_size pointer_shift limit list_impl list_spec;
+  array_spec.derefCellPointer_spec := derefCellPointer_spec segment_size pointer_shift limit list_impl list_spec;
+  array_spec.cutoffMoveForward_spec := cutoffMoveForward_spec segment_size pointer_shift limit list_impl list_spec;
+  array_spec.cutoffGetPointer_spec := cutoffGetPointer_spec segment_size pointer_shift limit list_impl list_spec;
+  array_spec.infinite_array_mapsto_agree := infinite_array_mapsto_agree segment_size pointer_shift limit list_impl list_spec;
+  array_spec.cell_cancellation_handle_exclusive := cell_cancellation_handle'_exclusive segment_size pointer_shift limit list_impl list_spec;
+  array_spec.cell_cancellation_handle_not_cancelled := cell_cancellation_handle'_not_cancelled segment_size pointer_shift limit list_impl list_spec;
+  array_spec.acquire_cell := acquire_cell segment_size pointer_shift limit list_impl list_spec;
+  array_spec.cellPointerId_spec := cellPointerId_spec segment_size pointer_shift limit list_impl list_spec;
+  |}.

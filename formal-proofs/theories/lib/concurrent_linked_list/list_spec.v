@@ -9,15 +9,14 @@ Record listSpec Σ `{!heapG Σ}
        {seg_impl: segmentInterface}
        (segment_spec: segmentSpec Σ seg_impl) :=
   ListSpec {
-      list_name: Type;
       is_concurrentLinkedList:
         namespace ->
         linkedListNode_parameters _ _ (linkedListNode_base _ _ segment_spec) ->
-        list_name -> iProp Σ;
+        gname -> iProp Σ;
       is_concurrentLinkedList_persistent N p γ:
         Persistent (is_concurrentLinkedList N p γ);
       segment_in_list
-        (γ: list_name)
+        (γ: gname)
         (γs: linkedListNode_name _ _ (linkedListNode_base _ _ segment_spec))
         (id: nat)
         (v: val): iProp Σ;
@@ -26,10 +25,10 @@ Record listSpec Σ `{!heapG Σ}
       segment_in_list_agree γ id γs v γs' v':
         segment_in_list γ γs id v -∗ segment_in_list γ γs' id v' -∗
                         ⌜v = v' ∧ γs = γs'⌝;
-      segment_is_cancelled: list_name -> nat -> iProp Σ;
+      segment_is_cancelled: gname -> nat -> iProp Σ;
       segment_is_cancelled_persistent γ id:
         Persistent (segment_is_cancelled γ id);
-      pointer_location: list_name -> loc -> nat -> iProp Σ;
+      pointer_location: gname -> loc -> nat -> iProp Σ;
       segment_in_list_is_node N p E γ γs id v:
         ↑N ⊆ E →
         is_concurrentLinkedList N p γ -∗
