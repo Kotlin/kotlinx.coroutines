@@ -1,15 +1,10 @@
 From iris.program_logic Require Import atomic.
 From iris.heap_lang Require Export proofmode notation lang.
+Require Export
+        SegmentQueue.lib.concurrent_linked_list.infinite_array.array_interfaces.
 
-Record infiniteArraySpec Σ `{!heapG Σ} :=
+Record infiniteArraySpec Σ `{!heapG Σ} (impl: infiniteArrayInterface) :=
   InfiniteArraySpec {
-      newInfiniteArray: val;
-      cancelCell: val;
-      findCell: val;
-      derefCellPointer: val;
-      cutoffMoveForward: val;
-      cutoffGetPointer: val;
-      cellPointerId: val;
       infinite_array_name: Type;
       is_infinite_array (N: namespace) (γ: infinite_array_name)
                         (cell_is_owned: nat → iProp Σ): iProp Σ;
@@ -26,6 +21,8 @@ Record infiniteArraySpec Σ `{!heapG Σ} :=
           iProp Σ;
       is_infinite_array_cutoff_reading (N: namespace) (γ: infinite_array_name)
                                        (p: val) (start_id: nat): iProp Σ;
+      is_infinite_array_cutoff_reading_persistent N γ p start_id:
+        Persistent (is_infinite_array_cutoff_reading N γ p start_id);
       is_infinite_array_cell_pointer_persistent N γ p i:
         Persistent (is_infinite_array_cell_pointer N γ p i);
       is_infinite_array_cutoff (N: namespace)
@@ -45,7 +42,7 @@ Record infiniteArraySpec Σ `{!heapG Σ} :=
         (▷ cell_is_owned i ={E∖↑N, E}=∗ True);
       newInfiniteArray_spec N co k:
         {{{ ⌜(k > 0)%nat⌝ ∧ inv_heap_inv }}}
-          newInfiniteArray #k
+          newInfiniteArray impl #k
         {{{ γ ℓ, RET #ℓ; is_infinite_array N γ co ∗
                         [∗ list] i ∈ seq 0 k,
                           is_infinite_array_cutoff N γ #(ℓ +ₗ Z.of_nat i) 0
@@ -54,36 +51,46 @@ Record infiniteArraySpec Σ `{!heapG Σ} :=
         is_infinite_array N γ co -∗
         is_infinite_array_cell_pointer N γ p i -∗
         <<< cell_cancellation_handle N γ i >>>
-            cancelCell p @ ⊤ ∖ ↑N
+            cancelCell impl p @ ⊤ ∖ ↑N
         <<< cell_is_cancelled N γ i, RET #() >>>;
       findCell_spec N γ co p (source_id id: nat):
         {{{ is_infinite_array N γ co ∗
             is_infinite_array_cutoff_reading N γ p source_id }}}
-        findCell p #id @ ⊤
+        findCell impl p #id @ ⊤
         {{{ p' id', RET p'; is_infinite_array_cell_pointer N γ p' id'
             ∗ ⌜(id ≤ id')%nat⌝
             ∗ ∀ i, (⌜max source_id id ≤ i < id'⌝)%nat -∗ cell_is_cancelled N γ i
         }}};
       derefCellPointer_spec N co γ (p: val) i:
         {{{ is_infinite_array N γ co ∗ is_infinite_array_cell_pointer N γ p i }}}
-          derefCellPointer p
+          derefCellPointer impl p
         {{{ ℓ, RET #ℓ; infinite_array_mapsto N co γ i ℓ }}};
       cutoffMoveForward_spec N co γ (p v: val) i:
         is_infinite_array N γ co -∗
         is_infinite_array_cell_pointer N γ p i -∗
         <<< ∀ start_index, ▷ is_infinite_array_cutoff N γ v start_index >>>
-          cutoffMoveForward v p @ ⊤ ∖ ↑N
+          cutoffMoveForward impl v p @ ⊤ ∖ ↑N
         <<< ∃ (success: bool), if success
             then ∃ i', ⌜start_index ≤ i' ≤ max i start_index⌝ ∧
                       is_infinite_array_cutoff N γ v i'
             else ▷ is_infinite_array_cutoff N γ v start_index, RET #success >>>;
       cutoffGetPointer_spec N γ (v: val):
         ⊢ <<< ∀ i, ▷ is_infinite_array_cutoff N γ v i >>>
-          cutoffGetPointer v @ ⊤
+          cutoffGetPointer impl v @ ⊤
         <<< ∃ (p: val), is_infinite_array_cutoff N γ v i ∗
                         is_infinite_array_cutoff_reading N γ p i, RET p >>>;
       cellPointerId_spec N co γ (p: val) i:
         {{{ is_infinite_array N γ co ∗ is_infinite_array_cell_pointer N γ p i }}}
-          cellPointerId p
+          cellPointerId impl p
         {{{ RET #i; True }}};
+      cellPointerCleanPrev_spec N co γ (p: val) i:
+        {{{ is_infinite_array N γ co ∗ is_infinite_array_cell_pointer N γ p i }}}
+          cellPointerCleanPrev impl p
+        {{{ RET #(); True }}};
     }.
+
+Existing Instances is_infinite_array_persistent
+         infinite_array_mapsto_persistent
+         is_infinite_array_cell_pointer_persistent
+         is_infinite_array_cutoff_reading_persistent
+         cell_is_cancelled_persistent.

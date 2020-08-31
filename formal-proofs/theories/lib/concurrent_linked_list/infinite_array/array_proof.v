@@ -3,7 +3,7 @@ From iris.heap_lang Require Export proofmode notation lang.
 From iris.algebra Require Import auth agree list.
 From SegmentQueue.lib.concurrent_linked_list Require Import list_spec.
 From SegmentQueue.lib.concurrent_linked_list.infinite_array Require Import
-     array_spec sqsegment_proof array_impl.
+     sqsegment_proof array_impl array_spec.
 Require Import SegmentQueue.util.everything.
 
 Section array_impl.
@@ -20,6 +20,7 @@ Let NList := N .@ "list".
 Let NNode := N .@ "node".
 Let list_spec := list_spec' NNode.
 Let node_spec := node_spec' NNode _ _ _.
+Let array_impl := InfiniteArray segment_size pointer_shift list_impl.
 
 Definition is_infinite_array γ
            (cell_is_owned: nat -> iProp Σ) :=
@@ -78,14 +79,14 @@ Definition is_infinite_array_cutoff γ (v: val) (i: nat): iProp Σ :=
               pointer_location _ _ _ list_spec γ ℓ (i `div` segment_size_nat).
 
 Definition cell_is_cancelled' γ i: iProp Σ :=
-  segment_view γ i (fun γs ix v => cell_is_cancelled γs ix).
+  segment_view γ i (fun γs ix v => sqsegment_proof.cell_is_cancelled γs ix).
 
 Global Instance cell_is_cancelled'_persistent γ i:
   Persistent (cell_is_cancelled' γ i).
 Proof. apply _. Qed.
 
 Definition cell_cancellation_handle' γ i: iProp Σ :=
-  segment_view γ i (fun γs ix v => cell_cancellation_handle γs ix).
+  segment_view γ i (fun γs ix v => sqsegment_proof.cell_cancellation_handle γs ix).
 
 Theorem cell_cancellation_handle'_exclusive γ i:
   cell_cancellation_handle' γ i -∗ cell_cancellation_handle' γ i -∗ False.
@@ -94,7 +95,8 @@ Proof.
   iDestruct "H1" as (? ?) "(H1 & _ & H1Rest)".
   iDestruct "H2" as (? ?) "(H2 & _ & H2Rest)".
   iDestruct (segment_in_list_agree with "H1 H2") as "[-> ->]".
-  iDestruct (cell_cancellation_handle_exclusive with "H1Rest H2Rest") as %[].
+  iDestruct (sqsegment_proof.cell_cancellation_handle_exclusive
+               with "H1Rest H2Rest") as %[].
 Qed.
 
 Theorem cell_cancellation_handle'_not_cancelled γ i:
@@ -154,7 +156,7 @@ Theorem cancelCell_spec γ co p i:
   is_infinite_array γ co -∗
   is_infinite_array_cell_pointer γ p i -∗
   <<< cell_cancellation_handle' γ i >>>
-  cancelCell list_impl p @ ⊤ ∖ ↑N
+  cancelCell array_impl p @ ⊤ ∖ ↑N
   <<< cell_is_cancelled' γ i, RET #() >>>.
 Proof.
   iIntros "#HArr #HCellPointer" (Φ) "AU". wp_lam.
@@ -188,7 +190,7 @@ Qed.
 Theorem findCell_spec γ co p (source_id id: nat):
   {{{ is_infinite_array γ co ∗
       is_infinite_array_cutoff_reading γ p source_id }}}
-  findCell segment_size list_impl p #id @ ⊤
+  findCell array_impl p #id @ ⊤
   {{{ p' id', RET p'; is_infinite_array_cell_pointer γ p' id'
       ∗ ⌜(id ≤ id')%nat⌝
       ∗ ∀ i, (⌜max source_id id ≤ i < id'⌝)%nat -∗ cell_is_cancelled' γ i
@@ -205,7 +207,7 @@ Proof.
   iDestruct "HFound" as %HFound. iDestruct "HInList'" as (γs') "#HInList'".
   iMod (segment_in_list_is_node with "HArr HInList'") as "#[HNode' HId']";
     first done.
-  wp_lam. wp_pures. wp_bind (sqsegment_impl.getId v').
+  wp_lam. wp_pures. wp_bind (getIdImpl _ _ _).
   iApply (getId_spec segment_size pointer_shift with "HNode'").
   iIntros (id'') "!> HId''".
   iDestruct (has_value_agrees with "HId' HId''") as "<-".
@@ -329,7 +331,7 @@ Qed.
 
 Theorem derefCellPointer_spec co γ (p: val) i:
   {{{ is_infinite_array γ co ∗ is_infinite_array_cell_pointer γ p i }}}
-    derefCellPointer p
+    derefCellPointer array_impl p
   {{{ ℓ, RET #ℓ; infinite_array_mapsto co γ i ℓ }}}.
 Proof.
   iIntros (Φ) "[#HArr #HCellPointer] HΦ". wp_lam.
@@ -354,7 +356,7 @@ Theorem cutoffMoveForward_spec co γ (p v: val) i:
   is_infinite_array γ co -∗
   is_infinite_array_cell_pointer γ p i -∗
   <<< ∀ start_index, ▷ is_infinite_array_cutoff γ v start_index >>>
-    cutoffMoveForward list_impl v p @ ⊤ ∖ ↑N
+    cutoffMoveForward array_impl v p @ ⊤ ∖ ↑N
   <<< ∃ (success: bool), if success
       then ∃ i', ⌜start_index ≤ i' ≤ max i start_index⌝ ∧
                  is_infinite_array_cutoff γ v i'
@@ -407,7 +409,7 @@ Qed.
 
 Theorem cutoffGetPointer_spec γ (v: val):
   ⊢ <<< ∀ i, ▷ is_infinite_array_cutoff γ v i >>>
-    cutoffGetPointer v @ ⊤
+    cutoffGetPointer array_impl v @ ⊤
   <<< ∃ (p: val), is_infinite_array_cutoff γ v i ∗
       is_infinite_array_cutoff_reading γ p i, RET p >>>.
 Proof.
@@ -435,7 +437,7 @@ Qed.
 
 Theorem cellPointerId_spec co γ (p: val) i:
   {{{ is_infinite_array γ co ∗ is_infinite_array_cell_pointer γ p i }}}
-    cellPointerId segment_size p
+    cellPointerId array_impl p
   {{{ RET #i; True }}}.
 Proof.
   iIntros (Φ) "[#HArr #HCellPointer] HΦ". wp_lam.
@@ -450,9 +452,22 @@ Proof.
   rewrite -Nat.div_mod; last lia. iApply "HΦ"; last done.
 Qed.
 
+Theorem cellPointerCleanPrev_spec co γ (p: val) i:
+  {{{ is_infinite_array γ co ∗ is_infinite_array_cell_pointer γ p i }}}
+    cellPointerCleanPrev array_impl p
+  {{{ RET #(); True }}}.
+Proof.
+  iIntros (Φ) "[#HArr #HCellPointer] HΦ". wp_lam.
+  iDestruct "HCellPointer" as (? ?) "(#HInList & #HId & ->)".
+  iMod (segment_in_list_is_node with "HArr HInList") as "#[HNode _]";
+    first done.
+  wp_pures.
+  iApply cleanPrev_spec; last by iApply "HΦ". iFrame "HInList HArr".
+Qed.
+
 Theorem newInfiniteArray_spec co k:
   {{{ ⌜(k > 0)%nat⌝ ∧ inv_heap_inv }}}
-    newInfiniteArray list_impl #k
+    newInfiniteArray array_impl #k
   {{{ γ ℓ, RET #ℓ; is_infinite_array γ co ∗
                    [∗ list] i ∈ seq 0 k,
                      is_infinite_array_cutoff γ #(ℓ +ₗ Z.of_nat i) 0
@@ -490,4 +505,5 @@ Canonical Structure array_impl
   array_spec.cell_cancellation_handle_not_cancelled := cell_cancellation_handle'_not_cancelled segment_size pointer_shift limit list_impl list_spec;
   array_spec.acquire_cell := acquire_cell segment_size pointer_shift limit list_impl list_spec;
   array_spec.cellPointerId_spec := cellPointerId_spec segment_size pointer_shift limit list_impl list_spec;
+  array_spec.cellPointerCleanPrev_spec := cellPointerCleanPrev_spec segment_size pointer_shift limit list_impl list_spec;
   |}.

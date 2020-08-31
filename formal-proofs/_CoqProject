@@ -16,9 +16,11 @@
 ./theories/lib/concurrent_linked_list/list_proof.v
 ./theories/lib/concurrent_linked_list/infinite_array/sqsegment_impl.v
 ./theories/lib/concurrent_linked_list/infinite_array/sqsegment_proof.v
+./theories/lib/concurrent_linked_list/infinite_array/array_interfaces.v
 ./theories/lib/concurrent_linked_list/infinite_array/array_spec.v
 ./theories/lib/concurrent_linked_list/infinite_array/array_impl.v
 ./theories/lib/concurrent_linked_list/infinite_array/array_proof.v
+./theories/lib/concurrent_linked_list/infinite_array/array_helpers.v
 ./theories/lib/util/addAndGet.v
 ./theories/lib/util/addConditionally.v
 ./theories/lib/util/getAndSet.v
