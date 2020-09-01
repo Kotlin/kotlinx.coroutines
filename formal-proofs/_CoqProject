@@ -21,9 +21,16 @@
 ./theories/lib/concurrent_linked_list/infinite_array/array_impl.v
 ./theories/lib/concurrent_linked_list/infinite_array/array_proof.v
 ./theories/lib/concurrent_linked_list/infinite_array/array_helpers.v
+./theories/lib/concurrent_linked_list/infinite_array/iterator/iterator_impl.v
 ./theories/lib/util/addAndGet.v
 ./theories/lib/util/addConditionally.v
 ./theories/lib/util/getAndSet.v
 ./theories/lib/util/interruptibly.v
+./theories/lib/util/increaseValueTo.v
 ./theories/lib/barrier/barrier.v
 ./theories/util/everything.v
+./theories/util/big_opL.v
+./theories/util/cmra.v
+./theories/util/count_matching.v
+./theories/util/find_index.v
+./theories/util/local_updates.v

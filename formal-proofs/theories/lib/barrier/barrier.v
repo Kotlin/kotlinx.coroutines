@@ -44,7 +44,7 @@ End impl.
 Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
 Require Import SegmentQueue.lib.infinite_array.iterator.
 Require Import SegmentQueue.lib.util.interruptibly.
-Require Import SegmentQueue.util.everything.
+From SegmentQueue.util Require Import everything local_updates.
 
 From iris.base_logic.lib Require Import invariants.
 From iris.algebra Require Import auth.

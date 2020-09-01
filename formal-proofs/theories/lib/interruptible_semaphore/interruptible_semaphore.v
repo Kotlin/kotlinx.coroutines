@@ -35,7 +35,7 @@ Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
 Require Import SegmentQueue.lib.infinite_array.iterator.
 Require Import SegmentQueue.lib.util.interruptibly.
 Require Import SegmentQueue.lib.thread_queue.thread_queue_as_counter.
-Require Import SegmentQueue.util.everything.
+From SegmentQueue.util Require Import everything big_opL.
 
 From iris.base_logic.lib Require Import invariants.
 From iris.algebra Require Import auth.

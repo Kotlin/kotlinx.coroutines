@@ -2,7 +2,7 @@ From iris.base_logic Require Import lib.invariants.
 From iris.algebra Require Import cmra auth list agree csum excl.
 Require Import SegmentQueue.lib.concurrent_linked_list.infinite_array.sqsegment_impl.
 Require Import SegmentQueue.lib.concurrent_linked_list.segment_spec.
-Require Import SegmentQueue.util.everything.
+From SegmentQueue.util Require Import local_updates cmra count_matching everything.
 
 Section infinite_array_segment_proof.
 

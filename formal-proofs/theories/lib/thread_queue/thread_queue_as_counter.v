@@ -7,7 +7,7 @@ Require Import SegmentQueue.lib.thread_queue.thread_queue.
 Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
 Require Import SegmentQueue.lib.infinite_array.iterator.
 Require Import SegmentQueue.lib.util.interruptibly.
-Require Import SegmentQueue.util.everything.
+From SegmentQueue.util Require Import everything count_matching find_index.
 From iris.heap_lang Require Import notation.
 
 Section proof.

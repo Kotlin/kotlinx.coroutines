@@ -1,4 +1,3 @@
-From iris.base_logic.lib Require Export invariants.
 From iris.proofmode Require Import tactics.
 From iris.program_logic Require Export atomic.
 From iris.heap_lang Require Import proofmode notation lang.
@@ -12,7 +11,7 @@ Definition getAndSet : val :=
 
 Section getAndSetProof.
 
-Context `{heapG} (N: namespace).
+Context `{heapG}.
 
 Theorem getAndSet_spec (ℓ: loc) (v: val):
   ⊢ <<< ∀ k, ▷ ℓ ↦ k ∧ ⌜val_is_unboxed k⌝>>>

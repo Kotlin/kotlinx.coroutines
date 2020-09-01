@@ -1,7 +1,5 @@
 From iris.heap_lang Require Import notation lang.
 
-Section impl.
-
 Definition addAndGet: val :=
   rec: "addAndGet" "loc" "delta" :=
     let: "cur" := !"loc" in
@@ -9,8 +7,6 @@ Definition addAndGet: val :=
     if: CAS "loc" "cur" "new"
     then "new"
     else "addAndGet" "loc" "delta".
-
-End impl.
 
 From iris.program_logic Require Import atomic.
 From iris.heap_lang Require Import proofmode.

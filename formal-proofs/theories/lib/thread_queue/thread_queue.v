@@ -1,4 +1,5 @@
-Require Import SegmentQueue.util.everything.
+From SegmentQueue.util Require Import
+  everything local_updates big_opL cmra count_matching find_index.
 
 Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
 Require Import SegmentQueue.lib.infinite_array.iterator.

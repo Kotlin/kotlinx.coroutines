@@ -122,7 +122,7 @@ Definition find_segment : val :=
 End impl.
 
 From iris.algebra Require Import cmra auth list agree csum excl gset frac.
-Require Import SegmentQueue.util.everything.
+From SegmentQueue.util Require Import everything big_opL local_updates cmra.
 
 Section proof.
 

@@ -3,7 +3,7 @@ From iris.algebra Require Import cmra auth list agree csum numbers.
 From iris.base_logic Require Import lib.invariants.
 From SegmentQueue.lib.concurrent_linked_list
      Require Export segment_spec list_spec list_impl.
-Require Import SegmentQueue.util.everything.
+From SegmentQueue.util Require Import everything big_opL cmra local_updates.
 Open Scope nat.
 
 Section concurrentLinkedListProof.
