@@ -267,6 +267,7 @@ public final class kotlinx/coroutines/Delay$DefaultImpls {
 }
 
 public final class kotlinx/coroutines/DelayKt {
+	public static final fun awaitCancellation (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun delay-p9JZ4hM (DLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
