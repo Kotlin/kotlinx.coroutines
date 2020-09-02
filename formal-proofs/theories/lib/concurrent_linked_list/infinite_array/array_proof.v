@@ -113,7 +113,8 @@ Theorem acquire_cell cell_is_owned E γ i ℓ:
     ↑N ⊆ E →
     infinite_array_mapsto cell_is_owned γ i ℓ ={E, E∖↑N}=∗
     ▷ (cell_is_owned i ∨ ℓ ↦ NONEV ∗ cell_cancellation_handle' γ i) ∗
-    (▷ cell_is_owned i ={E∖↑N, E}=∗ True).
+    (▷ (cell_is_owned i ∨ ℓ ↦ NONEV ∗ cell_cancellation_handle' γ i)
+    ={E∖↑N, E}=∗ True).
 Proof.
   iIntros (HMask) "#HMapsto".
   iDestruct "HMapsto" as (? ?) "[HSeg (HId & HNode & Hdℓ)]".
@@ -149,7 +150,11 @@ Proof.
   }
   iIntros "HOwned". iMod "HMod" as "_".
   iMod ("HClose" with "[-]"); last done.
-  iApply "HRestore". by iLeft.
+  iApply "HRestore".
+  iDestruct "HOwned" as "[$|[Hℓ' HHandle]]". iRight. iFrame.
+  iDestruct "HHandle" as (? ?) "(HSeg' & ? & ?)".
+  iDestruct (segment_in_list_agree with "HSeg HSeg'") as ">[% %]".
+  simplify_eq. iFrame.
 Qed.
 
 Theorem cancelCell_spec γ co p i:

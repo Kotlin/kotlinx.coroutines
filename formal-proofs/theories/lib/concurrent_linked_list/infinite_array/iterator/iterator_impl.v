@@ -16,12 +16,13 @@ Definition iteratorStep: val :=
   ("idx", findCellAndMoveForward array_interface "ptr" "idx" "start").
 
 Definition iteratorStepOrIncreaseCounter: val :=
-  λ: "iterator",
+  λ: "shouldAdjust" "iterator",
   let: "counter" := Fst "iterator" in
   let: "s" := iteratorStep "iterator" in
   if: cellPointerId array_interface (Snd "s") = (Fst "s") then SOME (Snd "s")
-  else increaseValueTo "counter" (cellPointerId array_interface (Snd "s")) ;;
-       NONE.
+  else (if: "shouldAdjust"
+        then increaseValueTo "counter" (cellPointerId array_interface (Snd "s"))
+        else #()) ;; NONE.
 
 End impl.
 
@@ -247,13 +248,19 @@ Proof.
     iFrame "HIssued HCancelledSegId HCellPointer". iPureIntro. lia.
 Qed.
 
-Theorem iteratorStepOrIncreaseCounter_spec co γa P γ (fℓ: loc) (v: val):
+Theorem iteratorStepOrIncreaseCounter_spec
+        (shouldAdjust: bool) co γa P γ (fℓ: loc) (v: val):
   {{{ is_infinite_array _ _ _ NArray γa co ∗ is_iterator γa P γ v ∗ P ∗
-      make_laterable (∀ l, ([∗ list] i ∈ l,
-        cell_is_cancelled _ _ _ NArray γa i ∗ iterator_issued γ i ={⊤ ∖ ↑N}=∗ P))
+      if shouldAdjust
+      then make_laterable (∀ l, ([∗ list] i ∈ l,
+      cell_is_cancelled _ _ _ NArray γa i ∗ iterator_issued γ i
+        ={⊤ ∖ ↑N}=∗ P)) else True
   }}}
-    iteratorStepOrIncreaseCounter array_interface v
-  {{{ v, RET v; ⌜v = NONEV⌝ ∗ P ∨
+    iteratorStepOrIncreaseCounter array_interface #shouldAdjust v
+  {{{ v, RET v; ⌜v = NONEV⌝ ∗
+                (if shouldAdjust then P
+                 else ∃ i, cell_is_cancelled _ _ _ NArray γa i ∗
+                           iterator_issued γ i) ∨
                 ∃ ns s, ⌜v = SOMEV s⌝ ∧ iterator_issued γ ns ∗
                         is_infinite_array_cell_pointer _ _ _ NArray γa s ns
   }}}.
@@ -274,6 +281,11 @@ Proof.
     iApply "HΦ". iRight. iExists _, _. iSplitR; first done.
     by iFrame.
   - rewrite bool_decide_false; last (case; lia). wp_pures.
+    destruct shouldAdjust; wp_pures.
+    2: {
+      iApply "HΦ". iLeft. iSplitR; first done. iExists _.
+      iFrame. iApply "HCancelled". iPureIntro. lia.
+    }
     wp_apply (cellPointerId_spec with "[$]"). iIntros "_".
     wp_bind (increaseValueTo _ _).
     awp_apply iterator_increaseValueTo_spec without "HΦ".

@@ -85,6 +85,41 @@ Proof.
   rewrite count_matching_app. lia.
 Qed.
 
+Theorem count_matching_all
+  {A} (P: A -> Prop) {H': forall x, Decision (P x)} (l: list A):
+  count_matching P l = length l <-> ∀ i, i ∈ l → P i.
+Proof.
+  split.
+  - induction l as [|a l]=> /=.
+    * intros _ i Hi. inversion Hi.
+    * destruct (decide (P a)).
+      + case. intros HOk i Hi.
+        inversion Hi; subst; first done. by apply IHl.
+      + intros HContra.
+        assert (count_matching P l ≤ length l); last lia.
+        apply count_matching_le_length.
+  - intros HEl. induction l as [|a l] => //=.
+    rewrite decide_True.
+    by apply HEl; constructor.
+    rewrite IHl //.
+    intros i Hi. apply HEl. by constructor.
+Qed.
+
+Theorem count_matching_none
+  {A} (P: A -> Prop) {H': forall x, Decision (P x)} (l: list A):
+  count_matching P l = 0 <-> ∀ i, i ∈ l → ¬ P i.
+Proof.
+  assert (count_matching P l = 0 <->
+          count_matching (fun b => ¬ (P b)) l = length l) as ->.
+  {
+    rewrite count_matching_complement.
+    assert (count_matching P l ≤ length l).
+    by apply count_matching_le_length.
+    split; lia.
+  }
+  apply count_matching_all.
+Qed.
+
 Lemma present_cells_in_take_i_if_next_present_is_Si
   {A: Type} (P: A -> Prop) {H': forall x, Decision (P x)} (i: nat) (l: list A):
     find_index P l = Some i ->

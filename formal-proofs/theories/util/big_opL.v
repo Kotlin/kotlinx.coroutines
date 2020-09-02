@@ -184,3 +184,12 @@ Lemma big_opL_op_max_nat {A: Type} (f: nat → A -> max_natR) (l: list A):
 Proof.
   rewrite (big_opL_commute _). apply big_opL_proper. intros. by destruct (f _ _).
 Qed.
+
+Lemma big_opL_op_nat {A: Type} (f: nat → A -> natR) (l: list A):
+  ([^Nat.add list] k ↦ x ∈ l, f k x) ≡
+  ([^op list] k ↦ x ∈ l, f k x).
+Proof. done. Qed.
+
+Lemma big_opL_op_nat' {A: Type} (i: nat) (l: list A):
+  length l * i ≡ ([^op list] k ↦ x ∈ l, i).
+Proof. induction l=> //=. by rewrite IHl. Qed.

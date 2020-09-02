@@ -17,7 +17,7 @@ Record infiniteArraySpec Σ `{!heapG Σ} (impl: infiniteArrayInterface) :=
       infinite_array_mapsto_agree N co γ i ℓ ℓ':
         infinite_array_mapsto N co γ i ℓ -∗ infinite_array_mapsto N co γ i ℓ'
                               -∗ ⌜ℓ = ℓ'⌝;
-      is_infinite_array_cell_pointer N (γ: infinite_array_name) (p: val) (i: nat):
+                                        is_infinite_array_cell_pointer N (γ: infinite_array_name) (p: val) (i: nat):
           iProp Σ;
       is_infinite_array_cutoff_reading (N: namespace) (γ: infinite_array_name)
                                        (p: val) (start_id: nat): iProp Σ;
@@ -26,7 +26,7 @@ Record infiniteArraySpec Σ `{!heapG Σ} (impl: infiniteArrayInterface) :=
       is_infinite_array_cell_pointer_persistent N γ p i:
         Persistent (is_infinite_array_cell_pointer N γ p i);
       is_infinite_array_cutoff (N: namespace)
-        (γ: infinite_array_name) (v: val) (start_index: nat): iProp Σ;
+                               (γ: infinite_array_name) (v: val) (start_index: nat): iProp Σ;
       cell_is_cancelled (N: namespace) (γ: infinite_array_name) (i: nat): iProp Σ;
       cell_is_cancelled_persistent N γ i: Persistent (cell_is_cancelled N γ i);
       cell_cancellation_handle
@@ -39,7 +39,8 @@ Record infiniteArraySpec Σ `{!heapG Σ} (impl: infiniteArrayInterface) :=
         ↑N ⊆ E →
         infinite_array_mapsto N cell_is_owned γ i ℓ ={E, E∖↑N}=∗
         ▷ (cell_is_owned i ∨ ℓ ↦ NONEV ∗ cell_cancellation_handle N γ i) ∗
-        (▷ cell_is_owned i ={E∖↑N, E}=∗ True);
+        (▷ (cell_is_owned i ∨ ℓ ↦ NONEV ∗ cell_cancellation_handle N γ i)
+         ={E∖↑N, E}=∗ True);
       newInfiniteArray_spec N co k:
         {{{ ⌜(k > 0)%nat⌝ ∧ inv_heap_inv }}}
           newInfiniteArray impl #k
