@@ -199,35 +199,9 @@ enableFeaturePreview('GRADLE_METADATA')
 Since Kotlin/Native does not generally provide binary compatibility between versions, 
 you should use the same version of Kotlin/Native compiler as was used to build `kotlinx.coroutines`. 
 
-## Building 
+## Building and Contributing
 
-This library is built with Gradle. To build it, use `./gradlew build`. 
-You can import this project into IDEA, but you have to delegate build actions
-to Gradle (in Preferences -> Build, Execution, Deployment -> Build Tools -> Gradle -> Runner)
-
-### Requirements
-
-* JDK >= 11 referred to by the `JAVA_HOME` environment variable.
-* JDK 1.6 referred to by the `JDK_16` environment variable. It is okay to have `JDK_16` pointing to `JAVA_HOME` for external contributions.
-* JDK 1.8 referred to by the `JDK_18` environment variable. Only used by nightly stress-tests. It is okay to have `JDK_18` pointing to `JAVA_HOME` for external contributions.
-
-## Contributions and releases
-
-All development (both new features and bug fixes) is performed in `develop` branch. 
-This way `master` sources always contain sources of the most recently released version.
-Please send PRs with bug fixes to `develop` branch.
-Fixes to documentation in markdown files are an exception to this rule. They are updated directly in `master`.
-                                                                          
-The `develop` branch is pushed to `master` during release.
-
-* Full release procedure checklist is [here](RELEASE.md).
-* Steps for contributing new integration modules are explained [here](integration/README.md#Contributing).
-* Use [Knit](https://github.com/Kotlin/kotlinx-knit/blob/master/README.md) for updates to documentation:
-  * In project root directory run `./gradlew knit`.
-  * Commit updated documents and examples together with other changes.
-* Use [Binary Compatibility Validator](https://github.com/Kotlin/binary-compatibility-validator/blob/master/README.md) for updates to public API:
-  * In project root directory run `./gradlew apiDump`. 
-  * Commit updated API index together with other changes.
+See [Contributing Guidelines](CONTRIBUTING.md).
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->
