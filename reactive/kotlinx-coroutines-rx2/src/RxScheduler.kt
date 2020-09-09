@@ -33,7 +33,7 @@ public fun CoroutineDispatcher.asScheduler(): Scheduler =
         DispatcherScheduler(this)
     }
 
-private class DispatcherScheduler(internal val dispatcher: CoroutineDispatcher) : Scheduler() {
+private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Scheduler() {
 
     private val schedulerJob = SupervisorJob()
 
