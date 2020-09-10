@@ -110,19 +110,10 @@ compileKotlinMetadata {
 // :KLUDGE: Idea.active: This is needed to workaround resolve problems after importing this project to IDEA
 def configureNativeSourceSetPreset(name, preset) {
     def hostMainCompilation = project.kotlin.targetFromPreset(preset).compilations.main
-    // Kotlin 1.3.x: Look for platform libraries in "compile" configuration
-    def compileConfiguration = configurations[hostMainCompilation.compileDependencyConfigurationName]
-    // Kotlin 1.4.x: Look for platform libraries in "implementation" for default source set
+    // Look for platform libraries in "implementation" for default source set
     def implementationConfiguration = configurations[hostMainCompilation.defaultSourceSet.implementationMetadataConfigurationName]
-    // Now find the libraries:
-    // Kotlin 1.3.x: Find all platform libs
-    // Kotlin 1.4.x: Finds platform libs & stdlib, but platform declarations are still not resolved due to IDE bugs
+    // Now find the libraries: Finds platform libs & stdlib, but platform declarations are still not resolved due to IDE bugs
     def hostNativePlatformLibs = files(
-        provider {
-            compileConfiguration.findAll {
-                it.path.endsWith(".klib") || it.absolutePath.contains("klib${File.separator}platform")
-            }
-        },
         provider {
             implementationConfiguration.findAll {
                 it.path.endsWith(".klib") || it.absolutePath.contains("klib${File.separator}platform") || it.absolutePath.contains("stdlib")
@@ -158,17 +149,10 @@ kotlin.sourceSets {
     }
 
     jvmTest.dependencies {
-        // This is a workaround for https://youtrack.jetbrains.com/issue/KT-39037
-        def excludingCurrentProject = { dependency ->
-            def result = project.dependencies.create(dependency)
-            result.exclude(module: project.name)
-            return result
-        }
-
-        api(excludingCurrentProject("org.jetbrains.kotlinx:lincheck:$lincheck_version"))
+        api "org.jetbrains.kotlinx:lincheck:$lincheck_version"
         api "org.jetbrains.kotlinx:kotlinx-knit-test:$knit_version"
         api "com.esotericsoftware:kryo:4.0.0"
-        implementation(excludingCurrentProject(project(":android-unit-tests")))
+        implementation project(":android-unit-tests")
     }
 }
 

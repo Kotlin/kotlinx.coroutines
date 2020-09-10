@@ -87,12 +87,6 @@ buildscript {
 
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
-// Hierarchical project structures are not fully supported in 1.3.7x MPP, enable conditionally for 1.4.x
-// Also enable it in IDEA to properly import project structure
-if (Idea.active || VersionNumber.parse(kotlin_version) > VersionNumber.parse("1.3.79")) {
-    ext.set("kotlin.mpp.enableGranularSourceSetsMetadata", "true")
-}
-
 // todo:KLUDGE: This is needed to workaround dependency resolution between Java and MPP modules
 def configureKotlinJvmPlatform(configuration) {
     configuration.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
