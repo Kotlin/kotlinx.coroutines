@@ -171,7 +171,8 @@ variable values, even those that would be lost during standard debugging.
 
 > Debugging works for versions 1.3.8 or later of `kotlinx-coroutines-core`.
 
-Build the following code sample:
+For example, consider a case when the emission by a `simple` flow is slow, taking 100 ms to produce an element; and collector is also slow, taking 300 ms to process an element.
+Build the following code:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -183,7 +184,7 @@ import kotlin.system.*
 //sampleStart
 fun simple(): Flow<Int> = flow {
     for (i in 1..3) {
-        delay(100) // set the breakpoint here
+        delay(100)
         emit(i) // set the breakpoint here
     }
 }
@@ -206,7 +207,7 @@ fun main() = runBlocking<Unit> {
 
 > You can get the full code from [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-16.kt).
 
-Set a breakpoint on the line with the emitter `emit(i)` and run code in debug mode.
+Set a breakpoint at the line with the [emit] function called and run code in debug mode.
 
 The **Debug** tool window appears. It contains a **Coroutines** tab. In this tab, you can find information about both currently running and suspended coroutines. 
 The coroutines are grouped by the dispatcher they are running on. 
@@ -216,16 +217,19 @@ The coroutines are grouped by the dispatcher they are running on.
 There are two coroutines running concurrently. The flow collector and emitter run in separate coroutines because of the concurrent operator [buffer].
 That means that code buffers values that are emitted from the flow.
 
-The emitter coroutine is running, while the collector coroutine status is suspended.
+The emitter coroutine has the **RUNNING** status, the collector coroutine has the **SUSPENDED** status.
 
-Set a new breakpoint on the line where the code prints value `println(value)` and rerun the code in debug mode:
+Delete the previously set breakpoint and set a new breakpoint at the line where the code prints value `println(value)` and rerun the code in debug mode:
 
 ![Debugging coroutines](images/coroutine-idea-debugging-2.png)
 
-Now the collector coroutine is running, while the emitter coroutine status is suspended.
+Now the collector coroutine has the **RUNNING** status, while the emitter coroutine has the **SUSPENDED** status.
+You can dig deep into each coroutine to debug your code. 
 
 If you need a full report containing the state of each coroutine and its stack, right-click inside the **Coroutines** tab, and then
 click **Get Coroutines Dump**.
+
+![Debugging coroutines](images/coroutine-idea-debugging-3.png)
 
 Learn more about debugging coroutines in [this blog post](https://blog.jetbrains.com/kotlin/2020/07/kotlin-1-4-rc-debugging-coroutines/)
 and [IntelliJ IDEA documentation](https://www.jetbrains.com/help/idea/debug-kotlin-coroutines.html).
@@ -758,4 +762,6 @@ that should be implemented.
 [asContextElement]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/java.lang.-thread-local/as-context-element.html
 [ensurePresent]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/java.lang.-thread-local/ensure-present.html
 [ThreadContextElement]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-thread-context-element/index.html
+[buffer]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/buffer.html
+[emit]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow-collector/emit.html
 <!--- END -->
