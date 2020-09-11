@@ -163,12 +163,15 @@ figure out what the coroutine was doing, where, and when if you don't have speci
 
 The Coroutine Debugger of the Kotlin plugin simplifies debugging coroutines in IntelliJ IDEA.
 
+With the coroutine debugger you can:
+* Easily check the state of each coroutine.
+* See the values of local and captured variables for both running and suspended coroutines.
+* See a full coroutine creation stack, as well as a call stack inside the coroutine. The stack includes all frames with 
+variable values, even those that would be lost during standard debugging.
+
 > Debugging works for versions 1.3.8 or later of `kotlinx-coroutines-core`.
 
-The **Debug Tool Window** contains a **Coroutines** tab. In this tab, you can find information about both currently 
-running and suspended coroutines. The coroutines are grouped by the dispatcher they are running on. 
-
-Build the following code:
+Build the following code sample:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -180,8 +183,8 @@ import kotlin.system.*
 //sampleStart
 fun simple(): Flow<Int> = flow {
     for (i in 1..3) {
-        delay(100) // pretend we are asynchronously waiting 100 ms
-        emit(i) // emit next value
+        delay(100) // set the breakpoint here
+        emit(i) // set the breakpoint here
     }
 }
 
@@ -203,26 +206,23 @@ fun main() = runBlocking<Unit> {
 
 > You can get the full code from [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-16.kt).
 
-Set two breakpoints on the lines:
+Set a breakpoint on the line with the emitter `emit(i)` and run code in debug mode.
 
-<div class="sample" markdown="1" theme="idea" mode="kotlin" data-highlight-only>
+The **Debug** tool window appears. It contains a **Coroutines** tab. In this tab, you can find information about both currently running and suspended coroutines. 
+The coroutines are grouped by the dispatcher they are running on. 
 
-```kotlin
-delay(100)
-emit(i) 
-```
+![Debugging coroutines](images/coroutine-idea-debugging-1.png)
 
-</div>
+There are two coroutines running concurrently. The flow collector and emitter run in separate coroutines because of the concurrent operator [buffer].
+That means that code buffers values that are emitted from the flow.
 
-Run the code in debug mode.
+The emitter coroutine is running, while the collector coroutine status is suspended.
 
-![Debugging coroutines](images/coroutine-debugger.png)
+Set a new breakpoint on the line where the code prints value `println(value)` and rerun the code in debug mode:
 
-You can:
-* Easily check the state of each coroutine.
-* See the values of local and captured variables for both running and suspended coroutines.
-* See a full coroutine creation stack, as well as a call stack inside the coroutine. The stack includes all frames with 
-variable values, even those that would be lost during standard debugging.
+![Debugging coroutines](images/coroutine-idea-debugging-2.png)
+
+Now the collector coroutine is running, while the emitter coroutine status is suspended.
 
 If you need a full report containing the state of each coroutine and its stack, right-click inside the **Coroutines** tab, and then
 click **Get Coroutines Dump**.
