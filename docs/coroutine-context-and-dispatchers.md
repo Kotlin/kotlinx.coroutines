@@ -171,7 +171,7 @@ variable values, even those that would be lost during standard debugging.
 
 > Debugging works for versions 1.3.8 or later of `kotlinx-coroutines-core`.
 
-For example, consider a [Flow](flow.md) with both slow emitter and collector (100 ms to produce an element and 300 ms to process it):
+The following example contains [Flow](flow.md) with both slow emitter and collector (100 ms to produce an element and 300 ms to process it):
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -183,7 +183,7 @@ import kotlin.system.*
 //sampleStart
 fun simple(): Flow<Int> = flow {
     for (i in 1..3) {
-        delay(100)
+        delay(100) // producing the value in 100 ms
         emit(i) // set the breakpoint here
     }
 }
@@ -191,9 +191,9 @@ fun simple(): Flow<Int> = flow {
 fun main() = runBlocking<Unit> {
     val time = measureTimeMillis {
         simple()
-            .buffer() // buffer emissions, don't wait
+            .buffer() // buffer emitted values
             .collect { value ->
-                delay(300) // pretend we are processing it for 300 ms
+                delay(300) // processing the value in 300 ms
                 println(value)
             }
     }
