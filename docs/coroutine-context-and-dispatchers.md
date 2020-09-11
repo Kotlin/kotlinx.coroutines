@@ -171,8 +171,7 @@ variable values, even those that would be lost during standard debugging.
 
 > Debugging works for versions 1.3.8 or later of `kotlinx-coroutines-core`.
 
-For example, consider a case when the emission by a `simple` flow is slow, taking 100 ms to produce an element; and collector is also slow, taking 300 ms to process an element.
-Build the following code:
+For example, consider a [Flow](flow.md) with both slow emitter and collector (100 ms to produce an element and 300 ms to process it):
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -207,7 +206,7 @@ fun main() = runBlocking<Unit> {
 
 > You can get the full code from [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-16.kt).
 
-Set a breakpoint at the line with the [emit] function called and run code in debug mode.
+Build the code, set a breakpoint at the line with the [emit] function called and run code in debug mode.
 
 The **Debug** tool window appears. It contains a **Coroutines** tab. In this tab, you can find information about both currently running and suspended coroutines. 
 The coroutines are grouped by the dispatcher they are running on. 
