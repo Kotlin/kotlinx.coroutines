@@ -168,6 +168,54 @@ The Coroutine Debugger of the Kotlin plugin simplifies debugging coroutines in I
 The **Debug Tool Window** contains a **Coroutines** tab. In this tab, you can find information about both currently 
 running and suspended coroutines. The coroutines are grouped by the dispatcher they are running on. 
 
+Build the following code:
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlin.system.*
+
+//sampleStart
+fun simple(): Flow<Int> = flow {
+    for (i in 1..3) {
+        delay(100) // pretend we are asynchronously waiting 100 ms
+        emit(i) // emit next value
+    }
+}
+
+fun main() = runBlocking<Unit> {
+    val time = measureTimeMillis {
+        simple()
+            .buffer() // buffer emissions, don't wait
+            .collect { value ->
+                delay(300) // pretend we are processing it for 300 ms
+                println(value)
+            }
+    }
+    println("Collected in $time ms")
+}
+//sampleEnd
+```
+
+</div>
+
+> You can get the full code from [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-16.kt).
+
+Set two breakpoints on the lines:
+
+<div class="sample" markdown="1" theme="idea" mode="kotlin" data-highlight-only>
+
+```kotlin
+delay(100)
+emit(i) 
+```
+
+</div>
+
+Run the code in debug mode.
+
 ![Debugging coroutines](images/coroutine-debugger.png)
 
 You can:
