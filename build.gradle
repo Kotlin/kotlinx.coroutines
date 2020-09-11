@@ -87,6 +87,11 @@ buildscript {
 
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
+// todo:KLUDGE: Hierarchical project structures are not fully supported in IDEA, enable only for a regular built
+if (!Idea.active) {
+    ext.set("kotlin.mpp.enableGranularSourceSetsMetadata", "true")
+}
+
 // todo:KLUDGE: This is needed to workaround dependency resolution between Java and MPP modules
 def configureKotlinJvmPlatform(configuration) {
     configuration.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
