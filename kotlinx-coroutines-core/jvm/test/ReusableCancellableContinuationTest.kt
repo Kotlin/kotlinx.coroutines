@@ -28,7 +28,7 @@ class ReusableCancellableContinuationTest : TestBase() {
         suspender: suspend ((CancellableContinuation<Unit>) -> Unit) -> Unit
     ) {
         val result = mutableSetOf<CancellableContinuation<*>>()
-        val job = coroutineContext[Job]!!
+        val job = currentJob()
         val channel = Channel<Continuation<Unit>>(1)
         launch {
             channel.consumeEach {
@@ -79,7 +79,7 @@ class ReusableCancellableContinuationTest : TestBase() {
         FieldWalker.assertReachableCount(1, coroutineContext[Job]) { it === continuation }
         suspendAtomicCancellableCoroutineReusable<Unit> {
             expect(5)
-            coroutineContext[Job]!!.cancel()
+            currentScopeJob().cancel()
             it.resume(Unit)
         }
         assertFalse(isActive)
@@ -134,7 +134,7 @@ class ReusableCancellableContinuationTest : TestBase() {
 
     @Test
     fun testPropagatedCancel() = runTest({it is CancellationException}) {
-        val currentJob = coroutineContext[Job]!!
+        val currentJob = currentJob()
         expect(1)
         // Bind child at first
         suspendAtomicCancellableCoroutineReusable<Unit> {
@@ -182,7 +182,7 @@ class ReusableCancellableContinuationTest : TestBase() {
                 channel.receive()
             }
             expect(2)
-            val job = coroutineContext[Job]!!
+            val job = currentJob()
             // 1 for reusable CC, another one for outer joiner
             FieldWalker.assertReachableCount(2, job) { it is CancellableContinuation<*> }
         }

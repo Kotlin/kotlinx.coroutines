@@ -265,7 +265,7 @@ class CoroutineScopeTest : TestBase() {
     fun testIncompleteScopeState() = runTest {
         lateinit var scopeJob: Job
         coroutineScope {
-            scopeJob = coroutineContext[Job]!!
+            scopeJob = currentScopeJob()
             scopeJob.invokeOnCompletion { }
         }
 

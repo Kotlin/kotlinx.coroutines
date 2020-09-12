@@ -47,7 +47,7 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     /** @suppress */
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         if (dispatchImmediately) {
-            block.run()
+             block.run()
         } else {
             post(block)
         }

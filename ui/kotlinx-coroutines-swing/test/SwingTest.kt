@@ -58,7 +58,7 @@ class SwingTest : TestBase() {
         job.join()
         assertTrue(component.executed)
         component.cancel()
-        component.coroutineContext[Job]!!.join()
+        component.currentScopeJob().join()
     }
 
     @Test
@@ -81,7 +81,7 @@ class SwingTest : TestBase() {
     }
 
     private suspend fun join(component: SwingComponent) {
-        component.coroutineContext[Job]!!.join()
+        component.currentScopeJob().join()
     }
 
     @Test

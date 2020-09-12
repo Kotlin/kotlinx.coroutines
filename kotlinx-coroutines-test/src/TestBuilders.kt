@@ -42,17 +42,22 @@ import kotlin.coroutines.*
  * @param testBody The code of the unit-test.
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public fun runBlockingTest(context: CoroutineContext = EmptyCoroutineContext, testBody: suspend TestCoroutineScope.() -> Unit) {
+public fun runBlockingTest(
+    context: CoroutineContext = EmptyCoroutineContext,
+    testBody: suspend TestCoroutineScope.() -> Unit
+) {
     val (safeContext, dispatcher) = context.checkArguments()
     val startingJobs = safeContext.activeJobs()
     val scope = TestCoroutineScope(safeContext)
-    val deferred = scope.async {
-        scope.testBody()
+    runBlocking {
+        val job = scope.launch {
+            scope.testBody()
+        }
+        dispatcher.advanceUntilIdle()
+        job.join()
     }
+
     dispatcher.advanceUntilIdle()
-    deferred.getCompletionExceptionOrNull()?.let {
-        throw it
-    }
     scope.cleanupTestCoroutines()
     val endingJobs = safeContext.activeJobs()
     if ((endingJobs - startingJobs).isNotEmpty()) {
@@ -86,7 +91,7 @@ private fun CoroutineContext.checkArguments(): Pair<CoroutineContext, DelayContr
         this ?: TestCoroutineDispatcher()
     }
 
-    val exceptionHandler =  get(CoroutineExceptionHandler).run {
+    val exceptionHandler = get(CoroutineExceptionHandler).run {
         this?.let {
             require(this is UncaughtExceptionCaptor) { "coroutineExceptionHandler must implement UncaughtExceptionCaptor: $this" }
         }

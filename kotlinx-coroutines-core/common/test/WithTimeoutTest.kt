@@ -194,7 +194,7 @@ class WithTimeoutTest : TestBase() {
     fun testIncompleteWithTimeoutState() = runTest {
         lateinit var timeoutJob: Job
         val handle = withTimeout(Long.MAX_VALUE) {
-            timeoutJob = coroutineContext[Job]!!
+            timeoutJob = currentJob()
             timeoutJob.invokeOnCompletion { }
         }
 

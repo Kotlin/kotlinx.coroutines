@@ -157,7 +157,7 @@ class RunBlockingTest : TestBase() {
     fun testIncompleteState() {
         val handle = runBlocking {
             // See #835
-            coroutineContext[Job]!!.invokeOnCompletion {  }
+            currentJob().invokeOnCompletion {  }
         }
 
         handle.dispose()

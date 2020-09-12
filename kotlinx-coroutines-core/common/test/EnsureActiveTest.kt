@@ -17,7 +17,7 @@ class EnsureActiveTest : TestBase() {
         scope.launch(Dispatchers.Unconfined) {
             ensureActive()
             coroutineContext.ensureActive()
-            coroutineContext[Job]!!.ensureActive()
+            currentJob().ensureActive()
             expect(2)
             delay(Long.MAX_VALUE)
         }
@@ -36,7 +36,7 @@ class EnsureActiveTest : TestBase() {
         scope.launch(Dispatchers.Unconfined) {
             ensureActive()
             coroutineContext.ensureActive()
-            coroutineContext[Job]!!.ensureActive()
+            currentJob().ensureActive()
             expect(2)
         }
 
@@ -56,7 +56,7 @@ class EnsureActiveTest : TestBase() {
         scope.launch(Dispatchers.Unconfined) {
             ensureActive()
             coroutineContext.ensureActive()
-            coroutineContext[Job]!!.ensureActive()
+            currentJob().ensureActive()
             expect(2)
             throw TestException()
         }

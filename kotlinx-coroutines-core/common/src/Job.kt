@@ -669,3 +669,22 @@ public object NonDisposableHandle : DisposableHandle, ChildHandle {
      */
     override fun toString(): String = "NonDisposableHandle"
 }
+
+/**
+ * Gets the [Job] of the current suspend function.
+ *
+ * @throws IllegalStateExeption if there's no [Job] in [CoroutineContext] (not likely)
+ */
+public suspend fun currentJob(): Job =
+    coroutineContext.currentJob()
+
+/**
+ * Gets the [Job] of the current [CoroutineScope]
+ *
+ * @throws IllegalStateExeption if there's no [Job] in [CoroutineContext] (not likely)
+ */
+public fun CoroutineScope.currentScopeJob(): Job =
+    coroutineContext.currentJob()
+
+internal fun CoroutineContext.currentJob() =
+    checkNotNull(this[Job]!!)

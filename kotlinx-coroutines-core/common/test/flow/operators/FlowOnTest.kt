@@ -171,7 +171,7 @@ class FlowOnTest : TestBase() {
             try {
                 flow<Int> {
                     expect(1)
-                    val flowJob = kotlin.coroutines.coroutineContext[Job]!!
+                    val flowJob = currentJob()
                     launch {
                         expect(2)
                         flowJob.cancel()
@@ -280,7 +280,7 @@ class FlowOnTest : TestBase() {
     fun testAtomicStart() = runTest {
         try {
             coroutineScope {
-                val job = coroutineContext[Job]!!
+                val job = currentJob()
                 val flow = flow {
                     expect(3)
                     emit(1)

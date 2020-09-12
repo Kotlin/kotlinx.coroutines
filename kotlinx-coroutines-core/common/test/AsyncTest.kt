@@ -241,7 +241,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testIncompleteAsyncState() = runTest {
         val deferred = async {
-            coroutineContext[Job]!!.invokeOnCompletion {  }
+            currentJob().invokeOnCompletion {  }
         }
 
         deferred.await().dispose()
@@ -255,7 +255,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testIncompleteAsyncFastPath() = runTest {
         val deferred = async(Dispatchers.Unconfined) {
-            coroutineContext[Job]!!.invokeOnCompletion {  }
+            currentJob().invokeOnCompletion {  }
         }
 
         deferred.await().dispose()

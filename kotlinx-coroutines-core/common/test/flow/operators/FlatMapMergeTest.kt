@@ -41,7 +41,7 @@ class FlatMapMergeTest : FlatMapMergeBaseTest() {
     fun testAtomicStart() = runTest {
         try {
             coroutineScope {
-                val job = coroutineContext[Job]!!
+                val job = currentJob()
                 val flow = flow {
                     expect(3)
                     emit(1)

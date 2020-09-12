@@ -91,7 +91,7 @@ class UnconfinedTest : TestBase() {
     fun testCancellationWihYields() = runTest {
         expect(1)
         GlobalScope.launch(Dispatchers.Unconfined) {
-            val job = coroutineContext[Job]!!
+            val job = currentJob()
             expect(2)
             yield()
             GlobalScope.launch(Dispatchers.Unconfined) {

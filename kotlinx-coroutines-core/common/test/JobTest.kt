@@ -211,7 +211,7 @@ class JobTest : TestBase() {
     @Test
     fun testIncompleteJobState() = runTest {
         val job = launch {
-            coroutineContext[Job]!!.invokeOnCompletion {  }
+            currentJob().invokeOnCompletion {  }
         }
 
         job.join()
@@ -225,6 +225,29 @@ class JobTest : TestBase() {
         val job = async { Wrapper() }
         job.join()
         assertTrue(job.children.toList().isEmpty())
+    }
+
+    @Test
+    fun testCurrentScopeJob() = runTest {
+        currentScopeJob()
+        finish(1)
+    }
+
+    @Test
+    fun testCurrentScopeJobCustomJob() {
+        val testJob = Job()
+        val scope = CoroutineScope(testJob)
+        val resultJob = scope.currentScopeJob()
+        assertEquals(testJob, resultJob)
+    }
+
+    @Test
+    fun testCurrentJob() = runTest {
+        suspend fun getJob() =
+            currentJob()
+        val suspendJob = getJob()
+        val scopeJob = currentScopeJob()
+        assertEquals(scopeJob, suspendJob)
     }
 
     private class Wrapper : Incomplete {

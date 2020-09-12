@@ -313,7 +313,7 @@ class WithContextTest : TestBase() {
     fun testIncompleteWithContextState() = runTest {
         lateinit var ctxJob: Job
         withContext(wrapperDispatcher(coroutineContext)) {
-            ctxJob = coroutineContext[Job]!!
+            ctxJob = currentJob()
             ctxJob.invokeOnCompletion { }
         }
 

@@ -6,7 +6,6 @@ package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*
 import org.junit.Test
-import kotlin.coroutines.*
 import kotlin.test.*
 
 class CoroutinesDumpTest : DebugTestBase() {
@@ -148,7 +147,7 @@ class CoroutinesDumpTest : DebugTestBase() {
     private suspend fun nestedActiveMethod(shouldSuspend: Boolean) {
         if (shouldSuspend) yield()
         notifyCoroutineStarted()
-        while (coroutineContext[Job]!!.isActive) {
+        while (currentJob().isActive) {
             try {
                 Thread.sleep(60_000)
             } catch (_ : InterruptedException) {
