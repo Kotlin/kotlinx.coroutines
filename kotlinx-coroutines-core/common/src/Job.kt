@@ -687,4 +687,4 @@ public fun CoroutineScope.currentScopeJob(): Job =
     coroutineContext.currentJob()
 
 internal fun CoroutineContext.currentJob() =
-    checkNotNull(this[Job]!!)
+    checkNotNull(this[Job])
