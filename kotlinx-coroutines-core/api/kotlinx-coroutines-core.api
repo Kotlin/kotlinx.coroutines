@@ -394,6 +394,8 @@ public final class kotlinx/coroutines/JobKt {
 	public static synthetic fun cancelChildren$default (Lkotlinx/coroutines/Job;Ljava/util/concurrent/CancellationException;ILjava/lang/Object;)V
 	public static final fun cancelFutureOnCancellation (Lkotlinx/coroutines/CancellableContinuation;Ljava/util/concurrent/Future;)V
 	public static final fun cancelFutureOnCompletion (Lkotlinx/coroutines/Job;Ljava/util/concurrent/Future;)Lkotlinx/coroutines/DisposableHandle;
+	public static final fun currentJob (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun currentScopeJob (Lkotlinx/coroutines/CoroutineScope;)Lkotlinx/coroutines/Job;
 	public static final fun ensureActive (Lkotlin/coroutines/CoroutineContext;)V
 	public static final fun ensureActive (Lkotlinx/coroutines/Job;)V
 	public static final fun isActive (Lkotlin/coroutines/CoroutineContext;)Z
