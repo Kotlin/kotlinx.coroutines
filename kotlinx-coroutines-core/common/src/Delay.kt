@@ -64,7 +64,7 @@ public interface Delay {
  * Handy because it returns [Nothing], allowing it to be used in any coroutine,
  * regardless of the required return type.
  */
-public suspend inline fun awaitCancellation(): Nothing = suspendCancellableCoroutine {}
+public suspend fun awaitCancellation(): Nothing = suspendCancellableCoroutine {}
 
 /**
  * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
