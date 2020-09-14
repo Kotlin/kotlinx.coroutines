@@ -63,6 +63,34 @@ public interface Delay {
  *
  * Handy because it returns [Nothing], allowing it to be used in any coroutine,
  * regardless of the required return type.
+ *
+ * Usage example in callback adapting code:
+ *
+ * ```kotlin
+ * fun currentTemperature(): Flow<Temperature> = callbackFlow {
+ *     val callback = SensorCallback { degreesCelsius: Double ->
+ *         trySend(Temperature.celsius(degreesCelsius))
+ *     }
+ *     try {
+ *         registerSensorCallback(callback)
+ *         awaitCancellation() // Suspends to keep getting updates until cancellation.
+ *     } finally {
+ *         unregisterSensorCallback(callback)
+ *     }
+ * }
+ * ```
+ *
+ * Usage example in (non declarative) UI code:
+ *
+ * ```kotlin
+ * suspend fun showStuffUntilCancelled(content: Stuff): Nothing {
+ *     someSubView.text = content.title
+ *     anotherSubView.text = content.description
+ *     someView.visibleInScope {
+ *         awaitCancellation() // Suspends so the view stays visible.
+ *     }
+ * }
+ * ```
  */
 public suspend fun awaitCancellation(): Nothing = suspendCancellableCoroutine {}
 
