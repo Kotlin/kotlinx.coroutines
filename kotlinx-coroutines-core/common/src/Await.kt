@@ -8,14 +8,6 @@ import kotlinx.atomicfu.*
 import kotlin.coroutines.*
 
 /**
- * Suspends until cancellation, in which case it will throw a [CancellationException].
- *
- * Handy because it returns [Nothing], allowing it to be used in any coroutine,
- * regardless of the required return type.
- */
-public suspend inline fun awaitCancellation(): Nothing = suspendCancellableCoroutine {}
-
-/**
  * Awaits for completion of given deferred values without blocking a thread and resumes normally with the list of values
  * when all deferred computations are complete or resumes with the first thrown exception if any of computations
  * complete exceptionally including cancellation.

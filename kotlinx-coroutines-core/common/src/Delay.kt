@@ -59,6 +59,14 @@ public interface Delay {
 }
 
 /**
+ * Suspends until cancellation, in which case it will throw a [CancellationException].
+ *
+ * Handy because it returns [Nothing], allowing it to be used in any coroutine,
+ * regardless of the required return type.
+ */
+public suspend inline fun awaitCancellation(): Nothing = suspendCancellableCoroutine {}
+
+/**
  * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
