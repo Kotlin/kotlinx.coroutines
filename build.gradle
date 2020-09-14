@@ -83,6 +83,8 @@ buildscript {
         // JMH plugins
         classpath "com.github.jengelman.gradle.plugins:shadow:5.1.0"
     }
+
+    CacheRedirector.configureBuildScript(buildscript, rootProject)
 }
 
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
@@ -295,7 +297,14 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 // Report Kotlin compiler version when building project
 println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
 
+// --------------- Cache redirector ---------------
+
+allprojects {
+    CacheRedirector.configure(project)
+}
+
 // --------------- Configure sub-projects that are published ---------------
+
 def publishTasks = getTasksByName("publish", true) + getTasksByName("publishNpm", true)
 
 task deploy(dependsOn: publishTasks)
