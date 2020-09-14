@@ -100,6 +100,8 @@ public suspend fun awaitCancellation(): Nothing = suspendCancellableCoroutine {}
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  *
+ * If you want to delay forever (until cancellation), consider using [awaitCancellation] instead.
+ *
  * Note that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
  * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
@@ -117,6 +119,8 @@ public suspend fun delay(timeMillis: Long) {
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
+ *
+ * If you want to delay forever (until cancellation), consider using [awaitCancellation] instead.
  *
  * Note that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
