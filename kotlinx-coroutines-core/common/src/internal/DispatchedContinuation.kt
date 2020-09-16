@@ -214,7 +214,11 @@ internal class DispatchedContinuation<in T>(
 
     // takeState had already cleared the state so we cancel takenState here
     override fun cancelCompletedResult(takenState: Any?, cause: Throwable) {
-        if (takenState is CompletedWithCancellation) takenState.onCancellation(cause)
+        // It is Ok to call onCancellation here without try/catch around it, since this function only faces
+        // a "bound" cancellation handler that performs the safe call to the user-specified code.
+        if (takenState is CompletedWithCancellation) {
+            takenState.onCancellation(cause)
+        }
     }
 
     @Suppress("NOTHING_TO_INLINE")

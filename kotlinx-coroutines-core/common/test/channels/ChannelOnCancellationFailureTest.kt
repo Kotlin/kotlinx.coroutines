@@ -1,0 +1,80 @@
+/*
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+package kotlinx.coroutines.channels
+
+import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.selects.*
+import kotlin.test.*
+
+/**
+ * Tests for failures inside [Channel] cancellation handler.
+ */
+class ChannelOnCancellationFailureTest : TestBase() {
+    private val item = "LOST"
+    private val onCancelFail: (String) -> Unit = { throw TestException(it) }
+    private val shouldBeUnhandled: List<(Throwable) -> Boolean> = listOf({ it.isElementCancelException() })
+
+    private fun Throwable.isElementCancelException() =
+        this is ElementCancelException && cause is TestException && cause!!.message == item
+
+    @Test
+    fun testSendCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
+        val channel = Channel(onElementCancel = onCancelFail)
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            channel.send(item)
+            expectUnreached()
+        }
+        job.cancel()
+    }
+
+    @Test
+    fun testSendSelectCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
+        val channel = Channel(onElementCancel = onCancelFail)
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            select {
+                channel.onSend(item) {
+                    expectUnreached()
+                }
+            }
+        }
+        job.cancel()
+    }
+
+    @Test
+    fun testReceiveCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
+        val channel = Channel(onElementCancel = onCancelFail)
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            channel.receive()
+            expectUnreached() // will be cancelled before it dispatches
+        }
+        channel.send(item)
+        job.cancel()
+    }
+
+    @Test
+    fun testReceiveSelectCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
+        val channel = Channel(onElementCancel = onCancelFail)
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            select<Unit> {
+                channel.onReceive {
+                    expectUnreached()
+                }
+            }
+            expectUnreached() // will be cancelled before it dispatches
+        }
+        channel.send(item)
+        job.cancel()
+    }
+
+    @Test
+    fun testChannelCancelledFail() = runTest(expected = { it.isElementCancelException()}) {
+        val channel = Channel(1, onElementCancel = onCancelFail)
+        channel.send(item)
+        channel.cancel()
+        expectUnreached()
+    }
+
+}

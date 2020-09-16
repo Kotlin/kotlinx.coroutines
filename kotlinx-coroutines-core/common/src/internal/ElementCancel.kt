@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.*
@@ -30,4 +34,7 @@ internal fun <E> OnElementCancel<E>.callElementCancel(resource: E, context: Coro
 internal fun <E> OnElementCancel<E>.bindCancellationFun(element: E, context: CoroutineContext): (Throwable) -> Unit =
     { _: Throwable -> callElementCancel(element, context) }
 
+/**
+ * Internal exception that is thrown when [Channel] cancellation handler throws an exception.
+ */
 internal class ElementCancelException(message: String, cause: Throwable) : RuntimeException(message, cause)
