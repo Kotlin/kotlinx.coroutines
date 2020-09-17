@@ -118,7 +118,7 @@ class CancellableResumeTest : TestBase() {
             try {
                 suspendCancellableCoroutine<String> { cont ->
                     expect(3)
-                    // resumed first, dispatched, then cancelled, bit still got invokeOnCancellation call
+                    // resumed first, dispatched, then cancelled, but still got invokeOnCancellation call
                     cont.invokeOnCancellation { cause ->
                         // Note: invokeOnCancellation is called before cc.resume(value) { ... } handler
                         expect(7)
