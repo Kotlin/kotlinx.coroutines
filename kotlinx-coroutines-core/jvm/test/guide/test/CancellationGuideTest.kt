@@ -87,4 +87,11 @@ class CancellationGuideTest {
             "Result is null"
         )
     }
+
+    @Test
+    fun testExampleCancel09() {
+        test("ExampleCancel09") { kotlinx.coroutines.guide.exampleCancel09.main() }.verifyLines(
+            "0"
+        )
+    }
 }
