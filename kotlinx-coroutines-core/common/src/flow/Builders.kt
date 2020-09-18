@@ -283,11 +283,12 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  * Adjacent applications of [callbackFlow], [flowOn], [buffer], [produceIn], and [broadcastIn] are
  * always fused so that only one properly configured channel is used for execution.
  *
- * Example of usage:
+ * Example of usage that converts a multi-short callback API to a flow.
+ * For single-shot callbacks use [suspendCancellableCoroutine].
  *
  * ```
  * fun flowFrom(api: CallbackBasedApi): Flow<T> = callbackFlow {
- *     val callback = object : Callback { // implementation of some callback interface
+ *     val callback = object : Callback { // Implementation of some callback interface
  *         override fun onNextValue(value: T) {
  *             // To avoid blocking you can configure channel capacity using
  *             // either buffer(Channel.CONFLATED) or buffer(Channel.UNLIMITED) to avoid overfill
@@ -311,6 +312,10 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  *     awaitClose { api.unregister(callback) }
  * }
  * ```
+ *
+ * > The callback `register`/`unregister` methods provided by an external API must be thread-safe, because
+ * > `awaitClose` block can be called at any time due to asynchronous nature of cancellation, even
+ * > concurrently with the call of the callback.
  */
 @ExperimentalCoroutinesApi
 public fun <T> callbackFlow(@BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> = CallbackFlowBuilder(block)

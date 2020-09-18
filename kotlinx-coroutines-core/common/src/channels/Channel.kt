@@ -44,13 +44,16 @@ public interface SendChannel<in E> {
      * Sends the specified [element] to this channel, suspending the caller while the buffer of this channel is full
      * or if it does not exist, or throws an exception if the channel [is closed for `send`][isClosedForSend] (see [close] for details).
      *
-     * Note that closing a channel _after_ this function has suspended does not cause this suspended [send] invocation
+     * [Closing][close] a channel _after_ this function has suspended does not cause this suspended [send] invocation
      * to abort, because closing a channel is conceptually like sending a special "close token" over this channel.
      * All elements sent over the channel are delivered in first-in first-out order. The sent element
      * will be delivered to receivers before the close token.
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with a [CancellationException].
+     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+     * suspended, it will not resume successfully. If the `send` call threw [CancellationException] there is no way
+     * to tell if the [element] was already sent to the channel or not. See [Channel] documentation for details.
      *
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
@@ -164,6 +167,9 @@ public interface ReceiveChannel<out E> {
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with a [CancellationException].
+     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+     * suspended, it will not resume successfully. If the `receive` call threw [CancellationException] there is no way
+     * to tell if some element was already received from the channel or not. See [Channel] documentation for details.
      *
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
@@ -188,6 +194,9 @@ public interface ReceiveChannel<out E> {
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with a [CancellationException].
+     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+     * suspended, it will not resume successfully. If the `receiveOrNull` call threw [CancellationException] there is no way
+     * to tell if some element was already received from the channel or not. See [Channel] documentation for details.
      *
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
@@ -232,6 +241,9 @@ public interface ReceiveChannel<out E> {
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with a [CancellationException].
+     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+     * suspended, it will not resume successfully. If the `receiveOrClosed` call threw [CancellationException] there is no way
+     * to tell if some element was already received from the channel or not. See [Channel] documentation for details.
      *
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
@@ -415,6 +427,9 @@ public interface ChannelIterator<out E> {
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with a [CancellationException].
+     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+     * suspended, it will not resume successfully. If the `hasNext` call threw [CancellationException] there is no way
+     * to tell if some element was already received from the channel or not. See [Channel] documentation for details.
      *
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
@@ -479,10 +494,29 @@ public interface ChannelIterator<out E> {
  *   This channel has an array buffer of a fixed `capacity`.
  *   [Sending][send] suspends only when the buffer is full, and [receiving][receive] suspends only when the buffer is empty.
  *
+ * ### Prompt cancellation guarantee
+ *
+ * All suspending functions with channels provide **prompt cancellation guarantee**.
+ * If the job was cancelled while send or receive function was suspended, it will not resume successfully.
+ * If the [send][SendChannel.send] call threw [CancellationException] there is no way
+ * to tell if the element was already sent to the channel or not.
+ * If the [receive][ReceiveChannel.receive] call threw [CancellationException] there is no way
+ * to tell if some element was already received from the channel or not.
+ *
+ * With a single-threaded [dispatcher][CoroutineDispatcher] like [Dispatchers.Main] this gives a guarantee that if a
+ * piece code running in this thread cancels a [Job], then a coroutine running this job cannot resume successfully
+ * and continue to run, ensuring a prompt response to its cancellation.
+ *
+ * > **Prompt cancellation guarantee** for channel operations was added since `kotlinx.coroutines` version `1.4.0`
+ * > and had replaced a channel-specific atomic-cancellation that was not consistent with other suspending functions.
+ * > The low-level mechanics of prompt cancellation are explained in [suspendCancellableCoroutine] function.
+ *
  * ### Transferring resources via channels
  *
- * When a closeable resource (like open file or a handle to another native resource) is transferred via channel
- * from one coroutine to another it can be lost if either send or receive operation are cancelled in transit.
+ * As a result of a prompt cancellation guarantee, when a closeable resource
+ * (like open file or a handle to another native resource) is transferred via channel from one coroutine to another
+ * it can be lost if either send or receive operations are cancelled in transit.
+ *
  * A `Channel()` constructor function has an `onElementCancel` optional parameter.
  * When `onElementCancel` parameter is set, the corresponding function is called once for each element
  * that was sent to the channel and is being lost due to cancellation, which can happen in the following cases:

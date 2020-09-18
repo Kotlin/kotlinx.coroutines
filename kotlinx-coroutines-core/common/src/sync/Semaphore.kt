@@ -33,7 +33,10 @@ public interface Semaphore {
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
-     * The semaphore is not acquired if [CancellationException] was thrown.
+     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+     * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
+     * This function releases the semaphore if it was already acquired by this function before the [CancellationException]
+     * was thrown.
      *
      * Note, that this function does not check for cancellation when it does not suspend.
      * Use [CoroutineScope.isActive] or [CoroutineScope.ensureActive] to periodically

@@ -14,6 +14,8 @@ import kotlin.coroutines.intrinsics.*
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed when this suspending function is invoked or while
  * this function is waiting for dispatch, it resumes with a [CancellationException].
+ * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+ * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
  *
  * **Note**: This function always [checks for cancellation][ensureActive] even when it does not suspend.
  *
