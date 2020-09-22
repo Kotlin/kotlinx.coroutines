@@ -80,13 +80,53 @@ public suspend fun <T> Publisher<T>.awaitLast(): T = awaitOne(Mode.LAST)
  */
 public suspend fun <T> Publisher<T>.awaitSingle(): T = awaitOne(Mode.SINGLE)
 
+/**
+ * Awaits for the single value from the given publisher or the [default] value if none is emitted without blocking a thread and
+ * returns the resulting value or throws the corresponding exception if this publisher had produced error.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * immediately resumes with [CancellationException].
+ *
+ * @throws NoSuchElementException if publisher does not emit any value
+ * @throws IllegalArgumentException if publisher emits more than one value
+ */
+public suspend fun <T> Publisher<T>.awaitSingleOrDefault(default: T): T = awaitOne(Mode.SINGLE_OR_DEFAULT, default)
+
+/**
+ * Awaits for the single value from the given publisher or `null` value if none is emitted without blocking a thread and
+ * returns the resulting value or throws the corresponding exception if this publisher had produced error.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * immediately resumes with [CancellationException].
+ *
+ * @throws NoSuchElementException if publisher does not emit any value
+ * @throws IllegalArgumentException if publisher emits more than one value
+ */
+public suspend fun <T> Publisher<T>.awaitSingleOrNull(): T = awaitOne(Mode.SINGLE_OR_DEFAULT)
+
+/**
+ * Awaits for the single value from the given publisher or call [defaultValue] to get a value if none is emitted without blocking a thread and
+ * returns the resulting value or throws the corresponding exception if this publisher had produced error.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * immediately resumes with [CancellationException].
+ *
+ * @throws NoSuchElementException if publisher does not emit any value
+ * @throws IllegalArgumentException if publisher emits more than one value
+ */
+public suspend fun <T> Publisher<T>.awaitSingleOrElse(defaultValue: () -> T): T = awaitOne(Mode.SINGLE_OR_DEFAULT) ?: defaultValue()
+
 // ------------------------ private ------------------------
 
 private enum class Mode(val s: String) {
     FIRST("awaitFirst"),
     FIRST_OR_DEFAULT("awaitFirstOrDefault"),
     LAST("awaitLast"),
-    SINGLE("awaitSingle");
+    SINGLE("awaitSingle"),
+    SINGLE_OR_DEFAULT("awaitSingleOrDefault");
     override fun toString(): String = s
 }
 
@@ -114,8 +154,8 @@ private suspend fun <T> Publisher<T>.awaitOne(
                         cont.resume(t)
                     }
                 }
-                Mode.LAST, Mode.SINGLE -> {
-                    if (mode == Mode.SINGLE && seenValue) {
+                Mode.LAST, Mode.SINGLE, Mode.SINGLE_OR_DEFAULT -> {
+                    if ((mode == Mode.SINGLE || mode == Mode.SINGLE_OR_DEFAULT) && seenValue) {
                         subscription.cancel()
                         if (cont.isActive)
                             cont.resumeWithException(IllegalArgumentException("More than one onNext value for $mode"))
@@ -134,7 +174,7 @@ private suspend fun <T> Publisher<T>.awaitOne(
                 return
             }
             when {
-                mode == Mode.FIRST_OR_DEFAULT -> {
+                (mode == Mode.FIRST_OR_DEFAULT || mode == Mode.SINGLE_OR_DEFAULT) -> {
                     cont.resume(default as T)
                 }
                 cont.isActive -> {
