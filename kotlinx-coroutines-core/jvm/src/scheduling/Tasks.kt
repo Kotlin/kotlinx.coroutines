@@ -11,6 +11,9 @@ import java.util.concurrent.*
 
 // TODO most of these fields will be moved to 'object ExperimentalDispatcher'
 
+// User-visible name
+internal const val DEFAULT_DISPATCHER_NAME = "Dispatchers.Default"
+// Internal debuggability name + thread name prefixes
 internal const val DEFAULT_SCHEDULER_NAME = "DefaultDispatcher"
 
 // 100us as default

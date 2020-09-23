@@ -12,7 +12,7 @@ class ScanTest : TestBase() {
     @Test
     fun testScan() = runTest {
         val flow = flowOf(1, 2, 3, 4, 5)
-        val result = flow.scanReduce { acc, v -> acc + v }.toList()
+        val result = flow.runningReduce { acc, v -> acc + v }.toList()
         assertEquals(listOf(1, 3, 6, 10, 15), result)
     }
 
@@ -26,13 +26,13 @@ class ScanTest : TestBase() {
     @Test
     fun testNulls() = runTest {
         val flow = flowOf(null, 2, null, null, null, 5)
-        val result = flow.scanReduce { acc, v ->  if (v == null) acc else (if (acc == null) v else acc + v) }.toList()
+        val result = flow.runningReduce { acc, v -> if (v == null) acc else (if (acc == null) v else acc + v) }.toList()
         assertEquals(listOf(null, 2, 2, 2, 2, 7), result)
     }
 
     @Test
     fun testEmptyFlow() = runTest {
-        val result = emptyFlow<Int>().scanReduce { _, _ -> 1 }.toList()
+        val result = emptyFlow<Int>().runningReduce { _, _ -> 1 }.toList()
         assertTrue(result.isEmpty())
     }
 
@@ -49,7 +49,7 @@ class ScanTest : TestBase() {
                 emit(1)
                 emit(2)
             }
-        }.scanReduce { _, value ->
+        }.runningReduce { _, value ->
             expect(value) // 2
             latch.receive()
             throw TestException()
@@ -59,7 +59,7 @@ class ScanTest : TestBase() {
         finish(4)
     }
 
-    public operator fun <T> Collection<T>.plus(element: T): List<T> {
+    private operator fun <T> Collection<T>.plus(element: T): List<T> {
         val result = ArrayList<T>(size + 1)
         result.addAll(this)
         result.add(element)

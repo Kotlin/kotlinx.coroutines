@@ -50,7 +50,7 @@ class FlowGuideTest {
     @Test
     fun testExampleFlow05() {
         test("ExampleFlow05") { kotlinx.coroutines.guide.exampleFlow05.main() }.verifyLines(
-            "Calling foo...",
+            "Calling simple function...",
             "Calling collect...",
             "Flow started",
             "1",
@@ -139,7 +139,7 @@ class FlowGuideTest {
     @Test
     fun testExampleFlow13() {
         test("ExampleFlow13") { kotlinx.coroutines.guide.exampleFlow13.main() }.verifyLinesFlexibleThread(
-            "[main @coroutine#1] Started foo flow",
+            "[main @coroutine#1] Started simple flow",
             "[main @coroutine#1] Collected 1",
             "[main @coroutine#1] Collected 2",
             "[main @coroutine#1] Collected 3"
@@ -151,7 +151,7 @@ class FlowGuideTest {
         test("ExampleFlow14") { kotlinx.coroutines.guide.exampleFlow14.main() }.verifyExceptions(
             "Exception in thread \"main\" java.lang.IllegalStateException: Flow invariant is violated:",
             "\t\tFlow was collected in [CoroutineId(1), \"coroutine#1\":BlockingCoroutine{Active}@5511c7f8, BlockingEventLoop@2eac3323],",
-            "\t\tbut emission happened in [CoroutineId(1), \"coroutine#1\":DispatchedCoroutine{Active}@2dae0000, DefaultDispatcher].",
+            "\t\tbut emission happened in [CoroutineId(1), \"coroutine#1\":DispatchedCoroutine{Active}@2dae0000, Dispatchers.Default].",
             "\t\tPlease refer to 'flow' documentation or use 'flowOn' instead",
             "\tat ..."
         )

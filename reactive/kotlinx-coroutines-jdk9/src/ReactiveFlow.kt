@@ -4,12 +4,14 @@
 
 package kotlinx.coroutines.jdk9
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
 import kotlinx.coroutines.reactive.collect
+import org.reactivestreams.*
+import kotlin.coroutines.*
 import java.util.concurrent.Flow as JFlow
-import org.reactivestreams.FlowAdapters
 
 /**
  * Transforms the given reactive [Publisher] into [Flow].
@@ -25,9 +27,15 @@ public fun <T : Any> JFlow.Publisher<T>.asFlow(): Flow<T> =
 
 /**
  * Transforms the given flow to a reactive specification compliant [Publisher].
+ *
+ * An optional [context] can be specified to control the execution context of calls to [Subscriber] methods.
+ * You can set a [CoroutineDispatcher] to confine them to a specific thread and/or various [ThreadContextElement] to
+ * inject additional context into the caller thread. By default, the [Unconfined][Dispatchers.Unconfined] dispatcher
+ * is used, so calls are performed from an arbitrary thread.
  */
-public fun <T : Any> Flow<T>.asPublisher(): JFlow.Publisher<T> {
-    val reactivePublisher : org.reactivestreams.Publisher<T> = this.asPublisher<T>()
+@JvmOverloads // binary compatibility
+public fun <T : Any> Flow<T>.asPublisher(context: CoroutineContext = EmptyCoroutineContext): JFlow.Publisher<T> {
+    val reactivePublisher : org.reactivestreams.Publisher<T> = this.asPublisher<T>(context)
     return FlowAdapters.toFlowPublisher(reactivePublisher)
 }
 

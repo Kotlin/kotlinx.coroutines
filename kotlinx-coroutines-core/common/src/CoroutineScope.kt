@@ -226,10 +226,10 @@ public fun CoroutineScope.cancel(message: String, cause: Throwable? = null): Uni
 
 /**
  * Ensures that current scope is [active][CoroutineScope.isActive].
- * Throws [IllegalStateException] if the context does not have a job in it.
  *
  * If the job is no longer active, throws [CancellationException].
  * If the job was cancelled, thrown exception contains the original cancellation cause.
+ * This function does not do anything if there is no [Job] in the scope's [coroutineContext][CoroutineScope.coroutineContext].
  *
  * This method is a drop-in replacement for the following code, but with more precise exception:
  * ```
@@ -237,6 +237,8 @@ public fun CoroutineScope.cancel(message: String, cause: Throwable? = null): Uni
  *     throw CancellationException()
  * }
  * ```
+ *
+ * @see CoroutineContext.ensureActive
  */
 public fun CoroutineScope.ensureActive(): Unit = coroutineContext.ensureActive()
 

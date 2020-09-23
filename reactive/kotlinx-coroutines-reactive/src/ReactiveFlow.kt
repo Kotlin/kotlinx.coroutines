@@ -34,8 +34,15 @@ public fun <T : Any> Publisher<T>.asFlow(): Flow<T> =
  *
  * This function is integrated with `ReactorContext` from `kotlinx-coroutines-reactor` module,
  * see its documentation for additional details.
+ *
+ * An optional [context] can be specified to control the execution context of calls to [Subscriber] methods.
+ * You can set a [CoroutineDispatcher] to confine them to a specific thread and/or various [ThreadContextElement] to
+ * inject additional context into the caller thread. By default, the [Unconfined][Dispatchers.Unconfined] dispatcher
+ * is used, so calls are performed from an arbitrary thread.
  */
-public fun <T : Any> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
+@JvmOverloads // binary compatibility
+public fun <T : Any> Flow<T>.asPublisher(context: CoroutineContext = EmptyCoroutineContext): Publisher<T> =
+    FlowAsPublisher(this, Dispatchers.Unconfined + context)
 
 private class PublisherAsFlow<T : Any>(
     private val publisher: Publisher<T>,
@@ -153,11 +160,14 @@ internal fun <T> Publisher<T>.injectCoroutineContext(coroutineContext: Coroutine
  * Adapter that transforms [Flow] into TCK-complaint [Publisher].
  * [cancel] invocation cancels the original flow.
  */
-@Suppress("PublisherImplementation")
-private class FlowAsPublisher<T : Any>(private val flow: Flow<T>) : Publisher<T> {
+@Suppress("ReactiveStreamsPublisherImplementation")
+private class FlowAsPublisher<T : Any>(
+    private val flow: Flow<T>,
+    private val context: CoroutineContext
+) : Publisher<T> {
     override fun subscribe(subscriber: Subscriber<in T>?) {
         if (subscriber == null) throw NullPointerException()
-        subscriber.onSubscribe(FlowSubscription(flow, subscriber))
+        subscriber.onSubscribe(FlowSubscription(flow, subscriber, context))
     }
 }
 
@@ -165,12 +175,14 @@ private class FlowAsPublisher<T : Any>(private val flow: Flow<T>) : Publisher<T>
 @InternalCoroutinesApi
 public class FlowSubscription<T>(
     @JvmField public val flow: Flow<T>,
-    @JvmField public val subscriber: Subscriber<in T>
-) : Subscription, AbstractCoroutine<Unit>(Dispatchers.Unconfined, false) {
+    @JvmField public val subscriber: Subscriber<in T>,
+    context: CoroutineContext
+) : Subscription, AbstractCoroutine<Unit>(context, true) {
     private val requested = atomic(0L)
-    private val producer = atomic<CancellableContinuation<Unit>?>(null)
+    private val producer = atomic<Continuation<Unit>?>(createInitialContinuation())
 
-    override fun onStart() {
+    // This code wraps startCoroutineCancellable into continuation
+    private fun createInitialContinuation(): Continuation<Unit> = Continuation(coroutineContext) {
         ::flowProcessing.startCoroutineCancellable(this)
     }
 
@@ -197,19 +209,17 @@ public class FlowSubscription<T>(
      */
     private suspend fun consumeFlow() {
         flow.collect { value ->
-            /*
-             * Flow is scopeless, thus if it's not active, its subscription was cancelled.
-             * No intermediate "child failed, but flow coroutine is not" states are allowed.
-             */
-            coroutineContext.ensureActive()
-            if (requested.value <= 0L) {
+            // Emit the value
+            subscriber.onNext(value)
+            // Suspend if needed before requesting the next value
+            if (requested.decrementAndGet() <= 0) {
                 suspendCancellableCoroutine<Unit> {
                     producer.value = it
-                    if (requested.value != 0L) it.resumeSafely()
                 }
+            } else {
+                // check for cancellation if we don't suspend
+                coroutineContext.ensureActive()
             }
-            requested.decrementAndGet()
-            subscriber.onNext(value)
         }
     }
 
@@ -218,22 +228,19 @@ public class FlowSubscription<T>(
     }
 
     override fun request(n: Long) {
-        if (n <= 0) {
-            return
-        }
-        start()
-        requested.update { value ->
+        if (n <= 0) return
+        val old = requested.getAndUpdate { value ->
             val newValue = value + n
             if (newValue <= 0L) Long.MAX_VALUE else newValue
         }
-        val producer = producer.getAndSet(null) ?: return
-        producer.resumeSafely()
-    }
-
-    private fun CancellableContinuation<Unit>.resumeSafely() {
-        val token = tryResume(Unit)
-        if (token != null) {
-            completeResume(token)
+        if (old <= 0L) {
+            assert(old == 0L)
+            // Emitter is not started yet or has suspended -- spin on race with suspendCancellableCoroutine
+            while(true) {
+                val producer = producer.getAndSet(null) ?: continue // spin if not set yet
+                producer.resume(Unit)
+                break
+            }
         }
     }
 }

@@ -4,9 +4,6 @@
 
 package kotlinx.coroutines.internal
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
-internal actual typealias NativeThreadLocal = kotlin.native.concurrent.ThreadLocal
-
 internal actual class CommonThreadLocal<T> actual constructor() {
     private var value: T? = null
     @Suppress("UNCHECKED_CAST")

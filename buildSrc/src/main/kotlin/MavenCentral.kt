@@ -5,10 +5,9 @@
 @file:Suppress("UnstableApiUsage")
 
 import org.gradle.api.Project
-import org.gradle.api.provider.Property
 import org.gradle.api.publish.maven.MavenPom
 
-// --------------- pom configuration ---------------
+// Pom configuration
 
 fun MavenPom.configureMavenCentralMetadata(project: Project) {
     name by project.name
@@ -35,8 +34,4 @@ fun MavenPom.configureMavenCentralMetadata(project: Project) {
     scm {
         url by "https://github.com/Kotlin/kotlinx.coroutines"
     }
-}
-
-private infix fun <T> Property<T>.by(value: T) {
-    set(value)
 }

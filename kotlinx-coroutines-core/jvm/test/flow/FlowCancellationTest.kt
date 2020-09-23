@@ -43,4 +43,20 @@ class FlowCancellationTest : TestBase() {
         job.cancelAndJoin()
         finish(3)
     }
+
+    @Test
+    fun testFlowWithEmptyContext() = runTest {
+        expect(1)
+        withEmptyContext {
+            val flow = flow {
+                expect(2)
+                emit("OK")
+            }
+            flow.collect {
+                expect(3)
+                assertEquals("OK", it)
+            }
+        }
+        finish(4)
+    }
 }

@@ -73,7 +73,7 @@ private class BlockingCoroutine<T>(
             eventLoop?.decrementUseCount()
         }
         // now return result
-        val state = state
+        val state = state.unboxState()
         (state as? CompletedExceptionally)?.let { throw it.cause }
         state as T
     }

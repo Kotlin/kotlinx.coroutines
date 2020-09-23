@@ -26,7 +26,7 @@ internal object Unconfined : CoroutineDispatcher() {
             "isDispatchNeeded and dispatch calls.")
     }
     
-    override fun toString(): String = "Unconfined"
+    override fun toString(): String = "Dispatchers.Unconfined"
 }
 
 /**
