@@ -71,7 +71,7 @@ public suspend fun <T> Flow<T>.single(): T {
  * The terminal operator, that awaits for one and only one value to be published.
  * Throws [IllegalStateException] for flow that contains more than one element.
  */
-public suspend fun <T: Any> Flow<T>.singleOrNull(): T? {
+public suspend fun <T> Flow<T>.singleOrNull(): T? {
     var result: T? = null
     collect { value ->
         if (result != null) error("Expected only one element")
