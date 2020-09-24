@@ -61,6 +61,10 @@ class SingleTest : TestBase() {
         assertEquals(1, flowOf<Int?>(1).single())
         assertNull(flowOf<Int?>(null).single())
         assertFailsWith<NoSuchElementException> { flowOf<Int?>().single() }
+
+        assertEquals(1, flowOf<Int?>(1).singleOrNull())
+        assertNull(flowOf<Int?>(null).singleOrNull())
+        assertFailsWith<NoSuchElementException> { flowOf<Int?>().singleOrNull() }
     }
 
     @Test
