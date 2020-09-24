@@ -803,7 +803,7 @@ internal abstract class AbstractChannel<E>(
     private fun removeReceiveOnCancel(cont: CancellableContinuation<*>, receive: Receive<*>) =
         cont.invokeOnCancellation(handler = RemoveReceiveOnCancel(receive).asHandler)
 
-    private inner class RemoveReceiveOnCancel(private val receive: Receive<*>) : CancelHandler() {
+    private inner class RemoveReceiveOnCancel(private val receive: Receive<*>) : BeforeResumeCancelHandler() {
         override fun invoke(cause: Throwable?) {
             if (receive.remove())
                 onReceiveDequeued()

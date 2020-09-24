@@ -322,6 +322,8 @@ internal open class CancellableContinuationImpl<in T>(
                      * Continuation was already completed, and might already have cancel handler.
                      */
                     if (state.cancelHandler != null) multipleHandlersError(handler, state)
+                    // BeforeResumeCancelHandler does not need to be called on a completed continuation
+                    if (cancelHandler is BeforeResumeCancelHandler) return
                     if (state.cancelled) {
                         // todo: extra layer of protection against the second invokeOnCancellation
                         // if (!state.makeHandled()) multipleHandlersError(handler, state)
@@ -335,8 +337,10 @@ internal open class CancellableContinuationImpl<in T>(
                 else -> {
                     /*
                      * Continuation was already completed normally, but might get cancelled while being dispatched.
-                     * Change its state to CompletedContinuation.
+                     * Change its state to CompletedContinuation, unless we have BeforeResumeCancelHandler which
+                     * does not need to be called in this case.
                      */
+                    if (cancelHandler is BeforeResumeCancelHandler) return
                     val update = CompletedContinuation(state, cancelHandler = cancelHandler)
                     if (_state.compareAndSet(state, update)) return // quit on cas success
                 }
@@ -370,8 +374,9 @@ internal open class CancellableContinuationImpl<in T>(
             proposedUpdate
         }
         !resumeMode.isCancellableMode && idempotent == null -> proposedUpdate // cannot be cancelled in process, all is fine
-        onCancellation != null || state is CancelHandler || idempotent != null ->
-            // mark as CompletedContinuation if special cases are present (cancellation handlers or idempotent resume)
+        onCancellation != null || (state is CancelHandler && state !is BeforeResumeCancelHandler) || idempotent != null ->
+            // mark as CompletedContinuation if special cases are present:
+            // Cancellation handlers that shall be called after resume or idempotent resume
             CompletedContinuation(proposedUpdate, state as? CancelHandler, onCancellation, idempotent)
         else -> proposedUpdate // simple case -- use the value directly
     }
@@ -506,7 +511,19 @@ private object Active : NotCompleted {
     override fun toString(): String = "Active"
 }
 
+/**
+ * Base class for all [CancellableContinuation.invokeOnCancellation] handlers to avoid an extra instance
+ * on JVM, yet support JS where you cannot extend from a functional type.
+ */
 internal abstract class CancelHandler : CancelHandlerBase(), NotCompleted
+
+/**
+ * Base class for all [CancellableContinuation.invokeOnCancellation] handlers that don't need to be invoked
+ * if continuation is cancelled after resumption, during dispatch, because the corresponding resources
+ * were already released before calling `resume`. This cancel handler is called only before `resume`.
+ * It avoids allocation of [CompletedContinuation] instance during resume on JVM.
+ */
+internal abstract class BeforeResumeCancelHandler : CancelHandler()
 
 // Wrapper for lambdas, for the performance sake CancelHandler can be subclassed directly
 private class InvokeOnCancel( // Clashes with InvokeOnCancellation

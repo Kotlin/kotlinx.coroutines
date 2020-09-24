@@ -356,7 +356,8 @@ internal fun <T> getOrCreateCancellableContinuation(
 }
 
 /**
- * Removes the specified [node] on cancellation.
+ * Removes the specified [node] on cancellation. This function assumes that this node is already
+ * removed on successful resume and does not try to remove it if the continuation is cancelled during dispatch.
  */
 internal fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedListNode) =
     invokeOnCancellation(handler = RemoveOnCancel(node).asHandler)
@@ -377,7 +378,7 @@ public fun CancellableContinuation<*>.disposeOnCancellation(handle: DisposableHa
 
 // --------------- implementation details ---------------
 
-private class RemoveOnCancel(private val node: LockFreeLinkedListNode) : CancelHandler() {
+private class RemoveOnCancel(private val node: LockFreeLinkedListNode) : BeforeResumeCancelHandler() {
     override fun invoke(cause: Throwable?) { node.remove() }
     override fun toString() = "RemoveOnCancel[$node]"
 }
