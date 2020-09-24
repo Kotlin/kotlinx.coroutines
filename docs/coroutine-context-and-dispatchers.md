@@ -163,75 +163,23 @@ figure out what the coroutine was doing, where, and when if you don't have speci
 
 The Coroutine Debugger of the Kotlin plugin simplifies debugging coroutines in IntelliJ IDEA.
 
-With the coroutine debugger you can:
-* Easily check the state of each coroutine.
-* See the values of local and captured variables for both running and suspended coroutines.
-* See a full coroutine creation stack, as well as a call stack inside the coroutine. The stack includes all frames with 
-variable values, even those that would be lost during standard debugging.
-
 > Debugging works for versions 1.3.8 or later of `kotlinx-coroutines-core`.
 
-The following example contains [Flow](flow.md) with both slow emitter and collector (100 ms to produce an element and 300 ms to process it):
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
-```kotlin
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import kotlin.system.*
-
-//sampleStart
-fun simple(): Flow<Int> = flow {
-    for (i in 1..3) {
-        delay(100) // producing the value in 100 ms
-        emit(i) // set the breakpoint here
-    }
-}
-
-fun main() = runBlocking<Unit> {
-    val time = measureTimeMillis {
-        simple()
-            .buffer() // buffer emitted values
-            .collect { value ->
-                delay(300) // processing the value in 300 ms
-                println(value)
-            }
-    }
-    println("Collected in $time ms")
-}
-//sampleEnd
-```
-
-</div>
-
-> You can get the full code from [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-16.kt).
-
-Build the code, set a breakpoint at the line with the [emit] function called and run code in debug mode.
-
-The **Debug** tool window appears. It contains a **Coroutines** tab. In this tab, you can find information about both currently running and suspended coroutines. 
-The coroutines are grouped by the dispatcher they are running on. 
+The **Debug** tool window contains the **Coroutines** tab. In this tab, you can find information about both currently running and suspended coroutines. 
+The coroutines are grouped by the dispatcher they are running on.
 
 ![Debugging coroutines](images/coroutine-idea-debugging-1.png)
 
-There are two coroutines running concurrently. The flow collector and emitter run in separate coroutines because of the concurrent operator [buffer].
-That means that code buffers values that are emitted from the flow.
+With the coroutine debugger, you can:
+* Check the state of each coroutine.
+* See the values of local and captured variables for both running and suspended coroutines.
+* See a full coroutine creation stack, as well as a call stack inside the coroutine. The stack includes all frames with 
+variable values, even those that would be lost during standard debugging.
+* Get a full report that contains the state of each coroutine and its stack. To obtain it, right-click inside the **Coroutines** tab, and then click **Get Coroutines Dump**.
 
-The emitter coroutine has the **RUNNING** status, the collector coroutine has the **SUSPENDED** status.
+To start coroutine debugging, you just need to set breakpoints and run the application in debug mode.
 
-Delete the previously set breakpoint and set a new breakpoint at the line where the code prints value `println(value)` and rerun the code in debug mode:
-
-![Debugging coroutines](images/coroutine-idea-debugging-2.png)
-
-Now the collector coroutine has the **RUNNING** status, while the emitter coroutine has the **SUSPENDED** status.
-You can dig deep into each coroutine to debug your code. 
-
-If you need a full report containing the state of each coroutine and its stack, right-click inside the **Coroutines** tab, and then
-click **Get Coroutines Dump**.
-
-![Debugging coroutines](images/coroutine-idea-debugging-3.png)
-
-Learn more about debugging coroutines in [this blog post](https://blog.jetbrains.com/kotlin/2020/07/kotlin-1-4-rc-debugging-coroutines/)
-and [IntelliJ IDEA documentation](https://www.jetbrains.com/help/idea/debug-kotlin-coroutines.html).
+Learn more about coroutines debugging in the [tutorial](https://kotlinlang.org/docs/tutorials/coroutines/debug-coroutines-with-idea.html).
 
 #### Debugging using logging
 
@@ -762,5 +710,4 @@ that should be implemented.
 [ensurePresent]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/java.lang.-thread-local/ensure-present.html
 [ThreadContextElement]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-thread-context-element/index.html
 [buffer]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/buffer.html
-[emit]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow-collector/emit.html
 <!--- END -->
