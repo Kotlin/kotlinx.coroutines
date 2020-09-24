@@ -379,7 +379,10 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         override fun tryResumeLockWaiter(): Any? = if (select.trySelect()) SELECT_SUCCESS else null
         override fun completeResumeLockWaiter(token: Any) {
             assert { token === SELECT_SUCCESS }
-            block.startCoroutineCancellable(receiver = mutex, completion = select.completion)
+            block.startCoroutineCancellable(receiver = mutex, completion = select.completion) {
+                // if this continuation get's cancelled during dispatch to the caller, then release the lock
+                mutex.unlock(owner)
+            }
         }
         override fun toString(): String = "LockSelect[$owner, $mutex, $select]"
     }
