@@ -68,6 +68,13 @@ class EnsureActiveTest : TestBase() {
         finish(4)
     }
 
+    @Test
+    fun testEnsureActiveWithEmptyContext() = runTest {
+        withEmptyContext {
+            ensureActive() // should not do anything
+        }
+    }
+
     private inline fun checkException(block: () -> Unit) {
         val result = runCatching(block)
         val exception = result.exceptionOrNull() ?: fail()

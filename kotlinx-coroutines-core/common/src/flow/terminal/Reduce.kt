@@ -8,9 +8,7 @@
 
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
-import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 import kotlin.jvm.*
 
 /**
@@ -84,15 +82,10 @@ public suspend fun <T: Any> Flow<T>.singleOrNull(): T? {
  */
 public suspend fun <T> Flow<T>.first(): T {
     var result: Any? = NULL
-    try {
-        collect { value ->
-            result = value
-            throw AbortFlowException(NopCollector)
-        }
-    } catch (e: AbortFlowException) {
-        // Do nothing
+    collectWhile {
+        result = it
+        false
     }
-
     if (result === NULL) throw NoSuchElementException("Expected at least one element")
     return result as T
 }
@@ -103,17 +96,14 @@ public suspend fun <T> Flow<T>.first(): T {
  */
 public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
     var result: Any? = NULL
-    try {
-        collect { value ->
-            if (predicate(value)) {
-                result = value
-                throw AbortFlowException(NopCollector)
-            }
+    collectWhile {
+        if (predicate(it)) {
+            result = it
+            false
+        } else {
+            true
         }
-    } catch (e: AbortFlowException) {
-        // Do nothing
     }
-
     if (result === NULL) throw NoSuchElementException("Expected at least one element matching the predicate $predicate")
     return result as T
 }
@@ -124,13 +114,9 @@ public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
  */
 public suspend fun <T : Any> Flow<T>.firstOrNull(): T? {
     var result: T? = null
-    try {
-        collect { value ->
-            result = value
-            throw AbortFlowException(NopCollector)
-        }
-    } catch (e: AbortFlowException) {
-        // Do nothing
+    collectWhile {
+        result = it
+        false
     }
     return result
 }
@@ -141,15 +127,13 @@ public suspend fun <T : Any> Flow<T>.firstOrNull(): T? {
  */
 public suspend fun <T : Any> Flow<T>.firstOrNull(predicate: suspend (T) -> Boolean): T? {
     var result: T? = null
-    try {
-        collect { value ->
-            if (predicate(value)) {
-                result = value
-                throw AbortFlowException(NopCollector)
-            }
+    collectWhile {
+        if (predicate(it)) {
+            result = it
+            false
+        } else {
+            true
         }
-    } catch (e: AbortFlowException) {
-        // Do nothing
     }
     return result
 }

@@ -6,6 +6,7 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.internal.*
 import kotlin.test.*
 
 class FirstTest : TestBase() {
@@ -159,5 +160,14 @@ class FirstTest : TestBase() {
         assertSame(instance, flow.firstOrNull())
         assertSame(instance, flow.first { true })
         assertSame(instance, flow.firstOrNull { true })
+    }
+
+    @Test
+    fun testAbortFlowException() = runTest {
+        val flow = flow<Int> {
+            throw AbortFlowException(NopCollector) // Emulate cancellation
+        }
+
+        assertFailsWith<CancellationException> { flow.first() }
     }
 }

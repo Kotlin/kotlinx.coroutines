@@ -10,7 +10,7 @@
     * [Suspending functions](#suspending-functions)
     * [Flows](#flows)
   * [Flows are cold](#flows-are-cold)
-  * [Flow cancellation](#flow-cancellation)
+  * [Flow cancellation basics](#flow-cancellation-basics)
   * [Flow builders](#flow-builders)
   * [Intermediate flow operators](#intermediate-flow-operators)
     * [Transform operator](#transform-operator)
@@ -42,28 +42,30 @@
     * [Successful completion](#successful-completion)
   * [Imperative versus declarative](#imperative-versus-declarative)
   * [Launching flow](#launching-flow)
+  * [Flow cancellation checks](#flow-cancellation-checks)
+    * [Making busy flow cancellable](#making-busy-flow-cancellable)
   * [Flow and Reactive Streams](#flow-and-reactive-streams)
 
 <!--- END -->
 
 ## Asynchronous Flow
 
-Suspending functions asynchronously returns a single value, but how can we return
+A suspending function asynchronously returns a single value, but how can we return
 multiple asynchronously computed values? This is where Kotlin Flows come in.
 
 ### Representing multiple values
 
 Multiple values can be represented in Kotlin using [collections]. 
-For example, we can have a function `foo()` that returns a [List] 
+For example, we can have a `simple` function that returns a [List] 
 of three numbers and then print them all using [forEach]:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun foo(): List<Int> = listOf(1, 2, 3)
+fun simple(): List<Int> = listOf(1, 2, 3)
  
 fun main() {
-    foo().forEach { value -> println(value) } 
+    simple().forEach { value -> println(value) } 
 }
 ```
 
@@ -89,7 +91,7 @@ If we are computing the numbers with some CPU-consuming blocking code
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun foo(): Sequence<Int> = sequence { // sequence builder
+fun simple(): Sequence<Int> = sequence { // sequence builder
     for (i in 1..3) {
         Thread.sleep(100) // pretend we are computing it
         yield(i) // yield next value
@@ -97,7 +99,7 @@ fun foo(): Sequence<Int> = sequence { // sequence builder
 }
 
 fun main() {
-    foo().forEach { value -> println(value) } 
+    simple().forEach { value -> println(value) } 
 }
 ```  
 
@@ -116,7 +118,7 @@ This code outputs the same numbers, but it waits 100ms before printing each one.
 #### Suspending functions
 
 However, this computation blocks the main thread that is running the code. 
-When these values are computed by asynchronous code we can mark the function `foo` with a `suspend` modifier,
+When these values are computed by asynchronous code we can mark the `simple` function with a `suspend` modifier,
 so that it can perform its work without blocking and return the result as a list:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
@@ -125,13 +127,13 @@ so that it can perform its work without blocking and return the result as a list
 import kotlinx.coroutines.*                 
                            
 //sampleStart
-suspend fun foo(): List<Int> {
+suspend fun simple(): List<Int> {
     delay(1000) // pretend we are doing something asynchronous here
     return listOf(1, 2, 3)
 }
 
 fun main() = runBlocking<Unit> {
-    foo().forEach { value -> println(value) } 
+    simple().forEach { value -> println(value) } 
 }
 //sampleEnd
 ```  
@@ -151,7 +153,7 @@ This code prints the numbers after waiting for a second.
 #### Flows
 
 Using the `List<Int>` result type, means we can only return all the values at once. To represent
-the stream of values that are being asynchronously computed, we can use a [`Flow<Int>`][Flow] type just like we would the `Sequence<Int>` type for synchronously computed values:
+the stream of values that are being asynchronously computed, we can use a [`Flow<Int>`][Flow] type just like we would use the `Sequence<Int>` type for synchronously computed values:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -160,7 +162,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 //sampleStart               
-fun foo(): Flow<Int> = flow { // flow builder
+fun simple(): Flow<Int> = flow { // flow builder
     for (i in 1..3) {
         delay(100) // pretend we are doing something useful here
         emit(i) // emit next value
@@ -176,7 +178,7 @@ fun main() = runBlocking<Unit> {
         }
     }
     // Collect the flow
-    foo().collect { value -> println(value) } 
+    simple().collect { value -> println(value) } 
 }
 //sampleEnd
 ```  
@@ -203,11 +205,11 @@ Notice the following differences in the code with the [Flow] from the earlier ex
 
 * A builder function for [Flow] type is called [flow].
 * Code inside the `flow { ... }` builder block can suspend.
-* The function `foo()` is no longer marked with `suspend` modifier.   
+* The `simple` function  is no longer marked with `suspend` modifier.   
 * Values are _emitted_ from the flow using [emit][FlowCollector.emit] function.
 * Values are _collected_ from the flow using [collect][collect] function.  
 
-> We can replace [delay] with `Thread.sleep` in the body of `foo`'s `flow { ... }` and see that the main
+> We can replace [delay] with `Thread.sleep` in the body of `simple`'s `flow { ... }` and see that the main
 thread is blocked in this case. 
 
 ### Flows are cold
@@ -222,7 +224,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 //sampleStart      
-fun foo(): Flow<Int> = flow { 
+fun simple(): Flow<Int> = flow { 
     println("Flow started")
     for (i in 1..3) {
         delay(100)
@@ -231,8 +233,8 @@ fun foo(): Flow<Int> = flow {
 }
 
 fun main() = runBlocking<Unit> {
-    println("Calling foo...")
-    val flow = foo()
+    println("Calling simple function...")
+    val flow = simple()
     println("Calling collect...")
     flow.collect { value -> println(value) } 
     println("Calling collect again...")
@@ -248,7 +250,7 @@ fun main() = runBlocking<Unit> {
 Which prints:
 
 ```text
-Calling foo...
+Calling simple function...
 Calling collect...
 Flow started
 1
@@ -263,16 +265,14 @@ Flow started
 
 <!--- TEST -->
  
-This is a key reason the `foo()` function (which returns a flow) is not marked with `suspend` modifier.
-By itself, `foo()` returns quickly and does not wait for anything. The flow starts every time it is collected,
+This is a key reason the `simple` function (which returns a flow) is not marked with `suspend` modifier.
+By itself, `simple()` call returns quickly and does not wait for anything. The flow starts every time it is collected,
 that is why we see "Flow started" when we call `collect` again.
 
-### Flow cancellation
+### Flow cancellation basics
 
-Flow adheres to the general cooperative cancellation of coroutines. However, flow infrastructure does not introduce
-additional cancellation points. It is fully transparent for cancellation. As usual, flow collection can be 
-cancelled when the flow is suspended in a cancellable suspending function (like [delay]), and cannot be cancelled otherwise.
-
+Flow adheres to the general cooperative cancellation of coroutines. As usual, flow collection can be 
+cancelled when the flow is suspended in a cancellable suspending function (like [delay]).
 The following example shows how the flow gets cancelled on a timeout when running in a [withTimeoutOrNull] block 
 and stops executing its code:
 
@@ -283,7 +283,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 //sampleStart           
-fun foo(): Flow<Int> = flow { 
+fun simple(): Flow<Int> = flow { 
     for (i in 1..3) {
         delay(100)          
         println("Emitting $i")
@@ -293,7 +293,7 @@ fun foo(): Flow<Int> = flow {
 
 fun main() = runBlocking<Unit> {
     withTimeoutOrNull(250) { // Timeout after 250ms 
-        foo().collect { value -> println(value) } 
+        simple().collect { value -> println(value) } 
     }
     println("Done")
 }
@@ -304,7 +304,7 @@ fun main() = runBlocking<Unit> {
 
 > You can get the full code from [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-06.kt).
 
-Notice how only two numbers get emitted by the flow in `foo()` function, producing the following output: 
+Notice how only two numbers get emitted by the flow in the `simple` function, producing the following output: 
 
 ```text
 Emitting 1
@@ -315,6 +315,8 @@ Done
 ```
 
 <!--- TEST -->
+
+See [Flow cancellation checks](#flow-cancellation-checks) section for more details.
 
 ### Flow builders
 
@@ -590,14 +592,14 @@ Filter 5
 ### Flow context
 
 Collection of a flow always happens in the context of the calling coroutine. For example, if there is 
-a `foo` flow, then the following code runs in the context specified
-by the author of this code, regardless of the implementation details of the `foo` flow:
+a `simple` flow, then the following code runs in the context specified
+by the author of this code, regardless of the implementation details of the `simple` flow:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 withContext(context) {
-    foo.collect { value ->
+    simple().collect { value ->
         println(value) // run in the specified context 
     }
 }
@@ -610,7 +612,7 @@ withContext(context) {
 This property of a flow is called _context preservation_.
 
 So, by default, code in the `flow { ... }` builder runs in the context that is provided by a collector
-of the corresponding flow. For example, consider the implementation of `foo` that prints the thread
+of the corresponding flow. For example, consider the implementation of a `simple` function that prints the thread
 it is called on and emits three numbers:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
@@ -622,15 +624,15 @@ import kotlinx.coroutines.flow.*
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
            
 //sampleStart
-fun foo(): Flow<Int> = flow {
-    log("Started foo flow")
+fun simple(): Flow<Int> = flow {
+    log("Started simple flow")
     for (i in 1..3) {
         emit(i)
     }
 }  
 
 fun main() = runBlocking<Unit> {
-    foo().collect { value -> log("Collected $value") } 
+    simple().collect { value -> log("Collected $value") } 
 }            
 //sampleEnd
 ```                
@@ -642,7 +644,7 @@ fun main() = runBlocking<Unit> {
 Running this code produces:
 
 ```text  
-[main @coroutine#1] Started foo flow
+[main @coroutine#1] Started simple flow
 [main @coroutine#1] Collected 1
 [main @coroutine#1] Collected 2
 [main @coroutine#1] Collected 3
@@ -650,7 +652,7 @@ Running this code produces:
 
 <!--- TEST FLEXIBLE_THREAD -->
 
-Since `foo().collect` is called from the main thread, the body of `foo`'s flow is also called in the main thread.
+Since `simple().collect` is called from the main thread, the body of `simple`'s flow is also called in the main thread.
 This is the perfect default for fast-running or asynchronous code that does not care about the execution context and
 does not block the caller. 
 
@@ -670,7 +672,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
                       
 //sampleStart
-fun foo(): Flow<Int> = flow {
+fun simple(): Flow<Int> = flow {
     // The WRONG way to change context for CPU-consuming code in flow builder
     kotlinx.coroutines.withContext(Dispatchers.Default) {
         for (i in 1..3) {
@@ -681,7 +683,7 @@ fun foo(): Flow<Int> = flow {
 }
 
 fun main() = runBlocking<Unit> {
-    foo().collect { value -> println(value) } 
+    simple().collect { value -> println(value) } 
 }            
 //sampleEnd
 ```  
@@ -695,7 +697,7 @@ This code produces the following exception:
 ```text
 Exception in thread "main" java.lang.IllegalStateException: Flow invariant is violated:
 		Flow was collected in [CoroutineId(1), "coroutine#1":BlockingCoroutine{Active}@5511c7f8, BlockingEventLoop@2eac3323],
-		but emission happened in [CoroutineId(1), "coroutine#1":DispatchedCoroutine{Active}@2dae0000, DefaultDispatcher].
+		but emission happened in [CoroutineId(1), "coroutine#1":DispatchedCoroutine{Active}@2dae0000, Dispatchers.Default].
 		Please refer to 'flow' documentation or use 'flowOn' instead
 	at ...
 ``` 
@@ -717,7 +719,7 @@ import kotlinx.coroutines.flow.*
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
            
 //sampleStart
-fun foo(): Flow<Int> = flow {
+fun simple(): Flow<Int> = flow {
     for (i in 1..3) {
         Thread.sleep(100) // pretend we are computing it in CPU-consuming way
         log("Emitting $i")
@@ -726,7 +728,7 @@ fun foo(): Flow<Int> = flow {
 }.flowOn(Dispatchers.Default) // RIGHT way to change context for CPU-consuming code in flow builder
 
 fun main() = runBlocking<Unit> {
-    foo().collect { value ->
+    simple().collect { value ->
         log("Collected $value") 
     } 
 }            
@@ -757,7 +759,7 @@ creates another coroutine for an upstream flow when it has to change the [Corout
 
 Running different parts of a flow in different coroutines can be helpful from the standpoint of the overall time it takes 
 to collect the flow, especially when long-running asynchronous operations are involved. For example, consider a case when
-the emission by `foo()` flow is slow, taking 100 ms to produce an element; and collector is also slow, 
+the emission by a `simple` flow is slow, taking 100 ms to produce an element; and collector is also slow, 
 taking 300 ms to process an element. Let's see how long it takes to collect such a flow with three numbers:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
@@ -768,7 +770,7 @@ import kotlinx.coroutines.flow.*
 import kotlin.system.*
 
 //sampleStart
-fun foo(): Flow<Int> = flow {
+fun simple(): Flow<Int> = flow {
     for (i in 1..3) {
         delay(100) // pretend we are asynchronously waiting 100 ms
         emit(i) // emit next value
@@ -777,7 +779,7 @@ fun foo(): Flow<Int> = flow {
 
 fun main() = runBlocking<Unit> { 
     val time = measureTimeMillis {
-        foo().collect { value -> 
+        simple().collect { value -> 
             delay(300) // pretend we are processing it for 300 ms
             println(value) 
         } 
@@ -802,7 +804,7 @@ Collected in 1220 ms
 
 <!--- TEST ARBITRARY_TIME -->
 
-We can use a [buffer] operator on a flow to run emitting code of `foo()` concurrently with collecting code,
+We can use a [buffer] operator on a flow to run emitting code of the `simple` flow concurrently with collecting code,
 as opposed to running them sequentially:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
@@ -812,7 +814,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.system.*
 
-fun foo(): Flow<Int> = flow {
+fun simple(): Flow<Int> = flow {
     for (i in 1..3) {
         delay(100) // pretend we are asynchronously waiting 100 ms
         emit(i) // emit next value
@@ -822,7 +824,7 @@ fun foo(): Flow<Int> = flow {
 fun main() = runBlocking<Unit> { 
 //sampleStart
     val time = measureTimeMillis {
-        foo()
+        simple()
             .buffer() // buffer emissions, don't wait
             .collect { value -> 
                 delay(300) // pretend we are processing it for 300 ms
@@ -867,7 +869,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.system.*
 
-fun foo(): Flow<Int> = flow {
+fun simple(): Flow<Int> = flow {
     for (i in 1..3) {
         delay(100) // pretend we are asynchronously waiting 100 ms
         emit(i) // emit next value
@@ -877,7 +879,7 @@ fun foo(): Flow<Int> = flow {
 fun main() = runBlocking<Unit> { 
 //sampleStart
     val time = measureTimeMillis {
-        foo()
+        simple()
             .conflate() // conflate emissions, don't process each one
             .collect { value -> 
                 delay(300) // pretend we are processing it for 300 ms
@@ -918,7 +920,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.system.*
 
-fun foo(): Flow<Int> = flow {
+fun simple(): Flow<Int> = flow {
     for (i in 1..3) {
         delay(100) // pretend we are asynchronously waiting 100 ms
         emit(i) // emit next value
@@ -928,7 +930,7 @@ fun foo(): Flow<Int> = flow {
 fun main() = runBlocking<Unit> { 
 //sampleStart
     val time = measureTimeMillis {
-        foo()
+        simple()
             .collectLatest { value -> // cancel & restart on the latest value
                 println("Collecting $value") 
                 delay(300) // pretend we are processing it for 300 ms
@@ -1279,7 +1281,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 //sampleStart
-fun foo(): Flow<Int> = flow {
+fun simple(): Flow<Int> = flow {
     for (i in 1..3) {
         println("Emitting $i")
         emit(i) // emit next value
@@ -1288,7 +1290,7 @@ fun foo(): Flow<Int> = flow {
 
 fun main() = runBlocking<Unit> {
     try {
-        foo().collect { value ->         
+        simple().collect { value ->         
             println(value)
             check(value <= 1) { "Collected $value" }
         }
@@ -1329,7 +1331,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 //sampleStart
-fun foo(): Flow<String> = 
+fun simple(): Flow<String> = 
     flow {
         for (i in 1..3) {
             println("Emitting $i")
@@ -1343,7 +1345,7 @@ fun foo(): Flow<String> =
 
 fun main() = runBlocking<Unit> {
     try {
-        foo().collect { value -> println(value) }
+        simple().collect { value -> println(value) }
     } catch (e: Throwable) {
         println("Caught $e")
     } 
@@ -1390,7 +1392,7 @@ For example, let us emit the text on catching an exception:
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun foo(): Flow<String> = 
+fun simple(): Flow<String> = 
     flow {
         for (i in 1..3) {
             println("Emitting $i")
@@ -1404,7 +1406,7 @@ fun foo(): Flow<String> =
 
 fun main() = runBlocking<Unit> {
 //sampleStart
-    foo()
+    simple()
         .catch { e -> emit("Caught $e") } // emit on exception
         .collect { value -> println(value) }
 //sampleEnd
@@ -1437,7 +1439,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 //sampleStart
-fun foo(): Flow<Int> = flow {
+fun simple(): Flow<Int> = flow {
     for (i in 1..3) {
         println("Emitting $i")
         emit(i)
@@ -1445,7 +1447,7 @@ fun foo(): Flow<Int> = flow {
 }
 
 fun main() = runBlocking<Unit> {
-    foo()
+    simple()
         .catch { e -> println("Caught $e") } // does not catch downstream exceptions
         .collect { value ->
             check(value <= 1) { "Collected $value" }                 
@@ -1461,13 +1463,15 @@ fun main() = runBlocking<Unit> {
  
 A "Caught ..." message is not printed despite there being a `catch` operator: 
 
-<!--- TEST EXCEPTION  
+```text  
 Emitting 1
 1
 Emitting 2
 Exception in thread "main" java.lang.IllegalStateException: Collected 2
 	at ...
--->
+```
+
+<!--- TEST EXCEPTION -->
 
 #### Catching declaratively
 
@@ -1481,7 +1485,7 @@ be triggered by a call to `collect()` without parameters:
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun foo(): Flow<Int> = flow {
+fun simple(): Flow<Int> = flow {
     for (i in 1..3) {
         println("Emitting $i")
         emit(i)
@@ -1490,7 +1494,7 @@ fun foo(): Flow<Int> = flow {
 
 fun main() = runBlocking<Unit> {
 //sampleStart
-    foo()
+    simple()
         .onEach { value ->
             check(value <= 1) { "Collected $value" }                 
             println(value) 
@@ -1508,12 +1512,14 @@ fun main() = runBlocking<Unit> {
 Now we can see that a "Caught ..." message is printed and so we can catch all the exceptions without explicitly
 using a `try/catch` block: 
 
-<!--- TEST EXCEPTION  
+```text 
 Emitting 1
 1
 Emitting 2
 Caught java.lang.IllegalStateException: Collected 2
--->
+```
+
+<!--- TEST EXCEPTION -->
 
 ### Flow completion
 
@@ -1532,11 +1538,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 //sampleStart
-fun foo(): Flow<Int> = (1..3).asFlow()
+fun simple(): Flow<Int> = (1..3).asFlow()
 
 fun main() = runBlocking<Unit> {
     try {
-        foo().collect { value -> println(value) }
+        simple().collect { value -> println(value) }
     } finally {
         println("Done")
     }
@@ -1548,7 +1554,7 @@ fun main() = runBlocking<Unit> {
 
 > You can get the full code from [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-31.kt). 
 
-This code prints three numbers produced by the `foo()` flow followed by a "Done" string:
+This code prints three numbers produced by the `simple` flow followed by a "Done" string:
 
 ```text
 1
@@ -1572,11 +1578,11 @@ The previous example can be rewritten using an [onCompletion] operator and produ
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun foo(): Flow<Int> = (1..3).asFlow()
+fun simple(): Flow<Int> = (1..3).asFlow()
 
 fun main() = runBlocking<Unit> {
 //sampleStart
-    foo()
+    simple()
         .onCompletion { println("Done") }
         .collect { value -> println(value) }
 //sampleEnd
@@ -1595,7 +1601,7 @@ Done
 
 The key advantage of [onCompletion] is a nullable `Throwable` parameter of the lambda that can be used
 to determine whether the flow collection was completed normally or exceptionally. In the following
-example the `foo()` flow throws an exception after emitting the number 1:
+example the `simple` flow throws an exception after emitting the number 1:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -1604,13 +1610,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 //sampleStart
-fun foo(): Flow<Int> = flow {
+fun simple(): Flow<Int> = flow {
     emit(1)
     throw RuntimeException()
 }
 
 fun main() = runBlocking<Unit> {
-    foo()
+    simple()
         .onCompletion { cause -> if (cause != null) println("Flow completed exceptionally") }
         .catch { cause -> println("Caught exception") }
         .collect { value -> println(value) }
@@ -1647,10 +1653,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 //sampleStart
-fun foo(): Flow<Int> = (1..3).asFlow()
+fun simple(): Flow<Int> = (1..3).asFlow()
 
 fun main() = runBlocking<Unit> {
-    foo()
+    simple()
         .onCompletion { cause -> println("Flow completed with $cause") }
         .collect { value ->
             check(value <= 1) { "Collected $value" }                 
@@ -1777,6 +1783,127 @@ as cancellation and structured concurrency serve this purpose.
 Note that [launchIn] also returns a [Job], which can be used to [cancel][Job.cancel] the corresponding flow collection
 coroutine only without cancelling the whole scope or to [join][Job.join] it.
  
+### Flow cancellation checks
+
+For convenience, the [flow] builder performs additional [ensureActive] checks for cancellation on each emitted value. 
+It means that a busy loop emitting from a `flow { ... }` is cancellable:
+ 
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+//sampleStart           
+fun foo(): Flow<Int> = flow { 
+    for (i in 1..5) {
+        println("Emitting $i") 
+        emit(i) 
+    }
+}
+
+fun main() = runBlocking<Unit> {
+    foo().collect { value -> 
+        if (value == 3) cancel()  
+        println(value)
+    } 
+}
+//sampleEnd
+```  
+
+</div>
+
+> You can get the full code from [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-37.kt).
+
+We get only numbers up to 3 and a [CancellationException] after trying to emit number 4:
+
+```text 
+Emitting 1
+1
+Emitting 2
+2
+Emitting 3
+3
+Emitting 4
+Exception in thread "main" kotlinx.coroutines.JobCancellationException: BlockingCoroutine was cancelled; job="coroutine#1":BlockingCoroutine{Cancelled}@6d7b4f4c
+```
+
+<!--- TEST EXCEPTION -->
+
+However, most other flow operators do not do additional cancellation checks on their own for performance reasons. 
+For example, if you use [IntRange.asFlow] extension to write the same busy loop and don't suspend anywhere, 
+then there are no checks for cancellation:
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+//sampleStart           
+fun main() = runBlocking<Unit> {
+    (1..5).asFlow().collect { value -> 
+        if (value == 3) cancel()  
+        println(value)
+    } 
+}
+//sampleEnd
+```  
+
+</div>
+
+> You can get the full code from [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-38.kt).
+
+All numbers from 1 to 5 are collected and cancellation gets detected only before return from `runBlocking`:
+
+```text
+1
+2
+3
+4
+5
+Exception in thread "main" kotlinx.coroutines.JobCancellationException: BlockingCoroutine was cancelled; job="coroutine#1":BlockingCoroutine{Cancelled}@3327bd23
+```
+
+<!--- TEST EXCEPTION -->
+
+#### Making busy flow cancellable 
+
+In the case where you have a busy loop with coroutines you must explicitly check for cancellation.
+You can add `.onEach { currentCoroutineContext().ensureActive() }`, but there is a ready-to-use
+[cancellable] operator provided to do that:
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+//sampleStart           
+fun main() = runBlocking<Unit> {
+    (1..5).asFlow().cancellable().collect { value -> 
+        if (value == 3) cancel()  
+        println(value)
+    } 
+}
+//sampleEnd
+```  
+
+</div>
+
+> You can get the full code from [here](../kotlinx-coroutines-core/jvm/test/guide/example-flow-39.kt).
+
+With the `cancellable` operator only the numbers from 1 to 3 are collected:
+
+```text
+1
+2
+3
+Exception in thread "main" kotlinx.coroutines.JobCancellationException: BlockingCoroutine was cancelled; job="coroutine#1":BlockingCoroutine{Cancelled}@5ec0a365
+```
+
+<!--- TEST EXCEPTION -->
+ 
 ### Flow and Reactive Streams
 
 For those who are familiar with [Reactive Streams](https://www.reactive-streams.org/) or reactive frameworks such as RxJava and project Reactor, 
@@ -1813,6 +1940,8 @@ Integration modules include conversions from and to `Flow`, integration with Rea
 [Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
 [Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/join.html
+[ensureActive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/ensure-active.html
+[CancellationException]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-cancellation-exception/index.html
 <!--- INDEX kotlinx.coroutines.flow -->
 [Flow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html
 [flow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/flow.html
@@ -1845,4 +1974,6 @@ Integration modules include conversions from and to `Flow`, integration with Rea
 [catch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/catch.html
 [onCompletion]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/on-completion.html
 [launchIn]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/launch-in.html
+[IntRange.asFlow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/kotlin.ranges.-int-range/as-flow.html
+[cancellable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/cancellable.html
 <!--- END -->

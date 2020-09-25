@@ -7,11 +7,11 @@ package kotlinx.coroutines.guide.exampleFlow03
 
 import kotlinx.coroutines.*                 
                            
-suspend fun foo(): List<Int> {
+suspend fun simple(): List<Int> {
     delay(1000) // pretend we are doing something asynchronous here
     return listOf(1, 2, 3)
 }
 
 fun main() = runBlocking<Unit> {
-    foo().forEach { value -> println(value) } 
+    simple().forEach { value -> println(value) } 
 }

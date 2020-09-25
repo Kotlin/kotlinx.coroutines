@@ -8,7 +8,7 @@ package kotlinx.coroutines.guide.exampleFlow27
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun foo(): Flow<String> = 
+fun simple(): Flow<String> = 
     flow {
         for (i in 1..3) {
             println("Emitting $i")
@@ -22,7 +22,7 @@ fun foo(): Flow<String> =
 
 fun main() = runBlocking<Unit> {
     try {
-        foo().collect { value -> println(value) }
+        simple().collect { value -> println(value) }
     } catch (e: Throwable) {
         println("Caught $e")
     } 

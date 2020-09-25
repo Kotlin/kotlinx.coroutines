@@ -12,16 +12,24 @@ task installDependenciesMochaNode(type: NpmTask, dependsOn: [npmInstall]) {
     if (project.hasProperty("teamcity")) args += ["mocha-teamcity-reporter@$mocha_teamcity_reporter_version"]
 }
 
+def compileJsLegacy = tasks.hasProperty("compileKotlinJsLegacy")
+        ? compileKotlinJsLegacy
+        : compileKotlinJs
+
+def compileTestJsLegacy = tasks.hasProperty("compileTestKotlinJsLegacy")
+        ? compileTestKotlinJsLegacy
+        : compileTestKotlinJs
+
 // todo: use atomicfu-transformed test files here (not critical)
-task testMochaNode(type: NodeTask, dependsOn: [compileTestKotlinJs, installDependenciesMochaNode]) {
+task testMochaNode(type: NodeTask, dependsOn: [compileTestJsLegacy, installDependenciesMochaNode]) {
     script = file("$node.nodeModulesDir/node_modules/mocha/bin/mocha")
-    args = [compileTestKotlinJs.outputFile, '--require', 'source-map-support/register']
+    args = [compileTestJsLegacy.outputFile, '--require', 'source-map-support/register']
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
 }
 
-def legacyjsTestTask = project.tasks.findByName('legacyjsTest') ? legacyjsTest : jsTest
+def jsLegacyTestTask = project.tasks.findByName('jsLegacyTest') ? jsLegacyTest : jsTest
 
-legacyjsTestTask.dependsOn testMochaNode
+jsLegacyTestTask.dependsOn testMochaNode
 
 // -- Testing with Mocha under headless Chrome
 
@@ -38,7 +46,7 @@ task installDependenciesMochaChrome(type: NpmTask, dependsOn: [npmInstall]) {
 
 def mochaChromeTestPage = file("$buildDir/test-page.html")
 
-task prepareMochaChrome(dependsOn: [compileTestKotlinJs, installDependenciesMochaChrome]) {
+task prepareMochaChrome(dependsOn: [compileTestJsLegacy, installDependenciesMochaChrome]) {
     outputs.file(mochaChromeTestPage)
 }
 
@@ -56,8 +64,8 @@ prepareMochaChrome.doLast {
         <script>mocha.setup('bdd');</script>
         <script src="$node.nodeModulesDir/node_modules/kotlin/kotlin.js"></script>
         <script src="$node.nodeModulesDir/node_modules/kotlin-test/kotlin-test.js"></script>
-        <script src="$compileKotlinJs.outputFile"></script>
-        <script src="$compileTestKotlinJs.outputFile"></script>
+        <script src="$compileJsLegacy.outputFile"></script>
+        <script src="$compileTestJsLegacy.outputFile"></script>
         <script>mocha.run();</script>
         </body>
         </html>
@@ -66,7 +74,7 @@ prepareMochaChrome.doLast {
 
 task testMochaChrome(type: NodeTask, dependsOn: prepareMochaChrome) {
     script = file("$node.nodeModulesDir/node_modules/mocha-headless-chrome/bin/start")
-    args = [compileTestKotlinJs.outputFile, '--file', mochaChromeTestPage]
+    args = [compileTestJsLegacy.outputFile, '--file', mochaChromeTestPage]
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
 }
 
@@ -85,11 +93,11 @@ task installDependenciesMochaJsdom(type: NpmTask, dependsOn: [npmInstall]) {
     if (project.hasProperty("teamcity")) args += ["mocha-teamcity-reporter@$mocha_teamcity_reporter_version"]
 }
 
-task testMochaJsdom(type: NodeTask, dependsOn: [compileTestKotlinJs, installDependenciesMochaJsdom]) {
+task testMochaJsdom(type: NodeTask, dependsOn: [compileTestJsLegacy, installDependenciesMochaJsdom]) {
     script = file("$node.nodeModulesDir/node_modules/mocha/bin/mocha")
-    args = [compileTestKotlinJs.outputFile, '--require', 'source-map-support/register', '--require', 'jsdom-global/register']
+    args = [compileTestJsLegacy.outputFile, '--require', 'source-map-support/register', '--require', 'jsdom-global/register']
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
 }
 
-legacyjsTestTask.dependsOn testMochaJsdom
+jsLegacyTestTask.dependsOn testMochaJsdom
 

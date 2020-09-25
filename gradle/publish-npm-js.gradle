@@ -20,6 +20,10 @@ def npmDeployDir = file("$buildDir/npm")
 def authToken = prop("kotlin.npmjs.auth.token", "")
 def dryRun = prop("dryRun", "false")
 
+def jsLegacy = kotlin.targets.hasProperty("jsLegacy")
+        ? kotlin.targets.jsLegacy
+        : kotlin.targets.js
+
 // Note: publish transformed files using dependency on sourceSets.main.output
 task preparePublishNpm(type: Copy) {
     from(npmTemplateDir) {
@@ -30,7 +34,7 @@ task preparePublishNpm(type: Copy) {
         }
     }
     // we must publish output that is transformed by atomicfu
-    from(kotlin.targets.js.compilations.main.output.allOutputs)
+    from(jsLegacy.compilations.main.output.allOutputs)
     into npmDeployDir
 }
 

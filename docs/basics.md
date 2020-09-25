@@ -338,7 +338,7 @@ import kotlinx.coroutines.*
 fun main() = runBlocking {
     repeat(100_000) { // launch a lot of coroutines
         launch {
-            delay(1000L)
+            delay(5000L)
             print(".")
         }
     }
@@ -351,7 +351,7 @@ fun main() = runBlocking {
 
 <!--- TEST lines.size == 1 && lines[0] == ".".repeat(100_000) -->
 
-It launches 100K coroutines and, after a second, each coroutine prints a dot. 
+It launches 100K coroutines and, after 5 seconds, each coroutine prints a dot. 
 
 Now, try that with threads. What would happen? (Most likely your code will produce some sort of out-of-memory error)
 

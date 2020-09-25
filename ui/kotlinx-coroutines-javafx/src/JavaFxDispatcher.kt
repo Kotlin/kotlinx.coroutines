@@ -70,7 +70,7 @@ private object ImmediateJavaFxDispatcher : JavaFxDispatcher() {
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = !Platform.isFxApplicationThread()
 
-    override fun toString() = "JavaFx [immediate]"
+    override fun toString() = toStringInternalImpl() ?: "JavaFx.immediate"
 }
 
 /**
@@ -85,7 +85,7 @@ internal object JavaFx : JavaFxDispatcher() {
     override val immediate: MainCoroutineDispatcher
         get() = ImmediateJavaFxDispatcher
 
-    override fun toString() = "JavaFx"
+    override fun toString() = toStringInternalImpl() ?: "JavaFx"
 }
 
 private val pulseTimer by lazy {

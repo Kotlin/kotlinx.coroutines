@@ -43,4 +43,27 @@ public abstract class MainCoroutineDispatcher : CoroutineDispatcher() {
      * [Dispatchers.Main] supports immediate execution for Android, JavaFx and Swing platforms.
      */
     public abstract val immediate: MainCoroutineDispatcher
+
+    /**
+     * Returns a name of this main dispatcher for debugging purposes. This implementation returns
+     * `Dispatchers.Main` or `Dispatchers.Main.immediate` if it is the same as the corresponding
+     * reference in [Dispatchers] or a short class-name representation with address otherwise.
+     */
+    override fun toString(): String = toStringInternalImpl() ?: "$classSimpleName@$hexAddress"
+
+    /**
+     * Internal method for more specific [toString] implementations. It returns non-null
+     * string if this dispatcher is set in the platform as the main one.
+     * @suppress
+     */
+    @InternalCoroutinesApi
+    protected fun toStringInternalImpl(): String? {
+        val main = Dispatchers.Main
+        if (this === main) return "Dispatchers.Main"
+        val immediate =
+            try { main.immediate }
+            catch (e: UnsupportedOperationException) { null }
+        if (this === immediate) return "Dispatchers.Main.immediate"
+        return null
+    }
 }

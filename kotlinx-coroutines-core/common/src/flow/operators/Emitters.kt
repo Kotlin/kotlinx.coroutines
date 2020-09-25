@@ -19,10 +19,11 @@ import kotlin.jvm.*
 /**
  * Applies [transform] function to each value of the given flow.
  *
- * The receiver of the [transform] is [FlowCollector] and thus `transform` is a
- * generic function that may transform emitted element, skip it or emit it multiple times.
+ * The receiver of the `transform` is [FlowCollector] and thus `transform` is a
+ * flexible function that may transform emitted element, skip it or emit it multiple times.
  *
- * This operator can be used as a building block for other operators, for example:
+ * This operator generalizes [filter] and [map] operators and
+ * can be used as a building block for other operators, for example:
  *
  * ```
  * fun Flow<Int>.skipOddAndDuplicateEven(): Flow<Int> = transform { value ->

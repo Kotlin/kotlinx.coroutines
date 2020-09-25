@@ -20,8 +20,8 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  *
  * It can be demonstrated with the following example:
  * ```
- * val flow = flowOf(1, 2).delayEach(10)
- * val flow2 = flowOf("a", "b", "c").delayEach(15)
+ * val flow = flowOf(1, 2).onEach { delay(10) }
+ * val flow2 = flowOf("a", "b", "c").onEach { delay(15) }
  * flow.combine(flow2) { i, s -> i.toString() + s }.collect {
  *     println(it) // Will print "1a 2a 2b 2c"
  * }
@@ -42,8 +42,8 @@ public fun <T1, T2, R> Flow<T1>.combine(flow: Flow<T2>, transform: suspend (a: T
  *
  * It can be demonstrated with the following example:
  * ```
- * val flow = flowOf(1, 2).delayEach(10)
- * val flow2 = flowOf("a", "b", "c").delayEach(15)
+ * val flow = flowOf(1, 2).onEach { delay(10) }
+ * val flow2 = flowOf("a", "b", "c").onEach { delay(15) }
  * combine(flow, flow2) { i, s -> i.toString() + s }.collect {
  *     println(it) // Will print "1a 2a 2b 2c"
  * }
@@ -292,8 +292,8 @@ public inline fun <reified T, R> combineTransform(
  *
  * It can be demonstrated with the following example:
  * ```
- * val flow = flowOf(1, 2, 3).delayEach(10)
- * val flow2 = flowOf("a", "b", "c", "d").delayEach(15)
+ * val flow = flowOf(1, 2, 3).onEach { delay(10) }
+ * val flow2 = flowOf("a", "b", "c", "d").onEach { delay(15) }
  * flow.zip(flow2) { i, s -> i.toString() + s }.collect {
  *     println(it) // Will print "1a 2b 3c"
  * }

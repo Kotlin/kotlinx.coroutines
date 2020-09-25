@@ -446,6 +446,8 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 public abstract class kotlinx/coroutines/MainCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher {
 	public fun <init> ()V
 	public abstract fun getImmediate ()Lkotlinx/coroutines/MainCoroutineDispatcher;
+	public fun toString ()Ljava/lang/String;
+	protected final fun toStringInternalImpl ()Ljava/lang/String;
 }
 
 public final class kotlinx/coroutines/NonCancellable : kotlin/coroutines/AbstractCoroutineContextElement, kotlinx/coroutines/Job {
@@ -785,7 +787,7 @@ public abstract interface class kotlinx/coroutines/channels/ReceiveChannel {
 	public abstract fun iterator ()Lkotlinx/coroutines/channels/ChannelIterator;
 	public abstract fun poll ()Ljava/lang/Object;
 	public abstract fun receive (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract fun receiveOrClosed (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun receiveOrClosed-ZYPwvRU (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun receiveOrNull (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
@@ -838,8 +840,32 @@ public final class kotlinx/coroutines/channels/ValueOrClosed {
 	public final synthetic fun unbox-impl ()Ljava/lang/Object;
 }
 
+public final class kotlinx/coroutines/debug/internal/DebugCoroutineInfo {
+	public fun <init> (Lkotlinx/coroutines/debug/internal/DebugCoroutineInfoImpl;Lkotlin/coroutines/CoroutineContext;)V
+	public final fun getContext ()Lkotlin/coroutines/CoroutineContext;
+	public final fun getCreationStackBottom ()Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;
+	public final fun getCreationStackTrace ()Ljava/util/List;
+	public final fun getLastObservedFrame ()Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;
+	public final fun getLastObservedThread ()Ljava/lang/Thread;
+	public final fun getSequenceNumber ()J
+	public final fun getState ()Ljava/lang/String;
+	public final fun lastObservedStackTrace ()Ljava/util/List;
+}
+
 public synthetic class kotlinx/coroutines/debug/internal/DebugProbesImplSequenceNumberRefVolatile {
 	public fun <init> (J)V
+}
+
+public final class kotlinx/coroutines/debug/internal/DebuggerInfo : java/io/Serializable {
+	public fun <init> (Lkotlinx/coroutines/debug/internal/DebugCoroutineInfoImpl;Lkotlin/coroutines/CoroutineContext;)V
+	public final fun getCoroutineId ()Ljava/lang/Long;
+	public final fun getDispatcher ()Ljava/lang/String;
+	public final fun getLastObservedStackTrace ()Ljava/util/List;
+	public final fun getLastObservedThreadName ()Ljava/lang/String;
+	public final fun getLastObservedThreadState ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getSequenceNumber ()J
+	public final fun getState ()Ljava/lang/String;
 }
 
 public abstract class kotlinx/coroutines/flow/AbstractFlow : kotlinx/coroutines/flow/Flow {
@@ -971,7 +997,9 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static synthetic fun retry$default (Lkotlinx/coroutines/flow/Flow;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 	public static synthetic fun retry$default (Lkotlinx/coroutines/flow/Flow;JLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun retryWhen (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function4;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun runningReduce (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun sample (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun sample-8GFy2Ro (Lkotlinx/coroutines/flow/Flow;D)Lkotlinx/coroutines/flow/Flow;
 	public static final fun scan (Lkotlinx/coroutines/flow/Flow;Ljava/lang/Object;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun scanFold (Lkotlinx/coroutines/flow/Flow;Ljava/lang/Object;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun scanReduce (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
@@ -994,6 +1022,7 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static synthetic fun toSet$default (Lkotlinx/coroutines/flow/Flow;Ljava/util/Set;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun transform (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun transformLatest (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun transformWhile (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun unsafeTransform (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun withIndex (Lkotlinx/coroutines/flow/Flow;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun zip (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
