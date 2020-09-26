@@ -40,7 +40,8 @@ import kotlin.time.*
  */
 @FlowPreview
 public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
-    if (timeoutMillis <= 0) return this
+    require(timeoutMillis >= 0L) { "Debounce timeout should not be negative" }
+    if (timeoutMillis == 0L) return this
     return debounceInternal { timeoutMillis }
 }
 
@@ -73,6 +74,7 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
  *
  * @param timeoutMillisSelector [T] is the emitted value and the return value is timeout in milliseconds.
  */
+@ExperimentalTime
 @FlowPreview
 public fun <T> Flow<T>.debounce(timeoutMillisSelector: (T) -> Long): Flow<T> =
     debounceInternal { emittedItem ->
@@ -110,7 +112,7 @@ public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.t
 private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long) : Flow<T> =
     scopedFlow { downstream ->
         // Actually Any, KT-30796
-        val values = produce<Any?>(capacity = Channel.CONFLATED) {
+        val values = produce<Any?>(capacity = 0) {
             collect { value -> send(value ?: NULL) }
         }
         var lastValue: Any? = null
@@ -129,6 +131,7 @@ private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long) : F
                 lastValue?.let { value ->
                     val unboxedValue: T = NULL.unbox(value)
                     val timeoutMillis = timeoutMillisSelector(unboxedValue)
+                    require(timeoutMillis >= 0L) { "Debounce timeout should not be negative" }
                     // set timeout when lastValue != null
                     onTimeout(timeoutMillis) {
                         lastValue = null // Consume the value

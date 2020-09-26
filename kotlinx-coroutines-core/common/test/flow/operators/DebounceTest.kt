@@ -159,7 +159,7 @@ class DebounceTest : TestBase() {
             expect(2)
             throw TestException()
         }.flowOn(NamedDispatchers("source")).debounce(Long.MAX_VALUE).map {
-                expectUnreached()
+            expectUnreached()
         }
         assertFailsWith<TestException>(flow)
         finish(3)
@@ -222,6 +222,7 @@ class DebounceTest : TestBase() {
         finish(5)
     }
 
+    @ExperimentalTime
     @Test
     fun testDebounceSelectorBasic() = withVirtualTime {
         expect(1)
@@ -269,6 +270,7 @@ class DebounceTest : TestBase() {
         finish(4)
     }
 
+    @ExperimentalTime
     @Test
     fun testZeroDebounceTimeSelector() = withVirtualTime {
         expect(1)
