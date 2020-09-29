@@ -325,18 +325,15 @@ public suspend inline fun <T> suspendCancellableCoroutine(
 internal suspend inline fun <T> suspendCancellableCoroutineReusable(
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T = suspendCoroutineUninterceptedOrReturn { uCont ->
-    val cancellable = getOrCreateCancellableContinuation(uCont.intercepted(), resumeMode = MODE_CANCELLABLE_REUSABLE)
+    val cancellable = getOrCreateCancellableContinuation(uCont.intercepted())
     block(cancellable)
     cancellable.getResult()
 }
 
-internal fun <T> getOrCreateCancellableContinuation(
-    delegate: Continuation<T>, resumeMode: Int
-): CancellableContinuationImpl<T> {
-    assert { resumeMode.isReusableMode }
+internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): CancellableContinuationImpl<T> {
     // If used outside of our dispatcher
     if (delegate !is DispatchedContinuation<T>) {
-        return CancellableContinuationImpl(delegate, resumeMode)
+        return CancellableContinuationImpl(delegate, MODE_CANCELLABLE_REUSABLE)
     }
     /*
      * Attempt to claim reusable instance.
@@ -352,8 +349,8 @@ internal fun <T> getOrCreateCancellableContinuation(
      *    thus leaking CC instance for indefinite time.
      * 2) Continuation was cancelled. Then we should prevent any further reuse and bail out.
      */
-    return delegate.claimReusableCancellableContinuation()?.takeIf { it.resetState(resumeMode) }
-        ?: return CancellableContinuationImpl(delegate, resumeMode)
+    return delegate.claimReusableCancellableContinuation()?.takeIf { it.resetState(MODE_CANCELLABLE_REUSABLE) }
+        ?: return CancellableContinuationImpl(delegate, MODE_CANCELLABLE_REUSABLE)
 }
 
 /**
