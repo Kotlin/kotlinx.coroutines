@@ -338,7 +338,7 @@ internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): 
     /*
      * Attempt to claim reusable instance.
      *
-     * suspendAtomicCancellableCoroutineReusable { // <- claimed
+     * suspendCancellableCoroutineReusable { // <- claimed
      *     // Any asynchronous cancellation is "postponed" while this block
      *     // is being executed
      * } // postponed cancellation is checked here.

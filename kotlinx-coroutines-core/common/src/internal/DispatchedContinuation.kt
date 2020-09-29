@@ -37,7 +37,7 @@ internal class DispatchedContinuation<in T>(
      * 3) [REUSABLE_CLAIMED]. CC is currently being reused and its owner executes `suspend` block:
      *    ```
      *    // state == null | CC
-     *    suspendAtomicCancellableCoroutineReusable { cont ->
+     *    suspendCancellableCoroutineReusable { cont ->
      *        // state == REUSABLE_CLAIMED
      *        block(cont)
      *    }
@@ -49,7 +49,7 @@ internal class DispatchedContinuation<in T>(
      * [REUSABLE_CLAIMED] state is required to prevent the lost resume in the channel.
      * AbstractChannel.receive method relies on the fact that the following pattern
      * ```
-     * suspendAtomicCancellableCoroutineReusable { cont ->
+     * suspendCancellableCoroutineReusable { cont ->
      *     val result = pollFastPath()
      *     if (result != null) cont.resume(result)
      * }
@@ -67,12 +67,12 @@ internal class DispatchedContinuation<in T>(
         /*
          * Reusability control:
          * `null` -> no reusability at all, false
-         * If current state is not CCI, then we are within `suspendAtomicCancellableCoroutineReusable`, true
+         * If current state is not CCI, then we are within `suspendCancellableCoroutineReusable`, true
          * Else, if result is CCI === requester.
          * Identity check my fail for the following pattern:
          * ```
          * loop:
-         * suspendAtomicCancellableCoroutineReusable { } // Reusable, outer coroutine stores the child handle
+         * suspendCancellableCoroutineReusable { } // Reusable, outer coroutine stores the child handle
          * suspendCancellableCoroutine { } // **Not reusable**, handle should be disposed after {}, otherwise
          * it will leak because it won't be freed by `releaseInterceptedContinuation`
          * ```
@@ -119,7 +119,7 @@ internal class DispatchedContinuation<in T>(
      * If continuation was cancelled, it becomes non-reusable.
      *
      * ```
-     * suspendAtomicCancellableCoroutineReusable { // <- claimed
+     * suspendCancellableCoroutineReusable { // <- claimed
      * // Any asynchronous cancellation is "postponed" while this block
      * // is being executed
      * } // postponed cancellation is checked here in `getResult`
