@@ -202,7 +202,8 @@ public interface CancellableContinuation<in T> : Continuation<T> {
 
 /**
  * Suspends the coroutine like [suspendCoroutine], but providing a [CancellableContinuation] to
- * the [block]. This function throws a [CancellationException] if the coroutine is cancelled or completed while suspended.
+ * the [block]. This function throws a [CancellationException] if the [Job] of the coroutine is
+ * cancelled or completed while it is suspended.
  *
  * A typical use of this function is to suspend a coroutine while waiting for a result
  * from a single-shot callback API and to return the result to the caller.
