@@ -39,6 +39,7 @@ public abstract class OpDescriptor {
 }
 
 @SharedImmutable
+@JvmField
 internal val NO_DECISION: Any = Symbol("NO_DECISION")
 
 /**
