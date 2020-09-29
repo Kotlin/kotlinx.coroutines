@@ -80,7 +80,7 @@ class ChannelElementCancelTest : TestBase() {
 
     private fun runAllKindsTest(test: suspend CoroutineScope.(TestChannelKind) -> Unit) {
         for (kind in TestChannelKind.values()) {
-            if (kind.viaBroadcast) continue // does not support onElementCancel
+            if (kind.viaBroadcast) continue // does not support onUndeliveredElement
             try {
                 runTest {
                     test(kind)

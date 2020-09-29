@@ -23,10 +23,10 @@ enum class TestChannelKind(
     CONFLATED_BROADCAST(Channel.CONFLATED, "ConflatedBroadcastChannel", viaBroadcast = true)
     ;
 
-    fun <T> create(onElementCancel: ((T) -> Unit)? = null): Channel<T> = when {
-        viaBroadcast && onElementCancel != null -> error("Broadcast channels to do not support onElementCancel")
+    fun <T> create(onUndeliveredElement: ((T) -> Unit)? = null): Channel<T> = when {
+        viaBroadcast && onUndeliveredElement != null -> error("Broadcast channels to do not support onUndeliveredElement")
         viaBroadcast -> ChannelViaBroadcast(BroadcastChannel(capacity))
-        else -> Channel(capacity, onElementCancel)
+        else -> Channel(capacity, onUndeliveredElement)
     }
 
     val isConflated get() = capacity == Channel.CONFLATED

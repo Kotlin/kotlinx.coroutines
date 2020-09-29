@@ -28,7 +28,7 @@ internal class ArrayBroadcastChannel<E>(
      * Buffer capacity.
      */
     val capacity: Int
-) : AbstractSendChannel<E>(), BroadcastChannel<E> {
+) : AbstractSendChannel<E>(null), BroadcastChannel<E> {
     init {
         require(capacity >= 1) { "ArrayBroadcastChannel capacity must be at least 1, but $capacity was specified" }
     }

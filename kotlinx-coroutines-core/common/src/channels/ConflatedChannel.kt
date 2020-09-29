@@ -17,7 +17,7 @@ import kotlinx.coroutines.selects.*
  *
  * This channel is created by `Channel(Channel.CONFLATED)` factory function invocation.
  */
-internal open class ConflatedChannel<E>(onElementCancel: ((E) -> Unit)?) : AbstractChannel<E>(onElementCancel) {
+internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredElement<E>?) : AbstractChannel<E>(onUndeliveredElement) {
     protected final override val isBufferAlwaysEmpty: Boolean get() = false
     protected final override val isBufferEmpty: Boolean get() = value === EMPTY
     protected final override val isBufferAlwaysFull: Boolean get() = false
@@ -115,7 +115,7 @@ internal open class ConflatedChannel<E>(onElementCancel: ((E) -> Unit)?) : Abstr
     }
 
     protected override fun onCancelIdempotent(wasClosed: Boolean) {
-        var elementCancelException: ElementCancelException? = null // resource cancel exception
+        var elementCancelException: UndeliveredElementException? = null // resource cancel exception
         lock.withLock {
             elementCancelException = updateValueLocked(EMPTY)
         }
@@ -123,10 +123,10 @@ internal open class ConflatedChannel<E>(onElementCancel: ((E) -> Unit)?) : Abstr
         elementCancelException?.let { throw it } // throw exception at the end if there was one
     }
 
-    private fun updateValueLocked(element: Any?): ElementCancelException? {
+    private fun updateValueLocked(element: Any?): UndeliveredElementException? {
         val old = value
         val elementCancelException = if (old === EMPTY) null else
-            onElementCancel?.callElementCancelCatchingException(old as E)
+            onUndeliveredElement?.callElementUndeliveredCatchingException(old as E)
         value = element
         return elementCancelException
     }

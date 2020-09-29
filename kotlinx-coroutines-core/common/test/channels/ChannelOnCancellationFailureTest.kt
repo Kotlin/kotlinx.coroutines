@@ -18,11 +18,11 @@ class ChannelOnCancellationFailureTest : TestBase() {
     private val shouldBeUnhandled: List<(Throwable) -> Boolean> = listOf({ it.isElementCancelException() })
 
     private fun Throwable.isElementCancelException() =
-        this is ElementCancelException && cause is TestException && cause!!.message == item
+        this is UndeliveredElementException && cause is TestException && cause!!.message == item
 
     @Test
     fun testSendCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
-        val channel = Channel(onElementCancel = onCancelFail)
+        val channel = Channel(onUndeliveredElement = onCancelFail)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             channel.send(item)
             expectUnreached()
@@ -32,7 +32,7 @@ class ChannelOnCancellationFailureTest : TestBase() {
 
     @Test
     fun testSendSelectCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
-        val channel = Channel(onElementCancel = onCancelFail)
+        val channel = Channel(onUndeliveredElement = onCancelFail)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             select {
                 channel.onSend(item) {
@@ -45,7 +45,7 @@ class ChannelOnCancellationFailureTest : TestBase() {
 
     @Test
     fun testReceiveCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
-        val channel = Channel(onElementCancel = onCancelFail)
+        val channel = Channel(onUndeliveredElement = onCancelFail)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             channel.receive()
             expectUnreached() // will be cancelled before it dispatches
@@ -56,7 +56,7 @@ class ChannelOnCancellationFailureTest : TestBase() {
 
     @Test
     fun testReceiveSelectCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
-        val channel = Channel(onElementCancel = onCancelFail)
+        val channel = Channel(onUndeliveredElement = onCancelFail)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             select<Unit> {
                 channel.onReceive {
@@ -71,7 +71,7 @@ class ChannelOnCancellationFailureTest : TestBase() {
 
     @Test
     fun testReceiveOrNullCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
-        val channel = Channel(onElementCancel = onCancelFail)
+        val channel = Channel(onUndeliveredElement = onCancelFail)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             channel.receiveOrNull()
             expectUnreached() // will be cancelled before it dispatches
@@ -82,7 +82,7 @@ class ChannelOnCancellationFailureTest : TestBase() {
 
     @Test
     fun testReceiveOrNullSelectCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
-        val channel = Channel(onElementCancel = onCancelFail)
+        val channel = Channel(onUndeliveredElement = onCancelFail)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             select<Unit> {
                 channel.onReceiveOrNull {
@@ -97,7 +97,7 @@ class ChannelOnCancellationFailureTest : TestBase() {
 
     @Test
     fun testReceiveOrClosedCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
-        val channel = Channel(onElementCancel = onCancelFail)
+        val channel = Channel(onUndeliveredElement = onCancelFail)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             channel.receiveOrClosed()
             expectUnreached() // will be cancelled before it dispatches
@@ -108,7 +108,7 @@ class ChannelOnCancellationFailureTest : TestBase() {
 
     @Test
     fun testReceiveOrClosedSelectCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
-        val channel = Channel(onElementCancel = onCancelFail)
+        val channel = Channel(onUndeliveredElement = onCancelFail)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             select<Unit> {
                 channel.onReceiveOrClosed {
@@ -123,7 +123,7 @@ class ChannelOnCancellationFailureTest : TestBase() {
 
     @Test
     fun testHasNextCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
-        val channel = Channel(onElementCancel = onCancelFail)
+        val channel = Channel(onUndeliveredElement = onCancelFail)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             channel.iterator().hasNext()
             expectUnreached() // will be cancelled before it dispatches
@@ -134,7 +134,7 @@ class ChannelOnCancellationFailureTest : TestBase() {
 
     @Test
     fun testChannelCancelledFail() = runTest(expected = { it.isElementCancelException()}) {
-        val channel = Channel(1, onElementCancel = onCancelFail)
+        val channel = Channel(1, onUndeliveredElement = onCancelFail)
         channel.send(item)
         channel.cancel()
         expectUnreached()

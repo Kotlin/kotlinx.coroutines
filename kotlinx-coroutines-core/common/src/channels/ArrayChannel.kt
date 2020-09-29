@@ -24,8 +24,8 @@ internal open class ArrayChannel<E>(
      * Buffer capacity.
      */
     val capacity: Int,
-    onElementCancel: ((E) -> Unit)?
-) : AbstractChannel<E>(onElementCancel) {
+    onUndeliveredElement: OnUndeliveredElement<E>?
+) : AbstractChannel<E>(onUndeliveredElement) {
     init {
         require(capacity >= 1) { "ArrayChannel capacity must be at least 1, but $capacity was specified" }
     }
@@ -259,14 +259,14 @@ internal open class ArrayChannel<E>(
     // Note: this function is invoked when channel is already closed
     override fun onCancelIdempotent(wasClosed: Boolean) {
         // clear buffer first, but do not wait for it in helpers
-        val onElementCancel = onElementCancel
-        var elementCancelException: ElementCancelException? = null // first cancel exception, others suppressed
+        val onUndeliveredElement = onUndeliveredElement
+        var elementCancelException: UndeliveredElementException? = null // first cancel exception, others suppressed
         lock.withLock {
             repeat(size.value) {
                 val value = buffer[head]
-                if (value !== EMPTY && onElementCancel != null) {
+                if (value !== EMPTY && onUndeliveredElement != null) {
                     @Suppress("UNCHECKED_CAST")
-                    elementCancelException = onElementCancel.callElementCancelCatchingException(value as E, elementCancelException)
+                    elementCancelException = onUndeliveredElement.callElementUndeliveredCatchingException(value as E, elementCancelException)
                 }
                 buffer[head] = EMPTY
                 head = (head + 1) % buffer.size
