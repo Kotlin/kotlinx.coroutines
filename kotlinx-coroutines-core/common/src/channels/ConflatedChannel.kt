@@ -115,20 +115,20 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
     }
 
     protected override fun onCancelIdempotent(wasClosed: Boolean) {
-        var elementCancelException: UndeliveredElementException? = null // resource cancel exception
+        var undeliveredElementException: UndeliveredElementException? = null // resource cancel exception
         lock.withLock {
-            elementCancelException = updateValueLocked(EMPTY)
+            undeliveredElementException = updateValueLocked(EMPTY)
         }
         super.onCancelIdempotent(wasClosed)
-        elementCancelException?.let { throw it } // throw exception at the end if there was one
+        undeliveredElementException?.let { throw it } // throw exception at the end if there was one
     }
 
     private fun updateValueLocked(element: Any?): UndeliveredElementException? {
         val old = value
-        val elementCancelException = if (old === EMPTY) null else
-            onUndeliveredElement?.callElementUndeliveredCatchingException(old as E)
+        val undeliveredElementException = if (old === EMPTY) null else
+            onUndeliveredElement?.callUndeliveredElementCatchingException(old as E)
         value = element
-        return elementCancelException
+        return undeliveredElementException
     }
 
     override fun enqueueReceiveInternal(receive: Receive<E>): Boolean = lock.withLock {

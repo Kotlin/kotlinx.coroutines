@@ -457,7 +457,7 @@ internal abstract class AbstractSendChannel<E>(
         }
 
         override fun cancelElement() {
-            channel.onUndeliveredElement?.callElementUndelivered(pollResult, select.completion.context)
+            channel.onUndeliveredElement?.callUndeliveredElement(pollResult, select.completion.context)
         }
 
         override fun toString(): String = "SendSelect@$hexAddress($pollResult)[$channel, $select]"
@@ -1068,7 +1068,7 @@ internal class SendElement<E>(
     }
 
     override fun cancelElement() {
-        onUndeliveredElement?.callElementUndelivered(pollResult, cont.context)
+        onUndeliveredElement?.callUndeliveredElement(pollResult, cont.context)
     }
 }
 

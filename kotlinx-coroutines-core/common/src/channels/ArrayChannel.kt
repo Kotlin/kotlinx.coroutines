@@ -260,13 +260,13 @@ internal open class ArrayChannel<E>(
     override fun onCancelIdempotent(wasClosed: Boolean) {
         // clear buffer first, but do not wait for it in helpers
         val onUndeliveredElement = onUndeliveredElement
-        var elementCancelException: UndeliveredElementException? = null // first cancel exception, others suppressed
+        var undeliveredElementException: UndeliveredElementException? = null // first cancel exception, others suppressed
         lock.withLock {
             repeat(size.value) {
                 val value = buffer[head]
-                if (value !== EMPTY && onUndeliveredElement != null) {
+                if (onUndeliveredElement != null && value !== EMPTY) {
                     @Suppress("UNCHECKED_CAST")
-                    elementCancelException = onUndeliveredElement.callElementUndeliveredCatchingException(value as E, elementCancelException)
+                    undeliveredElementException = onUndeliveredElement.callUndeliveredElementCatchingException(value as E, undeliveredElementException)
                 }
                 buffer[head] = EMPTY
                 head = (head + 1) % buffer.size
@@ -275,7 +275,7 @@ internal open class ArrayChannel<E>(
         }
         // then clean all queued senders
         super.onCancelIdempotent(wasClosed)
-        elementCancelException?.let { throw it } // throw cancel exception at the end if there was one
+        undeliveredElementException?.let { throw it } // throw cancel exception at the end if there was one
     }
 
     // ------ debug ------

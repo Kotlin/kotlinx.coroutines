@@ -9,30 +9,30 @@ import kotlin.coroutines.*
 
 internal typealias OnUndeliveredElement<E> = (E) -> Unit
 
-internal fun <E> OnUndeliveredElement<E>.callElementUndeliveredCatchingException(
+internal fun <E> OnUndeliveredElement<E>.callUndeliveredElementCatchingException(
     element: E,
-    elementCancelException: UndeliveredElementException? = null
+    undeliveredElementException: UndeliveredElementException? = null
 ): UndeliveredElementException? {
     try {
         invoke(element)
     } catch (ex: Throwable) {
-        if (elementCancelException != null) {
-            elementCancelException.addSuppressedThrowable(ex)
+        if (undeliveredElementException != null) {
+            undeliveredElementException.addSuppressedThrowable(ex)
         } else {
-            return UndeliveredElementException("Exception in element cancellation for $element", ex)
+            return UndeliveredElementException("Exception in undelivered element handler for $element", ex)
         }
     }
-    return elementCancelException
+    return undeliveredElementException
 }
 
-internal fun <E> OnUndeliveredElement<E>.callElementUndelivered(resource: E, context: CoroutineContext) {
-    callElementUndeliveredCatchingException(resource, null)?.let { ex ->
+internal fun <E> OnUndeliveredElement<E>.callUndeliveredElement(element: E, context: CoroutineContext) {
+    callUndeliveredElementCatchingException(element, null)?.let { ex ->
         handleCoroutineException(context, ex)
     }
 }
 
 internal fun <E> OnUndeliveredElement<E>.bindCancellationFun(element: E, context: CoroutineContext): (Throwable) -> Unit =
-    { _: Throwable -> callElementUndelivered(element, context) }
+    { _: Throwable -> callUndeliveredElement(element, context) }
 
 /**
  * Internal exception that is thrown when [OnUndeliveredElement] handler in
