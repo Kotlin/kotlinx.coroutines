@@ -582,7 +582,7 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
  * See [Channel] interface documentation for details.
  *
  * @param capacity either a positive channel capacity or one of the constants defined in [Channel.Factory].
- * @param onUndeliveredElement an optional function that is called when element was sent but was not delivered to the the receiver.
+ * @param onUndeliveredElement an optional function that is called when element was sent but was not delivered to the consumer.
  *   See "Undelivered elements" section in [Channel] documentation.
  * @throws IllegalArgumentException when [capacity] < -2
  */

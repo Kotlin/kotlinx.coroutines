@@ -4,7 +4,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-class ChannelElementCancelTest : TestBase() {
+class ChannelUndeliveredElementTest : TestBase() {
     @Test
     fun testSendSuccessfully() = runAllKindsTest { kind ->
         val channel = kind.create<Resource> { it.cancel() }

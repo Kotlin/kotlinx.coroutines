@@ -15,10 +15,11 @@ import kotlin.random.Random
 import kotlin.test.*
 
 /**
- * Tests cancel atomicity for channel send & receive operations, including their select versions.
+ * Tests resource transfer via channel send & receive operations, including their select versions,
+ * using `onUndeliveredElement` to detect lost resources and close them properly.
  */
 @RunWith(Parameterized::class)
-class ChannelElementCancelStressTest(private val kind: TestChannelKind) : TestBase() {
+class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
@@ -33,7 +34,7 @@ class ChannelElementCancelStressTest(private val kind: TestChannelKind) : TestBa
     private val dispatcher = newFixedThreadPoolContext(2, "ChannelAtomicCancelStressTest")
     private val scope = CoroutineScope(dispatcher)
 
-    private val channel = kind.create<Data> { it.cancel() }
+    private val channel = kind.create<Data> { it.failedToDeliver() }
     private val senderDone = Channel<Boolean>(1)
     private val receiverDone = Channel<Boolean>(1)
 
@@ -45,7 +46,7 @@ class ChannelElementCancelStressTest(private val kind: TestChannelKind) : TestBa
     private var sentCnt = 0 // total number of send attempts
     private var receivedCnt = 0 // actually received successfully
     private var dupCnt = 0 // duplicates (should never happen)
-    private val cancelledCnt = atomic(0) // out of sent
+    private val failedToDeliverCnt = atomic(0) // out of sent
 
     lateinit var sender: Job
     lateinit var receiver: Job
@@ -85,14 +86,14 @@ class ChannelElementCancelStressTest(private val kind: TestChannelKind) : TestBa
         }
         stopSender()
         stopReceiver()
-        println("            Sent $sentCnt times to channel")
-        println("        Received $receivedCnt times from channel")
-        println("       Cancelled ${cancelledCnt.value} deliveries")
-        println("  Stopped sender $stoppedSender times")
-        println("Stopped receiver $stoppedReceiver times")
-        println("      Duplicated $dupCnt deliveries")
+        println("              Sent $sentCnt times to channel")
+        println("          Received $receivedCnt times from channel")
+        println(" Failed to deliver ${failedToDeliverCnt.value} times")
+        println("    Stopped sender $stoppedSender times")
+        println("  Stopped receiver $stoppedReceiver times")
+        println("        Duplicated $dupCnt deliveries")
         assertEquals(0, dupCnt)
-        assertEquals(sentCnt - cancelledCnt.value, receivedCnt)
+        assertEquals(sentCnt - failedToDeliverCnt.value, receivedCnt)
     }
 
     private fun launchSender() {
@@ -151,11 +152,11 @@ class ChannelElementCancelStressTest(private val kind: TestChannelKind) : TestBa
     }
 
     private inner class Data(val x: Int) {
-        private val cancelled = atomic(false)
+        private val failedToDeliver = atomic(false)
 
-        fun cancel() {
-            check(cancelled.compareAndSet(false, true)) { "Cancelled twice" }
-            cancelledCnt.incrementAndGet()
+        fun failedToDeliver() {
+            check(failedToDeliver.compareAndSet(false, true)) { "onUndeliveredElement notified twice" }
+            failedToDeliverCnt.incrementAndGet()
         }
     }
 

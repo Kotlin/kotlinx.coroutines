@@ -10,9 +10,9 @@ import kotlinx.coroutines.selects.*
 import kotlin.test.*
 
 /**
- * Tests for failures inside [Channel] cancellation handler.
+ * Tests for failures inside `onUndeliveredElement` handler in [Channel].
  */
-class ChannelOnCancellationFailureTest : TestBase() {
+class ChannelUndeliveredElementFailureTest : TestBase() {
     private val item = "LOST"
     private val onCancelFail: (String) -> Unit = { throw TestException(it) }
     private val shouldBeUnhandled: List<(Throwable) -> Boolean> = listOf({ it.isElementCancelException() })
