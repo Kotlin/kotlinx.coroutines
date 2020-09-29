@@ -73,9 +73,9 @@ class ChannelUndeliveredElementTest : TestBase() {
         channel.close() // immediately close channel
         val res = Resource("OK")
         assertFailsWith<ClosedSendChannelException> {
-            channel.send(res) // send fails to closed channel
+            channel.send(res) // send fails to closed channel, resource was not delivered
         }
-        assertFalse(res.isCancelled) // that's not a cancellation! Resource is not cancelled
+        assertTrue(res.isCancelled)
     }
 
     private fun runAllKindsTest(test: suspend CoroutineScope.(TestChannelKind) -> Unit) {
