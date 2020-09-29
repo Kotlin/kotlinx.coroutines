@@ -27,11 +27,11 @@ import kotlin.coroutines.intrinsics.*
  * | _Canceled_ (final _completed_ state)| `false`    | `true`        | `true`        |
  *
  * Invocation of [cancel] transitions this continuation from _active_ to _cancelled_ state, while
- * invocation of [resume] or [resumeWithException] transitions it from _active_ to _resumed_ state.
+ * invocation of [Continuation.resume] or [Continuation.resumeWithException] transitions it from _active_ to _resumed_ state.
  *
  * A [cancelled][isCancelled] continuation implies that it is [completed][isCompleted].
  *
- * Invocation of [resume] or [resumeWithException] in _resumed_ state produces an [IllegalStateException],
+ * Invocation of [Continuation.resume] or [Continuation.resumeWithException] in _resumed_ state produces an [IllegalStateException],
  * but is ignored in _cancelled_ state.
  *
  * ```
@@ -133,7 +133,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * At most one [handler] can be installed on a continuation. Attempt to call `invokeOnCancellation` second
      * time produces [IllegalStateException].
      *
-     * This handler is also called when this continuation [resumes][resume] normally (with a value) and then
+     * This handler is also called when this continuation [resumes][Continuation.resume] normally (with a value) and then
      * is cancelled while waiting to be dispatched. More generally speaking, this handler is called whenever
      * the caller of [suspendCancellableCoroutine] is getting a [CancellationException].
      *
