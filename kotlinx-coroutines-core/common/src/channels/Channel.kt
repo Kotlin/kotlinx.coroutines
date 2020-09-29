@@ -78,11 +78,12 @@ public interface SendChannel<in E> {
      * and returns `true`. Otherwise, just returns `false`. This is a synchronous variant of [send] which backs off
      * in situations when `send` suspends.
      *
-     * When `offer` call returns `false` it guarantees that the element was not delivered to the consumer, but
-     * it does not call `onUndeliveredElement`.
-     * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
-     *
      * Throws an exception if the channel [is closed for `send`][isClosedForSend] (see [close] for details).
+     *
+     * When `offer` call returns `false` it guarantees that the element was not delivered to the consumer and it
+     * it does not call `onUndeliveredElement` that was installed for this channel. If the channel was closed,
+     * then it calls `onUndeliveredElement` before throwing an exception.
+     * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
      */
     public fun offer(element: E): Boolean
 
@@ -527,16 +528,44 @@ public interface ChannelIterator<out E> {
  * that was sent to the channel with the call to the [send][SendChannel.send] function but failed to be delivered,
  * which can happen in the following cases:
  *
- * * [send][SendChannel.send] operation was cancelled before it had a chance to actually send the element.
- * * [receive][ReceiveChannel.receive] operation retrieved the element from the channel but was cancelled before
- *   the code following the receive call resumed.
+ * * When [send][SendChannel.send] operation throws an exception because it was cancelled before it had a chance to actually
+ *   send the element or because the channel was [closed][SendChannel.close] or [cancelled][ReceiveChannel.cancel].
+ * * When [offer][SendChannel.offer] operation throws an exception when
+ *   the channel was [closed][SendChannel.close] or [cancelled][ReceiveChannel.cancel].
+ * * When [receive][ReceiveChannel.receive], [receiveOrNull][ReceiveChannel.receiveOrNull], or [hasNext][ChannelIterator.hasNext]
+ *   operation throws an exception when it had retrieved the element from the
+ *   channel but was cancelled before the code following the receive call resumed.
  * * The channel was [cancelled][ReceiveChannel.cancel], in which case `onUndeliveredElement` is called on every
  *   remaining element in the channel's buffer.
  *
  * Note, that `onUndeliveredElement` function is called synchronously in an arbitrary context. It should be fast, non-blocking,
  * and should not throw exceptions. Any exception thrown by `onUndeliveredElement` is wrapped into an internal runtime
- * exception which is either rethrown or handed off to the exception handler in the current context
+ * exception which is either rethrown from the caller method or handed off to the exception handler in the current context
  * (see [CoroutineExceptionHandler]) when one is available.
+ *
+ * A typical usage for `onDeliveredElement` is to close a resource that is being transferred via the channel. The
+ * following code pattern guarantees that opened resources are closed even if producer, consumer, and/or channel
+ * are cancelled. Resources are never lost.
+ *
+ * ```
+ * // Create the channel with onUndeliveredElement block that closes a resource
+ * val channel = Channel<Resource>(capacity) { resource -> resource.close() }
+ *
+ * // Producer code
+ * val resourceToSend = openResource()
+ * channel.send(resourceToSend)
+ *
+ * // Consumer code
+ * val resourceReceived = channel.receive()
+ * try {
+ *     // work with received resource
+ * } finally {
+ *     resourceReceived.close()
+ * }
+ * ```
+ *
+ * > Note, that if you do any kind of work in between `openResource()` and `channel.send(...)`, then you should
+ * > ensure that resource gets closed in case this additional code fails.
  */
 public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
     /**

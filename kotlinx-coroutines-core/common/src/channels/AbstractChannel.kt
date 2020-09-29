@@ -155,7 +155,14 @@ internal abstract class AbstractSendChannel<E>(
                 // See https://github.com/Kotlin/kotlinx.coroutines/issues/359
                 throw recoverStackTrace(helpCloseAndGetSendException(closedForSend ?: return false))
             }
-            result is Closed<*> -> throw recoverStackTrace(helpCloseAndGetSendException(result))
+            result is Closed<*> -> {
+                val sendException = recoverStackTrace(helpCloseAndGetSendException(result))
+                onUndeliveredElement?.callUndeliveredElementCatchingException(element)?.let {
+                    it.addSuppressed(sendException)
+                    throw it
+                }
+                throw sendException
+            }
             else -> error("offerInternal returned $result")
         }
     }
@@ -178,7 +185,7 @@ internal abstract class AbstractSendChannel<E>(
                         return@sc
                     }
                     enqueueResult is Closed<*> -> {
-                        cont.helpCloseAndResumeWithSendException(enqueueResult)
+                        cont.helpCloseAndResumeWithSendException(element, enqueueResult)
                         return@sc
                     }
                     enqueueResult === ENQUEUE_FAILED -> {} // try to offer instead
@@ -195,7 +202,7 @@ internal abstract class AbstractSendChannel<E>(
                 }
                 offerResult === OFFER_FAILED -> continue@loop
                 offerResult is Closed<*> -> {
-                    cont.helpCloseAndResumeWithSendException(offerResult)
+                    cont.helpCloseAndResumeWithSendException(element, offerResult)
                     return@sc
                 }
                 else -> error("offerInternal returned $offerResult")
@@ -203,9 +210,15 @@ internal abstract class AbstractSendChannel<E>(
         }
     }
 
-    private fun Continuation<*>.helpCloseAndResumeWithSendException(closed: Closed<*>) {
+    private fun Continuation<*>.helpCloseAndResumeWithSendException(element: E, closed: Closed<*>) {
         helpClose(closed)
-        resumeWithException(closed.sendException)
+        val sendException = closed.sendException
+        onUndeliveredElement?.callUndeliveredElementCatchingException(element)?.let {
+            it.addSuppressed(sendException)
+            resumeWithException(it)
+            return
+        }
+        resumeWithException(sendException)
     }
 
     /**
