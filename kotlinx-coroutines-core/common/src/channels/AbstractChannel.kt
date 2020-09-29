@@ -433,7 +433,7 @@ internal abstract class AbstractSendChannel<E>(
     // ------ private ------
 
     private class SendSelect<E, R>(
-        override val pollResult: E,
+        override val pollResult: E, // E | Closed - the result pollInternal returns when it rendezvous with this node
         @JvmField val channel: AbstractSendChannel<E>,
         @JvmField val select: SelectInstance<R>,
         @JvmField val block: suspend (SendChannel<E>) -> R
@@ -1015,7 +1015,7 @@ internal typealias Handler = (Throwable?) -> Unit
  * Represents sending waiter in the queue.
  */
 internal abstract class Send : LockFreeLinkedListNode() {
-    abstract val pollResult: Any? // E | Closed
+    abstract val pollResult: Any? // E | Closed - the result pollInternal returns when it rendezvous with this node
     // Returns: null - failure,
     //          RETRY_ATOMIC for retry (only when otherOp != null),
     //          RESUME_TOKEN on success (call completeResumeSend)
