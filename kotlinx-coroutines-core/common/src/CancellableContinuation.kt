@@ -207,7 +207,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
  *
  * A typical use of this function is to suspend a coroutine while waiting for a result
  * from a single-shot callback API and to return the result to the caller.
- * For multi-short callback APIs see [callbackFlow][kotlinx.coroutines.flow.callbackFlow].
+ * For multi-shot callback APIs see [callbackFlow][kotlinx.coroutines.flow.callbackFlow].
  *
  * ```
  * suspend fun awaitCallback(): T = suspendCancellableCoroutine { continuation ->
@@ -240,7 +240,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
  * successfully.
  *
  * The cancellation of the coroutine's job is generally asynchronous with respect to the suspended coroutine.
- * The suspended coroutine is resumed via the call it to its [Continuation.resumeWith] member function or to
+ * The suspended coroutine is resumed with the call it to its [Continuation.resumeWith] member function or to
  * [resume][Continuation.resume] extension function.
  * However, when coroutine is resumed, it does not immediately start executing, but is passed to its
  * [CoroutineDispatcher] to schedule its execution when dispatcher's resources become available for execution.
