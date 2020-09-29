@@ -191,7 +191,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     }
 
     private suspend fun lockSuspend(owner: Any?) = suspendCancellableCoroutineReusable<Unit> sc@ { cont ->
-        val waiter = LockCont(this, owner, cont)
+        val waiter = LockCont(owner, cont)
         _state.loop { state ->
             when (state) {
                 is Empty -> {
@@ -250,7 +250,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                 }
                 is LockedQueue -> {
                     check(state.owner !== owner) { "Already locked by $owner" }
-                    val node = LockSelect(this, owner, select, block)
+                    val node = LockSelect(owner, select, block)
                     if (state.addLastIf(node) { _state.value === state }) {
                         // successfully enqueued
                         select.disposeOnSelect(node)
@@ -348,8 +348,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         override fun toString(): String = "LockedQueue[$owner]"
     }
 
-    private abstract class LockWaiter(
-        @JvmField val mutex: Mutex,
+    private abstract inner class LockWaiter(
         @JvmField val owner: Any?
     ) : LockFreeLinkedListNode(), DisposableHandle {
         final override fun dispose() { remove() }
@@ -357,34 +356,32 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         abstract fun completeResumeLockWaiter(token: Any)
     }
 
-    private class LockCont(
-        mutex: MutexImpl,
+    private inner class LockCont(
         owner: Any?,
         @JvmField val cont: CancellableContinuation<Unit>
-    ) : LockWaiter(mutex, owner) {
+    ) : LockWaiter(owner) {
         override fun tryResumeLockWaiter() = cont.tryResume(Unit, idempotent = null) {
-            // if this continuation get's cancelled during dispatch to the caller, then release the lock
-            mutex.unlock(owner)
+            // if this continuation gets cancelled during dispatch to the caller, then release the lock
+            unlock(owner)
         }
         override fun completeResumeLockWaiter(token: Any) = cont.completeResume(token)
-        override fun toString(): String = "LockCont[$owner, $cont]"
+        override fun toString(): String = "LockCont[$owner, $cont] for ${this@MutexImpl}"
     }
 
-    private class LockSelect<R>(
-        mutex: Mutex,
+    private inner class LockSelect<R>(
         owner: Any?,
         @JvmField val select: SelectInstance<R>,
         @JvmField val block: suspend (Mutex) -> R
-    ) : LockWaiter(mutex, owner) {
+    ) : LockWaiter(owner) {
         override fun tryResumeLockWaiter(): Any? = if (select.trySelect()) SELECT_SUCCESS else null
         override fun completeResumeLockWaiter(token: Any) {
             assert { token === SELECT_SUCCESS }
-            block.startCoroutineCancellable(receiver = mutex, completion = select.completion) {
-                // if this continuation get's cancelled during dispatch to the caller, then release the lock
-                mutex.unlock(owner)
+            block.startCoroutineCancellable(receiver = this@MutexImpl, completion = select.completion) {
+                // if this continuation gets cancelled during dispatch to the caller, then release the lock
+                unlock(owner)
             }
         }
-        override fun toString(): String = "LockSelect[$owner, $mutex, $select]"
+        override fun toString(): String = "LockSelect[$owner, $select] for ${this@MutexImpl}"
     }
 
     // atomic unlock operation that checks that waiters queue is empty
