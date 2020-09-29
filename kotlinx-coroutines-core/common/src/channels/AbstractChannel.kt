@@ -447,8 +447,8 @@ internal abstract class AbstractSendChannel<E>(
 
         override fun dispose() { // invoked on select completion
             if (!remove()) return
-            // if the node was successfully removed (meaning it was added but was not received) then cancel resource
-            cancelElement()
+            // if the node was successfully removed (meaning it was added but was not received) then element not delivered
+            undeliveredElement()
         }
 
         override fun resumeSendClosed(closed: Closed<*>) {
@@ -456,7 +456,7 @@ internal abstract class AbstractSendChannel<E>(
                 select.resumeSelectWithException(closed.sendException)
         }
 
-        override fun cancelElement() {
+        override fun undeliveredElement() {
             channel.onUndeliveredElement?.callUndeliveredElement(pollResult, select.completion.context)
         }
 
@@ -511,8 +511,8 @@ internal abstract class AbstractChannel<E>(
                 send.completeResumeSend()
                 return send.pollResult
             }
-            // too late, already cancelled, but we removed it from the queue and need to cancel resource
-            send.cancelElement()
+            // too late, already cancelled, but we removed it from the queue and need to notify on undelivered element
+            send.undeliveredElement()
         }
     }
 
@@ -690,8 +690,8 @@ internal abstract class AbstractChannel<E>(
         }
 
         override fun onRemoved(affected: LockFreeLinkedListNode) {
-            // Called when we removed it from the queue but were too late to resume and need to cancel resource
-            (affected as Send).cancelElement()
+            // Called when we removed it from the queue but were too late to resume, so we have undelivered element
+            (affected as Send).undeliveredElement()
         }
     }
 
@@ -1023,7 +1023,7 @@ internal abstract class Send : LockFreeLinkedListNode() {
     abstract fun tryResumeSend(otherOp: PrepareOp?): Symbol?
     abstract fun completeResumeSend()
     abstract fun resumeSendClosed(closed: Closed<*>)
-    open fun cancelElement() {}
+    open fun undeliveredElement() {}
 }
 
 /**
@@ -1062,12 +1062,12 @@ internal class SendElement<E>(
 
     override fun remove(): Boolean {
         if (!super.remove()) return false
-        // if the node was successfully removed (meaning it was added but was not received) then cancel resource
-        cancelElement()
+        // if the node was successfully removed (meaning it was added but was not received) then we have undelivered element
+        undeliveredElement()
         return true
     }
 
-    override fun cancelElement() {
+    override fun undeliveredElement() {
         onUndeliveredElement?.callUndeliveredElement(pollResult, cont.context)
     }
 }

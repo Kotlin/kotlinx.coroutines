@@ -175,8 +175,8 @@ internal open class ArrayChannel<E>(
                         replacement = send!!.pollResult
                         break@loop
                     }
-                    // too late, already cancelled, but we removed it from the queue and need to cancel resource
-                    send!!.cancelElement()
+                    // too late, already cancelled, but we removed it from the queue and need to notify on undelivered element
+                    send!!.undeliveredElement()
                 }
             }
             if (replacement !== POLL_FAILED && replacement !is Closed<*>) {
