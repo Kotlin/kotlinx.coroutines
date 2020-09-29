@@ -78,6 +78,10 @@ public interface SendChannel<in E> {
      * and returns `true`. Otherwise, just returns `false`. This is a synchronous variant of [send] which backs off
      * in situations when `send` suspends.
      *
+     * When `offer` call returns `false` it guarantees that the element was not delivered to the consumer, but
+     * it does not call `onUndeliveredElement`.
+     * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
+     *
      * Throws an exception if the channel [is closed for `send`][isClosedForSend] (see [close] for details).
      */
     public fun offer(element: E): Boolean
