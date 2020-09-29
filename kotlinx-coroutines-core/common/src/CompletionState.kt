@@ -30,7 +30,7 @@ internal fun <T> recoverResult(state: Any?, uCont: Continuation<T>): Result<T> =
 
 internal data class CompletedWithCancellation(
     @JvmField val result: Any?,
-    @JvmField val onCancellation: ((cause: Throwable) -> Unit)
+    @JvmField val onCancellation: (cause: Throwable) -> Unit
 )
 
 /**
