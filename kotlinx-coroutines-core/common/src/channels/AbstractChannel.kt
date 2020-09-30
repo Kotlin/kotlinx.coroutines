@@ -153,24 +153,25 @@ internal abstract class AbstractSendChannel<E>(
                 // We should check for closed token on offer as well, otherwise offer won't be linearizable
                 // in the face of concurrent close()
                 // See https://github.com/Kotlin/kotlinx.coroutines/issues/359
-                throw recoverStackTrace(helpCloseAndGetSendException(closedForSend ?: return false))
+                throw recoverStackTrace(helpCloseAndGetSendException(element, closedForSend ?: return false))
             }
             result is Closed<*> -> {
-                val sendException = recoverStackTrace(helpCloseAndGetSendException(result))
-                onUndeliveredElement?.callUndeliveredElementCatchingException(element)?.let {
-                    it.addSuppressed(sendException)
-                    throw it
-                }
-                throw sendException
+                throw recoverStackTrace(helpCloseAndGetSendException(element, result))
             }
             else -> error("offerInternal returned $result")
         }
     }
 
-    private fun helpCloseAndGetSendException(closed: Closed<*>): Throwable {
+    private inline fun helpCloseAndGetSendException(element: E, closed: Closed<*>): Throwable {
         // To ensure linearizablity we must ALWAYS help close the channel when we observe that it was closed
         // See https://github.com/Kotlin/kotlinx.coroutines/issues/1419
         helpClose(closed)
+        // Elemenet was not delivered -> cals onUndeliveredElement
+        onUndeliveredElement?.callUndeliveredElementCatchingException(element)?.let {
+            // If it crashes, add send exception as suppressed for better diagnostics
+            it.addSuppressed(closed.sendException)
+            throw it
+        }
         return closed.sendException
     }
 
@@ -390,7 +391,7 @@ internal abstract class AbstractSendChannel<E>(
                         select.disposeOnSelect(node)
                         return
                     }
-                    enqueueResult is Closed<*> -> throw recoverStackTrace(helpCloseAndGetSendException(enqueueResult))
+                    enqueueResult is Closed<*> -> throw recoverStackTrace(helpCloseAndGetSendException(element, enqueueResult))
                     enqueueResult === ENQUEUE_FAILED -> {} // try to offer
                     enqueueResult is Receive<*> -> {} // try to offer
                     else -> error("enqueueSend returned $enqueueResult ")
@@ -406,7 +407,7 @@ internal abstract class AbstractSendChannel<E>(
                     block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
                     return
                 }
-                offerResult is Closed<*> -> throw recoverStackTrace(helpCloseAndGetSendException(offerResult))
+                offerResult is Closed<*> -> throw recoverStackTrace(helpCloseAndGetSendException(element, offerResult))
                 else -> error("offerSelectInternal returned $offerResult")
             }
         }
