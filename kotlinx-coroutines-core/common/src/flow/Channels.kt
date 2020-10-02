@@ -33,6 +33,11 @@ private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>,
     // See https://youtrack.jetbrains.com/issue/KT-16222
     // See https://github.com/Kotlin/kotlinx.coroutines/issues/1333
     var cause: Throwable? = null
+
+    // Fixes a bug where receiveOrClosed is an abstract method,
+    // this is a problem in the implementation of vertx-lang-kotlin for toChannel
+    // See https://github.com/vert-x3/vertx-lang-kotlin/blob/4bdf42202ff55ab0d4db079f90ad0f93a30a7b33/vertx-lang-kotlin-coroutines/src/main/java/io/vertx/kotlin/coroutines/ReceiveChannelHandler.kt#L142-L161
+    var hasReceiveOrClosed = true
     try {
         while (true) {
             // :KLUDGE: This "run" call is resolved to an extension function "run" and forces the size of
@@ -44,18 +49,37 @@ private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>,
             //     L$1 <- channel
             //     L$2 <- cause
             //     L$3 <- this$run (actually equal to this)
-            val result = run { channel.receiveOrClosed() }
-            if (result.isClosed) {
-                result.closeCause?.let { throw it }
-                break // returns normally when result.closeCause == null
+            if (hasReceiveOrClosed) {
+                val result = run { channel.receiveOrClosed() }.onFailure {
+                    if (it is AbstractMethodError) {
+                        hasReceiveOrClosed = false
+                    } else {
+                        throw it
+                    }
+                }
+                // We don't have receiveOrClosed
+                if (!hasReceiveOrClosed) continue
+
+                if (result.isClosed) {
+                    result.closeCause?.let { throw it }
+                    break // returns normally when result.closeCause == null
+                }
+                // result is spilled here to the coroutine state and retained after the call, even though
+                // it is not actually needed in the next loop iteration.
+                //     L$0 <- this
+                //     L$1 <- channel
+                //     L$2 <- cause
+                //     L$3 <- result
+                emit(result.value)
+            } else {
+                if (!channel.isClosedForReceive) {
+                    val result = run { channel.receive() }
+                    // Result is also seemingly spilled here as explained above
+                    emit(result)
+                } else {
+                    break
+                }
             }
-            // result is spilled here to the coroutine state and retained after the call, even though
-            // it is not actually needed in the next loop iteration.
-            //     L$0 <- this
-            //     L$1 <- channel
-            //     L$2 <- cause
-            //     L$3 <- result
-            emit(result.value)
         }
     } catch (e: Throwable) {
         cause = e
