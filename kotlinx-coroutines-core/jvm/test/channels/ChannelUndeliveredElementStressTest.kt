@@ -29,7 +29,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                 .map { arrayOf<Any>(it) }
     }
 
-    private val TEST_DURATION = 1000L * stressTestMultiplier
+    private val testSeconds = 3 * stressTestMultiplier
 
     private val dispatcher = newFixedThreadPoolContext(2, "ChannelAtomicCancelStressTest")
     private val scope = CoroutineScope(dispatcher)
@@ -38,15 +38,15 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     private val senderDone = Channel<Boolean>(1)
     private val receiverDone = Channel<Boolean>(1)
 
-    private var lastReceived = -1
+    private var lastReceived = -1L
 
-    private var stoppedSender = 0
-    private var stoppedReceiver = 0
+    private var stoppedSender = 0L
+    private var stoppedReceiver = 0L
 
-    private var sentCnt = 0 // total number of send attempts
-    private var receivedCnt = 0 // actually received successfully
-    private var dupCnt = 0 // duplicates (should never happen)
-    private val failedToDeliverCnt = atomic(0) // out of sent
+    private var sentCnt = 0L // total number of send attempts
+    private var receivedCnt = 0L // actually received successfully
+    private var dupCnt = 0L // duplicates (should never happen)
+    private val failedToDeliverCnt = atomic(0L) // out of sent
 
     lateinit var sender: Job
     lateinit var receiver: Job
@@ -67,11 +67,21 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
 
     @Test
     fun testAtomicCancelStress() = runBlocking {
-        println("--- ChannelAtomicCancelStressTest $kind")
-        val deadline = System.currentTimeMillis() + TEST_DURATION
+        println("=== ChannelAtomicCancelStressTest $kind")
+        var nextVerify = System.currentTimeMillis() + 1000L
+        var seconds = 0
         launchSender()
         launchReceiver()
-        while (System.currentTimeMillis() < deadline && !hasError()) {
+        while (!hasError()) {
+            if (System.currentTimeMillis() >= nextVerify) {
+                nextVerify += 1000L
+                seconds++
+                println("--- ChannelAtomicCancelStressTest $kind --- $seconds seconds")
+                printProgressAndVerify()
+                if (seconds >= testSeconds) break
+                launchSender()
+                launchReceiver()
+            }
             when (Random.nextInt(3)) {
                 0 -> { // cancel & restart sender
                     stopSender()
@@ -84,6 +94,9 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                 2 -> yield() // just yield (burn a little time)
             }
         }
+    }
+
+    private suspend fun printProgressAndVerify() {
         stopSender()
         stopReceiver()
         println("              Sent $sentCnt times to channel")
@@ -151,7 +164,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
         }
     }
 
-    private inner class Data(val x: Int) {
+    private inner class Data(val x: Long) {
         private val failedToDeliver = atomic(false)
 
         fun failedToDeliver() {
