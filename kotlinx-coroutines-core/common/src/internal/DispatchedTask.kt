@@ -34,7 +34,7 @@ internal const val MODE_CANCELLABLE_REUSABLE = 2
 
 /**
  * Undispatched mode for [CancellableContinuation.resumeUndispatched].
- * It is used when the thread is right, but it needs to be mark it with the current coroutine.
+ * It is used when the thread is right, but it needs to be marked with the current coroutine.
  */
 internal const val MODE_UNDISPATCHED = 4
 
