@@ -1463,13 +1463,15 @@ fun main() = runBlocking<Unit> {
  
 A "Caught ..." message is not printed despite there being a `catch` operator: 
 
-<!--- TEST EXCEPTION  
+```text  
 Emitting 1
 1
 Emitting 2
 Exception in thread "main" java.lang.IllegalStateException: Collected 2
 	at ...
--->
+```
+
+<!--- TEST EXCEPTION -->
 
 #### Catching declaratively
 
@@ -1510,12 +1512,14 @@ fun main() = runBlocking<Unit> {
 Now we can see that a "Caught ..." message is printed and so we can catch all the exceptions without explicitly
 using a `try/catch` block: 
 
-<!--- TEST EXCEPTION  
+```text 
 Emitting 1
 1
 Emitting 2
 Caught java.lang.IllegalStateException: Collected 2
--->
+```
+
+<!--- TEST EXCEPTION -->
 
 ### Flow completion
 

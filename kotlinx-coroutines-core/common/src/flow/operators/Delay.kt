@@ -112,35 +112,73 @@ public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.t
  * }.sample(100)
  * ```
  * produces `1, 3, 5, 7, 9`.
- * 
+ *
  * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
 @FlowPreview
 public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
-    require(periodMillis > 0) { "Sample period should be positive" }
+    return sample(flow {
+        delay(periodMillis)
+        while (true) {
+            emit(Unit)
+            delay(periodMillis)
+        }
+    })
+}
+
+/**
+ * Returns a flow that emits only the latest value emitted by the original flow only when the [sampler] emits.
+ *
+ * Example:
+ * ```
+ * flow {
+ *     repeat(10) {
+ *         emit(it)
+ *         delay(50)
+ *     }
+ * }.sampleBy(flow {
+ *     repeat(10) {
+ *         delay(100)
+ *         emit(it)
+ *     }
+ * })
+ *
+ * ```
+ * produces `0, 2, 4, 6, 8`.
+ *
+ * Note that the latest element is not emitted if it does not fit into the sampling window.
+ */
+public fun <T, R> Flow<T>.sample(sampler: Flow<R>): Flow<T> {
     return scopedFlow { downstream ->
         val values = produce<Any?>(capacity = Channel.CONFLATED) {
             // Actually Any, KT-30796
             collect { value -> send(value ?: NULL) }
         }
+
+        val otherChannel = produce(capacity = 0) {
+            sampler.collect {
+                value -> send(value)
+            }
+        }
         var lastValue: Any? = null
-        val ticker = fixedPeriodTicker(periodMillis)
         while (lastValue !== DONE) {
             select<Unit> {
                 values.onReceiveOrNull {
                     if (it == null) {
-                        ticker.cancel(ChildCancelledException())
                         lastValue = DONE
+                        otherChannel.cancel(ChildCancelledException())
                     } else {
                         lastValue = it
                     }
                 }
-
-                // todo: shall be start sampling only when an element arrives or sample aways as here?
-                ticker.onReceive {
-                    val value = lastValue ?: return@onReceive
-                    lastValue = null // Consume the value
-                    downstream.emit(NULL.unbox(value))
+                otherChannel.onReceiveOrNull {
+                    if(it != null) {
+                        val value = lastValue ?: return@onReceiveOrNull
+                        lastValue = null // Consume the value
+                        downstream.emit(NULL.unbox(value))
+                    }else{
+                        lastValue = DONE
+                    }
                 }
             }
         }
