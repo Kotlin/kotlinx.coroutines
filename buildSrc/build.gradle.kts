@@ -4,22 +4,6 @@
 
 import java.util.*
 
-buildscript {
-    val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
-
-    if (cacheRedirectorEnabled) {
-        println("Redirecting repositories for buildSrc buildscript")
-    }
-
-    repositories {
-        if (cacheRedirectorEnabled) {
-            maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
-        } else {
-            maven("https://plugins.gradle.org/m2")
-        }
-    }
-}
-
 plugins {
     `kotlin-dsl`
 }
@@ -42,7 +26,7 @@ kotlinDslPluginOptions {
     experimentalWarning.set(false)
 }
 
-private val props = Properties().apply {
+val props = Properties().apply {
     file("../gradle.properties").inputStream().use { load(it) }
 }
 
