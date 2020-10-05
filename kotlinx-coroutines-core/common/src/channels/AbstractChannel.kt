@@ -166,7 +166,7 @@ internal abstract class AbstractSendChannel<E>(
         // To ensure linearizablity we must ALWAYS help close the channel when we observe that it was closed
         // See https://github.com/Kotlin/kotlinx.coroutines/issues/1419
         helpClose(closed)
-        // Elemenet was not delivered -> cals onUndeliveredElement
+        // Element was not delivered -> cals onUndeliveredElement
         onUndeliveredElement?.callUndeliveredElementCatchingException(element)?.let {
             // If it crashes, add send exception as suppressed for better diagnostics
             it.addSuppressed(closed.sendException)
