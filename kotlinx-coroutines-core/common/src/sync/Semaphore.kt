@@ -206,8 +206,9 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
         // On CAS failure -- the cell must be either PERMIT or BROKEN
         // If the cell already has PERMIT from tryResumeNextFromQueue, try to grab it
         if (segment.cas(i, PERMIT, TAKEN)) { // took permit thus eliminating acquire/release pair
-            val result = cont.tryResumeAcquire()
-            assert { result } // must always succeed, since continuation was not published yet
+            // The following resume must always succeed, since continuation was not published yet and we don't have
+            // to pass onCancellationRelease handle, since the coroutine did not suspend yet and cannot be cancelled
+            cont.resume(Unit)
             return true
         }
         assert { segment.get(i) === BROKEN } // it must be broken in this case, no other way around it
