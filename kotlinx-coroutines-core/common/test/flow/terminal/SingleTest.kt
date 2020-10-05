@@ -7,7 +7,7 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-class SingleTest : TestBase() { 
+class SingleTest : TestBase() {
 
     @Test
     fun testSingle() = runTest {
@@ -64,7 +64,7 @@ class SingleTest : TestBase() {
 
         assertEquals(1, flowOf<Int?>(1).singleOrNull())
         assertNull(flowOf<Int?>(null).singleOrNull())
-        assertFailsWith<NoSuchElementException> { flowOf<Int?>().singleOrNull() }
+        assertNull(flowOf<Int?>().singleOrNull())
     }
 
     @Test
