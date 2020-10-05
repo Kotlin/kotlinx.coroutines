@@ -631,6 +631,7 @@ public fun <E> Channel(capacity: Int = RENDEZVOUS, onUndeliveredElement: ((E) ->
 /**
  * @suppress Binary compatibility only, should not be documented
  */
+// This declaration is hidden since version 1.4.0
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
 public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> = Channel(capacity, onUndeliveredElement = null)
 
