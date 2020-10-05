@@ -16,7 +16,9 @@ internal fun <E> OnUndeliveredElement<E>.callUndeliveredElementCatchingException
     try {
         invoke(element)
     } catch (ex: Throwable) {
-        if (undeliveredElementException != null) {
+        // undeliveredElementException.cause !== ex is an optimization in case the same exception is thrown
+        // over and over again by on OnUndeliveredElement
+        if (undeliveredElementException != null && undeliveredElementException.cause !== ex) {
             undeliveredElementException.addSuppressedThrowable(ex)
         } else {
             return UndeliveredElementException("Exception in undelivered element handler for $element", ex)
