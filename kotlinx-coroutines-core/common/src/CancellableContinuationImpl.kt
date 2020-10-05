@@ -192,7 +192,7 @@ internal open class CancellableContinuationImpl<in T>(
             (state as? CancelHandler)?.let { callCancelHandler(it, cause) }
             // Complete state update
             detachChildIfNonResuable()
-            dispatchResume(mode = MODE_ATOMIC) // no need for additional cancellation checks
+            dispatchResume(resumeMode) // no need for additional cancellation checks
             return true
         }
     }
@@ -494,6 +494,11 @@ internal open class CancellableContinuationImpl<in T>(
             is CompletedContinuation -> state.result as T
             else -> state as T
         }
+
+    // The exceptional state in CancellableContinuationImpl is stored directly and it is not recovered yet.
+    // The stacktrace recovery is invoked here.
+    override fun getExceptionalResult(state: Any?): Throwable? =
+        super.getExceptionalResult(state)?.let { recoverStackTrace(it, delegate) }
 
     // For nicer debugging
     public override fun toString(): String =

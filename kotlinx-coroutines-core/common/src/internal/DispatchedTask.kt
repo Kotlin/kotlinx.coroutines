@@ -53,11 +53,23 @@ internal abstract class DispatchedTask<in T>(
      */
     internal open fun cancelCompletedResult(takenState: Any?, cause: Throwable) {}
 
+    /**
+     * There are two implementations of `DispatchedTask`:
+     * * [DispatchedContinuation] keeps only simple values as successfully results.
+     * * [CancellableContinuationImpl] keeps additional data with values and overrides this method to unwrap it.
+     */
     @Suppress("UNCHECKED_CAST")
     internal open fun <T> getSuccessfulResult(state: Any?): T =
         state as T
 
-    internal fun getExceptionalResult(state: Any?): Throwable? =
+    /**
+     * There are two implementations of `DispatchedTask`:
+     * * [DispatchedContinuation] is just an intermediate storage that stores the exception that has its stack-trace
+     *   properly recovered and is ready to pass to the [delegate] continuation directly.
+     * * [CancellableContinuationImpl] stores raw cause of the failure in its state; when it needs to be dispatched
+     *   its stack-trace has to be recovered, so it overrides this method for that purpose.
+     */
+    internal open fun getExceptionalResult(state: Any?): Throwable? =
         (state as? CompletedExceptionally)?.cause
 
     public final override fun run() {
@@ -151,7 +163,7 @@ internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
 internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, undispatched: Boolean) {
     // This resume is never cancellable. The result is always delivered to delegate continuation.
     val state = takeState()
-    val exception = getExceptionalResult(state)?.let { recoverStackTrace(it, delegate) }
+    val exception = getExceptionalResult(state)
     val result = if (exception != null) Result.failure(exception) else Result.success(getSuccessfulResult<T>(state))
     when {
         undispatched -> (delegate as DispatchedContinuation).resumeUndispatchedWith(result)

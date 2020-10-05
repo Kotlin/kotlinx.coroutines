@@ -944,7 +944,7 @@ internal abstract class AbstractChannel<E>(
             val token = if (closed.closeCause == null) {
                 cont.tryResume(false)
             } else {
-                cont.tryResumeWithException(recoverStackTrace(closed.receiveException, cont))
+                cont.tryResumeWithException(closed.receiveException)
             }
             if (token != null) {
                 iterator.result = closed
