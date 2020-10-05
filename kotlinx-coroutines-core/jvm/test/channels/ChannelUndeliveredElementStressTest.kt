@@ -29,7 +29,8 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                 .map { arrayOf<Any>(it) }
     }
 
-    private val testSeconds = 3 * stressTestMultiplier
+    private val iterationDurationMs = 100L
+    private val testIterations = 20 * stressTestMultiplier // 2 sec
 
     private val dispatcher = newFixedThreadPoolContext(2, "ChannelAtomicCancelStressTest")
     private val scope = CoroutineScope(dispatcher)
@@ -38,6 +39,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     private val senderDone = Channel<Boolean>(1)
     private val receiverDone = Channel<Boolean>(1)
 
+    @Volatile
     private var lastReceived = -1L
 
     private var stoppedSender = 0L
@@ -47,6 +49,12 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     private var receivedCnt = 0L // actually received successfully
     private var dupCnt = 0L // duplicates (should never happen)
     private val failedToDeliverCnt = atomic(0L) // out of sent
+
+    private val modulo = 1 shl 25
+    private val mask = (modulo - 1).toLong()
+    private val sentStatus = ItemStatus() // 1 - send norm, 2 - send select, +2 - did not throw exception
+    private val receivedStatus = ItemStatus() // 1-6 received
+    private val failedStatus = ItemStatus() // 1 - failed
 
     lateinit var sender: Job
     lateinit var receiver: Job
@@ -68,17 +76,17 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     @Test
     fun testAtomicCancelStress() = runBlocking {
         println("=== ChannelAtomicCancelStressTest $kind")
-        var nextVerify = System.currentTimeMillis() + 1000L
-        var seconds = 0
+        var nextIterationTime = System.currentTimeMillis() + iterationDurationMs
+        var iteration = 0
         launchSender()
         launchReceiver()
         while (!hasError()) {
-            if (System.currentTimeMillis() >= nextVerify) {
-                nextVerify += 1000L
-                seconds++
-                println("--- ChannelAtomicCancelStressTest $kind --- $seconds seconds")
-                printProgressAndVerify()
-                if (seconds >= testSeconds) break
+            if (System.currentTimeMillis() >= nextIterationTime) {
+                nextIterationTime += iterationDurationMs
+                iteration++
+                verify(iteration)
+                if (iteration % 10 == 0) printProgressSummary(iteration)
+                if (iteration >= testIterations) break
                 launchSender()
                 launchReceiver()
             }
@@ -96,18 +104,50 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
         }
     }
 
-    private suspend fun printProgressAndVerify() {
+    private suspend fun verify(iteration: Int) {
         stopSender()
+        drainReceiver()
         stopReceiver()
+        try {
+            assertEquals(0, dupCnt)
+            assertEquals(sentCnt - failedToDeliverCnt.value, receivedCnt)
+        } catch (e: Throwable) {
+            printProgressSummary(iteration)
+            printErrorDetails()
+            throw e
+        }
+        sentStatus.clear()
+        receivedStatus.clear()
+        failedStatus.clear()
+    }
+
+    private fun printProgressSummary(iteration: Int) {
+        println("--- ChannelAtomicCancelStressTest $kind -- $iteration of $testIterations")
         println("              Sent $sentCnt times to channel")
         println("          Received $receivedCnt times from channel")
         println(" Failed to deliver ${failedToDeliverCnt.value} times")
         println("    Stopped sender $stoppedSender times")
         println("  Stopped receiver $stoppedReceiver times")
         println("        Duplicated $dupCnt deliveries")
-        assertEquals(0, dupCnt)
-        assertEquals(sentCnt - failedToDeliverCnt.value, receivedCnt)
     }
+
+    private fun printErrorDetails() {
+        val min = minOf(sentStatus.min, receivedStatus.min, failedStatus.min)
+        val max = maxOf(sentStatus.max, receivedStatus.max, failedStatus.max)
+        for (x in min..max) {
+            val sentCnt = if (sentStatus[x] != 0) 1 else 0
+            val receivedCnt = if (receivedStatus[x] != 0) 1 else 0
+            val failedToDeliverCnt = failedStatus[x]
+            if (sentCnt - failedToDeliverCnt != receivedCnt) {
+                println("!!! Error for value $x: " +
+                    "sentStatus=${sentStatus[x]}, " +
+                    "receivedStatus=${receivedStatus[x]}, " +
+                    "failedStatus=${failedStatus[x]}"
+                )
+            }
+        }
+    }
+
 
     private fun launchSender() {
         sender = scope.launch(start = CoroutineStart.ATOMIC) {
@@ -115,11 +155,14 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                 var counter = 0
                 while (true) {
                     val trySendData = Data(sentCnt++)
-                    when (Random.nextInt(2)) {
-                        0 -> channel.send(trySendData)
-                        1 -> select<Unit> { channel.onSend(trySendData) {} }
+                    val sendMode = Random.nextInt(2) + 1
+                    sentStatus[trySendData.x] = sendMode
+                    when (sendMode) {
+                        1 -> channel.send(trySendData)
+                        2 -> select<Unit> { channel.onSend(trySendData) {} }
                         else -> error("cannot happen")
                     }
+                    sentStatus[trySendData.x] = sendMode + 2
                     when {
                         // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
                         kind == TestChannelKind.LINKED_LIST -> while (sentCnt > lastReceived + 100) yield()
@@ -141,13 +184,14 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
         receiver = scope.launch(start = CoroutineStart.ATOMIC) {
             cancellable(receiverDone) {
                 while (true) {
-                    val receivedData = when (Random.nextInt(6)) {
-                        0 -> channel.receive()
-                        1 -> select { channel.onReceive { it } }
-                        2 -> channel.receiveOrNull() ?: error("Should not be closed")
-                        3 -> select { channel.onReceiveOrNull { it ?: error("Should not be closed") } }
-                        4 -> channel.receiveOrClosed().value
-                        5 -> {
+                    val receiveMode = Random.nextInt(6) + 1
+                    val receivedData = when (receiveMode) {
+                        1 -> channel.receive()
+                        2 -> select { channel.onReceive { it } }
+                        3 -> channel.receiveOrNull() ?: error("Should not be closed")
+                        4 -> select { channel.onReceiveOrNull { it ?: error("Should not be closed") } }
+                        5 -> channel.receiveOrClosed().value
+                        6 -> {
                             val iterator = channel.iterator()
                             check(iterator.hasNext()) { "Should not be closed" }
                             iterator.next()
@@ -159,9 +203,20 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                     if (received <= lastReceived)
                         dupCnt++
                     lastReceived = received
+                    receivedStatus[received] = receiveMode
                 }
             }
         }
+    }
+
+    private suspend fun drainReceiver() {
+        while (!channel.isEmpty) yield() // burn time until receiver gets it all
+    }
+
+    private suspend fun stopReceiver() {
+        stoppedReceiver++
+        receiver.cancel()
+        receiverDone.receive()
     }
 
     private inner class Data(val x: Long) {
@@ -170,12 +225,31 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
         fun failedToDeliver() {
             check(failedToDeliver.compareAndSet(false, true)) { "onUndeliveredElement notified twice" }
             failedToDeliverCnt.incrementAndGet()
+            failedStatus[x] = 1
         }
     }
 
-    private suspend fun stopReceiver() {
-        stoppedReceiver++
-        receiver.cancel()
-        receiverDone.receive()
+    inner class ItemStatus {
+        private val a = ByteArray(modulo)
+        private val _min = atomic(Long.MAX_VALUE)
+        private val _max = atomic(-1L)
+
+        val min: Long get() = _min.value
+        val max: Long get() = _max.value
+
+        operator fun set(x: Long, value: Int) {
+            a[(x and mask).toInt()] = value.toByte()
+            _min.update { y -> minOf(x, y) }
+            _max.update { y -> maxOf(x, y) }
+        }
+
+        operator fun get(x: Long): Int = a[(x and mask).toInt()].toInt()
+
+        fun clear() {
+            if (_max.value < 0) return
+            for (x in _min.value.._max.value) a[(x and mask).toInt()] = 0
+            _min.value = Long.MAX_VALUE
+            _max.value = -1L
+        }
     }
 }
