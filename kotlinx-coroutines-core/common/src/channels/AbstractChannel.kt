@@ -162,7 +162,7 @@ internal abstract class AbstractSendChannel<E>(
         }
     }
 
-    private inline fun helpCloseAndGetSendException(element: E, closed: Closed<*>): Throwable {
+    private fun helpCloseAndGetSendException(element: E, closed: Closed<*>): Throwable {
         // To ensure linearizablity we must ALWAYS help close the channel when we observe that it was closed
         // See https://github.com/Kotlin/kotlinx.coroutines/issues/1419
         helpClose(closed)
