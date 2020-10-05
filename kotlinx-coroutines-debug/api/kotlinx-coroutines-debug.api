@@ -61,3 +61,20 @@ public final class kotlinx/coroutines/debug/junit4/CoroutinesTimeout$Companion {
 	public static synthetic fun seconds$default (Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout$Companion;JZZILjava/lang/Object;)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
 }
 
+public abstract interface annotation class kotlinx/coroutines/debug/junit5/CoroutinesTimeout : java/lang/annotation/Annotation {
+	public abstract fun cancelOnTimeout ()Z
+	public abstract fun enableCoroutineCreationStackTraces ()Z
+	public abstract fun testTimeoutMs ()J
+}
+
+public final class kotlinx/coroutines/debug/junit5/CoroutinesTimeoutExtension : org/junit/jupiter/api/extension/InvocationInterceptor {
+	public fun <init> ()V
+	public fun interceptAfterAllMethod (Lorg/junit/jupiter/api/extension/InvocationInterceptor$Invocation;Lorg/junit/jupiter/api/extension/ReflectiveInvocationContext;Lorg/junit/jupiter/api/extension/ExtensionContext;)V
+	public fun interceptAfterEachMethod (Lorg/junit/jupiter/api/extension/InvocationInterceptor$Invocation;Lorg/junit/jupiter/api/extension/ReflectiveInvocationContext;Lorg/junit/jupiter/api/extension/ExtensionContext;)V
+	public fun interceptBeforeAllMethod (Lorg/junit/jupiter/api/extension/InvocationInterceptor$Invocation;Lorg/junit/jupiter/api/extension/ReflectiveInvocationContext;Lorg/junit/jupiter/api/extension/ExtensionContext;)V
+	public fun interceptBeforeEachMethod (Lorg/junit/jupiter/api/extension/InvocationInterceptor$Invocation;Lorg/junit/jupiter/api/extension/ReflectiveInvocationContext;Lorg/junit/jupiter/api/extension/ExtensionContext;)V
+	public fun interceptTestFactoryMethod (Lorg/junit/jupiter/api/extension/InvocationInterceptor$Invocation;Lorg/junit/jupiter/api/extension/ReflectiveInvocationContext;Lorg/junit/jupiter/api/extension/ExtensionContext;)Ljava/lang/Object;
+	public fun interceptTestMethod (Lorg/junit/jupiter/api/extension/InvocationInterceptor$Invocation;Lorg/junit/jupiter/api/extension/ReflectiveInvocationContext;Lorg/junit/jupiter/api/extension/ExtensionContext;)V
+	public fun interceptTestTemplateMethod (Lorg/junit/jupiter/api/extension/InvocationInterceptor$Invocation;Lorg/junit/jupiter/api/extension/ReflectiveInvocationContext;Lorg/junit/jupiter/api/extension/ExtensionContext;)V
+}
+

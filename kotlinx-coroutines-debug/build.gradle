@@ -18,8 +18,16 @@ configurations {
     configureKotlinJvmPlatform(shadow)
 }
 
+test {
+    useJUnitPlatform()
+}
+
 dependencies {
     compileOnly "junit:junit:$junit_version"
+    compileOnly "org.junit.jupiter:junit-jupiter-api:$junit5_version"
+    testCompile "org.junit.jupiter:junit-jupiter-api:$junit5_version"
+    testCompile "org.junit.jupiter:junit-jupiter-engine:$junit5_version"
+    testRuntimeOnly "org.junit.vintage:junit-vintage-engine:$junit5_version"
     shadowDeps "net.bytebuddy:byte-buddy:$byte_buddy_version"
     shadowDeps "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
     compileOnly "io.projectreactor.tools:blockhound:$blockhound_version"
