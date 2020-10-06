@@ -329,8 +329,6 @@ internal open class CancellableContinuationImpl<in T>(
                     // BeforeResumeCancelHandler does not need to be called on a completed continuation
                     if (cancelHandler is BeforeResumeCancelHandler) return
                     if (state.cancelled) {
-                        // todo: extra layer of protection against the second invokeOnCancellation
-                        // if (!state.makeHandled()) multipleHandlersError(handler, state)
                         // Was already cancelled while being dispatched -- invoke the handler directly
                         callCancelHandler(handler, state.cancelCause)
                         return
