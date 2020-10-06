@@ -176,6 +176,17 @@ threads are handled by Android runtime.
 R8 and ProGuard rules are bundled into the [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android) module.
 For more details see ["Optimization" section for Android](ui/kotlinx-coroutines-android/README.md#optimization). 
 
+#### Avoiding including the debug infrastructure in the resulting APK
+
+`kotlinx-coroutines-core` provides resources that are not needed for the applications to operate and are only needed to
+debug coroutine-using code. To exclude them at no loss of functionality, add the following to the `android` block in
+your gradle file for the application subproject:
+```groovy
+packagingOptions {
+  exclude "DebugProbesKt.bin"
+}
+```
+
 ### JS
 
 [Kotlin/JS](https://kotlinlang.org/docs/reference/js-overview.html) version of `kotlinx.coroutines` is published as 
