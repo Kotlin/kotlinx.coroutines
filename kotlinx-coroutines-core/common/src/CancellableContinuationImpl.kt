@@ -95,9 +95,9 @@ internal open class CancellableContinuationImpl<in T>(
      * Resets cancellability state in order to [suspendCancellableCoroutineReusable] to work.
      * Invariant: used only by [suspendCancellableCoroutineReusable] in [REUSABLE_CLAIMED] state.
      */
-    @JvmName("resetState") // Prettier stack traces
-    internal fun resetState(resumeMode: Int): Boolean {
-        assert { resumeMode != MODE_UNINITIALIZED } // invalid mode for CancellableContinuationImpl
+    @JvmName("resetStateReusable") // Prettier stack traces
+    internal fun resetStateReusable(): Boolean {
+        assert { resumeMode == MODE_CANCELLABLE_REUSABLE } // invalid mode for CancellableContinuationImpl
         assert { parentHandle !== NonDisposableHandle }
         val state = _state.value
         assert { state !is NotCompleted }
@@ -108,7 +108,6 @@ internal open class CancellableContinuationImpl<in T>(
         }
         _decision.value = UNDECIDED
         _state.value = Active
-        this.resumeMode = resumeMode
         return true
     }
 

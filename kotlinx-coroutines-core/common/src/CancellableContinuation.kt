@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
@@ -349,7 +348,7 @@ internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): 
      *    thus leaking CC instance for indefinite time.
      * 2) Continuation was cancelled. Then we should prevent any further reuse and bail out.
      */
-    return delegate.claimReusableCancellableContinuation()?.takeIf { it.resetState(MODE_CANCELLABLE_REUSABLE) }
+    return delegate.claimReusableCancellableContinuation()?.takeIf { it.resetStateReusable() }
         ?: return CancellableContinuationImpl(delegate, MODE_CANCELLABLE_REUSABLE)
 }
 
