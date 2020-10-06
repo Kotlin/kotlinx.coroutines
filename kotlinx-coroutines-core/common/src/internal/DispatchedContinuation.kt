@@ -19,7 +19,7 @@ internal val REUSABLE_CLAIMED = Symbol("REUSABLE_CLAIMED")
 internal class DispatchedContinuation<in T>(
     @JvmField val dispatcher: CoroutineDispatcher,
     @JvmField val continuation: Continuation<T>
-) : DispatchedTask<T>(MODE_ATOMIC), CoroutineStackFrame, Continuation<T> by continuation {
+) : DispatchedTask<T>(MODE_UNINITIALIZED), CoroutineStackFrame, Continuation<T> by continuation {
     @JvmField
     @Suppress("PropertyName")
     internal var _state: Any? = UNDEFINED
@@ -281,6 +281,7 @@ private inline fun DispatchedContinuation<*>.executeUnconfined(
     contState: Any?, mode: Int, doYield: Boolean = false,
     block: () -> Unit
 ): Boolean {
+    assert { mode != MODE_UNINITIALIZED } // invalid execution mode
     val eventLoop = ThreadLocalEventLoop.eventLoop
     // If we are yielding and unconfined queue is empty, we can bail out as part of fast path
     if (doYield && eventLoop.isUnconfinedQueueEmpty) return false

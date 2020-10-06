@@ -38,6 +38,12 @@ internal const val MODE_CANCELLABLE_REUSABLE = 2
  */
 internal const val MODE_UNDISPATCHED = 4
 
+/**
+ * Initial mode for [DispatchedContinuation] implementation, should never be used for dispatch, because it is always
+ * overwritten when continuation is resumed with the actual resume mode.
+ */
+internal const val MODE_UNINITIALIZED = -1
+
 internal val Int.isCancellableMode get() = this == MODE_CANCELLABLE || this == MODE_CANCELLABLE_REUSABLE
 internal val Int.isReusableMode get() = this == MODE_CANCELLABLE_REUSABLE
 
@@ -73,6 +79,7 @@ internal abstract class DispatchedTask<in T>(
         (state as? CompletedExceptionally)?.cause
 
     public final override fun run() {
+        assert { resumeMode != MODE_UNINITIALIZED } // should have been set before dispatching
         val taskContext = this.taskContext
         var fatalException: Throwable? = null
         try {
@@ -141,6 +148,7 @@ internal abstract class DispatchedTask<in T>(
 }
 
 internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
+    assert { mode != MODE_UNINITIALIZED } // invalid mode value for this method
     val delegate = this.delegate
     val undispatched = mode == MODE_UNDISPATCHED
     if (!undispatched && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {

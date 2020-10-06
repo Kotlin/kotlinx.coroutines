@@ -27,6 +27,10 @@ internal open class CancellableContinuationImpl<in T>(
     final override val delegate: Continuation<T>,
     resumeMode: Int
 ) : DispatchedTask<T>(resumeMode), CancellableContinuation<T>, CoroutineStackFrame {
+    init {
+        assert { resumeMode != MODE_UNINITIALIZED } // invalid mode for CancellableContinuationImpl
+    }
+
     public override val context: CoroutineContext = delegate.context
 
     /*
@@ -93,6 +97,7 @@ internal open class CancellableContinuationImpl<in T>(
      */
     @JvmName("resetState") // Prettier stack traces
     internal fun resetState(resumeMode: Int): Boolean {
+        assert { resumeMode != MODE_UNINITIALIZED } // invalid mode for CancellableContinuationImpl
         assert { parentHandle !== NonDisposableHandle }
         val state = _state.value
         assert { state !is NotCompleted }
