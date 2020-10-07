@@ -178,9 +178,9 @@ For more details see ["Optimization" section for Android](ui/kotlinx-coroutines-
 
 #### Avoiding including the debug infrastructure in the resulting APK
 
-`kotlinx-coroutines-core` provides resources that are not needed for the applications to operate and are only needed to
-debug coroutine-using code. To exclude them at no loss of functionality, add the following to the `android` block in
-your gradle file for the application subproject:
+`kotlinx-coroutines-core` provides resources that are not required for the applications to operate and are only needed
+for debugging coroutine-using code. To exclude them at no loss of functionality, add the following to the `android`
+block in your gradle file for the application subproject:
 ```groovy
 packagingOptions {
   exclude "DebugProbesKt.bin"
