@@ -172,18 +172,18 @@ java.lang.NoClassDefFoundError: Failed resolution of: Ljava/lang/management/Mana
 
 #### Build failures due to duplicate resource files
 
-Building a project for Android that depends on `kotlinx-coroutines-debug` (usually introduced by being a transitive
+Building an Android project that depends on `kotlinx-coroutines-debug` (usually introduced by being a transitive
 dependency of `kotlinx-coroutines-test`) may fail with `DuplicateRelativeFileException` for `META-INF/AL2.0`,
 `META-INF/LGPL2.1`, or `win32-x86/attach_hotspot_windows.dll` when trying to merge the Android resource.
 
-The problem is with the fact that Android merges the resources of all its dependencies into a single directory and
-complains about conflicts. However:
+The problem is that Android merges the resources of all its dependencies into a single directory and complains about
+conflicts, but:
 * `kotlinx-coroutines-debug` transitively depends on JNA and JNA-platform, both of which include license files in their
-  META-INF directories. Trying to merge their resources leads to problems, which means that any Android project that
+  META-INF directories. Trying to merge these files leads to conflicts, which means that any Android project that
   depends on JNA and JNA-platform will experience build failures.
 * Additionally, `kotlinx-coroutines-debug` embeds `byte-buddy-agent` and `byte-buddy`, along with their resource files.
   Then, if the project separately depends on `byte-buddy`, merging the resources of `kotlinx-coroutines-debug` with ones
-  from `byte-buddy` and `byte-buddy-agent` will lead to problems as the resource files are duplicated.
+  from `byte-buddy` and `byte-buddy-agent` will lead to conflicts as the resource files are duplicated.
 
 One possible workaround for these issues is to add the following to the `android` block in your gradle file for the
 application subproject:
@@ -202,8 +202,8 @@ This will cause the resource merge algorithm to exclude the problematic license 
 copy of the files needed for `byte-buddy-agent` to work.
 
 Alternatively, avoid depending on `kotlinx-coroutines-debug`. In particular, if the only reason why this library a
-dependency of your project is that `kotlinx-coroutines-test` in turn depends on it, you may replace your dependency on
-`kotlinx.coroutines.test` with one that excludes `kotlinx-coroutines-debug`. For example, you could replace
+dependency of your project is that `kotlinx-coroutines-test` in turn depends on it, you may change your dependency on
+`kotlinx.coroutines.test` to exclude `kotlinx-coroutines-debug`. For example, you could replace
 ```kotlin
 androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version")
 ```
