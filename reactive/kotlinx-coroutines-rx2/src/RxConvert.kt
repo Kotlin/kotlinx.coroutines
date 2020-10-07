@@ -137,8 +137,9 @@ public fun <T: Any> Flow<T>.asFlowable(context: CoroutineContext = EmptyCoroutin
 
 @Deprecated(
     message = "Deprecated in the favour of Flow",
-    level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("this.consumeAsFlow().asObservable()") // Deprecated since 1.4.0
-)
+    level = DeprecationLevel.ERROR,
+    replaceWith = ReplaceWith("this.consumeAsFlow().asObservable(context)", "kotlinx.coroutines.flow.consumeAsFlow")
+) // Deprecated since 1.4.0
 public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = rxObservable(context) {
     for (t in this@asObservable)
         send(t)
