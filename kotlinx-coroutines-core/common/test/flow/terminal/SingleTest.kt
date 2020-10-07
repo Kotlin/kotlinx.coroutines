@@ -25,8 +25,8 @@ class SingleTest : TestBase() {
             emit(239L)
             emit(240L)
         }
-        assertFailsWith<RuntimeException> { flow.single() }
-        assertFailsWith<RuntimeException> { flow.singleOrNull() }
+        assertFailsWith<IllegalArgumentException> { flow.single() }
+        assertNull(flow.singleOrNull())
     }
 
     @Test

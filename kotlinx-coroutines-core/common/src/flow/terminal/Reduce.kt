@@ -9,6 +9,7 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.flow.internal.*
+import kotlinx.coroutines.internal.Symbol
 import kotlin.jvm.*
 
 /**
@@ -47,33 +48,43 @@ public suspend inline fun <T, R> Flow<T>.fold(
 }
 
 /**
- * The terminal operator, that awaits for one and only one value to be published.
+ * The terminal operator that awaits for one and only one value to be emitted.
  * Throws [NoSuchElementException] for empty flow and [IllegalStateException] for flow
  * that contains more than one element.
  */
 public suspend fun <T> Flow<T>.single(): T {
     var result: Any? = NULL
     collect { value ->
-        if (result !== NULL) error("Expected only one element")
+        require(result == NULL) { "Flow has more than one element" }
         result = value
     }
 
-    if (result === NULL) throw NoSuchElementException("Expected at least one element")
-    @Suppress("UNCHECKED_CAST")
+    if (result === NULL) throw NoSuchElementException("Flow is empty")
     return result as T
 }
 
 /**
- * The terminal operator, that awaits for one and only one value to be published.
- * Throws [IllegalStateException] for flow that contains more than one element.
+ * The terminal operator that awaits for one and only one value to be emitted.
+ * Returns the single value or `null`, if the flow was empty or emitted more than one value.
  */
 public suspend fun <T> Flow<T>.singleOrNull(): T? {
-    var result: T? = null
+    var result: Any? = NULL
     collect { value ->
-        if (result != null) error("Expected only one element")
-        result = value
+        /*
+         * result === NULL -> first value
+         * result === user value -> we already had first value and second one arrived
+         * result === DONE -> we've seen more than one value, time to return it
+         * as well.
+         */
+        result = if (result === NULL) {
+            value
+        } else {
+            // Indicator that more than one value was observed
+            DONE
+        }
     }
-    return result
+    // Symbols are never leaked, so it's one comparison versus two
+    return if (result is Symbol) null else result as T
 }
 
 /**
