@@ -55,7 +55,7 @@ public suspend inline fun <T, R> Flow<T>.fold(
 public suspend fun <T> Flow<T>.single(): T {
     var result: Any? = NULL
     collect { value ->
-        require(result == NULL) { "Flow has more than one element" }
+        require(result === NULL) { "Flow has more than one element" }
         result = value
     }
 
@@ -69,22 +69,18 @@ public suspend fun <T> Flow<T>.single(): T {
  */
 public suspend fun <T> Flow<T>.singleOrNull(): T? {
     var result: Any? = NULL
-    collect { value ->
-        /*
-         * result === NULL -> first value
-         * result === user value -> we already had first value and second one arrived
-         * result === DONE -> we've seen more than one value, time to return it
-         * as well.
-         */
-        result = if (result === NULL) {
-            value
+    collectWhile {
+        // No values yet, update result
+        if (result === NULL) {
+            result = it
+            true
         } else {
-            // Indicator that more than one value was observed
-            DONE
+            // Second value, reset result and bail out
+            result = NULL
+            false
         }
     }
-    // Symbols are never leaked, so it's one comparison versus two
-    return if (result is Symbol) null else result as T
+    return if (result === NULL) null else result as T
 }
 
 /**

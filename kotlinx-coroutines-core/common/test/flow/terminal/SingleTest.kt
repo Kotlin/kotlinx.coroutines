@@ -73,5 +73,22 @@ class SingleTest : TestBase() {
         val flow = flowOf(instance)
         assertSame(instance, flow.single())
         assertSame(instance, flow.singleOrNull())
+
+        val flow2 = flow {
+            emit(BadClass())
+            emit(BadClass())
+        }
+        assertFailsWith<IllegalArgumentException> { flow2.single() }
+    }
+
+    @Test
+    fun testSingleNoWait() = runTest {
+        val flow = flow {
+            emit(1)
+            emit(2)
+            awaitCancellation()
+        }
+
+        assertNull(flow.singleOrNull())
     }
 }
