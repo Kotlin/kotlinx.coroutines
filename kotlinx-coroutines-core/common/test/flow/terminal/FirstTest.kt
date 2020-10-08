@@ -129,6 +129,12 @@ class FirstTest : TestBase() {
     }
 
     @Test
+    fun testFirstOrNullWithNullElement() = runTest {
+        assertNull(flowOf<String?>(null).firstOrNull())
+        assertNull(flowOf<String?>(null).firstOrNull { true })
+    }
+
+    @Test
     fun testFirstOrNullWhenErrorCancelsUpstream() = runTest {
         val latch = Channel<Unit>()
         val flow = flow {
