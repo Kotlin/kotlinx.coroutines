@@ -6,6 +6,7 @@ package kotlinx.coroutines.rx2
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import org.junit.Assert
 import org.junit.Test
 import kotlin.test.*
@@ -126,7 +127,7 @@ class ConvertTest : TestBase() {
             delay(50)
             send("K")
         }
-        val observable = c.asObservable(Dispatchers.Unconfined)
+        val observable = c.consumeAsFlow().asObservable(Dispatchers.Unconfined)
         checkSingleValue(observable.reduce { t1, t2 -> t1 + t2 }.toSingle()) {
             assertEquals("OK", it)
         }
@@ -140,7 +141,7 @@ class ConvertTest : TestBase() {
             delay(50)
             throw TestException("K")
         }
-        val observable = c.asObservable(Dispatchers.Unconfined)
+        val observable = c.consumeAsFlow().asObservable(Dispatchers.Unconfined)
         val single = rxSingle(Dispatchers.Unconfined) {
             var result = ""
             try {
