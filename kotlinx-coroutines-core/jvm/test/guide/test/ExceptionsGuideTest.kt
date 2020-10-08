@@ -5,6 +5,7 @@
 // This file was automatically generated from exception-handling.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
 
+import kotlinx.coroutines.knit.*
 import org.junit.Test
 
 class ExceptionsGuideTest {
