@@ -26,10 +26,6 @@ kotlin {
     }
 
     sourceSets {
-        jsMain.dependencies {
-            api "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
-        }
-
         jsTest.dependencies {
             api "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
         }

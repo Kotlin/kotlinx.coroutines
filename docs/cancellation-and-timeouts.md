@@ -11,6 +11,7 @@
   * [Closing resources with `finally`](#closing-resources-with-finally)
   * [Run non-cancellable block](#run-non-cancellable-block)
   * [Timeout](#timeout)
+  * [Asynchronous timeout and resources](#asynchronous-timeout-and-resources)
 
 <!--- END -->
 
@@ -354,6 +355,114 @@ Result is null
 ```
 
 <!--- TEST -->
+
+### Asynchronous timeout and resources
+
+<!-- 
+  NOTE: Don't change this section name. It is being referenced to from within KDoc of withTimeout functions.
+-->
+
+The timeout event in [withTimeout] is asynchronous with respect to the code running in its block and may happen at any time,
+even right before the return from inside of the timeout block. Keep this in mind if you open or acquire some
+resource inside the block that needs closing or release outside of the block. 
+
+For example, here we imitate a closeable resource with the `Resource` class, that simply keeps track of how many times 
+it was created by incrementing the `acquired` counter and decrementing this counter from its `close` function.
+Let us run a lot of coroutines with the small timeout try acquire this resource from inside
+of the `withTimeout` block after a bit of delay and release it from outside.
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
+
+```kotlin
+import kotlinx.coroutines.*
+
+//sampleStart
+var acquired = 0
+
+class Resource {
+    init { acquired++ } // Acquire the resource
+    fun close() { acquired-- } // Release the resource
+}
+
+fun main() {
+    runBlocking {
+        repeat(100_000) { // Launch 100K coroutines
+            launch { 
+                val resource = withTimeout(60) { // Timeout of 60 ms
+                    delay(50) // Delay for 50 ms
+                    Resource() // Acquire a resource and return it from withTimeout block     
+                }
+                resource.close() // Release the resource
+            }
+        }
+    }
+    // Outside of runBlocking all coroutines have completed
+    println(acquired) // Print the number of resources still acquired
+}
+//sampleEnd
+``` 
+
+</div>
+
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-08.kt).
+
+<!--- CLEAR -->
+
+If you run the above code you'll see that it does not always print zero, though it may depend on the timings 
+of your machine you may need to tweak timeouts in this example to actually see non-zero values. 
+
+> Note, that incrementing and decrementing `acquired` counter here from 100K coroutines is completely safe,
+> since it always happens from the same main thread. More on that will be explained in the next chapter
+> on coroutine context.
+
+To workaround this problem you can store a reference to the resource in the variable as opposed to returning it 
+from the `withTimeout` block. 
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
+  
+```kotlin
+import kotlinx.coroutines.*
+
+var acquired = 0
+
+class Resource {
+    init { acquired++ } // Acquire the resource
+    fun close() { acquired-- } // Release the resource
+}
+
+fun main() {
+//sampleStart
+    runBlocking {
+        repeat(100_000) { // Launch 100K coroutines
+            launch { 
+                var resource: Resource? = null // Not acquired yet
+                try {
+                    withTimeout(60) { // Timeout of 60 ms
+                        delay(50) // Delay for 50 ms
+                        resource = Resource() // Store a resource to the variable if acquired      
+                    }
+                    // We can do something else with the resource here
+                } finally {  
+                    resource?.close() // Release the resource if it was acquired
+                }
+            }
+        }
+    }
+    // Outside of runBlocking all coroutines have completed
+    println(acquired) // Print the number of resources still acquired
+//sampleEnd
+}
+``` 
+
+</div>
+ 
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-09.kt).
+
+This example always prints zero. Resources do not leak.
+
+<!--- TEST 
+0
+-->
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->

@@ -392,7 +392,7 @@ internal class SubscribedFlowCollector<T>(
     private val action: suspend FlowCollector<T>.() -> Unit
 ) : FlowCollector<T> by collector {
     suspend fun onSubscription() {
-        val safeCollector = SafeCollector(collector, coroutineContext)
+        val safeCollector = SafeCollector(collector, currentCoroutineContext())
         try {
             safeCollector.action()
         } finally {

@@ -257,16 +257,17 @@ public final class kotlinx/coroutines/Deferred$DefaultImpls {
 
 public abstract interface class kotlinx/coroutines/Delay {
 	public abstract fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
+	public abstract fun invokeOnTimeout (JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
 	public abstract fun scheduleResumeAfterDelay (JLkotlinx/coroutines/CancellableContinuation;)V
 }
 
 public final class kotlinx/coroutines/Delay$DefaultImpls {
 	public static fun delay (Lkotlinx/coroutines/Delay;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static fun invokeOnTimeout (Lkotlinx/coroutines/Delay;JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
+	public static fun invokeOnTimeout (Lkotlinx/coroutines/Delay;JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
 }
 
 public final class kotlinx/coroutines/DelayKt {
+	public static final fun awaitCancellation (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun delay-p9JZ4hM (DLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
@@ -1054,10 +1055,14 @@ public final class kotlinx/coroutines/flow/FlowKt {
 }
 
 public final class kotlinx/coroutines/flow/LintKt {
+	public static final fun cancel (Lkotlinx/coroutines/flow/FlowCollector;Ljava/util/concurrent/CancellationException;)V
+	public static synthetic fun cancel$default (Lkotlinx/coroutines/flow/FlowCollector;Ljava/util/concurrent/CancellationException;ILjava/lang/Object;)V
 	public static final fun cancellable (Lkotlinx/coroutines/flow/SharedFlow;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun conflate (Lkotlinx/coroutines/flow/StateFlow;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun distinctUntilChanged (Lkotlinx/coroutines/flow/StateFlow;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun flowOn (Lkotlinx/coroutines/flow/SharedFlow;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun getCoroutineContext (Lkotlinx/coroutines/flow/FlowCollector;)Lkotlin/coroutines/CoroutineContext;
+	public static final fun isActive (Lkotlinx/coroutines/flow/FlowCollector;)Z
 }
 
 public abstract interface class kotlinx/coroutines/flow/MutableSharedFlow : kotlinx/coroutines/flow/FlowCollector, kotlinx/coroutines/flow/SharedFlow {
