@@ -57,7 +57,7 @@ class StateInTest : TestBase() {
         val scope = this + sharingJob
         val shared: StateFlow<String?>
         if (iv) {
-            shared = upstream.stateIn(scope, initialValue = null)
+            shared = upstream.stateIn(scope, SharingStarted.Eagerly, null)
             assertEquals(null, shared.value)
         } else {
             shared = upstream.stateIn(scope)

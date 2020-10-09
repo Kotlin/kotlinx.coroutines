@@ -710,7 +710,7 @@ class SharedFlowTest : TestBase() {
                 }
             }
         }
-        repeat(1000) { index ->
+        repeat(1000) {
             val value = if (rnd.nextBoolean()) null else rnd.nextData()
             if (rnd.nextInt(20) == 0) {
                 result.add("resetReplayCache & emit: $value")

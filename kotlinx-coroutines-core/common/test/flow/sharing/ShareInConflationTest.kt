@@ -49,114 +49,114 @@ class ShareInConflationTest : TestBase() {
     @Test
     fun testConflateReplay1() =
         checkConflation(1) {
-            conflate().shareIn(it, 1)
+            conflate().shareIn(it, 1, SharingStarted.Eagerly)
         }
 
     @Test // still looks like conflating the last value for the first subscriber (will not replay to others though)
     fun testConflateReplay0() =
         checkConflation(1) {
-            conflate().shareIn(it, 0)
+            conflate().shareIn(it, 0, SharingStarted.Eagerly)
         }
 
     @Test
     fun testConflateReplay5() =
         checkConflation(5) {
-            conflate().shareIn(it, 5)
+            conflate().shareIn(it, 5, SharingStarted.Eagerly)
         }
 
     @Test
     fun testBufferDropOldestReplay1() =
         checkConflation(1) {
-            buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST).shareIn(it, 1)
+            buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST).shareIn(it, 1, SharingStarted.Eagerly)
         }
 
     @Test
     fun testBufferDropOldestReplay0() =
         checkConflation(1) {
-            buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST).shareIn(it, 0)
+            buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST).shareIn(it, 0, SharingStarted.Eagerly)
         }
 
     @Test
     fun testBufferDropOldestReplay10() =
         checkConflation(10) {
-            buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST).shareIn(it, 10)
+            buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST).shareIn(it, 10, SharingStarted.Eagerly)
         }
 
     @Test
     fun testBuffer20DropOldestReplay0() =
         checkConflation(20) {
-            buffer(20, onBufferOverflow = BufferOverflow.DROP_OLDEST).shareIn(it, 0)
+            buffer(20, onBufferOverflow = BufferOverflow.DROP_OLDEST).shareIn(it, 0, SharingStarted.Eagerly)
         }
 
     @Test
     fun testBuffer7DropOldestReplay11() =
         checkConflation(18) {
-            buffer(7, onBufferOverflow = BufferOverflow.DROP_OLDEST).shareIn(it, 11)
+            buffer(7, onBufferOverflow = BufferOverflow.DROP_OLDEST).shareIn(it, 11, SharingStarted.Eagerly)
         }
 
     @Test // a preceding buffer() gets overridden by conflate()
     fun testBufferConflateOverride() =
         checkConflation(1) {
-            buffer(23).conflate().shareIn(it, 1)
+            buffer(23).conflate().shareIn(it, 1, SharingStarted.Eagerly)
         }
 
     @Test // a preceding buffer() gets overridden by buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
     fun testBufferDropOldestOverride() =
         checkConflation(1) {
-            buffer(23).buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST).shareIn(it, 1)
+            buffer(23).buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST).shareIn(it, 1, SharingStarted.Eagerly)
         }
 
     @Test
     fun testBufferDropLatestReplay0() =
         checkConflation(1, BufferOverflow.DROP_LATEST) {
-            buffer(onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 0)
+            buffer(onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 0, SharingStarted.Eagerly)
         }
 
     @Test
     fun testBufferDropLatestReplay1() =
         checkConflation(1, BufferOverflow.DROP_LATEST) {
-            buffer(onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 1)
+            buffer(onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 1, SharingStarted.Eagerly)
         }
 
     @Test
     fun testBufferDropLatestReplay10() =
         checkConflation(10, BufferOverflow.DROP_LATEST) {
-            buffer(onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 10)
+            buffer(onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 10, SharingStarted.Eagerly)
         }
 
     @Test
     fun testBuffer0DropLatestReplay0() =
         checkConflation(1, BufferOverflow.DROP_LATEST) {
-            buffer(0, onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 0)
+            buffer(0, onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 0, SharingStarted.Eagerly)
         }
 
     @Test
     fun testBuffer0DropLatestReplay1() =
         checkConflation(1, BufferOverflow.DROP_LATEST) {
-            buffer(0, onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 1)
+            buffer(0, onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 1, SharingStarted.Eagerly)
         }
 
     @Test
     fun testBuffer0DropLatestReplay10() =
         checkConflation(10, BufferOverflow.DROP_LATEST) {
-            buffer(0, onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 10)
+            buffer(0, onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 10, SharingStarted.Eagerly)
         }
 
     @Test
     fun testBuffer5DropLatestReplay0() =
         checkConflation(5, BufferOverflow.DROP_LATEST) {
-            buffer(5, onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 0)
+            buffer(5, onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 0, SharingStarted.Eagerly)
         }
 
     @Test
     fun testBuffer5DropLatestReplay10() =
         checkConflation(15, BufferOverflow.DROP_LATEST) {
-            buffer(5, onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 10)
+            buffer(5, onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 10, SharingStarted.Eagerly)
         }
 
     @Test // a preceding buffer() gets overridden by buffer(onBufferOverflow = BufferOverflow.DROP_LATEST)
     fun testBufferDropLatestOverride() =
         checkConflation(1, BufferOverflow.DROP_LATEST) {
-            buffer(23).buffer(onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 0)
+            buffer(23).buffer(onBufferOverflow = BufferOverflow.DROP_LATEST).shareIn(it, 0, SharingStarted.Eagerly)
         }
 }

@@ -21,13 +21,12 @@ import kotlin.jvm.*
  * and replaying a specified number of [replay] values to new subscribers. See the [SharedFlow] documentation
  * for the general concepts of shared flows.
  *
- * The starting of the sharing coroutine is controlled by the [started] parameter. By default, the sharing coroutine is started
- * [Eagerly][SharingStarted.Eagerly], so the upstream flow is started even before the first subscribers appear. Note
- * that in this case all values emitted by the upstream beyond the most recent values as specified by
- * [replay] parameter **will be immediately discarded**.
+ * The starting of the sharing coroutine is controlled by the [started] parameter. The following options
+ * are supported.
  *
- * Additional options for the [started] parameter are:
- *
+ * * [Eagerly][SharingStarted.Eagerly] &mdash; the upstream flow is started even before the first subscriber appears. Note
+ *   that in this case all values emitted by the upstream beyond the most recent values as specified by
+ *   [replay] parameter **will be immediately discarded**.
  * * [Lazily][SharingStarted.Lazily] &mdash; starts the upstream flow after the first subscriber appears, which guarantees
  *   that this first subscriber gets all the emitted values, while subsequent subscribers are only guaranteed to
  *   get the most recent [replay] values. The upstream flow continues to be active even when all subscribers
@@ -131,14 +130,13 @@ import kotlin.jvm.*
  *
  * @param scope the coroutine scope in which sharing is started.
  * @param replay the number of values replayed to new subscribers (cannot be negative).
- * @param started the strategy that controls when sharing is started and stopped
- *   (optional, default to [Eagerly][SharingStarted.Eagerly] starting the sharing without waiting for subscribers).
+ * @param started the strategy that controls when sharing is started and stopped.
  */
 @ExperimentalCoroutinesApi
 public fun <T> Flow<T>.shareIn(
     scope: CoroutineScope,
     replay: Int,
-    started: SharingStarted = SharingStarted.Eagerly
+    started: SharingStarted
 ): SharedFlow<T> {
     val config = configureSharing(replay)
     val shared = MutableSharedFlow<T>(
@@ -279,8 +277,7 @@ private fun <T> CoroutineScope.launchSharing(
  * [distinctUntilChanged][Flow.distinctUntilChanged], or [cancellable] operators to a state flow has no effect.
  *
  * @param scope the coroutine scope in which sharing is started.
- * @param started the strategy that controls when sharing is started and stopped
- *   (optional, default to [Eagerly][SharingStarted.Eagerly] starting the sharing without waiting for subscribers).
+ * @param started the strategy that controls when sharing is started and stopped.
  * @param initialValue the initial value of the state flow.
  *   This value is also used when the state flow is reset using the [SharingStarted.WhileSubscribed] strategy
  *   with the `replayExpirationMillis` parameter.
@@ -288,7 +285,7 @@ private fun <T> CoroutineScope.launchSharing(
 @ExperimentalCoroutinesApi
 public fun <T> Flow<T>.stateIn(
     scope: CoroutineScope,
-    started: SharingStarted = SharingStarted.Eagerly,
+    started: SharingStarted,
     initialValue: T
 ): StateFlow<T> {
     val config = configureSharing(1)

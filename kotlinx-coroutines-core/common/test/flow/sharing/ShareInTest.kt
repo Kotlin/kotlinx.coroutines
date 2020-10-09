@@ -13,7 +13,7 @@ class ShareInTest : TestBase() {
     fun testReplay0Eager() = runTest {
         expect(1)
         val flow = flowOf("OK")
-        val shared = flow.shareIn(this, 0)
+        val shared = flow.shareIn(this, 0, SharingStarted.Eagerly)
         yield() // actually start sharing
         // all subscribers miss "OK"
         val jobs = List(10) {
@@ -95,7 +95,7 @@ class ShareInTest : TestBase() {
             terminate.join()
             if (failed) throw TestException()
         }
-        val shared = upstream.shareIn(this + sharingJob, 1)
+        val shared = upstream.shareIn(this + sharingJob, 1, SharingStarted.Eagerly)
         assertEquals(emptyList(), shared.replayCache)
         emitted.join() // should start sharing, emit & cache
         assertEquals(listOf("OK"), shared.replayCache)
@@ -186,6 +186,7 @@ class ShareInTest : TestBase() {
         finish(2)
     }
 
+    @Suppress("TestFunctionName")
     private fun SharingStarted.Companion.WhileSubscribedAtLeast(threshold: Int): SharingStarted =
         object : SharingStarted {
             override fun command(subscriptionCount: StateFlow<Int>): Flow<SharingCommand> =
