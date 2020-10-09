@@ -257,13 +257,13 @@ public final class kotlinx/coroutines/Deferred$DefaultImpls {
 
 public abstract interface class kotlinx/coroutines/Delay {
 	public abstract fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
+	public abstract fun invokeOnTimeout (JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
 	public abstract fun scheduleResumeAfterDelay (JLkotlinx/coroutines/CancellableContinuation;)V
 }
 
 public final class kotlinx/coroutines/Delay$DefaultImpls {
 	public static fun delay (Lkotlinx/coroutines/Delay;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static fun invokeOnTimeout (Lkotlinx/coroutines/Delay;JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
+	public static fun invokeOnTimeout (Lkotlinx/coroutines/Delay;JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
 }
 
 public final class kotlinx/coroutines/DelayKt {

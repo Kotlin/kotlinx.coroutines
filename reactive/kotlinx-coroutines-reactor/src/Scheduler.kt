@@ -39,7 +39,7 @@ public class SchedulerCoroutineDispatcher(
     }
 
     /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         scheduler.schedule(block, timeMillis, TimeUnit.MILLISECONDS).asDisposableHandle()
 
     /** @suppress */

@@ -142,7 +142,7 @@ private fun <U, T: U> setupTimeout(
     // schedule cancellation of this coroutine on time
     val cont = coroutine.uCont
     val context = cont.context
-    coroutine.disposeOnCompletion(context.delay.invokeOnTimeout(coroutine.time, coroutine))
+    coroutine.disposeOnCompletion(context.delay.invokeOnTimeout(coroutine.time, coroutine, coroutine.context))
     // restart the block using a new coroutine with a new job,
     // however, start it undispatched, because we already are in the proper context
     return coroutine.startUndispatchedOrReturnIgnoreTimeout(coroutine, block)

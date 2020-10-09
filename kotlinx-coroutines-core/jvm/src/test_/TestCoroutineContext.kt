@@ -230,7 +230,7 @@ public class TestCoroutineContext(private val name: String? = null) : CoroutineC
             }, timeMillis)
         }
 
-        override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+        override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
             val node = postDelayed(block, timeMillis)
             return object : DisposableHandle {
                 override fun dispose() {

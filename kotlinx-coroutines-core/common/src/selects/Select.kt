@@ -655,7 +655,7 @@ internal class SelectBuilderImpl<in R>(
             if (trySelect())
                 block.startCoroutineCancellable(completion) // shall be cancellable while waits for dispatch
         }
-        disposeOnSelect(context.delay.invokeOnTimeout(timeMillis, action))
+        disposeOnSelect(context.delay.invokeOnTimeout(timeMillis, action, context))
     }
 
     private class DisposeNode(

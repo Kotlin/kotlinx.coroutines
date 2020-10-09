@@ -71,7 +71,7 @@ public final class kotlinx/coroutines/rx3/SchedulerCoroutineDispatcher : kotlinx
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getScheduler ()Lio/reactivex/rxjava3/core/Scheduler;
 	public fun hashCode ()I
-	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
+	public fun invokeOnTimeout (JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
 	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/CancellableContinuation;)V
 	public fun toString ()Ljava/lang/String;
 }
