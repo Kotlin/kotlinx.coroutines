@@ -179,7 +179,10 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      * On a [MutableStateFlow], which always contains a single value, this function is not
      * supported, and throws an [UnsupportedOperationException]. To reset a [MutableStateFlow]
      * to an initial value, just update its [value][MutableStateFlow.value].
+     *
+     * **Note: This is an experimental api.** This function may be removed or renamed in the future.
      */
+    @ExperimentalCoroutinesApi
     public fun resetReplayCache()
 }
 
