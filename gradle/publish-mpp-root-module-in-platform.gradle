@@ -3,37 +3,40 @@
  */
 
 
-/*
- * Publish the platform JAR and POM so that consumers who depend on this module and can't read Gradle module metadata
- * can still get the platform artifact and transitive dependencies from the POM.
- *
- * See the full rationale here https://youtrack.jetbrains.com/issue/KMM-237#focus=streamItem-27-4115233.0-0
- */
-project.ext.publishPlatformArtifactsInRootModule = { platformPublication ->
-    def platformPomBuilder = null
+/** Publish the platform JAR and POM so that consumers who depend on this module and can't read Gradle module
+ metadata can still get the platform artifact and transitive dependencies from the POM: */
+project.ext.publishPlatformArtifactsInRootModule = { MavenPublication platformPublication ->
 
-    platformPublication.pom.withXml { platformPomBuilder = asString() }
+    XmlProvider platformXml = null
 
-    publishing.publications.kotlinMultiplatform  {
-        platformPublication.artifacts.forEach {
-            artifact(it)
-        }
+    platformPublication.pom.withXml { platformXml = it }
 
+    publishing.publications.kotlinMultiplatform {
         pom.withXml {
-            def pomStringBuilder = asString()
-            pomStringBuilder.setLength(0)
-            // The platform POM needs its artifact ID replaced with the artifact ID of the root module:
-            def platformPomString = platformPomBuilder.toString()
-            platformPomString.eachLine { line ->
-                if (!line.contains("<!--")) { // Remove the Gradle module metadata marker as it will be added anew
-                    pomStringBuilder.append(line.replace(platformPublication.artifactId, artifactId))
-                    pomStringBuilder.append("\n")
-                }
-            }
+            Node root = asNode()
+            // Remove the original content and add the content from the platform POM:
+            root.children().toList().each { root.remove(it as Node) }
+            platformXml.asNode().children().each { root.append(it as Node) }
+
+            // Adjust the self artifact ID, as it should match the root module's coordinates:
+            ((root.get("artifactId") as NodeList).get(0) as Node).setValue(artifactId)
+
+            // Set packaging to POM to indicate that there's no artifact:
+            root.appendNode("packaging", "pom")
+
+            // Remove the original platform dependencies and add a single dependency on the platform module:
+            Node dependencies = (root.get("dependencies") as NodeList).get(0) as Node
+            dependencies.children().toList().each { dependencies.remove(it as Node) }
+            Node singleDependency = dependencies.appendNode("dependency")
+            singleDependency.appendNode("groupId", platformPublication.groupId)
+            singleDependency.appendNode("artifactId", platformPublication.artifactId)
+            singleDependency.appendNode("version", platformPublication.version)
+            singleDependency.appendNode("scope", "compile")
         }
     }
 
-    tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication"}.configureEach {
+    tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication" }.configureEach {
         dependsOn(tasks["generatePomFileFor${platformPublication.name.capitalize()}Publication"])
     }
+
 }
