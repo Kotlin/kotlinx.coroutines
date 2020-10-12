@@ -264,7 +264,7 @@ internal interface CancellableFlow<out T> : Flow<T>
 /**
  * Named implementation class for a flow that is defined by the [cancellable] function.
  */
-private class CancellableFlowImpl<T>(val flow: Flow<T>) : CancellableFlow<T> {
+private class CancellableFlowImpl<T>(private val flow: Flow<T>) : CancellableFlow<T> {
     override suspend fun collect(collector: FlowCollector<T>) {
         flow.collect {
             currentCoroutineContext().ensureActive()
