@@ -56,20 +56,33 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
     val isClosed = Array(size) { false }
     var nonClosed = size
     var remainingNulls = size
-    // See flow.combine(other) for explanation.
-    while (nonClosed != 0) {
-        select<Unit> {
-            for (i in 0 until size) {
-                onReceive(isClosed[i], channels[i], { isClosed[i] = true; --nonClosed }) { value ->
-                    if (latestValues[i] == null) --remainingNulls
-                    latestValues[i] = value
-                    if (remainingNulls != 0) return@onReceive
+    // See flow.combine(other) for explanation of the logic
+    // Reuse receive blocks to avoid allocations on each iteration
+    val onReceiveBlocks = Array<suspend (Any?) -> Unit>(size) { i ->
+        { value ->
+            if (value === null) {
+                isClosed[i] = true;
+                --nonClosed
+            }
+            else {
+                if (latestValues[i] == null) --remainingNulls
+                latestValues[i] = value
+                if (remainingNulls == 0) {
                     val arguments = arrayFactory()
                     for (index in 0 until size) {
                         arguments[index] = NULL.unbox(latestValues[index])
                     }
                     transform(arguments as Array<T>)
                 }
+            }
+        }
+    }
+
+    while (nonClosed != 0) {
+        select<Unit> {
+            for (i in 0 until size) {
+                if (isClosed[i]) continue
+                channels[i].onReceiveOrNull(onReceiveBlocks[i])
             }
         }
     }
