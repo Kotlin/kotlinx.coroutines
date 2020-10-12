@@ -282,7 +282,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
 
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>
-    ) : ConflatedChannel<E>(), ReceiveChannel<E> {
+    ) : ConflatedChannel<E>(null), ReceiveChannel<E> {
 
         override fun onCancelIdempotent(wasClosed: Boolean) {
             if (wasClosed) {

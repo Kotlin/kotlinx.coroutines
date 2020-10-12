@@ -4,6 +4,8 @@
 
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.internal.*
+
 /**
  * Rendezvous channel. This channel does not have any buffer at all. An element is transferred from sender
  * to receiver only when [send] and [receive] invocations meet in time (rendezvous), so [send] suspends
@@ -13,7 +15,7 @@ package kotlinx.coroutines.channels
  *
  * This implementation is fully lock-free.
  **/
-internal open class RendezvousChannel<E> : AbstractChannel<E>() {
+internal open class RendezvousChannel<E>(onUndeliveredElement: OnUndeliveredElement<E>?) : AbstractChannel<E>(onUndeliveredElement) {
     protected final override val isBufferAlwaysEmpty: Boolean get() = true
     protected final override val isBufferEmpty: Boolean get() = true
     protected final override val isBufferAlwaysFull: Boolean get() = true

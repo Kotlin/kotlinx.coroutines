@@ -20,6 +20,9 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * the channel afterwards. If you need to iterate over the channel without consuming it,
  * a regular `for` loop should be used instead.
  *
+ * Note, that emitting values from a channel into a flow is not atomic. A value that was received from the
+ * channel many not reach the flow collector if it was cancelled and will be lost.
+ *
  * This function provides a more efficient shorthand for `channel.consumeEach { value -> emit(value) }`.
  * See [consumeEach][ReceiveChannel.consumeEach].
  */

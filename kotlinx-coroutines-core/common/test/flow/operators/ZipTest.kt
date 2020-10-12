@@ -67,14 +67,12 @@ class ZipTest : TestBase() {
         val f1 = flow<String> {
             emit("1")
             emit("2")
-            hang {
-                expect(1)
-            }
+            expectUnreached() // the above emit will get cancelled because f2 ends
         }
 
         val f2 = flowOf("a", "b")
         assertEquals(listOf("1a", "2b"), f1.zip(f2) { s1, s2 -> s1 + s2 }.toList())
-        finish(2)
+        finish(1)
     }
 
     @Test
@@ -89,25 +87,6 @@ class ZipTest : TestBase() {
 
         val f2 = flowOf("a", "b")
         assertEquals(listOf("a1", "b2"), f2.zip(f1) { s1, s2 -> s1 + s2 }.toList())
-        finish(2)
-    }
-
-    @Test
-    fun testCancelWhenFlowIsDone2() = runTest {
-        val f1 = flow<String> {
-            emit("1")
-            emit("2")
-            try {
-                emit("3")
-                expectUnreached()
-            } finally {
-                expect(1)
-            }
-
-        }
-
-        val f2 = flowOf("a", "b")
-        assertEquals(listOf("1a", "2b"), f1.zip(f2) { s1, s2 -> s1 + s2 }.toList())
         finish(2)
     }
 

@@ -7,5 +7,5 @@ package kotlinx.coroutines.channels
 // Test that ArrayChannel(1, DROP_OLDEST) works just like ConflatedChannel()
 class ConflatedChannelArrayModelTest : ConflatedChannelTest() {
     override fun <T> createConflatedChannel(): Channel<T> =
-        ArrayChannel<T>(1, BufferOverflow.DROP_OLDEST)
+        ArrayChannel<T>(1, BufferOverflow.DROP_OLDEST, null)
 }
