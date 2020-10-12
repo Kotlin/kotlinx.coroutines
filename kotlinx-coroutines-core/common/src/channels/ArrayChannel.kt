@@ -27,7 +27,7 @@ internal open class ArrayChannel<E>(
     private val onBufferOverflow: BufferOverflow
 ) : AbstractChannel<E>() {
     init {
-        require(capacity >= 1) { "ArrayChannel capacity must be at least 1, but $capacity was specified" }
+        assert { capacity >= 1 } // ArrayChannel capacity must be at least 1
     }
 
     private val lock = ReentrantLock()
