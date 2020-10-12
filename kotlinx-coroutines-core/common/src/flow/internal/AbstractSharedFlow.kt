@@ -82,7 +82,11 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
             if (nCollectors == 0) nextIndex = 0
             (slot as AbstractSharedFlowSlot<Any>).freeLocked(this)
         }
-        // Resume suspended coroutines
+        /*
+           Resume suspended coroutines.
+           This can happens when the subscriber that was freed was a slow one and was holding up buffer.
+           When this subscriber was freed, previously queued emitted can now wake up and are resumed here.
+        */
         for (cont in resumes) cont?.resume(Unit)
         // decrement subscription count
         subscriptionCount?.increment(-1)
