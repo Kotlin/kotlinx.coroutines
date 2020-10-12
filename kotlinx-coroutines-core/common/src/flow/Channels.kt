@@ -186,10 +186,21 @@ public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
  * default and to control what happens when data is produced faster than it is consumed,
  * that is to control backpressure behavior.
  *
- * **Note: This API is obsolete.** It will be deprecated and replaced with
- * the [Flow.shareIn] operator when it becomes stable.
+ * ### Deprecated
+ *
+ * **This API is deprecated.** The [BroadcastChannel] provides a complex channel-like API for hot flows.
+ * [SharedFlow] is a easier-to-use and more flow-centric API for the same purposes, so using
+ * [shareIn] operator is preferred. It is not a direct replacement, so please
+ * study [shareIn] documentation to see what kind of shared flow fits your use-case. As a rule of thumb:
+ *
+ * * Replace `broadcastIn(scope)` and `broadcastIn(scope, CoroutineStart.LAZY)` with `shareIn(scope, 0, SharingStarted.Lazily)`.
+ * * Replace `broadcastIn(scope, CoroutineStart.DEFAULT)` with `shareIn(scope, 0, SharingStarted.Eagerly)`.
  */
-@FlowPreview
+@Deprecated(
+    message = "Use shareIn operator and the resulting SharedFlow as a replacement for BroadcastChannel",
+    replaceWith = ReplaceWith("shareIn(scope, 0, SharingStarted.Lazily)"),
+    level = DeprecationLevel.WARNING
+)
 public fun <T> Flow<T>.broadcastIn(
     scope: CoroutineScope,
     start: CoroutineStart = CoroutineStart.LAZY
