@@ -210,5 +210,5 @@ private class StartedWhileSubscribed(
             stopTimeout == other.stopTimeout &&
             replayExpiration == other.replayExpiration
 
-    override fun hashCode(): Int = stopTimeout.hashCode() * 13 + replayExpiration.hashCode()
+    override fun hashCode(): Int = stopTimeout.hashCode() * 31 + replayExpiration.hashCode()
 }
