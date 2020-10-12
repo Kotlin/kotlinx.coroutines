@@ -119,7 +119,10 @@ private class ReactiveSubscriber<T : Any>(
     private val requestSize: Long
 ) : Subscriber<T> {
     private lateinit var subscription: Subscription
-    private val channel = Channel<T>(capacity, onBufferOverflow)
+
+    // This implementation of ReactiveSubscriber always uses "offer" in its onNext implementation and it cannot
+    // be reliable with rendezvous channel, so a rendezvous channel is replaced with buffer=1 channel
+    private val channel = Channel<T>(if (capacity == Channel.RENDEZVOUS) 1 else capacity, onBufferOverflow)
 
     suspend fun takeNextOrNull(): T? = channel.receiveOrNull()
 
