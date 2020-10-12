@@ -167,7 +167,11 @@ public interface MutableStateFlow<T> : StateFlow<T>, MutableSharedFlow<T> {
 
     /**
      * Atomically compares the current [value] with [expect] and sets it to [update] if it is equal to [expect].
-     * The result is `true` if the [value] was set to [update] and `false` otherwise. 
+     * The result is `true` if the [value] was set to [update] and `false` otherwise.
+     *
+     * This function use a regular comparison using [Any.equals]. If both [expect] and [update] are equal to the
+     * current [value], this function returns `true`, but it does not actually change the reference that is
+     * stored in the [value].
      */
     public fun compareAndSet(expect: T, update: T): Boolean
 }

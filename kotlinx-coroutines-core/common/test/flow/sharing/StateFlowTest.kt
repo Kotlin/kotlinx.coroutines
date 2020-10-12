@@ -172,4 +172,25 @@ class StateFlowTest : TestBase() {
         assertEquals(42, state.value)
         assertEquals(listOf(42), state.replayCache)
     }
+
+    @Test
+    fun testReferenceUpdatesAndCAS() {
+        val d0 = Data(0)
+        val d0_1 = Data(0)
+        val d1 = Data(1)
+        val d1_1 = Data(1)
+        val d1_2 = Data(1)
+        val state = MutableStateFlow(d0)
+        assertSame(d0, state.value)
+        state.value = d0_1 // equal, nothing changes
+        assertSame(d0, state.value)
+        state.value = d1 // updates
+        assertSame(d1, state.value)
+        assertFalse(state.compareAndSet(d0, d0)) // wrong value
+        assertSame(d1, state.value)
+        assertTrue(state.compareAndSet(d1_1, d1_2)) // "updates", but ref stays
+        assertSame(d1, state.value)
+        assertTrue(state.compareAndSet(d1_1, d0)) // updates, reference changes
+        assertSame(d0, state.value)
+    }
 }
