@@ -828,7 +828,7 @@ internal abstract class AbstractChannel<E>(
         override fun toString(): String = "RemoveReceiveOnCancel[$receive]"
     }
 
-    private class Itr<E>(val channel: AbstractChannel<E>) : ChannelIterator<E> {
+    private class Itr<E>(@JvmField val channel: AbstractChannel<E>) : ChannelIterator<E> {
         var result: Any? = POLL_FAILED // E | POLL_FAILED | Closed
 
         override suspend fun hasNext(): Boolean {
