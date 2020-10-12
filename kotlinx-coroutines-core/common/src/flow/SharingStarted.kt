@@ -15,7 +15,7 @@ import kotlin.time.*
 @ExperimentalCoroutinesApi
 public enum class SharingCommand {
     /**
-     * Starts the sharing coroutine.
+     * Starts sharing, launching collection of the upstream flow.
      *
      * Emitting this command again does not do anything. Emit [STOP] and then [START] to restart an
      * upstream flow.
@@ -23,12 +23,13 @@ public enum class SharingCommand {
     START,
 
     /**
-     * Stops the sharing coroutine.
+     * Stops sharing, cancelling collection of the upstream flow.
      */
     STOP,
 
     /**
-     * Stops the sharing coroutine and resets the [SharedFlow.replayCache] to its initial state.
+     * Stops sharing, cancelling collection of the upstream flow, and resets the [SharedFlow.replayCache]
+     * to its initial state.
      * The [shareIn] operator calls [MutableSharedFlow.resetReplayCache];
      * the [stateIn] operator resets the value to its original `initialValue`.
      */
