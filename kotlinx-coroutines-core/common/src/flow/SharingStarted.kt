@@ -101,7 +101,8 @@ public interface SharingStarted {
          * * [replayExpirationMillis] &mdash; configures a delay (in milliseconds) between the stopping of
          *   the sharing coroutine and the resetting of the replay cache (which makes the cache empty for the [shareIn] operator
          *   and resets the cached value to the original `initialValue` for the [stateIn] operator).
-         *   It defaults to `Long.MAX_VALUE` (keep replay cache forever, never reset buffer)
+         *   It defaults to `Long.MAX_VALUE` (keep replay cache forever, never reset buffer).
+         *   Use zero value to expire the cache immediately.
          *
          * This function throws [IllegalArgumentException] when either [stopTimeoutMillis] or [replayExpirationMillis]
          * are negative.
@@ -134,7 +135,8 @@ public interface SharingStarted {
  * * [replayExpiration] &mdash; configures a delay between the stopping of
  *   the sharing coroutine and the resetting of the replay cache (which makes the cache empty for the [shareIn] operator
  *   and resets the cached value to the original `initialValue` for the [stateIn] operator).
- *   It defaults to `Long.MAX_VALUE` (keep replay cache forever, never reset buffer)
+ *   It defaults to [Duration.INFINITE] (keep replay cache forever, never reset buffer).
+ *   Use [Duration.ZERO] value to expire the cache immediately.
  *
  * This function throws [IllegalArgumentException] when either [stopTimeout] or [replayExpiration]
  * are negative.
