@@ -200,21 +200,36 @@ private fun <T> CoroutineScope.launchSharing(
     initialValue: T
 ) {
     launch(context) { // the single coroutine to rule the sharing
-        started.command(shared.subscriptionCount)
-            .distinctUntilChanged() // only changes in command have effect
-            .collectLatest { // cancels block on new emission
-                when (it) {
-                    SharingCommand.START -> upstream.collect(shared) // can be cancelled
-                    SharingCommand.STOP -> { /* just cancel and do nothing else */ }
-                    SharingCommand.STOP_AND_RESET_REPLAY_CACHE -> {
-                        if (initialValue === NO_VALUE) {
-                            shared.resetReplayCache() // regular shared flow -> reset cache
-                        } else {
-                            shared.tryEmit(initialValue) // state flow -> reset to initial value
+        // Optimize common built-in started strategies
+        when {
+            started === SharingStarted.Eagerly -> {
+                // collect immediately & forever
+                upstream.collect(shared)
+            }
+            started === SharingStarted.Lazily -> {
+                // start collecting on the first subscriber - wait for it first
+                shared.subscriptionCount.first { it > 0 }
+                upstream.collect(shared)
+            }
+            else -> {
+                // other & custom strategies
+                started.command(shared.subscriptionCount)
+                    .distinctUntilChanged() // only changes in command have effect
+                    .collectLatest { // cancels block on new emission
+                        when (it) {
+                            SharingCommand.START -> upstream.collect(shared) // can be cancelled
+                            SharingCommand.STOP -> { /* just cancel and do nothing else */ }
+                            SharingCommand.STOP_AND_RESET_REPLAY_CACHE -> {
+                                if (initialValue === NO_VALUE) {
+                                    shared.resetReplayCache() // regular shared flow -> reset cache
+                                } else {
+                                    shared.tryEmit(initialValue) // state flow -> reset to initial value
+                                }
+                            }
                         }
                     }
-                }
             }
+        }
     }
 }
 
@@ -351,10 +366,7 @@ private class ReadonlySharedFlow<T>(
 
 private class ReadonlyStateFlow<T>(
     flow: StateFlow<T>
-) : StateFlow<T> by flow, CancellableFlow<T>, FusibleFlow<T>, DistinctFlow<T> {
-    override val isDefaultEquivalence: Boolean
-        get() = true
-
+) : StateFlow<T> by flow, CancellableFlow<T>, FusibleFlow<T> {
     override fun fuse(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow) =
         fuseStateFlow(context, capacity, onBufferOverflow)
 }

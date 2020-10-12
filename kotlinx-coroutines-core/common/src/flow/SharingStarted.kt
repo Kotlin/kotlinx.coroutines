@@ -151,13 +151,13 @@ public fun SharingStarted.Companion.WhileSubscribed(
 // -------------------------------- implementation --------------------------------
 
 private class StartedEagerly : SharingStarted {
-    private val alwaysStarted = unsafeDistinctFlow { emit(SharingCommand.START) }
-    override fun command(subscriptionCount: StateFlow<Int>): Flow<SharingCommand> = alwaysStarted
+    override fun command(subscriptionCount: StateFlow<Int>): Flow<SharingCommand> =
+        flowOf(SharingCommand.START)
     override fun toString(): String = "SharingStarted.Eagerly"
 }
 
 private class StartedLazily : SharingStarted {
-    override fun command(subscriptionCount: StateFlow<Int>): Flow<SharingCommand> = unsafeDistinctFlow {
+    override fun command(subscriptionCount: StateFlow<Int>): Flow<SharingCommand> = flow {
         var started = false
         subscriptionCount.collect { count ->
             if (count > 0 && !started) {

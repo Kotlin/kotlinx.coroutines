@@ -251,12 +251,9 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
 
 private class StateFlowImpl<T>(
     initialState: Any // T | NULL
-) : AbstractSharedFlow<StateFlowSlot>(), MutableStateFlow<T>, DistinctFlow<T>, CancellableFlow<T>, FusibleFlow<T> {
+) : AbstractSharedFlow<StateFlowSlot>(), MutableStateFlow<T>, CancellableFlow<T>, FusibleFlow<T> {
     private val _state = atomic(initialState) // T | NULL
     private var sequence = 0 // serializes updates, value update is in process when sequence is odd
-
-    override val isDefaultEquivalence: Boolean
-        get() = true // it is a DistinctFlow with default equivalence, so distinctUntilChanged is NOP on it
 
     @Suppress("UNCHECKED_CAST")
     public override var value: T

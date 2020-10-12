@@ -94,4 +94,27 @@ class DistinctUntilChangedTest : TestBase() {
         val flow = flowOf(null, 1, null, null).distinctUntilChanged()
         assertEquals(listOf(null, 1, null), flow.toList())
     }
+
+    @Test
+    fun testRepeatedDistinctFusionDefault() = testRepeatedDistinctFusion {
+        distinctUntilChanged()
+    }
+
+    @Test
+    fun testRepeatedDistinctFusionAreEquivalent() = testRepeatedDistinctFusion {
+        distinctUntilChanged { old, new -> old == new }
+    }
+
+    @Test
+    fun testRepeatedDistinctFusionByKey() = testRepeatedDistinctFusion {
+        distinctUntilChangedBy { it % 2 }
+    }
+
+    private fun testRepeatedDistinctFusion(op: Flow<Int>.() -> Flow<Int>) = runTest {
+        val flow = (1..10).asFlow()
+        val d1 = flow.op()
+        assertNotSame(flow, d1)
+        val d2 = d1.op()
+        assertSame(d1, d2)
+    }
 }
