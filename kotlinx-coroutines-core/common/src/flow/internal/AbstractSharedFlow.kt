@@ -45,7 +45,7 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
         // Actually create slot under lock
         var subscriptionCount: MutableStateFlow<Int>? = null
         val slot = synchronized(this) {
-            val slots = when(val curSlots = slots) {
+            val slots = when (val curSlots = slots) {
                 null -> createSlotArray(2).also { slots = it }
                 else -> if (nCollectors >= curSlots.size) {
                     curSlots.copyOf(2 * curSlots.size).also { slots = it }
