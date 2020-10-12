@@ -172,12 +172,16 @@ public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
  *
  * For more explanation of context preservation please refer to [Flow] documentation.
  *
- * This operators retains a _sequential_ nature of flow if changing the context does not call for changing
+ * This operator retains a _sequential_ nature of flow if changing the context does not call for changing
  * the [dispatcher][CoroutineDispatcher]. Otherwise, if changing dispatcher is required, it collects
  * flow emissions in one coroutine that is run using a specified [context] and emits them from another coroutines
  * with the original collector's context using a channel with a [default][Channel.BUFFERED] buffer size
  * between two coroutines similarly to [buffer] operator, unless [buffer] operator is explicitly called
  * before or after `flowOn`, which requests buffering behavior and specifies channel size.
+ *
+ * Note, that flows operating across different dispatchers might lose some in-flight elements when cancelled.
+ * In particular, this operator ensures that downstream flow does not resume on cancellation even if the element
+ * was already emitted by the upstream flow.
  *
  * ### Operator fusion
  *

@@ -33,9 +33,10 @@ public interface Semaphore {
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
-     *
-     * *Cancellation of suspended semaphore acquisition is atomic* -- when this function
-     * throws [CancellationException] it means that the semaphore was not acquired.
+     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+     * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
+     * This function releases the semaphore if it was already acquired by this function before the [CancellationException]
+     * was thrown.
      *
      * Note, that this function does not check for cancellation when it does not suspend.
      * Use [CoroutineScope.isActive] or [CoroutineScope.ensureActive] to periodically
@@ -148,6 +149,8 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
     private val _availablePermits = atomic(permits - acquiredPermits)
     override val availablePermits: Int get() = max(_availablePermits.value, 0)
 
+    private val onCancellationRelease = { _: Throwable -> release() }
+
     override fun tryAcquire(): Boolean {
         _availablePermits.loop { p ->
             if (p <= 0) return false
@@ -164,7 +167,7 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
         acquireSlowPath()
     }
 
-    private suspend fun acquireSlowPath() = suspendAtomicCancellableCoroutineReusable<Unit> sc@ { cont ->
+    private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable<Unit> sc@ { cont ->
         while (true) {
             if (addAcquireToQueue(cont)) return@sc
             val p = _availablePermits.getAndDecrement()
@@ -203,6 +206,8 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
         // On CAS failure -- the cell must be either PERMIT or BROKEN
         // If the cell already has PERMIT from tryResumeNextFromQueue, try to grab it
         if (segment.cas(i, PERMIT, TAKEN)) { // took permit thus eliminating acquire/release pair
+            // The following resume must always succeed, since continuation was not published yet and we don't have
+            // to pass onCancellationRelease handle, since the coroutine did not suspend yet and cannot be cancelled
             cont.resume(Unit)
             return true
         }
@@ -232,15 +237,15 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
                 return !segment.cas(i, PERMIT, BROKEN)
             }
             cellState === CANCELLED -> return false // the acquire was already cancelled
-            else -> return (cellState as CancellableContinuation<Unit>).tryResume()
+            else -> return (cellState as CancellableContinuation<Unit>).tryResumeAcquire()
         }
     }
-}
 
-private fun CancellableContinuation<Unit>.tryResume(): Boolean {
-    val token = tryResume(Unit) ?: return false
-    completeResume(token)
-    return true
+    private fun CancellableContinuation<Unit>.tryResumeAcquire(): Boolean {
+        val token = tryResume(Unit, null, onCancellationRelease) ?: return false
+        completeResume(token)
+        return true
+    }
 }
 
 private class CancelSemaphoreAcquisitionHandler(

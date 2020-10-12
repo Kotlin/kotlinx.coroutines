@@ -21,9 +21,12 @@ import kotlin.time.*
 public interface Delay {
     /**
      * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
+     *
      * This suspending function is cancellable.
      * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
      * immediately resumes with [CancellationException].
+     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+     * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
      */
     public suspend fun delay(time: Long) {
         if (time <= 0) return // don't delay
@@ -97,9 +100,12 @@ public suspend fun awaitCancellation(): Nothing = suspendCancellableCoroutine {}
 
 /**
  * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
+ *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
+ * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+ * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
  *
  * If you want to delay forever (until cancellation), consider using [awaitCancellation] instead.
  *
@@ -117,9 +123,12 @@ public suspend fun delay(timeMillis: Long) {
 
 /**
  * Delays coroutine for a given [duration] without blocking a thread and resumes it after the specified time.
+ *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
+ * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+ * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
  *
  * If you want to delay forever (until cancellation), consider using [awaitCancellation] instead.
  *

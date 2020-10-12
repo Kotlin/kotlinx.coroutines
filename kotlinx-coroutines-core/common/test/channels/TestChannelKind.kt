@@ -7,9 +7,10 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 
-enum class TestChannelKind(val capacity: Int,
-                           private val description: String,
-                           private val viaBroadcast: Boolean = false
+enum class TestChannelKind(
+    val capacity: Int,
+    private val description: String,
+    val viaBroadcast: Boolean = false
 ) {
     RENDEZVOUS(0, "RendezvousChannel"),
     ARRAY_1(1, "ArrayChannel(1)"),
@@ -22,8 +23,11 @@ enum class TestChannelKind(val capacity: Int,
     CONFLATED_BROADCAST(Channel.CONFLATED, "ConflatedBroadcastChannel", viaBroadcast = true)
     ;
 
-    fun create(): Channel<Int> = if (viaBroadcast) ChannelViaBroadcast(BroadcastChannel(capacity))
-                                 else Channel(capacity)
+    fun <T> create(onUndeliveredElement: ((T) -> Unit)? = null): Channel<T> = when {
+        viaBroadcast && onUndeliveredElement != null -> error("Broadcast channels to do not support onUndeliveredElement")
+        viaBroadcast -> ChannelViaBroadcast(BroadcastChannel(capacity))
+        else -> Channel(capacity, onUndeliveredElement)
+    }
 
     val isConflated get() = capacity == Channel.CONFLATED
     override fun toString(): String = description

@@ -73,6 +73,7 @@ public expect abstract class AbstractAtomicDesc : AtomicDesc {
     protected open fun retry(affected: LockFreeLinkedListNode, next: Any): Boolean
     public abstract fun finishPrepare(prepareOp: PrepareOp) // non-null on failure
     public open fun onPrepare(prepareOp: PrepareOp): Any? // non-null on failure
+    public open fun onRemoved(affected: LockFreeLinkedListNode) // non-null on failure
     protected abstract fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)
 }
 
