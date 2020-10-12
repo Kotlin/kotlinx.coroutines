@@ -346,9 +346,10 @@ class FlowOnTest : TestBase() {
     fun testCancelledFlowOn() = runTest {
         assertFailsWith<CancellationException> {
             coroutineScope {
+                val scope = this
                 flow {
                     emit(Unit) // emit to buffer
-                    cancel() // now cancel
+                    scope.cancel() // now cancel outer scope
                 }.flowOn(wrapperDispatcher()).collect {
                     // should not be reached, because cancelled before it runs
                     expectUnreached()
