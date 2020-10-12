@@ -166,38 +166,6 @@ class StateFlowTest : TestBase() {
     }
 
     @Test
-    fun testCancellability() = runTest {
-        expect(1)
-        val state = MutableStateFlow(0)
-        var subscribed = true
-        val barrier = Channel<Int>()
-        val job = state
-            .onSubscription { subscribed = true }
-            .onEach { i ->
-                when (i) {
-                    0 -> expect(2) // initial value
-                    1 -> expect(3)
-                    2 -> {
-                        expect(4)
-                        currentCoroutineContext().cancel()
-                    }
-                    else -> expectUnreached() // shall check for cancellation
-                }
-                barrier.send(i)
-            }
-            .launchIn(this)
-        yield()
-        assertTrue(subscribed) // yielding in enough
-        assertEquals(0, barrier.receive()) // should get initial value, too
-        for (i in 1..3) { // emit after subscription
-            state.value = i
-            if (i < 3) assertEquals(i, barrier.receive()) // shall receive it
-        }
-        job.join()
-        finish(5)
-    }
-
-    @Test
     fun testResetUnsupported() {
         val state = MutableStateFlow(42)
         assertFailsWith<UnsupportedOperationException> { state.resetReplayCache() }

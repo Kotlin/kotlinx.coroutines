@@ -334,9 +334,10 @@ private class StateFlowImpl<T>(
                 // Here the coroutine could have waited for a while to be dispatched,
                 // so we use the most recent state here to ensure the best possible conflation of stale values
                 val newState = _state.value
+                // always check for cancellation
+                collectorJob?.ensureActive()
                 // Conflate value emissions using equality
                 if (oldState == null || oldState != newState) {
-                    collectorJob?.ensureActive()
                     collector.emit(NULL.unbox(newState))
                     oldState = newState
                 }
