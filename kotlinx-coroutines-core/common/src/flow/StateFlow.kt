@@ -209,9 +209,9 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
         return true
     }
 
-    override fun freeLocked(flow: StateFlowImpl<*>): List<Continuation<Unit>>? {
+    override fun freeLocked(flow: StateFlowImpl<*>): Array<Continuation<Unit>?> {
         _state.value = null // free now
-        return null // nothing more to do
+        return EMPTY_RESUMES // nothing more to do
     }
 
     @Suppress("UNCHECKED_CAST")

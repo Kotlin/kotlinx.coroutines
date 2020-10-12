@@ -233,7 +233,7 @@ private class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
         return true
     }
 
-    override fun freeLocked(flow: SharedFlowImpl<*>): List<Continuation<Unit>>? {
+    override fun freeLocked(flow: SharedFlowImpl<*>): Array<Continuation<Unit>?> {
         assert { index >= 0 }
         val oldIndex = index
         index = -1L
@@ -323,16 +323,16 @@ private class SharedFlowImpl<T>(
     }
 
     override fun tryEmit(value: T): Boolean {
-        var resumeList: List<Continuation<Unit>>? = null
+        var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
         val emitted = synchronized(this) {
             if (tryEmitLocked(value)) {
-                resumeList = findSlotsToResumeLocked()
+                resumes = findSlotsToResumeLocked()
                 true
             } else {
                 false
             }
         }
-        resumeList?.forEach { it.resume(Unit) }
+        for (cont in resumes) cont?.resume(Unit)
         return emitted
     }
 
@@ -417,12 +417,12 @@ private class SharedFlowImpl<T>(
     }
 
     private suspend fun emitSuspend(value: T) = suspendCancellableCoroutine<Unit> sc@{ cont ->
-        var resumeList: List<Continuation<Unit>>? = null
+        var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
         val emitter = synchronized(this) lock@{
             // recheck buffer under lock again (make sure it is really full)
             if (tryEmitLocked(value)) {
                 cont.resume(Unit)
-                resumeList = findSlotsToResumeLocked()
+                resumes = findSlotsToResumeLocked()
                 return@lock null
             }
             // add suspended emitter to the buffer
@@ -430,13 +430,13 @@ private class SharedFlowImpl<T>(
                 enqueueLocked(it)
                 queueSize++ // added to queue of waiting emitters
                 // synchronous shared flow might rendezvous with waiting emitter
-                if (bufferCapacity == 0) resumeList = findSlotsToResumeLocked()
+                if (bufferCapacity == 0) resumes = findSlotsToResumeLocked()
             }
         }
         // outside of the lock: register dispose on cancellation
         emitter?.let { cont.disposeOnCancellation(it) }
         // outside of the lock: resume slots if needed
-        resumeList?.forEach { it.resume(Unit) }
+        for (cont in resumes) cont?.resume(Unit)
     }
 
     private fun cancelEmitter(emitter: Emitter) = synchronized(this) {
@@ -454,9 +454,9 @@ private class SharedFlowImpl<T>(
     }
 
     // Is called when a collector disappears or changes index, returns a list of continuations to resume after lock
-    internal fun updateCollectorIndexLocked(oldIndex: Long): List<Continuation<Unit>>? {
+    internal fun updateCollectorIndexLocked(oldIndex: Long): Array<Continuation<Unit>?> {
         assert { oldIndex >= minCollectorIndex }
-        if (oldIndex > minCollectorIndex) return null // nothing changes, it was not min
+        if (oldIndex > minCollectorIndex) return EMPTY_RESUMES // nothing changes, it was not min
         // start computing new minimal index of active collectors
         val head = head
         var newMinCollectorIndex = head + bufferSize
@@ -467,7 +467,7 @@ private class SharedFlowImpl<T>(
             if (slot.index >= 0 && slot.index < newMinCollectorIndex) newMinCollectorIndex = slot.index
         }
         assert { newMinCollectorIndex >= minCollectorIndex } // can only grow
-        if (newMinCollectorIndex <= minCollectorIndex) return null // nothing changes
+        if (newMinCollectorIndex <= minCollectorIndex) return EMPTY_RESUMES // nothing changes
         // Compute new buffer size if we drop items we no longer need and no emitter is resumed:
         // We must keep all the items from newMinIndex to the end of buffer
         var newBufferEndIndex = bufferEndIndex // var to grow when waiters are resumed
@@ -481,20 +481,21 @@ private class SharedFlowImpl<T>(
             // If we don't have collectors anymore we must resume all waiting emitters
             queueSize // that's how many waiting emitters we have (at most)
         }
-        var resumeList: ArrayList<Continuation<Unit>>? = null
+        var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
         val newQueueEndIndex = newBufferEndIndex + queueSize
         if (maxResumeCount > 0) { // collect emitters to resume if we have them
-            resumeList = ArrayList(maxResumeCount)
+            resumes = arrayOfNulls(maxResumeCount)
+            var resumeCount = 0
             val buffer = buffer!!
             for (curEmitterIndex in newBufferEndIndex until newQueueEndIndex) {
                 val emitter = buffer.getBufferAt(curEmitterIndex)
                 if (emitter !== NO_VALUE) {
                     emitter as Emitter // must have Emitter class
-                    resumeList.add(emitter.cont)
+                    resumes[resumeCount++] = emitter.cont
                     buffer.setBufferAt(curEmitterIndex, NO_VALUE) // make as canceled if we moved ahead
                     buffer.setBufferAt(newBufferEndIndex, emitter.value)
                     newBufferEndIndex++
-                    if (resumeList.size >= maxResumeCount) break // enough resumed, done
+                    if (resumeCount >= maxResumeCount) break // enough resumed, done
                 }
             }
         }
@@ -511,7 +512,7 @@ private class SharedFlowImpl<T>(
         updateBufferLocked(newReplayIndex, newMinCollectorIndex, newBufferEndIndex, newQueueEndIndex)
         // just in case we've moved all buffered emitters and have NO_VALUE's at the tail now
         cleanupTailLocked()
-        return resumeList
+        return resumes
     }
 
     private fun updateBufferLocked(
@@ -549,7 +550,7 @@ private class SharedFlowImpl<T>(
 
     // returns NO_VALUE if cannot take value without suspension
     private fun tryTakeValue(slot: SharedFlowSlot): Any? {
-        var resumeList: List<Continuation<Unit>>? = null
+        var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
         val value = synchronized(this) {
             val index = tryPeekLocked(slot)
             if (index < 0) {
@@ -558,11 +559,11 @@ private class SharedFlowImpl<T>(
                 val oldIndex = slot.index
                 val newValue = getPeekedValueLockedAt(index)
                 slot.index = index + 1 // points to the next index after peeked one
-                resumeList = updateCollectorIndexLocked(oldIndex)
+                resumes = updateCollectorIndexLocked(oldIndex)
                 newValue
             }
         }
-        resumeList?.forEach { it.resume(Unit) }
+        for (resume in resumes) resume?.resume(Unit)
         return value
     }
 
@@ -597,16 +598,17 @@ private class SharedFlowImpl<T>(
         }
     }
 
-    private fun findSlotsToResumeLocked(): List<Continuation<Unit>>? {
-        var result: ArrayList<Continuation<Unit>>? = null
+    private fun findSlotsToResumeLocked(): Array<Continuation<Unit>?> {
+        var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
+        var resumeCount = 0
         forEachSlotLocked loop@{ slot ->
             val cont = slot.cont ?: return@loop // only waiting slots
             if (tryPeekLocked(slot) < 0) return@loop // only slots that can peek a value
-            val a = result ?: ArrayList<Continuation<Unit>>(2).also { result = it }
-            a.add(cont)
+            if (resumeCount >= resumes.size) resumes = resumes.copyOf(maxOf(2, 2 * resumes.size))
+            resumes[resumeCount++] = cont
             slot.cont = null // not waiting anymore
         }
-        return result
+        return resumes
     }
 
     override fun createSlot() = SharedFlowSlot()

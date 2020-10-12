@@ -4,15 +4,18 @@
 
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.assert
-import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
+import kotlin.jvm.*
+import kotlin.native.concurrent.*
+
+@JvmField
+@SharedImmutable
+internal val EMPTY_RESUMES = arrayOfNulls<Continuation<Unit>?>(0)
 
 internal abstract class AbstractSharedFlowSlot<F> {
     abstract fun allocateLocked(flow: F): Boolean
-    abstract fun freeLocked(flow: F): List<Continuation<Unit>>? // returns a list of continuation to resume after lock
+    abstract fun freeLocked(flow: F): Array<Continuation<Unit>?> // returns continuations to resume after lock
 }
 
 internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : SynchronizedObject() {
@@ -71,7 +74,7 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
     protected fun freeSlot(slot: S) {
         // Release slot under lock
         var subscriptionCount: MutableStateFlow<Int>? = null
-        val resumeList = synchronized(this) {
+        val resumes = synchronized(this) {
             nCollectors--
             subscriptionCount = _subscriptionCount // retrieve under lock if initialized
             // Reset next index oracle if we have no more active collectors for more predictable behavior next time
@@ -79,7 +82,7 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
             (slot as AbstractSharedFlowSlot<Any>).freeLocked(this)
         }
         // Resume suspended coroutines
-        resumeList?.forEach { it.resume(Unit) }
+        for (cont in resumes) cont?.resume(Unit)
         // decrement subscription count
         subscriptionCount?.increment(-1)
     }
