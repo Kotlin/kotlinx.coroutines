@@ -100,14 +100,20 @@ class DistinctUntilChangedTest : TestBase() {
         distinctUntilChanged()
     }
 
+    // A separate variable is needed for K/N that does not optimize non-captured lambdas (yet)
+    private val areEquivalentTestFun: (old: Int, new: Int) -> Boolean = { old, new -> old == new }
+
     @Test
     fun testRepeatedDistinctFusionAreEquivalent() = testRepeatedDistinctFusion {
-        distinctUntilChanged { old, new -> old == new }
+        distinctUntilChanged(areEquivalentTestFun)
     }
+
+    // A separate variable is needed for K/N that does not optimize non-captured lambdas (yet)
+    private val keySelectorTestFun: (Int) -> Int = { it % 2 }
 
     @Test
     fun testRepeatedDistinctFusionByKey() = testRepeatedDistinctFusion {
-        distinctUntilChangedBy { it % 2 }
+        distinctUntilChangedBy(keySelectorTestFun)
     }
 
     private fun testRepeatedDistinctFusion(op: Flow<Int>.() -> Flow<Int>) = runTest {
