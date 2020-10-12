@@ -38,7 +38,7 @@ import kotlin.native.concurrent.*
  * ```
  * class EventBus {
  *     private val _events = MutableSharedFlow<Event>(0) // private mutable shared flow
- *     val events get() = _events.asSharedFlow() // publicly exposed as read-only shared flow
+ *     val events = _events.asSharedFlow() // publicly exposed as read-only shared flow
  *
  *     suspend fun produceEvent(event: Event) {
  *         _events.emit(event) // suspends until all subscribers receive it

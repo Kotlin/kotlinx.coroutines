@@ -34,7 +34,7 @@ import kotlin.native.concurrent.*
  * ```
  * class CounterModel {
  *     private val _counter = MutableStateFlow(0) // private mutable state flow
- *     val counter get() = _counter.asStateFlow() // publicly exposed as read-only state flow
+ *     val counter = _counter.asStateFlow() // publicly exposed as read-only state flow
  *
  *     fun inc() {
  *         _counter.value++
