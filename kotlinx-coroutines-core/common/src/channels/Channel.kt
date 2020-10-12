@@ -607,7 +607,7 @@ public fun <E> Channel(capacity: Int = RENDEZVOUS, onBufferOverflow: BufferOverf
         }
     }
 
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "For binary compatibility")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.4.0, binary compatibility with earlier versions")
 public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> = Channel(capacity)
 
 /**

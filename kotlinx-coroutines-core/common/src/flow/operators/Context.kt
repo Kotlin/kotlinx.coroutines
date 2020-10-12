@@ -143,7 +143,7 @@ public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED, onBufferOverflow: Buffer
     }
 }
 
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "For binary compatibility")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.4.0, binary compatibility with earlier versions")
 public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> = buffer(capacity)
 
 /**
