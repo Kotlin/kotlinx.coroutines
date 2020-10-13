@@ -58,7 +58,7 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
  * Returns a flow that invokes the given [action] **before** this flow starts to be collected.
  *
  * The [action] is called before the upstream flow is started, so if it is used with a [SharedFlow]
- * there is **no guarantee** that emissions to the upstream flow that happen inside or immediately
+ * there is **no guarantee** that emissions from the upstream flow that happen inside or immediately
  * after this `onStart` action will be collected
  * (see [onSubscription] for an alternative operator on shared flows).
  *
