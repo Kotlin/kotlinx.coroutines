@@ -253,7 +253,7 @@ class PublisherAsFlowTest : TestBase() {
             .buffer(capacity, onBufferOverflow)
         val list = flow.toList()
         val runSize = if (capacity == Channel.BUFFERED) 1 else capacity
-        val expected = when(onBufferOverflow) {
+        val expected = when (onBufferOverflow) {
             // Everything is expected to be delivered
             BufferOverflow.SUSPEND -> (1..m).toList()
             // Only the last one (by default) or the last "capacity" items delivered
@@ -263,5 +263,4 @@ class PublisherAsFlowTest : TestBase() {
         }
         assertEquals(expected, list)
     }
-
 }
