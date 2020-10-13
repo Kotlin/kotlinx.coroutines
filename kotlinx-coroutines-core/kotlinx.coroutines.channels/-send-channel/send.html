@@ -33,24 +33,22 @@
 
 <h1 id="send">send</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">send</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$send(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L67">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">send</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$send(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L65">(source)</a></div>
 
 <p>Sends the specified <a href="send.html#kotlinx.coroutines.channels.SendChannel$send(kotlinx.coroutines.channels.SendChannel.E)/element">element</a> to this channel, suspending the caller while the buffer of this channel is full
 or if it does not exist, or throws an exception if the channel <a href="is-closed-for-send.html">is closed for <code>send</code></a> (see <a href="close.html">close</a> for details).</p>
 
-<p>Note that closing a channel <em>after</em> this function has suspended does not cause this suspended <a href="./send.md">send</a> invocation
+<p><a href="close.html">Closing</a> a channel <em>after</em> this function has suspended does not cause this suspended <a href="./send.md">send</a> invocation
 to abort, because closing a channel is conceptually like sending a special “close token” over this channel.
 All elements sent over the channel are delivered in first-in first-out order. The sent element
 will be delivered to receivers before the close token.</p>
 
 <p>This suspending function is cancellable. If the <a href="../../kotlinx.coroutines/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this
-function is suspended, this function immediately resumes with a <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.</p>
-
-<p><em>Cancellation of suspended <code>send</code> is atomic</em>: when this function
-throws a <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>, it means that the <a href="send.html#kotlinx.coroutines.channels.SendChannel$send(kotlinx.coroutines.channels.SendChannel.E)/element">element</a> was not sent to this channel.
-As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
-continue to execute even after it was cancelled from the same thread in the case when this <code>send</code> operation
-was already resumed and the continuation was posted for execution to the thread’s queue.</p>
+function is suspended, this function immediately resumes with a <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.
+There is a <strong>prompt cancellation guarantee</strong>. If the job was cancelled while this function was
+suspended, it will not resume successfully. The <code>send</code> call can send the element to the channel,
+but then throw <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>, thus an exception should not be treated as a failure to deliver the element.
+See “Undelivered elements” section in <a href="../-channel/index.html">Channel</a> documentation for details on handling undelivered elements.</p>
 
 <p>Note that this function does not check for cancellation when it is not suspended.
 Use <a href="../../kotlinx.coroutines/yield.html">yield</a> or <a href="../../kotlinx.coroutines/is-active.html">CoroutineScope.isActive</a> to periodically check for cancellation in tight loops if needed.</p>

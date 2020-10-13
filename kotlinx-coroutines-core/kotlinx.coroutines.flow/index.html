@@ -46,7 +46,7 @@
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractFlow</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="-abstract-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractFlow</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="-abstract-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><span class="identifier">CancellableFlow</span><span class="symbol">&lt;</span><a href="-abstract-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Base class for stateful implementations of <code>Flow</code>.
 It tracks all the properties required for context preservation and throws an <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a>
@@ -63,8 +63,7 @@ if any of the properties are violated.</p>
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Flow</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
 
-        <p>A cold asynchronous data stream that sequentially emits values
-and completes normally or with an exception.</p>
+        <p>An asynchronous data stream that sequentially emits values and completes normally or with an exception.</p>
 
       </td>
 </tr>
@@ -85,13 +84,73 @@ an entity that accepts values emitted by the <a href="-flow/index.html">Flow</a>
 <tr>
 <td>
 
+        <p><a href="-mutable-shared-flow/index.html">MutableSharedFlow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">MutableSharedFlow</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="-mutable-shared-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="-mutable-shared-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>A mutable <a href="-shared-flow/index.html">SharedFlow</a> that provides functions to <a href="-flow-collector/emit.html">emit</a> values to the flow.
+An instance of <code>MutableSharedFlow</code> with the given configuration parameters can be created using <code>MutableSharedFlow(...)</code>
+constructor function.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="-mutable-state-flow/index.html">MutableStateFlow</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">MutableStateFlow</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-state-flow/index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="-mutable-state-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">MutableStateFlow</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="-state-flow/index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="-mutable-state-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="-mutable-shared-flow/index.html"><span class="identifier">MutableSharedFlow</span></a><span class="symbol">&lt;</span><a href="-mutable-state-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>A mutable <a href="-state-flow/index.html">StateFlow</a> that provides a setter for <a href="-mutable-state-flow/value.html">value</a>.</p>
+        <p>A mutable <a href="-state-flow/index.html">StateFlow</a> that provides a setter for <a href="-mutable-state-flow/value.html">value</a>.
+An instance of <code>MutableStateFlow</code> with the given initial <code>value</code> can be created using
+<code>MutableStateFlow(value)</code> constructor function.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-shared-flow/index.html">SharedFlow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">SharedFlow</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="-shared-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>A <em>hot</em> <a href="-flow/index.html">Flow</a> that shares emitted values among all its collectors in a broadcast fashion, so that all collectors
+get all emitted values. A shared flow is called <em>hot</em> because its active instance exists independently of the
+presence of collectors. This is opposed to a regular <a href="-flow/index.html">Flow</a>, such as defined by the <a href="#"><code>flow { ... }</code></a> function,
+which is <em>cold</em> and is started separately for each collector.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-sharing-command/index.html">SharingCommand</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">enum</span> <span class="keyword">class </span><span class="identifier">SharingCommand</span></code></div>
+
+        <p>A command emitted by <a href="-sharing-started/index.html">SharingStarted</a> implementations to control the sharing coroutine in
+the <a href="share-in.html">shareIn</a> and <a href="state-in.html">stateIn</a> operators.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-sharing-started/index.html">SharingStarted</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">SharingStarted</span></code></div>
+
+        <p>A strategy for starting and stopping the sharing coroutine in <a href="share-in.html">shareIn</a> and <a href="state-in.html">stateIn</a> operators.</p>
 
       </td>
 </tr>
@@ -102,11 +161,11 @@ an entity that accepts values emitted by the <a href="-flow/index.html">Flow</a>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">StateFlow</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="-state-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">StateFlow</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="-state-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>A <a href="-flow/index.html">Flow</a> that represents a read-only state with a single updatable data <a href="-state-flow/value.html">value</a> that emits updates
-to the value to its collectors. The current value can be retrieved via <a href="-state-flow/value.html">value</a> property.
-The flow of future updates to the value can be observed by collecting values from this flow.</p>
+        <p>A <a href="-shared-flow/index.html">SharedFlow</a> that represents a read-only state with a single updatable data <a href="-state-flow/value.html">value</a> that emits updates
+to the value to its collectors. A state flow is a <em>hot</em> flow because its active instance exists independently
+of the presence of collectors. Its current value can be retrieved via the <a href="-state-flow/value.html">value</a> property.</p>
 
       </td>
 </tr>
@@ -251,6 +310,28 @@ It is 16 by default and can be changed on JVM using <a href="-d-e-f-a-u-l-t_-c-o
 
       </td>
 </tr>
+<tr>
+<td>
+
+        <p><a href="coroutine-context.html">coroutineContext</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">coroutineContext</span></s><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="is-active.html">isActive</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">isActive</span></s><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+      </td>
+</tr>
 </tbody>
 </table>
 
@@ -258,6 +339,19 @@ It is 16 by default and can be changed on JVM using <a href="-d-e-f-a-u-l-t_-c-o
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+
+        <p><a href="-mutable-shared-flow.html">MutableSharedFlow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">MutableSharedFlow</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$MutableSharedFlow(kotlin.Int, kotlin.Int, kotlinx.coroutines.channels.BufferOverflow)/replay">replay</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$MutableSharedFlow(kotlin.Int, kotlin.Int, kotlinx.coroutines.channels.BufferOverflow)/extraBufferCapacity">extraBufferCapacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$MutableSharedFlow(kotlin.Int, kotlin.Int, kotlinx.coroutines.channels.BufferOverflow)/onBufferOverflow">onBufferOverflow</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines.channels/-buffer-overflow/index.html"><span class="identifier">BufferOverflow</span></a>&nbsp;<span class="symbol">=</span>&nbsp;BufferOverflow.SUSPEND<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-mutable-shared-flow/index.html"><span class="identifier">MutableSharedFlow</span></a><span class="symbol">&lt;</span><a href="-mutable-shared-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Creates a <a href="-mutable-shared-flow/index.html">MutableSharedFlow</a> with the given configuration parameters.</p>
+
+      </td>
+</tr>
 <tr>
 <td>
 
@@ -288,11 +382,37 @@ Every flow collector will trigger a new broadcast channel subscription.</p>
 <tr>
 <td>
 
+        <p><a href="as-shared-flow.html">asSharedFlow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-mutable-shared-flow/index.html"><span class="identifier">MutableSharedFlow</span></a><span class="symbol">&lt;</span><a href="as-shared-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asSharedFlow</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="as-shared-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Represents this mutable shared flow as a read-only shared flow.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="as-state-flow.html">asStateFlow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-mutable-state-flow/index.html"><span class="identifier">MutableStateFlow</span></a><span class="symbol">&lt;</span><a href="as-state-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asStateFlow</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-state-flow/index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="as-state-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Represents this mutable state flow as a read-only state flow.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="broadcast-in.html">broadcastIn</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="broadcast-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">broadcastIn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$broadcastIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.broadcastIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineStart)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$broadcastIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.broadcastIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineStart)/start">start</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.LAZY<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../kotlinx.coroutines.channels/-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="broadcast-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="broadcast-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">broadcastIn</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$broadcastIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.broadcastIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineStart)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$broadcastIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.broadcastIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineStart)/start">start</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.LAZY<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../kotlinx.coroutines.channels/-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="broadcast-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Creates a <a href="../kotlinx.coroutines.channels/broadcast.html">broadcast</a> coroutine that collects the given flow.</p>
 
@@ -305,9 +425,22 @@ Every flow collector will trigger a new broadcast channel subscription.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="buffer.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">buffer</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$buffer(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.buffer.T)), kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;BUFFERED<span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="buffer.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="buffer.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">buffer</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$buffer(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.buffer.T)), kotlin.Int, kotlinx.coroutines.channels.BufferOverflow)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;BUFFERED<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$buffer(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.buffer.T)), kotlin.Int, kotlinx.coroutines.channels.BufferOverflow)/onBufferOverflow">onBufferOverflow</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines.channels/-buffer-overflow/index.html"><span class="identifier">BufferOverflow</span></a>&nbsp;<span class="symbol">=</span>&nbsp;BufferOverflow.SUSPEND<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="buffer.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Buffers flow emissions via channel of a specified capacity and runs collector in a separate coroutine.</p>
+
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="buffer.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">buffer</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$buffer(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.buffer.T)), kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;BUFFERED<span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="buffer.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="cache.html">cache</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="cache.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">cache</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="cache.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
       </td>
 </tr>
@@ -320,9 +453,20 @@ Every flow collector will trigger a new broadcast channel subscription.</p>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">callbackFlow</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$callbackFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.callbackFlow.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="callback-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="callback-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Creates an instance of the cold <a href="-flow/index.html">Flow</a> with elements that are sent to a <a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>
+        <p>Creates an instance of a <em>cold</em> <a href="-flow/index.html">Flow</a> with elements that are sent to a <a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>
 provided to the builder’s <a href="callback-flow.html#kotlinx.coroutines.flow$callbackFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.callbackFlow.T)), kotlin.Unit)))/block">block</a> of code via <a href="../kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>. It allows elements to be
 produced by code that is running in a different context or concurrently.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="cancel.html">cancel</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">cancel</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$cancel(kotlinx.coroutines.flow.FlowCollector((kotlin.Any)), kotlinx.coroutines.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
       </td>
 </tr>
@@ -337,7 +481,12 @@ produced by code that is running in a different context or concurrently.</p>
 
         <p>Returns a flow which checks cancellation status on each emission and throws
 the corresponding cancellation cause if flow collector was cancelled.
-Note that <a href="#">flow</a> builder is <a href="cancellable.html">cancellable</a> by default.</p>
+Note that <a href="#">flow</a> builder and all implementations of <a href="-shared-flow/index.html">SharedFlow</a> are <a href="cancellable.html">cancellable</a> by default.</p>
+
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="cancellable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">cancellable</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="cancellable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Applying <a href="cancellable.html">cancellable</a> to a <a href="-shared-flow/index.html">SharedFlow</a> has no effect.
+See the <a href="-shared-flow/index.html">SharedFlow</a> documentation on Operator Fusion.</p>
 
       </td>
 </tr>
@@ -365,7 +514,7 @@ in downstream flow and does not catch exceptions that are thrown to cancel the f
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">channelFlow</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$channelFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.channelFlow.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="channel-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="channel-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Creates an instance of the cold <a href="-flow/index.html">Flow</a> with elements that are sent to a <a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>
+        <p>Creates an instance of a <em>cold</em> <a href="-flow/index.html">Flow</a> with elements that are sent to a <a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>
 provided to the builder’s <a href="channel-flow.html#kotlinx.coroutines.flow$channelFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.channelFlow.T)), kotlin.Unit)))/block">block</a> of code via <a href="../kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>. It allows elements to be
 produced by code that is running in a different context or concurrently.
 The resulting flow is <em>cold</em>, which means that <a href="channel-flow.html#kotlinx.coroutines.flow$channelFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.channelFlow.T)), kotlin.Unit)))/block">block</a> is called every time a terminal operator
@@ -500,9 +649,8 @@ always gets the most recent value emitted.</p>
 
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-state-flow/index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="conflate.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">conflate</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="conflate.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Returns this.
-Applying <a href="conflate.html">conflate</a> operator to <a href="-state-flow/index.html">StateFlow</a> has no effect.
-See <a href="-state-flow/index.html">StateFlow</a> documentation on Operator Fusion.</p>
+        <p>Applying <a href="conflate.html">conflate</a> to <a href="-state-flow/index.html">StateFlow</a> has no effect.
+See the <a href="-state-flow/index.html">StateFlow</a> documentation on Operator Fusion.</p>
 
       </td>
 </tr>
@@ -577,9 +725,8 @@ with each other via the provided <a href="distinct-until-changed.html#kotlinx.co
 
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-state-flow/index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">distinctUntilChanged</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="distinct-until-changed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Returns this.
-Applying <a href="distinct-until-changed.html">distinctUntilChanged</a> operator to <a href="-state-flow/index.html">StateFlow</a> has no effect.
-See <a href="-state-flow/index.html">StateFlow</a> documentation on Operator Fusion.</p>
+        <p>Applying <a href="distinct-until-changed.html">distinctUntilChanged</a> to <a href="-state-flow/index.html">StateFlow</a> has no effect.
+See the <a href="-state-flow/index.html">StateFlow</a> documentation on Operator Fusion.</p>
 
       </td>
 </tr>
@@ -633,7 +780,7 @@ Throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgume
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="emit-all.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">emitAll</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$emitAll(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.emitAll.T)), kotlinx.coroutines.channels.ReceiveChannel((kotlinx.coroutines.flow.emitAll.T)))/channel">channel</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="emit-all.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Emits all elements from the given <a href="emit-all.html#kotlinx.coroutines.flow$emitAll(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.emitAll.T)), kotlinx.coroutines.channels.ReceiveChannel((kotlinx.coroutines.flow.emitAll.T)))/channel">channel</a> to this flow collector and <a href="../kotlinx.coroutines/cancel.html">cancels</a> (consumes)
+        <p>Emits all elements from the given <a href="emit-all.html#kotlinx.coroutines.flow$emitAll(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.emitAll.T)), kotlinx.coroutines.channels.ReceiveChannel((kotlinx.coroutines.flow.emitAll.T)))/channel">channel</a> to this flow collector and <a href="cancel.html">cancels</a> (consumes)
 the channel afterwards. If you need to iterate over the channel without consuming it,
 a regular <code>for</code> loop should be used instead.</p>
 
@@ -735,12 +882,12 @@ Throws <a href="#">NoSuchElementException</a> if the flow has not contained elem
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">firstOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">firstOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
 
         <p>The terminal operator that returns the first element emitted by the flow and then cancels flow’s collection.
 Returns <code>null</code> if the flow was empty.</p>
 
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">firstOrNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$firstOrNull(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.firstOrNull.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.firstOrNull.T, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">firstOrNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$firstOrNull(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.firstOrNull.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.firstOrNull.T, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
 
         <p>The terminal operator that returns the first element emitted by the flow matching the given <a href="first-or-null.html#kotlinx.coroutines.flow$firstOrNull(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.firstOrNull.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.firstOrNull.T, kotlin.Boolean)))/predicate">predicate</a> and then cancels flow’s collection.
 Returns <code>null</code> if the flow did not contain an element matching the <a href="first-or-null.html#kotlinx.coroutines.flow$firstOrNull(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.firstOrNull.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.firstOrNull.T, kotlin.Boolean)))/predicate">predicate</a>.</p>
@@ -826,7 +973,8 @@ concurrently collected flows.</p>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">flow</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flow(kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.flow.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Creates a flow from the given suspendable <a href="flow.html#kotlinx.coroutines.flow$flow(kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.flow.T)), kotlin.Unit)))/block">block</a>.</p>
+        <p>Creates a <em>cold</em> flow from the given suspendable <a href="flow.html#kotlinx.coroutines.flow$flow(kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.flow.T)), kotlin.Unit)))/block">block</a>.
+The flow being <em>cold</em> means that the <a href="flow.html#kotlinx.coroutines.flow$flow(kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.flow.T)), kotlin.Unit)))/block">block</a> is called every time a terminal operator is applied to the resulting flow.</p>
 
       </td>
 </tr>
@@ -843,7 +991,7 @@ concurrently collected flows.</p>
 
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">flowOf</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$flowOf(kotlinx.coroutines.flow.flowOf.T)/value">value</span><span class="symbol">:</span>&nbsp;<a href="flow-of.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-of.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Creates flow that produces the given <a href="flow-of.html#kotlinx.coroutines.flow$flowOf(kotlinx.coroutines.flow.flowOf.T)/value">value</a>.</p>
+        <p>Creates a flow that produces the given <a href="flow-of.html#kotlinx.coroutines.flow$flowOf(kotlinx.coroutines.flow.flowOf.T)/value">value</a>.</p>
 
       </td>
 </tr>
@@ -860,11 +1008,10 @@ concurrently collected flows.</p>
 This operator is composable and affects only preceding operators that do not have its own context.
 This operator is context preserving: <a href="flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</a> <strong>does not</strong> leak into the downstream flow.</p>
 
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-state-flow/index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">flowOn</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.StateFlow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">flowOn</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.SharedFlow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Returns this.
-Applying <a href="flow-on.html">flowOn</a> operator to <a href="-state-flow/index.html">StateFlow</a> has no effect.
-See <a href="-state-flow/index.html">StateFlow</a> documentation on Operator Fusion.</p>
+        <p>Applying <a href="flow-on.html">flowOn</a> to <a href="-shared-flow/index.html">SharedFlow</a> has no effect.
+See the <a href="-shared-flow/index.html">SharedFlow</a> documentation on Operator Fusion.</p>
 
       </td>
 </tr>
@@ -972,7 +1119,7 @@ All flows are merged concurrently, without limit on the number of simultaneously
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-completion.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onCompletion.T)), kotlin.Throwable, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="on-completion.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-completion.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Invokes the given <a href="on-completion.html#kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onCompletion.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> when the given flow is completed or cancelled, passing
+        <p>Returns a flow that invokes the given <a href="on-completion.html#kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onCompletion.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> <strong>after</strong> the flow is completed or cancelled, passing
 the cancellation exception or failure as cause parameter of <a href="on-completion.html#kotlinx.coroutines.flow$onCompletion(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onCompletion.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onCompletion.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a>.</p>
 
       </td>
@@ -986,7 +1133,7 @@ the cancellation exception or failure as cause parameter of <a href="on-completi
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-each.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onEach</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$onEach(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onEach.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.onEach.T, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="on-each.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-each.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Returns a flow which performs the given <a href="on-each.html#kotlinx.coroutines.flow$onEach(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onEach.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.onEach.T, kotlin.Unit)))/action">action</a> on each value of the original flow.</p>
+        <p>Returns a flow that invokes the given <a href="on-each.html#kotlinx.coroutines.flow$onEach(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onEach.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.onEach.T, kotlin.Unit)))/action">action</a> <strong>before</strong> each value of the upstream flow is emitted downstream.</p>
 
       </td>
 </tr>
@@ -1014,7 +1161,21 @@ For example:</p>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-start.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onStart</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onStart(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onStart.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onStart.T)), kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="on-start.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="on-start.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Invokes the given <a href="on-start.html#kotlinx.coroutines.flow$onStart(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onStart.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onStart.T)), kotlin.Unit)))/action">action</a> when this flow starts to be collected.</p>
+        <p>Returns a flow that invokes the given <a href="on-start.html#kotlinx.coroutines.flow$onStart(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.onStart.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onStart.T)), kotlin.Unit)))/action">action</a> <strong>before</strong> this flow starts to be collected.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="on-subscription.html">onSubscription</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="on-subscription.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onSubscription</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$onSubscription(kotlinx.coroutines.flow.SharedFlow((kotlinx.coroutines.flow.onSubscription.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onSubscription.T)), kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="on-subscription.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="on-subscription.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a flow that invokes the given <a href="on-subscription.html#kotlinx.coroutines.flow$onSubscription(kotlinx.coroutines.flow.SharedFlow((kotlinx.coroutines.flow.onSubscription.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.onSubscription.T)), kotlin.Unit)))/action">action</a> <strong>after</strong> this shared flow starts to be collected
+(after the subscription is registered).</p>
 
       </td>
 </tr>
@@ -1028,6 +1189,19 @@ For example:</p>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="produce-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">produceIn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$produceIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.produceIn.T)), kotlinx.coroutines.CoroutineScope)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="produce-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Creates a <a href="../kotlinx.coroutines.channels/produce.html">produce</a> coroutine that collects the given flow.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="publish.html">publish</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="publish.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">publish</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="publish.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="publish.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">publish</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$publish(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.publish.T)), kotlin.Int)/bufferSize">bufferSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="publish.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
       </td>
 </tr>
@@ -1056,6 +1230,19 @@ in fan-out fashion every time this flow is collected. One element will be emitte
 
         <p>Accumulates value starting with the first element and applying <a href="reduce.html#kotlinx.coroutines.flow$reduce(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.reduce.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.reduce.S, kotlinx.coroutines.flow.reduce.T, )))/operation">operation</a> to current accumulator value and each element.
 Throws <a href="#">NoSuchElementException</a> if flow was empty.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="replay.html">replay</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="replay.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">replay</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="replay.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="replay.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">replay</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$replay(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.replay.T)), kotlin.Int)/bufferSize">bufferSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="replay.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
       </td>
 </tr>
@@ -1153,13 +1340,29 @@ For example:</p>
 <tr>
 <td>
 
+        <p><a href="share-in.html">shareIn</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="share-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">shareIn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/started">started</span><span class="symbol">:</span>&nbsp;<a href="-sharing-started/index.html"><span class="identifier">SharingStarted</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/replay">replay</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="share-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Converts a <em>cold</em> <a href="-flow/index.html">Flow</a> into a <em>hot</em> <a href="-shared-flow/index.html">SharedFlow</a> that is started in the given coroutine <a href="share-in.html#kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/scope">scope</a>,
+sharing emissions from a single running instance of the upstream flow with multiple downstream subscribers,
+and replaying a specified number of <a href="share-in.html#kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/replay">replay</a> values to new subscribers. See the <a href="-shared-flow/index.html">SharedFlow</a> documentation
+for the general concepts of shared flows.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="single.html">single</a></p>
 
       </td>
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="single.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">single</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="single.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>The terminal operator, that awaits for one and only one value to be published.
+        <p>The terminal operator that awaits for one and only one value to be emitted.
 Throws <a href="#">NoSuchElementException</a> for empty flow and <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> for flow
 that contains more than one element.</p>
 
@@ -1172,10 +1375,31 @@ that contains more than one element.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="single-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">singleOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="single-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="single-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">singleOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="single-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
 
-        <p>The terminal operator, that awaits for one and only one value to be published.
-Throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> for flow that contains more than one element.</p>
+        <p>The terminal operator that awaits for one and only one value to be emitted.
+Returns the single value or <code>null</code>, if the flow was empty or emitted more than one value.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="state-in.html">stateIn</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="state-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">stateIn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$stateIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.stateIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlinx.coroutines.flow.stateIn.T)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$stateIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.stateIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlinx.coroutines.flow.stateIn.T)/started">started</span><span class="symbol">:</span>&nbsp;<a href="-sharing-started/index.html"><span class="identifier">SharingStarted</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$stateIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.stateIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlinx.coroutines.flow.stateIn.T)/initialValue">initialValue</span><span class="symbol">:</span>&nbsp;<a href="state-in.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-state-flow/index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="state-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Converts a <em>cold</em> <a href="-flow/index.html">Flow</a> into a <em>hot</em> <a href="-state-flow/index.html">StateFlow</a> that is started in the given coroutine <a href="state-in.html#kotlinx.coroutines.flow$stateIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.stateIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlinx.coroutines.flow.stateIn.T)/scope">scope</a>,
+sharing the most recently emitted value from a single running instance of the upstream flow with multiple
+downstream subscribers. See the <a href="-state-flow/index.html">StateFlow</a> documentation for the general concepts of state flows.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="state-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">stateIn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$stateIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.stateIn.T)), kotlinx.coroutines.CoroutineScope)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-state-flow/index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="state-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Starts the upstream flow in a given <a href="state-in.html#kotlinx.coroutines.flow$stateIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.stateIn.T)), kotlinx.coroutines.CoroutineScope)/scope">scope</a>, suspends until the first value is emitted, and returns a <em>hot</em>
+<a href="-state-flow/index.html">StateFlow</a> of future emissions, sharing the most recently emitted value from this running instance of the upstream flow
+with multiple downstream subscribers. See the <a href="-state-flow/index.html">StateFlow</a> documentation for the general concepts of state flows.</p>
 
       </td>
 </tr>
@@ -1322,6 +1546,27 @@ function returns <code>true</code>.</p>
 
         <p>Zips values from the current flow (<code>this</code>) with <a href="zip.html#kotlinx.coroutines.flow$zip(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T1)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T2)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.zip.T1, kotlinx.coroutines.flow.zip.T2, kotlinx.coroutines.flow.zip.R)))/other">other</a> flow using provided <a href="zip.html#kotlinx.coroutines.flow$zip(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T1)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.zip.T2)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.zip.T1, kotlinx.coroutines.flow.zip.T2, kotlinx.coroutines.flow.zip.R)))/transform">transform</a> function applied to each pair of values.
 The resulting flow completes as soon as one of the flows completes and cancel is called on the remaining flow.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="companion-object-functions">Companion Object Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-while-subscribed.html">WhileSubscribed</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">SharingStarted.Companion</span><span class="symbol">.</span><span class="identifier">WhileSubscribed</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$WhileSubscribed(kotlinx.coroutines.flow.SharingStarted.Companion, , )/stopTimeout">stopTimeout</span><span class="symbol">:</span>&nbsp;<span class="identifier">&lt;ERROR CLASS&gt;</span>&nbsp;<span class="symbol">=</span>&nbsp;Duration.ZERO<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$WhileSubscribed(kotlinx.coroutines.flow.SharingStarted.Companion, , )/replayExpiration">replayExpiration</span><span class="symbol">:</span>&nbsp;<span class="identifier">&lt;ERROR CLASS&gt;</span>&nbsp;<span class="symbol">=</span>&nbsp;Duration.INFINITE<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-sharing-started/index.html"><span class="identifier">SharingStarted</span></a></code></div>
+
+        <p>Sharing is started when the first subscriber appears, immediately stops when the last
+subscriber disappears (by default), keeping the replay cache forever (by default).</p>
 
       </td>
 </tr>

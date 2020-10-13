@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SharingStarted - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-sharing-started/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.flow</a> / <a href="./index.html">SharingStarted</a></div>
+
+<h1 id="sharingstarted">SharingStarted</h1>
+
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">interface </span><span class="identifier">SharingStarted</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/SharingStarted.kt#L79">(source)</a></div>
+
+<p>A strategy for starting and stopping the sharing coroutine in <a href="../share-in.html">shareIn</a> and <a href="../state-in.html">stateIn</a> operators.</p>
+
+<p>This interface provides a set of built-in strategies: <a href="-eagerly.html">Eagerly</a>, <a href="-lazily.html">Lazily</a>, <a href="-while-subscribed.html">WhileSubscribed</a>, and
+supports custom strategies by implementing this interface’s <a href="command.html">command</a> function.</p>
+
+<p>For example, it is possible to define a custom strategy that starts the upstream only when the number
+of subscribers exceeds the given <code>threshold</code> and make it an extension on <a href="#">SharingStarted.Companion</a> so
+that it looks like a built-in strategy on the use-site:</p>
+
+<pre>fun SharingStarted.Companion.WhileSubscribedAtLeast(threshold: Int): SharingStarted =
+    object : SharingStarted {
+        override fun command(subscriptionCount: StateFlow&lt;Int&gt;): Flow&lt;SharingCommand&gt; =
+            subscriptionCount
+                .map { if (it &gt;= threshold) SharingCommand.START else SharingCommand.STOP }
+    }
+</pre>
+
+<h3 id="commands">Commands</h3>
+
+<p>The <code>SharingStarted</code> strategy works by emitting <a href="../-sharing-command/index.html">commands</a> that control upstream flow from its
+<a href="command.html"><code>command</code></a> flow implementation function. Back-to-back emissions of the same command have no effect.
+Only emission of a different command has effect:</p>
+
+<ul>
+  <li><a href="../-sharing-command/-s-t-a-r-t.html">START</a> — the upstream flow is stared.</li>
+  <li><a href="../-sharing-command/-s-t-o-p.html">STOP</a> — the upstream flow is stopped.</li>
+  <li><a href="../-sharing-command/-s-t-o-p_-a-n-d_-r-e-s-e-t_-r-e-p-l-a-y_-c-a-c-h-e.html">STOP_AND_RESET_REPLAY_CACHE</a> —
+the upstream flow is stopped and the <a href="../-shared-flow/replay-cache.html">SharedFlow.replayCache</a> is reset to its initial state.
+The <a href="../share-in.html">shareIn</a> operator calls <a href="../-mutable-shared-flow/reset-replay-cache.html">MutableSharedFlow.resetReplayCache</a>;
+the <a href="../state-in.html">stateIn</a> operator resets the value to its original <code>initialValue</code>.</li>
+</ul>
+
+<p>Initially, the upstream flow is stopped and is in the initial state, so the emission of additional
+<a href="../-sharing-command/-s-t-o-p.html">STOP</a> and <a href="../-sharing-command/-s-t-o-p_-a-n-d_-r-e-s-e-t_-r-e-p-l-a-y_-c-a-c-h-e.html">STOP_AND_RESET_REPLAY_CACHE</a> commands will
+have no effect.</p>
+
+<p>The completion of the <code>command</code> flow normally has no effect (the upstream flow keeps running if it was running).
+The failure of the <code>command</code> flow cancels the sharing coroutine and the upstream flow.</p>
+
+<h3 id="functions">Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="command.html">command</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">command</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow.SharingStarted$command(kotlinx.coroutines.flow.StateFlow((kotlin.Int)))/subscriptionCount">subscriptionCount</span><span class="symbol">:</span>&nbsp;<a href="../-state-flow/index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../-sharing-command/index.html"><span class="identifier">SharingCommand</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Transforms the <a href="../-mutable-shared-flow/subscription-count.html">subscriptionCount</a> state of the shared flow into the
+flow of <a href="../-sharing-command/index.html">commands</a> that control the sharing coroutine. See the <a href="./index.html">SharingStarted</a> interface
+documentation for details.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="companion-object-properties">Companion Object Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-eagerly.html">Eagerly</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">Eagerly</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">SharingStarted</span></a></code></div>
+
+        <p>Sharing is started immediately and never stops.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-lazily.html">Lazily</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">Lazily</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">SharingStarted</span></a></code></div>
+
+        <p>Sharing is started when the first subscriber appears and never stops.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="companion-object-functions">Companion Object Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-while-subscribed.html">WhileSubscribed</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">WhileSubscribed</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow.SharingStarted.Companion$WhileSubscribed(kotlin.Long, kotlin.Long)/stopTimeoutMillis">stopTimeoutMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow.SharingStarted.Companion$WhileSubscribed(kotlin.Long, kotlin.Long)/replayExpirationMillis">replayExpirationMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Long.MAX_VALUE<br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">SharingStarted</span></a></code></div>
+
+        <p>Sharing is started when the first subscriber appears, immediately stops when the last
+subscriber disappears (by default), keeping the replay cache forever (by default).</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="companion-object-extension-functions">Companion Object Extension Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="../-while-subscribed.html">WhileSubscribed</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">SharingStarted.Companion</span><span class="symbol">.</span><span class="identifier">WhileSubscribed</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$WhileSubscribed(kotlinx.coroutines.flow.SharingStarted.Companion, , )/stopTimeout">stopTimeout</span><span class="symbol">:</span>&nbsp;<span class="identifier">&lt;ERROR CLASS&gt;</span>&nbsp;<span class="symbol">=</span>&nbsp;Duration.ZERO<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$WhileSubscribed(kotlinx.coroutines.flow.SharingStarted.Companion, , )/replayExpiration">replayExpiration</span><span class="symbol">:</span>&nbsp;<span class="identifier">&lt;ERROR CLASS&gt;</span>&nbsp;<span class="symbol">=</span>&nbsp;Duration.INFINITE<br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">SharingStarted</span></a></code></div>
+
+        <p>Sharing is started when the first subscriber appears, immediately stops when the last
+subscriber disappears (by default), keeping the replay cache forever (by default).</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

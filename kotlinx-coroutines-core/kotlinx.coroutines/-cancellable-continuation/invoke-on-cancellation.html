@@ -33,10 +33,10 @@
 
 <h1 id="invokeoncancellation">invokeOnCancellation</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCancellation</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L129">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCancellation</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L146">(source)</a></div>
 
-<p>Registers a <a href="invoke-on-cancellation.html#kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> to be <strong>synchronously</strong> invoked on cancellation (regular or exceptional) of this continuation.
-When the continuation is already cancelled, the handler will be immediately invoked
+<p>Registers a <a href="invoke-on-cancellation.html#kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> to be <strong>synchronously</strong> invoked on <a href="cancel.html">cancellation</a> (regular or exceptional) of this continuation.
+When the continuation is already cancelled, the handler is immediately invoked
 with the cancellation exception. Otherwise, the handler will be invoked as soon as this
 continuation is cancelled.</p>
 
@@ -45,7 +45,15 @@ If it does, they will get caught, wrapped into a <a href="#">CompletionHandlerEx
 processed as an uncaught exception in the context of the current coroutine
 (see <a href="../-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a>).</p>
 
-<p>At most one <a href="invoke-on-cancellation.html#kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> can be installed on a continuation.</p>
+<p>At most one <a href="invoke-on-cancellation.html#kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> can be installed on a continuation. Attempt to call <code>invokeOnCancellation</code> second
+time produces <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a>.</p>
+
+<p>This handler is also called when this continuation <a href="#">resumes</a> normally (with a value) and then
+is cancelled while waiting to be dispatched. More generally speaking, this handler is called whenever
+the caller of <a href="../suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> is getting a <a href="../-cancellation-exception/index.html">CancellationException</a>.</p>
+
+<p>A typical example for <code>invokeOnCancellation</code> usage is given in
+the documentation for the <a href="../suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> function.</p>
 
 <p><strong>Note</strong>: Implementation of <code>CompletionHandler</code> must be fast, non-blocking, and thread-safe.
 This <code>handler</code> can be invoked concurrently with the surrounding code.

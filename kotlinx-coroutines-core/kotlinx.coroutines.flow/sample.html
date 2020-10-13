@@ -35,42 +35,48 @@
 
 <div class="overload-group">
 
-  <div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="sample.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sample</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$sample(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.sample.T)), kotlin.Long)/periodMillis">periodMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="sample.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Delay.kt#L119">(source)</a></div>
+  <div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="sample.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sample</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$sample(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.sample.T)), kotlin.Long)/periodMillis">periodMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="sample.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Delay.kt#L159">(source)</a></div>
 
   <p>Returns a flow that emits only the latest value emitted by the original flow during the given sampling <a href="sample.html#kotlinx.coroutines.flow$sample(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.sample.T)), kotlin.Long)/periodMillis">period</a>.</p>
 
   <p>Example:</p>
 
-  <pre>flow {
-    repeat(10) {
-        emit(it)
-        delay(50)
-    }
-}.sample(100)
-</pre>
+  <div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">flow</span> <span class="p">{</span>
+    <span class="nf">repeat</span><span class="p">(</span><span class="m">10</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nf">emit</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+        <span class="nf">delay</span><span class="p">(</span><span class="m">110</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}.</span><span class="nf">sample</span><span class="p">(</span><span class="m">200</span><span class="p">)</span>
+</code></pre></div>  </div>
 
-  <p>produces <code>1, 3, 5, 7, 9</code>.</p>
+  <p>produces the following emissions</p>
+
+  <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1, 3, 5, 7, 9
+</code></pre></div>  </div>
 
   <p>Note that the latest element is not emitted if it does not fit into the sampling window.</p>
 
 </div>
 <div class="overload-group">
 
-  <div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="sample.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sample</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$sample(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.sample.T)), )/period">period</span><span class="symbol">:</span>&nbsp;<span class="identifier">&lt;ERROR CLASS&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="sample.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Delay.kt#L183">(source)</a></div>
+  <div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="sample.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sample</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$sample(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.sample.T)), )/period">period</span><span class="symbol">:</span>&nbsp;<span class="identifier">&lt;ERROR CLASS&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="sample.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Delay.kt#L231">(source)</a></div>
 
   <p>Returns a flow that emits only the latest value emitted by the original flow during the given sampling <a href="sample.html#kotlinx.coroutines.flow$sample(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.sample.T)), )/period">period</a>.</p>
 
   <p>Example:</p>
 
-  <pre>flow {
-    repeat(10) {
-        emit(it)
-        delay(50.milliseconds)
-    }
-}.sample(100.milliseconds)
-</pre>
+  <div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">flow</span> <span class="p">{</span>
+    <span class="nf">repeat</span><span class="p">(</span><span class="m">10</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nf">emit</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+        <span class="nf">delay</span><span class="p">(</span><span class="m">110</span><span class="p">.</span><span class="n">milliseconds</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}.</span><span class="nf">sample</span><span class="p">(</span><span class="m">200</span><span class="p">.</span><span class="n">milliseconds</span><span class="p">)</span>
+</code></pre></div>  </div>
 
-  <p>produces <code>1, 3, 5, 7, 9</code>.</p>
+  <p>produces the following emissions</p>
+
+  <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1, 3, 5, 7, 9
+</code></pre></div>  </div>
 
   <p>Note that the latest element is not emitted if it does not fit into the sampling window.</p>
 

@@ -35,7 +35,7 @@
 
 <div class="overload-group">
 
-  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flowOn</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Context.kt#L202">(source)</a></div>
+  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flowOn</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Context.kt#L240">(source)</a></div>
 
   <p>Changes the context where this flow is executed to the given <a href="flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</a>.
 This operator is composable and affects only preceding operators that do not have its own context.
@@ -55,12 +55,16 @@ This operator is context preserving: <a href="flow-on.html#kotlinx.coroutines.fl
 
   <p>For more explanation of context preservation please refer to <a href="-flow/index.html">Flow</a> documentation.</p>
 
-  <p>This operators retains a <em>sequential</em> nature of flow if changing the context does not call for changing
+  <p>This operator retains a <em>sequential</em> nature of flow if changing the context does not call for changing
 the <a href="../kotlinx.coroutines/-coroutine-dispatcher/index.html">dispatcher</a>. Otherwise, if changing dispatcher is required, it collects
 flow emissions in one coroutine that is run using a specified <a href="flow-on.html#kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</a> and emits them from another coroutines
 with the original collector’s context using a channel with a <a href="../kotlinx.coroutines.channels/-channel/-b-u-f-f-e-r-e-d.html">default</a> buffer size
 between two coroutines similarly to <a href="buffer.html">buffer</a> operator, unless <a href="buffer.html">buffer</a> operator is explicitly called
 before or after <code>flowOn</code>, which requests buffering behavior and specifies channel size.</p>
+
+  <p>Note, that flows operating across different dispatchers might lose some in-flight elements when cancelled.
+In particular, this operator ensures that downstream flow does not resume on cancellation even if the element
+was already emitted by the upstream flow.</p>
 
   <h3 id="operator-fusion">Operator fusion</h3>
 
@@ -76,8 +80,8 @@ when they have the same context keys, for example:</p>
     .flowOn(Dispatchers.Default)
 </pre>
 
-  <p>Note that an instance of <a href="-state-flow/index.html">StateFlow</a> does not have an execution context by itself,
-so applying <code>flowOn</code> to a <code>StateFlow</code> has not effect. See <a href="-state-flow/index.html">StateFlow</a> documentation on Operator Fusion.</p>
+  <p>Note that an instance of <a href="-shared-flow/index.html">SharedFlow</a> does not have an execution context by itself,
+so applying <code>flowOn</code> to a <code>SharedFlow</code> has not effect. See the <a href="-shared-flow/index.html">SharedFlow</a> documentation on Operator Fusion.</p>
 
   <h3 id="exceptions">Exceptions</h3>
 
@@ -86,13 +90,12 @@ so applying <code>flowOn</code> to a <code>StateFlow</code> has not effect. See 
 </div>
 <div class="overload-group">
 
-  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-state-flow/index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">flowOn</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.StateFlow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Lint.kt#L20">(source)</a></div>
+  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">flowOn</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$flowOn(kotlinx.coroutines.flow.SharedFlow((kotlinx.coroutines.flow.flowOn.T)), kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="flow-on.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Lint.kt#L32">(source)</a></div>
 
   <p><strong>Deprecated:</strong> DeprecationLevel.ERROR</p>
 
-  <p>Returns this.
-Applying <a href="./flow-on.md">flowOn</a> operator to <a href="-state-flow/index.html">StateFlow</a> has no effect.
-See <a href="-state-flow/index.html">StateFlow</a> documentation on Operator Fusion.</p>
+  <p>Applying <a href="./flow-on.md">flowOn</a> to <a href="-shared-flow/index.html">SharedFlow</a> has no effect.
+See the <a href="-shared-flow/index.html">SharedFlow</a> documentation on Operator Fusion.</p>
 
 </div>
 

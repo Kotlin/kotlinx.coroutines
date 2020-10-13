@@ -62,10 +62,50 @@ This method is not thread-safe and should not be invoked concurrently.</p>
 </tbody>
 </table>
 
+<h3 id="extension-properties">Extension Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="../coroutine-context.html">coroutineContext</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><a href="./index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">coroutineContext</span></s><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../is-active.html">isActive</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><a href="./index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">isActive</span></s><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="extension-functions">Extension Functions</h3>
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+
+        <p><a href="../cancel.html">cancel</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="./index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">cancel</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$cancel(kotlinx.coroutines.flow.FlowCollector((kotlin.Any)), kotlinx.coroutines.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+      </td>
+</tr>
 <tr>
 <td>
 
@@ -75,7 +115,7 @@ This method is not thread-safe and should not be invoked concurrently.</p>
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="../emit-all.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">emitAll</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$emitAll(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.emitAll.T)), kotlinx.coroutines.channels.ReceiveChannel((kotlinx.coroutines.flow.emitAll.T)))/channel">channel</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../emit-all.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Emits all elements from the given <a href="../emit-all.html#kotlinx.coroutines.flow$emitAll(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.emitAll.T)), kotlinx.coroutines.channels.ReceiveChannel((kotlinx.coroutines.flow.emitAll.T)))/channel">channel</a> to this flow collector and <a href="../../kotlinx.coroutines/cancel.html">cancels</a> (consumes)
+        <p>Emits all elements from the given <a href="../emit-all.html#kotlinx.coroutines.flow$emitAll(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.emitAll.T)), kotlinx.coroutines.channels.ReceiveChannel((kotlinx.coroutines.flow.emitAll.T)))/channel">channel</a> to this flow collector and <a href="../cancel.html">cancels</a> (consumes)
 the channel afterwards. If you need to iterate over the channel without consuming it,
 a regular <code>for</code> loop should be used instead.</p>
 
@@ -83,6 +123,28 @@ a regular <code>for</code> loop should be used instead.</p>
 
         <p>Collects all the values from the given <a href="../emit-all.html#kotlinx.coroutines.flow$emitAll(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.emitAll.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.emitAll.T)))/flow">flow</a> and emits them to the collector.
 It is a shorthand for <code>flow.collect { value -&gt; emit(value) }</code>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="inheritors">Inheritors</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="../-mutable-shared-flow/index.html">MutableSharedFlow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">MutableSharedFlow</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="../-mutable-shared-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="./index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="../-mutable-shared-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>A mutable <a href="../-shared-flow/index.html">SharedFlow</a> that provides functions to <a href="emit.html">emit</a> values to the flow.
+An instance of <code>MutableSharedFlow</code> with the given configuration parameters can be created using <code>MutableSharedFlow(...)</code>
+constructor function.</p>
 
       </td>
 </tr>

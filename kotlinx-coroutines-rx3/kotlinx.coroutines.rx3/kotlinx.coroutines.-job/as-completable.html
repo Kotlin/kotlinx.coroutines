@@ -36,7 +36,7 @@
 <div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">fun </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">asCompletable</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx3$asCompletable(kotlinx.coroutines.Job, kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/Completable.html"><span class="identifier">Completable</span></a></code></div>
 
 <p>Converts this job to the hot reactive completable that signals
-with <a href="#">onCompleted</a> when the corresponding job completes.</p>
+with <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/CompletableObserver.html#onComplete()">onCompleted</a> when the corresponding job completes.</p>
 
 <p>Every subscriber gets the signal at the same time.
 Unsubscribing from the resulting completable <strong>does not</strong> affect the original job in any way.</p>

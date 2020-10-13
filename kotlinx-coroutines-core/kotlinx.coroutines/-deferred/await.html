@@ -33,14 +33,16 @@
 
 <h1 id="await">await</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#T"><span class="identifier">T</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Deferred.kt#L50">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#T"><span class="identifier">T</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Deferred.kt#L52">(source)</a></div>
 
 <p>Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete,
 returning the resulting value or throwing the corresponding exception if the deferred was cancelled.</p>
 
 <p>This suspending function is cancellable.
 If the <a href="../-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
-immediately resumes with <a href="../-cancellation-exception/index.html">CancellationException</a>.</p>
+immediately resumes with <a href="../-cancellation-exception/index.html">CancellationException</a>.
+There is a <strong>prompt cancellation guarantee</strong>. If the job was cancelled while this function was
+suspended, it will not resume successfully. See <a href="../suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> documentation for low-level details.</p>
 
 <p>This function can be used in <a href="../../kotlinx.coroutines.selects/select.html">select</a> invocation with <a href="on-await.html">onAwait</a> clause.
 Use <a href="../-job/is-completed.html">isCompleted</a> to check for completion of this deferred value without waiting.</p>

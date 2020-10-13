@@ -33,14 +33,14 @@
 
 <h1 id="io">IO</h1>
 
-<div class="signature"><code><span class="identifier">@JvmStatic</span> <span class="keyword">val </span><span class="identifier">IO</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/Dispatchers.kt#L114">(source)</a></div>
+<div class="signature"><code><span class="identifier">@JvmStatic</span> <span class="keyword">val </span><span class="identifier">IO</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/Dispatchers.kt#L118">(source)</a></div>
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
 <p>The <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> that is designed for offloading blocking IO tasks to a shared pool of threads.</p>
 
 <p>Additional threads in this pool are created and are shutdown on demand.
-The number of threads used by this dispatcher is limited by the value of
+The number of threads used by tasks in this dispatcher is limited by the value of
 “<code>kotlinx.coroutines.io.parallelism</code>” (<a href="../-i-o_-p-a-r-a-l-l-e-l-i-s-m_-p-r-o-p-e-r-t-y_-n-a-m-e.html">IO_PARALLELISM_PROPERTY_NAME</a>) system property.
 It defaults to the limit of 64 threads or the number of cores (whichever is larger).</p>
 
@@ -49,9 +49,13 @@ It defaults to the limit of 64 threads or the number of cores (whichever is larg
 If you need a higher number of parallel threads,
 you should use a custom dispatcher backed by your own thread pool.</p>
 
+<h3 id="implementation-note">Implementation note</h3>
+
 <p>This dispatcher shares threads with a <a href="-default.html">Default</a> dispatcher, so using
 <code>withContext(Dispatchers.IO) { ... }</code> does not lead to an actual switching to another thread —
-typically execution continues in the same thread.</p>
+typically execution continues in the same thread.
+As a result of thread sharing, more than 64 (default parallelism) threads can be created (but not used)
+during operations over IO dispatcher.</p>
 
 
       </div>

@@ -33,32 +33,34 @@
 
 <h1 id="channel">Channel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L512">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L587">(source)</a></div>
 
 <p>Channel is a non-blocking primitive for communication between a sender (via <a href="../-send-channel/index.html">SendChannel</a>) and a receiver (via <a href="../-receive-channel/index.html">ReceiveChannel</a>).
 Conceptually, a channel is similar to Java’s <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
 but it has suspending operations instead of blocking ones and can be <a href="../-send-channel/close.html">closed</a>.</p>
+
+<h3 id="creating-channels">Creating channels</h3>
 
 <p>The <code>Channel(capacity)</code> factory function is used to create channels of different kinds depending on
 the value of the <code>capacity</code> integer:</p>
 
 <ul>
   <li>
-    <p>When <code>capacity</code> is 0 — it creates a <code>RendezvousChannel</code>.
+    <p>When <code>capacity</code> is 0 — it creates a <em>rendezvous</em> channel.
 This channel does not have any buffer at all. An element is transferred from the sender
 to the receiver only when <a href="../-send-channel/send.html">send</a> and <a href="../-receive-channel/receive.html">receive</a> invocations meet in time (rendezvous), so <a href="../-send-channel/send.html">send</a> suspends
 until another coroutine invokes <a href="../-receive-channel/receive.html">receive</a>, and <a href="../-receive-channel/receive.html">receive</a> suspends until another coroutine invokes <a href="../-send-channel/send.html">send</a>.</p>
   </li>
   <li>
-    <p>When <code>capacity</code> is <a href="-u-n-l-i-m-i-t-e-d.html">Channel.UNLIMITED</a> — it creates a <code>LinkedListChannel</code>.
+    <p>When <code>capacity</code> is <a href="-u-n-l-i-m-i-t-e-d.html">Channel.UNLIMITED</a> — it creates a channel with effectively unlimited buffer.
 This channel has a linked-list buffer of unlimited capacity (limited only by available memory).
 <a href="../-send-channel/send.html">Sending</a> to this channel never suspends, and <a href="../-send-channel/offer.html">offer</a> always returns <code>true</code>.</p>
   </li>
   <li>
-    <p>When <code>capacity</code> is <a href="-c-o-n-f-l-a-t-e-d.html">Channel.CONFLATED</a> — it creates a <code>ConflatedChannel</code>.
+    <p>When <code>capacity</code> is <a href="-c-o-n-f-l-a-t-e-d.html">Channel.CONFLATED</a> — it creates a <em>conflated</em> channel
 This channel buffers at most one element and conflates all subsequent <code>send</code> and <code>offer</code> invocations,
 so that the receiver always gets the last element sent.
-Back-to-send sent elements are <em>conflated</em> — only the last sent element is received,
+Back-to-send sent elements are conflated — only the last sent element is received,
 while previously sent elements <strong>are lost</strong>.
 <a href="../-send-channel/send.html">Sending</a> to this channel never suspends, and <a href="../-send-channel/offer.html">offer</a> always returns <code>true</code>.</p>
   </li>
@@ -68,6 +70,87 @@ This channel has an array buffer of a fixed <code>capacity</code>.
 <a href="../-send-channel/send.html">Sending</a> suspends only when the buffer is full, and <a href="../-receive-channel/receive.html">receiving</a> suspends only when the buffer is empty.</p>
   </li>
 </ul>
+
+<p>Buffered channels can be configured with an additional <a href="../-buffer-overflow/index.html"><code>onBufferOverflow</code></a> parameter. It controls the behaviour
+of the channel’s <a href="../-send-channel/send.html">send</a> function on buffer overflow:</p>
+
+<ul>
+  <li><a href="../-buffer-overflow/-s-u-s-p-e-n-d.html">SUSPEND</a> — the default, suspend <code>send</code> on buffer overflow until there is
+free space in the buffer.</li>
+  <li><a href="../-buffer-overflow/-d-r-o-p_-o-l-d-e-s-t.html">DROP_OLDEST</a> — do not suspend the <code>send</code>, add the latest value to the buffer,
+drop the oldest one from the buffer.
+A channel with <code>capacity = 1</code> and <code>onBufferOverflow = DROP_OLDEST</code> is a <em>conflated</em> channel.</li>
+  <li><a href="../-buffer-overflow/-d-r-o-p_-l-a-t-e-s-t.html">DROP_LATEST</a> — do not suspend the <code>send</code>, drop the value that is being sent,
+keep the buffer contents intact.</li>
+</ul>
+
+<p>A non-default <code>onBufferOverflow</code> implicitly creates a channel with at least one buffered element and
+is ignored for a channel with unlimited buffer. It cannot be specified for <code>capacity = CONFLATED</code>, which
+is a shortcut by itself.</p>
+
+<h3 id="prompt-cancellation-guarantee">Prompt cancellation guarantee</h3>
+
+<p>All suspending functions with channels provide <strong>prompt cancellation guarantee</strong>.
+If the job was cancelled while send or receive function was suspended, it will not resume successfully,
+but throws a <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.
+With a single-threaded <a href="../../kotlinx.coroutines/-coroutine-dispatcher/index.html">dispatcher</a> like <a href="../../kotlinx.coroutines/-dispatchers/-main.html">Dispatchers.Main</a> this gives a
+guarantee that if a piece code running in this thread cancels a <a href="../../kotlinx.coroutines/-job/index.html">Job</a>, then a coroutine running this job cannot
+resume successfully and continue to run, ensuring a prompt response to its cancellation.</p>
+
+<p><strong>Prompt cancellation guarantee</strong> for channel operations was added since <code>kotlinx.coroutines</code> version <code>1.4.0</code>
+ and had replaced a channel-specific atomic-cancellation that was not consistent with other suspending functions.
+ The low-level mechanics of prompt cancellation are explained in <a href="../../kotlinx.coroutines/suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> function.</p>
+
+<h3 id="undelivered-elements">Undelivered elements</h3>
+
+<p>As a result of a prompt cancellation guarantee, when a closeable resource
+(like open file or a handle to another native resource) is transferred via channel from one coroutine to another
+it can fail to be delivered and will be lost if either send or receive operations are cancelled in transit.</p>
+
+<p>A <code>Channel()</code> constructor function has an <code>onUndeliveredElement</code> optional parameter.
+When <code>onUndeliveredElement</code> parameter is set, the corresponding function is called once for each element
+that was sent to the channel with the call to the <a href="../-send-channel/send.html">send</a> function but failed to be delivered,
+which can happen in the following cases:</p>
+
+<ul>
+  <li>When <a href="../-send-channel/send.html">send</a> operation throws an exception because it was cancelled before it had a chance to actually
+send the element or because the channel was <a href="../-send-channel/close.html">closed</a> or <a href="../-receive-channel/cancel.html">cancelled</a>.</li>
+  <li>When <a href="../-send-channel/offer.html">offer</a> operation throws an exception when
+the channel was <a href="../-send-channel/close.html">closed</a> or <a href="../-receive-channel/cancel.html">cancelled</a>.</li>
+  <li>When <a href="../-receive-channel/receive.html">receive</a>, <a href="#">receiveOrNull</a>, or <a href="../-channel-iterator/has-next.html">hasNext</a>
+operation throws an exception when it had retrieved the element from the
+channel but was cancelled before the code following the receive call resumed.</li>
+  <li>The channel was <a href="../-receive-channel/cancel.html">cancelled</a>, in which case <code>onUndeliveredElement</code> is called on every
+remaining element in the channel’s buffer.</li>
+</ul>
+
+<p>Note, that <code>onUndeliveredElement</code> function is called synchronously in an arbitrary context. It should be fast, non-blocking,
+and should not throw exceptions. Any exception thrown by <code>onUndeliveredElement</code> is wrapped into an internal runtime
+exception which is either rethrown from the caller method or handed off to the exception handler in the current context
+(see <a href="../../kotlinx.coroutines/-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a>) when one is available.</p>
+
+<p>A typical usage for <code>onDeliveredElement</code> is to close a resource that is being transferred via the channel. The
+following code pattern guarantees that opened resources are closed even if producer, consumer, and/or channel
+are cancelled. Resources are never lost.</p>
+
+<pre>// Create the channel with onUndeliveredElement block that closes a resource
+val channel = Channel&lt;Resource&gt;(capacity) { resource -&gt; resource.close() }
+
+// Producer code
+val resourceToSend = openResource()
+channel.send(resourceToSend)
+
+// Consumer code
+val resourceReceived = channel.receive()
+try {
+    // work with received resource
+} finally {
+    resourceReceived.close()
+}
+</pre>
+
+<p>Note, that if you do any kind of work in between <code>openResource()</code> and <code>channel.send(...)</code>, then you should
+ ensure that resource gets closed in case this additional code fails.</p>
 
 <h3 id="inherited-properties">Inherited Properties</h3>
 
@@ -293,10 +376,10 @@ or if it does not exist, or throws an exception if the channel <a href="../-send
 <td>
         <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">BUFFERED</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
-        <p>Requests a buffered channel with the default buffer capacity in the <code>Channel(...)</code> factory function —
-an <code>ArrayChannel</code> gets created with the default capacity.
-The default capacity is 64 and can be overridden by setting
-<a href="-d-e-f-a-u-l-t_-b-u-f-f-e-r_-p-r-o-p-e-r-t-y_-n-a-m-e.html">DEFAULT_BUFFER_PROPERTY_NAME</a> on JVM.</p>
+        <p>Requests a buffered channel with the default buffer capacity in the <code>Channel(...)</code> factory function.
+The default capacity for a channel that <a href="../-buffer-overflow/-s-u-s-p-e-n-d.html">suspends</a> on overflow
+is 64 and can be overridden by setting <a href="-d-e-f-a-u-l-t_-b-u-f-f-e-r_-p-r-o-p-e-r-t-y_-n-a-m-e.html">DEFAULT_BUFFER_PROPERTY_NAME</a> on JVM.
+For non-suspending channels, a buffer of capacity 1 is used.</p>
 
       </td>
 </tr>
@@ -309,7 +392,8 @@ The default capacity is 64 and can be overridden by setting
 <td>
         <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">CONFLATED</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
-        <p>Requests a conflated channel in the <code>Channel(...)</code> factory function — a <code>ConflatedChannel</code> gets created.</p>
+        <p>Requests a conflated channel in the <code>Channel(...)</code> factory function. This is a shortcut to creating
+a channel with <a href="../-buffer-overflow/-d-r-o-p_-o-l-d-e-s-t.html"><code>onBufferOverflow = DROP_OLDEST</code></a>.</p>
 
       </td>
 </tr>
@@ -336,7 +420,7 @@ The default capacity is 64 and can be overridden by setting
 <td>
         <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">RENDEZVOUS</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
-        <p>Requests a rendezvous channel in the <code>Channel(...)</code> factory function — a <code>RendezvousChannel</code> gets created.</p>
+        <p>Requests a rendezvous channel in the <code>Channel(...)</code> factory function — a channel that does not have a buffer.</p>
 
       </td>
 </tr>
@@ -349,7 +433,7 @@ The default capacity is 64 and can be overridden by setting
 <td>
         <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">UNLIMITED</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
-        <p>Requests a channel with an unlimited capacity buffer in the <code>Channel(...)</code> factory function</p>
+        <p>Requests a channel with an unlimited capacity buffer in the <code>Channel(...)</code> factory function.</p>
 
       </td>
 </tr>

@@ -734,6 +734,19 @@ complete exceptionally including cancellation.</p>
 <tr>
 <td>
 
+        <p><a href="await-cancellation.html">awaitCancellation</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">awaitCancellation</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-nothing/index.html"><span class="identifier">Nothing</span></a></code></div>
+
+        <p>Suspends until cancellation, in which case it will throw a <a href="-cancellation-exception/index.html">CancellationException</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="cancel.html">cancel</a></p>
 
       </td>
@@ -850,17 +863,11 @@ This function is an alias to avoid name clash with <a href="-coroutine-scope/cor
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">delay</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines$delay(kotlin.Long)/timeMillis">timeMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
-This suspending function is cancellable.
-If the <a href="-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
-immediately resumes with <a href="-cancellation-exception/index.html">CancellationException</a>.</p>
+        <p>Delays coroutine for a given time without blocking a thread and resumes it after a specified time.</p>
 
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">delay</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines$delay()/duration">duration</span><span class="symbol">:</span>&nbsp;<span class="identifier">&lt;ERROR CLASS&gt;</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Delays coroutine for a given <a href="delay.html#kotlinx.coroutines$delay()/duration">duration</a> without blocking a thread and resumes it after the specified time.
-This suspending function is cancellable.
-If the <a href="-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
-immediately resumes with <a href="-cancellation-exception/index.html">CancellationException</a>.</p>
+        <p>Delays coroutine for a given <a href="delay.html#kotlinx.coroutines$delay()/duration">duration</a> without blocking a thread and resumes it after the specified time.</p>
 
       </td>
 </tr>
@@ -873,8 +880,7 @@ immediately resumes with <a href="-cancellation-exception/index.html">Cancellati
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">ensureActive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Ensures that current scope is <a href="is-active.html">active</a>.
-Throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> if the context does not have a job in it.</p>
+        <p>Ensures that current scope is <a href="is-active.html">active</a>.</p>
 
         <div class="signature"><code><span class="keyword">fun </span><a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">ensureActive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
@@ -1055,7 +1061,8 @@ context’s <a href="-job/index.html">Job</a> with <a href="-supervisor-job.html
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">suspendCancellableCoroutine</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$suspendCancellableCoroutine(kotlin.Function1((kotlinx.coroutines.CancellableContinuation((kotlinx.coroutines.suspendCancellableCoroutine.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="-cancellable-continuation/index.html"><span class="identifier">CancellableContinuation</span></a><span class="symbol">&lt;</span><a href="suspend-cancellable-coroutine.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="suspend-cancellable-coroutine.html#T"><span class="identifier">T</span></a></code></div>
 
         <p>Suspends the coroutine like <a href="#">suspendCoroutine</a>, but providing a <a href="-cancellable-continuation/index.html">CancellableContinuation</a> to
-the <a href="suspend-cancellable-coroutine.html#kotlinx.coroutines$suspendCancellableCoroutine(kotlin.Function1((kotlinx.coroutines.CancellableContinuation((kotlinx.coroutines.suspendCancellableCoroutine.T)), kotlin.Unit)))/block">block</a>. This function throws a <a href="-cancellation-exception/index.html">CancellationException</a> if the coroutine is cancelled or completed while suspended.</p>
+the <a href="suspend-cancellable-coroutine.html#kotlinx.coroutines$suspendCancellableCoroutine(kotlin.Function1((kotlinx.coroutines.CancellableContinuation((kotlinx.coroutines.suspendCancellableCoroutine.T)), kotlin.Unit)))/block">block</a>. This function throws a <a href="-cancellation-exception/index.html">CancellationException</a> if the <a href="-job/index.html">Job</a> of the coroutine is
+cancelled or completed while it is suspended.</p>
 
       </td>
 </tr>

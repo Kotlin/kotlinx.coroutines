@@ -33,12 +33,12 @@
 
 <h1 id="buffered">BUFFERED</h1>
 
-<div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">BUFFERED</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L538">(source)</a></div>
+<div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">BUFFERED</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L614">(source)</a></div>
 
-<p>Requests a buffered channel with the default buffer capacity in the <code>Channel(...)</code> factory function —
-an <code>ArrayChannel</code> gets created with the default capacity.
-The default capacity is 64 and can be overridden by setting
-<a href="-d-e-f-a-u-l-t_-b-u-f-f-e-r_-p-r-o-p-e-r-t-y_-n-a-m-e.html">DEFAULT_BUFFER_PROPERTY_NAME</a> on JVM.</p>
+<p>Requests a buffered channel with the default buffer capacity in the <code>Channel(...)</code> factory function.
+The default capacity for a channel that <a href="../-buffer-overflow/-s-u-s-p-e-n-d.html">suspends</a> on overflow
+is 64 and can be overridden by setting <a href="-d-e-f-a-u-l-t_-b-u-f-f-e-r_-p-r-o-p-e-r-t-y_-n-a-m-e.html">DEFAULT_BUFFER_PROPERTY_NAME</a> on JVM.
+For non-suspending channels, a buffer of capacity 1 is used.</p>
 
 
       </div>

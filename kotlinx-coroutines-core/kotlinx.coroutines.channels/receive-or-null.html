@@ -33,19 +33,16 @@
 
 <h1 id="receiveornull">receiveOrNull</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="receive-or-null.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="receive-or-null.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channels.common.kt#L59">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="receive-or-null.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="receive-or-null.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channels.common.kt#L56">(source)</a></div>
 
 <p>Retrieves and removes the element from this channel suspending the caller while this channel <a href="#">isEmpty</a>
 or returns <code>null</code> if the channel is <a href="-receive-channel/is-closed-for-receive.html">closed</a>.</p>
 
 <p>This suspending function is cancellable. If the <a href="../kotlinx.coroutines/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this
-function is suspended, this function immediately resumes with <a href="../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.</p>
-
-<p><em>Cancellation of suspended receive is atomic</em> – when this function
-throws <a href="../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a> it means that the element was not retrieved from this channel.
-As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
-continue to execute even after it was cancelled from the same thread in the case when this receive operation
-was already resumed and the continuation was posted for execution to the thread’s queue.</p>
+function is suspended, this function immediately resumes with <a href="../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.
+There is a <strong>prompt cancellation guarantee</strong>. If the job was cancelled while this function was
+suspended, it will not resume successfully. If the <code>receiveOrNull</code> call threw <a href="../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a> there is no way
+to tell if some element was already received from the channel or not. See <a href="-channel/index.html">Channel</a> documentation for details.</p>
 
 <p>Note, that this function does not check for cancellation when it is not suspended.
 Use <a href="../kotlinx.coroutines/yield.html">yield</a> or <a href="../kotlinx.coroutines/is-active.html">CoroutineScope.isActive</a> to periodically check for cancellation in tight loops if needed.</p>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>awaitCancellation - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await-cancellation.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines</a> / <a href="./await-cancellation.html">awaitCancellation</a></div>
+
+<h1 id="awaitcancellation">awaitCancellation</h1>
+
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">awaitCancellation</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-nothing/index.html"><span class="identifier">Nothing</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Delay.kt#L99">(source)</a></div>
+
+<p>Suspends until cancellation, in which case it will throw a <a href="-cancellation-exception/index.html">CancellationException</a>.</p>
+
+<p>This function returns <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-nothing/index.html">Nothing</a>, so it can be used in any coroutine,
+regardless of the required return type.</p>
+
+<p>Usage example in callback adapting code:</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">fun</span> <span class="nf">currentTemperature</span><span class="p">():</span> <span class="nc">Flow</span><span class="p">&lt;</span><span class="nc">Temperature</span><span class="p">&gt;</span> <span class="p">=</span> <span class="nf">callbackFlow</span> <span class="p">{</span>
+    <span class="kd">val</span> <span class="py">callback</span> <span class="p">=</span> <span class="nc">SensorCallback</span> <span class="p">{</span> <span class="n">degreesCelsius</span><span class="p">:</span> <span class="nc">Double</span> <span class="p">-&gt;</span>
+        <span class="nf">trySend</span><span class="p">(</span><span class="nc">Temperature</span><span class="p">.</span><span class="nf">celsius</span><span class="p">(</span><span class="n">degreesCelsius</span><span class="p">))</span>
+    <span class="p">}</span>
+    <span class="k">try</span> <span class="p">{</span>
+        <span class="nf">registerSensorCallback</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+        <span class="nf">awaitCancellation</span><span class="p">()</span> <span class="c1">// Suspends to keep getting updates until cancellation.</span>
+    <span class="p">}</span> <span class="k">finally</span> <span class="p">{</span>
+        <span class="nf">unregisterSensorCallback</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Usage example in (non declarative) UI code:</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">suspend</span> <span class="k">fun</span> <span class="nf">showStuffUntilCancelled</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nc">Stuff</span><span class="p">):</span> <span class="nc">Nothing</span> <span class="p">{</span>
+    <span class="n">someSubView</span><span class="p">.</span><span class="n">text</span> <span class="p">=</span> <span class="n">content</span><span class="p">.</span><span class="n">title</span>
+    <span class="n">anotherSubView</span><span class="p">.</span><span class="n">text</span> <span class="p">=</span> <span class="n">content</span><span class="p">.</span><span class="n">description</span>
+    <span class="n">someView</span><span class="p">.</span><span class="nf">visibleInScope</span> <span class="p">{</span>
+        <span class="nf">awaitCancellation</span><span class="p">()</span> <span class="c1">// Suspends so the view stays visible.</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

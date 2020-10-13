@@ -33,10 +33,107 @@
 
 <h1 id="suspendcancellablecoroutine">suspendCancellableCoroutine</h1>
 
-<div class="signature"><code><span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">suspendCancellableCoroutine</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">crossinline</span> <span class="parameterName" id="kotlinx.coroutines$suspendCancellableCoroutine(kotlin.Function1((kotlinx.coroutines.CancellableContinuation((kotlinx.coroutines.suspendCancellableCoroutine.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="-cancellable-continuation/index.html"><span class="identifier">CancellableContinuation</span></a><span class="symbol">&lt;</span><a href="suspend-cancellable-coroutine.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="suspend-cancellable-coroutine.html#T"><span class="identifier">T</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L186">(source)</a></div>
+<div class="signature"><code><span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">suspendCancellableCoroutine</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">crossinline</span> <span class="parameterName" id="kotlinx.coroutines$suspendCancellableCoroutine(kotlin.Function1((kotlinx.coroutines.CancellableContinuation((kotlinx.coroutines.suspendCancellableCoroutine.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="-cancellable-continuation/index.html"><span class="identifier">CancellableContinuation</span></a><span class="symbol">&lt;</span><a href="suspend-cancellable-coroutine.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="suspend-cancellable-coroutine.html#T"><span class="identifier">T</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L305">(source)</a></div>
 
 <p>Suspends the coroutine like <a href="#">suspendCoroutine</a>, but providing a <a href="-cancellable-continuation/index.html">CancellableContinuation</a> to
-the <a href="suspend-cancellable-coroutine.html#kotlinx.coroutines$suspendCancellableCoroutine(kotlin.Function1((kotlinx.coroutines.CancellableContinuation((kotlinx.coroutines.suspendCancellableCoroutine.T)), kotlin.Unit)))/block">block</a>. This function throws a <a href="-cancellation-exception/index.html">CancellationException</a> if the coroutine is cancelled or completed while suspended.</p>
+the <a href="suspend-cancellable-coroutine.html#kotlinx.coroutines$suspendCancellableCoroutine(kotlin.Function1((kotlinx.coroutines.CancellableContinuation((kotlinx.coroutines.suspendCancellableCoroutine.T)), kotlin.Unit)))/block">block</a>. This function throws a <a href="-cancellation-exception/index.html">CancellationException</a> if the <a href="-job/index.html">Job</a> of the coroutine is
+cancelled or completed while it is suspended.</p>
+
+<p>A typical use of this function is to suspend a coroutine while waiting for a result
+from a single-shot callback API and to return the result to the caller.
+For multi-shot callback APIs see <a href="../kotlinx.coroutines.flow/callback-flow.html">callbackFlow</a>.</p>
+
+<pre>suspend fun awaitCallback(): T = suspendCancellableCoroutine { continuation -&gt;
+    val callback = object : Callback { // Implementation of some callback interface
+        override fun onCompleted(value: T) {
+            // Resume coroutine with a value provided by the callback
+            continuation.resume(value)
+        }
+        override fun onApiError(cause: Throwable) {
+            // Resume coroutine with an exception provided by the callback
+            continuation.resumeWithException(cause)
+        }
+    }
+    // Register callback with an API
+    api.register(callback)
+    // Remove callback on cancellation
+    continuation.invokeOnCancellation { api.unregister(callback) }
+    // At this point the coroutine is suspended by suspendCancellableCoroutine until callback fires
+}
+</pre>
+
+<p>The callback <code>register</code>/<code>unregister</code> methods provided by an external API must be thread-safe, because
+ <code>invokeOnCancellation</code> block can be called at any time due to asynchronous nature of cancellation, even
+ concurrently with the call of the callback.</p>
+
+<h3 id="prompt-cancellation-guarantee">Prompt cancellation guarantee</h3>
+
+<p>This function provides <strong>prompt cancellation guarantee</strong>.
+If the <a href="-job/index.html">Job</a> of the current coroutine was cancelled while this function was suspended it will not resume
+successfully.</p>
+
+<p>The cancellation of the coroutine’s job is generally asynchronous with respect to the suspended coroutine.
+The suspended coroutine is resumed with the call it to its <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/resume-with.html">Continuation.resumeWith</a> member function or to
+<a href="#">resume</a> extension function.
+However, when coroutine is resumed, it does not immediately start executing, but is passed to its
+<a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> to schedule its execution when dispatcher’s resources become available for execution.
+The job’s cancellation can happen both before, after, and concurrently with the call to <code>resume</code>. In any
+case, prompt cancellation guarantees that the the coroutine will not resume its code successfully.</p>
+
+<p>If the coroutine was resumed with an exception (for example, using <a href="#">Continuation.resumeWithException</a> extension
+function) and cancelled, then the resulting exception of the <code>suspendCancellableCoroutine</code> function is determined
+by whichever action (exceptional resume or cancellation) that happened first.</p>
+
+<h3 id="returning-resources-from-a-suspended-coroutine">Returning resources from a suspended coroutine</h3>
+
+<p>As a result of a prompt cancellation guarantee, when a closeable resource
+(like open file or a handle to another native resource) is returned from a suspended coroutine as a value
+it can be lost when the coroutine is cancelled. In order to ensure that the resource can be properly closed
+in this case, the <a href="-cancellable-continuation/index.html">CancellableContinuation</a> interface provides two functions.</p>
+
+<ul>
+  <li><a href="-cancellable-continuation/invoke-on-cancellation.html">invokeOnCancellation</a> installs a handler that is called
+whenever a suspend coroutine is being cancelled. In addition to the example at the beginning, it can be
+used to ensure that a resource that was opened before the call to
+<code>suspendCancellableCoroutine</code> or in its body is closed in case of cancellation.</li>
+</ul>
+<pre>suspendCancellableCoroutine { continuation -&gt;
+   val resource = openResource() // Opens some resource
+   continuation.invokeOnCancellation {
+       resource.close() // Ensures the resource is closed on cancellation
+   }
+   // ...
+}
+</pre>
+<ul>
+  <li><a href="-cancellable-continuation/resume.html">resume(value) { … }</a> method on a <a href="-cancellable-continuation/index.html">CancellableContinuation</a> takes
+an optional <code>onCancellation</code> block. It can be used when resuming with a resource that must be closed by
+the code that called the corresponding suspending function.</li>
+</ul>
+<pre>suspendCancellableCoroutine { continuation -&gt;
+    val callback = object : Callback { // Implementation of some callback interface
+        // A callback provides a reference to some closeable resource
+        override fun onCompleted(resource: T) {
+            // Resume coroutine with a value provided by the callback and ensure the resource is closed in case
+            // when the coroutine is cancelled before the caller gets a reference to the resource.
+            continuation.resume(resource) {
+                resource.close() // Close the resource on cancellation
+            }
+        }
+    // ...
+}
+</pre>
+
+<h3 id="implementation-details-and-custom-continuation-interceptors">Implementation details and custom continuation interceptors</h3>
+
+<p>The prompt cancellation guarantee is the result of a coordinated implementation inside <code>suspendCancellableCoroutine</code>
+function and the <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> class. The coroutine dispatcher checks for the status of the <a href="-job/index.html">Job</a> immediately
+before continuing its normal execution and aborts this normal execution, calling all the corresponding
+cancellation handlers, if the job was cancelled.</p>
+
+<p>If a custom implementation of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a> is used in a coroutine’s context that does not extend
+<a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> class, then there is no prompt cancellation guarantee. A custom continuation interceptor
+can resume execution of a previously suspended coroutine even if its job was already cancelled.</p>
 
 
       </div>

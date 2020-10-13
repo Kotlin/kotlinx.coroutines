@@ -33,11 +33,17 @@
 
 <h1 id="ascoroutinedispatcher">asCoroutineDispatcher</h1>
 
-<div class="signature"><code><span class="identifier">@JvmName</span><span class="symbol">(</span>"from"<span class="symbol">)</span> <span class="keyword">fun </span><a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html"><span class="identifier">Executor</span></a><span class="symbol">.</span><span class="identifier">asCoroutineDispatcher</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/Executors.kt#L50">(source)</a></div>
+<div class="signature"><code><span class="identifier">@JvmName</span><span class="symbol">(</span>"from"<span class="symbol">)</span> <span class="keyword">fun </span><a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html"><span class="identifier">Executor</span></a><span class="symbol">.</span><span class="identifier">asCoroutineDispatcher</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/Executors.kt#L62">(source)</a></div>
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
 <p>Converts an instance of <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html">Executor</a> to an implementation of <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a>.</p>
+
+<p>If the underlying executor throws <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/RejectedExecutionException.html">RejectedExecutionException</a> on
+attempt to submit a continuation task (it happens when <a href="../-executor-coroutine-dispatcher/close.html">closing</a> the
+resulting dispatcher, on underlying executor <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html#shutdown()">shutdown</a>, or when it uses limited queues),
+then the <a href="../-job/index.html">Job</a> of the affected task is <a href="#">cancelled</a> and the task is submitted to the
+<a href="../-dispatchers/-i-o.html">Dispatchers.IO</a>, so that the affected coroutine can cleanup its resources and promptly complete.</p>
 
 
       </div>

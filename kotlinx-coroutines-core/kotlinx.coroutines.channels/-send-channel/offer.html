@@ -33,13 +33,18 @@
 
 <h1 id="offer">offer</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">offer</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L85">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">offer</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L88">(source)</a></div>
 
 <p>Immediately adds the specified <a href="offer.html#kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</a> to this channel, if this doesn’t violate its capacity restrictions,
 and returns <code>true</code>. Otherwise, just returns <code>false</code>. This is a synchronous variant of <a href="send.html">send</a> which backs off
 in situations when <code>send</code> suspends.</p>
 
 <p>Throws an exception if the channel <a href="is-closed-for-send.html">is closed for <code>send</code></a> (see <a href="close.html">close</a> for details).</p>
+
+<p>When <code>offer</code> call returns <code>false</code> it guarantees that the element was not delivered to the consumer and it
+it does not call <code>onUndeliveredElement</code> that was installed for this channel. If the channel was closed,
+then it calls <code>onUndeliveredElement</code> before throwing an exception.
+See “Undelivered elements” section in <a href="../-channel/index.html">Channel</a> documentation for details on handling undelivered elements.</p>
 
 
       </div>

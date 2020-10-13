@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>stateIn - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/state-in.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.flow</a> / <a href="./state-in.html">stateIn</a></div>
+
+<h1 id="statein">stateIn</h1>
+
+<div class="overload-group">
+
+  <div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="state-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">stateIn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$stateIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.stateIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlinx.coroutines.flow.stateIn.T)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$stateIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.stateIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlinx.coroutines.flow.stateIn.T)/started">started</span><span class="symbol">:</span>&nbsp;<a href="-sharing-started/index.html"><span class="identifier">SharingStarted</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$stateIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.stateIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlinx.coroutines.flow.stateIn.T)/initialValue">initialValue</span><span class="symbol">:</span>&nbsp;<a href="state-in.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-state-flow/index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="state-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Share.kt#L301">(source)</a></div>
+
+  <p>Converts a <em>cold</em> <a href="-flow/index.html">Flow</a> into a <em>hot</em> <a href="-state-flow/index.html">StateFlow</a> that is started in the given coroutine <a href="state-in.html#kotlinx.coroutines.flow$stateIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.stateIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlinx.coroutines.flow.stateIn.T)/scope">scope</a>,
+sharing the most recently emitted value from a single running instance of the upstream flow with multiple
+downstream subscribers. See the <a href="-state-flow/index.html">StateFlow</a> documentation for the general concepts of state flows.</p>
+
+  <p>The starting of the sharing coroutine is controlled by the <a href="state-in.html#kotlinx.coroutines.flow$stateIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.stateIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlinx.coroutines.flow.stateIn.T)/started">started</a> parameter, as explained in the
+documentation for <a href="share-in.html">shareIn</a> operator.</p>
+
+  <p>The <code>stateIn</code> operator is useful in situations when there is a <em>cold</em> flow that provides updates to the
+value of some state and is expensive to create and/or to maintain, but there are multiple subscribers
+that need to collect the most recent state value. For example, consider a
+flow of state updates coming from a backend over the expensive network connection, taking a lot of
+time to establish. Conceptually it might be implemented like this:</p>
+
+  <pre>val backendState: Flow&lt;State&gt; = flow {
+    connectToBackend() // takes a lot of time
+    try {
+      while (true) {
+          emit(receiveStateUpdateFromBackend())
+      }
+    } finally {
+        disconnectFromBackend()
+    }
+}
+</pre>
+
+  <p>If this flow is directly used in the application, then every time it is collected a fresh connection is
+established, and it will take a while before state updates start flowing. However, we can share a single connection
+and establish it eagerly like this:</p>
+
+  <pre>val state: StateFlow&lt;State&gt; = backendMessages.stateIn(scope, SharingStarted.Eagerly, State.LOADING)
+</pre>
+
+  <p>Now, a single connection is shared between all collectors from <code>state</code>, and there is a chance that the connection
+is already established by the time it is needed.</p>
+
+  <h3 id="upstream-completion-and-error-handling">Upstream completion and error handling</h3>
+
+  <p><strong>Normal completion of the upstream flow has no effect on subscribers</strong>, and the sharing coroutine continues to run. If a
+a strategy like <a href="-sharing-started/-while-subscribed.html">SharingStarted.WhileSubscribed</a> is used, then the upstream can get restarted again. If a special
+action on upstream completion is needed, then an <a href="on-completion.html">onCompletion</a> operator can be used before
+the <code>stateIn</code> operator to emit a special value in this case. See the <a href="share-in.html">shareIn</a> operator’s documentation for an example.</p>
+
+  <p>Any exception in the upstream flow terminates the sharing coroutine without affecting any of the subscribers,
+and will be handled by the <a href="state-in.html#kotlinx.coroutines.flow$stateIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.stateIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlinx.coroutines.flow.stateIn.T)/scope">scope</a> in which the sharing coroutine is launched. Custom exception handling
+can be configured by using the <a href="catch.html">catch</a> or <a href="retry.html">retry</a> operators before the <code>stateIn</code> operator, similarly to
+the <a href="share-in.html">shareIn</a> operator.</p>
+
+  <h3 id="operator-fusion">Operator fusion</h3>
+
+  <p>Application of <a href="flow-on.html">flowOn</a>, <a href="conflate.html">conflate</a>,
+<a href="buffer.html">buffer</a> with <a href="../kotlinx.coroutines.channels/-channel/-c-o-n-f-l-a-t-e-d.html">CONFLATED</a> or <a href="../kotlinx.coroutines.channels/-channel/-r-e-n-d-e-z-v-o-u-s.html">RENDEZVOUS</a> capacity,
+<a href="distinct-until-changed.html">distinctUntilChanged</a>, or <a href="cancellable.html">cancellable</a> operators to a state flow has no effect.</p>
+
+  <h3 id="parameters">Parameters</h3>
+
+  <p><code>scope</code> - the coroutine scope in which sharing is started.</p>
+
+  <p><code>started</code> - the strategy that controls when sharing is started and stopped.</p>
+
+  <p><code>initialValue</code> - the initial value of the state flow.
+This value is also used when the state flow is reset using the <a href="-sharing-started/-while-subscribed.html">SharingStarted.WhileSubscribed</a> strategy
+with the <code>replayExpirationMillis</code> parameter.</p>
+
+</div>
+<div class="overload-group">
+
+  <div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="state-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">stateIn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$stateIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.stateIn.T)), kotlinx.coroutines.CoroutineScope)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-state-flow/index.html"><span class="identifier">StateFlow</span></a><span class="symbol">&lt;</span><a href="state-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Share.kt#L320">(source)</a></div>
+
+  <p>Starts the upstream flow in a given <a href="state-in.html#kotlinx.coroutines.flow$stateIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.stateIn.T)), kotlinx.coroutines.CoroutineScope)/scope">scope</a>, suspends until the first value is emitted, and returns a <em>hot</em>
+<a href="-state-flow/index.html">StateFlow</a> of future emissions, sharing the most recently emitted value from this running instance of the upstream flow
+with multiple downstream subscribers. See the <a href="-state-flow/index.html">StateFlow</a> documentation for the general concepts of state flows.</p>
+
+  <h3 id="parameters-1">Parameters</h3>
+
+  <p><code>scope</code> - the coroutine scope in which sharing is started.</p>
+
+</div>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

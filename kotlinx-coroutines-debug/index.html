@@ -51,7 +51,7 @@ please follow the BlockHound <a href="https://github.com/reactor/BlockHound/blob
 <p>Add <code>kotlinx-coroutines-debug</code> to your project test dependencies:</p>
 
 <pre>dependencies {
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.3.9'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.4.0-M1'
 }
 </pre>
 
@@ -88,7 +88,7 @@ stacktraces will be dumped to the console.</p>
 <h3 id="using-as-jvm-agent">Using as JVM agent</h3>
 
 <p>Debug module can also be used as a standalone JVM agent to enable debug probes on the application startup.
-You can run your application with an additional argument: <code>-javaagent:kotlinx-coroutines-debug-1.3.9.jar</code>.
+You can run your application with an additional argument: <code>-javaagent:kotlinx-coroutines-debug-1.4.0-M1.jar</code>.
 Additionally, on Linux and Mac OS X you can use <code>kill -5 $pid</code> command in order to force your application to print all alive coroutines.
 When used as Java agent, <code>"kotlinx.coroutines.debug.enable.creation.stack.trace"</code> system property can be used to control 
 <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/enable-creation-stack-traces.html">DebugProbes.enableCreationStackTraces</a> along with agent startup.</p>
@@ -181,6 +181,55 @@ of the dump programmatically.</p>
 <p>Unfortunately, Android runtime does not support Instrument API necessary for <code>kotlinx-coroutines-debug</code> to function, triggering <code>java.lang.NoClassDefFoundError: Failed resolution of: Ljava/lang/management/ManagementFactory;</code>.</p>
 
 <p>Nevertheless, it will be possible to support debug agent on Android as soon as <a href="https://github.com/Archinamon/android-gradle-aspectj">GradleAspectJ-Android</a>  will support android-gradle 3.3</p>
+
+<h4 id="build-failures-due-to-duplicate-resource-files">Build failures due to duplicate resource files</h4>
+
+<p>Building an Android project that depends on <code>kotlinx-coroutines-debug</code> (usually introduced by being a transitive
+dependency of <code>kotlinx-coroutines-test</code>) may fail with <code>DuplicateRelativeFileException</code> for <code>META-INF/AL2.0</code>,
+<code>META-INF/LGPL2.1</code>, or <code>win32-x86/attach_hotspot_windows.dll</code> when trying to merge the Android resource.</p>
+
+<p>The problem is that Android merges the resources of all its dependencies into a single directory and complains about
+conflicts, but:</p>
+
+<ul>
+  <li><code>kotlinx-coroutines-debug</code> transitively depends on JNA and JNA-platform, both of which include license files in their
+META-INF directories. Trying to merge these files leads to conflicts, which means that any Android project that
+depends on JNA and JNA-platform will experience build failures.</li>
+  <li>Additionally, <code>kotlinx-coroutines-debug</code> embeds <code>byte-buddy-agent</code> and <code>byte-buddy</code>, along with their resource files.
+Then, if the project separately depends on <code>byte-buddy</code>, merging the resources of <code>kotlinx-coroutines-debug</code> with ones
+from <code>byte-buddy</code> and <code>byte-buddy-agent</code> will lead to conflicts as the resource files are duplicated.</li>
+</ul>
+
+<p>One possible workaround for these issues is to add the following to the <code>android</code> block in your gradle file for the
+application subproject:</p>
+
+<div class="language-groovy highlighter-rouge"><div class="highlight"><pre class="highlight"><code>     <span class="n">packagingOptions</span> <span class="o">{</span>
+         <span class="c1">// for JNA and JNA-platform</span>
+         <span class="n">exclude</span> <span class="s2">"META-INF/AL2.0"</span>
+         <span class="n">exclude</span> <span class="s2">"META-INF/LGPL2.1"</span>
+         <span class="c1">// for byte-buddy</span>
+         <span class="n">exclude</span> <span class="s2">"META-INF/licenses/ASM"</span>
+         <span class="n">pickFirst</span> <span class="s2">"win32-x86-64/attach_hotspot_windows.dll"</span>
+         <span class="n">pickFirst</span> <span class="s2">"win32-x86/attach_hotspot_windows.dll"</span>
+     <span class="o">}</span>
+</code></pre></div></div>
+
+<p>This will cause the resource merge algorithm to exclude the problematic license files altogether and only leave a single
+copy of the files needed for <code>byte-buddy-agent</code> to work.</p>
+
+<p>Alternatively, avoid depending on <code>kotlinx-coroutines-debug</code>. In particular, if the only reason why this library a
+dependency of your project is that <code>kotlinx-coroutines-test</code> in turn depends on it, you may change your dependency on
+<code>kotlinx.coroutines.test</code> to exclude <code>kotlinx-coroutines-debug</code>. For example, you could replace</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">androidTestImplementation</span><span class="p">(</span><span class="s">"org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>with</p>
+
+<div class="language-groovy highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">androidTestImplementation</span><span class="o">(</span><span class="s2">"org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">exclude</span> <span class="nl">group:</span> <span class="s2">"org.jetbrains.kotlinx"</span><span class="o">,</span> <span class="nl">module:</span> <span class="s2">"kotlinx-coroutines-debug"</span>
+<span class="o">}</span>
+</code></pre></div></div>
 
 <h3 id="packages">Packages</h3>
 

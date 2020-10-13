@@ -33,18 +33,37 @@
 
 <h1 id="channel">Channel</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">Channel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels$Channel(kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;RENDEZVOUS<span class="symbol">)</span><span class="symbol">: </span><a href="-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><a href="-channel.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L562">(source)</a></div>
+<div class="overload-group">
 
-<p>Creates a channel with the specified buffer capacity (or without a buffer by default).
+  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">Channel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$Channel(kotlin.Int, kotlinx.coroutines.channels.BufferOverflow, kotlin.Function1((kotlinx.coroutines.channels.Channel.E, kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;RENDEZVOUS<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$Channel(kotlin.Int, kotlinx.coroutines.channels.BufferOverflow, kotlin.Function1((kotlinx.coroutines.channels.Channel.E, kotlin.Unit)))/onBufferOverflow">onBufferOverflow</span><span class="symbol">:</span>&nbsp;<a href="-buffer-overflow/index.html"><span class="identifier">BufferOverflow</span></a>&nbsp;<span class="symbol">=</span>&nbsp;BufferOverflow.SUSPEND<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$Channel(kotlin.Int, kotlinx.coroutines.channels.BufferOverflow, kotlin.Function1((kotlinx.coroutines.channels.Channel.E, kotlin.Unit)))/onUndeliveredElement">onUndeliveredElement</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="-channel.html#E"><span class="identifier">E</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><a href="-channel.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L644">(source)</a></div>
+
+  <p>Creates a channel with the specified buffer capacity (or without a buffer by default).
 See <a href="-channel/index.html">Channel</a> interface documentation for details.</p>
 
-<h3 id="parameters">Parameters</h3>
+  <h3 id="parameters">Parameters</h3>
 
-<p><code>capacity</code> - either a positive channel capacity or one of the constants defined in <a href="#">Channel.Factory</a>.</p>
+  <p><code>capacity</code> - either a positive channel capacity or one of the constants defined in <a href="#">Channel.Factory</a>.</p>
 
-<h3 id="exceptions">Exceptions</h3>
+  <p><code>onBufferOverflow</code> - configures an action on buffer overflow (optional, defaults to
+a <a href="-buffer-overflow/-s-u-s-p-e-n-d.html">suspending</a> attempt to <a href="-send-channel/send.html">send</a> a value,
+supported only when <code>capacity &gt;= 0</code> or <code>capacity == Channel.BUFFERED</code>,
+implicitly creates a channel with at least one buffered element).</p>
 
-<p><code>IllegalArgumentException</code> - when <a href="-channel.html#kotlinx.coroutines.channels$Channel(kotlin.Int)/capacity">capacity</a> &lt; -2</p>
+  <p><code>onUndeliveredElement</code> - an optional function that is called when element was sent but was not delivered to the consumer.
+See “Undelivered elements” section in <a href="-channel/index.html">Channel</a> documentation.</p>
+
+  <h3 id="exceptions">Exceptions</h3>
+
+  <p><code>IllegalArgumentException</code> - when <a href="-channel.html#kotlinx.coroutines.channels$Channel(kotlin.Int, kotlinx.coroutines.channels.BufferOverflow, kotlin.Function1((kotlinx.coroutines.channels.Channel.E, kotlin.Unit)))/capacity">capacity</a> &lt; -2</p>
+
+</div>
+<div class="overload-group">
+
+  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <s><span class="identifier">Channel</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels$Channel(kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;RENDEZVOUS<span class="symbol">)</span><span class="symbol">: </span><a href="-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><a href="-channel.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L676">(source)</a></div>
+
+  <p><strong>Deprecated:</strong> DeprecationLevel.HIDDEN</p>
+
+</div>
 
       </div>
     </main>

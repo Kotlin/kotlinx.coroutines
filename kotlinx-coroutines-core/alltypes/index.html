@@ -87,6 +87,17 @@ function.</p>
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.channels/-buffer-overflow/index.html">kotlinx.coroutines.channels.BufferOverflow</a></p>
+      </td>
+<td>
+
+        <p>A strategy for buffer overflow handling in <a href="../kotlinx.coroutines.channels/-channel/index.html">channels</a> and <a href="../kotlinx.coroutines.flow/-flow/index.html">flows</a> that
+controls what is going to be sacrificed on buffer overflow:</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines/-cancellable-continuation/index.html">kotlinx.coroutines.CancellableContinuation</a></p>
       </td>
 <td>
@@ -350,8 +361,7 @@ the semantics of their behavior may change in some way that may break some code.
       </td>
 <td>
 
-        <p>A cold asynchronous data stream that sequentially emits values
-and completes normally or with an exception.</p>
+        <p>An asynchronous data stream that sequentially emits values and completes normally or with an exception.</p>
 
       </td>
 </tr>
@@ -478,11 +488,25 @@ and used for any UI-based activities. Instance of <code>MainDispatcher</code> ca
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.flow/-mutable-shared-flow/index.html">kotlinx.coroutines.flow.MutableSharedFlow</a></p>
+      </td>
+<td>
+
+        <p>A mutable <a href="../kotlinx.coroutines.flow/-shared-flow/index.html">SharedFlow</a> that provides functions to <a href="../kotlinx.coroutines.flow/-flow-collector/emit.html">emit</a> values to the flow.
+An instance of <code>MutableSharedFlow</code> with the given configuration parameters can be created using <code>MutableSharedFlow(...)</code>
+constructor function.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.flow/-mutable-state-flow/index.html">kotlinx.coroutines.flow.MutableStateFlow</a></p>
       </td>
 <td>
 
-        <p>A mutable <a href="../kotlinx.coroutines.flow/-state-flow/index.html">StateFlow</a> that provides a setter for <a href="../kotlinx.coroutines.flow/-mutable-state-flow/value.html">value</a>.</p>
+        <p>A mutable <a href="../kotlinx.coroutines.flow/-state-flow/index.html">StateFlow</a> that provides a setter for <a href="../kotlinx.coroutines.flow/-mutable-state-flow/value.html">value</a>.
+An instance of <code>MutableStateFlow</code> with the given initial <code>value</code> can be created using
+<code>MutableStateFlow(value)</code> constructor function.</p>
 
       </td>
 </tr>
@@ -631,13 +655,47 @@ Semaphore is fair and maintains a FIFO order of acquirers.</p>
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.flow/-shared-flow/index.html">kotlinx.coroutines.flow.SharedFlow</a></p>
+      </td>
+<td>
+
+        <p>A <em>hot</em> <a href="../kotlinx.coroutines.flow/-flow/index.html">Flow</a> that shares emitted values among all its collectors in a broadcast fashion, so that all collectors
+get all emitted values. A shared flow is called <em>hot</em> because its active instance exists independently of the
+presence of collectors. This is opposed to a regular <a href="../kotlinx.coroutines.flow/-flow/index.html">Flow</a>, such as defined by the <a href="#"><code>flow { ... }</code></a> function,
+which is <em>cold</em> and is started separately for each collector.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.flow/-sharing-command/index.html">kotlinx.coroutines.flow.SharingCommand</a></p>
+      </td>
+<td>
+
+        <p>A command emitted by <a href="../kotlinx.coroutines.flow/-sharing-started/index.html">SharingStarted</a> implementations to control the sharing coroutine in
+the <a href="../kotlinx.coroutines.flow/share-in.html">shareIn</a> and <a href="../kotlinx.coroutines.flow/state-in.html">stateIn</a> operators.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.flow/-sharing-started/index.html">kotlinx.coroutines.flow.SharingStarted</a></p>
+      </td>
+<td>
+
+        <p>A strategy for starting and stopping the sharing coroutine in <a href="../kotlinx.coroutines.flow/share-in.html">shareIn</a> and <a href="../kotlinx.coroutines.flow/state-in.html">stateIn</a> operators.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.flow/-state-flow/index.html">kotlinx.coroutines.flow.StateFlow</a></p>
       </td>
 <td>
 
-        <p>A <a href="../kotlinx.coroutines.flow/-flow/index.html">Flow</a> that represents a read-only state with a single updatable data <a href="../kotlinx.coroutines.flow/-state-flow/value.html">value</a> that emits updates
-to the value to its collectors. The current value can be retrieved via <a href="../kotlinx.coroutines.flow/-state-flow/value.html">value</a> property.
-The flow of future updates to the value can be observed by collecting values from this flow.</p>
+        <p>A <a href="../kotlinx.coroutines.flow/-shared-flow/index.html">SharedFlow</a> that represents a read-only state with a single updatable data <a href="../kotlinx.coroutines.flow/-state-flow/value.html">value</a> that emits updates
+to the value to its collectors. A state flow is a <em>hot</em> flow because its active instance exists independently
+of the presence of collectors. Its current value can be retrieved via the <a href="../kotlinx.coroutines.flow/-state-flow/value.html">value</a> property.</p>
 
       </td>
 </tr>

@@ -33,7 +33,9 @@
 
 <h1 id="broadcastin">broadcastIn</h1>
 
-<div class="signature"><code><span class="identifier">@FlowPreview</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="broadcast-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">broadcastIn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$broadcastIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.broadcastIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineStart)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$broadcastIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.broadcastIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineStart)/start">start</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.LAZY<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../kotlinx.coroutines.channels/-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="broadcast-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Channels.kt#L186">(source)</a></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="broadcast-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">broadcastIn</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$broadcastIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.broadcastIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineStart)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$broadcastIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.broadcastIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineStart)/start">start</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.LAZY<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../kotlinx.coroutines.channels/-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="broadcast-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Channels.kt#L207">(source)</a></div>
+
+<p><strong>Deprecated:</strong> Use shareIn operator and the resulting SharedFlow as a replacement for BroadcastChannel</p>
 
 <p>Creates a <a href="../kotlinx.coroutines.channels/broadcast.html">broadcast</a> coroutine that collects the given flow.</p>
 
@@ -45,6 +47,17 @@ Use <a href="buffer.html">buffer</a> operator on the flow before calling <code>b
 default and to control what happens when data is produced faster than it is consumed,
 that is to control backpressure behavior.</p>
 
+<h3 id="deprecated">Deprecated</h3>
+
+<p><strong>This API is deprecated.</strong> The <a href="../kotlinx.coroutines.channels/-broadcast-channel/index.html">BroadcastChannel</a> provides a complex channel-like API for hot flows.
+<a href="-shared-flow/index.html">SharedFlow</a> is a easier-to-use and more flow-centric API for the same purposes, so using
+<a href="share-in.html">shareIn</a> operator is preferred. It is not a direct replacement, so please
+study <a href="share-in.html">shareIn</a> documentation to see what kind of shared flow fits your use-case. As a rule of thumb:</p>
+
+<ul>
+  <li>Replace <code>broadcastIn(scope)</code> and <code>broadcastIn(scope, CoroutineStart.LAZY)</code> with <code>shareIn(scope, 0, SharingStarted.Lazily)</code>.</li>
+  <li>Replace <code>broadcastIn(scope, CoroutineStart.DEFAULT)</code> with <code>shareIn(scope, 0, SharingStarted.Eagerly)</code>.</li>
+</ul>
 
       </div>
     </main>

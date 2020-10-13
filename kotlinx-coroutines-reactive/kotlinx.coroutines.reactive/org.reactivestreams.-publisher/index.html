@@ -150,6 +150,48 @@ returns the resulting value or throws the corresponding exception if this publis
 <tr>
 <td>
 
+        <p><a href="await-single-or-default.html">awaitSingleOrDefault</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="await-single-or-default.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitSingleOrDefault</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactive$awaitSingleOrDefault(org.reactivestreams.Publisher((kotlinx.coroutines.reactive.awaitSingleOrDefault.T)), kotlinx.coroutines.reactive.awaitSingleOrDefault.T)/default">default</span><span class="symbol">:</span>&nbsp;<a href="await-single-or-default.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="await-single-or-default.html#T"><span class="identifier">T</span></a></code></div>
+
+        <p>Awaits for the single value from the given publisher or the <a href="await-single-or-default.html#kotlinx.coroutines.reactive$awaitSingleOrDefault(org.reactivestreams.Publisher((kotlinx.coroutines.reactive.awaitSingleOrDefault.T)), kotlinx.coroutines.reactive.awaitSingleOrDefault.T)/default">default</a> value if none is emitted without blocking a thread and
+returns the resulting value or throws the corresponding exception if this publisher had produced error.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="await-single-or-else.html">awaitSingleOrElse</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="await-single-or-else.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitSingleOrElse</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactive$awaitSingleOrElse(org.reactivestreams.Publisher((kotlinx.coroutines.reactive.awaitSingleOrElse.T)), kotlin.Function0((kotlinx.coroutines.reactive.awaitSingleOrElse.T)))/defaultValue">defaultValue</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="await-single-or-else.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="await-single-or-else.html#T"><span class="identifier">T</span></a></code></div>
+
+        <p>Awaits for the single value from the given publisher or call <a href="await-single-or-else.html#kotlinx.coroutines.reactive$awaitSingleOrElse(org.reactivestreams.Publisher((kotlinx.coroutines.reactive.awaitSingleOrElse.T)), kotlin.Function0((kotlinx.coroutines.reactive.awaitSingleOrElse.T)))/defaultValue">defaultValue</a> to get a value if none is emitted without blocking a thread and
+returns the resulting value or throws the corresponding exception if this publisher had produced error.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="await-single-or-null.html">awaitSingleOrNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="await-single-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitSingleOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await-single-or-null.html#T"><span class="identifier">T</span></a></code></div>
+
+        <p>Awaits for the single value from the given publisher or <code>null</code> value if none is emitted without blocking a thread and
+returns the resulting value or throws the corresponding exception if this publisher had produced error.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="collect.html">collect</a></p>
 
       </td>

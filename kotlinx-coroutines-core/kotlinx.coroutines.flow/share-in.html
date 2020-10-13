@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>shareIn - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/share-in.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.flow</a> / <a href="./share-in.html">shareIn</a></div>
+
+<h1 id="sharein">shareIn</h1>
+
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="share-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">shareIn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/started">started</span><span class="symbol">:</span>&nbsp;<a href="-sharing-started/index.html"><span class="identifier">SharingStarted</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/replay">replay</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="share-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Share.kt#L136">(source)</a></div>
+
+<p>Converts a <em>cold</em> <a href="-flow/index.html">Flow</a> into a <em>hot</em> <a href="-shared-flow/index.html">SharedFlow</a> that is started in the given coroutine <a href="share-in.html#kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/scope">scope</a>,
+sharing emissions from a single running instance of the upstream flow with multiple downstream subscribers,
+and replaying a specified number of <a href="share-in.html#kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/replay">replay</a> values to new subscribers. See the <a href="-shared-flow/index.html">SharedFlow</a> documentation
+for the general concepts of shared flows.</p>
+
+<p>The starting of the sharing coroutine is controlled by the <a href="share-in.html#kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/started">started</a> parameter. The following options
+are supported.</p>
+
+<ul>
+  <li><a href="-sharing-started/-eagerly.html">Eagerly</a> — the upstream flow is started even before the first subscriber appears. Note
+that in this case all values emitted by the upstream beyond the most recent values as specified by
+<a href="share-in.html#kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/replay">replay</a> parameter <strong>will be immediately discarded</strong>.</li>
+  <li><a href="-sharing-started/-lazily.html">Lazily</a> — starts the upstream flow after the first subscriber appears, which guarantees
+that this first subscriber gets all the emitted values, while subsequent subscribers are only guaranteed to
+get the most recent <a href="share-in.html#kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/replay">replay</a> values. The upstream flow continues to be active even when all subscribers
+disappear, but only the most recent <a href="share-in.html#kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/replay">replay</a> values are cached without subscribers.</li>
+  <li><a href="-sharing-started/-while-subscribed.html">WhileSubscribed()</a> — starts the upstream flow when the first subscriber
+appears, immediately stops when the last subscriber disappears, keeping the replay cache forever.
+It has additional optional configuration parameters as explained in its documentation.</li>
+  <li>A custom strategy can be supplied by implementing the <a href="-sharing-started/index.html">SharingStarted</a> interface.</li>
+</ul>
+
+<p>The <code>shareIn</code> operator is useful in situations when there is a <em>cold</em> flow that is expensive to create and/or
+to maintain, but there are multiple subscribers that need to collect its values. For example, consider a
+flow of messages coming from a backend over the expensive network connection, taking a lot of
+time to establish. Conceptually, it might be implemented like this:</p>
+
+<pre>val backendMessages: Flow&lt;Message&gt; = flow {
+    connectToBackend() // takes a lot of time
+    try {
+      while (true) {
+          emit(receiveMessageFromBackend())
+      }
+    } finally {
+        disconnectFromBackend()
+    }
+}
+</pre>
+
+<p>If this flow is directly used in the application, then every time it is collected a fresh connection is
+established, and it will take a while before messages start flowing. However, we can share a single connection
+and establish it eagerly like this:</p>
+
+<pre>val messages: SharedFlow&lt;Message&gt; = backendMessages.shareIn(scope, SharingStarted.Eagerly)
+</pre>
+
+<p>Now a single connection is shared between all collectors from <code>messages</code>, and there is a chance that the connection
+is already established by the time it is needed.</p>
+
+<h3 id="upstream-completion-and-error-handling">Upstream completion and error handling</h3>
+
+<p><strong>Normal completion of the upstream flow has no effect on subscribers</strong>, and the sharing coroutine continues to run. If a
+a strategy like <a href="-sharing-started/-while-subscribed.html">SharingStarted.WhileSubscribed</a> is used, then the upstream can get restarted again. If a special
+action on upstream completion is needed, then an <a href="on-completion.html">onCompletion</a> operator can be used before the
+<code>shareIn</code> operator to emit a special value in this case, like this:</p>
+
+<pre>backendMessages
+    .onCompletion { cause -&gt; if (cause == null) emit(UpstreamHasCompletedMessage) }
+    .shareIn(scope, SharingStarted.Eagerly)
+</pre>
+
+<p>Any exception in the upstream flow terminates the sharing coroutine without affecting any of the subscribers,
+and will be handled by the <a href="share-in.html#kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/scope">scope</a> in which the sharing coroutine is launched. Custom exception handling
+can be configured by using the <a href="catch.html">catch</a> or <a href="retry.html">retry</a> operators before the <code>shareIn</code> operator.
+For example, to retry connection on any <code>IOException</code> with 1 second delay between attempts, use:</p>
+
+<pre>val messages = backendMessages
+    .retry { e -&gt;
+        val shallRetry = e is IOException // other exception are bugs - handle them
+        if (shallRetry) delay(1000)
+        shallRetry
+    }
+    .shareIn(scope, SharingStarted.Eagerly)
+</pre>
+
+<h3 id="initial-value">Initial value</h3>
+
+<p>When a special initial value is needed to signal to subscribers that the upstream is still loading the data,
+use the <a href="on-start.html">onStart</a> operator on the upstream flow. For example:</p>
+
+<pre>backendMessages
+    .onStart { emit(UpstreamIsStartingMessage) }
+    .shareIn(scope, SharingStarted.Eagerly, 1) // replay one most recent message
+</pre>
+
+<h3 id="buffering-and-conflation">Buffering and conflation</h3>
+
+<p>The <code>shareIn</code> operator runs the upstream flow in a separate coroutine, and buffers emissions from upstream as explained
+in the <a href="buffer.html">buffer</a> operator’s description, using a buffer of <a href="share-in.html#kotlinx.coroutines.flow$shareIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.shareIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.flow.SharingStarted, kotlin.Int)/replay">replay</a> size or the default (whichever is larger).
+This default buffering can be overridden with an explicit buffer configuration by preceding the <code>shareIn</code> call
+with <a href="buffer.html">buffer</a> or <a href="conflate.html">conflate</a>, for example:</p>
+
+<ul>
+  <li><code>buffer(0).shareIn(scope, started, 0)</code> — overrides the default buffer size and creates a <a href="-shared-flow/index.html">SharedFlow</a> without a buffer.
+Effectively, it configures sequential processing between the upstream emitter and subscribers,
+as the emitter is suspended until all subscribers process the value. Note, that the value is still immediately
+discarded when there are no subscribers.</li>
+  <li><code>buffer(b).shareIn(scope, started, r)</code> — creates a <a href="-shared-flow/index.html">SharedFlow</a> with <code>replay = r</code> and <code>extraBufferCapacity = b</code>.</li>
+  <li><code>conflate().shareIn(scope, started, r)</code> — creates a <a href="-shared-flow/index.html">SharedFlow</a> with <code>replay = r</code>, <code>onBufferOverflow = DROP_OLDEST</code>,
+and <code>extraBufferCapacity = 1</code> when <code>replay == 0</code> to support this strategy.</li>
+</ul>
+
+<h3 id="operator-fusion">Operator fusion</h3>
+
+<p>Application of <a href="flow-on.html">flowOn</a>, <a href="buffer.html">buffer</a> with <a href="../kotlinx.coroutines.channels/-channel/-r-e-n-d-e-z-v-o-u-s.html">RENDEZVOUS</a> capacity,
+or <a href="cancellable.html">cancellable</a> operators to the resulting shared flow has no effect.</p>
+
+<h3 id="exceptions">Exceptions</h3>
+
+<p>This function throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgumentException.html">IllegalArgumentException</a> on unsupported values of parameters or combinations thereof.</p>
+
+<h3 id="parameters">Parameters</h3>
+
+<p><code>scope</code> - the coroutine scope in which sharing is started.</p>
+
+<p><code>started</code> - the strategy that controls when sharing is started and stopped.</p>
+
+<p><code>replay</code> - the number of values replayed to new subscribers (cannot be negative, defaults to zero).</p>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

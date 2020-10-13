@@ -33,18 +33,16 @@
 
 <h1 id="lock">lock</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">lock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.sync.Mutex$lock(kotlin.Any)/owner">owner</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/sync/Mutex.kt#L66">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">lock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.sync.Mutex$lock(kotlin.Any)/owner">owner</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/sync/Mutex.kt#L64">(source)</a></div>
 
 <p>Locks this mutex, suspending caller while the mutex is locked.</p>
 
 <p>This suspending function is cancellable. If the <a href="../../kotlinx.coroutines/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this
-function is suspended, this function immediately resumes with <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.</p>
-
-<p><em>Cancellation of suspended lock invocation is atomic</em> – when this function
-throws <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a> it means that the mutex was not locked.
-As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
-continue to execute even after it was cancelled from the same thread in the case when this lock operation
-was already resumed and the continuation was posted for execution to the thread’s queue.</p>
+function is suspended, this function immediately resumes with <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.
+There is a <strong>prompt cancellation guarantee</strong>. If the job was cancelled while this function was
+suspended, it will not resume successfully. See <a href="../../kotlinx.coroutines/suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> documentation for low-level details.
+This function releases the lock if it was already acquired by this function before the <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>
+was thrown.</p>
 
 <p>Note that this function does not check for cancellation when it is not suspended.
 Use <a href="../../kotlinx.coroutines/yield.html">yield</a> or <a href="../../kotlinx.coroutines/is-active.html">CoroutineScope.isActive</a> to periodically check for cancellation in tight loops if needed.</p>

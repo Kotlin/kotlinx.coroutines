@@ -33,11 +33,13 @@
 
 <h1 id="cancellablecontinuation">CancellableContinuation</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CancellableContinuation</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L47">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CancellableContinuation</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L48">(source)</a></div>
 
 <p>Cancellable continuation. It is <em>completed</em> when resumed or cancelled.
 When the <a href="cancel.html">cancel</a> function is explicitly invoked, this continuation immediately resumes with a <a href="../-cancellation-exception/index.html">CancellationException</a> or
 the specified cancel cause.</p>
+
+<p>An instance of <code>CancellableContinuation</code> is created by the <a href="../suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> function.</p>
 
 <p>Cancellable continuation has three states (as subset of <a href="../-job/index.html">Job</a> states):</p>
 
@@ -73,11 +75,11 @@ the specified cancel cause.</p>
 </table>
 
 <p>Invocation of <a href="cancel.html">cancel</a> transitions this continuation from <em>active</em> to <em>cancelled</em> state, while
-invocation of <a href="resume.html">resume</a> or <a href="#">resumeWithException</a> transitions it from <em>active</em> to <em>resumed</em> state.</p>
+invocation of <a href="#">Continuation.resume</a> or <a href="#">Continuation.resumeWithException</a> transitions it from <em>active</em> to <em>resumed</em> state.</p>
 
 <p>A <a href="is-cancelled.html">cancelled</a> continuation implies that it is <a href="is-completed.html">completed</a>.</p>
 
-<p>Invocation of <a href="resume.html">resume</a> or <a href="#">resumeWithException</a> in <em>resumed</em> state produces an <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a>,
+<p>Invocation of <a href="#">Continuation.resume</a> or <a href="#">Continuation.resumeWithException</a> in <em>resumed</em> state produces an <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a>,
 but is ignored in <em>cancelled</em> state.</p>
 
 <pre>    +-----------+   resume    +---------+
@@ -89,7 +91,6 @@ but is ignored in <em>cancelled</em> state.</p>
     +-----------+
     | Cancelled |
     +-----------+
-
 </pre>
 
 <h3 id="properties">Properties</h3>
@@ -166,8 +167,8 @@ cancelled as a result of this invocation, and <code>false</code> otherwise.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCancellation</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Registers a <a href="invoke-on-cancellation.html#kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> to be <strong>synchronously</strong> invoked on cancellation (regular or exceptional) of this continuation.
-When the continuation is already cancelled, the handler will be immediately invoked
+        <p>Registers a <a href="invoke-on-cancellation.html#kotlinx.coroutines.CancellableContinuation$invokeOnCancellation(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> to be <strong>synchronously</strong> invoked on <a href="cancel.html">cancellation</a> (regular or exceptional) of this continuation.
+When the continuation is already cancelled, the handler is immediately invoked
 with the cancellation exception. Otherwise, the handler will be invoked as soon as this
 continuation is cancelled.</p>
 
@@ -219,6 +220,21 @@ This function is designed to only be used by <a href="../-coroutine-dispatcher/i
 the <a href="../-coroutine-dispatcher/dispatch.html">dispatch</a> function of the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in the <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/context.html">context</a>.
 This function is designed to only be used by <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementations.
 <strong>It should not be used in general code</strong>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="try-resume.html">tryResume</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">tryResume</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CancellableContinuation$tryResume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Any, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/value">value</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CancellableContinuation$tryResume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Any, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/idempotent">idempotent</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.CancellableContinuation$tryResume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Any, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span></code></div>
+
+        <p>Same as <a href="#">tryResume</a> but with <a href="try-resume.html#kotlinx.coroutines.CancellableContinuation$tryResume(kotlinx.coroutines.CancellableContinuation.T, kotlin.Any, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancellation">onCancellation</a> handler that called if and only if the value is not
+delivered to the caller because of the dispatch in the process, so that atomicity delivery
+guaranteed can be provided by having a cancellation fallback.</p>
 
       </td>
 </tr>

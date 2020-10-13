@@ -33,7 +33,7 @@
 
 <h1 id="receive">receive</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#E"><span class="identifier">E</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L186">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#E"><span class="identifier">E</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L187">(source)</a></div>
 
 <p>Retrieves and removes an element from this channel if it’s not empty, or suspends the caller while the channel is empty,
 or throws a <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a> if the channel <a href="is-closed-for-receive.html">is closed for <code>receive</code></a>.
@@ -41,13 +41,11 @@ If the channel was closed because of an exception, it is called a <em>failed</em
 will throw the original <a href="../-send-channel/close.html">close</a> cause exception.</p>
 
 <p>This suspending function is cancellable. If the <a href="../../kotlinx.coroutines/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this
-function is suspended, this function immediately resumes with a <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.</p>
-
-<p><em>Cancellation of suspended <code>receive</code> is atomic</em>: when this function
-throws a <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>, it means that the element was not retrieved from this channel.
-As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
-continue to execute even after it was cancelled from the same thread in the case when this <code>receive</code> operation
-was already resumed and the continuation was posted for execution to the thread’s queue.</p>
+function is suspended, this function immediately resumes with a <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.
+There is a <strong>prompt cancellation guarantee</strong>. If the job was cancelled while this function was
+suspended, it will not resume successfully. The <code>receive</code> call can retrieve the element from the channel,
+but then throw <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>, thus failing to deliver the element.
+See “Undelivered elements” section in <a href="../-channel/index.html">Channel</a> documentation for details on handling undelivered elements.</p>
 
 <p>Note that this function does not check for cancellation when it is not suspended.
 Use <a href="../../kotlinx.coroutines/yield.html">yield</a> or <a href="../../kotlinx.coroutines/is-active.html">CoroutineScope.isActive</a> to periodically check for cancellation in tight loops if needed.</p>

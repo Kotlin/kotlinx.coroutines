@@ -33,7 +33,7 @@
 
 <h1 id="await">await</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.js/-promise/index.html"><span class="identifier">Promise</span></a><span class="symbol">&lt;</span><a href="await.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await.html#T"><span class="identifier">T</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/js/src/Promise.kt#L66">(source)</a></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.js/-promise/index.html"><span class="identifier">Promise</span></a><span class="symbol">&lt;</span><a href="await.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await.html#T"><span class="identifier">T</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/js/src/Promise.kt#L68">(source)</a></div>
 
 <p><strong>Platform and version requirements:</strong> JS</p>
 
@@ -41,7 +41,9 @@
 
 <p>This suspending function is cancellable.
 If the <a href="../-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
-stops waiting for the promise and immediately resumes with <a href="../-cancellation-exception/index.html">CancellationException</a>.</p>
+stops waiting for the promise and immediately resumes with <a href="../-cancellation-exception/index.html">CancellationException</a>.
+There is a <strong>prompt cancellation guarantee</strong>. If the job was cancelled while this function was
+suspended, it will not resume successfully. See <a href="#">suspendCancellableCoroutine</a> documentation for low-level details.</p>
 
 
       </div>

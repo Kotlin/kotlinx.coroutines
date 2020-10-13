@@ -68,6 +68,20 @@ function.</p>
 <tr>
 <td>
 
+        <p><a href="-buffer-overflow/index.html">BufferOverflow</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">enum</span> <span class="keyword">class </span><span class="identifier">BufferOverflow</span></code></div>
+
+        <p>A strategy for buffer overflow handling in <a href="-channel/index.html">channels</a> and <a href="../kotlinx.coroutines.flow/-flow/index.html">flows</a> that
+controls what is going to be sacrificed on buffer overflow:</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="-channel/index.html">Channel</a></p>
 
       </td>
@@ -221,10 +235,12 @@ exception on send attempts.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">Channel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels$Channel(kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;RENDEZVOUS<span class="symbol">)</span><span class="symbol">: </span><a href="-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><a href="-channel.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">Channel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$Channel(kotlin.Int, kotlinx.coroutines.channels.BufferOverflow, kotlin.Function1((kotlinx.coroutines.channels.Channel.E, kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;RENDEZVOUS<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$Channel(kotlin.Int, kotlinx.coroutines.channels.BufferOverflow, kotlin.Function1((kotlinx.coroutines.channels.Channel.E, kotlin.Unit)))/onBufferOverflow">onBufferOverflow</span><span class="symbol">:</span>&nbsp;<a href="-buffer-overflow/index.html"><span class="identifier">BufferOverflow</span></a>&nbsp;<span class="symbol">=</span>&nbsp;BufferOverflow.SUSPEND<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$Channel(kotlin.Int, kotlinx.coroutines.channels.BufferOverflow, kotlin.Function1((kotlinx.coroutines.channels.Channel.E, kotlin.Unit)))/onUndeliveredElement">onUndeliveredElement</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="-channel.html#E"><span class="identifier">E</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><a href="-channel.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Creates a channel with the specified buffer capacity (or without a buffer by default).
 See <a href="-channel/index.html">Channel</a> interface documentation for details.</p>
+
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <s><span class="identifier">Channel</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels$Channel(kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;RENDEZVOUS<span class="symbol">)</span><span class="symbol">: </span><a href="-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><a href="-channel.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
 
       </td>
 </tr>
@@ -348,7 +364,7 @@ provided by <a href="associate-to.html#kotlinx.coroutines.channels$associateTo(k
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitClose</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$awaitClose(kotlinx.coroutines.channels.ProducerScope((kotlin.Any)), kotlin.Function0((kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;{}<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Suspends the current coroutine until the channel is either <a href="-send-channel/close.html">closed</a> or <a href="-receive-channel/cancel.html">cancelled</a>
-and invokes the given <a href="await-close.html#kotlinx.coroutines.channels$awaitClose(kotlinx.coroutines.channels.ProducerScope((kotlin.Any)), kotlin.Function0((kotlin.Unit)))/block">block</a> before resuming the coroutine. This suspending function is cancellable.</p>
+and invokes the given <a href="await-close.html#kotlinx.coroutines.channels$awaitClose(kotlinx.coroutines.channels.ProducerScope((kotlin.Any)), kotlin.Function0((kotlin.Unit)))/block">block</a> before resuming the coroutine.</p>
 
       </td>
 </tr>

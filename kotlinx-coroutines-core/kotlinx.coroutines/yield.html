@@ -33,13 +33,15 @@
 
 <h1 id="yield">yield</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">yield</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Yield.kt#L27">(source)</a></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">yield</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Yield.kt#L30">(source)</a></div>
 
 <p>Yields the thread (or thread pool) of the current coroutine dispatcher to other coroutines to run if possible.</p>
 
 <p>This suspending function is cancellable.
 If the <a href="-job/index.html">Job</a> of the current coroutine is cancelled or completed when this suspending function is invoked or while
-this function is waiting for dispatch, it resumes with a <a href="-cancellation-exception/index.html">CancellationException</a>.</p>
+this function is waiting for dispatch, it resumes with a <a href="-cancellation-exception/index.html">CancellationException</a>.
+There is a <strong>prompt cancellation guarantee</strong>. If the job was cancelled while this function was
+suspended, it will not resume successfully. See <a href="suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> documentation for low-level details.</p>
 
 <p><strong>Note</strong>: This function always <a href="ensure-active.html">checks for cancellation</a> even when it does not suspend.</p>
 

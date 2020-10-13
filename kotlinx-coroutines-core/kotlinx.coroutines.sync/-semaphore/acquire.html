@@ -33,16 +33,17 @@
 
 <h1 id="acquire">acquire</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">acquire</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/sync/Semaphore.kt#L46">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">acquire</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/sync/Semaphore.kt#L47">(source)</a></div>
 
 <p>Acquires a permit from this semaphore, suspending until one is available.
 All suspending acquirers are processed in first-in-first-out (FIFO) order.</p>
 
 <p>This suspending function is cancellable. If the <a href="../../kotlinx.coroutines/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this
-function is suspended, this function immediately resumes with <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.</p>
-
-<p><em>Cancellation of suspended semaphore acquisition is atomic</em> – when this function
-throws <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a> it means that the semaphore was not acquired.</p>
+function is suspended, this function immediately resumes with <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>.
+There is a <strong>prompt cancellation guarantee</strong>. If the job was cancelled while this function was
+suspended, it will not resume successfully. See <a href="../../kotlinx.coroutines/suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> documentation for low-level details.
+This function releases the semaphore if it was already acquired by this function before the <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>
+was thrown.</p>
 
 <p>Note, that this function does not check for cancellation when it does not suspend.
 Use <a href="../../kotlinx.coroutines/is-active.html">CoroutineScope.isActive</a> or <a href="../../kotlinx.coroutines/ensure-active.html">CoroutineScope.ensureActive</a> to periodically

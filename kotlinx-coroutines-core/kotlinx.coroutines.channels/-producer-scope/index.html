@@ -234,7 +234,7 @@ To change that behaviour, supervising parent (<a href="../../kotlinx.coroutines/
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="./index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitClose</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$awaitClose(kotlinx.coroutines.channels.ProducerScope((kotlin.Any)), kotlin.Function0((kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;{}<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Suspends the current coroutine until the channel is either <a href="../-send-channel/close.html">closed</a> or <a href="../-receive-channel/cancel.html">cancelled</a>
-and invokes the given <a href="../await-close.html#kotlinx.coroutines.channels$awaitClose(kotlinx.coroutines.channels.ProducerScope((kotlin.Any)), kotlin.Function0((kotlin.Unit)))/block">block</a> before resuming the coroutine. This suspending function is cancellable.</p>
+and invokes the given <a href="../await-close.html#kotlinx.coroutines.channels$awaitClose(kotlinx.coroutines.channels.ProducerScope((kotlin.Any)), kotlin.Function0((kotlin.Unit)))/block">block</a> before resuming the coroutine.</p>
 
       </td>
 </tr>
@@ -284,8 +284,7 @@ Throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateE
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">ensureActive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Ensures that current scope is <a href="../../kotlinx.coroutines/is-active.html">active</a>.
-Throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> if the context does not have a job in it.</p>
+        <p>Ensures that current scope is <a href="../../kotlinx.coroutines/is-active.html">active</a>.</p>
 
       </td>
 </tr>
