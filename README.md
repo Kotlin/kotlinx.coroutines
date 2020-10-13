@@ -46,7 +46,7 @@ suspend fun main() = coroutineScope {
   * [DebugProbes] API to probe, keep track of, print and dump active coroutines;
   * [CoroutinesTimeout] test rule to automatically dump coroutines on test timeout.
 * [reactive](reactive/README.md) &mdash; modules that provide builders and iteration support for various reactive streams libraries:
-  * Reactive Streams ([Publisher.collect], [Publisher.awaitSingle], [publish], etc), 
+  * Reactive Streams ([Publisher.collect], [Publisher.awaitSingle], [kotlinx.coroutines.reactive.publish], etc), 
   * Flow (JDK 9) (the same interface as for Reactive Streams),
   * RxJava 2.x ([rxFlowable], [rxSingle], etc), and
   * RxJava 3.x ([rxFlowable], [rxSingle], etc), and
@@ -302,7 +302,7 @@ The `develop` branch is pushed to `master` during release.
 <!--- INDEX kotlinx.coroutines.reactive -->
 [Publisher.collect]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/collect.html
 [Publisher.awaitSingle]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/await-single.html
-[publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/publish.html
+[kotlinx.coroutines.reactive.publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/publish.html
 <!--- MODULE kotlinx-coroutines-rx2 -->
 <!--- INDEX kotlinx.coroutines.rx2 -->
 [rxFlowable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/rx-flowable.html

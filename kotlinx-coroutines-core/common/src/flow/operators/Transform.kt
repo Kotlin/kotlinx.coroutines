@@ -67,7 +67,7 @@ public fun <T> Flow<T>.withIndex(): Flow<IndexedValue<T>> = flow {
 }
 
 /**
- * Returns a flow which performs the given [action] on each value of the original flow.
+ * Returns a flow that invokes the given [action] **before** each value of the upstream flow is emitted downstream.
  */
 public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = transform { value ->
     action(value)

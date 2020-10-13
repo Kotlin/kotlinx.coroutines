@@ -25,7 +25,9 @@ val testNG by tasks.registering(Test::class) {
 
 tasks.test {
     reports.html.destination = file("$buildDir/reports/junit")
+}
 
+tasks.check {
     dependsOn(testNG)
 }
 

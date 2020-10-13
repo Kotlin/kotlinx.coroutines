@@ -95,13 +95,8 @@ public fun <E> CoroutineScope.produce(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,
     @BuilderInference block: suspend ProducerScope<E>.() -> Unit
-): ReceiveChannel<E> {
-    val channel = Channel<E>(capacity)
-    val newContext = newCoroutineContext(context)
-    val coroutine = ProducerCoroutine(newContext, channel)
-    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
-    return coroutine
-}
+): ReceiveChannel<E> =
+    produce(context, capacity, BufferOverflow.SUSPEND, CoroutineStart.DEFAULT, onCompletion = null, block = block)
 
 /**
  * **This is an internal API and should not be used from general code.**
@@ -122,8 +117,19 @@ public fun <E> CoroutineScope.produce(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
     @BuilderInference block: suspend ProducerScope<E>.() -> Unit
+): ReceiveChannel<E> =
+    produce(context, capacity, BufferOverflow.SUSPEND, start, onCompletion, block)
+
+// Internal version of produce that is maximally flexible, but is not exposed through public API (too many params)
+internal fun <E> CoroutineScope.produce(
+    context: CoroutineContext = EmptyCoroutineContext,
+    capacity: Int = 0,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    onCompletion: CompletionHandler? = null,
+    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
 ): ReceiveChannel<E> {
-    val channel = Channel<E>(capacity)
+    val channel = Channel<E>(capacity, onBufferOverflow)
     val newContext = newCoroutineContext(context)
     val coroutine = ProducerCoroutine(newContext, channel)
     if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)

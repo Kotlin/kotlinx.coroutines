@@ -10,37 +10,45 @@ import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
 /**
- * Returns this.
- * Applying [flowOn][Flow.flowOn] operator to [StateFlow] has no effect.
- * See [StateFlow] documentation on Operator Fusion.
+ * Applying [cancellable][Flow.cancellable] to a [SharedFlow] has no effect.
+ * See the [SharedFlow] documentation on Operator Fusion.
  */
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Applying flowOn operator to StateFlow has no effect. See StateFlow documentation on Operator Fusion.",
+    message = "Applying 'cancellable' to a SharedFlow has no effect. See the SharedFlow documentation on Operator Fusion.",
     replaceWith = ReplaceWith("this")
 )
-public fun <T> StateFlow<T>.flowOn(context: CoroutineContext): Flow<T> = noImpl()
+public fun <T> SharedFlow<T>.cancellable(): Flow<T> = noImpl()
 
 /**
- * Returns this.
- * Applying [conflate][Flow.conflate] operator to [StateFlow] has no effect.
- * See [StateFlow] documentation on Operator Fusion.
+ * Applying [flowOn][Flow.flowOn] to [SharedFlow] has no effect.
+ * See the [SharedFlow] documentation on Operator Fusion.
  */
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Applying conflate operator to StateFlow has no effect. See StateFlow documentation on Operator Fusion.",
+    message = "Applying 'flowOn' to SharedFlow has no effect. See the SharedFlow documentation on Operator Fusion.",
+    replaceWith = ReplaceWith("this")
+)
+public fun <T> SharedFlow<T>.flowOn(context: CoroutineContext): Flow<T> = noImpl()
+
+/**
+ * Applying [conflate][Flow.conflate] to [StateFlow] has no effect.
+ * See the [StateFlow] documentation on Operator Fusion.
+ */
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Applying 'conflate' to StateFlow has no effect. See the StateFlow documentation on Operator Fusion.",
     replaceWith = ReplaceWith("this")
 )
 public fun <T> StateFlow<T>.conflate(): Flow<T> = noImpl()
 
 /**
- * Returns this.
- * Applying [distinctUntilChanged][Flow.distinctUntilChanged] operator to [StateFlow] has no effect.
- * See [StateFlow] documentation on Operator Fusion.
+ * Applying [distinctUntilChanged][Flow.distinctUntilChanged] to [StateFlow] has no effect.
+ * See the [StateFlow] documentation on Operator Fusion.
  */
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Applying distinctUntilChanged operator to StateFlow has no effect. See StateFlow documentation on Operator Fusion.",
+    message = "Applying 'distinctUntilChanged' to StateFlow has no effect. See the StateFlow documentation on Operator Fusion.",
     replaceWith = ReplaceWith("this")
 )
 public fun <T> StateFlow<T>.distinctUntilChanged(): Flow<T> = noImpl()

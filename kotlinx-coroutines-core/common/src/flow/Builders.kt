@@ -16,7 +16,8 @@ import kotlin.jvm.*
 import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
- * Creates a flow from the given suspendable [block].
+ * Creates a _cold_ flow from the given suspendable [block].
+ * The flow being _cold_ means that the [block] is called every time a terminal operator is applied to the resulting flow.
  *
  * Example of usage:
  *
@@ -62,7 +63,7 @@ private class SafeFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit
 }
 
 /**
- * Creates a flow that produces a single value from the given functional type.
+ * Creates a _cold_ flow that produces a single value from the given functional type.
  */
 @FlowPreview
 public fun <T> (() -> T).asFlow(): Flow<T> = flow {
@@ -70,8 +71,10 @@ public fun <T> (() -> T).asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a flow that produces a single value from the given functional type.
+ * Creates a _cold_ flow that produces a single value from the given functional type.
+ *
  * Example of usage:
+ *
  * ```
  * suspend fun remoteCall(): R = ...
  * fun remoteCallFlow(): Flow<R> = ::remoteCall.asFlow()
@@ -83,7 +86,7 @@ public fun <T> (suspend () -> T).asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a flow that produces values from the given iterable.
+ * Creates a _cold_ flow that produces values from the given iterable.
  */
 public fun <T> Iterable<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
@@ -92,7 +95,7 @@ public fun <T> Iterable<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a flow that produces values from the given iterator.
+ * Creates a _cold_ flow that produces values from the given iterator.
  */
 public fun <T> Iterator<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
@@ -101,7 +104,7 @@ public fun <T> Iterator<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a flow that produces values from the given sequence.
+ * Creates a _cold_ flow that produces values from the given sequence.
  */
 public fun <T> Sequence<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
@@ -113,6 +116,7 @@ public fun <T> Sequence<T>.asFlow(): Flow<T> = flow {
  * Creates a flow that produces values from the specified `vararg`-arguments.
  *
  * Example of usage:
+ *
  * ```
  * flowOf(1, 2, 3)
  * ```
@@ -124,7 +128,7 @@ public fun <T> flowOf(vararg elements: T): Flow<T> = flow {
 }
 
 /**
- * Creates flow that produces the given [value].
+ * Creates a flow that produces the given [value].
  */
 public fun <T> flowOf(value: T): Flow<T> = flow {
     /*
@@ -144,7 +148,9 @@ private object EmptyFlow : Flow<Nothing> {
 }
 
 /**
- * Creates a flow that produces values from the given array.
+ * Creates a _cold_ flow that produces values from the given array.
+ * The flow being _cold_ means that the array components are read every time a terminal operator is applied
+ * to the resulting flow.
  */
 public fun <T> Array<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
@@ -153,7 +159,9 @@ public fun <T> Array<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a flow that produces values from the array.
+ * Creates a _cold_ flow that produces values from the array.
+ * The flow being _cold_ means that the array components are read every time a terminal operator is applied
+ * to the resulting flow.
  */
 public fun IntArray.asFlow(): Flow<Int> = flow {
     forEach { value ->
@@ -162,7 +170,9 @@ public fun IntArray.asFlow(): Flow<Int> = flow {
 }
 
 /**
- * Creates a flow that produces values from the array.
+ * Creates a _cold_ flow that produces values from the given array.
+ * The flow being _cold_ means that the array components are read every time a terminal operator is applied
+ * to the resulting flow.
  */
 public fun LongArray.asFlow(): Flow<Long> = flow {
     forEach { value ->
@@ -208,7 +218,7 @@ public fun <T> flowViaChannel(
 }
 
 /**
- * Creates an instance of the cold [Flow] with elements that are sent to a [SendChannel]
+ * Creates an instance of a _cold_ [Flow] with elements that are sent to a [SendChannel]
  * provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
  * produced by code that is running in a different context or concurrently.
  * The resulting flow is _cold_, which means that [block] is called every time a terminal operator
@@ -256,7 +266,7 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
     ChannelFlowBuilder(block)
 
 /**
- * Creates an instance of the cold [Flow] with elements that are sent to a [SendChannel]
+ * Creates an instance of a _cold_ [Flow] with elements that are sent to a [SendChannel]
  * provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
  * produced by code that is running in a different context or concurrently.
  *
@@ -324,10 +334,11 @@ public fun <T> callbackFlow(@BuilderInference block: suspend ProducerScope<T>.()
 private open class ChannelFlowBuilder<T>(
     private val block: suspend ProducerScope<T>.() -> Unit,
     context: CoroutineContext = EmptyCoroutineContext,
-    capacity: Int = BUFFERED
-) : ChannelFlow<T>(context, capacity) {
-    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
-        ChannelFlowBuilder(block, context, capacity)
+    capacity: Int = BUFFERED,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
+) : ChannelFlow<T>(context, capacity, onBufferOverflow) {
+    override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
+        ChannelFlowBuilder(block, context, capacity, onBufferOverflow)
 
     override suspend fun collectTo(scope: ProducerScope<T>) =
         block(scope)
@@ -339,8 +350,9 @@ private open class ChannelFlowBuilder<T>(
 private class CallbackFlowBuilder<T>(
     private val block: suspend ProducerScope<T>.() -> Unit,
     context: CoroutineContext = EmptyCoroutineContext,
-    capacity: Int = BUFFERED
-) : ChannelFlowBuilder<T>(block, context, capacity) {
+    capacity: Int = BUFFERED,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
+) : ChannelFlowBuilder<T>(block, context, capacity, onBufferOverflow) {
 
     override suspend fun collectTo(scope: ProducerScope<T>) {
         super.collectTo(scope)
@@ -360,6 +372,6 @@ private class CallbackFlowBuilder<T>(
         }
     }
 
-    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
-        CallbackFlowBuilder(block, context, capacity)
+    override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
+        CallbackFlowBuilder(block, context, capacity, onBufferOverflow)
 }

@@ -109,7 +109,7 @@ public actual open class TestBase actual constructor() {
      * Asserts that this line is never executed.
      */
     public actual fun expectUnreached() {
-        error("Should not be reached")
+        error("Should not be reached, current action index is ${actionIndex.get()}")
     }
 
     /**

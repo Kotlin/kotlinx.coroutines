@@ -1019,23 +1019,23 @@ internal val EMPTY = Symbol("EMPTY") // marker for Conflated & Buffered channels
 
 @JvmField
 @SharedImmutable
-internal val OFFER_SUCCESS: Any = Symbol("OFFER_SUCCESS")
+internal val OFFER_SUCCESS = Symbol("OFFER_SUCCESS")
 
 @JvmField
 @SharedImmutable
-internal val OFFER_FAILED: Any = Symbol("OFFER_FAILED")
+internal val OFFER_FAILED = Symbol("OFFER_FAILED")
 
 @JvmField
 @SharedImmutable
-internal val POLL_FAILED: Any = Symbol("POLL_FAILED")
+internal val POLL_FAILED = Symbol("POLL_FAILED")
 
 @JvmField
 @SharedImmutable
-internal val ENQUEUE_FAILED: Any = Symbol("ENQUEUE_FAILED")
+internal val ENQUEUE_FAILED = Symbol("ENQUEUE_FAILED")
 
 @JvmField
 @SharedImmutable
-internal val HANDLER_INVOKED: Any = Symbol("ON_CLOSE_HANDLER_INVOKED")
+internal val HANDLER_INVOKED = Symbol("ON_CLOSE_HANDLER_INVOKED")
 
 internal typealias Handler = (Throwable?) -> Unit
 

@@ -310,7 +310,7 @@ processing the previous one.  The [actor] coroutine builder accepts an optional 
 controls the implementation of the channel that this actor is using for its mailbox. The description of all 
 the available choices is given in documentation of the [`Channel()`][Channel] factory function.
 
-Let us change the code to use `ConflatedChannel` by passing [Channel.CONFLATED] capacity value. The 
+Let us change the code to use a conflated channel by passing [Channel.CONFLATED] capacity value. The 
 change is only to the line that creates an actor:
 
 ```kotlin

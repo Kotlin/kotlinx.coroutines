@@ -7,11 +7,12 @@ package kotlinx.coroutines
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
-private class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : CoroutineDispatcher(), Delay {
-
+internal class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : CoroutineDispatcher(), Delay {
     private val originalDispatcher = enclosingScope.coroutineContext[ContinuationInterceptor] as CoroutineDispatcher
     private val heap = ArrayList<TimedTask>() // TODO use MPP heap/ordered set implementation (commonize ThreadSafeHeap)
-    private var currentTime = 0L
+
+    var currentTime = 0L
+        private set
 
     init {
         /*
@@ -51,16 +52,19 @@ private class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : CoroutineD
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = originalDispatcher.isDispatchNeeded(context)
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val task = TimedTask(block, currentTime + timeMillis)
+        val task = TimedTask(block, deadline(timeMillis))
         heap += task
         return task
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val task = TimedTask(Runnable { with(continuation) { resumeUndispatched(Unit) } }, currentTime + timeMillis)
+        val task = TimedTask(Runnable { with(continuation) { resumeUndispatched(Unit) } }, deadline(timeMillis))
         heap += task
         continuation.invokeOnCancellation { task.dispose() }
     }
+
+    private fun deadline(timeMillis: Long) =
+        if (timeMillis == Long.MAX_VALUE) Long.MAX_VALUE else currentTime + timeMillis
 }
 
 /**

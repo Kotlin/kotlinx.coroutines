@@ -14,10 +14,11 @@ internal class ChannelFlowTransformLatest<T, R>(
     private val transform: suspend FlowCollector<R>.(value: T) -> Unit,
     flow: Flow<T>,
     context: CoroutineContext = EmptyCoroutineContext,
-    capacity: Int = Channel.BUFFERED
-) : ChannelFlowOperator<T, R>(flow, context, capacity) {
-    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<R> =
-        ChannelFlowTransformLatest(transform, flow, context, capacity)
+    capacity: Int = Channel.BUFFERED,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
+) : ChannelFlowOperator<T, R>(flow, context, capacity, onBufferOverflow) {
+    override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<R> =
+        ChannelFlowTransformLatest(transform, flow, context, capacity, onBufferOverflow)
 
     override suspend fun flowCollect(collector: FlowCollector<R>) {
         assert { collector is SendingCollector } // So cancellation behaviour is not leaking into the downstream
@@ -41,10 +42,11 @@ internal class ChannelFlowMerge<T>(
     private val flow: Flow<Flow<T>>,
     private val concurrency: Int,
     context: CoroutineContext = EmptyCoroutineContext,
-    capacity: Int = Channel.BUFFERED
-) : ChannelFlow<T>(context, capacity) {
-    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
-        ChannelFlowMerge(flow, concurrency, context, capacity)
+    capacity: Int = Channel.BUFFERED,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
+) : ChannelFlow<T>(context, capacity, onBufferOverflow) {
+    override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
+        ChannelFlowMerge(flow, concurrency, context, capacity, onBufferOverflow)
 
     override fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> {
         return scope.flowProduce(context, capacity, block = collectToFun)
@@ -72,17 +74,17 @@ internal class ChannelFlowMerge<T>(
         }
     }
 
-    override fun additionalToStringProps(): String =
-        "concurrency=$concurrency, "
+    override fun additionalToStringProps(): String = "concurrency=$concurrency"
 }
 
 internal class ChannelLimitedFlowMerge<T>(
     private val flows: Iterable<Flow<T>>,
     context: CoroutineContext = EmptyCoroutineContext,
-    capacity: Int = Channel.BUFFERED
-) : ChannelFlow<T>(context, capacity) {
-    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
-        ChannelLimitedFlowMerge(flows, context, capacity)
+    capacity: Int = Channel.BUFFERED,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
+) : ChannelFlow<T>(context, capacity, onBufferOverflow) {
+    override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
+        ChannelLimitedFlowMerge(flows, context, capacity, onBufferOverflow)
 
     override fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> {
         return scope.flowProduce(context, capacity, block = collectToFun)
