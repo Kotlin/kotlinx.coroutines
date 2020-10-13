@@ -37,7 +37,7 @@ import kotlin.native.concurrent.*
  *
  * ```
  * class EventBus {
- *     private val _events = MutableSharedFlow<Event>(0) // private mutable shared flow
+ *     private val _events = MutableSharedFlow<Event>() // private mutable shared flow
  *     val events = _events.asSharedFlow() // publicly exposed as read-only shared flow
  *
  *     suspend fun produceEvent(event: Event) {
@@ -194,7 +194,7 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
  *
  * This function throws [IllegalArgumentException] on unsupported values of parameters or combinations thereof.
  *
- * @param replay the number of values replayed to new subscribers (cannot be negative).
+ * @param replay the number of values replayed to new subscribers (cannot be negative, defaults to zero).
  * @param extraBufferCapacity the number of values buffered in addition to `replay`.
  *   [emit][MutableSharedFlow.emit] does not suspend while there is a buffer space remaining (optional, cannot be negative, defaults to zero).
  * @param onBufferOverflow configures an action on buffer overflow (optional, defaults to
@@ -204,14 +204,14 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
 @Suppress("FunctionName", "UNCHECKED_CAST")
 @ExperimentalCoroutinesApi
 public fun <T> MutableSharedFlow(
-    replay: Int,
+    replay: Int = 0,
     extraBufferCapacity: Int = 0,
     onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
 ): MutableSharedFlow<T> {
-    require(replay >= 0) { "replay cannot be negative" }
-    require(extraBufferCapacity >= 0) { "extraBufferCapacity cannot be negative" }
+    require(replay >= 0) { "replay cannot be negative, but was $replay" }
+    require(extraBufferCapacity >= 0) { "extraBufferCapacity cannot be negative, but was $extraBufferCapacity" }
     require(replay > 0 || extraBufferCapacity > 0 || onBufferOverflow == BufferOverflow.SUSPEND) {
-        "replay or extraBufferCapacity must be positive with non-default onBufferOverflow strategy"
+        "replay or extraBufferCapacity must be positive with non-default onBufferOverflow strategy $onBufferOverflow"
     }
     val bufferCapacity0 = replay + extraBufferCapacity
     val bufferCapacity = if (bufferCapacity0 < 0) Int.MAX_VALUE else bufferCapacity0 // coerce to MAX_VALUE on overflow

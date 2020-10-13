@@ -59,7 +59,7 @@ import kotlin.jvm.*
  * and establish it eagerly like this:
  *
  * ```
- * val messages: SharedFlow<Message> = backendMessages.shareIn(scope, 0)
+ * val messages: SharedFlow<Message> = backendMessages.shareIn(scope, SharingStarted.Eagerly)
  * ```
  *
  * Now a single connection is shared between all collectors from `messages`, and there is a chance that the connection
@@ -75,7 +75,7 @@ import kotlin.jvm.*
  * ```
  * backendMessages
  *     .onCompletion { cause -> if (cause == null) emit(UpstreamHasCompletedMessage) }
- *     .shareIn(scope, 0)
+ *     .shareIn(scope, SharingStarted.Eagerly)
  * ```
  *
  * Any exception in the upstream flow terminates the sharing coroutine without affecting any of the subscribers,
@@ -90,7 +90,7 @@ import kotlin.jvm.*
  *         if (shallRetry) delay(1000)
  *         shallRetry
  *     }
- *     .shareIn(scope, 0)
+ *     .shareIn(scope, SharingStarted.Eagerly)
  * ```
  *
  * ### Initial value
@@ -101,7 +101,7 @@ import kotlin.jvm.*
  * ```
  * backendMessages
  *     .onStart { emit(UpstreamIsStartingMessage) }
- *     .shareIn(scope, 1) // replay one most recent message
+ *     .shareIn(scope, SharingStarted.Eagerly, 1) // replay one most recent message
  * ```
  *
  * ### Buffering and conflation
@@ -111,12 +111,12 @@ import kotlin.jvm.*
  * This default buffering can be overridden with an explicit buffer configuration by preceding the `shareIn` call
  * with [buffer] or [conflate], for example:
  *
- * * `buffer(0).shareIn(scope, 0)` &mdash; overrides the default buffer size and creates a [SharedFlow] without a buffer.
+ * * `buffer(0).shareIn(scope, started, 0)` &mdash; overrides the default buffer size and creates a [SharedFlow] without a buffer.
  *   Effectively, it configures sequential processing between the upstream emitter and subscribers,
  *   as the emitter is suspended until all subscribers process the value. Note, that the value is still immediately
  *   discarded when there are no subscribers.
- * * `buffer(b).shareIn(scope, r)` &mdash; creates a [SharedFlow] with `replay = r` and `extraBufferCapacity = b`.
- * * `conflate().shareIn(scope, r)` &mdash; creates a [SharedFlow] with `replay = r`, `onBufferOverflow = DROP_OLDEST`,
+ * * `buffer(b).shareIn(scope, started, r)` &mdash; creates a [SharedFlow] with `replay = r` and `extraBufferCapacity = b`.
+ * * `conflate().shareIn(scope, started, r)` &mdash; creates a [SharedFlow] with `replay = r`, `onBufferOverflow = DROP_OLDEST`,
  *   and `extraBufferCapacity = 1` when `replay == 0` to support this strategy.
  *
  * ### Operator fusion
@@ -129,14 +129,14 @@ import kotlin.jvm.*
  * This function throws [IllegalArgumentException] on unsupported values of parameters or combinations thereof.
  *
  * @param scope the coroutine scope in which sharing is started.
- * @param replay the number of values replayed to new subscribers (cannot be negative).
  * @param started the strategy that controls when sharing is started and stopped.
+ * @param replay the number of values replayed to new subscribers (cannot be negative, defaults to zero).
  */
 @ExperimentalCoroutinesApi
 public fun <T> Flow<T>.shareIn(
     scope: CoroutineScope,
-    replay: Int,
-    started: SharingStarted
+    started: SharingStarted,
+    replay: Int = 0
 ): SharedFlow<T> {
     val config = configureSharing(replay)
     val shared = MutableSharedFlow<T>(
@@ -267,7 +267,7 @@ private fun <T> CoroutineScope.launchSharing(
  * and establish it eagerly like this:
  *
  * ```
- * val state: StateFlow<State> = backendMessages.stateIn(scope, initialValue = State.LOADING)
+ * val state: StateFlow<State> = backendMessages.stateIn(scope, SharingStarted.Eagerly, State.LOADING)
  * ```
  *
  * Now, a single connection is shared between all collectors from `state`, and there is a chance that the connection

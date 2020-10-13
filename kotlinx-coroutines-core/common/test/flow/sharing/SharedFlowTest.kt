@@ -18,7 +18,7 @@ class SharedFlowTest : TestBase() {
     @Test
     fun testRendezvousSharedFlowBasic() = runTest {
         expect(1)
-        val sh = MutableSharedFlow<Int?>(0)
+        val sh = MutableSharedFlow<Int?>()
         assertTrue(sh.replayCache.isEmpty())
         assertEquals(0, sh.subscriptionCount.value)
         sh.emit(1) // no suspend
@@ -91,7 +91,7 @@ class SharedFlowTest : TestBase() {
     @Test
     fun testRendezvousSharedFlowReset() = runTest {
         expect(1)
-        val sh = MutableSharedFlow<Int>(0)
+        val sh = MutableSharedFlow<Int>()
         val barrier = Channel<Unit>(1)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
@@ -383,7 +383,7 @@ class SharedFlowTest : TestBase() {
     @Test
     fun testSynchronousSharedFlowEmitterCancel() = runTest {
         expect(1)
-        val sh = MutableSharedFlow<Int>(0)
+        val sh = MutableSharedFlow<Int>()
         val barrier1 = Job()
         val barrier2 = Job()
         val barrier3 = Job()
@@ -562,7 +562,7 @@ class SharedFlowTest : TestBase() {
     @Test
     public fun testOnSubscription() = runTest {
         expect(1)
-        val sh = MutableSharedFlow<String>(0)
+        val sh = MutableSharedFlow<String>()
         fun share(s: String) { launch(start = CoroutineStart.UNDISPATCHED) { sh.emit(s) } }
         sh
             .onSubscription {
@@ -747,7 +747,7 @@ class SharedFlowTest : TestBase() {
 
     @Test
     fun testOperatorFusion() {
-        val sh = MutableSharedFlow<String>(0)
+        val sh = MutableSharedFlow<String>()
         assertSame(sh, (sh as Flow<*>).cancellable())
         assertSame(sh, (sh as Flow<*>).flowOn(Dispatchers.Default))
         assertSame(sh, sh.buffer(Channel.RENDEZVOUS))

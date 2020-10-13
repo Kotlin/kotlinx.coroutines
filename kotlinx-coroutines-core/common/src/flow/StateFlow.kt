@@ -76,7 +76,7 @@ import kotlin.native.concurrent.*
  * // MutableStateFlow(initialValue) is a shared flow with the following parameters:
  * val shared = MutableSharedFlow(
  *     replay = 1,
- *     onBufferOverflow = BufferOverflow.DROP_OLDEST,
+ *     onBufferOverflow = BufferOverflow.DROP_OLDEST
  * )
  * shared.tryEmit(initialValue) // emit the initial value
  * val state = shared.distinctUntilChanged() // get StateFlow-like behavior

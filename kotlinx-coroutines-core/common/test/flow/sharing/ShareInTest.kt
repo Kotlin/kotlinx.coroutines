@@ -13,7 +13,7 @@ class ShareInTest : TestBase() {
     fun testReplay0Eager() = runTest {
         expect(1)
         val flow = flowOf("OK")
-        val shared = flow.shareIn(this, 0, SharingStarted.Eagerly)
+        val shared = flow.shareIn(this, SharingStarted.Eagerly)
         yield() // actually start sharing
         // all subscribers miss "OK"
         val jobs = List(10) {
@@ -40,7 +40,7 @@ class ShareInTest : TestBase() {
             emit("DONE")
         }
         val sharingJob = Job()
-        val shared = flow.shareIn(this + sharingJob, replay, started = SharingStarted.Lazily)
+        val shared = flow.shareIn(this + sharingJob, started = SharingStarted.Lazily, replay = replay)
         yield() // should not start sharing
         // first subscriber gets "OK", other subscribers miss "OK"
         val n = 10
@@ -95,7 +95,7 @@ class ShareInTest : TestBase() {
             terminate.join()
             if (failed) throw TestException()
         }
-        val shared = upstream.shareIn(this + sharingJob, 1, SharingStarted.Eagerly)
+        val shared = upstream.shareIn(this + sharingJob, SharingStarted.Eagerly, 1)
         assertEquals(emptyList(), shared.replayCache)
         emitted.join() // should start sharing, emit & cache
         assertEquals(listOf("OK"), shared.replayCache)
@@ -157,7 +157,7 @@ class ShareInTest : TestBase() {
             }
         }
         
-        val shared = flow.shareIn(this, 0, started = started)
+        val shared = flow.shareIn(this, started)
         repeat(5) { // repeat scenario a few times
             yield()
             assertFalse(flowState.started) // flow is not running even if we yield

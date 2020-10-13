@@ -94,7 +94,7 @@ class SharingStressTest : TestBase() {
         val sharedFlow = if (usingStateFlow)
             upstream.stateIn(sharingScope, started, 0L)
         else
-            upstream.shareIn(sharingScope, replay, started)
+            upstream.shareIn(sharingScope, started, replay)
         try {
             val subscribers = ArrayList<SubJob>()
             withTimeoutOrNull(testDuration) {

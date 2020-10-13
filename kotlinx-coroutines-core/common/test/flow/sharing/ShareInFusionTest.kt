@@ -14,7 +14,7 @@ class ShareInFusionTest : TestBase() {
      */
     @Test
     fun testOperatorFusion() = runTest {
-        val sh = emptyFlow<Int>().shareIn(this, 0, SharingStarted.Eagerly)
+        val sh = emptyFlow<Int>().shareIn(this, SharingStarted.Eagerly)
         assertTrue(sh !is MutableSharedFlow<*>) // cannot be cast to mutable shared flow!!!
         assertSame(sh, (sh as Flow<*>).cancellable())
         assertSame(sh, (sh as Flow<*>).flowOn(Dispatchers.Default))
@@ -28,7 +28,7 @@ class ShareInFusionTest : TestBase() {
             assertEquals("FlowCtx", currentCoroutineContext()[CoroutineName]?.name)
             emit("OK")
         }.flowOn(CoroutineName("FlowCtx"))
-        assertEquals("OK", flow.shareIn(this, 1, SharingStarted.Eagerly).first())
+        assertEquals("OK", flow.shareIn(this, SharingStarted.Eagerly, 1).first())
         coroutineContext.cancelChildren()
     }
 
@@ -47,7 +47,7 @@ class ShareInFusionTest : TestBase() {
             send(0) // done
         }.buffer(10) // request a buffer of 10
         // ^^^^^^^^^ buffer stays here
-        val shared = flow.shareIn(this, 0, SharingStarted.Eagerly)
+        val shared = flow.shareIn(this, SharingStarted.Eagerly)
         shared
             .takeWhile { it > 0 }
             .collect { i -> expect(i + 1) }
