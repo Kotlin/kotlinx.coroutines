@@ -7,9 +7,9 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
 import kotlinx.coroutines.channels.Channel.Factory.CHANNEL_DEFAULT_CAPACITY
+import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 
 /**
@@ -20,9 +20,10 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
  * See `BroadcastChannel()` factory function for the description of available
  * broadcast channel implementations.
  *
- * **Note: This is an experimental api.** It may be changed in the future updates.
+ * **Note: This API is obsolete.** It will be deprecated and replaced by [SharedFlow][kotlinx.coroutines.flow.SharedFlow]
+ * when it becomes stable.
  */
-@ExperimentalCoroutinesApi
+@ExperimentalCoroutinesApi // not @ObsoleteCoroutinesApi to reduce burden for people who are still using it
 public interface BroadcastChannel<E> : SendChannel<E> {
     /**
      * Subscribes to this [BroadcastChannel] and returns a channel to receive elements from it.

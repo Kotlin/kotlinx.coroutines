@@ -4,25 +4,29 @@
 
 // Platform-specific configuration to compile JS modules
 
-apply plugin: 'kotlin2js'
+apply plugin: 'org.jetbrains.kotlin.js'
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
-    testCompile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
+    testImplementation "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
 }
 
-tasks.withType(compileKotlin2Js.getClass()) {
+kotlin {
+    js(LEGACY) {
+        moduleName = project.name - "-js"
+    }
+
+    sourceSets {
+        main.kotlin.srcDirs = ['src']
+        test.kotlin.srcDirs = ['test']
+        main.resources.srcDirs = ['resources']
+        test.resources.srcDirs = ['test-resources']
+    }
+}
+
+tasks.withType(compileKotlinJs.getClass()) {
     kotlinOptions {
         moduleKind = "umd"
         sourceMap = true
         metaInfo = true
-    }
-}
-
-compileKotlin2Js {
-    kotlinOptions {
-        // drop -js suffix from outputFile
-        def baseName = project.name - "-js"
-        outputFile = new File(outputFile.parent, baseName + ".js")
     }
 }

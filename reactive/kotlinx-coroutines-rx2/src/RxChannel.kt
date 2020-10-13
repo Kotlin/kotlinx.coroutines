@@ -64,7 +64,7 @@ public suspend inline fun <T> ObservableSource<T>.collect(action: (T) -> Unit): 
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T> :
-    LinkedListChannel<T>(), Observer<T>, MaybeObserver<T>
+    LinkedListChannel<T>(null), Observer<T>, MaybeObserver<T>
 {
     private val _subscription = atomic<Disposable?>(null)
 

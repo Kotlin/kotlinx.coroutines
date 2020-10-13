@@ -13,36 +13,24 @@ kotlin {
     }
 
     targets {
-        if (project.ext.ideaActive) {
-            fromPreset(project.ext.ideaPreset, 'native')
-        } else {
-            addTarget(presets.linuxX64)
-            addTarget(presets.iosArm64)
-            addTarget(presets.iosArm32)
-            addTarget(presets.iosX64)
-            addTarget(presets.macosX64)
-            addTarget(presets.mingwX64)
-            addTarget(presets.tvosArm64)
-            addTarget(presets.tvosX64)
-            addTarget(presets.watchosArm32)
-            addTarget(presets.watchosArm64)
-            addTarget(presets.watchosX86)
-        }
+        addTarget(presets.linuxX64)
+        addTarget(presets.iosArm64)
+        addTarget(presets.iosArm32)
+        addTarget(presets.iosX64)
+        addTarget(presets.macosX64)
+        addTarget(presets.mingwX64)
+        addTarget(presets.tvosArm64)
+        addTarget(presets.tvosX64)
+        addTarget(presets.watchosArm32)
+        addTarget(presets.watchosArm64)
+        addTarget(presets.watchosX86)
     }
 
     sourceSets {
         nativeMain { dependsOn commonMain }
-        // Empty source set is required in order to have native tests task
-        nativeTest {}
+        nativeTest { dependsOn commonTest }
 
-        if (!project.ext.ideaActive) {
-            configure(nativeMainSets) {
-                dependsOn nativeMain
-            }
-
-            configure(nativeTestSets) {
-                dependsOn nativeTest
-            }
-        }
+        configure(nativeMainSets) { dependsOn nativeMain }
+        configure(nativeTestSets) { dependsOn nativeTest }
     }
 }

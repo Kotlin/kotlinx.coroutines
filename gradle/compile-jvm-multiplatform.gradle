@@ -5,19 +5,11 @@
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
-repositories {
-    maven { url "https://dl.bintray.com/devexperts/Maven/" }
-}
-
 kotlin {
     targets {
         fromPreset(presets.jvm, 'jvm')
     }
     sourceSets {
-        jvmMain.dependencies {
-            api 'org.jetbrains.kotlin:kotlin-stdlib'
-        }
-
         jvmTest.dependencies {
             api "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
             // Workaround to make addSuppressed work in tests

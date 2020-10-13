@@ -2,53 +2,32 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-apply plugin: 'kotlin-dce-js'
-apply from: rootProject.file('gradle/node-js.gradle')
-
-// Workaround resolving new Gradle metadata with kotlin2js
-// TODO: Remove once KT-37188 is fixed
-try {
-    def jsCompilerType = Class.forName("org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute")
-    def jsCompilerAttr = Attribute.of("org.jetbrains.kotlin.js.compiler", jsCompilerType)
-    project.dependencies.attributesSchema.attribute(jsCompilerAttr)
-    configurations {
-        matching {
-            it.name.endsWith("Classpath")
-        }.forEach {
-            it.attributes.attribute(jsCompilerAttr, jsCompilerType.legacy)
+project.kotlin {
+    js(LEGACY) {
+        binaries.executable()
+        browser {
+            distribution {
+                directory = new File(directory.parentFile, "dist")
+            }
+            webpackTask {
+                cssSupport.enabled = true
+            }
+            runTask {
+                cssSupport.enabled = true
+            }
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                    webpackConfig.cssSupport.enabled = true
+                }
+            }
         }
     }
-} catch (java.lang.ClassNotFoundException e) {
-    // org.jetbrains.kotlin.gradle.targets.js.JsCompilerType is missing in 1.3.x
-    // But 1.3.x doesn't generate Gradle metadata, so this workaround is not needed
-}
 
-dependencies {
-    compile "org.jetbrains.kotlinx:kotlinx-html-js:$html_version"
-}
-
-compileKotlin2Js {
-    kotlinOptions {
-        main = "call"
-    }
-}
-
-task bundle(type: NpmTask, dependsOn: [npmInstall, runDceKotlinJs]) {
-    inputs.files(fileTree("$buildDir/kotlin-js-min/main"))
-    inputs.files(fileTree(file("src/main/web")))
-    inputs.file("npm/webpack.config.js")
-    outputs.dir("$buildDir/dist")
-    args = ["run", "bundle"]
-}
-
-task start(type: NpmTask, dependsOn: bundle) {
-    args = ["run", "start"]
-}
-
-// we have not tests but kotlin-dce-js still tries to work with them and crashed.
-// todo: Remove when KT-22028 is fixed
-afterEvaluate {
-    if (tasks.findByName('unpackDependenciesTestKotlinJs')) {
-        tasks.unpackDependenciesTestKotlinJs.enabled = false
+    sourceSets {
+        main.dependencies {
+            implementation "org.jetbrains.kotlinx:kotlinx-html-js:$html_version"
+            implementation(npm("html-webpack-plugin", "3.2.0"))
+        }
     }
 }

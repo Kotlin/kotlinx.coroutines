@@ -1,5 +1,36 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.4.0-M1
+
+### Breaking changes
+
+* The concept of atomic cancellation in channels is removed. All operations in channels
+    and corresponding `Flow` operators are cancellable in non-atomic way (#1813).
+* If `CoroutineDispatcher` throws `RejectedExecutionException`, cancel current `Job` and schedule its execution to `Dispatchers.IO` (#2003).
+* `CancellableContinuation.invokeOnCancellation` is invoked if the continuation was cancelled while its resume has been dispatched (#1915).
+* `Flow.singleOrNull` operator is aligned with standard library and does not longer throw `IllegalStateException` on multiple values (#2289). 
+
+### New experimental features
+
+* `SharedFlow` primitive for managing hot sources of events with support of various subscription mechanisms, replay logs and buffering (#2034).
+* `Flow.shareIn` and `Flow.stateIn` operators to transform cold instances of flow to hot `SharedFlow` and `StateFlow` respectively (#2047).
+
+### Other
+    
+* Support leak-free closeable resources transfer via `onUndeliveredElement` in channels (#1936).
+* Changed ABI in reactive integrations for Java interoperability (#2182).
+* Fixed ProGuard rules for `kotlinx-coroutines-core` (#2046, #2266).
+* Lint settings were added to `Flow` to avoid accidental capturing of outer `CoroutineScope` for cancellation check (#2038). 
+
+### External contributions
+
+* Allow nullable types in `Flow.firstOrNull` and `Flow.singleOrNull` by @ansman (#2229).
+* Add `Publisher.awaitSingleOrDefault|Null|Else` extensions by @sdeleuze (#1993).
+* `awaitCancellation` top-level function by @LouisCAD (#2213).
+* Significant part of our Gradle build scripts were migrated to `.kts` by @turansky. 
+
+Thank you for your contributions and participation in the Kotlin community!
+
 ## Version 1.3.9
 
 * Support of `CoroutineContext` in `Flow.asPublisher` and similar reactive builders (#2155).

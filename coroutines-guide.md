@@ -20,6 +20,7 @@ The main coroutines guide has moved to the [docs folder](docs/coroutines-guide.m
   * <a name='closing-resources-with-finally'></a>[Closing resources with `finally`](docs/cancellation-and-timeouts.md#closing-resources-with-finally)
   * <a name='run-non-cancellable-block'></a>[Run non-cancellable block](docs/cancellation-and-timeouts.md#run-non-cancellable-block)
   * <a name='timeout'></a>[Timeout](docs/cancellation-and-timeouts.md#timeout)
+  * <a name='asynchronous-timeout-and-resources'></a>[Asynchronous timeout and resources](docs/cancellation-and-timeouts.md#asynchronous-timeout-and-resources)
 <!--- TOC_REF docs/composing-suspending-functions.md -->
 * <a name='composing-suspending-functions'></a>[Composing Suspending Functions](docs/composing-suspending-functions.md#composing-suspending-functions)
   * <a name='sequential-by-default'></a>[Sequential by default](docs/composing-suspending-functions.md#sequential-by-default)

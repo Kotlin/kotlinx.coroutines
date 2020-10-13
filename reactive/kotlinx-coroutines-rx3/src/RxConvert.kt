@@ -16,7 +16,7 @@ import kotlin.coroutines.*
 
 /**
  * Converts this job to the hot reactive completable that signals
- * with [onCompleted][CompletableSubscriber.onCompleted] when the corresponding job completes.
+ * with [onCompleted][CompletableObserver.onComplete] when the corresponding job completes.
  *
  * Every subscriber gets the signal at the same time.
  * Unsubscribing from the resulting completable **does not** affect the original job in any way.
@@ -50,7 +50,7 @@ public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T> = rxMay
 
 /**
  * Converts this deferred value to the hot reactive single that signals either
- * [onSuccess][SingleSubscriber.onSuccess] or [onError][SingleSubscriber.onError].
+ * [onSuccess][SingleObserver.onSuccess] or [onError][SingleObserver.onError].
  *
  * Every subscriber gets the same completion value.
  * Unsubscribing from the resulting single **does not** affect the original deferred value in any way.
@@ -98,8 +98,6 @@ public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
  * inject additional context into the caller thread. By default, the [Unconfined][Dispatchers.Unconfined] dispatcher
  * is used, so calls are performed from an arbitrary thread.
  */
-@JvmOverloads // binary compatibility
-@JvmName("from")
 @ExperimentalCoroutinesApi
 public fun <T: Any> Flow<T>.asObservable(context: CoroutineContext = EmptyCoroutineContext) : Observable<T> = Observable.create { emitter ->
     /*
@@ -133,8 +131,19 @@ public fun <T: Any> Flow<T>.asObservable(context: CoroutineContext = EmptyCorout
  * inject additional context into the caller thread. By default, the [Unconfined][Dispatchers.Unconfined] dispatcher
  * is used, so calls are performed from an arbitrary thread.
  */
-@JvmOverloads // binary compatibility
-@JvmName("from")
 @ExperimentalCoroutinesApi
 public fun <T: Any> Flow<T>.asFlowable(context: CoroutineContext = EmptyCoroutineContext): Flowable<T> =
     Flowable.fromPublisher(asPublisher(context))
+
+@Suppress("UNUSED") // KT-42513
+@JvmOverloads // binary compatibility
+@JvmName("from")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "") // Since 1.4, was experimental prior to that
+public fun <T: Any> Flow<T>._asFlowable(context: CoroutineContext = EmptyCoroutineContext): Flowable<T> =
+    asFlowable(context)
+
+@Suppress("UNUSED") // KT-42513
+@JvmOverloads // binary compatibility
+@JvmName("from")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "") // Since 1.4, was experimental prior to that
+public fun <T: Any> Flow<T>._asObservable(context: CoroutineContext = EmptyCoroutineContext) : Observable<T> = asObservable(context)
