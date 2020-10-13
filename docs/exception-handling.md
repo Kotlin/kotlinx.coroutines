@@ -19,7 +19,7 @@
 ## Exception Handling
 
 This section covers exception handling and cancellation on exceptions.
-We already know that cancelled coroutine throws [CancellationException] in suspension points and that it
+We already know that a cancelled coroutine throws [CancellationException] in suspension points and that it
 is ignored by the coroutines' machinery. Here we look at what happens if an exception is thrown during cancellation or multiple children of the same
 coroutine throw an exception.
 
