@@ -165,22 +165,21 @@ The Coroutine Debugger of the Kotlin plugin simplifies debugging coroutines in I
 
 > Debugging works for versions 1.3.8 or later of `kotlinx-coroutines-core`.
 
-The **Debug Tool Window** contains a **Coroutines** tab. In this tab, you can find information about both currently 
-running and suspended coroutines. The coroutines are grouped by the dispatcher they are running on. 
+The **Debug** tool window contains the **Coroutines** tab. In this tab, you can find information about both currently running and suspended coroutines. 
+The coroutines are grouped by the dispatcher they are running on.
 
-![Debugging coroutines](images/coroutine-debugger.png)
+![Debugging coroutines](images/coroutine-idea-debugging-1.png)
 
-You can:
-* Easily check the state of each coroutine.
+With the coroutine debugger, you can:
+* Check the state of each coroutine.
 * See the values of local and captured variables for both running and suspended coroutines.
 * See a full coroutine creation stack, as well as a call stack inside the coroutine. The stack includes all frames with 
 variable values, even those that would be lost during standard debugging.
+* Get a full report that contains the state of each coroutine and its stack. To obtain it, right-click inside the **Coroutines** tab, and then click **Get Coroutines Dump**.
 
-If you need a full report containing the state of each coroutine and its stack, right-click inside the **Coroutines** tab, and then
-click **Get Coroutines Dump**.
+To start coroutine debugging, you just need to set breakpoints and run the application in debug mode.
 
-Learn more about debugging coroutines in [this blog post](https://blog.jetbrains.com/kotlin/2020/07/kotlin-1-4-rc-debugging-coroutines/)
-and [IntelliJ IDEA documentation](https://www.jetbrains.com/help/idea/debug-kotlin-coroutines.html).
+Learn more about coroutines debugging in the [tutorial](https://kotlinlang.org/docs/tutorials/coroutines/debug-coroutines-with-idea.html).
 
 #### Debugging using logging
 
