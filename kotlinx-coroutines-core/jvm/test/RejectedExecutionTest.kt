@@ -5,6 +5,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
 import org.junit.*
 import org.junit.Test
@@ -89,6 +90,7 @@ class RejectedExecutionTest : TestBase() {
 
     @Test
     fun testRejectOnDelay() = runTest {
+        if (!removeFutureOnCancel(executor)) return@runTest // Skip this test on old JDKs
         expect(1)
         executor.acceptTasks = 1 // accept one task
         assertFailsWith<CancellationException> {
@@ -110,6 +112,7 @@ class RejectedExecutionTest : TestBase() {
 
     @Test
     fun testRejectWithTimeout() = runTest {
+        if (!removeFutureOnCancel(executor)) return@runTest // Skip this test on old JDKs
         expect(1)
         executor.acceptTasks = 1 // accept one task
         assertFailsWith<CancellationException> {
