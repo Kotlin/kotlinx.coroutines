@@ -20,19 +20,19 @@ Section proof.
 Context `{!heapG Σ}.
 
 Variable (array_interface: infiniteArrayInterface).
-Variable (array_spec: infiniteArraySpec Σ array_interface).
+Variable (aspc: infiniteArraySpec Σ array_interface).
 
 Theorem findCellAndMoveForward_spec N γ co p (v: val) (source_id id: nat):
-  is_infinite_array _ _ array_spec N γ co -∗
-  is_infinite_array_cutoff_reading _ _ _ N γ p source_id -∗
-  <<< ∀ start_index, ▷ is_infinite_array_cutoff _ _ _ N γ v start_index >>>
+  is_infinite_array _ _ aspc N γ co -∗
+  is_infinite_array_cutoff_reading _ _ aspc N γ p source_id -∗
+  <<< ∀ start_index, ▷ is_infinite_array_cutoff _ _ aspc N γ v start_index >>>
       findCellAndMoveForward array_interface v #id p @ ⊤ ∖ ↑N
-  <<< ∃ p' id', is_infinite_array_cell_pointer _ _ _ N γ p' id'
+  <<< ∃ p' id', is_infinite_array_cell_pointer _ _ aspc N γ p' id'
                 ∗ ⌜(id ≤ id')%nat⌝
                 ∗ (∀ i, (⌜max source_id id ≤ i < id'⌝)%nat
-                        -∗ cell_is_cancelled _ _ _ N γ i)
+                        -∗ cell_is_cancelled _ _ aspc N γ i)
                 ∗ ∃ i', ⌜start_index ≤ i' ≤ max id' start_index⌝ ∧
-                  is_infinite_array_cutoff _ _ _ N γ v i',
+                  is_infinite_array_cutoff _ _ aspc N γ v i',
   RET p' >>>.
 Proof.
   iIntros "#HArr #HReading" (Φ) "AU". wp_lam. wp_pures. iLöb as "IH".

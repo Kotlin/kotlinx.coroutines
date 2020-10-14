@@ -5,32 +5,32 @@ Require Export
 
 Record infiniteArraySpec Σ `{!heapG Σ} (impl: infiniteArrayInterface) :=
   InfiniteArraySpec {
-      infinite_array_name: Type;
-      is_infinite_array (N: namespace) (γ: infinite_array_name)
+      is_infinite_array (N: namespace) (γ: gname)
                         (cell_is_owned: nat → iProp Σ): iProp Σ;
       is_infinite_array_persistent N γ co:
         Persistent (is_infinite_array N γ co);
       infinite_array_mapsto (N: namespace) (cell_is_owned: nat -> iProp Σ)
-                            (γ: infinite_array_name) (i: nat) (ℓ: loc): iProp Σ;
+                            (γ: gname) (i: nat) (ℓ: loc): iProp Σ;
       infinite_array_mapsto_persistent N co γ i ℓ:
         Persistent (infinite_array_mapsto N co γ i ℓ);
       infinite_array_mapsto_agree N co γ i ℓ ℓ':
         infinite_array_mapsto N co γ i ℓ -∗ infinite_array_mapsto N co γ i ℓ'
                               -∗ ⌜ℓ = ℓ'⌝;
-                                        is_infinite_array_cell_pointer N (γ: infinite_array_name) (p: val) (i: nat):
+      is_infinite_array_cell_pointer N (γ: gname) (p: val) (i: nat):
           iProp Σ;
-      is_infinite_array_cutoff_reading (N: namespace) (γ: infinite_array_name)
+      is_infinite_array_cutoff_reading (N: namespace) (γ: gname)
                                        (p: val) (start_id: nat): iProp Σ;
       is_infinite_array_cutoff_reading_persistent N γ p start_id:
         Persistent (is_infinite_array_cutoff_reading N γ p start_id);
       is_infinite_array_cell_pointer_persistent N γ p i:
         Persistent (is_infinite_array_cell_pointer N γ p i);
-      is_infinite_array_cutoff (N: namespace)
-                               (γ: infinite_array_name) (v: val) (start_index: nat): iProp Σ;
-      cell_is_cancelled (N: namespace) (γ: infinite_array_name) (i: nat): iProp Σ;
+      is_infinite_array_cutoff
+        (N: namespace) (γ: gname) (v: val)
+        (start_index: nat): iProp Σ;
+      cell_is_cancelled (N: namespace) (γ: gname) (i: nat): iProp Σ;
       cell_is_cancelled_persistent N γ i: Persistent (cell_is_cancelled N γ i);
       cell_cancellation_handle
-        (N: namespace) (γ: infinite_array_name) (i: nat): iProp Σ;
+        (N: namespace) (γ: gname) (i: nat): iProp Σ;
       cell_cancellation_handle_exclusive N γ i:
         cell_cancellation_handle N γ i -∗ cell_cancellation_handle N γ i -∗ False;
       cell_cancellation_handle_not_cancelled N γ i:

@@ -36,7 +36,7 @@ Section proof.
 Context `{heapG Σ}.
 
 Variable (array_interface: infiniteArrayInterface).
-Variable (array_spec: infiniteArraySpec Σ array_interface).
+Variable (aspc: infiniteArraySpec Σ array_interface).
 
 Notation algebra := (authR (prodUR (gset_disjUR nat)
                                    max_natUR)).
@@ -69,8 +69,9 @@ Proof. apply _. Qed.
 
 Definition iterator_contents γa (P: iProp) γ cℓ p n: iProp :=
   (iterator_counter γ cℓ n ∗ ([∗] replicate n P) ∗
-   ∃ (id: nat), (∀ id', ⌜n ≤ id' < id⌝ -∗ cell_is_cancelled _ _ _ NArray γa id') ∗
-  is_infinite_array_cutoff _ _ array_spec NArray γa p id)%I.
+   ∃ (id: nat), (∀ id', ⌜n ≤ id' < id⌝ -∗
+                        cell_is_cancelled _ _ aspc NArray γa id') ∗
+  is_infinite_array_cutoff _ _ aspc NArray γa p id)%I.
 
 Definition is_iterator γa P γ v: iProp :=
   ∃ (cℓ: loc) (p: val),
@@ -177,11 +178,11 @@ Proof.
 Qed.
 
 Theorem iteratorStep_spec co γa P γ (v: val):
-  {{{ is_infinite_array _ _ _ NArray γa co ∗ is_iterator γa P γ v ∗ P }}}
+  {{{ is_infinite_array _ _ aspc NArray γa co ∗ is_iterator γa P γ v ∗ P }}}
     iteratorStep array_interface v
   {{{ n ns s, RET (#n, s); ⌜ns ≥ n⌝ ∧ iterator_issued γ n ∗
-      is_infinite_array_cell_pointer _ _ _ NArray γa s ns ∗
-      ∀ i : nat, ⌜n ≤ i ∧ i < ns⌝ -∗ cell_is_cancelled _ _ _ NArray γa i
+      is_infinite_array_cell_pointer _ _ aspc NArray γa s ns ∗
+      ∀ i : nat, ⌜n ≤ i ∧ i < ns⌝ -∗ cell_is_cancelled _ _ aspc NArray γa i
   }}}.
 Proof.
   iIntros (Φ) "(#HArr & #HIter & HP) HΦ".
@@ -227,7 +228,7 @@ Proof.
     iExists _. by iFrame "HCutoff".
   }
   iIntros (seg segId) "(#HCellPointer & % & #HCancelled''' & HCutoff)".
-  iAssert (∀ i, ⌜start' ≤ i < segId⌝ -∗ cell_is_cancelled _ _ _ NArray γa i)%I
+  iAssert (∀ i, ⌜start' ≤ i < segId⌝ -∗ cell_is_cancelled _ _ aspc NArray γa i)%I
     with "[]" as "#HCancelledSegId".
   {
     iIntros (id' HId').
@@ -250,19 +251,19 @@ Qed.
 
 Theorem iteratorStepOrIncreaseCounter_spec
         (shouldAdjust: bool) co γa P γ (fℓ: loc) (v: val):
-  {{{ is_infinite_array _ _ _ NArray γa co ∗ is_iterator γa P γ v ∗ P ∗
+  {{{ is_infinite_array _ _ aspc NArray γa co ∗ is_iterator γa P γ v ∗ P ∗
       if shouldAdjust
       then make_laterable (∀ l, ([∗ list] i ∈ l,
-      cell_is_cancelled _ _ _ NArray γa i ∗ iterator_issued γ i
+      cell_is_cancelled _ _ aspc NArray γa i ∗ iterator_issued γ i
         ={⊤ ∖ ↑N}=∗ P)) else True
   }}}
     iteratorStepOrIncreaseCounter array_interface #shouldAdjust v
   {{{ v, RET v; ⌜v = NONEV⌝ ∗
                 (if shouldAdjust then P
-                 else ∃ i, cell_is_cancelled _ _ _ NArray γa i ∗
+                 else ∃ i, cell_is_cancelled _ _ aspc NArray γa i ∗
                            iterator_issued γ i) ∨
                 ∃ ns s, ⌜v = SOMEV s⌝ ∧ iterator_issued γ ns ∗
-                        is_infinite_array_cell_pointer _ _ _ NArray γa s ns
+                        is_infinite_array_cell_pointer _ _ aspc NArray γa s ns
   }}}.
 Proof.
   iIntros (Φ) "(#HArr & #HIter & HP & HPs) HΦ".
@@ -337,3 +338,6 @@ Proof.
 Qed.
 
 End proof.
+
+Typeclasses Opaque iterator_counter iterator_counter_at_least
+            iterator_contents is_iterator.

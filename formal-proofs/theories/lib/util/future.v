@@ -125,6 +125,10 @@ Definition future_invariant (γ: gname) (ℓ: loc) (state: future_state): iProp 
 Definition is_future (γ: gname) (f: val): iProp Σ :=
   ∃ (ℓ: loc), ⌜f = #ℓ⌝ ∧ inv N (∃ state, future_invariant γ ℓ state).
 
+Global Instance is_future_persistent γ f:
+  Persistent (is_future γ f).
+Proof. apply _. Qed.
+
 Instance future_state_Inhabited: Inhabited future_state.
 Proof. econstructor. econstructor. Qed.
 
