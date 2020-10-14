@@ -10,6 +10,8 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 internal fun getNull(): Symbol = NULL // Workaround for JS BE bug
 
@@ -111,40 +113,59 @@ private fun CoroutineScope.asFairChannel(flow: Flow<*>): ReceiveChannel<Any> = p
     }
 }
 
-internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = unsafeFlow {
-    coroutineScope {
-        val first = asChannel(flow)
-        val second = asChannel(flow2)
-        /*
-         * This approach only works with rendezvous channel and is required to enforce correctness
-         * in the following scenario:
-         * ```
-         * val f1 = flow { emit(1); delay(Long.MAX_VALUE) }
-         * val f2 = flowOf(1)
-         * f1.zip(f2) { ... }
-         * ```
-         *
-         * Invariant: this clause is invoked only when all elements from the channel were processed (=> rendezvous restriction).
-         */
-        (second as SendChannel<*>).invokeOnClose {
-            if (!first.isClosedForReceive) first.cancel(AbortFlowException(this@unsafeFlow))
-        }
-
-        val otherIterator = second.iterator()
-        try {
-            first.consumeEach { value ->
-                if (!otherIterator.hasNext()) {
-                    return@consumeEach
-                }
-                emit(transform(NULL.unbox(value), NULL.unbox(otherIterator.next())))
+internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
+    unsafeFlow {
+        coroutineScope {
+            val second = asChannel(flow2)
+            /*
+             * This approach only works with rendezvous channel and is required to enforce correctness
+             * in the following scenario:
+             * ```
+             * val f1 = flow { emit(1); delay(Long.MAX_VALUE) }
+             * val f2 = flowOf(1)
+             * f1.zip(f2) { ... }
+             * ```
+             *
+             * Invariant: this clause is invoked only when all elements from the channel were processed (=> rendezvous restriction).
+             */
+            val collectJob = Job()
+            val scopeJob = currentCoroutineContext()[Job]!!
+            (second as SendChannel<*>).invokeOnClose {
+                if (!collectJob.isActive) collectJob.cancel(AbortFlowException(this@unsafeFlow))
             }
-        } catch (e: AbortFlowException) {
-            e.checkOwnership(owner = this@unsafeFlow)
-        } finally {
-            if (!second.isClosedForReceive) second.cancel(AbortFlowException(this@unsafeFlow))
+
+            val newContext = coroutineContext + scopeJob
+            val cnt = threadContextElements(newContext)
+            try {
+                withContextUndispatched( coroutineContext + collectJob) {
+                    flow.collect { value ->
+                        val otherValue = second.receiveOrNull() ?: return@collect
+                        withContextUndispatched(newContext, cnt) {
+                            emit(transform(NULL.unbox(value), NULL.unbox(otherValue)))
+                        }
+                        ensureActive()
+                    }
+                }
+            } catch (e: AbortFlowException) {
+                e.checkOwnership(owner = this@unsafeFlow)
+            } finally {
+                if (!second.isClosedForReceive) second.cancel(AbortFlowException(this@unsafeFlow))
+            }
         }
     }
-}
+
+private suspend fun withContextUndispatched(
+    newContext: CoroutineContext,
+    countOrElement: Any = threadContextElements(newContext),
+    block: suspend () -> Unit
+): Unit =
+    suspendCoroutineUninterceptedOrReturn { uCont ->
+        withCoroutineContext(newContext, countOrElement) {
+            block.startCoroutineUninterceptedOrReturn(Continuation(newContext) {
+                uCont.resumeWith(it)
+            })
+        }
+    }
 
 // Channel has any type due to onReceiveOrNull. This will be fixed after receiveOrClosed
 private fun CoroutineScope.asChannel(flow: Flow<*>): ReceiveChannel<Any> = produce {
