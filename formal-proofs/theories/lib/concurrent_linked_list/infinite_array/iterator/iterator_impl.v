@@ -78,7 +78,7 @@ Definition is_iterator γa P γ v: iProp :=
     ⌜v = (#cℓ, p)%V⌝ ∧
     inv N (∃ (n: nat), iterator_contents γa P γ cℓ p n).
 
-Theorem is_iterator_persistent γa P γ v:
+Global Instance is_iterator_persistent γa P γ v:
   Persistent (is_iterator γa P γ v).
 Proof. apply _. Qed.
 
