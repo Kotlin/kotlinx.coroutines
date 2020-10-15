@@ -13,6 +13,10 @@ import kotlin.test.*
  */
 class ZipTest : TestBase() {
 
+    internal fun <T1, T2, R> Flow<T1>.zip(flow2: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> {
+        return zipImpl(this, flow2, transform)
+    }
+
     @Test
     fun testZip() = runTest {
         val f1 = flowOf("a", "b", "c")
@@ -221,5 +225,33 @@ class ZipTest : TestBase() {
         }
         assertFailsWith<CancellationException>(flow)
         finish(6)
+    }
+
+    private fun numbers(limit: Long = Long.MAX_VALUE) = flow {
+        for (i in 2L..limit) emit(i)
+    }
+
+    @Test
+    fun zip() = runTest {
+        val numbers = numbers(1000)
+        val first = numbers
+            .filter { it % 2L != 0L }
+            .map { it * it }
+        val second = numbers
+            .filter { it % 2L == 0L }
+            .map { it * it }
+        first.zip(second) { v1, v2 -> v1 + v2 }.filter { it % 3 == 0L }.count()
+    }
+
+    @Test
+    fun zip2() = runTest {
+        val numbers = numbers(10000)
+        val first = numbers
+            .filter { it % 2L != 0L }
+            .map { it * it }
+        val second = numbers
+            .filter { it % 2L == 0L }
+            .map { it * it }
+        first.zip(second) { v1, v2 -> v1 + v2 }.filter { it % 3 == 0L }.count()
     }
 }

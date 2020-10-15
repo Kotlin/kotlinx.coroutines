@@ -12,25 +12,23 @@ import java.util.concurrent.*
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(value = 1)
-@BenchmarkMode(Mode.AverageTime)
+@BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
-open class CombineBenchmark {
+open class CombineFlowsBenchmarVolatilek {
+
+    @Param("10", "100", "1000")
+    private var size = 10
 
     @Benchmark
-    fun measure10() = measure(10)
+    fun combine() = runBlocking {
+        combine((1 until size).map { flowOf(it) }) { a -> a}.collect()
+    }
 
     @Benchmark
-    fun measure100() = measure(100)
-
-    @Benchmark
-    fun measure1000() = measure(1000)
-
-    fun measure(size: Int) = runBlocking {
-        val flowList = (1..size).map { flowOf(it) }
-        val listFlow = combine(flowList) { it.toList() }
-
-        listFlow.collect {
-        }
+    fun combineTransform() = runBlocking {
+        val list = (1 until size).map { flowOf(it) }.toList()
+        combineTransform((1 until size).map { flowOf(it) }) { emit(it) }.collect()
     }
 }
+

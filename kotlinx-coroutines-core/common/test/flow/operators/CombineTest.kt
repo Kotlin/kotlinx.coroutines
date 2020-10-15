@@ -211,16 +211,16 @@ abstract class CombineTestBase : TestBase() {
             hang { expect(3) }
         }
 
-        val flow = f1.combineLatest(f2, { _, _ -> 1 }).onEach { expect(2) }
+        val flow = f1.combineLatest(f2, { _, _ -> 1 }).onEach { expectUnreached() }
         assertFailsWith<CancellationException>(flow)
-        finish(4)
+        finish(2)
     }
 
     @Test
     fun testCancellationExceptionDownstream() = runTest {
         val f1 = flow {
             emit(1)
-            expect(2)
+            expect(1)
             hang { expect(5) }
         }
         val f2 = flow {
@@ -230,7 +230,7 @@ abstract class CombineTestBase : TestBase() {
         }
 
         val flow = f1.combineLatest(f2, { _, _ -> 1 }).onEach {
-            expect(1)
+            expect(2)
             yield()
             expect(4)
             throw CancellationException("")

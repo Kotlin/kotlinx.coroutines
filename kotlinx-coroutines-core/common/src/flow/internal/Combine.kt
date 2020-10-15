@@ -9,107 +9,51 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
-
-internal fun getNull(): Symbol = NULL // Workaround for JS BE bug
-
-internal suspend fun <T1, T2, R> FlowCollector<R>.combineTransformInternal(
-    first: Flow<T1>, second: Flow<T2>,
-    transform: suspend FlowCollector<R>.(a: T1, b: T2) -> Unit
-) {
-    coroutineScope {
-        val firstChannel = asFairChannel(first)
-        val secondChannel = asFairChannel(second)
-        var firstValue: Any? = null
-        var secondValue: Any? = null
-        var firstIsClosed = false
-        var secondIsClosed = false
-        while (!firstIsClosed || !secondIsClosed) {
-            select<Unit> {
-                onReceive(firstIsClosed, firstChannel, { firstIsClosed = true }) { value ->
-                    firstValue = value
-                    if (secondValue !== null) {
-                        transform(getNull().unbox(firstValue), getNull().unbox(secondValue) as T2)
-                    }
-                }
-
-                onReceive(secondIsClosed, secondChannel, { secondIsClosed = true }) { value ->
-                    secondValue = value
-                    if (firstValue !== null) {
-                        transform(getNull().unbox(firstValue) as T1, getNull().unbox(secondValue) as T2)
-                    }
-                }
-            }
-        }
-    }
-}
 
 @PublishedApi
 internal suspend fun <R, T> FlowCollector<R>.combineInternal(
     flows: Array<out Flow<T>>,
     arrayFactory: () -> Array<T?>,
     transform: suspend FlowCollector<R>.(Array<T>) -> Unit
-): Unit = coroutineScope {
+): Unit = flowScope { // flow scope so any cancellation within the source flow will cancel the whole scope
     val size = flows.size
-    val channels = Array(size) { asFairChannel(flows[it]) }
-    val latestValues = arrayOfNulls<Any?>(size)
+    val latestValues = Array<Any?>(size) { NULL }
     val isClosed = Array(size) { false }
-    var nonClosed = size
-    var remainingNulls = size
-    // See flow.combine(other) for explanation of the logic
-    // Reuse receive blocks to avoid allocations on each iteration
-    val onReceiveBlocks = Array<suspend (Any?) -> Unit>(size) { i ->
-        { value ->
-            if (value === null) {
-                isClosed[i] = true;
-                --nonClosed
-            }
-            else {
-                if (latestValues[i] == null) --remainingNulls
-                latestValues[i] = value
-                if (remainingNulls == 0) {
-                    val arguments = arrayFactory()
-                    for (index in 0 until size) {
-                        arguments[index] = NULL.unbox(latestValues[index])
+    val resultChannel = Channel<Array<T>>(Channel.CONFLATED)
+    val nonClosed = LocalAtomicInt(size)
+    val remainingAbsentValues = LocalAtomicInt(size)
+    for (i in 0 until size) {
+        // Coroutine per flow that keeps track of its value and sends result to downstream
+        launch {
+            try {
+                flows[i].collect { value ->
+                    val previous = latestValues[i]
+                    latestValues[i] = value
+                    if (previous === NULL) remainingAbsentValues.decrementAndGet()
+                    if (remainingAbsentValues.value == 0) {
+                        val results = arrayFactory()
+                        for (index in 0 until size) {
+                            results[index] = NULL.unbox(latestValues[index])
+                        }
+                        // NB: here actually "stale" array can overwrite a fresh one and break linearizability
+                        resultChannel.send(results as Array<T>)
                     }
-                    transform(arguments as Array<T>)
+                    yield() // Emulate fairness for backward compatibility
+                }
+            } finally {
+                isClosed[i] = true
+                // Close the channel when there is no more flows
+                if (nonClosed.decrementAndGet() == 0) {
+                    resultChannel.close()
                 }
             }
         }
     }
 
-    while (nonClosed != 0) {
-        select<Unit> {
-            for (i in 0 until size) {
-                if (isClosed[i]) continue
-                channels[i].onReceiveOrNull(onReceiveBlocks[i])
-            }
-        }
-    }
-}
-
-private inline fun SelectBuilder<Unit>.onReceive(
-    isClosed: Boolean,
-    channel: ReceiveChannel<Any>,
-    crossinline onClosed: () -> Unit,
-    noinline onReceive: suspend (value: Any) -> Unit
-) {
-    if (isClosed) return
-    @Suppress("DEPRECATION")
-    channel.onReceiveOrNull {
-        // TODO onReceiveOrClosed when boxing issues are fixed
-        if (it === null) onClosed()
-        else onReceive(it)
-    }
-}
-
-// Channel has any type due to onReceiveOrNull. This will be fixed after receiveOrClosed
-private fun CoroutineScope.asFairChannel(flow: Flow<*>): ReceiveChannel<Any> = produce {
-    val channel = channel as ChannelCoroutine<Any>
-    flow.collect { value ->
-        return@collect channel.sendFair(value ?: NULL)
+    resultChannel.consumeEach {
+        transform(it)
     }
 }
 
@@ -131,12 +75,25 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
             val collectJob = Job()
             val scopeJob = currentCoroutineContext()[Job]!!
             (second as SendChannel<*>).invokeOnClose {
+                // Optimization to avoid AFE allocation when the other flow is done
                 if (!collectJob.isActive) collectJob.cancel(AbortFlowException(this@unsafeFlow))
             }
 
             val newContext = coroutineContext + scopeJob
             val cnt = threadContextElements(newContext)
             try {
+                /*
+                 * Non-trivial undispatched (because we are in the right context and there is no structured concurrency)
+                 * hierarchy:
+                 * -Outer coroutineScope that owns the whole zip process
+                 * - First flow is collected by the child of coroutineScope, collectJob.
+                 *    So it can be safely cancelled as soon as the second flow is done
+                 * - **But** the downstream MUST NOT be cancelled when the second flow is done,
+                 *    so we emit to downstream from coroutineScope job.
+                 * Typically, such hierarchy requires coroutine for collector that communicates
+                 * with coroutines scope via a channel, but it's way too expensive, so
+                 * we are using this trick instead.
+                 */
                 withContextUndispatched( coroutineContext + collectJob) {
                     flow.collect { value ->
                         val otherValue = second.receiveOrNull() ?: return@collect

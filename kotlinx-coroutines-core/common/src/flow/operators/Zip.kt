@@ -31,9 +31,7 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  */
 @JvmName("flowCombine")
 public fun <T1, T2, R> Flow<T1>.combine(flow: Flow<T2>, transform: suspend (a: T1, b: T2) -> R): Flow<R> = flow {
-    combineTransformInternal(this@combine, flow) { a, b ->
-        emit(transform(a, b))
-    }
+    combineInternal(arrayOf(this@combine, flow), { arrayOfNulls(2) }, { emit(transform(it[0] as T1, it[1] as T2)) })
 }
 
 /**
@@ -75,10 +73,11 @@ public fun <T1, T2, R> combine(flow: Flow<T1>, flow2: Flow<T2>, transform: suspe
 public fun <T1, T2, R> Flow<T1>.combineTransform(
     flow: Flow<T2>,
     @BuilderInference transform: suspend FlowCollector<R>.(a: T1, b: T2) -> Unit
-): Flow<R> = safeFlow {
-    combineTransformInternal(this@combineTransform, flow) { a, b ->
-        transform(a, b)
-    }
+): Flow<R> = combineTransform(this, flow) { args: Array<*> ->
+    transform(
+        args[0] as T1,
+        args[1] as T2
+    )
 }
 
 /**

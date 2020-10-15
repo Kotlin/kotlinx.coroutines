@@ -1,0 +1,12 @@
+/*
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+package kotlinx.coroutines.internal
+
+
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+internal actual typealias LocalAtomicRef<T> = java.util.concurrent.atomic.AtomicReference<T>
+
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+internal actual typealias LocalAtomicInt = java.util.concurrent.atomic.AtomicInteger
