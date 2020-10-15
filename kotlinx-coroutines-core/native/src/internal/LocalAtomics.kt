@@ -4,20 +4,27 @@
 
 package kotlinx.coroutines.internal
 
-internal actual class LocalAtomicRef<T> actual constructor(private var value: T) {
+import kotlinx.atomicfu.*
+
+internal actual class LocalAtomicRef<T> actual constructor(value: T) {
+    private val aRef = atomic(value)
+
     actual fun set(value: T) {
-        this.value = value
+        aRef.value = value
     }
 
-    actual fun get(): T = value
+    actual fun get(): T = aRef.value
 }
 
-internal actual class LocalAtomicInt actual constructor(private var value: Int) {
+internal actual class LocalAtomicInt actual constructor(value: Int) {
+
+    private val iRef = atomic(value)
+
     actual fun set(value: Int) {
-        this.value = value
+        iRef.value = value
     }
 
-    actual fun get(): Int = value
+    actual fun get(): Int = iRef.value
 
-    actual fun decrementAndGet(): Int = --value
+    actual fun decrementAndGet(): Int = iRef.decrementAndGet()
 }
