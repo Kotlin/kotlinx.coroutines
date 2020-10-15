@@ -12,6 +12,8 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
+internal fun getNull(): Symbol = NULL // Workaround for JS BE bug
+
 @PublishedApi
 internal suspend fun <R, T> FlowCollector<R>.combineInternal(
     flows: Array<out Flow<T>>,
@@ -19,7 +21,8 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
     transform: suspend FlowCollector<R>.(Array<T>) -> Unit
 ): Unit = flowScope { // flow scope so any cancellation within the source flow will cancel the whole scope
     val size = flows.size
-    val latestValues = Array<Any?>(size) { NULL }
+    if (size == 0) return@flowScope // bail-out for empty input
+    val latestValues = Array<Any?>(size) { getNull() }
     val isClosed = Array(size) { false }
     val resultChannel = Channel<Array<T>>(Channel.CONFLATED)
     val nonClosed = LocalAtomicInt(size)
@@ -31,11 +34,11 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
                 flows[i].collect { value ->
                     val previous = latestValues[i]
                     latestValues[i] = value
-                    if (previous === NULL) remainingAbsentValues.decrementAndGet()
+                    if (previous === getNull()) remainingAbsentValues.decrementAndGet()
                     if (remainingAbsentValues.value == 0) {
                         val results = arrayFactory()
                         for (index in 0 until size) {
-                            results[index] = NULL.unbox(latestValues[index])
+                            results[index] = getNull().unbox(latestValues[index])
                         }
                         // NB: here actually "stale" array can overwrite a fresh one and break linearizability
                         resultChannel.send(results as Array<T>)
@@ -98,7 +101,7 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
                     flow.collect { value ->
                         val otherValue = second.receiveOrNull() ?: return@collect
                         withContextUndispatched(newContext, cnt) {
-                            emit(transform(NULL.unbox(value), NULL.unbox(otherValue)))
+                            emit(transform(getNull().unbox(value), getNull().unbox(otherValue)))
                         }
                         ensureActive()
                     }
@@ -127,6 +130,6 @@ private suspend fun withContextUndispatched(
 // Channel has any type due to onReceiveOrNull. This will be fixed after receiveOrClosed
 private fun CoroutineScope.asChannel(flow: Flow<*>): ReceiveChannel<Any> = produce {
     flow.collect { value ->
-        return@collect channel.send(value ?: NULL)
+        return@collect channel.send(value ?: getNull())
     }
 }
