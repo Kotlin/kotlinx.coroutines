@@ -177,7 +177,7 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun tesConvertDispatcherToOriginalScheduler(): Unit = runTest {
+    fun testConvertDispatcherToOriginalScheduler(): Unit = runTest {
         expect(1)
 
         val originalScheduler = Schedulers.io()
@@ -189,7 +189,7 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun tesConvertSchedulerToOriginalDispatcher(): Unit = runTest {
+    fun testConvertSchedulerToOriginalDispatcher(): Unit = runTest {
         expect(1)
 
         val originalDispatcher = currentDispatcher() as CoroutineDispatcher
