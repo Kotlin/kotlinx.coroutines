@@ -39,7 +39,7 @@ public class CoroutinesTimeoutExtension: InvocationInterceptor {
             }.orElseGet {
                 throw UnsupportedOperationException("CoroutinesTimeoutExtension should not be used directly; annotate the test class or method with CoroutinesTimeout instead.")
             }
-        invocation.proceed()
+        interceptInvocation(invocation, invocationContext.executable.name, annotation)
     }
 
     override fun interceptAfterAllMethod(
@@ -107,6 +107,7 @@ public class CoroutinesTimeoutExtension: InvocationInterceptor {
             invocation.proceed()
         }
         val testThread = Thread(testResult, "Timeout test thread").apply { isDaemon = true }
+        DebugProbes.install()
         try {
             testThread.start()
             // Await until test is started to take only test execution time into account
