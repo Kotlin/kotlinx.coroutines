@@ -32,7 +32,6 @@ public fun CoroutineDispatcher.asScheduler(): Scheduler =
     } else {
         DispatcherScheduler(this)
     }
-
 private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Scheduler() {
 
     private val schedulerJob = SupervisorJob()
@@ -56,7 +55,9 @@ private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Schedul
     }
 
     override fun createWorker(): Worker =
-        DispatcherWorker(dispatcher, schedulerJob)
+        DispatcherWorker(dispatcher, schedulerJob).also {
+            it.start()
+        }
 
     override fun shutdown() {
         scope.cancel()
@@ -68,7 +69,7 @@ private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Schedul
         private val workerScope = CoroutineScope(workerJob + dispatcher)
         private val blockChannel = Channel<SchedulerChannelTask>(Channel.UNLIMITED)
 
-        init {
+        fun start() {
             workerScope.launch {
                 while (isActive) {
                     val task = blockChannel.receive()
@@ -118,6 +119,7 @@ private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Schedul
     }
 }
 
+
 /**
  * Represents a task to be queued sequentially on a [Channel] for a [Scheduler.Worker].
  *
@@ -126,18 +128,11 @@ private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Schedul
 private class SchedulerChannelTask(
     private val block: Runnable,
     private val job: Job
-) : Disposable {
+) : JobDisposable(job) {
     fun execute() {
         if (job.isActive) {
             block.run()
         }
-    }
-
-    override fun isDisposed(): Boolean =
-        !job.isActive
-
-    override fun dispose() {
-        job.cancel()
     }
 }
 
@@ -177,8 +172,8 @@ public class SchedulerCoroutineDispatcher(
     override fun hashCode(): Int = System.identityHashCode(scheduler)
 }
 
-private class JobDisposable(private val job: Job) : Disposable {
-    override fun isDisposed(): Boolean = job.isCancelled || job.isCompleted
+private open class JobDisposable(private val job: Job) : Disposable {
+    override fun isDisposed(): Boolean = !job.isActive
 
     override fun dispose() {
         job.cancel()
