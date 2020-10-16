@@ -297,5 +297,11 @@ public inline fun <reified T, R> combineTransform(
  *     println(it) // Will print "1a 2b 3c"
  * }
  * ```
+ *
+ * ### Buffering
+ *
+ * The upstream flow is collected sequentially in the same coroutine without any buffering, while the
+ * [other] flow is collected concurrently as if `buffer(0)` is used. See documentation in the [buffer] operator
+ * for explanation. You can use additional calls to the [buffer] operator as needed for more concurrency.
  */
 public fun <T1, T2, R> Flow<T1>.zip(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = zipImpl(this, other, transform)
