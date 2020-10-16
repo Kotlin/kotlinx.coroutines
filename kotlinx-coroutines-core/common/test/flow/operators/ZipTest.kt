@@ -13,10 +13,6 @@ import kotlin.test.*
  */
 class ZipTest : TestBase() {
 
-    internal fun <T1, T2, R> Flow<T1>.zip(flow2: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> {
-        return zipImpl(this, flow2, transform)
-    }
-
     @Test
     fun testZip() = runTest {
         val f1 = flowOf("a", "b", "c")
@@ -28,7 +24,7 @@ class ZipTest : TestBase() {
     fun testUnevenZip() = runTest {
         val f1 = flowOf("a", "b", "c", "d", "e")
         val f2 = flowOf(1, 2, 3)
-        assertEquals(listOf("a1", "b2", "c3"), f1.zip(f2, { i, j -> i + j }).toList())
+        assertEquals(listOf("a1", "b2", "c3"), f1.zip(f2) { i, j -> i + j }.toList())
         assertEquals(listOf("a1", "b2", "c3"), f2.zip(f1) { i, j -> j + i }.toList())
     }
 
@@ -84,6 +80,24 @@ class ZipTest : TestBase() {
     }
 
     @Test
+    fun testCancelWhenFlowIsDone2() = runTest {
+        val f1 = flow<String> {
+            emit("1")
+            emit("2")
+            try {
+                emit("3")
+                expectUnreached()
+            } finally {
+                expect(1)
+            }
+        }
+
+        val f2 = flowOf("a", "b")
+        assertEquals(listOf("1a", "2b"), f1.zip(f2) { s1, s2 -> s1 + s2 }.toList())
+        finish(2)
+    }
+
+    @Test
     fun testCancelWhenFlowIsDoneReversed() = runTest {
         val f1 = flow<String> {
             emit("1")
@@ -93,7 +107,7 @@ class ZipTest : TestBase() {
             }
         }
 
-        val f2 =flow<String> {
+        val f2 = flow<String> {
             emit("a")
             emit("b")
             yield()
@@ -135,19 +149,19 @@ class ZipTest : TestBase() {
         finish(6)
     }
 
-//    @Test
+    @Test
     fun testErrorInDownstreamCancelsUpstream() = runTest {
         val f1 = flow {
             emit("a")
             hang {
-                expect(2)
+                expect(3)
             }
         }.flowOn(NamedDispatchers("first"))
 
         val f2 = flow {
             emit(1)
             hang {
-                expect(3)
+                expect(2)
             }
         }.flowOn(NamedDispatchers("second"))
 
@@ -227,31 +241,18 @@ class ZipTest : TestBase() {
         finish(6)
     }
 
-    private fun numbers(limit: Long = Long.MAX_VALUE) = flow {
-        for (i in 2L..limit) emit(i)
-    }
-
     @Test
-    fun zip() = runTest {
-        val numbers = numbers(1000)
-        val first = numbers
-            .filter { it % 2L != 0L }
-            .map { it * it }
-        val second = numbers
-            .filter { it % 2L == 0L }
-            .map { it * it }
-        first.zip(second) { v1, v2 -> v1 + v2 }.filter { it % 3 == 0L }.count()
-    }
+    fun testCancellationOfCollector() = runTest {
+        val f1 = flow {
+            emit("1")
+            awaitCancellation()
+        }
 
-    @Test
-    fun zip2() = runTest {
-        val numbers = numbers(10000)
-        val first = numbers
-            .filter { it % 2L != 0L }
-            .map { it * it }
-        val second = numbers
-            .filter { it % 2L == 0L }
-            .map { it * it }
-        first.zip(second) { v1, v2 -> v1 + v2 }.filter { it % 3 == 0L }.count()
+        val f2 = flow {
+            emit("2")
+            yield()
+        }
+
+        f1.zip(f2) { a, b -> a + b }.collect { }
     }
 }

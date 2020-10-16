@@ -76,10 +76,10 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
              * Invariant: this clause is invoked only when all elements from the channel were processed (=> rendezvous restriction).
              */
             val collectJob = Job()
-            val scopeJob = currentCoroutineContext()[Job]!!
+            val scopeJob = currentCoroutineContext()[Job]!! // TODO replace with extension when #2245 is here
             (second as SendChannel<*>).invokeOnClose {
                 // Optimization to avoid AFE allocation when the other flow is done
-                if (!collectJob.isActive) collectJob.cancel(AbortFlowException(this@unsafeFlow))
+                if (collectJob.isActive) collectJob.cancel(AbortFlowException(this@unsafeFlow))
             }
 
             val newContext = coroutineContext + scopeJob
@@ -99,11 +99,10 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
                  */
                 withContextUndispatched( coroutineContext + collectJob) {
                     flow.collect { value ->
-                        val otherValue = second.receiveOrNull() ?: return@collect
                         withContextUndispatched(newContext, cnt) {
+                            val otherValue = second.receiveOrNull() ?: throw AbortFlowException(this@unsafeFlow)
                             emit(transform(getNull().unbox(value), getNull().unbox(otherValue)))
                         }
-                        ensureActive()
                     }
                 }
             } catch (e: AbortFlowException) {
