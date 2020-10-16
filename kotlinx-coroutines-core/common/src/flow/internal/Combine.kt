@@ -11,8 +11,10 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
+import kotlin.jvm.*
+import kotlin.math.*
 
-internal fun getNull(): Symbol = NULL // Workaround for JS BE bug
+private class Update(@JvmField val index: Int, @JvmField val value: Any?)
 
 @PublishedApi
 internal suspend fun <R, T> FlowCollector<R>.combineInternal(
@@ -22,27 +24,17 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
 ): Unit = flowScope { // flow scope so any cancellation within the source flow will cancel the whole scope
     val size = flows.size
     if (size == 0) return@flowScope // bail-out for empty input
-    val latestValues = Array<Any?>(size) { getNull() }
+    val latestValues = Array<Any?>(size) { UNINITIALIZED }
     val isClosed = Array(size) { false }
-    val resultChannel = Channel<Array<T>>(Channel.CONFLATED)
+    val resultChannel = Channel<Update>(flows.size)
     val nonClosed = LocalAtomicInt(size)
-    val remainingAbsentValues = LocalAtomicInt(size)
+    var remainingAbsentValues = size
     for (i in 0 until size) {
         // Coroutine per flow that keeps track of its value and sends result to downstream
         launch {
             try {
                 flows[i].collect { value ->
-                    val previous = latestValues[i]
-                    latestValues[i] = value
-                    if (previous === getNull()) remainingAbsentValues.decrementAndGet()
-                    if (remainingAbsentValues.value == 0) {
-                        val results = arrayFactory()
-                        for (index in 0 until size) {
-                            results[index] = getNull().unbox(latestValues[index])
-                        }
-                        // NB: here actually "stale" array can overwrite a fresh one and break linearizability
-                        resultChannel.send(results as Array<T>)
-                    }
+                    resultChannel.send(Update(i, value))
                     yield() // Emulate fairness for backward compatibility
                 }
             } finally {
@@ -55,8 +47,56 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
         }
     }
 
+//    val lastReceivedEpoch = IntArray(size)
+//    var currentEpoch = 0
+//    while (!resultChannel.isClosedForReceive) {
+//        ++currentEpoch
+//        var shouldSuspend = true
+//        // Start batch
+//        var elementsReceived = 0
+//        while (true) {
+//            // The very first receive in epoch should be suspending
+//            val element = if (shouldSuspend) {
+//                shouldSuspend = false
+//                resultChannel.receiveOrNull()
+//            } else {
+//                resultChannel.poll()
+//            }
+//            if (element === null) break // End batch processing, nothing to receive
+//            ++elementsReceived
+//            val index = element.index
+//            // Update valued
+//            val previous = latestValues[index]
+//            latestValues[index] = element.value
+//            if (previous === UNINITIALIZED) --remainingAbsentValues
+//            // Check epoch
+//            // Received the second value from the same flow in the same epoch -- bail out
+//            if (lastReceivedEpoch[index] == currentEpoch) break
+//            lastReceivedEpoch[index] = currentEpoch
+//        }
+//
+//        // Process batch result
+//        if (remainingAbsentValues == 0 && elementsReceived != 0) {
+//            val results = arrayFactory()
+//            for (i in 0 until size) {
+//                results[i] = latestValues[i] as T?
+//            }
+//            transform(results as Array<T>)
+//        }
+//    }
+
     resultChannel.consumeEach {
-        transform(it)
+        val index = it.index
+        val previous = latestValues[index]
+        latestValues[index] = it.value
+        if (previous === UNINITIALIZED) --remainingAbsentValues
+        if (remainingAbsentValues == 0) {
+            val results = arrayFactory()
+            for (i in 0 until size) {
+                results[i] = latestValues[i] as T?
+            }
+            transform(results as Array<T>)
+        }
     }
 }
 
@@ -101,7 +141,7 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
                     flow.collect { value ->
                         withContextUndispatched(newContext, cnt) {
                             val otherValue = second.receiveOrNull() ?: throw AbortFlowException(this@unsafeFlow)
-                            emit(transform(getNull().unbox(value), getNull().unbox(otherValue)))
+                            emit(transform(NULL.unbox(value), NULL.unbox(otherValue)))
                         }
                     }
                 }
@@ -129,6 +169,6 @@ private suspend fun withContextUndispatched(
 // Channel has any type due to onReceiveOrNull. This will be fixed after receiveOrClosed
 private fun CoroutineScope.asChannel(flow: Flow<*>): ReceiveChannel<Any> = produce {
     flow.collect { value ->
-        return@collect channel.send(value ?: getNull())
+        return@collect channel.send(value ?: NULL)
     }
 }

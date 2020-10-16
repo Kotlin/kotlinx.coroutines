@@ -2,9 +2,10 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.flow
+package kotlinx.coroutines.flow.operators
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlin.test.*
 import kotlinx.coroutines.flow.combine as combineOriginal
 import kotlinx.coroutines.flow.combineTransform as combineTransformOriginal
@@ -208,19 +209,19 @@ abstract class CombineTestBase : TestBase() {
         }
         val f2 = flow {
             emit(1)
-            hang { expect(3) }
+            expectUnreached()
         }
 
-        val flow = f1.combineLatest(f2, { _, _ -> 1 }).onEach { expectUnreached() }
+        val flow = f1.combineLatest(f2, { _, _ -> 1 }).onEach { expect(2) }
         assertFailsWith<CancellationException>(flow)
-        finish(2)
+        finish(3)
     }
 
     @Test
     fun testCancellationExceptionDownstream() = runTest {
         val f1 = flow {
             emit(1)
-            expect(1)
+            expect(2)
             hang { expect(5) }
         }
         val f2 = flow {
@@ -230,7 +231,7 @@ abstract class CombineTestBase : TestBase() {
         }
 
         val flow = f1.combineLatest(f2, { _, _ -> 1 }).onEach {
-            expect(2)
+            expect(1)
             yield()
             expect(4)
             throw CancellationException("")
