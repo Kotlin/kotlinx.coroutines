@@ -89,14 +89,10 @@ private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Schedul
             val newBlock = RxJavaPlugins.onSchedule(block)
 
             val taskJob = Job(workerJob)
-
-            fun addTaskToQueue() {
-                val task = SchedulerChannelTask(newBlock, taskJob)
-                blockChannel.offer(task)
-            }
+            val task = SchedulerChannelTask(newBlock, taskJob)
 
             if (delay == 0L) {
-                addTaskToQueue()
+                blockChannel.offer(task)
             } else {
                 // Use `taskJob` as the parent here so the delay will also get cancelled if the Disposable
                 // is disposed.
@@ -106,7 +102,7 @@ private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Schedul
                     delay(unit.toMillis(delay))
                     // Once the task is ready to run, it still needs to be executed via the queue to comply
                     // with the Scheduler contract of running all worker tasks in a non-overlapping manner.
-                    addTaskToQueue()
+                    blockChannel.offer(task)
                 }
             }
 
