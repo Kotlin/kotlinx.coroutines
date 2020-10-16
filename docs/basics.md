@@ -235,12 +235,12 @@ World!
 ### Scope builder
 
 In addition to the coroutine scope provided by different builders, it is possible to declare your own scope using the
-[coroutineScope] builder. It creates a coroutine scope and does not complete until all launched children complete. 
+[coroutineScope][_coroutineScope] builder. It creates a coroutine scope and does not complete until all launched children complete. 
 
-[runBlocking] and [coroutineScope] may look similar because they both wait for their body and all its children to complete.
+[runBlocking] and [coroutineScope][_coroutineScope] may look similar because they both wait for their body and all its children to complete.
 The main difference is that the [runBlocking] method _blocks_ the current thread for waiting,
-while [coroutineScope] just suspends, releasing the underlying thread for other usages.
-Because of that difference, [runBlocking] is a regular function and [coroutineScope] is a suspending function.
+while [coroutineScope][_coroutineScope] just suspends, releasing the underlying thread for other usages.
+Because of that difference, [runBlocking] is a regular function and [coroutineScope][_coroutineScope] is a suspending function.
 
 It can be demonstrated by the following example:
 
@@ -281,7 +281,7 @@ Coroutine scope is over
 -->
 
 Note that right after the "Task from coroutine scope" message (while waiting for nested launch)
- "Task from runBlocking" is executed and printed — even though the [coroutineScope] is not completed yet. 
+ "Task from runBlocking" is executed and printed — even though the [coroutineScope][_coroutineScope] is not completed yet. 
 
 ### Extract function refactoring
 
@@ -403,7 +403,7 @@ Active coroutines that were launched in [GlobalScope] do not keep the process al
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
 [Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/join.html
-[coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
+[_coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
 [CoroutineScope()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope.html
 <!--- END -->
 

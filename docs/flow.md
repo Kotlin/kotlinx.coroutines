@@ -203,7 +203,7 @@ I'm not blocked 3
 
 Notice the following differences in the code with the [Flow] from the earlier examples:
 
-* A builder function for [Flow] type is called [flow].
+* A builder function for [Flow] type is called [flow][_flow].
 * Code inside the `flow { ... }` builder block can suspend.
 * The `simple` function  is no longer marked with `suspend` modifier.   
 * Values are _emitted_ from the flow using [emit][FlowCollector.emit] function.
@@ -214,7 +214,7 @@ thread is blocked in this case.
 
 ### Flows are cold
 
-Flows are _cold_ streams similar to sequences &mdash; the code inside a [flow] builder does not
+Flows are _cold_ streams similar to sequences &mdash; the code inside a [flow][_flow] builder does not
 run until the flow is collected. This becomes clear in the following example:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
@@ -1785,7 +1785,7 @@ coroutine only without cancelling the whole scope or to [join][Job.join] it.
  
 ### Flow cancellation checks
 
-For convenience, the [flow] builder performs additional [ensureActive] checks for cancellation on each emitted value. 
+For convenience, the [flow][_flow] builder performs additional [ensureActive] checks for cancellation on each emitted value. 
 It means that a busy loop emitting from a `flow { ... }` is cancellable:
  
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
@@ -1944,7 +1944,7 @@ Integration modules include conversions from and to `Flow`, integration with Rea
 [CancellationException]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-cancellation-exception/index.html
 <!--- INDEX kotlinx.coroutines.flow -->
 [Flow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html
-[flow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/flow.html
+[_flow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/flow.html
 [FlowCollector.emit]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow-collector/emit.html
 [collect]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/collect.html
 [flowOf]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/flow-of.html
