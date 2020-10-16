@@ -177,9 +177,7 @@ jvmTest {
     minHeapSize = '1g'
     maxHeapSize = '1g'
     enableAssertions = true
-    if (!Idea.active) { // Workaround for KT-42671
-        systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
-    }
+    systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
     // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
     if (!Idea.active && rootProject.properties['stress'] == null) {
         exclude '**/*StressTest.*'
