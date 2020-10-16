@@ -394,6 +394,7 @@ public final class kotlinx/coroutines/JobKt {
 	public static final fun cancelFutureOnCompletion (Lkotlinx/coroutines/Job;Ljava/util/concurrent/Future;)Lkotlinx/coroutines/DisposableHandle;
 	public static final fun ensureActive (Lkotlin/coroutines/CoroutineContext;)V
 	public static final fun ensureActive (Lkotlinx/coroutines/Job;)V
+	public static final fun getJob (Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/Job;
 	public static final fun isActive (Lkotlin/coroutines/CoroutineContext;)Z
 }
 
