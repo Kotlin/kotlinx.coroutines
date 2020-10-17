@@ -438,6 +438,39 @@ class SchedulerTest : TestBase() {
 
         finish(4)
     }
+
+    /**
+     * Tests that cancelling a runnable in one worker doesn't affect work in another scheduler.
+     *
+     * This is part of expected behavior documented.
+     */
+    @Test
+    fun testMultipleWorkerCancellation(): Unit = runTest {
+        expect(1)
+
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+
+        coroutineScope {
+            suspendCancellableCoroutine<Unit> {
+                val workerOne = scheduler.createWorker()
+                workerOne.schedule({
+                    expect(3)
+                    it.resume(Unit)
+                }, 10, TimeUnit.MILLISECONDS)
+
+                expect(2)
+
+                val workerTwo = scheduler.createWorker()
+                workerTwo.schedule({
+                    expectUnreached()
+                }, 10, TimeUnit.MILLISECONDS)
+                workerTwo.dispose()
+            }
+        }
+
+        finish(4)
+    }
 }
 
 typealias RxSchedulerBlockNoDelay = (Runnable) -> Disposable
