@@ -21,9 +21,12 @@ import kotlin.time.*
 public interface Delay {
     /**
      * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
+     *
      * This suspending function is cancellable.
      * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
      * immediately resumes with [CancellationException].
+     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+     * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
      */
     public suspend fun delay(time: Long) {
         if (time <= 0) return // don't delay
@@ -54,15 +57,57 @@ public interface Delay {
      *
      * This implementation uses a built-in single-threaded scheduled executor service.
      */
-    public fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
-        DefaultDelay.invokeOnTimeout(timeMillis, block)
+    public fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+        DefaultDelay.invokeOnTimeout(timeMillis, block, context)
 }
 
 /**
+ * Suspends until cancellation, in which case it will throw a [CancellationException].
+ *
+ * This function returns [Nothing], so it can be used in any coroutine,
+ * regardless of the required return type.
+ *
+ * Usage example in callback adapting code:
+ *
+ * ```kotlin
+ * fun currentTemperature(): Flow<Temperature> = callbackFlow {
+ *     val callback = SensorCallback { degreesCelsius: Double ->
+ *         trySend(Temperature.celsius(degreesCelsius))
+ *     }
+ *     try {
+ *         registerSensorCallback(callback)
+ *         awaitCancellation() // Suspends to keep getting updates until cancellation.
+ *     } finally {
+ *         unregisterSensorCallback(callback)
+ *     }
+ * }
+ * ```
+ *
+ * Usage example in (non declarative) UI code:
+ *
+ * ```kotlin
+ * suspend fun showStuffUntilCancelled(content: Stuff): Nothing {
+ *     someSubView.text = content.title
+ *     anotherSubView.text = content.description
+ *     someView.visibleInScope {
+ *         awaitCancellation() // Suspends so the view stays visible.
+ *     }
+ * }
+ * ```
+ */
+@ExperimentalCoroutinesApi
+public suspend fun awaitCancellation(): Nothing = suspendCancellableCoroutine {}
+
+/**
  * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
+ *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
+ * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+ * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
+ *
+ * If you want to delay forever (until cancellation), consider using [awaitCancellation] instead.
  *
  * Note that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
@@ -72,15 +117,23 @@ public interface Delay {
 public suspend fun delay(timeMillis: Long) {
     if (timeMillis <= 0) return // don't delay
     return suspendCancellableCoroutine sc@ { cont: CancellableContinuation<Unit> ->
-        cont.context.delay.scheduleResumeAfterDelay(timeMillis, cont)
+        // if timeMillis == Long.MAX_VALUE then just wait forever like awaitCancellation, don't schedule.
+        if (timeMillis < Long.MAX_VALUE) {
+            cont.context.delay.scheduleResumeAfterDelay(timeMillis, cont)
+        }
     }
 }
 
 /**
  * Delays coroutine for a given [duration] without blocking a thread and resumes it after the specified time.
+ *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
+ * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+ * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
+ *
+ * If you want to delay forever (until cancellation), consider using [awaitCancellation] instead.
  *
  * Note that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *

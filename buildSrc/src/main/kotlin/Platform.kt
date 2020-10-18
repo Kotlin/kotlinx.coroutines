@@ -1,5 +1,6 @@
 import org.gradle.api.Project
 
+// Use from Groovy for now
 fun platformOf(project: Project): String =
     when (project.name.substringAfterLast("-")) {
         "js" -> "js"

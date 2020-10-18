@@ -38,6 +38,8 @@ public final class kotlinx/coroutines/reactor/ReactorContextKt {
 
 public final class kotlinx/coroutines/reactor/ReactorFlowKt {
 	public static final fun asFlux (Lkotlinx/coroutines/flow/Flow;)Lreactor/core/publisher/Flux;
+	public static final fun asFlux (Lkotlinx/coroutines/flow/Flow;Lkotlin/coroutines/CoroutineContext;)Lreactor/core/publisher/Flux;
+	public static synthetic fun asFlux$default (Lkotlinx/coroutines/flow/Flow;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lreactor/core/publisher/Flux;
 }
 
 public final class kotlinx/coroutines/reactor/SchedulerCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay {
@@ -47,7 +49,7 @@ public final class kotlinx/coroutines/reactor/SchedulerCoroutineDispatcher : kot
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getScheduler ()Lreactor/core/scheduler/Scheduler;
 	public fun hashCode ()I
-	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
+	public fun invokeOnTimeout (JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
 	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/CancellableContinuation;)V
 	public fun toString ()Ljava/lang/String;
 }

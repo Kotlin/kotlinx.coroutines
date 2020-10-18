@@ -7,6 +7,7 @@ package kotlinx.coroutines.reactive
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
+import org.reactivestreams.*
 import kotlin.test.*
 
 class PublisherAsFlowTest : TestBase() {
@@ -180,5 +181,86 @@ class PublisherAsFlowTest : TestBase() {
             }
         }
         finish(6)
+    }
+
+    @Test
+    fun testRequestRendezvous() =
+        testRequestSizeWithBuffer(Channel.RENDEZVOUS, BufferOverflow.SUSPEND, 1)
+
+    @Test
+    fun testRequestBuffer1() =
+        testRequestSizeWithBuffer(1, BufferOverflow.SUSPEND, 1)
+
+    @Test
+    fun testRequestBuffer10() =
+        testRequestSizeWithBuffer(10, BufferOverflow.SUSPEND, 10)
+
+    @Test
+    fun testRequestBufferUnlimited() =
+        testRequestSizeWithBuffer(Channel.UNLIMITED, BufferOverflow.SUSPEND, Long.MAX_VALUE)
+
+    @Test
+    fun testRequestBufferOverflowSuspend() =
+        testRequestSizeWithBuffer(Channel.BUFFERED, BufferOverflow.SUSPEND, 64)
+
+    @Test
+    fun testRequestBufferOverflowDropOldest() =
+        testRequestSizeWithBuffer(Channel.BUFFERED, BufferOverflow.DROP_OLDEST, Long.MAX_VALUE)
+
+    @Test
+    fun testRequestBufferOverflowDropLatest() =
+        testRequestSizeWithBuffer(Channel.BUFFERED, BufferOverflow.DROP_LATEST, Long.MAX_VALUE)
+
+    @Test
+    fun testRequestBuffer10OverflowDropOldest() =
+        testRequestSizeWithBuffer(10, BufferOverflow.DROP_OLDEST, Long.MAX_VALUE)
+
+    @Test
+    fun testRequestBuffer10OverflowDropLatest() =
+        testRequestSizeWithBuffer(10, BufferOverflow.DROP_LATEST, Long.MAX_VALUE)
+
+    /**
+     * Tests `publisher.asFlow.buffer(...)` chain, verifying expected requests size and that only expected
+     * values are delivered.
+     */
+    private fun testRequestSizeWithBuffer(
+        capacity: Int,
+        onBufferOverflow: BufferOverflow,
+        expectedRequestSize: Long
+    ) = runTest {
+        val m = 50
+        // publishers numbers from 1 to m
+        val publisher = Publisher<Int> { s ->
+            s.onSubscribe(object : Subscription {
+                var lastSent = 0
+                var remaining = 0L
+                override fun request(n: Long) {
+                    assertEquals(expectedRequestSize, n)
+                    remaining += n
+                    check(remaining >= 0)
+                    while (lastSent < m && remaining > 0) {
+                        s.onNext(++lastSent)
+                        remaining--
+                    }
+                    if (lastSent == m) s.onComplete()
+                }
+
+                override fun cancel() {}
+            })
+        }
+        val flow = publisher
+            .asFlow()
+            .buffer(capacity, onBufferOverflow)
+        val list = flow.toList()
+        val runSize = if (capacity == Channel.BUFFERED) 1 else capacity
+        val expected = when (onBufferOverflow) {
+            // Everything is expected to be delivered
+            BufferOverflow.SUSPEND -> (1..m).toList()
+            // Only the last one (by default) or the last "capacity" items delivered
+            BufferOverflow.DROP_OLDEST -> (m - runSize + 1..m).toList()
+            // Only the first one (by default) or the first "capacity" items delivered
+            BufferOverflow.DROP_LATEST -> (1..runSize).toList()
+        }
+        assertEquals(expected, list)
     }
 }

@@ -50,7 +50,7 @@
 
 ## Asynchronous Flow
 
-Suspending functions asynchronously returns a single value, but how can we return
+A suspending function asynchronously returns a single value, but how can we return
 multiple asynchronously computed values? This is where Kotlin Flows come in.
 
 ### Representing multiple values
@@ -153,7 +153,7 @@ This code prints the numbers after waiting for a second.
 #### Flows
 
 Using the `List<Int>` result type, means we can only return all the values at once. To represent
-the stream of values that are being asynchronously computed, we can use a [`Flow<Int>`][Flow] type just like we would the `Sequence<Int>` type for synchronously computed values:
+the stream of values that are being asynchronously computed, we can use a [`Flow<Int>`][Flow] type just like we would use the `Sequence<Int>` type for synchronously computed values:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -1463,13 +1463,15 @@ fun main() = runBlocking<Unit> {
  
 A "Caught ..." message is not printed despite there being a `catch` operator: 
 
-<!--- TEST EXCEPTION  
+```text  
 Emitting 1
 1
 Emitting 2
 Exception in thread "main" java.lang.IllegalStateException: Collected 2
 	at ...
--->
+```
+
+<!--- TEST EXCEPTION -->
 
 #### Catching declaratively
 
@@ -1510,12 +1512,14 @@ fun main() = runBlocking<Unit> {
 Now we can see that a "Caught ..." message is printed and so we can catch all the exceptions without explicitly
 using a `try/catch` block: 
 
-<!--- TEST EXCEPTION  
+```text 
 Emitting 1
 1
 Emitting 2
 Caught java.lang.IllegalStateException: Collected 2
--->
+```
+
+<!--- TEST EXCEPTION -->
 
 ### Flow completion
 

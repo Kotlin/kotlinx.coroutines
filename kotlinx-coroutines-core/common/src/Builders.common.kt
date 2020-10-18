@@ -129,8 +129,9 @@ private class LazyDeferredCoroutine<T>(
  * This function uses dispatcher from the new context, shifting execution of the [block] into the
  * different thread if a new dispatcher is specified, and back to the original dispatcher
  * when it completes. Note that the result of `withContext` invocation is
- * dispatched into the original context in a cancellable way, which means that if the original [coroutineContext],
- * in which `withContext` was invoked, is cancelled by the time its dispatcher starts to execute the code,
+ * dispatched into the original context in a cancellable way with a **prompt cancellation guarantee**,
+ * which means that if the original [coroutineContext], in which `withContext` was invoked,
+ * is cancelled by the time its dispatcher starts to execute the code,
  * it discards the result of `withContext` and throws [CancellationException].
  */
 public suspend fun <T> withContext(
