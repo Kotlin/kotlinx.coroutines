@@ -217,7 +217,7 @@ class DebounceTest : TestBase() {
         }
 
         expect(2)
-        val result = flow.debounce(1000.milliseconds).toList()
+        val result = flow.debounceWithDuration(1000.milliseconds).toList()
         assertEquals(listOf("A", "D", "E"), result)
         finish(5)
     }
@@ -228,28 +228,28 @@ class DebounceTest : TestBase() {
         expect(1)
         val flow = flow {
             expect(3)
-            emit("A")
-            delay(1500)
-            emit("B")
-            delay(500)
-            emit("C")
-            delay(1)
-            emit("D")
-            delay(800)
-            emit("E")
+            emit(1)
+            delay(90)
+            emit(2)
+            delay(90)
+            emit(3)
+            delay(1010)
+            emit(4)
+            delay(1010)
+            emit(5)
             expect(4)
         }
 
         expect(2)
         val result = flow.debounce {
-            if (it == "C") {
+            if (it == 1) {
                 0
             } else {
                 1000
             }
         }.toList()
 
-        assertEquals(listOf("A", "C", "E"), result)
+        assertEquals(listOf(1, 3, 4, 5), result)
         finish(5)
     }
 
@@ -257,17 +257,18 @@ class DebounceTest : TestBase() {
     fun testZeroDebounceTime() = withVirtualTime {
         expect(1)
         val flow = flow {
-            expect(2)
+            expect(3)
             emit("A")
             emit("B")
             emit("C")
-            expect(3)
+            expect(4)
         }
 
+        expect(2)
         val result = flow.debounce(0).toList()
 
         assertEquals(listOf("A", "B", "C"), result)
-        finish(4)
+        finish(5)
     }
 
     @ExperimentalTime
@@ -275,16 +276,47 @@ class DebounceTest : TestBase() {
     fun testZeroDebounceTimeSelector() = withVirtualTime {
         expect(1)
         val flow = flow {
-            expect(2)
-            emit("A")
-            delay(1)
-            emit("B")
             expect(3)
+            emit("A")
+            emit("B")
+            expect(4)
         }
 
+        expect(2)
         val result = flow.debounce { 0 }.toList()
 
         assertEquals(listOf("A", "B"), result)
-        finish(4)
+        finish(5)
+    }
+
+    @ExperimentalTime
+    @Test
+    fun testDebounceDurationSelectorBasic() = withVirtualTime {
+        expect(1)
+        val flow = flow {
+            expect(3)
+            emit("A")
+            delay(1500.milliseconds)
+            emit("B")
+            delay(500.milliseconds)
+            emit("C")
+            delay(250.milliseconds)
+            emit("D")
+            delay(2000.milliseconds)
+            emit("E")
+            expect(4)
+        }
+
+        expect(2)
+        val result = flow.debounceWithDuration {
+            if (it == "C") {
+                0.milliseconds
+            } else {
+                1000.milliseconds
+            }
+        }.toList()
+
+        assertEquals(listOf("A", "C", "D", "E"), result)
+        finish(5)
     }
 }
