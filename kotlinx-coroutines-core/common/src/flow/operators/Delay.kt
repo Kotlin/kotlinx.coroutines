@@ -64,36 +64,58 @@ fun main() = runBlocking {
  */
 @FlowPreview
 public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
-    require(timeoutMillis > 0) { "Debounce timeout should be positive" }
-    return scopedFlow { downstream ->
-        // Actually Any, KT-30796
-        val values = produce<Any?>(capacity = Channel.CONFLATED) {
-            collect { value -> send(value ?: NULL) }
-        }
-        var lastValue: Any? = null
-        while (lastValue !== DONE) {
-            select<Unit> {
-                // Should be receiveOrClosed when boxing issues are fixed
-                values.onReceiveOrNull {
-                    if (it == null) {
-                        if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
-                        lastValue = DONE
-                    } else {
-                        lastValue = it
-                    }
-                }
-
-                lastValue?.let { value ->
-                    // set timeout when lastValue != null
-                    onTimeout(timeoutMillis) {
-                        lastValue = null // Consume the value
-                        downstream.emit(NULL.unbox(value))
-                    }
-                }
-            }
-        }
-    }
+    require(timeoutMillis >= 0L) { "Debounce timeout should not be negative" }
+    if (timeoutMillis == 0L) return this
+    return debounceInternal { timeoutMillis }
 }
+
+/**
+ * Returns a flow that mirrors the original flow, but filters out values
+ * that are followed by the newer values within the given [timeout][timeoutMillis].
+ * The latest value is always emitted.
+ *
+ * A variation of [debounce] that allows specifying the timeout value dynamically.
+ *
+ * Example:
+ *
+ * ```kotlin
+ * flow {
+ *     emit(1)
+ *     delay(90)
+ *     emit(2)
+ *     delay(90)
+ *     emit(3)
+ *     delay(1010)
+ *     emit(4)
+ *     delay(1010)
+ *     emit(5)
+ * }.debounce {
+ *     if (it == 1) {
+ *         0L
+ *     } else {
+ *         1000L
+ *     }
+ * }
+ * ```
+ * <!--- KNIT example-delay-02.kt -->
+ *
+ * produces the following emissions
+ *
+ * ```text
+ * 1, 3, 4, 5
+ * ```
+ * <!--- TEST -->
+ *
+ * Note that the resulting flow does not emit anything as long as the original flow emits
+ * items faster than every [timeoutMillis] milliseconds.
+ *
+ * @param timeoutMillis [T] is the emitted value and the return value is timeout in milliseconds.
+ */
+@FlowPreview
+public fun <T> Flow<T>.debounce(timeoutMillis: (T) -> Long): Flow<T> =
+    debounceInternal { emittedItem ->
+        timeoutMillis(emittedItem)
+    }
 
 /**
  * Returns a flow that mirrors the original flow, but filters out values
@@ -129,7 +151,98 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
  */
 @ExperimentalTime
 @FlowPreview
-public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.toDelayMillis())
+public fun <T> Flow<T>.debounceWithDuration(timeout: Duration): Flow<T> = debounce(timeout.toDelayMillis())
+
+/**
+ * Returns a flow that mirrors the original flow, but filters out values
+ * that are followed by the newer values within the given [timeout].
+ * The latest value is always emitted.
+ *
+ * A variation of [debounceWithDuration] that allows specifying the timeout value dynamically.
+ *
+ * Example:
+ *
+ * ```kotlin
+ * flow {
+ *     emit(1)
+ *     delay(90.milliseconds)
+ *     emit(2)
+ *     delay(90.milliseconds)
+ *     emit(3)
+ *     delay(1010.milliseconds)
+ *     emit(4)
+ *     delay(1010.milliseconds)
+ *     emit(5)
+ * }.debounce {
+ *     if (it == 1) {
+ *         0.milliseconds
+ *     } else {
+ *         1000.milliseconds
+ *     }
+ * }
+ * ```
+ * <!--- KNIT example-delay-duration-02.kt -->
+ *
+ * produces the following emissions
+ *
+ * ```text
+ * 1, 3, 4, 5
+ * ```
+ * <!--- TEST -->
+ *
+ * Note that the resulting flow does not emit anything as long as the original flow emits
+ * items faster than every [timeout] milliseconds.
+ *
+ * @param timeout [T] is the emitted value and the return value is timeout in [Duration].
+ */
+@ExperimentalTime
+@FlowPreview
+public fun <T> Flow<T>.debounceWithDuration(timeout: (T) -> Duration): Flow<T> =
+    debounceInternal { emittedItem ->
+        timeout(emittedItem).toDelayMillis()
+    }
+
+private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long) : Flow<T> =
+    scopedFlow { downstream ->
+        // Actually Any, KT-30796
+        val values = produce<Any?>(capacity = 0) {
+            collect { value -> send(value ?: NULL) }
+        }
+        var lastValue: Any? = null
+        while (lastValue !== DONE) {
+            select<Unit> {
+                // Give a chance to consume lastValue first before onReceiveOrNull receives a new value
+                lastValue?.let { value ->
+                    val unboxedValue: T = NULL.unbox(value)
+                    val timeoutMillis = timeoutMillisSelector(unboxedValue)
+                    require(timeoutMillis >= 0L) { "Debounce timeout should not be negative" }
+
+                    if (timeoutMillis == 0L) {
+                        lastValue = null
+                        runBlocking {
+                            launch { downstream.emit(unboxedValue) }
+                        }
+                    } else {
+                        // Set timeout when lastValue != null
+                        onTimeout(timeoutMillis) {
+                            lastValue = null // Consume the value
+                            downstream.emit(unboxedValue)
+                        }
+                    }
+                }
+
+                // Should be receiveOrClosed when boxing issues are fixed
+                values.onReceiveOrNull {
+                    if (it == null) {
+                        if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
+                        lastValue = DONE
+                    } else {
+                        lastValue = it
+                    }
+                }
+            }
+        }
+    }
 
 /**
  * Returns a flow that emits only the latest value emitted by the original flow during the given sampling [period][periodMillis].
@@ -144,7 +257,7 @@ public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.t
  *     }
  * }.sample(200)
  * ```
- * <!--- KNIT example-delay-02.kt -->
+ * <!--- KNIT example-delay-03.kt -->
  *
  * produces the following emissions
  *
@@ -152,7 +265,7 @@ public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.t
  * 1, 3, 5, 7, 9
  * ```
  * <!--- TEST -->
- * 
+ *
  * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
 @FlowPreview
@@ -215,7 +328,7 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMil
  *     }
  * }.sample(200.milliseconds)
  * ```
- * <!--- KNIT example-delay-duration-02.kt -->
+ * <!--- KNIT example-delay-duration-03.kt -->
  *
  * produces the following emissions
  *
