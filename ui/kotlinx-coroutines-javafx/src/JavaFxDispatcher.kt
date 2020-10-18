@@ -42,7 +42,7 @@ public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
     }
 
     /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS, EventHandler {
             block.run()
         })

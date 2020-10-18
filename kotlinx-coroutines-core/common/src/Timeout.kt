@@ -24,7 +24,14 @@ import kotlin.time.*
  * The sibling function that does not throw an exception on timeout is [withTimeoutOrNull].
  * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
- * Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ * **The timeout event is asynchronous with respect to the code running in the block** and may happen at any time,
+ * even right before the return from inside of the timeout [block]. Keep this in mind if you open or acquire some
+ * resource inside the [block] that needs closing or release outside of the block.
+ * See the
+ * [Asynchronous timeout and resources][https://kotlinlang.org/docs/reference/coroutines/cancellation-and-timeouts.html#asynchronous-timeout-and-resources]
+ * section of the coroutines guide for details.
+ *
+ * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
  *
  * @param timeMillis timeout time in milliseconds.
  */
@@ -48,7 +55,14 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * The sibling function that does not throw an exception on timeout is [withTimeoutOrNull].
  * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
- * Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ * **The timeout event is asynchronous with respect to the code running in the block** and may happen at any time,
+ * even right before the return from inside of the timeout [block]. Keep this in mind if you open or acquire some
+ * resource inside the [block] that needs closing or release outside of the block.
+ * See the
+ * [Asynchronous timeout and resources][https://kotlinlang.org/docs/reference/coroutines/cancellation-and-timeouts.html#asynchronous-timeout-and-resources]
+ * section of the coroutines guide for details.
+ *
+ * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
  */
 @ExperimentalTime
 public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineScope.() -> T): T {
@@ -68,7 +82,14 @@ public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineSc
  * The sibling function that throws an exception on timeout is [withTimeout].
  * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
- * Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ * **The timeout event is asynchronous with respect to the code running in the block** and may happen at any time,
+ * even right before the return from inside of the timeout [block]. Keep this in mind if you open or acquire some
+ * resource inside the [block] that needs closing or release outside of the block.
+ * See the
+ * [Asynchronous timeout and resources][https://kotlinlang.org/docs/reference/coroutines/cancellation-and-timeouts.html#asynchronous-timeout-and-resources]
+ * section of the coroutines guide for details.
+ *
+ * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
  *
  * @param timeMillis timeout time in milliseconds.
  */
@@ -101,7 +122,14 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
  * The sibling function that throws an exception on timeout is [withTimeout].
  * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
- * Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ * **The timeout event is asynchronous with respect to the code running in the block** and may happen at any time,
+ * even right before the return from inside of the timeout [block]. Keep this in mind if you open or acquire some
+ * resource inside the [block] that needs closing or release outside of the block.
+ * See the
+ * [Asynchronous timeout and resources][https://kotlinlang.org/docs/reference/coroutines/cancellation-and-timeouts.html#asynchronous-timeout-and-resources]
+ * section of the coroutines guide for details.
+ *
+ * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
  */
 @ExperimentalTime
 public suspend fun <T> withTimeoutOrNull(timeout: Duration, block: suspend CoroutineScope.() -> T): T? =
@@ -114,7 +142,7 @@ private fun <U, T: U> setupTimeout(
     // schedule cancellation of this coroutine on time
     val cont = coroutine.uCont
     val context = cont.context
-    coroutine.disposeOnCompletion(context.delay.invokeOnTimeout(coroutine.time, coroutine))
+    coroutine.disposeOnCompletion(context.delay.invokeOnTimeout(coroutine.time, coroutine, coroutine.context))
     // restart the block using a new coroutine with a new job,
     // however, start it undispatched, because we already are in the proper context
     return coroutine.startUndispatchedOrReturnIgnoreTimeout(coroutine, block)

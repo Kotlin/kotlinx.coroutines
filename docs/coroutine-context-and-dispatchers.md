@@ -8,6 +8,8 @@
   * [Dispatchers and threads](#dispatchers-and-threads)
   * [Unconfined vs confined dispatcher](#unconfined-vs-confined-dispatcher)
   * [Debugging coroutines and threads](#debugging-coroutines-and-threads)
+    * [Debugging with IDEA](#debugging-with-idea)
+    * [Debugging using logging](#debugging-using-logging)
   * [Jumping between threads](#jumping-between-threads)
   * [Job in the context](#job-in-the-context)
   * [Children of a coroutine](#children-of-a-coroutine)
@@ -155,8 +157,34 @@ The unconfined dispatcher should not be used in general code.
 
 Coroutines can suspend on one thread and resume on another thread. 
 Even with a single-threaded dispatcher it might be hard to
-figure out what the coroutine was doing, where, and when. The common approach to debugging applications with 
-threads is to print the thread name in the log file on each log statement. This feature is universally supported
+figure out what the coroutine was doing, where, and when if you don't have special tooling. 
+
+#### Debugging with IDEA
+
+The Coroutine Debugger of the Kotlin plugin simplifies debugging coroutines in IntelliJ IDEA.
+
+> Debugging works for versions 1.3.8 or later of `kotlinx-coroutines-core`.
+
+The **Debug** tool window contains the **Coroutines** tab. In this tab, you can find information about both currently running and suspended coroutines. 
+The coroutines are grouped by the dispatcher they are running on.
+
+![Debugging coroutines](images/coroutine-idea-debugging-1.png)
+
+With the coroutine debugger, you can:
+* Check the state of each coroutine.
+* See the values of local and captured variables for both running and suspended coroutines.
+* See a full coroutine creation stack, as well as a call stack inside the coroutine. The stack includes all frames with 
+variable values, even those that would be lost during standard debugging.
+* Get a full report that contains the state of each coroutine and its stack. To obtain it, right-click inside the **Coroutines** tab, and then click **Get Coroutines Dump**.
+
+To start coroutine debugging, you just need to set breakpoints and run the application in debug mode.
+
+Learn more about coroutines debugging in the [tutorial](https://kotlinlang.org/docs/tutorials/coroutines/debug-coroutines-with-idea.html).
+
+#### Debugging using logging
+
+Another approach to debugging applications with 
+threads without Coroutine Debugger is to print the thread name in the log file on each log statement. This feature is universally supported
 by logging frameworks. When using coroutines, the thread name alone does not give much of a context, so 
 `kotlinx.coroutines` includes debugging facilities to make it easier. 
 
@@ -652,7 +680,7 @@ stored in a thread-local variable. However, in this case you are fully responsib
 potentially concurrent modifications to the variable in this mutable box.
 
 For advanced usage, for example for integration with logging MDC, transactional contexts or any other libraries
-which internally use thread-locals for passing data, see documentation of the [ThreadContextElement] interface 
+which internally use thread-locals for passing data, see the documentation of the [ThreadContextElement] interface 
 that should be implemented. 
 
 <!--- MODULE kotlinx-coroutines-core -->

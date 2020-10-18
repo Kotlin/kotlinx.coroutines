@@ -24,7 +24,7 @@ but others are unique.
 
 ### The problem
 
-Let us launch a hundred coroutines all doing the same action thousand times. 
+Let us launch a hundred coroutines all doing the same action a thousand times. 
 We'll also measure their completion time for further comparisons:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
@@ -102,7 +102,7 @@ increment the `counter` concurrently from multiple threads without any synchroni
 
 ### Volatiles are of no help
 
-There is common misconception that making a variable `volatile` solves concurrency problem. Let us try it:
+There is a common misconception that making a variable `volatile` solves concurrency problem. Let us try it:
 
 <!--- CLEAR -->
 
@@ -158,7 +158,7 @@ do not provide atomicity of larger actions (increment in our case).
 ### Thread-safe data structures
 
 The general solution that works both for threads and for coroutines is to use a thread-safe (aka synchronized,
-linearizable, or atomic) data structure that provides all the necessarily synchronization for the corresponding 
+linearizable, or atomic) data structure that provides all the necessary synchronization for the corresponding 
 operations that needs to be performed on a shared state. 
 In the case of a simple counter we can use `AtomicInteger` class which has atomic `incrementAndGet` operations:
 
