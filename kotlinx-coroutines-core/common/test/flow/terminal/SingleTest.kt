@@ -7,7 +7,7 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-class SingleTest : TestBase() {
+class SingleTest : TestBase() { 
 
     @Test
     fun testSingle() = runTest {
@@ -25,8 +25,8 @@ class SingleTest : TestBase() {
             emit(239L)
             emit(240L)
         }
-        assertFailsWith<IllegalArgumentException> { flow.single() }
-        assertNull(flow.singleOrNull())
+        assertFailsWith<RuntimeException> { flow.single() }
+        assertFailsWith<RuntimeException> { flow.singleOrNull() }
     }
 
     @Test
@@ -61,10 +61,6 @@ class SingleTest : TestBase() {
         assertEquals(1, flowOf<Int?>(1).single())
         assertNull(flowOf<Int?>(null).single())
         assertFailsWith<NoSuchElementException> { flowOf<Int?>().single() }
-
-        assertEquals(1, flowOf<Int?>(1).singleOrNull())
-        assertNull(flowOf<Int?>(null).singleOrNull())
-        assertNull(flowOf<Int?>().singleOrNull())
     }
 
     @Test
@@ -73,22 +69,5 @@ class SingleTest : TestBase() {
         val flow = flowOf(instance)
         assertSame(instance, flow.single())
         assertSame(instance, flow.singleOrNull())
-
-        val flow2 = flow {
-            emit(BadClass())
-            emit(BadClass())
-        }
-        assertFailsWith<IllegalArgumentException> { flow2.single() }
-    }
-
-    @Test
-    fun testSingleNoWait() = runTest {
-        val flow = flow {
-            emit(1)
-            emit(2)
-            awaitCancellation()
-        }
-
-        assertNull(flow.singleOrNull())
     }
 }

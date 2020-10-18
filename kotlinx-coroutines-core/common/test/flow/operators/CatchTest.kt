@@ -134,14 +134,15 @@ class CatchTest : TestBase() {
             // flowOn with a different dispatcher introduces asynchrony so that all exceptions in the
             // upstream flows are handled before they go downstream
             .onEach { value ->
-                expectUnreached() // already cancelled
+                expect(8)
+                assertEquals("OK", value)
             }
             .catch { e ->
-                expect(8)
+                expect(9)
                 assertTrue(e is TestException)
                 assertSame(d0, kotlin.coroutines.coroutineContext[ContinuationInterceptor] as CoroutineContext)
             }
             .collect()
-        finish(9)
+        finish(10)
     }
 }

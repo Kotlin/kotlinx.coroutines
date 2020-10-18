@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -7,12 +7,11 @@ package kotlinx.coroutines
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
-internal class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : CoroutineDispatcher(), Delay {
+private class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : CoroutineDispatcher(), Delay {
+
     private val originalDispatcher = enclosingScope.coroutineContext[ContinuationInterceptor] as CoroutineDispatcher
     private val heap = ArrayList<TimedTask>() // TODO use MPP heap/ordered set implementation (commonize ThreadSafeHeap)
-
-    var currentTime = 0L
-        private set
+    private var currentTime = 0L
 
     init {
         /*
@@ -51,20 +50,17 @@ internal class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : Coroutine
     @ExperimentalCoroutinesApi
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = originalDispatcher.isDispatchNeeded(context)
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val task = TimedTask(block, deadline(timeMillis))
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+        val task = TimedTask(block, currentTime + timeMillis)
         heap += task
         return task
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val task = TimedTask(Runnable { with(continuation) { resumeUndispatched(Unit) } }, deadline(timeMillis))
+        val task = TimedTask(Runnable { with(continuation) { resumeUndispatched(Unit) } }, currentTime + timeMillis)
         heap += task
         continuation.invokeOnCancellation { task.dispose() }
     }
-
-    private fun deadline(timeMillis: Long) =
-        if (timeMillis == Long.MAX_VALUE) Long.MAX_VALUE else currentTime + timeMillis
 }
 
 /**

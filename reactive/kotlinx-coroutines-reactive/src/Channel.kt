@@ -48,7 +48,7 @@ public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit): Unit =
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
 private class SubscriptionChannel<T>(
     private val request: Int
-) : LinkedListChannel<T>(null), Subscriber<T> {
+) : LinkedListChannel<T>(), Subscriber<T> {
     init {
         require(request >= 0) { "Invalid request size: $request" }
     }

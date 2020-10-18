@@ -5,7 +5,6 @@
 // This file was automatically generated from coroutine-context-and-dispatchers.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
 
-import kotlinx.coroutines.knit.*
 import org.junit.Test
 
 class DispatcherGuideTest {

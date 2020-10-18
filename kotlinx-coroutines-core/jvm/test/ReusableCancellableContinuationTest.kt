@@ -11,14 +11,15 @@ import kotlin.coroutines.*
 import kotlin.test.*
 
 class ReusableCancellableContinuationTest : TestBase() {
+
     @Test
     fun testReusable() = runTest {
-        testContinuationsCount(10, 1, ::suspendCancellableCoroutineReusable)
+        testContinuationsCount(10, 1, ::suspendAtomicCancellableCoroutineReusable)
     }
 
     @Test
     fun testRegular() = runTest {
-        testContinuationsCount(10, 10, ::suspendCancellableCoroutine)
+        testContinuationsCount(10, 10, ::suspendAtomicCancellableCoroutine)
     }
 
     private suspend inline fun CoroutineScope.testContinuationsCount(
@@ -50,7 +51,7 @@ class ReusableCancellableContinuationTest : TestBase() {
     fun testCancelledOnClaimedCancel() = runTest {
         expect(1)
         try {
-            suspendCancellableCoroutineReusable<Unit> {
+            suspendAtomicCancellableCoroutineReusable<Unit> {
                 it.cancel()
             }
             expectUnreached()
@@ -64,7 +65,7 @@ class ReusableCancellableContinuationTest : TestBase() {
         expect(1)
         // Bind child at first
         var continuation: Continuation<*>? = null
-        suspendCancellableCoroutineReusable<Unit> {
+        suspendAtomicCancellableCoroutineReusable<Unit> {
             expect(2)
             continuation = it
             launch {  // Attach to the parent, avoid fast path
@@ -76,16 +77,13 @@ class ReusableCancellableContinuationTest : TestBase() {
         ensureActive()
         // Verify child was bound
         FieldWalker.assertReachableCount(1, coroutineContext[Job]) { it === continuation }
-        try {
-            suspendCancellableCoroutineReusable<Unit> {
-                expect(5)
-                coroutineContext[Job]!!.cancel()
-                it.resume(Unit) // will not dispatch, will get CancellationException
-            }
-        } catch (e: CancellationException) {
-            assertFalse(isActive)
-            finish(6)
+        suspendAtomicCancellableCoroutineReusable<Unit> {
+            expect(5)
+            coroutineContext[Job]!!.cancel()
+            it.resume(Unit)
         }
+        assertFalse(isActive)
+        finish(6)
     }
 
     @Test
@@ -95,7 +93,7 @@ class ReusableCancellableContinuationTest : TestBase() {
         launch {
             cont!!.resumeWith(Result.success(Unit))
         }
-        suspendCancellableCoroutineReusable<Unit> {
+        suspendAtomicCancellableCoroutineReusable<Unit> {
             cont = it
         }
         ensureActive()
@@ -110,7 +108,7 @@ class ReusableCancellableContinuationTest : TestBase() {
         launch { // Attach to the parent, avoid fast path
             cont!!.resumeWith(Result.success(Unit))
         }
-        suspendCancellableCoroutine<Unit> {
+        suspendAtomicCancellableCoroutine<Unit> {
             cont = it
         }
         ensureActive()
@@ -123,7 +121,7 @@ class ReusableCancellableContinuationTest : TestBase() {
         expect(1)
         var cont: Continuation<*>? = null
         try {
-            suspendCancellableCoroutineReusable<Unit> {
+            suspendAtomicCancellableCoroutineReusable<Unit> {
                 cont = it
                 it.cancel()
             }
@@ -139,7 +137,7 @@ class ReusableCancellableContinuationTest : TestBase() {
         val currentJob = coroutineContext[Job]!!
         expect(1)
         // Bind child at first
-        suspendCancellableCoroutineReusable<Unit> {
+        suspendAtomicCancellableCoroutineReusable<Unit> {
             expect(2)
             // Attach to the parent, avoid fast path
             launch {
@@ -155,23 +153,15 @@ class ReusableCancellableContinuationTest : TestBase() {
         assertFalse(isActive)
         // Child detached
         FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
-        expect(5)
+        suspendAtomicCancellableCoroutineReusable<Unit> { it.resume(Unit) }
+        suspendAtomicCancellableCoroutineReusable<Unit> { it.resume(Unit) }
+        FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
+
         try {
-            // Resume is non-atomic, so it throws cancellation exception
-            suspendCancellableCoroutineReusable<Unit> {
-                expect(6) // but the code inside the block is executed
-                it.resume(Unit)
-            }
+            suspendAtomicCancellableCoroutineReusable<Unit> {}
         } catch (e: CancellationException) {
             FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
-            expect(7)
-        }
-        try {
-            // No resume -- still cancellation exception
-            suspendCancellableCoroutineReusable<Unit> {}
-        } catch (e: CancellationException) {
-            FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
-            finish(8)
+            finish(5)
         }
     }
 

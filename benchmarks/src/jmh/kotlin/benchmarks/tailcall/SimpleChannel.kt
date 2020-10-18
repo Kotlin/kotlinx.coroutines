@@ -70,12 +70,12 @@ class NonCancellableChannel : SimpleChannel() {
 }
 
 class CancellableChannel : SimpleChannel() {
-    override suspend fun suspendReceive(): Int = suspendCancellableCoroutine {
+    override suspend fun suspendReceive(): Int = suspendAtomicCancellableCoroutine {
         consumer = it.intercepted()
         COROUTINE_SUSPENDED
     }
 
-    override suspend fun suspendSend(element: Int) = suspendCancellableCoroutine<Unit> {
+    override suspend fun suspendSend(element: Int) = suspendAtomicCancellableCoroutine<Unit> {
         enqueuedValue = element
         producer = it.intercepted()
         COROUTINE_SUSPENDED
@@ -84,13 +84,13 @@ class CancellableChannel : SimpleChannel() {
 
 class CancellableReusableChannel : SimpleChannel() {
     @Suppress("INVISIBLE_MEMBER")
-    override suspend fun suspendReceive(): Int = suspendCancellableCoroutineReusable {
+    override suspend fun suspendReceive(): Int = suspendAtomicCancellableCoroutineReusable {
         consumer = it.intercepted()
         COROUTINE_SUSPENDED
     }
 
     @Suppress("INVISIBLE_MEMBER")
-    override suspend fun suspendSend(element: Int) = suspendCancellableCoroutineReusable<Unit> {
+    override suspend fun suspendSend(element: Int) = suspendAtomicCancellableCoroutineReusable<Unit> {
         enqueuedValue = element
         producer = it.intercepted()
         COROUTINE_SUSPENDED

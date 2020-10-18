@@ -54,11 +54,11 @@ class TestRunBlockingOrderTest : TestBase() {
     }
 
     @Test
-    fun testVeryLongDelay() = runBlockingTest {
+    fun testInfiniteDelay() = runBlockingTest {
         expect(1)
         delay(100) // move time forward a bit some that naive time + delay gives an overflow
         launch {
-            delay(Long.MAX_VALUE / 2) // very long delay
+            delay(Long.MAX_VALUE) // infinite delay
             finish(4)
         }
         launch  {

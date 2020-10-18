@@ -13,10 +13,7 @@ import kotlin.coroutines.*
 import kotlin.math.*
 import kotlin.random.Random
 
-external fun require(resource: String)
-
 fun main() {
-    require("style.css")
     println("Starting example application...")
     document.addEventListener("DOMContentLoaded", {
         Application().start()

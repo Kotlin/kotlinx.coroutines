@@ -2,12 +2,10 @@
 
 [![official JetBrains project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=1.4.0-M1) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/1.4.0-M1)
-[![Kotlin](https://img.shields.io/badge/kotlin-1.4.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
-[![Slack channel](https://img.shields.io/badge/chat-slack-green.svg?logo=slack)](https://kotlinlang.slack.com/messages/coroutines/)
+[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=1.3.8) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/1.3.8)
 
 Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
-This is a companion version for Kotlin `1.4.0` release.
+This is a companion version for Kotlin `1.3.71` release.
 
 ```kotlin
 suspend fun main() = coroutineScope {
@@ -46,7 +44,7 @@ suspend fun main() = coroutineScope {
   * [DebugProbes] API to probe, keep track of, print and dump active coroutines;
   * [CoroutinesTimeout] test rule to automatically dump coroutines on test timeout.
 * [reactive](reactive/README.md) &mdash; modules that provide builders and iteration support for various reactive streams libraries:
-  * Reactive Streams ([Publisher.collect], [Publisher.awaitSingle], [kotlinx.coroutines.reactive.publish], etc), 
+  * Reactive Streams ([Publisher.collect], [Publisher.awaitSingle], [publish], etc), 
   * Flow (JDK 9) (the same interface as for Reactive Streams),
   * RxJava 2.x ([rxFlowable], [rxSingle], etc), and
   * RxJava 3.x ([rxFlowable], [rxSingle], etc), and
@@ -86,7 +84,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>1.4.0-M1</version>
+    <version>1.3.8</version>
 </dependency>
 ```
 
@@ -94,7 +92,7 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.4.0</kotlin.version>
+    <kotlin.version>1.3.71</kotlin.version>
 </properties>
 ```
 
@@ -104,7 +102,7 @@ Add dependencies (you can also add other modules that you need):
 
 ```groovy
 dependencies {
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0-M1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8'
 }
 ```
 
@@ -112,7 +110,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.4.0'
+    ext.kotlin_version = '1.3.71'
 }
 ```
 
@@ -130,7 +128,7 @@ Add dependencies (you can also add other modules that you need):
 
 ```groovy
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0-M1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8")
 }
 ```
 
@@ -138,7 +136,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 plugins {
-    kotlin("jvm") version "1.4.0"
+    kotlin("jvm") version "1.3.71"
 }
 ```
 
@@ -148,14 +146,9 @@ Make sure that you have either `jcenter()` or `mavenCentral()` in the list of re
 
 Core modules of `kotlinx.coroutines` are also available for 
 [Kotlin/JS](#js) and [Kotlin/Native](#native).
-In common code that should get compiled for different platforms, you can add dependency to `kotlinx-coroutines-core` right to the `commonMain` source set:
-```groovy
-commonMain {
-    dependencies {
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0-M1")
-    }
-}
-```
+In common code that should get compiled for different platforms, add dependency to  
+[`kotlinx-coroutines-core-common`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-common/1.3.8/jar)
+(follow the link to get the dependency declaration snippet).
 
 ### Android
 
@@ -163,7 +156,7 @@ Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
 module as dependency when using `kotlinx.coroutines` on Android:
 
 ```groovy
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.0-M1'
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.8'
 ```
 
 This gives you access to Android [Dispatchers.Main]
@@ -176,21 +169,10 @@ threads are handled by Android runtime.
 R8 and ProGuard rules are bundled into the [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android) module.
 For more details see ["Optimization" section for Android](ui/kotlinx-coroutines-android/README.md#optimization). 
 
-#### Avoiding including the debug infrastructure in the resulting APK
-
-The `kotlinx-coroutines-core` artifact contains a resource file that is not required for the coroutines to operate
-normally and is only used by the debugger. To exclude it at no loss of functionality, add the following snippet to the
-`android` block in your gradle file for the application subproject:
-```groovy
-packagingOptions {
-  exclude "DebugProbesKt.bin"
-}
-```
-
 ### JS
 
 [Kotlin/JS](https://kotlinlang.org/docs/reference/js-overview.html) version of `kotlinx.coroutines` is published as 
-[`kotlinx-coroutines-core-js`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.4.0-M1/jar)
+[`kotlinx-coroutines-core-js`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.3.8/jar)
 (follow the link to get the dependency declaration snippet).
  
 You can also use [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) package via NPM. 
@@ -198,7 +180,7 @@ You can also use [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotli
 ### Native
 
 [Kotlin/Native](https://kotlinlang.org/docs/reference/native-overview.html) version of `kotlinx.coroutines` is published as 
-[`kotlinx-coroutines-core-native`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-native/1.4.0-M1/jar)
+[`kotlinx-coroutines-core-native`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-native/1.3.8/jar)
 (follow the link to get the dependency declaration snippet).
 
 Only single-threaded code (JS-style) on Kotlin/Native is currently supported. 
@@ -212,9 +194,35 @@ enableFeaturePreview('GRADLE_METADATA')
 Since Kotlin/Native does not generally provide binary compatibility between versions, 
 you should use the same version of Kotlin/Native compiler as was used to build `kotlinx.coroutines`. 
 
-## Building and Contributing
+## Building 
 
-See [Contributing Guidelines](CONTRIBUTING.md).
+This library is built with Gradle. To build it, use `./gradlew build`. 
+You can import this project into IDEA, but you have to delegate build actions
+to Gradle (in Preferences -> Build, Execution, Deployment -> Build Tools -> Gradle -> Runner)
+
+### Requirements
+
+* JDK >= 11 referred to by the `JAVA_HOME` environment variable.
+* JDK 1.6 referred to by the `JDK_16` environment variable. It is okay to have `JDK_16` pointing to `JAVA_HOME` for external contributions.
+* JDK 1.8 referred to by the `JDK_18` environment variable. Only used by nightly stress-tests. It is okay to have `JDK_18` pointing to `JAVA_HOME` for external contributions.
+
+## Contributions and releases
+
+All development (both new features and bug fixes) is performed in `develop` branch. 
+This way `master` sources always contain sources of the most recently released version.
+Please send PRs with bug fixes to `develop` branch.
+Fixes to documentation in markdown files are an exception to this rule. They are updated directly in `master`.
+                                                                          
+The `develop` branch is pushed to `master` during release.
+
+* Full release procedure checklist is [here](RELEASE.md).
+* Steps for contributing new integration modules are explained [here](integration/README.md#Contributing).
+* Use [Knit](https://github.com/Kotlin/kotlinx-knit/blob/master/README.md) for updates to documentation:
+  * In project root directory run `./gradlew knit`.
+  * Commit updated documents and examples together with other changes.
+* Use [Binary Compatibility Validator](https://github.com/Kotlin/binary-compatibility-validator/blob/master/README.md) for updates to public API:
+  * In project root directory run `./gradlew apiDump`. 
+  * Commit updated API index together with other changes.
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->
@@ -276,7 +284,7 @@ See [Contributing Guidelines](CONTRIBUTING.md).
 <!--- INDEX kotlinx.coroutines.reactive -->
 [Publisher.collect]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/collect.html
 [Publisher.awaitSingle]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/await-single.html
-[kotlinx.coroutines.reactive.publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/publish.html
+[publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/publish.html
 <!--- MODULE kotlinx-coroutines-rx2 -->
 <!--- INDEX kotlinx.coroutines.rx2 -->
 [rxFlowable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/rx-flowable.html

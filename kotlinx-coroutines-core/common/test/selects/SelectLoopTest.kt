@@ -24,20 +24,19 @@ class SelectLoopTest : TestBase() {
             expect(3)
             throw TestException()
         }
-        try {
-            while (true) {
-                select<Unit> {
-                    channel.onReceiveOrNull {
-                        expectUnreached()
-                    }
-                    job.onJoin {
-                        expectUnreached()
-                    }
+        var isDone = false
+        while (!isDone) {
+            select<Unit> {
+                channel.onReceiveOrNull {
+                    expect(4)
+                    assertEquals(Unit, it)
+                }
+                job.onJoin {
+                    expect(5)
+                    isDone = true
                 }
             }
-        } catch (e: CancellationException) {
-            // select will get cancelled because of the failure of job
-            finish(4)
         }
+        finish(6)
     }
 }

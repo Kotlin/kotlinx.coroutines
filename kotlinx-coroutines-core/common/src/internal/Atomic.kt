@@ -39,8 +39,7 @@ public abstract class OpDescriptor {
 }
 
 @SharedImmutable
-@JvmField
-internal val NO_DECISION: Any = Symbol("NO_DECISION")
+private val NO_DECISION: Any = Symbol("NO_DECISION")
 
 /**
  * Descriptor for multi-word atomic operation.
@@ -53,12 +52,8 @@ internal val NO_DECISION: Any = Symbol("NO_DECISION")
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
-@InternalCoroutinesApi
 public abstract class AtomicOp<in T> : OpDescriptor() {
     private val _consensus = atomic<Any?>(NO_DECISION)
-
-    // Returns NO_DECISION when there is not decision yet
-    val consensus: Any? get() = _consensus.value
 
     val isDecided: Boolean get() = _consensus.value !== NO_DECISION
 

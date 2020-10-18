@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 /**

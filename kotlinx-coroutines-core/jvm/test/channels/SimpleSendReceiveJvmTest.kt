@@ -28,7 +28,7 @@ class SimpleSendReceiveJvmTest(
         }
     }
 
-    val channel = kind.create<Int>()
+    val channel = kind.create()
 
     @Test
     fun testSimpleSendReceive() = runBlocking {

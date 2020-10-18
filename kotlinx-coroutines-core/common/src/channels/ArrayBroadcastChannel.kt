@@ -28,7 +28,7 @@ internal class ArrayBroadcastChannel<E>(
      * Buffer capacity.
      */
     val capacity: Int
-) : AbstractSendChannel<E>(null), BroadcastChannel<E> {
+) : AbstractSendChannel<E>(), BroadcastChannel<E> {
     init {
         require(capacity >= 1) { "ArrayBroadcastChannel capacity must be at least 1, but $capacity was specified" }
     }
@@ -180,8 +180,6 @@ internal class ArrayBroadcastChannel<E>(
                             this.tail = tail + 1
                             return@withLock // go out of lock to wakeup this sender
                         }
-                        // Too late, already cancelled, but we removed it from the queue and need to release resources.
-                        // However, ArrayBroadcastChannel does not support onUndeliveredElement, so nothing to do
                     }
                 }
             }
@@ -207,7 +205,7 @@ internal class ArrayBroadcastChannel<E>(
 
     private class Subscriber<E>(
         private val broadcastChannel: ArrayBroadcastChannel<E>
-    ) : AbstractChannel<E>(null), ReceiveChannel<E> {
+    ) : AbstractChannel<E>(), ReceiveChannel<E> {
         private val subLock = ReentrantLock()
 
         private val _subHead = atomic(0L)

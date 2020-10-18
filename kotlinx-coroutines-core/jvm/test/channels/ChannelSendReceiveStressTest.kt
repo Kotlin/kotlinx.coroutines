@@ -35,7 +35,7 @@ class ChannelSendReceiveStressTest(
 
     private val maxBuffer = 10_000 // artificial limit for LinkedListChannel
 
-    val channel = kind.create<Int>()
+    val channel = kind.create()
     private val sendersCompleted = AtomicInteger()
     private val receiversCompleted = AtomicInteger()
     private val dupes = AtomicInteger()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -7,13 +7,10 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-open class ConflatedChannelTest : TestBase() {
-    protected open fun <T> createConflatedChannel() =
-        Channel<T>(Channel.CONFLATED)
-    
+class ConflatedChannelTest : TestBase() {
     @Test
     fun testBasicConflationOfferPoll() {
-        val q = createConflatedChannel<Int>()
+        val q = Channel<Int>(Channel.CONFLATED)
         assertNull(q.poll())
         assertTrue(q.offer(1))
         assertTrue(q.offer(2))
@@ -24,7 +21,7 @@ open class ConflatedChannelTest : TestBase() {
 
     @Test
     fun testConflatedSend() = runTest {
-        val q = createConflatedChannel<Int>()
+        val q = ConflatedChannel<Int>()
         q.send(1)
         q.send(2) // shall conflated previously sent
         assertEquals(2, q.receiveOrNull())
@@ -32,7 +29,7 @@ open class ConflatedChannelTest : TestBase() {
 
     @Test
     fun testConflatedClose() = runTest {
-        val q = createConflatedChannel<Int>()
+        val q = Channel<Int>(Channel.CONFLATED)
         q.send(1)
         q.close() // shall become closed but do not conflate last sent item yet
         assertTrue(q.isClosedForSend)
@@ -46,7 +43,7 @@ open class ConflatedChannelTest : TestBase() {
 
     @Test
     fun testConflationSendReceive() = runTest {
-        val q = createConflatedChannel<Int>()
+        val q = Channel<Int>(Channel.CONFLATED)
         expect(1)
         launch { // receiver coroutine
             expect(4)
@@ -74,7 +71,7 @@ open class ConflatedChannelTest : TestBase() {
 
     @Test
     fun testConsumeAll() = runTest {
-        val q = createConflatedChannel<Int>()
+        val q = Channel<Int>(Channel.CONFLATED)
         expect(1)
         for (i in 1..10) {
             q.send(i) // stores as last
@@ -88,7 +85,7 @@ open class ConflatedChannelTest : TestBase() {
 
     @Test
     fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
-        val channel = createConflatedChannel<Int>()
+        val channel = Channel<Int>(Channel.CONFLATED)
         channel.cancel(TestCancellationException())
         channel.receiveOrNull()
     }

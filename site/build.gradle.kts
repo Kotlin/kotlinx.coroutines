@@ -7,7 +7,7 @@ import groovy.lang.*
 val buildDocsDir = "$buildDir/docs"
 val jekyllDockerImage = "jekyll/jekyll:${version("jekyll")}"
 
-val copyDocs by tasks.registering(Copy::class) {
+val copyDocs = tasks.register<Copy>("copyDocs") {
     val dokkaTasks = rootProject.getTasksByName("dokka", true)
 
     from(dokkaTasks.map { "${it.project.buildDir}/dokka" }) {
@@ -21,12 +21,12 @@ val copyDocs by tasks.registering(Copy::class) {
     dependsOn(dokkaTasks)
 }
 
-val copyExampleFrontendJs by tasks.registering(Copy::class) {
+val copyExampleFrontendJs = tasks.register<Copy>("copyExampleFrontendJs") {
     val srcBuildDir = project(":example-frontend-js").buildDir
     from("$srcBuildDir/dist")
     into("$buildDocsDir/example-frontend-js")
 
-    dependsOn(":example-frontend-js:browserDistribution")
+    dependsOn(":example-frontend-js:bundle")
 }
 
 tasks.register<Exec>("site") {

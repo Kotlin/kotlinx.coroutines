@@ -63,7 +63,7 @@ class BroadcastTest : TestBase() {
         val a = produce {
             expect(3)
             send("MSG")
-            expectUnreached() // is not executed, because send is cancelled
+            expect(5)
         }
         expect(2)
         yield() // to produce
@@ -72,7 +72,7 @@ class BroadcastTest : TestBase() {
         expect(4)
         yield() // to abort produce
         assertTrue(a.isClosedForReceive) // the source channel was consumed
-        finish(5)
+        finish(6)
     }
 
     @Test

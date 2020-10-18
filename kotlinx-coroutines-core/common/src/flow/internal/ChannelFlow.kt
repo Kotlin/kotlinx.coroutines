@@ -16,7 +16,7 @@ internal fun <T> Flow<T>.asChannelFlow(): ChannelFlow<T> =
     this as? ChannelFlow ?: ChannelFlowOperatorImpl(this)
 
 /**
- * Operators that can fuse with **downstream** [buffer] and [flowOn] operators implement this interface.
+ * Operators that can fuse with [buffer] and [flowOn] operators implement this interface.
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
@@ -24,18 +24,16 @@ internal fun <T> Flow<T>.asChannelFlow(): ChannelFlow<T> =
 public interface FusibleFlow<T> : Flow<T> {
     /**
      * This function is called by [flowOn] (with context) and [buffer] (with capacity) operators
-     * that are applied to this flow. Should not be used with [capacity] of [Channel.CONFLATED]
-     * (it shall be desugared to `capacity = 0, onBufferOverflow = DROP_OLDEST`).
+     * that are applied to this flow.
      */
     public fun fuse(
         context: CoroutineContext = EmptyCoroutineContext,
-        capacity: Int = Channel.OPTIONAL_CHANNEL,
-        onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
-    ): Flow<T>
+        capacity: Int = Channel.OPTIONAL_CHANNEL
+    ): FusibleFlow<T>
 }
 
 /**
- * Operators that use channels as their "output" extend this `ChannelFlow` and are always fused with each other.
+ * Operators that use channels extend this `ChannelFlow` and are always fused with each other.
  * This class servers as a skeleton implementation of [FusibleFlow] and provides other cross-cutting
  * methods like ability to [produceIn] and [broadcastIn] the corresponding flow, thus making it
  * possible to directly use the backing channel if it exists (hence the `ChannelFlow` name).
@@ -47,13 +45,8 @@ public abstract class ChannelFlow<T>(
     // upstream context
     @JvmField public val context: CoroutineContext,
     // buffer capacity between upstream and downstream context
-    @JvmField public val capacity: Int,
-    // buffer overflow strategy
-    @JvmField public val onBufferOverflow: BufferOverflow
+    @JvmField public val capacity: Int
 ) : FusibleFlow<T> {
-    init {
-        assert { capacity != Channel.CONFLATED } // CONFLATED must be desugared to 0, DROP_OLDEST by callers
-    }
 
     // shared code to create a suspend lambda from collectTo function in one place
     internal val collectToFun: suspend (ProducerScope<T>) -> Unit
@@ -62,62 +55,35 @@ public abstract class ChannelFlow<T>(
     private val produceCapacity: Int
         get() = if (capacity == Channel.OPTIONAL_CHANNEL) Channel.BUFFERED else capacity
 
-    /**
-     * When this [ChannelFlow] implementation can work without a channel (supports [Channel.OPTIONAL_CHANNEL]),
-     * then it should return a non-null value from this function, so that a caller can use it without the effect of
-     * additional [flowOn] and [buffer] operators, by incorporating its
-     * [context], [capacity], and [onBufferOverflow] into its own implementation.
-     */
-    public open fun dropChannelOperators(): Flow<T>? = null
-
-    public override fun fuse(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): Flow<T> {
-        assert { capacity != Channel.CONFLATED } // CONFLATED must be desugared to (0, DROP_OLDEST) by callers
+    public override fun fuse(context: CoroutineContext, capacity: Int): FusibleFlow<T> {
         // note: previous upstream context (specified before) takes precedence
         val newContext = context + this.context
-        val newCapacity: Int
-        val newOverflow: BufferOverflow
-        if (onBufferOverflow != BufferOverflow.SUSPEND) {
-            // this additional buffer never suspends => overwrite preceding buffering configuration
-            newCapacity = capacity
-            newOverflow = onBufferOverflow
-        } else {
-            // combine capacities, keep previous overflow strategy
-            newCapacity = when {
-                this.capacity == Channel.OPTIONAL_CHANNEL -> capacity
-                capacity == Channel.OPTIONAL_CHANNEL -> this.capacity
-                this.capacity == Channel.BUFFERED -> capacity
-                capacity == Channel.BUFFERED -> this.capacity
-                else -> {
-                    // sanity checks
-                    assert { this.capacity >= 0 }
-                    assert { capacity >= 0 }
-                    // combine capacities clamping to UNLIMITED on overflow
-                    val sum = this.capacity + capacity
-                    if (sum >= 0) sum else Channel.UNLIMITED // unlimited on int overflow
-                }
+        val newCapacity = when {
+            this.capacity == Channel.OPTIONAL_CHANNEL -> capacity
+            capacity == Channel.OPTIONAL_CHANNEL -> this.capacity
+            this.capacity == Channel.BUFFERED -> capacity
+            capacity == Channel.BUFFERED -> this.capacity
+            this.capacity == Channel.CONFLATED -> Channel.CONFLATED
+            capacity == Channel.CONFLATED -> Channel.CONFLATED
+            else -> {
+                // sanity checks
+                assert { this.capacity >= 0 }
+                assert { capacity >= 0 }
+                // combine capacities clamping to UNLIMITED on overflow
+                val sum = this.capacity + capacity
+                if (sum >= 0) sum else Channel.UNLIMITED // unlimited on int overflow
             }
-            newOverflow = this.onBufferOverflow
         }
-        if (newContext == this.context && newCapacity == this.capacity && newOverflow == this.onBufferOverflow)
-            return this
-        return create(newContext, newCapacity, newOverflow)
+        if (newContext == this.context && newCapacity == this.capacity) return this
+        return create(newContext, newCapacity)
     }
 
-    protected abstract fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T>
+    protected abstract fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T>
 
     protected abstract suspend fun collectTo(scope: ProducerScope<T>)
 
-    // broadcastImpl is used in broadcastIn operator which is obsolete and replaced by SharedFlow.
-    // BroadcastChannel does not support onBufferOverflow beyond simple conflation
-    public open fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> {
-        val broadcastCapacity = when (onBufferOverflow) {
-            BufferOverflow.SUSPEND -> produceCapacity
-            BufferOverflow.DROP_OLDEST -> Channel.CONFLATED
-            BufferOverflow.DROP_LATEST ->
-                throw IllegalArgumentException("Broadcast channel does not support BufferOverflow.DROP_LATEST")
-        }
-        return scope.broadcast(context, broadcastCapacity, start, block = collectToFun)
-    }
+    public open fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> =
+        scope.broadcast(context, produceCapacity, start, block = collectToFun)
 
     /**
      * Here we use ATOMIC start for a reason (#1825).
@@ -128,33 +94,26 @@ public abstract class ChannelFlow<T>(
      * Thus `onCompletion` and `finally` blocks won't be executed and it may lead to a different kinds of memory leaks.
      */
     public open fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
-        scope.produce(context, produceCapacity, onBufferOverflow, start = CoroutineStart.ATOMIC, block = collectToFun)
+        scope.produce(context, produceCapacity, start = CoroutineStart.ATOMIC, block = collectToFun)
 
     override suspend fun collect(collector: FlowCollector<T>): Unit =
         coroutineScope {
             collector.emitAll(produceImpl(this))
         }
 
-    protected open fun additionalToStringProps(): String? = null
+    public open fun additionalToStringProps(): String = ""
 
     // debug toString
-    override fun toString(): String {
-        val props = ArrayList<String>(4)
-        additionalToStringProps()?.let { props.add(it) }
-        if (context !== EmptyCoroutineContext) props.add("context=$context")
-        if (capacity != Channel.OPTIONAL_CHANNEL) props.add("capacity=$capacity")
-        if (onBufferOverflow != BufferOverflow.SUSPEND) props.add("onBufferOverflow=$onBufferOverflow")
-        return "$classSimpleName[${props.joinToString(", ")}]"
-    }
+    override fun toString(): String =
+        "$classSimpleName[${additionalToStringProps()}context=$context, capacity=$capacity]"
 }
 
 // ChannelFlow implementation that operates on another flow before it
 internal abstract class ChannelFlowOperator<S, T>(
-    @JvmField protected val flow: Flow<S>,
+    @JvmField val flow: Flow<S>,
     context: CoroutineContext,
-    capacity: Int,
-    onBufferOverflow: BufferOverflow
-) : ChannelFlow<T>(context, capacity, onBufferOverflow) {
+    capacity: Int
+) : ChannelFlow<T>(context, capacity) {
     protected abstract suspend fun flowCollect(collector: FlowCollector<T>)
 
     // Changes collecting context upstream to the specified newContext, while collecting in the original context
@@ -189,19 +148,14 @@ internal abstract class ChannelFlowOperator<S, T>(
     override fun toString(): String = "$flow -> ${super.toString()}"
 }
 
-/**
- * Simple channel flow operator: [flowOn], [buffer], or their fused combination.
- */
+// Simple channel flow operator: flowOn, buffer, or their fused combination
 internal class ChannelFlowOperatorImpl<T>(
     flow: Flow<T>,
     context: CoroutineContext = EmptyCoroutineContext,
-    capacity: Int = Channel.OPTIONAL_CHANNEL,
-    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
-) : ChannelFlowOperator<T, T>(flow, context, capacity, onBufferOverflow) {
-    override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
-        ChannelFlowOperatorImpl(flow, context, capacity, onBufferOverflow)
-
-    override fun dropChannelOperators(): Flow<T>? = flow
+    capacity: Int = Channel.OPTIONAL_CHANNEL
+) : ChannelFlowOperator<T, T>(flow, context, capacity) {
+    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
+        ChannelFlowOperatorImpl(flow, context, capacity)
 
     override suspend fun flowCollect(collector: FlowCollector<T>) =
         flow.collect(collector)

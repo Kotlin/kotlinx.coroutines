@@ -46,8 +46,8 @@ internal class TestMainDispatcher(private val mainFactory: MainDispatcherFactory
         delay.delay(time)
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        return delay.invokeOnTimeout(timeMillis, block, context)
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+        return delay.invokeOnTimeout(timeMillis, block)
     }
 
     public fun setDispatcher(dispatcher: CoroutineDispatcher) {

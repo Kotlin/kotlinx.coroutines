@@ -9,24 +9,25 @@ import kotlinx.coroutines.selects.*
 import kotlin.test.*
 
 class AtomicCancellationTest : TestBase() {
+
     @Test
-    fun testSendCancellable() = runBlocking {
+    fun testSendAtomicCancel() = runBlocking {
         expect(1)
         val channel = Channel<Int>()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             channel.send(42) // suspends
-            expectUnreached() // should NOT execute because of cancellation
+            expect(4) // should execute despite cancellation
         }
         expect(3)
         assertEquals(42, channel.receive()) // will schedule sender for further execution
         job.cancel() // cancel the job next
         yield() // now yield
-        finish(4)
+        finish(5)
     }
 
     @Test
-    fun testSelectSendCancellable() = runBlocking {
+    fun testSelectSendAtomicCancel() = runBlocking {
         expect(1)
         val channel = Channel<Int>()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
@@ -37,33 +38,34 @@ class AtomicCancellationTest : TestBase() {
                     "OK"
                 }
             }
-            expectUnreached() // should NOT execute because of cancellation
+            assertEquals("OK", result)
+            expect(5) // should execute despite cancellation
         }
         expect(3)
         assertEquals(42, channel.receive()) // will schedule sender for further execution
         job.cancel() // cancel the job next
         yield() // now yield
-        finish(4)
+        finish(6)
     }
 
     @Test
-    fun testReceiveCancellable() = runBlocking {
+    fun testReceiveAtomicCancel() = runBlocking {
         expect(1)
         val channel = Channel<Int>()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             assertEquals(42, channel.receive()) // suspends
-            expectUnreached() // should NOT execute because of cancellation
+            expect(4) // should execute despite cancellation
         }
         expect(3)
         channel.send(42) // will schedule receiver for further execution
         job.cancel() // cancel the job next
         yield() // now yield
-        finish(4)
+        finish(5)
     }
 
     @Test
-    fun testSelectReceiveCancellable() = runBlocking {
+    fun testSelectReceiveAtomicCancel() = runBlocking {
         expect(1)
         val channel = Channel<Int>()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
@@ -75,13 +77,14 @@ class AtomicCancellationTest : TestBase() {
                     "OK"
                 }
             }
-            expectUnreached() // should NOT execute because of cancellation
+            assertEquals("OK", result)
+            expect(5) // should execute despite cancellation
         }
         expect(3)
         channel.send(42) // will schedule receiver for further execution
         job.cancel() // cancel the job next
         yield() // now yield
-        finish(4)
+        finish(6)
     }
 
     @Test

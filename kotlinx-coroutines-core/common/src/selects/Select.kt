@@ -189,8 +189,14 @@ public interface SelectInstance<in R> {
  *
  * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
  * function is suspended, this function immediately resumes with [CancellationException].
- * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
- * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
+ *
+ * Atomicity of cancellation depends on the clause: [onSend][SendChannel.onSend], [onReceive][ReceiveChannel.onReceive],
+ * [onReceiveOrNull][ReceiveChannel.onReceiveOrNull], and [onLock][Mutex.onLock] clauses are
+ * *atomically cancellable*. When select throws [CancellationException] it means that those clauses had not performed
+ * their respective operations.
+ * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
+ * continue to execute even after it was cancelled from the same thread in the case when this select operation
+ * was already resumed on atomically cancellable clause and the continuation was posted for execution to the thread's queue.
  *
  * Note that this function does not check for cancellation when it is not suspended.
  * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
@@ -649,7 +655,7 @@ internal class SelectBuilderImpl<in R>(
             if (trySelect())
                 block.startCoroutineCancellable(completion) // shall be cancellable while waits for dispatch
         }
-        disposeOnSelect(context.delay.invokeOnTimeout(timeMillis, action, context))
+        disposeOnSelect(context.delay.invokeOnTimeout(timeMillis, action))
     }
 
     private class DisposeNode(

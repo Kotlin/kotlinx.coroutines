@@ -7,6 +7,7 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
+import kotlin.native.concurrent.*
 
 /**
  * Channel that buffers at most one element and conflates all subsequent `send` and `offer` invocations,
@@ -17,7 +18,7 @@ import kotlinx.coroutines.selects.*
  *
  * This channel is created by `Channel(Channel.CONFLATED)` factory function invocation.
  */
-internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredElement<E>?) : AbstractChannel<E>(onUndeliveredElement) {
+internal open class ConflatedChannel<E> : AbstractChannel<E>() {
     protected final override val isBufferAlwaysEmpty: Boolean get() = false
     protected final override val isBufferEmpty: Boolean get() = value === EMPTY
     protected final override val isBufferAlwaysFull: Boolean get() = false
@@ -28,6 +29,10 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
     private val lock = ReentrantLock()
 
     private var value: Any? = EMPTY
+
+    private companion object {
+        private val EMPTY = Symbol("EMPTY")
+    }
 
     // result is `OFFER_SUCCESS | Closed`
     protected override fun offerInternal(element: E): Any {
@@ -49,7 +54,7 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
                     }
                 }
             }
-            updateValueLocked(element)?.let { throw it }
+            value = element
             return OFFER_SUCCESS
         }
         // breaks here if offer meets receiver
@@ -82,7 +87,7 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
             if (!select.trySelect()) {
                 return ALREADY_SELECTED
             }
-            updateValueLocked(element)?.let { throw it }
+            value = element
             return OFFER_SUCCESS
         }
         // breaks here if offer meets receiver
@@ -115,20 +120,12 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
     }
 
     protected override fun onCancelIdempotent(wasClosed: Boolean) {
-        var undeliveredElementException: UndeliveredElementException? = null // resource cancel exception
-        lock.withLock {
-            undeliveredElementException = updateValueLocked(EMPTY)
+        if (wasClosed) {
+            lock.withLock {
+                value = EMPTY
+            }
         }
         super.onCancelIdempotent(wasClosed)
-        undeliveredElementException?.let { throw it } // throw exception at the end if there was one
-    }
-
-    private fun updateValueLocked(element: Any?): UndeliveredElementException? {
-        val old = value
-        val undeliveredElementException = if (old === EMPTY) null else
-            onUndeliveredElement?.callUndeliveredElementCatchingException(old as E)
-        value = element
-        return undeliveredElementException
     }
 
     override fun enqueueReceiveInternal(receive: Receive<E>): Boolean = lock.withLock {

@@ -20,9 +20,6 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * the channel afterwards. If you need to iterate over the channel without consuming it,
  * a regular `for` loop should be used instead.
  *
- * Note, that emitting values from a channel into a flow is not atomic. A value that was received from the
- * channel many not reach the flow collector if it was cancelled and will be lost.
- *
  * This function provides a more efficient shorthand for `channel.consumeEach { value -> emit(value) }`.
  * See [consumeEach][ReceiveChannel.consumeEach].
  */
@@ -119,9 +116,8 @@ private class ChannelAsFlow<T>(
     private val channel: ReceiveChannel<T>,
     private val consume: Boolean,
     context: CoroutineContext = EmptyCoroutineContext,
-    capacity: Int = Channel.OPTIONAL_CHANNEL,
-    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
-) : ChannelFlow<T>(context, capacity, onBufferOverflow) {
+    capacity: Int = Channel.OPTIONAL_CHANNEL
+) : ChannelFlow<T>(context, capacity) {
     private val consumed = atomic(false)
 
     private fun markConsumed() {
@@ -130,11 +126,8 @@ private class ChannelAsFlow<T>(
         }
     }
     
-    override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
-        ChannelAsFlow(channel, consume, context, capacity, onBufferOverflow)
-
-    override fun dropChannelOperators(): Flow<T>? =
-        ChannelAsFlow(channel, consume)
+    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
+        ChannelAsFlow(channel, consume, context, capacity)
 
     override suspend fun collectTo(scope: ProducerScope<T>) =
         SendingCollector(scope).emitAllImpl(channel, consume) // use efficient channel receiving code from emitAll
@@ -161,7 +154,7 @@ private class ChannelAsFlow<T>(
         }
     }
 
-    override fun additionalToStringProps(): String = "channel=$channel"
+    override fun additionalToStringProps(): String = "channel=$channel, "
 }
 
 /**
@@ -188,22 +181,8 @@ public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
  * Use [buffer] operator on the flow before calling `broadcastIn` to specify a value other than
  * default and to control what happens when data is produced faster than it is consumed,
  * that is to control backpressure behavior.
- *
- * ### Deprecated
- *
- * **This API is deprecated.** The [BroadcastChannel] provides a complex channel-like API for hot flows.
- * [SharedFlow] is a easier-to-use and more flow-centric API for the same purposes, so using
- * [shareIn] operator is preferred. It is not a direct replacement, so please
- * study [shareIn] documentation to see what kind of shared flow fits your use-case. As a rule of thumb:
- *
- * * Replace `broadcastIn(scope)` and `broadcastIn(scope, CoroutineStart.LAZY)` with `shareIn(scope, 0, SharingStarted.Lazily)`.
- * * Replace `broadcastIn(scope, CoroutineStart.DEFAULT)` with `shareIn(scope, 0, SharingStarted.Eagerly)`.
  */
-@Deprecated(
-    message = "Use shareIn operator and the resulting SharedFlow as a replacement for BroadcastChannel",
-    replaceWith = ReplaceWith("shareIn(scope, 0, SharingStarted.Lazily)"),
-    level = DeprecationLevel.WARNING
-)
+@FlowPreview
 public fun <T> Flow<T>.broadcastIn(
     scope: CoroutineScope,
     start: CoroutineStart = CoroutineStart.LAZY

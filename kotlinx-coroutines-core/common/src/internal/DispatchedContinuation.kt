@@ -2,10 +2,10 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.internal
+package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlin.native.concurrent.*
@@ -19,7 +19,7 @@ internal val REUSABLE_CLAIMED = Symbol("REUSABLE_CLAIMED")
 internal class DispatchedContinuation<in T>(
     @JvmField val dispatcher: CoroutineDispatcher,
     @JvmField val continuation: Continuation<T>
-) : DispatchedTask<T>(MODE_UNINITIALIZED), CoroutineStackFrame, Continuation<T> by continuation {
+) : DispatchedTask<T>(MODE_ATOMIC_DEFAULT), CoroutineStackFrame, Continuation<T> by continuation {
     @JvmField
     @Suppress("PropertyName")
     internal var _state: Any? = UNDEFINED
@@ -37,19 +37,19 @@ internal class DispatchedContinuation<in T>(
      * 3) [REUSABLE_CLAIMED]. CC is currently being reused and its owner executes `suspend` block:
      *    ```
      *    // state == null | CC
-     *    suspendCancellableCoroutineReusable { cont ->
+     *    suspendAtomicCancellableCoroutineReusable { cont ->
      *        // state == REUSABLE_CLAIMED
      *        block(cont)
      *    }
      *    // state == CC
      *    ```
-     * 4) [Throwable] continuation was cancelled with this cause while being in [suspendCancellableCoroutineReusable],
+     * 4) [Throwable] continuation was cancelled with this cause while being in [suspendAtomicCancellableCoroutineReusable],
      *    [CancellableContinuationImpl.getResult] will check for cancellation later.
      *
      * [REUSABLE_CLAIMED] state is required to prevent the lost resume in the channel.
      * AbstractChannel.receive method relies on the fact that the following pattern
      * ```
-     * suspendCancellableCoroutineReusable { cont ->
+     * suspendAtomicCancellableCoroutineReusable { cont ->
      *     val result = pollFastPath()
      *     if (result != null) cont.resume(result)
      * }
@@ -67,12 +67,12 @@ internal class DispatchedContinuation<in T>(
         /*
          * Reusability control:
          * `null` -> no reusability at all, false
-         * If current state is not CCI, then we are within `suspendCancellableCoroutineReusable`, true
+         * If current state is not CCI, then we are within `suspendAtomicCancellableCoroutineReusable`, true
          * Else, if result is CCI === requester.
          * Identity check my fail for the following pattern:
          * ```
          * loop:
-         * suspendCancellableCoroutineReusable { } // Reusable, outer coroutine stores the child handle
+         * suspendAtomicCancellableCoroutineReusable { } // Reusable, outer coroutine stores the child handle
          * suspendCancellableCoroutine { } // **Not reusable**, handle should be disposed after {}, otherwise
          * it will leak because it won't be freed by `releaseInterceptedContinuation`
          * ```
@@ -83,7 +83,7 @@ internal class DispatchedContinuation<in T>(
     }
 
     /**
-     * Claims the continuation for [suspendCancellableCoroutineReusable] block,
+     * Claims the continuation for [suspendAtomicCancellableCoroutineReusable] block,
      * so all cancellations will be postponed.
      */
     @Suppress("UNCHECKED_CAST")
@@ -119,7 +119,7 @@ internal class DispatchedContinuation<in T>(
      * If continuation was cancelled, it becomes non-reusable.
      *
      * ```
-     * suspendCancellableCoroutineReusable { // <- claimed
+     * suspendAtomicCancellableCoroutineReusable { // <- claimed
      * // Any asynchronous cancellation is "postponed" while this block
      * // is being executed
      * } // postponed cancellation is checked here in `getResult`
@@ -180,10 +180,10 @@ internal class DispatchedContinuation<in T>(
         val state = result.toState()
         if (dispatcher.isDispatchNeeded(context)) {
             _state = state
-            resumeMode = MODE_ATOMIC
+            resumeMode = MODE_ATOMIC_DEFAULT
             dispatcher.dispatch(context, this)
         } else {
-            executeUnconfined(state, MODE_ATOMIC) {
+            executeUnconfined(state, MODE_ATOMIC_DEFAULT) {
                 withCoroutineContext(this.context, countOrElement) {
                     continuation.resumeWith(result)
                 }
@@ -194,42 +194,29 @@ internal class DispatchedContinuation<in T>(
     // We inline it to save an entry on the stack in cases where it shows (unconfined dispatcher)
     // It is used only in Continuation<T>.resumeCancellableWith
     @Suppress("NOTHING_TO_INLINE")
-    inline fun resumeCancellableWith(
-        result: Result<T>,
-        noinline onCancellation: ((cause: Throwable) -> Unit)?
-    ) {
-        val state = result.toState(onCancellation)
+    inline fun resumeCancellableWith(result: Result<T>) {
+        val state = result.toState()
         if (dispatcher.isDispatchNeeded(context)) {
             _state = state
             resumeMode = MODE_CANCELLABLE
             dispatcher.dispatch(context, this)
         } else {
             executeUnconfined(state, MODE_CANCELLABLE) {
-                if (!resumeCancelled(state)) {
+                if (!resumeCancelled()) {
                     resumeUndispatchedWith(result)
                 }
             }
         }
     }
 
-    // takeState had already cleared the state so we cancel takenState here
-    override fun cancelCompletedResult(takenState: Any?, cause: Throwable) {
-        // It is Ok to call onCancellation here without try/catch around it, since this function only faces
-        // a "bound" cancellation handler that performs the safe call to the user-specified code.
-        if (takenState is CompletedWithCancellation) {
-            takenState.onCancellation(cause)
-        }
-    }
-
     @Suppress("NOTHING_TO_INLINE")
-    inline fun resumeCancelled(state: Any?): Boolean {
+    inline fun resumeCancelled(): Boolean {
         val job = context[Job]
         if (job != null && !job.isActive) {
-            val cause = job.getCancellationException()
-            cancelCompletedResult(state, cause)
-            resumeWithException(cause)
+            resumeWithException(job.getCancellationException())
             return true
         }
+
         return false
     }
 
@@ -258,11 +245,8 @@ internal class DispatchedContinuation<in T>(
  * @suppress **This an internal API and should not be used from general code.**
  */
 @InternalCoroutinesApi
-public fun <T> Continuation<T>.resumeCancellableWith(
-    result: Result<T>,
-    onCancellation: ((cause: Throwable) -> Unit)? = null
-): Unit = when (this) {
-    is DispatchedContinuation -> resumeCancellableWith(result, onCancellation)
+public fun <T> Continuation<T>.resumeCancellableWith(result: Result<T>): Unit = when (this) {
+    is DispatchedContinuation -> resumeCancellableWith(result)
     else -> resumeWith(result)
 }
 
@@ -281,7 +265,6 @@ private inline fun DispatchedContinuation<*>.executeUnconfined(
     contState: Any?, mode: Int, doYield: Boolean = false,
     block: () -> Unit
 ): Boolean {
-    assert { mode != MODE_UNINITIALIZED } // invalid execution mode
     val eventLoop = ThreadLocalEventLoop.eventLoop
     // If we are yielding and unconfined queue is empty, we can bail out as part of fast path
     if (doYield && eventLoop.isUnconfinedQueueEmpty) return false

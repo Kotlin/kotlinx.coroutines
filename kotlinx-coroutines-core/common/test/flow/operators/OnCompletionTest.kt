@@ -231,7 +231,7 @@ class OnCompletionTest : TestBase() {
 
     @Test
     fun testSingle() = runTest {
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<IllegalStateException> {
             flowOf(239).onCompletion {
                 assertNull(it)
                 expect(1)
@@ -240,7 +240,7 @@ class OnCompletionTest : TestBase() {
                     expectUnreached()
                 } catch (e: Throwable) {
                     // Second emit -- failure
-                    assertTrue { e is IllegalArgumentException }
+                    assertTrue { e is IllegalStateException }
                     throw e
                 }
             }.single()

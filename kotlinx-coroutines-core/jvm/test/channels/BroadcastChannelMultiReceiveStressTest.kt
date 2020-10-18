@@ -48,9 +48,8 @@ class BroadcastChannelMultiReceiveStressTest(
             launch(pool + CoroutineName("Sender")) {
                 var i = 0L
                 while (isActive) {
-                    i++
-                    broadcast.send(i) // could be cancelled
-                    sentTotal.set(i) // only was for it if it was not cancelled
+                    broadcast.send(++i)
+                    sentTotal.set(i) // set sentTotal only if `send` was not cancelled
                 }
             }
         val receivers = mutableListOf<Job>()
@@ -89,8 +88,10 @@ class BroadcastChannelMultiReceiveStressTest(
         try {
             withTimeout(5000) {
                 receivers.forEachIndexed { index, receiver ->
-                    if (lastReceived[index].get() >= total) receiver.cancel()
-                    receiver.join()
+                    if (lastReceived[index].get() == total)
+                        receiver.cancel()
+                    else
+                        receiver.join()
                 }
             }
         } catch (e: Exception) {
@@ -111,7 +112,7 @@ class BroadcastChannelMultiReceiveStressTest(
             check(i == last + 1) { "Last was $last, got $i" }
         receivedTotal.incrementAndGet()
         lastReceived[receiverIndex].set(i)
-        return i >= stopOnReceive.get()
+        return i == stopOnReceive.get()
     }
 
     private suspend fun doReceive(channel: ReceiveChannel<Long>, receiverIndex: Int) {
