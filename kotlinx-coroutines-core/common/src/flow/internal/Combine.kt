@@ -52,20 +52,13 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
      */
     val lastReceivedEpoch = ByteArray(size)
     var currentEpoch: Byte = 0
-    combine@ while (true) {
+    while (true) {
         ++currentEpoch
-        var shouldSuspend = true
 
         // Start batch
+        // The very first receive in epoch should be suspending
+        var element = resultChannel.receiveOrNull() ?: break // Channel is closed, nothing to do here
         while (true) {
-            // The very first receive in epoch should be suspending
-            val element = if (shouldSuspend) {
-                shouldSuspend = false
-                resultChannel.receiveOrNull() ?: break@combine // Channel is closed, nothing to do here
-            } else {
-                resultChannel.poll()
-            }
-            if (element === null) break // End batch processing, nothing to receive
             val index = element.index
             // Update values
             val previous = latestValues[index]
@@ -75,6 +68,7 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
             // Received the second value from the same flow in the same epoch -- bail out
             if (lastReceivedEpoch[index] == currentEpoch) break
             lastReceivedEpoch[index] = currentEpoch
+            element = resultChannel.poll() ?: break
         }
 
         // Process batch result if there is enough data
