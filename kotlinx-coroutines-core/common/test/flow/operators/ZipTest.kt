@@ -5,7 +5,6 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.internal.*
 import kotlin.test.*
 
 /*
@@ -70,7 +69,7 @@ class ZipTest : TestBase() {
             emit("2")
         }
 
-        val f2 =flow<String> {
+        val f2 = flow<String> {
             emit("a")
             emit("b")
             expectUnreached()
@@ -212,7 +211,7 @@ class ZipTest : TestBase() {
             hang { expect(6) }
         }
 
-        val flow = f1.zip(f2, { _, _ -> 1 }).onEach { expect(4) }
+        val flow = f1.zip(f2) { _, _ -> 1 }.onEach { expect(4) }
         assertFailsWith<CancellationException>(flow)
         finish(7)
     }

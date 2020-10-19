@@ -8,7 +8,6 @@
 
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
 import kotlinx.coroutines.flow.flow as safeFlow

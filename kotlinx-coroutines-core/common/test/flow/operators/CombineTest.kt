@@ -22,7 +22,7 @@ abstract class CombineTestBase : TestBase() {
         val flow = flowOf("a", "b", "c")
         val flow2 = flowOf(1, 2, 3)
         val list = flow.combineLatest(flow2) { i, j -> i + j }.toList()
-        assertEquals(listOf("a1", "b1", "b2", "c2", "c3"), list)
+        assertEquals(listOf("a1", "b2", "c3"), list)
     }
 
     @Test
@@ -30,7 +30,7 @@ abstract class CombineTestBase : TestBase() {
         val flow = flowOf("a", null, null)
         val flow2 = flowOf(1, 2, 3)
         val list = flow.combineLatest(flow2, { i, j -> i + j }).toList()
-        assertEquals(listOf("a1", "null1", "null2", "null2", "null3"), list)
+        assertEquals(listOf("a1", "null2", "null3"), list)
     }
 
     @Test
@@ -38,7 +38,7 @@ abstract class CombineTestBase : TestBase() {
         val flow = flowOf("a", "b", "c")
         val flow2 = flowOf(null, 2, null)
         val list = flow.combineLatest(flow2, { i, j -> i + j }).toList()
-        assertEquals(listOf("anull", "bnull", "b2", "c2", "cnull"), list)
+        assertEquals(listOf("anull", "b2", "cnull"), list)
     }
 
     @Test

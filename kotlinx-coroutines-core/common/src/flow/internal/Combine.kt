@@ -11,21 +11,20 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
-import kotlin.jvm.*
-import kotlin.math.*
 
-private class Update(@JvmField val index: Int, @JvmField val value: Any?)
+private typealias Update = IndexedValue<Any?>
 
 @PublishedApi
 internal suspend fun <R, T> FlowCollector<R>.combineInternal(
     flows: Array<out Flow<T>>,
-    arrayFactory: () -> Array<T?>,
+    arrayFactory: () -> Array<T?>, // Array factory is required to workaround array typing on JVM
     transform: suspend FlowCollector<R>.(Array<T>) -> Unit
 ): Unit = flowScope { // flow scope so any cancellation within the source flow will cancel the whole scope
     val size = flows.size
     if (size == 0) return@flowScope // bail-out for empty input
-    val latestValues = Array<Any?>(size) { UNINITIALIZED }
-    val isClosed = Array(size) { false }
+    val latestValues = arrayOfNulls<Any?>(size)
+    latestValues.fill(UNINITIALIZED) // Smaller bytecode & faster that Array(size) { UNINITIALIZED }
+    val isClosed = BooleanArray(size)
     val resultChannel = Channel<Update>(flows.size)
     val nonClosed = LocalAtomicInt(size)
     var remainingAbsentValues = size
@@ -35,7 +34,7 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
             try {
                 flows[i].collect { value ->
                     resultChannel.send(Update(i, value))
-                    yield() // Emulate fairness for backward compatibility
+                    yield() // Emulate fairness, giving each flow chance to emit
                 }
             } finally {
                 isClosed[i] = true
@@ -47,54 +46,41 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
         }
     }
 
-//    val lastReceivedEpoch = IntArray(size)
-//    var currentEpoch = 0
-//    while (!resultChannel.isClosedForReceive) {
-//        ++currentEpoch
-//        var shouldSuspend = true
-//        // Start batch
-//        var elementsReceived = 0
-//        while (true) {
-//            // The very first receive in epoch should be suspending
-//            val element = if (shouldSuspend) {
-//                shouldSuspend = false
-//                resultChannel.receiveOrNull()
-//            } else {
-//                resultChannel.poll()
-//            }
-//            if (element === null) break // End batch processing, nothing to receive
-//            ++elementsReceived
-//            val index = element.index
-//            // Update valued
-//            val previous = latestValues[index]
-//            latestValues[index] = element.value
-//            if (previous === UNINITIALIZED) --remainingAbsentValues
-//            // Check epoch
-//            // Received the second value from the same flow in the same epoch -- bail out
-//            if (lastReceivedEpoch[index] == currentEpoch) break
-//            lastReceivedEpoch[index] = currentEpoch
-//        }
-//
-//        // Process batch result
-//        if (remainingAbsentValues == 0 && elementsReceived != 0) {
-//            val results = arrayFactory()
-//            for (i in 0 until size) {
-//                results[i] = latestValues[i] as T?
-//            }
-//            transform(results as Array<T>)
-//        }
-//    }
+    /*
+     * Batch-receive optimization: read updates in batches, but bail-out
+     * as soon as we encountered two values from the same source
+     */
+    val lastReceivedEpoch = ByteArray(size)
+    var currentEpoch: Byte = 0
+    combine@ while (true) {
+        ++currentEpoch
+        var shouldSuspend = true
 
-    resultChannel.consumeEach {
-        val index = it.index
-        val previous = latestValues[index]
-        latestValues[index] = it.value
-        if (previous === UNINITIALIZED) --remainingAbsentValues
+        // Start batch
+        while (true) {
+            // The very first receive in epoch should be suspending
+            val element = if (shouldSuspend) {
+                shouldSuspend = false
+                resultChannel.receiveOrNull() ?: break@combine // Channel is closed, nothing to do here
+            } else {
+                resultChannel.poll()
+            }
+            if (element === null) break // End batch processing, nothing to receive
+            val index = element.index
+            // Update values
+            val previous = latestValues[index]
+            latestValues[index] = element.value
+            if (previous === UNINITIALIZED) --remainingAbsentValues
+            // Check epoch
+            // Received the second value from the same flow in the same epoch -- bail out
+            if (lastReceivedEpoch[index] == currentEpoch) break
+            lastReceivedEpoch[index] = currentEpoch
+        }
+
+        // Process batch result if there is enough data
         if (remainingAbsentValues == 0) {
             val results = arrayFactory()
-            for (i in 0 until size) {
-                results[i] = latestValues[i] as T?
-            }
+            (latestValues as Array<T?>).copyInto(results)
             transform(results as Array<T>)
         }
     }

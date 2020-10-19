@@ -15,7 +15,7 @@ import java.util.concurrent.*
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
-open class CombineFlowsBenchmarVolatilek {
+open class CombineFlowsBenchmark {
 
     @Param("10", "100", "1000")
     private var size = 10
