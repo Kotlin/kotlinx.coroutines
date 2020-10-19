@@ -50,4 +50,22 @@ open class ChannelSinkBenchmark {
         for (i in start until (start + count))
             send(i)
     }
+
+    // Migrated from deprecated operators, are good only for stressing channels
+
+    private fun <E> ReceiveChannel<E>.filter(context: CoroutineContext = Dispatchers.Unconfined, predicate: suspend (E) -> Boolean): ReceiveChannel<E> =
+        GlobalScope.produce(context, onCompletion = { cancel() }) {
+            for (e in this@filter) {
+                if (predicate(e)) send(e)
+            }
+        }
+
+    private suspend inline fun <E, R> ReceiveChannel<E>.fold(initial: R, operation: (acc: R, E) -> R): R {
+        var accumulator = initial
+        consumeEach {
+            accumulator = operation(accumulator, it)
+        }
+        return accumulator
+    }
 }
+
