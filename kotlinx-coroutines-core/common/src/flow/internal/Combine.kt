@@ -126,9 +126,9 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
                  */
                 val scopeContext = coroutineContext
                 val cnt = threadContextElements(scopeContext)
-                withContextUndispatched(coroutineContext + collectJob) {
+                withContextUndispatched(coroutineContext + collectJob, Unit) {
                     flow.collect { value ->
-                        withContextUndispatched(scopeContext, cnt) {
+                        withContextUndispatched(scopeContext, Unit, cnt) {
                             val otherValue = second.receiveOrNull() ?: throw AbortFlowException(this@unsafeFlow)
                             emit(transform(value, NULL.unbox(otherValue)))
                         }
@@ -139,18 +139,5 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
             } finally {
                 if (!second.isClosedForReceive) second.cancel()
             }
-        }
-    }
-
-private suspend fun withContextUndispatched(
-    newContext: CoroutineContext,
-    countOrElement: Any = threadContextElements(newContext),
-    block: suspend () -> Unit
-): Unit =
-    suspendCoroutineUninterceptedOrReturn { uCont ->
-        withCoroutineContext(newContext, countOrElement) {
-            block.startCoroutineUninterceptedOrReturn(Continuation(newContext) {
-                uCont.resumeWith(it)
-            })
         }
     }
