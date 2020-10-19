@@ -111,7 +111,7 @@ internal object DebugProbesImpl {
         check(isInstalled) { "Debug probes are not installed" }
         val jobToStack = capturedCoroutines
             .filter { it.delegate.context[Job] != null }
-            .associateBy({ it.delegate.context[Job]!! }, { it.info })
+            .associateBy({ it.delegate.context.job }, { it.info })
         return buildString {
             job.build(jobToStack, this, "")
         }

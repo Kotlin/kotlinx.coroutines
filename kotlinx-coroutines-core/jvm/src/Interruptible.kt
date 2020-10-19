@@ -40,8 +40,7 @@ public suspend fun <T> runInterruptible(
 
 private fun <T> runInterruptibleInExpectedContext(coroutineContext: CoroutineContext, block: () -> T): T {
     try {
-        val job = coroutineContext[Job]!! // withContext always creates a job
-        val threadState = ThreadState(job)
+        val threadState = ThreadState(coroutineContext.job)
         threadState.setup()
         try {
             return block()
