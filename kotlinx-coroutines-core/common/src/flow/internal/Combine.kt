@@ -54,7 +54,6 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
     var currentEpoch: Byte = 0
     while (true) {
         ++currentEpoch
-
         // Start batch
         // The very first receive in epoch should be suspending
         var element = resultChannel.receiveOrNull() ?: break // Channel is closed, nothing to do here
