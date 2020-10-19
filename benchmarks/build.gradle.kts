@@ -36,7 +36,7 @@ tasks.named<KotlinCompile>("compileJmhKotlin") {
 // It is better to use the following to run benchmarks, otherwise you may get unexpected errors:
 // ./gradlew --no-daemon cleanJmhJar jmh -Pjmh="MyBenchmark"
 extensions.configure<JMHPluginExtension>("jmh") {
-    jmhVersion = "1.21"
+    jmhVersion = "1.26"
     duplicateClassesStrategy = DuplicatesStrategy.INCLUDE
     failOnError = true
     resultFormat = "CSV"
@@ -54,7 +54,7 @@ tasks.named<Jar>("jmhJar") {
 }
 
 dependencies {
-    compile("org.openjdk.jmh:jmh-core:1.21")
+    compile("org.openjdk.jmh:jmh-core:1.26")
     compile("io.projectreactor:reactor-core:${version("reactor")}")
     compile("io.reactivex.rxjava2:rxjava:2.1.9")
     compile("com.github.akarnokd:rxjava2-extensions:0.20.8")
