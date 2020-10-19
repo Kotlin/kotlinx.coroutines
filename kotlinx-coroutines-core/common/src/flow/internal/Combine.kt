@@ -17,14 +17,13 @@ private typealias Update = IndexedValue<Any?>
 @PublishedApi
 internal suspend fun <R, T> FlowCollector<R>.combineInternal(
     flows: Array<out Flow<T>>,
-    arrayFactory: () -> Array<T?>, // Array factory is required to workaround array typing on JVM
+    arrayFactory: () -> Array<T?>?, // Array factory is required to workaround array typing on JVM
     transform: suspend FlowCollector<R>.(Array<T>) -> Unit
 ): Unit = flowScope { // flow scope so any cancellation within the source flow will cancel the whole scope
     val size = flows.size
     if (size == 0) return@flowScope // bail-out for empty input
     val latestValues = arrayOfNulls<Any?>(size)
     latestValues.fill(UNINITIALIZED) // Smaller bytecode & faster that Array(size) { UNINITIALIZED }
-    val isClosed = BooleanArray(size)
     val resultChannel = Channel<Update>(flows.size)
     val nonClosed = LocalAtomicInt(size)
     var remainingAbsentValues = size
@@ -37,7 +36,6 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
                     yield() // Emulate fairness, giving each flow chance to emit
                 }
             } finally {
-                isClosed[i] = true
                 // Close the channel when there is no more flows
                 if (nonClosed.decrementAndGet() == 0) {
                     resultChannel.close()
@@ -72,9 +70,17 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
 
         // Process batch result if there is enough data
         if (remainingAbsentValues == 0) {
+            /*
+             * If arrayFactory returns null, then we can avoid array copy because
+             * it's our own safe transformer that immediately deconstructs the array
+             */
             val results = arrayFactory()
-            (latestValues as Array<T?>).copyInto(results)
-            transform(results as Array<T>)
+            if (results == null) {
+                transform(latestValues as Array<T>)
+            } else {
+                (latestValues as Array<T?>).copyInto(results)
+                transform(results as Array<T>)
+            }
         }
     }
 }
@@ -82,7 +88,12 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
 internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
     unsafeFlow {
         coroutineScope {
-            val second = asChannel(flow2)
+            val second = produce<Any> {
+                flow2.collect { value ->
+                    return@collect channel.send(value ?: NULL)
+                }
+            }
+
             /*
              * This approach only works with rendezvous channel and is required to enforce correctness
              * in the following scenario:
@@ -95,14 +106,11 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
              * Invariant: this clause is invoked only when all elements from the channel were processed (=> rendezvous restriction).
              */
             val collectJob = Job()
-            val scopeJob = currentCoroutineContext()[Job]!! // TODO replace with extension when #2245 is here
             (second as SendChannel<*>).invokeOnClose {
                 // Optimization to avoid AFE allocation when the other flow is done
                 if (collectJob.isActive) collectJob.cancel(AbortFlowException(this@unsafeFlow))
             }
 
-            val newContext = coroutineContext + scopeJob
-            val cnt = threadContextElements(newContext)
             try {
                 /*
                  * Non-trivial undispatched (because we are in the right context and there is no structured concurrency)
@@ -116,18 +124,20 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
                  * with coroutines scope via a channel, but it's way too expensive, so
                  * we are using this trick instead.
                  */
-                withContextUndispatched( coroutineContext + collectJob) {
+                val scopeContext = coroutineContext
+                val cnt = threadContextElements(scopeContext)
+                withContextUndispatched(coroutineContext + collectJob) {
                     flow.collect { value ->
-                        withContextUndispatched(newContext, cnt) {
+                        withContextUndispatched(scopeContext, cnt) {
                             val otherValue = second.receiveOrNull() ?: throw AbortFlowException(this@unsafeFlow)
-                            emit(transform(NULL.unbox(value), NULL.unbox(otherValue)))
+                            emit(transform(value, NULL.unbox(otherValue)))
                         }
                     }
                 }
             } catch (e: AbortFlowException) {
                 e.checkOwnership(owner = this@unsafeFlow)
             } finally {
-                if (!second.isClosedForReceive) second.cancel(AbortFlowException(this@unsafeFlow))
+                if (!second.isClosedForReceive) second.cancel()
             }
         }
     }
@@ -144,10 +154,3 @@ private suspend fun withContextUndispatched(
             })
         }
     }
-
-// Channel has any type due to onReceiveOrNull. This will be fixed after receiveOrClosed
-private fun CoroutineScope.asChannel(flow: Flow<*>): ReceiveChannel<Any> = produce {
-    flow.collect { value ->
-        return@collect channel.send(value ?: NULL)
-    }
-}
