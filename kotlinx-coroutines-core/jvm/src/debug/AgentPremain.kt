@@ -21,9 +21,9 @@ internal object AgentPremain {
 
     public var isInstalledStatically = false
 
-    private val enableCreationStackTraces =
+    private val enableCreationStackTraces = runCatching {
         System.getProperty("kotlinx.coroutines.debug.enable.creation.stack.trace")?.toBoolean()
-            ?: DebugProbesImpl.enableCreationStackTraces
+    }.getOrNull() ?: DebugProbesImpl.enableCreationStackTraces
 
     @JvmStatic
     public fun premain(args: String?, instrumentation: Instrumentation) {
