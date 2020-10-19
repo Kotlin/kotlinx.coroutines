@@ -158,8 +158,8 @@ internal object DebugProbesImpl {
                 // Leave in the dump only the coroutines that were not collected while we were dumping them
                 .mapNotNull { owner ->
                     // Fuse map and filter into one operation to save an inline
-                    if (owner.notFinished()) owner.info.context?.let { context -> create(owner, context) }
-                    else null
+                    if (owner.isFinished()) null
+                    else owner.info.context?.let { context -> create(owner, context) }
                 }
         }
 
@@ -194,12 +194,12 @@ internal object DebugProbesImpl {
      * Typically, we intercept completion of the coroutine so it invokes "probeCoroutineCompleted",
      * but it's not the case for lazy coroutines that get cancelled before start.
      */
-    private fun CoroutineOwner<*>.notFinished(): Boolean {
+    private fun CoroutineOwner<*>.isFinished(): Boolean {
         // Guarded by lock
-        val job = info.context?.get(Job) ?: return true
-        if (!job.isCompleted) return true
+        val job = info.context?.get(Job) ?: return false
+        if (!job.isCompleted) return false
         capturedCoroutinesMap.remove(this) // Clean it up by the way
-        return false
+        return true
     }
 
     private fun dumpCoroutinesSynchronized(out: PrintStream): Unit = coroutineStateLock.write {
@@ -207,7 +207,7 @@ internal object DebugProbesImpl {
         out.print("Coroutines dump ${dateFormat.format(System.currentTimeMillis())}")
         capturedCoroutines
             .asSequence()
-            .filter { it.notFinished() }
+            .filter { !it.isFinished() }
             .sortedBy { it.info.sequenceNumber }
             .forEach { owner ->
                 val info = owner.info
