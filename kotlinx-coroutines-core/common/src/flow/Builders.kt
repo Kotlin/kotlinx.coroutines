@@ -204,8 +204,8 @@ public fun LongRange.asFlow(): Flow<Long> = flow {
 @FlowPreview
 @Deprecated(
     message = "Use channelFlow with awaitClose { } instead of flowViaChannel and invokeOnClose { }.",
-    level = DeprecationLevel.WARNING
-)
+    level = DeprecationLevel.ERROR
+) // To be removed in 1.4.x
 @Suppress("DeprecatedCallableAddReplaceWith")
 public fun <T> flowViaChannel(
     bufferSize: Int = BUFFERED,

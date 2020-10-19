@@ -150,7 +150,6 @@ public fun consumesAll(vararg channels: ReceiveChannel<*>): CompletionHandler =
  *
  * The operation is _terminal_.
  */
-@ExperimentalCoroutinesApi // since 1.3.0, tentatively graduates in 1.4.0
 public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -> R): R {
     var cause: Throwable? = null
     try {
@@ -171,7 +170,6 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
  * The operation is _terminal_.
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
-@ExperimentalCoroutinesApi // since 1.3.0, tentatively graduates in 1.4.x
 public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit): Unit =
     consume {
         for (e in this) action(e)

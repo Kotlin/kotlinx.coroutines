@@ -434,7 +434,6 @@ public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): F
     message = "'scanReduce' was renamed to 'runningReduce' to be consistent with Kotlin standard library",
     replaceWith = ReplaceWith("runningReduce(operation)")
 )
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.scanReduce(operation: suspend (accumulator: T, value: T) -> T): Flow<T> = runningReduce(operation)
 
 @Deprecated(

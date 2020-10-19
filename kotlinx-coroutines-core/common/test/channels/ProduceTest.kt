@@ -163,7 +163,7 @@ class ProduceTest : TestBase() {
     private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {
         val source = Channel<Int>()
         expect(1)
-        val produced = produce<Int>(coroutineContext, onCompletion = source.consumes()) {
+        val produced = produce<Int>(coroutineContext, onCompletion = { source.cancelConsumed(it) }) {
             expect(2)
             source.receive()
         }
