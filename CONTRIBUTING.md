@@ -46,7 +46,7 @@ so do familiarize yourself with the following guidelines.
     Use 4 spaces for indentation.
   * [Build the project](#building) to make sure it all works and passes the tests.
 * If you fix a bug:
-  * Write the test the reproduces the bug.
+  * Write the test that reproduces the bug.
   * Fixes without tests are accepted only in exceptional circumstances if it can be shown that writing the 
     corresponding test is too hard or otherwise impractical.
   * Follow the style of writing tests that is used in this project: 
