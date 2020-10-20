@@ -11,6 +11,7 @@ Notation RESUMEDV := (InjLV #0).
 Notation CANCELLEDV := (InjLV #1).
 Notation BROKENV := (InjLV #2).
 Notation TAKENV := (InjLV #3).
+Notation REFUSEDV := (InjLV #4).
 
 Section impl.
 
@@ -115,8 +116,12 @@ Inductive cellRendezvousResolution :=
 | cellValueTaken
 | cellBroken.
 
+Inductive cancellationResult :=
+| cellTookValue
+| cellClosed.
+
 Inductive cancellationResolution :=
-| cancellationFinished
+| cancellationAllowed (result: option cancellationResult)
 | cancellationPrevented.
 
 Inductive futureTerminalState :=
@@ -150,9 +155,17 @@ Notation inhabitedCellStateR :=
         (csumR
            (* Cell was immediately cancelled. *)
            (agreeR unitO)
-           (* true: cancellation succeeded. *)
-           (* false: cancellation was logically impossible. *)
-           (optionUR (agreeR boolO))))).
+           (optionUR
+              (csumR
+                 (* cancellation was logically impossible. *)
+                 (agreeR unitO)
+                 (* cancellation was allowed. *)
+                 (optionUR
+                    (csumR
+                       (* a value was passed to the cell nonetheless. *)
+                       (agreeR valO)
+                       (* cancellation completed successfully. *)
+                       (agreeR unitO)))))))).
 
 Notation cellStateR :=
   (csumR
@@ -203,7 +216,7 @@ Definition rendezvousResolution_ra r :=
 
 Definition cancellationResolution_ra r :=
   to_agree match r with
-           | cancellationFinished => true
+           | cancellationAllowed => true
            | cancellationPrevented => false
            end.
 
@@ -295,6 +308,10 @@ Proof. apply _. Qed.
 Definition rendezvous_initialized γtq i: iProp :=
   inhabited_rendezvous_state γtq i ε ∨ filled_rendezvous_state γtq i ε.
 
+Definition suspension_permit γ := own γ (◯ (1%nat, ε, ε, ε)).
+
+Definition awakening_permit γ := own γ (◯ (ε, (1%nat, ε), ε, ε)).
+
 Variable array_interface: infiniteArrayInterface.
 Variable array_spec: infiniteArraySpec _ array_interface.
 
@@ -306,15 +323,19 @@ Let cancellation_handle := cell_cancellation_handle _ _ array_spec NArr.
 Record thread_queue_parameters :=
   ThreadQueueParameters
     {
+      is_immediate_cancellation: bool;
       enqueue_resource: iProp;
       dequeue_resource: iProp;
+      passed_value_resource: val -> iProp;
       cell_breaking_resource: iProp;
     }.
 
 Variable parameters: thread_queue_parameters.
 Let E := enqueue_resource parameters.
 Let R := dequeue_resource parameters.
+Let V := passed_value_resource parameters.
 Let CB := cell_breaking_resource parameters.
+Let immediateCancellation := is_immediate_cancellation parameters.
 
 Definition cell_resources
            γtq γa γe γd i (k: option cellState) (insideDeqFront: bool):
@@ -326,7 +347,7 @@ Definition cell_resources
     cancellation_handle γa i ∗
     ∃ ℓ, cell_location γtq γa i ℓ ∗
          match d with
-         | None => ℓ ↦ SOMEV v ∗ E ∗ R
+         | None => ℓ ↦ SOMEV v ∗ E ∗ V v ∗ R
          | Some cellValueTaken =>
            ℓ ↦ TAKENV ∗ iterator_issued γe i ∗ (E ∨ cell_breaking_token γtq i)
          | Some cellBroken => ℓ ↦ BROKENV ∗ (E ∗ CB ∨ iterator_issued γe i)
@@ -335,25 +356,53 @@ Definition cell_resources
     iterator_issued γe i ∗ rendezvous_thread_handle γtq γf f i ∗
     ∃ ℓ, cell_location γtq γa i ℓ ∗
          match r with
-         | None => ℓ ↦ InjLV f ∗ E ∗
-                  cancellation_handle γa i ∗
-                  (if insideDeqFront then R else True) ∗
+         | None => ℓ ↦ InjLV f ∗ cancellation_handle γa i ∗
+                  E ∗ (if insideDeqFront then R else True) ∗
                   (future_completion_permit γf 1%Qp ∨ iterator_issued γd i)
          | Some (cellResumed v) =>
            (ℓ ↦ InjLV f ∨ ℓ ↦ RESUMEDV) ∗
            iterator_issued γd i ∗
            future_is_completed γf v ∗
            cancellation_handle γa i ∗
-           (R ∨ future_cancellation_permit γf 1%Qp)
+           (V v ∗ R ∨ future_cancellation_permit γf 1%Qp)
          | Some cellImmediatelyCancelled =>
            (ℓ ↦ InjLV f ∨ ℓ ↦ CANCELLEDV) ∗
+           ⌜immediateCancellation⌝ ∗
            future_is_cancelled γf
          | Some (cellCancelled d) =>
            future_is_cancelled γf ∗
+           ⌜¬ immediateCancellation⌝ ∗
            match d with
-             | None => True
-             | Some cancellationPrevented => True
-             | Some cancellationFinished => True
+           | None =>
+             (ℓ ↦ InjLV f ∗ E ∗
+                (if insideDeqFront then R else True) ∗
+                (future_completion_permit γf 1%Qp ∨
+                 iterator_issued γd i)
+              ∨ ∃ v, ℓ ↦ SOMEV v ∗ iterator_issued γd i ∗
+                       future_completion_permit γf 1%Qp ∗ V v ∗ R)
+           | Some cancellationPrevented =>
+             ⌜insideDeqFront⌝ ∧
+             (ℓ ↦ InjLV f ∗ E ∗
+                (future_completion_permit γf 1%Qp ∨
+                 iterator_issued γd i)
+              ∨ ℓ ↦ REFUSEDV ∗
+                ((future_completion_permit γf 1%Qp ∨
+                  iterator_issued γd i) ∗ E ∨
+                 future_completion_permit γf 1%Qp ∗
+                 iterator_issued γd i)
+              ∨ ∃ v, ℓ ↦ SOMEV v ∗ iterator_issued γd i ∗
+                 future_completion_permit γf 1%Qp ∗ V v)
+           | Some cancellationFinished =>
+             ℓ ↦ InjLV f ∗ E ∗
+               (future_completion_permit γf 1%Qp ∨
+                iterator_issued γd i)
+             ∨ ℓ ↦ CANCELLEDV ∗
+                 ((future_completion_permit γf 1%Qp ∨
+                   iterator_issued γd i) ∗ awakening_permit γtq ∨
+                 future_completion_permit γf 1%Qp ∗
+                 iterator_issued γd i)
+             ∨ ∃ v, ℓ ↦ SOMEV v ∗ iterator_issued γd i ∗
+                    future_completion_permit γf 1%Qp ∗ V v ∗ R
            end
          end
   end.
@@ -426,10 +475,6 @@ Proof.
   iDestruct (rendezvous_state_valid with "H● HExistsEl") as %(c & HEl & _).
   iPureIntro. eauto.
 Qed.
-
-Definition suspension_permit γ := own γ (◯ (1%nat, ε, ε, ε)).
-
-Definition awakening_permit γ := own γ (◯ (ε, (1%nat, ε), ε, ε)).
 
 Definition is_nonskippable (r: option cellState): bool :=
   match r with
@@ -657,7 +702,7 @@ Proof.
       iDestruct ("HℓContra" with "Hℓ") as %[].
 Abort.
 
-Theorem inhabit_cell_spec γa γtq γe γd γf i ptr f e d:
+Lemma inhabit_cell_spec γa γtq γe γd γf i ptr f e d:
   is_future NFuture γf f -∗
   cell_enqueued γtq i -∗
   cell_location γtq γa i ptr -∗
