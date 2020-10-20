@@ -24,7 +24,7 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
     if (size == 0) return@flowScope // bail-out for empty input
     val latestValues = arrayOfNulls<Any?>(size)
     latestValues.fill(UNINITIALIZED) // Smaller bytecode & faster that Array(size) { UNINITIALIZED }
-    val resultChannel = Channel<Update>(flows.size)
+    val resultChannel = Channel<Update>(size)
     val nonClosed = LocalAtomicInt(size)
     var remainingAbsentValues = size
     for (i in 0 until size) {

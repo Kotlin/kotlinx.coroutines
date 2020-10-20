@@ -10,17 +10,6 @@ package kotlinx.coroutines.internal
  *
  * Have `Local` prefix to avoid AFU clashes during star-imports
  */
-
-// In fact, used as @Volatile
-internal expect class LocalAtomicRef<T>(value: T) {
-    fun get(): T
-    fun set(value: T)
-}
-
-internal inline var LocalAtomicRef<Any?>.value
-    get() = get()
-    set(value) = set(value)
-
 internal expect class LocalAtomicInt(value: Int) {
     fun get(): Int
     fun set(value: Int)
