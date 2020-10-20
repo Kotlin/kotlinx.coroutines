@@ -23,6 +23,11 @@ public fun Scheduler.asCoroutineDispatcher(): CoroutineDispatcher =
         SchedulerCoroutineDispatcher(this)
     }
 
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.4.0, binary compatibility with earlier versions")
+@JvmName("asCoroutineDispatcher")
+public fun Scheduler.asCoroutineDispatcher0(): SchedulerCoroutineDispatcher =
+    SchedulerCoroutineDispatcher(this)
+
 /**
  * Converts an instance of [CoroutineDispatcher] to an implementation of [Scheduler].
  */
@@ -32,6 +37,7 @@ public fun CoroutineDispatcher.asScheduler(): Scheduler =
     } else {
         DispatcherScheduler(this)
     }
+
 private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Scheduler() {
 
     private val schedulerJob = SupervisorJob()
@@ -115,7 +121,6 @@ private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Schedul
     }
 }
 
-
 /**
  * Represents a task to be queued sequentially on a [Channel] for a [Scheduler.Worker].
  *
@@ -123,7 +128,7 @@ private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Schedul
  */
 private class SchedulerChannelTask(
     private val block: Runnable,
-    private val job: Job
+    job: Job
 ) : JobDisposable(job) {
     fun execute() {
         if (job.isActive) {
@@ -168,7 +173,7 @@ public class SchedulerCoroutineDispatcher(
     override fun hashCode(): Int = System.identityHashCode(scheduler)
 }
 
-private open class JobDisposable(private val job: Job) : Disposable {
+private open class JobDisposable(protected val job: Job) : Disposable {
     override fun isDisposed(): Boolean = !job.isActive
 
     override fun dispose() {
