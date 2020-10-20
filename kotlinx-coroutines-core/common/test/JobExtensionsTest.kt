@@ -4,9 +4,10 @@
 
 package kotlinx.coroutines
 
+import kotlin.coroutines.*
 import kotlin.test.*
 
-class EnsureActiveTest : TestBase() {
+class JobExtensionsTest : TestBase() {
 
     private val job = Job()
     private val scope = CoroutineScope(job + CoroutineExceptionHandler { _, _ ->  })
@@ -80,5 +81,15 @@ class EnsureActiveTest : TestBase() {
         val exception = result.exceptionOrNull() ?: fail()
         assertTrue(exception is JobCancellationException)
         assertTrue(exception.cause is TestException)
+    }
+
+    @Test
+    fun testJobExtension() = runTest {
+        assertSame(coroutineContext[Job]!!, coroutineContext.job)
+        assertSame(NonCancellable, NonCancellable.job)
+        assertSame(job, job.job)
+        assertFailsWith<IllegalStateException> { EmptyCoroutineContext.job }
+        assertFailsWith<IllegalStateException> { Dispatchers.Default.job }
+        assertFailsWith<IllegalStateException> { (Dispatchers.Default + CoroutineName("")).job }
     }
 }

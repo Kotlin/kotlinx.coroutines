@@ -34,9 +34,4 @@ internal open class ChannelCoroutine<E>(
         _channel.cancel(exception) // cancel the channel
         cancelCoroutine(exception) // cancel the job
     }
-
-    @Suppress("UNCHECKED_CAST")
-    suspend fun sendFair(element: E) {
-        (_channel as AbstractSendChannel<E>).sendFair(element)
-    }
 }

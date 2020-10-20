@@ -5,6 +5,7 @@
 package kotlinx.coroutines.sync
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.*
 import kotlin.test.*
 
 class MutexStressTest : TestBase() {
@@ -25,5 +26,68 @@ class MutexStressTest : TestBase() {
         }
         jobs.forEach { it.join() }
         assertEquals(n * k, shared)
+    }
+
+    @Test
+    fun stressUnlockCancelRace() = runTest {
+        val n = 10_000 * stressTestMultiplier
+        val mutex = Mutex(true) // create a locked mutex
+        newSingleThreadContext("SemaphoreStressTest").use { pool ->
+            repeat (n) {
+                // Initially, we hold the lock and no one else can `lock`,
+                // otherwise it's a bug.
+                assertTrue(mutex.isLocked)
+                var job1EnteredCriticalSection = false
+                val job1 = launch(start = CoroutineStart.UNDISPATCHED) {
+                    mutex.lock()
+                    job1EnteredCriticalSection = true
+                    mutex.unlock()
+                }
+                // check that `job1` didn't finish the call to `acquire()`
+                assertEquals(false, job1EnteredCriticalSection)
+                val job2 = launch(pool) {
+                    mutex.unlock()
+                }
+                // Because `job2` executes in a separate thread, this
+                // cancellation races with the call to `unlock()`.
+                job1.cancelAndJoin()
+                job2.join()
+                assertFalse(mutex.isLocked)
+                mutex.lock()
+            }
+        }
+    }
+
+    @Test
+    fun stressUnlockCancelRaceWithSelect() = runTest {
+        val n = 10_000 * stressTestMultiplier
+        val mutex = Mutex(true) // create a locked mutex
+        newSingleThreadContext("SemaphoreStressTest").use { pool ->
+            repeat (n) {
+                // Initially, we hold the lock and no one else can `lock`,
+                // otherwise it's a bug.
+                assertTrue(mutex.isLocked)
+                var job1EnteredCriticalSection = false
+                val job1 = launch(start = CoroutineStart.UNDISPATCHED) {
+                    select<Unit> {
+                        mutex.onLock {
+                            job1EnteredCriticalSection = true
+                            mutex.unlock()
+                        }
+                    }
+                }
+                // check that `job1` didn't finish the call to `acquire()`
+                assertEquals(false, job1EnteredCriticalSection)
+                val job2 = launch(pool) {
+                    mutex.unlock()
+                }
+                // Because `job2` executes in a separate thread, this
+                // cancellation races with the call to `unlock()`.
+                job1.cancelAndJoin()
+                job2.join()
+                assertFalse(mutex.isLocked)
+                mutex.lock()
+            }
+        }
     }
 }

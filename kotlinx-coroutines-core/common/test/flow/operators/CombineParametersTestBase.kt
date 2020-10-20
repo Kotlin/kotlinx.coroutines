@@ -161,4 +161,33 @@ class CombineParametersTest : TestBase() {
         }.singleOrNull()
         assertNull(value)
     }
+
+    @Test
+    fun testFairnessInVariousConfigurations() = runTest {
+        // Test various configurations
+        for (flowsCount in 2..5) {
+            for (flowSize in 1..5) {
+                val flows = List(flowsCount) { (1..flowSize).asFlow() }
+                val combined = combine(flows) { it.joinToString(separator = "") }.toList()
+                val expected = List(flowSize) { (it +  1).toString().repeat(flowsCount) }
+                assertEquals(expected, combined, "Count: $flowsCount, size: $flowSize")
+            }
+        }
+    }
+
+    @Test
+    fun testEpochOverflow() = runTest {
+        val flow = (0..1023).asFlow()
+        val result = flow.combine(flow) { a, b -> a + b }.toList()
+        assertEquals(List(1024) { it * 2 } , result)
+    }
+
+    @Test
+    fun testArrayType() = runTest {
+        val arr = flowOf(1)
+        combine(listOf(arr, arr)) {
+            println(it[0])
+            it[0]
+        }.toList().also { println(it) }
+    }
 }

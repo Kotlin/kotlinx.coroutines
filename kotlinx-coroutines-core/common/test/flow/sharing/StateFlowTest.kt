@@ -5,6 +5,7 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlin.test.*
 
 class StateFlowTest : TestBase() {
@@ -56,7 +57,7 @@ class StateFlowTest : TestBase() {
             expect(2)
             assertFailsWith<CancellationException> {
                 state.collect { value ->
-                    when(value.i) {
+                    when (value.i) {
                         0 -> expect(3) // initial value
                         2 -> expect(5)
                         4 -> expect(7)
@@ -103,11 +104,93 @@ class StateFlowTest : TestBase() {
     class CounterModel {
         // private data flow
         private val _counter = MutableStateFlow(0)
+
         // publicly exposed as a flow
         val counter: StateFlow<Int> get() = _counter
 
         fun inc() {
             _counter.value++
         }
+    }
+
+    @Test
+    public fun testOnSubscriptionWithException() = runTest {
+        expect(1)
+        val state = MutableStateFlow("A")
+        state
+            .onSubscription {
+                emit("collector->A")
+                state.value = "A"
+            }
+            .onSubscription {
+                emit("collector->B")
+                state.value = "B"
+                throw TestException()
+            }
+            .onStart {
+                emit("collector->C")
+                state.value = "C"
+            }
+            .onStart {
+                emit("collector->D")
+                state.value = "D"
+            }
+            .onEach {
+                when (it) {
+                    "collector->D" -> expect(2)
+                    "collector->C" -> expect(3)
+                    "collector->A" -> expect(4)
+                    "collector->B" -> expect(5)
+                    else -> expectUnreached()
+                }
+            }
+            .catch { e ->
+                assertTrue(e is TestException)
+                expect(6)
+            }
+            .launchIn(this)
+            .join()
+        assertEquals(0, state.subscriptionCount.value)
+        finish(7)
+    }
+
+    @Test
+    fun testOperatorFusion() {
+        val state = MutableStateFlow(String)
+        assertSame(state, (state as Flow<*>).cancellable())
+        assertSame(state, (state as Flow<*>).distinctUntilChanged())
+        assertSame(state, (state as Flow<*>).flowOn(Dispatchers.Default))
+        assertSame(state, (state as Flow<*>).conflate())
+        assertSame(state, state.buffer(Channel.CONFLATED))
+        assertSame(state, state.buffer(Channel.RENDEZVOUS))
+    }
+
+    @Test
+    fun testResetUnsupported() {
+        val state = MutableStateFlow(42)
+        assertFailsWith<UnsupportedOperationException> { state.resetReplayCache() }
+        assertEquals(42, state.value)
+        assertEquals(listOf(42), state.replayCache)
+    }
+
+    @Test
+    fun testReferenceUpdatesAndCAS() {
+        val d0 = Data(0)
+        val d0_1 = Data(0)
+        val d1 = Data(1)
+        val d1_1 = Data(1)
+        val d1_2 = Data(1)
+        val state = MutableStateFlow(d0)
+        assertSame(d0, state.value)
+        state.value = d0_1 // equal, nothing changes
+        assertSame(d0, state.value)
+        state.value = d1 // updates
+        assertSame(d1, state.value)
+        assertFalse(state.compareAndSet(d0, d0)) // wrong value
+        assertSame(d1, state.value)
+        assertTrue(state.compareAndSet(d1_1, d1_2)) // "updates", but ref stays
+        assertSame(d1, state.value)
+        assertTrue(state.compareAndSet(d1_1, d0)) // updates, reference changes
+        assertSame(d0, state.value)
     }
 }

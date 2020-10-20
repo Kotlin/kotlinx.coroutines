@@ -5,6 +5,7 @@
 // This file was automatically generated from cancellation-and-timeouts.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
 
+import kotlinx.coroutines.knit.*
 import org.junit.Test
 
 class CancellationGuideTest {
@@ -85,6 +86,13 @@ class CancellationGuideTest {
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",
             "Result is null"
+        )
+    }
+
+    @Test
+    fun testExampleCancel09() {
+        test("ExampleCancel09") { kotlinx.coroutines.guide.exampleCancel09.main() }.verifyLines(
+            "0"
         )
     }
 }

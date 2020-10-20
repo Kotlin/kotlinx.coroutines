@@ -27,7 +27,11 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
 
 /**
  * Suspends the current coroutine until the channel is either [closed][SendChannel.close] or [cancelled][ReceiveChannel.cancel]
- * and invokes the given [block] before resuming the coroutine. This suspending function is cancellable.
+ * and invokes the given [block] before resuming the coroutine.
+ *
+ * This suspending function is cancellable.
+ * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+ * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
  *
  * Note that when the producer channel is cancelled, this function resumes with a cancellation exception.
  * Therefore, in case of cancellation, no code after the call to this function will be executed.
@@ -91,13 +95,8 @@ public fun <E> CoroutineScope.produce(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,
     @BuilderInference block: suspend ProducerScope<E>.() -> Unit
-): ReceiveChannel<E> {
-    val channel = Channel<E>(capacity)
-    val newContext = newCoroutineContext(context)
-    val coroutine = ProducerCoroutine(newContext, channel)
-    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
-    return coroutine
-}
+): ReceiveChannel<E> =
+    produce(context, capacity, BufferOverflow.SUSPEND, CoroutineStart.DEFAULT, onCompletion = null, block = block)
 
 /**
  * **This is an internal API and should not be used from general code.**
@@ -118,8 +117,19 @@ public fun <E> CoroutineScope.produce(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
     @BuilderInference block: suspend ProducerScope<E>.() -> Unit
+): ReceiveChannel<E> =
+    produce(context, capacity, BufferOverflow.SUSPEND, start, onCompletion, block)
+
+// Internal version of produce that is maximally flexible, but is not exposed through public API (too many params)
+internal fun <E> CoroutineScope.produce(
+    context: CoroutineContext = EmptyCoroutineContext,
+    capacity: Int = 0,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    onCompletion: CompletionHandler? = null,
+    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
 ): ReceiveChannel<E> {
-    val channel = Channel<E>(capacity)
+    val channel = Channel<E>(capacity, onBufferOverflow)
     val newContext = newCoroutineContext(context)
     val coroutine = ProducerCoroutine(newContext, channel)
     if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)

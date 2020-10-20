@@ -3,12 +3,59 @@
  */
 
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
-apply from: rootProject.file("gradle/targets.gradle")
 apply from: rootProject.file("gradle/compile-jvm-multiplatform.gradle")
 apply from: rootProject.file("gradle/compile-common.gradle")
 apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
 apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
 apply from: rootProject.file('gradle/publish-npm-js.gradle')
+
+/* ==========================================================================
+  Configure source sets structure for kotlinx-coroutines-core:
+
+  TARGETS                            SOURCE SETS
+  -------         ----------------------------------------------
+
+     js -----------------------------------------------------+
+                                                             |
+                                                             V
+     jvm -------------------------------> concurrent ---> common
+                                              ^
+     ios     \                                |
+     macos   | ---> nativeDarwin ---> native --+
+     tvos    |                         ^
+     watchos /                         |
+                                       |
+     linux  \  ---> nativeOther -------+
+     mingw  /
+
+   ========================================================================== */
+
+project.ext.sourceSetSuffixes = ["Main", "Test"]
+
+void defineSourceSet(newName, dependsOn, includedInPred) {
+    for (suffix in project.ext.sourceSetSuffixes) {
+        def newSS = kotlin.sourceSets.maybeCreate(newName + suffix)
+        for (dep in dependsOn) {
+            newSS.dependsOn(kotlin.sourceSets[dep + suffix])
+        }
+        for (curSS in kotlin.sourceSets) {
+            def curName = curSS.name
+            if (curName.endsWith(suffix)) {
+                def prefix = curName.substring(0, curName.length() - suffix.length())
+                if (includedInPred(prefix)) curSS.dependsOn(newSS)
+            }
+        }
+    }
+}
+
+static boolean isNativeDarwin(String name) { return ["ios", "macos", "tvos", "watchos"].any { name.startsWith(it) } }
+static boolean isNativeOther(String name) { return ["linux", "mingw"].any { name.startsWith(it) } }
+
+defineSourceSet("concurrent", ["common"]) { it in ["jvm", "native"] }
+defineSourceSet("nativeDarwin", ["native"]) { isNativeDarwin(it) }
+defineSourceSet("nativeOther", ["native"]) { isNativeOther(it) }
+
+/* ========================================================================== */
 
 /*
  * All platform plugins and configuration magic happens here instead of build.gradle
@@ -18,7 +65,7 @@ kotlin {
     configure(sourceSets) {
         def srcDir = name.endsWith('Main') ? 'src' : 'test'
         def platform = name[0..-5]
-        kotlin.srcDir "$platform/$srcDir"
+        kotlin.srcDirs = ["$platform/$srcDir"]
         if (name == "jvmMain") {
             resources.srcDirs = ["$platform/resources"]
         } else if (name == "jvmTest") {
@@ -31,12 +78,18 @@ kotlin {
     }
 
     configure(targets) {
-        def targetName = it.name
-        compilations.all { compilation ->
-            def compileTask = tasks.getByName(compilation.compileKotlinTaskName)
-            // binary compatibility support
-            if (targetName.contains("jvm") && compilation.compilationName == "main") {
-                compileTask.kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
+        // Configure additional binaries and test runs -- one for each OS
+        if (["macos", "linux", "mingw"].any { name.startsWith(it) }) {
+            binaries {
+                // Test for memory leaks using a special entry point that does not exit but returns from main
+                binaries.getTest("DEBUG").freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
+                // Configure a separate test where code runs in background
+                test("background", [org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType.DEBUG]) {
+                    freeCompilerArgs += ["-e", "kotlinx.coroutines.mainBackground"]
+                }
+            }
+            testRuns {
+                background { setExecutionSourceFrom(binaries.backgroundDebugTest) }
             }
         }
     }
@@ -54,23 +107,52 @@ compileKotlinMetadata {
     }
 }
 
+// :KLUDGE: Idea.active: This is needed to workaround resolve problems after importing this project to IDEA
+def configureNativeSourceSetPreset(name, preset) {
+    def hostMainCompilation = project.kotlin.targetFromPreset(preset).compilations.main
+    // Look for platform libraries in "implementation" for default source set
+    def implementationConfiguration = configurations[hostMainCompilation.defaultSourceSet.implementationMetadataConfigurationName]
+    // Now find the libraries: Finds platform libs & stdlib, but platform declarations are still not resolved due to IDE bugs
+    def hostNativePlatformLibs = files(
+        provider {
+            implementationConfiguration.findAll {
+                it.path.endsWith(".klib") || it.absolutePath.contains("klib${File.separator}platform") || it.absolutePath.contains("stdlib")
+            }
+        }
+    )
+    // Add all those dependencies
+    for (suffix in sourceSetSuffixes) {
+        configure(kotlin.sourceSets[name + suffix]) {
+            dependencies.add(implementationMetadataConfigurationName, hostNativePlatformLibs)
+        }
+    }
+}
+
+// :KLUDGE: Idea.active: Configure platform libraries for native source sets when working in IDEA
+if (Idea.active) {
+    def manager = project.ext.hostManager
+    def linuxPreset = kotlin.presets.linuxX64
+    def macosPreset = kotlin.presets.macosX64
+    // linux should be always available (cross-compilation capable) -- use it as default
+    assert manager.isEnabled(linuxPreset.konanTarget)
+    // use macOS libs for nativeDarwin if available
+    def macosAvailable = manager.isEnabled(macosPreset.konanTarget)
+    // configure source sets
+    configureNativeSourceSetPreset("native", linuxPreset)
+    configureNativeSourceSetPreset("nativeOther", linuxPreset)
+    configureNativeSourceSetPreset("nativeDarwin", macosAvailable ? macosPreset : linuxPreset)
+}
+
 kotlin.sourceSets {
     jvmMain.dependencies {
         compileOnly "com.google.android:annotations:4.1.1.4"
     }
 
     jvmTest.dependencies {
-        // This is a workaround for https://youtrack.jetbrains.com/issue/KT-39037
-        def excludingCurrentProject = { dependency ->
-            def result = project.dependencies.create(dependency)
-            result.exclude(module: project.name)
-            return result
-        }
-
-        api(excludingCurrentProject("org.jetbrains.kotlinx:lincheck:$lincheck_version"))
+        api "org.jetbrains.kotlinx:lincheck:$lincheck_version"
         api "org.jetbrains.kotlinx:kotlinx-knit-test:$knit_version"
         api "com.esotericsoftware:kryo:4.0.0"
-        implementation(excludingCurrentProject(project(":android-unit-tests")))
+        implementation project(":android-unit-tests")
     }
 }
 
@@ -97,7 +179,7 @@ jvmTest {
     enableAssertions = true
     systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
     // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
-    if (!project.ext.ideaActive && rootProject.properties['stress'] == null) {
+    if (!Idea.active && rootProject.properties['stress'] == null) {
         exclude '**/*StressTest.*'
     }
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test

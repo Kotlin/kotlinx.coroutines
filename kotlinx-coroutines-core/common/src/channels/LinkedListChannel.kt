@@ -17,7 +17,7 @@ import kotlinx.coroutines.selects.*
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-internal open class LinkedListChannel<E> : AbstractChannel<E>() {
+internal open class LinkedListChannel<E>(onUndeliveredElement: OnUndeliveredElement<E>?) : AbstractChannel<E>(onUndeliveredElement) {
     protected final override val isBufferAlwaysEmpty: Boolean get() = true
     protected final override val isBufferEmpty: Boolean get() = true
     protected final override val isBufferAlwaysFull: Boolean get() = false

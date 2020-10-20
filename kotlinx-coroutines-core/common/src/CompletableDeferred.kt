@@ -19,7 +19,7 @@ import kotlinx.coroutines.selects.*
  * All functions on this interface are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
  *
- * **`CompletableDeferred` interface is not stable for inheritance in 3rd party libraries**,
+ * **The `CompletableDeferred` interface is not stable for inheritance in 3rd party libraries**,
  * as new methods might be added to this interface in the future, but is stable for use.
  */
 public interface CompletableDeferred<T> : Deferred<T> {

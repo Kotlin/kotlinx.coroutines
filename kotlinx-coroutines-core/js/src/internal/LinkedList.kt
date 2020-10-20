@@ -124,6 +124,8 @@ public actual abstract class AbstractAtomicDesc : AtomicDesc() {
         return null
     }
 
+    actual open fun onRemoved(affected: Node) {}
+
     actual final override fun prepare(op: AtomicOp<*>): Any? {
         val affected = affectedNode
         val failure = failure(affected)

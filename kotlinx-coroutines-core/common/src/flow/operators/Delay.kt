@@ -14,13 +14,30 @@ import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
 import kotlin.time.*
 
+/* Scaffolding for Knit code examples
+<!--- TEST_NAME FlowDelayTest -->
+<!--- PREFIX .*-duration-.*
+@file:OptIn(ExperimentalTime::class)
+----- INCLUDE .*-duration-.*
+import kotlin.time.*
+----- INCLUDE .*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+fun main() = runBlocking {
+----- SUFFIX .*
+.toList().joinToString().let { println(it) } }
+-->
+*/
+
 /**
  * Returns a flow that mirrors the original flow, but filters out values
  * that are followed by the newer values within the given [timeout][timeoutMillis].
  * The latest value is always emitted.
  *
  * Example:
- * ```
+ *
+ * ```kotlin
  * flow {
  *     emit(1)
  *     delay(90)
@@ -33,7 +50,14 @@ import kotlin.time.*
  *     emit(5)
  * }.debounce(1000)
  * ```
- * produces `3, 4, 5`.
+ * <!--- KNIT example-delay-01.kt -->
+ *
+ * produces the following emissions
+ *
+ * ```text
+ * 3, 4, 5
+ * ```
+ * <!--- TEST -->
  *
  * Note that the resulting flow does not emit anything as long as the original flow emits
  * items faster than every [timeoutMillis] milliseconds.
@@ -77,7 +101,8 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
  * The latest value is always emitted.
  *
  * Example:
- * ```
+ *
+ * ```kotlin
  * flow {
  *     emit(1)
  *     delay(90.milliseconds)
@@ -90,7 +115,14 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
  *     emit(5)
  * }.debounce(1000.milliseconds)
  * ```
- * produces `3, 4, 5`.
+ * <!--- KNIT example-delay-duration-01.kt -->
+ *
+ * produces the following emissions
+ *
+ * ```text
+ * 3, 4, 5
+ * ```
+ * <!--- TEST -->
  *
  * Note that the resulting flow does not emit anything as long as the original flow emits
  * items faster than every [timeout] milliseconds.
@@ -103,15 +135,23 @@ public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.t
  * Returns a flow that emits only the latest value emitted by the original flow during the given sampling [period][periodMillis].
  *
  * Example:
- * ```
+ *
+ * ```kotlin
  * flow {
  *     repeat(10) {
  *         emit(it)
- *         delay(50)
+ *         delay(110)
  *     }
- * }.sample(100)
+ * }.sample(200)
  * ```
- * produces `1, 3, 5, 7, 9`.
+ * <!--- KNIT example-delay-02.kt -->
+ *
+ * produces the following emissions
+ *
+ * ```text
+ * 1, 3, 5, 7, 9
+ * ```
+ * <!--- TEST -->
  * 
  * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
@@ -166,15 +206,23 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMil
  * Returns a flow that emits only the latest value emitted by the original flow during the given sampling [period].
  *
  * Example:
- * ```
+ *
+ * ```kotlin
  * flow {
  *     repeat(10) {
  *         emit(it)
- *         delay(50.milliseconds)
+ *         delay(110.milliseconds)
  *     }
- * }.sample(100.milliseconds)
+ * }.sample(200.milliseconds)
  * ```
- * produces `1, 3, 5, 7, 9`.
+ * <!--- KNIT example-delay-duration-02.kt -->
+ *
+ * produces the following emissions
+ *
+ * ```text
+ * 1, 3, 5, 7, 9
+ * ```
+ * <!--- TEST -->
  *
  * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
