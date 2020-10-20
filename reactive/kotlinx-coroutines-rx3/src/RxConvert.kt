@@ -84,7 +84,7 @@ public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
         override fun onNext(t: T) {
             try {
                 sendBlocking(t)
-            } catch (ignored: Exception) { //TODO: Replace when this issue is fixed: https://github.com/Kotlin/kotlinx.coroutines/issues/974
+            } catch (ignored: Throwable) { //TODO: Replace when this issue is fixed: https://github.com/Kotlin/kotlinx.coroutines/issues/974
             }
         }
         override fun onError(e: Throwable) { close(e) }
