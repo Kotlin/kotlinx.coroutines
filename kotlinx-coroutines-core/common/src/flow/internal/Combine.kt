@@ -9,133 +9,135 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
-internal fun getNull(): Symbol = NULL // Workaround for JS BE bug
-
-internal suspend fun <T1, T2, R> FlowCollector<R>.combineTransformInternal(
-    first: Flow<T1>, second: Flow<T2>,
-    transform: suspend FlowCollector<R>.(a: T1, b: T2) -> Unit
-) {
-    coroutineScope {
-        val firstChannel = asFairChannel(first)
-        val secondChannel = asFairChannel(second)
-        var firstValue: Any? = null
-        var secondValue: Any? = null
-        var firstIsClosed = false
-        var secondIsClosed = false
-        while (!firstIsClosed || !secondIsClosed) {
-            select<Unit> {
-                onReceive(firstIsClosed, firstChannel, { firstIsClosed = true }) { value ->
-                    firstValue = value
-                    if (secondValue !== null) {
-                        transform(getNull().unbox(firstValue), getNull().unbox(secondValue) as T2)
-                    }
-                }
-
-                onReceive(secondIsClosed, secondChannel, { secondIsClosed = true }) { value ->
-                    secondValue = value
-                    if (firstValue !== null) {
-                        transform(getNull().unbox(firstValue) as T1, getNull().unbox(secondValue) as T2)
-                    }
-                }
-            }
-        }
-    }
-}
+private typealias Update = IndexedValue<Any?>
 
 @PublishedApi
 internal suspend fun <R, T> FlowCollector<R>.combineInternal(
     flows: Array<out Flow<T>>,
-    arrayFactory: () -> Array<T?>,
+    arrayFactory: () -> Array<T?>?, // Array factory is required to workaround array typing on JVM
     transform: suspend FlowCollector<R>.(Array<T>) -> Unit
-): Unit = coroutineScope {
+): Unit = flowScope { // flow scope so any cancellation within the source flow will cancel the whole scope
     val size = flows.size
-    val channels = Array(size) { asFairChannel(flows[it]) }
+    if (size == 0) return@flowScope // bail-out for empty input
     val latestValues = arrayOfNulls<Any?>(size)
-    val isClosed = Array(size) { false }
-    var nonClosed = size
-    var remainingNulls = size
-    // See flow.combine(other) for explanation.
-    while (nonClosed != 0) {
-        select<Unit> {
-            for (i in 0 until size) {
-                onReceive(isClosed[i], channels[i], { isClosed[i] = true; --nonClosed }) { value ->
-                    if (latestValues[i] == null) --remainingNulls
-                    latestValues[i] = value
-                    if (remainingNulls != 0) return@onReceive
-                    val arguments = arrayFactory()
-                    for (index in 0 until size) {
-                        arguments[index] = NULL.unbox(latestValues[index])
+    latestValues.fill(UNINITIALIZED) // Smaller bytecode & faster that Array(size) { UNINITIALIZED }
+    val resultChannel = Channel<Update>(size)
+    val nonClosed = LocalAtomicInt(size)
+    var remainingAbsentValues = size
+    for (i in 0 until size) {
+        // Coroutine per flow that keeps track of its value and sends result to downstream
+        launch {
+            try {
+                flows[i].collect { value ->
+                    resultChannel.send(Update(i, value))
+                    yield() // Emulate fairness, giving each flow chance to emit
+                }
+            } finally {
+                // Close the channel when there is no more flows
+                if (nonClosed.decrementAndGet() == 0) {
+                    resultChannel.close()
+                }
+            }
+        }
+    }
+
+    /*
+     * Batch-receive optimization: read updates in batches, but bail-out
+     * as soon as we encountered two values from the same source
+     */
+    val lastReceivedEpoch = ByteArray(size)
+    var currentEpoch: Byte = 0
+    while (true) {
+        ++currentEpoch
+        // Start batch
+        // The very first receive in epoch should be suspending
+        var element = resultChannel.receiveOrNull() ?: break // Channel is closed, nothing to do here
+        while (true) {
+            val index = element.index
+            // Update values
+            val previous = latestValues[index]
+            latestValues[index] = element.value
+            if (previous === UNINITIALIZED) --remainingAbsentValues
+            // Check epoch
+            // Received the second value from the same flow in the same epoch -- bail out
+            if (lastReceivedEpoch[index] == currentEpoch) break
+            lastReceivedEpoch[index] = currentEpoch
+            element = resultChannel.poll() ?: break
+        }
+
+        // Process batch result if there is enough data
+        if (remainingAbsentValues == 0) {
+            /*
+             * If arrayFactory returns null, then we can avoid array copy because
+             * it's our own safe transformer that immediately deconstructs the array
+             */
+            val results = arrayFactory()
+            if (results == null) {
+                transform(latestValues as Array<T>)
+            } else {
+                (latestValues as Array<T?>).copyInto(results)
+                transform(results as Array<T>)
+            }
+        }
+    }
+}
+
+internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
+    unsafeFlow {
+        coroutineScope {
+            val second = produce<Any> {
+                flow2.collect { value ->
+                    return@collect channel.send(value ?: NULL)
+                }
+            }
+
+            /*
+             * This approach only works with rendezvous channel and is required to enforce correctness
+             * in the following scenario:
+             * ```
+             * val f1 = flow { emit(1); delay(Long.MAX_VALUE) }
+             * val f2 = flowOf(1)
+             * f1.zip(f2) { ... }
+             * ```
+             *
+             * Invariant: this clause is invoked only when all elements from the channel were processed (=> rendezvous restriction).
+             */
+            val collectJob = Job()
+            (second as SendChannel<*>).invokeOnClose {
+                // Optimization to avoid AFE allocation when the other flow is done
+                if (collectJob.isActive) collectJob.cancel(AbortFlowException(this@unsafeFlow))
+            }
+
+            try {
+                /*
+                 * Non-trivial undispatched (because we are in the right context and there is no structured concurrency)
+                 * hierarchy:
+                 * -Outer coroutineScope that owns the whole zip process
+                 * - First flow is collected by the child of coroutineScope, collectJob.
+                 *    So it can be safely cancelled as soon as the second flow is done
+                 * - **But** the downstream MUST NOT be cancelled when the second flow is done,
+                 *    so we emit to downstream from coroutineScope job.
+                 * Typically, such hierarchy requires coroutine for collector that communicates
+                 * with coroutines scope via a channel, but it's way too expensive, so
+                 * we are using this trick instead.
+                 */
+                val scopeContext = coroutineContext
+                val cnt = threadContextElements(scopeContext)
+                withContextUndispatched(coroutineContext + collectJob, Unit) {
+                    flow.collect { value ->
+                        withContextUndispatched(scopeContext, Unit, cnt) {
+                            val otherValue = second.receiveOrNull() ?: throw AbortFlowException(this@unsafeFlow)
+                            emit(transform(value, NULL.unbox(otherValue)))
+                        }
                     }
-                    transform(arguments as Array<T>)
                 }
+            } catch (e: AbortFlowException) {
+                e.checkOwnership(owner = this@unsafeFlow)
+            } finally {
+                if (!second.isClosedForReceive) second.cancel()
             }
         }
     }
-}
-
-private inline fun SelectBuilder<Unit>.onReceive(
-    isClosed: Boolean,
-    channel: ReceiveChannel<Any>,
-    crossinline onClosed: () -> Unit,
-    noinline onReceive: suspend (value: Any) -> Unit
-) {
-    if (isClosed) return
-    @Suppress("DEPRECATION")
-    channel.onReceiveOrNull {
-        // TODO onReceiveOrClosed when boxing issues are fixed
-        if (it === null) onClosed()
-        else onReceive(it)
-    }
-}
-
-// Channel has any type due to onReceiveOrNull. This will be fixed after receiveOrClosed
-private fun CoroutineScope.asFairChannel(flow: Flow<*>): ReceiveChannel<Any> = produce {
-    val channel = channel as ChannelCoroutine<Any>
-    flow.collect { value ->
-        return@collect channel.sendFair(value ?: NULL)
-    }
-}
-
-internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = unsafeFlow {
-    coroutineScope {
-        val first = asChannel(flow)
-        val second = asChannel(flow2)
-        /*
-         * This approach only works with rendezvous channel and is required to enforce correctness
-         * in the following scenario:
-         * ```
-         * val f1 = flow { emit(1); delay(Long.MAX_VALUE) }
-         * val f2 = flowOf(1)
-         * f1.zip(f2) { ... }
-         * ```
-         *
-         * Invariant: this clause is invoked only when all elements from the channel were processed (=> rendezvous restriction).
-         */
-        (second as SendChannel<*>).invokeOnClose {
-            if (!first.isClosedForReceive) first.cancel(AbortFlowException(this@unsafeFlow))
-        }
-
-        val otherIterator = second.iterator()
-        try {
-            first.consumeEach { value ->
-                if (!otherIterator.hasNext()) {
-                    return@consumeEach
-                }
-                emit(transform(NULL.unbox(value), NULL.unbox(otherIterator.next())))
-            }
-        } catch (e: AbortFlowException) {
-            e.checkOwnership(owner = this@unsafeFlow)
-        } finally {
-            if (!second.isClosedForReceive) second.cancel(AbortFlowException(this@unsafeFlow))
-        }
-    }
-}
-
-// Channel has any type due to onReceiveOrNull. This will be fixed after receiveOrClosed
-private fun CoroutineScope.asChannel(flow: Flow<*>): ReceiveChannel<Any> = produce {
-    flow.collect { value ->
-        return@collect channel.send(value ?: NULL)
-    }
-}
