@@ -55,7 +55,6 @@ internal actual class SafeCollector<T> actual constructor(
      */
     override suspend fun emit(value: T) {
         return suspendCoroutineUninterceptedOrReturn sc@{ uCont ->
-            // Update information about caller for stackwalking
             try {
                 emit(uCont, value)
             } catch (e: Throwable) {

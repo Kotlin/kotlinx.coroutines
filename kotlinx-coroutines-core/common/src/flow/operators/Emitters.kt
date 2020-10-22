@@ -158,7 +158,12 @@ public fun <T> Flow<T>.onCompletion(
         throw e
     }
     // Normal completion
-    SafeCollector(this, currentCoroutineContext()).invokeSafely(action, null)
+    val sc = SafeCollector(this, currentCoroutineContext())
+    try {
+        sc.action(null)
+    } finally {
+        sc.releaseIntercepted()
+    }
 }
 
 /**
