@@ -3,8 +3,8 @@
  */
 
 dependencies {
-    testImplementation("com.google.android:android:${version("android")}")
-    testImplementation("org.robolectric:robolectric:${version("robolectric")}")
-    testImplementation(project(":kotlinx-coroutines-test"))
-    testImplementation(project(":kotlinx-coroutines-android"))
+    jvmTestImplementation("com.google.android:android:${version("android")}")
+    jvmTestImplementation("org.robolectric:robolectric:${version("robolectric")}")
+    jvmTestImplementation(project(":kotlinx-coroutines-test"))
+    jvmTestImplementation(project(":kotlinx-coroutines-android"))
 }

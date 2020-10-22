@@ -180,12 +180,27 @@ allprojects {
 configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != coreModule }) {
     evaluationDependsOn(":$coreModule")
     def platform = PlatformKt.platformOf(it)
+    def isJvmMultiplatform = platform == 'jvm-multiplatform'
+    if (isJvmMultiplatform) {
+        apply plugin: 'org.jetbrains.kotlin.multiplatform'
+    }
     apply from: rootProject.file("gradle/compile-${platform}.gradle")
-    dependencies {
-        // See comment below for rationale, it will be replaced with "project" dependency
-        compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
-        // the only way IDEA can resolve test classes
-        testCompile project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
+    if (isJvmMultiplatform) {
+        kotlin.sourceSets {
+            jvmMain.dependencies {
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
+            }
+            jvmTest.dependencies {
+                implementation project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
+            }
+        }
+    } else {
+        dependencies {
+            // See comment below for rationale, it will be replaced with "project" dependency
+            compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
+            // the only way IDEA can resolve test classes
+            testCompile project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
+        }
     }
 }
 
@@ -262,11 +277,18 @@ configure(subprojects.findAll {
 }) {
     // Pure JS and pure MPP doesn't have this notion and are configured separately
     // TODO detect it via platformOf and migrate benchmarks to the same scheme
-    sourceSets {
-        main.kotlin.srcDirs = ['src']
-        test.kotlin.srcDirs = ['test']
-        main.resources.srcDirs = ['resources']
-        test.resources.srcDirs = ['test-resources']
+    kotlin {
+        sourceSets {
+            jvmMain {
+                kotlin.srcDir('src')
+                resources.srcDir('resources')
+            }
+            jvmTest {
+                kotlin.srcDir('test')
+                resources.srcDir('test-resources')
+            }
+        }
+
     }
 }
 

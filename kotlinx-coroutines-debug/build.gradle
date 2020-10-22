@@ -6,38 +6,44 @@ apply plugin: "com.github.johnrengelman.shadow"
 
 configurations {
     shadowDeps // shaded dependencies, not included into the resulting .pom file
-    compileOnly.extendsFrom(shadowDeps)
-    runtimeOnly.extendsFrom(shadowDeps)
+    jvmMainCompileOnly.extendsFrom(shadowDeps)
+    jvmMainRuntimeOnly.extendsFrom(shadowDeps)
 
     /*
      * It is possible to extend a particular configuration with shadow,
      * but in that case it changes dependency type to "runtime" and resolves it
      * (so it cannot be further modified). Otherwise, shadow just ignores all dependencies.
      */
-    shadow.extendsFrom(api) // shadow - resulting configuration with shaded jar file
+    shadow.extendsFrom(jvmMainApi) // shadow - resulting configuration with shaded jar file
     configureKotlinJvmPlatform(shadow)
 }
 
 dependencies {
-    compileOnly "junit:junit:$junit_version"
+    jvmMainCompileOnly "junit:junit:$junit_version"
     shadowDeps "net.bytebuddy:byte-buddy:$byte_buddy_version"
     shadowDeps "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
-    compileOnly "io.projectreactor.tools:blockhound:$blockhound_version"
-    testCompile "io.projectreactor.tools:blockhound:$blockhound_version"
-    api "net.java.dev.jna:jna:$jna_version"
-    api "net.java.dev.jna:jna-platform:$jna_version"
+    jvmMainCompileOnly "io.projectreactor.tools:blockhound:$blockhound_version"
+    jvmTestImplementation "io.projectreactor.tools:blockhound:$blockhound_version"
+    jvmMainApi "net.java.dev.jna:jna:$jna_version"
+    jvmMainApi "net.java.dev.jna:jna-platform:$jna_version"
 }
 
-jar {
+jvmJar {
     manifest {
         attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
         attributes "Can-Redefine-Classes": "true"
     }
 }
 
-shadowJar {
-    classifier null
+task shadowJvmJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    dependsOn(jvmJar)
+    def target = kotlin.targets.jvm
+    archiveAppendix.set(jvmJar.archiveAppendix)
+    from target.compilations.main.output
+    archiveClassifier.set(null)
+    manifest.inheritFrom jvmJar.manifest
     // Shadow only byte buddy, do not package kotlin stdlib
     configurations = [project.configurations.shadowDeps]
     relocate('net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy')
+    exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 }

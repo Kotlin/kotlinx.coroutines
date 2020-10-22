@@ -1,3 +1,3 @@
 dependencies {
-    implementation(project(":kotlinx-coroutines-debug"))
+    jvmMainImplementation(project(":kotlinx-coroutines-debug"))
 }

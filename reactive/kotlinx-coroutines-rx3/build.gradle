@@ -4,18 +4,18 @@
 targetCompatibility = JavaVersion.VERSION_1_8
 
 dependencies {
-    compile project(':kotlinx-coroutines-reactive')
-    testCompile project(':kotlinx-coroutines-reactive').sourceSets.test.output
-    testCompile "org.reactivestreams:reactive-streams-tck:$reactive_streams_version"
-    compile "io.reactivex.rxjava3:rxjava:$rxjava3_version"
+    jvmMainImplementation project(':kotlinx-coroutines-reactive')
+    jvmTestImplementation project(':kotlinx-coroutines-reactive').kotlin.targets.jvm.compilations.test.output.allOutputs
+    jvmTestImplementation "org.reactivestreams:reactive-streams-tck:$reactive_streams_version"
+    jvmMainImplementation "io.reactivex.rxjava3:rxjava:$rxjava3_version"
 }
 
-compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
-}
-
-compileKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+kotlin {
+    configure([jvm("jvm")]) {
+        compilations.all {
+            kotlinOptions.jvmTarget = "1.8"
+        }
+    }
 }
 
 tasks.withType(dokka.getClass()) {
@@ -27,6 +27,9 @@ tasks.withType(dokka.getClass()) {
 
 task testNG(type: Test) {
     useTestNG()
+    def jvmTestTask = tasks.getByName("jvmTest") as Test
+    classpath = jvmTestTask.classpath
+    testClassesDirs = jvmTestTask.testClassesDirs
     reports.html.destination = file("$buildDir/reports/testng")
     include '**/*ReactiveStreamTckTest.*'
     // Skip testNG when tests are filtered with --tests, otherwise it simply fails
@@ -39,7 +42,7 @@ task testNG(type: Test) {
     }
 }
 
-test {
+jvmTest {
     dependsOn(testNG)
     reports.html.destination = file("$buildDir/reports/junit")
 }

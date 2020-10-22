@@ -6,6 +6,12 @@ plugins {
     id("org.openjfx.javafxplugin")
 }
 
+kotlin {
+    jvm {
+        withJava()
+    }
+}
+
 javafx {
     version = version("javafx")
     modules = listOf("javafx.controls")
@@ -35,13 +41,13 @@ val jdk8Test by tasks.registering(Test::class) {
     // Run these tests only during nightly stress test
     onlyIf { project.properties["stressTest"] != null }
 
-    val test = tasks.test.get()
+    val test = tasks.getByName<Test>("jvmTest")
 
     classpath = test.classpath
     testClassesDirs = test.testClassesDirs
     executable = "$JDK_18/bin/java"
 
-    dependsOn("compileTestKotlin")
+    dependsOn("compileTestKotlinJvm")
     dependsOn(checkJdk8)
 }
 

@@ -26,13 +26,13 @@ if (!isBom) {
 
 if (!isMultiplatform && !isBom) {
     // Regular java modules need 'java-library' plugin for proper publication
-    apply plugin: 'java-library'
+//    apply plugin: 'java-library'
 
     // MPP projects pack their sources automatically, java libraries need to explicitly pack them
-    task sourcesJar(type: Jar) {
-        archiveClassifier = 'sources'
-        from sourceSets.main.allSource
-    }
+//    task sourcesJar(type: Jar) {
+//        archiveClassifier = 'sources'
+//        from sourceSets.main.allSource
+//    }
 }
 
 publishing {
@@ -50,19 +50,19 @@ publishing {
         }
     }
 
-    if (!isMultiplatform && !isBom) {
-        // Configure java publications for regular non-MPP modules
-        publications {
-            maven(MavenPublication) {
-                if (project.name == "kotlinx-coroutines-debug") {
-                    project.shadow.component(it)
-                } else {
-                    from components.java
-                }
-                artifact sourcesJar
-            }
-        }
-    }
+//    if (!isMultiplatform && !isBom) {
+//        // Configure java publications for regular non-MPP modules
+//        publications {
+//            maven(MavenPublication) {
+//                if (project.name == "kotlinx-coroutines-debug") {
+//                    project.shadow.component(it)
+//                } else {
+//                    from components.java
+//                }
+//                artifact sourcesJar
+//            }
+//        }
+//    }
 
     publications.all {
         MavenCentralKt.configureMavenCentralMetadata(pom, project)
@@ -79,7 +79,7 @@ publishing {
                 // With Kotlin 1.4 & HMPP, the root module should have no suffix in the ID, but for compatibility with
                 // the consumers who can't read Gradle module metadata, we publish the JVM artifacts in it, too
                 it.artifactId = isKotlin137x ? "$project.name-native" : project.name
-                if (!isKotlin137x) {
+                if (!isKotlin137x && project.name == 'kotlinx-coroutines-core') {
                     apply from: "$rootDir/gradle/publish-mpp-root-module-in-platform.gradle"
                     publishPlatformArtifactsInRootModule(publications["jvm"])
                 }

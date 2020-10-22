@@ -5,12 +5,15 @@
 val reactiveStreamsVersion = property("reactive_streams_version")
 
 dependencies {
-    compile("org.reactivestreams:reactive-streams:$reactiveStreamsVersion")
-    testCompile("org.reactivestreams:reactive-streams-tck:$reactiveStreamsVersion")
+    jvmMainImplementation("org.reactivestreams:reactive-streams:$reactiveStreamsVersion")
+    jvmTestImplementation("org.reactivestreams:reactive-streams-tck:$reactiveStreamsVersion")
 }
 
 val testNG by tasks.registering(Test::class) {
     useTestNG()
+    val jvmTestTask = tasks.getByName("jvmTest") as Test
+    classpath = jvmTestTask.classpath
+    testClassesDirs = jvmTestTask.testClassesDirs
     reports.html.destination = file("$buildDir/reports/testng")
     include("**/*ReactiveStreamTckTest.*")
     // Skip testNG when tests are filtered with --tests, otherwise it simply fails
@@ -23,7 +26,7 @@ val testNG by tasks.registering(Test::class) {
     }
 }
 
-tasks.test {
+tasks.jvmTest {
     reports.html.destination = file("$buildDir/reports/junit")
 }
 

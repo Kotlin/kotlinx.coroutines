@@ -6,9 +6,7 @@ sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
 kotlin {
-    targets {
-        fromPreset(presets.jvm, 'jvm')
-    }
+    jvm('jvm')
     sourceSets {
         jvmTest.dependencies {
             api "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
@@ -21,7 +19,7 @@ kotlin {
     }
 }
 
-jvmTest {
+tasks.withType(Test) {
     testLogging {
         showStandardStreams = true
         events "passed", "failed"

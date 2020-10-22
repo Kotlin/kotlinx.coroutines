@@ -4,8 +4,10 @@
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-tasks.named<KotlinCompile>("compileKotlin") {
-    kotlinOptions {
-        freeCompilerArgs += "-Xallow-kotlin-package"
+kotlin {
+    configure(listOf(jvm())) {
+        val main by compilations.getting {
+            kotlinOptions.freeCompilerArgs += "-Xallow-kotlin-package"
+        }
     }
 }

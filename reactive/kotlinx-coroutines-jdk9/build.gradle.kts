@@ -3,17 +3,15 @@
  */
 
 dependencies {
-    compile(project(":kotlinx-coroutines-reactive"))
-    compile("org.reactivestreams:reactive-streams-flow-adapters:${version("reactive_streams")}")
+    jvmMainImplementation(project(":kotlinx-coroutines-reactive"))
+    jvmMainImplementation("org.reactivestreams:reactive-streams-flow-adapters:${version("reactive_streams")}")
 }
 
-tasks {
-    compileKotlin {
-        kotlinOptions.jvmTarget = "9"
-    }
-
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = "9"
+kotlin {
+    configure(listOf(jvm("jvm"))) {
+        compilations.all {
+            kotlinOptions.jvmTarget = "9"
+        }
     }
 }
 

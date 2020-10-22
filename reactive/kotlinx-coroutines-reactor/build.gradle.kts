@@ -5,18 +5,15 @@
 val reactorVersion = version("reactor")
 
 dependencies {
-    compile("io.projectreactor:reactor-core:$reactorVersion")
-    compile(project(":kotlinx-coroutines-reactive"))
+    jvmMainImplementation("io.projectreactor:reactor-core:$reactorVersion")
+    jvmMainImplementation(project(":kotlinx-coroutines-reactive"))
 }
 
-
-tasks {
-    compileKotlin {
-        kotlinOptions.jvmTarget = "1.8"
-    }
-
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
+kotlin {
+    configure(listOf(jvm("jvm"))) {
+        compilations.all {
+            kotlinOptions.jvmTarget = "1.8"
+        }
     }
 }
 

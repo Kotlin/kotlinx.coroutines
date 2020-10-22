@@ -5,7 +5,7 @@
 val guavaVersion = "28.0-jre"
 
 dependencies {
-    compile("com.google.guava:guava:$guavaVersion")
+    jvmMainImplementation("com.google.guava:guava:$guavaVersion")
 }
 
 externalDocumentationLink(

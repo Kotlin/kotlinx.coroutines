@@ -24,7 +24,7 @@ open class RunR8 : JavaExec() {
     val inputConfigCommon: File = File("testdata/r8-test-common.pro")
 
     @InputFiles
-    val jarFile: File = project.tasks.named<Zip>("jar").get().archivePath
+    val jarFile: File = project.tasks.named<Zip>("jvmJar").get().archivePath
 
     init {
         classpath = project.configurations["r8"]
@@ -39,7 +39,7 @@ open class RunR8 : JavaExec() {
             "--output", outputDex.absolutePath,
             "--pg-conf", inputConfig.absolutePath
         )
-        arguments.addAll(project.configurations["runtimeClasspath"].files.map { it.absolutePath })
+        arguments.addAll(project.configurations["jvmRuntimeClasspath"].files.map { it.absolutePath })
         arguments.add(jarFile.absolutePath)
 
         args = arguments

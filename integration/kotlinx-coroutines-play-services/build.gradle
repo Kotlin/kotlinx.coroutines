@@ -31,7 +31,7 @@ dependencies {
         to.attribute(unpackedAar, true).attribute(artifactType, "jar")
     }
 
-    api("com.google.android.gms:play-services-tasks:$tasks_version") {
+    jvmMainApi("com.google.android.gms:play-services-tasks:$tasks_version") {
         exclude group: 'com.android.support'
     }
 }

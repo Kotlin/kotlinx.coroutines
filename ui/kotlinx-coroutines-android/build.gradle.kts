@@ -2,21 +2,17 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import org.jetbrains.dokka.DokkaConfiguration.ExternalDocumentationLink
-import org.jetbrains.dokka.gradle.DokkaTask
-import java.net.URL
-
 configurations {
     create("r8")
 }
 
 dependencies {
-    compileOnly("com.google.android:android:${version("android")}")
-    compileOnly("androidx.annotation:annotation:${version("androidx_annotation")}")
+    jvmMainCompileOnly("com.google.android:android:${version("android")}")
+    jvmMainCompileOnly("androidx.annotation:annotation:${version("androidx_annotation")}")
 
-    testImplementation("com.google.android:android:${version("android")}")
-    testImplementation("org.robolectric:robolectric:${version("robolectric")}")
-    testImplementation("org.smali:baksmali:${version("baksmali")}")
+    jvmTestImplementation("com.google.android:android:${version("android")}")
+    jvmTestImplementation("org.robolectric:robolectric:${version("robolectric")}")
+    jvmTestImplementation("org.smali:baksmali:${version("baksmali")}")
 
     "r8"("com.android.tools.build:builder:4.0.0-alpha06") // Contains r8-2.0.4-dev
 }
@@ -31,17 +27,17 @@ val runR8 by tasks.registering(RunR8::class) {
     outputDex = optimizedDexDir
     inputConfig = file("testdata/r8-test-rules.pro")
 
-    dependsOn("jar")
+    dependsOn("jvmJar")
 }
 
 val runR8NoOptim by tasks.registering(RunR8::class) {
     outputDex = unOptimizedDexDir
     inputConfig = file("testdata/r8-test-rules-no-optim.pro")
 
-    dependsOn("jar")
+    dependsOn("jvmJar")
 }
 
-tasks.test {
+tasks.jvmTest {
     // Ensure the R8-processed dex is built and supply its path as a property to the test.
     dependsOn(runR8)
     dependsOn(runR8NoOptim)

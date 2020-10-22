@@ -43,11 +43,26 @@ dokka {
     }
 
     if (project.name != "kotlinx-coroutines-core") {
-        dependsOn(project.configurations.compileClasspath)
-        dependsOn(project.sourceSets.main.output)
-        doFirst {
-            // resolve classpath only during execution
-            classpath = project.configurations.dokkaStubs.files + project.configurations.compileClasspath.files + project.sourceSets.main.output.files
+        if (PlatformKt.platformOf(project) == 'jvm-multiplatform') {
+            dependsOn(project.configurations.jvmCompileClasspath)
+            dependsOn(project.kotlin.jvm().compilations.main.output)
+            makeLinkMapping(it, projectDir)
+            impliedPlatforms = ['JVM']
+            sourceRoot {
+                path = rootProject.file("$projectDir/src")
+                platforms = ['JVM']
+            }
+            doFirst {
+                // resolve classpath only during execution
+                classpath = project.configurations.dokkaStubs.files + project.configurations.jvmCompileClasspath.files + project.kotlin.targets.jvm.compilations.main.output.allOutputs
+            }
+        } else {
+            dependsOn(project.configurations.compileClasspath)
+            dependsOn(project.sourceSets.main.output)
+            doFirst {
+                // resolve classpath only during execution
+                classpath = project.configurations.dokkaStubs.files + project.configurations.compileClasspath.files + project.sourceSets.main.output.files
+            }
         }
     }
 }
