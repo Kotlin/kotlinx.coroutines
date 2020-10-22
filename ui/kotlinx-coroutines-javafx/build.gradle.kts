@@ -6,16 +6,10 @@ plugins {
     id("org.openjfx.javafxplugin")
 }
 
-kotlin {
-    jvm {
-        withJava()
-    }
-}
-
 javafx {
     version = version("javafx")
     modules = listOf("javafx.controls")
-    configuration = "compile"
+    configuration = "jvmMainImplementation"
 }
 
 val JDK_18: String? by lazy {

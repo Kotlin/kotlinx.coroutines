@@ -28,22 +28,25 @@ dependencies {
     jvmMainApi "net.java.dev.jna:jna-platform:$jna_version"
 }
 
-jvmJar {
+configure([jvmJar, jvmIrJar]) {
     manifest {
         attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
         attributes "Can-Redefine-Classes": "true"
     }
 }
 
-task shadowJvmJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-    dependsOn(jvmJar)
-    def target = kotlin.targets.jvm
-    archiveAppendix.set(jvmJar.archiveAppendix)
-    from target.compilations.main.output
-    archiveClassifier.set(null)
-    manifest.inheritFrom jvmJar.manifest
-    // Shadow only byte buddy, do not package kotlin stdlib
-    configurations = [project.configurations.shadowDeps]
-    relocate('net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy')
-    exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+['jvm', 'jvmIr'].forEach { jvmCompilerType ->
+    tasks.register("shadow${jvmCompilerType.capitalize()}Jar", com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+        def jarTask = tasks.getByName("${jvmCompilerType}Jar")
+        dependsOn(jarTask)
+        def target = kotlin.targets[jvmCompilerType]
+        archiveAppendix.set(jarTask.archiveAppendix)
+        from target.compilations.main.output
+        archiveClassifier.set(null)
+        manifest.inheritFrom jarTask.manifest
+        // Shadow only byte buddy, do not package kotlin stdlib
+        configurations = [project.configurations.shadowDeps]
+        relocate('net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy')
+        exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+    }
 }

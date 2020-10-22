@@ -17,29 +17,9 @@ sourceSets {
         compileClasspath += sourceSets.test.runtimeClasspath
         runtimeClasspath += sourceSets.test.runtimeClasspath
     }
-    mavenTest {
-        kotlin
-        compileClasspath += sourceSets.test.runtimeClasspath
-        runtimeClasspath += sourceSets.test.runtimeClasspath
-    }
-    debugAgentTest {
-        kotlin
-        compileClasspath += sourceSets.test.runtimeClasspath
-        runtimeClasspath += sourceSets.test.runtimeClasspath
-    }
-
-    coreAgentTest {
-        kotlin
-        compileClasspath += sourceSets.test.runtimeClasspath
-        runtimeClasspath += sourceSets.test.runtimeClasspath
-    }
 }
 
-compileDebugAgentTestKotlin {
-    kotlinOptions {
-        freeCompilerArgs += ["-Xallow-kotlin-package"]
-    }
-}
+def jvmCompilerAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
 
 task npmTest(type: Test) {
     def sourceSet = sourceSets.npmTest
@@ -55,54 +35,110 @@ task npmTest(type: Test) {
     classpath = sourceSet.runtimeClasspath
 }
 
-task mavenTest(type: Test) {
-    def sourceSet = sourceSets.mavenTest
-    dependsOn(project(':').getTasksByName("publishToMavenLocal", true))
-    testClassesDirs = sourceSet.output.classesDirs
-    classpath = sourceSet.runtimeClasspath
-    // we can't depend on the subprojects because we need to test the classfiles that are published in the end.
-    // also, we can't put this in the `dependencies` block because the resolution would happen before publication.
-    def mavenTestClasspathConfiguration = project.configurations.detachedConfiguration(
-            project.dependencies.create("org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"),
-            project.dependencies.create("org.jetbrains.kotlinx:kotlinx-coroutines-android:$version"))
-
-    mavenTestClasspathConfiguration.attributes {
-        attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
-    }
-
-    classpath += mavenTestClasspathConfiguration
-}
-
-task debugAgentTest(type: Test) {
-    def sourceSet = sourceSets.debugAgentTest
-    dependsOn(project(':kotlinx-coroutines-debug').shadowJvmJar)
-    jvmArgs ('-javaagent:' + project(':kotlinx-coroutines-debug').shadowJvmJar.outputs.files.getFiles()[0])
-    testClassesDirs = sourceSet.output.classesDirs
-    classpath = sourceSet.runtimeClasspath
-}
-
-task coreAgentTest(type: Test) {
-    def sourceSet = sourceSets.coreAgentTest
-    dependsOn(project(':kotlinx-coroutines-core').jvmJar)
-    jvmArgs ('-javaagent:' + project(':kotlinx-coroutines-core').jvmJar.outputs.files.getFiles()[0])
-    testClassesDirs = sourceSet.output.classesDirs
-    classpath = sourceSet.runtimeClasspath
-}
-
 dependencies {
+    attributesSchema {
+        attribute(jvmCompilerAttr)
+    }
     testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testCompile 'junit:junit:4.12'
     npmTestCompile 'org.apache.commons:commons-compress:1.18'
     npmTestCompile 'com.google.code.gson:gson:2.8.5'
-    debugAgentTestCompile project(':kotlinx-coroutines-core')
-    debugAgentTestCompile project(':kotlinx-coroutines-debug')
-    coreAgentTestCompile project(':kotlinx-coroutines-core')
 }
 
-compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+['legacy', 'ir'].forEach { jvmCompilerType ->
+    sourceSets {
+        "mavenTest${jvmCompilerType.capitalize()}" {
+            kotlin.srcDirs = ["src/mavenTest/kotlin"]
+            compileClasspath += sourceSets.test.runtimeClasspath
+            runtimeClasspath += sourceSets.test.runtimeClasspath
+        }
+        "debugAgentTest${jvmCompilerType.capitalize()}" {
+            kotlin.srcDirs = ["src/debugAgentTest/kotlin"]
+            compileClasspath += sourceSets.test.runtimeClasspath
+            runtimeClasspath += sourceSets.test.runtimeClasspath
+        }
+
+        "coreAgentTest${jvmCompilerType.capitalize()}" {
+            kotlin.srcDirs = ["src/coreAgentTest/kotlin"]
+            compileClasspath += sourceSets.test.runtimeClasspath
+            runtimeClasspath += sourceSets.test.runtimeClasspath
+        }
+    }
+
+    tasks.register("mavenTest${jvmCompilerType.capitalize()}", Test) {
+        def sourceSet = sourceSets.getByName("mavenTest${jvmCompilerType.capitalize()}")
+        dependsOn(project(':').getTasksByName("publishToMavenLocal", true))
+        testClassesDirs = sourceSet.output.classesDirs
+        classpath = sourceSet.runtimeClasspath
+        // we can't depend on the subprojects because we need to test the classfiles that are published in the end.
+        // also, we can't put this in the `dependencies` block because the resolution would happen before publication.
+        def mavenTestClasspathConfiguration = project.configurations.detachedConfiguration(
+                project.dependencies.create("org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"),
+                project.dependencies.create("org.jetbrains.kotlinx:kotlinx-coroutines-android:$version"))
+
+        mavenTestClasspathConfiguration.attributes {
+            attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
+            attribute(jvmCompilerAttr, jvmCompilerType)
+        }
+
+        classpath += mavenTestClasspathConfiguration
+    }
+
+    tasks.register("debugAgentTest${jvmCompilerType.capitalize()}", Test) {
+        def sourceSet = sourceSets.getByName("debugAgentTest${jvmCompilerType.capitalize()}")
+        def jarProp = jvmCompilerType == 'ir' ? 'shadowJvmIrJar' : 'shadowJvmJar'
+        dependsOn(project(':kotlinx-coroutines-debug')[jarProp])
+        jvmArgs('-javaagent:' + project(':kotlinx-coroutines-debug')[jarProp].outputs.files.getFiles()[0])
+        testClassesDirs = sourceSet.output.classesDirs
+        classpath = sourceSet.runtimeClasspath
+    }
+
+    tasks.register("coreAgentTest${jvmCompilerType.capitalize()}", Test) {
+        def sourceSet = sourceSets.getByName("coreAgentTest${jvmCompilerType.capitalize()}")
+        def jarProp = jvmCompilerType == 'ir' ? 'jvmIrJar' : 'jvmJar'
+        dependsOn(project(':kotlinx-coroutines-core')[jarProp])
+        jvmArgs('-javaagent:' + project(':kotlinx-coroutines-core')[jarProp].outputs.files.getFiles()[0])
+        testClassesDirs = sourceSet.output.classesDirs
+        classpath = sourceSet.runtimeClasspath
+    }
+
+    configurations {
+        def confNames = [
+                "debugAgentTest${jvmCompilerType.capitalize()}RuntimeClasspath",
+                "debugAgentTest${jvmCompilerType.capitalize()}CompileClasspath",
+                "coreAgentTest${jvmCompilerType.capitalize()}RuntimeClasspath",
+                "coreAgentTest${jvmCompilerType.capitalize()}CompileClasspath"
+        ]
+        configure(confNames.collect { getByName(it) }) {
+            attributes {
+                attribute(jvmCompilerAttr, jvmCompilerType)
+            }
+        }
+    }
+
+    "compileCoreAgentTest${jvmCompilerType.capitalize()}Kotlin" {
+        kotlinOptions {
+            freeCompilerArgs += ["-Xallow-jvm-ir-dependencies"]
+        }
+    }
+
+    "compileDebugAgentTest${jvmCompilerType.capitalize()}Kotlin" {
+        kotlinOptions {
+            freeCompilerArgs += ["-Xallow-kotlin-package", "-Xallow-jvm-ir-dependencies"]
+        }
+    }
+
+    dependencies {
+        "debugAgentTest${jvmCompilerType.capitalize()}Compile" project(':kotlinx-coroutines-core')
+        "debugAgentTest${jvmCompilerType.capitalize()}Compile" project(':kotlinx-coroutines-debug')
+        "coreAgentTest${jvmCompilerType.capitalize()}Compile" project(':kotlinx-coroutines-core')
+    }
+
+    check {
+        dependsOn(["mavenTest${jvmCompilerType.capitalize()}", "debugAgentTest${jvmCompilerType.capitalize()}", "coreAgentTest${jvmCompilerType.capitalize()}"])
+    }
 }
 
 check {
-    dependsOn([npmTest, mavenTest, debugAgentTest, coreAgentTest])
+    dependsOn("npmTest")
 }

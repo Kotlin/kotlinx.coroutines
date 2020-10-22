@@ -5,8 +5,24 @@
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
+def jvmCompilerAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
+
 kotlin {
-    jvm('jvm')
+    jvm('jvm') {
+        attributes.attribute(jvmCompilerAttr, 'legacy')
+    }
+    jvm('jvmIr') {
+        attributes.attribute(jvmCompilerAttr, 'ir')
+        compilations.all {
+            kotlinOptions.useIR = true
+        }
+        // Do not publish JVM IR into repository
+        mavenPublication { targetPublication ->
+            tasks.withType(PublishToMavenRepository)
+                    .matching { it.publication == targetPublication }
+                    .all { onlyIf { false } }
+        }
+    }
     sourceSets {
         jvmTest.dependencies {
             api "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
@@ -15,6 +31,12 @@ kotlin {
             api "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
             api "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
             api "junit:junit:$junit_version"
+        }
+        jvmIrMain {
+            dependsOn jvmMain
+        }
+        jvmIrTest {
+            dependsOn jvmTest
         }
     }
 }

@@ -1,0 +1,15 @@
+public final class kotlinx/coroutines/slf4j/MDCContext : kotlin/coroutines/AbstractCoroutineContextElement, kotlinx/coroutines/ThreadContextElement {
+	public static final field Key Lkotlinx/coroutines/slf4j/MDCContext$Key;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getContextMap ()Ljava/util/Map;
+	public synthetic fun restoreThreadContext (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Object;)V
+	public fun restoreThreadContext (Lkotlin/coroutines/CoroutineContext;Ljava/util/Map;)V
+	public synthetic fun updateThreadContext (Lkotlin/coroutines/CoroutineContext;)Ljava/lang/Object;
+	public fun updateThreadContext (Lkotlin/coroutines/CoroutineContext;)Ljava/util/Map;
+}
+
+public final class kotlinx/coroutines/slf4j/MDCContext$Key : kotlin/coroutines/CoroutineContext$Key {
+}
+

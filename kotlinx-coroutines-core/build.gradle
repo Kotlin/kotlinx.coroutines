@@ -173,7 +173,16 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
     dependsOn(checkJdk16)
 }
 
-jvmTest {
+// TODO: JVM IR stacktraces are differs from legacy and causes tests to fail so temporary we will ignore these tests
+jvmIrTest {
+    filter {
+        excludeTest('kotlinx.coroutines.debug.CoroutinesDumpTest', 'testCreationStackTrace')
+        excludeTestsMatching('kotlinx.coroutines.exceptions.StackTraceRecovery*')
+        excludeTestsMatching('kotlinx.coroutines.debug.DebugProbesTest')
+    }
+}
+
+configure([jvmTest, jvmIrTest]) {
     minHeapSize = '1g'
     maxHeapSize = '1g'
     enableAssertions = true
@@ -185,7 +194,7 @@ jvmTest {
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
 }
 
-jvmJar {
+configure([jvmJar, jvmIrJar]) {
     manifest {
         attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
         attributes "Can-Retransform-Classes": "true"
@@ -224,7 +233,7 @@ task moreTest(dependsOn: [jvmStressTest, jdk16Test])
 build.dependsOn moreTest
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {
-    classifier = 'tests'
+    archiveClassifier.set('tests')
     from compileTestKotlinJvm.destinationDir
 }
 

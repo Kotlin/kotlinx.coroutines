@@ -11,7 +11,7 @@ dependencies {
 }
 
 kotlin {
-    configure([jvm("jvm")]) {
+    configure([jvm("jvm"), jvm("jvmIr")]) {
         compilations.all {
             kotlinOptions.jvmTarget = "1.8"
         }

@@ -11,7 +11,7 @@ apply plugin: 'maven-publish'
 
 // ------------- tasks
 
-def isMultiplatform = project.name == "kotlinx-coroutines-core"
+def isMultiplatform = project.name != "benchmarks"
 def isBom = project.name == "kotlinx-coroutines-bom"
 def isKotlin137x = VersionNumber.parse(kotlin_version) <= VersionNumber.parse("1.3.79")
 
@@ -26,13 +26,13 @@ if (!isBom) {
 
 if (!isMultiplatform && !isBom) {
     // Regular java modules need 'java-library' plugin for proper publication
-//    apply plugin: 'java-library'
+    apply plugin: 'java-library'
 
     // MPP projects pack their sources automatically, java libraries need to explicitly pack them
-//    task sourcesJar(type: Jar) {
-//        archiveClassifier = 'sources'
-//        from sourceSets.main.allSource
-//    }
+    task sourcesJar(type: Jar) {
+        archiveClassifier = 'sources'
+        from sourceSets.main.allSource
+    }
 }
 
 publishing {
@@ -50,19 +50,19 @@ publishing {
         }
     }
 
-//    if (!isMultiplatform && !isBom) {
-//        // Configure java publications for regular non-MPP modules
-//        publications {
-//            maven(MavenPublication) {
-//                if (project.name == "kotlinx-coroutines-debug") {
-//                    project.shadow.component(it)
-//                } else {
-//                    from components.java
-//                }
-//                artifact sourcesJar
-//            }
-//        }
-//    }
+    if (!isMultiplatform && !isBom) {
+        // Configure java publications for regular non-MPP modules
+        publications {
+            maven(MavenPublication) {
+                if (project.name == "kotlinx-coroutines-debug") {
+                    project.shadow.component(it)
+                } else {
+                    from components.java
+                }
+                artifact sourcesJar
+            }
+        }
+    }
 
     publications.all {
         MavenCentralKt.configureMavenCentralMetadata(pom, project)
@@ -100,7 +100,7 @@ publishing {
         // Hierarchical project structures are not fully supported in 1.3.7x MPP
         if (isKotlin137x) {
             // disable metadata everywhere, but in native and js modules
-            if (type == 'maven' || type == 'metadata' || type == 'jvm') {
+            if (type == 'maven' || type == 'metadata' || type == 'jvm' || type == 'jvmIr') {
                 moduleDescriptorGenerator = null
             }
         }

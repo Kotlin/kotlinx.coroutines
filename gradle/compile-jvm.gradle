@@ -9,13 +9,32 @@ apply plugin: 'org.jetbrains.kotlin.jvm'
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
+def jvmCompilerAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
+
+configurations {
+    create("jvmImplementation") {
+        extendsFrom implementation
+        attributes {
+            attribute(jvmCompilerAttr, "legacy")
+        }
+    }
+}
+
 dependencies {
+    attributesSchema {
+        attribute(jvmCompilerAttr)
+    }
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     // Workaround to make addSuppressed work in tests
     testCompile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
     testCompile "junit:junit:$junit_version"
+}
+
+sourceSets.all { sourceSet ->
+    sourceSet.compileClasspath += configurations.jvmImplementation
+    sourceSet.runtimeClasspath += configurations.jvmImplementation
 }
 
 compileKotlin {

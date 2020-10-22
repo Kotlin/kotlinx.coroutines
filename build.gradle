@@ -96,7 +96,9 @@ if (!Idea.active) {
 
 // todo:KLUDGE: This is needed to workaround dependency resolution between Java and MPP modules
 def configureKotlinJvmPlatform(configuration) {
+    def jvmCompilerAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
     configuration.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
+    configuration.attributes.attribute(jvmCompilerAttr, 'legacy')
 }
 
 allprojects {
@@ -197,7 +199,11 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
     } else {
         dependencies {
             // See comment below for rationale, it will be replaced with "project" dependency
-            compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
+            if (platform == 'jvm') {
+                jvmImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
+            } else {
+                compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
+            }
             // the only way IDEA can resolve test classes
             testCompile project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
         }
