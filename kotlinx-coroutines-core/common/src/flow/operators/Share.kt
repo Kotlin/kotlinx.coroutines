@@ -330,13 +330,20 @@ private fun <T> CoroutineScope.launchSharingDeferred(
     result: CompletableDeferred<StateFlow<T>>
 ) {
     launch(context) {
-        var state: MutableStateFlow<T>? = null
-        upstream.collect { value ->
-            state?.let { it.value = value } ?: run {
-                state = MutableStateFlow(value).also {
-                    result.complete(it.asStateFlow())
+        try {
+            var state: MutableStateFlow<T>? = null
+            upstream.collect { value ->
+                state?.let { it.value = value } ?: run {
+                    state = MutableStateFlow(value).also {
+                        result.complete(it.asStateFlow())
+                    }
                 }
             }
+        } catch (e: Throwable) {
+            // Notify the waiter that the flow has failed
+            result.completeExceptionally(e)
+            // But still cancel the scope where state was (not) produced
+            throw e
         }
     }
 }
