@@ -160,7 +160,7 @@ public fun <T> Flow<T>.onCompletion(
     // Normal completion
     val sc = SafeCollector(this, currentCoroutineContext())
     try {
-        sc.invokeSafely(action, null)
+        sc.action(null)
     } finally {
         sc.releaseIntercepted()
     }
