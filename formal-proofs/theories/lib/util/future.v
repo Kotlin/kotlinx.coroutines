@@ -152,6 +152,9 @@ Proof.
   apply None_least.
 Qed.
 
+Theorem future_is_not_unit γ f: is_future γ f -∗ ⌜f ≠ #()⌝.
+Proof. iIntros "HFuture". by iDestruct "HFuture" as (?) "[-> _]". Qed.
+
 Theorem awaitFuture_spec γ f:
   {{{ is_future γ f }}}
     awaitFuture f
