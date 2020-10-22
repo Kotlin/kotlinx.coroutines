@@ -28,14 +28,25 @@ dependencies {
     jvmMainApi "net.java.dev.jna:jna-platform:$jna_version"
 }
 
-configure([jvmJar, jvmIrJar]) {
+def jvmJarTasks = rootProject.ext.build_snapshot_train ? [jvmJar, jvmIrJar] : [jvmJar]
+configure(jvmJarTasks) {
     manifest {
         attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
         attributes "Can-Redefine-Classes": "true"
     }
 }
 
-['jvm', 'jvmIr'].forEach { jvmCompilerType ->
+if (rootProject.ext.build_snapshot_train) {
+    tasks.named('jvmIrTest', Test) {
+        filter {
+            excludeTest('kotlinx.coroutines.debug.CoroutinesDumpTest', 'testCreationStackTrace')
+            excludeTestsMatching('kotlinx.coroutines.debug.DebugProbesTest')
+        }
+    }
+}
+
+def targets = rootProject.ext.build_snapshot_train ? ['jvm', 'jvmIr'] : ['jvm']
+targets.forEach { jvmCompilerType ->
     tasks.register("shadow${jvmCompilerType.capitalize()}Jar", com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
         def jarTask = tasks.getByName("${jvmCompilerType}Jar")
         dependsOn(jarTask)

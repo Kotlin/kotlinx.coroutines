@@ -98,7 +98,9 @@ if (!Idea.active) {
 def configureKotlinJvmPlatform(configuration) {
     def jvmCompilerAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
     configuration.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
-    configuration.attributes.attribute(jvmCompilerAttr, 'legacy')
+    if (build_snapshot_train) {
+        configuration.attributes.attribute(jvmCompilerAttr, 'legacy')
+    }
 }
 
 allprojects {

@@ -3,8 +3,13 @@
  */
 
 kotlin {
-    configure(listOf(jvm("jvm"), jvm("jvmIr"))) {
-        val main by compilations.getting {
+    val targets = if (rootProject.ext.get("build_snapshot_train") as Boolean) {
+        listOf(jvm("jvm"), jvm("jvmIr"))
+    } else {
+        listOf(jvm("jvm"))
+    }
+    configure(targets) {
+        compilations.getByName("main") {
             kotlinOptions.freeCompilerArgs += "-Xallow-kotlin-package"
         }
     }

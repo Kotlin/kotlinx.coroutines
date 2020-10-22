@@ -14,15 +14,19 @@ def jvmCompilerAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
 configurations {
     create("jvmImplementation") {
         extendsFrom implementation
-        attributes {
-            attribute(jvmCompilerAttr, "legacy")
+        if (rootProject.ext.build_snapshot_train) {
+            attributes {
+                attribute(jvmCompilerAttr, "legacy")
+            }
         }
     }
 }
 
 dependencies {
-    attributesSchema {
-        attribute(jvmCompilerAttr)
+    if (rootProject.ext.build_snapshot_train) {
+        attributesSchema {
+            attribute(jvmCompilerAttr)
+        }
     }
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     // Workaround to make addSuppressed work in tests

@@ -37,7 +37,12 @@ val runR8NoOptim by tasks.registering(RunR8::class) {
     dependsOn("jvmJar")
 }
 
-configure(listOf(tasks.jvmTest.get(), tasks.getByName<org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest>("jvmIrTest"))) {
+val testTasks = if (rootProject.ext.get("build_snapshot_train") as Boolean) {
+    listOf(tasks.jvmTest.get(), tasks.getByName<org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest>("jvmIrTest"))
+} else {
+    listOf(tasks.jvmTest.get())
+}
+configure(testTasks) {
     // Ensure the R8-processed dex is built and supply its path as a property to the test.
     dependsOn(runR8)
     dependsOn(runR8NoOptim)

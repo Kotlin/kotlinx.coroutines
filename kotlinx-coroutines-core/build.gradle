@@ -174,15 +174,14 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
 }
 
 // TODO: JVM IR stacktraces are differs from legacy and causes tests to fail so temporary we will ignore these tests
-jvmIrTest {
-    filter {
-        excludeTest('kotlinx.coroutines.debug.CoroutinesDumpTest', 'testCreationStackTrace')
-        excludeTestsMatching('kotlinx.coroutines.exceptions.StackTraceRecovery*')
-        excludeTestsMatching('kotlinx.coroutines.debug.DebugProbesTest')
+if (rootProject.ext.build_snapshot_train) {
+    tasks.named("jvmIrTest", Test) {
+        exclude 'kotlinx/coroutines/exceptions/StackTraceRecovery*'
     }
 }
 
-configure([jvmTest, jvmIrTest]) {
+def jvmTestTasks = rootProject.ext.build_snapshot_train ? [jvmTest, jvmIrTest] : [jvmTest]
+configure(jvmTestTasks) {
     minHeapSize = '1g'
     maxHeapSize = '1g'
     enableAssertions = true
@@ -194,7 +193,8 @@ configure([jvmTest, jvmIrTest]) {
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
 }
 
-configure([jvmJar, jvmIrJar]) {
+def jvmJarTasks = rootProject.ext.build_snapshot_train ? [jvmJar, jvmIrJar] : [jvmJar]
+configure(jvmJarTasks) {
     manifest {
         attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
         attributes "Can-Retransform-Classes": "true"

@@ -36,8 +36,10 @@ task npmTest(type: Test) {
 }
 
 dependencies {
-    attributesSchema {
-        attribute(jvmCompilerAttr)
+    if (rootProject.ext.build_snapshot_train) {
+        attributesSchema {
+            attribute(jvmCompilerAttr)
+        }
     }
     testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testCompile 'junit:junit:4.12'
@@ -45,7 +47,9 @@ dependencies {
     npmTestCompile 'com.google.code.gson:gson:2.8.5'
 }
 
-['legacy', 'ir'].forEach { jvmCompilerType ->
+def targets = rootProject.ext.build_snapshot_train ? ['legacy', 'ir'] : ['']
+
+targets.forEach { jvmCompilerType ->
     sourceSets {
         "mavenTest${jvmCompilerType.capitalize()}" {
             kotlin.srcDirs = ["src/mavenTest/kotlin"]
@@ -78,7 +82,9 @@ dependencies {
 
         mavenTestClasspathConfiguration.attributes {
             attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
-            attribute(jvmCompilerAttr, jvmCompilerType)
+            if (rootProject.ext.build_snapshot_train) {
+                attribute(jvmCompilerAttr, jvmCompilerType)
+            }
         }
 
         classpath += mavenTestClasspathConfiguration
@@ -102,16 +108,18 @@ dependencies {
         classpath = sourceSet.runtimeClasspath
     }
 
-    configurations {
-        def confNames = [
-                "debugAgentTest${jvmCompilerType.capitalize()}RuntimeClasspath",
-                "debugAgentTest${jvmCompilerType.capitalize()}CompileClasspath",
-                "coreAgentTest${jvmCompilerType.capitalize()}RuntimeClasspath",
-                "coreAgentTest${jvmCompilerType.capitalize()}CompileClasspath"
-        ]
-        configure(confNames.collect { getByName(it) }) {
-            attributes {
-                attribute(jvmCompilerAttr, jvmCompilerType)
+    if (rootProject.ext.build_snapshot_train) {
+        configurations {
+            def confNames = [
+                    "debugAgentTest${jvmCompilerType.capitalize()}RuntimeClasspath",
+                    "debugAgentTest${jvmCompilerType.capitalize()}CompileClasspath",
+                    "coreAgentTest${jvmCompilerType.capitalize()}RuntimeClasspath",
+                    "coreAgentTest${jvmCompilerType.capitalize()}CompileClasspath"
+            ]
+            configure(confNames.collect { getByName(it) }) {
+                attributes {
+                    attribute(jvmCompilerAttr, jvmCompilerType)
+                }
             }
         }
     }
