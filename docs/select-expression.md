@@ -1,32 +1,19 @@
 <!--- TEST_NAME SelectGuideTest --> 
 
-**Table of contents**
-
-<!--- TOC -->
-
-* [Select Expression (experimental)](#select-expression-experimental)
-  * [Selecting from channels](#selecting-from-channels)
-  * [Selecting on close](#selecting-on-close)
-  * [Selecting to send](#selecting-to-send)
-  * [Selecting deferred values](#selecting-deferred-values)
-  * [Switch over a channel of deferred values](#switch-over-a-channel-of-deferred-values)
-
-<!--- END -->
-
-## Select Expression (experimental)
+[//]: # (title: Select expression \(experimental\))
 
 Select expression makes it possible to await multiple suspending functions simultaneously and _select_
 the first one that becomes available.
 
 > Select expressions are an experimental feature of `kotlinx.coroutines`. Their API is expected to 
-evolve in the upcoming updates of the `kotlinx.coroutines` library with potentially
-breaking changes.
+> evolve in the upcoming updates of the `kotlinx.coroutines` library with potentially
+> breaking changes.
+>
+{type="note"}
 
-### Selecting from channels
+## Selecting from channels
 
 Let us have two producers of strings: `fizz` and `buzz`. The `fizz` produces "Fizz" string every 300 ms:
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 fun CoroutineScope.fizz() = produce<String> {
@@ -37,11 +24,7 @@ fun CoroutineScope.fizz() = produce<String> {
 }
 ```
 
-</div>
-
 And the `buzz` produces "Buzz!" string every 500 ms:
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 fun CoroutineScope.buzz() = produce<String> {
@@ -52,13 +35,9 @@ fun CoroutineScope.buzz() = produce<String> {
 }
 ```
 
-</div>
-
 Using [receive][ReceiveChannel.receive] suspending function we can receive _either_ from one channel or the
 other. But [select] expression allows us to receive from _both_ simultaneously using its
 [onReceive][ReceiveChannel.onReceive] clauses:
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<String>) {
@@ -73,13 +52,9 @@ suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<St
 }
 ```
 
-</div>
-
 Let us run it all seven times:
 
 <!--- CLEAR -->
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -122,10 +97,11 @@ fun main() = runBlocking<Unit> {
 //sampleEnd        
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-select-01.kt).
+>
+{type="note"}
 
 The result of this code is: 
 
@@ -141,14 +117,12 @@ buzz -> 'Buzz!'
 
 <!--- TEST -->
 
-### Selecting on close
+## Selecting on close
 
 The [onReceive][ReceiveChannel.onReceive] clause in `select` fails when the channel is closed causing the corresponding
 `select` to throw an exception. We can use [onReceiveOrNull][onReceiveOrNull] clause to perform a
 specific action when the channel is closed. The following example also shows that `select` is an expression that returns 
 the result of its selected clause:
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): String =
@@ -168,8 +142,6 @@ suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): St
     }
 ```
 
-</div>
-
 Note that [onReceiveOrNull][onReceiveOrNull] is an extension function defined only 
 for channels with non-nullable elements so that there is no accidental confusion between a closed channel
 and a null value. 
@@ -178,8 +150,6 @@ Let's use it with channel `a` that produces "Hello" string four times and
 channel `b` that produces "World" four times:
 
 <!--- CLEAR -->
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -217,10 +187,11 @@ fun main() = runBlocking<Unit> {
 //sampleEnd      
 }    
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-select-02.kt).
+>
+{type="note"}
 
 The result of this code is quite interesting, so we'll analyze it in more detail:
 
@@ -247,15 +218,13 @@ time to time on its [send][SendChannel.send] invocation and gives a chance for `
 The second observation, is that [onReceiveOrNull][onReceiveOrNull] gets immediately selected when the 
 channel is already closed.
 
-### Selecting to send
+## Selecting to send
 
 Select expression has [onSend][SendChannel.onSend] clause that can be used for a great good in combination 
 with a biased nature of selection.
 
 Let us write an example of producer of integers that sends its values to a `side` channel when 
 the consumers on its primary channel cannot keep up with it:
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 fun CoroutineScope.produceNumbers(side: SendChannel<Int>) = produce<Int> {
@@ -269,13 +238,9 @@ fun CoroutineScope.produceNumbers(side: SendChannel<Int>) = produce<Int> {
 }
 ```
 
-</div>
-
 Consumer is going to be quite slow, taking 250 ms to process each number:
 
 <!--- CLEAR -->
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -307,10 +272,11 @@ fun main() = runBlocking<Unit> {
 //sampleEnd      
 }
 ```
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-</div> 
- 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-select-03.kt).
+>
+{type="note"}
   
 So let us see what happens:
  
@@ -330,13 +296,11 @@ Done consuming
 
 <!--- TEST -->
 
-### Selecting deferred values
+## Selecting deferred values
 
 Deferred values can be selected using [onAwait][Deferred.onAwait] clause. 
 Let us start with an async function that returns a deferred string value after 
 a random delay:
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 fun CoroutineScope.asyncString(time: Int) = async {
@@ -345,11 +309,7 @@ fun CoroutineScope.asyncString(time: Int) = async {
 }
 ```
 
-</div>
-
 Let us start a dozen of them with a random delay.
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 fun CoroutineScope.asyncStringsList(): List<Deferred<String>> {
@@ -358,16 +318,12 @@ fun CoroutineScope.asyncStringsList(): List<Deferred<String>> {
 }
 ```
 
-</div>
-
 Now the main function awaits for the first of them to complete and counts the number of deferred values
 that are still active. Note that we've used here the fact that `select` expression is a Kotlin DSL, 
 so we can provide clauses for it using an arbitrary code. In this case we iterate over a list
 of deferred values to provide `onAwait` clause for each deferred value.
 
 <!--- CLEAR -->
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -400,10 +356,11 @@ fun main() = runBlocking<Unit> {
 //sampleEnd
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-select-04.kt).
+>
+{type="note"}
 
 The output is:
 
@@ -414,13 +371,11 @@ Deferred 4 produced answer 'Waited for 128 ms'
 
 <!--- TEST -->
 
-### Switch over a channel of deferred values
+## Switch over a channel of deferred values
 
 Let us write a channel producer function that consumes a channel of deferred string values, waits for each received
 deferred value, but only until the next deferred value comes over or the channel is closed. This example puts together 
 [onReceiveOrNull][onReceiveOrNull] and [onAwait][Deferred.onAwait] clauses in the same `select`:
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 fun CoroutineScope.switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) = produce<String> {
@@ -445,12 +400,7 @@ fun CoroutineScope.switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) =
 }
 ```
 
-</div>
-
 To test it, we'll use a simple async function that resolves to a specified string after a specified time:
-
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 fun CoroutineScope.asyncString(str: String, time: Long) = async {
@@ -459,14 +409,10 @@ fun CoroutineScope.asyncString(str: String, time: Long) = async {
 }
 ```
 
-</div>
-
 The main function just launches a coroutine to print results of `switchMapDeferreds` and sends some test
 data to it:
 
 <!--- CLEAR -->
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -519,10 +465,11 @@ fun main() = runBlocking<Unit> {
 //sampleEnd
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-select-05.kt).
+>
+{type="note"}
 
 The result of this code:
 
