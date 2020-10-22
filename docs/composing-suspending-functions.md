@@ -1,29 +1,14 @@
 <!--- TEST_NAME ComposingGuideTest -->
 
-**Table of contents**
-
-<!--- TOC -->
-
-* [Composing Suspending Functions](#composing-suspending-functions)
-  * [Sequential by default](#sequential-by-default)
-  * [Concurrent using async](#concurrent-using-async)
-  * [Lazily started async](#lazily-started-async)
-  * [Async-style functions](#async-style-functions)
-  * [Structured concurrency with async](#structured-concurrency-with-async)
-
-<!--- END -->
-
-## Composing Suspending Functions
+[//]: # (title: Composinbg suspending functions)
 
 This section covers various approaches to composition of suspending functions.
 
-### Sequential by default
+## Sequential by default
 
 Assume that we have two suspending functions defined elsewhere that do something useful like some kind of 
 remote service call or computation. We just pretend they are useful, but actually each one just
 delays for a second for the purpose of this example:
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 suspend fun doSomethingUsefulOne(): Int {
@@ -37,9 +22,6 @@ suspend fun doSomethingUsefulTwo(): Int {
 }
 ```
 
-</div>
-
-
 What do we do if we need them to be invoked _sequentially_ &mdash; first `doSomethingUsefulOne` _and then_ 
 `doSomethingUsefulTwo`, and compute the sum of their results? 
 In practice we do this if we use the result of the first function to make a decision on whether we need 
@@ -50,8 +32,6 @@ code, is _sequential_ by default. The following example demonstrates it by measu
 time it takes to execute both suspending functions:
 
 <!--- CLEAR -->
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -78,10 +58,11 @@ suspend fun doSomethingUsefulTwo(): Int {
     return 29
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-01.kt).
+>
+{type="note"}
 
 It produces something like this:
 
@@ -92,7 +73,7 @@ Completed in 2017 ms
 
 <!--- TEST ARBITRARY_TIME -->
 
-### Concurrent using async
+## Concurrent using async
 
 What if there are no dependencies between invocations of `doSomethingUsefulOne` and `doSomethingUsefulTwo` and
 we want to get the answer faster, by doing both _concurrently_? This is where [async] comes to help. 
@@ -102,10 +83,7 @@ that works concurrently with all the other coroutines. The difference is that `l
 does not carry any resulting value, while `async` returns a [Deferred] &mdash; a light-weight non-blocking future
 that represents a promise to provide a result later. You can use `.await()` on a deferred value to get its eventual result,
 but `Deferred` is also a `Job`, so you can cancel it if needed.
- 
 
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
- 
 ```kotlin
 import kotlinx.coroutines.*
 import kotlin.system.*
@@ -131,10 +109,11 @@ suspend fun doSomethingUsefulTwo(): Int {
     return 29
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-02.kt).
+>
+{type="note"}
 
 It produces something like this:
 
@@ -148,14 +127,12 @@ Completed in 1017 ms
 This is twice as fast, because the two coroutines execute concurrently. 
 Note that concurrency with coroutines is always explicit.
 
-### Lazily started async
+## Lazily started async
 
 Optionally, [async] can be made lazy by setting its `start` parameter to [CoroutineStart.LAZY]. 
 In this mode it only starts the coroutine when its result is required by 
 [await][Deferred.await], or if its `Job`'s [start][Job.start] function 
 is invoked. Run the following example:
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -185,10 +162,11 @@ suspend fun doSomethingUsefulTwo(): Int {
     return 29
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-03.kt).
+>
+{type="note"}
 
 It produces something like this:
 
@@ -209,15 +187,13 @@ execution and waits for its finish, which is not the intended use-case for lazin
 The use-case for `async(start = CoroutineStart.LAZY)` is a replacement for the 
 standard `lazy` function in cases when computation of the value involves suspending functions.
 
-### Async-style functions
+## Async-style functions
 
 We can define async-style functions that invoke `doSomethingUsefulOne` and `doSomethingUsefulTwo`
 _asynchronously_ using the [async] coroutine builder with an explicit [GlobalScope] reference.
 We name such functions with the 
 "...Async" suffix to highlight the fact that they only start asynchronous computation and one needs
 to use the resulting deferred value to get the result.
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 // The result type of somethingUsefulOneAsync is Deferred<Int>
@@ -231,18 +207,14 @@ fun somethingUsefulTwoAsync() = GlobalScope.async {
 }
 ```
 
-</div>
-
 Note that these `xxxAsync` functions are **not** _suspending_ functions. They can be used from anywhere.
 However, their use always implies asynchronous (here meaning _concurrent_) execution of their action
 with the invoking code.
  
-The following example shows their use outside of coroutine:  
+The following example shows their use outside of coroutine:
 
 <!--- CLEAR -->
 
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
- 
 ```kotlin
 import kotlinx.coroutines.*
 import kotlin.system.*
@@ -282,10 +254,11 @@ suspend fun doSomethingUsefulTwo(): Int {
     return 29
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-04.kt).
+>
+{type="note"}
 
 <!--- TEST ARBITRARY_TIME
 The answer is 42
@@ -293,8 +266,10 @@ Completed in 1085 ms
 -->
 
 > This programming style with async functions is provided here only for illustration, because it is a popular style
-in other programming languages. Using this style with Kotlin coroutines is **strongly discouraged** for the
-reasons explained below.
+> in other programming languages. Using this style with Kotlin coroutines is **strongly discouraged** for the
+> reasons explained below.
+>
+{type="note"}
 
 Consider what happens if between the `val one = somethingUsefulOneAsync()` line and `one.await()` expression there is some logic
 error in the code and the program throws an exception and the operation that was being performed by the program aborts. 
@@ -303,14 +278,12 @@ could otherwise continue doing other operations. But here we have `somethingUsef
 even though the operation that initiated it was aborted. This problem does not happen with structured
 concurrency, as shown in the section below.
 
-### Structured concurrency with async 
+## Structured concurrency with async 
 
 Let us take the [Concurrent using async](#concurrent-using-async) example and extract a function that 
 concurrently performs `doSomethingUsefulOne` and `doSomethingUsefulTwo` and returns the sum of their results.
 Because the [async] coroutine builder is defined as an extension on [CoroutineScope], we need to have it in the 
 scope and that is what the [coroutineScope][_coroutineScope] function provides:
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 suspend fun concurrentSum(): Int = coroutineScope {
@@ -320,15 +293,11 @@ suspend fun concurrentSum(): Int = coroutineScope {
 }
 ```
 
-</div>
-
 This way, if something goes wrong inside the code of the `concurrentSum` function and it throws an exception,
 all the coroutines that were launched in its scope will be cancelled.
 
 <!--- CLEAR -->
 
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
- 
 ```kotlin
 import kotlinx.coroutines.*
 import kotlin.system.*
@@ -358,10 +327,11 @@ suspend fun doSomethingUsefulTwo(): Int {
     return 29
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-05.kt).
+>
+{type="note"}
 
 We still have concurrent execution of both operations, as evident from the output of the above `main` function: 
 
@@ -375,8 +345,6 @@ Completed in 1017 ms
 Cancellation is always propagated through coroutines hierarchy:
 
 <!--- CLEAR -->
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -405,10 +373,11 @@ suspend fun failedConcurrentSum(): Int = coroutineScope {
     one.await() + two.await()
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-06.kt).
+>
+{type="note"}
 
 Note how both the first `async` and the awaiting parent are cancelled on failure of one of the children
 (namely, `two`):
