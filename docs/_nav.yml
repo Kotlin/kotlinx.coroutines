@@ -1,18 +1,18 @@
 - md: coroutines-guide.md
   url: coroutines-guide.html
-  title: Coroutines Guide
+  title: Coroutines guide
 - md: basics.md
   url: basics.html
   title: Basics
 - md: cancellation-and-timeouts.md
   url: cancellation-and-timeouts.html
-  title: Cancellation and Timeouts
+  title: Cancellation and timeouts
 - md: composing-suspending-functions.md
   url: composing-suspending-functions.html
-  title: Composing Suspending Functions
+  title: Composing suspending functions
 - md: coroutine-context-and-dispatchers.md
   url: coroutine-context-and-dispatchers.html
-  title: Coroutine Context and Dispatchers
+  title: Coroutine context and dispatchers
 - md: flow.md
   url: flow.html
   title: Asynchronous Flow
@@ -21,10 +21,10 @@
   title: Channels
 - md: exception-handling.md
   url: exception-handling.html
-  title: Exception Handling and Supervision
+  title: Exception handling and supervision
 - md: shared-mutable-state-and-concurrency.md
   url: shared-mutable-state-and-concurrency.html
-  title: Shared Mutable State and Concurrency
+  title: Shared mutable state and concurrency
 - md: select-expression.md
   url: select-expression.html
-  title: Select Expression (experimental)
+  title: Select expression (experimental)
