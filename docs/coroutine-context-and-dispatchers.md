@@ -1,27 +1,6 @@
 <!--- TEST_NAME DispatcherGuideTest -->
 
-**Table of contents**
-
-<!--- TOC -->
-
-* [Coroutine Context and Dispatchers](#coroutine-context-and-dispatchers)
-  * [Dispatchers and threads](#dispatchers-and-threads)
-  * [Unconfined vs confined dispatcher](#unconfined-vs-confined-dispatcher)
-  * [Debugging coroutines and threads](#debugging-coroutines-and-threads)
-    * [Debugging with IDEA](#debugging-with-idea)
-    * [Debugging using logging](#debugging-using-logging)
-  * [Jumping between threads](#jumping-between-threads)
-  * [Job in the context](#job-in-the-context)
-  * [Children of a coroutine](#children-of-a-coroutine)
-  * [Parental responsibilities](#parental-responsibilities)
-  * [Naming coroutines for debugging](#naming-coroutines-for-debugging)
-  * [Combining context elements](#combining-context-elements)
-  * [Coroutine scope](#coroutine-scope)
-  * [Thread-local data](#thread-local-data)
-
-<!--- END -->
-
-## Coroutine Context and Dispatchers
+[//]: # (title: Coroutine context and dispatchers)
 
 Coroutines always execute in some context represented by a value of the 
 [CoroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/) 
@@ -30,7 +9,7 @@ type, defined in the Kotlin standard library.
 The coroutine context is a set of various elements. The main elements are the [Job] of the coroutine, 
 which we've seen before, and its dispatcher, which is covered in this section.
 
-### Dispatchers and threads
+## Dispatchers and threads
 
 The coroutine context includes a _coroutine dispatcher_ (see [CoroutineDispatcher]) that determines what thread or threads 
 the corresponding coroutine uses for its execution. The coroutine dispatcher can confine coroutine execution 
@@ -41,8 +20,6 @@ All coroutine builders like [launch] and [async] accept an optional
 parameter that can be used to explicitly specify the dispatcher for the new coroutine and other context elements. 
 
 Try the following example:
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -64,10 +41,11 @@ fun main() = runBlocking<Unit> {
 //sampleEnd    
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-01.kt).
+>
+{type="note"}
 
 It produces the following output (maybe in different order):
 
@@ -96,7 +74,7 @@ A dedicated thread is a very expensive resource.
 In a real application it must be either released, when no longer needed, using the [close][ExecutorCoroutineDispatcher.close] 
 function, or stored in a top-level variable and reused throughout the application.  
 
-### Unconfined vs confined dispatcher
+## Unconfined vs confined dispatcher
  
 The [Dispatchers.Unconfined] coroutine dispatcher starts a coroutine in the caller thread, but only until the
 first suspension point. After suspension it resumes the coroutine in the thread that is fully determined by the
@@ -107,8 +85,6 @@ On the other side, the dispatcher is inherited from the outer [CoroutineScope] b
 The default dispatcher for the [runBlocking] coroutine, in particular,
 is confined to the invoker thread, so inheriting it has the effect of confining execution to
 this thread with predictable FIFO scheduling.
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -128,10 +104,11 @@ fun main() = runBlocking<Unit> {
 //sampleEnd    
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-02.kt).
+>
+{type="note"}
 
 Produces the output: 
  
@@ -149,26 +126,30 @@ in the `main` thread, while the unconfined one resumes in the default executor t
 function is using.
 
 > The unconfined dispatcher is an advanced mechanism that can be helpful in certain corner cases where
-dispatching of a coroutine for its execution later is not needed or produces undesirable side-effects,
-because some operation in a coroutine must be performed right away. 
-The unconfined dispatcher should not be used in general code.  
+> dispatching of a coroutine for its execution later is not needed or produces undesirable side-effects,
+> because some operation in a coroutine must be performed right away. 
+> The unconfined dispatcher should not be used in general code. 
+>
+{type="note"}
 
-### Debugging coroutines and threads
+## Debugging coroutines and threads
 
 Coroutines can suspend on one thread and resume on another thread. 
 Even with a single-threaded dispatcher it might be hard to
 figure out what the coroutine was doing, where, and when if you don't have special tooling. 
 
-#### Debugging with IDEA
+### Debugging with IDEA
 
 The Coroutine Debugger of the Kotlin plugin simplifies debugging coroutines in IntelliJ IDEA.
 
 > Debugging works for versions 1.3.8 or later of `kotlinx-coroutines-core`.
+>
+{type="note"}
 
 The **Debug** tool window contains the **Coroutines** tab. In this tab, you can find information about both currently running and suspended coroutines. 
 The coroutines are grouped by the dispatcher they are running on.
 
-![Debugging coroutines](images/coroutine-idea-debugging-1.png)
+![Debugging coroutines](coroutine-idea-debugging-1.png)
 
 With the coroutine debugger, you can:
 * Check the state of each coroutine.
@@ -181,7 +162,7 @@ To start coroutine debugging, you just need to set breakpoints and run the appli
 
 Learn more about coroutines debugging in the [tutorial](https://kotlinlang.org/docs/tutorials/coroutines/debug-coroutines-with-idea.html).
 
-#### Debugging using logging
+### Debugging using logging
 
 Another approach to debugging applications with 
 threads without Coroutine Debugger is to print the thread name in the log file on each log statement. This feature is universally supported
@@ -189,8 +170,6 @@ by logging frameworks. When using coroutines, the thread name alone does not giv
 `kotlinx.coroutines` includes debugging facilities to make it easier. 
 
 Run the following code with `-Dkotlinx.coroutines.debug` JVM option:
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -211,10 +190,11 @@ fun main() = runBlocking<Unit> {
 //sampleEnd    
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-03.kt).
+>
+{type="note"}
 
 There are three coroutines. The main coroutine (#1) inside `runBlocking` 
 and two coroutines computing the deferred values `a` (#2) and `b` (#3).
@@ -234,13 +214,13 @@ thread with the identifier of the currently executing coroutine appended to it. 
 is consecutively assigned to all created coroutines when the debugging mode is on.
 
 > Debugging mode is also turned on when JVM is run with `-ea` option.
-You can read more about debugging facilities in the documentation of the [DEBUG_PROPERTY_NAME] property.
+> You can read more about debugging facilities in the documentation of the [DEBUG_PROPERTY_NAME] property.
+>
+{type="note"}
 
-### Jumping between threads
+## Jumping between threads
 
 Run the following code with the `-Dkotlinx.coroutines.debug` JVM option (see [debug](#debugging-coroutines-and-threads)):
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -263,10 +243,11 @@ fun main() {
 //sampleEnd    
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-04.kt).
+>
+{type="note"}
 
 It demonstrates several new techniques. One is using [runBlocking] with an explicitly specified context, and
 the other one is using the [withContext] function to change the context of a coroutine while still staying in the
@@ -283,12 +264,10 @@ same coroutine, as you can see in the output below:
 Note that this example also uses the `use` function from the Kotlin standard library to release threads
 created with [newSingleThreadContext] when they are no longer needed. 
 
-### Job in the context
+## Job in the context
 
 The coroutine's [Job] is part of its context, and can be retrieved from it 
 using the `coroutineContext[Job]` expression:
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -299,10 +278,11 @@ fun main() = runBlocking<Unit> {
 //sampleEnd    
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-05.kt).
+> 
+{type="note"}
 
 In the [debug mode](#debugging-coroutines-and-threads), it outputs something like this:
 
@@ -315,7 +295,7 @@ My job is "coroutine#1":BlockingCoroutine{Active}@6d311334
 Note that [isActive] in [CoroutineScope] is just a convenient shortcut for
 `coroutineContext[Job]?.isActive == true`.
 
-### Children of a coroutine
+## Children of a coroutine
 
 When a coroutine is launched in the [CoroutineScope] of another coroutine,
 it inherits its context via [CoroutineScope.coroutineContext] and 
@@ -325,9 +305,6 @@ are recursively cancelled, too.
 
 However, when [GlobalScope] is used to launch a coroutine, there is no parent for the job of the new coroutine.
 It is therefore not tied to the scope it was launched from and operates independently.
-  
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -357,10 +334,11 @@ fun main() = runBlocking<Unit> {
 //sampleEnd
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-06.kt).
+>
+{type="note"}
 
 The output of this code is:
 
@@ -373,12 +351,10 @@ main: Who has survived request cancellation?
 
 <!--- TEST -->
 
-### Parental responsibilities 
+## Parental responsibilities 
 
 A parent coroutine always waits for completion of all its children. A parent does not have to explicitly track
 all the children it launches, and it does not have to use [Job.join] to wait for them at the end:
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -400,10 +376,11 @@ fun main() = runBlocking<Unit> {
 //sampleEnd
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-07.kt).
+>
+{type="note"}
 
 The result is going to be:
 
@@ -417,7 +394,7 @@ Now processing of the request is complete
 
 <!--- TEST -->
 
-### Naming coroutines for debugging
+## Naming coroutines for debugging
 
 Automatically assigned ids are good when coroutines log often and you just need to correlate log records
 coming from the same coroutine. However, when a coroutine is tied to the processing of a specific request
@@ -426,8 +403,6 @@ The [CoroutineName] context element serves the same purpose as the thread name. 
 is executing this coroutine when the [debugging mode](#debugging-coroutines-and-threads) is turned on.
 
 The following example demonstrates this concept:
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -452,10 +427,11 @@ fun main() = runBlocking(CoroutineName("main")) {
 //sampleEnd    
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-08.kt).
+>
+{type="note"}
 
 The output it produces with `-Dkotlinx.coroutines.debug` JVM option is similar to:
  
@@ -468,13 +444,11 @@ The output it produces with `-Dkotlinx.coroutines.debug` JVM option is similar t
 
 <!--- TEST FLEXIBLE_THREAD -->
 
-### Combining context elements
+## Combining context elements
 
 Sometimes we need to define multiple elements for a coroutine context. We can use the `+` operator for that.
 For example, we can launch a coroutine with an explicitly specified dispatcher and an explicitly specified 
 name at the same time: 
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -487,10 +461,11 @@ fun main() = runBlocking<Unit> {
 //sampleEnd    
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-09.kt).
+>
+{type="note"}
 
 The output of this code with the `-Dkotlinx.coroutines.debug` JVM option is: 
 
@@ -500,7 +475,7 @@ I'm working in thread DefaultDispatcher-worker-1 @test#2
 
 <!--- TEST FLEXIBLE_THREAD -->
 
-### Coroutine scope
+## Coroutine scope
 
 Let us put our knowledge about contexts, children and jobs together. Assume that our application has
 an object with a lifecycle, but that object is not a coroutine. For example, we are writing an Android application
@@ -515,8 +490,6 @@ the lifecycle of our activity. A `CoroutineScope` instance can be created by the
 factory functions. The former creates a general-purpose scope, while the latter creates a scope for UI applications and uses
 [Dispatchers.Main] as the default dispatcher:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
-
 ```kotlin
 class Activity {
     private val mainScope = MainScope()
@@ -527,12 +500,8 @@ class Activity {
     // to be continued ...
 ```
 
-</div>
-
 Now, we can launch coroutines in the scope of this `Activity` using the defined `scope`.
 For the demo, we launch ten coroutines that delay for a different time:
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
     // class Activity continues
@@ -548,15 +517,11 @@ For the demo, we launch ten coroutines that delay for a different time:
 } // class Activity ends
 ``` 
 
-</div>
-
 In our main function we create the activity, call our test `doSomething` function, and destroy the activity after 500ms.
 This cancels all the coroutines that were launched from `doSomething`. We can see that because after the destruction 
-of the activity no more messages are printed, even if we wait a little longer.  
+of the activity no more messages are printed, even if we wait a little longer.
 
 <!--- CLEAR -->
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -591,10 +556,11 @@ fun main() = runBlocking<Unit> {
 //sampleEnd    
 }
 ```
-
-</div>
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-10.kt).
+>
+{type="note"}
 
 The output of this example is:
 
@@ -611,7 +577,9 @@ As you can see, only the first two coroutines print a message and the others are
 by a single invocation of `job.cancel()` in `Activity.destroy()`.
 
 > Note, that Android has first-party support for coroutine scope in all entities with the lifecycle.
-See [the corresponding documentation](https://developer.android.com/topic/libraries/architecture/coroutines#lifecyclescope).
+> See [the corresponding documentation](https://developer.android.com/topic/libraries/architecture/coroutines#lifecyclescope).
+>
+{type="note"}
 
 ### Thread-local data
 
@@ -623,8 +591,6 @@ the [asContextElement] extension function is here for the rescue. It creates an 
 which keeps the value of the given `ThreadLocal` and restores it every time the coroutine switches its context.
 
 It is easy to demonstrate it in action:
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -645,10 +611,11 @@ fun main() = runBlocking<Unit> {
 //sampleEnd    
 }
 ```  
-
-</div>                                                                                       
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-context-11.kt).
+>
+{type="note"}
 
 In this example we launch a new coroutine in a background thread pool using [Dispatchers.Default], so
 it works on a different thread from the thread pool, but it still has the value of the thread local variable
