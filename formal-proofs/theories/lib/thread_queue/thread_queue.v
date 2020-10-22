@@ -134,14 +134,6 @@ Inductive cellState :=
 | cellInhabited (futureName: gname) (futureLoc: val)
                 (resolution: option futureTerminalState).
 
-(** User-visible state of the cell **)
-
-Inductive rendezvousState :=
-| RendezvousUninitiated
-| RendezvousSuspended (γf: gname) (f: val)
-| RendezvousFailed
-| RendezvousSucceeded.
-
 (** Resource algebras **)
 
 Notation cellInhabitantThreadR := (agreeR (prodO gnameO valO)).
@@ -185,7 +177,7 @@ Notation cellStateR :=
 
 Notation queueContentsUR :=
   (prodUR (listUR (optionUR cellStateR))
-          (optionUR (exclR (listO (leibnizO rendezvousState))))).
+          (optionUR (exclR natO))).
 
 Notation namesR := (agreeR (prodO (prodO gnameO gnameO) gnameO)).
 Notation enqueueUR := natUR.
@@ -267,36 +259,8 @@ Proof. apply _. Qed.
 Definition cell_breaking_token (γtq: gname) (i: nat): iProp :=
   filled_rendezvous_state γtq i (Excl' (), ε).
 
-Definition cellStateToRendezvousState (state: option cellState) :=
-  match state with
-  | None => RendezvousUninitiated
-  | Some d => match d with
-             | cellPassedValue v d =>
-               match d with
-               | None => RendezvousUninitiated
-               | Some cellRendezvousSucceeded => RendezvousSucceeded
-               | Some cellBroken => RendezvousFailed
-               end
-             | cellInhabited γ f r =>
-               match r with
-               | None => RendezvousSuspended γ f
-               | Some cellImmediatelyCancelled => RendezvousFailed
-               | Some (cellResumed v) => RendezvousSucceeded
-               | Some (cellCancelled None) => RendezvousSuspended γ f
-               | Some (cellCancelled (Some (cancellationAllowed r))) =>
-                 match r with
-                 | None => RendezvousSuspended γ f
-                 | Some (cellTookValue _) => RendezvousSucceeded
-                 | Some cellClosed => RendezvousFailed
-                 end
-               | Some (cellCancelled (Some cancellationPrevented)) =>
-                 RendezvousSucceeded
-               end
-             end
-  end.
-
-Definition thread_queue_state γ (l: list rendezvousState) :=
-  own γ (◯ (ε, (ε, Excl' (l : list (leibnizO rendezvousState))))).
+Definition thread_queue_state γ (n: nat) :=
+  own γ (◯ (ε, (ε, Excl' n))).
 
 Definition deq_front_at_least γtq (n: nat) :=
   own γtq (◯ (ε, (ε, MaxNat n), ε, ε)).
@@ -427,12 +391,28 @@ Definition cell_resources
          end
   end.
 
+Definition is_skippable (r: option cellState): bool :=
+  match r with
+  | Some (cellInhabited
+            γt th (Some (cellCancelled (Some (cancellationAllowed _))))) =>
+    true
+  | _ => false
+  end.
+
+Definition is_nonskippable (r: option cellState): bool :=
+  negb (is_skippable r).
+
+Definition is_immediately_cancelled (r: option cellState): bool :=
+  match r with
+  | Some (cellInhabited γt th (Some cellImmediatelyCancelled)) => true
+  | _ => false
+  end.
+
 Definition cell_list_contents_auth_ra
            (γa γe γd: gname) l (deqFront: nat): algebra :=
   ● (length l, (deqFront, MaxNat deqFront), Some (to_agree (γa, γe, γd)),
      (map (option_map cellState_ra) l,
-      Excl' (map cellStateToRendezvousState l :
-               list (leibnizO rendezvousState)))).
+      Excl' (count_matching is_nonskippable (drop deqFront l)))).
 
 Lemma rendezvous_state_valid γ γa γe γd l deqFront i s:
   own γ (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
@@ -466,10 +446,10 @@ Proof.
   + by apply Cinr_included.
 Qed.
 
-Lemma thread_queue_state_valid γtq γa γe γd l l' deqFront:
-  own γtq (cell_list_contents_auth_ra γa γe γd l' deqFront) -∗
-  thread_queue_state γtq l -∗
-  ⌜l = map cellStateToRendezvousState l'⌝.
+Lemma thread_queue_state_valid γtq γa γe γd n l deqFront:
+  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+  thread_queue_state γtq n -∗
+  ⌜n = count_matching is_nonskippable (drop deqFront l)⌝.
 Proof.
   iIntros "H● HState".
   iDestruct (own_valid_2 with "H● HState")
@@ -508,23 +488,6 @@ Proof.
   iPureIntro. eauto.
 Qed.
 
-Definition is_skippable (r: option cellState): bool :=
-  match r with
-  | Some (cellInhabited
-            γt th (Some (cellCancelled (Some (cancellationAllowed _))))) =>
-    true
-  | _ => false
-  end.
-
-Definition is_nonskippable (r: option cellState): bool :=
-  negb (is_skippable r).
-
-Definition is_immediately_cancelled (r: option cellState): bool :=
-  match r with
-  | Some (cellInhabited γt th (Some cellImmediatelyCancelled)) => true
-  | _ => false
-  end.
-
 Definition thread_queue_invariant γa γtq γe γd l deqFront: iProp :=
   own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ∗
       ([∗ list] i ↦ e ∈ l, cell_resources γtq γa γe γd i e
@@ -541,15 +504,15 @@ Definition is_thread_queue γa γtq γe γd e d :=
 
 (* TODO: Add a new parameter signifying the mode of the structure. *)
 
-Theorem thread_queue_append γtq γa γe γd l l' deqFront:
-  E -∗ thread_queue_state γtq l' -∗
+Theorem thread_queue_append γtq γa γe γd n l deqFront:
+  E -∗ thread_queue_state γtq n -∗
   thread_queue_invariant γa γtq γe γd l deqFront ==∗
   suspension_permit γtq ∗ cell_enqueued γtq (length l) ∗
-  thread_queue_state γtq (map cellStateToRendezvousState l
-                              ++ [RendezvousUninitiated]) ∗
+  thread_queue_state γtq (S n) ∗
   thread_queue_invariant γa γtq γe γd (l ++ [None]) deqFront.
 Proof.
   iIntros "HE H◯ (H● & HRRs & HLen & HDeqIdx)".
+  iDestruct (thread_queue_state_valid with "H● H◯") as %->.
   iDestruct "HLen" as %HLen.
   iMod (own_update_2 with "H● H◯") as "[H● [[$ $] $]]".
   2: {
@@ -574,7 +537,8 @@ Proof.
       apply list_lookup_validN. by case.
     * etransitivity.
       by apply delete_option_local_update, _.
-      rewrite map_app=> /=.
+      rewrite drop_app_le; last lia. rewrite count_matching_app=>/=.
+      rewrite Nat.add_1_r.
       by apply alloc_option_local_update.
   }
 Qed.
@@ -616,19 +580,16 @@ Qed.
 Lemma None_op_right_id (A: cmraT) (a: option A): a ⋅ None = a.
 Proof. by destruct a. Qed.
 
-Lemma inhabit_cell_ra γtq γa γe γd l l' deqFront i γf f:
+Lemma inhabit_cell_ra γtq γa γe γd l deqFront i γf f:
   l !! i = Some None ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
-  thread_queue_state γtq l' ==∗
+  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
   own γtq (cell_list_contents_auth_ra
              γa γe γd (<[i := Some (cellInhabited γf f None)]> l) deqFront) ∗
-  thread_queue_state γtq
-    (<[i := RendezvousSuspended γf f]> (map cellStateToRendezvousState l)) ∗
   rendezvous_thread_locs_state γtq γf f i.
 Proof.
-  iIntros (HEl) "H● H◯".
-  iMod (own_update_2 with "H● H◯") as "($ & $ & $)"; last done.
-  apply auth_update. rewrite insert_length.
+  iIntros (HEl) "H●".
+  iMod (own_update with "H●") as "($ & $)"; last done.
+  apply auth_update_alloc. rewrite insert_length.
   apply prod_local_update_2, prod_local_update=> /=.
   - rewrite -!fmap_is_map list_fmap_insert.
     apply list_lookup_local_update=> i'. rewrite lookup_nil.
@@ -649,10 +610,9 @@ Proof.
     + rewrite list_lookup_singletonM_gt; last lia.
       rewrite list_lookup_insert_ne; last lia.
       done.
-  - etransitivity.
-    by apply delete_option_local_update, _.
-    rewrite -!fmap_is_map list_fmap_insert=> /=.
-    by apply alloc_option_local_update.
+  - rewrite !count_matching_is_sum_map -!fmap_is_map !fmap_drop.
+    rewrite list_fmap_insert=> /=. rewrite list_insert_id; first done.
+    by rewrite map_lookup HEl.
 Qed.
 
 Lemma awakening_permit_combine γtq n:
@@ -668,35 +628,53 @@ Proof.
   done.
 Qed.
 
-Lemma deque_register_ra_update γ γa γe γd l deqFront i:
+Lemma deque_register_ra_update γ γa γe γd l deqFront i n:
   (i + deqFront < length l)%nat ->
-  own γ (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
+  own γ (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+  thread_queue_state γ n ==∗
   own γ (cell_list_contents_auth_ra γa γe γd l (deqFront + S i))
   ∗ [∗] replicate (S i) (awakening_permit γ)
+  ∗ thread_queue_state γ
+      (n - count_matching is_nonskippable (take (S i) (drop deqFront l)))
   ∗ deq_front_at_least γ (deqFront + S i).
 Proof.
   rewrite awakening_permit_combine; last lia.
-  iIntros (?) "H●". iMod (own_update with "H●") as "[$ [$ $]]"; last done.
-  apply auth_update_alloc, prod_local_update_1, prod_local_update_1=>/=.
-  apply prod_local_update_2, prod_local_update=> /=.
+  iIntros (?) "H● H◯".
+  iMod (own_update_2 with "H● H◯") as "($ & $ & $ & $)"; last done.
+  apply auth_update, prod_local_update=>/=.
+  apply prod_local_update_1, prod_local_update_2, prod_local_update=>/=.
   - rewrite ucmra_unit_right_id. by apply nat_local_update.
   - apply max_nat_local_update; simpl; lia.
+  - apply prod_local_update_2. rewrite ucmra_unit_right_id=>/=.
+    apply local_update_total_valid=> _ _. rewrite Excl_included=> ->.
+    etransitivity. by apply delete_option_local_update, _.
+    rewrite count_matching_take.
+    assert (∀ n m, m ≤ n -> n - (n - m) = m) as HPure by lia.
+    rewrite HPure.
+    + rewrite drop_drop. by apply alloc_option_local_update.
+    + rewrite count_matching_drop. lia.
 Qed.
 
-Theorem thread_queue_register_for_dequeue γtq γa γe γd l deqFront:
+Theorem thread_queue_register_for_dequeue γtq γa γe γd l deqFront n:
   ∀ i, find_index is_nonskippable (drop deqFront l) = Some i ->
-  ▷ R -∗ ▷ thread_queue_invariant γa γtq γe γd l deqFront ==∗
+  ▷ R -∗ ▷ thread_queue_invariant γa γtq γe γd l deqFront -∗
+  thread_queue_state γtq n ==∗
   ▷ ([∗] replicate (S i) (awakening_permit γtq)
   ∗ deq_front_at_least γtq (deqFront + S i)
-  ∗ thread_queue_invariant γa γtq γe γd l (deqFront + S i)).
+  ∗ thread_queue_invariant γa γtq γe γd l (deqFront + S i)
+  ∗ thread_queue_state γtq (n - 1)).
 Proof.
-  iIntros (i HFindSome) "HR (>H● & HRRs & >HLen & >HDeqIdx)".
+  iIntros (i HFindSome) "HR (>H● & HRRs & >HLen & >HDeqIdx) H◯".
   iDestruct "HLen" as %HLen.
+  move: (present_cells_in_take_Si_if_next_present_is_Si _ _ _ HFindSome)
+    => HPresentCells.
   apply find_index_Some in HFindSome.
   destruct HFindSome as [(v & HEl & HNonSkippable) HRestSkippable].
   rewrite lookup_drop in HEl.
   assert (deqFront + i < length l); first by apply lookup_lt_Some in HEl.
-  iMod (deque_register_ra_update with "H●") as "[$ [$ $]]"; first lia.
+  iMod (deque_register_ra_update with "H● H◯")
+    as "($ & $ & H◯ & $)"; first lia.
+  rewrite HPresentCells. iFrame "H◯".
   iSplitL "HR HRRs".
   - erewrite <-(take_drop_middle l _ v); last done.
     rewrite !big_sepL_app=>/=.
@@ -837,24 +815,21 @@ Proof.
 Qed.
 
 Lemma inhabit_cell_spec γa γtq γe γd γf i ptr f e d:
-  is_future NFuture γf f -∗
-  cell_enqueued γtq i -∗
-  cell_location γtq γa i ptr -∗
-  is_thread_queue γa γtq γe γd e d -∗
-  future_completion_permit γf 1%Qp -∗
-  iterator_issued γe i -∗
-  <<< ∀ l, thread_queue_state γtq l >>>
-    CAS #ptr (InjLV #()) (InjLV f) @ ⊤ ∖ ↑N
-  <<< ∃ (r: bool),
-          if r
-          then ⌜l !! i = Some RendezvousUninitiated⌝ ∧
-               rendezvous_thread_handle γtq γf f i ∗
-               thread_queue_state γtq (<[i := RendezvousSuspended γf f]> l)
-          else filled_rendezvous_state γtq i ε ∗
-               thread_queue_state γtq l ∗
-               future_completion_permit γf 1%Qp, RET #r >>>.
+  {{{ is_future NFuture γf f ∗
+      cell_enqueued γtq i ∗
+      cell_location γtq γa i ptr ∗
+      is_thread_queue γa γtq γe γd e d ∗
+      future_completion_permit γf 1%Qp ∗
+      iterator_issued γe i }}}
+    CAS #ptr (InjLV #()) (InjLV f)
+  {{{ (r: bool), RET #r;
+      if r
+      then rendezvous_thread_handle γtq γf f i
+      else filled_rendezvous_state γtq i ε
+           ∗ future_completion_permit γf 1%Qp }}}.
 Proof.
-  iIntros "#HF #HExistsEl #H↦ #HTq HFC HEnq" (Φ) "AU". wp_bind (CmpXchg _ _ _).
+  iIntros (Φ) "(#HF & #HExistsEl & #H↦ & #HTq & HFC & HEnq) HΦ".
+  wp_bind (CmpXchg _ _ _).
   iDestruct "HTq" as "(HInv & HInfArr & _ & _)".
 
   iInv "HInv" as (l' deqFront) "(>H● & HRRs & >HLen & >HDeqIdx)" "HTqClose".
@@ -862,7 +837,6 @@ Proof.
     as "[[#>HCellInit|[>Hℓ HCancHandle]] HCloseCell]"; first by solve_ndisj.
   {
     iSpecialize ("HCloseCell" with "[HCellInit]"); first by iLeft.
-    iMod "AU" as (l) "[HState [_ HClose]]".
     iDestruct "HCellInit" as "[HCellInhabited|HCellFilled]".
     - (* cell is inhabited? impossible, we hold the suspender token. *)
       rewrite /inhabited_rendezvous_state.
@@ -876,7 +850,7 @@ Proof.
       iDestruct "HRR" as "[>HEnq' _]".
       iDestruct (iterator_issued_exclusive with "HEnq HEnq'") as %[].
     - (* cell was filled already, CAS fails. *)
-      iDestruct ("HClose" $! false with "[HState HCellFilled HFC]") as "HΦ";
+      iDestruct ("HΦ" $! false with "[HCellFilled HFC]") as "HΦ";
         first by iFrame.
       iDestruct "HCellFilled" as (?) "HCellFilled".
       iDestruct (rendezvous_state_valid' with "H● HCellFilled")
@@ -893,10 +867,10 @@ Proof.
       destruct resolution as [[|]|].
       iDestruct "HRR" as "[HRR|HRR]".
       all: iDestruct "HRR" as "(Hℓ & HRR)"; wp_cmpxchg_fail.
-      all: iMod "HΦ"; iModIntro; iMod "HCloseCell" as "_".
+      all: iMod "HCloseCell" as "_"; iModIntro.
       all: iDestruct ("HRRsRestore" with "[H1 H2 HRR Hℓ]") as "HRRs";
         first by (eauto 10 with iFrame).
-      all: iModIntro; iMod ("HTqClose" with "[-HΦ]") as "_";
+      all: iMod ("HTqClose" with "[-HΦ]") as "_";
         first by iExists _, _; iFrame.
       all: iModIntro; wp_pures; iAssumption.
   }
@@ -907,14 +881,11 @@ Proof.
       iDestruct (big_sepL_lookup with "HRRs") as "HRR"; first done.
       iDestruct (cell_resources_conflict_invariant with
                      "H↦ HRR HCancHandle [Hℓ]") as ">[]"; first by eauto. }
-    iMod "AU" as (l) "[HState [_ HClose]]".
-    wp_cmpxchg_suc. iSpecialize ("HClose" $! true).
-    iDestruct (thread_queue_state_valid with "H● HState") as %->.
-    rewrite map_lookup HEl=> /=.
-    iMod (inhabit_cell_ra with "H● HState") as "(H● & H◯1 & #HLoc)"; first done.
-    iMod ("HClose" with "[H◯1]") as "HΦ"; first by iFrame "HF HLoc"; iFrame.
-    iModIntro. iMod ("HCloseCell" with "[]") as "_"; last iModIntro.
+    wp_cmpxchg_suc. iSpecialize ("HΦ" $! true).
+    iMod (inhabit_cell_ra with "H●") as "(H● & #HLoc)"; first done.
+    iMod ("HCloseCell" with "[]") as "_"; last iModIntro.
     { iLeft. iNext. iLeft. iExists _, _. iApply "HLoc". }
+    iSpecialize ("HΦ" with "[$]").
     iMod ("HTqClose" with "[-HΦ]"); last by iModIntro; wp_pures.
     iExists _, _. iFrame "H●". rewrite insert_length. iFrame "HLen".
     iSplitR "HDeqIdx".
@@ -935,7 +906,8 @@ Proof.
   }
 Qed.
 
-Lemma pass_value_to_empty_cell_spec_sync γtq γa γe γd i ptr e d v:
+Lemma pass_value_to_empty_cell_spec
+      (synchronously: bool) γtq γa γe γd i ptr e d v:
   {{{ is_thread_queue γa γtq γe γd e d ∗
       deq_front_at_least γtq (S i) ∗
       cell_location γtq γa i ptr ∗
@@ -947,7 +919,8 @@ Lemma pass_value_to_empty_cell_spec_sync γtq γa γe γd i ptr e d v:
       else inhabited_rendezvous_state γtq i ε
   }}}.
 Proof.
-  iIntros (Φ) "(#HTq & #HDeqFront & #H↦ & HIsRes) HΦ". wp_bind (CmpXchg _ _ _).
+  iIntros (Φ) "(#HTq & #HDeqFront & #H↦ & HIsRes) HΦ".
+  wp_bind (CmpXchg _ _ _).
   iDestruct "HTq" as "(HInv & HInfArr & _ & _)".
   iInv "HInv" as (l deqFront) "(>H● & HRRs & >HLen & >HDeqIdx)" "HTqClose".
   iDestruct "HLen" as %HLen.
@@ -985,6 +958,9 @@ Proof.
     wp_cmpxchg_fail.
     iDestruct ("HRRRestore" with "Hℓ") as "HRR".
     iDestruct ("HRRsRestore" with "HRR") as "HRRs".
+Abort.
+
+(* CANCELLING A RENDEZVOUS |||||||||||||||||||||||||||||||||||||||||||||||||*)
 
 Lemma inhabited_cell_is_inhabited γtq i l deqFront:
   own γtq (● cell_list_contents_auth_ra l deqFront) -∗
@@ -1038,8 +1014,6 @@ Proof.
   2: (* Resumed *) by iPureIntro; auto.
   all: iDestruct (inhabitant_token_exclusive with "HInhToken HInhToken'") as %[].
 Qed.
-
-(* CANCELLING A RENDEZVOUS |||||||||||||||||||||||||||||||||||||||||||||||||*)
 
 Lemma cancel_rendezvous_spec E R γa γtq γe γd l deqFront i j:
   find_index still_present (drop deqFront l) = Some j ->

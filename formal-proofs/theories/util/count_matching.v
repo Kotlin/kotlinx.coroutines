@@ -1,3 +1,4 @@
+Require Import SegmentQueue.util.everything.
 From Coq Require Import ssreflect.
 Require Import stdpp.base stdpp.list.
 Require Import SegmentQueue.util.find_index.
@@ -8,18 +9,19 @@ Fixpoint count_matching {A} (P: A -> Prop) {H': forall x, Decision (P x)} (l: li
   | cons x l' => if decide (P x) then S (count_matching P l') else count_matching P l'
   end%GEN_IF.
 
-Theorem count_matching_is_length_filter {A} (P: A -> Prop) {H': forall x, Decision (P x)} l:
-  count_matching P l = length (filter P l).
-Proof.
-  induction l; auto.
-  simpl. unfold filter in *. simpl.
-  destruct (decide (P a)); simpl; auto.
-Qed.
+Definition sum := foldr Nat.add 0.
+
+Theorem sum_app a b: sum (a ++ b) = sum a + sum b.
+Proof. induction a=> //=. rewrite IHa; lia. Qed.
+
+Theorem count_matching_is_sum_map {A} (P: A -> Prop) {H': forall x, Decision (P x)} l:
+  count_matching P l =
+  sum (map (fun x => if decide (P x) then 1 else 0)%GEN_IF l).
+Proof. induction l; auto. simpl. destruct (decide (P a)); simpl; auto. Qed.
 
 Theorem count_matching_app {A} (P: A -> Prop) {H': forall x, Decision (P x)} (l1 l2: list A):
   count_matching P (l1 ++ l2) = (count_matching P l1 + count_matching P l2)%nat.
-Proof. repeat rewrite count_matching_is_length_filter.
-         by rewrite filter_app app_length. Qed.
+Proof. rewrite !count_matching_is_sum_map map_app sum_app //. Qed.
 
 Theorem count_matching_alter
         {A} (P: A -> Prop) {H': forall x, Decision (P x)}:
@@ -28,21 +30,10 @@ Theorem count_matching_alter
                count_matching P (alter f i l) =
                (count_matching P l + (to_num (f v)) - (to_num v))%nat.
 Proof.
-  induction l; rewrite /= //; unfold to_num in *.
-  case; rewrite /=.
-  { intros. simplify_eq. destruct (decide (P v)); destruct (decide (P (f v))).
-    all: rewrite /=; lia. }
-  intros n Hel. rewrite /filter /=. destruct (decide (P a)); rewrite /= IHl //.
-  destruct (decide (P v)) as [pv|]; simpl. 2: lia.
-  destruct (count_matching P l) eqn:Z.
-  2: destruct (decide (P (f v))); simpl; lia.
-  exfalso.
-  move: n Z Hel pv. clear. induction l.
-  - intros. inversion Hel.
-  - intros. destruct n.
-    * inversion Hel. subst. simpl in *. destruct (decide (P v)); done.
-    * inversion Hel. eapply IHl; try done. simpl in *.
-      by destruct (decide (P a)).
+  intros ? v f l i HEl. rewrite -[in count_matching P l](take_drop_middle l i v HEl).
+  erewrite take_drop_middle_alter; last done.
+  rewrite !count_matching_is_sum_map.
+  rewrite !map_app !sum_app=> /=. subst to_num. simpl. lia.
 Qed.
 
 Theorem count_matching_le_length
@@ -58,9 +49,8 @@ Proof.
   simpl.
   destruct (decide (P a)); destruct (decide (not (P a))); try contradiction.
   done.
-  rewrite -minus_Sn_m.
+  rewrite -minus_Sn_m; try lia.
   by apply count_matching_le_length.
-  lia.
 Qed.
 
 Theorem count_matching_take
@@ -99,8 +89,7 @@ Proof.
         assert (count_matching P l ≤ length l); last lia.
         apply count_matching_le_length.
   - intros HEl. induction l as [|a l] => //=.
-    rewrite decide_True.
-    by apply HEl; constructor.
+    rewrite decide_True; last by apply HEl; constructor.
     rewrite IHl //.
     intros i Hi. apply HEl. by constructor.
 Qed.
@@ -125,32 +114,15 @@ Lemma present_cells_in_take_i_if_next_present_is_Si
     find_index P l = Some i ->
     count_matching P (take i l) = O.
 Proof.
-  intros HFindSome.
-  apply find_index_Some in HFindSome.
-  destruct HFindSome as [[v [HIn HPresent]] HNotPresent].
-  assert (i < length l)%nat as HLt.
-  { apply lookup_lt_is_Some. by eexists. }
-
-  assert (forall i', (i' < i)%nat -> exists v', take i l !! i' = Some v' /\
-                                      not (P v')) as HH.
-  {
-    intros i' HLti'. destruct (HNotPresent i' HLti')
-      as [v' [HEl Hv'NotPresent]].
-    exists v'. split; try done. by rewrite lookup_take.
-  }
-  remember (take i l) as l'. assert (i = length l') as HLen.
-  by subst; rewrite take_length_le; lia.
-  subst i.
-  revert HH. clear. rewrite /count_matching /filter /=.
-  induction l'; auto=> H. simpl in *.
-  destruct (H O) as [p H'']; simpl in *; first by lia.
-  destruct H'' as [[=] HH]; subst. destruct (decide (P p)).
-
-  contradiction.
-  apply IHl'.
-  intros i' HLt.
-  destruct (H (S i')); first by lia.
-  simpl in *. eauto.
+  intros HFindSome. apply count_matching_none.
+  apply find_index_Some in HFindSome. intros v HEl.
+  destruct HFindSome as [_ HNotPresent].
+  apply elem_of_list_lookup_1 in HEl. destruct HEl as [i' HEl].
+  destruct (decide (i ≤ i')).
+  by rewrite lookup_take_ge in HEl; last lia.
+  rewrite lookup_take in HEl; last lia.
+  destruct (HNotPresent i') as (v' & HEl' & HProof); first lia.
+  by simplify_eq.
 Qed.
 
 Lemma present_cells_in_take_1_drop_i_if_next_present_is_Si
@@ -169,7 +141,7 @@ Proof.
   assert (i = length (take i l))%nat as HH.
   by rewrite take_length_le; lia.
   replace (drop i l) with (drop i (take i l ++ v :: drop (S i) l)).
-  { symmetry. rewrite drop_app_le. lia. rewrite drop_ge. lia. done. }
+  { symmetry. rewrite drop_app_le; last lia. rewrite drop_ge //. lia. }
   by rewrite take_drop_middle.
 Qed.
 
