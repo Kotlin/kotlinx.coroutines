@@ -12,6 +12,12 @@ pluginManagement {
     }
 }
 
+// Propagate this property to buildSrc via the only possible way: system properties
+def propForKts = properties['build_snapshot_train']
+if (propForKts != null && propForKts != "") {
+    System.setProperty("build_snapshot_train", "true")
+}
+
 rootProject.name = 'kotlinx.coroutines'
 enableFeaturePreview('GRADLE_METADATA')
 
