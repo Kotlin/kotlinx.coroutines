@@ -40,6 +40,10 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         being used in ServiceLoader's implementation would be brittle. */
         allowBlockingCallsInside("kotlinx.coroutines.reactive.ReactiveFlowKt", "<clinit>")
         allowBlockingCallsInside("kotlinx.coroutines.CoroutineExceptionHandlerImplKt", "<clinit>")
+        /* These methods are from the reflection API. The API is big, so surely some other blocking calls will show up,
+        but with these rules in place, at least some simple examples pass without problems. */
+        allowBlockingCallsInside("kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltInsPackageFragmentProvider", "findPackage")
+        allowBlockingCallsInside("kotlin.reflect.jvm.internal.impl.resolve.OverridingUtil", "<clinit>")
         /* The predicates that define that BlockHound should only report blocking calls from threads that are part of
         the coroutine thread pool and currently execute a CPU-bound coroutine computation. */
         addDynamicThreadPredicate { isSchedulerWorker(it) }
