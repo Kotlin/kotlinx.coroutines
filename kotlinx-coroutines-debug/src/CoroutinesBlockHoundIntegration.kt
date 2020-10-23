@@ -9,10 +9,54 @@ import reactor.blockhound.integration.*
 @Suppress("UNUSED")
 public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
 
-    /** Allows blocking calls in implementation of channels.
+    /** Allows blocking calls in various coroutine structures, such as flows and channels.
      *
-     * Channels use a lock in their implementation, though only for protecting short pieces of fast and well-understood
-     * code, so locking there doesn't affect the program liveness. */
+     * They use locks in implementations, though only for protecting short pieces of fast and well-understood code, so
+     * locking in such places doesn't affect the program liveness. */
+    private fun BlockHound.Builder.allowBlockingCallsInPrimitiveImplementations() {
+        allowBlockingCallsInJobSupport()
+        allowBlockingCallsInThreadSafeHeap()
+        allowBlockingCallsInFlow()
+        allowBlockingCallsInChannels()
+    }
+
+    private fun BlockHound.Builder.allowBlockingCallsInJobSupport() {
+        for (method in listOf("finalizeFinishingState", "invokeOnCompletion", "makeCancelling",
+            "tryMakeCompleting"))
+        {
+            allowBlockingCallsInside("kotlinx.coroutines.JobSupport", method)
+        }
+    }
+
+    private fun BlockHound.Builder.allowBlockingCallsInThreadSafeHeap() {
+        for (method in listOf("clear", "peek", "removeFirstOrNull", "addLast")) {
+            allowBlockingCallsInside("kotlinx.coroutines.internal.ThreadSafeHeap", method)
+        }
+        // [addLastIf] is only used in [EventLoop.common]. Users of [removeFirstIf]:
+        allowBlockingCallsInside("kotlinx.coroutines.test.TestCoroutineDispatcher", "doActionsUntil")
+        allowBlockingCallsInside("kotlinx.coroutines.test.TestCoroutineContext", "triggerActions")
+    }
+
+    private fun BlockHound.Builder.allowBlockingCallsInFlow() {
+        allowBlockingCallsInsideStateFlow()
+        allowBlockingCallsInsideSharedFlow()
+    }
+
+    private fun BlockHound.Builder.allowBlockingCallsInsideStateFlow() {
+        allowBlockingCallsInside("kotlinx.coroutines.flow.StateFlowImpl", "updateState")
+    }
+
+    private fun BlockHound.Builder.allowBlockingCallsInsideSharedFlow() {
+        for (method in listOf("emitSuspend", "awaitValue", "getReplayCache", "tryEmit", "cancelEmitter",
+            "tryTakeValue", "resetReplayCache"))
+        {
+            allowBlockingCallsInside("kotlinx.coroutines.flow.SharedFlowImpl", method)
+        }
+        for (method in listOf("getSubscriptionCount", "allocateSlot", "freeSlot")) {
+            allowBlockingCallsInside("kotlinx.coroutines.flow.internal.AbstractSharedFlow", method)
+        }
+    }
+
     private fun BlockHound.Builder.allowBlockingCallsInChannels() {
         allowBlockingCallsInArrayChannel()
         allowBlockingCallsInBroadcastChannel()
