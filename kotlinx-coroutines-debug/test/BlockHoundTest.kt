@@ -1,5 +1,6 @@
 package kotlinx.coroutines.debug
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import org.junit.*
 import reactor.blockhound.*
 
@@ -49,6 +50,27 @@ class BlockHoundTest : TestBase() {
             async(Dispatchers.IO) {
                 Thread.sleep(1)
             }
+        }
+    }
+
+    @Test
+    fun testChannelsNotBeingConsideredBlocking() = runTest {
+        withContext(Dispatchers.Default) {
+            // Copy of kotlinx.coroutines.channels.ArrayChannelTest.testSimple
+            val q = Channel<Int>(1)
+            check(q.isEmpty)
+            check(!q.isClosedForReceive)
+            check(!q.isClosedForSend)
+            val sender = launch {
+                q.send(1)
+                q.send(2)
+            }
+            val receiver = launch {
+                q.receive() == 1
+                q.receive() == 2
+            }
+            sender.join()
+            receiver.join()
         }
     }
 
