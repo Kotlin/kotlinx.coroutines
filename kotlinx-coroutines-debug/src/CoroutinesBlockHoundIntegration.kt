@@ -9,6 +9,17 @@ import reactor.blockhound.integration.*
 @Suppress("UNUSED")
 public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
 
+    override fun applyTo(builder: BlockHound.Builder): Unit = with(builder) {
+        allowBlockingCallsInPrimitiveImplementations()
+        allowBlockingWhenEnqueuingTasks()
+        allowServiceLoaderInvocationsOnInit()
+        allowBlockingCallsInReflectionImpl()
+        /* The predicates that define that BlockHound should only report blocking calls from threads that are part of
+        the coroutine thread pool and currently execute a CPU-bound coroutine computation. */
+        addDynamicThreadPredicate { isSchedulerWorker(it) }
+        nonBlockingThreadPredicate { p -> p.or { mayNotBlock(it) } }
+    }
+
     /** Allows blocking calls in various coroutine structures, such as flows and channels.
      *
      * They use locks in implementations, though only for protecting short pieces of fast and well-understood code, so
@@ -129,17 +140,6 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
      */
     private fun BlockHound.Builder.allowBlockingCallsInReflectionImpl() {
         allowBlockingCallsInside("kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltInsPackageFragmentProvider", "findPackage")
-    }
-
-    override fun applyTo(builder: BlockHound.Builder): Unit = with(builder) {
-        allowBlockingCallsInChannels()
-        allowBlockingWhenEnqueuingTasks()
-        allowServiceLoaderInvocationsOnInit()
-        allowBlockingCallsInReflectionImpl()
-        /* The predicates that define that BlockHound should only report blocking calls from threads that are part of
-        the coroutine thread pool and currently execute a CPU-bound coroutine computation. */
-        addDynamicThreadPredicate { isSchedulerWorker(it) }
-        nonBlockingThreadPredicate { p -> p.or { mayNotBlock(it) } }
     }
 
 }
