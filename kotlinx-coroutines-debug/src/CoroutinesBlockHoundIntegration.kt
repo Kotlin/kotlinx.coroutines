@@ -9,41 +9,89 @@ import reactor.blockhound.integration.*
 @Suppress("UNUSED")
 public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
 
-    override fun applyTo(builder: BlockHound.Builder): Unit = with(builder) {
-        // These classes use a lock internally, but should be safe to use.
+    /** Allows blocking calls in implementation of channels.
+     *
+     * Channels use a lock in their implementation, though only for protecting short pieces of fast and well-understood
+     * code, so locking there doesn't affect the program liveness. */
+    private fun BlockHound.Builder.allowBlockingCallsInChannels() {
+        allowBlockingCallsInArrayChannel()
+        allowBlockingCallsInBroadcastChannel()
+        allowBlockingCallsInConflatedChannel()
+    }
+
+    /** Allows blocking inside [kotlinx.coroutines.channels.ArrayChannel]. */
+    private fun BlockHound.Builder.allowBlockingCallsInArrayChannel() {
         for (method in listOf(
             "pollInternal", "isEmpty", "isFull", "isClosedForReceive", "offerInternal", "offerSelectInternal",
-            "enqueueSend", "pollInternal", "pollSelectInternal", "enqueueReceiveInternal", "onCancelIdempotent" ))
+            "enqueueSend", "pollInternal", "pollSelectInternal", "enqueueReceiveInternal", "onCancelIdempotent"))
         {
             allowBlockingCallsInside("kotlinx.coroutines.channels.ArrayChannel", method)
         }
+    }
+
+    /** Allows blocking inside [kotlinx.coroutines.channels.ArrayBroadcastChannel]. */
+    private fun BlockHound.Builder.allowBlockingCallsInBroadcastChannel() {
         for (method in listOf("offerInternal", "offerSelectInternal", "updateHead")) {
             allowBlockingCallsInside("kotlinx.coroutines.channels.ArrayBroadcastChannel", method)
         }
         for (method in listOf("checkOffer", "pollInternal", "pollSelectInternal")) {
             allowBlockingCallsInside("kotlinx.coroutines.channels.ArrayBroadcastChannel\$Subscriber", method)
         }
+    }
+
+    /** Allows blocking inside [kotlinx.coroutines.channels.ConflatedChannel]. */
+    private fun BlockHound.Builder.allowBlockingCallsInConflatedChannel() {
         for (method in listOf("offerInternal", "offerSelectInternal", "pollInternal", "pollSelectInternal",
             "onCancelIdempotent"))
         {
             allowBlockingCallsInside("kotlinx.coroutines.channels.ConflatedChannel", method)
         }
-        allowBlockingCallsInside("kotlinx.coroutines.channels.AbstractSendChannel", "sendSuspend")
-        /* This method may block as part of its implementation, but is probably safe. We need to whitelist it so that
-        it is possible to enqueue coroutines in contexts that use thread pools from other coroutines in a way that's not
-        considered blocking. */
+    }
+
+    /** Allows blocking when enqueuing tasks into a thread pool.
+     *
+     * Without this, the following code breaks:
+     * ```
+     * withContext(Dispatchers.Default) {
+     *     withContext(newSingleThreadContext("singleThreadedContext")) {
+     *     }
+     * }
+     * ```
+     */
+    private fun BlockHound.Builder.allowBlockingWhenEnqueuingTasks() {
+        /* This method may block as part of its implementation, but is probably safe. */
         allowBlockingCallsInside("java.util.concurrent.ScheduledThreadPoolExecutor", "execute")
-        /* These files have fields that invoke service loaders. They are manually whitelisted; another approach could be
-        to whitelist the operations performed by service loaders, as they can generally be considered safe. This was not
-        done here because ServiceLoader has a large API surface, with some methods being hidden as implementation
-        details (in particular, the implementation of its iterator is completely opaque). Relying on particular names
-        being used in ServiceLoader's implementation would be brittle. */
+    }
+
+    /** Allows instances of [java.util.ServiceLoader] being called.
+     *
+     * Each instance is listed separately; another approach could be to generally allow the operations performed by
+     * service loaders, as they can generally be considered safe. This was not done here because ServiceLoader has a
+     * large API surface, with some methods being hidden as implementation details (in particular, the implementation of
+     * its iterator is completely opaque). Relying on particular names being used in ServiceLoader's implementation
+     * would be brittle, so here we only provide clearance rules for some specific instances.
+     */
+    private fun BlockHound.Builder.allowServiceLoaderInvocationsOnInit() {
         allowBlockingCallsInside("kotlinx.coroutines.reactive.ReactiveFlowKt", "<clinit>")
         allowBlockingCallsInside("kotlinx.coroutines.CoroutineExceptionHandlerImplKt", "<clinit>")
-        /* These methods are from the reflection API. The API is big, so surely some other blocking calls will show up,
-        but with these rules in place, at least some simple examples pass without problems. */
-        allowBlockingCallsInside("kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltInsPackageFragmentProvider", "findPackage")
+        // not part of the coroutines library, but it would be nice if reflection also wasn't considered blocking
         allowBlockingCallsInside("kotlin.reflect.jvm.internal.impl.resolve.OverridingUtil", "<clinit>")
+    }
+
+    /** Allows some blocking calls from the reflection API.
+     *
+     * The API is big, so surely some other blocking calls will show up, but with these rules in place, at least some
+     * simple examples work without problems.
+     */
+    private fun BlockHound.Builder.allowBlockingCallsInReflectionImpl() {
+        allowBlockingCallsInside("kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltInsPackageFragmentProvider", "findPackage")
+    }
+
+    override fun applyTo(builder: BlockHound.Builder): Unit = with(builder) {
+        allowBlockingCallsInChannels()
+        allowBlockingWhenEnqueuingTasks()
+        allowServiceLoaderInvocationsOnInit()
+        allowBlockingCallsInReflectionImpl()
         /* The predicates that define that BlockHound should only report blocking calls from threads that are part of
         the coroutine thread pool and currently execute a CPU-bound coroutine computation. */
         addDynamicThreadPredicate { isSchedulerWorker(it) }
