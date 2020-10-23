@@ -16,7 +16,6 @@ import kotlinx.coroutines.*
  * * [DROP_LATEST] &mdash; drop **the latest** value that is being added to the buffer right now on buffer overflow
  *   (so that buffer contents stay the same), do not suspend.
  */
-@ExperimentalCoroutinesApi
 public enum class BufferOverflow {
     /**
      * Suspend on buffer overflow.

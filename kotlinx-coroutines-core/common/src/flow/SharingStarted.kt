@@ -12,7 +12,6 @@ import kotlin.time.*
  * A command emitted by [SharingStarted] implementations to control the sharing coroutine in
  * the [shareIn] and [stateIn] operators.
  */
-@ExperimentalCoroutinesApi
 public enum class SharingCommand {
     /**
      * Starts sharing, launching collection of the upstream flow.
@@ -75,19 +74,16 @@ public enum class SharingCommand {
  * The completion of the `command` flow normally has no effect (the upstream flow keeps running if it was running).
  * The failure of the `command` flow cancels the sharing coroutine and the upstream flow.
  */
-@ExperimentalCoroutinesApi
 public interface SharingStarted {
     public companion object {
         /**
          * Sharing is started immediately and never stops.
          */
-        @ExperimentalCoroutinesApi
         public val Eagerly: SharingStarted = StartedEagerly()
 
         /**
          * Sharing is started when the first subscriber appears and never stops.
          */
-        @ExperimentalCoroutinesApi
         public val Lazily: SharingStarted = StartedLazily()
 
         /**
@@ -108,7 +104,6 @@ public interface SharingStarted {
          * are negative.
          */
         @Suppress("FunctionName")
-        @ExperimentalCoroutinesApi
         public fun WhileSubscribed(
             stopTimeoutMillis: Long = 0,
             replayExpirationMillis: Long = Long.MAX_VALUE
@@ -143,7 +138,6 @@ public interface SharingStarted {
  */
 @Suppress("FunctionName")
 @ExperimentalTime
-@ExperimentalCoroutinesApi
 public fun SharingStarted.Companion.WhileSubscribed(
     stopTimeout: Duration = Duration.ZERO,
     replayExpiration: Duration = Duration.INFINITE
