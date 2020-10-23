@@ -77,13 +77,13 @@ class StateInTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamFailedIMmediatelyWithInitialValue() = runTest {
+    fun testUpstreamFailedImmediatelyWithInitialValue() = runTest {
         val ceh = CoroutineExceptionHandler { _, _ -> expect(2) }
         val flow = flow<Int> {
             expect(1)
             throw TestException()
         }
-        assertFailsWith<TestException> { flow.stateIn(CoroutineScope(ceh)) }
+        assertFailsWith<TestException> { flow.stateIn(CoroutineScope(currentCoroutineContext() + Job() + ceh)) }
         finish(3)
     }
 }
