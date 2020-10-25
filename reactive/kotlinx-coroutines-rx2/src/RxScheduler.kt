@@ -53,9 +53,7 @@ private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Schedul
         if (!scope.isActive) return Disposables.disposed()
         val newBlock = RxJavaPlugins.onSchedule(block)
         return scope.launch {
-            if (delay > 0) {
-                delay(unit.toMillis(delay))
-            }
+            delay(unit.toMillis(delay))
             newBlock.run()
         }.asDisposable()
     }
@@ -97,7 +95,7 @@ private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Schedul
             val taskJob = Job(workerJob)
             val task = SchedulerChannelTask(newBlock, taskJob)
 
-            if (delay == 0L) {
+            if (delay <= 0L) {
                 blockChannel.offer(task)
             } else {
                 // Use `taskJob` as the parent here so the delay will also get cancelled if the Disposable
