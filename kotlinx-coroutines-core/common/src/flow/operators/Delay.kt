@@ -151,14 +151,14 @@ public fun <T> Flow<T>.debounce(timeoutMillis: (T) -> Long): Flow<T> =
  */
 @ExperimentalTime
 @FlowPreview
-public fun <T> Flow<T>.debounceWithDuration(timeout: Duration): Flow<T> = debounce(timeout.toDelayMillis())
+public fun <T> Flow<T>.debounceDuration(timeout: Duration): Flow<T> = debounce(timeout.toDelayMillis())
 
 /**
  * Returns a flow that mirrors the original flow, but filters out values
  * that are followed by the newer values within the given [timeout].
  * The latest value is always emitted.
  *
- * A variation of [debounceWithDuration] that allows specifying the timeout value dynamically.
+ * A variation of [debounceDuration] that allows specifying the timeout value dynamically.
  *
  * Example:
  *
@@ -197,7 +197,7 @@ public fun <T> Flow<T>.debounceWithDuration(timeout: Duration): Flow<T> = deboun
  */
 @ExperimentalTime
 @FlowPreview
-public fun <T> Flow<T>.debounceWithDuration(timeout: (T) -> Duration): Flow<T> =
+public fun <T> Flow<T>.debounceDuration(timeout: (T) -> Duration): Flow<T> =
     debounceInternal { emittedItem ->
         timeout(emittedItem).toDelayMillis()
     }
@@ -208,26 +208,23 @@ private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long) : F
         val values = produce<Any?>(capacity = 0) {
             collect { value -> send(value ?: NULL) }
         }
+
         var lastValue: Any? = null
         while (lastValue !== DONE) {
+            val timeoutMillis = lastValue?.let { timeoutMillisSelector(NULL.unbox(it)) }
+            if (timeoutMillis != null) {
+                require(timeoutMillis >= 0L) { "Debounce timeout should not be negative" }
+                if (timeoutMillis == 0L) {
+                    downstream.emit(NULL.unbox(lastValue))
+                    lastValue = null // Consume the value
+                }
+            }
             select<Unit> {
-                // Give a chance to consume lastValue first before onReceiveOrNull receives a new value
-                lastValue?.let { value ->
-                    val unboxedValue: T = NULL.unbox(value)
-                    val timeoutMillis = timeoutMillisSelector(unboxedValue)
-                    require(timeoutMillis >= 0L) { "Debounce timeout should not be negative" }
-
-                    if (timeoutMillis == 0L) {
-                        lastValue = null
-                        runBlocking {
-                            launch { downstream.emit(unboxedValue) }
-                        }
-                    } else {
-                        // Set timeout when lastValue != null
-                        onTimeout(timeoutMillis) {
-                            lastValue = null // Consume the value
-                            downstream.emit(unboxedValue)
-                        }
+                // Set timeout when lastValue exists and is not consumed yet
+                if (lastValue != null && timeoutMillis != null) {
+                    onTimeout(timeoutMillis) {
+                        downstream.emit(NULL.unbox(lastValue))
+                        lastValue = null // Consume the value
                     }
                 }
 

@@ -217,7 +217,7 @@ class DebounceTest : TestBase() {
         }
 
         expect(2)
-        val result = flow.debounceWithDuration(1000.milliseconds).toList()
+        val result = flow.debounceDuration(1000.milliseconds).toList()
         assertEquals(listOf("A", "D", "E"), result)
         finish(5)
     }
@@ -308,7 +308,7 @@ class DebounceTest : TestBase() {
         }
 
         expect(2)
-        val result = flow.debounceWithDuration {
+        val result = flow.debounceDuration {
             if (it == "C") {
                 0.milliseconds
             } else {
