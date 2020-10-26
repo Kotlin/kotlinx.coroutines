@@ -47,7 +47,7 @@ dependencies {
     npmTestCompile 'com.google.code.gson:gson:2.8.5'
 }
 
-def targets = rootProject.ext.build_snapshot_train ? ['legacy', 'ir'] : ['']
+def targets = rootProject.ext.build_snapshot_train ? ['jvm', 'jvmIr'] : ['']
 
 targets.forEach { jvmCompilerType ->
     sourceSets {
@@ -92,7 +92,7 @@ targets.forEach { jvmCompilerType ->
 
     tasks.register("debugAgentTest${jvmCompilerType.capitalize()}", Test) {
         def sourceSet = sourceSets.getByName("debugAgentTest${jvmCompilerType.capitalize()}")
-        def jarProp = jvmCompilerType == 'ir' ? 'shadowJvmIrJar' : 'shadowJvmJar'
+        def jarProp = jvmCompilerType == 'jvmIr' ? 'shadowJvmIrJar' : 'shadowJvmJar'
         dependsOn(project(':kotlinx-coroutines-debug')[jarProp])
         jvmArgs('-javaagent:' + project(':kotlinx-coroutines-debug')[jarProp].outputs.files.getFiles()[0])
         testClassesDirs = sourceSet.output.classesDirs
@@ -101,7 +101,7 @@ targets.forEach { jvmCompilerType ->
 
     tasks.register("coreAgentTest${jvmCompilerType.capitalize()}", Test) {
         def sourceSet = sourceSets.getByName("coreAgentTest${jvmCompilerType.capitalize()}")
-        def jarProp = jvmCompilerType == 'ir' ? 'jvmIrJar' : 'jvmJar'
+        def jarProp = jvmCompilerType == 'jvmIr' ? 'jvmIrJar' : 'jvmJar'
         dependsOn(project(':kotlinx-coroutines-core')[jarProp])
         jvmArgs('-javaagent:' + project(':kotlinx-coroutines-core')[jarProp].outputs.files.getFiles()[0])
         testClassesDirs = sourceSet.output.classesDirs

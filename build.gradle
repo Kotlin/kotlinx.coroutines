@@ -99,7 +99,7 @@ def configureKotlinJvmPlatform(configuration) {
     def jvmCompilerAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
     configuration.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
     if (build_snapshot_train) {
-        configuration.attributes.attribute(jvmCompilerAttr, 'legacy')
+        configuration.attributes.attribute(jvmCompilerAttr, 'jvm')
     }
 }
 
