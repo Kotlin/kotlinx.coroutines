@@ -15,6 +15,7 @@ $dokka.location:kotlinx.coroutines$ensurePresent(java.lang.ThreadLocal((kotlin.A
 $dokka.location:kotlinx.coroutines$id(kotlin.Any)kotlinx.coroutines/kotlin.-any/id.html
 $dokka.location:kotlinx.coroutines$isActive#kotlin.coroutines.CoroutineContextkotlinx.coroutines/kotlin.coroutines.-coroutine-context/is-active.html
 $dokka.location:kotlinx.coroutines$isPresent(java.lang.ThreadLocal((kotlin.Any)))kotlinx.coroutines/java.lang.-thread-local/is-present.html
+$dokka.location:kotlinx.coroutines$job#kotlin.coroutines.CoroutineContextkotlinx.coroutines/kotlin.coroutines.-coroutine-context/job.html
 $dokka.location:kotlinx.coroutines$joinAll(kotlin.collections.Collection((kotlinx.coroutines.Job)))kotlinx.coroutines/kotlin.collections.-collection/join-all.html
 $dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.Array((kotlinx.coroutines.flow.asFlow.T)))kotlinx.coroutines.flow/kotlin.-array/as-flow.html
 $dokka.location:kotlinx.coroutines.flow$asFlow(kotlin.Function0((kotlinx.coroutines.flow.asFlow.T)))kotlinx.coroutines.flow/kotlin.-function0/as-flow.html
