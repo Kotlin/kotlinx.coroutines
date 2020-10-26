@@ -1,5 +1,29 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.4.0
+
+### Improvements
+
+* `StateFlow`, `SharedFlow` and corresponding operators are promoted to stable API (#2316).
+* `Flow.debounce` operator with timeout selector based on each individual element is added (#1216, thanks to @mkano9!). 
+* `CoroutineContext.job` extension property is introduced (#2159).
+* `Flow.combine operator` is reworked:
+    * Complete fairness is maintained for single-threaded dispatchers.
+    * Its performance is improved, depending on the use-case, by at least 50% (#2296).
+    * Quadratic complexity depending on the number of upstream flows is eliminated (#2296).
+    * `crossinline` and `inline`-heavy internals are removed, fixing sporadic SIGSEGV on Mediatek Android devices (#1683, #1743).
+* `Flow.zip` operator performance is improved by 40%.
+* Various API has been promoted to stable or its deprecation level has been raised (#2316).
+
+### Bug fixes
+
+* Suspendable `stateIn` operator propagates exception to the caller when upstream fails to produce initial value (#2329).
+* Fix `SharedFlow` with replay for subscribers working at different speed (#2325).
+* Do not fail debug agent installation when security manager does not provide access to system properties (#2311).
+* Cancelled lazy coroutines are properly cleaned up from debug agent output (#2294).
+* `BlockHound` false-positives are correctly filtered out (#2302, #2190, #2303).
+* Potential crash during a race between cancellation and upstream in `Observable.asFlow` is fixed (#2104, #2299, thanks to @LouisCAD and @drinkthestars).
+
 ## Version 1.4.0-M1
 
 ### Breaking changes

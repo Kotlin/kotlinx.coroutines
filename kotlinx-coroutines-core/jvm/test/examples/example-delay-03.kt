@@ -3,7 +3,7 @@
  */
 
 // This file was automatically generated from Delay.kt by Knit tool. Do not edit.
-package kotlinx.coroutines.examples.exampleDelay02
+package kotlinx.coroutines.examples.exampleDelay03
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -11,20 +11,9 @@ import kotlinx.coroutines.flow.*
 fun main() = runBlocking {
 
 flow {
-    emit(1)
-    delay(90)
-    emit(2)
-    delay(90)
-    emit(3)
-    delay(1010)
-    emit(4)
-    delay(1010)
-    emit(5)
-}.debounce {
-    if (it == 1) {
-        0L
-    } else {
-        1000L
+    repeat(10) {
+        emit(it)
+        delay(110)
     }
-}
+}.sample(200)
 .toList().joinToString().let { println(it) } }

@@ -635,6 +635,15 @@ public fun CoroutineContext.cancelChildren(cause: CancellationException? = null)
 public fun CoroutineContext.cancelChildren(): Unit = cancelChildren(null)
 
 /**
+ * Retrieves the current [Job] instance from the given [CoroutineContext] or
+ * throws [IllegalStateException] if no job is present in the context.
+ *
+ * This method is a short-cut for `coroutineContext[Job]!!` and should be used only when it is known in advance that
+ * the context does have instance of the job in it.
+ */
+public val CoroutineContext.job: Job get() = get(Job) ?: error("Current context doesn't contain Job in it: $this")
+
+/**
  * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [CoroutineContext.cancelChildren].
  */
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")

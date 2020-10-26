@@ -11,10 +11,19 @@ import kotlin.native.concurrent.*
 /**
  * This value is used a a surrogate `null` value when needed.
  * It should never leak to the outside world.
+ * Its usage typically are paired with [Symbol.unbox] usages.
  */
 @JvmField
 @SharedImmutable
 internal val NULL = Symbol("NULL")
+
+/**
+ * Symbol to indicate that the value is not yet initialized.
+ * It should never leak to the outside world.
+ */
+@JvmField
+@SharedImmutable
+internal val UNINITIALIZED = Symbol("UNINITIALIZED")
 
 /*
  * Symbol used to indicate that the flow is complete.

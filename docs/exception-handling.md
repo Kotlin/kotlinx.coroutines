@@ -413,9 +413,9 @@ The second child is cancelled because the supervisor was cancelled
 
 #### Supervision scope
 
-Instead of [coroutineScope], we can use [supervisorScope] for _scoped_ concurrency. It propagates the cancellation
+Instead of [coroutineScope][_coroutineScope], we can use [supervisorScope][_supervisorScope] for _scoped_ concurrency. It propagates the cancellation
 in one direction only and cancels all its children only if it failed itself. It also waits for all children before completion
-just like [coroutineScope] does.
+just like [coroutineScope][_coroutineScope] does.
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -464,7 +464,7 @@ Caught an assertion error
 Another crucial difference between regular and supervisor jobs is exception handling.
 Every child should handle its exceptions by itself via the exception handling mechanism.
 This difference comes from the fact that child's failure does not propagate to the parent.
-It means that coroutines launched directly inside the [supervisorScope] _do_ use the [CoroutineExceptionHandler]
+It means that coroutines launched directly inside the [supervisorScope][_supervisorScope] _do_ use the [CoroutineExceptionHandler]
 that is installed in their scope in the same way as root coroutines do
 (see the [CoroutineExceptionHandler](#coroutineexceptionhandler) section for details). 
 
@@ -517,8 +517,8 @@ The scope is completed
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
 [SupervisorJob()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-supervisor-job.html
 [Job()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job.html
-[coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
-[supervisorScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/supervisor-scope.html
+[_coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
+[_supervisorScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/supervisor-scope.html
 <!--- INDEX kotlinx.coroutines.channels -->
 [actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/actor.html
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/produce.html

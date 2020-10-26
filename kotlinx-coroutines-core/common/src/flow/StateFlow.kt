@@ -135,7 +135,6 @@ import kotlin.native.concurrent.*
  * might be added to this interface in the future, but is stable for use.
  * Use the `MutableStateFlow(value)` constructor function to create an implementation.
  */
-@ExperimentalCoroutinesApi
 public interface StateFlow<out T> : SharedFlow<T> {
     /**
      * The current value of this state flow.
@@ -156,7 +155,6 @@ public interface StateFlow<out T> : SharedFlow<T> {
  * might be added to this interface in the future, but is stable for use.
  * Use the `MutableStateFlow()` constructor function to create an implementation.
  */
-@ExperimentalCoroutinesApi
 public interface MutableStateFlow<T> : StateFlow<T>, MutableSharedFlow<T> {
     /**
      * The current value of this state flow.
@@ -180,7 +178,6 @@ public interface MutableStateFlow<T> : StateFlow<T>, MutableSharedFlow<T> {
  * Creates a [MutableStateFlow] with the given initial [value].
  */
 @Suppress("FunctionName")
-@ExperimentalCoroutinesApi
 public fun <T> MutableStateFlow(value: T): MutableStateFlow<T> = StateFlowImpl(value ?: NULL)
 
 // ------------------------------------ Implementation ------------------------------------

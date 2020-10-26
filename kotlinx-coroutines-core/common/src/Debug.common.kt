@@ -27,7 +27,7 @@ internal expect fun assert(value: () -> Boolean)
  * Copy mechanism is used only on JVM, but it might be convenient to implement it in common exceptions,
  * so on JVM their stacktraces will be properly recovered.
  */
-@ExperimentalCoroutinesApi
+@ExperimentalCoroutinesApi // Since 1.2.0, no ETA on stability
 public interface CopyableThrowable<T> where T : Throwable, T : CopyableThrowable<T> {
 
     /**

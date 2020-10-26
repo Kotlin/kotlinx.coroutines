@@ -30,21 +30,21 @@ class StateInTest : TestBase() {
 
     @Test
     fun testUpstreamCompletedNoInitialValue() =
-        testUpstreamCompletedOrFailedReset(failed = false, iv = false)
+        testUpstreamCompletedOrFailedReset(failed = false, withInitialValue = false)
 
     @Test
     fun testUpstreamFailedNoInitialValue() =
-        testUpstreamCompletedOrFailedReset(failed = true, iv = false)
+        testUpstreamCompletedOrFailedReset(failed = true, withInitialValue = false)
 
     @Test
     fun testUpstreamCompletedWithInitialValue() =
-        testUpstreamCompletedOrFailedReset(failed = false, iv = true)
+        testUpstreamCompletedOrFailedReset(failed = false, withInitialValue = true)
 
     @Test
     fun testUpstreamFailedWithInitialValue() =
-        testUpstreamCompletedOrFailedReset(failed = true, iv = true)
+        testUpstreamCompletedOrFailedReset(failed = true, withInitialValue = true)
 
-    private fun testUpstreamCompletedOrFailedReset(failed: Boolean, iv: Boolean) = runTest {
+    private fun testUpstreamCompletedOrFailedReset(failed: Boolean, withInitialValue: Boolean) = runTest {
         val emitted = Job()
         val terminate = Job()
         val sharingJob = CompletableDeferred<Unit>()
@@ -56,7 +56,7 @@ class StateInTest : TestBase() {
         }
         val scope = this + sharingJob
         val shared: StateFlow<String?>
-        if (iv) {
+        if (withInitialValue) {
             shared = upstream.stateIn(scope, SharingStarted.Eagerly, null)
             assertEquals(null, shared.value)
         } else {
@@ -74,5 +74,16 @@ class StateInTest : TestBase() {
         } else {
             assertNull(sharingJob.getCompletionExceptionOrNull())
         }
+    }
+
+    @Test
+    fun testUpstreamFailedImmediatelyWithInitialValue() = runTest {
+        val ceh = CoroutineExceptionHandler { _, _ -> expect(2) }
+        val flow = flow<Int> {
+            expect(1)
+            throw TestException()
+        }
+        assertFailsWith<TestException> { flow.stateIn(CoroutineScope(currentCoroutineContext() + Job() + ceh)) }
+        finish(3)
     }
 }

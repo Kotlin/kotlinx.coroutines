@@ -367,10 +367,10 @@ public fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspen
     message = "Flow analogue of 'combineLatest' is 'combine'",
     replaceWith = ReplaceWith("combine(this, other, other2, transform)")
 )
-public inline fun <T1, T2, T3, R> Flow<T1>.combineLatest(
+public fun <T1, T2, T3, R> Flow<T1>.combineLatest(
     other: Flow<T2>,
     other2: Flow<T3>,
-    crossinline transform: suspend (T1, T2, T3) -> R
+    transform: suspend (T1, T2, T3) -> R
 ) = combine(this, other, other2, transform)
 
 @Deprecated(
@@ -378,11 +378,11 @@ public inline fun <T1, T2, T3, R> Flow<T1>.combineLatest(
     message = "Flow analogue of 'combineLatest' is 'combine'",
     replaceWith = ReplaceWith("combine(this, other, other2, other3, transform)")
 )
-public inline fun <T1, T2, T3, T4, R> Flow<T1>.combineLatest(
+public fun <T1, T2, T3, T4, R> Flow<T1>.combineLatest(
     other: Flow<T2>,
     other2: Flow<T3>,
     other3: Flow<T4>,
-    crossinline transform: suspend (T1, T2, T3, T4) -> R
+    transform: suspend (T1, T2, T3, T4) -> R
 ) = combine(this, other, other2, other3, transform)
 
 @Deprecated(
@@ -390,12 +390,12 @@ public inline fun <T1, T2, T3, T4, R> Flow<T1>.combineLatest(
     message = "Flow analogue of 'combineLatest' is 'combine'",
     replaceWith = ReplaceWith("combine(this, other, other2, other3, transform)")
 )
-public inline fun <T1, T2, T3, T4, T5, R> Flow<T1>.combineLatest(
+public fun <T1, T2, T3, T4, T5, R> Flow<T1>.combineLatest(
     other: Flow<T2>,
     other2: Flow<T3>,
     other3: Flow<T4>,
     other4: Flow<T5>,
-    crossinline transform: suspend (T1, T2, T3, T4, T5) -> R
+    transform: suspend (T1, T2, T3, T4, T5) -> R
 ): Flow<R> = combine(this, other, other2, other3, other4, transform)
 
 /**
@@ -434,7 +434,6 @@ public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): F
     message = "'scanReduce' was renamed to 'runningReduce' to be consistent with Kotlin standard library",
     replaceWith = ReplaceWith("runningReduce(operation)")
 )
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.scanReduce(operation: suspend (accumulator: T, value: T) -> T): Flow<T> = runningReduce(operation)
 
 @Deprecated(

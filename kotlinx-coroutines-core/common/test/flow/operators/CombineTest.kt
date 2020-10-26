@@ -1,10 +1,11 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
-package kotlinx.coroutines.flow
+@file:Suppress("UNCHECKED_CAST")
+package kotlinx.coroutines.flow.operators
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlin.test.*
 import kotlinx.coroutines.flow.combine as combineOriginal
 import kotlinx.coroutines.flow.combineTransform as combineTransformOriginal
@@ -21,28 +22,28 @@ abstract class CombineTestBase : TestBase() {
         val flow = flowOf("a", "b", "c")
         val flow2 = flowOf(1, 2, 3)
         val list = flow.combineLatest(flow2) { i, j -> i + j }.toList()
-        assertEquals(listOf("a1", "b1", "b2", "c2", "c3"), list)
+        assertEquals(listOf("a1", "b2", "c3"), list)
     }
 
     @Test
     fun testNulls() = runTest {
         val flow = flowOf("a", null, null)
         val flow2 = flowOf(1, 2, 3)
-        val list = flow.combineLatest(flow2, { i, j -> i + j }).toList()
-        assertEquals(listOf("a1", "null1", "null2", "null2", "null3"), list)
+        val list = flow.combineLatest(flow2) { i, j -> i + j }.toList()
+        assertEquals(listOf("a1", "null2", "null3"), list)
     }
 
     @Test
     fun testNullsOther() = runTest {
         val flow = flowOf("a", "b", "c")
         val flow2 = flowOf(null, 2, null)
-        val list = flow.combineLatest(flow2, { i, j -> i + j }).toList()
-        assertEquals(listOf("anull", "bnull", "b2", "c2", "cnull"), list)
+        val list = flow.combineLatest(flow2) { i, j -> i + j }.toList()
+        assertEquals(listOf("anull", "b2", "cnull"), list)
     }
 
     @Test
     fun testEmptyFlow() = runTest {
-        val flow = emptyFlow<String>().combineLatest(emptyFlow<Int>(), { i, j -> i + j })
+        val flow = emptyFlow<String>().combineLatest(emptyFlow<Int>()) { i, j -> i + j }
         assertNull(flow.singleOrNull())
     }
 
@@ -208,12 +209,12 @@ abstract class CombineTestBase : TestBase() {
         }
         val f2 = flow {
             emit(1)
-            hang { expect(3) }
+            expectUnreached()
         }
 
-        val flow = f1.combineLatest(f2, { _, _ -> 1 }).onEach { expect(2) }
+        val flow = f1.combineLatest(f2) { _, _ -> 1 }.onEach { expect(2) }
         assertFailsWith<CancellationException>(flow)
-        finish(4)
+        finish(3)
     }
 
     @Test
@@ -229,7 +230,7 @@ abstract class CombineTestBase : TestBase() {
             hang { expect(6) }
         }
 
-        val flow = f1.combineLatest(f2, { _, _ -> 1 }).onEach {
+        val flow = f1.combineLatest(f2) { _, _ -> 1 }.onEach {
             expect(1)
             yield()
             expect(4)
@@ -248,7 +249,7 @@ abstract class CombineTestBase : TestBase() {
                 emit(Unit) // emit
             }
             cancel() // cancel the scope
-            flow.combineLatest(flow) { u, _ -> u }.collect {
+            flow.combineLatest(flow) { _, _ ->  }.collect {
                 // should not be reached, because cancelled before it runs
                 expectUnreached()
             }
@@ -265,15 +266,26 @@ class CombineTransformTest : CombineTestBase() {
         emit(transform(a, b))
     }
 }
+// Array null-out is an additional test for our array elimination optimization
 
 class CombineVarargAdapterTest : CombineTestBase() {
     override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
-        combineOriginal(this, other) { args: Array<Any?> -> transform(args[0] as T1, args[1] as T2) }
+        combineOriginal(this, other) { args: Array<Any?> ->
+            transform(args[0] as T1, args[1] as T2).also {
+                args[0] = null
+                args[1] = null
+            }
+        }
 }
 
 class CombineIterableTest : CombineTestBase() {
     override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
-        combineOriginal(listOf(this, other)) { args -> transform(args[0] as T1, args[1] as T2) }
+        combineOriginal(listOf(this, other)) { args ->
+            transform(args[0] as T1, args[1] as T2).also {
+                args[0] = null
+                args[1] = null
+            }
+        }
 }
 
 class CombineTransformAdapterTest : CombineTestBase() {
@@ -283,11 +295,20 @@ class CombineTransformAdapterTest : CombineTestBase() {
 
 class CombineTransformVarargAdapterTest : CombineTestBase() {
     override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
-        combineTransformOriginal(this, other) { args: Array<Any?> -> emit(transform(args[0] as T1, args[1] as T2)) }
+        combineTransformOriginal(this, other) { args: Array<Any?> ->
+            emit(transform(args[0] as T1, args[1] as T2))   // Mess up with array
+            args[0] = null
+            args[1] = null
+        }
 }
 
 class CombineTransformIterableTest : CombineTestBase() {
     override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
-        combineTransformOriginal(listOf(this, other)) { args -> emit(transform(args[0] as T1, args[1] as T2)) }
+        combineTransformOriginal(listOf(this, other)) { args ->
+            emit(transform(args[0] as T1, args[1] as T2))
+            // Mess up with array
+            args[0] = null
+            args[1] = null
+        }
 }
 

@@ -81,7 +81,13 @@ public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
     val observer = object : Observer<T> {
         override fun onComplete() { close() }
         override fun onSubscribe(d: Disposable) { if (!disposableRef.compareAndSet(null, d)) d.dispose() }
-        override fun onNext(t: T) { sendBlocking(t) }
+        override fun onNext(t: T) {
+            try {
+                sendBlocking(t)
+            } catch (ignored: Throwable) { // TODO: Replace when this issue is fixed: https://github.com/Kotlin/kotlinx.coroutines/issues/974
+                // Is handled by the downstream flow
+            }
+        }
         override fun onError(e: Throwable) { close(e) }
     }
 

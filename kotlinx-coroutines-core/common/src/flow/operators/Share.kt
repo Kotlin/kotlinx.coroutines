@@ -132,7 +132,6 @@ import kotlin.jvm.*
  * @param started the strategy that controls when sharing is started and stopped.
  * @param replay the number of values replayed to new subscribers (cannot be negative, defaults to zero).
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.shareIn(
     scope: CoroutineScope,
     started: SharingStarted,
@@ -297,7 +296,6 @@ private fun <T> CoroutineScope.launchSharing(
  *   This value is also used when the state flow is reset using the [SharingStarted.WhileSubscribed] strategy
  *   with the `replayExpirationMillis` parameter.
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.stateIn(
     scope: CoroutineScope,
     started: SharingStarted,
@@ -316,7 +314,6 @@ public fun <T> Flow<T>.stateIn(
  *
  * @param scope the coroutine scope in which sharing is started.
  */
-@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.stateIn(scope: CoroutineScope): StateFlow<T> {
     val config = configureSharing(1)
     val result = CompletableDeferred<StateFlow<T>>()
@@ -330,13 +327,20 @@ private fun <T> CoroutineScope.launchSharingDeferred(
     result: CompletableDeferred<StateFlow<T>>
 ) {
     launch(context) {
-        var state: MutableStateFlow<T>? = null
-        upstream.collect { value ->
-            state?.let { it.value = value } ?: run {
-                state = MutableStateFlow(value).also {
-                    result.complete(it.asStateFlow())
+        try {
+            var state: MutableStateFlow<T>? = null
+            upstream.collect { value ->
+                state?.let { it.value = value } ?: run {
+                    state = MutableStateFlow(value).also {
+                        result.complete(it.asStateFlow())
+                    }
                 }
             }
+        } catch (e: Throwable) {
+            // Notify the waiter that the flow has failed
+            result.completeExceptionally(e)
+            // But still cancel the scope where state was (not) produced
+            throw e
         }
     }
 }
@@ -346,14 +350,12 @@ private fun <T> CoroutineScope.launchSharingDeferred(
 /**
  * Represents this mutable shared flow as a read-only shared flow.
  */
-@ExperimentalCoroutinesApi
 public fun <T> MutableSharedFlow<T>.asSharedFlow(): SharedFlow<T> =
     ReadonlySharedFlow(this)
 
 /**
  * Represents this mutable state flow as a read-only state flow.
  */
-@ExperimentalCoroutinesApi
 public fun <T> MutableStateFlow<T>.asStateFlow(): StateFlow<T> =
     ReadonlyStateFlow(this)
 
@@ -384,7 +386,6 @@ private class ReadonlyStateFlow<T>(
  *
  * The receiver of the [action] is [FlowCollector], so `onSubscription` can emit additional elements.
  */
-@ExperimentalCoroutinesApi
 public fun <T> SharedFlow<T>.onSubscription(action: suspend FlowCollector<T>.() -> Unit): SharedFlow<T> =
     SubscribedSharedFlow(this, action)
 

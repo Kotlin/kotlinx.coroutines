@@ -2,7 +2,7 @@
 
 [![official JetBrains project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=1.4.0-M1) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/1.4.0-M1)
+[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=1.4.0) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/1.4.0)
 [![Kotlin](https://img.shields.io/badge/kotlin-1.4.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![Slack channel](https://img.shields.io/badge/chat-slack-green.svg?logo=slack)](https://kotlinlang.slack.com/messages/coroutines/)
 
@@ -29,7 +29,7 @@ suspend fun main() = coroutineScope {
   * [delay] and [yield] top-level suspending functions;
   * [Flow] &mdash; cold asynchronous stream with [flow][_flow] builder and comprehensive operator set ([filter], [map], etc);
   * [Channel], [Mutex], and [Semaphore] communication and synchronization primitives;
-  * [coroutineScope], [supervisorScope], [withContext], and [withTimeout] scope builders;
+  * [coroutineScope][_coroutineScope], [supervisorScope][_supervisorScope], [withContext], and [withTimeout] scope builders;
   * [MainScope()] for Android and UI applications;
   * [SupervisorJob()] and [CoroutineExceptionHandler] for supervision of coroutines hierarchies;
   * [select] expression support and more.
@@ -86,7 +86,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>1.4.0-M1</version>
+    <version>1.4.0</version>
 </dependency>
 ```
 
@@ -104,7 +104,7 @@ Add dependencies (you can also add other modules that you need):
 
 ```groovy
 dependencies {
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0-M1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0'
 }
 ```
 
@@ -130,7 +130,7 @@ Add dependencies (you can also add other modules that you need):
 
 ```groovy
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0-M1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0")
 }
 ```
 
@@ -152,7 +152,7 @@ In common code that should get compiled for different platforms, you can add dep
 ```groovy
 commonMain {
     dependencies {
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0-M1")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0")
     }
 }
 ```
@@ -163,7 +163,7 @@ Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
 module as dependency when using `kotlinx.coroutines` on Android:
 
 ```groovy
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.0-M1'
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.0'
 ```
 
 This gives you access to Android [Dispatchers.Main]
@@ -190,7 +190,7 @@ packagingOptions {
 ### JS
 
 [Kotlin/JS](https://kotlinlang.org/docs/reference/js-overview.html) version of `kotlinx.coroutines` is published as 
-[`kotlinx-coroutines-core-js`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.4.0-M1/jar)
+[`kotlinx-coroutines-core-js`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.4.0/jar)
 (follow the link to get the dependency declaration snippet).
  
 You can also use [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) package via NPM. 
@@ -198,7 +198,7 @@ You can also use [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotli
 ### Native
 
 [Kotlin/Native](https://kotlinlang.org/docs/reference/native-overview.html) version of `kotlinx.coroutines` is published as 
-[`kotlinx-coroutines-core-native`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-native/1.4.0-M1/jar)
+[`kotlinx-coroutines-core-native`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-native/1.4.0/jar)
 (follow the link to get the dependency declaration snippet).
 
 Only single-threaded code (JS-style) on Kotlin/Native is currently supported. 
@@ -227,8 +227,8 @@ See [Contributing Guidelines](CONTRIBUTING.md).
 [Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
 [delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html
 [yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/yield.html
-[coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
-[supervisorScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/supervisor-scope.html
+[_coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
+[_supervisorScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/supervisor-scope.html
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html
 [withTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-timeout.html
 [MainScope()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-main-scope.html

@@ -108,7 +108,6 @@ import kotlin.native.concurrent.*
  * might be added to this interface in the future, but is stable for use.
  * Use the `MutableSharedFlow(replay, ...)` constructor function to create an implementation.
  */
-@ExperimentalCoroutinesApi
 public interface SharedFlow<out T> : Flow<T> {
     /**
      * A snapshot of the replay cache.
@@ -138,7 +137,6 @@ public interface SharedFlow<out T> : Flow<T> {
  * might be added to this interface in the future, but is stable for use.
  * Use the `MutableSharedFlow(...)` constructor function to create an implementation.
  */
-@ExperimentalCoroutinesApi
 public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
     /**
      * Tries to emit a [value] to this shared flow without suspending. It returns `true` if the value was
@@ -202,7 +200,6 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
  *   supported only when `replay > 0` or `extraBufferCapacity > 0`).
  */
 @Suppress("FunctionName", "UNCHECKED_CAST")
-@ExperimentalCoroutinesApi
 public fun <T> MutableSharedFlow(
     replay: Int = 0,
     extraBufferCapacity: Int = 0,
@@ -326,7 +323,7 @@ private class SharedFlowImpl<T>(
         var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
         val emitted = synchronized(this) {
             if (tryEmitLocked(value)) {
-                resumes = findSlotsToResumeLocked()
+                resumes = findSlotsToResumeLocked(resumes)
                 true
             } else {
                 false
@@ -422,7 +419,7 @@ private class SharedFlowImpl<T>(
             // recheck buffer under lock again (make sure it is really full)
             if (tryEmitLocked(value)) {
                 cont.resume(Unit)
-                resumes = findSlotsToResumeLocked()
+                resumes = findSlotsToResumeLocked(resumes)
                 return@lock null
             }
             // add suspended emitter to the buffer
@@ -430,7 +427,7 @@ private class SharedFlowImpl<T>(
                 enqueueLocked(it)
                 queueSize++ // added to queue of waiting emitters
                 // synchronous shared flow might rendezvous with waiting emitter
-                if (bufferCapacity == 0) resumes = findSlotsToResumeLocked()
+                if (bufferCapacity == 0) resumes = findSlotsToResumeLocked(resumes)
             }
         }
         // outside of the lock: register dispose on cancellation
@@ -512,6 +509,8 @@ private class SharedFlowImpl<T>(
         updateBufferLocked(newReplayIndex, newMinCollectorIndex, newBufferEndIndex, newQueueEndIndex)
         // just in case we've moved all buffered emitters and have NO_VALUE's at the tail now
         cleanupTailLocked()
+        // We need to waken up suspended collectors if any emitters were resumed here
+        if (resumes.isNotEmpty()) resumes = findSlotsToResumeLocked(resumes)
         return resumes
     }
 
@@ -598,9 +597,9 @@ private class SharedFlowImpl<T>(
         }
     }
 
-    private fun findSlotsToResumeLocked(): Array<Continuation<Unit>?> {
-        var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
-        var resumeCount = 0
+    private fun findSlotsToResumeLocked(resumesIn: Array<Continuation<Unit>?>): Array<Continuation<Unit>?> {
+        var resumes: Array<Continuation<Unit>?> = resumesIn
+        var resumeCount = resumesIn.size
         forEachSlotLocked loop@{ slot ->
             val cont = slot.cont ?: return@loop // only waiting slots
             if (tryPeekLocked(slot) < 0) return@loop // only slots that can peek a value

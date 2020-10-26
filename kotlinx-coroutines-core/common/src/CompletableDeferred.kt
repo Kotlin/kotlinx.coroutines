@@ -57,7 +57,6 @@ public interface CompletableDeferred<T> : Deferred<T> {
  * This function transitions this deferred in the same ways described by [CompletableDeferred.complete] and
  * [CompletableDeferred.completeExceptionally].
  */
-@ExperimentalCoroutinesApi // since 1.3.2, tentatively until 1.4.0
 public fun <T> CompletableDeferred<T>.completeWith(result: Result<T>): Boolean =
     result.fold({ complete(it) }, { completeExceptionally(it) })
 

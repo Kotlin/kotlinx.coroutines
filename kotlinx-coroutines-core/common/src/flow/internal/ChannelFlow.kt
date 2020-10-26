@@ -224,19 +224,33 @@ private class UndispatchedContextCollector<T>(
     private val emitRef: suspend (T) -> Unit = { downstream.emit(it) } // allocate suspend function ref once on creation
 
     override suspend fun emit(value: T): Unit =
-        withContextUndispatched(emitContext, countOrElement, emitRef, value)
+        withContextUndispatched(emitContext, value, countOrElement, emitRef)
 }
 
 // Efficiently computes block(value) in the newContext
-private suspend fun <T, V> withContextUndispatched(
+internal suspend fun <T, V> withContextUndispatched(
     newContext: CoroutineContext,
+    value: V,
     countOrElement: Any = threadContextElements(newContext), // can be precomputed for speed
-    block: suspend (V) -> T, value: V
+    block: suspend (V) -> T
 ): T =
     suspendCoroutineUninterceptedOrReturn { uCont ->
         withCoroutineContext(newContext, countOrElement) {
-            block.startCoroutineUninterceptedOrReturn(value, Continuation(newContext) {
-                uCont.resumeWith(it)
-            })
+            block.startCoroutineUninterceptedOrReturn(value, StackFrameContinuation(uCont, newContext))
         }
     }
+
+// Continuation that links the caller with uCont with walkable CoroutineStackFrame
+private class StackFrameContinuation<T>(
+    private val uCont: Continuation<T>, override val context: CoroutineContext
+) : Continuation<T>, CoroutineStackFrame {
+
+    override val callerFrame: CoroutineStackFrame?
+        get() = uCont as? CoroutineStackFrame
+
+    override fun resumeWith(result: Result<T>) {
+        uCont.resumeWith(result)
+    }
+
+    override fun getStackTraceElement(): StackTraceElement? = null
+}
