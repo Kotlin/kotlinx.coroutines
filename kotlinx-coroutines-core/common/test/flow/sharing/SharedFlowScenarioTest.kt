@@ -176,6 +176,31 @@ class SharedFlowScenarioTest : TestBase() {
             collect(b, 15)
         }
 
+    @Test // https://github.com/Kotlin/kotlinx.coroutines/issues/2320
+    fun testResumeFastSubscriberOnResumedEmitter() =
+        testSharedFlow<Int>(MutableSharedFlow(1)) {
+            // create two subscribers and start collecting
+            val s1 = subscribe("s1"); resumeCollecting(s1)
+            val s2 = subscribe("s2"); resumeCollecting(s2)
+            // now emit 0, make sure it is collected
+            emitRightNow(0); expectReplayOf(0)
+            awaitCollected(s1, 0)
+            awaitCollected(s2, 0)
+            // now emit 1, and only first subscriber continues and collects it
+            emitRightNow(1); expectReplayOf(1)
+            collect(s1, 1)
+            // now emit 2, it suspend (s2 is blocking it)
+            val e2 = emitSuspends(2)
+            resumeCollecting(s1) // resume, but does not collect (e2 is still queued)
+            collect(s2, 1) // resume + collect next --> resumes emitter, thus resumes s1
+            awaitCollected(s1, 2) // <-- S1 collects value from the newly resumed emitter here !!!
+            emitResumes(e2); expectReplayOf(2)
+            // now emit 3, it suspends (s2 blocks it)
+            val e3 = emitSuspends(3)
+            collect(s2, 2)
+            emitResumes(e3); expectReplayOf(3)
+        }
+
     private fun <T> testSharedFlow(
         sharedFlow: MutableSharedFlow<T>,
         scenario: suspend ScenarioDsl<T>.() -> Unit
@@ -305,12 +330,21 @@ class SharedFlowScenarioTest : TestBase() {
             return TestJob(job, name)
         }
 
+        // collect ~== resumeCollecting + awaitCollected (for each value)
         suspend fun collect(job: TestJob, vararg a: T) {
             for (value in a) {
                 checkReplay() // should not have changed
-                addAction(ResumeCollecting(job))
-                awaitAction(Collected(job, value))
+                resumeCollecting(job)
+                awaitCollected(job, value)
             }
+        }
+
+        suspend fun resumeCollecting(job: TestJob) {
+            addAction(ResumeCollecting(job))
+        }
+
+        suspend fun awaitCollected(job: TestJob, value: T) {
+            awaitAction(Collected(job, value))
         }
 
         fun stop() {
