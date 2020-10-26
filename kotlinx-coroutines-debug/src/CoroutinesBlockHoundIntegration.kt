@@ -20,10 +20,12 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         nonBlockingThreadPredicate { p -> p.or { mayNotBlock(it) } }
     }
 
-    /** Allows blocking calls in various coroutine structures, such as flows and channels.
+    /**
+     * Allows blocking calls in various coroutine structures, such as flows and channels.
      *
      * They use locks in implementations, though only for protecting short pieces of fast and well-understood code, so
-     * locking in such places doesn't affect the program liveness. */
+     * locking in such places doesn't affect the program liveness.
+     */
     private fun BlockHound.Builder.allowBlockingCallsInPrimitiveImplementations() {
         allowBlockingCallsInJobSupport()
         allowBlockingCallsInThreadSafeHeap()
@@ -31,6 +33,9 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         allowBlockingCallsInChannels()
     }
 
+    /**
+     * Allows blocking inside [kotlinx.coroutines.JobSupport].
+     */
     private fun BlockHound.Builder.allowBlockingCallsInJobSupport() {
         for (method in listOf("finalizeFinishingState", "invokeOnCompletion", "makeCancelling",
             "tryMakeCompleting"))
@@ -39,6 +44,9 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         }
     }
 
+    /**
+     * Allows blocking inside [kotlinx.coroutines.internal.ThreadSafeHeap].
+     */
     private fun BlockHound.Builder.allowBlockingCallsInThreadSafeHeap() {
         for (method in listOf("clear", "peek", "removeFirstOrNull", "addLast")) {
             allowBlockingCallsInside("kotlinx.coroutines.internal.ThreadSafeHeap", method)
@@ -53,10 +61,16 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         allowBlockingCallsInsideSharedFlow()
     }
 
+    /**
+     * Allows blocking inside the implementation of [kotlinx.coroutines.flow.StateFlow].
+     */
     private fun BlockHound.Builder.allowBlockingCallsInsideStateFlow() {
         allowBlockingCallsInside("kotlinx.coroutines.flow.StateFlowImpl", "updateState")
     }
 
+    /**
+     * Allows blocking inside the implementation of [kotlinx.coroutines.flow.SharedFlow].
+     */
     private fun BlockHound.Builder.allowBlockingCallsInsideSharedFlow() {
         for (method in listOf("emitSuspend", "awaitValue", "getReplayCache", "tryEmit", "cancelEmitter",
             "tryTakeValue", "resetReplayCache"))
@@ -74,7 +88,9 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         allowBlockingCallsInConflatedChannel()
     }
 
-    /** Allows blocking inside [kotlinx.coroutines.channels.ArrayChannel]. */
+    /**
+     * Allows blocking inside [kotlinx.coroutines.channels.ArrayChannel].
+     */
     private fun BlockHound.Builder.allowBlockingCallsInArrayChannel() {
         for (method in listOf(
             "pollInternal", "isEmpty", "isFull", "isClosedForReceive", "offerInternal", "offerSelectInternal",
@@ -84,7 +100,9 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         }
     }
 
-    /** Allows blocking inside [kotlinx.coroutines.channels.ArrayBroadcastChannel]. */
+    /**
+     * Allows blocking inside [kotlinx.coroutines.channels.ArrayBroadcastChannel].
+     */
     private fun BlockHound.Builder.allowBlockingCallsInBroadcastChannel() {
         for (method in listOf("offerInternal", "offerSelectInternal", "updateHead")) {
             allowBlockingCallsInside("kotlinx.coroutines.channels.ArrayBroadcastChannel", method)
@@ -94,7 +112,9 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         }
     }
 
-    /** Allows blocking inside [kotlinx.coroutines.channels.ConflatedChannel]. */
+    /**
+     * Allows blocking inside [kotlinx.coroutines.channels.ConflatedChannel].
+     */
     private fun BlockHound.Builder.allowBlockingCallsInConflatedChannel() {
         for (method in listOf("offerInternal", "offerSelectInternal", "pollInternal", "pollSelectInternal",
             "onCancelIdempotent"))
@@ -103,7 +123,8 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         }
     }
 
-    /** Allows blocking when enqueuing tasks into a thread pool.
+    /**
+     * Allows blocking when enqueuing tasks into a thread pool.
      *
      * Without this, the following code breaks:
      * ```
@@ -118,7 +139,8 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         allowBlockingCallsInside("java.util.concurrent.ScheduledThreadPoolExecutor", "execute")
     }
 
-    /** Allows instances of [java.util.ServiceLoader] being called.
+    /**
+     * Allows instances of [java.util.ServiceLoader] being called.
      *
      * Each instance is listed separately; another approach could be to generally allow the operations performed by
      * service loaders, as they can generally be considered safe. This was not done here because ServiceLoader has a
@@ -133,7 +155,8 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         allowBlockingCallsInside("kotlin.reflect.jvm.internal.impl.resolve.OverridingUtil", "<clinit>")
     }
 
-    /** Allows some blocking calls from the reflection API.
+    /**
+     * Allows some blocking calls from the reflection API.
      *
      * The API is big, so surely some other blocking calls will show up, but with these rules in place, at least some
      * simple examples work without problems.
