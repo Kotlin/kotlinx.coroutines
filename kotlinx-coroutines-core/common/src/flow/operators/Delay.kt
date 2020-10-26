@@ -192,7 +192,7 @@ public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> =
  * <!--- TEST -->
  *
  * Note that the resulting flow does not emit anything as long as the original flow emits
- * items faster than every [timeout] milliseconds.
+ * items faster than every [timeout] unit.
  *
  * @param timeout [T] is the emitted value and the return value is timeout in [Duration].
  */
