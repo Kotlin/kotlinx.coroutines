@@ -112,10 +112,10 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
  * @param timeoutMillis [T] is the emitted value and the return value is timeout in milliseconds.
  */
 @FlowPreview
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
 public fun <T> Flow<T>.debounce(timeoutMillis: (T) -> Long): Flow<T> =
-    debounceInternal { emittedItem ->
-        timeoutMillis(emittedItem)
-    }
+    debounceInternal(timeoutMillis)
 
 /**
  * Returns a flow that mirrors the original flow, but filters out values
@@ -151,14 +151,15 @@ public fun <T> Flow<T>.debounce(timeoutMillis: (T) -> Long): Flow<T> =
  */
 @ExperimentalTime
 @FlowPreview
-public fun <T> Flow<T>.debounceDuration(timeout: Duration): Flow<T> = debounce(timeout.toDelayMillis())
+public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> =
+    debounce(timeout.toDelayMillis())
 
 /**
  * Returns a flow that mirrors the original flow, but filters out values
  * that are followed by the newer values within the given [timeout].
  * The latest value is always emitted.
  *
- * A variation of [debounceDuration] that allows specifying the timeout value dynamically.
+ * A variation of [debounce] that allows specifying the timeout value dynamically.
  *
  * Example:
  *
@@ -197,44 +198,52 @@ public fun <T> Flow<T>.debounceDuration(timeout: Duration): Flow<T> = debounce(t
  */
 @ExperimentalTime
 @FlowPreview
-public fun <T> Flow<T>.debounceDuration(timeout: (T) -> Duration): Flow<T> =
+@JvmName("debounceDuration")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+public fun <T> Flow<T>.debounce(timeout: (T) -> Duration): Flow<T> =
     debounceInternal { emittedItem ->
         timeout(emittedItem).toDelayMillis()
     }
 
 private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long) : Flow<T> =
     scopedFlow { downstream ->
-        // Actually Any, KT-30796
-        val values = produce<Any?>(capacity = 0) {
+        // Produce the values using the default (rendezvous) channel
+        // Note: the actual type is Any, KT-30796
+        val values = produce<Any?> {
             collect { value -> send(value ?: NULL) }
         }
-
+        // Now consume the values
         var lastValue: Any? = null
         while (lastValue !== DONE) {
-            val timeoutMillis = lastValue?.let { timeoutMillisSelector(NULL.unbox(it)) }
-            if (timeoutMillis != null) {
+            var timeoutMillis = 0L // will be always computed when lastValue != null
+            // Compute timeout for this value
+            if (lastValue != null) {
+                timeoutMillis = timeoutMillisSelector(NULL.unbox(lastValue))
                 require(timeoutMillis >= 0L) { "Debounce timeout should not be negative" }
                 if (timeoutMillis == 0L) {
                     downstream.emit(NULL.unbox(lastValue))
                     lastValue = null // Consume the value
                 }
             }
+            // assert invariant: lastValue != null implies timeoutMillis > 0
+            assert { lastValue == null || timeoutMillis > 0 }
+            // wait for the next value with timeout
             select<Unit> {
                 // Set timeout when lastValue exists and is not consumed yet
-                if (lastValue != null && timeoutMillis != null) {
+                if (lastValue != null) {
                     onTimeout(timeoutMillis) {
                         downstream.emit(NULL.unbox(lastValue))
                         lastValue = null // Consume the value
                     }
                 }
-
                 // Should be receiveOrClosed when boxing issues are fixed
-                values.onReceiveOrNull {
-                    if (it == null) {
+                values.onReceiveOrNull { value ->
+                    if (value == null) {
                         if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
                         lastValue = DONE
                     } else {
-                        lastValue = it
+                        lastValue = value
                     }
                 }
             }
