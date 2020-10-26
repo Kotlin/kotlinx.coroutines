@@ -5,7 +5,7 @@
 ### Improvements
 
 * `StateFlow`, `SharedFlow` and corresponding operators are promoted to stable API (#2316).
-* `Flow.debounce` operator with timeout selector based on each individual element is added (#1216). 
+* `Flow.debounce` operator with timeout selector based on each individual element is added (#1216, thanks to @mkano9!). 
 * `CoroutineContext.job` extension property is introduced (#2159).
 * `Flow.combine operator` is reworked:
     * Complete fairness is maintained for single-threaded dispatchers.
@@ -22,7 +22,7 @@
 * Do not fail debug agent installation when security manager does not provide access to system properties (#2311).
 * Cancelled lazy coroutines are properly cleaned up from debug agent output (#2294).
 * `BlockHound` false-positives are correctly filtered out (#2302, #2190, #2303).
-* Potential crash during a race between cancellation and upstream in `Observable.asFlow` is fixed (#2104, #2299).
+* Potential crash during a race between cancellation and upstream in `Observable.asFlow` is fixed (#2104, #2299, thanks to @LouisCAD and @drinkthestars).
 
 ## Version 1.4.0-M1
 
