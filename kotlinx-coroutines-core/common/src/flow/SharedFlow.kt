@@ -108,7 +108,6 @@ import kotlin.native.concurrent.*
  * might be added to this interface in the future, but is stable for use.
  * Use the `MutableSharedFlow(replay, ...)` constructor function to create an implementation.
  */
-@ExperimentalCoroutinesApi
 public interface SharedFlow<out T> : Flow<T> {
     /**
      * A snapshot of the replay cache.
@@ -138,7 +137,6 @@ public interface SharedFlow<out T> : Flow<T> {
  * might be added to this interface in the future, but is stable for use.
  * Use the `MutableSharedFlow(...)` constructor function to create an implementation.
  */
-@ExperimentalCoroutinesApi
 public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
     /**
      * Tries to emit a [value] to this shared flow without suspending. It returns `true` if the value was
@@ -202,7 +200,6 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
  *   supported only when `replay > 0` or `extraBufferCapacity > 0`).
  */
 @Suppress("FunctionName", "UNCHECKED_CAST")
-@ExperimentalCoroutinesApi
 public fun <T> MutableSharedFlow(
     replay: Int = 0,
     extraBufferCapacity: Int = 0,

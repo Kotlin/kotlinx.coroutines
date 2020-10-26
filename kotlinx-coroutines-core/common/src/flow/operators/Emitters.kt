@@ -71,7 +71,6 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
  *     .collect { println(it) } // prints Begin, a, b, c
  * ```
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.onStart(
     action: suspend FlowCollector<T>.() -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke start action
@@ -142,7 +141,6 @@ public fun <T> Flow<T>.onStart(
  * In case of failure or cancellation, any attempt to emit additional elements throws the corresponding exception.
  * Use [catch] if you need to suppress failure and replace it with emission of elements.
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.onCompletion(
     action: suspend FlowCollector<T>.(cause: Throwable?) -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke completion action
@@ -178,7 +176,6 @@ public fun <T> Flow<T>.onCompletion(
  * }.collect { println(it) } // prints 1, 2
  * ```
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.onEmpty(
     action: suspend FlowCollector<T>.() -> Unit
 ): Flow<T> = unsafeFlow {
@@ -202,12 +199,6 @@ private class ThrowingCollector(private val e: Throwable) : FlowCollector<Any?> 
         throw e
     }
 }
-
-// It was only released in 1.3.0-M2, remove in 1.4.0
-/** @suppress */
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility with a version w/o FlowCollector receiver")
-public fun <T> Flow<T>.onCompletion(action: suspend (cause: Throwable?) -> Unit): Flow<T> =
-    onCompletion { action(it) }
 
 private suspend fun <T> FlowCollector<T>.invokeSafely(
     action: suspend FlowCollector<T>.(cause: Throwable?) -> Unit,

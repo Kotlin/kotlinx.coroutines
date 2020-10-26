@@ -28,7 +28,7 @@ import org.reactivestreams.FlowAdapters
  * **Note: This is an experimental api.** Behaviour of publishers that work as children in a parent scope with respect
  *        to cancellation and error handling may change in the future.
  */
-@ExperimentalCoroutinesApi
+@ExperimentalCoroutinesApi // Since 1.3.x
 public fun <T> flowPublish(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit

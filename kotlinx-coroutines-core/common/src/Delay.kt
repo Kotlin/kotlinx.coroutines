@@ -95,7 +95,6 @@ public interface Delay {
  * }
  * ```
  */
-@ExperimentalCoroutinesApi
 public suspend fun awaitCancellation(): Nothing = suspendCancellableCoroutine {}
 
 /**
