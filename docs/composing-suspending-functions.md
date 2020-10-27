@@ -1,6 +1,6 @@
 <!--- TEST_NAME ComposingGuideTest -->
 
-[//]: # (title: Composinbg suspending functions)
+[//]: # (title: Composing suspending functions)
 
 This section covers various approaches to composition of suspending functions.
 

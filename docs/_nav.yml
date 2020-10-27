@@ -27,4 +27,4 @@
   title: Shared mutable state and concurrency
 - md: select-expression.md
   url: select-expression.html
-  title: Select expression (experimental)
+  title: Select Expression (experimental)
