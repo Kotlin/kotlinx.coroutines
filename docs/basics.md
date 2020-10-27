@@ -373,7 +373,7 @@ fun main() = runBlocking {
             delay(500L)
         }
     }
-    delay(1300L) // just quit after delay
+    delay(1000L) // just quit after delay
 //sampleEnd    
 }
 ```
