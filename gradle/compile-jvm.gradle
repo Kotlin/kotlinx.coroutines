@@ -9,23 +9,27 @@ apply plugin: 'org.jetbrains.kotlin.jvm'
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
-def jvmCompilerAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
-
 configurations {
-    create("jvmImplementation") {
-        extendsFrom implementation
+    create('jvmImplementation') {
         if (rootProject.ext.build_snapshot_train) {
             attributes {
-                attribute(jvmCompilerAttr, 'jvm')
+                attribute(jvmCompilerTypeAttr, 'jvm')
             }
         }
     }
+    configure([runtimeClasspath, runtimeElements]) {
+        extendsFrom jvmImplementation
+    }
+}
+
+sourceSets.all { sourceSet ->
+    sourceSet.compileClasspath += configurations.jvmImplementation
 }
 
 dependencies {
     if (rootProject.ext.build_snapshot_train) {
         attributesSchema {
-            attribute(jvmCompilerAttr)
+            attribute(rootProject.ext.jvmCompilerTypeAttr)
         }
     }
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
@@ -34,11 +38,6 @@ dependencies {
     testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
     testCompile "junit:junit:$junit_version"
-}
-
-sourceSets.all { sourceSet ->
-    sourceSet.compileClasspath += configurations.jvmImplementation
-    sourceSet.runtimeClasspath += configurations.jvmImplementation
 }
 
 compileKotlin {

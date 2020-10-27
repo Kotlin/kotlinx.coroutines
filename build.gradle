@@ -32,6 +32,7 @@ buildscript {
         if (kotlin_version == null) {
             throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
         }
+        ext.jvmCompilerTypeAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
     }
 
     // Determine if any project dependency is using a snapshot version
@@ -72,7 +73,20 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
     }
 
+    configurations.named('classpath') {
+        if (build_snapshot_train) {
+            attributes {
+                attribute(jvmCompilerTypeAttr, 'jvm')
+            }
+        }
+    }
+
     dependencies {
+        if (build_snapshot_train) {
+            attributesSchema {
+                attribute(jvmCompilerTypeAttr)
+            }
+        }
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
@@ -96,10 +110,9 @@ if (!Idea.active) {
 
 // todo:KLUDGE: This is needed to workaround dependency resolution between Java and MPP modules
 def configureKotlinJvmPlatform(configuration) {
-    def jvmCompilerAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
     configuration.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
     if (build_snapshot_train) {
-        configuration.attributes.attribute(jvmCompilerAttr, 'jvm')
+        configuration.attributes.attribute(ext.jvmCompilerTypeAttr, 'jvm')
     }
 }
 
@@ -204,7 +217,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
             if (platform == 'jvm') {
                 jvmImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
             } else {
-                compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
             }
             // the only way IDEA can resolve test classes
             testCompile project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs

@@ -5,17 +5,15 @@
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
-def jvmCompilerAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
-
 kotlin {
     jvm('jvm') {
         if (rootProject.ext.build_snapshot_train) {
-            attributes.attribute(jvmCompilerAttr, 'jvm')
+            attributes.attribute(rootProject.ext.jvmCompilerTypeAttr, 'jvm')
         }
     }
     if (rootProject.ext.build_snapshot_train) {
         jvm('jvmIr') {
-            attributes.attribute(jvmCompilerAttr, 'jvmIr')
+            attributes.attribute(rootProject.ext.jvmCompilerTypeAttr, 'jvmIr')
             compilations.all {
                 kotlinOptions.useIR = true
             }
