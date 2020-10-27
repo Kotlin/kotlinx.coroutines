@@ -5,11 +5,8 @@
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
-import io.reactivex.disposables.Disposable
-import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.suspendCancellableCoroutine
+import io.reactivex.disposables.*
+import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
 // ------------------------ CompletableSource ------------------------
@@ -30,6 +27,7 @@ public suspend fun CompletableSource.await(): Unit = suspendCancellableCoroutine
 }
 
 // ------------------------ MaybeSource ------------------------
+private val MISSING_VALUE = Any()
 
 /**
  * Awaits for completion of the maybe without blocking a thread.
@@ -41,7 +39,10 @@ public suspend fun CompletableSource.await(): Unit = suspendCancellableCoroutine
  * immediately resumes with [CancellationException].
  */
 @Suppress("UNCHECKED_CAST")
-public suspend fun <T> MaybeSource<T>.await(): T? = (this as MaybeSource<T?>).awaitOrDefault(null)
+public suspend fun <T> MaybeSource<T>.await(): T? {
+    val result = (this as MaybeSource<Any>).awaitOrDefault(MISSING_VALUE)
+    return if (result === MISSING_VALUE) null else result as T
+}
 
 /**
  * Awaits for completion of the maybe without blocking a thread.
@@ -52,12 +53,23 @@ public suspend fun <T> MaybeSource<T>.await(): T? = (this as MaybeSource<T?>).aw
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  */
-public suspend fun <T> MaybeSource<T>.awaitOrDefault(default: T): T = suspendCancellableCoroutine { cont ->
+public suspend fun <T : Any> MaybeSource<T>.awaitOrDefault(default: T): T = suspendCancellableCoroutine { cont ->
     subscribe(object : MaybeObserver<T> {
-        override fun onSubscribe(d: Disposable) { cont.disposeOnCancellation(d) }
-        override fun onComplete() { cont.resume(default) }
-        override fun onSuccess(t: T) { cont.resume(t) }
-        override fun onError(error: Throwable) { cont.resumeWithException(error) }
+        override fun onSubscribe(d: Disposable) {
+            cont.disposeOnCancellation(d)
+        }
+
+        override fun onComplete() {
+            cont.resume(default)
+        }
+
+        override fun onSuccess(t: T) {
+            cont.resume(t)
+        }
+
+        override fun onError(error: Throwable) {
+            cont.resumeWithException(error)
+        }
     })
 }
 
@@ -71,7 +83,7 @@ public suspend fun <T> MaybeSource<T>.awaitOrDefault(default: T): T = suspendCan
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  */
-public suspend fun <T> SingleSource<T>.await(): T = suspendCancellableCoroutine { cont ->
+public suspend fun <T : Any> SingleSource<T>.await(): T = suspendCancellableCoroutine { cont ->
     subscribe(object : SingleObserver<T> {
         override fun onSubscribe(d: Disposable) { cont.disposeOnCancellation(d) }
         override fun onSuccess(t: T) { cont.resume(t) }
@@ -91,7 +103,7 @@ public suspend fun <T> SingleSource<T>.await(): T = suspendCancellableCoroutine 
  *
  * @throws NoSuchElementException if observable does not emit any value
  */
-public suspend fun <T> ObservableSource<T>.awaitFirst(): T = awaitOne(Mode.FIRST)
+public suspend fun <T: Any> ObservableSource<T>.awaitFirst(): T = awaitOne(Mode.FIRST)!! // Cannot be null
 
 /**
  * Awaits for the first value from the given observable or the [default] value if none is emitted without blocking a
@@ -101,7 +113,8 @@ public suspend fun <T> ObservableSource<T>.awaitFirst(): T = awaitOne(Mode.FIRST
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  */
-public suspend fun <T> ObservableSource<T>.awaitFirstOrDefault(default: T): T = awaitOne(Mode.FIRST_OR_DEFAULT, default)
+@Suppress("UNCHECKED_CAST")
+public suspend fun <T> ObservableSource<T>.awaitFirstOrDefault(default: T): T = (this as ObservableSource<Any>).awaitOne(Mode.FIRST_OR_DEFAULT, default) as T
 
 /**
  * Awaits for the first value from the given observable or `null` value if none is emitted without blocking a
@@ -111,7 +124,7 @@ public suspend fun <T> ObservableSource<T>.awaitFirstOrDefault(default: T): T = 
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  */
-public suspend fun <T> ObservableSource<T>.awaitFirstOrNull(): T? = awaitOne(Mode.FIRST_OR_DEFAULT)
+public suspend fun <T : Any> ObservableSource<T>.awaitFirstOrNull(): T? = awaitOne(Mode.FIRST_OR_DEFAULT)
 
 /**
  * Awaits for the first value from the given observable or call [defaultValue] to get a value if none is emitted without blocking a
@@ -121,7 +134,7 @@ public suspend fun <T> ObservableSource<T>.awaitFirstOrNull(): T? = awaitOne(Mod
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  */
-public suspend fun <T> ObservableSource<T>.awaitFirstOrElse(defaultValue: () -> T): T = awaitOne(Mode.FIRST_OR_DEFAULT) ?: defaultValue()
+public suspend fun <T : Any> ObservableSource<T>.awaitFirstOrElse(defaultValue: () -> T): T = awaitOne(Mode.FIRST_OR_DEFAULT) ?: defaultValue()
 
 /**
  * Awaits for the last value from the given observable without blocking a thread.
@@ -133,7 +146,7 @@ public suspend fun <T> ObservableSource<T>.awaitFirstOrElse(defaultValue: () -> 
  *
  * @throws NoSuchElementException if observable does not emit any value
  */
-public suspend fun <T> ObservableSource<T>.awaitLast(): T = awaitOne(Mode.LAST)
+public suspend fun <T : Any> ObservableSource<T>.awaitLast(): T = awaitOne(Mode.LAST)!! // Cannot be null
 
 /**
  * Awaits for the single value from the given observable without blocking a thread.
@@ -146,7 +159,7 @@ public suspend fun <T> ObservableSource<T>.awaitLast(): T = awaitOne(Mode.LAST)
  * @throws NoSuchElementException if observable does not emit any value
  * @throws IllegalArgumentException if observable emits more than one value
  */
-public suspend fun <T> ObservableSource<T>.awaitSingle(): T = awaitOne(Mode.SINGLE)
+public suspend fun <T : Any> ObservableSource<T>.awaitSingle(): T = awaitOne(Mode.SINGLE)!! // Cannot be null
 
 // ------------------------ private ------------------------
 
@@ -161,10 +174,10 @@ private enum class Mode(val s: String) {
     override fun toString(): String = s
 }
 
-private suspend fun <T> ObservableSource<T>.awaitOne(
+private suspend fun <T : Any> ObservableSource<T>.awaitOne(
     mode: Mode,
-    default: T? = null
-): T = suspendCancellableCoroutine { cont ->
+    default: Any? = null
+): T? = suspendCancellableCoroutine { cont ->
     subscribe(object : Observer<T> {
         private lateinit var subscription: Disposable
         private var value: T? = null
@@ -205,7 +218,7 @@ private suspend fun <T> ObservableSource<T>.awaitOne(
             }
             when {
                 mode == Mode.FIRST_OR_DEFAULT -> {
-                    cont.resume(default as T)
+                    cont.resume(default as T?)
                 }
                 cont.isActive -> {
                     cont.resumeWithException(NoSuchElementException("No value received via onNext for $mode"))

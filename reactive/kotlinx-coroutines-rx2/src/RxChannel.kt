@@ -18,7 +18,7 @@ import kotlinx.coroutines.internal.*
  * [MaybeSource] doesn't have a corresponding [Flow] adapter, so it should be transformed to [Observable] first.
  */
 @Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.WARNING) // Will be hidden in 1.4
-public fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
+public fun <T : Any> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     subscribe(channel)
     return channel
@@ -32,40 +32,48 @@ public fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
  * [ObservableSource] doesn't have a corresponding [Flow] adapter, so it should be transformed to [Observable] first.
  */
 @Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.WARNING) // Will be hidden in 1.4
-public fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
+public fun <T : Any> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     subscribe(channel)
     return channel
 }
 
 // Will be promoted to error in 1.3.0, removed in 1.4.0
-@Deprecated(message = "Use collect instead", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("this.collect(action)"))
-public suspend inline fun <T> MaybeSource<T>.consumeEach(action: (T) -> Unit): Unit =
+@Deprecated(
+    message = "Use collect instead",
+    level = DeprecationLevel.ERROR,
+    replaceWith = ReplaceWith("this.collect(action)")
+)
+public suspend inline fun <T : Any> MaybeSource<T>.consumeEach(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
 
 // Will be promoted to error in 1.3.0, removed in 1.4.0
-@Deprecated(message = "Use collect instead", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("this.collect(action)"))
-public suspend inline fun <T> ObservableSource<T>.consumeEach(action: (T) -> Unit): Unit =
+@Deprecated(
+    message = "Use collect instead",
+    level = DeprecationLevel.ERROR,
+    replaceWith = ReplaceWith("this.collect(action)")
+)
+public suspend inline fun <T : Any> ObservableSource<T>.consumeEach(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
 
 /**
  * Subscribes to this [MaybeSource] and performs the specified action for each received element.
  * Cancels subscription if any exception happens during collect.
  */
-public suspend inline fun <T> MaybeSource<T>.collect(action: (T) -> Unit): Unit =
+public suspend inline fun <T : Any> MaybeSource<T>.collect(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
 
 /**
  * Subscribes to this [ObservableSource] and performs the specified action for each received element.
  * Cancels subscription if any exception happens during collect.
  */
-public suspend inline fun <T> ObservableSource<T>.collect(action: (T) -> Unit): Unit =
+public suspend inline fun <T : Any> ObservableSource<T>.collect(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-private class SubscriptionChannel<T> :
-    LinkedListChannel<T>(null), Observer<T>, MaybeObserver<T>
-{
+private class SubscriptionChannel<T : Any>
+    : LinkedListChannel<T>(null), Observer<T>, MaybeObserver<T> {
+
     private val _subscription = atomic<Disposable?>(null)
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
