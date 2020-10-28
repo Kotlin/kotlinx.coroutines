@@ -68,6 +68,15 @@ import kotlin.native.concurrent.*
  * the `onBufferOverflow` parameter, which is equal to one of the entries of the [BufferOverflow] enum. When a strategy other
  * than [SUSPENDED][BufferOverflow.SUSPEND] is configured, emissions to the shared flow never suspend.
  *
+ * ### Unbuffered shared flow
+ *
+ * A default implementation of a shared flow that is created with `MutableSharedFlow()` constructor function
+ * without parameters has no replay cache nor additional buffer.
+ * [emit][MutableSharedFlow.emit] call to such a shared flow suspends until all subscribers receive the emitted value
+ * and returns immediately if there are no subscribers.
+ * Thus, [tryEmit][MutableSharedFlow.tryEmit] call succeeds and returns `true` only if
+ * there are no subscribers (in which case the emitted value is immediately lost).
+ *
  * ### SharedFlow vs BroadcastChannel
  *
  * Conceptually shared flow is similar to [BroadcastChannel][BroadcastChannel]
