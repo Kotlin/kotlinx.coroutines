@@ -51,6 +51,7 @@ tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("jmhJar"
     archiveClassifier by null
     archiveVersion by null
     destinationDirectory.file("$rootDir")
+    configurations.add(project.configurations["jvmImplementation"])
 }
 
 dependencies {

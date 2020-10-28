@@ -17,13 +17,10 @@ configurations {
             }
         }
     }
-    configure([runtimeClasspath, runtimeElements]) {
-        extendsFrom jvmImplementation
-    }
 }
 
 sourceSets.all { sourceSet ->
-    sourceSet.compileClasspath += configurations.jvmImplementation
+    sourceSet.runtimeClasspath += configurations.jvmImplementation
 }
 
 dependencies {
