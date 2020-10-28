@@ -199,6 +199,9 @@ Let NDeq := N .@ "deq".
 Let NEnq := N .@ "enq".
 Notation iProp := (iProp Σ).
 
+Global Instance base_lit_inhabited: Inhabited base_lit.
+Proof. repeat econstructor. Qed.
+
 Definition rendezvousResolution_ra r :=
   match r with
   | None => (Excl' (), None)
@@ -348,7 +351,10 @@ Definition cell_resources
          | Some cellImmediatelyCancelled =>
            (ℓ ↦ InjLV f ∨ ℓ ↦ CANCELLEDV) ∗
            ⌜immediateCancellation⌝ ∗
-           future_is_cancelled γf
+           future_is_cancelled γf ∗
+           ((future_completion_permit γf 1%Qp ∨ iterator_issued γd i) ∗
+            (if insideDeqFront then R else True) ∨
+            future_completion_permit γf 1%Qp ∗ iterator_issued γd i)
          | Some (cellCancelled d) =>
            future_is_cancelled γf ∗
            ⌜¬ immediateCancellation⌝ ∗
@@ -383,13 +389,15 @@ Definition cell_resources
                   iterator_issued γd i)
              | Some (cellTookValue v) =>
                ℓ ↦ SOMEV #v ∗ iterator_issued γd i ∗
-                 future_completion_permit γf 1%Qp ∗ V v ∗ R
+                 future_completion_permit γf 1%Qp ∗ V v
+                 (* TODO: be able to take `V v` *)
              | Some cellClosed =>
-             ℓ ↦ CANCELLEDV ∗
+               ℓ ↦ CANCELLEDV ∗
                  ((future_completion_permit γf 1%Qp ∨
                    iterator_issued γd i) ∗ awakening_permit γtq ∨
                  future_completion_permit γf 1%Qp ∗
                  iterator_issued γd i)
+                 (* TODO: establish an exclusive right to mark the cell as closed *)
              end
            end
          end
@@ -729,6 +737,19 @@ Proof.
   done.
 Qed.
 
+Lemma suspension_permit_combine γtq n:
+  n > 0 ->
+  ([∗] replicate n (suspension_permit γtq))%I ≡ own γtq (◯ (n, ε, ε, ε)).
+Proof.
+  move=> Hn.
+  rewrite big_opL_replicate_irrelevant_element -big_opL_own;
+    last by inversion Hn.
+  move: (big_opL_op_prodR 0)=> /= HBigOpL.
+  rewrite -big_opL_auth_frag !HBigOpL !big_opL_op_ucmra_unit.
+  rewrite -big_opL_op_nat' Nat.mul_1_r replicate_length.
+  done.
+Qed.
+
 Lemma deque_register_ra_update γ γa γe γd l deqFront i n:
   (i + deqFront < length l)%nat ->
   own γ (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
@@ -801,6 +822,9 @@ Proof.
       rewrite bool_decide_true; last lia.
       rewrite /cell_resources.
       destruct v as [[|? ? [[| |[[|]|]]|]]|]=> //.
+      + iDestruct "H" as "($ & $ & H)". iDestruct "H" as (?) "H".
+        iExists _. iDestruct "H" as "($ & $ & $ & $ & H)".
+        iDestruct "H" as "[[H _]|H]"; [iLeft|iRight]; iFrame; done.
       + iDestruct "H" as "(_ & _ & H)".
         iDestruct "H" as (?) "H".
         iDestruct "H" as "(_ & _ & _ & >HContra & _)".
@@ -824,11 +848,11 @@ Proof.
 Qed.
 
 Lemma awakening_permit_implies_bound γtq γa γe γd l deqFront n:
-  ([∗] replicate n (awakening_permit γtq)) -∗
   own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+  ([∗] replicate n (awakening_permit γtq)) -∗
   ⌜n <= deqFront⌝.
 Proof.
-  iIntros "HAwaks H●".
+  iIntros "H● HAwaks".
   destruct n; first by iPureIntro; lia.
   rewrite awakening_permit_combine; last lia.
   iDestruct (own_valid_2 with "H● HAwaks")
@@ -837,51 +861,23 @@ Proof.
   simpl in *. iPureIntro; lia.
 Qed.
 
+Lemma suspension_permit_implies_bound γtq γa γe γd l deqFront n:
+  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+  ([∗] replicate n (suspension_permit γtq)) -∗
+  ⌜n <= length l⌝.
+Proof.
+  iIntros "H● HSuspends".
+  destruct n; first by iPureIntro; lia.
+  rewrite suspension_permit_combine; last lia.
+  iDestruct (own_valid_2 with "H● HSuspends")
+    as %[[[[HValid%nat_included _]%prod_included
+             _]%prod_included _]%prod_included _]%auth_both_valid.
+  simpl in *. iPureIntro; lia.
+Qed.
+
 Global Instance is_thread_queue_persistent γa γ γe γd e d:
   Persistent (is_thread_queue γa γ γe γd e d).
 Proof. apply _. Qed.
-
-Lemma cell_resources_conflict_invariant γtq γa γe γd ℓ i b c q:
-  cell_location γtq γa i ℓ -∗
-  cell_resources γtq γa γe γd i (Some c) b -∗
-  cancellation_handle γa i -∗
-  ℓ ↦{q} - -∗
-  False.
-Proof.
-  iIntros "#H↦ HRR HCancHandle Hℓ".
-  iDestruct "Hℓ" as (?) "Hℓ".
-  destruct c as [? resolution|? ? resolution].
-  - simpl. iDestruct "HRR" as "(_ & HCancHandle' & _)".
-    iDestruct (cell_cancellation_handle_exclusive
-                 with "HCancHandle HCancHandle'") as %[].
-  - simpl. iDestruct "HRR" as "(_ & _ & HRR)".
-    iDestruct "HRR" as (ℓ') "[H↦' HRR]".
-    iDestruct (infinite_array_mapsto_agree with "H↦ H↦'") as "<-".
-    iAssert (∀ v, ℓ ↦ v -∗ False)%I with "[Hℓ]" as "HℓContra".
-    { iIntros (?) "Hℓ'".
-      iDestruct (mapsto_valid_2 with "Hℓ' Hℓ") as %HContra.
-      exfalso; move: HContra; rewrite frac_valid'.
-      apply Qp_not_plus_q_ge_1. }
-    destruct resolution as [resolution|].
-    + destruct resolution as [?| |d].
-      * iDestruct "HRR" as "(_ & _ & _ & HCancHandle' & _)".
-        iDestruct (cell_cancellation_handle_exclusive
-                     with "HCancHandle HCancHandle'") as %[].
-      * iDestruct "HRR" as "[[Hℓ'|Hℓ'] _]".
-        all: iDestruct ("HℓContra" with "Hℓ'") as %[].
-      * iDestruct "HRR" as "(_ & _ & HRR)".
-        destruct d as [[[[|]|]|]|].
-        all: try (iDestruct "HRR" as "(Hℓ' & _)";
-          by iDestruct ("HℓContra" with "Hℓ'") as %[]).
-        { iDestruct "HRR" as "(_ & _ & [[Hℓ _]|[[Hℓ _]|HRR]])";
-            last iDestruct "HRR" as (?) "[Hℓ _]".
-          all: by iDestruct ("HℓContra" with "Hℓ") as %[]. }
-        { iDestruct "HRR" as "[_ [[Hℓ _]|[_ HRR]]]";
-            last iDestruct "HRR" as (?) "[Hℓ _]".
-          all: by iDestruct ("HℓContra" with "Hℓ") as %[]. }
-    + iDestruct "HRR" as "[Hℓ _]".
-      iDestruct ("HℓContra" with "Hℓ") as %[].
-Qed.
 
 Lemma cell_cancelled_means_skippable γtq γa γe γd i b c:
   cell_cancelled γa i -∗
@@ -915,11 +911,40 @@ Proof.
     iDestruct ("HContra" with "HCancHandle") as %[].
 Qed.
 
+Lemma cell_cancelled_means_present E' γtq γa γe γd l deqFront ℓ i:
+  ↑NArr ⊆ E' ->
+  cell_cancelled γa i -∗
+  cell_location γtq γa i ℓ -∗
+  ▷ thread_queue_invariant γa γtq γe γd l deqFront ={E'}=∗
+  ▷ thread_queue_invariant γa γtq γe γd l deqFront ∗
+  ▷ ∃ c, ⌜l !! i = Some (Some c) ∧ if immediateCancellation
+                                 then is_immediately_cancelled (Some c)
+                                 else is_skippable (Some c)⌝.
+Proof.
+  iIntros (HSets) "#HCanc #H↦ (>H● & HRRs & >%)".
+  iMod (acquire_cell _ _ _ _ _ _ with "H↦")
+    as "[[#>HCellInit|[>Hℓ HCancHandle]] HCloseCell]"; first done.
+  - iMod ("HCloseCell" with "[HCellInit]") as "_"; first by iLeft. iModIntro.
+    iDestruct "HCellInit" as "[HCellInit|HCellInit]".
+    1: iDestruct "HCellInit" as (? ?) "HCellInit".
+    2: iDestruct "HCellInit" as (?) "HCellInit".
+    all: iDestruct (rendezvous_state_included' with "H● HCellInit") as
+        %(c & HEl & _).
+    all: iDestruct (big_sepL_lookup_acc with "HRRs") as "[HRR HRRsRestore]";
+      first done.
+    all: iDestruct (cell_cancelled_means_skippable with "HCanc HRR")
+                   as "#HH".
+    all: iSpecialize ("HRRsRestore" with "HRR").
+    all: iFrame. all: iSplitR; first by iPureIntro. all: iNext.
+    all: iDestruct "HH" as "%"; iPureIntro. all: by eexists.
+  - iDestruct (cell_cancellation_handle_not_cancelled with "HCanc HCancHandle")
+      as ">[]".
+Qed.
+
 (* ENTRY POINTS TO THE CELL ****************************************************)
 
 Lemma inhabit_cell_spec γa γtq γe γd γf i ptr f e d:
   {{{ is_future NFuture γf f ∗
-      cell_enqueued γtq i ∗
       cell_location γtq γa i ptr ∗
       is_thread_queue γa γtq γe γd e d ∗
       future_completion_permit γf 1%Qp ∗
@@ -931,65 +956,65 @@ Lemma inhabit_cell_spec γa γtq γe γd γf i ptr f e d:
       else filled_rendezvous_state γtq i ε
            ∗ future_completion_permit γf 1%Qp }}}.
 Proof.
-  iIntros (Φ) "(#HF & #HExistsEl & #H↦ & #HTq & HFC & HEnq) HΦ".
+  iIntros (Φ) "(#HF & #H↦ & #(HInv & HInfArr & HE & _) & HFC & HEnq) HΦ".
   wp_bind (CmpXchg _ _ _).
-  iDestruct "HTq" as "(HInv & HInfArr & _ & _)".
-
+  iMod (access_iterator_resources with "HE [#]") as "HH"; first done.
+  by iApply (iterator_issued_is_at_least with "HEnq").
+  iDestruct "HH" as "[HH HHRestore]".
   iInv "HInv" as (l' deqFront) "(>H● & HRRs & >HLen & >HDeqIdx)" "HTqClose".
-  iMod (acquire_cell _ _ _ _ _ _ with "H↦")
-    as "[[#>HCellInit|[>Hℓ HCancHandle]] HCloseCell]"; first by solve_ndisj.
-  {
-    iSpecialize ("HCloseCell" with "[HCellInit]"); first by iLeft.
-    iDestruct "HCellInit" as "[HCellInhabited|HCellFilled]".
-    - (* cell is inhabited? impossible, we hold the suspender token. *)
-      rewrite /inhabited_rendezvous_state.
-      iDestruct "HCellInhabited" as (? ?) "HCellInhabited".
-      iDestruct (rendezvous_state_included' with "H● HCellInhabited")
-        as %(c & HEl & HInc).
-      destruct c; simpl in *.
-      { exfalso. move: HInc. rewrite csum_included. case; first done.
-        case; by intros (? & ? & ? & ? & ?). }
-      iDestruct (big_sepL_lookup with "HRRs") as "HRR"; first done.
-      iDestruct "HRR" as "[>HEnq' _]".
-      iDestruct (iterator_issued_exclusive with "HEnq HEnq'") as %[].
-    - (* cell was filled already, CAS fails. *)
-      iDestruct ("HΦ" $! false with "[HCellFilled HFC]") as "HΦ";
-        first by iFrame.
-      iDestruct "HCellFilled" as (?) "HCellFilled".
-      iDestruct (rendezvous_state_included' with "H● HCellFilled")
-        as %(c & HEl & HInc).
-      destruct c as [v' resolution|]; simpl in *.
-      2: { exfalso. move: HInc. rewrite csum_included. case; first done.
-           case; by intros (? & ? & ? & ? & ?). }
-      iDestruct (big_sepL_lookup_acc with "HRRs") as "[HRR HRRsRestore]";
-        first done.
-      simpl.
-      iDestruct "HRR" as "(H1 & H2 & H3 & HRR)".
-      iDestruct "HRR" as (ℓ) "[H↦' HRR]".
-      iDestruct (infinite_array_mapsto_agree with "H↦ H↦'") as "><-".
-      destruct resolution as [[|]|].
-      iDestruct "HRR" as "[HRR|HRR]".
-      all: iDestruct "HRR" as "(Hℓ & HRR)"; wp_cmpxchg_fail.
-      all: iMod "HCloseCell" as "_"; iModIntro.
-      all: iDestruct ("HRRsRestore" with "[H1 H2 H3 HRR Hℓ]") as "HRRs";
-        first by (eauto 10 with iFrame).
-      all: iMod ("HTqClose" with "[-HΦ]") as "_";
-        first by iExists _, _; iFrame.
-      all: iModIntro; wp_pures; iAssumption.
-  }
-  {
-    iDestruct (rendezvous_state_included with "H● HExistsEl") as %(c & HEl & _).
-    destruct c as [contra|].
-    { (* it could not have been already allocated! *)
-      iDestruct (big_sepL_lookup with "HRRs") as "HRR"; first done.
-      iDestruct (cell_resources_conflict_invariant with
-                     "H↦ HRR HCancHandle [Hℓ]") as ">[]"; first by eauto. }
-    wp_cmpxchg_suc. iSpecialize ("HΦ" $! true).
+  iDestruct (suspension_permit_implies_bound with "H● HH") as "#>HH'".
+  iDestruct "HH'" as %HLength. iSpecialize ("HHRestore" with "HH").
+  destruct (lookup_lt_is_Some_2 l' i) as [c HEl]; first lia.
+  destruct c as [[? resolution|? ? ?]|].
+  - (* A value was already passed. *)
+    iMod (own_update with "H●") as "[H● HCellFilled]".
+    2: iDestruct ("HΦ" $! false with "[HCellFilled HFC]") as "HΦ";
+      first by iFrame; iExists _.
+    { apply auth_update_core_id. by apply _.
+      apply prod_included; split=>/=; first by apply ucmra_unit_least.
+      apply prod_included; split=>/=; last by apply ucmra_unit_least.
+      apply list_singletonM_included. eexists. rewrite map_lookup HEl /=.
+      split; first done. apply Some_included. right. apply Cinl_included.
+      apply prod_included. split=>/=; first done. apply ucmra_unit_least.
+    }
+    iDestruct (big_sepL_lookup_acc with "HRRs") as "[HRR HRRsRestore]";
+      first done.
+    simpl.
+    iDestruct "HRR" as "(H1 & H2 & H3 & HRR)".
+    iDestruct "HRR" as (ℓ) "[H↦' HRR]".
+    iDestruct (infinite_array_mapsto_agree with "H↦ H↦'") as "><-".
+    destruct resolution as [[|]|].
+    iDestruct "HRR" as "[HRR|HRR]".
+    all: iDestruct "HRR" as "(Hℓ & HRR)"; wp_cmpxchg_fail.
+    all: iDestruct ("HRRsRestore" with "[H1 H2 H3 HRR Hℓ]") as "HRRs";
+      first by (eauto 10 with iFrame).
+    all: iMod ("HTqClose" with "[-HΦ HHRestore]") as "_";
+      first by iExists _, _; iFrame.
+    all: by iModIntro; iMod "HHRestore"; iModIntro; wp_pures.
+  - (* Cell already inhabited? Impossible. *)
+    iDestruct (big_sepL_lookup with "HRRs") as "HRR"; first done.
+    iDestruct "HRR" as "[>HEnq' _]".
+    iDestruct (iterator_issued_exclusive with "HEnq HEnq'") as %[].
+  - iMod (acquire_cell _ _ _ _ _ _ with "H↦")
+      as "[[#>HCellInit|[>Hℓ HCancHandle]] HCloseCell]";
+      first by solve_ndisj.
+    { (* We know the rendezvous is not yet initialized. *)
+      iAssert (∃ s, rendezvous_state γtq i (Some s))%I with "[]"
+        as (?) "HContra".
+      { iDestruct "HCellInit" as "[H|H]".
+        iDestruct "H" as (? ?) "H"; iExists _; iFrame "H".
+        iDestruct "H" as (?) "H"; iExists _; iFrame "H". }
+      iDestruct (rendezvous_state_included with "H● HContra")
+        as %(c & HEl' & HInc).
+      simplify_eq. simpl in HInc. by apply included_None in HInc.
+    }
+    wp_cmpxchg_suc.
     iMod (inhabit_cell_ra with "H●") as "(H● & #HLoc)"; first done.
     iMod ("HCloseCell" with "[]") as "_"; last iModIntro.
     { iLeft. iNext. iLeft. iExists _, _. iApply "HLoc". }
-    iSpecialize ("HΦ" with "[$]").
-    iMod ("HTqClose" with "[-HΦ]"); last by iModIntro; wp_pures.
+    iSpecialize ("HΦ" $! true with "[$]").
+    iMod ("HTqClose" with "[-HΦ HHRestore]").
+    2: by iModIntro; iMod "HHRestore"; iModIntro; wp_pures.
     iExists _, _. iFrame "H●". rewrite insert_length. iFrame "HLen".
     iSplitR "HDeqIdx".
     2: {
@@ -1006,11 +1031,7 @@ Proof.
     iApply "HRRsRestore". simpl. iFrame "HEnq HLoc HF".
     iExists _. iFrame "H↦ Hℓ HCancHandle". iDestruct "HPre" as "[$ $]".
     iFrame.
-  }
 Qed.
-
-Global Instance base_lit_inhabited: Inhabited base_lit.
-Proof. repeat econstructor. Qed.
 
 Lemma pass_value_to_empty_cell_spec
       (synchronously: bool) γtq γa γe γd i ptr e d v:
@@ -1160,6 +1181,197 @@ Proof.
       iApply "HRRsRestore". simpl. iFrame. iSplitR; first done.
       iExists _. iFrame "H↦".
       iLeft. iFrame.
+Qed.
+
+Theorem dequeue_iterator_update γa γtq γe γd e d:
+  ⊢ is_thread_queue γa γtq γe γd e d -∗
+    ⌜¬ immediateCancellation⌝ -∗
+    make_laterable (∀ l, ([∗ list] i ∈ l,
+    cell_cancelled γa i ∗ iterator_issued γd i
+    ={⊤ ∖ ↑NDeq}=∗ awakening_permit γtq)).
+Proof.
+  iIntros "(#HInv & _ & _ & _)" (HCanc).
+  iApply (make_laterable_intro True%I); last done.
+  iModIntro. iIntros "_". iIntros (cancelledCells).
+  iAssert (∀ i ℓ, cell_cancelled γa i ∗ cell_location γtq γa i ℓ ∗
+                                 iterator_issued γd i
+          ={⊤ ∖ ↑NDeq}=∗ awakening_permit γtq)%I as "HH".
+  {
+    iIntros (i ℓ) "(#HCellCanc & #H↦ & HIsRes)".
+    iInv "HInv" as (l deqFront) "HOpen" "HClose".
+    iMod (cell_cancelled_means_present with "HCellCanc H↦ HOpen")
+         as "[HOpen >HFact]".
+    by solve_ndisj. iDestruct "HFact" as %(c & HEl & HFact).
+    iDestruct "HOpen" as "(H● & HRRs & HPures)".
+    iDestruct (big_sepL_lookup_acc with "HRRs") as "[HRR HRRsRestore]";
+      first done.
+    destruct immediateCancellation; first done. simpl in *.
+    destruct c as [|? ? [[| |[[c'|]|]]|]]=>//.
+    iDestruct "HRR" as "(HIsSus & HTh & HRR)".
+    iDestruct "HRR" as (ℓ') "(H↦' & HFutureCancelled & HNotCanc & HRR)".
+    admit.
+  }
+Abort.
+
+Lemma read_cell_value_by_resumer_spec γtq γa γe γd i ptr e d:
+  {{{ is_thread_queue γa γtq γe γd e d ∗
+      cell_location γtq γa i ptr ∗
+      iterator_issued γd i }}}
+    !#ptr
+  {{{ (v: val), RET v;
+      deq_front_at_least γd (S i) ∗
+      (⌜v = NONEV⌝ ∧ iterator_issued γd i ∨
+       ⌜v = CANCELLEDV⌝ ∧ (if immediateCancellation then R
+                           else awakening_permit γtq) ∨
+       ⌜v = REFUSEDV⌝ ∧ E ∨
+       ∃ γf f, ⌜v = InjLV f⌝ ∧ rendezvous_thread_handle γtq γf f i ∗
+               future_completion_permit γf 1%Qp)
+  }}}.
+Proof.
+  iIntros (Φ) "(#(HInv & HInfArr & _ & HD) & #H↦ & HIsRes) HΦ".
+  iMod (access_iterator_resources with "HD [#]") as "HH"; first done.
+  { iApply (own_mono with "HIsRes"). apply auth_included; split=>//=.
+    apply prod_included; split; first by apply ucmra_unit_least.
+    apply max_nat_included. simpl. done. }
+  rewrite awakening_permit_combine; last lia.
+  iDestruct "HH" as "[>HH HHRestore]".
+  iMod (acquire_cell _ _ _ _ _ _ with "H↦")
+    as "[[#>HCellInit|[>Hℓ HCancHandle]] HCloseCell]"; first by solve_ndisj.
+  2: { (* Cell was not yet inhabited, so NONEV is written in it. *)
+    wp_load. iMod ("HCloseCell" with "[Hℓ HCancHandle]") as "_".
+    by iRight; iFrame. iModIntro. iMod ("HHRestore" with "HH").
+    iApply "HΦ". by iLeft; iFrame.
+  }
+  iSpecialize ("HCloseCell" with "[HCellInit]"); first by iLeft.
+  iInv "HInv" as (l deqFront) "(>H● & HRRs & >HLen & >HDeqIdx)" "HTqClose".
+  iDestruct (own_valid_2 with "H● HH")
+    as %[[[[_ [HValid%nat_included _]%prod_included]%prod_included
+        _]%prod_included _]%prod_included _]%auth_both_valid.
+  simpl in *. iSpecialize ("HHRestore" with "[HH]"); first done.
+  iDestruct "HCellInit" as "[HCellInhabited|HCellFilled]".
+  2: { (* Cell could not have been filled already, we hold the permit. *)
+    iDestruct "HCellFilled" as (?) "HCellFilled".
+    iDestruct (rendezvous_state_included' with "H● HCellFilled")
+      as %(c & HEl & HInc).
+    destruct c as [? c'|].
+    2: { exfalso. simpl in *. move: HInc. rewrite csum_included.
+        case; first done. case; by intros (? & ? & ? & ? & ?). }
+    iDestruct (big_sepL_lookup with "HRRs") as "HRR"; first done.
+    iDestruct "HRR" as "[>HContra _]".
+    iDestruct (iterator_issued_exclusive with "HContra HIsRes") as %[].
+  }
+  (* Cell was inhabited. *)
+  iDestruct "HCellInhabited" as (? ?) "HCellInhabited".
+  iDestruct (rendezvous_state_included' with "H● HCellInhabited")
+    as %(c & HEl & HInc).
+  destruct c as [? c'|? ? c'].
+  1: { exfalso. simpl in *. move: HInc. rewrite csum_included.
+        case; first done. case; by intros (? & ? & ? & ? & ?). }
+  move: HInc; rewrite Cinr_included pair_included to_agree_included.
+  case. case=> /= HEq1 HEq2 _. simplify_eq.
+  iDestruct (big_sepL_lookup_acc with "HRRs") as "[HRR HRRsRestore]";
+    first done.
+  iDestruct "HRR" as "(HIsSus & #HTh & HRR)". iDestruct "HRR" as (ℓ) "[H↦' HRR]".
+  iDestruct (infinite_array_mapsto_agree with "H↦ H↦'") as "><-".
+  destruct c' as [[| |c'']|].
+  - (* Cell could not have been resumed already. *)
+    iDestruct "HRR" as "(_ & >HContra & _)".
+    iDestruct (iterator_issued_exclusive with "HContra HIsRes") as %[].
+  - iDestruct "HRR" as
+        "(Hℓ & >HImmediate & HCancelled & [HCompletion|[_ HC]])".
+    iDestruct "HImmediate" as %HImmediate.
+    iDestruct "HCompletion" as "[[HCompletionPermit|HC] HR]".
+    all: try by iDestruct (iterator_issued_exclusive with "HIsRes HC") as ">[]".
+    iDestruct "Hℓ" as "[Hℓ|Hℓ]"; wp_load.
+    + iSpecialize ("HΦ" $! (InjLV _) with "[HCompletionPermit]").
+      { repeat iRight. iExists _, _. iFrame. iSplit; last by iAssumption. done. }
+      iMod ("HTqClose" with "[-HCloseCell HHRestore HΦ]").
+      2: iModIntro; iMod "HCloseCell"; iModIntro; by iMod "HHRestore".
+      iExists _, _. iFrame "H● HDeqIdx HLen". iApply "HRRsRestore".
+      iFrame "HIsSus HTh HCancelled". iExists _. iFrame "H↦".
+      iSplitL "Hℓ"; first by iLeft. iSplitR; first done. iLeft. iFrame.
+    + iSpecialize ("HΦ" $! CANCELLEDV with "[HR]").
+      { iRight. iLeft. destruct immediateCancellation=> //.
+        rewrite bool_decide_true; last lia. by iFrame. }
+      iMod ("HTqClose" with "[-HCloseCell HHRestore HΦ]").
+      2: iModIntro; iMod "HCloseCell"; iModIntro; by iMod "HHRestore".
+      iExists _, _. iFrame "H● HDeqIdx HLen". iApply "HRRsRestore".
+      iFrame "HIsSus HTh HCancelled". iExists _. iFrame "H↦".
+      iSplitL "Hℓ"; first by iRight. iSplitR; first done. iRight. iFrame.
+  - iDestruct "HRR" as "(HCancelled & >HNotImmediate & HRR)".
+    iDestruct "HNotImmediate" as %HNotImmediate.
+    destruct c'' as [[[[|]|]|]|].
+    + (* Value couldn't have been taken, as it hasn't been passed. *)
+      iDestruct "HRR" as "(_ & HC & _)".
+      by iDestruct (iterator_issued_exclusive with "HIsRes HC") as ">[]".
+    + (* The cell was cancelled successfully. *)
+      iDestruct "HRR" as "[Hℓ [[[HFutureCompl|HC] HAwak]|[_ HC]]]".
+      all: try by iDestruct (iterator_issued_exclusive with "HIsRes HC")
+          as ">[]".
+      wp_load.
+      iSpecialize ("HΦ" $! CANCELLEDV with "[HAwak]").
+      { iRight. iLeft. iSplitR; first done. by destruct immediateCancellation. }
+      iMod ("HTqClose" with "[-HCloseCell HHRestore HΦ]").
+      2: iModIntro; iMod "HCloseCell"; iModIntro; by iMod "HHRestore".
+      iExists _, _. iFrame "H● HDeqIdx HLen". iApply "HRRsRestore".
+      iFrame "HIsSus HTh HCancelled". iExists _. iFrame "H↦ Hℓ".
+      iSplitR; first done. iRight. iFrame.
+    + (* The cell is attempting to cancel. *)
+      iDestruct "HRR" as "(Hℓ & HE & [HFutureCompl|HC])".
+      2: by iDestruct (iterator_issued_exclusive with "HIsRes HC") as ">[]".
+      wp_load.
+      iSpecialize ("HΦ" $! (InjLV _) with "[HFutureCompl]").
+      { repeat iRight. iExists _, _. iFrame. iSplit=>//. }
+      iMod ("HTqClose" with "[-HCloseCell HHRestore HΦ]").
+      2: iModIntro; iMod "HCloseCell"; iModIntro; by iMod "HHRestore".
+      iExists _, _. iFrame "H● HDeqIdx HLen". iApply "HRRsRestore".
+      iFrame "HIsSus HTh HCancelled". iExists _. iFrame "H↦ Hℓ HE".
+      iSplitR; first done. iRight. iFrame.
+    + (* Cancellation was prevented. *)
+      iDestruct "HRR" as "(HInside & HCancHandle & HRR)".
+      iDestruct "HRR" as "[(Hℓ & HE & [HFutureCompl|HC])|
+        [[Hℓ [[[HFutureCompl|HC] HE]|[_ HC]]]|HRR]]";
+        last iDestruct "HRR" as (?) "(_ & HC & _)".
+      all: try by iDestruct (iterator_issued_exclusive with "HIsRes HC")
+          as ">[]".
+      all: wp_load.
+      { iSpecialize ("HΦ" $! (InjLV _) with "[HFutureCompl]").
+        { repeat iRight. iExists _, _. iFrame. iSplit=>//. }
+        iMod ("HTqClose" with "[-HCloseCell HHRestore HΦ]").
+        2: iModIntro; iMod "HCloseCell"; iModIntro; by iMod "HHRestore".
+        iExists _, _. iFrame "H● HDeqIdx HLen". iApply "HRRsRestore".
+        iFrame "HInside HIsSus HTh HCancelled HCancHandle". iExists _.
+        iFrame "H↦". iSplitR; first done. iLeft. iFrame. }
+      { iSpecialize ("HΦ" $! REFUSEDV with "[HE]").
+        { iRight. iRight. iLeft. by iFrame. }
+        iMod ("HTqClose" with "[-HCloseCell HHRestore HΦ]").
+        2: iModIntro; iMod "HCloseCell"; iModIntro; by iMod "HHRestore".
+        iExists _, _. iFrame "H● HDeqIdx HLen". iApply "HRRsRestore".
+        iFrame "HInside HIsSus HTh HCancelled HCancHandle". iExists _.
+        iFrame "H↦". iSplitR; first done. iRight. iLeft. iFrame. }
+    + (* Cell was cancelled, but this fact was not registered. *)
+      iDestruct "HRR" as "(HCancHandle &
+        [(Hℓ & HE & HR & [HFutureCompl|HC])|(_ & HRR)])";
+        last iDestruct "HRR" as (?) "(_ & HC & _)".
+      all: try by iDestruct (iterator_issued_exclusive with "HIsRes HC")
+          as ">[]".
+      wp_load.
+      iSpecialize ("HΦ" $! (InjLV _) with "[HFutureCompl]").
+      { repeat iRight. iExists _, _. iFrame. iSplit=>//. }
+      iMod ("HTqClose" with "[-HCloseCell HHRestore HΦ]").
+      2: iModIntro; iMod "HCloseCell"; iModIntro; by iMod "HHRestore".
+      iExists _, _. iFrame "H● HDeqIdx HLen". iApply "HRRsRestore".
+      iFrame "HCancHandle HIsSus HTh". iExists _. iFrame "H↦ HCancelled".
+      iSplitR; first done. iLeft. iFrame.
+  - iDestruct "HRR" as "(Hℓ & HCancHandle & HE & HR & [HFutureCompl|HC])".
+    2: by iDestruct (iterator_issued_exclusive with "HIsRes HC") as ">[]".
+    wp_load.
+    iSpecialize ("HΦ" $! (InjLV _) with "[HFutureCompl]").
+    { repeat iRight. iExists _, _. iFrame. iSplit=>//. }
+    iMod ("HTqClose" with "[-HCloseCell HHRestore HΦ]").
+    2: iModIntro; iMod "HCloseCell"; iModIntro; by iMod "HHRestore".
+    iExists _, _. iFrame "H● HDeqIdx HLen". iApply "HRRsRestore".
+    iFrame "HCancHandle HIsSus HTh". iExists _. by iFrame.
 Qed.
 
 (* TRANSITIONS ON CELLS IN THE NON-SUSPENDING CASE *****************************)
@@ -1346,6 +1558,20 @@ Proof.
     iApply "HRRsRestore". simpl. iFrame "HIsRes HCancHandle".
     iSplitR; first done. iExists _. iFrame "H↦". iRight. iFrame.
 Qed.
+
+
+
+(* DEALING WITH THE SUSPENDED FUTURE *******************************************)
+
+(* TODO: *)
+(* Invariant for increasing iterators *)
+(* Cancelling a future *)
+(* Resuming a future *)
+(* Registering cancellation *)
+(* Marking the cell as resumed *)
+(* Marking the cell as cancelled *)
+(* Marking the cell as refused *)
+(* Passing a value in async cancellation mode *)
 
 (* CANCELLING A RENDEZVOUS |||||||||||||||||||||||||||||||||||||||||||||||||*)
 
@@ -1849,7 +2075,7 @@ Qed.
 
 Lemma awakening_permit_from_cancelled_cell' E R γa γtq γe γd i γt th deqFront r:
   ⌜i < deqFront⌝ -∗
-  cell_is_cancelled _ _ _ NArr γa i -∗
+  cell_cancelled γa i -∗
   iterator_issued γd i -∗
   cell_resources E R γtq γa γe γd deqFront i (Some (cellInhabited γt th (Some (cellCancelled r)))) -∗
   cell_resources E R γtq γa γe γd deqFront i (Some (cellInhabited γt th (Some (cellCancelled r)))) ∗

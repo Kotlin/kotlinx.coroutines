@@ -63,7 +63,7 @@ Definition iterator_counter γ cℓ (n: nat): iProp :=
 Definition iterator_counter_at_least γ (n: nat): iProp :=
   own γ (◯ (ε, MaxNat n)).
 
-Lemma iterator_counter_at_least_persistent γ n:
+Global Instance iterator_counter_at_least_persistent γ n:
   Persistent (iterator_counter_at_least γ n).
 Proof. apply _. Qed.
 
@@ -177,6 +177,14 @@ Proof.
   apply max_nat_included; simpl; lia.
 Qed.
 
+Lemma iterator_issued_is_at_least γ n:
+  iterator_issued γ n -∗ iterator_counter_at_least γ (S n).
+Proof.
+  iIntros "H". iApply (own_mono with "H"). apply auth_included; split=>//=.
+  apply prod_included; split; first by apply ucmra_unit_least.
+  apply max_nat_included. simpl. done.
+Qed.
+
 Theorem iteratorStep_spec co γa P γ (v: val):
   {{{ is_infinite_array _ _ aspc NArray γa co ∗ is_iterator γa P γ v ∗ P }}}
     iteratorStep array_interface v
@@ -255,7 +263,7 @@ Theorem iteratorStepOrIncreaseCounter_spec
       if shouldAdjust
       then make_laterable (∀ l, ([∗ list] i ∈ l,
       cell_is_cancelled _ _ aspc NArray γa i ∗ iterator_issued γ i
-        ={⊤ ∖ ↑N}=∗ P)) else True
+        ={⊤ ∖ ↑N}=∗ ▷ P)) else True
   }}}
     iteratorStepOrIncreaseCounter array_interface #shouldAdjust v
   {{{ v, RET v; ⌜v = NONEV⌝ ∗
@@ -308,7 +316,7 @@ Proof.
     iDestruct "HPs" as "[HP HPs]".
     iMod ("HP" with "[HIssued]") as "HP".
     { iFrame "HIssued". iApply "HCancelled". iPureIntro. lia. }
-    iAssert ([∗ list] i ∈ seq start (ns - start), |={⊤ ∖ ↑N}=> P)%I
+    iAssert ([∗ list] i ∈ seq start (ns - start), |={⊤ ∖ ↑N}=> ▷ P)%I
       with "[HPs HIssued']" as "HPs".
     { iCombine "HIssued'" "HPs" as "HIntro".
       rewrite -big_sepL_sep.
@@ -335,6 +343,28 @@ Proof.
           iIntros (? ?). iApply "HCancelled'". iPureIntro. lia.
       }
       iIntros "!> HΦ". wp_pures. iApply "HΦ". iLeft. by iFrame.
+Qed.
+
+Lemma access_iterator_resources E R γa γd d i:
+  ↑N ⊆ E ->
+  is_iterator γa R γd d -∗
+  iterator_counter_at_least γd i
+  ={E,E∖↑N}=∗ ▷ (([∗] replicate i R)
+                      ∗ ((▷ [∗] replicate i R) ={E∖↑N, E}=∗ True)).
+Proof.
+  iIntros (HSets) "#HIsIter HCounterValue".
+  iDestruct "HIsIter" as (cℓ p) "[-> HIsIter]".
+  iInv N as (n) "(HCounter & HResource & HCutoff)" "HClose".
+  iModIntro. rewrite /iterator_counter.
+  iDestruct "HCounter" as "[Hcℓ >H●]".
+  iDestruct (own_valid_2 with "H● HCounterValue")
+    as %[[_ HValid%max_nat_included]%prod_included _]%auth_both_valid.
+  simpl in *.
+  apply nat_le_sum in HValid. destruct HValid as [z ->].
+  rewrite replicate_plus big_sepL_app.
+  iDestruct "HResource" as "[$ HResource]".
+  iNext. iIntros "HResource'". iMod ("HClose" with "[-]"); last done.
+  iExists (i + z). iFrame. rewrite replicate_plus big_sepL_app. iFrame.
 Qed.
 
 End proof.
