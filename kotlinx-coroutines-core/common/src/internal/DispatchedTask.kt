@@ -14,7 +14,7 @@ import kotlin.jvm.*
  * **DO NOT CHANGE THE CONSTANT VALUE**. It might be inlined into legacy user code that was calling
  * inline `suspendAtomicCancellableCoroutine` function and did not support reuse.
  */
-internal const val MODE_ATOMIC = 0
+internal const val MODE_ATOMIC: Int = 0
 
 /**
  * Cancellable dispatch mode. It is used by user-facing [suspendCancellableCoroutine].
@@ -30,13 +30,13 @@ internal const val MODE_CANCELLABLE: Int = 1
  * Note, that implementation of cancellability checks mode via [Int.isCancellableMode] extension;
  * implementation of reuse checks mode via [Int.isReusableMode] extension.
  */
-internal const val MODE_CANCELLABLE_REUSABLE = 2
+internal const val MODE_CANCELLABLE_REUSABLE: Int = 2
 
 /**
  * Undispatched mode for [CancellableContinuation.resumeUndispatched].
  * It is used when the thread is right, but it needs to be marked with the current coroutine.
  */
-internal const val MODE_UNDISPATCHED = 4
+internal const val MODE_UNDISPATCHED: Int = 4
 
 /**
  * Initial mode for [DispatchedContinuation] implementation, should never be used for dispatch, because it is always
