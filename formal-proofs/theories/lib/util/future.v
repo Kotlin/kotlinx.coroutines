@@ -21,6 +21,7 @@ Definition awaitFuture: val :=
 
 From iris.base_logic Require Import lib.invariants.
 From iris.program_logic Require Import atomic.
+From iris.bi.lib Require Import fractional.
 From iris.heap_lang Require Import proofmode.
 From iris.algebra Require Import cmra excl csum auth csum numbers.
 
@@ -81,6 +82,36 @@ Global Instance future_completion_permit_Timeless:
   Timeless (future_completion_permit γ q).
 Proof. apply _. Qed.
 
+Global Instance future_cancellation_permit_Fractional γ:
+  Fractional (future_cancellation_permit γ).
+Proof.
+  iIntros (x y). rewrite /future_cancellation_permit.
+  by rewrite -own_op -auth_frag_op -pair_op -Some_op -Cinl_op -frac_op'.
+Qed.
+
+Global Instance future_completion_permit_Fractional γ:
+  Fractional (future_completion_permit γ).
+Proof.
+  iIntros (x y). rewrite /future_completion_permit.
+  by rewrite -own_op -auth_frag_op -!pair_op -Some_op -Cinl_op -frac_op'.
+Qed.
+
+Theorem future_cancellation_permit_valid γ q:
+  future_cancellation_permit γ q -∗ ⌜(q ≤ 1)%Qc⌝.
+Proof.
+  iIntros "HFuture". iDestruct (own_valid with "HFuture") as %HValid.
+  iPureIntro. move: HValid. rewrite auth_frag_valid. case=> _/=.
+  rewrite Some_valid. by compute.
+Qed.
+
+Theorem future_completion_permit_valid γ q:
+  future_completion_permit γ q -∗ ⌜(q ≤ 1)%Qc⌝.
+Proof.
+  iIntros "HFuture". iDestruct (own_valid with "HFuture") as %HValid.
+  iPureIntro. move: HValid. rewrite auth_frag_valid. case; case=> _/=.
+  rewrite Some_valid. by compute.
+Qed.
+
 Global Instance future_is_completed_Persistent:
   Persistent (future_is_completed γ v).
 Proof. apply _. Qed.
@@ -115,18 +146,19 @@ Proof.
   by apply agree_op_invL' in HValid.
 Qed.
 
-Definition future_invariant (γ: gname) (ℓ: loc) (state: future_state): iProp Σ :=
+Definition future_invariant (R: val -> iProp Σ) (γ: gname) (ℓ: loc)
+           (state: future_state): iProp Σ :=
   own γ (future_auth_ra state) ∗ match state with
     | FutureEmpty => ℓ ↦ InjLV #0
-    | FutureCompleted v => ℓ ↦ InjRV v
+    | FutureCompleted x => ℓ ↦ InjRV x ∗ (R x ∨ future_cancellation_permit γ 1%Qp)
     | FutureCancelled =>  ℓ ↦ InjLV #1
   end.
 
-Definition is_future (γ: gname) (f: val): iProp Σ :=
-  ∃ (ℓ: loc), ⌜f = #ℓ⌝ ∧ inv N (∃ state, future_invariant γ ℓ state).
+Definition is_future R (γ: gname) (f: val): iProp Σ :=
+  ∃ (ℓ: loc), ⌜f = #ℓ⌝ ∧ inv N (∃ state, future_invariant R γ ℓ state).
 
-Global Instance is_future_persistent γ f:
-  Persistent (is_future γ f).
+Global Instance is_future_persistent R γ f:
+  Persistent (is_future R γ f).
 Proof. apply _. Qed.
 
 Instance future_state_Inhabited: Inhabited future_state.
@@ -152,34 +184,66 @@ Proof.
   apply None_least.
 Qed.
 
-Theorem future_is_not_unit γ f: is_future γ f -∗ ⌜f ≠ #()⌝.
+Theorem future_is_not_unit R γ f: is_future R γ f -∗ ⌜f ≠ #()⌝.
 Proof. iIntros "HFuture". by iDestruct "HFuture" as (?) "[-> _]". Qed.
 
-Theorem awaitFuture_spec γ f:
-  {{{ is_future γ f }}}
-    awaitFuture f
-  {{{ v, RET v; (∃ v', ⌜v = SOMEV v'⌝ ∧ future_is_completed γ v') ∨
-                ⌜v = NONEV⌝ ∧ future_is_cancelled γ }}}.
+Theorem future_cancellation_permit_exclusive γ q:
+  future_cancellation_permit γ 1%Qp -∗ future_cancellation_permit γ q -∗ False.
 Proof.
-  iIntros (Φ) "HFuture HΦ". iDestruct "HFuture" as (ℓ ->) "#HFuture".
-  wp_lam. iLöb as "IH". wp_bind (!#ℓ)%E.
-  iInv "HFuture" as (p) "[>H● Hℓ]" "HInvClose".
-  destruct p as [|v|]; wp_load.
-  - iMod ("HInvClose" with "[H● Hℓ]") as "_"; first by iExists _; iFrame.
-    iModIntro; wp_pures. wp_lam. iApply ("IH" with "[$]").
-  - iMod (future_is_completed_from_auth_ra with "H●") as "[H● H◯]".
-    iMod ("HInvClose" with "[H● Hℓ]") as "_".
-    { iExists (FutureCompleted v). by iFrame "H●". }
-    iModIntro; wp_pures. iApply "HΦ". iLeft. iExists _. iSplitR; done.
-  - iMod (future_is_cancelled_from_auth_ra with "H●") as "[H● H◯]".
-    iMod ("HInvClose" with "[H● Hℓ]") as "_".
-    { iExists FutureCancelled. by iFrame "H●". }
-    iModIntro; wp_pures. iApply "HΦ". iRight. iSplitR; done.
+  iIntros "H1 H2". iCombine "H1" "H2" as "H".
+  iDestruct (own_valid with "H") as %HValid. exfalso. move: HValid.
+  case=> _/=. move: (frac_valid' (1 + q)). case=> HOk _ HOk'. apply HOk in HOk'.
+  by eapply Qp_not_plus_q_ge_1.
 Qed.
 
-Theorem tryCompleteFuture_spec γ f (v: val):
-  is_future γ f -∗
-  <<< future_completion_permit γ 1%Qp >>>
+Theorem future_completion_permit_exclusive γ q:
+  future_completion_permit γ 1%Qp -∗ future_completion_permit γ q -∗ False.
+Proof.
+  iIntros "H1 H2". iCombine "H1" "H2" as "H".
+  iDestruct (own_valid with "H") as %HValid. exfalso. move: HValid.
+  case; case=> _/=.
+  move: (frac_valid' (1 + q)). case=> HOk _ HOk' _. apply HOk in HOk'.
+  by eapply Qp_not_plus_q_ge_1.
+Qed.
+
+Theorem awaitFuture_spec R γ f:
+  is_future R γ f -∗
+  <<< future_cancellation_permit γ 1%Qp >>>
+    awaitFuture f @ ⊤ ∖ ↑N
+  <<< ∃ v, (∃ v', ⌜v = SOMEV v'⌝ ∗ R v' ∗ future_is_completed γ v') ∨
+           ⌜v = NONEV⌝ ∧ future_is_cancelled γ, RET v >>>.
+Proof.
+  iIntros "HFuture" (Φ) "AU". iDestruct "HFuture" as (ℓ ->) "#HFuture".
+  wp_lam. iLöb as "IH". wp_bind (!#ℓ)%E.
+  iInv "HFuture" as (p) "[>H● HR]" "HInvClose".
+  destruct p as [|v|].
+  - wp_load.
+    iMod ("HInvClose" with "[H● HR]") as "_"; first by iExists _; iFrame.
+    iModIntro; wp_pures. wp_lam. iApply ("IH" with "[$]").
+  - iDestruct "HR" as "[Hℓ [HR|HCancellation]]".
+    + iMod (future_is_completed_from_auth_ra with "H●") as "[H● H◯]".
+      iMod "AU" as "[HOpen [_ HClose]]".
+      wp_load.
+      iMod ("HClose" with "[HR H◯]") as "HΦ".
+      { iLeft. iExists _. by iFrame. }
+      iModIntro.
+      iMod ("HInvClose" with "[H● Hℓ HOpen]") as "_".
+      { iExists (FutureCompleted v). iFrame "H● Hℓ HOpen". }
+      iModIntro. by wp_pures.
+    + iMod "AU" as "[HOpen [_ HClose]]". wp_load.
+      iDestruct (future_cancellation_permit_exclusive with
+                     "HOpen HCancellation") as %[].
+  - iMod (future_is_cancelled_from_auth_ra with "H●") as "[H● H◯]".
+    iMod "AU" as "[HOpen [_ HClose]]". wp_load.
+    iMod ("HClose" with "[H◯]") as "HΦ". by iRight; iFrame. iModIntro.
+    iMod ("HInvClose" with "[H● HR]") as "_".
+    { iExists FutureCancelled. by iFrame "H●". }
+    iModIntro; wp_pures. iApply "HΦ".
+Qed.
+
+Theorem tryCompleteFuture_spec R γ f (v: val):
+  is_future R γ f -∗
+  <<< R v ∗ future_completion_permit γ 1%Qp >>>
     tryCompleteFuture f v @ ⊤ ∖ ↑N
   <<< ∃ (b: bool), if b then future_is_completed γ v
                      else future_is_cancelled γ, RET #b >>>.
@@ -187,7 +251,7 @@ Proof.
   iIntros "HFuture" (Φ) "AU". iDestruct "HFuture" as (ℓ ->) "#HFuture".
   wp_lam. wp_pures. wp_bind (CmpXchg _ _ _).
   iInv "HFuture" as (p) "[>H● Hℓ]" "HInvClose".
-  iMod "AU" as "[HPermit [_ HClose]]".
+  iMod "AU" as "[[HR HPermit] [_ HClose]]".
   destruct p.
   - wp_cmpxchg_suc.
     iMod (own_update_2 with "H● HPermit") as "[H● HFutureCompleted]".
@@ -205,7 +269,7 @@ Proof.
     }
     iMod ("HClose" $! true with "HFutureCompleted") as "HΦ".
     iModIntro.
-    iMod ("HInvClose" with "[H● Hℓ]") as "_".
+    iMod ("HInvClose" with "[-HΦ]") as "_".
     { iExists (FutureCompleted v). iFrame. }
     iModIntro. by wp_pures.
   - iDestruct (own_valid_2 with "H● HPermit")
@@ -226,12 +290,13 @@ Proof.
     iModIntro. by wp_pures.
 Qed.
 
-Theorem tryCancelFuture_spec γ f:
-  is_future γ f -∗
+Theorem tryCancelFuture_spec R γ f:
+  is_future R γ f -∗
   <<< future_cancellation_permit γ 1%Qp >>>
     tryCancelFuture f @ ⊤ ∖ ↑N
   <<< ∃ (b: bool), if b then future_is_cancelled γ
-                     else (∃ v, future_is_completed γ v), RET #b >>>.
+                     else (∃ v, future_is_completed γ v) ∗
+                          future_cancellation_permit γ 1%Qp, RET #b >>>.
 Proof.
   iIntros "HFuture" (Φ) "AU". iDestruct "HFuture" as (ℓ ->) "#HFuture".
   wp_lam. wp_pures. wp_bind (CmpXchg _ _ _).
@@ -257,12 +322,15 @@ Proof.
     iMod ("HInvClose" with "[H● Hℓ]") as "_".
     { iExists FutureCancelled. iFrame. }
     iModIntro. by wp_pures.
-  - wp_cmpxchg_fail.
+  - iDestruct "Hℓ" as "[Hℓ [HR|HContra]]".
+    2: by iDestruct (future_cancellation_permit_exclusive
+                       with "HPermit HContra") as ">[]".
+    wp_cmpxchg_fail.
     iMod (future_is_completed_from_auth_ra with "H●") as "[H● HFutureCompleted]".
-    iMod ("HClose" $! false with "[HFutureCompleted]") as "HΦ";
-      first by iExists _.
+    iMod ("HClose" $! false with "[HPermit HFutureCompleted]") as "HΦ".
+    { iFrame. by iExists _. }
     iModIntro.
-    iMod ("HInvClose" with "[H● Hℓ]") as "_".
+    iMod ("HInvClose" with "[H● Hℓ HR]") as "_".
     { iExists (FutureCompleted v). iFrame. }
     iModIntro. by wp_pures.
   - iDestruct (own_valid_2 with "H● HPermit")
@@ -276,13 +344,13 @@ Proof.
         simplify_eq.
 Qed.
 
-Theorem completeFuture_spec (v: val):
-  {{{ True }}}
+Theorem completeFuture_spec R (v: val):
+  {{{ R v }}}
     completeFuture v
-  {{{ γ f, RET f; is_future γ f ∗ future_is_completed γ v ∗
+  {{{ γ f, RET f; is_future R γ f ∗ future_is_completed γ v ∗
                   future_cancellation_permit γ 1%Qp }}}.
 Proof.
-  iIntros (Φ) "_ HΦ". wp_lam. wp_pures.
+  iIntros (Φ) "HR HΦ". wp_lam. wp_pures.
   iMod (own_alloc (future_auth_ra (FutureCompleted v) ⋅
                    (◯ (Some (to_agree (Some v)), permit_state_ra false, None) ⋅
                     ◯ (None, None, Some (Cinl 1%Qp)))))
@@ -293,15 +361,15 @@ Proof.
   }
   rewrite -wp_fupd.
   wp_alloc ℓ as "Hℓ".
-  iMod (inv_alloc N _ (∃ p, future_invariant γ ℓ p) with "[H● Hℓ]") as "HInv".
-  { iExists _; by iFrame. }
+  iMod (inv_alloc N _ (∃ p, future_invariant R γ ℓ p) with "[H● Hℓ HR]") as "HInv".
+  { iExists _. iFrame "H● Hℓ". iFrame "HR". }
   iApply "HΦ". iFrame. iExists _. by iFrame.
 Qed.
 
-Theorem emptyFuture_spec:
+Theorem emptyFuture_spec R:
   {{{ True }}}
     emptyFuture #()
-  {{{ γ f, RET f; is_future γ f ∗
+  {{{ γ f, RET f; is_future R γ f ∗
                   future_cancellation_permit γ 1%Qp ∗
                   future_completion_permit γ 1%Qp }}}.
 Proof.
@@ -316,7 +384,7 @@ Proof.
   }
   rewrite -wp_fupd.
   wp_alloc ℓ as "Hℓ".
-  iMod (inv_alloc N _ (∃ p, future_invariant γ ℓ p) with "[H● Hℓ]") as "HInv".
+  iMod (inv_alloc N _ (∃ p, future_invariant R γ ℓ p) with "[H● Hℓ]") as "HInv".
   { iExists _; by iFrame. }
   iApply "HΦ". iFrame. iExists _. by iFrame.
 Qed.

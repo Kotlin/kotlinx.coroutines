@@ -147,17 +147,21 @@ Notation inhabitedCellStateR :=
         (csumR
            (* Cell was immediately cancelled. *)
            (agreeR unitO)
-           (optionUR
-              (csumR
-                 (* cancellation was logically impossible. *)
-                 (agreeR unitO)
-                 (* cancellation was allowed. *)
-                 (optionUR
-                    (csumR
-                       (* a value was passed to the cell nonetheless. *)
-                       (agreeR valO)
-                       (* cancellation completed successfully. *)
-                       (agreeR unitO)))))))).
+           (* Cell ony attempts cancellation. *)
+           (prodUR
+              (* Permits to attempt the later stages of cancellatoin. *)
+              natUR
+              (optionUR
+                 (csumR
+                    (* cancellation was logically impossible. *)
+                    (agreeR unitO)
+                    (* cancellation was allowed. *)
+                    (optionUR
+                       (csumR
+                          (* a value was passed to the cell nonetheless. *)
+                          (agreeR valO)
+                          (* cancellation completed successfully. *)
+                          (agreeR unitO))))))))).
 
 Notation cellStateR :=
   (csumR
@@ -199,6 +203,23 @@ Let NDeq := N .@ "deq".
 Let NEnq := N .@ "enq".
 Notation iProp := (iProp Σ).
 
+Record thread_queue_parameters :=
+  ThreadQueueParameters
+    {
+      is_immediate_cancellation: bool;
+      enqueue_resource: iProp;
+      dequeue_resource: iProp;
+      passed_value_resource: base_lit -> iProp;
+      cell_breaking_resource: iProp;
+    }.
+
+Variable parameters: thread_queue_parameters.
+Let E := enqueue_resource parameters.
+Let R := dequeue_resource parameters.
+Let V := passed_value_resource parameters.
+Let CB := cell_breaking_resource parameters.
+Let immediateCancellation := is_immediate_cancellation parameters.
+
 Global Instance base_lit_inhabited: Inhabited base_lit.
 Proof. repeat econstructor. Qed.
 
@@ -221,13 +242,18 @@ Definition cancellationResolution_ra r :=
   | cancellationPrevented => Cinl (to_agree ())
   end.
 
+Definition cancellationResolution_ra' r :=
+  match r with
+  | None => (2, None)
+  | Some d => (1, Some (cancellationResolution_ra d))
+  end.
+
 Definition futureTerminalState_ra r :=
   match r with
   | cellResumed v =>
     Cinl (to_agree #v)
   | cellImmediatelyCancelled => Cinr (Cinl (to_agree ()))
-  | cellCancelled r =>
-    Cinr (Cinr (option_map cancellationResolution_ra r))
+  | cellCancelled r => Cinr (Cinr (cancellationResolution_ra' r))
   end.
 
 Definition cellState_ra (state: cellState): cellStateR :=
@@ -262,6 +288,12 @@ Proof. apply _. Qed.
 Definition cell_breaking_token (γtq: gname) (i: nat): iProp :=
   filled_rendezvous_state γtq i (Excl' (), ε).
 
+Definition cancellation_registration_token (γtq: gname) (i: nat): iProp :=
+  inhabited_rendezvous_state γtq i (Some (Cinr (Cinr (2, ε)))).
+
+Definition cell_cancelling_token (γtq: gname) (i: nat): iProp :=
+  inhabited_rendezvous_state γtq i (Some (Cinr (Cinr (1, ε)))).
+
 Definition thread_queue_state γ (n: nat) :=
   own γ (◯ (ε, (ε, Excl' n))).
 
@@ -278,8 +310,10 @@ Proof. apply _. Qed.
 Definition rendezvous_filled_value (γtq: gname) (v: base_lit) (i: nat): iProp :=
   rendezvous_state γtq i (Some (Cinl (to_agree #v, ε))).
 
+Definition V' (v: val): iProp := ∃ (x: base_lit), ⌜v = #x⌝ ∧ V x ∗ R.
+
 Definition rendezvous_thread_handle (γtq γt: gname) th (i: nat): iProp :=
-  (is_future NFuture γt th ∗ rendezvous_thread_locs_state γtq γt th i)%I.
+  (is_future NFuture V' γt th ∗ rendezvous_thread_locs_state γtq γt th i)%I.
 
 Global Instance rendezvous_thread_handle_persistent γtq γt th i:
   Persistent (rendezvous_thread_handle γtq γt th i).
@@ -301,22 +335,10 @@ Let cell_location γtq :=
 Let cancellation_handle := cell_cancellation_handle _ _ array_spec NArr.
 Let cell_cancelled := cell_is_cancelled _ _ array_spec NArr.
 
-Record thread_queue_parameters :=
-  ThreadQueueParameters
-    {
-      is_immediate_cancellation: bool;
-      enqueue_resource: iProp;
-      dequeue_resource: iProp;
-      passed_value_resource: base_lit -> iProp;
-      cell_breaking_resource: iProp;
-    }.
-
-Variable parameters: thread_queue_parameters.
-Let E := enqueue_resource parameters.
-Let R := dequeue_resource parameters.
-Let V := passed_value_resource parameters.
-Let CB := cell_breaking_resource parameters.
-Let immediateCancellation := is_immediate_cancellation parameters.
+Definition resources_for_resumer T γf γd i: iProp :=
+  ((future_completion_permit γf 1%Qp ∨
+    future_completion_permit γf (1/2)%Qp ∗ iterator_issued γd i) ∗ T ∨
+   future_completion_permit γf 1%Qp ∗ iterator_issued γd i).
 
 Definition cell_resources
            γtq γa γe γd i (k: option cellState) (insideDeqFront: bool):
@@ -341,65 +363,56 @@ Definition cell_resources
          match r with
          | None => ℓ ↦ InjLV f ∗ cancellation_handle γa i ∗
                   E ∗ (if insideDeqFront then R else True) ∗
-                  (future_completion_permit γf 1%Qp ∨ iterator_issued γd i)
+                  future_cancellation_permit γf (1/2)%Qp ∗
+                  (future_completion_permit γf 1%Qp ∨
+                   future_completion_permit γf (1/2)%Qp ∗
+                   iterator_issued γd i)
          | Some (cellResumed v) =>
            (ℓ ↦ InjLV f ∨ ℓ ↦ RESUMEDV) ∗
            iterator_issued γd i ∗
            future_is_completed γf #v ∗
            cancellation_handle γa i ∗
-           (V v ∗ R ∨ future_cancellation_permit γf 1%Qp)
+           future_cancellation_permit γf (1/2)%Qp
          | Some cellImmediatelyCancelled =>
            (ℓ ↦ InjLV f ∨ ℓ ↦ CANCELLEDV) ∗
            ⌜immediateCancellation⌝ ∗
            future_is_cancelled γf ∗
-           ((future_completion_permit γf 1%Qp ∨ iterator_issued γd i) ∗
-            (if insideDeqFront then R else True) ∨
-            future_completion_permit γf 1%Qp ∗ iterator_issued γd i)
+           resources_for_resumer (if insideDeqFront then R else True) γf γd i
          | Some (cellCancelled d) =>
            future_is_cancelled γf ∗
            ⌜¬ immediateCancellation⌝ ∗
            match d with
            | None =>
              cancellation_handle γa i ∗
+             (if insideDeqFront then R else True) ∗
              (ℓ ↦ InjLV f ∗ E ∗
-                (if insideDeqFront then R else True) ∗
                 (future_completion_permit γf 1%Qp ∨
-                 iterator_issued γd i)
+                 future_completion_permit γf (1/2)%Qp ∗ iterator_issued γd i)
               ∨ ⌜insideDeqFront⌝ ∧
                 ∃ v, ℓ ↦ SOMEV #v ∗ iterator_issued γd i ∗
-                       future_completion_permit γf 1%Qp ∗ V v ∗ R)
+                       future_completion_permit γf 1%Qp ∗ V v)
            | Some cancellationPrevented =>
              ⌜insideDeqFront⌝ ∧
              cancellation_handle γa i ∗
              (ℓ ↦ InjLV f ∗ E ∗
                 (future_completion_permit γf 1%Qp ∨
                  iterator_issued γd i)
-              ∨ ℓ ↦ REFUSEDV ∗
-                ((future_completion_permit γf 1%Qp ∨
-                  iterator_issued γd i) ∗ E ∨
-                 future_completion_permit γf 1%Qp ∗
-                 iterator_issued γd i)
+              ∨ ℓ ↦ REFUSEDV ∗ resources_for_resumer E γf γd i
               ∨ ∃ v, ℓ ↦ SOMEV #v ∗ iterator_issued γd i ∗
                  future_completion_permit γf 1%Qp ∗ V v)
            | Some (cancellationAllowed d) =>
              match d with
              | None =>
                ℓ ↦ InjLV f ∗ E ∗
-                 ((future_completion_permit γf 1%Qp ∨
-                   iterator_issued γd i) ∗ awakening_permit γtq ∨
-                 future_completion_permit γf 1%Qp ∗
-                 iterator_issued γd i)
+               resources_for_resumer (awakening_permit γtq) γf γd i
              | Some (cellTookValue v) =>
                ℓ ↦ SOMEV #v ∗ iterator_issued γd i ∗
-                 future_completion_permit γf 1%Qp ∗ V v
-                 (* TODO: be able to take `V v` *)
+                 future_completion_permit γf 1%Qp ∗
+                 (cell_cancelling_token γf i ∨ V v)
              | Some cellClosed =>
                ℓ ↦ CANCELLEDV ∗
-                 ((future_completion_permit γf 1%Qp ∨
-                   iterator_issued γd i) ∗ awakening_permit γtq ∨
-                 future_completion_permit γf 1%Qp ∗
-                 iterator_issued γd i)
-                 (* TODO: establish an exclusive right to mark the cell as closed *)
+                 cell_cancelling_token γf i ∗
+                 resources_for_resumer (awakening_permit γtq) γf γd i
              end
            end
          end
@@ -832,8 +845,8 @@ Proof.
         iDestruct "HContra" as %[].
       + iDestruct "H" as "($ & $ & H)". iFrame "HR".
         iDestruct "H" as (?) "H". iExists _.
-        iDestruct "H" as "($ & $ & $ & $ & [H|H])".
-        by iLeft; iDestruct "H" as "($ & $ & _ & $)".
+        iDestruct "H" as "($ & $ & $ & $ & _ & [H|H])".
+        by iLeft; iFrame.
         by iDestruct "H" as "(>% & _)".
       + iDestruct "H" as "($ & $ & H)". iFrame "HR".
         iDestruct "H" as (?) "H". iExists _.
@@ -945,19 +958,22 @@ Qed.
 (* ENTRY POINTS TO THE CELL ****************************************************)
 
 Lemma inhabit_cell_spec γa γtq γe γd γf i ptr f e d:
-  {{{ is_future NFuture γf f ∗
+  {{{ is_future NFuture V' γf f ∗
       cell_location γtq γa i ptr ∗
       is_thread_queue γa γtq γe γd e d ∗
       future_completion_permit γf 1%Qp ∗
+      future_cancellation_permit γf 1%Qp ∗
       iterator_issued γe i }}}
     CAS #ptr (InjLV #()) (InjLV f)
   {{{ (r: bool), RET #r;
       if r
       then rendezvous_thread_handle γtq γf f i
+           ∗ future_cancellation_permit γf (1/2)%Qp
       else filled_rendezvous_state γtq i ε
            ∗ future_completion_permit γf 1%Qp }}}.
 Proof.
-  iIntros (Φ) "(#HF & #H↦ & #(HInv & HInfArr & HE & _) & HFC & HEnq) HΦ".
+  iIntros (Φ) "(#HF & #H↦ & #(HInv & HInfArr & HE & _) & HFCompl & HFCanc & HEnq)
+               HΦ".
   wp_bind (CmpXchg _ _ _).
   iMod (access_iterator_resources with "HE [#]") as "HH"; first done.
   by iApply (iterator_issued_is_at_least with "HEnq").
@@ -969,7 +985,7 @@ Proof.
   destruct c as [[? resolution|? ? ?]|].
   - (* A value was already passed. *)
     iMod (own_update with "H●") as "[H● HCellFilled]".
-    2: iDestruct ("HΦ" $! false with "[HCellFilled HFC]") as "HΦ";
+    2: iDestruct ("HΦ" $! false with "[HCellFilled HFCompl]") as "HΦ";
       first by iFrame; iExists _.
     { apply auth_update_core_id. by apply _.
       apply prod_included; split=>/=; first by apply ucmra_unit_least.
@@ -1011,6 +1027,9 @@ Proof.
     }
     wp_cmpxchg_suc.
     iMod (inhabit_cell_ra with "H●") as "(H● & #HLoc)"; first done.
+    iEval (rewrite -Qp_half_half) in "HFCanc".
+    rewrite future_cancellation_permit_Fractional.
+    iDestruct "HFCanc" as "[HFHalfCanc1 HFHalfCanc2]".
     iMod ("HCloseCell" with "[]") as "_"; last iModIntro.
     { iLeft. iNext. iLeft. iExists _, _. iApply "HLoc". }
     iSpecialize ("HΦ" $! true with "[$]").
@@ -1097,13 +1116,13 @@ Proof.
             iExists _; iFrame "Hℓ"; iSplitR; first (by iPureIntro).
             iNext; iIntros "Hℓ"; iExists _. iFrame "H↦". iRight. iRight.
             iExists _. iFrame.
-        - iDestruct "HRR" as "[$ HRR]".
+        - iDestruct "HRR" as "($ & HR' & HRR)".
           iDestruct "HRR" as "[[Hℓ HR]|[>% HR]]".
           + iExists _; iFrame "Hℓ"; iSplitR; first (by iPureIntro).
-            iNext; iIntros "Hℓ"; iExists _. iFrame "H↦". iLeft. iFrame.
+            iNext; iIntros "Hℓ"; iExists _. iFrame "H↦ HR'". iLeft. iFrame.
           + iDestruct "HR" as (?) "[Hℓ HR]".
             iExists _; iFrame "Hℓ"; iSplitR; first (by iPureIntro).
-            iNext; iIntros "Hℓ"; iExists _. iFrame "H↦". iRight.
+            iNext; iIntros "Hℓ"; iExists _. iFrame "H↦ HR'". iRight.
             iSplitR; first by iPureIntro. iExists _. iFrame.
       }
       2: iDestruct "HRR" as "[[Hℓ|Hℓ] $]".
@@ -1212,8 +1231,8 @@ Proof.
     iDestruct "HRR" as "(HIsSus & HTh & HRR)".
     iDestruct "HRR" as (ℓ') "(H↦' & HFutureCancelled & HNotCanc & HRR)".
     destruct c' as [[|]|].
-    3: iDestruct "HRR" as "(Hℓ & HE & [[[HFC|HC] >$]|[_ HC]])".
-    2: iDestruct "HRR" as "[Hℓ [[[HFC|HC] >$]|[_ HC]]]".
+    3: iDestruct "HRR" as "(Hℓ & HE & [[[HFC|[_ HC]] >$]|[_ HC]])".
+    2: iDestruct "HRR" as "(Hℓ & HTok & [[[HFC|[_ HC]] >$]|[_ HC]])".
     1: iDestruct "HRR" as "(_ & HC & _)".
     all: try by iDestruct (iterator_issued_exclusive with "HIsRes HC") as ">[]".
     all: iMod ("HClose" with "[-]"); last done.
@@ -1232,13 +1251,12 @@ Lemma read_cell_value_by_resumer_spec γtq γa γe γd i ptr e d:
       iterator_issued γd i }}}
     !#ptr
   {{{ (v: val), RET v;
-      deq_front_at_least γd (S i) ∗
       (⌜v = NONEV⌝ ∧ iterator_issued γd i ∨
        ⌜v = CANCELLEDV⌝ ∧ (if immediateCancellation then R
                            else awakening_permit γtq) ∨
        ⌜v = REFUSEDV⌝ ∧ E ∨
        ∃ γf f, ⌜v = InjLV f⌝ ∧ rendezvous_thread_handle γtq γf f i ∗
-               future_completion_permit γf 1%Qp)
+               future_completion_permit γf (1/2)%Qp)
   }}}.
 Proof.
   iIntros (Φ) "(#(HInv & HInfArr & _ & HD) & #H↦ & HIsRes) HΦ".
@@ -1293,16 +1311,20 @@ Proof.
   - iDestruct "HRR" as
         "(Hℓ & >HImmediate & HCancelled & [HCompletion|[_ HC]])".
     iDestruct "HImmediate" as %HImmediate.
-    iDestruct "HCompletion" as "[[HCompletionPermit|HC] HR]".
+    iDestruct "HCompletion" as "[[HCompletionPermit|[_ HC]] HR]".
     all: try by iDestruct (iterator_issued_exclusive with "HIsRes HC") as ">[]".
     iDestruct "Hℓ" as "[Hℓ|Hℓ]"; wp_load.
-    + iSpecialize ("HΦ" $! (InjLV _) with "[HCompletionPermit]").
+    + iEval (rewrite -Qp_half_half future_completion_permit_Fractional)
+        in "HCompletionPermit".
+      iDestruct "HCompletionPermit" as "[HCompl1 HCompl2]".
+      iSpecialize ("HΦ" $! (InjLV _) with "[HCompl2]").
       { repeat iRight. iExists _, _. iFrame. iSplit; last by iAssumption. done. }
       iMod ("HTqClose" with "[-HCloseCell HHRestore HΦ]").
       2: iModIntro; iMod "HCloseCell"; iModIntro; by iMod "HHRestore".
       iExists _, _. iFrame "H● HDeqIdx HLen". iApply "HRRsRestore".
       iFrame "HIsSus HTh HCancelled". iExists _. iFrame "H↦".
       iSplitL "Hℓ"; first by iLeft. iSplitR; first done. iLeft. iFrame.
+      iRight; iFrame.
     + iSpecialize ("HΦ" $! CANCELLEDV with "[HR]").
       { iRight. iLeft. destruct immediateCancellation=> //.
         rewrite bool_decide_true; last lia. by iFrame. }
@@ -1318,7 +1340,7 @@ Proof.
       iDestruct "HRR" as "(_ & HC & _)".
       by iDestruct (iterator_issued_exclusive with "HIsRes HC") as ">[]".
     + (* The cell was cancelled successfully. *)
-      iDestruct "HRR" as "[Hℓ [[[HFutureCompl|HC] HAwak]|[_ HC]]]".
+      iDestruct "HRR" as "(Hℓ & HTok & [[[HFutureCompl|[_ HC]] HAwak]|[_ HC]])".
       all: try by iDestruct (iterator_issued_exclusive with "HIsRes HC")
           as ">[]".
       wp_load.
@@ -1327,28 +1349,35 @@ Proof.
       iMod ("HTqClose" with "[-HCloseCell HHRestore HΦ]").
       2: iModIntro; iMod "HCloseCell"; iModIntro; by iMod "HHRestore".
       iExists _, _. iFrame "H● HDeqIdx HLen". iApply "HRRsRestore".
-      iFrame "HIsSus HTh HCancelled". iExists _. iFrame "H↦ Hℓ".
+      iFrame "HIsSus HTh HCancelled". iExists _. iFrame "H↦ Hℓ HTok".
       iSplitR; first done. iRight. iFrame.
     + (* The cell is attempting to cancel. *)
-      iDestruct "HRR" as "(Hℓ & HE & [HFutureCompl|HC])".
-      2: by iDestruct (iterator_issued_exclusive with "HIsRes HC") as ">[]".
+      iDestruct "HRR" as "(Hℓ & HE & [[[HFutureCompl|[_ HC]] HAwak]|[_ HC]])".
+      all: try by iDestruct (iterator_issued_exclusive with "HIsRes HC")
+          as ">[]".
+      iEval (rewrite -Qp_half_half future_completion_permit_Fractional)
+        in "HFutureCompl".
+      iDestruct "HFutureCompl" as "[HCompl1 HCompl2]".
       wp_load.
-      iSpecialize ("HΦ" $! (InjLV _) with "[HFutureCompl]").
+      iSpecialize ("HΦ" $! (InjLV _) with "[HCompl2]").
       { repeat iRight. iExists _, _. iFrame. iSplit=>//. }
       iMod ("HTqClose" with "[-HCloseCell HHRestore HΦ]").
       2: iModIntro; iMod "HCloseCell"; iModIntro; by iMod "HHRestore".
       iExists _, _. iFrame "H● HDeqIdx HLen". iApply "HRRsRestore".
       iFrame "HIsSus HTh HCancelled". iExists _. iFrame "H↦ Hℓ HE".
-      iSplitR; first done. iRight. iFrame.
+      iSplitR; first done. iLeft. iFrame. iRight; iFrame.
     + (* Cancellation was prevented. *)
       iDestruct "HRR" as "(HInside & HCancHandle & HRR)".
       iDestruct "HRR" as "[(Hℓ & HE & [HFutureCompl|HC])|
-        [[Hℓ [[[HFutureCompl|HC] HE]|[_ HC]]]|HRR]]";
+        [[Hℓ [[[HFutureCompl|[_ HC]] HE]|[_ HC]]]|HRR]]";
         last iDestruct "HRR" as (?) "(_ & HC & _)".
       all: try by iDestruct (iterator_issued_exclusive with "HIsRes HC")
           as ">[]".
       all: wp_load.
-      { iSpecialize ("HΦ" $! (InjLV _) with "[HFutureCompl]").
+      { iEval (rewrite -Qp_half_half future_completion_permit_Fractional)
+          in "HFutureCompl".
+        iDestruct "HFutureCompl" as "[HCompl1 HCompl2]".
+        iSpecialize ("HΦ" $! (InjLV _) with "[HCompl2]").
         { repeat iRight. iExists _, _. iFrame. iSplit=>//. }
         iMod ("HTqClose" with "[-HCloseCell HHRestore HΦ]").
         2: iModIntro; iMod "HCloseCell"; iModIntro; by iMod "HHRestore".
@@ -1363,28 +1392,36 @@ Proof.
         iFrame "HInside HIsSus HTh HCancelled HCancHandle". iExists _.
         iFrame "H↦". iSplitR; first done. iRight. iLeft. iFrame. }
     + (* Cell was cancelled, but this fact was not registered. *)
-      iDestruct "HRR" as "(HCancHandle &
-        [(Hℓ & HE & HR & [HFutureCompl|HC])|(_ & HRR)])";
+      iDestruct "HRR" as "(HCancHandle & HR' &
+        [(Hℓ & HE & [HFutureCompl|[_ HC]])|(_ & HRR)])";
         last iDestruct "HRR" as (?) "(_ & HC & _)".
       all: try by iDestruct (iterator_issued_exclusive with "HIsRes HC")
           as ">[]".
+      iEval (rewrite -Qp_half_half future_completion_permit_Fractional)
+        in "HFutureCompl".
+      iDestruct "HFutureCompl" as "[HCompl1 HCompl2]".
       wp_load.
-      iSpecialize ("HΦ" $! (InjLV _) with "[HFutureCompl]").
+      iSpecialize ("HΦ" $! (InjLV _) with "[HCompl2]").
       { repeat iRight. iExists _, _. iFrame. iSplit=>//. }
       iMod ("HTqClose" with "[-HCloseCell HHRestore HΦ]").
       2: iModIntro; iMod "HCloseCell"; iModIntro; by iMod "HHRestore".
       iExists _, _. iFrame "H● HDeqIdx HLen". iApply "HRRsRestore".
       iFrame "HCancHandle HIsSus HTh". iExists _. iFrame "H↦ HCancelled".
-      iSplitR; first done. iLeft. iFrame.
-  - iDestruct "HRR" as "(Hℓ & HCancHandle & HE & HR & [HFutureCompl|HC])".
+      iSplitR; first done. iFrame "HR'". iLeft. iFrame. iRight. iFrame.
+  - iDestruct "HRR" as "(Hℓ & HCancHandle & HE & HR & HFutureCanc &
+      [HFutureCompl|[_ HC]])".
     2: by iDestruct (iterator_issued_exclusive with "HIsRes HC") as ">[]".
+    iEval (rewrite -Qp_half_half future_completion_permit_Fractional)
+      in "HFutureCompl".
+    iDestruct "HFutureCompl" as "[HCompl1 HCompl2]".
     wp_load.
-    iSpecialize ("HΦ" $! (InjLV _) with "[HFutureCompl]").
+    iSpecialize ("HΦ" $! (InjLV _) with "[HCompl2]").
     { repeat iRight. iExists _, _. iFrame. iSplit=>//. }
     iMod ("HTqClose" with "[-HCloseCell HHRestore HΦ]").
     2: iModIntro; iMod "HCloseCell"; iModIntro; by iMod "HHRestore".
     iExists _, _. iFrame "H● HDeqIdx HLen". iApply "HRRsRestore".
-    iFrame "HCancHandle HIsSus HTh". iExists _. by iFrame.
+    iFrame "HCancHandle HIsSus HTh". iExists _. iFrame "H↦". iFrame.
+    iRight. iFrame.
 Qed.
 
 (* TRANSITIONS ON CELLS IN THE NON-SUSPENDING CASE *****************************)
@@ -1572,11 +1609,10 @@ Proof.
     iSplitR; first done. iExists _. iFrame "H↦". iRight. iFrame.
 Qed.
 
-
-
 (* DEALING WITH THE SUSPENDED FUTURE *******************************************)
 
 (* TODO: *)
+(* Establishing deqFront_at_least by iterator_issued *)
 (* Cancelling a future *)
 (* Resuming a future *)
 (* Registering cancellation *)
