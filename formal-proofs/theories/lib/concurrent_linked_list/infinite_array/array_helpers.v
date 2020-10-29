@@ -30,7 +30,8 @@ Theorem findCellAndMoveForward_spec N γ co p (v: val) (source_id id: nat):
   <<< ∃ p' id', is_infinite_array_cell_pointer _ _ aspc N γ p' id'
                 ∗ ⌜(id ≤ id')%nat⌝
                 ∗ (∀ i, (⌜max source_id id ≤ i < id'⌝)%nat
-                        -∗ cell_is_cancelled _ _ aspc N γ i)
+                        -∗ cell_is_cancelled _ _ aspc N γ i
+                        ∗ (∃ ℓ, infinite_array_mapsto _ _ aspc N co γ i ℓ))
                 ∗ ∃ i', ⌜start_index ≤ i' ≤ max id' start_index⌝ ∧
                   is_infinite_array_cutoff _ _ aspc N γ v i',
   RET p' >>>.

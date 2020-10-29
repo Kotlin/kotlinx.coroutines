@@ -67,19 +67,20 @@ Global Instance iterator_counter_at_least_persistent γ n:
   Persistent (iterator_counter_at_least γ n).
 Proof. apply _. Qed.
 
-Definition iterator_contents γa (P: iProp) γ cℓ p n: iProp :=
+Definition iterator_contents co γa (P: iProp) γ cℓ p n: iProp :=
   (iterator_counter γ cℓ n ∗ ([∗] replicate n P) ∗
    ∃ (id: nat), (∀ id', ⌜n ≤ id' < id⌝ -∗
-                        cell_is_cancelled _ _ aspc NArray γa id') ∗
+                        cell_is_cancelled _ _ aspc NArray γa id' ∗
+                        ∃ ℓ, infinite_array_mapsto _ _ aspc NArray co γa id' ℓ) ∗
   is_infinite_array_cutoff _ _ aspc NArray γa p id)%I.
 
-Definition is_iterator γa P γ v: iProp :=
+Definition is_iterator co γa P γ v: iProp :=
   ∃ (cℓ: loc) (p: val),
     ⌜v = (#cℓ, p)%V⌝ ∧
-    inv N (∃ (n: nat), iterator_contents γa P γ cℓ p n).
+    inv N (∃ (n: nat), iterator_contents co γa P γ cℓ p n).
 
-Global Instance is_iterator_persistent γa P γ v:
-  Persistent (is_iterator γa P γ v).
+Global Instance is_iterator_persistent co γa P γ v:
+  Persistent (is_iterator co γa P γ v).
 Proof. apply _. Qed.
 
 Definition iterator_issued γ n :=
@@ -186,11 +187,13 @@ Proof.
 Qed.
 
 Theorem iteratorStep_spec co γa P γ (v: val):
-  {{{ is_infinite_array _ _ aspc NArray γa co ∗ is_iterator γa P γ v ∗ P }}}
+  {{{ is_infinite_array _ _ aspc NArray γa co ∗ is_iterator co γa P γ v ∗ P }}}
     iteratorStep array_interface v
   {{{ n ns s, RET (#n, s); ⌜ns ≥ n⌝ ∧ iterator_issued γ n ∗
       is_infinite_array_cell_pointer _ _ aspc NArray γa s ns ∗
-      ∀ i : nat, ⌜n ≤ i ∧ i < ns⌝ -∗ cell_is_cancelled _ _ aspc NArray γa i
+      ∀ i : nat, ⌜n ≤ i ∧ i < ns⌝ -∗
+               cell_is_cancelled _ _ aspc NArray γa i ∗
+               ∃ ℓ, infinite_array_mapsto _ _ aspc NArray co γa i ℓ
   }}}.
 Proof.
   iIntros (Φ) "(#HArr & #HIter & HP) HΦ".
@@ -236,13 +239,14 @@ Proof.
     iExists _. by iFrame "HCutoff".
   }
   iIntros (seg segId) "(#HCellPointer & % & #HCancelled''' & HCutoff)".
-  iAssert (∀ i, ⌜start' ≤ i < segId⌝ -∗ cell_is_cancelled _ _ aspc NArray γa i)%I
+  iAssert (∀ i, ⌜start' ≤ i < segId⌝ -∗ cell_is_cancelled _ _ aspc NArray γa i
+          ∗ ∃ ℓ, infinite_array_mapsto _ _ aspc NArray co γa i ℓ)%I
     with "[]" as "#HCancelledSegId".
   {
     iIntros (id' HId').
-    destruct (decide (id' < start_id));
-      [iApply "HCancelled"|iApply "HCancelled'''"].
-    all: iPureIntro; lia.
+    destruct (decide (id' < start_id)).
+    by iApply "HCancelled"; iPureIntro; lia.
+    by iApply "HCancelled'''"; iPureIntro; lia.
   }
   iDestruct "HCutoff" as (i' Hi') "HCutoff".
   iSplitL.
@@ -259,16 +263,18 @@ Qed.
 
 Theorem iteratorStepOrIncreaseCounter_spec
         (shouldAdjust: bool) co γa P γ (fℓ: loc) (v: val):
-  {{{ is_infinite_array _ _ aspc NArray γa co ∗ is_iterator γa P γ v ∗ P ∗
+  {{{ is_infinite_array _ _ aspc NArray γa co ∗ is_iterator co γa P γ v ∗ P ∗
       if shouldAdjust
       then make_laterable (∀ l, ([∗ list] i ∈ l,
-      cell_is_cancelled _ _ aspc NArray γa i ∗ iterator_issued γ i
+      cell_is_cancelled _ _ aspc NArray γa i ∗ iterator_issued γ i ∗
+      (∃ ℓ, infinite_array_mapsto _ _ aspc NArray co γa i ℓ)
         ={⊤ ∖ ↑N}=∗ ▷ P)) else True
   }}}
     iteratorStepOrIncreaseCounter array_interface #shouldAdjust v
   {{{ v, RET v; ⌜v = NONEV⌝ ∗
                 (if shouldAdjust then P
                  else ∃ i, cell_is_cancelled _ _ aspc NArray γa i ∗
+                           (∃ ℓ, infinite_array_mapsto _ _ aspc NArray co γa i ℓ) ∗
                            iterator_issued γ i) ∨
                 ∃ ns s, ⌜v = SOMEV s⌝ ∧ iterator_issued γ ns ∗
                         is_infinite_array_cell_pointer _ _ aspc NArray γa s ns
@@ -345,9 +351,9 @@ Proof.
       iIntros "!> HΦ". wp_pures. iApply "HΦ". iLeft. by iFrame.
 Qed.
 
-Lemma access_iterator_resources E R γa γd d i:
+Lemma access_iterator_resources E R co γa γd d i:
   ↑N ⊆ E ->
-  is_iterator γa R γd d -∗
+  is_iterator co γa R γd d -∗
   iterator_counter_at_least γd i
   ={E,E∖↑N}=∗ ▷ (([∗] replicate i R)
                       ∗ ((▷ [∗] replicate i R) ={E∖↑N, E}=∗ True)).

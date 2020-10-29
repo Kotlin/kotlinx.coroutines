@@ -102,7 +102,7 @@ Qed.
 Theorem cell_cancellation_handle'_not_cancelled γ i:
   cell_is_cancelled' γ i -∗ cell_cancellation_handle' γ i -∗ False.
 Proof.
-  iIntros "H1 H2". rewrite /infinite_array_mapsto.
+  iIntros "H1 H2".
   iDestruct "H1" as (? ?) "(H1 & _ & H1Rest)".
   iDestruct "H2" as (? ?) "(H2 & _ & H2Rest)".
   iDestruct (segment_in_list_agree with "H1 H2") as "[-> ->]".
@@ -192,13 +192,29 @@ Proof.
   - iIntros "$ !> //".
 Qed.
 
+Lemma logicallyDerefCellPointer E P co γ i:
+  ↑NList ⊆ E ->
+  is_infinite_array γ co -∗
+  segment_view γ i P ={E}=∗
+  ∃ ℓ, ▷ infinite_array_mapsto co γ i ℓ.
+Proof.
+  iIntros (HMask) "#HArr HCellPointer".
+  iDestruct "HCellPointer" as (? ?) "(#HInList & #HId & _)".
+  iMod (segment_in_list_is_node with "HArr HInList") as "#[HNode HId']";
+    first done.
+  iDestruct "HId" as (values) "[HOwn HId]".
+  iExists _, _, _. iFrame "HInList HNode HId'". simpl.
+  iExists _. iSplitL; last done. iExists _. by iFrame "HOwn".
+Qed.
+
 Theorem findCell_spec γ co p (source_id id: nat):
   {{{ is_infinite_array γ co ∗
       is_infinite_array_cutoff_reading γ p source_id }}}
   findCell array_impl p #id @ ⊤
   {{{ p' id', RET p'; is_infinite_array_cell_pointer γ p' id'
       ∗ ⌜(id ≤ id')%nat⌝
-      ∗ ∀ i, (⌜max source_id id ≤ i < id'⌝)%nat -∗ cell_is_cancelled' γ i
+      ∗ ∀ i, (⌜max source_id id ≤ i < id'⌝)%nat -∗
+             cell_is_cancelled' γ i ∗ ∃ ℓ, infinite_array_mapsto co γ i ℓ
   }}}.
 Proof.
   iIntros (Φ) "[#HArr #HCellPointer] HΦ".
@@ -272,26 +288,39 @@ Proof.
     destruct k=> /=; last by eauto.
     intros; simplify_eq.
   }
+  iAssert (∀ i, ⌜source_id `max` id ≤ i ∧ i < id' * segment_size_nat⌝ ={⊤}=∗
+          ∃ ℓ, ▷ infinite_array_mapsto co γ i ℓ)%I with "[]" as "#HMapsto".
+  { iIntros (i HEl).
+    iAssert (|={⊤}=> cell_is_cancelled' γ i)%I with "[]" as ">HiCancelled";
+      first by iApply "HCellCanc".
+    by iMod (logicallyDerefCellPointer with "HArr HiCancelled") as "HH".
+  }
   iAssert ([∗ list] i ∈ seq (source_id `max` id)
                     (id' * segment_size_nat - (source_id `max` id)),
-          □ |={⊤}=> cell_is_cancelled' γ i)%I with "[]" as "HCellCanc'".
+          □ |={⊤}=> ▷ (cell_is_cancelled' γ i ∗
+                      ∃ ℓ, infinite_array_mapsto co γ i ℓ))%I
+    with "[]" as "HCellCanc'".
   {
     rewrite big_sepL_forall. iIntros (k ? HLookup).
     apply lookup_seq in HLookup.
-    iModIntro. iApply "HCellCanc". iPureIntro.
-    destruct HLookup as [-> Hk].
+    iModIntro. iSplitR.
+    by iMod ("HCellCanc" $! _ with "[%]") as "$"; [lia|done].
+    iMod ("HMapsto" $! _ with "[%]") as (ℓ) "HMapsto'"; last by iExists ℓ.
     lia.
   }
-  iAssert (|={⊤}=> [∗ list] i ∈ seq (source_id `max` id)
+  iAssert (|={⊤}=> ▷ [∗ list] i ∈ seq (source_id `max` id)
                     (id' * segment_size_nat - (source_id `max` id)),
-          cell_is_cancelled' γ i)%I with "[]" as ">#HCellCanc''".
+          cell_is_cancelled' γ i ∗
+          ∃ ℓ, infinite_array_mapsto co γ i ℓ)%I with "[]" as ">#HCellCanc''".
   {
-    iApply big_sepL_fupd. iApply (big_sepL_mono with "HCellCanc'").
+    iEval (rewrite big_sepL_later). iApply big_sepL_fupd.
+    iApply (big_sepL_mono with "HCellCanc'").
     iIntros (k y HSeq) "#HPers"=> //=.
   }
   iClear "HCellCanc HCellCanc' HOthersInList".
-  iAssert (∀ i, ⌜source_id `max` id ≤ i ∧ i < id' * segment_size_nat⌝ -∗
-           cell_is_cancelled' γ i)%I with "[]" as "#HCellCanc".
+  iAssert (▷ ∀ i, ⌜source_id `max` id ≤ i ∧ i < id' * segment_size_nat⌝ -∗
+           cell_is_cancelled' γ i ∗ ∃ ℓ, infinite_array_mapsto co γ i ℓ)%I
+    with "[]" as "#HCellCanc".
   {
     iIntros (k [Hk1 Hk2]). rewrite big_sepL_forall.
     apply nat_le_sum in Hk1. destruct Hk1 as [z ->].

@@ -60,7 +60,8 @@ Record infiniteArraySpec Σ `{!heapG Σ} (impl: infiniteArrayInterface) :=
         findCell impl p #id @ ⊤
         {{{ p' id', RET p'; is_infinite_array_cell_pointer N γ p' id'
             ∗ ⌜(id ≤ id')%nat⌝
-            ∗ ∀ i, (⌜max source_id id ≤ i < id'⌝)%nat -∗ cell_is_cancelled N γ i
+            ∗ ∀ i, (⌜max source_id id ≤ i < id'⌝)%nat -∗
+              cell_is_cancelled N γ i ∗ ∃ ℓ, infinite_array_mapsto N co γ i ℓ
         }}};
       derefCellPointer_spec N co γ (p: val) i:
         {{{ is_infinite_array N γ co ∗ is_infinite_array_cell_pointer N γ p i }}}
