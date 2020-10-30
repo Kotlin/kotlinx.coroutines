@@ -150,7 +150,8 @@ Definition future_invariant (R: val -> iProp Σ) (γ: gname) (ℓ: loc)
            (state: future_state): iProp Σ :=
   own γ (future_auth_ra state) ∗ match state with
     | FutureEmpty => ℓ ↦ InjLV #0
-    | FutureCompleted x => ℓ ↦ InjRV x ∗ (R x ∨ future_cancellation_permit γ 1%Qp)
+    | FutureCompleted x => ℓ ↦ InjRV x ∗
+                           (R x ∨ future_cancellation_permit γ (1/2)%Qp)
     | FutureCancelled =>  ℓ ↦ InjLV #1
   end.
 
@@ -210,7 +211,8 @@ Theorem awaitFuture_spec R γ f:
   is_future R γ f -∗
   <<< future_cancellation_permit γ 1%Qp >>>
     awaitFuture f @ ⊤ ∖ ↑N
-  <<< ∃ v, (∃ v', ⌜v = SOMEV v'⌝ ∗ R v' ∗ future_is_completed γ v') ∨
+  <<< ∃ v, (∃ v', ⌜v = SOMEV v'⌝ ∗ R v' ∗ future_is_completed γ v'
+           ∗ future_cancellation_permit γ (1/2)%Qp) ∨
            ⌜v = NONEV⌝ ∧ future_is_cancelled γ, RET v >>>.
 Proof.
   iIntros "HFuture" (Φ) "AU". iDestruct "HFuture" as (ℓ ->) "#HFuture".
@@ -224,11 +226,14 @@ Proof.
     + iMod (future_is_completed_from_auth_ra with "H●") as "[H● H◯]".
       iMod "AU" as "[HOpen [_ HClose]]".
       wp_load.
-      iMod ("HClose" with "[HR H◯]") as "HΦ".
+      iEval (rewrite -Qp_half_half future_cancellation_permit_Fractional)
+        in "HOpen".
+      iDestruct "HOpen" as "[HCancPerm1 HCancPerm2]".
+      iMod ("HClose" with "[HR H◯ HCancPerm2]") as "HΦ".
       { iLeft. iExists _. by iFrame. }
       iModIntro.
-      iMod ("HInvClose" with "[H● Hℓ HOpen]") as "_".
-      { iExists (FutureCompleted v). iFrame "H● Hℓ HOpen". }
+      iMod ("HInvClose" with "[-HΦ]") as "_".
+      { iExists (FutureCompleted v). iFrame. }
       iModIntro. by wp_pures.
     + iMod "AU" as "[HOpen [_ HClose]]". wp_load.
       iDestruct (future_cancellation_permit_exclusive with
@@ -241,12 +246,15 @@ Proof.
     iModIntro; wp_pures. iApply "HΦ".
 Qed.
 
-Theorem tryCompleteFuture_spec R γ f (v: val):
+Theorem tryCompleteFuture_spec (controlling_cancellation: bool) R γ f (v: val):
   is_future R γ f -∗
-  <<< R v ∗ future_completion_permit γ 1%Qp >>>
+  <<< (▷ R v ∨ if controlling_cancellation then ▷ future_is_cancelled γ else False) ∗
+      future_completion_permit γ 1%Qp >>>
     tryCompleteFuture f v @ ⊤ ∖ ↑N
   <<< ∃ (b: bool), if b then future_is_completed γ v
-                     else future_is_cancelled γ, RET #b >>>.
+                else future_is_cancelled γ ∗
+                     (if controlling_cancellation then True else R v) ∗
+                     future_completion_permit γ 1%Qp, RET #b >>>.
 Proof.
   iIntros "HFuture" (Φ) "AU". iDestruct "HFuture" as (ℓ ->) "#HFuture".
   wp_lam. wp_pures. wp_bind (CmpXchg _ _ _).
@@ -267,10 +275,17 @@ Proof.
         by apply alloc_option_local_update.
       - done.
     }
+    iDestruct "HFutureCompleted" as "#HFutureCompleted".
     iMod ("HClose" $! true with "HFutureCompleted") as "HΦ".
     iModIntro.
     iMod ("HInvClose" with "[-HΦ]") as "_".
-    { iExists (FutureCompleted v). iFrame. }
+    { iExists (FutureCompleted v). iFrame.
+      iDestruct "HR" as "[$|HContra]".
+      destruct controlling_cancellation.
+      - iDestruct (future_is_completed_not_cancelled
+                     with "HFutureCompleted HContra") as ">[]".
+      - iDestruct "HContra" as %[].
+    }
     iModIntro. by wp_pures.
   - iDestruct (own_valid_2 with "H● HPermit")
       as %[[[_ HValid]%pair_included _]%pair_included _]%auth_both_valid.
@@ -283,11 +298,12 @@ Proof.
         simplify_eq.
   - wp_cmpxchg_fail.
     iMod (future_is_cancelled_from_auth_ra with "H●") as "[H● HFutureCancelled]".
-    iMod ("HClose" $! false with "HFutureCancelled") as "HΦ".
-    iModIntro.
-    iMod ("HInvClose" with "[H● Hℓ]") as "_".
-    { iExists FutureCancelled. iFrame. }
-    iModIntro. by wp_pures.
+    destruct controlling_cancellation.
+    2: iDestruct "HR" as "[HR|%]"; last done.
+    all: iMod ("HClose" $! false with "[$]") as "HΦ"; iModIntro.
+    all: iMod ("HInvClose" with "[H● Hℓ]") as "_";
+      first by iExists FutureCancelled; iFrame.
+    all: iModIntro; by wp_pures.
 Qed.
 
 Theorem tryCancelFuture_spec R γ f:
@@ -345,7 +361,7 @@ Proof.
 Qed.
 
 Theorem completeFuture_spec R (v: val):
-  {{{ R v }}}
+  {{{ ▷ R v }}}
     completeFuture v
   {{{ γ f, RET f; is_future R γ f ∗ future_is_completed γ v ∗
                   future_cancellation_permit γ 1%Qp }}}.
