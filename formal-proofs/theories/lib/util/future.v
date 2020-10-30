@@ -211,9 +211,8 @@ Theorem awaitFuture_spec R γ f:
   is_future R γ f -∗
   <<< future_cancellation_permit γ 1%Qp >>>
     awaitFuture f @ ⊤ ∖ ↑N
-  <<< ∃ v, (∃ v', ⌜v = SOMEV v'⌝ ∗ R v' ∗ future_is_completed γ v'
-           ∗ future_cancellation_permit γ (1/2)%Qp) ∨
-           ⌜v = NONEV⌝ ∧ future_is_cancelled γ, RET v >>>.
+  <<< ∃ v', R v' ∗ future_is_completed γ v'
+            ∗ future_cancellation_permit γ (1/2)%Qp, RET (SOMEV v') >>>.
 Proof.
   iIntros "HFuture" (Φ) "AU". iDestruct "HFuture" as (ℓ ->) "#HFuture".
   wp_lam. iLöb as "IH". wp_bind (!#ℓ)%E.
@@ -229,8 +228,7 @@ Proof.
       iEval (rewrite -Qp_half_half future_cancellation_permit_Fractional)
         in "HOpen".
       iDestruct "HOpen" as "[HCancPerm1 HCancPerm2]".
-      iMod ("HClose" with "[HR H◯ HCancPerm2]") as "HΦ".
-      { iLeft. iExists _. by iFrame. }
+      iMod ("HClose" with "[HR H◯ HCancPerm2]") as "HΦ"; first by iFrame.
       iModIntro.
       iMod ("HInvClose" with "[-HΦ]") as "_".
       { iExists (FutureCompleted v). iFrame. }
@@ -239,11 +237,9 @@ Proof.
       iDestruct (future_cancellation_permit_exclusive with
                      "HOpen HCancellation") as %[].
   - iMod (future_is_cancelled_from_auth_ra with "H●") as "[H● H◯]".
-    iMod "AU" as "[HOpen [_ HClose]]". wp_load.
-    iMod ("HClose" with "[H◯]") as "HΦ". by iRight; iFrame. iModIntro.
-    iMod ("HInvClose" with "[H● HR]") as "_".
-    { iExists FutureCancelled. by iFrame "H●". }
-    iModIntro; wp_pures. iApply "HΦ".
+    iMod "AU" as "[HOpen [_ HClose]]".
+    iDestruct (future_cancellation_permit_implies_not_cancelled
+              with "HOpen H◯") as %[].
 Qed.
 
 Theorem tryCompleteFuture_spec (controlling_cancellation: bool) R γ f (v: val):
