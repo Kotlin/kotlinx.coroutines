@@ -1,6 +1,6 @@
 <!--- TEST_NAME ExceptionsGuideTest -->
 
-[//]: # (title: Exceptions handling)
+[//]: # (title: Coroutine exceptions handling)
 
 This section covers exception handling and cancellation on exceptions.
 We already know that a cancelled coroutine throws [CancellationException] in suspension points and that it
