@@ -1,6 +1,6 @@
 <!--- TEST_NAME BasicsGuideTest -->
 
-[//]: # (title: Basics)
+[//]: # (title: Coroutines basics)
 
 This section covers basic coroutine concepts.
 

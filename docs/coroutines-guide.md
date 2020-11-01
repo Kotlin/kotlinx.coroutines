@@ -12,19 +12,23 @@ coroutine-enabled primitives that this guide covers, including `launch`, `async`
 This is a guide on core features of `kotlinx.coroutines` with a series of examples, divided up into different topics.
 
 In order to use coroutines as well as follow the examples in this guide, you need to add a dependency on the `kotlinx-coroutines-core` module as explained 
-[in the project README](../README.md#using-in-your-projects).
+[in the project README](https://github.com/Kotlin/kotlinx.coroutines/blob/master/README.md#using-in-your-projects).
 
 ## Table of contents
 
-* [Basics](basics.md)
+* [Coroutines basics](basics.md)
+* [Tutorial: Create a basic coroutine](coroutines-basic-jvm.md)
+* [Hands-on: Intro to coroutines and channels](https://play.kotlinlang.org/hands-on/Introduction%20to%20Coroutines%20and%20Channels)
 * [Cancellation and timeouts](cancellation-and-timeouts.md)
 * [Composing suspending functions](composing-suspending-functions.md)
 * [Coroutine context and dispatchers](coroutine-context-and-dispatchers.md)
 * [Asynchronous Flow](flow.md)
 * [Channels](channels.md)
-* [Exception handling and supervision](exception-handling.md)
+* [Coroutine exceptions handling](exception-handling.md)
 * [Shared mutable state and concurrency](shared-mutable-state-and-concurrency.md)
 * [Select expression (experimental)](select-expression.md)
+* [Tutorial: Debug coroutines using IntelliJ IDEA](debug-coroutines-with-idea.md)
+* [Tutorial: Debug Kotlin Flow using IntelliJ IDEA](debug-flow-with-idea.md)
 
 ## Additional references
 
