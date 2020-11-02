@@ -497,7 +497,13 @@ private class SharedFlowImpl<T>(
             }
         }
         // Compute new buffer size -> how many values we now actually have after resume
-        val newBufferSize1 = (newBufferEndIndex - head).toInt()
+        var newBufferSize1 = (newBufferEndIndex - head).toInt()
+        // Note: When nCollectors == 0 we resume all queued emitters and we might have resumed more than bufferCapacity,
+        //       if which case we need to coerce the resulting buffer size and adjust newMinCollectorIndex
+        if (nCollectors == 0 && newBufferSize1 > bufferCapacity) {
+            newMinCollectorIndex += newBufferSize1 - bufferCapacity // adjust minCollectorIndex, too, to skip items
+            newBufferSize1 = bufferCapacity
+        }
         // Compute new replay size -> limit to replay the number of items we need, take into account that it can only grow
         var newReplayIndex = maxOf(replayIndex, newBufferEndIndex - minOf(replay, newBufferSize1))
         // adjustment for synchronous case with cancelled emitter (NO_VALUE)
