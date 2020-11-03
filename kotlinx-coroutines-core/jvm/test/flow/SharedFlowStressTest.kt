@@ -71,7 +71,4 @@ class SharedFlowStressTest : TestBase() {
         jobs.forEach { it.join() }
         println("total: produced = ${totalProduced.value}; consumed = ${totalConsumed.value}")
     }
-
-    private fun showStats(s: String) {
-    }
 }
