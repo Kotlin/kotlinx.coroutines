@@ -116,4 +116,26 @@ class CancellableContinuationTest : TestBase() {
         continuation!!.resume(Unit) // Should not fail
         finish(4)
     }
+
+    @Test
+    fun testCompleteJobWhileSuspended() = runTest {
+        expect(1)
+        val completableJob = Job()
+        val coroutineBlock = suspend {
+            assertFailsWith<CancellationException> {
+                suspendCancellableCoroutine<Unit> { cont ->
+                    expect(2)
+                    assertSame(completableJob, cont.context[Job])
+                    completableJob.complete()
+                }
+                expectUnreached()
+            }
+            expect(3)
+        }
+        coroutineBlock.startCoroutine(Continuation(completableJob) {
+            assertEquals(Unit, it.getOrNull())
+            expect(4)
+        })
+        finish(5)
+    }
 }

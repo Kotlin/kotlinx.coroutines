@@ -16,8 +16,8 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
         takeEventLoop().dispatch(context, block)
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
         takeEventLoop().scheduleResumeAfterDelay(timeMillis, continuation)
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
-        takeEventLoop().invokeOnTimeout(timeMillis, block)
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+        takeEventLoop().invokeOnTimeout(timeMillis, block, context)
 
     actual fun enqueue(task: Runnable): Unit = loopWasShutDown()
 }

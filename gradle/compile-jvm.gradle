@@ -4,13 +4,12 @@
 
 // Platform-specific configuration to compile JVM modules
 
-apply plugin: 'kotlin'
+apply plugin: 'org.jetbrains.kotlin.jvm'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     // Workaround to make addSuppressed work in tests
     testCompile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
@@ -19,8 +18,10 @@ dependencies {
     testCompile "junit:junit:$junit_version"
 }
 
-repositories {
-    maven { url "https://dl.bintray.com/devexperts/Maven/" }
+compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs += ['-Xexplicit-api=strict']
+    }
 }
 
 tasks.withType(Test) {

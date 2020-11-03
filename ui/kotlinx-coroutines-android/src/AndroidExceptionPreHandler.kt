@@ -5,7 +5,7 @@
 package kotlinx.coroutines.android
 
 import android.os.*
-import android.support.annotation.*
+import androidx.annotation.*
 import kotlinx.coroutines.*
 import java.lang.reflect.*
 import kotlin.coroutines.*

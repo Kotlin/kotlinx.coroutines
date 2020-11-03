@@ -42,7 +42,7 @@ class BasicOperationsTest : TestBase() {
     @Test
     fun testInvokeOnClose() = TestChannelKind.values().forEach { kind ->
         reset()
-        val channel = kind.create()
+        val channel = kind.create<Int>()
         channel.invokeOnClose {
             if (it is AssertionError) {
                 expect(3)
@@ -59,7 +59,7 @@ class BasicOperationsTest : TestBase() {
     fun testInvokeOnClosed() = TestChannelKind.values().forEach { kind ->
         reset()
         expect(1)
-        val channel = kind.create()
+        val channel = kind.create<Int>()
         channel.close()
         channel.invokeOnClose { expect(2) }
         assertFailsWith<IllegalStateException> { channel.invokeOnClose { expect(3) } }
@@ -69,7 +69,7 @@ class BasicOperationsTest : TestBase() {
     @Test
     fun testMultipleInvokeOnClose() = TestChannelKind.values().forEach { kind ->
         reset()
-        val channel = kind.create()
+        val channel = kind.create<Int>()
         channel.invokeOnClose { expect(3) }
         expect(1)
         assertFailsWith<IllegalStateException> { channel.invokeOnClose { expect(4) } }
@@ -81,7 +81,7 @@ class BasicOperationsTest : TestBase() {
     @Test
     fun testIterator() = runTest {
         TestChannelKind.values().forEach { kind ->
-            val channel = kind.create()
+            val channel = kind.create<Int>()
             val iterator = channel.iterator()
             assertFailsWith<IllegalStateException> { iterator.next() }
             channel.close()
@@ -91,7 +91,7 @@ class BasicOperationsTest : TestBase() {
     }
 
     private suspend fun testReceiveOrNull(kind: TestChannelKind) = coroutineScope {
-        val channel = kind.create()
+        val channel = kind.create<Int>()
         val d = async(NonCancellable) {
             channel.receive()
         }
@@ -108,7 +108,7 @@ class BasicOperationsTest : TestBase() {
     }
 
     private suspend fun testReceiveOrNullException(kind: TestChannelKind) = coroutineScope {
-        val channel = kind.create()
+        val channel = kind.create<Int>()
         val d = async(NonCancellable) {
             channel.receive()
         }
@@ -132,7 +132,7 @@ class BasicOperationsTest : TestBase() {
     @Suppress("ReplaceAssertBooleanWithAssertEquality")
     private suspend fun testReceiveOrClosed(kind: TestChannelKind) = coroutineScope {
         reset()
-        val channel = kind.create()
+        val channel = kind.create<Int>()
         launch {
             expect(2)
             channel.send(1)
@@ -159,7 +159,7 @@ class BasicOperationsTest : TestBase() {
     }
 
     private suspend fun testOffer(kind: TestChannelKind) = coroutineScope {
-        val channel = kind.create()
+        val channel = kind.create<Int>()
         val d = async { channel.send(42) }
         yield()
         channel.close()
@@ -184,7 +184,7 @@ class BasicOperationsTest : TestBase() {
     private suspend fun testSendAfterClose(kind: TestChannelKind) {
         assertFailsWith<ClosedSendChannelException> {
             coroutineScope {
-                val channel = kind.create()
+                val channel = kind.create<Int>()
                 channel.close()
 
                 launch {
@@ -195,7 +195,7 @@ class BasicOperationsTest : TestBase() {
     }
 
     private suspend fun testSendReceive(kind: TestChannelKind, iterations: Int) = coroutineScope {
-        val channel = kind.create()
+        val channel = kind.create<Int>()
         launch {
             repeat(iterations) { channel.send(it) }
             channel.close()

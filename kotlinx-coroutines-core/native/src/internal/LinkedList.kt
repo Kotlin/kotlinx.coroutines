@@ -1,6 +1,7 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:Suppress("NO_EXPLICIT_RETURN_TYPE_IN_API_MODE", "NO_EXPLICIT_VISIBILITY_IN_API_MODE")
 
 package kotlinx.coroutines.internal
 
@@ -122,6 +123,8 @@ public actual abstract class AbstractAtomicDesc : AtomicDesc() {
         finishPrepare(prepareOp)
         return null
     }
+
+    actual open fun onRemoved(affected: Node) {}
 
     actual final override fun prepare(op: AtomicOp<*>): Any? {
         val affected = affectedNode

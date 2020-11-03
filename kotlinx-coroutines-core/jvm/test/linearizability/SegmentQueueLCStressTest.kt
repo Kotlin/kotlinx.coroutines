@@ -18,12 +18,17 @@ class SegmentQueueLCStressTest : VerifierState() {
     private val q = SegmentBasedQueue<Int>()
 
     @Operation
-    fun add(@Param(name = "value") value: Int) {
-        q.enqueue(value)
+    fun enqueue(@Param(name = "value") x: Int): Boolean {
+        return q.enqueue(x) !== null
     }
 
     @Operation
-    fun poll(): Int? = q.dequeue()
+    fun dequeue(): Int? = q.dequeue()
+
+    @Operation
+    fun close() {
+        q.close()
+    }
 
     override fun extractState(): Any {
         val elements = ArrayList<Int>()
@@ -31,8 +36,8 @@ class SegmentQueueLCStressTest : VerifierState() {
             val x = q.dequeue() ?: break
             elements.add(x)
         }
-
-        return elements
+        val closed = q.enqueue(0) === null
+        return elements to closed
     }
 
     @Test

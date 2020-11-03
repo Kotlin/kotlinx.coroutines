@@ -1,5 +1,119 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.4.0
+
+### Improvements
+
+* `StateFlow`, `SharedFlow` and corresponding operators are promoted to stable API (#2316).
+* `Flow.debounce` operator with timeout selector based on each individual element is added (#1216, thanks to @mkano9!). 
+* `CoroutineContext.job` extension property is introduced (#2159).
+* `Flow.combine operator` is reworked:
+    * Complete fairness is maintained for single-threaded dispatchers.
+    * Its performance is improved, depending on the use-case, by at least 50% (#2296).
+    * Quadratic complexity depending on the number of upstream flows is eliminated (#2296).
+    * `crossinline` and `inline`-heavy internals are removed, fixing sporadic SIGSEGV on Mediatek Android devices (#1683, #1743).
+* `Flow.zip` operator performance is improved by 40%.
+* Various API has been promoted to stable or its deprecation level has been raised (#2316).
+
+### Bug fixes
+
+* Suspendable `stateIn` operator propagates exception to the caller when upstream fails to produce initial value (#2329).
+* Fix `SharedFlow` with replay for subscribers working at different speed (#2325).
+* Do not fail debug agent installation when security manager does not provide access to system properties (#2311).
+* Cancelled lazy coroutines are properly cleaned up from debug agent output (#2294).
+* `BlockHound` false-positives are correctly filtered out (#2302, #2190, #2303).
+* Potential crash during a race between cancellation and upstream in `Observable.asFlow` is fixed (#2104, #2299, thanks to @LouisCAD and @drinkthestars).
+
+## Version 1.4.0-M1
+
+### Breaking changes
+
+* The concept of atomic cancellation in channels is removed. All operations in channels
+    and corresponding `Flow` operators are cancellable in non-atomic way (#1813).
+* If `CoroutineDispatcher` throws `RejectedExecutionException`, cancel current `Job` and schedule its execution to `Dispatchers.IO` (#2003).
+* `CancellableContinuation.invokeOnCancellation` is invoked if the continuation was cancelled while its resume has been dispatched (#1915).
+* `Flow.singleOrNull` operator is aligned with standard library and does not longer throw `IllegalStateException` on multiple values (#2289). 
+
+### New experimental features
+
+* `SharedFlow` primitive for managing hot sources of events with support of various subscription mechanisms, replay logs and buffering (#2034).
+* `Flow.shareIn` and `Flow.stateIn` operators to transform cold instances of flow to hot `SharedFlow` and `StateFlow` respectively (#2047).
+
+### Other
+    
+* Support leak-free closeable resources transfer via `onUndeliveredElement` in channels (#1936).
+* Changed ABI in reactive integrations for Java interoperability (#2182).
+* Fixed ProGuard rules for `kotlinx-coroutines-core` (#2046, #2266).
+* Lint settings were added to `Flow` to avoid accidental capturing of outer `CoroutineScope` for cancellation check (#2038). 
+
+### External contributions
+
+* Allow nullable types in `Flow.firstOrNull` and `Flow.singleOrNull` by @ansman (#2229).
+* Add `Publisher.awaitSingleOrDefault|Null|Else` extensions by @sdeleuze (#1993).
+* `awaitCancellation` top-level function by @LouisCAD (#2213).
+* Significant part of our Gradle build scripts were migrated to `.kts` by @turansky. 
+
+Thank you for your contributions and participation in the Kotlin community!
+
+## Version 1.3.9
+
+* Support of `CoroutineContext` in `Flow.asPublisher` and similar reactive builders (#2155).
+* Kotlin updated to 1.4.0.
+* Transition to new HMPP publication scheme for multiplatform usages:
+    * Artifacts `kotlinx-coroutines-core-common` and `kotlinx-coroutines-core-native` are removed.
+    * For multiplatform usages, it's enough to [depend directly](README.md#multiplatform) on `kotlinx-coroutines-core` in `commonMain` source-set.
+    * The same artifact coordinates can be used to depend on platform-specific artifact in platform-specific source-set.
+
+## Version 1.3.8
+
+### New experimental features
+
+* Added `Flow.transformWhile operator` (#2065).
+* Replaced `scanReduce` with `runningReduce` to be consistent with the Kotlin standard library (#2139).
+
+### Bug fixes and improvements
+
+* Improve user experience for the upcoming coroutines debugger (#2093, #2118, #2131).
+* Debugger no longer retains strong references to the running coroutines (#2129).
+* Fixed race in `Flow.asPublisher` (#2109).
+* Fixed `ensureActive` to work in the empty context case to fix `IllegalStateException` when using flow from `suspend fun main` (#2044).
+* Fixed a problem with `AbortFlowException` in the `Flow.first` operator to avoid erroneous `NoSuchElementException` (#2051).
+* Fixed JVM dependency on Android annotations (#2075).
+* Removed keep rules mentioning `kotlinx.coroutines.android` from core module (#2061 by @mkj-gram).
+* Corrected some docs and examples (#2062, #2071, #2076, #2107, #2098, #2127, #2078, #2135).                                                                          
+* Improved the docs and guide on flow cancellation (#2043).
+* Updated Gradle version to `6.3` (it only affects multiplatform artifacts in this release).
+
+## Version 1.3.7
+
+* Fixed problem that triggered Android Lint failure (#2004).
+* New `Flow.cancellable()` operator for cooperative cancellation (#2026).
+* Emissions from `flow` builder now check cancellation status and are properly cancellable (#2026).
+* New `currentCoroutineContext` function to use unambiguously in the contexts with `CoroutineScope` in receiver position (#2026). 
+* `EXACTLY_ONCE` contract support in coroutine builders.
+* Various documentation improvements.
+
+## Version 1.3.6
+
+### Flow
+
+* `StateFlow`, new primitive for state handling (#1973, #1816, #395). The `StateFlow` is designed to eventually replace `ConflatedBroadcastChannel` for state publication scenarios. Please, try it and share your feedback. Note, that Flow-based primitives to publish events will be added later. For events you should continue to either use `BroadcastChannel(1)`, if you put events into the `StateFlow`, protect them from double-processing with flags.
+* `Flow.onEmpty` operator is introduced (#1890).
+* Behavioural change in `Flow.onCompletion`, it is aligned with `invokeOnCompletion` now and passes `CancellationException` to its cause parameter (#1693).
+* A lot of Flow operators have left its experimental status and are promoted to stable API.
+
+### Other
+
+* `runInterruptible` primitive to tie cancellation with thread interruption for blocking calls. Contributed by @jxdabc (#1947).
+* Integration module with RxJava3 is introduced. Contributed by @ZacSweers (#1883)
+* Integration with [BlockHound](https://github.com/reactor/BlockHound) in `kotlinx-coroutines-debug` module (#1821, #1060).
+* Memory leak in ArrayBroadcastChannel is fixed (#1885).
+* Behavioural change in `suspendCancellableCoroutine`, cancellation is established before invoking passed block argument (#1671).
+* Debug agent internals are moved into `kotlinx-coroutines-core` for better integration with IDEA. It should not affect library users and all the redundant code should be properly eliminated with R8.
+* ClassCastException with reusable continuations bug is fixed (#1966).
+* More precise scheduler detection for `Executor.asCoroutineDispatcher` (#1992).
+* Kotlin updated to 1.3.71.
+
 ## Version 1.3.5
 
 * `firstOrNull` operator. Contributed by @bradynpoulsen.

@@ -1,11 +1,15 @@
 public final class kotlinx/coroutines/debug/CoroutineInfo {
-	public final fun copy ()Lkotlinx/coroutines/debug/CoroutineInfo;
 	public final fun getContext ()Lkotlin/coroutines/CoroutineContext;
 	public final fun getCreationStackTrace ()Ljava/util/List;
 	public final fun getJob ()Lkotlinx/coroutines/Job;
 	public final fun getState ()Lkotlinx/coroutines/debug/State;
 	public final fun lastObservedStackTrace ()Ljava/util/List;
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class kotlinx/coroutines/debug/CoroutinesBlockHoundIntegration : reactor/blockhound/integration/BlockHoundIntegration {
+	public fun <init> ()V
+	public fun applyTo (Lreactor/blockhound/BlockHound$Builder;)V
 }
 
 public final class kotlinx/coroutines/debug/DebugProbes {
@@ -35,10 +39,6 @@ public final class kotlinx/coroutines/debug/State : java/lang/Enum {
 	public static final field SUSPENDED Lkotlinx/coroutines/debug/State;
 	public static fun valueOf (Ljava/lang/String;)Lkotlinx/coroutines/debug/State;
 	public static fun values ()[Lkotlinx/coroutines/debug/State;
-}
-
-public synthetic class kotlinx/coroutines/debug/internal/DebugProbesImplSequenceNumberRefVolatile {
-	public fun <init> (J)V
 }
 
 public final class kotlinx/coroutines/debug/junit4/CoroutinesTimeout : org/junit/rules/TestRule {

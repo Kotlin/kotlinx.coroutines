@@ -39,7 +39,7 @@ class CoroutinesDumpTest : DebugTestBase() {
 
     @Test
     fun testRunningCoroutine() = runBlocking {
-        val deferred = async(Dispatchers.Default) {
+        val deferred = async(Dispatchers.IO) {
             activeMethod(shouldSuspend = false)
             assertTrue(true)
         }
@@ -70,7 +70,7 @@ class CoroutinesDumpTest : DebugTestBase() {
 
     @Test
     fun testRunningCoroutineWithSuspensionPoint() = runBlocking {
-        val deferred = async(Dispatchers.Default) {
+        val deferred = async(Dispatchers.IO) {
             activeMethod(shouldSuspend = true)
             yield() // tail-call
         }
@@ -100,7 +100,7 @@ class CoroutinesDumpTest : DebugTestBase() {
 
     @Test
     fun testCreationStackTrace() = runBlocking {
-        val deferred = async(Dispatchers.Default) {
+        val deferred = async(Dispatchers.IO) {
             activeMethod(shouldSuspend = true)
         }
 
@@ -115,21 +115,27 @@ class CoroutinesDumpTest : DebugTestBase() {
         coroutineThread!!.interrupt()
 
         val expected =
-            ("kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
-                    "kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
-                    "kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:109)\n" +
-                    "kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:160)\n" +
-                    "kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt:88)\n" +
-                    "kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
-                    "kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt:81)\n" +
-                    "kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
-                    "kotlinx.coroutines.debug.CoroutinesDumpTest\$testCreationStackTrace\$1.invokeSuspend(CoroutinesDumpTest.kt)").trimStackTrace()
-        assertTrue(result.startsWith(expected))
+            "kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n" +
+            "kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt)\n" +
+            "kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable\$default(Cancellable.kt)\n" +
+            "kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt)\n" +
+            "kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt)\n" +
+            "kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt)\n" +
+            "kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
+            "kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt)\n" +
+            "kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
+            "kotlinx.coroutines.debug.CoroutinesDumpTest\$testCreationStackTrace\$1.invokeSuspend(CoroutinesDumpTest.kt)"
+        if (!result.startsWith(expected)) {
+            println("=== Actual result")
+            println(result)
+            error("Does not start with expected lines")
+        }
+
     }
 
     @Test
     fun testFinishedCoroutineRemoved() = runBlocking {
-        val deferred = async(Dispatchers.Default) {
+        val deferred = async(Dispatchers.IO) {
             activeMethod(shouldSuspend = true)
         }
 
@@ -149,7 +155,10 @@ class CoroutinesDumpTest : DebugTestBase() {
         if (shouldSuspend) yield()
         notifyCoroutineStarted()
         while (coroutineContext[Job]!!.isActive) {
-            runCatching { Thread.sleep(60_000) }
+            try {
+                Thread.sleep(60_000)
+            } catch (_ : InterruptedException) {
+            }
         }
     }
 

@@ -103,6 +103,8 @@ internal object CommonPool : ExecutorCoroutineDispatcher() {
             (pool ?: getOrCreatePoolSync()).execute(wrapTask(block))
         } catch (e: RejectedExecutionException) {
             unTrackTask()
+            // CommonPool only rejects execution when it is being closed and this behavior is reserved
+            // for testing purposes, so we don't have to worry about cancelling the affected Job here.
             DefaultExecutor.enqueue(block)
         }
     }

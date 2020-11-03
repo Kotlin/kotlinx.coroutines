@@ -87,17 +87,14 @@ private class MissingMainCoroutineDispatcher(
 
     override val immediate: MainCoroutineDispatcher get() = this
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean {
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
         missing()
-    }
 
-    override suspend fun delay(time: Long) {
+    override suspend fun delay(time: Long) =
         missing()
-    }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         missing()
-    }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) =
         missing()
@@ -114,7 +111,7 @@ private class MissingMainCoroutineDispatcher(
         }
     }
 
-    override fun toString(): String = "Main[missing${if (cause != null) ", cause=$cause" else ""}]"
+    override fun toString(): String = "Dispatchers.Main[missing${if (cause != null) ", cause=$cause" else ""}]"
 }
 
 /**

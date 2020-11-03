@@ -16,8 +16,11 @@ import kotlinx.coroutines.selects.*
  *
  * An instance of completable deferred can be created by `CompletableDeferred()` function in _active_ state.
  *
- * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
+ * All functions on this interface are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
+ *
+ * **The `CompletableDeferred` interface is not stable for inheritance in 3rd party libraries**,
+ * as new methods might be added to this interface in the future, but is stable for use.
  */
 public interface CompletableDeferred<T> : Deferred<T> {
     /**
@@ -54,8 +57,8 @@ public interface CompletableDeferred<T> : Deferred<T> {
  * This function transitions this deferred in the same ways described by [CompletableDeferred.complete] and
  * [CompletableDeferred.completeExceptionally].
  */
-@ExperimentalCoroutinesApi // since 1.3.2, tentatively until 1.4.0
-public fun <T> CompletableDeferred<T>.completeWith(result: Result<T>) = result.fold({ complete(it) }, { completeExceptionally(it) })
+public fun <T> CompletableDeferred<T>.completeWith(result: Result<T>): Boolean =
+    result.fold({ complete(it) }, { completeExceptionally(it) })
 
 /**
  * Creates a [CompletableDeferred] in an _active_ state.

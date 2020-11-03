@@ -59,7 +59,6 @@ public inline fun <T, R: Any> Flow<T>.mapNotNull(crossinline transform: suspend 
 /**
  * Returns a flow that wraps each element into [IndexedValue], containing value and its index (starting from zero).
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.withIndex(): Flow<IndexedValue<T>> = flow {
     var index = 0
     collect { value ->
@@ -68,7 +67,7 @@ public fun <T> Flow<T>.withIndex(): Flow<IndexedValue<T>> = flow {
 }
 
 /**
- * Returns a flow which performs the given [action] on each value of the original flow.
+ * Returns a flow that invokes the given [action] **before** each value of the upstream flow is emitted downstream.
  */
 public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = transform { value ->
     action(value)
@@ -101,12 +100,12 @@ public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend 
  *
  * For example:
  * ```
- * flowOf(1, 2, 3, 4).scanReduce { (v1, v2) -> v1 + v2 }.toList()
+ * flowOf(1, 2, 3, 4).runningReduce { (v1, v2) -> v1 + v2 }.toList()
  * ```
  * will produce `[1, 3, 6, 10]`
  */
 @ExperimentalCoroutinesApi
-public fun <T> Flow<T>.scanReduce(operation: suspend (accumulator: T, value: T) -> T): Flow<T> = flow {
+public fun <T> Flow<T>.runningReduce(operation: suspend (accumulator: T, value: T) -> T): Flow<T> = flow {
     var accumulator: Any? = NULL
     collect { value ->
         accumulator = if (accumulator === NULL) {

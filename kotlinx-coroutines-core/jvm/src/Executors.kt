@@ -14,7 +14,7 @@ import kotlin.coroutines.*
  * Instances of [ExecutorCoroutineDispatcher] should be closed by the owner of the dispatcher.
  *
  * This class is generally used as a bridge between coroutine-based API and
- * asynchronous API which requires instance of the [Executor].
+ * asynchronous API that requires an instance of the [Executor].
  */
 public abstract class ExecutorCoroutineDispatcher: CoroutineDispatcher(), Closeable {
     /** @suppress */
@@ -38,6 +38,12 @@ public abstract class ExecutorCoroutineDispatcher: CoroutineDispatcher(), Closea
 
 /**
  * Converts an instance of [ExecutorService] to an implementation of [ExecutorCoroutineDispatcher].
+ *
+ * If the underlying executor throws [RejectedExecutionException] on
+ * attempt to submit a continuation task (it happens when [closing][ExecutorCoroutineDispatcher.close] the
+ * resulting dispatcher, on underlying executor [shutdown][ExecutorService.shutdown], or when it uses limited queues),
+ * then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
+ * [Dispatchers.IO], so that the affected coroutine can cleanup its resources and promptly complete.
  */
 @JvmName("from") // this is for a nice Java API, see issue #255
 public fun ExecutorService.asCoroutineDispatcher(): ExecutorCoroutineDispatcher =
@@ -45,6 +51,12 @@ public fun ExecutorService.asCoroutineDispatcher(): ExecutorCoroutineDispatcher 
 
 /**
  * Converts an instance of [Executor] to an implementation of [CoroutineDispatcher].
+ *
+ * If the underlying executor throws [RejectedExecutionException] on
+ * attempt to submit a continuation task (it happens when [closing][ExecutorCoroutineDispatcher.close] the
+ * resulting dispatcher, on underlying executor [shutdown][ExecutorService.shutdown], or when it uses limited queues),
+ * then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
+ * [Dispatchers.IO], so that the affected coroutine can cleanup its resources and promptly complete.
  */
 @JvmName("from") // this is for a nice Java API, see issue #255
 public fun Executor.asCoroutineDispatcher(): CoroutineDispatcher =
@@ -82,7 +94,8 @@ internal abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispa
             executor.execute(wrapTask(block))
         } catch (e: RejectedExecutionException) {
             unTrackTask()
-            DefaultExecutor.enqueue(block)
+            cancelJobOnRejection(context, e)
+            Dispatchers.IO.dispatch(context, block)
         }
     }
 
@@ -93,7 +106,7 @@ internal abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispa
      */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val future = if (removesFutureOnCancellation) {
-            scheduleBlock(ResumeUndispatchedRunnable(this, continuation), timeMillis, TimeUnit.MILLISECONDS)
+            scheduleBlock(ResumeUndispatchedRunnable(this, continuation), continuation.context, timeMillis)
         } else {
             null
         }
@@ -106,22 +119,29 @@ internal abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispa
         DefaultExecutor.scheduleResumeAfterDelay(timeMillis, continuation)
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         val future = if (removesFutureOnCancellation) {
-            scheduleBlock(block, timeMillis, TimeUnit.MILLISECONDS)
+            scheduleBlock(block, context, timeMillis)
         } else {
             null
         }
-
-        return if (future != null ) DisposableFutureHandle(future) else DefaultExecutor.invokeOnTimeout(timeMillis, block)
+        return when {
+            future != null -> DisposableFutureHandle(future)
+            else -> DefaultExecutor.invokeOnTimeout(timeMillis, block, context)
+        }
     }
 
-    private fun scheduleBlock(block: Runnable, time: Long, unit: TimeUnit): ScheduledFuture<*>? {
+    private fun scheduleBlock(block: Runnable, context: CoroutineContext, timeMillis: Long): ScheduledFuture<*>? {
         return try {
-            (executor as? ScheduledExecutorService)?.schedule(block, time, unit)
+            (executor as? ScheduledExecutorService)?.schedule(block, timeMillis, TimeUnit.MILLISECONDS)
         } catch (e: RejectedExecutionException) {
+            cancelJobOnRejection(context, e)
             null
         }
+    }
+
+    private fun cancelJobOnRejection(context: CoroutineContext, exception: RejectedExecutionException) {
+        context.cancel(CancellationException("The task was rejected", exception))
     }
 
     override fun close() {

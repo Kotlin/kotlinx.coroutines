@@ -1,6 +1,7 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:OptIn(ExperimentalContracts::class)
 
 package kotlinx.coroutines.selects
 
@@ -10,6 +11,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.sync.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
@@ -39,7 +41,7 @@ public interface SelectBuilder<in R> {
      * Registers clause in this [select] expression with additional nullable parameter of type [P]
      * with the `null` value for this parameter that selects value of type [Q].
      */
-    public operator fun <P, Q> SelectClause2<P?, Q>.invoke(block: suspend (Q) -> R) = invoke(null, block)
+    public operator fun <P, Q> SelectClause2<P?, Q>.invoke(block: suspend (Q) -> R): Unit = invoke(null, block)
 
     /**
      * Clause that selects the given [block] after a specified timeout passes.
@@ -61,7 +63,7 @@ public interface SelectBuilder<in R> {
  */
 @ExperimentalCoroutinesApi
 @ExperimentalTime
-public fun <R> SelectBuilder<R>.onTimeout(timeout: Duration, block: suspend () -> R) =
+public fun <R> SelectBuilder<R>.onTimeout(timeout: Duration, block: suspend () -> R): Unit =
         onTimeout(timeout.toDelayMillis(), block)
 
 /**
@@ -187,20 +189,17 @@ public interface SelectInstance<in R> {
  *
  * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
  * function is suspended, this function immediately resumes with [CancellationException].
- *
- * Atomicity of cancellation depends on the clause: [onSend][SendChannel.onSend], [onReceive][ReceiveChannel.onReceive],
- * [onReceiveOrNull][ReceiveChannel.onReceiveOrNull], and [onLock][Mutex.onLock] clauses are
- * *atomically cancellable*. When select throws [CancellationException] it means that those clauses had not performed
- * their respective operations.
- * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
- * continue to execute even after it was cancelled from the same thread in the case when this select operation
- * was already resumed on atomically cancellable clause and the continuation was posted for execution to the thread's queue.
+ * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+ * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
  *
  * Note that this function does not check for cancellation when it is not suspended.
  * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
  */
-public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() -> Unit): R =
-    suspendCoroutineUninterceptedOrReturn { uCont ->
+public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() -> Unit): R {
+    contract {
+        callsInPlace(builder, InvocationKind.EXACTLY_ONCE)
+    }
+    return suspendCoroutineUninterceptedOrReturn { uCont ->
         val scope = SelectBuilderImpl(uCont)
         try {
             builder(scope)
@@ -209,8 +208,11 @@ public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() ->
         }
         scope.getResult()
     }
+}
 
 
+@SharedImmutable
+internal val NOT_SELECTED: Any = Symbol("NOT_SELECTED")
 @SharedImmutable
 internal val ALREADY_SELECTED: Any = Symbol("ALREADY_SELECTED")
 @SharedImmutable
@@ -240,8 +242,8 @@ internal class SelectBuilderImpl<in R>(
 
     override fun getStackTraceElement(): StackTraceElement? = null
 
-    // selection state is "this" (list of nodes) initially and is replaced by idempotent marker (or null) when selected
-    private val _state = atomic<Any?>(this)
+    // selection state is NOT_SELECTED initially and is replaced by idempotent marker (or null) when selected
+    private val _state = atomic<Any?>(NOT_SELECTED)
 
     // this is basically our own SafeContinuation
     private val _result = atomic<Any?>(UNDECIDED)
@@ -360,7 +362,7 @@ internal class SelectBuilderImpl<in R>(
 
     override val isSelected: Boolean get() = _state.loop { state ->
         when {
-            state === this -> return false
+            state === NOT_SELECTED -> return false
             state is OpDescriptor -> state.perform(this) // help
             else -> return true // already selected
         }
@@ -483,14 +485,14 @@ internal class SelectBuilderImpl<in R>(
         _state.loop { state -> // lock-free loop on state
             when {
                 // Found initial state (not selected yet) -- try to make it selected
-                state === this -> {
+                state === NOT_SELECTED -> {
                     if (otherOp == null) {
                         // regular trySelect -- just mark as select
-                        if (!_state.compareAndSet(this, null)) return@loop
+                        if (!_state.compareAndSet(NOT_SELECTED, null)) return@loop
                     } else {
                         // Rendezvous with another select instance -- install PairSelectOp
                         val pairSelectOp = PairSelectOp(otherOp)
-                        if (!_state.compareAndSet(this, pairSelectOp)) return@loop
+                        if (!_state.compareAndSet(NOT_SELECTED, pairSelectOp)) return@loop
                         val decision = pairSelectOp.perform(this)
                         if (decision !== null) return decision
                     }
@@ -546,7 +548,7 @@ internal class SelectBuilderImpl<in R>(
             // we must finish preparation of another operation before attempting to reach decision to select
             otherOp.finishPrepare()
             val decision = otherOp.atomicOp.decide(null) // try decide for success of operation
-            val update: Any = if (decision == null) otherOp.desc else impl
+            val update: Any = if (decision == null) otherOp.desc else NOT_SELECTED
             impl._state.compareAndSet(this, update)
             return decision
         }
@@ -558,10 +560,7 @@ internal class SelectBuilderImpl<in R>(
     override fun performAtomicTrySelect(desc: AtomicDesc): Any? =
         AtomicSelectOp(this, desc).perform(null)
 
-    override fun toString(): String {
-        val state = _state.value
-        return "SelectInstance(state=${if (state === this) "this" else state.toString()}, result=${_result.value})"
-    }
+    override fun toString(): String = "SelectInstance(state=${_state.value}, result=${_result.value})"
 
     private class AtomicSelectOp(
         @JvmField val impl: SelectBuilderImpl<*>,
@@ -600,8 +599,8 @@ internal class SelectBuilderImpl<in R>(
                 when {
                     state === this -> return null // already in progress
                     state is OpDescriptor -> state.perform(impl) // help
-                    state === impl -> {
-                        if (impl._state.compareAndSet(impl, this))
+                    state === NOT_SELECTED -> {
+                        if (impl._state.compareAndSet(NOT_SELECTED, this))
                             return null // success
                     }
                     else -> return ALREADY_SELECTED
@@ -611,12 +610,12 @@ internal class SelectBuilderImpl<in R>(
 
         // reverts the change done by prepareSelectedOp
         private fun undoPrepare() {
-            impl._state.compareAndSet(this, impl)
+            impl._state.compareAndSet(this, NOT_SELECTED)
         }
 
         private fun completeSelect(failure: Any?) {
             val selectSuccess = failure == null
-            val update = if (selectSuccess) null else impl
+            val update = if (selectSuccess) null else NOT_SELECTED
             if (impl._state.compareAndSet(this, update)) {
                 if (selectSuccess)
                     impl.doAfterSelect()
@@ -650,7 +649,7 @@ internal class SelectBuilderImpl<in R>(
             if (trySelect())
                 block.startCoroutineCancellable(completion) // shall be cancellable while waits for dispatch
         }
-        disposeOnSelect(context.delay.invokeOnTimeout(timeMillis, action))
+        disposeOnSelect(context.delay.invokeOnTimeout(timeMillis, action, context))
     }
 
     private class DisposeNode(

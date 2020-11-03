@@ -11,10 +11,10 @@ import java.util.function.*
 import kotlin.coroutines.*
 
 /**
- * Starts new coroutine and returns its result as an implementation of [CompletableFuture].
+ * Starts a new coroutine and returns its result as an implementation of [CompletableFuture].
  * The running coroutine is cancelled when the resulting future is cancelled or otherwise completed.
  *
- * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
+ * The coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with the [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
  * with corresponding [context] element.

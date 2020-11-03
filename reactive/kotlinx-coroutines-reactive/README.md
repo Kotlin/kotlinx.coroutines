@@ -6,14 +6,14 @@ Coroutine builders:
 
 | **Name**        | **Result**                    | **Scope**        | **Description**
 | --------------- | ----------------------------- | ---------------- | ---------------
-| [publish]       | `Publisher`                   | [ProducerScope] | Cold reactive publisher that starts coroutine on subscribe
+| [kotlinx.coroutines.reactive.publish]       | `Publisher`                   | [ProducerScope] | Cold reactive publisher that starts the coroutine on subscribe
 
 Integration with [Flow]:
 
 | **Name**            | **Result**        | **Description**
 | ---------------     | --------------    | ---------------
-| [Publisher.asFlow]  | `Flow`            | Converts the given publisher to flow
-| [Flow.asPublisher]  | `Publisher`       | Converts the given flow to the TCK-compliant publisher
+| [Publisher.asFlow]  | `Flow`            | Converts the given publisher to a flow
+| [Flow.asPublisher]  | `Publisher`       | Converts the given flow to a TCK-compliant publisher
 
 If these adapters are used along with `kotlinx-coroutines-reactor` in the classpath, then Reactor's `Context` is properly
 propagated as coroutine context element (`ReactorContext`) and vice versa.
@@ -37,7 +37,7 @@ Suspending extension functions and suspending iteration:
 [ProducerScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html
 <!--- MODULE kotlinx-coroutines-reactive -->
 <!--- INDEX kotlinx.coroutines.reactive -->
-[publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/publish.html
+[kotlinx.coroutines.reactive.publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/publish.html
 [Publisher.asFlow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/as-flow.html
 [Flow.asPublisher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/kotlinx.coroutines.flow.-flow/as-publisher.html
 [org.reactivestreams.Publisher.awaitFirst]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/await-first.html

@@ -10,7 +10,6 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
-import kotlin.native.concurrent.*
 
 /**
  * Broadcasts all elements of the channel.
@@ -34,19 +33,21 @@ import kotlin.native.concurrent.*
  *
  * This function has an inappropriate result type of [BroadcastChannel] which provides
  * [send][BroadcastChannel.send] and [close][BroadcastChannel.close] operations that interfere with
- * the broadcasting coroutine in hard-to-specify ways. It will be replaced with
- * sharing operators on [Flow][kotlinx.coroutines.flow.Flow] in the future.
+ * the broadcasting coroutine in hard-to-specify ways.
+ *
+ * **Note: This API is obsolete.** It will be deprecated and replaced with the
+ * [Flow.shareIn][kotlinx.coroutines.flow.shareIn] operator when it becomes stable.
  *
  * @param start coroutine start option. The default value is [CoroutineStart.LAZY].
  */
-fun <E> ReceiveChannel<E>.broadcast(
+public fun <E> ReceiveChannel<E>.broadcast(
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY
 ): BroadcastChannel<E> {
     val scope = GlobalScope + Dispatchers.Unconfined + CoroutineExceptionHandler { _, _ -> }
     // We can run this coroutine in the context that ignores all exceptions, because of `onCompletion = consume()`
     // which passes all exceptions upstream to the source ReceiveChannel
-    return scope.broadcast(capacity = capacity, start = start, onCompletion = consumes()) {
+    return scope.broadcast(capacity = capacity, start = start, onCompletion = { cancelConsumed(it) }) {
         for (e in this@broadcast) {
             send(e)
         }

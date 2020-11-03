@@ -69,6 +69,8 @@ public actual open class TestBase actual constructor() {
         throw makeError(message, cause)
     }
 
+    public fun hasError() = error.get() != null
+
     private fun makeError(message: Any, cause: Throwable? = null): IllegalStateException =
         IllegalStateException(message.toString(), cause).also {
             setError(it)
@@ -107,7 +109,7 @@ public actual open class TestBase actual constructor() {
      * Asserts that this line is never executed.
      */
     public actual fun expectUnreached() {
-        error("Should not be reached")
+        error("Should not be reached, current action index is ${actionIndex.get()}")
     }
 
     /**

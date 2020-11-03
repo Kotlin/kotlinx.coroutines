@@ -5,6 +5,7 @@
 // This file was automatically generated from exception-handling.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
 
+import kotlinx.coroutines.knit.*
 import org.junit.Test
 
 class ExceptionsGuideTest {
@@ -22,7 +23,7 @@ class ExceptionsGuideTest {
     @Test
     fun testExampleExceptions02() {
         test("ExampleExceptions02") { kotlinx.coroutines.guide.exampleExceptions02.main() }.verifyLines(
-            "Caught java.lang.AssertionError"
+            "CoroutineExceptionHandler got java.lang.AssertionError"
         )
     }
 
@@ -41,14 +42,14 @@ class ExceptionsGuideTest {
             "Second child throws an exception",
             "Children are cancelled, but exception is not handled until all children terminate",
             "The first child finished its non cancellable block",
-            "Caught java.lang.ArithmeticException"
+            "CoroutineExceptionHandler got java.lang.ArithmeticException"
         )
     }
 
     @Test
     fun testExampleExceptions05() {
         test("ExampleExceptions05") { kotlinx.coroutines.guide.exampleExceptions05.main() }.verifyLines(
-            "Caught java.io.IOException with suppressed [java.lang.ArithmeticException]"
+            "CoroutineExceptionHandler got java.io.IOException with suppressed [java.lang.ArithmeticException]"
         )
     }
 
@@ -56,37 +57,37 @@ class ExceptionsGuideTest {
     fun testExampleExceptions06() {
         test("ExampleExceptions06") { kotlinx.coroutines.guide.exampleExceptions06.main() }.verifyLines(
             "Rethrowing CancellationException with original cause",
-            "Caught original java.io.IOException"
+            "CoroutineExceptionHandler got java.io.IOException"
         )
     }
 
     @Test
     fun testExampleSupervision01() {
         test("ExampleSupervision01") { kotlinx.coroutines.guide.exampleSupervision01.main() }.verifyLines(
-            "First child is failing",
-            "First child is cancelled: true, but second one is still active",
-            "Cancelling supervisor",
-            "Second child is cancelled because supervisor is cancelled"
+            "The first child is failing",
+            "The first child is cancelled: true, but the second one is still active",
+            "Cancelling the supervisor",
+            "The second child is cancelled because the supervisor was cancelled"
         )
     }
 
     @Test
     fun testExampleSupervision02() {
         test("ExampleSupervision02") { kotlinx.coroutines.guide.exampleSupervision02.main() }.verifyLines(
-            "Child is sleeping",
-            "Throwing exception from scope",
-            "Child is cancelled",
-            "Caught assertion error"
+            "The child is sleeping",
+            "Throwing an exception from the scope",
+            "The child is cancelled",
+            "Caught an assertion error"
         )
     }
 
     @Test
     fun testExampleSupervision03() {
         test("ExampleSupervision03") { kotlinx.coroutines.guide.exampleSupervision03.main() }.verifyLines(
-            "Scope is completing",
-            "Child throws an exception",
-            "Caught java.lang.AssertionError",
-            "Scope is completed"
+            "The scope is completing",
+            "The child throws an exception",
+            "CoroutineExceptionHandler got java.lang.AssertionError",
+            "The scope is completed"
         )
     }
 }

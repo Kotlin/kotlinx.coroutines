@@ -1,6 +1,7 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE")
 
 package kotlinx.coroutines.internal
 
@@ -38,7 +39,8 @@ public abstract class OpDescriptor {
 }
 
 @SharedImmutable
-private val NO_DECISION: Any = Symbol("NO_DECISION")
+@JvmField
+internal val NO_DECISION: Any = Symbol("NO_DECISION")
 
 /**
  * Descriptor for multi-word atomic operation.
@@ -51,8 +53,12 @@ private val NO_DECISION: Any = Symbol("NO_DECISION")
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
+@InternalCoroutinesApi
 public abstract class AtomicOp<in T> : OpDescriptor() {
     private val _consensus = atomic<Any?>(NO_DECISION)
+
+    // Returns NO_DECISION when there is not decision yet
+    val consensus: Any? get() = _consensus.value
 
     val isDecided: Boolean get() = _consensus.value !== NO_DECISION
 

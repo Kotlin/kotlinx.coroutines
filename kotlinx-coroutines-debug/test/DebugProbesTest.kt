@@ -40,24 +40,25 @@ class DebugProbesTest : DebugTestBase() {
             val deferred = createDeferred()
             val traces = listOf(
                 "java.util.concurrent.ExecutionException\n" +
-                        "\tat kotlinx.coroutines.debug.DebugProbesTest\$createDeferred\$1.invokeSuspend(DebugProbesTest.kt:16)\n" +
+                        "\tat kotlinx.coroutines.debug.DebugProbesTest\$createDeferred\$1.invokeSuspend(DebugProbesTest.kt)\n" +
                         "\t(Coroutine boundary)\n" +
                         "\tat kotlinx.coroutines.DeferredCoroutine.await\$suspendImpl(Builders.common.kt)\n" +
-                        "\tat kotlinx.coroutines.debug.DebugProbesTest.oneMoreNestedMethod(DebugProbesTest.kt:71)\n" +
-                        "\tat kotlinx.coroutines.debug.DebugProbesTest.nestedMethod(DebugProbesTest.kt:66)\n" +
+                        "\tat kotlinx.coroutines.debug.DebugProbesTest.oneMoreNestedMethod(DebugProbesTest.kt)\n" +
+                        "\tat kotlinx.coroutines.debug.DebugProbesTest.nestedMethod(DebugProbesTest.kt)\n" +
                         "\t(Coroutine creation stacktrace)\n" +
-                        "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
-                        "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
-                        "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n" +
-                        "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:148)\n" +
-                        "\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:45)\n" +
+                        "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n" +
+                        "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt)\n" +
+                        "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable\$default(Cancellable.kt)\n" +
+                        "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt)\n" +
+                        "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt)\n" +
+                        "\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt)\n" +
                         "\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\n" +
-                        "\tat kotlinx.coroutines.TestBase.runTest(TestBase.kt:138)\n" +
-                        "\tat kotlinx.coroutines.TestBase.runTest\$default(TestBase.kt:19)\n" +
-                        "\tat kotlinx.coroutines.debug.DebugProbesTest.testAsyncWithProbes(DebugProbesTest.kt:38)",
+                        "\tat kotlinx.coroutines.TestBase.runTest(TestBase.kt)\n" +
+                        "\tat kotlinx.coroutines.TestBase.runTest\$default(TestBase.kt)\n" +
+                        "\tat kotlinx.coroutines.debug.DebugProbesTest.testAsyncWithProbes(DebugProbesTest.kt)",
                 "Caused by: java.util.concurrent.ExecutionException\n" +
-                        "\tat kotlinx.coroutines.debug.DebugProbesTest\$createDeferred\$1.invokeSuspend(DebugProbesTest.kt:16)\n" +
-                        "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n")
+                        "\tat kotlinx.coroutines.debug.DebugProbesTest\$createDeferred\$1.invokeSuspend(DebugProbesTest.kt)\n" +
+                        "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt)\n")
             nestedMethod(deferred, traces)
             deferred.join()
         }

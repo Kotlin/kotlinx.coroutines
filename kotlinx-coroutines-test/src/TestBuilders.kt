@@ -69,13 +69,15 @@ private fun CoroutineContext.activeJobs(): Set<Job> {
  */
 // todo: need documentation on how this extension is supposed to be used
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit) = runBlockingTest(coroutineContext, block)
+public fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit): Unit =
+    runBlockingTest(coroutineContext, block)
 
 /**
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineDispatcher].
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit) = runBlockingTest(this, block)
+public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit): Unit =
+    runBlockingTest(this, block)
 
 private fun CoroutineContext.checkArguments(): Pair<CoroutineContext, DelayController> {
     // TODO optimize it

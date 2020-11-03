@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 /**
@@ -87,7 +88,7 @@ public abstract class CoroutineDispatcher :
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
-    public open fun dispatchYield(context: CoroutineContext, block: Runnable) = dispatch(context, block)
+    public open fun dispatchYield(context: CoroutineContext, block: Runnable): Unit = dispatch(context, block)
 
     /**
      * Returns a continuation that wraps the provided [continuation], thus intercepting all resumptions.
@@ -115,7 +116,7 @@ public abstract class CoroutineDispatcher :
             "The dispatcher to the right of `+` just replaces the dispatcher to the left.",
         level = DeprecationLevel.ERROR
     )
-    public operator fun plus(other: CoroutineDispatcher) = other
+    public operator fun plus(other: CoroutineDispatcher): CoroutineDispatcher = other
 
     /** @suppress for nicer debugging */
     override fun toString(): String = "$classSimpleName@$hexAddress"

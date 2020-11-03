@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
+@file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE")
 package kotlinx.coroutines
 
 import kotlinx.coroutines.CoroutineStart.*
@@ -55,7 +55,7 @@ public enum class CoroutineStart {
      * Cancellability of coroutine at suspension points depends on the particular implementation details of
      * suspending functions as in [DEFAULT].
      */
-    @ExperimentalCoroutinesApi
+    @ExperimentalCoroutinesApi // Since 1.0.0, no ETA on stability
     ATOMIC,
 
     /**
@@ -71,7 +71,7 @@ public enum class CoroutineStart {
      *
      * **Note: This is an experimental api.** Execution semantics of coroutines may change in the future when this mode is used.
      */
-    @ExperimentalCoroutinesApi
+    @ExperimentalCoroutinesApi  // Since 1.0.0, no ETA on stability
     UNDISPATCHED;
 
     /**
@@ -85,12 +85,12 @@ public enum class CoroutineStart {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
-    public operator fun <T> invoke(block: suspend () -> T, completion: Continuation<T>) =
+    public operator fun <T> invoke(block: suspend () -> T, completion: Continuation<T>): Unit =
         when (this) {
-            CoroutineStart.DEFAULT -> block.startCoroutineCancellable(completion)
-            CoroutineStart.ATOMIC -> block.startCoroutine(completion)
-            CoroutineStart.UNDISPATCHED -> block.startCoroutineUndispatched(completion)
-            CoroutineStart.LAZY -> Unit // will start lazily
+            DEFAULT -> block.startCoroutineCancellable(completion)
+            ATOMIC -> block.startCoroutine(completion)
+            UNDISPATCHED -> block.startCoroutineUndispatched(completion)
+            LAZY -> Unit // will start lazily
         }
 
     /**
@@ -104,12 +104,12 @@ public enum class CoroutineStart {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
-    public operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>) =
+    public operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>): Unit =
         when (this) {
-            CoroutineStart.DEFAULT -> block.startCoroutineCancellable(receiver, completion)
-            CoroutineStart.ATOMIC -> block.startCoroutine(receiver, completion)
-            CoroutineStart.UNDISPATCHED -> block.startCoroutineUndispatched(receiver, completion)
-            CoroutineStart.LAZY -> Unit // will start lazily
+            DEFAULT -> block.startCoroutineCancellable(receiver, completion)
+            ATOMIC -> block.startCoroutine(receiver, completion)
+            UNDISPATCHED -> block.startCoroutineUndispatched(receiver, completion)
+            LAZY -> Unit // will start lazily
         }
 
     /**

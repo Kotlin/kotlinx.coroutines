@@ -42,7 +42,11 @@ public class CoroutinesTimeout(
 ) : TestRule {
 
     @Suppress("UNUSED") // Binary compatibility
-    constructor(testTimeoutMs: Long, cancelOnTimeout: Boolean = false) : this(testTimeoutMs, cancelOnTimeout, true)
+    public constructor(testTimeoutMs: Long, cancelOnTimeout: Boolean = false) : this(
+        testTimeoutMs,
+        cancelOnTimeout,
+        true
+    )
 
     init {
         require(testTimeoutMs > 0) { "Expected positive test timeout, but had $testTimeoutMs" }
@@ -55,7 +59,7 @@ public class CoroutinesTimeout(
         DebugProbes.install()
     }
 
-    companion object {
+    public companion object {
         /**
          * Creates [CoroutinesTimeout] rule with the given timeout in seconds.
          */

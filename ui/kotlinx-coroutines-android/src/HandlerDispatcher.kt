@@ -7,7 +7,7 @@
 package kotlinx.coroutines.android
 
 import android.os.*
-import android.support.annotation.*
+import androidx.annotation.*
 import android.view.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
@@ -52,7 +52,7 @@ public sealed class HandlerDispatcher : MainCoroutineDispatcher(), Delay {
 internal class AndroidDispatcherFactory : MainDispatcherFactory {
 
     override fun createDispatcher(allFactories: List<MainDispatcherFactory>) =
-        HandlerContext(Looper.getMainLooper().asHandler(async = true), "Main")
+        HandlerContext(Looper.getMainLooper().asHandler(async = true))
 
     override fun hintOnError(): String? = "For tests Dispatchers.setMain from kotlinx-coroutines-test module can be used"
 
@@ -97,7 +97,7 @@ internal fun Looper.asHandler(async: Boolean): Handler {
 
 @JvmField
 @Deprecated("Use Dispatchers.Main instead", level = DeprecationLevel.HIDDEN)
-internal val Main: HandlerDispatcher? = runCatching { HandlerContext(Looper.getMainLooper().asHandler(async = true), "Main") }.getOrNull()
+internal val Main: HandlerDispatcher? = runCatching { HandlerContext(Looper.getMainLooper().asHandler(async = true)) }.getOrNull()
 
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary Android [Handler].
@@ -140,7 +140,7 @@ internal class HandlerContext private constructor(
         continuation.invokeOnCancellation { handler.removeCallbacks(block) }
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))
         return object : DisposableHandle {
             override fun dispose() {
@@ -149,12 +149,10 @@ internal class HandlerContext private constructor(
         }
     }
 
-    override fun toString(): String =
-        if (name != null) {
-            if (invokeImmediately) "$name [immediate]" else name
-        } else {
-            handler.toString()
-        }
+    override fun toString(): String = toStringInternalImpl() ?: run {
+        val str = name ?: handler.toString()
+        if (invokeImmediately) "$str.immediate" else str
+    }
 
     override fun equals(other: Any?): Boolean = other is HandlerContext && other.handler === handler
     override fun hashCode(): Int = System.identityHashCode(handler)

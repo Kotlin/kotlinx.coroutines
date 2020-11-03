@@ -10,7 +10,6 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /**
  * Broadcasts the most recently sent element (aka [value]) to all [openSubscription] subscribers.
@@ -27,9 +26,10 @@ import kotlin.native.concurrent.*
  * [opening][openSubscription] and [closing][ReceiveChannel.cancel] subscription takes O(N) time, where N is the
  * number of subscribers.
  *
- * **Note: This API is experimental.** It may be changed in the future updates.
+ * **Note: This API is obsolete.** It will be deprecated and replaced by [StateFlow][kotlinx.coroutines.flow.StateFlow]
+ * when it becomes stable.
  */
-@ExperimentalCoroutinesApi
+@ExperimentalCoroutinesApi // not @ObsoleteCoroutinesApi to reduce burden for people who are still using it
 public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     /**
      * Creates an instance of this class that already holds a value.
@@ -37,7 +37,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
      * It is as a shortcut to creating an instance with a default constructor and
      * immediately sending an element: `ConflatedBroadcastChannel().apply { offer(value) }`.
      */
-    constructor(value: E) : this() {
+    public constructor(value: E) : this() {
         _state.lazySet(State<E>(value, null))
     }
 
@@ -47,9 +47,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     private val onCloseHandler = atomic<Any?>(null)
 
     private companion object {
-        @SharedImmutable
         private val CLOSED = Closed(null)
-        @SharedImmutable
         private val UNDEFINED = Symbol("UNDEFINED")
         private val INITIAL_STATE = State<Any?>(UNDEFINED, null)
     }
@@ -284,7 +282,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
 
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>
-    ) : ConflatedChannel<E>(), ReceiveChannel<E> {
+    ) : ConflatedChannel<E>(null), ReceiveChannel<E> {
 
         override fun onCancelIdempotent(wasClosed: Boolean) {
             if (wasClosed) {

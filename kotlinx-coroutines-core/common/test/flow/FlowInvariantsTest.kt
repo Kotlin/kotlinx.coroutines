@@ -6,7 +6,6 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
 import kotlin.reflect.*
 import kotlin.test.*
@@ -193,7 +192,7 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testEmptyCoroutineContext() = runTest {
+    fun testEmptyCoroutineContextMap() = runTest {
         emptyContextTest {
             map {
                 expect(it)
@@ -213,7 +212,18 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testEmptyCoroutineContextViolation() = runTest {
+    fun testEmptyCoroutineContextTransformWhile() = runTest {
+        emptyContextTest {
+            transformWhile {
+                expect(it)
+                emit(it + 1)
+                true
+            }
+        }
+    }
+
+    @Test
+    fun testEmptyCoroutineContextViolationTransform() = runTest {
         try {
             emptyContextTest {
                 transform {
@@ -221,6 +231,25 @@ class FlowInvariantsTest : TestBase() {
                     withContext(Dispatchers.Unconfined) {
                         emit(it + 1)
                     }
+                }
+            }
+            expectUnreached()
+        } catch (e: IllegalStateException) {
+            assertTrue(e.message!!.contains("Flow invariant is violated"))
+            finish(2)
+        }
+    }
+
+    @Test
+    fun testEmptyCoroutineContextViolationTransformWhile() = runTest {
+        try {
+            emptyContextTest {
+                transformWhile {
+                    expect(it)
+                    withContext(Dispatchers.Unconfined) {
+                        emit(it + 1)
+                    }
+                    true
                 }
             }
             expectUnreached()
@@ -243,16 +272,8 @@ class FlowInvariantsTest : TestBase() {
             return result
         }
 
-        val result = runSuspendFun { collector() }
+        val result = withEmptyContext { collector() }
         assertEquals(2, result)
         finish(3)
-    }
-
-    private suspend fun runSuspendFun(block: suspend () -> Int): Int {
-        val baseline = Result.failure<Int>(IllegalStateException("Block was suspended"))
-        var result: Result<Int> = baseline
-        block.startCoroutineUnintercepted(Continuation(EmptyCoroutineContext) { result = it })
-        while (result == baseline) yield()
-        return result.getOrThrow()
     }
 }

@@ -13,7 +13,7 @@ import kotlin.coroutines.CoroutineContext
 /**
  * Converts an instance of [Scheduler] to an implementation of [CoroutineDispatcher].
  */
-fun Scheduler.asCoroutineDispatcher(): SchedulerCoroutineDispatcher = SchedulerCoroutineDispatcher(this)
+public fun Scheduler.asCoroutineDispatcher(): SchedulerCoroutineDispatcher = SchedulerCoroutineDispatcher(this)
 
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary [Scheduler].
@@ -39,7 +39,7 @@ public class SchedulerCoroutineDispatcher(
     }
 
     /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         scheduler.schedule(block, timeMillis, TimeUnit.MILLISECONDS).asDisposableHandle()
 
     /** @suppress */

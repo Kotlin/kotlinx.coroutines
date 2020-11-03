@@ -25,7 +25,7 @@ public val Dispatchers.Swing : SwingDispatcher
  */
 public sealed class SwingDispatcher : MainCoroutineDispatcher(), Delay {
     /** @suppress */
-    override fun dispatch(context: CoroutineContext, block: Runnable) = SwingUtilities.invokeLater(block)
+    override fun dispatch(context: CoroutineContext, block: Runnable): Unit = SwingUtilities.invokeLater(block)
 
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
@@ -36,7 +36,7 @@ public sealed class SwingDispatcher : MainCoroutineDispatcher(), Delay {
     }
 
     /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         val timer = schedule(timeMillis, TimeUnit.MILLISECONDS, ActionListener {
             block.run()
         })
@@ -67,7 +67,7 @@ private object ImmediateSwingDispatcher : SwingDispatcher() {
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = !SwingUtilities.isEventDispatchThread()
 
-    override fun toString() = "Swing [immediate]"
+    override fun toString() = toStringInternalImpl() ?: "Swing.immediate"
 }
 
 /**
@@ -77,5 +77,5 @@ internal object Swing : SwingDispatcher() {
     override val immediate: MainCoroutineDispatcher
         get() = ImmediateSwingDispatcher
 
-    override fun toString() = "Swing"
+    override fun toString() = toStringInternalImpl() ?: "Swing"
 }

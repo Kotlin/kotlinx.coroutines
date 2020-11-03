@@ -4,13 +4,11 @@
 
 @file:JvmMultifileClass
 @file:JvmName("FlowKt")
-@file:Suppress("unused", "DeprecatedCallableAddReplaceWith", "UNUSED_PARAMETER")
+@file:Suppress("unused", "DeprecatedCallableAddReplaceWith", "UNUSED_PARAMETER", "NO_EXPLICIT_RETURN_TYPE_IN_API_MODE")
 
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.internal.*
-import kotlinx.coroutines.flow.internal.unsafeFlow
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -22,7 +20,7 @@ import kotlin.jvm.*
  * Deprecated functions also are moved here when they renamed. The difference is that they have
  * a body with their implementation while pure stubs have [noImpl].
  */
-private fun noImpl(): Nothing =
+internal fun noImpl(): Nothing =
     throw UnsupportedOperationException("Not implemented, should not be called")
 
 /**
@@ -99,7 +97,7 @@ public fun <T> Flow<T>.publishOn(context: CoroutineContext): Flow<T> = noImpl()
  * Opposed to subscribeOn, it it **possible** to use multiple `flowOn` operators in the one flow
  * @suppress
  */
-@Deprecated(message = "Use flowOn instead", level = DeprecationLevel.ERROR)
+@Deprecated(message = "Use 'flowOn' instead", level = DeprecationLevel.ERROR)
 public fun <T> Flow<T>.subscribeOn(context: CoroutineContext): Flow<T> = noImpl()
 
 /**
@@ -151,7 +149,7 @@ public fun <T> Flow<T>.onErrorResumeNext(fallback: Flow<T>): Flow<T> = noImpl()
  * @suppress
  */
 @Deprecated(
-    message = "Use launchIn with onEach, onCompletion and catch operators instead",
+    message = "Use 'launchIn' with 'onEach', 'onCompletion' and 'catch' instead",
     level = DeprecationLevel.ERROR
 )
 public fun <T> Flow<T>.subscribe(): Unit = noImpl()
@@ -161,7 +159,7 @@ public fun <T> Flow<T>.subscribe(): Unit = noImpl()
  * @suppress
  */
 @Deprecated(
-    message = "Use launchIn with onEach, onCompletion and catch operators instead",
+    message = "Use 'launchIn' with 'onEach', 'onCompletion' and 'catch' instead",
     level = DeprecationLevel.ERROR
 )public fun <T> Flow<T>.subscribe(onEach: suspend (T) -> Unit): Unit = noImpl()
 
@@ -170,7 +168,7 @@ public fun <T> Flow<T>.subscribe(): Unit = noImpl()
  * @suppress
  */
 @Deprecated(
-    message = "Use launchIn with onEach, onCompletion and catch operators instead",
+    message = "Use 'launchIn' with 'onEach', 'onCompletion' and 'catch' instead",
     level = DeprecationLevel.ERROR
 )public fun <T> Flow<T>.subscribe(onEach: suspend (T) -> Unit, onError: suspend (Throwable) -> Unit): Unit = noImpl()
 
@@ -181,7 +179,7 @@ public fun <T> Flow<T>.subscribe(): Unit = noImpl()
  */
 @Deprecated(
     level = DeprecationLevel.ERROR,
-    message = "Flow analogue is named flatMapConcat",
+    message = "Flow analogue is 'flatMapConcat'",
     replaceWith = ReplaceWith("flatMapConcat(mapper)")
 )
 public fun <T, R> Flow<T>.flatMap(mapper: suspend (T) -> Flow<R>): Flow<R> = noImpl()
@@ -369,10 +367,10 @@ public fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspen
     message = "Flow analogue of 'combineLatest' is 'combine'",
     replaceWith = ReplaceWith("combine(this, other, other2, transform)")
 )
-public inline fun <T1, T2, T3, R> Flow<T1>.combineLatest(
+public fun <T1, T2, T3, R> Flow<T1>.combineLatest(
     other: Flow<T2>,
     other2: Flow<T3>,
-    crossinline transform: suspend (T1, T2, T3) -> R
+    transform: suspend (T1, T2, T3) -> R
 ) = combine(this, other, other2, transform)
 
 @Deprecated(
@@ -380,11 +378,11 @@ public inline fun <T1, T2, T3, R> Flow<T1>.combineLatest(
     message = "Flow analogue of 'combineLatest' is 'combine'",
     replaceWith = ReplaceWith("combine(this, other, other2, other3, transform)")
 )
-public inline fun <T1, T2, T3, T4, R> Flow<T1>.combineLatest(
+public fun <T1, T2, T3, T4, R> Flow<T1>.combineLatest(
     other: Flow<T2>,
     other2: Flow<T3>,
     other3: Flow<T4>,
-    crossinline transform: suspend (T1, T2, T3, T4) -> R
+    transform: suspend (T1, T2, T3, T4) -> R
 ) = combine(this, other, other2, other3, transform)
 
 @Deprecated(
@@ -392,12 +390,12 @@ public inline fun <T1, T2, T3, T4, R> Flow<T1>.combineLatest(
     message = "Flow analogue of 'combineLatest' is 'combine'",
     replaceWith = ReplaceWith("combine(this, other, other2, other3, transform)")
 )
-public inline fun <T1, T2, T3, T4, T5, R> Flow<T1>.combineLatest(
+public fun <T1, T2, T3, T4, T5, R> Flow<T1>.combineLatest(
     other: Flow<T2>,
     other2: Flow<T3>,
     other3: Flow<T4>,
     other4: Flow<T5>,
-    crossinline transform: suspend (T1, T2, T3, T4, T5) -> R
+    transform: suspend (T1, T2, T3, T4, T5) -> R
 ): Flow<R> = combine(this, other, other2, other3, other4, transform)
 
 /**
@@ -430,3 +428,57 @@ public fun <T> Flow<T>.delayEach(timeMillis: Long): Flow<T> = onEach { delay(tim
     replaceWith = ReplaceWith("this.flatMapLatest(transform)")
 )
 public fun <T, R> Flow<T>.switchMap(transform: suspend (value: T) -> Flow<R>): Flow<R> = flatMapLatest(transform)
+
+@Deprecated(
+    level = DeprecationLevel.WARNING, // Since 1.3.8, was experimental when deprecated
+    message = "'scanReduce' was renamed to 'runningReduce' to be consistent with Kotlin standard library",
+    replaceWith = ReplaceWith("runningReduce(operation)")
+)
+public fun <T> Flow<T>.scanReduce(operation: suspend (accumulator: T, value: T) -> T): Flow<T> = runningReduce(operation)
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'publish()' is 'shareIn'. \n" +
+        "publish().connect() is the default strategy (no extra call is needed), \n" +
+        "publish().autoConnect() translates to 'started = SharingStared.Lazily' argument, \n" +
+        "publish().refCount() translates to 'started = SharingStared.WhileSubscribed()' argument.",
+    replaceWith = ReplaceWith("this.shareIn(scope, 0)")
+)
+public fun <T> Flow<T>.publish(): Flow<T> = noImpl()
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'publish(bufferSize)' is 'buffer' followed by 'shareIn'. \n" +
+        "publish().connect() is the default strategy (no extra call is needed), \n" +
+        "publish().autoConnect() translates to 'started = SharingStared.Lazily' argument, \n" +
+        "publish().refCount() translates to 'started = SharingStared.WhileSubscribed()' argument.",
+    replaceWith = ReplaceWith("this.buffer(bufferSize).shareIn(scope, 0)")
+)
+public fun <T> Flow<T>.publish(bufferSize: Int): Flow<T> = noImpl()
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'replay()' is 'shareIn' with unlimited replay. \n" +
+        "replay().connect() is the default strategy (no extra call is needed), \n" +
+        "replay().autoConnect() translates to 'started = SharingStared.Lazily' argument, \n" +
+        "replay().refCount() translates to 'started = SharingStared.WhileSubscribed()' argument.",
+    replaceWith = ReplaceWith("this.shareIn(scope, Int.MAX_VALUE)")
+)
+public fun <T> Flow<T>.replay(): Flow<T> = noImpl()
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'replay(bufferSize)' is 'shareIn' with the specified replay parameter. \n" +
+        "replay().connect() is the default strategy (no extra call is needed), \n" +
+        "replay().autoConnect() translates to 'started = SharingStared.Lazily' argument, \n" +
+        "replay().refCount() translates to 'started = SharingStared.WhileSubscribed()' argument.",
+    replaceWith = ReplaceWith("this.shareIn(scope, bufferSize)")
+)
+public fun <T> Flow<T>.replay(bufferSize: Int): Flow<T> = noImpl()
+
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "Flow analogue of 'cache()' is 'shareIn' with unlimited replay and 'started = SharingStared.Lazily' argument'",
+    replaceWith = ReplaceWith("this.shareIn(scope, Int.MAX_VALUE, started = SharingStared.Lazily)")
+)
+public fun <T> Flow<T>.cache(): Flow<T> = noImpl()

@@ -18,22 +18,22 @@
 
 ## Exception Handling
 
-
 This section covers exception handling and cancellation on exceptions.
-We already know that cancelled coroutine throws [CancellationException] in suspension points and that it 
-is ignored by coroutines machinery. But what happens if an exception is thrown during cancellation or multiple children of the same 
-coroutine throw an exception?
+We already know that a cancelled coroutine throws [CancellationException] in suspension points and that it
+is ignored by the coroutines' machinery. Here we look at what happens if an exception is thrown during cancellation or multiple children of the same
+coroutine throw an exception.
 
 ### Exception propagation
 
-Coroutine builders come in two flavors: propagating exceptions automatically ([launch] and [actor]) or 
+Coroutine builders come in two flavors: propagating exceptions automatically ([launch] and [actor]) or
 exposing them to users ([async] and [produce]).
-The former treat exceptions as unhandled, similar to Java's `Thread.uncaughtExceptionHandler`, 
-while the latter are relying on the user to consume the final 
+When these builders are used to create a _root_ coroutine, that is not a _child_ of another coroutine,
+the former builders treat exceptions as **uncaught** exceptions, similar to Java's `Thread.uncaughtExceptionHandler`,
+while the latter are relying on the user to consume the final
 exception, for example via [await][Deferred.await] or [receive][ReceiveChannel.receive] 
 ([produce] and [receive][ReceiveChannel.receive] are covered later in [Channels](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/channels.md) section).
 
-It can be demonstrated by a simple example that creates coroutines in the [GlobalScope]:
+It can be demonstrated by a simple example that creates root coroutines using the [GlobalScope]:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -41,13 +41,13 @@ It can be demonstrated by a simple example that creates coroutines in the [Globa
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
-    val job = GlobalScope.launch {
+    val job = GlobalScope.launch { // root coroutine with launch
         println("Throwing exception from launch")
         throw IndexOutOfBoundsException() // Will be printed to the console by Thread.defaultUncaughtExceptionHandler
     }
     job.join()
     println("Joined failed job")
-    val deferred = GlobalScope.async {
+    val deferred = GlobalScope.async { // root coroutine with async
         println("Throwing exception from async")
         throw ArithmeticException() // Nothing is printed, relying on user to call await
     }
@@ -62,7 +62,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-01.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-01.kt).
 
 The output of this code is (with [debug](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/coroutine-context-and-dispatchers.md#debugging-coroutines-and-threads)):
 
@@ -78,9 +78,13 @@ Caught ArithmeticException
 
 ### CoroutineExceptionHandler
 
-But what if one does not want to print all exceptions to the console?
-[CoroutineExceptionHandler] context element is used as generic `catch` block of coroutine where custom logging or exception handling may take place.
-It is similar to using [`Thread.uncaughtExceptionHandler`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#setUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler)).
+It is possible to customize the default behavior of printing **uncaught** exceptions to the console.
+[CoroutineExceptionHandler] context element on a _root_ coroutine can be used as generic `catch` block for
+this root coroutine and all its children where custom exception handling may take place.
+It is similar to [`Thread.uncaughtExceptionHandler`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#setUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler)).
+You cannot recover from the exception in the `CoroutineExceptionHandler`. The coroutine had already completed
+with the corresponding exception when the handler is called. Normally, the handler is used to
+log the exception, show some kind of error message, terminate, and/or restart the application.
 
 On JVM it is possible to redefine global exception handler for all coroutines by registering [CoroutineExceptionHandler] via
 [`ServiceLoader`](https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html).
@@ -89,8 +93,15 @@ Global exception handler is similar to
 which is used when no more specific handlers are registered.
 On Android, `uncaughtExceptionPreHandler` is installed as a global coroutine exception handler.
 
-[CoroutineExceptionHandler] is invoked only on exceptions which are not expected to be handled by the user, 
-so registering it in [async] builder and the like of it has no effect.
+`CoroutineExceptionHandler` is invoked only on **uncaught** exceptions &mdash; exceptions that were not handled in any other way.
+In particular, all _children_ coroutines (coroutines created in the context of another [Job]) delegate handling of
+their exceptions to their parent coroutine, which also delegates to the parent, and so on until the root,
+so the `CoroutineExceptionHandler` installed in their context is never used. 
+In addition to that, [async] builder always catches all exceptions and represents them in the resulting [Deferred] object, 
+so its `CoroutineExceptionHandler` has no effect either.
+
+> Coroutines running in supervision scope do not propagate exceptions to their parent and are
+excluded from this rule. A further [Supervision](#supervision) section of this document gives more details.  
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -100,12 +111,12 @@ import kotlinx.coroutines.*
 fun main() = runBlocking {
 //sampleStart
     val handler = CoroutineExceptionHandler { _, exception -> 
-        println("Caught $exception") 
+        println("CoroutineExceptionHandler got $exception") 
     }
-    val job = GlobalScope.launch(handler) {
+    val job = GlobalScope.launch(handler) { // root coroutine, running in GlobalScope
         throw AssertionError()
     }
-    val deferred = GlobalScope.async(handler) {
+    val deferred = GlobalScope.async(handler) { // also root, but async instead of launch
         throw ArithmeticException() // Nothing will be printed, relying on user to call deferred.await()
     }
     joinAll(job, deferred)
@@ -115,19 +126,19 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-02.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-02.kt).
 
 The output of this code is:
 
 ```text
-Caught java.lang.AssertionError
+CoroutineExceptionHandler got java.lang.AssertionError
 ```
 
 <!--- TEST-->
 
 ### Cancellation and exceptions
 
-Cancellation is tightly bound with exceptions. Coroutines internally use `CancellationException` for cancellation, these
+Cancellation is closely related to exceptions. Coroutines internally use `CancellationException` for cancellation, these
 exceptions are ignored by all handlers, so they should be used only as the source of additional debug information, which can
 be obtained by `catch` block.
 When a coroutine is cancelled using [Job.cancel], it terminates, but it does not cancel its parent.
@@ -161,7 +172,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-03.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-03.kt).
 
 The output of this code is:
 
@@ -175,14 +186,16 @@ Parent is not cancelled
 
 If a coroutine encounters an exception other than `CancellationException`, it cancels its parent with that exception. 
 This behaviour cannot be overridden and is used to provide stable coroutines hierarchies for
-[structured concurrency](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/composing-suspending-functions.md#structured-concurrency-with-async) which do not depend on 
-[CoroutineExceptionHandler] implementation.
-The original exception is handled by the parent when all its children terminate.
+[structured concurrency](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/composing-suspending-functions.md#structured-concurrency-with-async).
+[CoroutineExceptionHandler] implementation is not used for child coroutines.
 
-> This also a reason why, in these examples, [CoroutineExceptionHandler] is always installed to a coroutine
+> In these examples [CoroutineExceptionHandler] is always installed to a coroutine
 that is created in [GlobalScope]. It does not make sense to install an exception handler to a coroutine that
 is launched in the scope of the main [runBlocking], since the main coroutine is going to be always cancelled
 when its child completes with exception despite the installed handler. 
+
+The original exception is handled by the parent only when all its children terminate,
+which is demonstrated by the following example.
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -192,7 +205,7 @@ import kotlinx.coroutines.*
 fun main() = runBlocking {
 //sampleStart
     val handler = CoroutineExceptionHandler { _, exception -> 
-        println("Caught $exception") 
+        println("CoroutineExceptionHandler got $exception") 
     }
     val job = GlobalScope.launch(handler) {
         launch { // the first child
@@ -219,7 +232,7 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-04.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-04.kt).
 
 The output of this code is:
 
@@ -227,22 +240,15 @@ The output of this code is:
 Second child throws an exception
 Children are cancelled, but exception is not handled until all children terminate
 The first child finished its non cancellable block
-Caught java.lang.ArithmeticException
+CoroutineExceptionHandler got java.lang.ArithmeticException
 ```
 <!--- TEST-->
 
 ### Exceptions aggregation
 
-What happens if multiple children of a coroutine throw an exception?
-The general rule is "the first exception wins", so the first thrown exception is exposed to the handler.
-But that may cause lost exceptions, for example if coroutine throws an exception in its `finally` block.
-So, additional exceptions are suppressed. 
-
-> One of the solutions would have been to report each exception separately, 
-but then [Deferred.await] should have had the same mechanism to avoid behavioural inconsistency and this 
-would cause implementation details of a coroutines (whether it had delegated parts of its work to its children or not)
-to leak to its exception handler.
-
+When multiple children of a coroutine fail with an exception, the
+general rule is "the first exception wins", so the first exception gets handled.
+All additional exceptions that happen after the first one are attached to the first exception as suppressed ones. 
 
 <!--- INCLUDE
 import kotlinx.coroutines.exceptions.*
@@ -256,19 +262,19 @@ import java.io.*
 
 fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception ->
-        println("Caught $exception with suppressed ${exception.suppressed.contentToString()}")
+        println("CoroutineExceptionHandler got $exception with suppressed ${exception.suppressed.contentToString()}")
     }
     val job = GlobalScope.launch(handler) {
         launch {
             try {
-                delay(Long.MAX_VALUE)
+                delay(Long.MAX_VALUE) // it gets cancelled when another sibling fails with IOException
             } finally {
-                throw ArithmeticException()
+                throw ArithmeticException() // the second exception
             }
         }
         launch {
             delay(100)
-            throw IOException()
+            throw IOException() // the first exception
         }
         delay(Long.MAX_VALUE)
     }
@@ -278,22 +284,22 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-05.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-05.kt).
 
 > Note: This above code will work properly only on JDK7+ that supports `suppressed` exceptions
 
 The output of this code is:
 
 ```text
-Caught java.io.IOException with suppressed [java.lang.ArithmeticException]
+CoroutineExceptionHandler got java.io.IOException with suppressed [java.lang.ArithmeticException]
 ```
 
 <!--- TEST-->
 
-> Note, this mechanism currently works only on Java version 1.7+. 
-Limitation on JS and Native is temporary and will be fixed in the future.
+> Note that this mechanism currently only works on Java version 1.7+. 
+The JS and Native restrictions are temporary and will be lifted in the future.
 
-Cancellation exceptions are transparent and unwrapped by default:
+Cancellation exceptions are transparent and are unwrapped by default:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -304,13 +310,13 @@ import java.io.*
 fun main() = runBlocking {
 //sampleStart
     val handler = CoroutineExceptionHandler { _, exception ->
-        println("Caught original $exception")
+        println("CoroutineExceptionHandler got $exception")
     }
     val job = GlobalScope.launch(handler) {
-        val inner = launch {
+        val inner = launch { // all this stack of coroutines will get cancelled
             launch {
                 launch {
-                    throw IOException()
+                    throw IOException() // the original exception
                 }
             }
         }
@@ -318,7 +324,7 @@ fun main() = runBlocking {
             inner.join()
         } catch (e: CancellationException) {
             println("Rethrowing CancellationException with original cause")
-            throw e
+            throw e // cancellation exception is rethrown, yet the original IOException gets to the handler  
         }
     }
     job.join()
@@ -328,32 +334,33 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-06.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-06.kt).
 
 The output of this code is:
 
 ```text
 Rethrowing CancellationException with original cause
-Caught original java.io.IOException
+CoroutineExceptionHandler got java.io.IOException
 ```
 <!--- TEST-->
 
 ### Supervision
 
 As we have studied before, cancellation is a bidirectional relationship propagating through the whole
-coroutines hierarchy. But what if unidirectional cancellation is required? 
+hierarchy of coroutines. Let us take a look at the case when unidirectional cancellation is required. 
 
 A good example of such a requirement is a UI component with the job defined in its scope. If any of the UI's child tasks
 have failed, it is not always necessary to cancel (effectively kill) the whole UI component,
-but if UI component is destroyed (and its job is cancelled), then it is necessary to fail all child jobs as their results are no longer required.
+but if UI component is destroyed (and its job is cancelled), then it is necessary to fail all child jobs as their results are no longer needed.
 
-Another example is a server process that spawns several children jobs and needs to _supervise_
-their execution, tracking their failures and restarting just those children jobs that had failed.
+Another example is a server process that spawns multiple child jobs and needs to _supervise_
+their execution, tracking their failures and only restarting the failed ones.
 
 #### Supervision job
 
-For these purposes [SupervisorJob][SupervisorJob()] can be used. It is similar to a regular [Job][Job()] with the only exception that cancellation is propagated
-only downwards. It is easy to demonstrate with an example:
+The [SupervisorJob][SupervisorJob()] can be used for these purposes. 
+It is similar to a regular [Job][Job()] with the only exception that cancellation is propagated
+only downwards. This can easily be demonstrated using the following example:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -365,24 +372,24 @@ fun main() = runBlocking {
     with(CoroutineScope(coroutineContext + supervisor)) {
         // launch the first child -- its exception is ignored for this example (don't do this in practice!)
         val firstChild = launch(CoroutineExceptionHandler { _, _ ->  }) {
-            println("First child is failing")
-            throw AssertionError("First child is cancelled")
+            println("The first child is failing")
+            throw AssertionError("The first child is cancelled")
         }
         // launch the second child
         val secondChild = launch {
             firstChild.join()
             // Cancellation of the first child is not propagated to the second child
-            println("First child is cancelled: ${firstChild.isCancelled}, but second one is still active")
+            println("The first child is cancelled: ${firstChild.isCancelled}, but the second one is still active")
             try {
                 delay(Long.MAX_VALUE)
             } finally {
                 // But cancellation of the supervisor is propagated
-                println("Second child is cancelled because supervisor is cancelled")
+                println("The second child is cancelled because the supervisor was cancelled")
             }
         }
         // wait until the first child fails & completes
         firstChild.join()
-        println("Cancelling supervisor")
+        println("Cancelling the supervisor")
         supervisor.cancel()
         secondChild.join()
     }
@@ -391,24 +398,24 @@ fun main() = runBlocking {
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-01.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-01.kt).
 
 The output of this code is:
 
 ```text
-First child is failing
-First child is cancelled: true, but second one is still active
-Cancelling supervisor
-Second child is cancelled because supervisor is cancelled
+The first child is failing
+The first child is cancelled: true, but the second one is still active
+Cancelling the supervisor
+The second child is cancelled because the supervisor was cancelled
 ```
 <!--- TEST-->
 
 
 #### Supervision scope
 
-For *scoped* concurrency [supervisorScope] can be used instead of [coroutineScope] for the same purpose. It propagates cancellation 
-only in one direction and cancels all children only if it has failed itself. It also waits for all children before completion
-just like [coroutineScope] does.
+Instead of [coroutineScope][_coroutineScope], we can use [supervisorScope][_supervisorScope] for _scoped_ concurrency. It propagates the cancellation
+in one direction only and cancels all its children only if it failed itself. It also waits for all children before completion
+just like [coroutineScope][_coroutineScope] does.
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -421,42 +428,45 @@ fun main() = runBlocking {
         supervisorScope {
             val child = launch {
                 try {
-                    println("Child is sleeping")
+                    println("The child is sleeping")
                     delay(Long.MAX_VALUE)
                 } finally {
-                    println("Child is cancelled")
+                    println("The child is cancelled")
                 }
             }
             // Give our child a chance to execute and print using yield 
             yield()
-            println("Throwing exception from scope")
+            println("Throwing an exception from the scope")
             throw AssertionError()
         }
     } catch(e: AssertionError) {
-        println("Caught assertion error")
+        println("Caught an assertion error")
     }
 }
 ```
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-02.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-02.kt).
 
 The output of this code is:
 
 ```text
-Child is sleeping
-Throwing exception from scope
-Child is cancelled
-Caught assertion error
+The child is sleeping
+Throwing an exception from the scope
+The child is cancelled
+Caught an assertion error
 ```
 <!--- TEST-->
 
 #### Exceptions in supervised coroutines
 
 Another crucial difference between regular and supervisor jobs is exception handling.
-Every child should handle its exceptions by itself via exception handling mechanisms.
-This difference comes from the fact that child's failure is not propagated to the parent.
+Every child should handle its exceptions by itself via the exception handling mechanism.
+This difference comes from the fact that child's failure does not propagate to the parent.
+It means that coroutines launched directly inside the [supervisorScope][_supervisorScope] _do_ use the [CoroutineExceptionHandler]
+that is installed in their scope in the same way as root coroutines do
+(see the [CoroutineExceptionHandler](#coroutineexceptionhandler) section for details). 
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -466,30 +476,30 @@ import kotlinx.coroutines.*
 
 fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception -> 
-        println("Caught $exception") 
+        println("CoroutineExceptionHandler got $exception") 
     }
     supervisorScope {
         val child = launch(handler) {
-            println("Child throws an exception")
+            println("The child throws an exception")
             throw AssertionError()
         }
-        println("Scope is completing")
+        println("The scope is completing")
     }
-    println("Scope is completed")
+    println("The scope is completed")
 }
 ```
 
 </div>
 
-> You can get full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-03.kt).
+> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-supervision-03.kt).
 
 The output of this code is:
 
 ```text
-Scope is completing
-Child throws an exception
-Caught java.lang.AssertionError
-Scope is completed
+The scope is completing
+The child throws an exception
+CoroutineExceptionHandler got java.lang.AssertionError
+The scope is completed
 ```
 <!--- TEST-->
 
@@ -501,12 +511,14 @@ Scope is completed
 [Deferred.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/await.html
 [GlobalScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-global-scope/index.html
 [CoroutineExceptionHandler]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-exception-handler/index.html
+[Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
+[Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html
 [Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
 [SupervisorJob()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-supervisor-job.html
 [Job()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job.html
-[supervisorScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/supervisor-scope.html
-[coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
+[_coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
+[_supervisorScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/supervisor-scope.html
 <!--- INDEX kotlinx.coroutines.channels -->
 [actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/actor.html
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/produce.html

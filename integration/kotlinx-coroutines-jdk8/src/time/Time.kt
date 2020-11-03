@@ -1,6 +1,8 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:OptIn(ExperimentalContracts::class)
+
 package kotlinx.coroutines.time
 
 import kotlinx.coroutines.*
@@ -8,36 +10,40 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.*
 import java.time.*
 import java.time.temporal.*
+import kotlin.contracts.*
 
 /**
  * "java.time" adapter method for [kotlinx.coroutines.delay].
  */
-public suspend fun delay(duration: Duration) =
-        kotlinx.coroutines.delay(duration.coerceToMillis())
+public suspend fun delay(duration: Duration): Unit = delay(duration.coerceToMillis())
 
 /**
  * "java.time" adapter method for [kotlinx.coroutines.flow.debounce].
  */
 @FlowPreview
-public fun <T> Flow<T>.debounce(timeout: Duration) = debounce(timeout.coerceToMillis())
+public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.coerceToMillis())
 
 /**
  * "java.time" adapter method for [kotlinx.coroutines.flow.sample].
  */
 @FlowPreview
-public fun <T> Flow<T>.sample(period: Duration) = sample(period.coerceToMillis())
+public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.coerceToMillis())
 
 /**
  * "java.time" adapter method for [SelectBuilder.onTimeout].
  */
-public fun <R> SelectBuilder<R>.onTimeout(duration: Duration, block: suspend () -> R) =
+public fun <R> SelectBuilder<R>.onTimeout(duration: Duration, block: suspend () -> R): Unit =
         onTimeout(duration.coerceToMillis(), block)
 
 /**
  * "java.time" adapter method for [kotlinx.coroutines.withTimeout].
  */
-public suspend fun <T> withTimeout(duration: Duration, block: suspend CoroutineScope.() -> T): T =
-        kotlinx.coroutines.withTimeout(duration.coerceToMillis(), block)
+public suspend fun <T> withTimeout(duration: Duration, block: suspend CoroutineScope.() -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    return kotlinx.coroutines.withTimeout(duration.coerceToMillis(), block)
+}
 
 /**
  * "java.time" adapter method for [kotlinx.coroutines.withTimeoutOrNull].

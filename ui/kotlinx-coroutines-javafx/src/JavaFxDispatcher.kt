@@ -31,7 +31,7 @@ public val Dispatchers.JavaFx: JavaFxDispatcher
 public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
 
     /** @suppress */
-    override fun dispatch(context: CoroutineContext, block: Runnable) = Platform.runLater(block)
+    override fun dispatch(context: CoroutineContext, block: Runnable): Unit = Platform.runLater(block)
 
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
@@ -42,7 +42,7 @@ public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
     }
 
     /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS, EventHandler {
             block.run()
         })
@@ -70,7 +70,7 @@ private object ImmediateJavaFxDispatcher : JavaFxDispatcher() {
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = !Platform.isFxApplicationThread()
 
-    override fun toString() = "JavaFx [immediate]"
+    override fun toString() = toStringInternalImpl() ?: "JavaFx.immediate"
 }
 
 /**
@@ -85,7 +85,7 @@ internal object JavaFx : JavaFxDispatcher() {
     override val immediate: MainCoroutineDispatcher
         get() = ImmediateJavaFxDispatcher
 
-    override fun toString() = "JavaFx"
+    override fun toString() = toStringInternalImpl() ?: "JavaFx"
 }
 
 private val pulseTimer by lazy {

@@ -28,7 +28,7 @@ internal class ArrayBroadcastChannel<E>(
      * Buffer capacity.
      */
     val capacity: Int
-) : AbstractSendChannel<E>(), BroadcastChannel<E> {
+) : AbstractSendChannel<E>(null), BroadcastChannel<E> {
     init {
         require(capacity >= 1) { "ArrayBroadcastChannel capacity must be at least 1, but $capacity was specified" }
     }
@@ -180,6 +180,8 @@ internal class ArrayBroadcastChannel<E>(
                             this.tail = tail + 1
                             return@withLock // go out of lock to wakeup this sender
                         }
+                        // Too late, already cancelled, but we removed it from the queue and need to release resources.
+                        // However, ArrayBroadcastChannel does not support onUndeliveredElement, so nothing to do
                     }
                 }
             }
@@ -205,7 +207,7 @@ internal class ArrayBroadcastChannel<E>(
 
     private class Subscriber<E>(
         private val broadcastChannel: ArrayBroadcastChannel<E>
-    ) : AbstractChannel<E>(), ReceiveChannel<E> {
+    ) : AbstractChannel<E>(null), ReceiveChannel<E> {
         private val subLock = ReentrantLock()
 
         private val _subHead = atomic(0L)
@@ -218,13 +220,15 @@ internal class ArrayBroadcastChannel<E>(
         override val isBufferAlwaysFull: Boolean get() = error("Should not be used")
         override val isBufferFull: Boolean get() = error("Should not be used")
 
-        override fun onCancelIdempotent(wasClosed: Boolean) {
+        override fun close(cause: Throwable?): Boolean {
+            val wasClosed = super.close(cause)
             if (wasClosed) {
                 broadcastChannel.updateHead(removeSub = this)
                 subLock.withLock {
                     subHead = broadcastChannel.tail
                 }
             }
+            return wasClosed
         }
 
         // returns true if subHead was updated and broadcast channel's head must be checked
