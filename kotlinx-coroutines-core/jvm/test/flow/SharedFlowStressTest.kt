@@ -38,8 +38,8 @@ class SharedFlowStressTest : TestBase() {
         testStress(1, 1)
 
     @Test
-    fun testStressReplay7ExtraBuffer11() =
-        testStress(7, 11)
+    fun testStressReplay2ExtraBuffer1() =
+        testStress(2, 1)
 
     private fun testStress(replay: Int, extraBufferCapacity: Int) = runTest {
         sf = MutableSharedFlow(replay, extraBufferCapacity)
