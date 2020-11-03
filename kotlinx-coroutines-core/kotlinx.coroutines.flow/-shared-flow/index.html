@@ -33,7 +33,7 @@
 
 <h1 id="sharedflow">SharedFlow</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SharedFlow</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L111">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SharedFlow</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L120">(source)</a></div>
 
 <p>A <em>hot</em> <a href="../-flow/index.html">Flow</a> that shares emitted values among all its collectors in a broadcast fashion, so that all collectors
 get all emitted values. A shared flow is called <em>hot</em> because its active instance exists independently of the
@@ -88,6 +88,15 @@ using the <code>extraBufferCapacity</code> parameter.</p>
 <p>A shared flow with a buffer can be configured to avoid suspension of emitters on buffer overflow using
 the <code>onBufferOverflow</code> parameter, which is equal to one of the entries of the <a href="../../kotlinx.coroutines.channels/-buffer-overflow/index.html">BufferOverflow</a> enum. When a strategy other
 than <a href="../../kotlinx.coroutines.channels/-buffer-overflow/-s-u-s-p-e-n-d.html">SUSPENDED</a> is configured, emissions to the shared flow never suspend.</p>
+
+<h3 id="unbuffered-shared-flow">Unbuffered shared flow</h3>
+
+<p>A default implementation of a shared flow that is created with <code>MutableSharedFlow()</code> constructor function
+without parameters has no replay cache nor additional buffer.
+<a href="../-flow-collector/emit.html">emit</a> call to such a shared flow suspends until all subscribers receive the emitted value
+and returns immediately if there are no subscribers.
+Thus, <a href="../-mutable-shared-flow/try-emit.html">tryEmit</a> call succeeds and returns <code>true</code> only if
+there are no subscribers (in which case the emitted value is immediately lost).</p>
 
 <h3 id="sharedflow-vs-broadcastchannel">SharedFlow vs BroadcastChannel</h3>
 

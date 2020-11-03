@@ -61,7 +61,7 @@
     <span class="nc">FirebaseFirestore</span><span class="p">.</span><span class="nf">getInstance</span><span class="p">().</span><span class="nf">document</span><span class="p">(</span><span class="s">"users/$id"</span><span class="p">).</span><span class="k">get</span><span class="p">().</span><span class="nf">await</span><span class="p">()</span> <span class="c1">// Cancellable await</span>
 <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="nc">FirebaseFirestoreException</span><span class="p">)</span> <span class="p">{</span>
     <span class="c1">// Handle exception</span>
-    <span class="k">return</span><span class="nd">@async</span>
+    <span class="k">return</span><span class="err">@</span><span class="n">async</span>
 <span class="p">}</span>
 
 <span class="c1">// Do stuff</span>
