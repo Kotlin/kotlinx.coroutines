@@ -265,10 +265,12 @@ Theorem iteratorStepOrIncreaseCounter_spec
         (shouldAdjust: bool) co γa P γ (fℓ: loc) (v: val):
   {{{ is_infinite_array _ _ aspc NArray γa co ∗ is_iterator co γa P γ v ∗ P ∗
       if shouldAdjust
-      then make_laterable (∀ l, ([∗ list] i ∈ l,
-      cell_is_cancelled _ _ aspc NArray γa i ∗ iterator_issued γ i ∗
-      (∃ ℓ, infinite_array_mapsto _ _ aspc NArray co γa i ℓ)
-        ={⊤ ∖ ↑N}=∗ ▷ P)) else True
+      then make_laterable (∀ l start finish,
+      (∀ i, ⌜start ≤ i < finish⌝ -∗ cell_is_cancelled _ _ aspc NArray γa i ∗
+                (∃ ℓ, infinite_array_mapsto _ _ aspc NArray co γa i ℓ)) -∗
+      ▷ [∗] replicate (S start) P -∗
+      ([∗ list] i ∈ l, ⌜start ≤ i < finish⌝ ∗ iterator_issued γ i)
+        ={⊤ ∖ ↑N}=∗ ▷ [∗] replicate ((S start) + length l) P) else True
   }}}
     iteratorStepOrIncreaseCounter array_interface #shouldAdjust v
   {{{ v, RET v; ⌜v = NONEV⌝ ∗
@@ -305,7 +307,7 @@ Proof.
     wp_bind (increaseValueTo _ _).
     awp_apply iterator_increaseValueTo_spec without "HΦ".
     iInv "HInv" as (start) "(HCounter & HPs' & HSegment)".
-    iAssert (▷ ⌜start ≥ n⌝)%I with "[HIssued HCounter]" as "#>%".
+    iAssert (▷ ⌜start > n⌝)%I with "[HIssued HCounter]" as "#>%".
     { iDestruct "HCounter" as "[_ H●]".
       iApply (iterator_counter_at_least_implies_bound
                 with "[HIssued] H●").
@@ -318,32 +320,33 @@ Proof.
       iFrame. }
     iIntros "(HIssued' & _ & HCounter)".
     iDestruct (make_laterable_elim with "HPs") as "HPs".
-    iSpecialize ("HPs" $! ([n] ++ seq start (ns - start)))=> /=.
+    assert (∃ c, start = S n + c) as [c ->]. by apply nat_le_sum; lia.
+    rewrite replicate_plus big_sepL_app.
+    iDestruct "HPs'" as "[HPs' HPs'']".
+    iSpecialize ("HPs" $! ([n] ++ seq (S n + c) (ns - (S n + c))) n
+                   with "[] HPs'")=> /=.
+    { iIntros (i Hi). iApply "HCancelled". iPureIntro. apply Hi. }
+    iMod ("HPs" with "[HIssued HIssued']") as "HPs".
+    { iFrame. iSplitR; first by iPureIntro; lia.
+      iApply (big_sepL_impl with "HIssued'"). iIntros "!>" (? ? HEl) "$".
+      iPureIntro. move: HEl. rewrite lookup_seq. case=> ->. lia. }
     iDestruct "HPs" as "[HP HPs]".
-    iMod ("HP" with "[HIssued]") as "HP".
-    { iFrame "HIssued". iApply "HCancelled". iPureIntro. lia. }
-    iAssert ([∗ list] i ∈ seq start (ns - start), |={⊤ ∖ ↑N}=> ▷ P)%I
-      with "[HPs HIssued']" as "HPs".
-    { iCombine "HIssued'" "HPs" as "HIntro".
-      rewrite -big_sepL_sep.
-      iApply (big_sepL_impl with "HIntro").
-      iIntros "!>" (k y HLookup) "[HIssued HView]".
-      iApply "HView". iFrame. iApply "HCancelled". iPureIntro.
-      apply lookup_seq in HLookup. lia. }
-    rewrite big_sepL_fupd. iDestruct "HPs" as ">HPs".
+    rewrite seq_length. iCombine "HPs HPs''" as "HPs".
     iDestruct "HCounter" as "[[% HCounter]|[% HCounter]]".
-    * iSplitL "HPs' HSegment HCounter"; first by iExists _; iFrame.
-      iIntros "!> HΦ". wp_pures. iApply "HΦ". iLeft.
-      by iFrame.
+    * iSplitL "HPs HSegment HCounter".
+      { iExists _. iFrame "HSegment HCounter". simpl.
+        rewrite !replicate_plus !big_sepL_app.
+        by iDestruct "HPs" as "[($ & $ & _) $]". }
+      iIntros "!> HΦ". wp_pures. iApply "HΦ". iLeft. by iFrame.
     * iSplitR "HP".
       { iExists _. iFrame "HCounter".
         iModIntro. iModIntro.
-        iSplitL "HPs' HPs".
-        - assert (∃ k, ns = start + S k) as [k ->].
+        iSplitL "HPs".
+        - assert (∃ k, ns = (S n + c) + S k) as [k ->].
           by apply nat_lt_sum; lia.
           replace (_ + S k - _) with (S k) by lia.
-          iEval (rewrite -big_sepL_replicate) in "HPs".
-          rewrite seq_length replicate_plus big_sepL_app. by iFrame.
+          rewrite !replicate_plus !big_sepL_app.
+          iDestruct "HPs" as "[[$ ($ & $ & $)] $]".
         - iDestruct "HSegment" as (id) "[#HCancelled' HCutoff]".
           iExists _; iFrame "HCutoff".
           iIntros (? ?). iApply "HCancelled'". iPureIntro. lia.
