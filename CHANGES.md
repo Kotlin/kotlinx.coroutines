@@ -1,5 +1,11 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.4.1
+
+This is a patch release with an important fix to the `SharedFlow` implementation.
+
+* SharedFlow: Fix scenario with concurrent emitters and cancellation of subscriber (#2359, thanks to @vehovsky for the bug report).
+
 ## Version 1.4.0
 
 ### Improvements
