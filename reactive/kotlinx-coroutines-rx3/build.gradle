@@ -11,7 +11,7 @@ dependencies {
 }
 
 kotlin {
-    def targets = rootProject.ext.build_snapshot_train ? [jvm("jvm"), jvm("jvmIr")] : [jvm("jvm")]
+    def targets = rootProject.ext.jvm_ir_target_enabled ? [jvm("jvm"), jvm("jvmIr")] : [jvm("jvm")]
     configure(targets) {
         compilations.all {
             kotlinOptions.jvmTarget = "1.8"

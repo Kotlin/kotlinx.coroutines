@@ -37,7 +37,7 @@ val runR8NoOptim by tasks.registering(RunR8::class) {
     dependsOn("jvmJar")
 }
 
-val testTasks = if (rootProject.ext.get("build_snapshot_train") as Boolean) {
+val testTasks = if (rootProject.ext.get("jvm_ir_target_enabled") as Boolean) {
     listOf(tasks.jvmTest.get(), tasks.getByName<org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest>("jvmIrTest"))
 } else {
     listOf(tasks.jvmTest.get())

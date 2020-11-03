@@ -3,7 +3,7 @@
  */
 
 kotlin {
-    val targets = if (rootProject.ext.get("build_snapshot_train") as Boolean) {
+    val targets = if (rootProject.ext.get("jvm_ir_target_enabled") as Boolean) {
         listOf(jvm("jvm"), jvm("jvmIr"))
     } else {
         listOf(jvm("jvm"))

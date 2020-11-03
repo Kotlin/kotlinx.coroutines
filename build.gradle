@@ -32,6 +32,9 @@ buildscript {
         if (kotlin_version == null) {
             throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
         }
+    }
+    ext.jvm_ir_target_enabled = build_snapshot_train && rootProject.properties['disable_jvm_ir'] == null
+    if (jvm_ir_target_enabled) {
         ext.jvmCompilerTypeAttr = Attribute.of('org.jetbrains.kotlin.jvm.compiler', String)
     }
 
@@ -74,7 +77,7 @@ buildscript {
     }
 
     configurations.named('classpath') {
-        if (build_snapshot_train) {
+        if (jvm_ir_target_enabled) {
             attributes {
                 attribute(jvmCompilerTypeAttr, 'jvm')
             }
@@ -82,7 +85,7 @@ buildscript {
     }
 
     dependencies {
-        if (build_snapshot_train) {
+        if (jvm_ir_target_enabled) {
             attributesSchema {
                 attribute(jvmCompilerTypeAttr)
             }
@@ -111,7 +114,7 @@ if (!Idea.active) {
 // todo:KLUDGE: This is needed to workaround dependency resolution between Java and MPP modules
 def configureKotlinJvmPlatform(configuration) {
     configuration.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
-    if (build_snapshot_train) {
+    if (jvm_ir_target_enabled) {
         configuration.attributes.attribute(ext.jvmCompilerTypeAttr, 'jvm')
     }
 }

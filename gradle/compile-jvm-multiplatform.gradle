@@ -7,11 +7,11 @@ targetCompatibility = 1.6
 
 kotlin {
     jvm('jvm') {
-        if (rootProject.ext.build_snapshot_train) {
+        if (rootProject.ext.jvm_ir_target_enabled) {
             attributes.attribute(rootProject.ext.jvmCompilerTypeAttr, 'jvm')
         }
     }
-    if (rootProject.ext.build_snapshot_train) {
+    if (rootProject.ext.jvm_ir_target_enabled) {
         jvm('jvmIr') {
             attributes.attribute(rootProject.ext.jvmCompilerTypeAttr, 'jvmIr')
             compilations.all {
@@ -34,7 +34,7 @@ kotlin {
             api "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
             api "junit:junit:$junit_version"
         }
-        if (rootProject.ext.build_snapshot_train) {
+        if (rootProject.ext.jvm_ir_target_enabled) {
             jvmIrMain {
                 dependsOn jvmMain
             }

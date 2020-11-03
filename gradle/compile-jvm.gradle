@@ -11,7 +11,7 @@ targetCompatibility = 1.6
 
 configurations {
     create('jvmImplementation') {
-        if (rootProject.ext.build_snapshot_train) {
+        if (rootProject.ext.jvm_ir_target_enabled) {
             attributes {
                 attribute(jvmCompilerTypeAttr, 'jvm')
             }
@@ -24,7 +24,7 @@ sourceSets.all { sourceSet ->
 }
 
 dependencies {
-    if (rootProject.ext.build_snapshot_train) {
+    if (rootProject.ext.jvm_ir_target_enabled) {
         attributesSchema {
             attribute(rootProject.ext.jvmCompilerTypeAttr)
         }

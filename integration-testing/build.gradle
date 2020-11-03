@@ -34,7 +34,7 @@ task npmTest(type: Test) {
 }
 
 dependencies {
-    if (rootProject.ext.build_snapshot_train) {
+    if (rootProject.ext.jvm_ir_target_enabled) {
         attributesSchema {
             attribute(rootProject.ext.jvmCompilerTypeAttr)
         }
@@ -45,7 +45,7 @@ dependencies {
     npmTestCompile 'com.google.code.gson:gson:2.8.5'
 }
 
-def targets = rootProject.ext.build_snapshot_train ? ['jvm', 'jvmIr'] : ['']
+def targets = rootProject.ext.jvm_ir_target_enabled ? ['jvm', 'jvmIr'] : ['']
 
 targets.forEach { jvmCompilerType ->
     sourceSets {
@@ -80,7 +80,7 @@ targets.forEach { jvmCompilerType ->
 
         mavenTestClasspathConfiguration.attributes {
             attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
-            if (rootProject.ext.build_snapshot_train) {
+            if (rootProject.ext.jvm_ir_target_enabled) {
                 attribute(rootProject.ext.jvmCompilerTypeAttr, jvmCompilerType)
             }
         }
@@ -106,7 +106,7 @@ targets.forEach { jvmCompilerType ->
         classpath = sourceSet.runtimeClasspath
     }
 
-    if (rootProject.ext.build_snapshot_train) {
+    if (rootProject.ext.jvm_ir_target_enabled) {
         configurations {
             def confNames = [
                     "debugAgentTest${jvmCompilerType.capitalize()}RuntimeClasspath",
