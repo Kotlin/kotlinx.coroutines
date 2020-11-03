@@ -366,3 +366,14 @@ knit {
 }
 
 knitPrepare.dependsOn getTasksByName("dokka", true)
+
+// since we have jvm targets with same source sets only, use single dumped api
+subprojects { project ->
+    def projApiDir = file("$projectDir/api")
+    configure(tasks.matching { it.name.startsWith("apiDump") }) {
+        into(projApiDir)
+    }
+    configure(tasks.matching { it.name.startsWith("apiCheck") }) {
+        projectApiDir = projApiDir
+    }
+}
