@@ -202,7 +202,7 @@ class SharedFlowScenarioTest : TestBase() {
         }
 
     @Test
-    fun testSuspendedConcurrentEmitAndCancelSubscriber() =
+    fun testSuspendedConcurrentEmitAndCancelSubscriberReplay1() =
         testSharedFlow<Int>(MutableSharedFlow(1)) {
             val a = subscribe("a");
             emitRightNow(0); expectReplayOf(0)
@@ -219,6 +219,28 @@ class SharedFlowScenarioTest : TestBase() {
             collect(b, 3)
             emitRightNow(4); expectReplayOf(4)
             collect(b, 4)
+        }
+
+    @Test
+    fun testSuspendedConcurrentEmitAndCancelSubscriberReplay1ExtraBuffer1() =
+        testSharedFlow<Int>(MutableSharedFlow( replay = 1, extraBufferCapacity = 1)) {
+            val a = subscribe("a");
+            emitRightNow(0); expectReplayOf(0)
+            collect(a, 0)
+            emitRightNow(1); expectReplayOf(1)
+            emitRightNow(2); expectReplayOf(2)
+            val e3 = emitSuspends(3) // suspends until 1 is collected
+            val e4 = emitSuspends(4) // suspends until 1 is collected, too
+            val e5 = emitSuspends(5) // suspends until 1 is collected, too
+            cancel(a) // must resume emitters 3, 4, 5
+            emitResumes(e3)
+            emitResumes(e4)
+            emitResumes(e5)
+            expectReplayOf(5)
+            val b = subscribe("b")
+            collect(b, 5)
+            emitRightNow(6); expectReplayOf(6)
+            collect(b, 6)
         }
 
     private fun <T> testSharedFlow(

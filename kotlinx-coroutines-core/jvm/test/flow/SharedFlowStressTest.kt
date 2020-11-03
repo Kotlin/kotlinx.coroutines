@@ -18,8 +18,8 @@ class SharedFlowStressTest : TestBase() {
     private val nConsumers = 3
     private val nSeconds = 3 * stressTestMultiplier
 
-    private val sf: MutableSharedFlow<Long> = MutableSharedFlow(1)
-    private val view: SharedFlow<Long> = sf.asSharedFlow()
+    private lateinit var sf: MutableSharedFlow<Long>
+    private lateinit var view: SharedFlow<Long>
 
     @get:Rule
     val producerDispatcher = ExecutorRule(nProducers)
@@ -30,7 +30,20 @@ class SharedFlowStressTest : TestBase() {
     private val totalConsumed = atomic(0L)
 
     @Test
-    fun testStress() = runTest {
+    fun testStressReplay1() =
+        testStress(1, 0)
+
+    @Test
+    fun testStressReplay1ExtraBuffer1() =
+        testStress(1, 1)
+
+    @Test
+    fun testStressReplay7ExtraBuffer11() =
+        testStress(7, 11)
+
+    private fun testStress(replay: Int, extraBufferCapacity: Int) = runTest {
+        sf = MutableSharedFlow(replay, extraBufferCapacity)
+        view = sf.asSharedFlow()
         val jobs = ArrayList<Job>()
         jobs += List(nProducers) { producerIndex ->
             launch(producerDispatcher) {
