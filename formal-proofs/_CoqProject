@@ -3,10 +3,7 @@
 -arg -w -arg -ambiguous-paths
 -arg -w -arg -redundant-canonical-projection
 -arg -w -arg -projection-no-head-constant
-./theories/lib/infinite_array/infinite_array_impl.v
-./theories/lib/infinite_array/iterator.v
 ./theories/lib/thread_queue/thread_queue.v
-./theories/lib/thread_queue/thread_queue_as_counter.v
 ./theories/lib/interruptible_semaphore/interruptible_semaphore.v
 ./theories/lib/concurrent_linked_list/segment_spec.v
 ./theories/lib/concurrent_linked_list/segment_interfaces.v
@@ -25,7 +22,6 @@
 ./theories/lib/util/addAndGet.v
 ./theories/lib/util/addConditionally.v
 ./theories/lib/util/getAndSet.v
-./theories/lib/util/interruptibly.v
 ./theories/lib/util/increaseValueTo.v
 ./theories/lib/util/future.v
 ./theories/lib/barrier/barrier.v

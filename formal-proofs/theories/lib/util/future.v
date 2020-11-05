@@ -185,6 +185,9 @@ Proof.
   apply None_least.
 Qed.
 
+Theorem future_is_loc R γ f: is_future R γ f -∗ ⌜∃ (ℓ: loc), f = #ℓ⌝.
+Proof. iIntros "HFuture". by iDestruct "HFuture" as (?) "[-> _]"; iExists _. Qed.
+
 Theorem future_is_not_unit R γ f: is_future R γ f -∗ ⌜f ≠ #()⌝.
 Proof. iIntros "HFuture". by iDestruct "HFuture" as (?) "[-> _]". Qed.
 
