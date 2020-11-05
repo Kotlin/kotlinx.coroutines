@@ -262,7 +262,7 @@ Proof.
 Qed.
 
 Theorem iteratorStepOrIncreaseCounter_spec
-        (shouldAdjust: bool) co γa P γ (fℓ: loc) (v: val):
+        (shouldAdjust: bool) co γa P γ (v: val):
   {{{ is_infinite_array _ _ aspc NArray γa co ∗ is_iterator co γa P γ v ∗ P ∗
       if shouldAdjust
       then make_laterable (∀ l start finish,
