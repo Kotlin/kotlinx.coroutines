@@ -358,22 +358,30 @@ Lemma access_iterator_resources E R co γa γd d i:
   ↑N ⊆ E ->
   is_iterator co γa R γd d -∗
   iterator_counter_at_least γd i
-  ={E,E∖↑N}=∗ ▷ (([∗] replicate i R)
-                      ∗ ((▷ [∗] replicate i R) ={E∖↑N, E}=∗ True)).
+  ={E,E∖↑N}=∗ ▷ ([∗] replicate i R)
+              ∗ ((▷ [∗] replicate i R) ={E∖↑N, E}=∗ True).
 Proof.
   iIntros (HSets) "#HIsIter HCounterValue".
   iDestruct "HIsIter" as (cℓ p) "[-> HIsIter]".
   iInv N as (n) "(HCounter & HResource & HCutoff)" "HClose".
   iModIntro. rewrite /iterator_counter.
-  iDestruct "HCounter" as "[Hcℓ >H●]".
-  iDestruct (own_valid_2 with "H● HCounterValue")
-    as %[[_ HValid%max_nat_included]%prod_included _]%auth_both_valid.
-  simpl in *.
-  apply nat_le_sum in HValid. destruct HValid as [z ->].
-  rewrite replicate_plus big_sepL_app.
-  iDestruct "HResource" as "[$ HResource]".
-  iNext. iIntros "HResource'". iMod ("HClose" with "[-]"); last done.
-  iExists (i + z). iFrame. rewrite replicate_plus big_sepL_app. iFrame.
+  iDestruct "HCounter" as "[Hcℓ H●]".
+  iDestruct (own_valid_2 with "H● [$]") as "#HPure".
+  destruct (decide (i ≤ n)) as [HValid|HContra].
+  - apply nat_le_sum in HValid. destruct HValid as [z ->].
+    rewrite replicate_plus big_sepL_app.
+    iDestruct "HResource" as "[$ HResource]".
+    iIntros "HResource'". iMod ("HClose" with "[-]"); last done.
+    iExists (i + z). iFrame. rewrite replicate_plus big_sepL_app. iFrame.
+  - iSplitR.
+    * iDestruct "HPure" as ">HPure".
+      iDestruct "HPure"
+        as %[[_ HValid%max_nat_included]%prod_included _]%auth_both_valid.
+      simpl in *. lia.
+    * iIntros "_". iDestruct "HPure" as ">HPure".
+      iDestruct "HPure"
+        as %[[_ HValid%max_nat_included]%prod_included _]%auth_both_valid.
+      simpl in *. lia.
 Qed.
 
 End proof.

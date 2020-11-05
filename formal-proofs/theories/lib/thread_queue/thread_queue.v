@@ -1275,23 +1275,23 @@ Qed.
 Lemma deq_front_at_least_from_iterator_issued E' γa γtq γe γd e d i:
   ↑N ⊆ E' ->
   is_thread_queue γa γtq γe γd e d -∗
-  iterator_issued γd i ={E', E'∖↑NDeq}=∗
+  iterator_issued γd i ={E'}=∗
   deq_front_at_least γtq (S i) ∗
-  iterator_issued γd i ∗
-  ▷ |={E'∖↑NDeq, E'}=> True.
+  iterator_issued γd i.
 Proof.
   iIntros (HMask) "(HInv & _ & _ & HD) HIsRes".
   iMod (access_iterator_resources with "HD [#]") as "HH"; first by solve_ndisj.
   by iDestruct (iterator_issued_is_at_least with "HIsRes") as "$".
+  rewrite awakening_permit_combine; last lia.
+  iDestruct "HH" as "[>HH HHRestore]".
   iInv NTq as (l deqFront) "(>H● & HRRs & HRest)" "HClose".
-  iDestruct "HH" as "[HH HHRestore]".
-  iDestruct (awakening_permit_implies_bound with "H● HH") as "#>%".
+  rewrite -awakening_permit_combine; last lia.
+  iDestruct (awakening_permit_implies_bound with "H● HH") as "#%".
   iMod (cell_list_contents__deq_front_at_least with "H●") as "[H● $]"; first lia.
   iFrame "HIsRes".
   iMod ("HClose" with "[-HH HHRestore]") as "_".
   { iExists _, _. iFrame. }
-  iSpecialize ("HHRestore" with "HH").
-  iModIntro. iApply "HHRestore".
+  by iMod ("HHRestore" with "HH").
 Qed.
 
 Lemma inhabit_cell_spec γa γtq γe γd γf i ptr f e d:
@@ -1825,6 +1825,36 @@ Proof.
     iExists _, _. iFrame "H● HDeqIdx HLen". iApply "HRRsRestore".
     iFrame "HCancHandle HIsSus HTh". iExists _. iFrame "H↦". iFrame.
     iRight. iFrame.
+Qed.
+
+Lemma acquire_resumer_resource_from_immediately_cancelled E' γtq γa γe γd i e d ℓ:
+  (↑NTq ∪ ↑NArr) ⊆ E' ->
+  immediateCancellation ->
+  is_thread_queue γa γtq γe γd e d -∗
+  deq_front_at_least γtq (S i) -∗
+  cell_cancelled γa i -∗
+  cell_location γtq γa i ℓ -∗
+  iterator_issued γd i ={E'}=∗
+  ▷ R.
+Proof.
+  iIntros (HMask HImmediate) "[#HInv _] #HDeqFront #HCancelled #H↦ HIsRes".
+  iInv "HInv" as (l deqFront) "HTq" "HClose".
+  iMod (cell_cancelled_means_present with "HCancelled H↦ HTq") as
+      "[HTq >HSkippable]"; first by solve_ndisj.
+  iDestruct "HSkippable" as %(c & HEl & HCancelled).
+  destruct immediateCancellation; last done. simpl in HCancelled.
+  destruct c as [|? ? [[| |]|]]=> //.
+  iDestruct "HTq" as "(>H● & HRRs & HRest)".
+  iDestruct (big_sepL_lookup_acc with "HRRs") as "[HRR HRRs]"; first done.
+  iDestruct (deq_front_at_least_valid with "H● HDeqFront") as %HDeqFront.
+  rewrite bool_decide_true; last lia.
+  simpl. iDestruct "HRR" as "(HIsSus & HTh & HRR)".
+  iDestruct "HRR" as (ℓ') "(H↦' & Hℓ & HImmediate & HFutureCancelled & HRR)".
+  iDestruct "HRR" as "[[[HFuture|[_ >HC]] HR]|[_ >HC]]".
+  all: try by iDestruct (iterator_issued_exclusive with "HC HIsRes") as %[].
+  iFrame "HR".
+  iMod ("HClose" with "[-]"); last done. iExists _, _. iFrame "H● HRest".
+  iApply "HRRs". iFrame "HIsSus HTh". iExists _. by iFrame.
 Qed.
 
 (* TRANSITIONS ON CELLS IN THE NON-SUSPENDING CASE *****************************)
@@ -3024,8 +3054,7 @@ Proof.
     iFrame "HCancHandle HR". iRight. iFrame. iExists _. by iFrame.
 Qed.
 
-(* TODO: *)
-(* Taking the resumer resource from an immediately cancelled cell *)
+(* WHOLE OPERATIONS ON THE THREAD QUEUE ****************************************)
 
 Theorem try_deque_thread_spec E R γa γtq γe γd (eℓ epℓ dℓ dpℓ: loc):
   ▷ awakening_permit γtq -∗
