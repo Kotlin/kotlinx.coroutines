@@ -50,29 +50,42 @@ Definition tryCancelThreadQueueFuture: val :=
                     else #false.
 
 Definition tryResume: val :=
-  λ: "maxWait" "shouldAdjust" "mayBreakCells" "deqIterator" "value",
+  λ: "maxWait" "shouldAdjust" "mayBreakCells" "waitForResolution" "deqIterator"
+     "returnRefusedValue" "value",
   match: iteratorStepOrIncreaseCounter
            array_interface "shouldAdjust" "deqIterator" with
       NONE => #1
     | SOME "cellPtr" =>
       cellPointerCleanPrev array_interface "cellPtr" ;;
-      (rec: "loop" <> :=
+      (rec: "modify_cell" <> :=
          let: "cell" := derefCellPointer array_interface "cellPtr" in
          let: "cellState" := !"cell" in
          if: "cellState" = NONEV then
            if: CAS "cell" NONEV (SOME "value") then
              if: "mayBreakCells" then
-               if: (rec: "wait" "n" := ("n" = #0) ||
-                                       (!"cell" = TAKENV) ||
-                                       "wait" ("n" - #1)) "maxWait" ||
-                   !(CAS "cell" (SOME "value") BROKENV)
+               if: (rec: "wait" "n" :=
+                      ("n" ≠ #0) && ((!"cell" = TAKENV) || "wait" ("n" - #1)))
+                     "maxWait"
+                   || (~ CAS "cell" (SOME "value") BROKENV)
                then #0
                else #2
              else #0
-           else "loop" #()
+           else "modify_cell" #()
          else if: "cellState" = CANCELLEDV then #1
-         else #() (* TODO *)
-      ) #()
+         else if: "cellState" = REFUSEDV then "returnRefusedValue" "value" ;; #0
+         else match: "cellState" with
+                InjR "x" => "undefined"
+              | InjL "th" => let: "success" := tryCompleteFuture "th" "value" in
+                            if: "success" then
+                              "cell" <- RESUMEDV ;; #0
+                            else
+                              if: "shouldAdjust"
+                              then if: "waitForResolution" then "modify_cell" #()
+                                   else if: CAS "cell" (InjL "th") (SOME "value")
+                                        then #0
+                                        else "modify_cell" #()
+                              else #1
+              end) #()
   end.
 
 Definition resume: val :=
@@ -3071,21 +3084,28 @@ Qed.
 
 (* WHOLE OPERATIONS ON THE THREAD QUEUE ****************************************)
 
-Lemma tryResume_spec (mayBreakCells shouldAdjust: bool)
-      (maxWait: nat) γa γtq γe γd e d v:
+Lemma tryResume_spec (mayBreakCells shouldAdjust waitForResolution: bool)
+      (returnRefusedValue: val) (maxWait: nat) γa γtq γe γd e d v:
+  NTq ## NFuture ->
   lit_is_unboxed v ->
+  Laterable (V v) ->
   shouldAdjust = negb immediateCancellation ->
+  {{{ ERefuse ∗ V v }}}
+    returnRefusedValue #v
+  {{{ RET #(); ▷ E }}} -∗
   {{{ is_thread_queue γa γtq γe γd e d ∗ awakening_permit γtq ∗
       V v ∗ if mayBreakCells then CB else True }}}
-    tryResume array_interface #maxWait #shouldAdjust #mayBreakCells d #v
+    tryResume array_interface #maxWait #shouldAdjust #mayBreakCells #waitForResolution
+      d returnRefusedValue #v
   {{{ (n: nat), RET #n; ⌜n = 0⌝ ∧ E ∨
                       ⌜n = 1⌝ ∧ V v ∗
                         (if immediateCancellation then R
                          else awakening_permit γtq) ∨
-                      ⌜n = 2 ∧ mayBreakCells⌝ ∧ R
+                      ⌜n = 2 ∧ mayBreakCells⌝ ∧ R ∗ V v
   }}}.
 Proof.
-  iIntros (HUnboxed -> Φ) "(#HTq & HAwak & HV & HCB) HΦ".
+  iIntros (HMask HUnboxed HLaterable ->) "#HRefusedValue".
+  iIntros "!>" (Φ) "(#HTq & HAwak & HV & HCB) HΦ".
   wp_lam. wp_pures. wp_bind (iteratorStepOrIncreaseCounter _ _ _).
   iApply (iteratorStepOrIncreaseCounter_spec _ _ NArr NDeq with "[HAwak]").
   by solve_ndisj.
@@ -3128,261 +3148,76 @@ Proof.
          iApply ("IH" with "HV HCB HΦ HIsRes"). }
     destruct mayBreakCells.
     2: { wp_pures. iApply ("HΦ" $! 0). iLeft. by iFrame. }
-
-Theorem try_deque_thread_spec E R γa γtq γe γd (eℓ epℓ dℓ dpℓ: loc):
-  ▷ awakening_permit γtq -∗
-  <<< ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>>
-  ((try_deque_thread segment_size) #dpℓ) #dℓ @ ⊤ ∖ ↑N
-  <<< ∃ (v: val), ▷ E ∗ (∃ i,
-     (⌜l !! i = Some None⌝ ∧ ⌜v = #()⌝ ∧
-                     ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
-                            (<[i := Some cellFilled]> l) deqFront) ∗
-                            rendezvous_filled γtq i ∨
-   ∃ γt (th: loc),
-       ▷ rendezvous_thread_handle γtq γt th i ∗ (
-      ⌜l !! i = Some (Some (cellInhabited γt th None))⌝ ∧ ⌜v = #th⌝ ∧
-      ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
-        (<[i := Some (cellInhabited γt th (Some cellResumed))]> l)
-        deqFront ∗ rendezvous_resumed γtq i ∗ resumer_token γtq i ∨
-
-      ⌜l !! i = Some (Some (cellInhabited γt th (Some (cellCancelled None))))⌝ ∗
-      rendezvous_cancelled γtq i ∨
-      ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
-        (<[i := Some (cellInhabited γt th (Some (cellCancelled (Some cancellationPrevented))))]> l) deqFront ∗
-      thread_doesnt_have_permits γt ∨
-
-      (⌜l !! i = Some (Some (cellInhabited γt th (Some (cellCancelled (Some cancellationFinished)))))⌝ ∗
-      rendezvous_cancelled γtq i ∨
-       ⌜l !! i = Some (Some (cellInhabited γt th (Some cellAbandoned)))⌝ ∗
-      rendezvous_abandoned γtq i) ∗
-      ⌜v = #th⌝ ∧
-      ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
-      thread_doesnt_have_permits γt
-  )), RET v >>>.
-Proof.
-  iIntros "HAwaken" (Φ) "AU". iLöb as "IH".
-  wp_lam. wp_pures.
-
-  awp_apply (increase_deqIdx with "HAwaken").
-  iApply (aacc_aupd_abort with "AU"); first done.
-  iIntros (? ?) "HTq".
-  iAaccIntro with "HTq".
-  by iIntros "$ !> $".
-  iIntros (d ?) "($ & HIsRes & #HSegLoc) !> AU !>".
-
-  wp_pures.
-
-  wp_bind (segment_cutoff _).
-  iDestruct (iterator_issued_implies_bound with "HIsRes") as "#HDAtLeast".
-  awp_apply move_head_forward_spec.
-  2: iApply (aacc_aupd_abort with "AU"); first done.
-  2: iIntros (? ?) "(HInfArr & HRest)".
-  2: iDestruct (is_segment_by_location_prev with "HSegLoc HInfArr")
-    as (?) "[HIsSeg HArrRestore]".
-  2: iDestruct "HIsSeg" as (?) "HIsSeg".
-  2: iAaccIntro with "HIsSeg".
-  {
-    iApply big_sepL_forall. iIntros (k d' HEl). simpl.
-    by iRight.
-  }
-  {
-    iIntros "HIsSeg".
-    iDestruct ("HArrRestore" with "HIsSeg") as "$".
-    iFrame.
-    by iIntros "!> $ !>".
-  }
-  iIntros "HIsSeg".
-  iDestruct ("HArrRestore" with "[HIsSeg]") as "$"; first by iFrame.
-  iFrame.
-  iIntros "!> AU !>".
-
-  wp_pures.
-
-  awp_apply iterator_move_ptr_forward_spec; try iAssumption.
-  {
-    iPureIntro.
-    move: (Nat.mul_div_le d (Pos.to_nat segment_size)).
-    lia.
-  }
-  iApply (aacc_aupd_abort with "AU"); first done.
-  iIntros (? ?) "(HInfArr & HListContents & >% & HRest)".
-  iDestruct "HRest" as (? ?) "(HEnqIt & >HDeqIt & HRest)".
-  iCombine "HInfArr" "HDeqIt" as "HAacc".
-  iAaccIntro with "HAacc".
-  {
-    iIntros "[$ HDeqIt] !>". iFrame "HListContents".
-    iSplitR "HIsRes". iSplitR; first done. iExists _, _. iFrame.
-    by iIntros "$ !>".
-  }
-  iIntros "[$ HDeqPtr] !>".
-  iSplitR "HIsRes".
-  {
-    iFrame "HListContents". iSplitR; first done.
-    iExists _, _. iFrame.
-  }
-  iIntros "AU !>".
-
-  wp_pures. wp_lam. wp_pures.
-
-  replace (Z.rem d (Pos.to_nat segment_size)) with
-      (Z.of_nat (d `mod` Pos.to_nat segment_size)).
-  2: {
-    destruct (Pos.to_nat segment_size) eqn:S; first by lia.
-    by rewrite rem_of_nat.
-  }
-  awp_apply segment_data_at_spec.
-  { iPureIntro. apply Nat.mod_upper_bound. lia. }
-  iApply (aacc_aupd_abort with "AU"); first done.
-  iIntros (? deqFront) "(HInfArr & HRest)".
-  iDestruct (is_segment_by_location with "HSegLoc HInfArr")
-    as (? ?) "[HIsSeg HArrRestore]".
-  iAaccIntro with "HIsSeg".
-  {
-    iIntros "HIsSeg".
-    iDestruct ("HArrRestore" with "HIsSeg") as "$".
-    iFrame "HRest".
-    by iIntros "!> $ !>".
-  }
-  iIntros (?) "(HIsSeg & #HArrMapsto & #HCellInv)".
-  iDestruct ("HArrRestore" with "[HIsSeg]") as "$"; first done.
-  iDestruct "HRest" as "((HLen & HRes & >HAuth & HRest') & HRest)".
-  iMod (own_update with "HAuth") as "[HAuth HFrag']".
-  2: iAssert (deq_front_at_least γtq deqFront) with "HFrag'" as "HFrag".
-  {
-    apply auth_update_core_id.
-    by repeat (apply pair_core_id; try apply _).
-    repeat (apply prod_included'; simpl; split; try apply ucmra_unit_least).
-    by apply max_nat_included.
-  }
-  simpl.
-  iAssert (▷ deq_front_at_least γtq (S d))%I as "#HDeqFront".
-  {
-    iDestruct "HRest" as "(_ & HH)".
-    iDestruct "HH" as (? ?) "(_ & [>HDeqCtr _] & _ & _ & >%)".
-    iDestruct (iterator_points_to_at_least with "HDAtLeast HDeqCtr") as "%".
-    iApply (own_mono with "HFrag").
-
-    apply auth_included. simpl. split; first done.
-    repeat (apply prod_included'; simpl; split; try done).
-    apply max_nat_included=>/=. lia.
-  }
-  iFrame.
-  iIntros "!> AU !>".
-
-  wp_pures.
-  replace (_ + _)%nat with d by (rewrite Nat.mul_comm -Nat.div_mod //; lia).
-
-  awp_apply (resume_rendezvous_spec with "HCellInv HDeqFront HArrMapsto HIsRes").
-  iApply (aacc_aupd with "AU"); first done.
-  iIntros (? deqFront') "(HInfArr & HCellList & HRest)".
-  iAaccIntro with "HCellList".
-  by iFrame; iIntros "$ !> $ !>".
-
-  iIntros (?) "[(% & -> & #HRendFilled & HE & HCont)|HH]".
-  {
-    iRight.
-    iExists _.
-    iSplitL.
-    2: by iIntros "!> HΦ !>"; wp_pures.
-    iFrame "HE".
-    iExists _.
-    iLeft.
-    iFrame. iFrame "HRendFilled".
-    iSplitR; first done.
-    iDestruct "HRest" as "(>% & HRest)".
-    iSplitR; first done.
-    iSplitR.
-    {
-      iPureIntro.
-      intros (HDeqFront & γt & th & r & HEl).
-      destruct (decide (d = (deqFront' - 1)%nat)).
-      {
-        subst.
-        rewrite list_insert_alter in HEl.
-        rewrite list_lookup_alter in HEl.
-        destruct (_ !! (deqFront' - 1)%nat); simplify_eq.
-      }
-      rewrite list_lookup_insert_ne in HEl; try done.
-      by eauto 10.
+    iDestruct "HPassingResult" as "[HCellBreakingToken #HFilled]".
+    wp_pures. iClear "IH".
+    (* waiting for a suspender to arrive. *)
+    iInduction maxWait as [|maxWait'] "IHWait".
+    + wp_pures.
+      (* the suspender did not manage to arrive while we were waiting. *)
+      wp_bind (Snd _). iApply (break_cell_spec with "[$]").
+      iIntros "!>" (breakResult) "HBreakResult".
+      destruct breakResult; wp_pures.
+      * (* breaking succeeded. *)
+        iApply ("HΦ" $! 2). iRight; iRight.
+        by iDestruct "HBreakResult" as "[$ $]".
+      * (* breaking failed as the suspender arrived. *)
+        iApply ("HΦ" $! 0). iLeft. by iFrame.
+    + wp_pures. wp_bind (!#ℓ)%E.
+      awp_apply (check_passed_value false with "HFilled H↦ HCellBreakingToken")
+                without "HCB HΦ".
+      iDestruct "HTq" as "[HInv _]". iInv "HInv" as (l deqFront) "HOpen".
+      iAaccIntro with "HOpen".
+      { iIntros "HTq !>". iSplitL; last done. by iExists _, _. }
+      iIntros (?) "[HTq HReadValue]". iSplitL "HTq"; first by iExists _, _.
+      iIntros "!> [HCB HΦ]".
+      destruct (l !! ns) as [[[? res|]|]|]; try iDestruct "HReadValue" as %[].
+      destruct res as [[|]|].
+      * (* rendezvous succeeded, we may safely leave. *)
+        iDestruct "HReadValue" as "[-> HE]". wp_pures.
+        iApply ("HΦ" $! 0). iLeft. by iFrame.
+      * (* someone else broke the cell? impossible. *)
+        by iDestruct "HReadValue" as "[[_ %] _]".
+      * (* nothing happened in this cell yet after it was filled. *)
+        iDestruct "HReadValue" as "[-> HCellBreakingToken]". wp_pures.
+        replace (S maxWait' - 1)%Z with (Z.of_nat maxWait'); last lia.
+        iApply ("IHWait" with "HCB HΦ HCellBreakingToken").
+  - wp_pures. iApply ("HΦ" $! 1). iRight; iLeft. by iFrame.
+  - wp_pures. wp_bind (returnRefusedValue _).
+    iApply ("HRefusedValue" with "[$]"). iIntros "!> HE". wp_pures.
+    iApply ("HΦ" $! 0). iLeft. by iFrame.
+  - iDestruct "HInhabited" as (γf f ->) "[#HTh HFutureCompl]".
+    iDestruct (future_is_loc with "[]") as "HLoc". by iDestruct "HTh" as "[$ _]".
+    iDestruct "HLoc" as %[fℓ ->]. wp_pures.
+    wp_bind (tryCompleteFuture _ _).
+    awp_apply (try_resume_cell with "HDeqFront HTq HTh [HV]")
+              without "HCB HΦ"=>//.
+    iAaccIntro with "HFutureCompl"; first by iIntros "$ !>".
+    iIntros (completionResult) "HCompletion !> [HCB HΦ]".
+    wp_pures.
+    destruct completionResult.
+    { (* completion succeeded. *)
+      iDestruct "HCompletion" as "(HE & _ & HState)". wp_pures.
+      wp_bind (_ <- _)%E. iApply (mark_cell_as_resumed with "[$]").
+      iIntros "!> _". wp_pures. iApply ("HΦ" $! 0). iLeft. by iFrame.
     }
-    iDestruct "HRest" as (? ?) "HH".
-    iExists _, _.
-    by rewrite insert_length.
-  }
-
-  iDestruct "HH" as (γt th)
-    "[(HEl & -> & #HRendRes & HE & HListContents & HResumerToken)|
-    [(% & -> & HCanc & #HRend & HNoPerms & HE & HResTok & HListContents)|
-    [(% & [-> HAwak] & HListContents)|
-    (% & -> & HRendAbandoned & HE & HNoPerms & HListContents)]]]".
-  4: { (* Abandoned *)
-    iRight.
-    iExists _.
-    iSplitL.
-    2: by iIntros "!> HΦ !>"; wp_pures.
-    iFrame "HE".
-    iExists _. iRight. iExists γt, th.
-    iAssert (▷ rendezvous_thread_handle γtq γt th d)%I with "[-]" as "#HH".
-    {
-      iDestruct "HListContents" as "(_ & _ & _ & _ & _ & HLc)".
-      iDestruct (big_sepL_lookup with "HLc") as "HCR"; first eassumption.
-      simpl.
-      iDestruct "HCR" as (?) "(_ & $ & _)".
+    destruct immediateCancellation eqn:X.
+    { (* cancellation is immediate. *)
+      iDestruct "HCompletion" as "[HV HR]". wp_pures.
+      iApply ("HΦ" $! 1). iRight. iLeft. by iFrame.
     }
-    iFrame "HH".
-    iRight. iRight. iRight. iSplitL "HRendAbandoned".
-    by iRight; iFrame.
-    iSplitR; first by iPureIntro.
-    iFrame "HNoPerms".
-    by iFrame.
-  }
-  3: { (* Cancelled and we know about it. *)
-    iLeft. iFrame.
-    iIntros "!> AU !>". wp_pures.
-    iApply ("IH" with "HAwak AU").
-  }
-  2: { (* Cancelled, but we don't know about it. *)
-    iRight. iExists _. iFrame "HE". iSplitL.
-    2: by iIntros "!> HΦ !>"; wp_pures.
-    iExists _. iRight. iExists _, _. iFrame "HRend".
-    iRight. iLeft. by iFrame "HCanc".
-  }
-  (* Resumed *)
-  iRight.
-  iDestruct "HEl" as %HEl.
-  iExists _. iFrame "HE". iSplitL.
-  2: by iIntros "!> HΦ !>"; wp_pures.
-  iExists _. iRight. iExists _, _.
-  iAssert (▷ rendezvous_thread_handle γtq γt th d)%I with "[-]" as "#HH".
-  {
-    iDestruct "HListContents" as "(_ & _ & _ & _ & _ & HLc)".
-    iDestruct (big_sepL_lookup with "HLc") as "HCR".
-    {
-      rewrite list_insert_alter. erewrite list_lookup_alter.
-      by rewrite HEl.
+    iDestruct "HCompletion" as "(HV & #HState & HIsRes)".
+    destruct waitForResolution.
+    { by wp_pures; iApply ("IH" with "HV HCB HΦ HIsRes"). }
+    wp_pures. wp_bind (Snd _).
+    iApply (pass_value_to_cancelled_cell_spec with "[HIsRes HV]").
+    { iFrame "HTq HState H↦ HIsRes HDeqFront HV HTh". by iPureIntro. }
+    iIntros "!>" (valuePassingResult) "HValuePassing".
+    destruct valuePassingResult.
+    { (* the value was successfully passed. *)
+      wp_pures. iApply ("HΦ" $! 0). iLeft. by iFrame.
     }
-    simpl.
-    iDestruct "HCR" as (?) "(_ & $ & _)".
-  }
-  iFrame "HH". iClear "HH".
-  iLeft.
-  repeat (iSplitR; first done).
-
-  iDestruct "HRest" as "(>% & HRest)".
-  rewrite /is_thread_queue.
-  rewrite insert_length.
-  iFrame "HRendRes".
-  iFrame.
-  iPureIntro.
-  intros (HLt & γt' & th' & r & HEl'').
-  destruct (decide (d = (deqFront' - 1)%nat)).
-  {
-    subst. erewrite list_insert_alter in HEl''.
-    rewrite list_lookup_alter in HEl''.
-    destruct (_ !! (deqFront' - 1)%nat); simplify_eq.
-  }
-  rewrite list_lookup_insert_ne in HEl''; try done.
-  by eauto 10.
+    iDestruct "HValuePassing" as "[HIsRes HV]".
+    wp_pures. iApply ("IH" with "HV HCB HΦ HIsRes").
 Qed.
 
 Theorem try_enque_thread_spec E R γa γtq γe γd γt (eℓ epℓ dℓ dpℓ: loc) (th: loc):
