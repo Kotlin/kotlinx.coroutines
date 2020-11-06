@@ -12,11 +12,15 @@ To release new `<version>` of `kotlinx-coroutines`:
    `git merge origin/master`   
 
 4. Search & replace `<old-version>` with `<version>` across the project files. Should replace in:
-   * [`README.md`](README.md) (native, core, test, debug, modules)
-   * [`coroutines-guide.md`](docs/coroutines-guide.md)
-   * [`gradle.properties`](gradle.properties)
-   * [`ui/kotlinx-coroutines-android/example-app/gradle.properties`](ui/kotlinx-coroutines-android/example-app/gradle.properties)    
-   * [`ui/kotlinx-coroutines-android/animation-app/gradle.properties`](ui/kotlinx-coroutines-android/animation-app/gradle.properties)    
+   * Docs
+     * [`README.md`](README.md) (native, core, test, debug, modules)
+     * [`kotlinx-coroutines-debug/README.md`](kotlinx-coroutines-debug/README.md)
+     * [`kotlinx-coroutines-test/README.md`](kotlinx-coroutines-test/README.md)
+     * [`coroutines-guide-ui.md`](ui/coroutines-guide-ui.md)
+   * Properties   
+     * [`gradle.properties`](gradle.properties)
+     * [`ui/kotlinx-coroutines-android/example-app/gradle.properties`](ui/kotlinx-coroutines-android/example-app/gradle.properties)    
+     * [`ui/kotlinx-coroutines-android/animation-app/gradle.properties`](ui/kotlinx-coroutines-android/animation-app/gradle.properties)    
    * Make sure to **exclude** `CHANGES.md` from replacements.
    
    As an alternative approach you can use `./bump-version.sh old_version new_version`
@@ -26,7 +30,7 @@ To release new `<version>` of `kotlinx-coroutines`:
    * Write each change on a single line (don't wrap with CR).
    * Study commit message from previous release.
 
-6. Create branch for this release:
+6. Create the branch for this release:
    `git checkout -b version-<version>`
 
 7. Commit updated files to a new version branch:<br>
