@@ -32,14 +32,14 @@ Definition fromSome: val :=
 Definition suspend: val :=
   λ: "enqIterator",
   let: "future" := emptyFuture #() in
-  let: "cellPtr" := iteratorStep array_interface "enqIterator" in
+  let: "cellPtr" := Snd (iteratorStep array_interface "enqIterator") in
   let: "cell" := derefCellPointer array_interface "cellPtr" in
   let: "future'" := SOME ("future", "cellPtr") in
   if: CAS "cell" (InjLV #()) (InjL "future")
   then "future'"
   else let: "value" := !"cell" in
-       if: !("value" = BROKENV) && CAS "cell" "value" TAKENV
-       then tryCompleteFuture "future" (fromSome "value") ;; "future'"
+       if: ("value" ≠ BROKENV) && CAS "cell" "value" TAKENV
+       then tryCompleteFuture "future" (fromSome "value") ;; SOME ("future", #())
        else NONEV.
 
 Definition tryCancelThreadQueueFuture: val :=
@@ -322,8 +322,8 @@ Global Instance rendezvous_thread_locs_state_persistent γtq γt th i:
   Persistent (rendezvous_thread_locs_state γtq γt th i).
 Proof. apply _. Qed.
 
-Definition rendezvous_filled_value (γtq: gname) (v: base_lit) (i: nat): iProp :=
-  rendezvous_state γtq i (Some (Cinl (to_agree #v, ε))).
+Definition rendezvous_filled_value (γtq: gname) (v: val) (i: nat): iProp :=
+  rendezvous_state γtq i (Some (Cinl (to_agree v, ε))).
 
 Definition V' (v: val): iProp := ∃ (x: base_lit), ⌜v = #x⌝ ∧ V x ∗ R.
 
@@ -1320,7 +1320,9 @@ Lemma inhabit_cell_spec γa γtq γe γd γf i ptr f e d:
       then rendezvous_thread_handle γtq γf f i
            ∗ future_cancellation_permit γf (1/2)%Qp
       else filled_rendezvous_state γtq i ε
-           ∗ future_completion_permit γf 1%Qp }}}.
+           ∗ iterator_issued γe i
+           ∗ future_completion_permit γf 1%Qp
+           ∗ future_cancellation_permit γf 1%Qp }}}.
 Proof.
   iIntros (Φ) "(#HF & #H↦ & #(HInv & HInfArr & HE & _) & HFCompl & HFCanc & HEnq)
                HΦ".
@@ -1335,8 +1337,8 @@ Proof.
   destruct c as [[? resolution|? ? ?]|].
   - (* A value was already passed. *)
     iMod (own_update with "H●") as "[H● HCellFilled]".
-    2: iDestruct ("HΦ" $! false with "[HCellFilled HFCompl]") as "HΦ";
-      first by iFrame; iExists _.
+    2: iDestruct ("HΦ" $! false with "[HCellFilled HFCompl HFCanc HEnq]")
+      as "HΦ"; first by iFrame; iExists _.
     { apply auth_update_core_id. by apply _.
       apply prod_included; split=>/=; first by apply ucmra_unit_least.
       apply prod_included; split=>/=; last by apply ucmra_unit_least.
@@ -1415,7 +1417,7 @@ Lemma pass_value_to_empty_cell_spec
   {{{ (r: bool), RET #r;
       if r
       then if synchronously
-           then cell_breaking_token γtq i ∗ rendezvous_filled_value γtq v i
+           then cell_breaking_token γtq i ∗ rendezvous_filled_value γtq #v i
            else E
       else inhabited_rendezvous_state γtq i ε ∗ iterator_issued γd i ∗ V v
   }}}.
@@ -1883,13 +1885,13 @@ Lemma check_passed_value (suspender_side: bool) γtq γa γe γd i (ptr: loc) vf
            match l !! i with
            | Some (Some (cellPassedValue _ d)) =>
              match d with
-               | None => ⌜v = InjRV #vf⌝ ∧
+               | None => ⌜v = InjRV vf⌝ ∧
                         (if suspender_side then iterator_issued γe i
                          else cell_breaking_token γtq i)
                | Some cellBroken => ⌜v = BROKENV ∧ suspender_side⌝ ∗
-                                    iterator_issued γe i
+                                   E ∗ CB
                | Some cellRendezvousSucceeded =>
-                 if suspender_side then ⌜v = InjRV #vf⌝ ∧ iterator_issued γe i
+                 if suspender_side then ⌜v = InjRV vf⌝ ∧ iterator_issued γe i
                  else ⌜v = TAKENV⌝ ∧ E
              end
            | _ => False
@@ -1932,7 +1934,9 @@ Proof.
   - destruct suspender_side.
     + iDestruct "HRR" as "[Hptr HRR]". wp_load.
       iMod ("HClose" with "[-]") as "HΦ"; last by iModIntro.
-      iSplitR "HCellBreaking"; last by iFrame. iFrame "H● HLen HDeqIdx".
+      iDestruct "HRR" as "[$|HC]".
+      2: by iDestruct (iterator_issued_exclusive with "HCellBreaking HC") as %[].
+      iSplitL; last by iFrame. iFrame "H● HLen HDeqIdx".
       iApply "HRRsRestore". iFrame. iExists _. by iFrame.
     + iDestruct "HCellBreaking" as (?) "H◯".
       iDestruct (rendezvous_state_included' with "H● H◯") as %(c & HEl' & HInc).
@@ -1947,7 +1951,7 @@ Qed.
 Lemma break_cell_spec γtq γa γe γd i ptr e d v:
   {{{ is_thread_queue γa γtq γe γd e d ∗
       cell_location γtq γa i ptr ∗
-      rendezvous_filled_value γtq v i ∗
+      rendezvous_filled_value γtq #v i ∗
       cell_breaking_token γtq i ∗ CB }}}
     CAS #ptr (InjRV #v) BROKENV
   {{{ (r: bool), RET #r; if r then V v ∗ R else E }}}.
@@ -2013,8 +2017,8 @@ Lemma take_cell_value_spec γtq γa γe γd i ptr e d v:
       cell_location γtq γa i ptr ∗
       rendezvous_filled_value γtq v i ∗
       iterator_issued γe i }}}
-    CAS #ptr (InjRV #v) TAKENV
-  {{{ (r: bool), RET #r; if r then V v ∗ R else CB ∗ E }}}.
+    CAS #ptr (InjRV v) TAKENV
+  {{{ (r: bool) v', RET #r; ⌜v = #v'⌝ ∧ if r then V v' ∗ R else CB ∗ E }}}.
 Proof.
   iIntros (Φ) "(#HTq & #H↦ & #HFilled & HIsSus) HΦ".
   iDestruct "HTq" as "(HInv & HInfArr & _ & _)". wp_bind (CmpXchg _ _ _).
@@ -2036,7 +2040,7 @@ Proof.
     iSpecialize ("HRRsRestore" $! _); rewrite list_insert_id //.
     iDestruct "HRR" as "[(Hℓ & HCellBreaking & HV & HR)|(_ & HContra & _)]".
     2: by iDestruct (iterator_issued_exclusive with "HIsSus HContra") as ">[]".
-    wp_cmpxchg_suc. iSpecialize ("HΦ" $! true with "[$]").
+    wp_cmpxchg_suc. iSpecialize ("HΦ" $! true with "[HV HR]"). by iFrame.
     iMod ("HTqClose" with "[-HΦ]") as "_"; last by iModIntro; wp_pures.
     iExists _, _. iFrame "H● HDeqIdx". iSplitL; last by iPureIntro.
     iApply "HRRsRestore". iFrame "HIsRes HCancHandle". iSplitR; first done.
@@ -2045,14 +2049,14 @@ Proof.
     iSpecialize ("HRRsRestore" $! _); rewrite list_insert_id //.
     iDestruct "HRR" as "(Hℓ & [[HE HCB]|HContra])".
     2: by iDestruct (iterator_issued_exclusive with "HIsSus HContra") as ">[]".
-    wp_cmpxchg_fail. iSpecialize ("HΦ" $! false with "[$]").
+    wp_cmpxchg_fail. iSpecialize ("HΦ" $! false with "[HE HCB]"). by iFrame.
     iMod ("HTqClose" with "[-HΦ]") as "_"; last by iModIntro; wp_pures.
     iExists _, _. iFrame "H● HDeqIdx". iSplitL; last by iPureIntro.
     iApply "HRRsRestore". iFrame "HIsRes HCancHandle". iSplitR; first done.
     iExists _. iFrame "H↦". iFrame.
   - (* Cell is still intact, so we may take the value from it. *)
     iDestruct "HRR" as "(Hℓ & HE & HV & HR)".
-    wp_cmpxchg_suc. iSpecialize ("HΦ" $! true with "[$]").
+    wp_cmpxchg_suc. iSpecialize ("HΦ" $! true with "[HV HR]"). by iFrame.
     iMod (take_cell_value_ra with "H●") as "[H● #H◯]"; first done.
     iMod ("HTqClose" with "[-HΦ]") as "_"; last by iModIntro; wp_pures.
     iDestruct "HDeqIdx" as %HDeqIdx.
@@ -3218,6 +3222,115 @@ Proof.
     }
     iDestruct "HValuePassing" as "[HIsRes HV]".
     wp_pures. iApply ("IH" with "HV HCB HΦ HIsRes").
+Qed.
+
+Definition is_thread_queue_future γtq γa γf (v: val): iProp :=
+  ∃ f, is_future NFuture V' γf f ∗
+    (⌜v = (f, #())%V⌝ ∧ inv NTq (future_cancellation_permit γf (1/2)%Qp)
+      ∗ ∃ x, future_is_completed γf x) ∨
+    (∃ i s, ⌜v = (f, s)%V⌝ ∧ rendezvous_thread_handle γtq γf f i
+            ∗ is_infinite_array_cell_pointer _ _ array_spec NArr γa s i).
+
+Global Instance is_thread_queue_future_persistent:
+  Persistent (is_thread_queue_future γtq γa γf v).
+Proof. apply _. Qed.
+
+Definition thread_queue_future_cancellation_permit γf :=
+  future_cancellation_permit γf (1/2)%Qp.
+
+Lemma suspend_spec γa γtq γe γd e d:
+  {{{ is_thread_queue γa γtq γe γd e d ∗ suspension_permit γtq }}}
+    suspend array_interface e
+  {{{ v, RET v; ⌜v = NONEV⌝ ∧ E ∗ CB ∨
+                ∃ γf v', ⌜v = SOMEV v'⌝ ∧
+                         is_thread_queue_future γtq γa γf v' ∗
+                         thread_queue_future_cancellation_permit γf }}}.
+Proof.
+  iIntros (Φ) "[#HTq HIsSus] HΦ". wp_lam. wp_bind (emptyFuture _).
+  iApply (emptyFuture_spec with "[% //]").
+  iIntros "!>" (γf f) "(#HIsFuture & HCancPermit & HComplPermit)".
+  wp_pures. wp_bind (iteratorStep _ _). iApply (iteratorStep_spec with "[HIsSus]").
+  2: { by iDestruct "HTq" as "(_ & $ & $ & _)". }
+  by solve_ndisj.
+  iIntros "!>" (n ns s) "HEnqResult". destruct (decide (ns = n)) as [->|HContra].
+  2: { (* someone else cancelled our cell, but it's impossible. *)
+    iDestruct "HEnqResult" as "(% & HIsSus & _ & #HCancelled)".
+    iDestruct ("HCancelled" $! n with "[%]") as "[HNCancelled H↦]"; first lia.
+    iDestruct "H↦" as (ℓ) "H↦". iDestruct "HTq" as "[HInv _]". rewrite -fupd_wp.
+    iInv "HInv" as (? ?) "HOpen" "HClose".
+    iMod (cell_cancelled_means_present with "HNCancelled H↦ HOpen") as "[HOpen >HPure]".
+    by solve_ndisj.
+    iDestruct "HPure" as %(c & HEl & HState).
+    assert (∃ γf' f' d, l !! n = Some (Some (cellInhabited γf' f' d)))
+      as (? & ? & ? & HEl'); simplify_eq.
+    { simpl in *. destruct c. by destruct immediateCancellation.
+      by eauto. }
+    iDestruct "HOpen" as "(_ & HRRs & _)".
+    iDestruct (big_sepL_lookup with "HRRs") as "HRR"; first done.
+    simpl. iDestruct "HRR" as "[>HC _]".
+    by iDestruct (iterator_issued_exclusive with "HIsSus HC") as %[].
+  }
+  wp_pures. iDestruct "HEnqResult" as "(_ & HIsSus & #H↦~ & _)".
+  wp_bind (derefCellPointer _ _). iApply (derefCellPointer_spec with "[]").
+  { iDestruct "HTq" as "(_ & $ & _)". done. }
+  iIntros "!>" (ℓ) "#H↦". wp_pures. wp_bind (Snd _).
+  iApply (inhabit_cell_spec with "[$]"). iIntros "!>" (inhabitResult) "HResult".
+  destruct inhabitResult.
+  { (* the cell was successfully inhabited. *)
+    wp_pures. iApply "HΦ". iRight. iExists _, _. iSplitR; first done.
+    iDestruct "HResult" as "[HTh $]". rewrite /is_thread_queue_future.
+    iExists _. iRight. iExists _, _. iFrame "HTh". by iSplitR.
+  }
+  (* the cell is already filled. *)
+  wp_pures. wp_bind (!_)%E.
+  iDestruct "HResult" as "(#HFilled & HIsSus & HFCompl & HFCanc)".
+  iDestruct "HFilled" as (v) "HFilled".
+  awp_apply (check_passed_value true with "HFilled H↦ HIsSus")
+            without "HΦ HFCompl HFCanc".
+  iDestruct "HTq" as "(HInv & HRest)". iInv "HInv" as (l deqFront) "HOpen".
+  iAaccIntro with "HOpen". by iIntros "HOpen !>"; iSplitL; first iExists _, _.
+  iIntros (?) "[HTq HReadValue]". iSplitL "HTq"; first by iExists _, _.
+  iIntros "!> (HΦ & HFCompl & HFCanc)".
+  destruct (l !! n) as [[[? res|]|]|]; try iDestruct "HReadValue" as %[].
+  assert (res = Some cellBroken ∨ res ≠ Some cellBroken) as [->|HNeq].
+  { destruct res as [[|]|].
+    - by right.
+    - by left.
+    - by right.
+  }
+  * (* the cell is broken. *)
+    iDestruct "HReadValue" as "([-> _] & HE & HCB)".
+    wp_pures. iApply "HΦ". iLeft. by iFrame.
+  * (* rendezvous succeeded, we may safely leave. *)
+    iAssert (⌜x = InjRV v⌝ ∧ iterator_issued γe n)%I with "[HReadValue]" as "[-> HE]".
+    { by destruct res as [[|]|]. }
+    wp_pures. wp_bind (Snd _). iApply (take_cell_value_spec with "[$]").
+    iIntros "!>" (takingResult v') "[-> HTakingResult]".
+    destruct takingResult.
+    2: { wp_pures. iApply "HΦ". iLeft. by iDestruct "HTakingResult" as "[$ $]". }
+    (* successfully took the value. *)
+    wp_pures. wp_lam. wp_pures. iDestruct "HTakingResult" as "[HV HR]".
+    iAssert (▷ V' (#v'))%I with "[HV HR]" as "HV'".
+    { iFrame "HR". iExists _. by iFrame. }
+    awp_apply (tryCompleteFuture_spec _ false with "HIsFuture") without "HΦ".
+    iAssert ((▷ V' #v' ∨ False) ∗ future_completion_permit γf 1)%I with "[HV' HFCompl]"
+      as "HAacc".
+    by iFrame "HFCompl"; iLeft.
+    iAaccIntro with "HAacc". by iIntros "[[$|%] $]".
+    iIntros (completionResult) "HCompletion".
+    destruct completionResult.
+    2: { (* we hold the cancellation permit, so the future is not cancelled. *)
+      iDestruct "HCompletion" as "[HContra _]".
+      iDestruct (future_cancellation_permit_implies_not_cancelled
+                   with "HFCanc HContra") as %[].
+    }
+    iEval (rewrite -Qp_half_half future_cancellation_permit_Fractional) in "HFCanc".
+    iDestruct "HFCanc" as "[HFCanc HFCancInv]".
+    iMod (inv_alloc NTq _ (future_cancellation_permit γf (1 / 2)) with "[HFCancInv]")
+      as "HFCancInv"; first done.
+    iIntros "!> HΦ". wp_pures. iApply "HΦ". iRight. iExists _, _. iSplitR; first done.
+    iFrame "HFCanc". iExists _. iLeft. iFrame "HIsFuture". iSplitR; first done.
+    iFrame "HFCancInv". by iExists _.
 Qed.
 
 Theorem try_enque_thread_spec E R γa γtq γe γd γt (eℓ epℓ dℓ dpℓ: loc) (th: loc):
