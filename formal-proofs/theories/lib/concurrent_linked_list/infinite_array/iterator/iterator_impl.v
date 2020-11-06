@@ -24,6 +24,9 @@ Definition iteratorStepOrIncreaseCounter: val :=
         then increaseValueTo "counter" (cellPointerId array_interface (Snd "s"))
         else #()) ;; NONE.
 
+Definition newIterator: val :=
+  λ: "ptr" "n", (ref "n", "ptr").
+
 End impl.
 
 From iris.program_logic Require Import atomic.
@@ -184,6 +187,23 @@ Proof.
   iIntros "H". iApply (own_mono with "H"). apply auth_included; split=>//=.
   apply prod_included; split; first by apply ucmra_unit_least.
   apply max_nat_included. simpl. done.
+Qed.
+
+Theorem newIterator_spec co γa P p n:
+  {{{ is_infinite_array_cutoff _ _ aspc NArray γa p n ∗
+      [∗] replicate n P }}}
+    newIterator p #n
+  {{{ γ v, RET v; is_iterator co γa P γ v }}}.
+Proof.
+  iIntros (Φ) "[HCutoff HPs] HΦ". wp_lam. wp_pures. rewrite -wp_fupd.
+  wp_alloc ℓ as "Hℓ". wp_pures.
+  iMod (own_alloc (iterator_auth_ra n)) as (γ) "H●".
+  { rewrite /iterator_auth_ra. apply auth_auth_valid. done. }
+  iMod (inv_alloc N _ (∃ n, iterator_contents co γa P γ ℓ p n)
+       with "[HPs Hℓ H● HCutoff]") as "#HInv".
+  { iExists n. iFrame "H● Hℓ HPs". iExists n. iFrame "HCutoff".
+    iIntros (id HL). lia. }
+  iApply "HΦ". iExists _, _. by iFrame "HInv".
 Qed.
 
 Theorem iteratorStep_spec co γa P γ (v: val):

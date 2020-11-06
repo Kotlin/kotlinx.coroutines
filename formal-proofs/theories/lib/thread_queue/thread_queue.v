@@ -109,11 +109,8 @@ Definition resume: val :=
 
 Definition newThreadQueue: val :=
   λ: <>, let: "arr" := newInfiniteArray array_interface #2 in
-         let: "hd" := ref "arr" in
-         let: "tl" := ref "arr" in
-         let: "enqIdx" := ref #0 in
-         let: "deqIdx" := ref #0 in
-         (("enqIdx", "hd"), ("deqIdx", "tl")).
+        (newIterator ("arr" +ₗ #0) #0,
+         newIterator ("arr" +ₗ #1) #0).
 
 End impl.
 
@@ -196,11 +193,9 @@ Notation queueContentsUR :=
   (prodUR (listUR (optionUR cellStateR))
           (optionUR (exclR natO))).
 
-Notation namesR := (agreeR (prodO (prodO gnameO gnameO) gnameO)).
 Notation enqueueUR := natUR.
 Notation dequeueUR := (prodUR natUR max_natUR).
-Notation algebra := (authUR (prodUR (prodUR (prodUR enqueueUR dequeueUR)
-                                            (optionUR namesR))
+Notation algebra := (authUR (prodUR (prodUR enqueueUR dequeueUR)
                                     queueContentsUR)).
 
 Class threadQueueG Σ := ThreadQueueG { thread_queue_inG :> inG Σ algebra }.
@@ -313,7 +308,7 @@ Definition thread_queue_state γ (n: nat) :=
   own γ (◯ (ε, (ε, Excl' n))).
 
 Definition deq_front_at_least γtq (n: nat) :=
-  own γtq (◯ (ε, (ε, MaxNat n), ε, ε)).
+  own γtq (◯ (ε, (ε, MaxNat n), ε)).
 
 Definition rendezvous_thread_locs_state (γtq γf: gname) (f: val) (i: nat): iProp :=
   rendezvous_state γtq i (Some (Cinr (to_agree (γf, f), None))).
@@ -337,9 +332,9 @@ Proof. apply _. Qed.
 Definition rendezvous_initialized γtq i: iProp :=
   inhabited_rendezvous_state γtq i ε ∨ filled_rendezvous_state γtq i ε.
 
-Definition suspension_permit γ := own γ (◯ (1%nat, ε, ε, ε)).
+Definition suspension_permit γ := own γ (◯ (1%nat, ε, ε)).
 
-Definition awakening_permit γ := own γ (◯ (ε, (1%nat, ε), ε, ε)).
+Definition awakening_permit γ := own γ (◯ (ε, (1%nat, ε), ε)).
 
 Variable array_interface: infiniteArrayInterface.
 Variable array_spec: infiniteArraySpec _ array_interface.
@@ -459,14 +454,13 @@ Definition is_immediately_cancelled (r: option cellState): bool :=
   | _ => false
   end.
 
-Definition cell_list_contents_auth_ra
-           (γa γe γd: gname) l (deqFront: nat): algebra :=
-  ● (length l, (deqFront, MaxNat deqFront), Some (to_agree (γa, γe, γd)),
+Definition cell_list_contents_auth_ra l (deqFront: nat): algebra :=
+  ● (length l, (deqFront, MaxNat deqFront),
      (map (option_map cellState_ra) l,
       Excl' (count_matching is_nonskippable (drop deqFront l)))).
 
-Lemma rendezvous_state_included γ γa γe γd l deqFront i s:
-  own γ (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+Lemma rendezvous_state_included γ l deqFront i s:
+  own γ (cell_list_contents_auth_ra l deqFront) -∗
   rendezvous_state γ i s -∗
   ⌜∃ c, l !! i = Some c ∧ s ≼ option_map cellState_ra c⌝.
 Proof.
@@ -480,8 +474,8 @@ Proof.
   eexists. by split.
 Qed.
 
-Lemma rendezvous_state_included' γ γa γe γd l deqFront i s:
-  own γ (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+Lemma rendezvous_state_included' γ l deqFront i s:
+  own γ (cell_list_contents_auth_ra l deqFront) -∗
   rendezvous_state γ i (Some s) -∗
   ⌜∃ c, l !! i = Some (Some c) ∧ s ≼ cellState_ra c⌝.
 Proof.
@@ -497,8 +491,8 @@ Proof.
   + by apply Cinr_included.
 Qed.
 
-Lemma thread_queue_state_valid γtq γa γe γd n l deqFront:
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+Lemma thread_queue_state_valid γtq n l deqFront:
+  own γtq (cell_list_contents_auth_ra l deqFront) -∗
   thread_queue_state γtq n -∗
   ⌜n = count_matching is_nonskippable (drop deqFront l)⌝.
 Proof.
@@ -509,8 +503,8 @@ Proof.
   by simplify_eq.
 Qed.
 
-Theorem cell_list_contents_ra_locs γ γa γe γd l deqFront i γt th:
-  own γ (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+Theorem cell_list_contents_ra_locs γ l deqFront i γt th:
+  own γ (cell_list_contents_auth_ra l deqFront) -∗
   rendezvous_thread_locs_state γ γt th i -∗
   ⌜exists c, l !! i = Some (Some (cellInhabited γt th c))⌝.
 Proof.
@@ -529,8 +523,8 @@ Qed.
 Definition cell_enqueued γtq (i: nat): iProp :=
   rendezvous_state γtq i ε.
 
-Theorem cell_enqueued_lookup γtq γa γe γd l i d:
-  own γtq (cell_list_contents_auth_ra γa γe γd l d) -∗
+Theorem cell_enqueued_lookup γtq l i d:
+  own γtq (cell_list_contents_auth_ra l d) -∗
   cell_enqueued γtq i -∗
   ⌜exists v, l !! i = Some v⌝.
 Proof.
@@ -540,7 +534,7 @@ Proof.
 Qed.
 
 Definition thread_queue_invariant γa γtq γe γd l deqFront: iProp :=
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ∗
       ([∗ list] i ↦ e ∈ l, cell_resources γtq γa γe γd i e
                                           (bool_decide (i < deqFront))) ∗
       ⌜deqFront ≤ length l⌝ ∧
@@ -553,6 +547,38 @@ Definition is_thread_queue γa γtq γe γd e d :=
    is_infinite_array _ _ array_spec NArr γa co ∗
    is_iterator _ array_spec NArr NEnq co γa (suspension_permit γtq) γe e ∗
    is_iterator _ array_spec NArr NDeq co γa (awakening_permit γtq) γd d)%I.
+
+Theorem newThreadQueue_spec:
+  {{{ inv_heap_inv }}}
+    newThreadQueue array_interface #()
+  {{{ γa γtq γe γd e d, RET (e, d); is_thread_queue γa γtq γe γd e d }}}.
+Proof.
+  iIntros (Φ) "HHeap HΦ". wp_lam. wp_bind (newInfiniteArray _ _).
+  rewrite -fupd_wp.
+  iMod (own_alloc (cell_list_contents_auth_ra [] 0))
+       as (γtq) "H●".
+  { apply auth_auth_valid, pair_valid. split; first done.
+    apply pair_valid. split; last done. apply list_lookup_valid.
+    by case. }
+  replace 2%Z with (Z.of_nat 2); last lia.
+  iApply (newInfiniteArray_spec with "[HHeap]").
+  { iSplitR. by iPureIntro; lia. done. }
+  iIntros "!> !>" (γa aℓ) "[HArr (HE & HD & _)]". wp_pures.
+  wp_bind (newIterator _ _).
+  replace 0%Z with (Z.of_nat 0); last lia.
+  iApply (newIterator_spec with "[HD]"); first by simpl; iFrame.
+  iIntros "!>" (γd d) "HDeq".
+  wp_bind (newIterator _ _). wp_pures. rewrite -wp_fupd.
+  iApply (newIterator_spec with "[HE]"); first by simpl; iFrame.
+  iIntros "!>" (γe e) "HEnq".
+  iMod (inv_alloc NTq _
+        (∃ l deqFront, thread_queue_invariant γa γtq γe γd l deqFront)
+       with "[H●]") as "#HInv".
+  { iExists [], 0. iFrame. simpl. iPureIntro. repeat (split; first done).
+    case. lia. }
+  iSpecialize ("HΦ" $! γa γtq γe γd e d).
+  iModIntro. wp_pures. iApply "HΦ". by iFrame.
+Qed.
 
 Theorem thread_queue_append γtq γa γe γd n l deqFront:
   E -∗ thread_queue_state γtq n -∗
@@ -577,7 +603,7 @@ Proof.
   {
     apply auth_update, prod_local_update'; last apply prod_local_update'=> /=.
     * rewrite app_length=>/=.
-      apply prod_local_update_1, prod_local_update_1=>/=.
+      apply prod_local_update_1=>/=.
       by apply nat_local_update.
     * rewrite map_app=> /=.
       replace (length l) with (length (map (option_map cellState_ra) l))
@@ -597,14 +623,13 @@ Global Instance deq_front_at_least_persistent γtq n:
   Persistent (deq_front_at_least γtq n).
 Proof. apply _. Qed.
 
-Theorem deq_front_at_least_valid γtq γa γe γd n l deqFront :
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+Theorem deq_front_at_least_valid γtq n l deqFront :
+  own γtq (cell_list_contents_auth_ra l deqFront) -∗
   deq_front_at_least γtq n -∗
   ⌜n <= deqFront⌝.
 Proof.
   iIntros "H● H◯".
   iDestruct (own_valid_2 with "H● H◯") as %[HValid _]%auth_both_valid.
-  apply prod_included in HValid. destruct HValid as [HValid _].
   apply prod_included in HValid. destruct HValid as [HValid _].
   apply prod_included in HValid. destruct HValid as [_ HValid].
   apply prod_included in HValid. destruct HValid as [_ HValid].
@@ -612,10 +637,10 @@ Proof.
   iPureIntro; simpl in *; lia.
 Qed.
 
-Theorem cell_list_contents__deq_front_at_least i γtq γa γe γd l deqFront:
+Theorem cell_list_contents__deq_front_at_least i γtq l deqFront:
   (i <= deqFront)%nat ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ==∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ∗
   deq_front_at_least γtq i.
 Proof.
   iIntros (HLe) "H●".
@@ -642,14 +667,14 @@ Lemma None_op_right_id (A: cmraT) (a: option A): a ⋅ None = a.
 Proof. by destruct a. Qed.
 
 Lemma cell_list_contents_cell_update_alloc s
-      γtq γa γe γd l deqFront i initialState newState:
+      γtq l deqFront i initialState newState:
   l !! i = Some initialState ->
   is_nonskippable initialState = is_nonskippable newState ->
   (Some (option_map cellState_ra initialState), None) ~l~>
   (Some (option_map cellState_ra newState),
    Some s) ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
-  own γtq (cell_list_contents_auth_ra γa γe γd (<[i := newState]> l) deqFront) ∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ==∗
+  own γtq (cell_list_contents_auth_ra (<[i := newState]> l) deqFront) ∗
   rendezvous_state γtq i s.
 Proof.
   iIntros (HEl HNonSkippable HUp) "H●".
@@ -677,11 +702,11 @@ Proof.
     rewrite map_lookup HEl /= HNonSkippable //.
 Qed.
 
-Lemma inhabit_cell_ra γtq γa γe γd l deqFront i γf f:
+Lemma inhabit_cell_ra γtq l deqFront i γf f:
   l !! i = Some None ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ==∗
   own γtq (cell_list_contents_auth_ra
-             γa γe γd (<[i := Some (cellInhabited γf f None)]> l) deqFront) ∗
+             (<[i := Some (cellInhabited γf f None)]> l) deqFront) ∗
   rendezvous_thread_locs_state γtq γf f i.
 Proof.
   iIntros (HEl) "H●".
@@ -699,11 +724,11 @@ Proof.
   rewrite ucmra_unit_left_id -pair_op list_singletonM_op //.
 Qed.
 
-Lemma fill_cell_ra γtq γa γe γd l deqFront i v:
+Lemma fill_cell_ra γtq l deqFront i v:
   l !! i = Some None ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ==∗
   own γtq (cell_list_contents_auth_ra
-             γa γe γd (<[i := Some (cellPassedValue v None)]> l) deqFront) ∗
+             (<[i := Some (cellPassedValue v None)]> l) deqFront) ∗
   rendezvous_state γtq i (Some (Cinl (to_agree #v, ε))) ∗
   cell_breaking_token γtq i.
 Proof.
@@ -711,6 +736,7 @@ Proof.
   iMod (cell_list_contents_cell_update_alloc with "H●") as "($ & H◯)"=>//=.
   { apply option_local_update'''. by rewrite None_op_right_id.
     intros n. by rewrite None_op_right_id. }
+
   iAssert (rendezvous_state γtq i (Some (Cinl (to_agree #v, ε))))
     with "[H◯]" as "#$".
   { iApply (own_mono with "H◯"). rewrite auth_included; split=> //=.
@@ -722,11 +748,11 @@ Proof.
   by iExists _.
 Qed.
 
-Lemma take_cell_value_ra γtq γa γe γd l deqFront i v:
+Lemma take_cell_value_ra γtq l deqFront i v:
   l !! i = Some (Some (cellPassedValue v None)) ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ==∗
   own γtq (cell_list_contents_auth_ra
-             γa γe γd (<[i := Some (cellPassedValue v (Some cellRendezvousSucceeded))]> l) deqFront) ∗
+             (<[i := Some (cellPassedValue v (Some cellRendezvousSucceeded))]> l) deqFront) ∗
   rendezvous_state γtq i (Some (Cinl (to_agree #v, (None, Some (to_agree true))))).
 Proof.
   iIntros (HEl) "H●".
@@ -736,15 +762,15 @@ Proof.
 Qed.
 
 Lemma cell_list_contents_cell_update newState initialState s s'
-      γtq γa γe γd l deqFront i:
+      γtq l deqFront i:
   l !! i = Some initialState ->
   is_nonskippable initialState = is_nonskippable newState ∨
   i < deqFront ->
   (option_map cellState_ra initialState, s) ~l~>
   (option_map cellState_ra newState, s') ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+  own γtq (cell_list_contents_auth_ra l deqFront) -∗
   rendezvous_state γtq i s ==∗
-  own γtq (cell_list_contents_auth_ra γa γe γd (<[i := newState]> l) deqFront) ∗
+  own γtq (cell_list_contents_auth_ra (<[i := newState]> l) deqFront) ∗
   rendezvous_state γtq i s'.
 Proof.
   iIntros (HEl HNonSkippable HUp) "H● H◯".
@@ -771,12 +797,12 @@ Proof.
     * by rewrite drop_insert_gt; last lia.
 Qed.
 
-Lemma abandon_cell_ra γtq γa γe γd l deqFront i γf f:
+Lemma abandon_cell_ra γtq l deqFront i γf f:
   l !! i = Some (Some (cellInhabited γf f (Some (cellCancelled None)))) ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+  own γtq (cell_list_contents_auth_ra l deqFront) -∗
   cancellation_registration_token γtq i ==∗
   own γtq (cell_list_contents_auth_ra
-             γa γe γd (<[i := Some (cellInhabited γf f (Some (cellCancelled (Some cancellationPrevented))))]> l) deqFront) ∗
+             (<[i := Some (cellInhabited γf f (Some (cellCancelled (Some cancellationPrevented))))]> l) deqFront) ∗
   rendezvous_state γtq i (Some (Cinr (to_agree (γf, f), Some (Cinr (Cinr (1, ε)))))) ∗
   rendezvous_state γtq i (Some (Cinr (to_agree (γf, f), Some (Cinr (Cinr (ε, Some (Cinl (to_agree ())))))))).
 Proof.
@@ -795,11 +821,11 @@ Proof.
     by apply alloc_option_local_update.
 Qed.
 
-Lemma finish_cancellation_ra γtq γa γe γd γf f l deqFront i:
+Lemma finish_cancellation_ra γtq γf f l deqFront i:
   l !! i = Some (Some (cellInhabited γf f (Some (cellCancelled (Some (cancellationAllowed None)))))) ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ==∗
   own γtq (cell_list_contents_auth_ra
-             γa γe γd (<[i := Some (cellInhabited γf f (Some (cellCancelled (Some (cancellationAllowed (Some cellClosed))))))]> l) deqFront) ∗
+             (<[i := Some (cellInhabited γf f (Some (cellCancelled (Some (cancellationAllowed (Some cellClosed))))))]> l) deqFront) ∗
   rendezvous_state γtq i (Some (Cinr (to_agree (γf, f), Some (Cinr (Cinr (ε, Some (Cinr (Some (Cinr (to_agree ())))))))))).
 Proof.
   iIntros (HEl) "H●".
@@ -810,12 +836,12 @@ Proof.
   by rewrite -pair_op -Some_op -Cinr_op None_op_right_id.
 Qed.
 
-Lemma break_cell_ra γtq γa γe γd l deqFront i v:
+Lemma break_cell_ra γtq l deqFront i v:
   l !! i = Some (Some (cellPassedValue v None)) ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+  own γtq (cell_list_contents_auth_ra l deqFront) -∗
   cell_breaking_token γtq i ==∗
   own γtq (cell_list_contents_auth_ra
-             γa γe γd (<[i := Some (cellPassedValue v (Some cellBroken))]> l) deqFront) ∗
+             (<[i := Some (cellPassedValue v (Some cellBroken))]> l) deqFront) ∗
   rendezvous_state γtq i (Some (Cinl (to_agree #v, (None, Some (to_agree false))))).
 Proof.
   iIntros (HEl) "H● H◯". iDestruct "H◯" as (?) "H◯".
@@ -829,11 +855,11 @@ Proof.
   * apply alloc_option_local_update. done.
 Qed.
 
-Lemma cancel_cell_ra γtq γa γe γd γf f l deqFront i:
+Lemma cancel_cell_ra γtq γf f l deqFront i:
   l !! i = Some (Some (cellInhabited γf f None)) ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ==∗
   own γtq (cell_list_contents_auth_ra
-             γa γe γd (<[i := Some (cellInhabited γf f (Some (cellCancelled None)))]> l) deqFront) ∗
+             (<[i := Some (cellInhabited γf f (Some (cellCancelled None)))]> l) deqFront) ∗
   rendezvous_state γtq i (Some (Cinr (to_agree (γf, f), Some (Cinr (Cinr (2, ε)))))).
 Proof.
   iIntros (HEl) "H●".
@@ -842,11 +868,11 @@ Proof.
     by rewrite -Some_op -Cinr_op -!pair_op None_op_right_id !agree_idemp.
 Qed.
 
-Lemma immediately_cancel_cell_ra γtq γa γe γd γf f l deqFront i:
+Lemma immediately_cancel_cell_ra γtq γf f l deqFront i:
   l !! i = Some (Some (cellInhabited γf f None)) ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ==∗
   own γtq (cell_list_contents_auth_ra
-             γa γe γd (<[i := Some (cellInhabited γf f (Some cellImmediatelyCancelled))]> l) deqFront) ∗
+             (<[i := Some (cellInhabited γf f (Some cellImmediatelyCancelled))]> l) deqFront) ∗
   rendezvous_state γtq i (Some (Cinr (to_agree (γf, f), Some (Cinr (Cinl (to_agree ())))))).
 Proof.
   iIntros (HEl) "H●".
@@ -855,10 +881,10 @@ Proof.
     by rewrite -Some_op -Cinr_op -!pair_op None_op_right_id !agree_idemp.
 Qed.
 
-Lemma resumed_cell_core_id_ra γtq γa γe γd γf f l deqFront i v:
+Lemma resumed_cell_core_id_ra γtq γf f l deqFront i v:
   l !! i = Some (Some (cellInhabited γf f (Some (cellResumed v)))) ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ==∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ∗
   rendezvous_state γtq i (Some (Cinr (to_agree (γf, f),
                                       Some (Cinl (to_agree #v))))).
 Proof.
@@ -869,10 +895,10 @@ Proof.
     by rewrite -Some_op -Cinr_op -!pair_op -Some_op -Cinl_op !agree_idemp.
 Qed.
 
-Lemma cancelled_cell_core_id_ra γtq γa γe γd γf f l deqFront i r:
+Lemma cancelled_cell_core_id_ra γtq γf f l deqFront i r:
   l !! i = Some (Some (cellInhabited γf f (Some (cellCancelled r)))) ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ==∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ∗
   rendezvous_state γtq i (Some (Cinr (to_agree (γf, f),
                                       Some (Cinr (Cinr ε))))).
 Proof.
@@ -884,11 +910,11 @@ Proof.
             ucmra_unit_left_id.
 Qed.
 
-Lemma resume_cell_ra γtq γa γe γd γf f l deqFront i v:
+Lemma resume_cell_ra γtq γf f l deqFront i v:
   l !! i = Some (Some (cellInhabited γf f None)) ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ==∗
   own γtq (cell_list_contents_auth_ra
-             γa γe γd (<[i := Some (cellInhabited γf f (Some (cellResumed v)))]> l) deqFront) ∗
+             (<[i := Some (cellInhabited γf f (Some (cellResumed v)))]> l) deqFront) ∗
   rendezvous_state γtq i (Some (Cinr (to_agree (γf, f), Some (Cinl (to_agree #v))))).
 Proof.
   iIntros (HEl) "H●".
@@ -899,7 +925,7 @@ Qed.
 
 Lemma awakening_permit_combine γtq n:
   n > 0 ->
-  ([∗] replicate n (awakening_permit γtq))%I ≡ own γtq (◯ (ε, (n, ε), ε, ε)).
+  ([∗] replicate n (awakening_permit γtq))%I ≡ own γtq (◯ (ε, (n, ε), ε)).
 Proof.
   move=> Hn.
   rewrite big_opL_replicate_irrelevant_element -big_opL_own;
@@ -912,7 +938,7 @@ Qed.
 
 Lemma suspension_permit_combine γtq n:
   n > 0 ->
-  ([∗] replicate n (suspension_permit γtq))%I ≡ own γtq (◯ (n, ε, ε, ε)).
+  ([∗] replicate n (suspension_permit γtq))%I ≡ own γtq (◯ (n, ε, ε)).
 Proof.
   move=> Hn.
   rewrite big_opL_replicate_irrelevant_element -big_opL_own;
@@ -923,11 +949,11 @@ Proof.
   done.
 Qed.
 
-Lemma deque_register_ra_update γ γa γe γd l deqFront i n:
+Lemma deque_register_ra_update γ l deqFront i n:
   (i + deqFront < length l)%nat ->
-  own γ (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+  own γ (cell_list_contents_auth_ra l deqFront) -∗
   thread_queue_state γ n ==∗
-  own γ (cell_list_contents_auth_ra γa γe γd l (deqFront + S i))
+  own γ (cell_list_contents_auth_ra l (deqFront + S i))
   ∗ [∗] replicate (S i) (awakening_permit γ)
   ∗ thread_queue_state γ
       (n - count_matching is_nonskippable (take (S i) (drop deqFront l)))
@@ -937,7 +963,7 @@ Proof.
   iIntros (?) "H● H◯".
   iMod (own_update_2 with "H● H◯") as "($ & $ & $ & $)"; last done.
   apply auth_update, prod_local_update=>/=.
-  apply prod_local_update_1, prod_local_update_2, prod_local_update=>/=.
+  apply prod_local_update_2, prod_local_update=>/=.
   - rewrite ucmra_unit_right_id. by apply nat_local_update.
   - apply max_nat_local_update; simpl; lia.
   - apply prod_local_update_2. rewrite ucmra_unit_right_id=>/=.
@@ -951,15 +977,15 @@ Proof.
 Qed.
 
 Lemma allow_cell_cancellation_inside_deqFront_ra
-      γ γa γe γd l deqFront i j n γf f:
+      γ l deqFront i j n γf f:
   let l' := <[j := Some (cellInhabited γf f (Some (cellCancelled (Some (cancellationAllowed None)))))]> l in
   find_index is_nonskippable (drop deqFront l') = Some i ->
   j < deqFront ->
   l !! j = Some (Some (cellInhabited γf f (Some (cellCancelled None)))) ->
-  own γ (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+  own γ (cell_list_contents_auth_ra l deqFront) -∗
   thread_queue_state γ n -∗
   cancellation_registration_token γ j ==∗
-  own γ (cell_list_contents_auth_ra γa γe γd l' (deqFront + S i))
+  own γ (cell_list_contents_auth_ra l' (deqFront + S i))
   ∗ [∗] replicate (S i) (awakening_permit γ)
   ∗ thread_queue_state γ (n - 1)
   ∗ deq_front_at_least γ (deqFront + S i)
@@ -991,14 +1017,14 @@ Proof.
 Qed.
 
 Lemma allow_cell_cancellation_outside_deqFront_ra
-      γ γa γe γd l deqFront j n γf f:
+      γ l deqFront j n γf f:
   let l' := <[j := Some (cellInhabited γf f (Some (cellCancelled (Some (cancellationAllowed None)))))]> l in
   deqFront ≤ j ->
   l !! j = Some (Some (cellInhabited γf f (Some (cellCancelled None)))) ->
-  own γ (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+  own γ (cell_list_contents_auth_ra l deqFront) -∗
   thread_queue_state γ n -∗
   cancellation_registration_token γ j ==∗
-  own γ (cell_list_contents_auth_ra γa γe γd l' deqFront)
+  own γ (cell_list_contents_auth_ra l' deqFront)
   ∗ thread_queue_state γ (n - 1)
   ∗ rendezvous_state γ j (Some (Cinr (to_agree (γf, f), Some (Cinr (Cinr (1, ε))))))
   ∗ rendezvous_state γ j (Some (Cinr (to_agree (γf, f), Some (Cinr (Cinr (ε, Some (Cinr ε))))))).
@@ -1038,11 +1064,11 @@ Proof.
     by apply alloc_option_local_update.
 Qed.
 
-Lemma put_value_in_cancelled_cell_ra v γtq γa γe γd γf f l deqFront i:
+Lemma put_value_in_cancelled_cell_ra v γtq γf f l deqFront i:
   l !! i = Some (Some (cellInhabited γf f (Some (cellCancelled (Some (cancellationAllowed None)))))) ->
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ==∗
   own γtq (cell_list_contents_auth_ra
-             γa γe γd (<[i := Some (cellInhabited γf f (Some (cellCancelled (Some (cancellationAllowed (Some (cellTookValue v)))))))]> l) deqFront) ∗
+             (<[i := Some (cellInhabited γf f (Some (cellCancelled (Some (cancellationAllowed (Some (cellTookValue v)))))))]> l) deqFront) ∗
   rendezvous_state γtq i (Some (Cinr (to_agree (γf, f), Some (Cinr (Cinr (ε, Some (Cinr (Some (Cinl (to_agree #v)))))))))).
 Proof.
   iIntros (HEl) "H●".
@@ -1189,8 +1215,8 @@ Proof.
   iPureIntro. by apply advance_deqFront_pure.
 Qed.
 
-Lemma awakening_permit_implies_bound γtq γa γe γd l deqFront n:
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+Lemma awakening_permit_implies_bound γtq l deqFront n:
+  own γtq (cell_list_contents_auth_ra l deqFront) -∗
   ([∗] replicate n (awakening_permit γtq)) -∗
   ⌜n <= deqFront⌝.
 Proof.
@@ -1198,13 +1224,13 @@ Proof.
   destruct n; first by iPureIntro; lia.
   rewrite awakening_permit_combine; last lia.
   iDestruct (own_valid_2 with "H● HAwaks")
-    as %[[[[_ [HValid%nat_included _]%prod_included]%prod_included
-             _]%prod_included _]%prod_included _]%auth_both_valid.
+    as %[[[_ [HValid%nat_included _]%prod_included]%prod_included
+             ]%prod_included _]%auth_both_valid.
   simpl in *. iPureIntro; lia.
 Qed.
 
-Lemma suspension_permit_implies_bound γtq γa γe γd l deqFront n:
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+Lemma suspension_permit_implies_bound γtq l deqFront n:
+  own γtq (cell_list_contents_auth_ra l deqFront) -∗
   ([∗] replicate n (suspension_permit γtq)) -∗
   ⌜n <= length l⌝.
 Proof.
@@ -1212,8 +1238,8 @@ Proof.
   destruct n; first by iPureIntro; lia.
   rewrite suspension_permit_combine; last lia.
   iDestruct (own_valid_2 with "H● HSuspends")
-    as %[[[[HValid%nat_included _]%prod_included
-             _]%prod_included _]%prod_included _]%auth_both_valid.
+    as %[[[HValid%nat_included _]%prod_included
+             _]%prod_included _]%auth_both_valid.
   simpl in *. iPureIntro; lia.
 Qed.
 
@@ -1562,14 +1588,13 @@ Proof.
       iLeft. iFrame.
 Qed.
 
-Lemma deq_front_at_least_from_auth_ra γtq γa γe γd l deqFront:
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ==∗
-  own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) ∗
+Lemma deq_front_at_least_from_auth_ra γtq l deqFront:
+  own γtq (cell_list_contents_auth_ra l deqFront) ==∗
+  own γtq (cell_list_contents_auth_ra l deqFront) ∗
   deq_front_at_least γtq deqFront.
 Proof.
   iIntros "H●". iMod (own_update with "H●") as "[$ $]"; last done.
   apply auth_update_core_id. by apply _.
-  apply prod_included=> /=. split; last by apply ucmra_unit_least.
   apply prod_included=> /=. split; last by apply ucmra_unit_least.
   apply prod_included=> /=. split; first by apply ucmra_unit_least.
   apply prod_included=> /=. split; first by apply ucmra_unit_least.
@@ -2752,7 +2777,7 @@ Proof.
   simplify_eq. simpl in *. move: HInc'. rewrite Cinr_included pair_included.
   rewrite to_agree_included. case. case=> /= HH1 HH2 _. simplify_eq.
   iDestruct "HRR" as (ℓ) "(H↦' & HFutureCancelled & HNotImmediate & HRR)".
-  iAssert (own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+  iAssert (own γtq (cell_list_contents_auth_ra l deqFront) -∗
            cell_cancelling_token γtq i -∗
            cell_cancelling_token γtq i -∗ False)%I with "[]" as "HNotFinished".
   {
@@ -2907,7 +2932,7 @@ Proof.
   simplify_eq. simpl in *. move: HInc'. rewrite Cinr_included pair_included.
   rewrite to_agree_included. case. case=> /= HH1 HH2 _. simplify_eq.
   iDestruct "HRR" as (ℓ) "(H↦' & HFutureCancelled & HNotImmediate & HRR)".
-  iAssert (own γtq (cell_list_contents_auth_ra γa γe γd l deqFront) -∗
+  iAssert (own γtq (cell_list_contents_auth_ra l deqFront) -∗
            cell_cancelling_token γtq i -∗
            cell_cancelling_token γtq i -∗ False)%I with "[]" as "HNotFinished".
   {
@@ -3113,7 +3138,6 @@ Proof.
   wp_lam. wp_pures. wp_bind (iteratorStepOrIncreaseCounter _ _ _).
   iApply (iteratorStepOrIncreaseCounter_spec _ _ NArr NDeq with "[HAwak]").
   by solve_ndisj.
-  by repeat econstructor.
   { iDestruct "HTq" as "(HInv & $ & HEnq & $)". iFrame.
     destruct immediateCancellation eqn:X; first done.
     iApply (dequeue_iterator_update with "[$]"). iPureIntro=> HContra.
@@ -3331,351 +3355,6 @@ Proof.
     iIntros "!> HΦ". wp_pures. iApply "HΦ". iRight. iExists _, _. iSplitR; first done.
     iFrame "HFCanc". iExists _. iLeft. iFrame "HIsFuture". iSplitR; first done.
     iFrame "HFCancInv". by iExists _.
-Qed.
-
-Theorem try_enque_thread_spec E R γa γtq γe γd γt (eℓ epℓ dℓ dpℓ: loc) (th: loc):
-  is_thread_handle Nth γt #th -∗
-  suspension_permit γtq -∗
-  thread_doesnt_have_permits γt -∗
-  <<< ∀ l deqFront, ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront >>>
-  ((try_enque_thread segment_size) #th #epℓ) #eℓ @ ⊤ ∖ ↑N
-  <<< ∃ (v: val),
-      (∃ i (s: loc), ⌜v = SOMEV (#s, #(i `mod` Pos.to_nat segment_size)%nat)⌝ ∧
-       ⌜l !! i = Some None⌝ ∧
-       segment_location γa (i `div` Pos.to_nat segment_size)%nat s ∗
-       rendezvous_thread_handle γtq γt th i ∗
-       ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ
-         (alter (fun _ => Some (cellInhabited γt th None)) i l) deqFront ∗
-         inhabitant_token γtq i) ∨
-      (⌜v = NONEV⌝ ∧
-       ▷ is_thread_queue E R γa γtq γe γd eℓ epℓ dℓ dpℓ l deqFront ∗
-         thread_doesnt_have_permits γt ∗ ▷ R),
-    RET v >>>.
-Proof.
-  iIntros "#HThLoc HSusp HNoPerms" (Φ) "AU". wp_lam. wp_pures.
-  wp_lam. wp_pures.
-
-  wp_bind (!_)%E.
-  iMod "AU" as (? ?) "[(HInfArr & HListContents & >% & HRest) [HClose _]]".
-  iDestruct "HRest" as (? ?) "(>[HEnqCtr HEnqPtr] & >HDeqIt & HRest)".
-  iDestruct "HEnqPtr" as (? ? ?) "[#HSegLoc Hepℓ]".
-  wp_load.
-  iMod (iterator_counter_is_at_least with "HEnqCtr") as "[HEnqCtr #HEnqAtLeast]".
-  iMod ("HClose" with "[-HSusp HNoPerms]") as "AU".
-  {
-    iFrame.
-    iSplitR; first by iPureIntro.
-    iExists _, _. iFrame.
-    iExists _. iSplitR; first by iPureIntro. iExists _. by iFrame.
-  }
-  iModIntro.
-
-  wp_pures.
-  awp_apply iterator_value_faa. iApply (aacc_aupd_abort with "AU"); first done.
-  iIntros (cells ?) "(HInfArr & HListContents & >% & HRest)".
-  iDestruct "HRest" as (senqIdx ?) "(>HEnqIt & >HDeqIt & HAwaks & >HSusps & >%)".
-  iDestruct "HListContents" as "(HLC1 & HLC2 & >HAuth & HLC3)".
-  iAssert (⌜(senqIdx < length cells)%nat⌝)%I as %HEnqLtLen.
-  {
-    rewrite /suspension_permit.
-    iAssert (own γtq (◯ (S senqIdx,ε, ε))) with "[HSusp HSusps]" as "HSusp".
-    {
-      clear.
-      iInduction senqIdx as [|enqIdx'] "IH"; first done. simpl.
-      iDestruct "HSusps" as "[HSusp' HSusps]".
-      change (S (S enqIdx')) with (1 ⋅ S enqIdx')%nat.
-      rewrite pair_op_1 pair_op_1 auth_frag_op own_op.
-      iFrame.
-      iApply ("IH" with "HSusp [HSusps]").
-      iClear "IH".
-      by rewrite big_opL_irrelevant_element' seq_length.
-    }
-    iDestruct (own_valid_2 with "HAuth HSusp") as
-        %[[[HValid%nat_included _]%prod_included
-                                  _]%prod_included _]%auth_both_valid.
-    iPureIntro.
-    simpl in *.
-    lia.
-  }
-  iMod (own_update with "HAuth") as "[HAuth HFrag]".
-  2: iAssert (exists_list_element γtq senqIdx) with "HFrag" as "#HElExists".
-  {
-    apply auth_update_core_id; first by apply _.
-    apply prod_included; simpl; split.
-    by apply ucmra_unit_least.
-    apply list_lookup_included.
-    revert HEnqLtLen.
-    clear.
-    intros ? i.
-    rewrite -fmap_is_map list_lookup_fmap.
-    destruct (decide (i >= S senqIdx)%Z).
-    {
-      remember (cells !! i) as K. clear HeqK.
-      rewrite lookup_ge_None_2.
-      2: rewrite list_singletonM_length; lia.
-      by apply option_included; left.
-    }
-    assert (i < length cells)%nat as HEl by lia.
-    apply lookup_lt_is_Some in HEl.
-    destruct HEl as [? ->]. simpl.
-    destruct (decide (i = senqIdx)).
-    {
-      subst. rewrite list_lookup_singletonM.
-      apply Some_included_total, ucmra_unit_least.
-    }
-    assert (forall (A: ucmraT) (i i': nat) (x: A),
-                (i' < i)%nat -> list_singletonM i x !! i' = Some (ε: A))
-            as HH.
-    {
-      clear. induction i; intros [|i']; naive_solver auto with lia.
-    }
-    rewrite HH. 2: lia.
-    apply Some_included_total.
-    apply ucmra_unit_least.
-  }
-  iDestruct (iterator_points_to_at_least with "HEnqAtLeast [HEnqIt]") as %HnLtn'.
-  by iDestruct "HEnqIt" as "[$ _]".
-  iAaccIntro with "HEnqIt".
-  {
-    iFrame. iIntros "HEnqIt".
-    iSplitL. iSplitR; first done. iExists _, _. iFrame. done.
-    by iIntros "!> $ !>".
-  }
-  simpl. rewrite Nat.add_1_r union_empty_r_L.
-  iIntros "[[HEnqCtr HEnqPtr] HIsSus]".
-  iClear "HEnqAtLeast".
-  iMod (iterator_counter_is_at_least with "HEnqCtr") as "[HEnqCtr #HEnqAtLeast]".
-  iClear "HFrag".
-  change (own _ (◯ _)) with (iterator_issued γe senqIdx).
-  iFrame.
-  iSplitR "HIsSus HNoPerms".
-  {
-    iSplitR; first done.
-    iExists _, _. simpl.
-    iAssert ([∗ list] _ ∈ seq O (S senqIdx), suspension_permit γtq)%I
-            with "[HSusps HSusp]" as "$".
-    {
-      simpl. iFrame.
-      iApply (big_sepL_forall_2 with "HSusps").
-      by repeat rewrite seq_length.
-      done.
-    }
-    iFrame.
-    iPureIntro. lia.
-  }
-  iIntros "!> AU !>".
-
-  wp_pures. rewrite quot_of_nat.
-  awp_apply (find_segment_spec with "[] HSegLoc").
-  by iApply tq_cell_init.
-  iApply (aacc_aupd_abort with "AU"); first done.
-  iIntros (? ?) "[HInfArr HRest]".
-  iAaccIntro with "HInfArr".
-  {
-    iFrame. iIntros "$ !> $ !> //".
-  }
-  iIntros (segId ?) "(HInfArr & #HInvs & #HSegLoc' & #HRest')".
-  iAssert (⌜(senqIdx `div` Pos.to_nat segment_size <= segId)%nat⌝)%I as "%".
-  by iDestruct "HRest'" as "[(% & <-)|(% & % & _)]"; iPureIntro; lia.
-  iDestruct (big_sepL_lookup _ _ (senqIdx `div` Pos.to_nat segment_size)%nat with "HInvs") as "HInv".
-  by apply seq_lookup; lia.
-  iDestruct (cell_invariant_by_segment_invariant
-               _ _ _ _ (senqIdx `mod` Pos.to_nat segment_size)%nat with "HInv") as "HInv'".
-  by apply Nat.mod_upper_bound; lia.
-  simpl.
-  rewrite Nat.mul_comm -Nat.div_mod; try lia.
-  iDestruct "HInv'" as (ℓ) "(HCellInv & >HMapsTo)".
-  iFrame.
-  iIntros "!> AU !>".
-
-  wp_pures.
-
-  destruct (decide (senqIdx `div` Pos.to_nat segment_size = segId)%nat).
-  2: {
-    iDestruct "HRest'" as "[[% ->]|HC]".
-    {
-      exfalso.
-      assert (senqIdx `div` Pos.to_nat segment_size < segId)%nat by lia.
-      assert ((segId * Pos.to_nat segment_size) `div` Pos.to_nat segment_size <=
-              senqIdx `div` Pos.to_nat segment_size)%nat as HContra.
-      by apply Nat.div_le_mono; lia.
-      rewrite Nat.div_mul in HContra; lia.
-    }
-    iDestruct "HC" as "(% & % & HCanc)".
-    rewrite segments_cancelled__cells_cancelled.
-    remember (Pos.to_nat segment_size) as P.
-    iAssert (cell_is_cancelled segment_size γa
-              (P * senqIdx `div` P + senqIdx `mod` P)%nat) as "HCellCanc".
-    {
-      rewrite Nat.mul_comm.
-      iApply (big_sepL_lookup with "HCanc").
-      apply seq_lookup.
-      assert (senqIdx `mod` P < P)%nat by (apply Nat.mod_upper_bound; lia).
-      destruct (segId - senqIdx `div` P)%nat eqn:Z; try lia.
-      simpl.
-      lia.
-    }
-    rewrite -Nat.div_mod; try lia.
-
-    wp_lam. wp_pures. wp_bind (!_)%E. (* Just so I can open an invariant. *)
-    iInv N as "[[>HCancHandle _]|>HInit]" "HClose".
-    by iDestruct (cell_cancellation_handle'_not_cancelled with "HCancHandle HCellCanc") as %[].
-    iMod "AU" as (? ?) "[(_ & (_ & _ & >HAuth & _ & _ & HCellRRs) & _) _]".
-    iDestruct (exists_list_element_lookup with "HElExists HAuth") as %[c HEl].
-    destruct c as [c|]; simpl.
-    2: {
-      iDestruct (own_valid_2 with "HAuth HInit") as
-          %[[_ HValid]%prod_included _]%auth_both_valid.
-      simpl in *.
-      exfalso.
-      move: HValid. rewrite list_lookup_included. move=> HValid.
-      specialize (HValid senqIdx). move: HValid.
-      rewrite list_lookup_singletonM map_lookup HEl /= Some_included_total.
-      intros HValid.
-      apply prod_included in HValid; simpl in *; destruct HValid as [HValid _].
-      apply prod_included in HValid; simpl in *; destruct HValid as [_ HValid].
-      apply max_nat_included in HValid. simpl in *; lia.
-    }
-    iDestruct (big_sepL_lookup with "HCellRRs") as "HR".
-    done.
-    simpl.
-    iDestruct "HR" as (?) "[_ HRest]".
-    destruct c as [|? ? c].
-    {
-      iDestruct "HRest" as "(_ & >HCancHandle & _)".
-      iDestruct (cell_cancellation_handle'_not_cancelled with "HCancHandle HCellCanc") as %[].
-    }
-    destruct c; iDestruct "HRest" as "(_ & >HIsSus' & _)".
-    all: iDestruct (iterator_issued_exclusive with "HIsSus HIsSus'") as %[].
-  }
-
-  subst.
-  iClear "HRest' HInvs HSegLoc HInv". clear.
-
-  awp_apply (iterator_move_ptr_forward_spec with "[%] [$] [$]").
-  by move: (Nat.mul_div_le senqIdx (Pos.to_nat segment_size)); lia.
-  iApply (aacc_aupd_abort with "AU"); first done.
-  iIntros (? ?) "(HInfArr & HListContents & HLog1 & HRest)".
-  iDestruct "HRest" as (? ?) "(>HEnqIt & >HDeqIt & HAwaks & >HSusps & HLog2)".
-  iCombine "HInfArr" "HEnqIt" as "HAacc".
-  iAaccIntro with "HAacc".
-  {
-    iIntros "[$ HEnqIt]". iFrame.
-    iSplitL. by iExists _, _; iFrame.
-    by iIntros "!> $ !>".
-  }
-  iIntros "[$ EnqIt]". iFrame.
-  iSplitR "HIsSus HNoPerms".
-  by iExists _, _; iFrame.
-  iIntros "!> AU !>".
-
-  wp_pures. wp_lam. wp_pures.
-  replace (Z.rem senqIdx _) with (Z.of_nat (senqIdx `mod` Pos.to_nat segment_size)%nat).
-  2: {
-    destruct (Pos.to_nat segment_size) eqn:Z; try lia.
-    by rewrite rem_of_nat.
-  }
-
-  awp_apply segment_data_at_spec.
-  { iPureIntro. apply Nat.mod_upper_bound; lia. }
-  iApply (aacc_aupd_abort with "AU"); first done.
-  iIntros (? ?) "(HInfArr & HRest)".
-  iDestruct (is_segment_by_location with "HSegLoc' HInfArr")
-    as (? ?) "[HIsSeg HArrRestore]".
-  iAaccIntro with "HIsSeg".
-  {
-    iIntros "HIsSeg !>".
-    iDestruct ("HArrRestore" with "HIsSeg") as "$".
-    iFrame.
-    by iIntros "$ !>".
-  }
-  iIntros (?) "(HIsSeg & HArrMapsto' & _)".
-  iDestruct (array_mapsto'_agree with "HArrMapsto' HMapsTo") as "->".
-  iDestruct ("HArrRestore" with "[HIsSeg]") as "$"; first by iFrame.
-  iFrame "HRest".
-  iIntros "!> AU !>".
-
-  wp_pures.
-  awp_apply (inhabit_cell_spec with "[$] HNoPerms HIsSus HElExists HMapsTo HCellInv").
-  iApply (aacc_aupd_commit with "AU"); first done.
-  iIntros (? deqFront) "(HInfArr & HListContents & HRest)".
-  iAaccIntro with "HListContents".
-  { iIntros "$"; iFrame. iIntros "!> $ !>". done. }
-  iIntros (?) "H".
-  iDestruct "H" as "[(% & -> & HInhToken & #HRend & HListContents')|
-    (% & -> & HNoPerms & HR & HListContents)]".
-  all: iExists _; iSplitL; [|iIntros "!> HΦ !>"; by wp_pures].
-  2: {
-    iRight. iSplitR; first done. by iFrame.
-  }
-  iLeft.
-  iExists _, _. iSplitR; first done. iSplitR; first done.
-  iFrame "HInhToken HSegLoc' HRend".
-  iDestruct "HRest" as "(>% & >HRest)".
-  rewrite /is_thread_queue.
-  rewrite alter_length.
-  iFrame "HInfArr HRest HListContents'".
-  rewrite /cell_invariant.
-  iPureIntro.
-  intros (HLt & γt' & th' & r & HEl).
-  destruct (decide (senqIdx = (deqFront - 1)%nat)).
-  {
-    subst. rewrite list_lookup_alter in HEl.
-    destruct (_ !! (deqFront - 1)%nat); simpl in *; discriminate.
-  }
-  rewrite list_lookup_alter_ne in HEl; eauto 10.
-Qed.
-
-Theorem new_thread_queue_spec S R:
-  {{{ True }}}
-    new_thread_queue segment_size #()
-  {{{ γa γtq γe γd eℓ epℓ dℓ dpℓ, RET ((#epℓ, #eℓ), (#dpℓ, #dℓ));
-      is_thread_queue S R γa γtq γe γd eℓ epℓ dℓ dpℓ [] 0 }}}.
-Proof.
-  iIntros (Φ) "_ HPost".
-  wp_lam.
-  iMod (own_alloc (● (GSet (set_seq 0 0), MaxNat 0))) as (γd) "HAuthD".
-  { simpl. apply auth_auth_valid, pair_valid; split; done. }
-  iMod (own_alloc (● (GSet (set_seq 0 0), MaxNat 0))) as (γe) "HAuthE".
-  { simpl. apply auth_auth_valid, pair_valid; split; done. }
-  iMod (own_alloc (● (0%nat, (0%nat, MaxNat 0), []))) as (γtq) "HAuth".
-  { apply auth_auth_valid, pair_valid; split; try done.
-    apply list_lookup_valid; intro. rewrite lookup_nil //. }
-  iMod (own_alloc (● [])) as (γa) "HAuthTq".
-  { simpl. apply auth_auth_valid, list_lookup_valid. intros i.
-    by rewrite lookup_nil. }
-  wp_apply (new_infinite_array_spec with "[HAuthTq]").
-  by iFrame; iApply (tq_cell_init γtq γd).
-  iIntros (ℓ) "[HInfArr #HSegLoc]".
-  wp_pures.
-
-  rewrite -wp_fupd.
-  wp_alloc eℓ as "Heℓ". wp_alloc dℓ as "Hdℓ".
-  wp_alloc epℓ as "Hepℓ". wp_alloc dpℓ as "Hdpℓ".
-
-  wp_pures.
-  iApply "HPost".
-  rewrite /is_thread_queue /cell_list_contents /cell_list_contents_auth_ra /=.
-  iFrame "HInfArr HAuth".
-  repeat iSplitR; try done.
-  by iPureIntro; lia.
-
-  iExists 0%nat, 0%nat. simpl.
-  rewrite /iterator_points_to /iterator_counter.
-  iFrame "Hepℓ Hdpℓ HAuthE HAuthD".
-  iSplitL "Heℓ".
-  {
-    iExists 0%nat. simpl.
-    iSplitR; first done.
-    iExists _; by iFrame.
-  }
-  iSplitL "Hdℓ".
-  {
-    iExists 0%nat. simpl.
-    iSplitR; first done.
-    iExists _; by iFrame.
-  }
-  eauto.
 Qed.
 
 Theorem cancel_cell_spec (s: loc) (i: nat) E R γa γtq γe γd eℓ epℓ dℓ dpℓ:
