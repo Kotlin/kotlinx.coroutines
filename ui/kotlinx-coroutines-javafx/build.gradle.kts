@@ -12,6 +12,13 @@ javafx {
     configuration = "compileOnly"
 }
 
+sourceSets {
+    test.configure {
+        compileClasspath += configurations.compileOnly
+        runtimeClasspath += configurations.compileOnly
+    }
+}
+
 val JDK_18: String? by lazy {
     System.getenv("JDK_18")
 }
