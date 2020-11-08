@@ -69,7 +69,7 @@ private class BlockingCoroutine<T>(
     override fun afterCompletion(state: Any?) {
         // wake up blocked thread
         if (Thread.currentThread() != blockedThread)
-            LockSupport.unpark(blockedThread)
+            unpark(blockedThread)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -84,7 +84,9 @@ private class BlockingCoroutine<T>(
                     val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
                     // note: process next even may loose unpark flag, so check if completed before parking
                     if (isCompleted) break
-                    parkNanos(this, parkNanos)
+                    if (0 < parkNanos && parkNanos < Long.MAX_VALUE) {
+                        parkNanos(this, parkNanos)
+                    }
                 }
             } finally { // paranoia
                 eventLoop?.decrementUseCount()
