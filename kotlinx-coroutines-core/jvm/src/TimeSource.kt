@@ -60,7 +60,7 @@ internal inline fun unregisterTimeLoopThread() {
 
 @InlineOnly
 internal inline fun parkNanos(blocker: Any, nanos: Long) {
-    if (0 < nanos && nanos < Long.MAX_VALUE) {
+    if (0 <= nanos && nanos < Long.MAX_VALUE) {
         timeSource?.parkNanos(blocker, nanos) ?: LockSupport.parkNanos(blocker, nanos)
     }
 }
