@@ -8,7 +8,6 @@
 
 package kotlinx.coroutines
 
-import java.util.concurrent.locks.*
 import kotlin.contracts.*
 import kotlin.coroutines.*
 
@@ -77,6 +76,7 @@ private class BlockingCoroutine<T>(
         registerTimeLoopThread()
         try {
             eventLoop?.incrementUseCount()
+            val isMainThread = Thread.currentThread().id == 1L
             try {
                 while (true) {
                     @Suppress("DEPRECATION")
@@ -84,8 +84,17 @@ private class BlockingCoroutine<T>(
                     val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
                     // note: process next even may loose unpark flag, so check if completed before parking
                     if (isCompleted) break
-                    if (0 < parkNanos && parkNanos < Long.MAX_VALUE) {
-                        parkNanos(this, parkNanos)
+                    if (parkNanos < 0 || parkNanos >= Long.MAX_VALUE) {
+                        0L
+                    } else {
+                        if (parkNanos > 10_000_000L && isMainThread) {
+                            // Restrict long park MainThread. No more than 10ms. delay 1ms
+                            1_000_000L
+                        } else {
+                            parkNanos
+                        }
+                    }.let {
+                        parkNanos(this, it)
                     }
                 }
             } finally { // paranoia
