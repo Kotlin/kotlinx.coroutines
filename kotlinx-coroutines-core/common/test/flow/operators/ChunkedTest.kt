@@ -11,103 +11,47 @@ import kotlin.time.*
 @ExperimentalTime
 class ChunkedTest : TestBase() {
 
-    private val testFlow = flow<Int> {
-        delay(10)
-        for (i in 1..10_000_000) {
-            emit(i)
-//            delay(500)
-//            for (j in 1..100_000) {
-//                emit(j)
-//            }
-        }
-    }
-
-    private fun <T> Flow<T>.channelTransform() = channelFlow {
-        val inbox = produceIn(this)
-        repeat(4) {
-            launch(Dispatchers.Default) {
-                for (value in inbox) send(value.toString().toInt() * 2)
-            }
-        }
-    }
-
     @Test
-    fun testLazy() = runTest {
-        launch(Dispatchers.Default) {
-            var emissionsCount = 0
-            testFlow.chunkedNonResetableTimer(100, false)
-                .onEach { emissionsCount += it.size }
-                .count()
-                .let { println("chunks: $it, total emissions: $emissionsCount") }
-        }
-    }
-
-    @Test
-    fun testEager() = runTest {
-        launch(Dispatchers.Default) {
-            var emissionsCount = 0
-            testFlow.chunkedNonResetableTimer(100, true)
-                .onEach { emissionsCount += it.size }
-                .count()
-                .let { println("chunks: $it, total emissions: $emissionsCount") }
-        }
-    }
-
-    @Test
-    fun testSelectFixedInterval() = runTest {
-        launch(Dispatchers.Default) {
-            var emissionsCount = 0
-            testFlow.chunked(100.toDuration(DurationUnit.MILLISECONDS), minSize = 0)
-                .onEach { emissionsCount += it.size }
-                .count()
-                .let { println("chunks: $it, total emissions: $emissionsCount") }
-        }
-    }
-
-    @Test
-    fun testSelectFloatingInterval() = runTest {
-        launch(Dispatchers.Default) {
-            var emissionsCount = 0
-            testFlow.chunked(100.toDuration(DurationUnit.MILLISECONDS))
-                .onEach { emissionsCount += it.size }
-                .count()
-                .let { println("chunks: $it, total emissions: $emissionsCount") }
-        }
-    }
-
-    @Test
-    fun testChunkNoMaxTime() = runTest {
-        launch(Dispatchers.Default) {
-            var emissionsCount = 0
-            testFlow.chunkFixedTimeWindows(100)
-                .onEach { emissionsCount += it.size }
-                .count()
-                .let { println("chunks: $it, total emissions: $emissionsCount") }
-        }
-    }
-
-    @Test
-    fun testEmptyFlow() = runTest {
+    fun testEmptyFlowChunking() = runTest {
         val emptyFlow = emptyFlow<Int>()
-        val result = emptyFlow.chunked(1000).toList()
+        val result = measureTimedValue {
+            emptyFlow.chunked(10.seconds).toList()
+        }
 
-        assertTrue { result.isEmpty() }
+        assertTrue { result.value.isEmpty() }
+        assertTrue { result.duration.inSeconds < 1 }
     }
 
     @ExperimentalTime
     @Test
-    fun testSingleFastElement() = runTest {
+    fun testSingleFastElementChunking() = runTest {
         val fastFlow = flow { emit(1) }
+
         val result = measureTimedValue {
-            fastFlow.chunked(10_000).toList()
+            fastFlow.chunked(10.seconds).toList()
         }
 
         assertTrue { result.value.size == 1 && result.value.first().contains(1) }
         assertTrue { result.duration.inSeconds < 1 }
     }
 
+    @ExperimentalTime
     @Test
-    fun testWindowsChunkingWithNoMinimumSize() = withVirtualTime {
+    fun testMultipleFastElementsChunking() = runTest {
+        val fastFlow = flow {
+            for(i in 1..1000) emit(1)
+        }
+
+        val result = measureTimedValue {
+            fastFlow.chunked(10.seconds).toList()
+        }
+
+        assertTrue { result.value.size == 1 && result.value.first().size == 1000 }
+        assertTrue { result.duration.inSeconds < 1 }
+    }
+
+    @Test
+    fun testFixedTimeWindowChunkingWithZeroMinimumSize() = withVirtualTime {
         val intervalFlow = flow {
             delay(1500)
             emit(1)
@@ -116,7 +60,7 @@ class ChunkedTest : TestBase() {
             delay(1500)
             emit(3)
         }
-        val chunks = intervalFlow.chunked(2.toDuration(DurationUnit.SECONDS), minSize = 0).toList()
+        val chunks = intervalFlow.chunked(2.seconds, minSize = 0).toList()
 
         assertEquals (3, chunks.size)
         assertTrue { chunks.all { it.size == 1 } }
@@ -125,7 +69,7 @@ class ChunkedTest : TestBase() {
     }
 
     @Test
-    fun testNonContinousWindowsChunking() = withVirtualTime {
+    fun testDefaultChunkingWithFloatingWindows() = withVirtualTime {
         val intervalFlow = flow {
             delay(1500)
             emit(1)
@@ -134,7 +78,7 @@ class ChunkedTest : TestBase() {
             delay(1500)
             emit(3)
         }
-        val chunks = intervalFlow.chunked(2.toDuration(DurationUnit.SECONDS)).toList()
+        val chunks = intervalFlow.chunked(2.seconds).toList()
 
         assertEquals (2, chunks.size)
         assertTrue { chunks.first().size == 2 && chunks[1].size == 1 }
@@ -152,7 +96,7 @@ class ChunkedTest : TestBase() {
             delay(1500)
             emit(3)
         }
-        val chunks = intervalFlow.chunked(2000, minSize = 3).toList()
+        val chunks = intervalFlow.chunked(2.seconds, minSize = 3).toList()
 
         assertTrue { chunks.size == 1 }
         assertTrue { chunks.first().size == 3 }
@@ -173,7 +117,7 @@ class ChunkedTest : TestBase() {
             delay(1500)
             emit(6)
         }
-        val chunks = intervalFlow.chunked(2000, minSize = 0, maxSize = 3).toList()
+        val chunks = intervalFlow.chunked(2.seconds, minSize = 0, maxSize = 3).toList()
 
         assertEquals(3, chunks.size)
         assertEquals(3, chunks.first().size)
@@ -196,7 +140,7 @@ class ChunkedTest : TestBase() {
             delay(1500)
             emit(6)
         }
-        val chunks = intervalFlow.chunked(2000, maxSize = 3).toList()
+        val chunks = intervalFlow.chunked(2.seconds, maxSize = 3).toList()
 
         assertEquals(2, chunks.size)
         assertEquals(3, chunks.first().size)

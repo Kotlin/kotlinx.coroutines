@@ -50,7 +50,7 @@ public fun <T> Flow<T>.chunked(
     else chunkFloatingWindows(chunkDurationMs, minSize, maxSize)
 }
 
-public fun <T> Flow<T>.chunkFixedTimeWindows(durationMs: Long): Flow<List<T>> = scopedFlow { downstream ->
+private fun <T> Flow<T>.chunkFixedTimeWindows(durationMs: Long): Flow<List<T>> = scopedFlow { downstream ->
     val upstream = produce(capacity = Channel.CHANNEL_DEFAULT_CAPACITY) {
         val ticker = Ticker(durationMs, this).apply { send(Ticker.Message.Start) }
         launch {
@@ -70,7 +70,7 @@ public fun <T> Flow<T>.chunkFixedTimeWindows(durationMs: Long): Flow<List<T>> = 
     if (accumulator.isNotEmpty()) downstream.emit(accumulator)
 }
 
-public fun <T> Flow<T>.chunkContinousWindows(durationMs: Long, maxSize: Int): Flow<List<T>> =
+private fun <T> Flow<T>.chunkContinousWindows(durationMs: Long, maxSize: Int): Flow<List<T>> =
     scopedFlow { downstream ->
         val inbox: ReceiveChannel<T> = this@chunkContinousWindows.produceIn(this)
         val ticker = Ticker(durationMs, this).apply { send(Ticker.Message.Start) }
@@ -99,7 +99,7 @@ public fun <T> Flow<T>.chunkContinousWindows(durationMs: Long, maxSize: Int): Fl
         if (accumulator.isNotEmpty()) downstream.emit(accumulator)
     }
 
-public fun <T> Flow<T>.chunkFloatingWindows(
+private fun <T> Flow<T>.chunkFloatingWindows(
     durationMs: Long,
     minSize: Int,
     maxSize: Int,
