@@ -160,9 +160,9 @@ Qed.
 Theorem cancelCell_spec γ co p i:
   is_infinite_array γ co -∗
   is_infinite_array_cell_pointer γ p i -∗
-  <<< cell_cancellation_handle' γ i >>>
+  <<< ▷ cell_cancellation_handle' γ i >>>
   cancelCell array_impl p @ ⊤ ∖ ↑N
-  <<< cell_is_cancelled' γ i, RET #() >>>.
+  <<< ▷ cell_is_cancelled' γ i, RET #() >>>.
 Proof.
   iIntros "#HArr #HCellPointer" (Φ) "AU". wp_lam.
   rewrite /is_infinite_array_cell_pointer.
@@ -180,8 +180,8 @@ Proof.
   iApply (aacc_aupd_commit with "AU").
   by apply difference_mono_l, nclose_subseteq.
   iIntros "HCancHandle".
-  iDestruct "HCancHandle" as (? ?) "(#HInList' & #HId' & HCancHandle)".
-  iDestruct (segment_in_list_agree with "HInList HInList'") as %[-> ->].
+  iDestruct "HCancHandle" as (? ?) "(#HInList' & #HId' & >HCancHandle)".
+  iDestruct (segment_in_list_agree with "HInList HInList'") as ">[-> ->]".
   iAaccIntro with "HCancHandle".
   {
     iIntros "HCancHandle !>". iSplitL; last by iIntros "$ //".

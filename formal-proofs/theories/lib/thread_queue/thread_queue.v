@@ -97,7 +97,7 @@ Definition cancellationHandler: val :=
     if: "cancellationAllowed" then
       let: "markResult" := getAndSet "cell" CANCELLEDV in
       cancelCell array_interface "cellPtr" ;;
-      match: getAndSet "cell" CANCELLEDV with
+      match: "markResult" with
         InjR "v" => if: resume "maxWait" #true "mayBreakCells"
                               "waitForResolution" "deqIterator"
                               "returnRefusedValue" "v"
@@ -334,6 +334,10 @@ Definition cell_cancelling_token (γtq: gname) (i: nat): iProp :=
 
 Definition thread_queue_state γ (n: nat) :=
   own γ (◯ (ε, (ε, Excl' n))).
+
+Global Instance thread_queue_state_timeless:
+  Timeless (thread_queue_state γ n).
+Proof. apply _. Qed.
 
 Definition deq_front_at_least γtq (n: nat) :=
   own γtq (◯ (ε, (ε, MaxNat n), ε)).
@@ -614,13 +618,13 @@ Proof.
 Qed.
 
 Theorem thread_queue_append γtq γa γe γd n l deqFront:
-  E -∗ thread_queue_state γtq n -∗
-  thread_queue_invariant γa γtq γe γd l deqFront ==∗
-  suspension_permit γtq ∗ cell_enqueued γtq (length l) ∗
+  ▷ E -∗ thread_queue_state γtq n -∗
+  ▷ thread_queue_invariant γa γtq γe γd l deqFront ==∗
+  ▷ (suspension_permit γtq ∗ cell_enqueued γtq (length l) ∗
   thread_queue_state γtq (S n) ∗
-  thread_queue_invariant γa γtq γe γd (l ++ [None]) deqFront.
+  thread_queue_invariant γa γtq γe γd (l ++ [None]) deqFront).
 Proof.
-  iIntros "HE H◯ (H● & HRRs & HLen & HDeqIdx)".
+  iIntros "HE H◯ (>H● & HRRs & >HLen & >HDeqIdx)".
   iDestruct (thread_queue_state_valid with "H● H◯") as %->.
   iDestruct "HLen" as %HLen.
   iMod (own_update_2 with "H● H◯") as "[H● [[$ $] $]]".
@@ -650,6 +654,18 @@ Proof.
       rewrite Nat.add_1_r.
       by apply alloc_option_local_update.
   }
+Qed.
+
+Theorem thread_queue_append' E' γtq γa γe γd n e d:
+  ↑NTq ⊆ E' ->
+  is_thread_queue γa γtq γe γd e d -∗
+  ▷ E -∗ ▷ thread_queue_state γtq n ={E'}=∗
+  thread_queue_state γtq (S n) ∗ suspension_permit γtq.
+Proof.
+  iIntros (HMask) "[HInv _] HE >HState".
+  iInv "HInv" as (l deqFront) "HOpen" "HClose".
+  iMod (thread_queue_append with "HE HState HOpen") as "(>$ & _ & >$ & HRest)".
+  iMod ("HClose" with "[HRest]") as "_"; last done. by iExists _, _.
 Qed.
 
 Global Instance deq_front_at_least_persistent γtq n:
@@ -3527,7 +3543,8 @@ Theorem try_cancel_thread_queue_future γa γtq γe γd e d γf f:
   <<< ∃ (r: bool),
       if r then future_is_cancelled γf ∗
         ∃ i f' s, ⌜f = (f', s)%V⌝
-        ∗ is_infinite_array_cell_pointer _ _ array_spec NArr γa s i ∗
+        ∗ is_infinite_array_cell_pointer _ _ array_spec NArr γa s i
+        ∗ rendezvous_thread_handle γtq γf f' i ∗
         if immediateCancellation
         then inhabited_rendezvous_state γtq i (Some (Cinr (Cinl (to_agree ()))))
              ∗ ▷ cancellation_handle γa i
@@ -3568,7 +3585,7 @@ Proof.
     iIntros (r) "Hr !>". iExists r. iSplitL; last by iIntros "$ !>".
     destruct r.
     + iDestruct "Hr" as "[$ Hr]". iExists _, _, _. iFrame "HLoc".
-      iSplitR; first done. iFrame.
+      iSplitR; first done. by iFrame.
     + iDestruct "Hr" as "[Hr $]". iDestruct "Hr" as (?) "[_ Hr]".
       by iExists _.
 Qed.
