@@ -112,10 +112,12 @@ Definition cancellationHandler: val :=
       end.
 
 Definition tryCancelThreadQueueFuture: val :=
-  λ: "f",
-  let: "future" := Fst "f" in
-  let: "cellPtr" := Snd "f" in
-  tryCancelFuture "future".
+  λ: "f", tryCancelFuture (Fst "f").
+
+Definition awaitThreadQueueFuture: val :=
+  λ: "f", awaitFuture (Fst "f").
+
+Definition fillThreadQueueFuture: val := λ: "v", (completeFuture "v", #()).
 
 Definition tryCancelThreadQueueFuture': val :=
   λ: "immediate" "maxWait" "mayBreakCells" "waitForResolution"
@@ -577,15 +579,20 @@ Definition is_thread_queue γa γtq γe γd e d :=
 Theorem newThreadQueue_spec:
   {{{ inv_heap_inv }}}
     newThreadQueue array_interface #()
-  {{{ γa γtq γe γd e d, RET (e, d); is_thread_queue γa γtq γe γd e d }}}.
+  {{{ γa γtq γe γd e d, RET (e, d); is_thread_queue γa γtq γe γd e d
+      ∗ thread_queue_state γtq 0 }}}.
 Proof.
   iIntros (Φ) "HHeap HΦ". wp_lam. wp_bind (newInfiniteArray _ _).
   rewrite -fupd_wp.
-  iMod (own_alloc (cell_list_contents_auth_ra [] 0))
-       as (γtq) "H●".
-  { apply auth_auth_valid, pair_valid. split; first done.
-    apply pair_valid. split; last done. apply list_lookup_valid.
-    by case. }
+  iMod (own_alloc (cell_list_contents_auth_ra [] 0
+                   ⋅ ◯ (ε, (ε, Excl' 0)))) as (γtq) "[H● H◯]".
+  { apply auth_both_valid. split=> /=.
+    - apply pair_included. split; first by apply ucmra_unit_least.
+      apply pair_included. split; first by apply ucmra_unit_least.
+      done.
+    - apply pair_valid. split; first done.
+      apply pair_valid. split; last done. apply list_lookup_valid.
+      by case. }
   replace 2%Z with (Z.of_nat 2); last lia.
   iApply (newInfiniteArray_spec with "[HHeap]").
   { iSplitR. by iPureIntro; lia. done. }
@@ -1214,16 +1221,16 @@ Proof.
   destruct (is_skippable v); contradiction.
 Qed.
 
-Theorem thread_queue_register_for_dequeue γtq γa γe γd l deqFront n:
+Lemma thread_queue_register_for_dequeue γtq γa γe γd l deqFront n:
   ∀ i, find_index is_nonskippable (drop deqFront l) = Some i ->
   ▷ R -∗ ▷ thread_queue_invariant γa γtq γe γd l deqFront -∗
-  thread_queue_state γtq n ==∗
+  ▷ thread_queue_state γtq n ==∗
   ▷ (awakening_permit γtq
   ∗ deq_front_at_least γtq (deqFront + S i)
   ∗ thread_queue_invariant γa γtq γe γd l (deqFront + S i)
   ∗ thread_queue_state γtq (n - 1)).
 Proof.
-  iIntros (i HFindSome) "HR (>H● & HRRs & >HLen & >HDeqIdx) H◯".
+  iIntros (i HFindSome) "HR (>H● & HRRs & >HLen & >HDeqIdx) >H◯".
   iDestruct "HLen" as %HLen.
   move: (present_cells_in_take_Si_if_next_present_is_Si _ _ _ HFindSome)
     => HPresentCells.
@@ -1239,6 +1246,28 @@ Proof.
   rewrite HPresentCells. iFrame "H◯".
   iDestruct (advance_deqFront with "HAwaks HR HRRs") as "$"; first done.
   iPureIntro. by apply advance_deqFront_pure.
+Qed.
+
+Theorem thread_queue_register_for_dequeue' E' γtq γa γe γd n e d:
+  ↑NTq ⊆ E' ->
+  n > 0 ->
+  is_thread_queue γa γtq γe γd e d -∗
+  ▷ R -∗ ▷ thread_queue_state γtq n ={E'}=∗
+  thread_queue_state γtq (n - 1) ∗ awakening_permit γtq.
+Proof.
+  iIntros (HMask Hn) "[HInv _] HR >HState".
+  iInv "HInv" as (l deqFront) "HOpen" "HClose".
+  iAssert (▷⌜∃ i, find_index is_nonskippable (drop deqFront l) =
+          Some i⌝)%I with "[-]" as "#>HFindIndex".
+  { iDestruct "HOpen" as "[>H● _]".
+    iDestruct (thread_queue_state_valid with "H● HState") as %->.
+    apply count_matching_find_index_Some in Hn. destruct Hn as [i Hn].
+    iPureIntro. eauto. }
+  iDestruct "HFindIndex" as %[i HFindIndex].
+  iMod (thread_queue_register_for_dequeue with "HR HOpen HState")
+       as "(>HAwak & _ & HOpen & >HState)"=> //.
+  iFrame. iMod ("HClose" with "[HOpen]"); last done.
+  by iExists _, _.
 Qed.
 
 Lemma awakening_permit_implies_bound γtq l deqFront n:
@@ -3375,7 +3404,26 @@ Proof. apply _. Qed.
 Definition thread_queue_future_cancellation_permit γf :=
   future_cancellation_permit γf (1/2)%Qp.
 
-Lemma suspend_spec γa γtq γe γd e d:
+Theorem fillThreadQueueFuture_spec γtq γa (v: val):
+  {{{ ▷ V' v }}}
+    fillThreadQueueFuture v
+  {{{ γf v', RET v'; is_thread_queue_future γtq γa γf v' ∗
+                     thread_queue_future_cancellation_permit γf }}}.
+Proof.
+  iIntros (Φ) "HV HΦ". wp_lam. wp_bind (completeFuture _).
+  iApply (completeFuture_spec with "HV").
+  iIntros "!>" (γf v') "(HFuture & HCompleted & HPermit)". rewrite -wp_fupd.
+  iEval (rewrite -Qp_half_half future_cancellation_permit_Fractional)
+    in "HPermit".
+  iDestruct "HPermit" as "[HFCanc HFCancInv]".
+  iMod (inv_alloc NTq _ (future_cancellation_permit γf (1 / 2)) with "[HFCancInv]")
+    as "HFCancInv"; first done.
+  wp_pures. iApply "HΦ". iFrame "HFCanc". iExists _. iLeft.
+  iFrame "HFuture". iSplitR; first done. iFrame "HFCancInv".
+  iExists _. by iFrame.
+Qed.
+
+Theorem suspend_spec γa γtq γe γd e d:
   {{{ is_thread_queue γa γtq γe γd e d ∗ suspension_permit γtq }}}
     suspend array_interface e
   {{{ v, RET v; ⌜v = NONEV⌝ ∧ E ∗ CB ∨
@@ -3525,10 +3573,46 @@ Proof.
       by iExists _.
 Qed.
 
+Theorem await_thread_future γa γtq γe γd e d γf f:
+  NTq ## NFuture ->
+  is_thread_queue γa γtq γe γd e d -∗
+  is_thread_queue_future γtq γa γf f -∗
+  <<< ▷ thread_queue_future_cancellation_permit γf >>>
+    awaitThreadQueueFuture f @ ⊤ ∖ ↑NFuture ∖ ↑NTq
+  <<< ∃ (v': base_lit), V v' ∗ R ∗ future_is_completed γf #v',
+      RET (SOMEV #v') >>>.
+Proof.
+  iIntros (HMask) "#HTq #HFuture". iIntros (Φ) "AU". wp_lam.
+  iDestruct "HFuture" as (f') "[HFuture|HFuture]".
+  - iDestruct "HFuture" as "(HFuture & -> & HFInv & HCompl)".
+    iDestruct "HCompl" as (v) "#HCompl". wp_pures.
+    awp_apply (awaitFuture_spec with "HFuture").
+    iInv "HFInv" as ">HCancPermit".
+    iApply (aacc_aupd_commit with "AU"); first done.
+    iIntros ">HPermit". rewrite /thread_queue_future_cancellation_permit.
+    iCombine "HCancPermit" "HPermit" as "HPermit".
+    rewrite -future_cancellation_permit_Fractional Qp_half_half.
+    iAaccIntro with "HPermit".
+    {
+      iIntros "HPermit".
+      iEval (rewrite -Qp_half_half future_cancellation_permit_Fractional)
+        in "HPermit".
+      iDestruct "HPermit" as "[$ $]". by iIntros "!> $".
+    }
+    iIntros (r) "Hr". iDestruct "Hr" as "(HV & HCompl' & HCancPermit)".
+    iDestruct "HV" as (v' ->) "[HV HR]". iExists _. iFrame. iIntros "!> $ //".
+  - iDestruct "HFuture" as (i' s ->) "[HTh HLoc]". wp_pures.
+    awp_apply (await_cell with "HTq HTh"); first done.
+    iApply (aacc_aupd_commit with "AU"); first done. iIntros ">HPermit".
+    iAaccIntro with "HPermit". by iIntros "$ !> $".
+    iIntros (r) "Hr !>". iExists r. iSplitL; last by iIntros "$ !>".
+    iFrame.
+Qed.
+
 End proof.
 
 Typeclasses Opaque inhabited_rendezvous_state
- filled_rendezvous_state γtq filled_rendezvous_state_persistent
+ filled_rendezvous_state
  cell_breaking_token cancellation_registration_token
  cell_cancelling_token thread_queue_state deq_front_at_least
  rendezvous_thread_locs_state rendezvous_filled_value

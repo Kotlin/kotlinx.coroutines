@@ -1,42 +1,48 @@
 Require Import SegmentQueue.lib.thread_queue.thread_queue.
+From SegmentQueue.lib.concurrent_linked_list.infinite_array
+     Require Import array_spec iterator.iterator_impl.
+Require Import SegmentQueue.lib.util.future.
 From iris.heap_lang Require Import notation.
 
 Section impl.
 
-Variable segment_size : positive.
+Variable array_interface: infiniteArrayInterface.
 
-Definition new_semaphore : val :=
-  λ: "n", (ref "n", new_thread_queue segment_size #()).
+Definition newSemaphore: val :=
+  λ: "n", (ref "n", newThreadQueue array_interface #()).
 
-Definition cancellation_handler : val :=
-  λ: "availablePermits" "head" "deqIdx" "canceller" <>,
-  let: "p" := FAA "availablePermits" #1
-  in if: #0 ≤ "p" then InjLV #() else
-  if: "canceller" #() then InjLV #()
-  else resume segment_size "head" "deqIdx" ;; InjLV #().
+Definition acquireSemaphore: val :=
+  λ: "sem",
+  let: "availablePermits" := Fst ("sem") in
+  let: "e" := Fst (Snd ("sem")) in
+  let: "p" := FAA "availablePermits" #(-1) in
+  if: #0 < "p" then fillThreadQueueFuture #()
+  else suspend array_interface "e".
 
-Definition acquire_semaphore : val :=
-  λ: "cancHandle" "threadHandle" "availablePermits" "tail" "enqIdx" "head" "deqIdx",
-  let: "p" := FAA "availablePermits"  #(-1)
-  in if: #0 < "p" then InjRV #()
-  else suspend segment_size
-               (cancellation_handler "availablePermits" "head" "deqIdx")
-               "cancHandle" "threadHandle" "tail" "enqIdx".
+Definition semaphoreResume: val :=
+  λ: "d", resume array_interface #(Z.of_nat 300) #true #true #false "d"
+                 (λ: <>, #()) #().
 
-Definition release_semaphore : val :=
-  λ: "availablePermits" "head" "deqIdx",
-  let: "p" := FAA "availablePermits" #1
-  in if: #0 ≤ "p" then #()
-  else resume segment_size "head" "deqIdx".
+Definition releaseSemaphore: val :=
+  λ: "sem",
+  let: "availablePermits" := Fst ("sem") in
+  let: "d" := Snd (Snd ("sem")) in
+  let: "p" := FAA "availablePermits" #1 in
+  if: #0 ≤ "p" then #()
+  else semaphoreResume "d".
+
+Definition cancelSemaphoreFuture : val :=
+  λ: "sem" "f",
+  let: "availablePermits" := Fst ("sem") in
+  let: "d" := Snd (Snd ("sem")) in
+  tryCancelThreadQueueFuture' array_interface
+                              #false #(Z.of_nat 300) #true #true #false
+                              "d" (λ: <>, FAA "availablePermits" #1 < #0)
+                              (λ: <>, #()) (λ: <>, releaseSemaphore "sem").
 
 End impl.
 
-Require Import SegmentQueue.lib.infinite_array.infinite_array_impl.
-Require Import SegmentQueue.lib.infinite_array.iterator.
-Require Import SegmentQueue.lib.util.interruptibly.
-Require Import SegmentQueue.lib.thread_queue.thread_queue_as_counter.
 From SegmentQueue.util Require Import everything big_opL.
-
 From iris.base_logic.lib Require Import invariants.
 From iris.algebra Require Import auth.
 From iris.algebra Require Import list gset excl csum.
@@ -45,192 +51,92 @@ From iris.heap_lang Require Import proofmode.
 
 Section proof.
 
-Notation algebra := (authR (optionUR (exclR natO))).
-
-Class semaphoreG Σ := SemaphoreG { semaphore_inG :> inG Σ algebra }.
-Definition semaphoreΣ : gFunctors := #[GFunctor algebra].
-Instance subG_semaphoreΣ {Σ} : subG semaphoreΣ Σ -> semaphoreG Σ.
-Proof. solve_inG. Qed.
-
-Context `{iArrayG Σ} `{iteratorG Σ} `{heapG Σ} `{threadQueueG Σ} `{semaphoreG Σ}
-        `{parkingG Σ} `{interruptiblyG Σ}.
-Variable (Nth: namespace) (N: namespace).
-Variable (namespaces_disjoint : Nth ## N).
+Context `{heapG Σ} `{iteratorG Σ} `{threadQueueG Σ} `{futureG Σ}.
+Variable (N NFuture: namespace).
+Variable (HNDisj: N ## NFuture).
+Let NSem := N .@ "Sem".
+Let NTq := N .@ "Tq".
 Notation iProp := (iProp Σ).
 
-Variable (segment_size: positive).
+Definition semaphore_inv (R: iProp) (γtq: gname) (availablePermits: nat)
+           (p: loc) : iProp :=
+ ([∗] replicate availablePermits R) ∗
+ ∃ enqueuedThreads, thread_queue_state γtq enqueuedThreads ∗
+ p ↦ #(availablePermits - enqueuedThreads) ∗
+ ⌜availablePermits = 0 ∨ enqueuedThreads = 0⌝.
 
-Definition is_semaphore_inv (R : iProp) (γ: gname) (availablePermits: nat) (p: loc)
-  (epℓ eℓ dpℓ dℓ: loc) (γa γtq γe γd: gname) :=
-  (∃ v, ([∗ list] _ ∈ seq 0 availablePermits, R) ∗
-   own γ (● (Excl' availablePermits)) ∗
-   thread_queue_as_counter (N .@ "tq") Nth segment_size True R γa γtq γe γd eℓ epℓ dℓ dpℓ v ∗
-   p ↦ #(availablePermits - v) ∗ ⌜(availablePermits = 0 ∨ v = 0)%nat⌝)%I.
+Variable array_interface: infiniteArrayInterface.
+Variable array_spec: infiniteArraySpec _ array_interface.
 
-Definition is_semaphore (R : iProp) (γ: gname) (p: loc)
-           (epℓ eℓ dpℓ dℓ: loc) (γa γtq γe γd: gname) :=
-  inv (N .@ "semaphore") (∃ availablePermits,
-            is_semaphore_inv R γ availablePermits p epℓ eℓ dpℓ dℓ γa γtq γe γd)%I.
+Let tqParams R :=
+  @ThreadQueueParameters Σ false True R True (fun v => ⌜#v = #()⌝)%I True.
 
-Definition semaphore_permits γ availablePermits :=
-  own γ (◯ (Excl' availablePermits)).
+Let isThreadQueue R := is_thread_queue NTq NFuture (tqParams R) _ array_spec.
 
-Lemma new_semaphore_spec (n: nat) R:
-  {{{ ([∗ list] x ∈ replicate n R, x) }}}
-    new_semaphore segment_size #n
-  {{{ p γ γa γtq γe γd eℓ epℓ dℓ dpℓ, RET (#p, ((#epℓ, #eℓ), (#dpℓ, #dℓ)));
-      is_semaphore R γ p epℓ eℓ dpℓ dℓ γa γtq γe γd ∗
-      semaphore_permits γ n
-  }}}.
+Definition is_semaphore R γa γtq γe γd (s: val): iProp :=
+  ∃ e d (p: loc), ⌜s = (#p, (e, d))%V⌝ ∧
+  inv NSem (∃ availablePermits, semaphore_inv R γtq availablePermits p)
+  ∗ isThreadQueue R γa γtq γe γd e d.
+
+Theorem newSemaphore_spec (n: nat) R:
+  {{{ inv_heap_inv ∗ [∗] replicate n R }}}
+    newSemaphore array_interface #n
+  {{{ γa γtq γe γd s, RET s; is_semaphore R γa γtq γe γd s }}}.
 Proof.
-  iIntros (Φ) "HRs HΦ".
-  wp_lam.
-  iMod (own_alloc (● (Excl' n%nat) ⋅ ◯ (Excl' n%nat))) as (γ) "[HAuth HFrag]".
-  by apply auth_both_valid.
-  wp_apply new_thread_queue_spec; first done.
-  iIntros (γa γtq γe γd eℓ epℓ dℓ dpℓ) "HTq".
-  wp_bind (ref _)%E.
-  rewrite -wp_fupd.
-  wp_alloc p as "Hp".
-  iMod (inv_alloc (N .@ "semaphore") _
-                  (∃ n, is_semaphore_inv R γ n p epℓ eℓ dpℓ dℓ γa γtq γe γd)%I
-          with "[-HΦ HFrag]") as "#HInv".
-  {
-    iExists _.
-    rewrite /is_semaphore_inv. iExists O. iFrame "HAuth".
-    rewrite Z.sub_0_r. iFrame "Hp".
-    iSplitL "HRs".
-    2: {
-      iSplitL; last by iPureIntro; right.
-      iExists _, _. by iFrame.
-    }
-    iApply (big_sepL_forall_2 with "HRs").
-    by rewrite replicate_length seq_length.
-    intros ? ? ?. rewrite lookup_replicate. by intros _ [-> _].
-  }
-  iModIntro. wp_pures.
-  iApply "HΦ".
-  iFrame.
-  rewrite /is_semaphore.
-  done.
+  iIntros (Φ) "[#HHeap HR] HΦ". wp_lam. wp_bind (newThreadQueue _ _).
+  iApply (newThreadQueue_spec with "HHeap").
+  iIntros (γa γtq γe γd e d) "!> [#HTq HThreadState]".
+  rewrite -wp_fupd. wp_alloc p as "Hp". wp_pures.
+  iMod (inv_alloc NSem _ (∃ a, semaphore_inv R γtq a p) with "[-HΦ]") as "#HInv".
+  { iExists _. iFrame "HR". iExists 0. rewrite Z.sub_0_r. iFrame. by iRight. }
+  iApply "HΦ". iExists _, _, _. iSplitR; first done. by iFrame "HInv HTq".
 Qed.
 
-Lemma resume_in_semaphore_spec R γ p epℓ eℓ dpℓ dℓ γa γtq γe γd:
-  is_semaphore R γ p epℓ eℓ dpℓ dℓ γa γtq γe γd -∗
-  inv (N.@"permits") (∃ a, semaphore_permits γ a) -∗
-  {{{ awakening_permit γtq }}}
-    (resume segment_size) #dpℓ #dℓ
+Lemma resumeSemaphore_spec R maxWait γa γtq γe γd e d:
+  {{{ isThreadQueue R γa γtq γe γd e d ∗ awakening_permit γtq }}}
+    resume array_interface #(Z.of_nat maxWait) #true #true #false d (λ: <>, #())%V #()
+  {{{ (r: bool), RET #r; if r then True else R }}}.
+Proof.
+  iIntros (Φ) "[#HTq HAwak] HΦ".
+  iApply (resume_spec with "[] [HAwak]").
+  5: { by iFrame "HTq HAwak". }
+  by solve_ndisj. done. done.
+  { simpl. iIntros (Ψ) "!> _ HΨ". wp_pures. by iApply "HΨ". }
+  iIntros "!>" (r) "Hr". iApply "HΦ". simpl. destruct r; first done.
+  by iDestruct "Hr" as "(_ & $ & _)".
+Qed.
+
+Theorem releaseSemaphore_spec R γa γtq γe γd s:
+  {{{ is_semaphore R γa γtq γe γd s ∗ R }}}
+    releaseSemaphore array_interface s
   {{{ RET #(); True }}}.
 Proof.
-  iIntros "#HSemInv #HPermInv" (Φ) "!> HAwak HΦ". wp_lam. wp_pures.
-  awp_apply (try_deque_thread_as_counter_spec (N .@ "tq") with "HAwak") without "HΦ".
-  iInv "HSemInv" as (? ?) "(HPerms & >HAuth & HTq & HRest)".
-  iAaccIntro with "HTq".
-  {
-    iIntros "HTq !>".
-    iSplitL; last done.
-    iExists _, _. iFrame.
-  }
-  iIntros (?) "(_ & HTq & HState)".
-  iDestruct "HState" as "[->|HState]".
-  {
-    iSplitL; first by iExists _, _; iFrame.
-    iIntros "!> HΦ". wp_pures. by iApply "HΦ".
-  }
-
-  iDestruct "HState" as (? ? ?) "(-> & #[HIsThread HThreadLocs] &
-    [[HResTok #HRendRes]|HNoPerms])".
-  2: {
-    iSplitR "HNoPerms".
-    by iExists _, _; iFrame.
-    iIntros "!> HΦ". wp_pures.
-    awp_apply (unpark_spec with "HIsThread") without "HΦ".
-    iAaccIntro with "HNoPerms".
-    by iIntros ">HNoPerms !>".
-    iIntros "HPerms !> HΦ". wp_pures. by iApply "HΦ".
-  }
-  {
-    iSplitR "HResTok"; first by iExists _, _; iFrame.
-    iIntros "!> HΦ". wp_pures.
-
-    awp_apply (thread_queue_as_counter_unpark_spec with
-                   "HRendRes HIsThread HThreadLocs") without "HΦ".
-    iInv "HSemInv" as (? ?) "(HPerms & >HAuth & HTq & HRest)".
-    iCombine "HResTok" "HTq" as "HAacc".
-    iAaccIntro with "HAacc".
-    { iIntros "[$ HTq]". iExists _, _. by iFrame. }
-    iIntros "HTq". iSplitL.
-    by iExists _, _; iFrame.
-    iIntros "!> HΦ". wp_pures. by iApply "HΦ".
-  }
-Qed.
-
-Theorem release_semaphore_spec R γ (p epℓ eℓ dpℓ dℓ: loc) γa γtq γe γd:
-  is_semaphore R γ p epℓ eℓ dpℓ dℓ γa γtq γe γd -∗
-  inv (N .@ "permits") (∃ a, semaphore_permits γ a) -∗
-  {{{ R }}}
-    (release_semaphore segment_size) #p #dpℓ #dℓ
-  {{{ RET #(); True }}}.
-Proof.
-  iIntros "#HSemInv #HPermInv" (Φ) "!> HR HΦ". wp_lam. wp_pures.
-  wp_bind (FAA _ _).
-  iInv "HSemInv" as (availablePermits' v)
-                      "(HPerms & >HAuth & HTq & Hp & >HPure)" "HInvClose".
-  iDestruct "HPure" as %HPure.
-  remember (availablePermits' - v)%Z as op.
-  wp_faa.
-  destruct (decide (0 <= op)%Z).
-  {
-    iInv "HPermInv" as (availablePermits) ">HFrag" "HInvClose'".
-    iDestruct (own_valid_2 with "HAuth HFrag") as
-        %[<-%Excl_included%leibniz_equiv _]%auth_both_valid.
-    iMod (own_update_2 with "HAuth HFrag") as "[HAuth HFrag]".
-    {
-      apply auth_update, option_local_update.
-      apply (exclusive_local_update _ (Excl (1 + availablePermits)%nat)).
-      done.
-    }
-    iMod ("HInvClose'" with "[HFrag]") as "_"; first by eauto.
-    iMod ("HInvClose" with "[-HΦ]") as "_".
-    {
-      iExists _, _. simpl. iFrame "HAuth HTq". simpl.
-      iFrame "HR".
-      iSplitL "HPerms".
-      {
-        iApply (big_sepL_forall_2 with "HPerms").
-        by repeat rewrite seq_length.
-        done.
-      }
-      iSplitL.
-      {
-        rewrite Heqop.
-        replace (S availablePermits - v)%Z with (availablePermits - v + 1)%Z.
-        done.
-        lia.
-      }
-      iPureIntro. lia.
-    }
-    iModIntro. wp_pures. rewrite bool_decide_decide.
-    destruct (decide (0 <= op)%Z); try lia. wp_pures. by iApply "HΦ".
-  }
-
-  iMod (thread_as_counter_register_for_dequeue with "HR HTq")
-    as "[HAwak HTq]"; first by lia.
-
-  iMod ("HInvClose" with "[-HAwak HΦ]") as "_".
-  {
-    iExists _, _. iFrame. subst.
-    replace (availablePermits' - v + 1)%Z with (availablePermits' - (v - 1)%nat)%Z by lia.
-    iFrame "Hp". iPureIntro. lia.
-  }
-
-  iModIntro. wp_pures. rewrite bool_decide_decide.
-  rewrite decide_False; auto.
-  wp_pures.
-
-  by wp_apply (resume_in_semaphore_spec with "[$] [$] [$]").
-
-Qed.
+  iIntros (Φ) "[#HIsSem HR] HΦ". wp_lam.
+  iDestruct "HIsSem" as (e d p ->) "[HInv HTq]". wp_pures. wp_bind (FAA _ _).
+  iInv "HInv" as (availablePermits) "[HRs HOpen]" "HClose".
+  iDestruct "HOpen" as (enqueuedThreads) "(HState & Hp & >HPures)".
+  iDestruct "HPures" as %HPures.
+  destruct (decide (0 ≤ availablePermits - enqueuedThreads)%Z) as [HGe|HLt].
+  - assert (enqueuedThreads = 0) as -> by lia. rewrite Z.sub_0_r.
+    wp_faa. iMod ("HClose" with "[-HΦ]") as "_".
+    { iExists (S availablePermits). iFrame "HR HRs". iExists 0.
+      iFrame "HState". iSplitL; last by iPureIntro; lia.
+      replace (availablePermits + 1)%Z with (Z.of_nat (S availablePermits))
+        by lia.
+      by rewrite Z.sub_0_r. }
+    iModIntro. wp_pures. rewrite bool_decide_true; last lia. wp_pures.
+    by iApply "HΦ".
+  - iMod (thread_queue_register_for_dequeue' with "HTq [HR] HState")
+      as "[HState HAwak]"; [by solve_ndisj|lia|by iFrame|].
+    wp_faa. iMod ("HClose" with "[-HΦ HAwak]") as "_".
+    { iExists availablePermits. iFrame "HRs". iExists (enqueuedThreads - 1).
+      iFrame "HState". iSplitL; last by iPureIntro; lia.
+      by replace (availablePermits - enqueuedThreads + 1)%Z with
+          (availablePermits - (enqueuedThreads - 1)%nat)%Z by lia. }
+    iModIntro. wp_pures. rewrite bool_decide_false; last lia. wp_pures.
+    wp_lam. wp_pures. iApply (resumeSemaphore_spec with "[$]").
+    iIntros "!>" (r) "Hr".
+Abort.
 
 Theorem acquire_semaphore_spec Nint R γ (p epℓ eℓ dpℓ dℓ: loc) γa γtq γe γd
         γi cancHandle γth (threadHandle: loc):
