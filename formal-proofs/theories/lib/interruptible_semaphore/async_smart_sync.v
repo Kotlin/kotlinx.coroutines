@@ -12,36 +12,34 @@ Definition newSemaphore: val :=
   λ: "n", (ref "n", newThreadQueue array_interface #()).
 
 Definition acquireSemaphore: val :=
-  rec: "loop" "sem" :=
-    let: "availablePermits" := Fst ("sem") in
-    let: "e" := Fst (Snd ("sem")) in
-    let: "p" := FAA "availablePermits" #(-1) in
-    if: #0 < "p" then fillThreadQueueFuture #()
-    else match: suspend array_interface "e" with
-             NONE => "loop" "sem"
-           | SOME "v" => "v"
-         end.
+  λ: "sem",
+  let: "availablePermits" := Fst ("sem") in
+  let: "e" := Fst (Snd ("sem")) in
+  let: "p" := FAA "availablePermits" #(-1) in
+  if: #0 < "p" then fillThreadQueueFuture #()
+  else match: suspend array_interface "e" with
+           InjR "v" => "v"
+         | InjL "x" => "undefined"
+       end.
 
 Definition semaphoreResume: val :=
-  λ: "d", resume array_interface #(Z.of_nat 300) #true #true #true "d"
+  λ: "d", resume array_interface #(Z.of_nat 300) #true #false #false "d"
                  (λ: <>, #()) #().
 
 Definition releaseSemaphore: val :=
-  rec: "loop" "sem" :=
-    let: "availablePermits" := Fst ("sem") in
-    let: "d" := Snd (Snd ("sem")) in
-    let: "p" := FAA "availablePermits" #1 in
-    if: #0 ≤ "p" then #()
-    else if: semaphoreResume "d"
-         then #()
-         else "loop" "sem".
+  λ: "sem",
+  let: "availablePermits" := Fst ("sem") in
+  let: "d" := Snd (Snd ("sem")) in
+  let: "p" := FAA "availablePermits" #1 in
+  if: #0 ≤ "p" then #()
+  else semaphoreResume "d" ;; #().
 
 Definition cancelSemaphoreFuture : val :=
   λ: "sem" "f",
   let: "availablePermits" := Fst ("sem") in
   let: "d" := Snd (Snd ("sem")) in
   tryCancelThreadQueueFuture' array_interface
-                              #false #(Z.of_nat 300) #true #true
+                              #false #(Z.of_nat 300) #false #false
                               "d" (λ: <>, FAA "availablePermits" #1 < #0)
                               (λ: <>, #()) (λ: <>, releaseSemaphore "sem") "f".
 
@@ -74,7 +72,7 @@ Variable array_interface: infiniteArrayInterface.
 Variable array_spec: infiniteArraySpec _ array_interface.
 
 Let tqParams R :=
-  @ThreadQueueParameters Σ false True R True (fun v => ⌜#v = #()⌝)%I True.
+  @ThreadQueueParameters Σ false True R True (fun v => ⌜#v = #()⌝)%I False.
 
 Let isThreadQueue R := is_thread_queue NTq NFuture (tqParams R) _ array_spec.
 
@@ -102,16 +100,16 @@ Qed.
 
 Lemma resumeSemaphore_spec R maxWait (wait: bool) γa γtq γe γd e d:
   {{{ isThreadQueue R γa γtq γe γd e d ∗ awakening_permit γtq }}}
-    resume array_interface #(Z.of_nat maxWait) #true #true #wait d (λ: <>, #())%V #()
-  {{{ (r: bool), RET #r; if r then True else R }}}.
+    resume array_interface #(Z.of_nat maxWait) #true #false #wait d (λ: <>, #())%V #()
+  {{{ RET #true; True }}}.
 Proof.
   iIntros (Φ) "[#HTq HAwak] HΦ".
   iApply (resume_spec with "[] [HAwak]").
   5: { by iFrame "HTq HAwak". }
   by solve_ndisj. done. done.
-  { simpl. iIntros (Ψ) "!> _ HΨ". wp_pures. by iApply "HΨ". }
-  iIntros "!>" (r) "Hr". iApply "HΦ". simpl. destruct r; first done.
-  by iDestruct "Hr" as "(_ & $ & _)".
+  { simpl. iIntros (Ψ) "!> [% _] HΨ". wp_pures. by iApply "HΨ". }
+  iIntros "!>" (r) "Hr". simpl. destruct r; first by iApply "HΦ".
+  iDestruct "Hr" as "[% _]". lia.
 Qed.
 
 Theorem releaseSemaphore_spec R γa γtq γe γd s:
@@ -119,7 +117,7 @@ Theorem releaseSemaphore_spec R γa γtq γe γd s:
     releaseSemaphore array_interface s
   {{{ RET #(); True }}}.
 Proof.
-  iIntros (Φ) "[#HIsSem HR] HΦ". wp_lam. iLöb as "IH".
+  iIntros (Φ) "[#HIsSem HR] HΦ". wp_lam.
   iDestruct "HIsSem" as (e d p ->) "[HInv HTq]". wp_pures. wp_bind (FAA _ _).
   iInv "HInv" as (availablePermits) "[HRs HOpen]" "HClose".
   iDestruct "HOpen" as (enqueuedThreads) "(HState & Hp & >HPures)".
@@ -142,10 +140,8 @@ Proof.
       by replace (availablePermits - enqueuedThreads + 1)%Z with
           (availablePermits - (enqueuedThreads - 1)%nat)%Z by lia. }
     iModIntro. wp_pures. rewrite bool_decide_false; last lia. wp_pures.
-    wp_lam. wp_pures. wp_apply (resumeSemaphore_spec with "[$]").
-    iIntros (r) "Hr".
-    destruct r; wp_pures. by iApply "HΦ".
-    wp_lam. iApply ("IH" with "Hr HΦ").
+    wp_lam. wp_pures. wp_apply (resumeSemaphore_spec with "[$]"). iIntros "_".
+    wp_pures. by iApply "HΦ".
 Qed.
 
 Theorem acquireSemaphore_spec R γa γtq γe γd s:
@@ -154,7 +150,7 @@ Theorem acquireSemaphore_spec R γa γtq γe γd s:
   {{{ γf v, RET v; is_semaphore_future R γtq γa γf v ∗
                    thread_queue_future_cancellation_permit γf }}}.
 Proof.
-  iIntros (Φ) "#HIsSem HΦ". wp_lam. iLöb as "IH".
+  iIntros (Φ) "#HIsSem HΦ". wp_lam.
   iDestruct "HIsSem" as (e d p ->) "[HInv HTq]". wp_pures. wp_bind (FAA _ _).
   iInv "HInv" as (availablePermits) "[HRs HOpen]" "HClose".
   iDestruct "HOpen" as (enqueuedThreads) "(HState & Hp & >HPures)".
@@ -184,10 +180,10 @@ Proof.
       by replace (availablePermits - enqueuedThreads + -1)%Z with
           (availablePermits - S enqueuedThreads)%Z by lia. }
     iModIntro. wp_pures. rewrite bool_decide_false; last lia. wp_pures.
-    wp_apply (suspend_spec with "[$]")=> /=. iIntros (v) "[[-> _]|Hv]".
-    + wp_pures. wp_lam. iApply ("IH" with "HΦ").
-    + iDestruct "Hv" as (γf v') "(-> & HFuture & HCancPermit)". wp_pures.
-      iApply "HΦ". iFrame.
+    wp_apply (suspend_spec with "[$]")=> /=. iIntros (v) "[(_ & _ & %)|Hv]".
+    done.
+    iDestruct "Hv" as (γf v') "(-> & HFuture & HCancPermit)". wp_pures.
+    iApply "HΦ". iFrame.
 Qed.
 
 Theorem cancelSemaphoreFuture_spec R γa γtq γe γd s γf f:
@@ -243,12 +239,8 @@ Proof.
     iIntros "#HCancelled !> [Hv HΦ]". wp_pures.
     iDestruct "Hv" as "[[-> _]|Hv]"; first by wp_pures.
     iDestruct "Hv" as (x ->) "(#HInhabited' & HAwak & %)"; simplify_eq.
-    wp_pures. wp_apply (resumeSemaphore_spec with "[$]").
-    iIntros (r) "Hr". destruct r; wp_pures; first done.
-    wp_apply (releaseSemaphore_spec with "[Hr]").
-    { iSplitR; last by iApply "Hr". iExists _, _, _.
-      iSplitR; first done. iFrame "HInv HTq". }
-    iIntros "_". by wp_pures.
+    wp_pures. wp_apply (resumeSemaphore_spec with "[$]"). iIntros "_".
+    by wp_pures.
   - rewrite bool_decide_true; last lia. assert (enqueuedThreads = 0) as -> by lia.
     simpl. iDestruct "HState" as "(HState & HR & #HInhabited)".
     wp_faa.

@@ -5,6 +5,8 @@
 -arg -w -arg -projection-no-head-constant
 ./theories/lib/thread_queue/thread_queue.v
 ./theories/lib/interruptible_semaphore/sync_smart_sync.v
+./theories/lib/interruptible_semaphore/async_immediate.v
+./theories/lib/interruptible_semaphore/async_smart_sync.v
 ./theories/lib/concurrent_linked_list/segment_spec.v
 ./theories/lib/concurrent_linked_list/segment_interfaces.v
 ./theories/lib/concurrent_linked_list/list_interfaces.v
