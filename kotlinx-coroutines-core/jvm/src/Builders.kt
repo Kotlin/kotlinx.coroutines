@@ -84,7 +84,7 @@ private class BlockingCoroutine<T>(
                     val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
                     // note: process next even may loose unpark flag, so check if completed before parking
                     if (isCompleted) break
-                    if (parkNanos < 0 || parkNanos >= Long.MAX_VALUE) {
+                    if (parkNanos <= 0 || parkNanos >= Long.MAX_VALUE) {
                         0L
                     } else {
                         if (parkNanos > 10_000_000L && isMainThread) {
