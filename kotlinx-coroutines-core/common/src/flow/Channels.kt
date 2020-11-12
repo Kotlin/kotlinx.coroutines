@@ -201,7 +201,7 @@ public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
  */
 @Deprecated(
     message = "Use shareIn operator and the resulting SharedFlow as a replacement for BroadcastChannel",
-    replaceWith = ReplaceWith("shareIn(scope, 0, SharingStarted.Lazily)"),
+    replaceWith = ReplaceWith("this.shareIn(scope, SharingStarted.Lazily, 0)"),
     level = DeprecationLevel.WARNING
 )
 public fun <T> Flow<T>.broadcastIn(
