@@ -721,7 +721,19 @@ internal class CoroutineScheduler(
             }
             assert { localQueue.size == 0 }
             workerCtl.value = PARKED // Update value once
-            while (inStack()) { // Prevent spurious wakeups
+            /*
+             * inStack() prevents spurious wakeups, while workerCtl.value == PARKED
+             * prevents the following race:
+             *
+             * - T2 scans the queue, adds itself to the stack, goes to rescan
+             * - T2 suspends in 'workerCtl.value = PARKED' line
+             * - T1 pops T2 from the stack, claims workerCtl, suspends
+             * - T2 fails 'while (inStack())' check, goes to full rescan
+             * - T2 adds itself to the stack, parks
+             * - T1 unparks T2, bails out with success
+             * - T2 unparks and loops in 'while (inStack())'
+             */
+            while (inStack() && workerCtl.value == PARKED) { // Prevent spurious wakeups
                 if (isTerminated || state == WorkerState.TERMINATED) break
                 tryReleaseCpu(WorkerState.PARKING)
                 interrupted() // Cleanup interruptions
