@@ -10,13 +10,9 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import org.junit.platform.commons.support.AnnotationSupport
-import org.junit.runners.model.*
 import java.lang.reflect.Method
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.FutureTask
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
+
+public class CoroutinesTimeoutException(public val timeoutMs: Long): Exception("test timed out ofter $timeoutMs ms")
 
 public class CoroutinesTimeoutExtension: InvocationInterceptor {
 
@@ -107,7 +103,9 @@ public class CoroutinesTimeoutExtension: InvocationInterceptor {
         DebugProbes.enableCreationStackTraces = annotation.enableCoroutineCreationStackTraces
         DebugProbes.install()
         return try {
-            runWithTimeoutDumpingCoroutines(methodName, annotation.testTimeoutMs, annotation.cancelOnTimeout) {
+            runWithTimeoutDumpingCoroutines(methodName, annotation.testTimeoutMs, annotation.cancelOnTimeout,
+                { CoroutinesTimeoutException(annotation.testTimeoutMs) }
+            ) {
                 invocation.proceed()
             }
         } finally {

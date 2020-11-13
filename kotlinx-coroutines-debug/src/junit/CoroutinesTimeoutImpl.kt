@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.debug
 
-import org.junit.runners.model.*
 import java.util.concurrent.*
 
 /**
@@ -17,6 +16,7 @@ internal inline fun <T : Any?> runWithTimeoutDumpingCoroutines(
     methodName: String,
     testTimeoutMs: Long,
     cancelOnTimeout: Boolean,
+    initCancellationException: () -> Throwable,
     crossinline invocation: () -> T
 ): T {
     val testStartedLatch = CountDownLatch(1)
@@ -35,13 +35,14 @@ internal inline fun <T : Any?> runWithTimeoutDumpingCoroutines(
         testStartedLatch.await()
         return testResult.get(testTimeoutMs, TimeUnit.MILLISECONDS)
     } catch (e: TimeoutException) {
-        handleTimeout(testThread, methodName, testTimeoutMs, cancelOnTimeout)
+        handleTimeout(testThread, methodName, testTimeoutMs, cancelOnTimeout, initCancellationException())
     } catch (e: ExecutionException) {
         throw e.cause ?: e
     }
 }
 
-private fun handleTimeout(testThread: Thread, methodName: String, testTimeoutMs: Long, cancelOnTimeout: Boolean): Nothing {
+private fun handleTimeout(testThread: Thread, methodName: String, testTimeoutMs: Long, cancelOnTimeout: Boolean,
+                          cancellationException: Throwable): Nothing {
     val units =
         if (testTimeoutMs % 1000 == 0L)
             "${testTimeoutMs / 1000} seconds"
@@ -59,10 +60,11 @@ private fun handleTimeout(testThread: Thread, methodName: String, testTimeoutMs:
      * 2) Cancel all coroutines via debug agent API (changing system state!)
      * 3) Throw created exception
      */
-    val exception = createTimeoutException(testThread, testTimeoutMs)
+    cancellationException.attachStacktraceFrom(testThread)
+    testThread.interrupt()
     cancelIfNecessary(cancelOnTimeout)
     // If timed out test throws an exception, we can't do much except ignoring it
-    throw exception
+    throw cancellationException
 }
 
 private fun cancelIfNecessary(cancelOnTimeout: Boolean) {
@@ -73,10 +75,7 @@ private fun cancelIfNecessary(cancelOnTimeout: Boolean) {
     }
 }
 
-private fun createTimeoutException(thread: Thread, testTimeoutMs: Long): Exception {
+private fun Throwable.attachStacktraceFrom(thread: Thread) {
     val stackTrace = thread.stackTrace
-    val exception = TestTimedOutException(testTimeoutMs, TimeUnit.MILLISECONDS)
-    exception.stackTrace = stackTrace
-    thread.interrupt()
-    return exception
+    this.stackTrace = stackTrace
 }

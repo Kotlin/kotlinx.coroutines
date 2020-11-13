@@ -7,6 +7,7 @@ package kotlinx.coroutines.debug.junit4
 import kotlinx.coroutines.debug.*
 import org.junit.runner.*
 import org.junit.runners.model.*
+import java.util.concurrent.*
 
 internal class CoroutinesTimeoutStatement(
     private val testStatement: Statement,
@@ -17,7 +18,9 @@ internal class CoroutinesTimeoutStatement(
 
     override fun evaluate() {
         try {
-            runWithTimeoutDumpingCoroutines(testDescription.methodName, testTimeoutMs, cancelOnTimeout) {
+            runWithTimeoutDumpingCoroutines(testDescription.methodName, testTimeoutMs, cancelOnTimeout,
+                { TestTimedOutException(testTimeoutMs, TimeUnit.MILLISECONDS) })
+            {
                 testStatement.evaluate()
             }
         } finally {

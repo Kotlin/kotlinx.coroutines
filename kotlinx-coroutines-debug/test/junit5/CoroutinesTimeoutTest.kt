@@ -4,6 +4,7 @@
 
 package junit5
 
+import kotlinx.coroutines.debug.junit5.*
 import org.assertj.core.api.*
 import org.junit.*
 import org.junit.platform.engine.discovery.DiscoverySelectors.*
@@ -36,10 +37,9 @@ private fun ListAssert<Event>.testFinishedSuccessfully(testName: String): ListAs
         finishedSuccessfully()
     ))
 
-private fun ListAssert<Event>.testTimedOut(testName: String, after: Int): ListAssert<Event> =
+private fun ListAssert<Event>.testTimedOut(testName: String, after: Long): ListAssert<Event> =
     haveExactly(1, event(
         test(testName),
-        finishedWithFailure(instanceOf(TestTimedOutException::class.java), message {
-            it.contains(Regex("\\b$after\\b"))
-        })
+        finishedWithFailure(Condition({ it is CoroutinesTimeoutException && it.timeoutMs == after },
+            "is CoroutinesTimeoutException($after)"))
     ))
