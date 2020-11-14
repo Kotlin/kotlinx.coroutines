@@ -339,7 +339,6 @@ internal class SelectBuilderImpl<in R>(
             if (trySelect())
                 resumeSelectWithException(job.getCancellationException())
         }
-        override fun toString(): String = "SelectOnCancelling[${this@SelectBuilderImpl}]"
     }
 
     @PublishedApi

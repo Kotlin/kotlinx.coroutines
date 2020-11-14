@@ -41,7 +41,6 @@ private class CancelFutureOnCompletion(
         // interruption flag and it will cause spurious failures elsewhere
         future.cancel(false)
     }
-    override fun toString() = "CancelFutureOnCompletion[$future]"
 }
 
 private class CancelFutureOnCancel(private val future: Future<*>) : CancelHandler()  {
