@@ -190,6 +190,14 @@ jvmTest {
         exclude '**/*StressTest.*'
     }
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
+
+    // TODO: JVM IR generates different stacktrace so temporary disable stacktrace tests
+    if (rootProject.ext.jvm_ir_enabled) {
+        filter {
+            excludeTest('kotlinx.coroutines.debug.CoroutinesDumpTest', 'testCreationStackTrace')
+            excludeTestsMatching('kotlinx.coroutines.exceptions.StackTraceRecovery*')
+        }
+    }
 }
 
 jvmJar {
