@@ -4,10 +4,14 @@
 
 package kotlinx.coroutines.sync
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
 class MutexTest : TestBase() {
+    private val enterCount = atomic(0)
+    private val releasedCount = atomic(0)
+
     @Test
     fun testSimple() = runTest {
         val mutex = Mutex()
@@ -105,5 +109,36 @@ class MutexTest : TestBase() {
         // no lock
         assertFalse(mutex.holdsLock(firstOwner))
         assertFalse(mutex.holdsLock(secondOwner))
+    }
+
+    @Test
+    fun cancelLock() = runTest() {
+        val mutex = Mutex()
+        enterCount.value = 0
+        releasedCount.value = 0
+        repeat(1000) {
+            val job = launch(Dispatchers.Default) {
+                val owner = Any()
+                try {
+                    enterCount.incrementAndGet()
+                    mutex.withLock(owner) {}
+                    // repeat to give an increase in race probability
+                    mutex.withLock(owner) {}
+                } finally {
+                    // should be no way lock is still held by owner here
+                    if (mutex.holdsLock(owner)) {
+                        // if it is held, ensure test case doesn't lockup
+                        mutex.unlock(owner)
+                    } else {
+                        releasedCount.incrementAndGet()
+                    }
+                }
+            }
+            mutex.withLock {
+                job.cancel()
+            }
+            job.join()
+        }
+        assertEquals(enterCount.value, releasedCount.value)
     }
 }
