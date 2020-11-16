@@ -112,28 +112,28 @@ public inline fun <T> SharedFlow<T>.retry(
 public inline fun <T> SharedFlow<T>.retryWhen(noinline predicate: suspend FlowCollector<T>.(cause: Throwable, attempt: Long) -> Boolean): Flow<T> =
     (this as Flow<T>).retryWhen(predicate)
 
+@Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated(
     message = "SharedFlow never completes, so this terminal operation never completes.",
-    level = DeprecationLevel.WARNING,
-    replaceWith = ReplaceWith("awaitCancellation()")
+    level = DeprecationLevel.WARNING
 )
 @InlineOnly
 public suspend inline fun <T> SharedFlow<T>.toList(): List<T> =
     (this as Flow<T>).toList()
 
+@Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated(
     message = "SharedFlow never completes, so this terminal operation never completes.",
-    level = DeprecationLevel.WARNING,
-    replaceWith = ReplaceWith("awaitCancellation()")
+    level = DeprecationLevel.WARNING
 )
 @InlineOnly
 public suspend inline fun <T> SharedFlow<T>.toSet(): Set<T> =
     (this as Flow<T>).toSet()
 
+@Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated(
     message = "SharedFlow never completes, so this terminal operation never completes.",
-    level = DeprecationLevel.WARNING,
-    replaceWith = ReplaceWith("awaitCancellation()")
+    level = DeprecationLevel.WARNING
 )
 @InlineOnly
 public suspend inline fun <T> SharedFlow<T>.count(): Int =
