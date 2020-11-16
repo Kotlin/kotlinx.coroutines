@@ -537,8 +537,6 @@ Collection of a flow always happens in the context of the calling coroutine. For
 a `simple` flow, then the following code runs in the context specified
 by the author of this code, regardless of the implementation details of the `simple` flow:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
-
 ```kotlin
 withContext(context) {
     simple().collect { value ->
@@ -1523,8 +1521,6 @@ Done
 The key advantage of [onCompletion] is a nullable `Throwable` parameter of the lambda that can be used
 to determine whether the flow collection was completed normally or exceptionally. In the following
 example the `simple` flow throws an exception after emitting the number 1:
-
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
