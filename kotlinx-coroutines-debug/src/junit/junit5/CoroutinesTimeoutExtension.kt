@@ -6,15 +6,33 @@ package kotlinx.coroutines.debug.junit5
 
 import kotlinx.coroutines.debug.*
 import kotlinx.coroutines.debug.runWithTimeoutDumpingCoroutines
-import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.jupiter.api.extension.InvocationInterceptor
-import org.junit.jupiter.api.extension.ReflectiveInvocationContext
+import org.junit.jupiter.api.extension.*
 import org.junit.platform.commons.support.AnnotationSupport
-import java.lang.reflect.Method
+import java.lang.reflect.*
 
 public class CoroutinesTimeoutException(public val timeoutMs: Long): Exception("test timed out ofter $timeoutMs ms")
 
-public class CoroutinesTimeoutExtension: InvocationInterceptor {
+public class CoroutinesTimeoutExtension internal constructor(): InvocationInterceptor {
+
+    private companion object {
+        val NAMESPACE = ExtensionContext.Namespace.create("kotlinx", "coroutines", "debug", "junit5",
+            "CoroutinesTimeout")
+    }
+
+    override fun <T : Any?> interceptTestClassConstructor(
+        invocation: InvocationInterceptor.Invocation<T>,
+        invocationContext: ReflectiveInvocationContext<Constructor<T>>,
+        extensionContext: ExtensionContext
+    ): T {
+        if (extensionContext.getStore(NAMESPACE)["debugProbes"] == null) {
+            DebugProbes.install()
+            val uninstall: ExtensionContext.Store.CloseableResource = ExtensionContext.Store.CloseableResource {
+                DebugProbes.uninstall()
+            }
+            extensionContext.getStore(NAMESPACE).put("debugProbes", uninstall)
+        }
+        return invocation.proceed()
+    }
 
     override fun interceptTestMethod(
         invocation: InvocationInterceptor.Invocation<Void>,
@@ -101,15 +119,12 @@ public class CoroutinesTimeoutExtension: InvocationInterceptor {
         annotation: CoroutinesTimeout
     ): T {
         DebugProbes.enableCreationStackTraces = annotation.enableCoroutineCreationStackTraces
-        DebugProbes.install()
         return try {
             runWithTimeoutDumpingCoroutines(methodName, annotation.testTimeoutMs, annotation.cancelOnTimeout,
                 { CoroutinesTimeoutException(annotation.testTimeoutMs) }
             ) {
                 invocation.proceed()
             }
-        } finally {
-            DebugProbes.uninstall()
         }
     }
 }

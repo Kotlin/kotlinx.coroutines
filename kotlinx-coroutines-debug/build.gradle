@@ -43,6 +43,8 @@ if (rootProject.ext.jvm_ir_enabled) {
 }
 
 java {
+    /* This is needed to be able to run JUnit5 tests. Otherwise, Gradle complains that it can't find the
+    JVM1.6-compatible version of the `junit-platform-testkit` artifact. */
     disableAutoTargetJvm()
 }
 
