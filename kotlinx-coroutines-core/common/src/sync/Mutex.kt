@@ -201,17 +201,8 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                         // try lock
                         val update = if (owner == null) EMPTY_LOCKED else Empty(owner)
                         if (_state.compareAndSet(state, update)) { // locked
-                            val token = cont.tryResume(Unit, idempotent = null) {
-                                // if this continuation gets cancelled during dispatch to the caller, then release
-                                // the lock
-                                unlock(owner)
-                            }
-                            if (token != null) {
-                                cont.completeResume(token)
-                            } else {
-                                // failure to get token implies already cancelled
-                                unlock(owner)
-                            }
+                            // TODO implement functional type in LockCont as soon as we get rid of legacy JS
+                            cont.resume(Unit) { unlock(owner) }
                             return@sc
                         }
                     }
