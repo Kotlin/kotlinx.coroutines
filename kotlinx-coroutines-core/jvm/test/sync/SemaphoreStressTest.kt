@@ -102,7 +102,6 @@ class SemaphoreStressTest : TestBase() {
             }
             semaphore.withPermit {
                 job.cancel()
-
             }
             job.join()
             assertTrue { semaphore.availablePermits == 1 }
