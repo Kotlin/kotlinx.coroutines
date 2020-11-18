@@ -1064,6 +1064,7 @@ public final class kotlinx/coroutines/flow/LintKt {
 }
 
 public abstract interface class kotlinx/coroutines/flow/MutableSharedFlow : kotlinx/coroutines/flow/FlowCollector, kotlinx/coroutines/flow/SharedFlow {
+	public abstract fun emit (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getSubscriptionCount ()Lkotlinx/coroutines/flow/StateFlow;
 	public abstract fun resetReplayCache ()V
 	public abstract fun tryEmit (Ljava/lang/Object;)Z
