@@ -4,18 +4,16 @@
 
 @file:Suppress("unused")
 
-package kotlinx.coroutines.linearizability
+package kotlinx.coroutines.lincheck
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import org.jetbrains.kotlinx.lincheck.*
 import org.jetbrains.kotlinx.lincheck.annotations.*
-import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.paramgen.*
-import org.jetbrains.kotlinx.lincheck.verifier.*
-import org.junit.*
+import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
 
-
-class SegmentListRemoveLCStressTest : VerifierState() {
+class SegmentListRemoveLincheckTest : AbstractLincheckTest() {
     private val q = SegmentBasedQueue<Int>()
     private val segments: Array<OneElementSegment<Int>>
 
@@ -29,6 +27,9 @@ class SegmentListRemoveLCStressTest : VerifierState() {
         segments[index].removeSegment()
     }
 
+    override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O = this
+        .actorsBefore(0).actorsAfter(0)
+
     override fun extractState() = segments.map { it.logicallyRemoved }
 
     @Validate
@@ -37,9 +38,6 @@ class SegmentListRemoveLCStressTest : VerifierState() {
         q.checkAllSegmentsAreNotLogicallyRemoved()
     }
 
-    @Test
-    fun test() = LCStressOptionsDefault()
-        .actorsBefore(0)
-        .actorsAfter(0)
-        .check(this::class)
+    override fun ModelCheckingOptions.customize(isStressTest: Boolean) =
+        checkObstructionFreedom()
 }

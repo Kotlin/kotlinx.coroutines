@@ -3,7 +3,7 @@
  */
 @file:Suppress("unused")
 
-package kotlinx.coroutines.linearizability
+package kotlinx.coroutines.lincheck
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -11,37 +11,37 @@ import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.selects.*
+import org.jetbrains.kotlinx.lincheck.*
 import org.jetbrains.kotlinx.lincheck.annotations.*
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.paramgen.*
 import org.jetbrains.kotlinx.lincheck.verifier.*
-import org.junit.*
 
-class RendezvousChannelLCStressTest : ChannelLCStressTestBase(
+class RendezvousChannelLincheckTest : ChannelLincheckTestBase(
     c = Channel(RENDEZVOUS),
     sequentialSpecification = SequentialRendezvousChannel::class.java
 )
 class SequentialRendezvousChannel : SequentialIntChannelBase(RENDEZVOUS)
 
-class Array1ChannelLCStressTest : ChannelLCStressTestBase(
+class Array1ChannelLincheckTest : ChannelLincheckTestBase(
     c = Channel(1),
     sequentialSpecification = SequentialArray1RendezvousChannel::class.java
 )
 class SequentialArray1RendezvousChannel : SequentialIntChannelBase(1)
 
-class Array2ChannelLCStressTest : ChannelLCStressTestBase(
+class Array2ChannelLincheckTest : ChannelLincheckTestBase(
     c = Channel(2),
     sequentialSpecification = SequentialArray2RendezvousChannel::class.java
 )
 class SequentialArray2RendezvousChannel : SequentialIntChannelBase(2)
 
-class UnlimitedChannelLCStressTest : ChannelLCStressTestBase(
+class UnlimitedChannelLincheckTest : ChannelLincheckTestBase(
     c = Channel(UNLIMITED),
     sequentialSpecification = SequentialUnlimitedChannel::class.java
 )
 class SequentialUnlimitedChannel : SequentialIntChannelBase(UNLIMITED)
 
-class ConflatedChannelLCStressTest : ChannelLCStressTestBase(
+class ConflatedChannelLincheckTest : ChannelLincheckTestBase(
     c = Channel(CONFLATED),
     sequentialSpecification = SequentialConflatedChannel::class.java
 )
@@ -51,8 +51,11 @@ class SequentialConflatedChannel : SequentialIntChannelBase(CONFLATED)
     Param(name = "value", gen = IntGen::class, conf = "1:5"),
     Param(name = "closeToken", gen = IntGen::class, conf = "1:3")
 )
-abstract class ChannelLCStressTestBase(private val c: Channel<Int>, private val sequentialSpecification: Class<*>) {
-    @Operation
+abstract class ChannelLincheckTestBase(
+    private val c: Channel<Int>,
+    private val sequentialSpecification: Class<*>
+) : AbstractLincheckTest() {
+    @Operation(promptCancellation = true)
     suspend fun send(@Param(name = "value") value: Int): Any = try {
         c.send(value)
     } catch (e: NumberedCancellationException) {
@@ -74,7 +77,7 @@ abstract class ChannelLCStressTestBase(private val c: Channel<Int>, private val 
         e.testResult
     }
 
-    @Operation
+    @Operation(promptCancellation = true)
     suspend fun receive(): Any = try {
         c.receive()
     } catch (e: NumberedCancellationException) {
@@ -96,7 +99,7 @@ abstract class ChannelLCStressTestBase(private val c: Channel<Int>, private val 
         e.testResult
     }
 
-    @Operation
+    @Operation(causesBlocking = true)
     fun close(@Param(name = "closeToken") token: Int): Boolean = c.close(NumberedCancellationException(token))
 
     // TODO: this operation should be (and can be!) linearizable, but is not
@@ -113,11 +116,8 @@ abstract class ChannelLCStressTestBase(private val c: Channel<Int>, private val 
     // @Operation
     fun isEmpty() = c.isEmpty
 
-    @Test
-    fun test() = LCStressOptionsDefault()
-        .actorsBefore(0)
-        .sequentialSpecification(sequentialSpecification)
-        .check(this::class)
+    override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
+        actorsBefore(0).sequentialSpecification(sequentialSpecification)
 }
 
 private class NumberedCancellationException(number: Int) : CancellationException() {

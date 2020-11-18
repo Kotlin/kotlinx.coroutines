@@ -184,13 +184,30 @@ jvmTest {
     minHeapSize = '1g'
     maxHeapSize = '1g'
     enableAssertions = true
-    systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
+    if (!Idea.active) {
+        // We should not set this security manager when `jvmTest`
+        // is invoked by IntelliJ IDEA since we need to pass
+        // system properties for Lincheck and stress tests.
+        // TODO this can be removed once IDEA is allowed to use `jvmLincheckTest` and
+        // TODO `jvmStressTest` tasks for the corresponding tests instead of using `jvmTest`.
+        systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
+    }
     // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
     if (!Idea.active && rootProject.properties['stress'] == null) {
+        exclude '**/*LincheckTest.*'
         exclude '**/*StressTest.*'
     }
-    systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
-
+    if (Idea.active) {
+        // Configure the IDEA runner for Lincheck and stress tests
+        // TODO this can be removed once IDEA is allowed to use `jvmLincheckTest` and
+        // TODO `jvmStressTest` tasks for the corresponding tests instead of using `jvmTest`.
+        jvmArgs = ['--add-opens', 'java.base/jdk.internal.misc=ALL-UNNAMED',   // required for transformation
+                   '--add-exports', 'java.base/jdk.internal.util=ALL-UNNAMED'] // in the model checking mode
+        maxHeapSize = '6g' // we need more memory for model checking
+        systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2' // better for testing in general
+        systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '1' // better for model checking
+        systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
+    }
     // TODO: JVM IR generates different stacktrace so temporary disable stacktrace tests
     if (rootProject.ext.jvm_ir_enabled) {
         filter {
@@ -219,12 +236,26 @@ task jvmStressTest(type: Test, dependsOn: compileTestKotlinJvm) {
     systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '10'
 }
 
+task jvmLincheckTest(type: Test, dependsOn: compileTestKotlinJvm) {
+    classpath = files { jvmTest.classpath }
+    testClassesDirs = files { jvmTest.testClassesDirs }
+    minHeapSize = '1g'
+    maxHeapSize = '6g' // we may need more space for building an interleaving tree in the model checking mode
+    include '**/*LincheckTest.*'
+    enableAssertions = true
+    testLogging.showStandardStreams = true
+    jvmArgs = ['--add-opens', 'java.base/jdk.internal.misc=ALL-UNNAMED',   // required for transformation
+               '--add-exports', 'java.base/jdk.internal.util=ALL-UNNAMED'] // in the model checking mode
+    systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2'
+    systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '1' // better for the model checking mode
+}
+
 task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
     executable = "$System.env.JDK_16/bin/java"
     exclude '**/*LFStressTest.*' // lock-freedom tests use LockFreedomTestEnvironment which needs JDK8
-    exclude '**/*LCStressTest.*' // lin-check tests use LinChecker which needs JDK8
+    exclude '**/*LincheckTest.*' // Lincheck tests use LinChecker which needs JDK8
     exclude '**/exceptions/**'   // exceptions tests check suppressed exception which needs JDK8
     exclude '**/ExceptionsGuideTest.*'
     exclude '**/RunInterruptibleStressTest.*' // fails on JDK 1.6 due to JDK bug
@@ -234,7 +265,7 @@ task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
 jdk16Test.onlyIf { project.properties['stressTest'] != null }
 
 // Always run those tests
-task moreTest(dependsOn: [jvmStressTest, jdk16Test])
+task moreTest(dependsOn: [jvmStressTest, jvmLincheckTest, jdk16Test])
 build.dependsOn moreTest
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {
