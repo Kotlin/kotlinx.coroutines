@@ -23,7 +23,7 @@ internal const val MODE_ATOMIC = 0
  * **DO NOT CHANGE THE CONSTANT VALUE**. It is being into the user code from [suspendCancellableCoroutine].
  */
 @PublishedApi
-internal const val MODE_CANCELLABLE = 1
+internal const val MODE_CANCELLABLE: Int = 1
 
 /**
  * Cancellable dispatch mode for [suspendCancellableCoroutineReusable].
