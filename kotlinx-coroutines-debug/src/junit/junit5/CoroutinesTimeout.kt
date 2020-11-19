@@ -15,6 +15,5 @@ import java.lang.annotation.*
 @Inherited
 public annotation class CoroutinesTimeout(
     val testTimeoutMs: Long,
-    val cancelOnTimeout: Boolean = false,
-    val enableCoroutineCreationStackTraces: Boolean = true
+    val cancelOnTimeout: Boolean = false
 )

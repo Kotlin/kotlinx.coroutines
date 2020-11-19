@@ -12,11 +12,23 @@ import java.lang.reflect.*
 
 public class CoroutinesTimeoutException(public val timeoutMs: Long): Exception("test timed out ofter $timeoutMs ms")
 
-public class CoroutinesTimeoutExtension internal constructor(): InvocationInterceptor {
+public class CoroutinesTimeoutExtension internal constructor(
+    private val enableCoroutineCreationStackTraces: Boolean = true,
+    private val timeoutMs: Long? = null,
+    private val cancelOnTimeout: Boolean? = null): InvocationInterceptor
+{
+    public constructor(timeoutMs: Long, cancelOnTimeout: Boolean = false,
+                       enableCoroutineCreationStackTraces: Boolean = true):
+        this(enableCoroutineCreationStackTraces, timeoutMs, cancelOnTimeout)
 
-    private companion object {
-        val NAMESPACE = ExtensionContext.Namespace.create("kotlinx", "coroutines", "debug", "junit5",
-            "CoroutinesTimeout")
+    public companion object {
+        private val NAMESPACE: ExtensionContext.Namespace =
+            ExtensionContext.Namespace.create("kotlinx", "coroutines", "debug", "junit5", "CoroutinesTimeout")
+
+        @JvmOverloads
+        public fun seconds(timeout: Int, cancelOnTimeout: Boolean = false,
+                           enableCoroutineCreationStackTraces: Boolean = true): CoroutinesTimeoutExtension =
+            CoroutinesTimeoutExtension(enableCoroutineCreationStackTraces, timeout.toLong() * 1000, cancelOnTimeout)
     }
 
     override fun <T : Any?> interceptTestClassConstructor(
@@ -24,12 +36,15 @@ public class CoroutinesTimeoutExtension internal constructor(): InvocationInterc
         invocationContext: ReflectiveInvocationContext<Constructor<T>>,
         extensionContext: ExtensionContext
     ): T {
-        if (extensionContext.getStore(NAMESPACE)["debugProbes"] == null) {
+        val store: ExtensionContext.Store = extensionContext.getStore(NAMESPACE)
+        if (store["debugProbes"] == null) {
+            /** no [DebugProbes] uninstaller is present, so this must be the first test that this instance of
+             * [CoroutinesTimeoutExtension] runs. Install the [DebugProbes]. */
+            DebugProbes.enableCreationStackTraces = enableCoroutineCreationStackTraces
             DebugProbes.install()
-            val uninstall: ExtensionContext.Store.CloseableResource = ExtensionContext.Store.CloseableResource {
-                DebugProbes.uninstall()
-            }
-            extensionContext.getStore(NAMESPACE).put("debugProbes", uninstall)
+            /** put a fake resource into this extensions's store so that JUnit cleans it up, uninstalling the
+             * [DebugProbes] after this extension instance is no longer needed. **/
+            store.put("debugProbes", ExtensionContext.Store.CloseableResource { DebugProbes.uninstall() })
         }
         return invocation.proceed()
     }
@@ -117,14 +132,7 @@ public class CoroutinesTimeoutExtension internal constructor(): InvocationInterc
         invocation: InvocationInterceptor.Invocation<T>,
         methodName: String,
         annotation: CoroutinesTimeout
-    ): T {
-        DebugProbes.enableCreationStackTraces = annotation.enableCoroutineCreationStackTraces
-        return try {
-            runWithTimeoutDumpingCoroutines(methodName, annotation.testTimeoutMs, annotation.cancelOnTimeout,
-                { CoroutinesTimeoutException(annotation.testTimeoutMs) }
-            ) {
-                invocation.proceed()
-            }
-        }
-    }
+    ): T =
+        runWithTimeoutDumpingCoroutines(methodName, annotation.testTimeoutMs, annotation.cancelOnTimeout,
+            { CoroutinesTimeoutException(annotation.testTimeoutMs) }, { invocation.proceed()})
 }
