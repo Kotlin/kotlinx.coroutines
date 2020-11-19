@@ -9,6 +9,7 @@ import kotlinx.coroutines.debug.runWithTimeoutDumpingCoroutines
 import org.junit.jupiter.api.extension.*
 import org.junit.platform.commons.support.AnnotationSupport
 import java.lang.reflect.*
+import java.util.*
 
 public class CoroutinesTimeoutException(public val timeoutMs: Long): Exception("test timed out ofter $timeoutMs ms")
 
@@ -103,6 +104,11 @@ public class CoroutinesTimeoutExtension internal constructor(
         interceptNormalMethod(invocation, invocationContext, extensionContext)
     }
 
+    private fun<T> Class<T>.coroutinesTimeoutAnnotation(): Optional<CoroutinesTimeout> =
+        AnnotationSupport.findAnnotation(this, CoroutinesTimeout::class.java).or {
+            enclosingClass?.coroutinesTimeoutAnnotation() ?: Optional.empty()
+        }
+
     private fun <T: Any?> interceptNormalMethod(
         invocation: InvocationInterceptor.Invocation<T>,
         invocationContext: ReflectiveInvocationContext<Method>,
@@ -110,7 +116,7 @@ public class CoroutinesTimeoutExtension internal constructor(
     ): T {
         val annotation =
             AnnotationSupport.findAnnotation(invocationContext.executable, CoroutinesTimeout::class.java).or {
-                AnnotationSupport.findAnnotation(extensionContext.testClass, CoroutinesTimeout::class.java)
+                extensionContext.testClass.flatMap { it.coroutinesTimeoutAnnotation() }
             }.orElseGet {
                 throw UnsupportedOperationException("CoroutinesTimeoutExtension should not be used directly; annotate the test class or method with CoroutinesTimeout instead.")
             }
