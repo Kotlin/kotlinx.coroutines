@@ -63,7 +63,7 @@ public class CoroutinesTimeoutExtension internal constructor(
         invocationContext: ReflectiveInvocationContext<Method>,
         extensionContext: ExtensionContext
     ) {
-        interceptLifecycleMethod(invocation, invocationContext)
+        interceptLifecycleMethod(invocation, invocationContext, extensionContext)
     }
 
     override fun interceptAfterEachMethod(
@@ -71,7 +71,7 @@ public class CoroutinesTimeoutExtension internal constructor(
         invocationContext: ReflectiveInvocationContext<Method>,
         extensionContext: ExtensionContext
     ) {
-        interceptLifecycleMethod(invocation, invocationContext)
+        interceptLifecycleMethod(invocation, invocationContext, extensionContext)
     }
 
     override fun interceptBeforeAllMethod(
@@ -79,7 +79,7 @@ public class CoroutinesTimeoutExtension internal constructor(
         invocationContext: ReflectiveInvocationContext<Method>,
         extensionContext: ExtensionContext
     ) {
-        interceptLifecycleMethod(invocation, invocationContext)
+        interceptLifecycleMethod(invocation, invocationContext, extensionContext)
     }
 
     override fun interceptBeforeEachMethod(
@@ -87,7 +87,7 @@ public class CoroutinesTimeoutExtension internal constructor(
         invocationContext: ReflectiveInvocationContext<Method>,
         extensionContext: ExtensionContext
     ) {
-        interceptLifecycleMethod(invocation, invocationContext)
+        interceptLifecycleMethod(invocation, invocationContext, extensionContext)
     }
 
     override fun <T : Any?> interceptTestFactoryMethod(
@@ -109,36 +109,65 @@ public class CoroutinesTimeoutExtension internal constructor(
             enclosingClass?.coroutinesTimeoutAnnotation() ?: Optional.empty()
         }
 
-    private fun <T: Any?> interceptNormalMethod(
+    private fun <T: Any?> interceptMethod(
+        useClassAnnotation: Boolean,
         invocation: InvocationInterceptor.Invocation<T>,
         invocationContext: ReflectiveInvocationContext<Method>,
         extensionContext: ExtensionContext
     ): T {
-        val annotation =
-            AnnotationSupport.findAnnotation(invocationContext.executable, CoroutinesTimeout::class.java).or {
-                extensionContext.testClass.flatMap { it.coroutinesTimeoutAnnotation() }
-            }.orElseGet {
-                throw UnsupportedOperationException("CoroutinesTimeoutExtension should not be used directly; annotate the test class or method with CoroutinesTimeout instead.")
+        val testAnnotationOptional =
+            AnnotationSupport.findAnnotation(invocationContext.executable, CoroutinesTimeout::class.java)
+        val classAnnotationOptional = extensionContext.testClass.flatMap { it.coroutinesTimeoutAnnotation() }
+        if (timeoutMs != null && cancelOnTimeout != null) {
+            // this means we @RegisterExtension was used in order to register this extension.
+            if (testAnnotationOptional.isPresent || classAnnotationOptional.isPresent) {
+                /* Using annotations creates a separate instance of the extension, which composes in a strange way: both
+                timeouts are applied. This is at odds with the concept that method-level annotations override the outer
+                rules and may lead to unexpected outcomes, so we prohibit this. */
+                throw UnsupportedOperationException("Using CoroutinesTimeout along with instance field-registered CoroutinesTimeout is prohibited; please use either @RegisterExtension or @CoroutinesTimeout, but not both")
             }
-        return interceptInvocation(invocation, invocationContext.executable.name, annotation)
+            return interceptInvocation(invocation, invocationContext.executable.name, timeoutMs, cancelOnTimeout)
+        }
+        /* The extension was registered via an annotation; check that we succeeded in finding the annotation that led to
+        the extension being registered and taking its parameters. */
+        if (testAnnotationOptional.isEmpty && classAnnotationOptional.isEmpty) {
+            throw UnsupportedOperationException("Timeout was registered with a CoroutinesTimeout annotation, but we were unable to find it. Please report this.")
+        }
+        return when {
+            testAnnotationOptional.isPresent -> {
+                val annotation = testAnnotationOptional.get()
+                interceptInvocation(invocation, invocationContext.executable.name, annotation.testTimeoutMs,
+                    annotation.cancelOnTimeout)
+            }
+            useClassAnnotation && classAnnotationOptional.isPresent -> {
+                val annotation = classAnnotationOptional.get()
+                interceptInvocation(invocation, invocationContext.executable.name, annotation.testTimeoutMs,
+                    annotation.cancelOnTimeout)
+            }
+            else -> {
+                invocation.proceed()
+            }
+        }
     }
+
+    private fun<T> interceptNormalMethod(
+        invocation: InvocationInterceptor.Invocation<T>,
+        invocationContext: ReflectiveInvocationContext<Method>,
+        extensionContext: ExtensionContext
+    ): T = interceptMethod(true, invocation, invocationContext, extensionContext)
 
     private fun interceptLifecycleMethod(
         invocation: InvocationInterceptor.Invocation<Void>,
-        invocationContext: ReflectiveInvocationContext<Method>
-    ) {
-        val annotation =
-            AnnotationSupport.findAnnotation(invocationContext.executable, CoroutinesTimeout::class.java).orElseGet {
-                throw UnsupportedOperationException("CoroutinesTimeoutExtension should not be used directly; annotate the test class or method with CoroutinesTimeout instead.")
-            }
-        interceptInvocation(invocation, invocationContext.executable.name, annotation)
-    }
+        invocationContext: ReflectiveInvocationContext<Method>,
+        extensionContext: ExtensionContext
+    ) = interceptMethod(false, invocation, invocationContext, extensionContext)
 
     private fun <T : Any?> interceptInvocation(
         invocation: InvocationInterceptor.Invocation<T>,
         methodName: String,
-        annotation: CoroutinesTimeout
+        testTimeoutMs: Long,
+        cancelOnTimeout: Boolean
     ): T =
-        runWithTimeoutDumpingCoroutines(methodName, annotation.testTimeoutMs, annotation.cancelOnTimeout,
-            { CoroutinesTimeoutException(annotation.testTimeoutMs) }, { invocation.proceed()})
+        runWithTimeoutDumpingCoroutines(methodName, testTimeoutMs, cancelOnTimeout,
+            { CoroutinesTimeoutException(testTimeoutMs) }, { invocation.proceed() })
 }
