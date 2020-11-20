@@ -14,12 +14,54 @@ import java.util.concurrent.atomic.*
 
 public class CoroutinesTimeoutException(public val timeoutMs: Long): Exception("test timed out ofter $timeoutMs ms")
 
+/**
+ * This JUnit5 extension allows running test, test factory, test template, and lifecycle methods in a separate thread,
+ * failing them after the provided time limit and interrupting the thread.
+ *
+ * Additionally, it installs [DebugProbes] and dumps all coroutines at the moment of the timeout. It also cancels
+ * coroutines on timeout if [cancelOnTimeout] set to `true`.
+ * [enableCoroutineCreationStackTraces] controls the corresponding [DebugProbes.enableCreationStackTraces] property
+ * and can be optionally disabled to speed-up tests if creation stack traces are not needed.
+ *
+ * Beware that if several tests that use this extension set [enableCoroutineCreationStackTraces] to different values and
+ * execute in parallel, the behavior is ill-defined. In order to avoid conflicts between different instances of this
+ * extension when using JUnit5 in parallel, use [ResourceLock] with resource name `coroutines timeout` on tests that use
+ * it. Note that the tests annotated with [CoroutinesTimeout] already use this [ResourceLock], so there is no need to
+ * annotate them additionally.
+ *
+ * Note that while calls to test factories are verified to finish in the specified time, but the methods that they
+ * produce are not affected by this extension.
+ *
+ * Beware that registering the extension via [CoroutinesTimeout] annotation conflicts with manually registering it on
+ * the same tests via other methods (most notably, [RegisterExtension]) and is prohibited.
+ *
+ * Example of usage:
+ * ```
+ * class HangingTest {
+ *     @JvmField
+ *     @RegisterExtension
+ *     val timeout = CoroutinesTimeoutExtension.seconds(5)
+ *
+ *     @Test
+ *     fun testThatHangs() = runBlocking {
+ *          ...
+ *          delay(Long.MAX_VALUE) // somewhere deep in the stack
+ *          ...
+ *     }
+ * }
+ * ```
+ *
+ * @see [CoroutinesTimeout]
+ * */
 // NB: the constructor is not private so that JUnit is able to call it via reflection.
 public class CoroutinesTimeoutExtension internal constructor(
     private val enableCoroutineCreationStackTraces: Boolean = true,
     private val timeoutMs: Long? = null,
     private val cancelOnTimeout: Boolean? = null): InvocationInterceptor
 {
+    /**
+     * Creates the [CoroutinesTimeoutExtension] extension with the given timeout in milliseconds.
+     */
     public constructor(timeoutMs: Long, cancelOnTimeout: Boolean = false,
                        enableCoroutineCreationStackTraces: Boolean = true):
         this(enableCoroutineCreationStackTraces, timeoutMs, cancelOnTimeout)
@@ -28,6 +70,9 @@ public class CoroutinesTimeoutExtension internal constructor(
         private val NAMESPACE: ExtensionContext.Namespace =
             ExtensionContext.Namespace.create("kotlinx", "coroutines", "debug", "junit5", "CoroutinesTimeout")
 
+        /**
+         * Creates the [CoroutinesTimeoutExtension] extension with the given timeout in seconds.
+         */
         @JvmOverloads
         public fun seconds(timeout: Int, cancelOnTimeout: Boolean = false,
                            enableCoroutineCreationStackTraces: Boolean = true): CoroutinesTimeoutExtension =

@@ -18,6 +18,15 @@ import java.io.*
 // note that these tests are run using JUnit4 in order not to mix the testing systems.
 class CoroutinesTimeoutTest {
 
+    // This test is ignored because it just checks an example.
+    @Test
+    @Ignore
+    fun testRegisterExtensionExample() {
+        val capturedOut = ByteArrayOutputStream()
+        eventsForSelector(selectClass(RegisterExtensionExample::class.java), capturedOut)
+            .testTimedOut("testThatHangs", 5000)
+    }
+
     @Test
     fun testCoroutinesTimeoutSimple() {
         val capturedOut = ByteArrayOutputStream()
