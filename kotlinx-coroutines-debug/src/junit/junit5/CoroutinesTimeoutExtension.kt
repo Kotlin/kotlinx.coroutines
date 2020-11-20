@@ -10,9 +10,11 @@ import org.junit.jupiter.api.extension.*
 import org.junit.platform.commons.support.AnnotationSupport
 import java.lang.reflect.*
 import java.util.*
+import java.util.concurrent.atomic.*
 
 public class CoroutinesTimeoutException(public val timeoutMs: Long): Exception("test timed out ofter $timeoutMs ms")
 
+// NB: the constructor is not private so that JUnit is able to call it via reflection.
 public class CoroutinesTimeoutExtension internal constructor(
     private val enableCoroutineCreationStackTraces: Boolean = true,
     private val timeoutMs: Long? = null,
@@ -32,22 +34,41 @@ public class CoroutinesTimeoutExtension internal constructor(
             CoroutinesTimeoutExtension(enableCoroutineCreationStackTraces, timeout.toLong() * 1000, cancelOnTimeout)
     }
 
+    private val debugProbesOwnershipPassed = AtomicBoolean(false)
+
+    /* We install the debug probes early so that the coroutines launched from the test constructor are captured as well.
+    However, this is not enough as the same extension instance may be reused several times, even cleaning up its
+    resources from the store. */
+    init {
+        DebugProbes.enableCreationStackTraces = enableCoroutineCreationStackTraces
+        DebugProbes.install()
+    }
+
+    // This is needed so that a class with no tests still successfully passes the ownership of DebugProbes to JUnit5.
     override fun <T : Any?> interceptTestClassConstructor(
         invocation: InvocationInterceptor.Invocation<T>,
         invocationContext: ReflectiveInvocationContext<Constructor<T>>,
         extensionContext: ExtensionContext
     ): T {
+        initialize(extensionContext)
+        return invocation.proceed()
+    }
+
+    private fun initialize(extensionContext: ExtensionContext) {
         val store: ExtensionContext.Store = extensionContext.getStore(NAMESPACE)
         if (store["debugProbes"] == null) {
-            /** no [DebugProbes] uninstaller is present, so this must be the first test that this instance of
-             * [CoroutinesTimeoutExtension] runs. Install the [DebugProbes]. */
-            DebugProbes.enableCreationStackTraces = enableCoroutineCreationStackTraces
-            DebugProbes.install()
+            if (!debugProbesOwnershipPassed.compareAndSet(false, true)) {
+                /** This means that the [DebugProbes.install] call from the constructor of this extensions has already
+                 * been matched with a corresponding cleanup procedure for JUnit5, but then JUnit5 cleaned everything up
+                 * and later reused the same extension instance for other tests. Therefore, we need to install the
+                 * [DebugProbes] anew. */
+                DebugProbes.enableCreationStackTraces = enableCoroutineCreationStackTraces
+                DebugProbes.install()
+            }
             /** put a fake resource into this extensions's store so that JUnit cleans it up, uninstalling the
              * [DebugProbes] after this extension instance is no longer needed. **/
             store.put("debugProbes", ExtensionContext.Store.CloseableResource { DebugProbes.uninstall() })
         }
-        return invocation.proceed()
     }
 
     override fun interceptTestMethod(
@@ -115,6 +136,7 @@ public class CoroutinesTimeoutExtension internal constructor(
         invocationContext: ReflectiveInvocationContext<Method>,
         extensionContext: ExtensionContext
     ): T {
+        initialize(extensionContext)
         val testAnnotationOptional =
             AnnotationSupport.findAnnotation(invocationContext.executable, CoroutinesTimeout::class.java)
         val classAnnotationOptional = extensionContext.testClass.flatMap { it.coroutinesTimeoutAnnotation() }

@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.debug.junit5
 import org.junit.jupiter.api.extension.*
+import org.junit.jupiter.api.parallel.*
 import java.lang.annotation.*
 
 /**
