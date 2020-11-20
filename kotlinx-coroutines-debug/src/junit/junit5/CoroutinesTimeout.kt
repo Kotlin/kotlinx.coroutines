@@ -68,5 +68,3 @@ public annotation class CoroutinesTimeout(
     val testTimeoutMs: Long,
     val cancelOnTimeout: Boolean = false
 )
-
-internal val x = 0
