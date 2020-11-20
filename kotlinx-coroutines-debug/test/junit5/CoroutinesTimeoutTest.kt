@@ -83,19 +83,6 @@ class CoroutinesTimeoutTest {
     /* Currently there's no ability to replicate [TestFailureValidation] as is for JUnit5:
     https://github.com/junit-team/junit5/issues/506. So, the test mechanism is more ad-hoc. */
 
-    /**
-     * This test is disabled due to a race condition between JUnit4 executors that run the given tests
-     * in parallel. This led to [DebugProbes.enableCreationStackTraces] being changed while this test is running.
-     * Because of this, there is no way for this test to consistently pass when there is more than one executor.
-     *
-     * In JUnit5, this is less of a problem since tests can be marked with [ResourceLock] to denote that they should not
-     * be run in parallel, so this issue is not reason enough to forbid configuring whether to enable the coroutine
-     * creation stacktraces. Yet this is enough of a problem to prevent normal testing of the extension in JUnit4.
-     *
-     * Making all the tests run sequentially (for example, by putting all their code into a single tests) works to show
-     * that the issue is solely due to parallelism.
-     */
-    @Ignore
     @Test
     fun testCoroutinesTimeoutExtensionDisabledTraces() {
         val capturedOut = ByteArrayOutputStream()

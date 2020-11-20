@@ -113,6 +113,13 @@ public class CoroutinesTimeoutExtension internal constructor(
             /** put a fake resource into this extensions's store so that JUnit cleans it up, uninstalling the
              * [DebugProbes] after this extension instance is no longer needed. **/
             store.put("debugProbes", ExtensionContext.Store.CloseableResource { DebugProbes.uninstall() })
+        } else if (!debugProbesOwnershipPassed.get()) {
+            /** This instance shares its store with other ones. Because of this, there was no need to install
+             * [DebugProbes], they are already installed, and this fact will outlive this instance of the extension. */
+            if (debugProbesOwnershipPassed.compareAndSet(false, true)) {
+                // We successfully marked the ownership as passed, and now may uninstall the extraneous debug probes.
+                DebugProbes.uninstall()
+            }
         }
     }
 
