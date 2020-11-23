@@ -46,7 +46,7 @@ Try it (don't forget to import `kotlin.concurrent.thread`).
 
 If you start by replacing `GlobalScope.launch` with `thread`, the compiler produces the following error:
 
-```text
+```Plain Text
 Error: Kotlin: Suspend functions are only allowed to be called from a coroutine or another suspend function
 ```
 
