@@ -67,9 +67,6 @@ public class CoroutinesTimeoutExtension internal constructor(
         this(enableCoroutineCreationStackTraces, timeoutMs, cancelOnTimeout)
 
     public companion object {
-        private val NAMESPACE: ExtensionContext.Namespace =
-            ExtensionContext.Namespace.create("kotlinx", "coroutines", "debug", "junit5", "CoroutinesTimeout")
-
         /**
          * Creates the [CoroutinesTimeoutExtension] extension with the given timeout in seconds.
          */
@@ -79,7 +76,13 @@ public class CoroutinesTimeoutExtension internal constructor(
             CoroutinesTimeoutExtension(enableCoroutineCreationStackTraces, timeout.toLong() * 1000, cancelOnTimeout)
     }
 
+    /** @see [initialize] */
     private val debugProbesOwnershipPassed = AtomicBoolean(false)
+
+    private fun tryPassDebugProbesOwnership() = debugProbesOwnershipPassed.compareAndSet(false, true)
+
+    private val isDebugProbesOwnershipPassed
+        get() = debugProbesOwnershipPassed.get()
 
     /* We install the debug probes early so that the coroutines launched from the test constructor are captured as well.
     However, this is not enough as the same extension instance may be reused several times, even cleaning up its
@@ -99,26 +102,58 @@ public class CoroutinesTimeoutExtension internal constructor(
         return invocation.proceed()
     }
 
+    /**
+     * Initialize this extension instance and/or the extension value store.
+     *
+     * It seems that the only way to reliably have JUnit5 clean up after its extensions is to put an instance of
+     * [ExtensionContext.Store.CloseableResource] into the value store corresponding to the extension instance, which
+     * means that [DebugProbes.uninstall] must be placed into the value store. [debugProbesOwnershipPassed] is `true`
+     * if the call to [DebugProbes.install] performed in the constructor of the extension instance was matched with a
+     * placing of [DebugProbes.uninstall] into the value store. We call the process of placing the cleanup procedure
+     * "passing the ownership", as now JUnit5 (and not our code) has to worry about uninstalling the debug probes.
+     *
+     * However, extension instances can be reused with different value stores, and value stores can be reused across
+     * extension instances. This leads to a tricky scheme of performing [DebugProbes.uninstall]:
+     *
+     * * If neither the ownership of this instance's [DebugProbes] was yet passed nor there is any cleanup procedure
+     *   stored, it means that we can just store our cleanup procedure, passing the ownership.
+     * * If the ownership was not yet passed, but a cleanup procedure is already stored, we can't just replace it with
+     *   another one, as this would lead to imbalance between [DebugProbes.install] and [DebugProbes.uninstall].
+     *   Instead, we know that this extension context will at least outlive this use of this instance, so some debug
+     *   probes other than the ones from our constructor are already installed and won't be uninstalled during our
+     *   operation. We simply uninstall the debug probes that were installed in our constructor.
+     * * If the ownership was passed, but the store is empty, it means that this test instance is reused and, possibly,
+     *   the debug probes installed in its constructor were already uninstalled. This means that we have to install them
+     *   anew and store an uninstaller.
+     */
     private fun initialize(extensionContext: ExtensionContext) {
-        val store: ExtensionContext.Store = extensionContext.getStore(NAMESPACE)
-        if (store["debugProbes"] == null) {
-            if (!debugProbesOwnershipPassed.compareAndSet(false, true)) {
-                /** This means that the [DebugProbes.install] call from the constructor of this extensions has already
-                 * been matched with a corresponding cleanup procedure for JUnit5, but then JUnit5 cleaned everything up
-                 * and later reused the same extension instance for other tests. Therefore, we need to install the
-                 * [DebugProbes] anew. */
-                DebugProbes.enableCreationStackTraces = enableCoroutineCreationStackTraces
-                DebugProbes.install()
-            }
-            /** put a fake resource into this extensions's store so that JUnit cleans it up, uninstalling the
-             * [DebugProbes] after this extension instance is no longer needed. **/
-            store.put("debugProbes", ExtensionContext.Store.CloseableResource { DebugProbes.uninstall() })
-        } else if (!debugProbesOwnershipPassed.get()) {
-            /** This instance shares its store with other ones. Because of this, there was no need to install
-             * [DebugProbes], they are already installed, and this fact will outlive this instance of the extension. */
-            if (debugProbesOwnershipPassed.compareAndSet(false, true)) {
-                // We successfully marked the ownership as passed, and now may uninstall the extraneous debug probes.
-                DebugProbes.uninstall()
+        val store: ExtensionContext.Store = extensionContext.getStore(
+            ExtensionContext.Namespace.create(CoroutinesTimeoutExtension::class, extensionContext.uniqueId))
+        /** It seems that the JUnit5 documentation does not specify the relationship between the extension instances and
+         * the corresponding [ExtensionContext] (in which the value stores are managed), so it is unclear whether it's
+         * theoretically possible for two extension instances that run concurrently to share an extension context. So,
+         * just in case this risk exists, we synchronize here. */
+        synchronized(store) {
+            if (store["debugProbes"] == null) {
+                if (!tryPassDebugProbesOwnership()) {
+                    /** This means that the [DebugProbes.install] call from the constructor of this extensions has
+                     * already been matched with a corresponding cleanup procedure for JUnit5, but then JUnit5 cleaned
+                     * everything up and later reused the same extension instance for other tests. Therefore, we need to
+                     * install the [DebugProbes] anew. */
+                    DebugProbes.enableCreationStackTraces = enableCoroutineCreationStackTraces
+                    DebugProbes.install()
+                }
+                /** put a fake resource into this extensions's store so that JUnit cleans it up, uninstalling the
+                 * [DebugProbes] after this extension instance is no longer needed. **/
+                store.put("debugProbes", ExtensionContext.Store.CloseableResource { DebugProbes.uninstall() })
+            } else if (!debugProbesOwnershipPassed.get()) {
+                /** This instance shares its store with other ones. Because of this, there was no need to install
+                 * [DebugProbes], they are already installed, and this fact will outlive this use of this instance of
+                 * the extension. */
+                if (tryPassDebugProbesOwnership()) {
+                    // We successfully marked the ownership as passed and now may uninstall the extraneous debug probes.
+                    DebugProbes.uninstall()
+                }
             }
         }
     }

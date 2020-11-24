@@ -62,7 +62,7 @@ import java.lang.annotation.*
 @Retention(value = AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @ExtendWith(CoroutinesTimeoutExtension::class)
-@ResourceLock("coroutines timeout")
+@ResourceLock("coroutines timeout", mode = ResourceAccessMode.READ)
 @Inherited
 public annotation class CoroutinesTimeout(
     val testTimeoutMs: Long,
