@@ -573,6 +573,23 @@ class ListenableFutureTest : TestBase() {
         finish(3)
     }
 
+    /** This test ensures that we never pass [CancellationException] to [CoroutineExceptionHandler]. */
+    @Test
+    fun testCancellationExceptionOnExternalCancellation() = runTest {
+        expect(1)
+        // No parent here (NonCancellable), so nowhere to propagate exception
+        val result = future(NonCancellable + Dispatchers.Unconfined) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                expect(2)
+                throw TestCancellationException() // this exception cannot be handled
+            }
+        }
+        assertTrue(result.cancel(true))
+        finish(3)
+    }
+
     @Test
     fun testCancellingFutureContextJobCancelsFuture() = runTest {
         expect(1)
