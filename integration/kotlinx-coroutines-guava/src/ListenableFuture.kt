@@ -167,7 +167,7 @@ public fun <T> ListenableFuture<T>.asDeferred(): Deferred<T> {
  * state - a serious fundamental bug.
  */
 private fun ExecutionException.nonNullCause(): Throwable {
-  return this.cause!!
+    return this.cause!!
 }
 
 /**
@@ -479,4 +479,4 @@ private class JobListenableFuture<T>(private val jobToCancel: Job): ListenableFu
  * [SettableFuture] can't store the reason of cancellation. To mitigate this, we wrap cancellation exception into this
  * class and pass it into [SettableFuture.complete]. See implementation of [JobListenableFuture].
  */
-private class Cancelled(val exception: CancellationException)
+private class Cancelled(@JvmField val exception: CancellationException)
