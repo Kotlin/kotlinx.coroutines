@@ -199,14 +199,7 @@ jvmTest {
     }
     if (Idea.active) {
         // Configure the IDEA runner for Lincheck and stress tests
-        // TODO this can be removed once IDEA is allowed to use `jvmLincheckTest` and
-        // TODO `jvmStressTest` tasks for the corresponding tests instead of using `jvmTest`.
-        jvmArgs = ['--add-opens', 'java.base/jdk.internal.misc=ALL-UNNAMED',   // required for transformation
-                   '--add-exports', 'java.base/jdk.internal.util=ALL-UNNAMED'] // in the model checking mode
-        maxHeapSize = '6g' // we need more memory for model checking
-        systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2' // better for testing in general
-        systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '1' // better for model checking
-        systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
+        configureJvmForLincheck()
     }
     // TODO: JVM IR generates different stacktrace so temporary disable stacktrace tests
     if (rootProject.ext.jvm_ir_enabled) {
@@ -240,10 +233,14 @@ task jvmLincheckTest(type: Test, dependsOn: compileTestKotlinJvm) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
     minHeapSize = '1g'
-    maxHeapSize = '6g' // we may need more space for building an interleaving tree in the model checking mode
     include '**/*LincheckTest.*'
     enableAssertions = true
     testLogging.showStandardStreams = true
+    configureJvmForLincheck()
+}
+
+def configureJvmForLincheck() {
+    maxHeapSize = '6g' // we may need more space for building an interleaving tree in the model checking mode
     jvmArgs = ['--add-opens', 'java.base/jdk.internal.misc=ALL-UNNAMED',   // required for transformation
                '--add-exports', 'java.base/jdk.internal.util=ALL-UNNAMED'] // in the model checking mode
     systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2'
