@@ -36,7 +36,7 @@ internal class UnbiasedSelectBuilderImpl<in R>(uCont: Continuation<R>) :
     val clauses = arrayListOf<() -> Unit>()
 
     @PublishedApi
-    internal fun handleBuilderException(e: Throwable) = instance.handleBuilderException(e)
+    internal fun handleBuilderException(e: Throwable): Unit = instance.handleBuilderException(e)
 
     @PublishedApi
     internal fun initSelectResult(): Any? {
