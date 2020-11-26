@@ -7,6 +7,7 @@ package kotlinx.coroutines.guava
 import com.google.common.util.concurrent.*
 import kotlinx.coroutines.*
 import org.junit.*
+import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.*
 import java.util.concurrent.CancellationException
@@ -316,6 +317,28 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
+    @Ignore  // TODO: propagate cancellation before running listeners.
+    fun testAsListenableFuturePropagatesCancellationBeforeRunningListeners() = runTest {
+        expect(1)
+        val deferred = async(context = Dispatchers.Unconfined) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                expect(3) // Cancelled.
+            }
+        }
+        val asFuture = deferred.asListenableFuture()
+        asFuture.addListener(Runnable { expect(4) }, MoreExecutors.directExecutor())
+        assertFalse(asFuture.isDone)
+        expect(2)
+        asFuture.cancel(false)
+        assertTrue(asFuture.isDone)
+        assertTrue(asFuture.isCancelled)
+        assertFailsWith<CancellationException> { deferred.await() }
+        finish(5)
+    }
+
+    @Test
     fun testFutureCancellation() = runTest {
         val future = awaitFutureWithCancel(true)
         assertTrue(future.isCancelled)
@@ -333,15 +356,18 @@ class ListenableFutureTest : TestBase() {
 
         val outputCancellationException =
           assertFailsWith<CancellationException> { asFuture.get() }
-        assertEquals(outputCancellationException.message, "Foobar")
-        assertTrue(outputCancellationException.cause is OutOfMemoryError)
-        assertEquals(outputCancellationException.cause?.message, "Foobaz")
+        val cause = outputCancellationException.cause
+        assertNotNull(cause)
+        assertEquals(cause.message, "Foobar")
+        assertTrue(cause.cause is OutOfMemoryError)
+        assertEquals(cause.cause?.message, "Foobaz")
     }
 
     @Test
     fun testNoFutureCancellation() = runTest {
         val future = awaitFutureWithCancel(false)
         assertFalse(future.isCancelled)
+        @Suppress("BlockingMethodInNonBlockingContext")
         assertEquals(42, future.get())
         finish(4)
     }
@@ -354,7 +380,7 @@ class ListenableFutureTest : TestBase() {
 
         assertTrue(asDeferredAsFuture.isCancelled)
         assertFailsWith<CancellationException> {
-            val value: Int = asDeferredAsFuture.await()
+            asDeferredAsFuture.await()
         }
     }
 
@@ -379,7 +405,7 @@ class ListenableFutureTest : TestBase() {
 
         assertTrue(asDeferred.isCancelled)
         assertFailsWith<CancellationException> {
-            val value: Int = asDeferred.await()
+            asDeferred.await()
         }
     }
 
@@ -433,7 +459,10 @@ class ListenableFutureTest : TestBase() {
     @Test
     fun testFutureCompletedWithNullFastPathAsDeferred() = runTest {
         val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
-        val future = executor.submit(Callable<Int> { null }).also { it.get() }
+        val future = executor.submit(Callable<Int> { null }).also {
+            @Suppress("BlockingMethodInNonBlockingContext")
+            it.get()
+        }
         assertNull(future.asDeferred().await())
     }
 
@@ -494,8 +523,10 @@ class ListenableFutureTest : TestBase() {
         val future = future(Dispatchers.Unconfined) {
             try {
                 delay(Long.MAX_VALUE)
-            } finally {
+                expectUnreached()
+            } catch (e: CancellationException) {
                 expect(2)
+                throw e
             }
         }
 
@@ -507,17 +538,19 @@ class ListenableFutureTest : TestBase() {
 
     @Test
     fun testExceptionOnExternalCancellation() = runTest(expected = {it is TestException}) {
-        expect(1)
         val result = future(Dispatchers.Unconfined) {
             try {
+                expect(1)
                 delay(Long.MAX_VALUE)
-            } finally {
-                expect(2)
+                expectUnreached()
+            } catch (e: CancellationException) {
+                expect(3)
                 throw TestException()
             }
         }
+        expect(2)
         result.cancel(true)
-        finish(3)
+        finish(4)
     }
 
     @Test
@@ -540,12 +573,120 @@ class ListenableFutureTest : TestBase() {
         finish(3)
     }
 
+    /** This test ensures that we never pass [CancellationException] to [CoroutineExceptionHandler]. */
+    @Test
+    fun testCancellationExceptionOnExternalCancellation() = runTest {
+        expect(1)
+        // No parent here (NonCancellable), so nowhere to propagate exception
+        val result = future(NonCancellable + Dispatchers.Unconfined) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                expect(2)
+                throw TestCancellationException() // this exception cannot be handled
+            }
+        }
+        assertTrue(result.cancel(true))
+        finish(3)
+    }
+
+    @Test
+    fun testCancellingFutureContextJobCancelsFuture() = runTest {
+        expect(1)
+        val supervisorJob = SupervisorJob()
+        val future = future(context = supervisorJob) {
+            expect(2)
+            try {
+                delay(Long.MAX_VALUE)
+                expectUnreached()
+            } catch (e: CancellationException) {
+                expect(4)
+                throw e
+            }
+        }
+        yield()
+        expect(3)
+        supervisorJob.cancel(CancellationException("Parent cancelled", TestException()))
+        supervisorJob.join()
+        assertTrue(future.isDone)
+        assertTrue(future.isCancelled)
+        val thrown = assertFailsWith<CancellationException> { future.get() }
+        val cause = thrown.cause
+        assertNotNull(cause)
+        assertTrue(cause is CancellationException)
+        assertEquals("Parent cancelled", cause.message)
+        assertTrue(cause.cause is TestException)
+        finish(5)
+    }
+
+    @Test
+    fun testFutureChildException() = runTest {
+        val future = future(context = NonCancellable + Dispatchers.Unconfined) {
+            val foo = async { delay(Long.MAX_VALUE); 42 }
+            val bar = async<Int> { throw TestException() }
+            foo.await() + bar.await()
+        }
+        future.checkFutureException<TestException>()
+    }
+
+    @Test
+    fun testFutureIsDoneAfterChildrenCompleted() = runTest {
+        expect(1)
+        val testException = TestException()
+        // Don't propagate exception to the test and use different dispatchers as we are going to block test thread.
+        val future = future(context = NonCancellable + Dispatchers.Default) {
+            val foo = async {
+                try {
+                    delay(Long.MAX_VALUE)
+                    42
+                } finally {
+                    withContext(NonCancellable) {
+                        delay(200)
+                    }
+                }
+            }
+            foo.invokeOnCompletion {
+                expect(3)
+            }
+            val bar = async<Int> { throw testException }
+            foo.await() + bar.await()
+        }
+        yield()
+        expect(2)
+        // Blocking get should succeed after internal coroutine completes.
+        val thrown = assertFailsWith<ExecutionException> { future.get() }
+        expect(4)
+        assertEquals(testException, thrown.cause)
+        finish(5)
+    }
+
+    @Test
+    @Ignore  // TODO: propagate cancellation before running listeners.
+    fun testFuturePropagatesCancellationBeforeRunningListeners() = runTest {
+        expect(1)
+        val future = future(context = Dispatchers.Unconfined) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                expect(3) // Cancelled.
+            }
+        }
+        future.addListener(Runnable { expect(4) }, MoreExecutors.directExecutor())
+        assertFalse(future.isDone)
+        expect(2)
+        future.cancel(false)
+        assertTrue(future.isDone)
+        assertTrue(future.isCancelled)
+        finish(5)
+    }
+
     private inline fun <reified T: Throwable> ListenableFuture<*>.checkFutureException() {
         val e = assertFailsWith<ExecutionException> { get() }
         val cause = e.cause!!
         assertTrue(cause is T)
     }
 
+    @Suppress("SuspendFunctionOnCoroutineScope")
     private suspend fun CoroutineScope.awaitFutureWithCancel(cancellable: Boolean): ListenableFuture<Int> {
         val latch = CountDownLatch(1)
         val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
