@@ -33,46 +33,7 @@
 
 <h1 id="sharingstarted">SharingStarted</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SharingStarted</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/SharingStarted.kt#L77">(source)</a></div>
-
-<p>A strategy for starting and stopping the sharing coroutine in <a href="../share-in.html">shareIn</a> and <a href="../state-in.html">stateIn</a> operators.</p>
-
-<p>This interface provides a set of built-in strategies: <a href="-eagerly.html">Eagerly</a>, <a href="-lazily.html">Lazily</a>, <a href="-while-subscribed.html">WhileSubscribed</a>, and
-supports custom strategies by implementing this interface’s <a href="command.html">command</a> function.</p>
-
-<p>For example, it is possible to define a custom strategy that starts the upstream only when the number
-of subscribers exceeds the given <code>threshold</code> and make it an extension on <a href="#">SharingStarted.Companion</a> so
-that it looks like a built-in strategy on the use-site:</p>
-
-<pre>fun SharingStarted.Companion.WhileSubscribedAtLeast(threshold: Int): SharingStarted =
-    object : SharingStarted {
-        override fun command(subscriptionCount: StateFlow&lt;Int&gt;): Flow&lt;SharingCommand&gt; =
-            subscriptionCount
-                .map { if (it &gt;= threshold) SharingCommand.START else SharingCommand.STOP }
-    }
-</pre>
-
-<h3 id="commands">Commands</h3>
-
-<p>The <code>SharingStarted</code> strategy works by emitting <a href="../-sharing-command/index.html">commands</a> that control upstream flow from its
-<a href="command.html"><code>command</code></a> flow implementation function. Back-to-back emissions of the same command have no effect.
-Only emission of a different command has effect:</p>
-
-<ul>
-  <li><a href="../-sharing-command/-s-t-a-r-t.html">START</a> — the upstream flow is stared.</li>
-  <li><a href="../-sharing-command/-s-t-o-p.html">STOP</a> — the upstream flow is stopped.</li>
-  <li><a href="../-sharing-command/-s-t-o-p_-a-n-d_-r-e-s-e-t_-r-e-p-l-a-y_-c-a-c-h-e.html">STOP_AND_RESET_REPLAY_CACHE</a> —
-the upstream flow is stopped and the <a href="../-shared-flow/replay-cache.html">SharedFlow.replayCache</a> is reset to its initial state.
-The <a href="../share-in.html">shareIn</a> operator calls <a href="../-mutable-shared-flow/reset-replay-cache.html">MutableSharedFlow.resetReplayCache</a>;
-the <a href="../state-in.html">stateIn</a> operator resets the value to its original <code>initialValue</code>.</li>
-</ul>
-
-<p>Initially, the upstream flow is stopped and is in the initial state, so the emission of additional
-<a href="../-sharing-command/-s-t-o-p.html">STOP</a> and <a href="../-sharing-command/-s-t-o-p_-a-n-d_-r-e-s-e-t_-r-e-p-l-a-y_-c-a-c-h-e.html">STOP_AND_RESET_REPLAY_CACHE</a> commands will
-have no effect.</p>
-
-<p>The completion of the <code>command</code> flow normally has no effect (the upstream flow keeps running if it was running).
-The failure of the <code>command</code> flow cancels the sharing coroutine and the upstream flow.</p>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SharingStarted</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/SharingStarted.kt#L75">(source)</a></div>
 
 <h3 id="functions">Functions</h3>
 

@@ -33,45 +33,55 @@
 
 <h1 id="catch">catch</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">catch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Errors.kt#L57">(source)</a></div>
+<div class="overload-group">
 
-<p>Catches exceptions in the flow completion and calls a specified <a href="catch.html#kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> with
+  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">catch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Errors.kt#L57">(source)</a></div>
+
+  <p>Catches exceptions in the flow completion and calls a specified <a href="catch.html#kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> with
 the caught exception. This operator is <em>transparent</em> to exceptions that occur
 in downstream flow and does not catch exceptions that are thrown to cancel the flow.</p>
 
-<p>For example:</p>
+  <p>For example:</p>
 
-<pre>flow { emitData() }
+  <pre>flow { emitData() }
     .map { computeOne(it) }
     .catch { ... } // catches exceptions in emitData and computeOne
     .map { computeTwo(it) }
     .collect { process(it) } // throws exceptions from process and computeTwo
 </pre>
 
-<p>Conceptually, the action of <code>catch</code> operator is similar to wrapping the code of upstream flows with
+  <p>Conceptually, the action of <code>catch</code> operator is similar to wrapping the code of upstream flows with
 <code>try { ... } catch (e: Throwable) { action(e) }</code>.</p>
 
-<p>Any exception in the <a href="catch.html#kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> code itself proceeds downstream where it can be
+  <p>Any exception in the <a href="catch.html#kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> code itself proceeds downstream where it can be
 caught by further <code>catch</code> operators if needed. If a particular exception does not need to be
 caught it can be rethrown from the action of <code>catch</code> operator. For example:</p>
 
-<pre>flow.catch { e -&gt;
+  <pre>flow.catch { e -&gt;
     if (e !is IOException) throw e // rethrow all but IOException
     // e is IOException here
     ...
 }
 </pre>
 
-<p>The <a href="catch.html#kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> code has <a href="-flow-collector/index.html">FlowCollector</a> as a receiver and can <a href="-flow-collector/emit.html">emit</a> values downstream.
+  <p>The <a href="catch.html#kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> code has <a href="-flow-collector/index.html">FlowCollector</a> as a receiver and can <a href="-flow-collector/emit.html">emit</a> values downstream.
 For example, caught exception can be replaced with some wrapper value for errors:</p>
 
-<pre>flow.catch { e -&gt; emit(ErrorWrapperValue(e)) }
+  <pre>flow.catch { e -&gt; emit(ErrorWrapperValue(e)) }
 </pre>
 
-<p>The <a href="catch.html#kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> can also use <a href="emit-all.html">emitAll</a> to fallback on some other flow in case of an error. However, to
+  <p>The <a href="catch.html#kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> can also use <a href="emit-all.html">emitAll</a> to fallback on some other flow in case of an error. However, to
 retry an original flow use <a href="retry-when.html">retryWhen</a> operator that can retry the flow multiple times without
 introducing ever-growing stack of suspending calls.</p>
 
+</div>
+<div class="overload-group">
+
+  <div class="signature"><code><span class="keyword">inline</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">catch</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">noinline</span> <span class="parameterName" id="kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.SharedFlow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Lint.kt#L91">(source)</a></div>
+
+  <p><strong>Deprecated:</strong> SharedFlow never completes, so this operator has no effect.</p>
+
+</div>
 
       </div>
     </main>

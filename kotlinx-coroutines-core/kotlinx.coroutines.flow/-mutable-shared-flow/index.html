@@ -35,13 +35,13 @@
 
 <div class="signature"><code><span class="keyword">interface </span><span class="identifier">MutableSharedFlow</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L149">(source)</a></div>
 
-<p>A mutable <a href="../-shared-flow/index.html">SharedFlow</a> that provides functions to <a href="../-flow-collector/emit.html">emit</a> values to the flow.
+<p>A mutable <a href="../-shared-flow/index.html">SharedFlow</a> that provides functions to <a href="emit.html">emit</a> values to the flow.
 An instance of <code>MutableSharedFlow</code> with the given configuration parameters can be created using <code>MutableSharedFlow(...)</code>
 constructor function.</p>
 
 <p>See the <a href="../-shared-flow/index.html">SharedFlow</a> documentation for details on shared flows.</p>
 
-<p><code>MutableSharedFlow</code> is a <a href="../-shared-flow/index.html">SharedFlow</a> that also provides the abilities to <a href="../-flow-collector/emit.html">emit</a> a value,
+<p><code>MutableSharedFlow</code> is a <a href="../-shared-flow/index.html">SharedFlow</a> that also provides the abilities to <a href="emit.html">emit</a> a value,
 to <a href="try-emit.html">tryEmit</a> without suspension if possible, to track the <a href="subscription-count.html">subscriptionCount</a>,
 and to <a href="reset-replay-cache.html">resetReplayCache</a>.</p>
 
@@ -103,6 +103,20 @@ Use the <code>MutableSharedFlow(...)</code> constructor function to create an im
 <tr>
 <td>
 
+        <p><a href="emit.html">emit</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">emit</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow.MutableSharedFlow$emit(kotlinx.coroutines.flow.MutableSharedFlow.T)/value">value</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Emits a <a href="emit.html#kotlinx.coroutines.flow.MutableSharedFlow$emit(kotlinx.coroutines.flow.MutableSharedFlow.T)/value">value</a> to this shared flow, suspending on buffer overflow if the shared flow was created
+with the default <a href="../../kotlinx.coroutines.channels/-buffer-overflow/-s-u-s-p-e-n-d.html">BufferOverflow.SUSPEND</a> strategy.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="reset-replay-cache.html">resetReplayCache</a></p>
 
       </td>
@@ -126,29 +140,8 @@ To reset a shared flow to an initial value, emit the value after this call.</p>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">tryEmit</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow.MutableSharedFlow$tryEmit(kotlinx.coroutines.flow.MutableSharedFlow.T)/value">value</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Tries to emit a <a href="try-emit.html#kotlinx.coroutines.flow.MutableSharedFlow$tryEmit(kotlinx.coroutines.flow.MutableSharedFlow.T)/value">value</a> to this shared flow without suspending. It returns <code>true</code> if the value was
-emitted successfully. When this function returns <code>false</code>, it means that the call to a plain <a href="../-flow-collector/emit.html">emit</a>
+emitted successfully. When this function returns <code>false</code>, it means that the call to a plain <a href="emit.html">emit</a>
 function will suspend until there is a buffer space available.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="inherited-functions">Inherited Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="../-flow-collector/emit.html">emit</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">emit</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow.FlowCollector$emit(kotlinx.coroutines.flow.FlowCollector.T)/value">value</span><span class="symbol">:</span>&nbsp;<a href="../-flow-collector/index.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-        <p>Collects the value emitted by the upstream.
-This method is not thread-safe and should not be invoked concurrently.</p>
 
       </td>
 </tr>
@@ -263,6 +256,8 @@ This method is not thread-safe and should not be invoked concurrently.</p>
         <p>Catches exceptions in the flow completion and calls a specified <a href="../catch.html#kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</a> with
 the caught exception. This operator is <em>transparent</em> to exceptions that occur
 in downstream flow and does not catch exceptions that are thrown to cancel the flow.</p>
+
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="../catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">catch</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$catch(kotlinx.coroutines.flow.SharedFlow((kotlinx.coroutines.flow.catch.T)), kotlin.SuspendFunction2((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.catch.T)), kotlin.Throwable, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="../catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../catch.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
       </td>
 </tr>
@@ -380,10 +375,6 @@ always gets the most recent value emitted.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../count.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">count</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
-
-        <p>Returns the number of elements in this flow.</p>
-
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../count.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">count</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$count(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.count.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.count.T, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="../count.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
         <p>Returns the number of elements matching the given predicate.</p>
@@ -836,12 +827,6 @@ Throws <a href="#">NoSuchElementException</a> if flow was empty.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../retry.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">retry</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Long, kotlin.SuspendFunction1((kotlin.Throwable, kotlin.Boolean)))/retries">retries</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Long.MAX_VALUE<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Long, kotlin.SuspendFunction1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;{ true }<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../retry.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Retries collection of the given flow up to <a href="../retry.html#kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Long, kotlin.SuspendFunction1((kotlin.Throwable, kotlin.Boolean)))/retries">retries</a> times when an exception that matches the
-given <a href="../retry.html#kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Long, kotlin.SuspendFunction1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</a> occurs in the upstream flow. This operator is <em>transparent</em> to exceptions that occur
-in downstream flow and does not retry on exceptions that are thrown to cancel the flow.</p>
-
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../retry.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">retry</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/retries">retries</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Int.MAX_VALUE<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retry(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retry.T)), kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;{ true }<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../retry.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
       </td>
@@ -859,6 +844,8 @@ in downstream flow and does not retry on exceptions that are thrown to cancel th
 <a href="../retry-when.html#kotlinx.coroutines.flow$retryWhen(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retryWhen.T)), kotlin.SuspendFunction3((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.retryWhen.T)), kotlin.Throwable, kotlin.Long, kotlin.Boolean)))/predicate">predicate</a> returns true. The predicate also receives an <code>attempt</code> number as parameter,
 starting from zero on the initial call. This operator is <em>transparent</em> to exceptions that occur
 in downstream flow and does not retry on exceptions that are thrown to cancel the flow.</p>
+
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="../retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">retryWhen</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retryWhen(kotlinx.coroutines.flow.SharedFlow((kotlinx.coroutines.flow.retryWhen.T)), kotlin.SuspendFunction3((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.retryWhen.T)), kotlin.Throwable, kotlin.Long, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="../retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">attempt</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
       </td>
 </tr>
@@ -1045,6 +1032,7 @@ Throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgume
 
       </td>
 <td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="../to-list.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">toList</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../to-list.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../to-list.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">toList</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$toList(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.toList.T)), kotlin.collections.MutableList((kotlinx.coroutines.flow.toList.T)))/destination">destination</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html"><span class="identifier">MutableList</span></a><span class="symbol">&lt;</span><a href="../to-list.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span>&nbsp;<span class="symbol">=</span>&nbsp;ArrayList()<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../to-list.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Collects given flow into a <a href="../to-list.html#kotlinx.coroutines.flow$toList(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.toList.T)), kotlin.collections.MutableList((kotlinx.coroutines.flow.toList.T)))/destination">destination</a></p>
@@ -1058,6 +1046,7 @@ Throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgume
 
       </td>
 <td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="../to-set.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">toSet</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html"><span class="identifier">Set</span></a><span class="symbol">&lt;</span><a href="../to-set.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../to-set.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">toSet</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$toSet(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.toSet.T)), kotlin.collections.MutableSet((kotlinx.coroutines.flow.toSet.T)))/destination">destination</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-set/index.html"><span class="identifier">MutableSet</span></a><span class="symbol">&lt;</span><a href="../to-set.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span>&nbsp;<span class="symbol">=</span>&nbsp;LinkedHashSet()<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html"><span class="identifier">Set</span></a><span class="symbol">&lt;</span><a href="../to-set.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Collects given flow into a <a href="../to-set.html#kotlinx.coroutines.flow$toSet(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.toSet.T)), kotlin.collections.MutableSet((kotlinx.coroutines.flow.toSet.T)))/destination">destination</a></p>

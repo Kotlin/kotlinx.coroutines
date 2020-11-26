@@ -33,6 +33,7 @@ kotlinx.coroutines
 kotlinx.coroutines.channels
 kotlinx.coroutines.flow
 kotlinx.coroutines.intrinsics
+kotlinx.coroutines.scheduling
 kotlinx.coroutines.selects
 kotlinx.coroutines.sync
 kotlinx.coroutines.test

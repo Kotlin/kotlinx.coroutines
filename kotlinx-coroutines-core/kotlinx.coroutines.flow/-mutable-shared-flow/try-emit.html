@@ -33,15 +33,18 @@
 
 <h1 id="tryemit">tryEmit</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">tryEmit</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow.MutableSharedFlow$tryEmit(kotlinx.coroutines.flow.MutableSharedFlow.T)/value">value</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L159">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">tryEmit</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow.MutableSharedFlow$tryEmit(kotlinx.coroutines.flow.MutableSharedFlow.T)/value">value</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L173">(source)</a></div>
 
 <p>Tries to emit a <a href="try-emit.html#kotlinx.coroutines.flow.MutableSharedFlow$tryEmit(kotlinx.coroutines.flow.MutableSharedFlow.T)/value">value</a> to this shared flow without suspending. It returns <code>true</code> if the value was
-emitted successfully. When this function returns <code>false</code>, it means that the call to a plain <a href="../-flow-collector/emit.html">emit</a>
+emitted successfully. When this function returns <code>false</code>, it means that the call to a plain <a href="emit.html">emit</a>
 function will suspend until there is a buffer space available.</p>
 
 <p>A shared flow configured with a <a href="../../kotlinx.coroutines.channels/-buffer-overflow/index.html">BufferOverflow</a> strategy other than <a href="../../kotlinx.coroutines.channels/-buffer-overflow/-s-u-s-p-e-n-d.html">SUSPEND</a>
 (either <a href="../../kotlinx.coroutines.channels/-buffer-overflow/-d-r-o-p_-o-l-d-e-s-t.html">DROP_OLDEST</a> or <a href="../../kotlinx.coroutines.channels/-buffer-overflow/-d-r-o-p_-l-a-t-e-s-t.html">DROP_LATEST</a>) never
-suspends on <a href="../-flow-collector/emit.html">emit</a>, and thus <code>tryEmit</code> to such a shared flow always returns <code>true</code>.</p>
+suspends on <a href="emit.html">emit</a>, and thus <code>tryEmit</code> to such a shared flow always returns <code>true</code>.</p>
+
+<p>This method is <strong>thread-safe</strong> and can be safely invoked from concurrent coroutines without
+external synchronization.</p>
 
 
       </div>

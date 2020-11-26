@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MutableSharedFlow.emit - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-mutable-shared-flow/emit.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.flow</a> / <a href="index.html">MutableSharedFlow</a> / <a href="./emit.html">emit</a></div>
+
+<h1 id="emit">emit</h1>
+
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">emit</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow.MutableSharedFlow$emit(kotlinx.coroutines.flow.MutableSharedFlow.T)/value">value</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L159">(source)</a></div>
+
+<p>Overrides <a href="../-flow-collector/emit.html">FlowCollector.emit</a></p>
+
+<p>Emits a <a href="emit.html#kotlinx.coroutines.flow.MutableSharedFlow$emit(kotlinx.coroutines.flow.MutableSharedFlow.T)/value">value</a> to this shared flow, suspending on buffer overflow if the shared flow was created
+with the default <a href="../../kotlinx.coroutines.channels/-buffer-overflow/-s-u-s-p-e-n-d.html">BufferOverflow.SUSPEND</a> strategy.</p>
+
+<p>See <a href="try-emit.html">tryEmit</a> for a non-suspending variant of this function.</p>
+
+<p>This method is <strong>thread-safe</strong> and can be safely invoked from concurrent coroutines without
+external synchronization.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

@@ -33,26 +33,28 @@
 
 <h1 id="retrywhen">retryWhen</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">retryWhen</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retryWhen(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retryWhen.T)), kotlin.SuspendFunction3((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.retryWhen.T)), kotlin.Throwable, kotlin.Long, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">attempt</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Errors.kt#L170">(source)</a></div>
+<div class="overload-group">
 
-<p>Retries collection of the given flow when an exception occurs in the upstream flow and the
+  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">retryWhen</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$retryWhen(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retryWhen.T)), kotlin.SuspendFunction3((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.retryWhen.T)), kotlin.Throwable, kotlin.Long, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">attempt</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Errors.kt#L170">(source)</a></div>
+
+  <p>Retries collection of the given flow when an exception occurs in the upstream flow and the
 <a href="retry-when.html#kotlinx.coroutines.flow$retryWhen(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retryWhen.T)), kotlin.SuspendFunction3((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.retryWhen.T)), kotlin.Throwable, kotlin.Long, kotlin.Boolean)))/predicate">predicate</a> returns true. The predicate also receives an <code>attempt</code> number as parameter,
 starting from zero on the initial call. This operator is <em>transparent</em> to exceptions that occur
 in downstream flow and does not retry on exceptions that are thrown to cancel the flow.</p>
 
-<p>For example, the following call retries the flow forever if the error is caused by <code>IOException</code>, but
+  <p>For example, the following call retries the flow forever if the error is caused by <code>IOException</code>, but
 stops after 3 retries on any other exception:</p>
 
-<pre>flow.retryWhen { cause, attempt -&gt; cause is IOException || attempt &lt; 3 }
+  <pre>flow.retryWhen { cause, attempt -&gt; cause is IOException || attempt &lt; 3 }
 </pre>
 
-<p>To implement a simple retry logic with a limit on the number of retries use <a href="retry.html">retry</a> operator.</p>
+  <p>To implement a simple retry logic with a limit on the number of retries use <a href="retry.html">retry</a> operator.</p>
 
-<p>Similarly to <a href="catch.html">catch</a> operator, the <a href="retry-when.html#kotlinx.coroutines.flow$retryWhen(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retryWhen.T)), kotlin.SuspendFunction3((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.retryWhen.T)), kotlin.Throwable, kotlin.Long, kotlin.Boolean)))/predicate">predicate</a> code has <a href="-flow-collector/index.html">FlowCollector</a> as a receiver and can
+  <p>Similarly to <a href="catch.html">catch</a> operator, the <a href="retry-when.html#kotlinx.coroutines.flow$retryWhen(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retryWhen.T)), kotlin.SuspendFunction3((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.retryWhen.T)), kotlin.Throwable, kotlin.Long, kotlin.Boolean)))/predicate">predicate</a> code has <a href="-flow-collector/index.html">FlowCollector</a> as a receiver and can
 <a href="-flow-collector/emit.html">emit</a> values downstream.
 The <a href="retry-when.html#kotlinx.coroutines.flow$retryWhen(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retryWhen.T)), kotlin.SuspendFunction3((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.retryWhen.T)), kotlin.Throwable, kotlin.Long, kotlin.Boolean)))/predicate">predicate</a> is a suspending function, so it can be used to introduce delay before retry, for example:</p>
 
-<pre>flow.retryWhen { cause, attempt -&gt;
+  <pre>flow.retryWhen { cause, attempt -&gt;
     if (cause is IOException) {    // retry on IOException
         emit(RetryWrapperValue(e))
         delay(1000)                // delay for one second before retry
@@ -63,8 +65,16 @@ The <a href="retry-when.html#kotlinx.coroutines.flow$retryWhen(kotlinx.coroutine
 }
 </pre>
 
-<p>See <a href="catch.html">catch</a> for more details.</p>
+  <p>See <a href="catch.html">catch</a> for more details.</p>
 
+</div>
+<div class="overload-group">
+
+  <div class="signature"><code><span class="keyword">inline</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">retryWhen</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">noinline</span> <span class="parameterName" id="kotlinx.coroutines.flow$retryWhen(kotlinx.coroutines.flow.SharedFlow((kotlinx.coroutines.flow.retryWhen.T)), kotlin.SuspendFunction3((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.retryWhen.T)), kotlin.Throwable, kotlin.Long, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-flow-collector/index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">attempt</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="retry-when.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Lint.kt#L112">(source)</a></div>
+
+  <p><strong>Deprecated:</strong> SharedFlow never completes, so this operator has no effect.</p>
+
+</div>
 
       </div>
     </main>

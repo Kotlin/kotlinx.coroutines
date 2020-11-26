@@ -33,7 +33,7 @@
 
 <h1 id="resetreplaycache">resetReplayCache</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">resetReplayCache</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L196">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">resetReplayCache</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L213">(source)</a></div>
 
 <p>Resets the <a href="../-shared-flow/replay-cache.html">replayCache</a> of this shared flow to an empty state.
 New subscribers will be receiving only the values that were emitted after this call,
@@ -43,6 +43,9 @@ To reset a shared flow to an initial value, emit the value after this call.</p>
 <p>On a <a href="../-mutable-state-flow/index.html">MutableStateFlow</a>, which always contains a single value, this function is not
 supported, and throws an <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/UnsupportedOperationException.html">UnsupportedOperationException</a>. To reset a <a href="../-mutable-state-flow/index.html">MutableStateFlow</a>
 to an initial value, just update its <a href="../-mutable-state-flow/value.html">value</a>.</p>
+
+<p>This method is <strong>thread-safe</strong> and can be safely invoked from concurrent coroutines without
+external synchronization.</p>
 
 <p><strong>Note: This is an experimental api.</strong> This function may be removed or renamed in the future.</p>
 

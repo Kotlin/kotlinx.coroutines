@@ -40,8 +40,11 @@
 <p>The coroutine is immediately started. Passing <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-start/-l-a-z-y/index.html">CoroutineStart.LAZY</a> to <a href="future.html#kotlinx.coroutines.guava$future(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.guava.future.T)))/start">start</a> throws
 <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgumentException.html">IllegalArgumentException</a>, because Futures don’t have a way to start lazily.</p>
 
-<p>The created coroutine is cancelled when the resulting future completes successfully, fails, or
-is cancelled.</p>
+<p>When the created coroutine <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/is-completed.html">isCompleted</a>, it will try to
+<em>synchronously</em> complete the returned Future with the same outcome. This will
+succeed, barring a race with external cancellation of returned <a href="https://google.github.io/guava/releases/28.0-jre/api/docs/com/google/common/util/concurrent/ListenableFuture.html">ListenableFuture</a>.</p>
+
+<p>Cancellation is propagated bidirectionally.</p>
 
 <p><code>CoroutineContext</code> is inherited from this <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>. Additional context elements can be
 added/overlaid by passing <a href="future.html#kotlinx.coroutines.guava$future(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.guava.future.T)))/context">context</a>.</p>
@@ -55,8 +58,10 @@ a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/k
 <p>See <a href="#">newCoroutineContext</a> for a description of debugging
 facilities.</p>
 
-<p>Note that the error and cancellation semantics of <a href="./future.md">future</a> are <em>subtly different</em> than
-<a href="../kotlinx.coroutines.-deferred/as-listenable-future.html">asListenableFuture</a>’s. See <a href="#">ListenableFutureCoroutine</a> for details.</p>
+<p>Note that the error and cancellation semantics of <a href="./future.md">future</a> are <em>subtly different</em> than <a href="../kotlinx.coroutines.-deferred/as-listenable-future.html">asListenableFuture</a>’s.
+In particular, any exception that happens in the coroutine after returned future is
+successfully cancelled will be passed to the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a> from the <a href="future.html#kotlinx.coroutines.guava$future(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.guava.future.T)))/context">context</a>.
+See <a href="#">ListenableFutureCoroutine</a> for details.</p>
 
 <h3 id="parameters">Parameters</h3>
 
