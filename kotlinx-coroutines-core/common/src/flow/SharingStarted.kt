@@ -58,7 +58,7 @@ public enum class SharingCommand {
  * [`command`][command] flow implementation function. Back-to-back emissions of the same command have no effect.
  * Only emission of a different command has effect:
  *
- * * [START][SharingCommand.START] &mdash; the upstream flow is stared.
+ * * [START][SharingCommand.START] &mdash; the upstream flow is started.
  * * [STOP][SharingCommand.STOP] &mdash; the upstream flow is stopped.
  * * [STOP_AND_RESET_REPLAY_CACHE][SharingCommand.STOP_AND_RESET_REPLAY_CACHE] &mdash;
  *   the upstream flow is stopped and the [SharedFlow.replayCache] is reset to its initial state.
