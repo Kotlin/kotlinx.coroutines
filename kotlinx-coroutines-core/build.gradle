@@ -184,13 +184,22 @@ jvmTest {
     minHeapSize = '1g'
     maxHeapSize = '1g'
     enableAssertions = true
-    systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
+    if (!Idea.active) {
+        // We should not set this security manager when `jvmTest`
+        // is invoked by IntelliJ IDEA since we need to pass
+        // system properties for Lincheck and stress tests.
+        // TODO Remove once IDEA is smart enough to select between `jvmTest`/`jvmStressTest`/`jvmLincheckTest` #KTIJ-599
+        systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
+    }
     // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
     if (!Idea.active && rootProject.properties['stress'] == null) {
+        exclude '**/*LincheckTest.*'
         exclude '**/*StressTest.*'
     }
-    systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
-
+    if (Idea.active) {
+        // Configure the IDEA runner for Lincheck
+        configureJvmForLincheck(jvmTest)
+    }
     // TODO: JVM IR generates different stacktrace so temporary disable stacktrace tests
     if (rootProject.ext.jvm_ir_enabled) {
         filter {
@@ -219,23 +228,41 @@ task jvmStressTest(type: Test, dependsOn: compileTestKotlinJvm) {
     systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '10'
 }
 
+task jvmLincheckTest(type: Test, dependsOn: compileTestKotlinJvm) {
+    classpath = files { jvmTest.classpath }
+    testClassesDirs = files { jvmTest.testClassesDirs }
+    include '**/*LincheckTest.*'
+    enableAssertions = true
+    testLogging.showStandardStreams = true
+    configureJvmForLincheck(jvmLincheckTest)
+}
+
+static void configureJvmForLincheck(task) {
+    task.minHeapSize = '1g'
+    task.maxHeapSize = '6g' // we may need more space for building an interleaving tree in the model checking mode
+    task.jvmArgs = ['--add-opens', 'java.base/jdk.internal.misc=ALL-UNNAMED',   // required for transformation
+                     '--add-exports', 'java.base/jdk.internal.util=ALL-UNNAMED'] // in the model checking mode
+    task.systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2'
+    task.systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '1' // better for the model checking mode
+}
+
 task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
     executable = "$System.env.JDK_16/bin/java"
     exclude '**/*LFStressTest.*' // lock-freedom tests use LockFreedomTestEnvironment which needs JDK8
-    exclude '**/*LCStressTest.*' // lin-check tests use LinChecker which needs JDK8
+    exclude '**/*LincheckTest.*' // Lincheck tests use LinChecker which needs JDK8
     exclude '**/exceptions/**'   // exceptions tests check suppressed exception which needs JDK8
     exclude '**/ExceptionsGuideTest.*'
     exclude '**/RunInterruptibleStressTest.*' // fails on JDK 1.6 due to JDK bug
 }
 
-// Run these tests only during nightly stress test
+// Run jdk16Test test only during nightly stress test
 jdk16Test.onlyIf { project.properties['stressTest'] != null }
 
-// Always run those tests
-task moreTest(dependsOn: [jvmStressTest, jdk16Test])
-build.dependsOn moreTest
+// Always check additional test sets
+task moreTest(dependsOn: [jvmStressTest, jvmLincheckTest, jdk16Test])
+check.dependsOn moreTest
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {
     classifier = 'tests'

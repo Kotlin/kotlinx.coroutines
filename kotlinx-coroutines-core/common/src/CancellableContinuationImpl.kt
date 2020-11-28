@@ -85,6 +85,13 @@ internal open class CancellableContinuationImpl<in T>(
 
     public override val isCancelled: Boolean get() = state is CancelledContinuation
 
+    // We cannot invoke `state.toString()` since it may cause a circular dependency
+    private val stateDebugRepresentation get() = when(state) {
+        is NotCompleted -> "Active"
+        is CancelledContinuation -> "Cancelled"
+        else -> "Completed"
+    }
+
     public override fun initCancellability() {
         setupCancellation()
     }
@@ -503,7 +510,7 @@ internal open class CancellableContinuationImpl<in T>(
 
     // For nicer debugging
     public override fun toString(): String =
-        "${nameString()}(${delegate.toDebugString()}){$state}@$hexAddress"
+        "${nameString()}(${delegate.toDebugString()}){$stateDebugRepresentation}@$hexAddress"
 
     protected open fun nameString(): String =
         "CancellableContinuation"

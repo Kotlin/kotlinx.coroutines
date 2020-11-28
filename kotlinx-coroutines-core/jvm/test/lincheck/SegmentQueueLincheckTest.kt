@@ -3,18 +3,17 @@
  */
 @file:Suppress("unused")
 
-package kotlinx.coroutines.linearizability
+package kotlinx.coroutines.lincheck
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.SegmentBasedQueue
 import org.jetbrains.kotlinx.lincheck.annotations.*
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.paramgen.*
-import org.jetbrains.kotlinx.lincheck.verifier.*
-import org.junit.*
+import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
 
 @Param(name = "value", gen = IntGen::class, conf = "1:5")
-class SegmentQueueLCStressTest : VerifierState() {
+class SegmentQueueLincheckTest : AbstractLincheckTest() {
     private val q = SegmentBasedQueue<Int>()
 
     @Operation
@@ -40,6 +39,6 @@ class SegmentQueueLCStressTest : VerifierState() {
         return elements to closed
     }
 
-    @Test
-    fun test() = LCStressOptionsDefault().check(this::class)
+    override fun ModelCheckingOptions.customize(isStressTest: Boolean) =
+        checkObstructionFreedom()
 }
