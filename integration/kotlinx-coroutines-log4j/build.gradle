@@ -1,0 +1,11 @@
+dependencies {
+    implementation 'org.apache.logging.log4j:log4j-api:2.13.1'
+    testImplementation 'org.apache.logging.log4j:log4j-core:2.13.1'
+}
+
+tasks.withType(dokka.getClass()) {
+    externalDocumentationLink {
+        packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
+        url = new URL("https://logging.apache.org/log4j/2.x/log4j-api/apidocs")
+    }
+}

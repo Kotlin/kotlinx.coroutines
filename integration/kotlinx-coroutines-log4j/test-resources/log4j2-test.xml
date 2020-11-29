@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration debug="false">
+<Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+        <PatternLayout>
+            <pattern>%X{first} %X{last} - %m%n</pattern>
+        </PatternLayout>
+    </Console>
+</Appenders>
+
+<Loggers>
+    <Root level="trace">
+        <AppenderRef ref="Console"/>
+    </Root>
+</Loggers>
+</Configuration>
