@@ -385,8 +385,23 @@ private class JobListenableFuture<T>(private val jobToCancel: Job): ListenableFu
         // this Future hasn't itself been successfully cancelled, the Future will return
         // isCancelled() == false. This is the only discovered way to reconcile the two different
         // cancellation contracts.
-        return auxFuture.isCancelled || (isDone && Uninterruptibles.getUninterruptibly(auxFuture) is Cancelled)
+        return auxFuture.isCancelled || auxFuture.completedWithCancellation
     }
+
+    /**
+     * Helper for [isCancelled] that takes into account that
+     * our auxiliary future can complete with [Cancelled] instance.
+     */
+    private val SettableFuture<*>.completedWithCancellation: Boolean
+        get() = isDone && try {
+            Uninterruptibles.getUninterruptibly(this) is Cancelled
+        } catch (e: CancellationException) {
+            true
+        } catch (t: Throwable) {
+            // In theory appart from CancellationException, getUninterruptibly can only
+            // throw ExecutionException, but to be safe we catch Throwable here.
+            false
+        }
 
     /**
      * Waits for [auxFuture] to complete by blocking, then uses its `result`
