@@ -201,7 +201,8 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                         // try lock
                         val update = if (owner == null) EMPTY_LOCKED else Empty(owner)
                         if (_state.compareAndSet(state, update)) { // locked
-                            cont.resume(Unit)
+                            // TODO implement functional type in LockCont as soon as we get rid of legacy JS
+                            cont.resume(Unit) { unlock(owner) }
                             return@sc
                         }
                     }

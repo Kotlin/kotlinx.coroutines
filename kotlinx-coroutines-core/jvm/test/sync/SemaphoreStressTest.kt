@@ -2,7 +2,7 @@ package kotlinx.coroutines.sync
 
 import kotlinx.coroutines.*
 import org.junit.Test
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class SemaphoreStressTest : TestBase() {
     @Test
@@ -88,6 +88,23 @@ class SemaphoreStressTest : TestBase() {
                 assertEquals(1, semaphore.availablePermits)
                 semaphore.acquire()
             }
+        }
+    }
+
+    @Test
+    fun testShouldBeUnlockedOnCancellation() = runTest {
+        val semaphore = Semaphore(1)
+        val n = 1000 * stressTestMultiplier
+        repeat(n) {
+            val job = launch(Dispatchers.Default) {
+                semaphore.acquire()
+                semaphore.release()
+            }
+            semaphore.withPermit {
+                job.cancel()
+            }
+            job.join()
+            assertTrue { semaphore.availablePermits == 1 }
         }
     }
 }

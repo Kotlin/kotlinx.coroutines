@@ -90,4 +90,21 @@ class MutexStressTest : TestBase() {
             }
         }
     }
+
+    @Test
+    fun testShouldBeUnlockedOnCancellation() = runTest {
+        val mutex = Mutex()
+        val n = 1000 * stressTestMultiplier
+        repeat(n) {
+            val job = launch(Dispatchers.Default) {
+                mutex.lock()
+                mutex.unlock()
+            }
+            mutex.withLock {
+                job.cancel()
+            }
+            job.join()
+            assertFalse { mutex.isLocked }
+        }
+    }
 }

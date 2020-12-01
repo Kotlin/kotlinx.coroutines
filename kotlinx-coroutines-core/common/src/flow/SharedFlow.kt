@@ -148,6 +148,17 @@ public interface SharedFlow<out T> : Flow<T> {
  */
 public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
     /**
+     * Emits a [value] to this shared flow, suspending on buffer overflow if the shared flow was created
+     * with the default [BufferOverflow.SUSPEND] strategy.
+     *
+     * See [tryEmit] for a non-suspending variant of this function.
+     *
+     * This method is **thread-safe** and can be safely invoked from concurrent coroutines without
+     * external synchronization.
+     */
+    override suspend fun emit(value: T)
+
+    /**
      * Tries to emit a [value] to this shared flow without suspending. It returns `true` if the value was
      * emitted successfully. When this function returns `false`, it means that the call to a plain [emit]
      * function will suspend until there is a buffer space available.
@@ -155,6 +166,9 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      * A shared flow configured with a [BufferOverflow] strategy other than [SUSPEND][BufferOverflow.SUSPEND]
      * (either [DROP_OLDEST][BufferOverflow.DROP_OLDEST] or [DROP_LATEST][BufferOverflow.DROP_LATEST]) never
      * suspends on [emit], and thus `tryEmit` to such a shared flow always returns `true`.
+     *
+     * This method is **thread-safe** and can be safely invoked from concurrent coroutines without
+     * external synchronization.
      */
     public fun tryEmit(value: T): Boolean
 
@@ -189,6 +203,9 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      * On a [MutableStateFlow], which always contains a single value, this function is not
      * supported, and throws an [UnsupportedOperationException]. To reset a [MutableStateFlow]
      * to an initial value, just update its [value][MutableStateFlow.value].
+     *
+     * This method is **thread-safe** and can be safely invoked from concurrent coroutines without
+     * external synchronization.
      *
      * **Note: This is an experimental api.** This function may be removed or renamed in the future.
      */

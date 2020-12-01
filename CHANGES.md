@@ -1,5 +1,17 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.4.2
+
+* Fixed `StackOverflowError` in `Job.toString` when `Job` is observed in its intermediate state (#2371).
+* Improved liveness and latency of `Dispatchers.Default` and `Dispatchers.IO` in low-loaded mode (#2381).
+* Improved performance of consecutive `Channel.cancel` invocations (#2384).
+* `SharingStarted` is now `fun` interface (#2397).
+* Additional lint settings for `SharedFlow` to catch programmatic errors early (#2376).
+* Fixed bug when mutex and semaphore were not released during cancellation (#2390, thanks to @Tilps for reproducing).
+* Some corner cases in cancellation propagation between coroutines and listenable futures are repaired (#1442, thanks to @vadimsemenov).
+* Fixed unconditional cast to `CoroutineStackFrame` in exception recovery that triggered failures of instrumented code (#2386).
+* Platform-specific dependencies are removed from `kotlinx-coroutines-javafx` (#2360). 
+
 ## Version 1.4.1
 
 This is a patch release with an important fix to the `SharedFlow` implementation.
