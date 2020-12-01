@@ -153,7 +153,7 @@ public fun <T1, T2, T3, T4, R> combine(
     flow3: Flow<T3>,
     flow4: Flow<T4>,
     transform: suspend (T1, T2, T3, T4) -> R
-): Flow<R> = combine(flow, flow2, flow3, flow4) { args: Array<*> ->
+): Flow<R> = combineUnsafe(flow, flow2, flow3, flow4) { args: Array<*> ->
     transform(
         args[0] as T1,
         args[1] as T2,
