@@ -23,7 +23,7 @@ internal class DispatchedContinuation<in T>(
     @JvmField
     @Suppress("PropertyName")
     internal var _state: Any? = UNDEFINED
-    override val callerFrame: CoroutineStackFrame? = continuation as? CoroutineStackFrame
+    override val callerFrame: CoroutineStackFrame? get() = continuation as? CoroutineStackFrame
     override fun getStackTraceElement(): StackTraceElement? = null
     @JvmField // pre-cached value to avoid ctx.fold on every resumption
     internal val countOrElement = threadContextElements(context)
