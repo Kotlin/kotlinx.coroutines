@@ -203,6 +203,8 @@ configure(subprojects.findAll { !sourceless.contains(it.name) }) {
         kotlinOptions.freeCompilerArgs += experimentalAnnotations.collect { "-Xuse-experimental=" + it }
         kotlinOptions.freeCompilerArgs += "-progressive"
         kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
+        // Disable KT-36770 for RxJava2 integration
+        kotlinOptions.freeCompilerArgs += "-XXLanguage:-ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated"
         // Remove null assertions to get smaller bytecode on Android
         kotlinOptions.freeCompilerArgs += ["-Xno-param-assertions", "-Xno-receiver-assertions", "-Xno-call-assertions"]
     }
