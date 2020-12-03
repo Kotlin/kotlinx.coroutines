@@ -397,9 +397,7 @@ private class JobListenableFuture<T>(private val jobToCancel: Job): ListenableFu
             Uninterruptibles.getUninterruptibly(this) is Cancelled
         } catch (e: CancellationException) {
             true
-        } catch (t: Throwable) {
-            // In theory appart from CancellationException, getUninterruptibly can only
-            // throw ExecutionException, but to be safe we catch Throwable here.
+        } catch (e: ExecutionException) {
             false
         }
 
