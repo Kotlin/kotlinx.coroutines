@@ -351,4 +351,18 @@ class AwaitTest : TestBase() {
             async(NonCancellable) { throw TestException() }
         joinAll(job, job, job)
     }
+
+    @Test
+    fun testAwaitAllDelegates() = runTest {
+        expect(1)
+        val deferred = CompletableDeferred<String>()
+        val delegate = object : Deferred<String> by deferred {}
+        launch {
+            expect(3)
+            deferred.complete("OK")
+        }
+        expect(2)
+        awaitAll(delegate)
+        finish(4)
+    }
 }

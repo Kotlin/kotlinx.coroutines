@@ -509,12 +509,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     private fun makeNode(handler: CompletionHandler, onCancelling: Boolean): JobNode<*> {
-        return if (onCancelling)
-            (handler as? JobCancellingNode<*>)?.also { assert { it.job === this } }
-                ?: InvokeOnCancelling(this, handler)
-        else
-            (handler as? JobNode<*>)?.also { assert { it.job === this && it !is JobCancellingNode } }
+        return if (onCancelling) {
+            handler as? JobCancellingNode<*> ?: InvokeOnCancelling(this, handler)
+        } else {
+            (handler as? JobNode<*>)?.also { assert { it !is JobCancellingNode } }
                 ?: InvokeOnCompletion(this, handler)
+        }
     }
 
     private fun addLastAtomic(expect: Any, list: NodeList, node: JobNode<*>) =
