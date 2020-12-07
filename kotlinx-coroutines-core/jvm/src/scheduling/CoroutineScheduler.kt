@@ -295,7 +295,7 @@ internal class CoroutineScheduler(
 
     // This is used a "stop signal" for close and shutdown functions
     private val _isTerminated = atomic(false)
-    val isTerminated: Boolean get() = _isTerminated.value
+    val isTerminated: Boolean by _isTerminated
 
     companion object {
         // A symbol to mark workers that are not in parkedWorkersStack

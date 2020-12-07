@@ -127,9 +127,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     private val _state = atomic<Any?>(if (active) EMPTY_ACTIVE else EMPTY_NEW)
 
     private val _parentHandle = atomic<ChildHandle?>(null)
-    internal var parentHandle: ChildHandle?
-        get() = _parentHandle.value
-        set(value) { _parentHandle.value = value }
+    internal var parentHandle: ChildHandle? by _parentHandle
 
     override val parent: Job?
         get() = parentHandle?.parent
@@ -1080,19 +1078,13 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         rootCause: Throwable?
     ) : SynchronizedObject(), Incomplete {
         private val _isCompleting = atomic(isCompleting)
-        var isCompleting: Boolean
-            get() = _isCompleting.value
-            set(value) { _isCompleting.value = value }
+        var isCompleting: Boolean by _isCompleting
 
         private val _rootCause = atomic(rootCause)
-        var rootCause: Throwable? // NOTE: rootCause is kept even when SEALED
-            get() = _rootCause.value
-            set(value) { _rootCause.value = value }
+        var rootCause: Throwable? by _rootCause // NOTE: rootCause is kept even when SEALED
 
         private val _exceptionsHolder = atomic<Any?>(null)
-        private var exceptionsHolder: Any? // Contains null | Throwable | ArrayList | SEALED
-            get() = _exceptionsHolder.value
-            set(value) { _exceptionsHolder.value = value }
+        private var exceptionsHolder: Any? by _exceptionsHolder // Contains null | Throwable | ArrayList | SEALED
 
         // Note: cannot be modified when sealed
         val isSealed: Boolean get() = exceptionsHolder === SEALED

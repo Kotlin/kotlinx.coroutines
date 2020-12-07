@@ -56,7 +56,7 @@ public abstract class AtomicOp<in T> : OpDescriptor() {
     private val _consensus = atomic<Any?>(NO_DECISION)
 
     // Returns NO_DECISION when there is not decision yet
-    val consensus: Any? get() = _consensus.value
+    val consensus: Any? by _consensus
 
     val isDecided: Boolean get() = _consensus.value !== NO_DECISION
 
