@@ -33,7 +33,7 @@ import kotlin.native.concurrent.*
  *
  * [SharedFlow] is useful for broadcasting events that happen inside an application to subscribers that can come and go.
  * For example, the following class encapsulates an event bus that distributes events to all subscribers
- * in a _rendezvous_ manner, suspending until all subscribers process each event:
+ * in a _rendezvous_ manner, suspending until all subscribers receive emitted event:
  *
  * ```
  * class EventBus {
@@ -148,8 +148,8 @@ public interface SharedFlow<out T> : Flow<T> {
  */
 public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
     /**
-     * Emits a [value] to this shared flow, suspending on buffer overflow if the shared flow was created
-     * with the default [BufferOverflow.SUSPEND] strategy.
+     * Emits a [value] to this shared flow, suspending on buffer overflow until all subscribers receive the value
+     * if the shared flow was created with the default [BufferOverflow.SUSPEND] strategy.
      *
      * See [tryEmit] for a non-suspending variant of this function.
      *
