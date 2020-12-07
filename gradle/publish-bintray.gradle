@@ -71,7 +71,6 @@ publishing {
             it.artifact(javadocJar)
         }
 
-        // Rename MPP artifacts for backward compatibility
         def type = it.name
         switch (type) {
             case 'kotlinMultiplatform':
@@ -82,13 +81,7 @@ publishing {
                 publishPlatformArtifactsInRootModule(publications["jvm"])
                 break
             case 'metadata':
-                // As the old -common dependencies will fail to resolve with Gradle module metadata, rename the module
-                // to '*-metadata' so that the resolution failure are more clear
-                it.artifactId = "$project.name-metadata"
-                break
             case 'jvm':
-                it.artifactId = "$project.name-jvm"
-                break
             case 'js':
             case 'native':
                 it.artifactId = "$project.name-$type"
