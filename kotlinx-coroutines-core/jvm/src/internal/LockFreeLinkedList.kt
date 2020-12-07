@@ -321,7 +321,7 @@ public actual open class LockFreeLinkedListNode {
             queue.correctPrev(op) // queue head is never removed, so null result can only mean RETRY_ATOMIC
 
         private val _affectedNode = atomic<Node?>(null)
-        final override val affectedNode: Node? get() = _affectedNode.value
+        final override val affectedNode: Node? by _affectedNode
         final override val originalNext: Node? get() = queue
 
         override fun retry(affected: Node, next: Any): Boolean = next !== queue
@@ -367,8 +367,8 @@ public actual open class LockFreeLinkedListNode {
             }
         }
 
-        final override val affectedNode: Node? get() = _affectedNode.value
-        final override val originalNext: Node? get() = _originalNext.value
+        final override val affectedNode: Node? by _affectedNode
+        final override val originalNext: Node? by _originalNext
 
         // check node predicates here, must signal failure if affect is not of type T
         protected override fun failure(affected: Node): Any? =

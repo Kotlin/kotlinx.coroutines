@@ -105,7 +105,7 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     }
 
     /** @suppress */
-    override val currentTime: Long get() = _time.value
+    override val currentTime: Long by _time
 
     /** @suppress */
     override fun advanceTimeBy(delayTimeMillis: Long): Long {

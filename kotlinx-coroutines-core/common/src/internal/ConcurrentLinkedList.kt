@@ -95,7 +95,7 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
     // Pointer to the previous node, updates in [remove] function.
     private val _prev = atomic(prev)
 
-    private val nextOrClosed get() = _next.value
+    private val nextOrClosed: Any? by _next
 
     /**
      * Returns the next segment or `null` of the one does not exist,
@@ -122,7 +122,7 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
      */
     val isTail: Boolean get() = next == null
 
-    val prev: N? get() = _prev.value
+    val prev: N? by _prev
 
     /**
      * Cleans the pointer to the previous node.

@@ -73,11 +73,9 @@ internal open class CancellableContinuationImpl<in T>(
     private val _state = atomic<Any?>(Active)
 
     private val _parentHandle = atomic<DisposableHandle?>(null)
-    private var parentHandle: DisposableHandle?
-        get() = _parentHandle.value
-        set(value) { _parentHandle.value = value }
+    private var parentHandle: DisposableHandle? by _parentHandle
 
-    internal val state: Any? get() = _state.value
+    internal val state: Any? by _state
 
     public override val isActive: Boolean get() = state is NotCompleted
 

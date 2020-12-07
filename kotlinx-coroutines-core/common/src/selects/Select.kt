@@ -250,9 +250,7 @@ internal class SelectBuilderImpl<in R>(
 
     // cancellability support
     private val _parentHandle = atomic<DisposableHandle?>(null)
-    private var parentHandle: DisposableHandle?
-        get() = _parentHandle.value
-        set(value) { _parentHandle.value = value }
+    private var parentHandle: DisposableHandle? by _parentHandle
 
     /* Result state machine
 
