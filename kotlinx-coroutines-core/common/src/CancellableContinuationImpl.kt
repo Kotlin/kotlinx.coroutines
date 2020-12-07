@@ -129,7 +129,7 @@ internal open class CancellableContinuationImpl<in T>(
         val parent = delegate.context[Job] ?: return // fast path 3 -- don't do anything without parent
         val handle = parent.invokeOnCompletion(
             onCancelling = true,
-            handler = ChildContinuation(parent, this).asHandler
+            handler = ChildContinuation(this).asHandler
         )
         parentHandle = handle
         // now check our state _after_ registering (could have completed while we were registering)
