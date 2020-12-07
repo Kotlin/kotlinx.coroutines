@@ -51,19 +51,13 @@ internal class ArrayBroadcastChannel<E>(
     // head, tail, and size are guarded by bufferLock
 
     private val _head = atomic(0L)
-    private var head: Long // do modulo on use of head
-        get() = _head.value
-        set(value) { _head.value = value }
+    private var head: Long by _head // do modulo on use of head
 
     private val _tail = atomic(0L)
-    private var tail: Long // do modulo on use of tail
-        get() = _tail.value
-        set(value) { _tail.value = value }
+    private var tail: Long by _tail // do modulo on use of tail
     
     private val _size = atomic(0)
-    private var size: Int
-        get() = _size.value
-        set(value) { _size.value = value }
+    private var size: Int by _size
 
     @Suppress("DEPRECATION")
     private val subscribers = subscriberList<Subscriber<E>>()
@@ -196,9 +190,7 @@ internal class ArrayBroadcastChannel<E>(
         private val subLock = ReentrantLock()
 
         private val _subHead = atomic(0L)
-        var subHead: Long // guarded by subLock
-            get() = _subHead.value
-            set(value) { _subHead.value = value }
+        var subHead: Long by _subHead // guarded by subLock
 
         override val isBufferAlwaysEmpty: Boolean get() = false
         override val isBufferEmpty: Boolean get() = subHead >= broadcastChannel.tail

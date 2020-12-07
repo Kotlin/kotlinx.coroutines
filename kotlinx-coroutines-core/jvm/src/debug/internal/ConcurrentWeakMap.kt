@@ -22,8 +22,7 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(
     private val core = atomic(Core(MIN_CAPACITY))
     private val weakRefQueue: ReferenceQueue<K>? = if (weakRefQueue) ReferenceQueue() else null
 
-    override val size: Int
-        get() = _size.value
+    override val size: Int by _size
 
     private fun decrementSize() { _size.decrementAndGet() }
 

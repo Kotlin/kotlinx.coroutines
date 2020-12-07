@@ -446,7 +446,6 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public final fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
 	protected final fun getOnAwaitInternal ()Lkotlinx/coroutines/selects/SelectClause1;
 	public final fun getOnJoin ()Lkotlinx/coroutines/selects/SelectClause0;
-	public fun getParent ()Lkotlinx/coroutines/Job;
 	protected fun handleJobException (Ljava/lang/Throwable;)Z
 	protected final fun initParentJob (Lkotlinx/coroutines/Job;)V
 	public final fun invokeOnCompletion (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
@@ -464,6 +463,7 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public final fun parentCancelled (Lkotlinx/coroutines/ParentJob;)V
 	public fun plus (Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
 	public fun plus (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
+	public final fun registerSelectClause0 (Lkotlinx/coroutines/selects/SelectInstance;Lkotlin/jvm/functions/Function1;)V
 	public final fun start ()Z
 	protected final fun toCancellationException (Ljava/lang/Throwable;Ljava/lang/String;)Ljava/util/concurrent/CancellationException;
 	public static synthetic fun toCancellationException$default (Lkotlinx/coroutines/JobSupport;Ljava/lang/Throwable;Ljava/lang/String;ILjava/lang/Object;)Ljava/util/concurrent/CancellationException;

@@ -185,9 +185,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
     private val _delayed = atomic<DelayedTaskQueue?>(null)
 
     private val _isCompleted = atomic(false)
-    private var isCompleted
-        get() = _isCompleted.value
-        set(value) { _isCompleted.value = value }
+    private var isCompleted: Boolean by _isCompleted
 
     override val isEmpty: Boolean get() {
         if (!isUnconfinedQueueEmpty) return false

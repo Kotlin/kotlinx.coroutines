@@ -104,9 +104,7 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
         lateinit var handle: DisposableHandle
 
         private val _disposer = atomic<DisposeHandlersOnCancel?>(null)
-        var disposer: DisposeHandlersOnCancel?
-            get() = _disposer.value
-            set(value) { _disposer.value = value }
+        var disposer: DisposeHandlersOnCancel? by _disposer
         
         override fun invoke(cause: Throwable?) {
             if (cause != null) {
