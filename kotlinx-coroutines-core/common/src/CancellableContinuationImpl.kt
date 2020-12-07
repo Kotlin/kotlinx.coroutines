@@ -74,7 +74,7 @@ internal open class CancellableContinuationImpl<in T>(
 
     private var parentHandle: DisposableHandle? = null
 
-    internal val state: Any? get() = _state.value
+    internal val state: Any? by _state
 
     public override val isActive: Boolean get() = state is NotCompleted
 

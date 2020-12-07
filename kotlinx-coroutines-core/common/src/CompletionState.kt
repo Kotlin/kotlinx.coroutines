@@ -44,7 +44,7 @@ internal open class CompletedExceptionally(
     handled: Boolean = false
 ) {
     private val _handled = atomic(handled)
-    val handled: Boolean get() = _handled.value
+    val handled: Boolean by _handled
     fun makeHandled(): Boolean = _handled.compareAndSet(false, true)
     override fun toString(): String = "$classSimpleName[$cause]"
 }

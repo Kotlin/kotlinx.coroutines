@@ -116,8 +116,7 @@ class ChannelUndeliveredElementTest : TestBase() {
     private class Resource(val value: String) {
         private val _cancelled = atomic(false)
 
-        val isCancelled: Boolean
-            get() = _cancelled.value
+        val isCancelled: Boolean by _cancelled
 
         fun cancel() {
             check(!_cancelled.getAndSet(true)) { "Already cancelled" }
