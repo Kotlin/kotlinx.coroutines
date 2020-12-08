@@ -20,5 +20,7 @@ Integration with SLF4J [MDC](https://logback.qos.ch/manual/mdc.html).
 
 <!--- MODULE kotlinx-coroutines-slf4j -->
 <!--- INDEX kotlinx.coroutines.slf4j -->
+
 [MDCContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-slf4j/kotlinx.coroutines.slf4j/-m-d-c-context/index.html
+
 <!--- END -->

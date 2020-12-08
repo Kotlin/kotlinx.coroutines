@@ -38,7 +38,7 @@ public enum class SharingCommand {
 /**
  * A strategy for starting and stopping the sharing coroutine in [shareIn] and [stateIn] operators.
  *
- * This interface provides a set of built-in strategies: [Eagerly], [Lazily], [WhileSubscribed], and
+ * This functional interface provides a set of built-in strategies: [Eagerly], [Lazily], [WhileSubscribed], and
  * supports custom strategies by implementing this interface's [command] function.
  *
  * For example, it is possible to define a custom strategy that starts the upstream only when the number
@@ -46,11 +46,9 @@ public enum class SharingCommand {
  * that it looks like a built-in strategy on the use-site:
  *
  * ```
- * fun SharingStarted.Companion.WhileSubscribedAtLeast(threshold: Int): SharingStarted =
- *     object : SharingStarted {
- *         override fun command(subscriptionCount: StateFlow<Int>): Flow<SharingCommand> =
- *             subscriptionCount
- *                 .map { if (it >= threshold) SharingCommand.START else SharingCommand.STOP }
+ * fun SharingStarted.Companion.WhileSubscribedAtLeast(threshold: Int) =
+ *     SharingStarted { subscriptionCount: StateFlow<Int> ->
+ *         subscriptionCount.map { if (it >= threshold) SharingCommand.START else SharingCommand.STOP }
  *     }
  * ```
  *
@@ -60,7 +58,7 @@ public enum class SharingCommand {
  * [`command`][command] flow implementation function. Back-to-back emissions of the same command have no effect.
  * Only emission of a different command has effect:
  *
- * * [START][SharingCommand.START] &mdash; the upstream flow is stared.
+ * * [START][SharingCommand.START] &mdash; the upstream flow is started.
  * * [STOP][SharingCommand.STOP] &mdash; the upstream flow is stopped.
  * * [STOP_AND_RESET_REPLAY_CACHE][SharingCommand.STOP_AND_RESET_REPLAY_CACHE] &mdash;
  *   the upstream flow is stopped and the [SharedFlow.replayCache] is reset to its initial state.
@@ -74,7 +72,7 @@ public enum class SharingCommand {
  * The completion of the `command` flow normally has no effect (the upstream flow keeps running if it was running).
  * The failure of the `command` flow cancels the sharing coroutine and the upstream flow.
  */
-public interface SharingStarted {
+public fun interface SharingStarted {
     public companion object {
         /**
          * Sharing is started immediately and never stops.

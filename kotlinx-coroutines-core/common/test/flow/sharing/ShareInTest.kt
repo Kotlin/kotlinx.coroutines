@@ -187,11 +187,9 @@ class ShareInTest : TestBase() {
     }
 
     @Suppress("TestFunctionName")
-    private fun SharingStarted.Companion.WhileSubscribedAtLeast(threshold: Int): SharingStarted =
-        object : SharingStarted {
-            override fun command(subscriptionCount: StateFlow<Int>): Flow<SharingCommand> =
-                subscriptionCount
-                    .map { if (it >= threshold) SharingCommand.START else SharingCommand.STOP }
+    private fun SharingStarted.Companion.WhileSubscribedAtLeast(threshold: Int) =
+        SharingStarted { subscriptionCount ->
+            subscriptionCount.map { if (it >= threshold) SharingCommand.START else SharingCommand.STOP }
         }
 
     private class FlowState {

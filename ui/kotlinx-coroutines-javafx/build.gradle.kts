@@ -3,13 +3,20 @@
  */
 
 plugins {
-    id("org.openjfx.javafxplugin")
+    id("org.openjfx.javafxplugin") version "0.0.9"
 }
 
 javafx {
     version = version("javafx")
     modules = listOf("javafx.controls")
-    configuration = "compile"
+    configuration = "compileOnly"
+}
+
+sourceSets {
+    test.configure {
+        compileClasspath += configurations.compileOnly
+        runtimeClasspath += configurations.compileOnly
+    }
 }
 
 val JDK_18: String? by lazy {

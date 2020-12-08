@@ -6,8 +6,12 @@ sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
 kotlin {
-    targets {
-        fromPreset(presets.jvm, 'jvm')
+    jvm {
+        if (rootProject.ext.jvm_ir_enabled) {
+            compilations.all {
+                kotlinOptions.useIR = true
+            }
+        }
     }
     sourceSets {
         jvmTest.dependencies {
