@@ -35,7 +35,7 @@ internal object MainDispatcherLoader {
                 ).iterator().asSequence().toList()
             }
             @Suppress("ConstantConditionIf")
-            factories.maxBy { it.loadPriority }?.tryCreateDispatcher(factories)
+            factories.maxByOrNull { it.loadPriority }?.tryCreateDispatcher(factories)
                 ?: createMissingDispatcher()
         } catch (e: Throwable) {
             // Service loader can throw an exception as well

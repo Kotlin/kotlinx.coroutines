@@ -322,7 +322,7 @@ public actual open class LockFreeLinkedListNode {
 
         private val _affectedNode = atomic<Node?>(null)
         final override val affectedNode: Node? get() = _affectedNode.value
-        final override val originalNext: Node? get() = queue
+        final override val originalNext: Node get() = queue
 
         override fun retry(affected: Node, next: Any): Boolean = next !== queue
 

@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-@file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNUSED")
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNUSED")
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*

@@ -89,6 +89,19 @@ public suspend inline fun <E> BroadcastChannel<E>.consumeEach(action: (E) -> Uni
 // -------- Operations on ReceiveChannel --------
 
 /**
+ * Returns a [List] containing all elements.
+ *
+ * The operation is _terminal_.
+ * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
+ */
+@OptIn(ExperimentalStdlibApi::class)
+public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
+    consumeEach {
+        add(it)
+    }
+}
+
+/**
  * Returns a [CompletionHandler] that invokes [cancel][ReceiveChannel.cancel] on the [ReceiveChannel]
  * with the corresponding cause. See also [ReceiveChannel.consume].
  *
@@ -1188,15 +1201,6 @@ public suspend fun <E, C : MutableCollection<in E>> ReceiveChannel<E>.toCollecti
     }
     return destination
 }
-
-/**
- * Returns a [List] containing all elements.
- *
- * The operation is _terminal_.
- * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
- */
-public suspend fun <E> ReceiveChannel<E>.toList(): List<E> =
-    this.toMutableList()
 
 /**
  * Returns a [Map] filled with all elements of this channel.
