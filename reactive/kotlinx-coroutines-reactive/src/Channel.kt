@@ -26,24 +26,26 @@ import org.reactivestreams.*
  */
 @Deprecated(
     message = "Transforming publisher to channel is deprecated, use asFlow() instead",
-    level = DeprecationLevel.WARNING) // Will be error in 1.4
+    level = DeprecationLevel.ERROR) // Will be error in 1.4
 public fun <T> Publisher<T>.openSubscription(request: Int = 1): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>(request)
     subscribe(channel)
     return channel
 }
 
-// Will be promoted to error in 1.3.0, removed in 1.4.0
-@Deprecated(message = "Use collect instead", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("this.collect(action)"))
-public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit): Unit =
-    openSubscription().consumeEach(action)
-
 /**
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  * Cancels subscription if any exception happens during collect.
  */
 public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit): Unit =
-    openSubscription().consumeEach(action)
+    toChannel().consumeEach(action)
+
+@PublishedApi
+internal fun <T> Publisher<T>.toChannel(request: Int = 1): ReceiveChannel<T> {
+    val channel = SubscriptionChannel<T>(request)
+    subscribe(channel)
+    return channel
+}
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
 private class SubscriptionChannel<T>(

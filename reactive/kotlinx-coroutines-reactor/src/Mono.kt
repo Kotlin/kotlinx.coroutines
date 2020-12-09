@@ -34,17 +34,6 @@ public fun <T> mono(
     return monoInternal(GlobalScope, context, block)
 }
 
-@Deprecated(
-    message = "CoroutineScope.mono is deprecated in favour of top-level mono",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("mono(context, block)")
-) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
-@LowPriorityInOverloadResolution
-public fun <T> CoroutineScope.mono(
-    context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend CoroutineScope.() -> T?
-): Mono<T> = monoInternal(this, context, block)
-
 private fun <T> monoInternal(
     scope: CoroutineScope, // support for legacy mono in scope
     context: CoroutineContext,
@@ -89,3 +78,14 @@ private class MonoCoroutine<in T>(
 
     override fun isDisposed(): Boolean = disposed
 }
+
+@Deprecated(
+    message = "CoroutineScope.mono is deprecated in favour of top-level mono",
+    level = DeprecationLevel.HIDDEN,
+    replaceWith = ReplaceWith("mono(context, block)")
+) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
+public fun <T> CoroutineScope.mono(
+    context: CoroutineContext = EmptyCoroutineContext,
+    block: suspend CoroutineScope.() -> T?
+): Mono<T> = monoInternal(this, context, block)
+

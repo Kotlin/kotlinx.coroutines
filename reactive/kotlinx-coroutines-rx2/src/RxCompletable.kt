@@ -2,14 +2,11 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
-import kotlin.internal.*
 
 /**
  * Creates cold [Completable] that runs a given [block] in a coroutine and emits its result.
@@ -27,17 +24,6 @@ public fun rxCompletable(
             "Its lifecycle should be managed via Disposable handle. Had $context" }
     return rxCompletableInternal(GlobalScope, context, block)
 }
-
-@Deprecated(
-    message = "CoroutineScope.rxCompletable is deprecated in favour of top-level rxCompletable",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("rxCompletable(context, block)")
-) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
-@LowPriorityInOverloadResolution
-public fun CoroutineScope.rxCompletable(
-    context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend CoroutineScope.() -> Unit
-): Completable = rxCompletableInternal(this, context, block)
 
 private fun rxCompletableInternal(
     scope: CoroutineScope, // support for legacy rxCompletable in scope
@@ -72,3 +58,13 @@ private class RxCompletableCoroutine(
         }
     }
 }
+
+@Deprecated(
+    message = "CoroutineScope.rxCompletable is deprecated in favour of top-level rxCompletable",
+    level = DeprecationLevel.HIDDEN,
+    replaceWith = ReplaceWith("rxCompletable(context, block)")
+) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
+public fun CoroutineScope.rxCompletable(
+    context: CoroutineContext = EmptyCoroutineContext,
+    block: suspend CoroutineScope.() -> Unit
+): Completable = rxCompletableInternal(this, context, block)

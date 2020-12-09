@@ -20,8 +20,8 @@ class ObservableSubscriptionSelectTest : TestBase() {
         var a = 0
         var b = 0
         // open two subs
-        val channelA = source.openSubscription()
-        val channelB = source.openSubscription()
+        val channelA = source.toChannel()
+        val channelB = source.toChannel()
         loop@ while (true) {
             val done: Int = select {
                 channelA.onReceiveCatching { result ->

@@ -1,9 +1,6 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package kotlinx.coroutines.reactive
 
 import kotlinx.atomicfu.*
@@ -42,17 +39,6 @@ public fun <T> publish(
             "Its lifecycle should be managed via subscription. Had $context" }
     return publishInternal(GlobalScope, context, DEFAULT_HANDLER, block)
 }
-
-@Deprecated(
-    message = "CoroutineScope.publish is deprecated in favour of top-level publish",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("publish(context, block)")
-) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0. Binary compatibility with Spring
-@LowPriorityInOverloadResolution
-public fun <T> CoroutineScope.publish(
-    context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Publisher<T> = publishInternal(this, context, DEFAULT_HANDLER ,block)
 
 /** @suppress For internal use from other reactive integration modules only */
 @InternalCoroutinesApi
@@ -288,3 +274,13 @@ public class PublisherCoroutine<in T>(
 
     private fun Throwable.isFatal() = this is VirtualMachineError || this is ThreadDeath || this is LinkageError
 }
+
+@Deprecated(
+    message = "CoroutineScope.publish is deprecated in favour of top-level publish",
+    level = DeprecationLevel.HIDDEN,
+    replaceWith = ReplaceWith("publish(context, block)")
+) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0. Binary compatibility with Spring
+public fun <T> CoroutineScope.publish(
+    context: CoroutineContext = EmptyCoroutineContext,
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+): Publisher<T> = publishInternal(this, context, DEFAULT_HANDLER, block)
