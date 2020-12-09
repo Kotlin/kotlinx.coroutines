@@ -1,9 +1,6 @@
-
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package kotlinx.coroutines.reactor
 
@@ -15,7 +12,6 @@ import reactor.core.*
 import reactor.core.publisher.*
 import reactor.util.context.*
 import kotlin.coroutines.*
-import kotlin.internal.*
 
 /**
  * Creates cold reactive [Flux] that runs a given [block] in a coroutine.
@@ -43,18 +39,6 @@ public fun <T> flux(
     return Flux.from(reactorPublish(GlobalScope, context, block))
 }
 
-@Deprecated(
-    message = "CoroutineScope.flux is deprecated in favour of top-level flux",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("flux(context, block)")
-) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0. Binary compatibility with Spring
-@LowPriorityInOverloadResolution
-public fun <T> CoroutineScope.flux(
-    context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Flux<T> =
-    Flux.from(reactorPublish(this, context, block))
-
 private fun <T> reactorPublish(
     scope: CoroutineScope,
     context: CoroutineContext = EmptyCoroutineContext,
@@ -80,3 +64,14 @@ private val REACTOR_HANDLER: (Throwable, CoroutineContext) -> Unit = { e, ctx ->
         }
     }
 }
+
+@Deprecated(
+    message = "CoroutineScope.flux is deprecated in favour of top-level flux",
+    level = DeprecationLevel.HIDDEN,
+    replaceWith = ReplaceWith("flux(context, block)")
+) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0. Binary compatibility with Spring
+public fun <T> CoroutineScope.flux(
+    context: CoroutineContext = EmptyCoroutineContext,
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+): Flux<T> =
+    Flux.from(reactorPublish(this, context, block))

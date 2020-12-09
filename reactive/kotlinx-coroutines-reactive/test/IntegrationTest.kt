@@ -82,30 +82,6 @@ class IntegrationTest(
     }
 
     @Test
-    fun testNumbers() = runBlocking<Unit> {
-        val n = 100 * stressTestMultiplier
-        val pub = publish(ctx(coroutineContext)) {
-            for (i in 1..n) {
-                send(i)
-                if (delay) delay(1)
-            }
-        }
-        assertEquals(1, pub.awaitFirst())
-        assertEquals(1, pub.awaitFirstOrDefault(0))
-        assertEquals(1, pub.awaitFirstOrNull())
-        assertEquals(1, pub.awaitFirstOrElse { 0 })
-        assertEquals(n, pub.awaitLast())
-        assertFailsWith<IllegalArgumentException> { pub.awaitSingle() }
-        assertFailsWith<IllegalArgumentException> { pub.awaitSingleOrDefault(0) }
-        assertFailsWith<IllegalArgumentException> { pub.awaitSingleOrNull() }
-        assertFailsWith<IllegalArgumentException> { pub.awaitSingleOrElse { 0 } }
-        checkNumbers(n, pub)
-        val channel = pub.openSubscription()
-        checkNumbers(n, channel.asPublisher(ctx(coroutineContext)))
-        channel.cancel()
-    }
-
-    @Test
     fun testCancelWithoutValue() = runTest {
         val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
             publish<String> {
@@ -118,7 +94,7 @@ class IntegrationTest(
     }
 
     @Test
-    fun testEmptySingle() = runTest(unhandled = listOf({e -> e is NoSuchElementException})) {
+    fun testEmptySingle() = runTest(unhandled = listOf { e -> e is NoSuchElementException }) {
         expect(1)
         val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
             publish<String> {

@@ -2,8 +2,6 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
@@ -14,7 +12,6 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import kotlin.coroutines.*
-import kotlin.internal.*
 
 /**
  * Creates cold [observable][Observable] that will run a given [block] in a coroutine.
@@ -41,17 +38,6 @@ public fun <T : Any> rxObservable(
             "Its lifecycle should be managed via Disposable handle. Had $context" }
     return rxObservableInternal(GlobalScope, context, block)
 }
-
-@Deprecated(
-    message = "CoroutineScope.rxObservable is deprecated in favour of top-level rxObservable",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("rxObservable(context, block)")
-) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
-@LowPriorityInOverloadResolution
-public fun <T : Any> CoroutineScope.rxObservable(
-    context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Observable<T> = rxObservableInternal(this, context, block)
 
 private fun <T : Any> rxObservableInternal(
     scope: CoroutineScope, // support for legacy rxObservable in scope
@@ -212,3 +198,13 @@ internal fun Throwable.isFatal() = try {
 } catch (e: Throwable) {
     true
 }
+
+@Deprecated(
+    message = "CoroutineScope.rxObservable is deprecated in favour of top-level rxObservable",
+    level = DeprecationLevel.HIDDEN,
+    replaceWith = ReplaceWith("rxObservable(context, block)")
+) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
+public fun <T : Any> CoroutineScope.rxObservable(
+    context: CoroutineContext = EmptyCoroutineContext,
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+): Observable<T> = rxObservableInternal(this, context, block)

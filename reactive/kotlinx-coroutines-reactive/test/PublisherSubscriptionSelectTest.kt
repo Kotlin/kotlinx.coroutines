@@ -28,8 +28,8 @@ class PublisherSubscriptionSelectTest(private val request: Int) : TestBase() {
         var a = 0
         var b = 0
         // open two subs
-        val channelA = source.openSubscription(request)
-        val channelB = source.openSubscription(request)
+        val channelA = source.toChannel(request)
+        val channelB = source.toChannel(request)
         loop@ while (true) {
             val done: Int = select {
                 channelA.onReceiveCatching { result ->
