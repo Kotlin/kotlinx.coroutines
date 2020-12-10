@@ -437,6 +437,12 @@ public actual open class LockFreeLinkedListNode {
                 else -> next // roll back if consensus if failure
             }
             affected._next.compareAndSet(this, update)
+            if (consensus == null) {
+                // If the consensus was on a successful completion of operation the above CAS could have reinstalled
+                // the node that was already removed into the list. This call to finishOnSuccess properly completes
+                // the ongoing operation.
+                desc.finishOnSuccess(affected, next)
+            }
             return null
         }
 
@@ -451,9 +457,9 @@ public actual open class LockFreeLinkedListNode {
         protected open fun takeAffectedNode(op: OpDescriptor): Node? = affectedNode!! // null for RETRY_ATOMIC
         protected open fun failure(affected: Node): Any? = null // next: Node | Removed
         protected open fun retry(affected: Node, next: Any): Boolean = false // next: Node | Removed
-        protected abstract fun finishOnSuccess(affected: Node, next: Node)
 
         public abstract fun updatedNext(affected: Node, next: Node): Any
+        public abstract fun finishOnSuccess(affected: Node, next: Node)
 
         public abstract fun finishPrepare(prepareOp: PrepareOp)
 
@@ -540,7 +546,15 @@ public actual open class LockFreeLinkedListNode {
      */
     private fun finishAdd(next: Node) {
         next._prev.loop { nextPrev ->
-            if (this.next !== next) return // this or next was removed or another node added, remover/adder fixes up links
+            val thisNext = this.next
+            if (thisNext !== next) { // this or next was removed or another node added
+                if (thisNext is Removed) {
+                    // If this node was removed, let's help the removal operation complete
+                    next.correctPrev(null)
+                }
+                // Otherwise another node was added -> adder fixes up links
+                return
+            }
             if (next._prev.compareAndSet(nextPrev, this)) {
                 // This newly added node could have been removed, and the above CAS would have added it physically again.
                 // Let us double-check for this situation and correct if needed
@@ -611,10 +625,20 @@ public actual open class LockFreeLinkedListNode {
         }
     }
 
+    internal fun nextValue(): Any = _next.value
+
     internal fun validateNode(prev: Node, next: Node) {
-        assert { prev === this._prev.value }
-        assert { next === this._next.value }
+        val result = validateNodeResult(prev, next)
+        check(result.isEmpty()) { result }
     }
+
+    internal fun validateNodeResult(prev: Node, next: Node): String = buildString {
+        append(validateSameResult("prev", prev, _prev.value))
+        append(validateSameResult("next", next, _next.value))
+    }
+
+    private fun validateSameResult(name: String, expect: Node, actual: Any): String =
+        if (expect === actual) "" else "{$name: expect=$expect, actual=$actual}"
 
     override fun toString(): String = "${this::class.java.simpleName}@${Integer.toHexString(System.identityHashCode(this))}"
 }
@@ -652,15 +676,48 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     override val isRemoved: Boolean get() = false
     override fun nextIfRemoved(): Node? = null
 
+    // ================ for debugging and tests ================
+
     internal fun validate() {
-        var prev: Node = this
-        var cur: Node = next as Node
-        while (cur != this) {
-            val next = cur.nextNode
+        val start = this
+        var prev: Node = start
+        var cur: Node = nextValue() as Node
+        while (cur !== start) {
+            val next = cur.nextValue() as Node
             cur.validateNode(prev, next)
             prev = cur
             cur = next
         }
         validateNode(prev, next as Node)
+    }
+
+    private fun Node.expectNextNode(sb: StringBuilder): Node? {
+        val next = nextValue()
+        if (next is Node) return next
+        sb.append(next)
+        if (next is Removed) {
+            sb.append(" ")
+            return next.ref
+        }
+        sb.append("!!]")
+        return null
+    }
+
+    internal fun stateRepresentation(): String = buildString {
+        append("[")
+        val start = this@LockFreeLinkedListHead
+        var prev: Node = start
+        var cur: Node = expectNextNode(this) ?: return@buildString
+        while (cur !== start) {
+            val next = cur.expectNextNode(this) ?: return@buildString
+            append(cur)
+            append(cur.validateNodeResult(prev, next))
+            append(", ")
+            prev = cur
+            cur = next
+        }
+        append(start)
+        append(validateNodeResult(prev, next as Node))
+        append("]")
     }
 }

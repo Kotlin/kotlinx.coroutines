@@ -14,9 +14,13 @@ import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
 
 @Param(name = "value", gen = IntGen::class, conf = "1:5")
 class LockFreeListLincheckTest : AbstractLincheckTest() {
-    class Node(val value: Int): LockFreeLinkedListNode()
+    class Node(val value: Int): LockFreeLinkedListNode() {
+        override fun toString(): String = "N$value"
+    }
 
-    private val q: LockFreeLinkedListHead = LockFreeLinkedListHead()
+    private val q: LockFreeLinkedListHead = object : LockFreeLinkedListHead() {
+        override fun toString(): String = "H"
+    }
 
     @Operation
     fun addLast(@Param(name = "value") value: Int) {
@@ -42,11 +46,16 @@ class LockFreeListLincheckTest : AbstractLincheckTest() {
 
     private fun Any.isSame(value: Int) = this is Node && this.value == value
 
-    override fun extractState(): Any {
-        val elements = ArrayList<Int>()
-        q.forEach<Node> { elements.add(it.value) }
-        return elements
+    @OptIn(ExperimentalStdlibApi::class)
+    override fun extractState(): List<Int> = buildList {
+        q.forEach<Node> { add(it.value) }
     }
+
+    @Validate
+    fun validate() = q.validate()
+
+    @StateRepresentation
+    fun stateRepresentation() = q.stateRepresentation()
 
     override fun ModelCheckingOptions.customize(isStressTest: Boolean) =
         checkObstructionFreedom()

@@ -74,7 +74,7 @@ public expect abstract class AbstractAtomicDesc : AtomicDesc {
     public abstract fun finishPrepare(prepareOp: PrepareOp) // non-null on failure
     public open fun onPrepare(prepareOp: PrepareOp): Any? // non-null on failure
     public open fun onRemoved(affected: LockFreeLinkedListNode) // non-null on failure
-    protected abstract fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)
+    public abstract fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */
