@@ -28,7 +28,7 @@ internal object CommonPool : ExecutorCoroutineDispatcher() {
      * Note that until Java 10, if an application is run within a container,
      * `Runtime.getRuntime().availableProcessors()` is not aware of container constraints and will return the real number of cores.
      */
-    public const val DEFAULT_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.default.parallelism"
+    private const val DEFAULT_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.default.parallelism"
 
     override val executor: Executor
         get() = pool ?: getOrCreatePoolSync()
@@ -62,7 +62,7 @@ internal object CommonPool : ExecutorCoroutineDispatcher() {
             ?: return createPlainPool() // Fallback to plain thread pool
         // Try to use commonPool unless parallelism was explicitly specified or in debug privatePool mode
         if (!usePrivatePool && requestedParallelism < 0) {
-            Try { fjpClass.getMethod("commonPool")?.invoke(null) as? ExecutorService }
+            Try { fjpClass.getMethod("commonPool").invoke(null) as? ExecutorService }
                 ?.takeIf { isGoodCommonPool(fjpClass, it) }
                 ?.let { return it }
         }

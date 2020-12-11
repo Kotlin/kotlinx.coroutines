@@ -169,7 +169,7 @@ internal class CoroutineScheduler(
      * It does nothing is this worker is already physically linked to the stack.
      * This method is invoked only from the worker thread itself.
      * This invocation always precedes [LockSupport.parkNanos].
-     * See [Worker.doPark].
+     * See [Worker.tryPark].
      *
      * Returns `true` if worker was added to the stack by this invocation, `false` if it was already
      * registered in the stack.

@@ -36,7 +36,7 @@ internal actual class SafeCollector<T> actual constructor(
     override val context: CoroutineContext
         get() = completion?.context ?: EmptyCoroutineContext
 
-    override fun invokeSuspend(result: Result<Any?>): Any? {
+    override fun invokeSuspend(result: Result<Any?>): Any {
         result.onFailure { lastEmissionContext = DownstreamExceptionElement(it) }
         completion?.resumeWith(result as Result<Unit>)
         return COROUTINE_SUSPENDED
