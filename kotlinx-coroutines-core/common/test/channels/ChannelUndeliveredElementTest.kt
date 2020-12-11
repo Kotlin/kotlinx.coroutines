@@ -51,6 +51,20 @@ class ChannelUndeliveredElementTest : TestBase() {
     }
 
     @Test
+    fun testUnlimitedChannelCancelled() = runTest {
+        val channel = Channel<Resource>(Channel.UNLIMITED) { it.cancel() }
+        val resA = Resource("A")
+        val resB = Resource("B")
+        channel.send(resA) // goes to buffer
+        channel.send(resB) // goes to buffer
+        assertFalse(resA.isCancelled) // it is in buffer, not cancelled
+        assertFalse(resB.isCancelled) //  it is in buffer, not cancelled
+        channel.cancel() // now cancel the channel
+        assertTrue(resA.isCancelled) // now cancelled in buffer
+        assertTrue(resB.isCancelled) // now cancelled in buffer
+    }
+
+    @Test
     fun testConflatedResourceCancelled() = runTest {
         val channel = Channel<Resource>(Channel.CONFLATED) { it.cancel() }
         val resA = Resource("A")
