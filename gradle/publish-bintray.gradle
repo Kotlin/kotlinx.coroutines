@@ -42,7 +42,7 @@ publishing {
         if (bintrayUpload) {
             PublishingKt.configureBintrayPublication(delegate, project)
         } else {
-            PublishingKt.configureMavenPublication(delegate)
+            PublishingKt.configureMavenPublication(delegate, project)
         }
     }
 
