@@ -7,7 +7,6 @@ import org.gradle.util.VersionNumber
 apply plugin: 'jdk-convention'
 apply from: rootProject.file("gradle/experimental.gradle")
 
-def rootModule = "kotlinx.coroutines"
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
 def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom', 'integration-testing']
@@ -187,7 +186,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
     apply from: rootProject.file("gradle/compile-${platform}.gradle")
     dependencies {
         // See comment below for rationale, it will be replaced with "project" dependency
-        compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
+        compile project(":$coreModule")
         // the only way IDEA can resolve test classes
         testCompile project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
     }
@@ -239,22 +238,6 @@ if (build_snapshot_train) {
                     println it
                 }
             }
-        }
-    }
-}
-
-/*
- * Hack to trick nmpp plugin: we are renaming artifacts in order to provide backward compatibility for dependencies,
- * but publishing plugin does not re-read artifact names for kotlin-jvm projects, so renaming is not applied in pom files
- * for JVM-only projects.
- *
- * We artificially replace "project" dependency with "module" one to have proper names in pom files, but then substitute it
- * to have out "project" dependency back.
- */
-configure(subprojects.findAll { it.name != coreModule && it.name != rootModule }) {
-    configurations.all {
-        resolutionStrategy.dependencySubstitution {
-            substitute module("org.jetbrains.kotlinx:kotlinx-coroutines-core:$version") with project(':kotlinx-coroutines-core')
         }
     }
 }

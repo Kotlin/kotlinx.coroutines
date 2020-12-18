@@ -13,7 +13,6 @@ apply plugin: 'maven-publish'
 
 def isMultiplatform = project.name == "kotlinx-coroutines-core"
 def isBom = project.name == "kotlinx-coroutines-bom"
-def isKotlin137x = VersionNumber.parse(kotlin_version) <= VersionNumber.parse("1.3.79")
 
 if (!isBom) {
     apply plugin: "com.github.johnrengelman.shadow"
@@ -72,39 +71,22 @@ publishing {
             it.artifact(javadocJar)
         }
 
-        // Rename MPP artifacts for backward compatibility
         def type = it.name
         switch (type) {
             case 'kotlinMultiplatform':
                 // With Kotlin 1.4 & HMPP, the root module should have no suffix in the ID, but for compatibility with
                 // the consumers who can't read Gradle module metadata, we publish the JVM artifacts in it, too
-                it.artifactId = isKotlin137x ? "$project.name-native" : project.name
-                if (!isKotlin137x) {
-                    apply from: "$rootDir/gradle/publish-mpp-root-module-in-platform.gradle"
-                    publishPlatformArtifactsInRootModule(publications["jvm"])
-                }
+                it.artifactId =  project.name
+                apply from: "$rootDir/gradle/publish-mpp-root-module-in-platform.gradle"
+                publishPlatformArtifactsInRootModule(publications["jvm"])
                 break
             case 'metadata':
-                // As the old -common dependencies will fail to resolve with Gradle module metadata, rename the module
-                // to '*-metadata' so that the resolution failure are more clear
-                it.artifactId = isKotlin137x ? "$project.name-common" : "$project.name-metadata"
-                break
             case 'jvm':
-                it.artifactId = isKotlin137x ? project.name : "$project.name-jvm"
-                break
             case 'js':
             case 'native':
                 it.artifactId = "$project.name-$type"
                 break
         }
-        // Hierarchical project structures are not fully supported in 1.3.7x MPP
-        if (isKotlin137x) {
-            // disable metadata everywhere, but in native and js modules
-            if (type == 'maven' || type == 'metadata' || type == 'jvm') {
-                moduleDescriptorGenerator = null
-            }
-        }
-
     }
 }
 
