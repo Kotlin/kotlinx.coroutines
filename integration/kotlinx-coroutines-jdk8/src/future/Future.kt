@@ -105,22 +105,23 @@ private fun Job.setupCancellation(future: CompletableFuture<*>) {
 }
 
 /**
- * Converts this completion stage to an instance of [Deferred].
+ * Converts this [CompletionStage] to an instance of [Deferred].
  * When this completion stage is an instance of [Future], then it is cancelled when
  * the resulting deferred is cancelled.
+ *
+ * ### Implementation details
+ *
+ * [CompletionStage] does not extend a [Future] and does not provide future-like methods to check for completion and
+ * to retrieve a resulting value, so this implementation always takes a slow path of installing a callback with
+ * [CompletionStage.whenComplete]. For cases when [CompletionStage] is statically known to be an instance
+ * of [CompletableFuture] there is an overload of this `asDeferred` function with a [CompletableFuture] receiver that
+ * has a fast-path for a future that is already complete. Note, that it is not safe to dynamically check if an instance
+ * of a [CompletionStage] is an instance of a [CompletableFuture], because JDK functions return instances that do
+ * implement a [CompletableFuture], yet throw an [UnsupportedOperationException] on most of the future-like methods in it.
+ * For the purpose of cancelling the the future, the corresponding [UnsupportedOperationException] is ignored in this case.
  */
+@Suppress("DeferredIsResult")
 public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
-    // Fast path if already completed
-    if (this is Future<*> && isDone()){
-        return try {
-            @Suppress("UNCHECKED_CAST")
-            CompletableDeferred(get() as T)
-        } catch (e: Throwable) {
-            // unwrap original cause from ExecutionException
-            val original = (e as? ExecutionException)?.cause ?: e
-            CompletableDeferred<T>().also { it.completeExceptionally(original) }
-        }
-    }
     val result = CompletableDeferred<T>()
     whenComplete { value, exception ->
         if (exception == null) {
@@ -137,34 +138,98 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
 }
 
 /**
- * Awaits for completion of the completion stage without blocking a thread.
+ * Converts this [CompletableFuture] to an instance of [Deferred].
+ * The future is cancelled when the resulting deferred is cancelled.
+ *
+ * ### Implementation details
+ *
+ * This implementation has a fast-path for a case of a future that [isDone][CompletableFuture.isDone].
+ */
+@Suppress("DeferredIsResult")
+public fun <T> CompletableFuture<T>.asDeferred(): Deferred<T> {
+    // Fast path if already completed
+    if (isDone) {
+        return try {
+            @Suppress("UNCHECKED_CAST")
+            CompletableDeferred(get() as T)
+        } catch (e: Throwable) {
+            // unwrap original cause from ExecutionException
+            val original = (e as? ExecutionException)?.cause ?: e
+            CompletableDeferred<T>().also { it.completeExceptionally(original) }
+        }
+    }
+    // slow-path
+    return (this as CompletionStage<T>).asDeferred()
+}
+/**
+ * Awaits for completion of [CompletionStage] without blocking a thread.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * stops waiting for the completion stage and immediately resumes with [CancellationException][kotlinx.coroutines.CancellationException].
- * This method is intended to be used with one-shot futures, so on coroutine cancellation completion stage is cancelled as well if it is instance of [CompletableFuture].
+ * This method is intended to be used with one-shot futures, so on coroutine cancellation completion stage is cancelled as well if it is instance of a [Future].
  * If cancelling given stage is undesired, `stage.asDeferred().await()` should be used instead.
+ *
+ * ### Implementation details
+ *
+ * [CompletionStage] does not extend a [Future] and does not provide future-like methods to check for completion and
+ * to retrieve a resulting value, so this implementation always takes a slow path of installing a callback with
+ * [CompletionStage.whenComplete]. For cases when [CompletionStage] is statically known to be an instance
+ * of [CompletableFuture] there is an overload of this `await` function with a [CompletableFuture] receiver that
+ * has a fast-path for a future that is already complete. Note, that it is not safe to dynamically check if an instance
+ * of a [CompletionStage] is an instance of a [CompletableFuture], because JDK functions return instances that do
+ * implement a [CompletableFuture], yet throw an exception on most of the future-like methods in it.
+ * For the purpose of cancelling the the future, the corresponding [UnsupportedOperationException] is ignored in this case.
  */
-public suspend fun <T> CompletionStage<T>.await(): T {
+public suspend fun <T> CompletionStage<T>.await(): T =
+    suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
+        val consumer = ContinuationConsumer(cont)
+        whenComplete(consumer)
+        if (cont.isActive) {
+            // avoid creation of a lambda when continuation was already resumed during whenComplete call
+            // TODO: In a major release this lambda can be made to extend CancelFutureOnCompletion class from core module
+            // This will further save one allocated object here.
+            cont.invokeOnCancellation {
+                if (this is Future<*>) {
+                    // mayInterruptIfRunning is not used
+                    try {
+                        cancel(false)
+                    } catch (e: UnsupportedOperationException) {
+                        // Internal JDK implementation of a Future can throw an UnsupportedOperationException here.
+                        // We simply ignore it for the purpose of cancellation
+                        // See https://github.com/Kotlin/kotlinx.coroutines/issues/2456
+                    }
+                }
+                consumer.cont = null // shall clear reference to continuation to aid GC
+            }
+        }
+    }
+
+/**
+ * Awaits for completion of [CompletableFuture] without blocking a thread.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * stops waiting for the completable future and immediately resumes with [CancellationException][kotlinx.coroutines.CancellationException].
+ * This method is intended to be used with one-shot futures, so on coroutine cancellation the completable future is cancelled.
+ * If cancelling the future is undesired, `future.asDeferred().await()` should be used instead.
+ *
+ * ### Implementation details
+ *
+ * This implementation has a fast-path for a case of a future that [isDone][CompletableFuture.isDone].
+ */
+public suspend fun <T> CompletableFuture<T>.await(): T {
     // fast path when CompletableFuture is already done (does not suspend)
-    if (this is Future<*> && isDone()) {
+    if (isDone) {
         try {
-            @Suppress("UNCHECKED_CAST")
+            @Suppress("UNCHECKED_CAST", "BlockingMethodInNonBlockingContext")
             return get() as T
         } catch (e: ExecutionException) {
             throw e.cause ?: e // unwrap original cause from ExecutionException
         }
     }
     // slow path -- suspend
-    return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
-        val consumer = ContinuationConsumer(cont)
-        whenComplete(consumer)
-        cont.invokeOnCancellation {
-            // mayInterruptIfRunning is not used
-            (this as? CompletableFuture<T>)?.cancel(false)
-            consumer.cont = null // shall clear reference to continuation to aid GC
-        }
-    }
+    return (this as CompletionStage<T>).await()
 }
 
 private class ContinuationConsumer<T>(
