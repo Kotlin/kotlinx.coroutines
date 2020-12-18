@@ -4,6 +4,6 @@
 -keepnames class kotlinx.coroutines.android.AndroidDispatcherFactory {}
 
 # Most of volatile fields are updated with AFU and should not be mangled
--keepclassmembers class kotlinx.** {
+-keepclassmembers class kotlinx.coroutines.** {
     volatile <fields>;
 }
