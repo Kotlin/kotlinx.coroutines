@@ -18,10 +18,9 @@ import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 import kotlin.synchronized
-import kotlinx.coroutines.internal.artificialFrame as createArtificialFrame // IDEA bug workaround
 
 internal object DebugProbesImpl {
-    private const val ARTIFICIAL_FRAME_MESSAGE = "Coroutine creation stacktrace"
+    private val ARTIFICIAL_FRAME = ArtificialStackFrames().coroutineCreation()
     private val dateFormat = SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
 
     private var weakRefCleanerThread: Thread? = null
@@ -219,7 +218,7 @@ internal object DebugProbesImpl {
                     info.state
                 out.print("\n\nCoroutine ${owner.delegate}, state: $state")
                 if (observedStackTrace.isEmpty()) {
-                    out.print("\n\tat ${createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE)}")
+                    out.print("\n\tat $ARTIFICIAL_FRAME")
                     printStackTrace(out, info.creationStackTrace)
                 } else {
                     printStackTrace(out, enhancedStackTrace)
@@ -420,7 +419,7 @@ internal object DebugProbesImpl {
         StackTraceFrame(
             foldRight<StackTraceElement, StackTraceFrame?>(null) { frame, acc ->
                 StackTraceFrame(acc, frame)
-            }, createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE)
+            }, ARTIFICIAL_FRAME
         )
 
     private fun <T> createOwner(completion: Continuation<T>, frame: StackTraceFrame?): Continuation<T> {
