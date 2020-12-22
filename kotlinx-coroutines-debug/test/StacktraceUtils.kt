@@ -82,20 +82,20 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
         return
     }
     // Drop "Coroutine dump" line
-    trace.withIndex().drop(1).forEach { (index, value) ->
+    trace.drop(1).withIndex().forEach { (index, value) ->
         if (ignoredCoroutine != null && value.contains(ignoredCoroutine)) {
             return@forEach
         }
 
-        val expected = traces[index - 1].split("\n\tat kotlinx.coroutines.debug.ArtificialStackFrames.coroutineCreation(ArtificialStackFrames.kt)\n", limit = 2)
-        val actual = value.split("\n\tat kotlinx.coroutines.debug.ArtificialStackFrames.coroutineCreation(ArtificialStackFrames.kt)\n", limit = 2)
+        val expected = traces[index].split(Regex("\n\tat kotlinx.coroutines.debug.ArtificialStackFrames.coroutineCreation[^\n]*\n"), limit = 2)
+        val actual = value.split(Regex("\n\tat kotlinx.coroutines.debug.ArtificialStackFrames.coroutineCreation[^\n]*\n"), limit = 2)
         assertEquals(expected.size, actual.size, "Creation stacktrace should be part of the expected input")
 
-        expected.withIndex().forEach { (index, trace) ->
-            val actualTrace = actual[index].trimStackTrace().sanitizeAddresses()
-            val expectedTrace = trace.trimStackTrace().sanitizeAddresses()
-            val actualLines = cleanBlockHoundTraces(actualTrace.split("\n"))
-            val expectedLines = expectedTrace.split("\n")
+        actual.zip(expected).forEach { (actualTrace, expectedTrace) ->
+            val sanitizedActualTrace = actualTrace.trimStackTrace().sanitizeAddresses()
+            val sanitizedExpectedTrace = expectedTrace.trimStackTrace().sanitizeAddresses()
+            val actualLines = cleanBlockHoundTraces(sanitizedActualTrace.split("\n"))
+            val expectedLines = sanitizedExpectedTrace.split("\n")
             for (i in expectedLines.indices) {
                 assertEquals(expectedLines[i], actualLines[i])
             }
