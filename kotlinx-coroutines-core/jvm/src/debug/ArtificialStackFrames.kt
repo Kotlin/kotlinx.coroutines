@@ -3,8 +3,10 @@
  */
 
 package kotlinx.coroutines.debug
+import kotlinx.coroutines.*
 
-public class ArtificialStackFrames {
+@InternalCoroutinesApi
+internal class ArtificialStackFrames {
     public fun coroutineCreation(): StackTraceElement = Exception().stackTrace.toList()[0]
     public fun coroutineBoundary(): StackTraceElement = Exception().stackTrace.toList()[0]
 }
