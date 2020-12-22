@@ -60,7 +60,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-01.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-compose-01.kt).
 >
 {type="note"}
 
@@ -111,7 +111,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-02.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-compose-02.kt).
 >
 {type="note"}
 
@@ -164,7 +164,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-03.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-compose-03.kt).
 >
 {type="note"}
 
@@ -256,7 +256,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-04.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-compose-04.kt).
 >
 {type="note"}
 
@@ -329,7 +329,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-05.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-compose-05.kt).
 >
 {type="note"}
 
@@ -375,7 +375,7 @@ suspend fun failedConcurrentSum(): Int = coroutineScope {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-compose-06.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-compose-06.kt).
 >
 {type="note"}
 

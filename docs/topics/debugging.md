@@ -38,11 +38,11 @@ Stacktrace recovery tries to stitch asynchronous exception stacktrace with a sta
 not only information where an exception was thrown, but also where it was asynchronously rethrown or caught.
 
 It is easy to demonstrate with actual stacktraces of the same program that awaits asynchronous operation in `main` function 
-(runnable code is [here](../kotlinx-coroutines-debug/test/RecoveryExample.kt)):
+(runnable code is [here](../../kotlinx-coroutines-debug/test/RecoveryExample.kt)):
 
 | Without recovery | With recovery |
 | - | - |
-| ![before](images/before.png "before") | ![after](images/after.png "after") |
+| ![before](../images/before.png "before") | ![after](../images/after.png "after") |
 
 The only downside of this approach is losing referential transparency of the exception. 
 
@@ -63,12 +63,12 @@ Exception copy logic is straightforward:
 
 ## Debug agent
 
-[kotlinx-coroutines-debug](../kotlinx-coroutines-debug) module provides one of the most powerful debug capabilities in `kotlinx.coroutines`.
+[kotlinx-coroutines-debug](../../kotlinx-coroutines-debug) module provides one of the most powerful debug capabilities in `kotlinx.coroutines`.
 
 This is a separate module with a JVM agent that keeps track of all alive coroutines, introspects and dumps them similar to thread dump command,
 additionally enhancing stacktraces with information where coroutine was created.
 
-The full tutorial of how to use debug agent can be found in the corresponding [readme](../kotlinx-coroutines-debug/README.md).
+The full tutorial of how to use debug agent can be found in the corresponding [readme](../../kotlinx-coroutines-debug/README.md).
 
 ### Debug agent and Android
 
@@ -94,7 +94,7 @@ In optimized (release) builds with R8 version 1.6.0 or later both
 [Debugging mode](../../docs/debugging.md#debug-mode) and 
 [Stacktrace recovery](../../docs/debugging.md#stacktrace-recovery) 
 are permanently turned off. 
-For more details see ["Optimization" section for Android](../ui/kotlinx-coroutines-android/README.md#optimization). 
+For more details see ["Optimization" section for Android](../../ui/kotlinx-coroutines-android/README.md#optimization). 
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->

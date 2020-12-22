@@ -66,8 +66,8 @@ suspend fun main() = coroutineScope {
 * Guides and manuals: 
   * [Guide to kotlinx.coroutines by example](https://kotlinlang.org/docs/reference/coroutines/coroutines-guide.html) (**read it first**)
   * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
-  * [Debugging capabilities in kotlinx.coroutines](docs/debugging.md)
-* [Compatibility policy and experimental annotations](docs/compatibility.md)
+  * [Debugging capabilities in kotlinx.coroutines](docs/topics/debugging.md)
+* [Compatibility policy and experimental annotations](docs/topics/compatibility.md)
 * [Change log for kotlinx.coroutines](CHANGES.md)
 * [Coroutines design document (KEEP)](https://github.com/Kotlin/KEEP/blob/master/proposals/coroutines.md)
 * [Full kotlinx.coroutines API reference](https://kotlin.github.io/kotlinx.coroutines)

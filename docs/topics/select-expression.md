@@ -99,7 +99,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-select-01.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-select-01.kt).
 >
 {type="note"}
 
@@ -189,7 +189,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-select-02.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-select-02.kt).
 >
 {type="note"}
 
@@ -274,7 +274,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-select-03.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-select-03.kt).
 >
 {type="note"}
   
@@ -358,7 +358,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-select-04.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-select-04.kt).
 >
 {type="note"}
 
@@ -467,7 +467,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-select-05.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-select-05.kt).
 >
 {type="note"}
 

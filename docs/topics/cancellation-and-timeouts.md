@@ -32,7 +32,7 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-01.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-01.kt).
 >
 {type="note"}
 
@@ -86,7 +86,7 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-02.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-02.kt).
 >
 {type="note"}
 
@@ -137,7 +137,7 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-03.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-03.kt).
 >
 {type="note"}
 
@@ -182,7 +182,7 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-04.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-04.kt).
 >
 {type="note"}
 
@@ -237,7 +237,7 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-05.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-05.kt).
 >
 {type="note"}
 
@@ -275,7 +275,7 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-06.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-06.kt).
 >
 {type="note"}
 
@@ -318,7 +318,7 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-07.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-07.kt).
 >
 {type="note"}
 
@@ -378,7 +378,7 @@ fun main() {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-08.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-08.kt).
 >
 {type="note"}
 
@@ -431,7 +431,7 @@ fun main() {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-cancel-09.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-09.kt).
 >
 {type="note"}
 
