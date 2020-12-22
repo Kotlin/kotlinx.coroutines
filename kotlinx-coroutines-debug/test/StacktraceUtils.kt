@@ -14,22 +14,6 @@ public fun String.trimStackTrace(): String =
         .replace(Regex("(?<=\tat )[^\n]*/"), "")
         .replace(Regex("\t"), "")
         .replace("sun.misc.Unsafe.", "jdk.internal.misc.Unsafe.") // JDK8->JDK11
-        .applyBackspace()
-
-public fun String.applyBackspace(): String {
-    val array = toCharArray()
-    val stack = CharArray(array.size)
-    var stackSize = -1
-    for (c in array) {
-        if (c != '\b') {
-            stack[++stackSize] = c
-        } else {
-            --stackSize
-        }
-    }
-
-    return String(stack, 0, stackSize + 1)
-}
 
 public fun verifyStackTrace(e: Throwable, traces: List<String>) {
     val stacktrace = toStackTrace(e)
@@ -74,7 +58,7 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null, f
  *     `$$BlockHound$$_` prepended at the last component.
  */
 private fun cleanBlockHoundTraces(frames: List<String>): List<String> {
-    var result = mutableListOf<String>()
+    val result = mutableListOf<String>()
     val blockHoundSubstr = "\$\$BlockHound\$\$_"
     var i = 0
     while (i < frames.size) {
@@ -103,8 +87,8 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
             return@forEach
         }
 
-        val expected = traces[index - 1].applyBackspace().split("\n\tat kotlinx.coroutines.debug.ArtificialStackFrames.coroutineCreation(ArtificialStackFrames.kt)\n", limit = 2)
-        val actual = value.applyBackspace().split("\n\tat kotlinx.coroutines.debug.ArtificialStackFrames.coroutineCreation(ArtificialStackFrames.kt)\n", limit = 2)
+        val expected = traces[index - 1].split("\n\tat kotlinx.coroutines.debug.ArtificialStackFrames.coroutineCreation(ArtificialStackFrames.kt)\n", limit = 2)
+        val actual = value.split("\n\tat kotlinx.coroutines.debug.ArtificialStackFrames.coroutineCreation(ArtificialStackFrames.kt)\n", limit = 2)
         assertEquals(expected.size, actual.size, "Creation stacktrace should be part of the expected input")
 
         expected.withIndex().forEach { (index, trace) ->
