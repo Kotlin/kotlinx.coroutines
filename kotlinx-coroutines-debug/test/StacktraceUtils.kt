@@ -81,7 +81,7 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
         assertTrue(filtered[0].startsWith("Coroutines dump"))
         return
     }
-    // Drop "Coroutine dump" line
+    // The first line, "Coroutine dump", is dropped. This is not `zip` because not having enough dumps is an error.
     trace.drop(1).withIndex().forEach { (index, value) ->
         if (ignoredCoroutine != null && value.contains(ignoredCoroutine)) {
             return@forEach

@@ -5,8 +5,34 @@
 package kotlinx.coroutines.debug
 import kotlinx.coroutines.*
 
+/**
+ * A collection of artificial stack trace elements to be included in stack traces by the coroutines machinery.
+ */
 @InternalCoroutinesApi
 internal class ArtificialStackFrames {
-    public fun coroutineCreation(): StackTraceElement = Exception().stackTrace.toList()[0]
-    public fun coroutineBoundary(): StackTraceElement = Exception().stackTrace.toList()[0]
+    /**
+     * Return an artificial stack trace element denoting the boundary between coroutine creation and its execution.
+     *
+     * Appearance of this function in stack traces does not mean that it was called. Instead, it is used as a marker
+     * that separates the part of the stack trace with the code executed in a coroutine from the stack trace of the code
+     * that launched the coroutine.
+     *
+     * In earlier versions of kotlinx-coroutines, this was displayed as "(Coroutine creation stacktrace)", which caused
+     * problems for tooling that processes stack traces: https://github.com/Kotlin/kotlinx.coroutines/issues/2291
+     *
+     * Note that presence of this marker in a stack trace implies that coroutine creation stack traces were enabled.
+     */
+    fun coroutineCreation(): StackTraceElement = Exception().stackTrace[0]
+
+    /**
+     * Return an artificial stack trace element denoting a coroutine boundary.
+     *
+     * Appearance of this function in stack traces does not mean that it was called. Instead, when one coroutine invokes
+     * another, this is used as a marker in the stack trace to denote where the execution of one coroutine ends and that
+     * of another begins.
+     *
+     * In earlier versions of kotlinx-coroutines, this was displayed as "(Coroutine boundary)", which caused
+     * problems for tooling that processes stack traces: https://github.com/Kotlin/kotlinx.coroutines/issues/2291
+     */
+    fun coroutineBoundary(): StackTraceElement = Exception().stackTrace[0]
 }
