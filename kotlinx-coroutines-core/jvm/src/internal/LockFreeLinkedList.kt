@@ -439,7 +439,7 @@ public actual open class LockFreeLinkedListNode {
             affected._next.compareAndSet(this, update)
             if (consensus == null) {
                 // If the consensus was on a successful completion of operation the above CAS could have reinstalled
-                // the node that was already removed into the list. This call to finishOnSuccess properly completes
+                // the node that was already removed from the list. This call to finishOnSuccess properly completes
                 // the ongoing operation.
                 desc.finishOnSuccess(affected, next)
             }
