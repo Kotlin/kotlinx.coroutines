@@ -7,6 +7,9 @@ package kotlinx.coroutines.debug
 import java.io.*
 import kotlin.test.*
 
+private val coroutineCreationFrameRegex =
+    Regex("\n\tat kotlinx.coroutines.debug.ArtificialStackFrames.coroutineCreation[^\n]*\n")
+
 public fun String.trimStackTrace(): String =
     trimIndent()
         .replace(Regex(":[0-9]+"), "")
@@ -87,8 +90,8 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
             return@forEach
         }
 
-        val expected = traces[index].split(Regex("\n\tat kotlinx.coroutines.debug.ArtificialStackFrames.coroutineCreation[^\n]*\n"), limit = 2)
-        val actual = value.split(Regex("\n\tat kotlinx.coroutines.debug.ArtificialStackFrames.coroutineCreation[^\n]*\n"), limit = 2)
+        val expected = traces[index].split(coroutineCreationFrameRegex, limit = 2)
+        val actual = value.split(coroutineCreationFrameRegex, limit = 2)
         assertEquals(expected.size, actual.size, "Creation stacktrace should be part of the expected input")
 
         actual.zip(expected).forEach { (actualTrace, expectedTrace) ->
