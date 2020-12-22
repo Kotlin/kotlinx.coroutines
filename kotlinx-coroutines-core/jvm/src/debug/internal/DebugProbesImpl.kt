@@ -416,15 +416,17 @@ internal object DebugProbesImpl {
         return createOwner(completion, frame)
     }
 
-    private fun List<StackTraceElement>.toStackTraceFrame(): StackTraceFrame? =
-        foldRight<StackTraceElement, StackTraceFrame?>(null) { frame, acc ->
-            StackTraceFrame(acc, frame)
-        }
+    private fun List<StackTraceElement>.toStackTraceFrame(): StackTraceFrame =
+        StackTraceFrame(
+            foldRight<StackTraceElement, StackTraceFrame?>(null) { frame, acc ->
+                StackTraceFrame(acc, frame)
+            }, createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE)
+        )
 
     private fun <T> createOwner(completion: Continuation<T>, frame: StackTraceFrame?): Continuation<T> {
         if (!isInstalled) return completion
         val info = DebugCoroutineInfoImpl(completion.context, frame, sequenceNumber.incrementAndGet())
-        val owner = CoroutineOwner(completion, info, frame)
+        val owner = CoroutineOwner(completion, info)
         capturedCoroutinesMap[owner] = true
         if (!isInstalled) capturedCoroutinesMap.clear()
         return owner
@@ -447,9 +449,9 @@ internal object DebugProbesImpl {
      */
     private class CoroutineOwner<T>(
         @JvmField val delegate: Continuation<T>,
-        @JvmField val info: DebugCoroutineInfoImpl,
-        private val frame: CoroutineStackFrame?
+        @JvmField val info: DebugCoroutineInfoImpl
     ) : Continuation<T> by delegate, CoroutineStackFrame {
+        private val frame get() = info.creationStackBottom
 
         override val callerFrame: CoroutineStackFrame?
             get() = frame?.callerFrame
@@ -467,12 +469,10 @@ internal object DebugProbesImpl {
     private fun <T : Throwable> sanitizeStackTrace(throwable: T): List<StackTraceElement> {
         val stackTrace = throwable.stackTrace
         val size = stackTrace.size
-        val probeIndex = stackTrace.indexOfLast { it.className == "kotlin.coroutines.jvm.internal.DebugProbesKt" }
+        val traceStart = 1 + stackTrace.indexOfLast { it.className == "kotlin.coroutines.jvm.internal.DebugProbesKt" }
 
         if (!sanitizeStackTraces) {
-            return List(size - probeIndex) {
-                if (it == 0) createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE) else stackTrace[it + probeIndex]
-            }
+            return List(size - traceStart) { stackTrace[it + traceStart] }
         }
 
         /*
@@ -483,9 +483,8 @@ internal object DebugProbesImpl {
          * If an interval of internal methods ends in a synthetic method, the outermost non-synthetic method in that
          * interval will also be included.
          */
-        val result = ArrayList<StackTraceElement>(size - probeIndex + 1)
-        result += createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE)
-        var i = probeIndex + 1
+        val result = ArrayList<StackTraceElement>(size - traceStart + 1)
+        var i = traceStart
         while (i < size) {
             if (stackTrace[i].isInternalMethod) {
                 result += stackTrace[i] // we include the boundary of the span in any case
