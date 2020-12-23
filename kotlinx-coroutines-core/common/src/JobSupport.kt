@@ -1151,8 +1151,6 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         override fun invoke(cause: Throwable?) {
             parent.continueCompleting(state, child, proposedUpdate)
         }
-        override fun toString(): String =
-            "ChildCompletion[$child, $proposedUpdate]"
     }
 
     private class AwaitContinuation<T>(
@@ -1350,6 +1348,7 @@ internal abstract class JobNode<out J : Job>(
     override val isActive: Boolean get() = true
     override val list: NodeList? get() = null
     override fun dispose() = (job as JobSupport).removeNode(this)
+    override fun toString() = "$classSimpleName@$hexAddress[job@${job.hexAddress}]"
 }
 
 internal class NodeList : LockFreeLinkedListHead(), Incomplete {
@@ -1384,7 +1383,6 @@ private class InvokeOnCompletion(
     private val handler: CompletionHandler
 ) : JobNode<Job>(job)  {
     override fun invoke(cause: Throwable?) = handler.invoke(cause)
-    override fun toString() = "InvokeOnCompletion[$classSimpleName@$hexAddress]"
 }
 
 private class ResumeOnCompletion(
@@ -1392,7 +1390,6 @@ private class ResumeOnCompletion(
     private val continuation: Continuation<Unit>
 ) : JobNode<Job>(job)  {
     override fun invoke(cause: Throwable?) = continuation.resume(Unit)
-    override fun toString() = "ResumeOnCompletion[$continuation]"
 }
 
 private class ResumeAwaitOnCompletion<T>(
@@ -1411,7 +1408,6 @@ private class ResumeAwaitOnCompletion<T>(
             continuation.resume(state.unboxState() as T)
         }
     }
-    override fun toString() = "ResumeAwaitOnCompletion[$continuation]"
 }
 
 internal class DisposeOnCompletion(
@@ -1419,7 +1415,6 @@ internal class DisposeOnCompletion(
     private val handle: DisposableHandle
 ) : JobNode<Job>(job) {
     override fun invoke(cause: Throwable?) = handle.dispose()
-    override fun toString(): String = "DisposeOnCompletion[$handle]"
 }
 
 private class SelectJoinOnCompletion<R>(
@@ -1431,7 +1426,6 @@ private class SelectJoinOnCompletion<R>(
         if (select.trySelect())
             block.startCoroutineCancellable(select.completion)
     }
-    override fun toString(): String = "SelectJoinOnCompletion[$select]"
 }
 
 private class SelectAwaitOnCompletion<T, R>(
@@ -1443,7 +1437,6 @@ private class SelectAwaitOnCompletion<T, R>(
         if (select.trySelect())
             job.selectAwaitCompletion(select, block)
     }
-    override fun toString(): String = "SelectAwaitOnCompletion[$select]"
 }
 
 // -------- invokeOnCancellation nodes
@@ -1463,7 +1456,6 @@ private class InvokeOnCancelling(
     override fun invoke(cause: Throwable?) {
         if (_invoked.compareAndSet(0, 1)) handler.invoke(cause)
     }
-    override fun toString() = "InvokeOnCancelling[$classSimpleName@$hexAddress]"
 }
 
 internal class ChildHandleNode(
@@ -1472,7 +1464,6 @@ internal class ChildHandleNode(
 ) : JobCancellingNode<JobSupport>(parent), ChildHandle {
     override fun invoke(cause: Throwable?) = childJob.parentCancelled(job)
     override fun childCancelled(cause: Throwable): Boolean = job.childCancelled(cause)
-    override fun toString(): String = "ChildHandle[$childJob]"
 }
 
 // Same as ChildHandleNode, but for cancellable continuation
@@ -1483,7 +1474,5 @@ internal class ChildContinuation(
     override fun invoke(cause: Throwable?) {
         child.parentCancelled(child.getContinuationCancellationCause(job))
     }
-    override fun toString(): String =
-        "ChildContinuation[$child]"
 }
 

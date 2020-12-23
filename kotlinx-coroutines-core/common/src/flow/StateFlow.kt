@@ -160,6 +160,9 @@ public interface MutableStateFlow<T> : StateFlow<T>, MutableSharedFlow<T> {
      * The current value of this state flow.
      *
      * Setting a value that is [equal][Any.equals] to the previous one does nothing.
+     *
+     * This property is **thread-safe** and can be safely updated from concurrent coroutines without
+     * external synchronization.
      */
     public override var value: T
 
@@ -170,6 +173,9 @@ public interface MutableStateFlow<T> : StateFlow<T>, MutableSharedFlow<T> {
      * This function use a regular comparison using [Any.equals]. If both [expect] and [update] are equal to the
      * current [value], this function returns `true`, but it does not actually change the reference that is
      * stored in the [value].
+     *
+     * This method is **thread-safe** and can be safely invoked from concurrent coroutines without
+     * external synchronization.
      */
     public fun compareAndSet(expect: T, update: T): Boolean
 }

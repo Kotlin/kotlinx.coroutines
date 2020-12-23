@@ -26,6 +26,7 @@ internal open class ChannelCoroutine<E>(
     }
 
     final override fun cancel(cause: CancellationException?) {
+        if (isClosedForReceive) return // Do not create an exception if channel is already cancelled
         cancelInternal(cause ?: defaultCancellationException())
     }
 

@@ -9,6 +9,12 @@ apply plugin: 'org.jetbrains.kotlin.jvm'
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
+if (rootProject.ext.jvm_ir_enabled) {
+    kotlin.target.compilations.all {
+        kotlinOptions.useIR = true
+    }
+}
+
 dependencies {
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     // Workaround to make addSuppressed work in tests

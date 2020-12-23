@@ -222,7 +222,7 @@ fun main() = runBlocking<Unit> {
 
 > You can get the full code [here](../kotlinx-coroutines-core/jvm/test/guide/example-select-02.kt).
 
-The result of this code is quite interesting, so we'll analyze it in mode detail:
+The result of this code is quite interesting, so we'll analyze it in more detail:
 
 ```text
 a -> 'Hello 0'
