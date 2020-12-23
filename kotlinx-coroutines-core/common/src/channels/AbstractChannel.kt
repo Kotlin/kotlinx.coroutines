@@ -635,6 +635,7 @@ internal abstract class AbstractChannel<E>(
         cancelInternal(cause)
 
     final override fun cancel(cause: CancellationException?) {
+        if (isClosedForReceive) return // Do not create an exception if channel is already cancelled
         cancelInternal(cause ?: CancellationException("$classSimpleName was cancelled"))
     }
 

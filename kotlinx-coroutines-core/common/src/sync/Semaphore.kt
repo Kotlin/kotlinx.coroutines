@@ -172,7 +172,7 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
             if (addAcquireToQueue(cont)) return@sc
             val p = _availablePermits.getAndDecrement()
             if (p > 0) { // permit acquired
-                cont.resume(Unit)
+                cont.resume(Unit, onCancellationRelease)
                 return@sc
             }
         }
@@ -206,9 +206,8 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
         // On CAS failure -- the cell must be either PERMIT or BROKEN
         // If the cell already has PERMIT from tryResumeNextFromQueue, try to grab it
         if (segment.cas(i, PERMIT, TAKEN)) { // took permit thus eliminating acquire/release pair
-            // The following resume must always succeed, since continuation was not published yet and we don't have
-            // to pass onCancellationRelease handle, since the coroutine did not suspend yet and cannot be cancelled
-            cont.resume(Unit)
+            /// This continuation is not yet published, but still can be cancelled via outer job
+            cont.resume(Unit, onCancellationRelease)
             return true
         }
         assert { segment.get(i) === BROKEN } // it must be broken in this case, no other way around it

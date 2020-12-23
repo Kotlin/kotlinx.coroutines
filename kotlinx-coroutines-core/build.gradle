@@ -5,8 +5,12 @@
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply from: rootProject.file("gradle/compile-jvm-multiplatform.gradle")
 apply from: rootProject.file("gradle/compile-common.gradle")
+
+if (rootProject.ext.native_targets_enabled) {
+    apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
+}
+
 apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
-apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
 apply from: rootProject.file('gradle/publish-npm-js.gradle')
 
 /* ==========================================================================
@@ -52,8 +56,11 @@ static boolean isNativeDarwin(String name) { return ["ios", "macos", "tvos", "wa
 static boolean isNativeOther(String name) { return ["linux", "mingw"].any { name.startsWith(it) } }
 
 defineSourceSet("concurrent", ["common"]) { it in ["jvm", "native"] }
-defineSourceSet("nativeDarwin", ["native"]) { isNativeDarwin(it) }
-defineSourceSet("nativeOther", ["native"]) { isNativeOther(it) }
+
+if (rootProject.ext.native_targets_enabled) {
+    defineSourceSet("nativeDarwin", ["native"]) { isNativeDarwin(it) }
+    defineSourceSet("nativeOther", ["native"]) { isNativeOther(it) }
+}
 
 /* ========================================================================== */
 
@@ -129,7 +136,7 @@ def configureNativeSourceSetPreset(name, preset) {
 }
 
 // :KLUDGE: Idea.active: Configure platform libraries for native source sets when working in IDEA
-if (Idea.active) {
+if (Idea.active && rootProject.ext.native_targets_enabled) {
     def manager = project.ext.hostManager
     def linuxPreset = kotlin.presets.linuxX64
     def macosPreset = kotlin.presets.macosX64
@@ -183,6 +190,13 @@ jvmTest {
         exclude '**/*StressTest.*'
     }
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
+
+    // TODO: JVM IR generates different stacktrace so temporary disable stacktrace tests
+    if (rootProject.ext.jvm_ir_enabled) {
+        filter {
+            excludeTestsMatching('kotlinx.coroutines.exceptions.StackTraceRecovery*')
+        }
+    }
 }
 
 jvmJar {
