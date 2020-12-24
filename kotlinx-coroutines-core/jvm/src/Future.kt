@@ -38,13 +38,7 @@ private class CancelFutureOnCompletion(
     override fun invoke(cause: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this
         // interruption flag and it will cause spurious failures elsewhere
-        try {
-            future.cancel(false)
-        } catch (e: UnsupportedOperationException) {
-            // Internal JDK implementation of a Future can throw an UnsupportedOperationException here.
-            // We simply ignore it for the purpose of cancellation
-            // See https://github.com/Kotlin/kotlinx.coroutines/issues/2456
-        }
+        future.cancel(false)
     }
 }
 
