@@ -165,14 +165,9 @@ public suspend fun <T> CompletionStage<T>.await(): T {
     return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
         val consumer = ContinuationConsumer(cont)
         whenComplete(consumer)
-        if (cont.isActive) {
-            // avoid creation of a lambda when continuation was already resumed during whenComplete call
-            // TODO: In a major release this lambda can be made to extend CancelFutureOnCompletion class from core module
-            // This will further save one allocated object here.
-            cont.invokeOnCancellation {
-                future.cancel(false)
-                consumer.cont = null // shall clear reference to continuation to aid GC
-            }
+        cont.invokeOnCancellation {
+            future.cancel(false)
+            consumer.cont = null // shall clear reference to continuation to aid GC
         }
     }
 }
