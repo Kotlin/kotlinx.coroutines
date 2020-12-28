@@ -18,8 +18,8 @@ internal class ReactorContextInjector : ContextInjector {
     override fun <T> injectCoroutineContext(publisher: Publisher<T>, coroutineContext: CoroutineContext): Publisher<T> {
         val reactorContext = coroutineContext[ReactorContext]?.context ?: return publisher
         return when(publisher) {
-            is Mono -> publisher.subscriberContext(reactorContext)
-            is Flux -> publisher.subscriberContext(reactorContext)
+            is Mono -> publisher.contextWrite(reactorContext)
+            is Flux -> publisher.contextWrite(reactorContext)
             else -> publisher
         }
     }
