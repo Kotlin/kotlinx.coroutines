@@ -23,7 +23,7 @@ public fun Scheduler.asCoroutineDispatcher(): CoroutineDispatcher =
         SchedulerCoroutineDispatcher(this)
     }
 
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.4.0, binary compatibility with earlier versions")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.4.2, binary compatibility with earlier versions")
 @JvmName("asCoroutineDispatcher")
 public fun Scheduler.asCoroutineDispatcher0(): SchedulerCoroutineDispatcher =
     SchedulerCoroutineDispatcher(this)

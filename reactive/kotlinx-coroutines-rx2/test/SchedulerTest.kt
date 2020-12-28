@@ -6,7 +6,6 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.*
-import io.reactivex.functions.*
 import io.reactivex.observers.*
 import io.reactivex.plugins.*
 import io.reactivex.schedulers.*
@@ -218,13 +217,13 @@ class SchedulerTest : TestBase() {
         expect(1)
 
         fun setScheduler(expectedCountOnSchedule: Int, expectCountOnRun: Int) {
-            RxJavaPlugins.setScheduleHandler(Function {
+            RxJavaPlugins.setScheduleHandler {
                 expect(expectedCountOnSchedule)
                 Runnable {
                     expect(expectCountOnRun)
                     it.run()
                 }
-            })
+            }
         }
 
         val dispatcher = currentDispatcher() as CoroutineDispatcher
@@ -289,13 +288,13 @@ class SchedulerTest : TestBase() {
     }
 
     private fun setScheduler(expectedCountOnSchedule: Int, expectCountOnRun: Int) {
-        RxJavaPlugins.setScheduleHandler(Function {
+        RxJavaPlugins.setScheduleHandler {
             expect(expectedCountOnSchedule)
             Runnable {
                 expect(expectCountOnRun)
                 it.run()
             }
-        })
+        }
     }
 
     /**
