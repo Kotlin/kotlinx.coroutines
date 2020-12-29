@@ -9,7 +9,8 @@ import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
 /**
- * Yields the thread (or thread pool) of the current coroutine dispatcher to other coroutines to run if possible.
+ * Yields the thread (or thread pool) of the current coroutine dispatcher
+ * to other coroutines on the same dispatcher to run if possible.
  * 
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed when this suspending function is invoked or while
