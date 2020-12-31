@@ -8,6 +8,7 @@ import org.gradle.util.VersionNumber
 
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
 // ------------- tasks
 
@@ -36,16 +37,11 @@ if (!isMultiplatform && !isBom) {
 
 publishing {
     repositories {
-        maven {
-            def user = 'kotlin'
-            def repo = 'kotlinx'
-            def name = 'kotlinx.coroutines'
-            url = "https://api.bintray.com/maven/$user/$repo/$name/;publish=0"
-
-            credentials {
-                username = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-                password = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
-            }
+        def bintrayUpload = System.getenv("libs.bintray.upload") != null
+        if (bintrayUpload) {
+            PublishingKt.configureBintrayPublication(delegate, project)
+        } else {
+            PublishingKt.configureMavenPublication(delegate, project)
         }
     }
 
@@ -64,8 +60,11 @@ publishing {
     }
 
     publications.all {
-        MavenCentralKt.configureMavenCentralMetadata(pom, project)
-
+        PublishingKt.configureMavenCentralMetadata(pom, project)
+        def bintrayUpload = System.getenv("libs.bintray.upload") != null
+        if (!bintrayUpload) {
+            PublishingKt.signPublicationIfKeyPresent(project, it)
+        }
         // add empty javadocs
         if (!isBom && it.name != "kotlinMultiplatform") {
             it.artifact(javadocJar)
@@ -92,13 +91,6 @@ publishing {
 
 tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication"}.configureEach {
     dependsOn(tasks["generatePomFileForJvmPublication"])
-}
-
-task publishDevelopSnapshot() {
-    def branch = System.getenv('currentBranch')
-    if (branch == "develop") {
-        dependsOn(":publish")
-    }
 }
 
 // Compatibility with old TeamCity configurations that perform :kotlinx-coroutines-core:bintrayUpload
