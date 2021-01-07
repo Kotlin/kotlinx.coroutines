@@ -854,7 +854,19 @@ Collected in 1071 ms
 <!--- TEST ARBITRARY_TIME -->
 
 > Note that the [flowOn] operator uses the same buffering mechanism when it has to change a [CoroutineDispatcher],
-but here we explicitly request buffering without changing the execution context. 
+but here we explicitly request buffering without changing the execution context. Both [flowOn] and [buffer] operators
+launch a different coroutine for elements emission from the one that is used for elements collection.  This can be
+easily proved by enabling the -Dkotlinx.coroutines.debug JVM option.
+```text
+[main @coroutine#2] Emitting 1
+[main @coroutine#2] Emitting 2
+[main @coroutine#2] Emitting 3
+[main @coroutine#1] Collecting 1
+[main @coroutine#1] Collecting 2
+[main @coroutine#1] Collecting 3
+[main @coroutine#1] Collected in 1056 ms
+```   
+
 
 #### Conflation
 
