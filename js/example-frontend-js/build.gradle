@@ -31,24 +31,3 @@ project.kotlin {
         }
     }
 }
-
-
-// Workaround for bug in 1.4.20 that will be fixed in 1.4.21, KT-43668
-tasks.withType(org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinPackageJsonTask) {
-    doFirst {
-        def producerField = it.class.superclass.getDeclaredMethod("getProducer")
-        producerField.setAccessible(true);
-        def producer = producerField.invoke(it)
-        def items = producer.fileCollectionDependencies
-        def list2 = new HashSet<FileCollectionDependency>()
-        for (FileCollectionDependency item : items) {
-            for (File file : item.files) {
-                if (!file.isFile()) {
-                    list2.add(item)
-                    break
-                }
-            }
-        }
-        items.removeAll(list2)
-    }
-}
