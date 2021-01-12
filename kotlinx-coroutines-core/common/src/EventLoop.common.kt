@@ -66,7 +66,9 @@ internal abstract class EventLoop : CoroutineDispatcher() {
     public fun processUnconfinedEvent(): Boolean {
         val queue = unconfinedQueue ?: return false
         val task = queue.removeFirstOrNull() ?: return false
-        task.run()
+        platformAutoreleasePool {
+            task.run()
+        }
         return true
     }
     /**
@@ -271,7 +273,9 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         // then process one event from queue
         val task = dequeue()
         if (task != null) {
-            task.run()
+            platformAutoreleasePool {
+                task.run()
+            }
             return 0
         }
         return nextTime
@@ -525,6 +529,8 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
 }
 
 internal expect fun createEventLoop(): EventLoop
+
+internal expect inline fun platformAutoreleasePool(crossinline block: () -> Unit)
 
 internal expect fun nanoTime(): Long
 
