@@ -167,7 +167,7 @@ Proof.
       by rewrite Z.sub_0_r. }
     iModIntro. wp_pures. iApply (fillThreadQueueFuture_spec with "[HR]").
     2: {
-      iIntros "!>" (γf v') "[HFuture HCancPermit]".
+      iIntros "!>" (γf v') "(HFuture & HCancPermit & _)".
       iApply "HΦ". iFrame.
     }
     rewrite /V'. iExists _. iSplitR; first done. simpl.

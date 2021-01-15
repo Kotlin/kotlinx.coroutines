@@ -3424,17 +3424,18 @@ Theorem fillThreadQueueFuture_spec γtq γa (v: val):
   {{{ ▷ V' v }}}
     fillThreadQueueFuture v
   {{{ γf v', RET v'; is_thread_queue_future γtq γa γf v' ∗
-                     thread_queue_future_cancellation_permit γf }}}.
+                     thread_queue_future_cancellation_permit γf ∗
+                     future_is_completed γf v }}}.
 Proof.
   iIntros (Φ) "HV HΦ". wp_lam. wp_bind (completeFuture _).
   iApply (completeFuture_spec with "HV").
-  iIntros "!>" (γf v') "(HFuture & HCompleted & HPermit)". rewrite -wp_fupd.
+  iIntros "!>" (γf v') "(HFuture & #HCompleted & HPermit)". rewrite -wp_fupd.
   iEval (rewrite -Qp_half_half future_cancellation_permit_Fractional)
     in "HPermit".
   iDestruct "HPermit" as "[HFCanc HFCancInv]".
   iMod (inv_alloc NTq _ (future_cancellation_permit γf (1 / 2)) with "[HFCancInv]")
     as "HFCancInv"; first done.
-  wp_pures. iApply "HΦ". iFrame "HFCanc". iExists _. iLeft.
+  wp_pures. iApply "HΦ". iFrame "HFCanc HCompleted". iExists _. iLeft.
   iFrame "HFuture". iSplitR; first done. iFrame "HFCancInv".
   iExists _. by iFrame.
 Qed.

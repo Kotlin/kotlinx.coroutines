@@ -24,9 +24,12 @@
 ./theories/lib/util/addAndGet.v
 ./theories/lib/util/addConditionally.v
 ./theories/lib/util/getAndSet.v
+./theories/lib/util/getAndUpdate.v
 ./theories/lib/util/increaseValueTo.v
+./theories/lib/util/forRange.v
 ./theories/lib/util/future.v
 ./theories/lib/barrier/barrier.v
+./theories/lib/countdownlatch/countdownlatch.v
 ./theories/util/everything.v
 ./theories/util/big_opL.v
 ./theories/util/cmra.v
