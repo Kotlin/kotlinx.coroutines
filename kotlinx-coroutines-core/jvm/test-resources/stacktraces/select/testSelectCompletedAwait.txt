@@ -1,6 +1,6 @@
 kotlinx.coroutines.RecoverableTestException
 	at kotlinx.coroutines.exceptions.StackTraceRecoverySelectTest$testSelectCompletedAwait$1.invokeSuspend(StackTraceRecoverySelectTest.kt:40)
-	at kotlinx.coroutines.debug.ArtificialStackFrames.coroutineBoundary(ArtificialStackFrames.kt)
+	at ArtificialStackFrames.coroutineBoundary(ArtificialStackFrames.kt)
 	at kotlinx.coroutines.exceptions.StackTraceRecoverySelectTest$testSelectCompletedAwait$1.invokeSuspend(StackTraceRecoverySelectTest.kt:41)
 Caused by: kotlinx.coroutines.RecoverableTestException
 	at kotlinx.coroutines.exceptions.StackTraceRecoverySelectTest$testSelectCompletedAwait$1.invokeSuspend(StackTraceRecoverySelectTest.kt:40)
