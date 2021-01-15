@@ -59,10 +59,9 @@ To release new `<version>` of `kotlinx-coroutines`:
    (make sure you have [Docker](https://www.docker.com/) installed first): <br>
    `site/deploy.sh <version> push`
    
-4. In [Bintray](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines) admin interface:
-   * Publish artifacts of the new version.
-   * Wait until newly published version becomes the most recent.
-   * Sync to Maven Central.
+4. In [Nexus](https://oss.sonatype.org/#stagingRepositories) admin interface:
+   * Close the repository and wait for it to verify.
+   * Release the repository.
    
 5. Announce new release in [Slack](https://kotlinlang.slack.com)   
 

@@ -5,7 +5,6 @@
 package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.channels.*
 import kotlin.coroutines.*
 
 /**
@@ -75,7 +74,7 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
         val nodes = Array(deferreds.size) { i ->
             val deferred = deferreds[i]
             deferred.start() // To properly await lazily started deferreds
-            AwaitAllNode(cont, deferred).apply {
+            AwaitAllNode(cont).apply {
                 handle = deferred.invokeOnCompletion(asHandler)
             }
         }
@@ -101,7 +100,7 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
         override fun toString(): String = "DisposeHandlersOnCancel[$nodes]"
     }
 
-    private inner class AwaitAllNode(private val continuation: CancellableContinuation<List<T>>, job: Job) : JobNode<Job>(job) {
+    private inner class AwaitAllNode(private val continuation: CancellableContinuation<List<T>>) : JobNode() {
         lateinit var handle: DisposableHandle
 
         private val _disposer = atomic<DisposeHandlersOnCancel?>(null)

@@ -69,7 +69,7 @@ private class BlockingCoroutine<T>(
     override fun afterCompletion(state: Any?) {
         // wake up blocked thread
         if (Thread.currentThread() != blockedThread)
-            LockSupport.unpark(blockedThread)
+            unpark(blockedThread)
     }
 
     @Suppress("UNCHECKED_CAST")
