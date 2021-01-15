@@ -492,7 +492,7 @@ internal object DebugProbesImpl {
                 // first index past the end of the span of internal methods that starts from `i`
                 var j = i + 1
                 while (j < size && stackTrace[j].isInternalMethod) {
-                    j += 1
+                    ++j
                 }
                 // index of the last non-synthetic internal methods in this span, or `i` if there are no such methods
                 var k = j - 1
@@ -508,7 +508,7 @@ internal object DebugProbesImpl {
                 i = j
             } else {
                 result += stackTrace[i]
-                i += 1
+                ++i
             }
         }
         return result
