@@ -298,7 +298,7 @@ internal open class ArrayChannel<E>(
         }
         // then clean all queued senders
         super.onCancelIdempotent(wasClosed)
-        undeliveredElementException?.let { throw it } // throw cancel exception at the end if there was one
+        undeliveredElementException?.let { throw it } // throw UndeliveredElementException at the end if there was one
     }
 
     // ------ debug ------

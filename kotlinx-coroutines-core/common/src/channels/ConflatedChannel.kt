@@ -120,7 +120,7 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
             undeliveredElementException = updateValueLocked(EMPTY)
         }
         super.onCancelIdempotent(wasClosed)
-        undeliveredElementException?.let { throw it } // throw exception at the end if there was one
+        undeliveredElementException?.let { throw it } // throw UndeliveredElementException at the end if there was one
     }
 
     private fun updateValueLocked(element: Any?): UndeliveredElementException? {

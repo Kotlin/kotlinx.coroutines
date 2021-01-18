@@ -477,7 +477,14 @@ internal abstract class AbstractSendChannel<E>(
         override val pollResult: Any? get() = element
         override fun tryResumeSend(otherOp: PrepareOp?): Symbol? = RESUME_TOKEN.also { otherOp?.finishPrepare() }
         override fun completeResumeSend() {}
-        override fun resumeSendClosed(closed: Closed<*>) {}
+
+        /**
+         * This method should be never called, see special logic in [LinkedListChannel.onCancelIdempotentList].
+         */
+        override fun resumeSendClosed(closed: Closed<*>) {
+            assert { false }
+        }
+
         override fun toString(): String = "SendBuffered@$hexAddress($element)"
     }
 }
@@ -669,6 +676,13 @@ internal abstract class AbstractChannel<E>(
             // Add to the list only **after** successful removal
             list += previous as Send
         }
+        onCancelIdempotentList(list, closed)
+    }
+
+    /**
+     * This method is overridden by [LinkedListChannel] to handle cancellation of [SendBuffered] elements from the list.
+     */
+    protected open fun onCancelIdempotentList(list: InlineList<Send>, closed: Closed<*>) {
         list.forEachReversed { it.resumeSendClosed(closed) }
     }
 
