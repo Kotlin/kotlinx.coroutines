@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.gradle.util.VersionNumber
@@ -183,7 +183,7 @@ allprojects {
 configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != coreModule }) {
     evaluationDependsOn(":$coreModule")
     def platform = PlatformKt.platformOf(it)
-    apply from: rootProject.file("gradle/compile-${platform}.gradle")
+    apply plugin: "kotlin-${platform}-conventions"
     dependencies {
         // See comment below for rationale, it will be replaced with "project" dependency
         compile project(":$coreModule")
