@@ -45,6 +45,7 @@ suspend fun main() = coroutineScope {
 * [debug](kotlinx-coroutines-debug/README.md) &mdash; debug utilities for coroutines:
   * [DebugProbes] API to probe, keep track of, print and dump active coroutines;
   * [CoroutinesTimeout] test rule to automatically dump coroutines on test timeout.
+  * Automatic integration with [BlockHound](https://github.com/reactor/BlockHound).
 * [reactive](reactive/README.md) &mdash; modules that provide builders and iteration support for various reactive streams libraries:
   * Reactive Streams ([Publisher.collect], [Publisher.awaitSingle], [kotlinx.coroutines.reactive.publish], etc), 
   * Flow (JDK 9) (the same interface as for Reactive Streams),
