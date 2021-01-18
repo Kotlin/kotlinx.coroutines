@@ -477,33 +477,40 @@ internal object DebugProbesImpl {
 
         /*
          * Trim intervals of internal methods from the stacktrace (bounds are excluded from trimming)
-         * E.g. for sequence [e, i1, i2, i3, e, i4, e, i5, i6, e7]
+         * E.g. for sequence [e, i1, i2, i3, e, i4, e, i5, i6, i7]
          * output will be [e, i1, i3, e, i4, e, i5, i7]
+         *
+         * If an interval of internal methods ends in a synthetic method, the outermost non-synthetic method in that
+         * interval will also be included.
          */
         val result = ArrayList<StackTraceElement>(size - probeIndex + 1)
         result += createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE)
-        var includeInternalFrame = true
-        for (i in (probeIndex + 1) until size - 1) {
-            val element = stackTrace[i]
-            if (!element.isInternalMethod) {
-                includeInternalFrame = true
-                result += element
-                continue
-            }
-
-            if (includeInternalFrame) {
-                result += element
-                includeInternalFrame = false
-            } else if (stackTrace[i + 1].isInternalMethod) {
-                continue
+        var i = probeIndex + 1
+        while (i < size) {
+            if (stackTrace[i].isInternalMethod) {
+                result += stackTrace[i] // we include the boundary of the span in any case
+                // first index past the end of the span of internal methods that starts from `i`
+                var j = i + 1
+                while (j < size && stackTrace[j].isInternalMethod) {
+                    ++j
+                }
+                // index of the last non-synthetic internal methods in this span, or `i` if there are no such methods
+                var k = j - 1
+                while (k > i && stackTrace[k].fileName == null) {
+                    k -= 1
+                }
+                if (k > i && k < j - 1) {
+                    /* there are synthetic internal methods at the end of this span, but there is a non-synthetic method
+                    after `i`, so we include it. */
+                    result += stackTrace[k]
+                }
+                result += stackTrace[j - 1] // we include the other boundary of this span in any case, too
+                i = j
             } else {
-                result += element
-                includeInternalFrame = true
+                result += stackTrace[i]
+                ++i
             }
-
         }
-
-        result += stackTrace[size - 1]
         return result
     }
 
