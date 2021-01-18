@@ -680,7 +680,7 @@ internal abstract class AbstractChannel<E>(
     }
 
     /**
-     * This method is overriden by [LinkedListChannel] to handle cancellation of [SendBuffered] elements from the list.
+     * This method is overridden by [LinkedListChannel] to handle cancellation of [SendBuffered] elements from the list.
      */
     protected open fun onCancelIdempotentList(list: InlineList<Send>, closed: Closed<*>) {
         list.forEachReversed { it.resumeSendClosed(closed) }
