@@ -4,37 +4,43 @@
 
 // Platform-specific configuration to compile JVM modules
 
-apply plugin: 'org.jetbrains.kotlin.jvm'
+import org.gradle.api.*
 
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
+plugins {
+    kotlin("jvm")
+}
 
-if (rootProject.ext.jvm_ir_enabled) {
-    kotlin.target.compilations.all {
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_6
+    targetCompatibility = JavaVersion.VERSION_1_6
+}
+
+if (rootProject.extra.get("jvm_ir_enabled") as Boolean) {
+    kotlin.target.compilations.configureEach {
         kotlinOptions.useIR = true
     }
 }
 
 dependencies {
-    testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
+    testCompile(kotlin("test"))
     // Workaround to make addSuppressed work in tests
-    testCompile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-    testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
-    testCompile "junit:junit:$junit_version"
+    testCompile(kotlin("reflect"))
+    testCompile(kotlin("stdlib-jdk7"))
+    testCompile(kotlin("test-junit"))
+    testCompile("junit:junit:${version("junit")}")
 }
 
-compileKotlin {
+tasks.compileKotlin {
     kotlinOptions {
-        freeCompilerArgs += ['-Xexplicit-api=strict']
+        freeCompilerArgs += listOf("-Xexplicit-api=strict")
     }
 }
 
-tasks.withType(Test) {
+tasks.withType<Test> {
     testLogging {
         showStandardStreams = true
-        events "passed", "failed"
+        events("passed", "failed")
     }
-    def stressTest = project.properties['stressTest']
-    if (stressTest != null) systemProperties['stressTest'] = stressTest
+    val stressTest = project.properties["stressTest"]
+    if (stressTest != null) systemProperties["stressTest"] = stressTest
 }

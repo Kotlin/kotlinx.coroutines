@@ -1,29 +1,37 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // Platform-specific configuration to compile JS modules
 
-apply plugin: 'org.jetbrains.kotlin.js'
+import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
+
+plugins {
+    kotlin("js")
+}
 
 dependencies {
-    testImplementation "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
+    testImplementation(kotlin("test-js"))
 }
 
 kotlin {
     js(LEGACY) {
-        moduleName = project.name - "-js"
+        moduleName = project.name.removeSuffix("-js")
     }
 
     sourceSets {
-        main.kotlin.srcDirs = ['src']
-        test.kotlin.srcDirs = ['test']
-        main.resources.srcDirs = ['resources']
-        test.resources.srcDirs = ['test-resources']
+        main {
+            kotlin.srcDirs("src")
+            resources.srcDirs("resources")
+        }
+        test {
+            kotlin.srcDirs("test")
+            resources.srcDirs("test-resources")
+        }
     }
 }
 
-tasks.withType(compileKotlinJs.getClass()) {
+tasks.withType<KotlinJsCompile> {
     kotlinOptions {
         moduleKind = "umd"
         sourceMap = true
