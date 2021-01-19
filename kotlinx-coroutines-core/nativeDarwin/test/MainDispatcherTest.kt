@@ -4,10 +4,20 @@
 
 package kotlinx.coroutines
 
+import kotlin.coroutines.*
 import kotlin.test.*
 
 class MainDispatcherTest : TestBase() {
     private val testThread = currentThread()
+
+    @Test
+    fun testDispatchNecessityCheckWithMainImmediateDispatcher() {
+        runTest {
+            val immediate = Dispatchers.Main.immediate
+            val needsDispatch = testThread != mainThread
+            assertEquals(needsDispatch, immediate.isDispatchNeeded(EmptyCoroutineContext))
+        }
+    }
 
     @Test
     fun testWithContext() {

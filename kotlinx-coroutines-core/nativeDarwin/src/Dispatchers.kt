@@ -28,7 +28,7 @@ private class DarwinMainDispatcher(
 
     init { freeze() }
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean = !invokeImmediately || isMainThread()
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = !(invokeImmediately && isMainThread())
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         dispatch_async(dispatch_get_main_queue()) {
