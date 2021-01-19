@@ -66,7 +66,9 @@ internal abstract class EventLoop : CoroutineDispatcher() {
     public fun processUnconfinedEvent(): Boolean {
         val queue = unconfinedQueue ?: return false
         val task = queue.removeFirstOrNull() ?: return false
-        task.run()
+        platformAutoreleasePool {
+            task.run()
+        }
         return true
     }
     /**
@@ -271,7 +273,9 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         // then process one event from queue
         val task = dequeue()
         if (task != null) {
-            task.run()
+            platformAutoreleasePool {
+                task.run()
+            }
             return 0
         }
         return nextTime
@@ -525,6 +529,17 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
 }
 
 internal expect fun createEventLoop(): EventLoop
+
+/**
+ * Used by Darwin targets to wrap a [Runnable.run] call in an Objective-C Autorelease Pool. It is a no-op on JVM, JS and
+ * non-Darwin native targets.
+ *
+ * Coroutines on Darwin targets can call into the Objective-C world, where a callee may push a to-be-returned object to
+ * the Autorelease Pool, so as to avoid a premature ARC release before it reaches the caller. This means the pool must
+ * be eventually drained to avoid leaks. Since Kotlin Coroutines does not use [NSRunLoop], which provides automatic
+ * pool management, it must manage the pool creation and pool drainage manually.
+ */
+internal expect inline fun platformAutoreleasePool(crossinline block: () -> Unit)
 
 internal expect fun nanoTime(): Long
 
