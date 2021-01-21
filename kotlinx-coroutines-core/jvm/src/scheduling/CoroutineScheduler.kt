@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.scheduling
@@ -146,7 +146,7 @@ internal class CoroutineScheduler(
      *
      * Note, [newIndex] can be zero for the worker that is being terminated (removed from [workers]).
      */
-    internal fun parkedWorkersStackTopUpdate(worker: Worker, oldIndex: Int, newIndex: Int) {
+    fun parkedWorkersStackTopUpdate(worker: Worker, oldIndex: Int, newIndex: Int) {
         parkedWorkersStack.loop { top ->
             val index = (top and PARKED_INDEX_MASK).toInt()
             val updVersion = (top + PARKED_VERSION_INC) and PARKED_VERSION_MASK
@@ -174,7 +174,7 @@ internal class CoroutineScheduler(
      * Returns `true` if worker was added to the stack by this invocation, `false` if it was already
      * registered in the stack.
      */
-    internal fun parkedWorkersStackPush(worker: Worker): Boolean {
+    fun parkedWorkersStackPush(worker: Worker): Boolean {
         if (worker.nextParkedWorker !== NOT_IN_STACK) return false // already in stack, bail out
         /*
          * The below loop can be entered only if this worker was not in the stack and, since no other thread
@@ -403,7 +403,7 @@ internal class CoroutineScheduler(
         }
     }
 
-    internal fun createTask(block: Runnable, taskContext: TaskContext): Task {
+    fun createTask(block: Runnable, taskContext: TaskContext): Task {
         val nanoTime = schedulerTimeSource.nanoTime()
         if (block is Task) {
             block.submissionTime = nanoTime
@@ -422,7 +422,7 @@ internal class CoroutineScheduler(
         tryUnpark() // Try unpark again in case there was race between permit release and parking
     }
 
-    internal fun signalCpuWork() {
+    fun signalCpuWork() {
         if (tryUnpark()) return
         if (tryCreateWorker()) return
         tryUnpark()
@@ -654,7 +654,7 @@ internal class CoroutineScheduler(
          * Releases CPU token if worker has any and changes state to [newState].
          * Returns `true` if CPU permit was returned to the pool
          */
-        internal fun tryReleaseCpu(newState: WorkerState): Boolean {
+      fun tryReleaseCpu(newState: WorkerState): Boolean {
             val previousState = state
             val hadCpu = previousState == WorkerState.CPU_ACQUIRED
             if (hadCpu) releaseCpuPermit()
@@ -774,7 +774,7 @@ internal class CoroutineScheduler(
          * Marsaglia xorshift RNG with period 2^32-1 for work stealing purposes.
          * ThreadLocalRandom cannot be used to support Android and ThreadLocal<Random> is up to 15% slower on Ktor benchmarks
          */
-        internal fun nextInt(upperBound: Int): Int {
+        fun nextInt(upperBound: Int): Int {
             var r = rngState
             r = r xor (r shl 13)
             r = r xor (r shr 17)
