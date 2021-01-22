@@ -64,10 +64,10 @@ suspend fun main() = coroutineScope {
   * [Deep dive into Coroutines](https://www.youtube.com/watch?v=YrrUCSi72E8) (Roman Elizarov at KotlinConf 2017, [slides](https://www.slideshare.net/elizarov/deep-dive-into-coroutines-on-jvm-kotlinconf-2017))
   * [Kotlin Coroutines in Practice](https://www.youtube.com/watch?v=a3agLJQ6vt8) (Roman Elizarov at KotlinConf 2018, [slides](https://www.slideshare.net/elizarov/kotlin-coroutines-in-practice-kotlinconf-2018))
 * Guides and manuals: 
-  * [Guide to kotlinx.coroutines by example](https://kotlinlang.org/docs/reference/coroutines/coroutines-guide.html) (**read it first**)
+  * [Guide to kotlinx.coroutines by example](https://kotlinlang.org/docs/coroutines-guide.html) (**read it first**)
   * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
-  * [Debugging capabilities in kotlinx.coroutines](docs/debugging.md)
-* [Compatibility policy and experimental annotations](docs/compatibility.md)
+  * [Debugging capabilities in kotlinx.coroutines](docs/topics/debugging.md)
+* [Compatibility policy and experimental annotations](docs/topics/compatibility.md)
 * [Change log for kotlinx.coroutines](CHANGES.md)
 * [Coroutines design document (KEEP)](https://github.com/Kotlin/KEEP/blob/master/proposals/coroutines.md)
 * [Full kotlinx.coroutines API reference](https://kotlin.github.io/kotlinx.coroutines)
@@ -189,7 +189,7 @@ packagingOptions {
 
 ### JS
 
-[Kotlin/JS](https://kotlinlang.org/docs/reference/js-overview.html) version of `kotlinx.coroutines` is published as 
+[Kotlin/JS](https://kotlinlang.org/docs/js-overview.html) version of `kotlinx.coroutines` is published as 
 [`kotlinx-coroutines-core-js`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.4.2/jar)
 (follow the link to get the dependency declaration snippet).
  
@@ -197,7 +197,7 @@ You can also use [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotli
 
 ### Native
 
-[Kotlin/Native](https://kotlinlang.org/docs/reference/native-overview.html) version of `kotlinx.coroutines` is published as 
+[Kotlin/Native](https://kotlinlang.org/docs/native-overview.html) version of `kotlinx.coroutines` is published as 
 [`kotlinx-coroutines-core-native`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-native/1.4.2/jar)
 (follow the link to get the dependency declaration snippet).
 

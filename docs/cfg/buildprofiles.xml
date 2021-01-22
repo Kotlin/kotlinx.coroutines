@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<buildprofiles>
+    <variables>
+        <enable-browser-edits>true</enable-browser-edits>
+        <browser-edits-url>https://github.com/Kotlin/kotlinx.coroutines/edit/master/</browser-edits-url>
+    </variables>
+    <build-profile product="kc"/>
+</buildprofiles>
