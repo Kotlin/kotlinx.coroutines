@@ -161,15 +161,34 @@ Definition latch_state γl (counter: nat): iProp :=
       | _ => Cinl (Excl (Pos.of_nat counter))
                       end))).
 
-Theorem newLatch_spec (n: nat):
-  n > 0 ->
+Theorem newLatch_spec (c: Z):
   {{{ inv_heap_inv }}}
-    newLatch array_interface #n
+    newLatch array_interface #c
   {{{ γl γa γtq γe γd s, RET s; is_latch γl γa γtq γe γd s ∗
-                                         latch_state γl n
+                                latch_state γl (if decide (0 ≤ c)%Z then Z.to_nat c else 0)
   }}}.
 Proof.
-  iIntros (Hn Φ) "#HHeap HΦ".
+  iIntros (Φ) "#HHeap HΦ".
+  remember (if decide (0 ≤ c)%Z then Z.to_nat c else 0) as n.
+  destruct n as [|n'].
+  {
+    iMod (own_alloc (● (0, Some (Cinr None)) ⋅ ◯ (0, Some (Cinr None))))
+      as (γl) "[H● H◯]".
+    by apply auth_both_valid=> //.
+    wp_lam. wp_bind (newThreadQueue _ _).
+    iApply (newThreadQueue_spec with "HHeap").
+    iIntros (γa γtq γe γd e d) "!> [#HTq HThreadState]".
+    wp_alloc pw as "Hpw". wp_alloc p as "Hp". rewrite -wp_fupd. wp_pures.
+    iMod (inv_alloc NLatch _ (∃ n w, latch_invariant γl γtq p pw n w) with "[-HΦ H◯]")
+      as "#HInv".
+    { iExists 0, 0. simpl. iLeft. iFrame "Hpw HThreadState". iRight. iFrame.
+      iSplitR; first done. iExists _. iFrame. iPureIntro.
+      destruct (decide (0 ≤ c)%Z); lia. }
+    iApply "HΦ". iSplitR.
+    { iExists _, _, _, _. iSplitR; first done. by iFrame "HInv HTq". }
+    rewrite /latch_state. by iFrame.
+  }
+  remember (S n') as n eqn:Hn'.
   iMod (own_alloc (● (0, Some (Cinl (Excl (Pos.of_nat n)))) ⋅
                    ◯ (0, Some (Cinl (Excl (Pos.of_nat n))))))
     as (γl) "[H● H◯]".
@@ -181,7 +200,8 @@ Proof.
   iMod (inv_alloc NLatch _ (∃ n w, latch_invariant γl γtq p pw n w) with "[-HΦ H◯]")
     as "#HInv".
   { iExists n, 0. simpl. iLeft. iFrame "Hpw HThreadState". iLeft. iFrame.
-    by iPureIntro. }
+    destruct (decide (0 ≤ c)%Z); last lia. rewrite Heqn.
+    rewrite Z2Nat.id; last lia. iFrame. iPureIntro. lia. }
   iApply "HΦ". iSplitR.
   { iExists _, _, _, _. iSplitR; first done. by iFrame "HInv HTq". }
   rewrite /latch_state. by destruct n; first lia.
