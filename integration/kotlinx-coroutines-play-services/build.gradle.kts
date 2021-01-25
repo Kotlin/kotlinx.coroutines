@@ -2,14 +2,14 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-ext.tasks_version = '16.0.1'
+val tasksVersion = "16.0.1"
 
-def artifactType = Attribute.of("artifactType", String)
-def unpackedAar = Attribute.of("unpackedAar", Boolean)
+val artifactType = Attribute.of("artifactType", String::class.java)
+val unpackedAar = Attribute.of("unpackedAar", Boolean::class.javaObjectType)
 
-configurations.all {
+configurations.configureEach {
     afterEvaluate {
-        if (canBeResolved) {
+        if (isCanBeResolved) {
             attributes.attribute(unpackedAar, true) // request all AARs to be unpacked
         }
     }
@@ -21,25 +21,21 @@ dependencies {
     }
 
     artifactTypes {
-        aar {
+        create("aar") {
             attributes.attribute(unpackedAar, false)
         }
     }
 
-    registerTransform(UnpackAar) {
+    registerTransform(UnpackAar::class.java) {
         from.attribute(unpackedAar, false).attribute(artifactType, "aar")
         to.attribute(unpackedAar, true).attribute(artifactType, "jar")
     }
 
-    api("com.google.android.gms:play-services-tasks:$tasks_version") {
-        exclude group: 'com.android.support'
+    api("com.google.android.gms:play-services-tasks:$tasksVersion") {
+        exclude(group="com.android.support")
     }
 }
 
-tasks.withType(dokka.getClass()) {
-    externalDocumentationLink {
-        url = new URL("https://developers.google.com/android/reference/")
-        // This is workaround for missing package list in Google API
-        packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
-    }
-}
+externalDocumentationLink(
+    url = "https://developers.google.com/android/reference/"
+)
