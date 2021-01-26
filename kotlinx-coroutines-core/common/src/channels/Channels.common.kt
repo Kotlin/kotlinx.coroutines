@@ -1,14 +1,16 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:JvmMultifileClass
 @file:JvmName("ChannelsKt")
 @file:Suppress("DEPRECATION_ERROR")
+@file:OptIn(ExperimentalContracts::class)
 
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -164,6 +166,9 @@ public fun consumesAll(vararg channels: ReceiveChannel<*>): CompletionHandler =
  * The operation is _terminal_.
  */
 public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -> R): R {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
     var cause: Throwable? = null
     try {
         return block()
