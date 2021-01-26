@@ -455,7 +455,7 @@ private class JobListenableFuture<T>(private val jobToCancel: Job): ListenableFu
             try {
                 when (val result = Uninterruptibles.getUninterruptibly(auxFuture)) {
                     is Cancelled -> append("CANCELLED, cause=[${result.exception}]")
-                    else -> append("SUCCESS, result=[$result")
+                    else -> append("SUCCESS, result=[$result]")
                 }
             } catch (e: CancellationException) {
                 // `this` future was cancelled by `Future.cancel`. In this case there's no cause or message.
@@ -469,6 +469,7 @@ private class JobListenableFuture<T>(private val jobToCancel: Job): ListenableFu
         } else {
             append("PENDING, delegate=[$auxFuture]")
         }
+        append(']')
     }
 }
 
