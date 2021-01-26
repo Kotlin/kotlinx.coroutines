@@ -56,6 +56,10 @@ class BuilderContractsTest : TestBase() {
     }
 
     private fun consume(a: Int) {
+        /*
+         * Verify the value is actually set correctly
+         * (non-zero, VerificationError is not triggered can be read)
+         */
         assertNotEquals(0, a)
         assertEquals(a.hashCode(), a)
     }
