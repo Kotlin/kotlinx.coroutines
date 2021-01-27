@@ -680,6 +680,50 @@ class ListenableFutureTest : TestBase() {
         finish(5)
     }
 
+    @Test
+    fun testFutureCompletedExceptionally() = runTest {
+        val testException = TestException()
+        // NonCancellable to not propagate error to this scope.
+        val future = future(context = NonCancellable) {
+            throw testException
+        }
+        yield()
+        assertTrue(future.isDone)
+        assertFalse(future.isCancelled)
+        val thrown = assertFailsWith<ExecutionException> { future.get() }
+        assertEquals(testException, thrown.cause)
+    }
+
+    @Test
+    fun testAsListenableFutureCompletedExceptionally() = runTest {
+        val testException = TestException()
+        val deferred = CompletableDeferred<String>().apply {
+            completeExceptionally(testException)
+        }
+        val asListenableFuture = deferred.asListenableFuture()
+        assertTrue(asListenableFuture.isDone)
+        assertFalse(asListenableFuture.isCancelled)
+        val thrown = assertFailsWith<ExecutionException> { asListenableFuture.get() }
+        assertEquals(testException, thrown.cause)
+    }
+
+    @Test
+    fun stressTestJobListenableFutureIsCancelledDoesNotThrow() = runTest {
+        repeat(1000) {
+            val deferred = CompletableDeferred<String>()
+            val asListenableFuture = deferred.asListenableFuture()
+            // We heed two threads to test a race condition.
+            withContext(Dispatchers.Default) {
+                val cancellationJob = launch {
+                    asListenableFuture.cancel(false)
+                }
+                while (!cancellationJob.isCompleted) {
+                    asListenableFuture.isCancelled // Shouldn't throw.
+                }
+            }
+        }
+    }
+
     private inline fun <reified T: Throwable> ListenableFuture<*>.checkFutureException() {
         val e = assertFailsWith<ExecutionException> { get() }
         val cause = e.cause!!
