@@ -34,7 +34,7 @@ public val DEFAULT_CONCURRENCY: Int = systemProp(DEFAULT_CONCURRENCY_PROPERTY_NA
  * Transforms elements emitted by the original flow by applying [transform], that returns another flow,
  * and then concatenating and flattening these flows.
  *
- * This method is is a shortcut for `map(transform).flattenConcat()`. See [flattenConcat].
+ * This method is a shortcut for `map(transform).flattenConcat()`. See [flattenConcat].
  *
  * Note that even though this operator looks very familiar, we discourage its usage in a regular application-specific flows.
  * Most likely, suspending operation in [map] operator will be sufficient and linear transformations are much easier to reason about.
