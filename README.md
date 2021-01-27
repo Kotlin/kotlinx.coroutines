@@ -145,19 +145,6 @@ plugins {
 
 Make sure that you have either `jcenter()` or `mavenCentral()` in the list of repositories.
 
-### Multiplatform
-
-Core modules of `kotlinx.coroutines` are also available for 
-[Kotlin/JS](#js) and [Kotlin/Native](#native).
-In common code that should get compiled for different platforms, you can add dependency to `kotlinx-coroutines-core` right to the `commonMain` source set:
-```groovy
-commonMain {
-    dependencies {
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
-    }
-}
-```
-
 ### Android
 
 Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
@@ -169,13 +156,13 @@ implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2'
 
 This gives you access to Android [Dispatchers.Main]
 coroutine dispatcher and also makes sure that in case of crashed coroutine with unhandled exception this
-exception is logged before crashing Android application, similarly to the way uncaught exceptions in 
-threads are handled by Android runtime. 
+exception is logged before crashing Android application, similarly to the way uncaught exceptions in
+threads are handled by Android runtime.
 
 #### R8 and ProGuard
 
 R8 and ProGuard rules are bundled into the [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android) module.
-For more details see ["Optimization" section for Android](ui/kotlinx-coroutines-android/README.md#optimization). 
+For more details see ["Optimization" section for Android](ui/kotlinx-coroutines-android/README.md#optimization).
 
 #### Avoiding including the debug infrastructure in the resulting APK
 
@@ -188,27 +175,40 @@ packagingOptions {
 }
 ```
 
-### JS
+### Multiplatform
 
-[Kotlin/JS](https://kotlinlang.org/docs/js-overview.html) version of `kotlinx.coroutines` is published as 
-[`kotlinx-coroutines-core-js`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.4.2/jar)
-(follow the link to get the dependency declaration snippet).
- 
-You can also use [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) package via NPM. 
+Core modules of `kotlinx.coroutines` are also available for 
+[Kotlin/JS](https://kotlinlang.org/docs/reference/js-overview.html) and [Kotlin/Native](https://kotlinlang.org/docs/reference/native-overview.html).
 
-### Native
-
-[Kotlin/Native](https://kotlinlang.org/docs/native-overview.html) version of `kotlinx.coroutines` is published as 
-[`kotlinx-coroutines-core-native`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-native/1.4.2/jar)
-(follow the link to get the dependency declaration snippet).
-
-Only single-threaded code (JS-style) on Kotlin/Native is currently supported. 
-Kotlin/Native supports only Gradle version 4.10 and you need to enable Gradle metadata in your
-`settings.gradle` file:
-
+In common code that should get compiled for different platforms, you can add dependency to `kotlinx-coroutines-core` right to the `commonMain` source set:
 ```groovy
-enableFeaturePreview('GRADLE_METADATA')
+commonMain {
+    dependencies {
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+    }
+}
 ```
+
+No more additional dependencies is needed, platform-specific artifacts will be resolved automatically via Gradle metadata available since Gradle 5.3.
+
+Platform-specific dependencies are recommended to be used only for non-multiplatform projects that are compiled only for target platform.
+
+#### JS
+
+Kotlin/JS version of `kotlinx.coroutines` is published as 
+[`kotlinx-coroutines-core-js`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.4.2/jar)
+(follow the link to get the dependency declaration snippet) and as [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) NPM package. 
+
+#### Native
+
+Kotlin/Native version of `kotlinx.coroutines` is published as 
+[`kotlinx-coroutines-core-$platform`](https://mvnrepository.com/search?q=kotlinx-coroutines-core-) where `$platform` is 
+the target Kotlin/Native platform. [List of currently supported targets](https://github.com/Kotlin/kotlinx.coroutines/blob/master/gradle/compile-native-multiplatform.gradle#L16).
+
+
+Only single-threaded code (JS-style) on Kotlin/Native is supported in stable versions.
+Additionally, special `-native-mt` version is released on a regular basis, for the state of multi-threaded coroutines support
+please follow the [corresponding issue](https://github.com/Kotlin/kotlinx.coroutines/issues/462) for the additional details.
 
 Since Kotlin/Native does not generally provide binary compatibility between versions, 
 you should use the same version of Kotlin/Native compiler as was used to build `kotlinx.coroutines`. 
