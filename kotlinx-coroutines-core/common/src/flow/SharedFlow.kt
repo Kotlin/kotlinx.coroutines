@@ -221,9 +221,11 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
  * @param replay the number of values replayed to new subscribers (cannot be negative, defaults to zero).
  * @param extraBufferCapacity the number of values buffered in addition to `replay`.
  *   [emit][MutableSharedFlow.emit] does not suspend while there is a buffer space remaining (optional, cannot be negative, defaults to zero).
- * @param onBufferOverflow configures an action on buffer overflow (optional, defaults to
- *   [suspending][BufferOverflow.SUSPEND] attempts to [emit][MutableSharedFlow.emit] a value,
- *   supported only when `replay > 0` or `extraBufferCapacity > 0`).
+ * @param onBufferOverflow configures an action on buffer overflow. Optional, defaults to
+ *   [suspending][BufferOverflow.SUSPEND] attempts to [emit][MutableSharedFlow.emit] a value.
+ *   Values other than [BufferOverflow.SUSPEND] are supported only when `replay > 0` or `extraBufferCapacity > 0` - in other words, when the
+ *   flow has no buffer, then [emit][MutableSharedFlow.emit] will always suspend unless there is at least one subscriber ready to accept the
+ *   value.
  */
 @Suppress("FunctionName", "UNCHECKED_CAST")
 public fun <T> MutableSharedFlow(
