@@ -449,11 +449,8 @@ Definition cell_resources
              match d with
              | None =>
                ℓ ↦ InjLV f ∗ E ∗
-               ((future_completion_permit γf 1%Qp ∨
-                 future_completion_permit γf (1/2)%Qp ∗ iterator_issued γd i) ∗
-                 (if insideDeqFront then awakening_permit γtq else True)
-                ∨ future_completion_permit γf 1%Qp ∗ iterator_issued γd i ∗
-                  cell_cancelled γa i)
+               resources_for_resumer
+                 (if insideDeqFront then awakening_permit γtq else True) γf γd i
              | Some (cellTookValue v) =>
                (ℓ ↦ SOMEV #v ∗ ⌜lit_is_unboxed v⌝ ∗ V v ∗ awakening_permit γtq ∨
                 ℓ ↦ CANCELLEDV ∗ cell_cancelling_token γtq i) ∗
@@ -1749,15 +1746,13 @@ Proof.
   assert (i < deqFront') by lia.
   rewrite bool_decide_true; last lia.
   destruct c' as [[|]|].
-  3: iDestruct "HRR" as "(Hℓ & HE & [[[HFC|[_ HC]] >$]|(_ & HC & _)])".
+  3: iDestruct "HRR" as "(Hℓ & HE & [[[HFC|[_ HC]] >$]|[_ HC]])".
   2: iDestruct "HRR" as "(Hℓ & HTok & [[[HFC|[_ HC]] >$]|[_ HC]])".
   1: iDestruct "HRR" as "(_ & HC & _)".
   all: try by iDestruct (iterator_issued_exclusive with "HIsRes HC") as ">[]".
   all: iMod ("HClose" with "[-]"); last done.
   all: iExists _, _; iFrame; iApply "HRRsRestore".
-  all: iFrame. all: iExists _.
-  - by iFrame.
-  - iFrame. iRight; by iFrame.
+  all: iFrame. all: iExists _. all: by iFrame.
 Qed.
 
 Lemma read_cell_value_by_resumer_spec γtq γa γe γd i ptr e d:
@@ -1867,7 +1862,7 @@ Proof.
       iFrame "HIsSus HTh HCancelled". iExists _. iFrame "H↦ Hℓ HTok".
       iSplitR; first done. iRight. iFrame.
     + (* The cell is attempting to cancel. *)
-      iDestruct "HRR" as "(Hℓ & HE & [[[HFutureCompl|[_ HC]] HAwak]|(_&HC&_)])".
+      iDestruct "HRR" as "(Hℓ & HE & [[[HFutureCompl|[_ HC]] HAwak]|[_ HC]])".
       all: try by iDestruct (iterator_issued_exclusive with "HIsRes HC")
           as ">[]".
       iEval (rewrite -Qp_half_half future_completion_permit_Fractional)
@@ -2997,7 +2992,7 @@ Proof.
     iFrame "H↦ HFutureCancelled HNotImmediate Hℓ". iSplitL "HToken".
     by iExists _, _.
     rewrite /resources_for_resumer.
-    iDestruct "HRR" as "[[H1 H2]|(H1 & H2 & _)]"; [iLeft|iRight]; iFrame.
+    iDestruct "HRR" as "[[H1 H2]|[H1 H2]]"; [iLeft|iRight]; iFrame.
 Qed.
 
 Lemma markRefused_spec γa γtq γe γd e d i ptr γf f:
@@ -3186,7 +3181,7 @@ Proof.
     iFrame "HIsSus HTh'". iExists _. iFrame "H↦ HFutureCancelled HNotImmediate".
     iFrame "Hℓ HCancTok". iLeft. iFrame.
   - (* Cancellation was permitted but undecided until we arrived. *)
-    iDestruct "HRR" as "(Hℓ & HE & [[[HFuture|[_ >HC]] HAwak]|(_ & >HC & _)])".
+    iDestruct "HRR" as "(Hℓ & HE & [[[HFuture|[_ >HC]] HAwak]|[_ >HC]])".
     all: try by iDestruct (iterator_issued_exclusive with "HC HIsRes") as %[].
     iMod (put_value_in_cancelled_cell_ra with "H●") as "[H● H◯]"; first done.
     wp_cmpxchg_suc. iSpecialize ("HΦ" $! true with "HE").
