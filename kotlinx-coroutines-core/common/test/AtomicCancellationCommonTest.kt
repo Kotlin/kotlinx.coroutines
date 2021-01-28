@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -29,6 +29,38 @@ class AtomicCancellationCommonTest : TestBase() {
         expect(2)
         job.cancel()
         expect(3)
+    }
+
+    @Test
+    fun testUndispatchedLaunch() = runTest {
+        expect(1)
+        assertFailsWith<CancellationException> {
+            withContext(Job()) {
+                cancel()
+                launch(start = CoroutineStart.UNDISPATCHED) {
+                    expect(2)
+                    yield()
+                    expectUnreached()
+                }
+            }
+        }
+        finish(3)
+    }
+
+    @Test
+    fun testUndispatchedLaunchWithUnconfinedContext() = runTest {
+        expect(1)
+        assertFailsWith<CancellationException> {
+            withContext(Dispatchers.Unconfined + Job()) {
+                cancel()
+                launch(start = CoroutineStart.UNDISPATCHED) {
+                    expect(2)
+                    yield()
+                    expectUnreached()
+                }
+            }
+        }
+        finish(3)
     }
 
     @Test
