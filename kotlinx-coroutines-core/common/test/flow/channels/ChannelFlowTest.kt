@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.flow
@@ -193,5 +193,18 @@ class ChannelFlowTest : TestBase() {
 
         assertEquals(listOf(1), flow.toList())
         finish(3)
+    }
+
+    @Test
+    fun testCancelledOnCompletion() = runTest {
+        val myFlow = callbackFlow<Any> {
+            expect(2)
+            close()
+            hang { expect(3) }
+        }
+
+        expect(1)
+        myFlow.collect()
+        finish(4)
     }
 }

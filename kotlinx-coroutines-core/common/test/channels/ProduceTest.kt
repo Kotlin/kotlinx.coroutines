@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -93,6 +93,27 @@ class ProduceTest : TestBase() {
     @Test
     fun testCancelOnCompletion() = runTest {
         cancelOnCompletion(coroutineContext)
+    }
+
+    @Test
+    fun testCancelWhenTheChannelIsClosed() = runTest {
+        val channel = produce<Int> {
+            send(1)
+            close()
+            expect(2)
+            launch {
+                expect(3)
+                hang { expect(5) }
+            }
+        }
+
+        expect(1)
+        channel.receive()
+        yield()
+        expect(4)
+        channel.cancel()
+        (channel as Job).join()
+        finish(6)
     }
 
     @Test

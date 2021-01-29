@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -642,7 +642,13 @@ internal abstract class AbstractChannel<E>(
         cancelInternal(cause)
 
     final override fun cancel(cause: CancellationException?) {
-        if (isClosedForReceive) return // Do not create an exception if channel is already cancelled
+        /*
+         * Do not create an exception if channel is already cancelled.
+         * Channel is closed for receive when either it is cancelled (then we are free to bail out)
+         * or was closed and elements were received.
+         * Then `onCancelIdempotent` does nothing for all implementations.
+         */
+        if (isClosedForReceive) return
         cancelInternal(cause ?: CancellationException("$classSimpleName was cancelled"))
     }
 
