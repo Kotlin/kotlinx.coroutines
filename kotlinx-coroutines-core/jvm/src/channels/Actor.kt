@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -148,10 +148,11 @@ private class LazyActorCoroutine<E>(
 ) : ActorCoroutine<E>(parentContext, channel, active = false),
     SelectClause2<E, SendChannel<E>> {
 
-    private var continuation = block.createCoroutineUnintercepted(this, this)
+    private var continuation: Continuation<Unit>? = block.createCoroutineUnintercepted(this, this)
 
     override fun onStart() {
-        continuation.startCoroutineCancellable(this)
+        continuation!!.startCoroutineCancellable(this)
+        continuation = null
     }
 
     override suspend fun send(element: E) {
@@ -179,5 +180,9 @@ private class LazyActorCoroutine<E>(
     override fun <R> registerSelectClause2(select: SelectInstance<R>, param: E, block: suspend (SendChannel<E>) -> R) {
         start()
         super.onSend.registerSelectClause2(select, param, block)
+    }
+
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        continuation = null
     }
 }

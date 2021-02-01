@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -111,9 +111,12 @@ private class LazyDeferredCoroutine<T>(
     private var continuation: Continuation<Unit>? = block.createCoroutineUnintercepted(this, this)
 
     override fun onStart() {
-        val continuation = checkNotNull(this.continuation) { "Already started" }
-        this.continuation = null
-        continuation.startCoroutineCancellable(this)
+        continuation!!.startCoroutineCancellable(this)
+        continuation = null
+    }
+
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        continuation = null
     }
 }
 
@@ -204,9 +207,12 @@ private class LazyStandaloneCoroutine(
     private var continuation: Continuation<Unit>? = block.createCoroutineUnintercepted(this, this)
 
     override fun onStart() {
-        val continuation = checkNotNull(this.continuation) { "Already started" }
-        this.continuation = null
-        continuation.startCoroutineCancellable(this)
+        continuation!!.startCoroutineCancellable(this)
+        continuation = null
+    }
+
+    override fun onCancelled(cause: Throwable, handled: Boolean) {
+        continuation = null
     }
 }
 
