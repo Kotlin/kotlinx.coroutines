@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -113,7 +113,7 @@ private object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Ke
 internal actual class UndispatchedCoroutine<in T>actual constructor (
     context: CoroutineContext,
     uCont: Continuation<T>
-) : ScopeCoroutine<T>(context + UndispatchedMarker, uCont) {
+) : ScopeCoroutine<T>(if (context[UndispatchedMarker] == null) context + UndispatchedMarker else context, uCont) {
 
     private var savedContext: CoroutineContext? = null
     private var savedOldValue: Any? = null
