@@ -19,5 +19,6 @@ internal expect val DefaultDelay: Delay
 
 // countOrElement -- pre-cached value for ThreadContext.kt
 internal expect inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T
+internal expect inline fun <T> withContinuationContext(continuation: Continuation<*>, countOrElement: Any?, block: () -> T): T
 internal expect fun Continuation<*>.toDebugString(): String
 internal expect val CoroutineContext.coroutineName: String?

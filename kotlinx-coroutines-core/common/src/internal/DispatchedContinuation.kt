@@ -235,7 +235,7 @@ internal class DispatchedContinuation<in T>(
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
     inline fun resumeUndispatchedWith(result: Result<T>) {
-        withCoroutineContext(context, countOrElement) {
+        withContinuationContext(continuation, countOrElement) {
             continuation.resumeWith(result)
         }
     }

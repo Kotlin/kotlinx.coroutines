@@ -85,9 +85,9 @@ internal abstract class DispatchedTask<in T>(
         try {
             val delegate = delegate as DispatchedContinuation<T>
             val continuation = delegate.continuation
-            val context = continuation.context
-            val state = takeState() // NOTE: Must take state in any case, even if cancelled
-            withCoroutineContext(context, delegate.countOrElement) {
+            withContinuationContext(continuation, delegate.countOrElement) {
+                val context = continuation.context
+                val state = takeState() // NOTE: Must take state in any case, even if cancelled
                 val exception = getExceptionalResult(state)
                 /*
                  * Check whether continuation was originally resumed with an exception.

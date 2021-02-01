@@ -10,7 +10,7 @@ import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
 
-@Warmup(iterations = 5, time = 1)
+@Warmup(iterations = 7, time = 1)
 @Measurement(iterations = 5, time = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -41,7 +41,7 @@ open class ChannelSinkBenchmark {
 
     private suspend inline fun run(context: CoroutineContext): Int {
         return Channel
-            .range(1, 1_000_000, context)
+            .range(1, 10_000, context)
             .filter(context) { it % 4 == 0 }
             .fold(0) { a, b -> a + b }
     }
