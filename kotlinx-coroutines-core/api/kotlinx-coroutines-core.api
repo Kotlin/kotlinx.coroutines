@@ -10,7 +10,6 @@ public abstract class kotlinx/coroutines/AbstractCoroutine : kotlinx/coroutines/
 	protected fun onCancelled (Ljava/lang/Throwable;Z)V
 	protected fun onCompleted (Ljava/lang/Object;)V
 	protected final fun onCompletionInternal (Ljava/lang/Object;)V
-	protected fun onStart ()V
 	public final fun resumeWith (Ljava/lang/Object;)V
 	public final fun start (Lkotlinx/coroutines/CoroutineStart;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
 	public final fun start (Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function1;)V
@@ -431,6 +430,7 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public fun minusKey (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
 	protected fun onCancelling (Ljava/lang/Throwable;)V
 	protected fun onCompletionInternal (Ljava/lang/Object;)V
+	protected fun onStart ()V
 	public final fun parentCancelled (Lkotlinx/coroutines/ParentJob;)V
 	public fun plus (Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
 	public fun plus (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;

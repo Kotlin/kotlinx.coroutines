@@ -96,7 +96,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          ~ waits for start
          >> start / join / await invoked
        ## ACTIVE: state == EMPTY_ACTIVE | is JobNode | is NodeList
-         + onStartInternal / onStart (lazy coroutine is started)
+         + onStart (lazy coroutine is started)
          ~ active coroutine is working (or scheduled to execution)
          >> childCancelled / cancelImpl invoked
        ## CANCELLING: state is Finishing, state.rootCause != null
@@ -393,12 +393,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             is Empty -> { // EMPTY_X state -- no completion handlers
                 if (state.isActive) return FALSE // already active
                 if (!_state.compareAndSet(state, EMPTY_ACTIVE)) return RETRY
-                onStartInternal()
+                onStart()
                 return TRUE
             }
             is InactiveNodeList -> { // LIST state -- inactive with a list of completion handlers
                 if (!_state.compareAndSet(state, state.list)) return RETRY
-                onStartInternal()
+                onStart()
                 return TRUE
             }
             else -> return FALSE // not a new state
@@ -409,7 +409,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * Override to provide the actual [start] action.
      * This function is invoked exactly once when non-active coroutine is [started][start].
      */
-    internal open fun onStartInternal() {}
+    protected open fun onStart() {}
 
     public final override fun getCancellationException(): CancellationException =
         when (val state = this.state) {

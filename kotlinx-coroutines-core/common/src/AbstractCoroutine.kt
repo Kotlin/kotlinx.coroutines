@@ -66,16 +66,6 @@ public abstract class AbstractCoroutine<in T>(
     }
 
     /**
-     * This function is invoked once when a non-active coroutine (constructed with `active` set to `false)
-     * is [started][start].
-     */
-    protected open fun onStart() {}
-
-    internal final override fun onStartInternal() {
-        onStart()
-    }
-
-    /**
      * This function is invoked once when the job was completed normally with the specified [value],
      * right before all the waiters for the coroutine's completion are notified.
      */
