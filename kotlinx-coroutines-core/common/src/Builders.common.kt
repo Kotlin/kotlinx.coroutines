@@ -167,7 +167,6 @@ public suspend fun <T> withContext(
         }
         // SLOW PATH -- use new dispatcher
         val coroutine = DispatchedCoroutine(newContext, uCont)
-        coroutine.initParentJob()
         block.startCoroutineCancellable(coroutine, coroutine)
         coroutine.getResult()
     }
