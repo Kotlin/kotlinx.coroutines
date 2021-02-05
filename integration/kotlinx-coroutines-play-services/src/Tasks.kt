@@ -6,15 +6,9 @@
 
 package kotlinx.coroutines.tasks
 
-import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.android.gms.tasks.RuntimeExecutionException
-import com.google.android.gms.tasks.Task
-import com.google.android.gms.tasks.TaskCompletionSource
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.suspendCancellableCoroutine
+import com.google.android.gms.tasks.*
+import kotlinx.coroutines.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 
 /**
@@ -103,5 +97,33 @@ public suspend fun <T> Task<T>.await(): T {
                 cont.resumeWithException(e)
             }
         }
+    }
+}
+
+/**
+ * Awaits for completion of the created task without blocking a thread.
+ *
+ * Prefer this method over [Task.await] if a [Task] can be constructed with a [CancellationToken], to cancel the task
+ * if this function is cancelled.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * stops waiting for the completion stage and immediately resumes with [CancellationException].
+ *
+ * @see [Task.await]
+ */
+@OptIn(ExperimentalContracts::class)
+@ExperimentalCoroutinesApi
+public suspend fun <T> (suspend (CancellationToken) -> Task<T>).await(): T {
+    contract { callsInPlace(this@await, InvocationKind.EXACTLY_ONCE) }
+
+    val cancellation = CancellationTokenSource()
+    val task = this(cancellation.token)
+
+    return try {
+        task.await()
+    } catch (cancellationException: CancellationException) {
+        cancellation.cancel()
+        throw cancellationException
     }
 }

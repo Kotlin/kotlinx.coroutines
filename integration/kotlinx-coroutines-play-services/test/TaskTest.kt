@@ -149,5 +149,69 @@ class TaskTest : TestBase() {
         }
     }
 
+    @Test
+    fun testAwaitConstructedTask() = runTest {
+        var taskCompletionSource: TaskCompletionSource<Int>? = null
+
+        val deferred: Deferred<Int> = async(start = CoroutineStart.UNDISPATCHED) {
+            val taskCreator: suspend (CancellationToken) -> Task<Int> = { cancellationToken ->
+                taskCompletionSource = TaskCompletionSource<Int>(cancellationToken)
+                taskCompletionSource!!.task
+            }
+            taskCreator.await()
+        }
+
+        assertFalse(deferred.isCompleted)
+        taskCompletionSource!!.setResult(42)
+
+        assertEquals(42, deferred.await())
+        assertTrue(deferred.isCompleted)
+    }
+
+    @Test
+    fun testFailedAwaitConstructedTask() {
+        var taskCompletionSource: TaskCompletionSource<Int>? = null
+
+        val deferred: Deferred<Int> = GlobalScope.async(start = CoroutineStart.UNDISPATCHED) {
+            val taskCreator: suspend (CancellationToken) -> Task<Int> = { cancellationToken ->
+                taskCompletionSource = TaskCompletionSource<Int>(cancellationToken)
+                taskCompletionSource!!.task
+            }
+            taskCreator.await()
+        }
+
+        assertFalse(deferred.isCompleted)
+        taskCompletionSource!!.setException(TestException("something went wrong"))
+
+        runTest(expected = { it is TestException }) {
+            deferred.await()
+        }
+    }
+
+    @Test
+    fun testCancelledAwaitConstructedTask() = runTest {
+        var task: Task<Int>? = null
+
+        val deferred: Deferred<Int> = async(start = CoroutineStart.UNDISPATCHED) {
+            val taskCreator: suspend (CancellationToken) -> Task<Int> = { cancellationToken ->
+                task = TaskCompletionSource<Int>(cancellationToken).task
+                task!!
+            }
+            taskCreator.await()
+        }
+
+        assertFalse(deferred.isCompleted)
+        deferred.cancel()
+
+        try {
+            deferred.await()
+            fail("deferred.await() should be cancelled")
+        } catch (e: Exception) {
+            assertTrue(e is CancellationException)
+        }
+
+        assertTrue(task!!.isCanceled)
+    }
+
     class TestException(message: String) : Exception(message)
 }
