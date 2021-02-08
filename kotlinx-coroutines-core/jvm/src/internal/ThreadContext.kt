@@ -24,7 +24,7 @@ private class ThreadState(@JvmField val context: CoroutineContext, n: Int) {
 
     fun restore(context: CoroutineContext) {
         for (i in elements.indices.reversed()) {
-            elements[i]?.restoreThreadContext(context, values[i])
+            elements[i]!!.restoreThreadContext(context, values[i])
         }
     }
 }
