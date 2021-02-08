@@ -11,13 +11,22 @@ import kotlin.coroutines.*
 internal val NO_THREAD_ELEMENTS = Symbol("NO_THREAD_ELEMENTS")
 
 // Used when there are >= 2 active elements in the context
-private class ThreadState(val context: CoroutineContext, n: Int) {
-    private var a = arrayOfNulls<Any>(n)
+@Suppress("UNCHECKED_CAST")
+private class ThreadState(@JvmField val context: CoroutineContext, n: Int) {
+    private val values = arrayOfNulls<Any>(n)
+    private val elements = arrayOfNulls<ThreadContextElement<Any?>>(n)
     private var i = 0
 
-    fun append(value: Any?) { a[i++] = value }
-    fun take() = a[i++]
-    fun start() { i = 0 }
+    fun append(element: ThreadContextElement<*>, value: Any?) {
+        values[i] = value
+        elements[i++] = element as ThreadContextElement<Any?>
+    }
+
+    fun restore(context: CoroutineContext) {
+        for (i in elements.indices.reversed()) {
+            elements[i]!!.restoreThreadContext(context, values[i])
+        }
+    }
 }
 
 // Counts ThreadContextElements in the context
@@ -42,17 +51,7 @@ private val findOne =
 private val updateState =
     fun (state: ThreadState, element: CoroutineContext.Element): ThreadState {
         if (element is ThreadContextElement<*>) {
-            state.append(element.updateThreadContext(state.context))
-        }
-        return state
-    }
-
-// Restores state for all ThreadContextElements in the context from the given ThreadState
-private val restoreState =
-    fun (state: ThreadState, element: CoroutineContext.Element): ThreadState {
-        @Suppress("UNCHECKED_CAST")
-        if (element is ThreadContextElement<*>) {
-            (element as ThreadContextElement<Any?>).restoreThreadContext(state.context, state.take())
+            state.append(element, element.updateThreadContext(state.context))
         }
         return state
     }
@@ -86,8 +85,7 @@ internal fun restoreThreadContext(context: CoroutineContext, oldState: Any?) {
         oldState === NO_THREAD_ELEMENTS -> return // very fast path when there are no ThreadContextElements
         oldState is ThreadState -> {
             // slow path with multiple stored ThreadContextElements
-            oldState.start()
-            context.fold(oldState, restoreState)
+            oldState.restore(context)
         }
         else -> {
             // fast path for one ThreadContextElement, but need to find it

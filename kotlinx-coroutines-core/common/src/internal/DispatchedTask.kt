@@ -134,7 +134,7 @@ internal abstract class DispatchedTask<in T>(
      * Fatal exception handling can be intercepted with [CoroutineExceptionHandler] element in the context of
      * a failed coroutine, but such exceptions should be reported anyway.
      */
-    internal fun handleFatalException(exception: Throwable?, finallyException: Throwable?) {
+    public fun handleFatalException(exception: Throwable?, finallyException: Throwable?) {
         if (exception === null && finallyException === null) return
         if (exception !== null && finallyException !== null) {
             exception.addSuppressedThrowable(finallyException)
