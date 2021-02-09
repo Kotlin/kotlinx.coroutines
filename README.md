@@ -117,11 +117,11 @@ buildscript {
 }
 ```
 
-Make sure that you have either `jcenter()` or `mavenCentral()` in the list of repositories:
+Make sure that you have `mavenCentral()` in the list of repositories:
 
 ```
 repository {
-    jcenter()
+    mavenCentral()
 }
 ```
 
@@ -143,7 +143,7 @@ plugins {
 }
 ```
 
-Make sure that you have either `jcenter()` or `mavenCentral()` in the list of repositories.
+Make sure that you have `mavenCentral()` in the list of repositories.
 
 ### Android
 
