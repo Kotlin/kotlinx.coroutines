@@ -53,14 +53,7 @@ buildscript {
     }
 
     repositories {
-        jcenter()
-        maven {
-            url "https://kotlin.bintray.com/kotlinx"
-            credentials {
-                username = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER') ?: ""
-                password = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY') ?: ""
-            }
-        }
+        maven {url "https://kotlin.bintray.com/kotlinx"}
         // Future replacement for kotlin-dev, with cache redirector
         maven { url "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
         maven {
@@ -70,7 +63,6 @@ buildscript {
                 password = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY') ?: ""
             }
         }
-        maven { url "https://kotlin.bintray.com/kotlin-eap" }
         maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
         maven { url "https://plugins.gradle.org/m2/" }
     }
@@ -157,25 +149,10 @@ allprojects {
          * transitive dependencies was removed from jcenter, thus breaking gradle dependency resolution
          */
         google()
-        jcenter()
+        mavenCentral()
         // Future replacement for kotlin-dev, with cache redirector
         maven { url "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
-        maven {
-            url "https://kotlin.bintray.com/kotlin-dev"
-            credentials {
-                username = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER') ?: ""
-                password = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY') ?: ""
-            }
-        }
-        maven { url "https://kotlin.bintray.com/kotlin-eap" }
-        maven {
-            url "https://kotlin.bintray.com/kotlinx"
-            credentials {
-                username = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER') ?: ""
-                password = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY') ?: ""
-            }
-        }
-        mavenLocal()
+        maven { url "https://kotlin.bintray.com/kotlinx" }
     }
 }
 

@@ -32,11 +32,11 @@ dependencies {
 ```
 </tabs>
 
-This library is published to Bintray JCenter repository, so add the following:
+This library is published to Bintray Maven Central repository, so add the following:
 
 ```groovy
 repositories {
-    jcenter()
+    mavenCentral()
 }
 ```
 
@@ -75,18 +75,6 @@ Since we'll be using the [`kotlinx.coroutines`](https://github.com/Kotlin/kotlin
         <version>%coroutinesVersion%</version>
     </dependency>
 </dependencies>
-```
-
-This library is published to Bintray JCenter repository, so let us add it:
-
-```xml
-<repositories>
-    ...
-    <repository>
-        <id>central</id>
-        <url>https://jcenter.bintray.com</url>
-    </repository>
-</repositories>
 ```
 
 That's it, we are good to go and write code under `src/main/kotlin`.
