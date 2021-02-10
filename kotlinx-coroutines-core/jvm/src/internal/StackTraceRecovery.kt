@@ -7,7 +7,7 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.debug.ARTIFICIAL_FRAME_CLASS_NAME
+import kotlinx.coroutines.debug.ARTIFICIAL_FRAME_PACKAGE_NAME
 import kotlinx.coroutines.debug.ArtificialStackFrames
 import java.util.*
 import kotlin.coroutines.*
@@ -95,7 +95,7 @@ private fun <E : Throwable> recoverFromStackFrame(exception: E, continuation: Co
  * IllegalStateException
  *   at foo
  *   at kotlin.coroutines.resumeWith
- *   at ArtificialStackFrames.coroutineBoundary(ArtificialStackFrames.kt)
+ *   at _._COROUTINE.BOUNDARY_._(CoroutineDebugging.kt)
  *   at bar
  *   ...real stackTrace...
  * caused by "IllegalStateException" (original one)
@@ -191,7 +191,7 @@ private fun createStackTrace(continuation: CoroutineStackFrame): ArrayDeque<Stac
     return stack
 }
 
-internal fun StackTraceElement.isArtificial() = className == ARTIFICIAL_FRAME_CLASS_NAME
+internal fun StackTraceElement.isArtificial() = className.startsWith(ARTIFICIAL_FRAME_PACKAGE_NAME)
 private fun Array<StackTraceElement>.frameIndex(methodName: String) = indexOfFirst { methodName == it.className }
 
 private fun StackTraceElement.elementWiseEquals(e: StackTraceElement): Boolean {

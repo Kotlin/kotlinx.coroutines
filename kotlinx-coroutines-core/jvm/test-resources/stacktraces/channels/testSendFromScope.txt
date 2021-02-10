@@ -1,6 +1,6 @@
 kotlinx.coroutines.RecoverableTestCancellationException
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testSendFromScope$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt:136)
-	at ArtificialStackFrames.coroutineBoundary(ArtificialStackFrames.kt)
+	at _._COROUTINE.BOUNDARY_._(CoroutineDebugging.kt)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest.sendInChannel(StackTraceRecoveryChannelsTest.kt:167)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$sendWithContext$2.invokeSuspend(StackTraceRecoveryChannelsTest.kt:162)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$sendFromScope$2.invokeSuspend(StackTraceRecoveryChannelsTest.kt:172)

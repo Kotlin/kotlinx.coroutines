@@ -8,7 +8,7 @@ import java.io.*
 import kotlin.test.*
 
 private val coroutineCreationFrameRegex =
-    Regex("\n\tat ArtificialStackFrames.coroutineCreation[^\n]*\n")
+    Regex("\n\tat _._COROUTINE.CREATION_._[^\n]*\n")
 
 public fun String.trimStackTrace(): String =
     trimIndent()
