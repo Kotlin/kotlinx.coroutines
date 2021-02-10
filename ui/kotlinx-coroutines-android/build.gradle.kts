@@ -12,7 +12,7 @@ configurations {
 
 repositories {
     mavenCentral()
-    jcenter() // https://youtrack.jetbrains.com/issue/IDEA-261384
+    jcenter() // https://youtrack.jetbrains.com/issue/IDEA-261387
 }
 dependencies {
     compileOnly("com.google.android:android:${version("android")}")
