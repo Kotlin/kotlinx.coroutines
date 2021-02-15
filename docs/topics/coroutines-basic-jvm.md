@@ -32,7 +32,7 @@ dependencies {
 ```
 </tabs>
 
-This library is published to Bintray Maven Central repository, so add the following:
+This library is published to Maven Central repository, so add the following:
 
 ```groovy
 repositories {
