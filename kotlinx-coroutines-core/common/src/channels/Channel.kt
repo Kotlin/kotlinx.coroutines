@@ -90,7 +90,7 @@ public interface SendChannel<in E> {
     /**
      * Closes this channel.
      * This is an idempotent operation &mdash; subsequent invocations of this function have no effect and return `false`.
-     * Conceptually, its sends a special "close token" over this channel.
+     * Conceptually, it sends a special "close token" over this channel.
      *
      * Immediately after invocation of this function,
      * [isClosedForSend] starts returning `true`. However, [isClosedForReceive][ReceiveChannel.isClosedForReceive]
@@ -498,7 +498,7 @@ public interface ChannelIterator<out E> {
  * * When `capacity` is [Channel.CONFLATED] &mdash; it creates a _conflated_ channel
  *   This channel buffers at most one element and conflates all subsequent `send` and `offer` invocations,
  *   so that the receiver always gets the last element sent.
- *   Back-to-send sent elements are conflated &mdash; only the last sent element is received,
+ *   Back-to-back sent elements are conflated &mdash; only the last sent element is received,
  *   while previously sent elements **are lost**.
  *   [Sending][send] to this channel never suspends, and [offer] always returns `true`.
  *

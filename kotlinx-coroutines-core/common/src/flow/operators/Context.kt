@@ -181,7 +181,7 @@ public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> = buffer(capaci
  * **Conflation takes precedence over `buffer()` calls with any other capacity.**
  *
  * Note that any instance of [StateFlow] already behaves as if `conflate` operator is
- * applied to it, so applying `conflate` to a `StateFlow` has not effect.
+ * applied to it, so applying `conflate` to a `StateFlow` has no effect.
  * See [StateFlow] documentation on Operator Fusion.
  */
 public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
