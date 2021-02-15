@@ -52,7 +52,7 @@ internal val IDLE_WORKER_KEEP_ALIVE_NS = TimeUnit.SECONDS.toNanos(
 )
 
 @JvmField
-internal var schedulerTimeSource: TimeSource = NanoTimeSource
+internal var schedulerTimeSource: SchedulerTimeSource = NanoTimeSource
 
 /**
  * Marker indicating that task is CPU-bound and will not block
@@ -108,10 +108,11 @@ internal class TaskImpl(
 // Open for tests
 internal class GlobalQueue : LockFreeTaskQueue<Task>(singleConsumer = false)
 
-internal abstract class TimeSource {
+// Was previously TimeSource, renamed due to KT-42625 and KT-23727
+internal abstract class SchedulerTimeSource {
     abstract fun nanoTime(): Long
 }
 
-internal object NanoTimeSource : TimeSource() {
+internal object NanoTimeSource : SchedulerTimeSource() {
     override fun nanoTime() = System.nanoTime()
 }
