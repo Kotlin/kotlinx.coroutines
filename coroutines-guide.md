@@ -2,7 +2,7 @@ The main coroutines guide has moved to the [docs folder](docs/topics/coroutines-
 
 ## Table of contents
 
-<!--- TOC_REF docs/topics/basics.md -->
+<!--- TOC_REF docs/topics/coroutines-basics.md -->
 <!--- TOC_REF docs/topics/cancellation-and-timeouts.md -->
 <!--- TOC_REF docs/topics/composing-suspending-functions.md -->
 <!--- TOC_REF docs/topics/coroutine-context-and-dispatchers.md -->
