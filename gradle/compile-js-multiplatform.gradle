@@ -6,18 +6,13 @@ apply from: rootProject.file('gradle/node-js.gradle')
 
 kotlin {
     js {
-        // In 1.3.7x js() has not member `moduleName`
-        // In 1.4.x it has and allow to safety set compiler output file name and does not break test integration
-        if (it.hasProperty("moduleName")) {
-            moduleName = project.name
-        }
+        moduleName = project.name
 
-        // In 1.3.7x js() has not member `irTarget`
         // In 1.4.x it has in `both` and `legacy` mode and js() is of type `KotlinJsTarget`
         // `irTarget` is non-null in `both` mode
         // and contains appropriate `irTarget` with type `KotlinJsIrTarget`
         // `irTarget` is null in `legacy` mode
-        if (it.hasProperty("irTarget") && it.irTarget != null) {
+        if (it.irTarget != null) {
             irTarget.nodejs()
             irTarget.compilations['main']?.dependencies {
                 api "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
