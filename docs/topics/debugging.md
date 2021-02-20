@@ -46,6 +46,10 @@ It is easy to demonstrate with actual stacktraces of the same program that await
 
 The only downside of this approach is losing referential transparency of the exception. 
 
+> Note that suppressed exceptions are not copied and are left intact in the cause
+> in order to prevent cycles in the exceptions chain, obscure`[CIRCULAR REFERENCE]` messages
+> and even [crashes](https://jira.qos.ch/browse/LOGBACK-1027) in some frameworks
+
 ### Stacktrace recovery machinery   
 
 This section explains the inner mechanism of stacktrace recovery and can be skipped.
