@@ -2,7 +2,7 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.debug
+package _COROUTINE
 
 /**
  * A collection of artificial stack trace elements to be included in stack traces by the coroutines machinery.
@@ -20,7 +20,7 @@ internal class ArtificialStackFrames {
      *
      * Note that presence of this marker in a stack trace implies that coroutine creation stack traces were enabled.
      */
-    fun coroutineCreation(): StackTraceElement = Exception().artificialFrame("creation")
+    fun coroutineCreation(): StackTraceElement = Exception().artificialFrame(_CREATION::class.java.simpleName)
 
     /**
      * Returns an artificial stack trace element denoting a coroutine boundary.
@@ -32,10 +32,13 @@ internal class ArtificialStackFrames {
      * In earlier versions of kotlinx-coroutines, this was displayed as "(Coroutine boundary)", which caused
      * problems for tooling that processes stack traces: https://github.com/Kotlin/kotlinx.coroutines/issues/2291
      */
-    fun coroutineBoundary(): StackTraceElement = Exception().artificialFrame("boundary")
+    fun coroutineBoundary(): StackTraceElement = Exception().artificialFrame(_BOUNDARY::class.java.simpleName)
 }
 
-internal val ARTIFICIAL_FRAME_PACKAGE_NAME = "_._COROUTINE"
+private class _CREATION
+private class _BOUNDARY
+
+internal val ARTIFICIAL_FRAME_PACKAGE_NAME = "_COROUTINE"
 
 private fun Throwable.artificialFrame(name: String): StackTraceElement =
-    with(stackTrace[0]) { StackTraceElement("$ARTIFICIAL_FRAME_PACKAGE_NAME.${name.toUpperCase()}_", "_", fileName, lineNumber) }
+    with(stackTrace[0]) { StackTraceElement(ARTIFICIAL_FRAME_PACKAGE_NAME + "." + name, "_", fileName, lineNumber) }

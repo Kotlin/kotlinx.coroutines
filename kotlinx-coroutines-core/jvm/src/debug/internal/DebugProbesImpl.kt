@@ -7,7 +7,6 @@ package kotlinx.coroutines.debug.internal
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.*
-import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.internal.ScopeCoroutine
 import java.io.*
 import java.lang.StackTraceElement
@@ -18,6 +17,7 @@ import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 import kotlin.synchronized
+import _COROUTINE.ArtificialStackFrames
 
 internal object DebugProbesImpl {
     private val ARTIFICIAL_FRAME = ArtificialStackFrames().coroutineCreation()

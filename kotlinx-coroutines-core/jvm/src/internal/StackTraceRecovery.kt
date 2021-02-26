@@ -7,8 +7,8 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.debug.ARTIFICIAL_FRAME_PACKAGE_NAME
-import kotlinx.coroutines.debug.ArtificialStackFrames
+import _COROUTINE.ARTIFICIAL_FRAME_PACKAGE_NAME
+import _COROUTINE.ArtificialStackFrames
 import java.util.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
@@ -95,7 +95,7 @@ private fun <E : Throwable> recoverFromStackFrame(exception: E, continuation: Co
  * IllegalStateException
  *   at foo
  *   at kotlin.coroutines.resumeWith
- *   at _._COROUTINE.BOUNDARY_._(CoroutineDebugging.kt)
+ *   at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)
  *   at bar
  *   ...real stackTrace...
  * caused by "IllegalStateException" (original one)
