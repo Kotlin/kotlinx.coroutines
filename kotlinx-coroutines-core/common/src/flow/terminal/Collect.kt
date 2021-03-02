@@ -87,8 +87,8 @@ public suspend inline fun <T> Flow<T>.collectIndexed(crossinline action: suspend
 
 /**
  * Terminal flow operator that collects the given flow with a provided [action].
- * The crucial difference from [collect] is that when the original flow emits a new value, [action] block for previous
- * value is cancelled.
+ * The crucial difference from [collect] is that when the original flow emits a new value
+ * then the [action] block for the previous value is cancelled.
  *
  * It can be demonstrated by the following example:
  *

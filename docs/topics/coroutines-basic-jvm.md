@@ -32,7 +32,7 @@ dependencies {
 ```
 </tabs>
 
-This library is published to Maven Central repository, so add the following:
+This library is published to the [Maven Central repository](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core), so add the following:
 
 ```groovy
 repositories {
@@ -76,6 +76,8 @@ Since we'll be using the [`kotlinx.coroutines`](https://github.com/Kotlin/kotlin
     </dependency>
 </dependencies>
 ```
+
+This library is published to the [Maven Central repository](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core), which Maven will download from by default.
 
 That's it, we are good to go and write code under `src/main/kotlin`.
 
