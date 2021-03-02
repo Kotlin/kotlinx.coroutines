@@ -35,6 +35,7 @@ public interface CopyableThrowable<T> where T : Throwable, T : CopyableThrowable
      * For better debuggability, it is recommended to use original exception as [cause][Throwable.cause] of the resulting one.
      * Stacktrace of copied exception will be overwritten by stacktrace recovery machinery by [Throwable.setStackTrace] call.
      * An exception can opt-out of copying by returning `null` from this function.
+     * Suppressed exceptions of the original exception should not be copied in order to avoid circular exceptions.
      */
     public fun createCopy(): T?
 }
