@@ -33,7 +33,7 @@
 
 <h1 id="coroutinestart">CoroutineStart</h1>
 
-<div class="signature"><code><span class="keyword">enum</span> <span class="keyword">class </span><span class="identifier">CoroutineStart</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineStart.kt#L21">(source)</a></div>
+<div class="signature"><code><span class="keyword">enum</span> <span class="keyword">class </span><span class="identifier">CoroutineStart</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineStart.kt#L20">(source)</a></div>
 
 <p>Defines start options for coroutines builders.
 It is used in <code>start</code> parameter of <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, and other coroutine builder functions.</p>
@@ -96,8 +96,8 @@ This is similar to <a href="-d-e-f-a-u-l-t.html">DEFAULT</a>, but the coroutine 
       </td>
 <td>
 
-        <p>Immediately executes the coroutine until its first suspension point <em>in the current thread</em> as if the
-coroutine was started using <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a>. However, when the coroutine is resumed from suspension
+        <p>Immediately executes the coroutine until its first suspension point <em>in the current thread</em> similarly to
+the coroutine being started using <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a>. However, when the coroutine is resumed from suspension
 it is dispatched according to the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in its context.</p>
 
       </td>

@@ -60,7 +60,7 @@ This channel has a linked-list buffer of unlimited capacity (limited only by ava
     <p>When <code>capacity</code> is <a href="-c-o-n-f-l-a-t-e-d.html">Channel.CONFLATED</a> — it creates a <em>conflated</em> channel
 This channel buffers at most one element and conflates all subsequent <code>send</code> and <code>offer</code> invocations,
 so that the receiver always gets the last element sent.
-Back-to-send sent elements are conflated — only the last sent element is received,
+Back-to-back sent elements are conflated — only the last sent element is received,
 while previously sent elements <strong>are lost</strong>.
 <a href="../-send-channel/send.html">Sending</a> to this channel never suspends, and <a href="../-send-channel/offer.html">offer</a> always returns <code>true</code>.</p>
   </li>
@@ -264,7 +264,7 @@ This function closes the channel and removes all buffered sent elements from it.
 
         <p>Closes this channel.
 This is an idempotent operation — subsequent invocations of this function have no effect and return <code>false</code>.
-Conceptually, its sends a special “close token” over this channel.</p>
+Conceptually, it sends a special “close token” over this channel.</p>
 
       </td>
 </tr>

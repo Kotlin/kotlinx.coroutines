@@ -44,9 +44,7 @@
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html"><span class="identifier">CompletionStage</span></a><span class="symbol">&lt;</span><a href="as-deferred.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asDeferred</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><a href="as-deferred.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Converts this completion stage to an instance of <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html">Deferred</a>.
-When this completion stage is an instance of <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html">Future</a>, then it is cancelled when
-the resulting deferred is cancelled.</p>
+        <p>Converts this <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html">CompletionStage</a> to an instance of <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html">Deferred</a>.</p>
 
       </td>
 </tr>
@@ -59,7 +57,7 @@ the resulting deferred is cancelled.</p>
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html"><span class="identifier">CompletionStage</span></a><span class="symbol">&lt;</span><a href="await.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>Awaits for completion of the completion stage without blocking a thread.</p>
+        <p>Awaits for completion of <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html">CompletionStage</a> without blocking a thread.</p>
 
       </td>
 </tr>

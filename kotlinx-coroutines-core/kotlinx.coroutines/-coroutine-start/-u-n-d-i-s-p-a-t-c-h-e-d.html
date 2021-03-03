@@ -33,10 +33,10 @@
 
 <h1 id="undispatched">UNDISPATCHED</h1>
 
-<div class="signature"><code><span class="identifier">UNDISPATCHED</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineStart.kt#L75">(source)</a></div>
+<div class="signature"><code><span class="identifier">UNDISPATCHED</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineStart.kt#L76">(source)</a></div>
 
-<p>Immediately executes the coroutine until its first suspension point <em>in the current thread</em> as if the
-coroutine was started using <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a>. However, when the coroutine is resumed from suspension
+<p>Immediately executes the coroutine until its first suspension point <em>in the current thread</em> similarly to
+the coroutine being started using <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a>. However, when the coroutine is resumed from suspension
 it is dispatched according to the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in its context.</p>
 
 <p>This is similar to <a href="-a-t-o-m-i-c.html">ATOMIC</a> in the sense that coroutine starts executing even if it was already cancelled,
@@ -45,7 +45,10 @@ but the difference is that it starts executing in the same thread.</p>
 <p>Cancellability of coroutine at suspension points depends on the particular implementation details of
 suspending functions as in <a href="-d-e-f-a-u-l-t.html">DEFAULT</a>.</p>
 
-<p><strong>Note: This is an experimental api.</strong> Execution semantics of coroutines may change in the future when this mode is used.</p>
+<h3 id="unconfined-event-loop">Unconfined event loop</h3>
+
+<p>Unlike <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> and <a href="../-main-coroutine-dispatcher/immediate.html">MainCoroutineDispatcher.immediate</a>, nested undispatched coroutines do not form
+an event loop that otherwise prevents potential stack overflow in case of unlimited nesting.</p>
 
 
       </div>

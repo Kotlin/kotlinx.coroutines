@@ -38,7 +38,7 @@
 <p>Transforms elements emitted by the original flow by applying <a href="flat-map-concat.html#kotlinx.coroutines.flow$flatMapConcat(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMapConcat.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.flatMapConcat.T, kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.flatMapConcat.R)))))/transform">transform</a>, that returns another flow,
 and then concatenating and flattening these flows.</p>
 
-<p>This method is is a shortcut for <code>map(transform).flattenConcat()</code>. See <a href="flatten-concat.html">flattenConcat</a>.</p>
+<p>This method is a shortcut for <code>map(transform).flattenConcat()</code>. See <a href="flatten-concat.html">flattenConcat</a>.</p>
 
 <p>Note that even though this operator looks very familiar, we discourage its usage in a regular application-specific flows.
 Most likely, suspending operation in <a href="map.html">map</a> operator will be sufficient and linear transformations are much easier to reason about.</p>

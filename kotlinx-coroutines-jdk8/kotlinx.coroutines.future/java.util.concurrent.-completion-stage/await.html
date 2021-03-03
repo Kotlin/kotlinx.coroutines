@@ -35,13 +35,15 @@
 
 <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html"><span class="identifier">CompletionStage</span></a><span class="symbol">&lt;</span><a href="await.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await.html#T"><span class="identifier">T</span></a></code></div>
 
-<p>Awaits for completion of the completion stage without blocking a thread.</p>
+<p>Awaits for completion of <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html">CompletionStage</a> without blocking a thread.</p>
 
 <p>This suspending function is cancellable.
 If the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
-stops waiting for the completion stage and immediately resumes with <a href="#">CancellationException</a>.
-This method is intended to be used with one-shot futures, so on coroutine cancellation completion stage is cancelled as well if it is instance of <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html">CompletableFuture</a>.
-If cancelling given stage is undesired, <code>stage.asDeferred().await()</code> should be used instead.</p>
+stops waiting for the completion stage and immediately resumes with <a href="#">CancellationException</a>.</p>
+
+<p>This method is intended to be used with one-shot futures, so on coroutine cancellation the <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html">CompletableFuture</a> that
+corresponds to this <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html">CompletionStage</a> (see <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html#toCompletableFuture()">CompletionStage.toCompletableFuture</a>)
+is cancelled. If cancelling the given stage is undesired, <code>stage.asDeferred().await()</code> should be used instead.</p>
 
 
       </div>

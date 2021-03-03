@@ -53,7 +53,8 @@
         <p>Creates a copy of the current instance.
 For better debuggability, it is recommended to use original exception as <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/cause.html">cause</a> of the resulting one.
 Stacktrace of copied exception will be overwritten by stacktrace recovery machinery by <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/set-stack-trace.html">Throwable.setStackTrace</a> call.
-An exception can opt-out of copying by returning <code>null</code> from this function.</p>
+An exception can opt-out of copying by returning <code>null</code> from this function.
+Suppressed exceptions of the original exception should not be copied in order to avoid circular exceptions.</p>
 
       </td>
 </tr>
