@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.reactor
@@ -24,7 +24,7 @@ import kotlinx.coroutines.reactive.*
  * #### Propagating ReactorContext to Reactor's Context
  * ```
  * val flux = myDatabaseService.getUsers()
- *     .subscriberContext() { ctx -> println(ctx); ctx }
+ *     .contextWrite { ctx -> println(ctx); ctx }
  * flux.await() // Will print "null"
  *
  * // Now add ReactorContext
@@ -43,7 +43,7 @@ import kotlinx.coroutines.reactive.*
  *     .subscribe() // Will print 'Reactor context in Flow: null'
  * // Add subscriber's context
  * flow.asFlux()
- *     .subscriberContext { ctx -> ctx.put("answer", 42) }
+ *     .contextWrite { ctx -> ctx.put("answer", 42) }
  *     .subscribe() // Will print "Reactor context in Flow: Context{'answer'=42}"
  * ```
  */

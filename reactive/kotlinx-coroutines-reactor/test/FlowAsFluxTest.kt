@@ -18,8 +18,8 @@ class FlowAsFluxTest : TestBase() {
             (1..4).forEach { i -> emit(createMono(i).awaitFirst()) }
         }
             .asFlux()
-            .subscriberContext(Context.of(1, "1"))
-            .subscriberContext(Context.of(2, "2", 3, "3", 4, "4"))
+            .contextWrite(Context.of(1, "1"))
+            .contextWrite(Context.of(2, "2", 3, "3", 4, "4"))
         val list = flux.collectList().block()!!
         assertEquals(listOf("1", "2", "3", "4"), list)
     }
@@ -36,7 +36,7 @@ class FlowAsFluxTest : TestBase() {
             it.next("OK")
             it.complete()
         }
-            .subscriberContext { ctx ->
+            .contextWrite { ctx ->
                 expect(2)
                 assertEquals("CTX", ctx.get(1))
                 ctx
@@ -58,7 +58,7 @@ class FlowAsFluxTest : TestBase() {
                     it.next("OK")
                     it.complete()
                 }
-            .subscriberContext { ctx ->
+            .contextWrite { ctx ->
                 expect(2)
                 assertEquals("CTX", ctx.get(1))
                 ctx

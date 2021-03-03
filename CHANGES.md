@@ -1,5 +1,31 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.4.3 
+
+### General changes
+
+* Thread context is properly preserved and restored for coroutines without `ThreadContextElement` (#985)
+* `ThreadContextElement`s are now restored in the opposite order from update (#2195)
+* Improved performance of combine with 4 parameters, thanks to @alexvanyo (#2419)
+* Debug agent sanitizer leaves at least one frame with source location (#1437)
+* Update Reactor version in `kotlinx-coroutines-reactor` to `3.4.1`, thanks to @sokomishalov (#2432)
+* `callInPlace` contract added to `ReceiveChannel.consume` (#941)
+* `CoroutineStart.UNDISPATCHED` promoted to stable API (#1393)
+* Kotlin updated to 1.4.30
+* `kotlinx.coroutines` are now released directly to MavenCentral  
+* Reduced the size of `DispatchedCoroutine` by a field
+* Internal class `TimeSource` renamed to `SchedulerTimeSource` to prevent wildcard import issues (#2537)
+
+### Bug fixes
+
+* Fixed the problem that prevented implementation via delegation for `Job` interface (#2423)
+* Fixed incorrect ProGuard rules that allowed shrinking volatile felds (#1564)
+* Fixed `await/`asDeferred` for `MinimalState` implementations in jdk8 module (#2456)
+* Fixed bug when `onUndeliveredElement` wasn't called for unlimited channels (#2435)
+* Fixed a bug when `ListenableFuture.isCancelled` returned from `asListenableFuture` could have thrown an exception, thanks to @vadimsemenov (#2421)
+* Coroutine in `callbackFlow` and `produce` is properly cancelled when the channel was closed separately (#2506)
+
+
 ## Version 1.4.2
 
 * Fixed `StackOverflowError` in `Job.toString` when `Job` is observed in its intermediate state (#2371).

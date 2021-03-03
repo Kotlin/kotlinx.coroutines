@@ -1,19 +1,19 @@
-import org.gradle.util.VersionNumber
-
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+
+import org.gradle.util.VersionNumber
 
 // Configures publishing of Maven artifacts to Bintray
 
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
 // ------------- tasks
 
 def isMultiplatform = project.name == "kotlinx-coroutines-core"
 def isBom = project.name == "kotlinx-coroutines-bom"
-def isKotlin137x = VersionNumber.parse(kotlin_version) <= VersionNumber.parse("1.3.79")
 
 if (!isBom) {
     apply plugin: "com.github.johnrengelman.shadow"
@@ -37,16 +37,11 @@ if (!isMultiplatform && !isBom) {
 
 publishing {
     repositories {
-        maven {
-            def user = 'kotlin'
-            def repo = 'kotlinx'
-            def name = 'kotlinx.coroutines'
-            url = "https://api.bintray.com/maven/$user/$repo/$name/;publish=0"
-
-            credentials {
-                username = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-                password = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
-            }
+        def bintrayUpload = System.getenv("libs.bintray.upload") != null
+        if (bintrayUpload) {
+            PublishingKt.configureBintrayPublication(delegate, project)
+        } else {
+            PublishingKt.configureMavenPublication(delegate, project)
         }
     }
 
@@ -65,58 +60,37 @@ publishing {
     }
 
     publications.all {
-        MavenCentralKt.configureMavenCentralMetadata(pom, project)
-
+        PublishingKt.configureMavenCentralMetadata(pom, project)
+        def bintrayUpload = System.getenv("libs.bintray.upload") != null
+        if (!bintrayUpload) {
+            PublishingKt.signPublicationIfKeyPresent(project, it)
+        }
         // add empty javadocs
         if (!isBom && it.name != "kotlinMultiplatform") {
             it.artifact(javadocJar)
         }
 
-        // Rename MPP artifacts for backward compatibility
         def type = it.name
         switch (type) {
             case 'kotlinMultiplatform':
                 // With Kotlin 1.4 & HMPP, the root module should have no suffix in the ID, but for compatibility with
                 // the consumers who can't read Gradle module metadata, we publish the JVM artifacts in it, too
-                it.artifactId = isKotlin137x ? "$project.name-native" : project.name
-                if (!isKotlin137x) {
-                    apply from: "$rootDir/gradle/publish-mpp-root-module-in-platform.gradle"
-                    publishPlatformArtifactsInRootModule(publications["jvm"])
-                }
+                it.artifactId =  project.name
+                apply from: "$rootDir/gradle/publish-mpp-root-module-in-platform.gradle"
+                publishPlatformArtifactsInRootModule(publications["jvm"])
                 break
             case 'metadata':
-                // As the old -common dependencies will fail to resolve with Gradle module metadata, rename the module
-                // to '*-metadata' so that the resolution failure are more clear
-                it.artifactId = isKotlin137x ? "$project.name-common" : "$project.name-metadata"
-                break
             case 'jvm':
-                it.artifactId = isKotlin137x ? project.name : "$project.name-jvm"
-                break
             case 'js':
             case 'native':
                 it.artifactId = "$project.name-$type"
                 break
         }
-        // Hierarchical project structures are not fully supported in 1.3.7x MPP
-        if (isKotlin137x) {
-            // disable metadata everywhere, but in native and js modules
-            if (type == 'maven' || type == 'metadata' || type == 'jvm') {
-                moduleDescriptorGenerator = null
-            }
-        }
-
     }
 }
 
 tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication"}.configureEach {
     dependsOn(tasks["generatePomFileForJvmPublication"])
-}
-
-task publishDevelopSnapshot() {
-    def branch = System.getenv('currentBranch')
-    if (branch == "develop") {
-        dependsOn(":publish")
-    }
 }
 
 // Compatibility with old TeamCity configurations that perform :kotlinx-coroutines-core:bintrayUpload

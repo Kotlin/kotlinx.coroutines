@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -35,7 +35,7 @@ internal object MainDispatcherLoader {
                 ).iterator().asSequence().toList()
             }
             @Suppress("ConstantConditionIf")
-            factories.maxBy { it.loadPriority }?.tryCreateDispatcher(factories)
+            factories.maxByOrNull { it.loadPriority }?.tryCreateDispatcher(factories)
                 ?: createMissingDispatcher()
         } catch (e: Throwable) {
             // Service loader can throw an exception as well

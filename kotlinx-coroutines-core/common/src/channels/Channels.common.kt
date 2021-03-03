@@ -1,14 +1,16 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:JvmMultifileClass
 @file:JvmName("ChannelsKt")
 @file:Suppress("DEPRECATION_ERROR")
+@file:OptIn(ExperimentalContracts::class)
 
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -89,6 +91,19 @@ public suspend inline fun <E> BroadcastChannel<E>.consumeEach(action: (E) -> Uni
 // -------- Operations on ReceiveChannel --------
 
 /**
+ * Returns a [List] containing all elements.
+ *
+ * The operation is _terminal_.
+ * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
+ */
+@OptIn(ExperimentalStdlibApi::class)
+public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
+    consumeEach {
+        add(it)
+    }
+}
+
+/**
  * Returns a [CompletionHandler] that invokes [cancel][ReceiveChannel.cancel] on the [ReceiveChannel]
  * with the corresponding cause. See also [ReceiveChannel.consume].
  *
@@ -151,6 +166,9 @@ public fun consumesAll(vararg channels: ReceiveChannel<*>): CompletionHandler =
  * The operation is _terminal_.
  */
 public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -> R): R {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
     var cause: Throwable? = null
     try {
         return block()
@@ -1188,15 +1206,6 @@ public suspend fun <E, C : MutableCollection<in E>> ReceiveChannel<E>.toCollecti
     }
     return destination
 }
-
-/**
- * Returns a [List] containing all elements.
- *
- * The operation is _terminal_.
- * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
- */
-public suspend fun <E> ReceiveChannel<E>.toList(): List<E> =
-    this.toMutableList()
 
 /**
  * Returns a [Map] filled with all elements of this channel.

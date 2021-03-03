@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -19,5 +19,6 @@ internal expect val DefaultDelay: Delay
 
 // countOrElement -- pre-cached value for ThreadContext.kt
 internal expect inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T
+internal expect inline fun <T> withContinuationContext(continuation: Continuation<*>, countOrElement: Any?, block: () -> T): T
 internal expect fun Continuation<*>.toDebugString(): String
 internal expect val CoroutineContext.coroutineName: String?

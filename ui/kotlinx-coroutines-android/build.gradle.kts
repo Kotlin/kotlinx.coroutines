@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 import org.jetbrains.dokka.DokkaConfiguration.ExternalDocumentationLink
@@ -10,6 +10,10 @@ configurations {
     create("r8")
 }
 
+repositories {
+    mavenCentral()
+    jcenter() // https://youtrack.jetbrains.com/issue/IDEA-261387
+}
 dependencies {
     compileOnly("com.google.android:android:${version("android")}")
     compileOnly("androidx.annotation:annotation:${version("androidx_annotation")}")

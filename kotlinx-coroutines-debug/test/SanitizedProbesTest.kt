@@ -63,6 +63,7 @@ class SanitizedProbesTest : DebugTestBase() {
                     "\t(Coroutine creation stacktrace)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                     "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
+                    "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt)\n" +
                     "\tat kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.createActiveDeferred(SanitizedProbesTest.kt:62)\n" +
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.access\$createActiveDeferred(SanitizedProbesTest.kt:16)\n" +
@@ -87,10 +88,11 @@ class SanitizedProbesTest : DebugTestBase() {
                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)",
 
             "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@1b68b9a4, state: SUSPENDED\n" +
-                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$launchSelector\$1.invokeSuspend(SanitizedProbesTest.kt:143)\n" +
+                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$launchSelector\$1\$1\$1.invokeSuspend(SanitizedProbesTest.kt)\n" +
                 "\t(Coroutine creation stacktrace)\n" +
                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                 "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:25)\n" +
+                "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.launch\$default(Builders.common.kt)\n" +
                 "\tat kotlinx.coroutines.BuildersKt.launch\$default(Unknown Source)\n" +
                 "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.launchSelector(SanitizedProbesTest.kt:100)\n" +
                 "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.access\$launchSelector(SanitizedProbesTest.kt:16)\n" +

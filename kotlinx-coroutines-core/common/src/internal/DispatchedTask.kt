@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -85,9 +85,9 @@ internal abstract class DispatchedTask<in T>(
         try {
             val delegate = delegate as DispatchedContinuation<T>
             val continuation = delegate.continuation
-            val context = continuation.context
-            val state = takeState() // NOTE: Must take state in any case, even if cancelled
-            withCoroutineContext(context, delegate.countOrElement) {
+            withContinuationContext(continuation, delegate.countOrElement) {
+                val context = continuation.context
+                val state = takeState() // NOTE: Must take state in any case, even if cancelled
                 val exception = getExceptionalResult(state)
                 /*
                  * Check whether continuation was originally resumed with an exception.
@@ -134,7 +134,7 @@ internal abstract class DispatchedTask<in T>(
      * Fatal exception handling can be intercepted with [CoroutineExceptionHandler] element in the context of
      * a failed coroutine, but such exceptions should be reported anyway.
      */
-    internal fun handleFatalException(exception: Throwable?, finallyException: Throwable?) {
+    public fun handleFatalException(exception: Throwable?, finallyException: Throwable?) {
         if (exception === null && finallyException === null) return
         if (exception !== null && finallyException !== null) {
             exception.addSuppressedThrowable(finallyException)

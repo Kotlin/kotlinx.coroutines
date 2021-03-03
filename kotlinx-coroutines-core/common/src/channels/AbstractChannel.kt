@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -477,7 +477,14 @@ internal abstract class AbstractSendChannel<E>(
         override val pollResult: Any? get() = element
         override fun tryResumeSend(otherOp: PrepareOp?): Symbol? = RESUME_TOKEN.also { otherOp?.finishPrepare() }
         override fun completeResumeSend() {}
-        override fun resumeSendClosed(closed: Closed<*>) {}
+
+        /**
+         * This method should be never called, see special logic in [LinkedListChannel.onCancelIdempotentList].
+         */
+        override fun resumeSendClosed(closed: Closed<*>) {
+            assert { false }
+        }
+
         override fun toString(): String = "SendBuffered@$hexAddress($element)"
     }
 }
@@ -635,7 +642,13 @@ internal abstract class AbstractChannel<E>(
         cancelInternal(cause)
 
     final override fun cancel(cause: CancellationException?) {
-        if (isClosedForReceive) return // Do not create an exception if channel is already cancelled
+        /*
+         * Do not create an exception if channel is already cancelled.
+         * Channel is closed for receive when either it is cancelled (then we are free to bail out)
+         * or was closed and elements were received.
+         * Then `onCancelIdempotent` does nothing for all implementations.
+         */
+        if (isClosedForReceive) return
         cancelInternal(cause ?: CancellationException("$classSimpleName was cancelled"))
     }
 
@@ -669,6 +682,13 @@ internal abstract class AbstractChannel<E>(
             // Add to the list only **after** successful removal
             list += previous as Send
         }
+        onCancelIdempotentList(list, closed)
+    }
+
+    /**
+     * This method is overridden by [LinkedListChannel] to handle cancellation of [SendBuffered] elements from the list.
+     */
+    protected open fun onCancelIdempotentList(list: InlineList<Send>, closed: Closed<*>) {
         list.forEachReversed { it.resumeSendClosed(closed) }
     }
 

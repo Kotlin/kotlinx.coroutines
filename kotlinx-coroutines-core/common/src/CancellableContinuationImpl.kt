@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -85,6 +85,13 @@ internal open class CancellableContinuationImpl<in T>(
 
     public override val isCancelled: Boolean get() = state is CancelledContinuation
 
+    // We cannot invoke `state.toString()` since it may cause a circular dependency
+    private val stateDebugRepresentation get() = when(state) {
+        is NotCompleted -> "Active"
+        is CancelledContinuation -> "Cancelled"
+        else -> "Completed"
+    }
+
     public override fun initCancellability() {
         setupCancellation()
     }
@@ -122,7 +129,7 @@ internal open class CancellableContinuationImpl<in T>(
         val parent = delegate.context[Job] ?: return // fast path 3 -- don't do anything without parent
         val handle = parent.invokeOnCompletion(
             onCancelling = true,
-            handler = ChildContinuation(parent, this).asHandler
+            handler = ChildContinuation(this).asHandler
         )
         parentHandle = handle
         // now check our state _after_ registering (could have completed while we were registering)
@@ -503,7 +510,7 @@ internal open class CancellableContinuationImpl<in T>(
 
     // For nicer debugging
     public override fun toString(): String =
-        "${nameString()}(${delegate.toDebugString()}){$state}@$hexAddress"
+        "${nameString()}(${delegate.toDebugString()}){$stateDebugRepresentation}@$hexAddress"
 
     protected open fun nameString(): String =
         "CancellableContinuation"

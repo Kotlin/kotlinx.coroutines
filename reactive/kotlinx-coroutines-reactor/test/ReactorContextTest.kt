@@ -18,8 +18,8 @@ class ReactorContextTest : TestBase() {
             buildString {
                 (1..7).forEach { append(ctx.getOrDefault(it, "noValue")) }
             }
-        }  .subscriberContext(Context.of(2, "2", 3, "3", 4, "4", 5, "5"))
-           .subscriberContext { ctx -> ctx.put(6, "6") }
+        }  .contextWrite(Context.of(2, "2", 3, "3", 4, "4", 5, "5"))
+           .contextWrite { ctx -> ctx.put(6, "6") }
         assertEquals(mono.awaitFirst(), "1234567")
     }
 
@@ -29,8 +29,8 @@ class ReactorContextTest : TestBase() {
             val ctx = reactorContext()
             (1..7).forEach { send(ctx.getOrDefault(it, "noValue")) }
         }
-            .subscriberContext(Context.of(2, "2", 3, "3", 4, "4", 5, "5"))
-            .subscriberContext { ctx -> ctx.put(6, "6") }
+            .contextWrite(Context.of(2, "2", 3, "3", 4, "4", 5, "5"))
+            .contextWrite { ctx -> ctx.put(6, "6") }
         val list = flux.collectList().block()!!
         assertEquals((1..7).map { it.toString() }, list)
     }
@@ -42,7 +42,7 @@ class ReactorContextTest : TestBase() {
             buildString {
                 (1..3).forEach { append(ctx.getOrDefault(it, "noValue")) }
             }
-        }  .subscriberContext(Context.of(2, "2"))
+        }  .contextWrite(Context.of(2, "2"))
             .awaitFirst()
         assertEquals(result, "123")
     }

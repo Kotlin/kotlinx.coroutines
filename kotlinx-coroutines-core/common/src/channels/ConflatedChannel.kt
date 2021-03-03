@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -120,7 +120,7 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
             undeliveredElementException = updateValueLocked(EMPTY)
         }
         super.onCancelIdempotent(wasClosed)
-        undeliveredElementException?.let { throw it } // throw exception at the end if there was one
+        undeliveredElementException?.let { throw it } // throw UndeliveredElementException at the end if there was one
     }
 
     private fun updateValueLocked(element: Any?): UndeliveredElementException? {
