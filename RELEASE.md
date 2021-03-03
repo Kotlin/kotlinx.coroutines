@@ -34,7 +34,7 @@ To release new `<version>` of `kotlinx-coroutines`:
 7. Commit updated files to a new version branch:<br>
    `git commit -a -m "Version <version>"`
    
-8. Push new version into the branch:<br>
+8. Push the new version into the branch:<br>
    `git push -u origin version-<version>`
    
 9. Create Pull-Request on GitHub from `version-<version>` branch into `master`:

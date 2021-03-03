@@ -20,11 +20,10 @@
 
 * Fixed the problem that prevented implementation via delegation for `Job` interface (#2423)
 * Fixed incorrect ProGuard rules that allowed shrinking volatile felds (#1564)
-* Fixed `await/`asDeferred` for `MinimalState` implementations in jdk8 module (#2456)
+* Fixed `await`/`asDeferred` for `MinimalStage` implementations in jdk8 module (#2456)
 * Fixed bug when `onUndeliveredElement` wasn't called for unlimited channels (#2435)
 * Fixed a bug when `ListenableFuture.isCancelled` returned from `asListenableFuture` could have thrown an exception, thanks to @vadimsemenov (#2421)
 * Coroutine in `callbackFlow` and `produce` is properly cancelled when the channel was closed separately (#2506)
-
 
 ## Version 1.4.2
 
