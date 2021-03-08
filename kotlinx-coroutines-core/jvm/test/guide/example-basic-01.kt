@@ -15,3 +15,7 @@ fun main() {
     println("Hello,") // main thread continues while coroutine is delayed
     Thread.sleep(2000L) // block main thread for 2 seconds to keep JVM alive
 }
+
+/**
+ * The Main theread sleeps for 2000L (2sec) so that the background thread can print("World!") keeping JVM alive.
+ */
