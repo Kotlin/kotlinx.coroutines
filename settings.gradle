@@ -31,7 +31,6 @@ include "kotlinx-coroutines-core"
 
 module('kotlinx-coroutines-test')
 module('kotlinx-coroutines-debug')
-module('stdlib-stubs')
 module('kotlinx-coroutines-bom')
 
 
@@ -52,7 +51,6 @@ if (JavaVersion.current().isJava11Compatible()) {
 }
 module('ui/kotlinx-coroutines-swing')
 
-module('js/js-stub')
 if (!build_snapshot_train) {
     module('js/example-frontend-js')
     include('site')

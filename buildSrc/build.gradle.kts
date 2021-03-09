@@ -47,4 +47,5 @@ fun version(target: String): String {
 dependencies {
     implementation(kotlin("gradle-plugin", version("kotlin")))
     implementation("org.jetbrains.dokka:dokka-gradle-plugin:${version("dokka")}")
+    implementation("org.jetbrains.dokka:dokka-core:${version("dokka")}")
 }
