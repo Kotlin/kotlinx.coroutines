@@ -3,6 +3,7 @@
  */
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.gradle.util.VersionNumber
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
 apply plugin: 'jdk-convention'
 apply from: rootProject.file("gradle/experimental.gradle")
@@ -10,7 +11,7 @@ apply from: rootProject.file("gradle/experimental.gradle")
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
 def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom', 'integration-testing']
-def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'js-stub', 'stdlib-stubs', 'integration-testing']
+def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'integration-testing']
 // Not published
 def unpublished = internal + ['example-frontend-js', 'android-unit-tests']
 
@@ -238,10 +239,11 @@ configure(subprojects.findAll {
 
 def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/$coreModule/"
 def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
+apply plugin: "org.jetbrains.dokka"
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     if (it.name != 'kotlinx-coroutines-bom') {
-        apply from: rootProject.file('gradle/dokka.gradle')
+        apply from: rootProject.file('gradle/dokka.gradle.kts')
     }
     apply from: rootProject.file('gradle/publish-bintray.gradle')
 }
@@ -249,11 +251,12 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     if (it.name != "kotlinx-coroutines-bom") {
         if (it.name != coreModule) {
-            dokka.dependsOn project(":$coreModule").dokka
-            tasks.withType(dokka.getClass()) {
-                externalDocumentationLink {
-                    url = new URL(core_docs_url)
-                    packageListUrl = new File(core_docs_file).toURI().toURL()
+            tasks.withType(DokkaTaskPartial.class) {
+                dokkaSourceSets.configureEach {
+                    externalDocumentationLink {
+                        url.set(new URL(core_docs_url))
+                        packageListUrl.set(new File(core_docs_file).toURI().toURL())
+                    }
                 }
             }
         }
@@ -286,9 +289,10 @@ apply plugin: 'kotlinx-knit'
 knit {
     siteRoot = "https://kotlin.github.io/kotlinx.coroutines"
     moduleRoots = [".", "integration", "reactive", "ui"]
+    moduleDocs = "build/dokka/htmlPartial"
 }
 
-knitPrepare.dependsOn getTasksByName("dokka", true)
+knitPrepare.dependsOn getTasksByName(":dokkaHtmlMultimodule", true)
 
 // Disable binary compatibility check for JVM IR compiler output by default
 if (jvm_ir_enabled) {

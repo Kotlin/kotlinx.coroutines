@@ -4,45 +4,45 @@ Core primitives to work with coroutines.
 
 Coroutine builder functions:
 
-| **Name**      | **Result**    | **Scope**        | **Description**
-| ------------- | ------------- | ---------------- | ---------------
-| [launch]      | [Job]         | [CoroutineScope] | Launches coroutine that does not have any result 
-| [async]       | [Deferred]    | [CoroutineScope] | Returns a single value with the future result
-| [produce][kotlinx.coroutines.channels.produce]     | [ReceiveChannel][kotlinx.coroutines.channels.ReceiveChannel] | [ProducerScope][kotlinx.coroutines.channels.ProducerScope]  | Produces a stream of elements
-| [runBlocking] | `T`           | [CoroutineScope] | Blocks the thread while the coroutine runs
+| **Name**                                       | **Result**                                                   | **Scope**                                                  | **Description**
+| ---------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------- | ---------------
+| [launch][kotlinx.coroutines.launch]            | [Job][kotlinx.coroutines.Job]                                | [CoroutineScope][kotlinx.coroutines.CoroutineScope]        | Launches coroutine that does not have any result 
+| [async][kotlinx.coroutines.async]              | [Deferred][kotlinx.coroutines.Deferred]                      | [CoroutineScope][kotlinx.coroutines.CoroutineScope]        | Returns a single value with the future result
+| [produce][kotlinx.coroutines.channels.produce] | [ReceiveChannel][kotlinx.coroutines.channels.ReceiveChannel] | [ProducerScope][kotlinx.coroutines.channels.ProducerScope] | Produces a stream of elements
+| [runBlocking][kotlinx.coroutines.runBlocking]  | `T`                                                          | [CoroutineScope][kotlinx.coroutines.CoroutineScope]        | Blocks the thread while the coroutine runs
 
 Coroutine dispatchers implementing [CoroutineDispatcher]:
  
-| **Name**                    | **Description**
-| --------------------------- | ---------------
-| [Dispatchers.Default]       | Confines coroutine execution to a shared pool of background threads
-| [Dispatchers.Unconfined]    | Does not confine coroutine execution in any way
+| **Name**                                                            | **Description**
+| ------------------------------------------------------------------- | ---------------
+| [Dispatchers.Default][kotlinx.coroutines.Dispatchers.Default]       | Confines coroutine execution to a shared pool of background threads
+| [Dispatchers.Unconfined][kotlinx.coroutines.Dispatchers.Unconfined] | Does not confine coroutine execution in any way
 
 More context elements:
 
-| **Name**                    | **Description**
-| --------------------------- | ---------------
-| [NonCancellable]            | A non-cancelable job that is always active
-| [CoroutineExceptionHandler] | Handler for uncaught exception
+| **Name**                                                                  | **Description**
+| ------------------------------------------------------------------------- | ---------------
+| [NonCancellable][kotlinx.coroutines.NonCancellable]                       | A non-cancelable job that is always active
+| [CoroutineExceptionHandler][kotlinx.coroutines.CoroutineExceptionHandler] | Handler for uncaught exception
 
 Synchronization primitives for coroutines:
 
-| **Name**   | **Suspending functions**                                    | **Description**
-| ---------- | ----------------------------------------------------------- | ---------------
-| [Mutex][kotlinx.coroutines.sync.Mutex]          | [lock][kotlinx.coroutines.sync.Mutex.lock]                                          | Mutual exclusion 
+| **Name**                                        | **Suspending functions**                                                                                            | **Description**
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------
+| [Mutex][kotlinx.coroutines.sync.Mutex]          | [lock][kotlinx.coroutines.sync.Mutex.lock]                                                                          | Mutual exclusion 
 | [Channel][kotlinx.coroutines.channels.Channel]  | [send][kotlinx.coroutines.channels.SendChannel.send], [receive][kotlinx.coroutines.channels.ReceiveChannel.receive] | Communication channel (aka queue or exchanger)
 
 Top-level suspending functions:
 
-| **Name**                 | **Description**
-| -------------------      | ---------------
-| [delay]                  | Non-blocking sleep
-| [yield]                  | Yields thread in single-threaded dispatchers
-| [withContext]            | Switches to a different context
-| [withTimeout]            | Set execution time-limit with exception on timeout 
-| [withTimeoutOrNull]      | Set execution time-limit will null result on timeout
-| [awaitAll]               | Awaits for successful completion of all given jobs or exceptional completion of any
-| [joinAll]                | Joins on all given jobs
+| **Name**                                                  | **Description**
+| --------------------------------------------------------- | ---------------
+| [delay][kotlinx.coroutines.delay]                         | Non-blocking sleep
+| [yield][kotlinx.coroutines.yield]                         | Yields thread in single-threaded dispatchers
+| [withContext][kotlinx.coroutines.withContext]             | Switches to a different context
+| [withTimeout][kotlinx.coroutines.withTimeout]             | Set execution time-limit with exception on timeout 
+| [withTimeoutOrNull][kotlinx.coroutines.withTimeoutOrNull] | Set execution time-limit will null result on timeout
+| [awaitAll][kotlinx.coroutines.awaitAll]                   | Awaits for successful completion of all given jobs or exceptional completion of any
+| [joinAll][kotlinx.coroutines.joinAll]                     | Joins on all given jobs
 
 Cancellation support for user-defined suspending functions is available with [suspendCancellableCoroutine]
 helper function. [NonCancellable] job object is provided to suppress cancellation with 
@@ -50,15 +50,15 @@ helper function. [NonCancellable] job object is provided to suppress cancellatio
 
 [Select][kotlinx.coroutines.selects.select] expression waits for the result of multiple suspending functions simultaneously:
 
-| **Receiver**     | **Suspending function**                       | **Select clause**                                | **Non-suspending version**
-| ---------------- | --------------------------------------------- | ------------------------------------------------ | --------------------------
-| [Job]            | [join][Job.join]                              | [onJoin][Job.onJoin]                   | [isCompleted][Job.isCompleted]
-| [Deferred]       | [await][Deferred.await]                       | [onAwait][Deferred.onAwait]                 | [isCompleted][Job.isCompleted]
-| [SendChannel][kotlinx.coroutines.channels.SendChannel]    | [send][kotlinx.coroutines.channels.SendChannel.send]                      | [onSend][kotlinx.coroutines.channels.SendChannel.onSend]                   | [offer][kotlinx.coroutines.channels.SendChannel.offer]
-| [ReceiveChannel][kotlinx.coroutines.channels.ReceiveChannel] | [receive][kotlinx.coroutines.channels.ReceiveChannel.receive]             | [onReceive][kotlinx.coroutines.channels.ReceiveChannel.onReceive]             | [poll][kotlinx.coroutines.channels.ReceiveChannel.poll]
-| [ReceiveChannel][kotlinx.coroutines.channels.ReceiveChannel] | [receiveOrNull][kotlinx.coroutines.channels.receiveOrNull] | [onReceiveOrNull][kotlinx.coroutines.channels.onReceiveOrNull] | [poll][kotlinx.coroutines.channels.ReceiveChannel.poll]
-| [Mutex][kotlinx.coroutines.sync.Mutex]          | [lock][kotlinx.coroutines.sync.Mutex.lock]                            | [onLock][kotlinx.coroutines.sync.Mutex.onLock]                   | [tryLock][kotlinx.coroutines.sync.Mutex.tryLock]
-| none            | [delay]                                        | [onTimeout][kotlinx.coroutines.selects.SelectBuilder.onTimeout]                   | none
+| **Receiver**                                                 | **Suspending function**                                         | **Select clause**                                                 | **Non-suspending version**
+| ------------------------------------------------------------ | --------------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------
+| [Job][kotlinx.coroutines.Job]                                | [join][kotlinx.coroutines.Job.join]                             | [onJoin][kotlinx.coroutines.Job.onJoin]                           | [isCompleted][kotlinx.coroutines.Job.isCompleted]
+| [Deferred][kotlinx.coroutines.Deferred]                      | [await][kotlinx.coroutines.Deferred.await]                      | [onAwait][kotlinx.coroutines.Deferred.onAwait]                    | [isCompleted][kotlinx.coroutines.Job.isCompleted]
+| [SendChannel][kotlinx.coroutines.channels.SendChannel]       | [send][kotlinx.coroutines.channels.SendChannel.send]            | [onSend][kotlinx.coroutines.channels.SendChannel.onSend]          | [offer][kotlinx.coroutines.channels.SendChannel.offer]
+| [ReceiveChannel][kotlinx.coroutines.channels.ReceiveChannel] | [receive][kotlinx.coroutines.channels.ReceiveChannel.receive]   | [onReceive][kotlinx.coroutines.channels.ReceiveChannel.onReceive] | [poll][kotlinx.coroutines.channels.ReceiveChannel.poll]
+| [ReceiveChannel][kotlinx.coroutines.channels.ReceiveChannel] | [receiveOrNull][kotlinx.coroutines.channels.receiveOrNull]      | [onReceiveOrNull][kotlinx.coroutines.channels.onReceiveOrNull]    | [poll][kotlinx.coroutines.channels.ReceiveChannel.poll]
+| [Mutex][kotlinx.coroutines.sync.Mutex]                       | [lock][kotlinx.coroutines.sync.Mutex.lock]                      | [onLock][kotlinx.coroutines.sync.Mutex.onLock]                    | [tryLock][kotlinx.coroutines.sync.Mutex.tryLock]
+| none | [delay][kotlinx.coroutines.delay]                     | [onTimeout][kotlinx.coroutines.selects.SelectBuilder.onTimeout] | none
 
 # Package kotlinx.coroutines
 
