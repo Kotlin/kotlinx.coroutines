@@ -92,10 +92,10 @@ task coreAgentTest(type: Test) {
 }
 
 dependencies {
-    testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    testCompile 'junit:junit:4.12'
-    npmTestCompile 'org.apache.commons:commons-compress:1.18'
-    npmTestCompile 'com.google.code.gson:gson:2.8.5'
+    testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    testImplementation 'junit:junit:4.12'
+    npmTestImplementation 'org.apache.commons:commons-compress:1.18'
+    npmTestImplementation 'com.google.code.gson:gson:2.8.5'
     debugAgentTestCompile project(':kotlinx-coroutines-core')
     debugAgentTestCompile project(':kotlinx-coroutines-debug')
     coreAgentTestCompile project(':kotlinx-coroutines-core')

@@ -163,9 +163,9 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
     apply plugin: "kotlin-${platform}-conventions"
     dependencies {
         // See comment below for rationale, it will be replaced with "project" dependency
-        compile project(":$coreModule")
+        api project(":$coreModule")
         // the only way IDEA can resolve test classes
-        testCompile project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
+        testImplementation project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
     }
 }
 
