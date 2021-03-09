@@ -22,12 +22,12 @@ if (rootProject.extra.get("jvm_ir_enabled") as Boolean) {
 }
 
 dependencies {
-    testCompile(kotlin("test"))
+    testImplementation(kotlin("test"))
     // Workaround to make addSuppressed work in tests
-    testCompile(kotlin("reflect"))
-    testCompile(kotlin("stdlib-jdk7"))
-    testCompile(kotlin("test-junit"))
-    testCompile("junit:junit:${version("junit")}")
+    testImplementation(kotlin("reflect"))
+    testImplementation(kotlin("stdlib-jdk7"))
+    testImplementation(kotlin("test-junit"))
+    testImplementation("junit:junit:${version("junit")}")
 }
 
 tasks.compileKotlin {
