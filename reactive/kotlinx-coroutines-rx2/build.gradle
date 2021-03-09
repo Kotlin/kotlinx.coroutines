@@ -1,6 +1,7 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
 dependencies {
     api project(':kotlinx-coroutines-reactive')
@@ -9,10 +10,12 @@ dependencies {
     api "io.reactivex.rxjava2:rxjava:$rxjava2_version"
 }
 
-tasks.withType(dokka.getClass()) {
-    externalDocumentationLink {
-        url = new URL('http://reactivex.io/RxJava/2.x/javadoc/')
-        packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
+tasks.withType(DokkaTaskPartial.class) {
+    dokkaSourceSets.configureEach {
+        externalDocumentationLink {
+            url.set(new URL('http://reactivex.io/RxJava/2.x/javadoc/'))
+            packageListUrl.set(projectDir.toPath().resolve("package.list").toUri().toURL())
+        }
     }
 }
 
