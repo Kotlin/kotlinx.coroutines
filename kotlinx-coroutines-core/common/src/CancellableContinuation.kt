@@ -104,8 +104,10 @@ public interface CancellableContinuation<in T> : Continuation<T> {
     public fun completeResume(token: Any)
 
     /**
-     * Legacy function that turned on cancellation behavior in [suspendCancellableCoroutine] before kotlinx.coroutines 1.1.0.
-     * This function does nothing and is left only for binary compatibility with old compiled code.
+     * Internal function that setups cancellation behavior in [suspendCancellableCoroutine].
+     * It's illegal to call this function in any non-`kotlinx.coroutines` code and
+     * such calls lead to undefined behaviour.
+     * Exposes in our ABI since 1.0.0 withing `suspendCancellableCoroutine` body.
      *
      * @suppress **This is unstable API and it is subject to change.**
      */

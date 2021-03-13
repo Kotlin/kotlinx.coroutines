@@ -72,10 +72,7 @@ internal open class CancellableContinuationImpl<in T>(
      */
     private val _state = atomic<Any?>(Active)
 
-    private val _parentHandle = atomic<DisposableHandle?>(null)
-    private var parentHandle: DisposableHandle?
-        get() = _parentHandle.value
-        set(value) { _parentHandle.value = value }
+    private var parentHandle: DisposableHandle? = null
 
     internal val state: Any? get() = _state.value
 
@@ -93,7 +90,25 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     public override fun initCancellability() {
-        setupCancellation()
+        /*
+        * Invariant: at the moment of invocation, `this` has not yet
+        * leaked to user code and no one is able to invoke `resume` or `cancel`
+        * on it yet. Also, this function is not invoked for reusable continuations.
+        */
+        val parent = context[Job] ?: return // fast path -- don't do anything without parent
+        val handle =  parent.invokeOnCompletion(
+            onCancelling = true,
+            handler = ChildContinuation(this).asHandler
+        )
+        parentHandle = handle
+        // now check our state _after_ registering, could have completed while we were registering,
+        // but only if parent was cancelled. Parent could be in a "cancelling" state for a while,
+        // so we are helping him and cleaning the node ourselves
+        if (isCompleted) {
+            // Can be invoked concurrently in 'parentCancelled', no problems here
+            handle.dispose()
+            parentHandle = NonDisposableHandle
+        }
     }
 
     private fun isReusable(): Boolean = delegate is DispatchedContinuation<*> && delegate.isReusable(this)
@@ -115,40 +130,6 @@ internal open class CancellableContinuationImpl<in T>(
         }
         _decision.value = UNDECIDED
         _state.value = Active
-        return true
-    }
-
-    /**
-     * Setups parent cancellation and checks for postponed cancellation in the case of reusable continuations.
-     * It is only invoked from an internal [getResult] function for reusable continuations
-     * and from [suspendCancellableCoroutine] to establish a cancellation before registering CC anywhere.
-     */
-    private fun setupCancellation() {
-        if (checkCompleted()) return
-        if (parentHandle !== null) return // fast path 2 -- was already initialized
-        val parent = delegate.context[Job] ?: return // fast path 3 -- don't do anything without parent
-        val handle = parent.invokeOnCompletion(
-            onCancelling = true,
-            handler = ChildContinuation(this).asHandler
-        )
-        parentHandle = handle
-        // now check our state _after_ registering (could have completed while we were registering)
-        // Also note that we do not dispose parent for reusable continuations, dispatcher will do that for us
-        if (isCompleted && !isReusable()) {
-            handle.dispose() // it is Ok to call dispose twice -- here and in disposeParentHandle
-            parentHandle = NonDisposableHandle // release it just in case, to aid GC
-        }
-    }
-
-    private fun checkCompleted(): Boolean {
-        val completed = isCompleted
-        if (!resumeMode.isReusableMode) return completed // Do not check postponed cancellation for non-reusable continuations
-        val dispatched = delegate as? DispatchedContinuation<*> ?: return completed
-        val cause = dispatched.checkPostponedCancellation(this) ?: return completed
-        if (!completed) {
-            // Note: this cancel may fail if one more concurrent cancel is currently being invoked
-            cancel(cause)
-        }
         return true
     }
 
@@ -216,7 +197,7 @@ internal open class CancellableContinuationImpl<in T>(
 
     private inline fun callCancelHandlerSafely(block: () -> Unit) {
         try {
-           block()
+            block()
         } catch (ex: Throwable) {
             // Handler should never fail, if it does -- it is an unhandled exception
             handleCoroutineException(
@@ -274,10 +255,54 @@ internal open class CancellableContinuationImpl<in T>(
         }
     }
 
+    private fun checkCancellation(): Job? {
+        // Don't need to check for non-reusable continuations, handle is already installed
+        if (!resumeMode.isReusableMode) return null
+        val parent: Job?
+        if (parentHandle == null) {
+            // No parent -- no postponed and no async cancellations
+            parent = context[Job] ?: return null
+            /*
+             * Rare slow-path: parent handle is not yet installed in reusable CC,
+             * but parent is cancelled. Just let already existing machinery to figure everything out
+             * and advance state machine for us.
+             */
+            if (parent.isCancelled) {
+                installParentHandleReusable(parent)
+                return parent
+            }
+        } else {
+            // Parent handle is not null, no need to lookup it
+            parent = null
+        }
+        return parent
+    }
+
     @PublishedApi
     internal fun getResult(): Any? {
-        setupCancellation()
-        if (trySuspend()) return COROUTINE_SUSPENDED
+        val isReusable = isReusable()
+        /*
+         * Check postponed or async cancellation for reusable continuations.
+         * Returns job to avoid looking it up twice
+         */
+        val parentJob = checkCancellation()
+        // trySuspend may fail either if 'block' has resumed/cancelled a continuation
+        // or we got async cancellation from parent.
+        if (trySuspend()) {
+            /*
+             * We were neither resumed nor cancelled, time to suspend.
+             * But first we have to install parent cancellation handle (if we didn't yet),
+             * so CC could be properly resumed on parent cancellation.
+             */
+            if (parentHandle == null) {
+                installParentHandleReusable(parentJob)
+            } else if (isReusable) {
+                releaseClaimedReusableContinuation()
+            }
+            return COROUTINE_SUSPENDED
+        } else if (isReusable) {
+            releaseClaimedReusableContinuation()
+        }
         // otherwise, onCompletionInternal was already invoked & invoked tryResume, and the result is in the state
         val state = this.state
         if (state is CompletedExceptionally) throw recoverStackTrace(state.cause, this)
@@ -294,6 +319,31 @@ internal open class CancellableContinuationImpl<in T>(
             }
         }
         return getSuccessfulResult(state)
+    }
+
+    private fun installParentHandleReusable(parent: Job?) {
+        if (parent == null) return // don't do anything without parent or if completed
+        // Install the handle
+        val handle = parent.invokeOnCompletion(
+            onCancelling = true,
+            handler = ChildContinuation(this).asHandler
+        )
+        parentHandle = handle
+        /*
+        * Finally release the continuation after installing the handle. If we were successful, then
+        * do nothing, it's ok to reuse the instance now.
+        * Otherwise, dispose the handle by ourselves.
+        */
+        releaseClaimedReusableContinuation()
+    }
+
+    private fun releaseClaimedReusableContinuation() {
+        val cancellationCause = (delegate as DispatchedContinuation<*>).tryReleaseClaimedContinuation(this) ?: return
+        parentHandle?.let {
+            it.dispose()
+            parentHandle = NonDisposableHandle
+        }
+        cancel(cancellationCause)
     }
 
     override fun resumeWith(result: Result<T>) =
@@ -462,12 +512,15 @@ internal open class CancellableContinuationImpl<in T>(
 
     /**
      * Detaches from the parent.
-     * Invariant: used from [CoroutineDispatcher.releaseInterceptedContinuation] iff [isReusable] is `true`
+     * * Used from [CoroutineDispatcher.releaseInterceptedContinuation] iff [isReusable] is `true`
+     * * Used from [parentCancelled] iff [isReusable] is `false`
      */
     internal fun detachChild() {
         val handle = parentHandle
-        handle?.dispose()
-        parentHandle = NonDisposableHandle
+        if (handle != null) {
+            handle.dispose()
+            parentHandle = NonDisposableHandle
+        }
     }
 
     // Note: Always returns RESUME_TOKEN | null
