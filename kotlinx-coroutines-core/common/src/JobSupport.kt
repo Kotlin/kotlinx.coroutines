@@ -1160,6 +1160,11 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         delegate: Continuation<T>,
         private val job: JobSupport
     ) : CancellableContinuationImpl<T>(delegate, MODE_CANCELLABLE) {
+
+        init {
+            initCancellability()
+        }
+
         override fun getContinuationCancellationCause(parent: Job): Throwable {
             val state = job.state
             /*
