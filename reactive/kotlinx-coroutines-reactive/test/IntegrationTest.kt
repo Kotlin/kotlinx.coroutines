@@ -9,6 +9,8 @@ import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
 import org.reactivestreams.*
+import java.lang.IllegalStateException
+import java.lang.RuntimeException
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -128,6 +130,73 @@ class IntegrationTest(
 
         job.join()
         finish(3)
+    }
+
+    /**
+     * Test the behavior of [awaitOne] on unconforming publishers.
+     */
+    @Test
+    fun testAwaitOnNonconformingPublishers() = runTest {
+        fun<T> publisher(block: Subscriber<in T>.(n: Long) -> Unit) =
+            Publisher<T> { subscriber ->
+                subscriber.onSubscribe(object: Subscription {
+                    override fun request(n: Long) {
+                        subscriber.block(n)
+                    }
+
+                    override fun cancel() {
+                    }
+                })
+            }
+        suspend fun<T> assertDetectsBadPublisher(operation: suspend Publisher<T>.() -> T,
+                                                 block: Subscriber<in T>.(n: Long) -> Unit) =
+            assertFailsWith<IllegalStateException> { publisher(block).operation() }
+
+        // Rule 1.1 broken: the publisher produces more values than requested.
+        assertDetectsBadPublisher<Int>({ awaitFirst() }) {
+            onNext(1)
+            onNext(2)
+        }
+
+        // Rule 1.7 broken: the publisher calls a method on a subscriber after reaching the terminal state.
+        // Using awaitSingle to check that bad publishers have priority over the lack of a value.
+        assertDetectsBadPublisher<Int>({ awaitSingle() }) {
+            onError(RuntimeException(""))
+            onComplete()
+        }
+        assertDetectsBadPublisher<Int>({ awaitSingle() }) {
+            onComplete()
+            onError(RuntimeException(""))
+        }
+        assertDetectsBadPublisher<Int>({ awaitSingle() }) {
+            onComplete()
+            onComplete()
+        }
+        assertDetectsBadPublisher<Int>({ awaitSingle() }) {
+            onComplete()
+            onNext(3)
+        }
+        assertDetectsBadPublisher<Int>({ awaitSingle() }) {
+            onError(RuntimeException(""))
+            onNext(3)
+        }
+
+        // Rule 1.9 broken (the first signal to the subscriber was not 'onSubscribe')
+        assertFailsWith<IllegalStateException> {
+            Publisher<Int> { subscriber ->
+                subscriber.onNext(3)
+            }.awaitFirst()
+        }
+        assertFailsWith<IllegalStateException> {
+            Publisher<Int> { subscriber ->
+                subscriber.onComplete()
+            }.awaitFirst()
+        }
+        assertFailsWith<IllegalStateException> {
+            Publisher<Int> { subscriber ->
+                subscriber.onError(RuntimeException(""))
+            }.awaitFirst()
+        }
     }
 
     private suspend fun checkNumbers(n: Int, pub: Publisher<Int>) {
