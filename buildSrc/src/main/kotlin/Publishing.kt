@@ -62,20 +62,6 @@ fun configureMavenPublication(rh: RepositoryHandler, project: Project) {
     }
 }
 
-fun configureBintrayPublication(rh: RepositoryHandler, project: Project) {
-    rh.maven {
-        val user = "kotlin"
-        val repo = "kotlinx"
-        val name = "kotlinx.coroutines"
-        url = URI("https://api.bintray.com/maven/$user/$repo/$name/;publish=0;override=0")
-
-        credentials {
-            username = project.findProperty("bintrayUser") as? String ?: System.getenv("BINTRAY_USER")
-            password = project.findProperty("bintrayApiKey") as? String ?: System.getenv("BINTRAY_API_KEY")
-        }
-    }
-}
-
 fun signPublicationIfKeyPresent(project: Project, publication: MavenPublication) {
     val keyId = project.getSensitiveProperty("libs.sign.key.id")
     val signingKey = project.getSensitiveProperty("libs.sign.key.private")

@@ -53,16 +53,8 @@ buildscript {
     }
 
     repositories {
-        maven {url "https://kotlin.bintray.com/kotlinx"}
-        // Future replacement for kotlin-dev, with cache redirector
-        maven { url "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
-        maven {
-            url "https://kotlin.bintray.com/kotlin-dev"
-            credentials {
-                username = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER') ?: ""
-                password = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY') ?: ""
-            }
-        }
+        // Leftover until we migrated to Dokka 1.4.30
+        maven { url "https://kotlin.bintray.com/kotlin-dev" }
         maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
         maven { url "https://plugins.gradle.org/m2/" }
     }
@@ -150,9 +142,6 @@ allprojects {
          */
         google()
         mavenCentral()
-        // Future replacement for kotlin-dev, with cache redirector
-        maven { url "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
-        maven { url "https://kotlin.bintray.com/kotlinx" }
     }
 }
 
@@ -243,7 +232,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     if (it.name != 'kotlinx-coroutines-bom') {
         apply from: rootProject.file('gradle/dokka.gradle')
     }
-    apply from: rootProject.file('gradle/publish-bintray.gradle')
+    apply from: rootProject.file('gradle/publish.gradle')
 }
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
