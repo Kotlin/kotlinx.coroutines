@@ -293,7 +293,7 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  * Adjacent applications of [callbackFlow], [flowOn], [buffer], [produceIn], and [broadcastIn] are
  * always fused so that only one properly configured channel is used for execution.
  *
- * Example of usage that converts a multi-short callback API to a flow.
+ * Example of usage that converts a multi-shot callback API to a flow.
  * For single-shot callbacks use [suspendCancellableCoroutine].
  *
  * ```
