@@ -1160,11 +1160,6 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         delegate: Continuation<T>,
         private val job: JobSupport
     ) : CancellableContinuationImpl<T>(delegate, MODE_CANCELLABLE) {
-
-        init {
-            initCancellability()
-        }
-
         override fun getContinuationCancellationCause(parent: Job): Throwable {
             val state = job.state
             /*
@@ -1233,6 +1228,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          * thrown and not a JobCancellationException.
          */
         val cont = AwaitContinuation(uCont.intercepted(), this)
+        // we are mimicking suspendCancellableCoroutine here and call initCancellability, too.
+        cont.initCancellability()
         cont.disposeOnCancellation(invokeOnCompletion(ResumeAwaitOnCompletion(cont).asHandler))
         cont.getResult()
     }
