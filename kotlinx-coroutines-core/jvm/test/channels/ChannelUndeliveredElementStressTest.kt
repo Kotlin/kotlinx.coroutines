@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -190,7 +190,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                         2 -> select { channel.onReceive { it } }
                         3 -> channel.receiveOrNull() ?: error("Should not be closed")
                         4 -> select { channel.onReceiveOrNull { it ?: error("Should not be closed") } }
-                        5 -> channel.receiveOrClosed().value
+                        5 -> channel.receiveCatching().getOrThrow()
                         6 -> {
                             val iterator = channel.iterator()
                             check(iterator.hasNext()) { "Should not be closed" }

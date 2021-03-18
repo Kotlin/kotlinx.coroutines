@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -35,7 +35,7 @@ class BasicOperationsTest : TestBase() {
     }
 
     @Test
-    fun testReceiveOrClosed() = runTest {
+    fun testReceiveCatching() = runTest {
         TestChannelKind.values().forEach { kind -> testReceiveOrClosed(kind) }
     }
 
@@ -139,22 +139,22 @@ class BasicOperationsTest : TestBase() {
         }
 
         expect(1)
-        val result = channel.receiveOrClosed()
-        assertEquals(1, result.value)
-        assertEquals(1, result.valueOrNull)
-        assertTrue(ValueOrClosed.value(1) == result)
+        val result = channel.receiveCatching()
+        assertEquals(1, result.getOrThrow())
+        assertEquals(1, result.getOrNull())
+        assertTrue(ChannelResult.value(1) == result)
 
         expect(3)
         launch {
             expect(4)
             channel.close()
         }
-        val closed = channel.receiveOrClosed()
+        val closed = channel.receiveCatching()
         expect(5)
-        assertNull(closed.valueOrNull)
+        assertNull(closed.getOrNull())
         assertTrue(closed.isClosed)
-        assertNull(closed.closeCause)
-        assertTrue(ValueOrClosed.closed<Int>(closed.closeCause) == closed)
+        assertNull(closed.exceptionOrNull())
+        assertTrue(ChannelResult.closed<Int>(closed.exceptionOrNull()) == closed)
         finish(6)
     }
 
