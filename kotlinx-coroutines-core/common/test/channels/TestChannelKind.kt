@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -43,7 +43,7 @@ private class ChannelViaBroadcast<E>(
 
     override suspend fun receive(): E = sub.receive()
     override suspend fun receiveOrNull(): E? = sub.receiveOrNull()
-    override suspend fun receiveOrClosed(): ValueOrClosed<E> = sub.receiveOrClosed()
+    override suspend fun receiveCatching(): ChannelResult<E> = sub.receiveCatching()
     override fun poll(): E? = sub.poll()
     override fun iterator(): ChannelIterator<E> = sub.iterator()
     
@@ -57,6 +57,6 @@ private class ChannelViaBroadcast<E>(
         get() = sub.onReceive
     override val onReceiveOrNull: SelectClause1<E?>
         get() = sub.onReceiveOrNull
-    override val onReceiveOrClosed: SelectClause1<ValueOrClosed<E>>
-        get() = sub.onReceiveOrClosed
+    override val onReceiveCatching: SelectClause1<ChannelResult<E>>
+        get() = sub.onReceiveCatching
 }

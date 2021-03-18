@@ -244,8 +244,9 @@ public interface ReceiveChannel<out E> {
 
     /**
      * Retrieves and removes an element from this channel if it's not empty, or suspends the caller while this channel is empty.
-     * This method returns [ValueOrClosed] with the value of an element successfully retrieved from the channel
-     * or the close cause if the channel was closed.
+     * This method returns [ChannelResult] with the value of an element successfully retrieved from the channel
+     * or the close cause if the channel was closed. Closed cause may be `null` if the channel was closed normally.
+     * The result cannot be [failed][ChannelResult.isFailure] without being [closed][ChannelResult.isClosed].
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with a [CancellationException].
@@ -257,25 +258,17 @@ public interface ReceiveChannel<out E> {
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
-     * This function can be used in [select] invocations with the [onReceiveOrClosed] clause.
+     * This function can be used in [select] invocations with the [onReceiveCatching] clause.
      * Use [poll] to try receiving from this channel without waiting.
-     *
-     * @suppress *This is an internal API, do not use*: Inline classes ABI is not stable yet and
-     *            [KT-27524](https://youtrack.jetbrains.com/issue/KT-27524) needs to be fixed.
      */
-    @InternalCoroutinesApi // until https://youtrack.jetbrains.com/issue/KT-27524 is fixed
-    public suspend fun receiveOrClosed(): ValueOrClosed<E>
+    public suspend fun receiveCatching(): ChannelResult<E>
 
     /**
-     * Clause for the [select] expression of the [receiveOrClosed] suspending function that selects with the [ValueOrClosed] with a value
+     * Clause for the [select] expression of the [onReceiveCatching] suspending function that selects with the [ChannelResult] with a value
      * that is received from the channel or with a close cause if the channel
      * [is closed for `receive`][isClosedForReceive].
-     *
-     * @suppress *This is an internal API, do not use*: Inline classes ABI is not stable yet and
-     *            [KT-27524](https://youtrack.jetbrains.com/issue/KT-27524) needs to be fixed.
      */
-    @InternalCoroutinesApi // until https://youtrack.jetbrains.com/issue/KT-27524 is fixed
-    public val onReceiveOrClosed: SelectClause1<ValueOrClosed<E>>
+    public val onReceiveCatching: SelectClause1<ChannelResult<E>>
 
     /**
      * Retrieves and removes an element from this channel if its not empty, or returns `null` if the channel is empty
@@ -321,104 +314,96 @@ public interface ReceiveChannel<out E> {
 }
 
 /**
- * A discriminated union of [ReceiveChannel.receiveOrClosed] result
- * that encapsulates either an element of type [T] successfully received from the channel or a close cause.
+ * A discriminated union of channel operation result.
+ * It encapsulates successful or failed result of a channel operation, or a failed operation to a closed channel with
+ * an optional cause.
  *
- * :todo: Do not make it public before resolving todos in the code of this class.
+ * Successful result represents a successful operation with value of type [T], for example, result of [Channel.receiveCatching]
+ * operation or a successfully sent element as a result of [Channel.trySend].
  *
- * @suppress *This is an internal API, do not use*: Inline classes ABI is not stable yet and
- *            [KT-27524](https://youtrack.jetbrains.com/issue/KT-27524) needs to be fixed.
+ * Failed result represents a failed operation attempt to a channel, but it doesn't necessary indicate that the channel is failed.
+ * E.g. when the channel is full, [Channel.trySend] returns failed result, but the channel itself is not in the failed state.
+ *
+ * Closed result represents an operation attempt to a closed channel and also implies that the operation was failed.
  */
-@Suppress("NON_PUBLIC_PRIMARY_CONSTRUCTOR_OF_INLINE_CLASS", "EXPERIMENTAL_FEATURE_WARNING")
-@InternalCoroutinesApi // until https://youtrack.jetbrains.com/issue/KT-27524 is fixed
-public inline class ValueOrClosed<out T>
+@Suppress("UNCHECKED_CAST")
+public inline class ChannelResult<out T>
 internal constructor(private val holder: Any?) {
     /**
-     * Returns `true` if this instance represents a received element.
-     * In this case [isClosed] returns `false`.
-     * todo: it is commented for now, because it is not used
+     * Returns `true` if this instance represents a successful
+     * operation outcome.
+     *
+     * In this case [isFailure] and [isClosed] return false.
      */
-    //public val isValue: Boolean get() = holder !is Closed
+    public val isSuccess: Boolean get() = holder !is Closed
 
     /**
-     * Returns `true` if this instance represents a close cause.
-     * In this case [isValue] returns `false`.
+     * Returns true if this instance represents unsuccessful operation.
+     *
+     * In this case [isSuccess] returns false, but it does not imply
+     * that the channel is failed or closed.
+     *
+     * Example of failed operation without an exception and channel being closed
+     * is [Channel.trySend] attempt to a channel that is full.
+     */
+    public val isFailure: Boolean get() = holder is Failed
+
+    /**
+     * Returns `true` if this instance represents unsuccessful operation
+     * to a closed or cancelled channel.
+     *
+     * In this case [isSuccess] returns false, [isFailure] returns `true`, but it does not imply
+     * that [exceptionOrNull] returns non-null value.
+     *
+     * It can happen if the channel was [closed][Channel.close] normally without an exception.
      */
     public val isClosed: Boolean get() = holder is Closed
 
     /**
-     * Returns the received value if this instance represents a received value, or throws an [IllegalStateException] otherwise.
-     *
-     * :todo: Decide, if it is needed, how it shall be named with relation to [valueOrThrow]:
-     *
-     * So we have the following methods on `ValueOrClosed`: `value`, `valueOrNull`, `valueOrThrow`.
-     * On the other hand, the channel has the following `receive` variants:
-     *  * `receive` which corresponds to `receiveOrClosed().valueOrThrow`... huh?
-     *  * `receiveOrNull` which corresponds to `receiveOrClosed().valueOrNull`
-     *  * `receiveOrClosed`
-     * For the sake of simplicity consider dropping this version of `value` and rename [valueOrThrow] to simply `value`.
+     * Returns the encapsulated value if this instance represents success or `null` if it represents failed result.
      */
-    @Suppress("UNCHECKED_CAST")
-    public val value: T
-        get() = if (holder is Closed) error(DEFAULT_CLOSE_MESSAGE) else holder as T
+    public fun getOrNull(): T? = if (holder !is Failed) holder as T else null
 
     /**
-     * Returns the received value if this element represents a received value, or `null` otherwise.
-     * :todo: Decide if it shall be made into extension that is available only for non-null T.
-     * Note: it might become inconsistent with kotlin.Result
+     *  Returns the encapsulated value if this instance represents success or throws an exception if it is closed or failed.
      */
-    @Suppress("UNCHECKED_CAST")
-    public val valueOrNull: T?
-        get() = if (holder is Closed) null else holder as T
-
-    /**
-     * :todo: Decide, if it is needed, how it shall be named with relation to [value].
-     * Note that `valueOrThrow` rethrows the cause adding no meaningful information about the call site,
-     * so if one is sure that `ValueOrClosed` always holds a value, this very property should be used.
-     * Otherwise, it could be very hard to locate the source of the exception.
-     * todo: it is commented for now, because it is not used
-     */
-    //@Suppress("UNCHECKED_CAST")
-    //public val valueOrThrow: T
-    //    get() = if (holder is Closed) throw holder.exception else holder as T
-
-    /**
-     * Returns the close cause of the channel if this instance represents a close cause, or throws
-     * an [IllegalStateException] otherwise.
-     */
-    @Suppress("UNCHECKED_CAST")
-    public val closeCause: Throwable? get() =
-        if (holder is Closed) holder.cause else error("Channel was not closed")
-
-    /**
-     * @suppress
-     */
-    public override fun toString(): String =
-        when (holder) {
-            is Closed -> holder.toString()
-            else -> "Value($holder)"
+    public fun getOrThrow(): T {
+        if (holder !is Failed) return holder as T
+        if (holder is Closed && holder.cause != null) throw holder.cause
+        error("Trying to call 'getOrThrow' on a failed channel result: $holder")
     }
 
-    internal class Closed(@JvmField val cause: Throwable?) {
-        // todo: it is commented for now, because it is not used
-        //val exception: Throwable get() = cause ?: ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE)
+    /**
+     * Returns the encapsulated exception if this instance represents failure or null if it is success
+     * or unsuccessful operation to closed channel.
+     */
+    public fun exceptionOrNull(): Throwable? = (holder as? Closed)?.cause
+
+    internal open class Failed {
+        override fun toString(): String = "Failed"
+    }
+
+    internal class Closed(@JvmField val cause: Throwable?): Failed() {
         override fun equals(other: Any?): Boolean = other is Closed && cause == other.cause
         override fun hashCode(): Int = cause.hashCode()
         override fun toString(): String = "Closed($cause)"
     }
 
-    /**
-     * todo: consider making value/closed constructors public in the future.
-     */
     internal companion object {
         @Suppress("NOTHING_TO_INLINE")
-        internal inline fun <E> value(value: E): ValueOrClosed<E> =
-            ValueOrClosed(value)
+        internal inline fun <E> value(value: E): ChannelResult<E> =
+            ChannelResult(value)
 
         @Suppress("NOTHING_TO_INLINE")
-        internal inline fun <E> closed(cause: Throwable?): ValueOrClosed<E> =
-            ValueOrClosed(Closed(cause))
+        internal inline fun <E> closed(cause: Throwable?): ChannelResult<E> =
+            ChannelResult(Closed(cause))
     }
+
+    public override fun toString(): String =
+        when (holder) {
+            is Closed -> holder.toString()
+            else -> "Value($holder)"
+        }
 }
 
 /**
