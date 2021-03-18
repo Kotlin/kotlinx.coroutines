@@ -99,7 +99,7 @@ internal open class CancellableContinuationImpl<in T>(
             ?: return // fast path -- don't do anything without parent
         // now check our state _after_ registering, could have completed while we were registering,
         // but only if parent was cancelled. Parent could be in a "cancelling" state for a while,
-        // so we are helping him and cleaning the node ourselves
+        // so we are helping it and cleaning the node ourselves
         if (isCompleted) {
             // Can be invoked concurrently in 'parentCancelled', no problems here
             handle.dispose()
