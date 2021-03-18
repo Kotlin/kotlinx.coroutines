@@ -217,11 +217,10 @@ public interface Job : CoroutineContext.Element {
      *   immediately cancels all its children.
      * * Parent cannot complete until all its children are complete. Parent waits for all its children to
      *   complete in _completing_ or _cancelling_ state.
-     * * Uncaught exception in a child, by default, cancels parent. In particular, this applies to
-     *   children created with [launch][CoroutineScope.launch] coroutine builder. Note that
-     *   [async][CoroutineScope.async] and other future-like
-     *   coroutine builders do not have uncaught exceptions by definition, since all their exceptions are
-     *   caught and are encapsulated in their result.
+     * * Uncaught exception in a child, by default, cancels parent. This applies even to
+     *   children created with [async][CoroutineScope.async] and other future-like
+     *   coroutine builders, even though their exceptions are caught and are encapsulated in their result.
+     *   This default behavior can be overridden with [SupervisorJob].
      */
     public val children: Sequence<Job>
 
