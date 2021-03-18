@@ -161,14 +161,19 @@ private suspend fun <T> Publisher<T>.awaitOne(
 
         override fun onNext(t: T) {
             val sub = subscription.checkInitialized("onNext")
-            subscription.checkInitialized("onNext")
             if (inTerminalState)
                 gotSignalInTerminalStateException("onNext")
             when (mode) {
                 Mode.FIRST, Mode.FIRST_OR_DEFAULT -> {
-                    if (seenValue)
-                        // TODO: decide if we want to be lenient here: after all, nothing breaks if this isn't true
+                    if (seenValue) {
+                        /** We are throwing here instead of resuming the continuation with an error, even though it
+                        breaks the spec, because the continuation was already resumed and is no longer active. This is
+                        fine, given that the only way this execution could occur is because of a non-compliant publisher
+                        that produced more elements than was requested in [Subscription.request]. Therefore, we crash
+                        hard and fast and attempt to provide an informative message to help in finding the misbehaving
+                        publisher. */
                         moreThanOneValueProvidedException(mode)
+                    }
                     seenValue = true
                     sub.cancel()
                     cont.resume(t)
@@ -188,7 +193,6 @@ private suspend fun <T> Publisher<T>.awaitOne(
 
         @Suppress("UNCHECKED_CAST")
         override fun onComplete() {
-            subscription.checkInitialized("onComplete") // TODO: maybe don't enforce?
             enterTerminalState("onComplete")
             if (seenValue) {
                 if (cont.isActive) cont.resume(value as T)
@@ -205,7 +209,6 @@ private suspend fun <T> Publisher<T>.awaitOne(
         }
 
         override fun onError(e: Throwable) {
-            subscription.checkInitialized("onError") // TODO: maybe don't enforce?
             enterTerminalState("onError")
             cont.resumeWithException(e)
         }
@@ -226,17 +229,25 @@ private suspend fun <T> Publisher<T>.awaitOne(
  * state was reached.
  */
 private fun gotSignalInTerminalStateException(signalName: String): Nothing =
-    throw IllegalStateException(
-        "'$signalName' was called after the publisher already signalled being in a terminal state")
+    throw IllegalStateException(signalInTerminalStateExceptionString(signalName))
+
+internal fun signalInTerminalStateExceptionString(signalName: String) =
+    "'$signalName' was called after the publisher already signalled being in a terminal state"
 
 /**
  * Enforce rule 1.1: it is invalid for a publisher to provide more values than requested.
  */
 private fun moreThanOneValueProvidedException(mode: Mode): Nothing =
-    throw IllegalStateException("Only a single value were requested in $mode, but the publisher provided more")
+    throw IllegalStateException(moreThanOneValueProvidedExceptionString(mode.toString()))
+
+internal fun moreThanOneValueProvidedExceptionString(mode: String) =
+    "Only a single value were requested in $mode, but the publisher provided more"
 
 /**
  * Enforce rule 1.9: expect [Subscriber.onSubscribe] before any other signals.
  */
 private fun Subscription?.checkInitialized(signalName: String): Subscription =
-    this ?: throw IllegalStateException("'$signalName' was called before 'onSubscribe'")
+    this ?: throw IllegalStateException(checkInitializedString(signalName))
+
+internal fun checkInitializedString(signalName: String) =
+    "'$signalName' was called before 'onSubscribe'"

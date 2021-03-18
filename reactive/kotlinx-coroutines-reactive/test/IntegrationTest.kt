@@ -137,7 +137,7 @@ class IntegrationTest(
      */
     @Test
     fun testAwaitOnNonconformingPublishers() = runTest {
-        fun<T> publisher(block: Subscriber<in T>.(n: Long) -> Unit) =
+        fun <T> publisher(block: Subscriber<in T>.(n: Long) -> Unit) =
             Publisher<T> { subscriber ->
                 subscriber.onSubscribe(object: Subscription {
                     override fun request(n: Long) {
@@ -148,35 +148,41 @@ class IntegrationTest(
                     }
                 })
             }
-        suspend fun<T> assertDetectsBadPublisher(operation: suspend Publisher<T>.() -> T,
-                                                 block: Subscriber<in T>.(n: Long) -> Unit) =
-            assertFailsWith<IllegalStateException> { publisher(block).operation() }
+        suspend fun <T> assertDetectsBadPublisher(
+            operation: suspend Publisher<T>.() -> T,
+            message: String? = null,
+            block: Subscriber<in T>.(n: Long) -> Unit,
+        ) =
+            assertFailsWith<IllegalStateException> { publisher(block).operation() }.let {
+                message == null || it.message == message
+            }
 
         // Rule 1.1 broken: the publisher produces more values than requested.
-        assertDetectsBadPublisher<Int>({ awaitFirst() }) {
+        assertDetectsBadPublisher<Int>({ awaitFirst() }, moreThanOneValueProvidedExceptionString("awaitFirst")) {
             onNext(1)
             onNext(2)
+            onComplete()
         }
 
         // Rule 1.7 broken: the publisher calls a method on a subscriber after reaching the terminal state.
         // Using awaitSingle to check that bad publishers have priority over the lack of a value.
-        assertDetectsBadPublisher<Int>({ awaitSingle() }) {
+        assertDetectsBadPublisher<Int>({ awaitSingle() }, signalInTerminalStateExceptionString("onComplete")) {
             onError(RuntimeException(""))
             onComplete()
         }
-        assertDetectsBadPublisher<Int>({ awaitSingle() }) {
+        assertDetectsBadPublisher<Int>({ awaitSingle() }, signalInTerminalStateExceptionString("onError")) {
             onComplete()
             onError(RuntimeException(""))
         }
-        assertDetectsBadPublisher<Int>({ awaitSingle() }) {
+        assertDetectsBadPublisher<Int>({ awaitSingle() }, signalInTerminalStateExceptionString("onComplete")) {
             onComplete()
             onComplete()
         }
-        assertDetectsBadPublisher<Int>({ awaitSingle() }) {
+        assertDetectsBadPublisher<Int>({ awaitSingle() }, signalInTerminalStateExceptionString("onNext")) {
             onComplete()
             onNext(3)
         }
-        assertDetectsBadPublisher<Int>({ awaitSingle() }) {
+        assertDetectsBadPublisher<Int>({ awaitSingle() }, signalInTerminalStateExceptionString("onNext")) {
             onError(RuntimeException(""))
             onNext(3)
         }
@@ -186,17 +192,7 @@ class IntegrationTest(
             Publisher<Int> { subscriber ->
                 subscriber.onNext(3)
             }.awaitFirst()
-        }
-        assertFailsWith<IllegalStateException> {
-            Publisher<Int> { subscriber ->
-                subscriber.onComplete()
-            }.awaitFirst()
-        }
-        assertFailsWith<IllegalStateException> {
-            Publisher<Int> { subscriber ->
-                subscriber.onError(RuntimeException(""))
-            }.awaitFirst()
-        }
+        }.let { assertEquals(checkInitializedString("onNext"), it.message) }
     }
 
     private suspend fun checkNumbers(n: Int, pub: Publisher<Int>) {
