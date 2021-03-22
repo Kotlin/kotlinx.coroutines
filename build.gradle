@@ -65,6 +65,7 @@ buildscript {
         }
         maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
         maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
     }
 
     dependencies {
