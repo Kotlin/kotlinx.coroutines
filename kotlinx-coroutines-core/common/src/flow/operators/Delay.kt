@@ -237,7 +237,7 @@ private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long) : F
                         lastValue = null // Consume the value
                     }
                 }
-                // Should be receiveOrClosed when boxing issues are fixed
+                // Should be receiveCatching when boxing issues are fixed
                 values.onReceiveOrNull { value ->
                     if (value == null) {
                         if (lastValue != null) downstream.emit(NULL.unbox(lastValue))

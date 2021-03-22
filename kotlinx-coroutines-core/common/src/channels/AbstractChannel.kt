@@ -137,21 +137,40 @@ internal abstract class AbstractSendChannel<E>(
         return sendSuspend(element)
     }
 
-    public final override fun offer(element: E): Boolean {
+    override fun offer(element: E): Boolean {
+        try {
+            return super.offer(element)
+        } catch (e: Throwable) {
+            onUndeliveredElement?.callUndeliveredElementCatchingException(element)?.let {
+                // If it crashes, add send exception as suppressed for better diagnostics
+                it.addSuppressed(e)
+                throw it
+            }
+            throw e
+        }
+    }
+
+    public final override fun trySend(element: E): ChannelResult<Unit> {
         val result = offerInternal(element)
         return when {
-            result === OFFER_SUCCESS -> true
+            result === OFFER_SUCCESS -> ChannelResult.success(Unit)
             result === OFFER_FAILED -> {
-                // We should check for closed token on offer as well, otherwise offer won't be linearizable
+                // We should check for closed token on trySend as well, otherwise trySend won't be linearizable
                 // in the face of concurrent close()
                 // See https://github.com/Kotlin/kotlinx.coroutines/issues/359
-                throw recoverStackTrace(helpCloseAndGetSendException(element, closedForSend ?: return false))
+                val closedForSend = closedForSend ?: return ChannelResult.failure()
+                ChannelResult.closed(helpCloseAndGetSendException(closedForSend))
             }
             result is Closed<*> -> {
-                throw recoverStackTrace(helpCloseAndGetSendException(element, result))
+                ChannelResult.closed(helpCloseAndGetSendException(result))
             }
-            else -> error("offerInternal returned $result")
+            else -> error("trySend returned $result")
         }
+    }
+
+    private fun helpCloseAndGetSendException(closed: Closed<*>): Throwable {
+        helpClose(closed)
+        return closed.sendException
     }
 
     private fun helpCloseAndGetSendException(element: E, closed: Closed<*>): Throwable {
@@ -632,9 +651,11 @@ internal abstract class AbstractChannel<E>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    public final override fun poll(): E? {
+    public final override fun tryReceive(): ChannelResult<E> {
         val result = pollInternal()
-        return if (result === POLL_FAILED) null else receiveOrNullResult(result)
+        if (result === POLL_FAILED) return ChannelResult.failure()
+        if (result is Closed<*>) return ChannelResult.closed(result.closeCause)
+        return ChannelResult.success(result as E)
     }
 
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
@@ -905,7 +926,7 @@ internal abstract class AbstractChannel<E>(
         @JvmField val receiveMode: Int
     ) : Receive<E>() {
         fun resumeValue(value: E): Any? = when (receiveMode) {
-            RECEIVE_RESULT -> ChannelResult.value(value)
+            RECEIVE_RESULT -> ChannelResult.success(value)
             else -> value
         }
 
@@ -990,7 +1011,7 @@ internal abstract class AbstractChannel<E>(
         @Suppress("UNCHECKED_CAST")
         override fun completeResumeReceive(value: E) {
             block.startCoroutineCancellable(
-                if (receiveMode == RECEIVE_RESULT) ChannelResult.value(value) else value,
+                if (receiveMode == RECEIVE_RESULT) ChannelResult.success(value) else value,
                 select.completion,
                 resumeOnCancellationFun(value)
             )
@@ -1144,7 +1165,7 @@ internal abstract class Receive<in E> : LockFreeLinkedListNode(), ReceiveOrClose
 
 @Suppress("NOTHING_TO_INLINE", "UNCHECKED_CAST")
 private inline fun <E> Any?.toResult(): ChannelResult<E> =
-    if (this is Closed<*>) ChannelResult.closed(closeCause) else ChannelResult.value(this as E)
+    if (this is Closed<*>) ChannelResult.closed(closeCause) else ChannelResult.success(this as E)
 
 @Suppress("NOTHING_TO_INLINE")
 private inline fun <E> Closed<*>.toResult(): ChannelResult<E> = ChannelResult.closed(closeCause)

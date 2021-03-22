@@ -555,6 +555,7 @@ public abstract interface class kotlinx/coroutines/channels/ActorScope : kotlinx
 
 public final class kotlinx/coroutines/channels/ActorScope$DefaultImpls {
 	public static synthetic fun cancel (Lkotlinx/coroutines/channels/ActorScope;)V
+	public static fun poll (Lkotlinx/coroutines/channels/ActorScope;)Ljava/lang/Object;
 }
 
 public abstract interface class kotlinx/coroutines/channels/BroadcastChannel : kotlinx/coroutines/channels/SendChannel {
@@ -566,6 +567,7 @@ public abstract interface class kotlinx/coroutines/channels/BroadcastChannel : k
 public final class kotlinx/coroutines/channels/BroadcastChannel$DefaultImpls {
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/channels/BroadcastChannel;Ljava/lang/Throwable;ILjava/lang/Object;)Z
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/channels/BroadcastChannel;Ljava/util/concurrent/CancellationException;ILjava/lang/Object;)V
+	public static fun offer (Lkotlinx/coroutines/channels/BroadcastChannel;Ljava/lang/Object;)Z
 }
 
 public final class kotlinx/coroutines/channels/BroadcastChannelKt {
@@ -598,6 +600,8 @@ public abstract interface class kotlinx/coroutines/channels/Channel : kotlinx/co
 
 public final class kotlinx/coroutines/channels/Channel$DefaultImpls {
 	public static synthetic fun cancel (Lkotlinx/coroutines/channels/Channel;)V
+	public static fun offer (Lkotlinx/coroutines/channels/Channel;Ljava/lang/Object;)Z
+	public static fun poll (Lkotlinx/coroutines/channels/Channel;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/channels/Channel$Factory {
@@ -628,7 +632,7 @@ public final class kotlinx/coroutines/channels/ChannelKt {
 public final class kotlinx/coroutines/channels/ChannelResult {
 	public static final field Companion Lkotlinx/coroutines/channels/ChannelResult$Companion;
 	public static final synthetic fun box-impl (Ljava/lang/Object;)Lkotlinx/coroutines/channels/ChannelResult;
-	public static synthetic fun constructor-impl (Ljava/lang/Object;Lkotlin/jvm/internal/DefaultConstructorMarker;)Ljava/lang/Object;
+	public static fun constructor-impl (Ljava/lang/Object;)Ljava/lang/Object;
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (Ljava/lang/Object;Ljava/lang/Object;)Z
 	public static final fun equals-impl0 (Ljava/lang/Object;Ljava/lang/Object;)Z
@@ -643,6 +647,12 @@ public final class kotlinx/coroutines/channels/ChannelResult {
 	public fun toString ()Ljava/lang/String;
 	public static fun toString-impl (Ljava/lang/Object;)Ljava/lang/String;
 	public final synthetic fun unbox-impl ()Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/channels/ChannelResult$Companion {
+	public final fun closed-JP2dKIU (Ljava/lang/Throwable;)Ljava/lang/Object;
+	public final fun failure-PtdJZtk ()Ljava/lang/Object;
+	public final fun success-JP2dKIU (Ljava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/channels/ChannelsKt {
@@ -789,6 +799,7 @@ public final class kotlinx/coroutines/channels/ConflatedBroadcastChannel : kotli
 	public fun offer (Ljava/lang/Object;)Z
 	public fun openSubscription ()Lkotlinx/coroutines/channels/ReceiveChannel;
 	public fun send (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun trySend-JP2dKIU (Ljava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/channels/ProduceKt {
@@ -802,6 +813,10 @@ public final class kotlinx/coroutines/channels/ProduceKt {
 
 public abstract interface class kotlinx/coroutines/channels/ProducerScope : kotlinx/coroutines/CoroutineScope, kotlinx/coroutines/channels/SendChannel {
 	public abstract fun getChannel ()Lkotlinx/coroutines/channels/SendChannel;
+}
+
+public final class kotlinx/coroutines/channels/ProducerScope$DefaultImpls {
+	public static fun offer (Lkotlinx/coroutines/channels/ProducerScope;Ljava/lang/Object;)Z
 }
 
 public abstract interface class kotlinx/coroutines/channels/ReceiveChannel {
@@ -818,12 +833,14 @@ public abstract interface class kotlinx/coroutines/channels/ReceiveChannel {
 	public abstract fun receive (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun receiveCatching-JP2dKIU (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun receiveOrNull (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun tryReceive-PtdJZtk ()Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/channels/ReceiveChannel$DefaultImpls {
 	public static synthetic fun cancel (Lkotlinx/coroutines/channels/ReceiveChannel;)V
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/channels/ReceiveChannel;Ljava/lang/Throwable;ILjava/lang/Object;)Z
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/channels/ReceiveChannel;Ljava/util/concurrent/CancellationException;ILjava/lang/Object;)V
+	public static fun poll (Lkotlinx/coroutines/channels/ReceiveChannel;)Ljava/lang/Object;
 }
 
 public abstract interface class kotlinx/coroutines/channels/SendChannel {
@@ -834,10 +851,12 @@ public abstract interface class kotlinx/coroutines/channels/SendChannel {
 	public abstract fun isFull ()Z
 	public abstract fun offer (Ljava/lang/Object;)Z
 	public abstract fun send (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun trySend-JP2dKIU (Ljava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/channels/SendChannel$DefaultImpls {
 	public static synthetic fun close$default (Lkotlinx/coroutines/channels/SendChannel;Ljava/lang/Throwable;ILjava/lang/Object;)Z
+	public static fun offer (Lkotlinx/coroutines/channels/SendChannel;Ljava/lang/Object;)Z
 }
 
 public final class kotlinx/coroutines/channels/TickerChannelsKt {
