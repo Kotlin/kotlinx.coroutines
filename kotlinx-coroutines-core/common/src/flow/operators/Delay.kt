@@ -432,7 +432,6 @@ public fun <T> Flow<T>.timeout(
 ): Flow<T> = timeoutInternal(timeoutMillis, action)
 
 @ExperimentalTime
-@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
 private fun <T> Flow<T>.timeoutInternal(
     timeoutMillis: Long,
     action: suspend FlowCollector<T>.() -> Unit
