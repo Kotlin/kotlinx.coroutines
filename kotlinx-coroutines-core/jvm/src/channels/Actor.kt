@@ -168,6 +168,11 @@ private class LazyActorCoroutine<E>(
         return super.offer(element)
     }
 
+    override fun trySend(element: E): ChannelResult<Unit> {
+        start()
+        return super.trySend(element)
+    }
+
     override fun close(cause: Throwable?): Boolean {
         // close the channel _first_
         val closed = super.close(cause)

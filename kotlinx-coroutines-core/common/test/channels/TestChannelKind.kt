@@ -44,9 +44,9 @@ private class ChannelViaBroadcast<E>(
     override suspend fun receive(): E = sub.receive()
     override suspend fun receiveOrNull(): E? = sub.receiveOrNull()
     override suspend fun receiveCatching(): ChannelResult<E> = sub.receiveCatching()
-    override fun poll(): E? = sub.poll()
     override fun iterator(): ChannelIterator<E> = sub.iterator()
-    
+    override fun tryReceive(): ChannelResult<E> = sub.tryReceive()
+
     override fun cancel(cause: CancellationException?) = sub.cancel(cause)
 
     // implementing hidden method anyway, so can cast to an internal class

@@ -63,6 +63,7 @@ public final class kotlinx/coroutines/reactive/PublisherCoroutine : kotlinx/coro
 	public fun registerSelectClause2 (Lkotlinx/coroutines/selects/SelectInstance;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
 	public fun request (J)V
 	public fun send (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun trySend-JP2dKIU (Ljava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/reactive/ReactiveFlowKt {

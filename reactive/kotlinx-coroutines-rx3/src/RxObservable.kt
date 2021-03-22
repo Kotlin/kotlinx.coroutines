@@ -71,10 +71,10 @@ private class RxObservableCoroutine<T: Any>(
     override fun invokeOnClose(handler: (Throwable?) -> Unit) =
         throw UnsupportedOperationException("RxObservableCoroutine doesn't support invokeOnClose")
 
-    override fun offer(element: T): Boolean {
-        if (!mutex.tryLock()) return false
+    override fun trySend(element: T): ChannelResult<Unit> {
+        if (!mutex.tryLock()) return ChannelResult.failure()
         doLockedNext(element)
-        return true
+        return ChannelResult.success(Unit)
     }
 
     public override suspend fun send(element: T) {

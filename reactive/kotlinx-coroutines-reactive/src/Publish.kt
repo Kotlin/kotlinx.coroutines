@@ -13,7 +13,7 @@ import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import org.reactivestreams.*
 import kotlin.coroutines.*
-import kotlin.internal.LowPriorityInOverloadResolution
+import kotlin.internal.*
 
 /**
  * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
@@ -96,10 +96,10 @@ public class PublisherCoroutine<in T>(
     override fun invokeOnClose(handler: (Throwable?) -> Unit): Nothing =
         throw UnsupportedOperationException("PublisherCoroutine doesn't support invokeOnClose")
 
-    override fun offer(element: T): Boolean {
-        if (!mutex.tryLock()) return false
+    override fun trySend(element: T): ChannelResult<Unit> {
+        if (!mutex.tryLock()) return ChannelResult.failure()
         doLockedNext(element)
-        return true
+        return ChannelResult.success(Unit)
     }
 
     public override suspend fun send(element: T) {

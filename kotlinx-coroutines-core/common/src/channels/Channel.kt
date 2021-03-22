@@ -85,7 +85,22 @@ public interface SendChannel<in E> {
      * then it calls `onUndeliveredElement` before throwing an exception.
      * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
      */
-    public fun offer(element: E): Boolean
+    public fun offer(element: E): Boolean {
+        val result = trySend(element)
+        if (result.isSuccess) return true
+        throw recoverStackTrace(result.exceptionOrNull() ?: return false)
+    }
+
+    /**
+     * Immediately adds the specified [element] to this channel, if this doesn't violate its capacity restrictions,
+     * and returns the successful result. Otherwise, returns failed or closed result.
+     * This is synchronous variant of [send], which backs off in situations when `send` suspends or throws.
+     *
+     * When `trySend` call returns a non-successful result, it guarantees that the element was not delivered to the consumer, and
+     * it does not call `onUndeliveredElement` that was installed for this channel.
+     * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
+     */
+    public fun trySend(element: E): ChannelResult<Unit>
 
     /**
      * Closes this channel.
@@ -218,7 +233,7 @@ public interface ReceiveChannel<out E> {
     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
     @LowPriorityInOverloadResolution
     @Deprecated(
-        message = "Deprecated in favor of receiveOrClosed and receiveOrNull extension",
+        message = "Deprecated in favor of receiveCatching and receiveOrNull extension",
         level = DeprecationLevel.WARNING,
         replaceWith = ReplaceWith("receiveOrNull", "kotlinx.coroutines.channels.receiveOrNull")
     )
@@ -230,13 +245,13 @@ public interface ReceiveChannel<out E> {
      * [closed for `receive`][isClosedForReceive] without a cause. The [select] invocation fails with
      * the original [close][SendChannel.close] cause exception if the channel has _failed_.
      *
-     * @suppress **Deprecated**: in favor of onReceiveOrClosed and onReceiveOrNull extension.
+     * @suppress **Deprecated**: in favor of receiveCatching and onReceiveOrNull extension.
      */
     @ObsoleteCoroutinesApi
     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
     @LowPriorityInOverloadResolution
     @Deprecated(
-        message = "Deprecated in favor of onReceiveOrClosed and onReceiveOrNull extension",
+        message = "Deprecated in favor of receiveCatching and onReceiveOrNull extension",
         level = DeprecationLevel.WARNING,
         replaceWith = ReplaceWith("onReceiveOrNull", "kotlinx.coroutines.channels.onReceiveOrNull")
     )
@@ -251,7 +266,7 @@ public interface ReceiveChannel<out E> {
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with a [CancellationException].
      * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
-     * suspended, it will not resume successfully. The `receiveOrClosed` call can retrieve the element from the channel,
+     * suspended, it will not resume successfully. The `receiveCatching` call can retrieve the element from the channel,
      * but then throw [CancellationException], thus failing to deliver the element.
      * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
      *
@@ -271,11 +286,22 @@ public interface ReceiveChannel<out E> {
     public val onReceiveCatching: SelectClause1<ChannelResult<E>>
 
     /**
-     * Retrieves and removes an element from this channel if its not empty, or returns `null` if the channel is empty
+     * Retrieves and removes an element from this channel if it's not empty or returns `null` if the channel is empty
      * or is [is closed for `receive`][isClosedForReceive] without a cause.
      * It throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
      */
-    public fun poll(): E?
+    public fun poll(): E? {
+        val result = tryReceive()
+        if (result.isSuccess) return result.getOrThrow()
+        throw recoverStackTrace(result.exceptionOrNull() ?: return null)
+    }
+
+    /**
+     * Retrieves and removes an element from this channel if it's not empty, returning a [successful][ChannelResult.success]
+     * result, returns [failed][ChannelResult.failed] result if the channel is empty, and [closed][ChannelResult.closed]
+     * result if the channel is closed.
+     */
+    public fun tryReceive(): ChannelResult<E>
 
     /**
      * Returns a new iterator to receive elements from this channel using a `for` loop.
@@ -315,35 +341,35 @@ public interface ReceiveChannel<out E> {
 
 /**
  * A discriminated union of channel operation result.
- * It encapsulates successful or failed result of a channel operation, or a failed operation to a closed channel with
+ * It encapsulates the successful or failed result of a channel operation or a failed operation to a closed channel with
  * an optional cause.
  *
- * Successful result represents a successful operation with value of type [T], for example, result of [Channel.receiveCatching]
- * operation or a successfully sent element as a result of [Channel.trySend].
+ * The successful result represents a successful operation with a value of type [T], for example,
+ * the result of [Channel.receiveCatching] operation or a successfully sent element as a result of [Channel.trySend].
  *
- * Failed result represents a failed operation attempt to a channel, but it doesn't necessary indicate that the channel is failed.
+ * The failed result represents a failed operation attempt to a channel, but it doesn't necessary indicate that the channel is failed.
  * E.g. when the channel is full, [Channel.trySend] returns failed result, but the channel itself is not in the failed state.
  *
- * Closed result represents an operation attempt to a closed channel and also implies that the operation was failed.
+ * The closed result represents an operation attempt to a closed channel and also implies that the operation has failed.
  */
 @Suppress("UNCHECKED_CAST")
 public inline class ChannelResult<out T>
-internal constructor(private val holder: Any?) {
+@PublishedApi internal constructor(private val holder: Any?) {
     /**
      * Returns `true` if this instance represents a successful
      * operation outcome.
      *
-     * In this case [isFailure] and [isClosed] return false.
+     * In this case [isFailure] and [isClosed] return `false`.
      */
-    public val isSuccess: Boolean get() = holder !is Closed
+    public val isSuccess: Boolean get() = holder !is Failed
 
     /**
-     * Returns true if this instance represents unsuccessful operation.
+     * Returns `true` if this instance represents unsuccessful operation.
      *
      * In this case [isSuccess] returns false, but it does not imply
      * that the channel is failed or closed.
      *
-     * Example of failed operation without an exception and channel being closed
+     * Example of a failed operation without an exception and channel being closed
      * is [Channel.trySend] attempt to a channel that is full.
      */
     public val isFailure: Boolean get() = holder is Failed
@@ -352,7 +378,7 @@ internal constructor(private val holder: Any?) {
      * Returns `true` if this instance represents unsuccessful operation
      * to a closed or cancelled channel.
      *
-     * In this case [isSuccess] returns false, [isFailure] returns `true`, but it does not imply
+     * In this case [isSuccess] returns `false`, [isFailure] returns `true`, but it does not imply
      * that [exceptionOrNull] returns non-null value.
      *
      * It can happen if the channel was [closed][Channel.close] normally without an exception.
@@ -374,7 +400,7 @@ internal constructor(private val holder: Any?) {
     }
 
     /**
-     * Returns the encapsulated exception if this instance represents failure or null if it is success
+     * Returns the encapsulated exception if this instance represents failure or `null` if it is success
      * or unsuccessful operation to closed channel.
      */
     public fun exceptionOrNull(): Throwable? = (holder as? Closed)?.cause
@@ -389,13 +415,21 @@ internal constructor(private val holder: Any?) {
         override fun toString(): String = "Closed($cause)"
     }
 
-    internal companion object {
-        @Suppress("NOTHING_TO_INLINE")
-        internal inline fun <E> value(value: E): ChannelResult<E> =
+    @Suppress("NOTHING_TO_INLINE")
+    @InternalCoroutinesApi
+    public companion object {
+        private val failed = Failed()
+
+        @InternalCoroutinesApi
+        public fun <E> success(value: E): ChannelResult<E> =
             ChannelResult(value)
 
-        @Suppress("NOTHING_TO_INLINE")
-        internal inline fun <E> closed(cause: Throwable?): ChannelResult<E> =
+        @InternalCoroutinesApi
+        public fun <E> failure(): ChannelResult<E> =
+            ChannelResult(failed)
+
+        @InternalCoroutinesApi
+        public fun <E> closed(cause: Throwable?): ChannelResult<E> =
             ChannelResult(Closed(cause))
     }
 

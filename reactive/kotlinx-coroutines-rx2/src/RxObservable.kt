@@ -91,6 +91,12 @@ private class RxObservableCoroutine<T : Any>(
         return true
     }
 
+    override fun trySend(element: T): ChannelResult<Unit> {
+        if (!mutex.tryLock()) return ChannelResult.failure()
+        doLockedNext(element)
+        return ChannelResult.success(Unit)
+    }
+
     public override suspend fun send(element: T) {
         // fast-path -- try send without suspension
         if (offer(element)) return

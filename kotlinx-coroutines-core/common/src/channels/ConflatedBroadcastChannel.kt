@@ -229,12 +229,12 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
 
     /**
      * Sends the value to all subscribed receives and stores this value as the most recent state for
-     * future subscribers. This implementation always returns `true`.
-     * It throws exception if the channel [isClosedForSend] (see [close] for details).
+     * future subscribers. This implementation always returns either successful result
+     * or closed with an exception.
      */
-    public override fun offer(element: E): Boolean {
-        offerInternal(element)?.let { throw it.sendException }
-        return true
+    public override fun trySend(element: E): ChannelResult<Unit> {
+        offerInternal(element)?.let { return ChannelResult.closed(it.sendException)  }
+        return ChannelResult.success(Unit)
     }
 
     @Suppress("UNCHECKED_CAST")

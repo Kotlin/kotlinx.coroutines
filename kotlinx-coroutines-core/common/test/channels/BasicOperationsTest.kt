@@ -142,7 +142,7 @@ class BasicOperationsTest : TestBase() {
         val result = channel.receiveCatching()
         assertEquals(1, result.getOrThrow())
         assertEquals(1, result.getOrNull())
-        assertTrue(ChannelResult.value(1) == result)
+        assertTrue(ChannelResult.success(1) == result)
 
         expect(3)
         launch {

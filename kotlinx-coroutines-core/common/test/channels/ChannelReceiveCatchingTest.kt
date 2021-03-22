@@ -45,7 +45,7 @@ class ChannelReceiveCatchingTest : TestBase() {
         assertEquals(1, element.getOrThrow())
         assertEquals(1, element.getOrNull())
         assertEquals("Value(1)", element.toString())
-        assertTrue(ChannelResult.value(1) == element) // Don't box
+        assertTrue(ChannelResult.success(1) == element) // Don't box
         assertFalse(element.isFailure)
         assertFalse(element.isClosed)
 
@@ -54,7 +54,7 @@ class ChannelReceiveCatchingTest : TestBase() {
         assertNull(nullElement.getOrThrow())
         assertNull(nullElement.getOrNull())
         assertEquals("Value(null)", nullElement.toString())
-        assertTrue(ChannelResult.value(null) == nullElement) // Don't box
+        assertTrue(ChannelResult.success(null) == nullElement) // Don't box
         assertFalse(element.isFailure)
         assertFalse(element.isClosed)
 
@@ -113,7 +113,7 @@ class ChannelReceiveCatchingTest : TestBase() {
     fun testReceiveResultChannel() = runTest {
         val channel = Channel<ChannelResult<UInt>>()
         launch {
-            channel.send(ChannelResult.value(1u))
+            channel.send(ChannelResult.success(1u))
             channel.send(ChannelResult.closed(TestException1()))
             channel.close(TestException2())
         }
