@@ -10,6 +10,8 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.internal.Symbol
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
 import kotlin.time.*
@@ -348,3 +350,159 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMil
 @ExperimentalTime
 @FlowPreview
 public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())
+
+/**
+ * Returns a flow that will timeout if the upstream takes too long to emit.
+ *
+ * Example:
+ *
+ * ```kotlin
+ * flow {
+ *     emit(1)
+ *     delay(100)
+ *     emit(2)
+ *     delay(100)
+ *     emit(3)
+ *     delay(1000)
+ *     emit(4)
+ * }.timeout(100.milliseconds) {
+ *     emit(-1) // Item to emit on timeout
+ * }.onEach {
+ *     delay(300) // This will not cause a timeout
+ * }
+ * ```
+ * <!--- KNIT example-timeout-duration-01.kt -->
+ *
+ * produces the following emissions
+ *
+ * ```text
+ * 1, 2, 3, -1
+ * ```
+ * <!--- TEST -->
+ *
+ * Note that delaying on the downstream doesn't trigger the timeout.
+ *
+ * @param timeout Timeout period
+ * @param action Action to invoke on timeout. Default is to throw [FlowTimeoutException]
+ */
+@ExperimentalTime
+public fun <T> Flow<T>.timeout(
+    timeout: Duration,
+    @BuilderInference action: suspend FlowCollector<T>.() -> Unit = { throw FlowTimeoutException(timeout.toDelayMillis()) }
+): Flow<T> = timeout(timeout.toDelayMillis(), action)
+
+/**
+ * Returns a flow that will timeout if the upstream takes too long to emit.
+ *
+ * Example:
+ *
+ * ```kotlin
+ * flow {
+ *     emit(1)
+ *     delay(100)
+ *     emit(2)
+ *     delay(100)
+ *     emit(3)
+ *     delay(1000)
+ *     emit(4)
+ * }.timeout(100) {
+ *     emit(-1) // Item to emit on timeout
+ * }.onEach {
+ *     delay(300) // This will not cause a timeout
+ * }
+ * ```
+ * <!--- KNIT example-timeout-duration-02.kt -->
+ *
+ * produces the following emissions
+ *
+ * ```text
+ * 1, 2, 3, -1
+ * ```
+ * <!--- TEST -->
+ *
+ * Note that delaying on the downstream doesn't trigger the timeout.
+ *
+ * @param timeoutMillis Timeout period in millis
+ * @param action Action to invoke on timeout. Default is to throw [FlowTimeoutException]
+ */
+@ExperimentalTime
+public fun <T> Flow<T>.timeout(
+    timeoutMillis: Long,
+    @BuilderInference action: suspend FlowCollector<T>.() -> Unit = { throw FlowTimeoutException(timeoutMillis) }
+): Flow<T> = timeoutInternal(timeoutMillis, action)
+
+@ExperimentalTime
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+private fun <T> Flow<T>.timeoutInternal(
+    timeoutMillis: Long,
+    action: suspend FlowCollector<T>.() -> Unit
+): Flow<T> = scopedFlow<T> { downStream ->
+    require(timeoutMillis >= 0L) { "Timeout should not be negative" }
+
+    // Produce the values using the default (rendezvous) channel
+    // Similar to [debounceInternal]
+    val values = produce<Any?> {
+        var timeoutJob = launch { // Emits timeout unless cancelled
+            delay(timeoutMillis)
+            send(TIMEOUT)
+        }
+        try {
+            collect {
+                timeoutJob.cancel() // Upstream emitted, so cancel the job
+
+                send(it ?: NULL)
+
+                // We reset the job here!. The reason being is that the `flow.emit()` suspends, which in turn suspends `send()`.
+                // We only want to measure a timeout if the producer took longer than `timeoutMillis`, not producer + consumer
+                timeoutJob = launch {
+                    delay(timeoutMillis)
+                    send(TIMEOUT)
+                }
+            }
+        } finally {
+            timeoutJob.cancel()
+            send(DONE) // Special signal to let flow end
+        }
+    }
+
+    // Await for values from our producer now
+    whileSelect {
+        values.onReceiveOrNull { value ->
+            if (value !== DONE) {
+                if (value === TIMEOUT) {
+                    throw InternalFlowTimeoutException()
+                }
+                downStream.emit(NULL.unbox(value))
+                return@onReceiveOrNull true
+            }
+            return@onReceiveOrNull false // We got the DONE signal, so exit the while loop
+        }
+    }
+}.catch { e ->
+    if (e is InternalFlowTimeoutException) {
+        action()
+    } else {
+        throw e
+    }
+}
+
+/**
+ * This exception is thrown by [timeout] to indicate an upstream flow timeout.
+ *
+ * @constructor Creates a timeout exception with the given message. This constructor is needed for exception stack-traces recovery.
+ */
+public class FlowTimeoutException internal constructor(message: String) : CancellationException(message), CopyableThrowable<FlowTimeoutException> {
+
+    // message is never null in fact
+    override fun createCopy(): FlowTimeoutException? =
+        FlowTimeoutException(message ?: "").also { it.initCause(this) }
+}
+
+@Suppress("FunctionName")
+internal fun FlowTimeoutException(time: Long) : FlowTimeoutException = FlowTimeoutException("Upstream flow timed out waiting for $time ms")
+
+// Special timeout flag
+private val TIMEOUT = Symbol("TIMEOUT")
+
+// Special indicator exception
+private class InternalFlowTimeoutException : Exception("Internal flow timeout exception")
