@@ -127,7 +127,13 @@ private open class BroadcastCoroutine<E>(
     parentContext: CoroutineContext,
     protected val _channel: BroadcastChannel<E>,
     active: Boolean
-) : AbstractCoroutine<Unit>(parentContext, active), ProducerScope<E>, BroadcastChannel<E> by _channel {
+) : AbstractCoroutine<Unit>(parentContext, initParentJob = false, active = active),
+    ProducerScope<E>, BroadcastChannel<E> by _channel {
+
+    init {
+        initParentJob(parentContext[Job])
+    }
+
     override val isActive: Boolean get() = super.isActive
 
     override val channel: SendChannel<E>

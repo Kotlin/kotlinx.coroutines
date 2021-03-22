@@ -184,7 +184,11 @@ public class FlowSubscription<T>(
     @JvmField public val flow: Flow<T>,
     @JvmField public val subscriber: Subscriber<in T>,
     context: CoroutineContext
-) : Subscription, AbstractCoroutine<Unit>(context, true) {
+) : Subscription, AbstractCoroutine<Unit>(context, initParentJob = false, true) {
+    /*
+     * We deliberately set initParentJob to false and do not establish parent-child
+     * relationship because FlowSubscription doesn't support it
+     */
     private val requested = atomic(0L)
     private val producer = atomic<Continuation<Unit>?>(createInitialContinuation())
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -173,11 +173,24 @@ class ActorTest(private val capacity: Int) : TestBase() {
     fun testCloseFreshActor() = runTest {
         for (start in CoroutineStart.values()) {
             val job = launch {
-                val actor = actor<Int>(start = start) { for (i in channel) {} }
+                val actor = actor<Int>(start = start) {
+                    for (i in channel) {
+                    }
+                }
                 actor.close()
             }
 
             job.join()
         }
+    }
+
+    @Test
+    fun testCancelledParent() = runTest({ it is CancellationException }) {
+        cancel()
+        expect(1)
+        actor<Int> {
+            expectUnreached()
+        }
+        finish(2)
     }
 }

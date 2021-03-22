@@ -139,7 +139,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * Initializes parent job.
      * It shall be invoked at most once after construction after all other initialization.
      */
-    internal fun initParentJobInternal(parent: Job?) {
+    protected fun initParentJob(parent: Job?) {
         assert { parentHandle == null }
         if (parent == null) {
             parentHandle = NonDisposableHandle
@@ -1311,7 +1311,7 @@ private class Empty(override val isActive: Boolean) : Incomplete {
 }
 
 internal open class JobImpl(parent: Job?) : JobSupport(true), CompletableJob {
-    init { initParentJobInternal(parent) }
+    init { initParentJob(parent) }
     override val onCancelComplete get() = true
     /*
      * Check whether parent is able to handle exceptions as well.

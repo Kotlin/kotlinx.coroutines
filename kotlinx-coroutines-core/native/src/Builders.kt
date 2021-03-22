@@ -53,7 +53,7 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
 private class BlockingCoroutine<T>(
     parentContext: CoroutineContext,
     private val eventLoop: EventLoop?
-) : AbstractCoroutine<T>(parentContext, true) {
+) : AbstractCoroutine<T>(parentContext, true, true) {
     override val isScopedCoroutine: Boolean get() = true
 
     @Suppress("UNCHECKED_CAST")

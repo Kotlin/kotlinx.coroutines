@@ -25,6 +25,9 @@ import kotlin.coroutines.*
  * * [onCancelled] in invoked when the coroutine completes with an exception (cancelled).
  *
  * @param parentContext the context of the parent coroutine.
+ * @param initParentJob specifies whether the parent-child relationship should be instantiated directly
+ *               in `AbstractCoroutine` constructor. If set to `false`, it's the responsibility of the child class
+ *               to invoke [initParentJob] manually.
  * @param active when `true` (by default), the coroutine is created in the _active_ state, otherwise it is created in the _new_ state.
  *               See [Job] for details.
  *
@@ -32,26 +35,28 @@ import kotlin.coroutines.*
  */
 @InternalCoroutinesApi
 public abstract class AbstractCoroutine<in T>(
-    /**
-     * The context of the parent coroutine.
-     */
     parentContext: CoroutineContext,
-    active: Boolean = true
+    initParentJob: Boolean,
+    active: Boolean
 ) : JobSupport(active), Job, Continuation<T>, CoroutineScope {
+
+    init {
+        /*
+         * Setup parent-child relationship between the parent in the context and the current coroutine.
+         * It may cause this coroutine to become _cancelling_ if the parent is already cancelled.
+         * It is dangerous to install parent-child relationship here if the coroutine class
+         * operates its state from within onCancelled or onCancelling
+         * (with exceptions for rx integrations that can't have any parent)
+         */
+        if (initParentJob) initParentJob(parentContext[Job])
+    }
+
     /**
      * The context of this coroutine that includes this coroutine as a [Job].
      */
     @Suppress("LeakingThis")
     public final override val context: CoroutineContext = parentContext + this
 
-    init {
-        /*
-         * Setup parent-child relationship between the parent in the context
-         * and the current coroutine.
-         * It may cause this coroutine to become cancelled if the parent is already cancelled
-         */
-        initParentJobInternal(parentContext[Job])
-    }
     /**
      * The context of this scope which is the same as the [context] of this coroutine.
      */

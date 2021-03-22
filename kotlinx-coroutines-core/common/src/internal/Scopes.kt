@@ -15,7 +15,7 @@ import kotlin.jvm.*
 internal open class ScopeCoroutine<in T>(
     context: CoroutineContext,
     @JvmField val uCont: Continuation<T> // unintercepted continuation
-) : AbstractCoroutine<T>(context, true), CoroutineStackFrame {
+) : AbstractCoroutine<T>(context, true, true), CoroutineStackFrame {
 
     final override val callerFrame: CoroutineStackFrame? get() = uCont as? CoroutineStackFrame
     final override fun getStackTraceElement(): StackTraceElement? = null

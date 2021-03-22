@@ -58,7 +58,7 @@ private fun <T> monoInternal(
 private class MonoCoroutine<in T>(
     parentContext: CoroutineContext,
     private val sink: MonoSink<T>
-) : AbstractCoroutine<T>(parentContext, true), Disposable {
+) : AbstractCoroutine<T>(parentContext, false, true), Disposable {
     @Volatile
     private var disposed = false
 

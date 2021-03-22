@@ -1,6 +1,5 @@
 public abstract class kotlinx/coroutines/AbstractCoroutine : kotlinx/coroutines/JobSupport, kotlin/coroutines/Continuation, kotlinx/coroutines/CoroutineScope, kotlinx/coroutines/Job {
-	public fun <init> (Lkotlin/coroutines/CoroutineContext;Z)V
-	public synthetic fun <init> (Lkotlin/coroutines/CoroutineContext;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lkotlin/coroutines/CoroutineContext;ZZ)V
 	protected fun afterResume (Ljava/lang/Object;)V
 	protected fun cancellationExceptionMessage ()Ljava/lang/String;
 	public final fun getContext ()Lkotlin/coroutines/CoroutineContext;
@@ -418,6 +417,7 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public final fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
 	public final fun getOnJoin ()Lkotlinx/coroutines/selects/SelectClause0;
 	protected fun handleJobException (Ljava/lang/Throwable;)Z
+	protected final fun initParentJob (Lkotlinx/coroutines/Job;)V
 	public final fun invokeOnCompletion (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
 	public final fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
 	public fun isActive ()Z
