@@ -152,7 +152,7 @@ class IntegrationTest(
         val dummyThrowable = RuntimeException(dummyMessage)
         suspend fun <T> assertDetectsBadPublisher(
             operation: suspend Publisher<T>.() -> T,
-            message: String? = null,
+            message: String,
             block: Subscriber<in T>.(n: Long) -> Unit,
         ) {
             assertCallsExceptionHandlerWith<IllegalStateException> {
@@ -163,37 +163,39 @@ class IntegrationTest(
                         throw e
                 }
             }.let {
-                assertTrue("Expected '$message', got '${it.message}'") { it.message == message }
+                assertTrue("Expected the message to contain '$message', got '${it.message}'") {
+                    it.message?.contains(message) ?: false
+                }
             }
         }
 
         // Rule 1.1 broken: the publisher produces more values than requested.
-        assertDetectsBadPublisher<Int>({ awaitFirst() }, moreThanOneValueProvidedExceptionString("awaitFirst")) {
+        assertDetectsBadPublisher<Int>({ awaitFirst() }, "provided more") {
             onNext(1)
             onNext(2)
             onComplete()
         }
 
         // Rule 1.7 broken: the publisher calls a method on a subscriber after reaching the terminal state.
-        assertDetectsBadPublisher<Int>({ awaitSingle() }, signalInTerminalStateExceptionString("onComplete")) {
+        assertDetectsBadPublisher<Int>({ awaitSingle() }, "terminal state") {
             onNext(1)
             onError(dummyThrowable)
             onComplete()
         }
-        assertDetectsBadPublisher<Int>({ awaitSingleOrDefault(2) }, signalInTerminalStateExceptionString("onError")) {
+        assertDetectsBadPublisher<Int>({ awaitSingleOrDefault(2) }, "terminal state") {
             onComplete()
             onError(dummyThrowable)
         }
-        assertDetectsBadPublisher<Int>({ awaitFirst() }, signalInTerminalStateExceptionString("onComplete")) {
+        assertDetectsBadPublisher<Int>({ awaitFirst() }, "terminal state") {
             onNext(0)
             onComplete()
             onComplete()
         }
-        assertDetectsBadPublisher<Int>({ awaitFirstOrDefault(1) }, signalInTerminalStateExceptionString("onNext")) {
+        assertDetectsBadPublisher<Int>({ awaitFirstOrDefault(1) }, "terminal state") {
             onComplete()
             onNext(3)
         }
-        assertDetectsBadPublisher<Int>({ awaitSingle() }, signalInTerminalStateExceptionString("onNext")) {
+        assertDetectsBadPublisher<Int>({ awaitSingle() }, "terminal state") {
             onError(dummyThrowable)
             onNext(3)
         }
@@ -208,7 +210,7 @@ class IntegrationTest(
             } catch (e: NoSuchElementException) {
                 // intentionally blank
             }
-        }.let { assertEquals(checkInitializedString("onNext"), it.message) }
+        }.let { assertTrue(it.message?.contains("onSubscribe") ?: false) }
     }
 
     private suspend inline fun <reified E: Throwable> assertCallsExceptionHandlerWith(

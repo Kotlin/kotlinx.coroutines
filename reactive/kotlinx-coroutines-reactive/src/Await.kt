@@ -161,7 +161,8 @@ private suspend fun <T> Publisher<T>.awaitOne(
             val sub = subscription.let {
                 if (it == null) {
                     /** Enforce rule 1.9: expect [Subscriber.onSubscribe] before any other signals. */
-                    handleCoroutineException(cont.context, IllegalStateException(checkInitializedString("onNext")))
+                    handleCoroutineException(cont.context,
+                        IllegalStateException("'onNext' was called before 'onSubscribe'"))
                     return
                 } else {
                     it
@@ -236,19 +237,12 @@ private suspend fun <T> Publisher<T>.awaitOne(
  * state was reached.
  */
 private fun gotSignalInTerminalStateException(context: CoroutineContext, signalName: String) =
-    handleCoroutineException(context, IllegalStateException(signalInTerminalStateExceptionString(signalName)))
-
-internal fun signalInTerminalStateExceptionString(signalName: String) =
-    "'$signalName' was called after the publisher already signalled being in a terminal state"
+    handleCoroutineException(context,
+        IllegalStateException("'$signalName' was called after the publisher already signalled being in a terminal state"))
 
 /**
  * Enforce rule 1.1: it is invalid for a publisher to provide more values than requested.
  */
 private fun moreThanOneValueProvidedException(context: CoroutineContext, mode: Mode) =
-    handleCoroutineException(context, IllegalStateException(moreThanOneValueProvidedExceptionString(mode.toString())))
-
-internal fun moreThanOneValueProvidedExceptionString(mode: String) =
-    "Only a single value were requested in $mode, but the publisher provided more"
-
-internal fun checkInitializedString(signalName: String) =
-    "'$signalName' was called before 'onSubscribe'"
+    handleCoroutineException(context,
+        IllegalStateException("Only a single value was requested in '$mode', but the publisher provided more"))
