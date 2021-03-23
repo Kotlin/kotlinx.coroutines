@@ -132,6 +132,10 @@ internal class DispatchedContinuation<in T>(
                     // Do nothing, wait until reusable instance will be returned from
                     // getResult() of a previous `suspendCancellableCoroutineReusable`
                 }
+                state is Throwable -> {
+                    // Also do nothing, Throwable can only indicate that the CC
+                    // is in REUSABLE_CLAIMED state, but with postponed cancellation
+                }
                 else -> error("Inconsistent state $state")
             }
         }
