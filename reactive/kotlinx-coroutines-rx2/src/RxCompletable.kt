@@ -53,7 +53,7 @@ private fun rxCompletableInternal(
 private class RxCompletableCoroutine(
     parentContext: CoroutineContext,
     private val subscriber: CompletableEmitter
-) : AbstractCoroutine<Unit>(parentContext, true) {
+) : AbstractCoroutine<Unit>(parentContext, false, true) {
     override fun onCompleted(value: Unit) {
         try {
             subscriber.onComplete()

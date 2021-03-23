@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.exceptions
@@ -15,8 +15,8 @@ class SuppressionTests : TestBase() {
     @Test
     fun testNotificationsWithException() = runTest {
         expect(1)
-        val coroutineContext = kotlin.coroutines.coroutineContext // workaround for KT-22984
-        val coroutine = object : AbstractCoroutine<String>(coroutineContext, false) {
+        val coroutineContext = kotlin.coroutines.coroutineContext + NonCancellable // workaround for KT-22984
+        val coroutine = object : AbstractCoroutine<String>(coroutineContext, true, false) {
             override fun onStart() {
                 expect(3)
             }

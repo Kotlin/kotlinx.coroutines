@@ -8,7 +8,6 @@ package kotlinx.coroutines
 import kotlinx.coroutines.CoroutineStart.*
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
-import kotlin.jvm.*
 
 /**
  * Abstract base class for implementation of coroutines in coroutine builders.
@@ -26,6 +25,9 @@ import kotlin.jvm.*
  * * [onCancelled] in invoked when the coroutine completes with an exception (cancelled).
  *
  * @param parentContext the context of the parent coroutine.
+ * @param initParentJob specifies whether the parent-child relationship should be instantiated directly
+ *               in `AbstractCoroutine` constructor. If set to `false`, it's the responsibility of the child class
+ *               to invoke [initParentJob] manually.
  * @param active when `true` (by default), the coroutine is created in the _active_ state, otherwise it is created in the _new_ state.
  *               See [Job] for details.
  *
@@ -33,13 +35,22 @@ import kotlin.jvm.*
  */
 @InternalCoroutinesApi
 public abstract class AbstractCoroutine<in T>(
-    /**
-     * The context of the parent coroutine.
-     */
-    @JvmField
-    protected val parentContext: CoroutineContext,
-    active: Boolean = true
+    parentContext: CoroutineContext,
+    initParentJob: Boolean,
+    active: Boolean
 ) : JobSupport(active), Job, Continuation<T>, CoroutineScope {
+
+    init {
+        /*
+         * Setup parent-child relationship between the parent in the context and the current coroutine.
+         * It may cause this coroutine to become _cancelling_ if the parent is already cancelled.
+         * It is dangerous to install parent-child relationship here if the coroutine class
+         * operates its state from within onCancelled or onCancelling
+         * (with exceptions for rx integrations that can't have any parent)
+         */
+        if (initParentJob) initParentJob(parentContext[Job])
+    }
+
     /**
      * The context of this coroutine that includes this coroutine as a [Job].
      */
@@ -52,28 +63,6 @@ public abstract class AbstractCoroutine<in T>(
     public override val coroutineContext: CoroutineContext get() = context
 
     override val isActive: Boolean get() = super.isActive
-
-    /**
-     * Initializes the parent job from the `parentContext` of this coroutine that was passed to it during construction.
-     * It shall be invoked at most once after construction after all other initialization.
-     * 
-     * Invocation of this function may cause this coroutine to become cancelled if the parent is already cancelled,
-     * in which case it synchronously invokes all the corresponding handlers.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    internal fun initParentJob() {
-        initParentJobInternal(parentContext[Job])
-    }
-
-    /**
-     * This function is invoked once when a non-active coroutine (constructed with `active` set to `false)
-     * is [started][start].
-     */
-    protected open fun onStart() {}
-
-    internal final override fun onStartInternal() {
-        onStart()
-    }
 
     /**
      * This function is invoked once when the job was completed normally with the specified [value],
@@ -127,26 +116,6 @@ public abstract class AbstractCoroutine<in T>(
     /**
      * Starts this coroutine with the given code [block] and [start] strategy.
      * This function shall be invoked at most once on this coroutine.
-     *
-     * First, this function initializes parent job from the `parentContext` of this coroutine that was passed to it
-     * during construction. Second, it starts the coroutine based on [start] parameter:
-     *
-     * * [DEFAULT] uses [startCoroutineCancellable].
-     * * [ATOMIC] uses [startCoroutine].
-     * * [UNDISPATCHED] uses [startCoroutineUndispatched].
-     * * [LAZY] does nothing.
-     */
-    public fun start(start: CoroutineStart, block: suspend () -> T) {
-        initParentJob()
-        start(block, this)
-    }
-
-    /**
-     * Starts this coroutine with the given code [block] and [start] strategy.
-     * This function shall be invoked at most once on this coroutine.
-     *
-     * First, this function initializes parent job from the `parentContext` of this coroutine that was passed to it
-     * during construction. Second, it starts the coroutine based on [start] parameter:
      * 
      * * [DEFAULT] uses [startCoroutineCancellable].
      * * [ATOMIC] uses [startCoroutine].
@@ -154,7 +123,6 @@ public abstract class AbstractCoroutine<in T>(
      * * [LAZY] does nothing.
      */
     public fun <R> start(start: CoroutineStart, receiver: R, block: suspend R.() -> T) {
-        initParentJob()
         start(block, receiver, this)
     }
 }

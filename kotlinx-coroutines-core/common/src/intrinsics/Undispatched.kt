@@ -82,11 +82,9 @@ private inline fun <T> startDirect(completion: Continuation<T>, block: (Continua
  * This function shall be invoked at most once on this coroutine.
  * This function checks cancellation of the outer [Job] on fast-path.
  *
- * First, this function initializes the parent job from the `parentContext` of this coroutine that was passed to it
- * during construction. Second, it starts the coroutine using [startCoroutineUninterceptedOrReturn].
+ * It starts the coroutine using [startCoroutineUninterceptedOrReturn].
  */
 internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturn(receiver: R, block: suspend R.() -> T): Any? {
-    initParentJob()
     return undispatchedResult({ true }) {
         block.startCoroutineUninterceptedOrReturn(receiver, this)
     }
@@ -96,8 +94,8 @@ internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturn(receiver: R, blo
  * Same as [startUndispatchedOrReturn], but ignores [TimeoutCancellationException] on fast-path.
  */
 internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
-    receiver: R, block: suspend R.() -> T): Any? {
-    initParentJob()
+    receiver: R, block: suspend R.() -> T
+): Any? {
     return undispatchedResult({ e -> !(e is TimeoutCancellationException && e.coroutine === this) }) {
         block.startCoroutineUninterceptedOrReturn(receiver, this)
     }

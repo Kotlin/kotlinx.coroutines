@@ -299,7 +299,7 @@ private class ToContinuation<T>(
  */
 private class ListenableFutureCoroutine<T>(
     context: CoroutineContext
-) : AbstractCoroutine<T>(context) {
+) : AbstractCoroutine<T>(context, initParentJob = true, active = true) {
 
     // JobListenableFuture propagates external cancellation to `this` coroutine. See JobListenableFuture.
     @JvmField

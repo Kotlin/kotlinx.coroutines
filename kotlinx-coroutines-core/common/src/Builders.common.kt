@@ -96,7 +96,7 @@ public fun <T> CoroutineScope.async(
 private open class DeferredCoroutine<T>(
     parentContext: CoroutineContext,
     active: Boolean
-) : AbstractCoroutine<T>(parentContext, active), Deferred<T>, SelectClause1<T> {
+) : AbstractCoroutine<T>(parentContext, true, active = active), Deferred<T>, SelectClause1<T> {
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T
     override val onAwait: SelectClause1<T> get() = this
@@ -167,7 +167,6 @@ public suspend fun <T> withContext(
         }
         // SLOW PATH -- use new dispatcher
         val coroutine = DispatchedCoroutine(newContext, uCont)
-        coroutine.initParentJob()
         block.startCoroutineCancellable(coroutine, coroutine)
         coroutine.getResult()
     }
@@ -188,7 +187,7 @@ public suspend inline operator fun <T> CoroutineDispatcher.invoke(
 private open class StandaloneCoroutine(
     parentContext: CoroutineContext,
     active: Boolean
-) : AbstractCoroutine<Unit>(parentContext, active) {
+) : AbstractCoroutine<Unit>(parentContext, initParentJob = true, active = active) {
     override fun handleJobException(exception: Throwable): Boolean {
         handleCoroutineException(context, exception)
         return true
