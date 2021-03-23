@@ -165,7 +165,9 @@ internal open class CancellableContinuationImpl<in T>(
      */
     private fun cancelLater(cause: Throwable): Boolean {
         if (!resumeMode.isReusableMode) return false
-        val dispatched = (delegate as? DispatchedContinuation<*>) ?: return false
+        // Ensure that we are postponing cancellation to the right instance
+        if (!isReusable()) return false
+        val dispatched = delegate as DispatchedContinuation<*>
         return dispatched.postponeCancellation(cause)
     }
 

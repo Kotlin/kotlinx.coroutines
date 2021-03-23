@@ -334,7 +334,7 @@ internal suspend inline fun <T> suspendCancellableCoroutineReusable(
 internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): CancellableContinuationImpl<T> {
     // If used outside of our dispatcher
     if (delegate !is DispatchedContinuation<T>) {
-        return CancellableContinuationImpl(delegate, MODE_CANCELLABLE_REUSABLE)
+        return CancellableContinuationImpl(delegate, MODE_CANCELLABLE)
     }
     /*
      * Attempt to claim reusable instance.
