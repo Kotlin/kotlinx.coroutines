@@ -16,7 +16,7 @@ abstract class SemaphoreLincheckTestBase(permits: Int) : AbstractLincheckTest() 
     @Operation
     fun tryAcquire() = semaphore.tryAcquire()
 
-    @Operation(promptCancellation = true)
+    @Operation(promptCancellation = true, allowExtraSuspension = true)
     suspend fun acquire() = semaphore.acquire()
 
     @Operation(handleExceptionsAsResult = [IllegalStateException::class])
