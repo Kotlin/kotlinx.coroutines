@@ -148,14 +148,24 @@ class IntegrationTest(
                     }
                 })
             }
+        val dummyMessage = "dummy"
+        val dummyThrowable = RuntimeException(dummyMessage)
         suspend fun <T> assertDetectsBadPublisher(
             operation: suspend Publisher<T>.() -> T,
             message: String? = null,
             block: Subscriber<in T>.(n: Long) -> Unit,
-        ) =
-            assertFailsWith<IllegalStateException> { publisher(block).operation() }.let {
-                message == null || it.message == message
+        ) {
+            assertCallsExceptionHandlerWith<IllegalStateException> {
+                try {
+                    publisher(block).operation()
+                } catch (e: Throwable) {
+                    if (e.message != dummyMessage)
+                        throw e
+                }
+            }.let {
+                assertTrue("Expected '$message', got '${it.message}'") { it.message == message }
             }
+        }
 
         // Rule 1.1 broken: the publisher produces more values than requested.
         assertDetectsBadPublisher<Int>({ awaitFirst() }, moreThanOneValueProvidedExceptionString("awaitFirst")) {
@@ -165,34 +175,60 @@ class IntegrationTest(
         }
 
         // Rule 1.7 broken: the publisher calls a method on a subscriber after reaching the terminal state.
-        // Using awaitSingle to check that bad publishers have priority over the lack of a value.
         assertDetectsBadPublisher<Int>({ awaitSingle() }, signalInTerminalStateExceptionString("onComplete")) {
-            onError(RuntimeException(""))
+            onNext(1)
+            onError(dummyThrowable)
             onComplete()
         }
-        assertDetectsBadPublisher<Int>({ awaitSingle() }, signalInTerminalStateExceptionString("onError")) {
+        assertDetectsBadPublisher<Int>({ awaitSingleOrDefault(2) }, signalInTerminalStateExceptionString("onError")) {
             onComplete()
-            onError(RuntimeException(""))
+            onError(dummyThrowable)
         }
-        assertDetectsBadPublisher<Int>({ awaitSingle() }, signalInTerminalStateExceptionString("onComplete")) {
+        assertDetectsBadPublisher<Int>({ awaitFirst() }, signalInTerminalStateExceptionString("onComplete")) {
+            onNext(0)
             onComplete()
             onComplete()
         }
-        assertDetectsBadPublisher<Int>({ awaitSingle() }, signalInTerminalStateExceptionString("onNext")) {
+        assertDetectsBadPublisher<Int>({ awaitFirstOrDefault(1) }, signalInTerminalStateExceptionString("onNext")) {
             onComplete()
             onNext(3)
         }
         assertDetectsBadPublisher<Int>({ awaitSingle() }, signalInTerminalStateExceptionString("onNext")) {
-            onError(RuntimeException(""))
+            onError(dummyThrowable)
             onNext(3)
         }
 
         // Rule 1.9 broken (the first signal to the subscriber was not 'onSubscribe')
-        assertFailsWith<IllegalStateException> {
-            Publisher<Int> { subscriber ->
-                subscriber.onNext(3)
-            }.awaitFirst()
+        assertCallsExceptionHandlerWith<IllegalStateException> {
+            try {
+                Publisher<Int> { subscriber ->
+                    subscriber.onNext(3)
+                    subscriber.onComplete()
+                }.awaitFirst()
+            } catch (e: NoSuchElementException) {
+                // intentionally blank
+            }
         }.let { assertEquals(checkInitializedString("onNext"), it.message) }
+    }
+
+    private suspend inline fun <reified E: Throwable> assertCallsExceptionHandlerWith(
+        crossinline operation: suspend () -> Unit): E
+    {
+        var caughtException: Throwable? = null
+        val exceptionHandler = object: AbstractCoroutineContextElement(CoroutineExceptionHandler),
+            CoroutineExceptionHandler
+        {
+            override fun handleException(context: CoroutineContext, exception: Throwable) {
+                caughtException = exception
+            }
+        }
+        return withContext(exceptionHandler) {
+            operation()
+            caughtException.let {
+                assertTrue(it is E)
+                it
+            }
+        }
     }
 
     private suspend fun checkNumbers(n: Int, pub: Publisher<Int>) {

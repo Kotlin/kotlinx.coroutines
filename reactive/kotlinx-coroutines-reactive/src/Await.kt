@@ -4,9 +4,7 @@
 
 package kotlinx.coroutines.reactive
 
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
@@ -160,19 +158,24 @@ private suspend fun <T> Publisher<T>.awaitOne(
         }
 
         override fun onNext(t: T) {
-            val sub = subscription.checkInitialized("onNext")
-            if (inTerminalState)
-                gotSignalInTerminalStateException("onNext")
+            val sub = subscription.let {
+                if (it == null) {
+                    /** Enforce rule 1.9: expect [Subscriber.onSubscribe] before any other signals. */
+                    handleCoroutineException(cont.context, IllegalStateException(checkInitializedString("onNext")))
+                    return
+                } else {
+                    it
+                }
+            }
+            if (inTerminalState) {
+                gotSignalInTerminalStateException(cont.context, "onNext")
+                return
+            }
             when (mode) {
                 Mode.FIRST, Mode.FIRST_OR_DEFAULT -> {
                     if (seenValue) {
-                        /** We are throwing here instead of resuming the continuation with an error, even though it
-                        breaks the spec, because the continuation was already resumed and is no longer active. This is
-                        fine, given that the only way this execution could occur is because of a non-compliant publisher
-                        that produced more elements than was requested in [Subscription.request]. Therefore, we crash
-                        hard and fast and attempt to provide an informative message to help in finding the misbehaving
-                        publisher. */
-                        moreThanOneValueProvidedException(mode)
+                        moreThanOneValueProvidedException(cont.context, mode)
+                        return
                     }
                     seenValue = true
                     sub.cancel()
@@ -193,7 +196,8 @@ private suspend fun <T> Publisher<T>.awaitOne(
 
         @Suppress("UNCHECKED_CAST")
         override fun onComplete() {
-            enterTerminalState("onComplete")
+            if (!tryEnterTerminalState("onComplete"))
+                return
             if (seenValue) {
                 if (cont.isActive) cont.resume(value as T)
                 return
@@ -209,17 +213,20 @@ private suspend fun <T> Publisher<T>.awaitOne(
         }
 
         override fun onError(e: Throwable) {
-            enterTerminalState("onError")
-            cont.resumeWithException(e)
+            if (tryEnterTerminalState("onError"))
+                cont.resumeWithException(e)
         }
 
         /**
          * Enforce rule 2.4: assume that the [Publisher] is in a terminal state after [onError] or [onComplete].
          */
-        private fun enterTerminalState(signalName: String) {
-            if (inTerminalState)
-                gotSignalInTerminalStateException(signalName)
+        private fun tryEnterTerminalState(signalName: String): Boolean {
+            if (inTerminalState) {
+                gotSignalInTerminalStateException(cont.context, signalName)
+                return false
+            }
             inTerminalState = true
+            return true
         }
     })
 }
@@ -228,8 +235,8 @@ private suspend fun <T> Publisher<T>.awaitOne(
  * Enforce rule 2.4 (detect publishers that don't respect rule 1.7): don't process anything after a terminal
  * state was reached.
  */
-private fun gotSignalInTerminalStateException(signalName: String): Nothing =
-    throw IllegalStateException(signalInTerminalStateExceptionString(signalName))
+private fun gotSignalInTerminalStateException(context: CoroutineContext, signalName: String) =
+    handleCoroutineException(context, IllegalStateException(signalInTerminalStateExceptionString(signalName)))
 
 internal fun signalInTerminalStateExceptionString(signalName: String) =
     "'$signalName' was called after the publisher already signalled being in a terminal state"
@@ -237,17 +244,11 @@ internal fun signalInTerminalStateExceptionString(signalName: String) =
 /**
  * Enforce rule 1.1: it is invalid for a publisher to provide more values than requested.
  */
-private fun moreThanOneValueProvidedException(mode: Mode): Nothing =
-    throw IllegalStateException(moreThanOneValueProvidedExceptionString(mode.toString()))
+private fun moreThanOneValueProvidedException(context: CoroutineContext, mode: Mode) =
+    handleCoroutineException(context, IllegalStateException(moreThanOneValueProvidedExceptionString(mode.toString())))
 
 internal fun moreThanOneValueProvidedExceptionString(mode: String) =
     "Only a single value were requested in $mode, but the publisher provided more"
-
-/**
- * Enforce rule 1.9: expect [Subscriber.onSubscribe] before any other signals.
- */
-private fun Subscription?.checkInitialized(signalName: String): Subscription =
-    this ?: throw IllegalStateException(checkInitializedString(signalName))
 
 internal fun checkInitializedString(signalName: String) =
     "'$signalName' was called before 'onSubscribe'"
