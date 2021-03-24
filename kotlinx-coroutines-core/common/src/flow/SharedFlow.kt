@@ -33,7 +33,7 @@ import kotlin.native.concurrent.*
  *
  * [SharedFlow] is useful for broadcasting events that happen inside an application to subscribers that can come and go.
  * For example, the following class encapsulates an event bus that distributes events to all subscribers
- * in a _rendezvous_ manner, suspending until all subscribers process each event:
+ * in a _rendezvous_ manner, suspending until all subscribers receive emitted event:
  *
  * ```
  * class EventBus {
