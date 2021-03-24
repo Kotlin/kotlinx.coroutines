@@ -7,6 +7,10 @@ package kotlinx.coroutines.channels
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
+import org.jetbrains.kotlinx.lincheck.*
+import org.jetbrains.kotlinx.lincheck.annotations.*
+import org.jetbrains.kotlinx.lincheck.annotations.Operation
+import org.jetbrains.kotlinx.lincheck.verifier.*
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.*
@@ -252,4 +256,28 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
             _max.value = -1L
         }
     }
+}
+
+class ChannelUndeliveredElementLincheckTest : AbstractLincheckTest() {
+    private val c = Channel<Int>(Channel.RENDEZVOUS)
+
+    @Operation
+    suspend fun send(x: Int) = c.send(x)
+
+    @Operation
+    suspend fun sendViaSelect(x: Int) = select<Unit> { c.onSend(x) {} }
+
+    @Operation
+    suspend fun receive() = c.receive()
+
+    @Operation
+    suspend fun receiveViaSelect() = select<Unit> { c.onReceive {} }
+
+    @Operation
+    suspend fun receiveViaIterator() = c.iterator().run {
+        if (hasNext()) next()
+    }
+
+    override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
+        verifier(EpsilonVerifier::class.java)
 }
