@@ -285,4 +285,18 @@ class MonoTest : TestBase() {
                 .collect { }
         }
     }
+
+    @Test
+    fun testTimeout() {
+        val mono = mono {
+            withTimeout(1) { delay(100) }
+        }
+        mono.doOnSubscribe { expect(1) }
+            .doOnNext { expectUnreached() }
+            .doOnSuccess { expect(2) }
+            .doOnError { expectUnreached() }
+            .doOnCancel { expectUnreached() }
+            .block()
+        finish(3)
+    }
 }
