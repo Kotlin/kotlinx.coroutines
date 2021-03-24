@@ -101,7 +101,12 @@ public abstract class CoroutineDispatcher :
 
     @InternalCoroutinesApi
     public override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
-        (continuation as DispatchedContinuation<*>).reusableCancellableContinuation?.detachChild()
+        /*
+         * Unconditional cast is safe here: we only return DispatchedContinuation from `interceptContinuation`,
+         * any ClassCastException can only indicate compiler bug
+         */
+        val dispatched = continuation as DispatchedContinuation<*>
+        dispatched.release()
     }
 
     /**
