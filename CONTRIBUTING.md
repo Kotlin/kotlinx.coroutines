@@ -52,6 +52,10 @@ so do familiarize yourself with the following guidelines.
   * Follow the style of writing tests that is used in this project: 
     name test functions as `testXxx`. Don't use backticks in test names.
 * If you introduce any new public APIs:
+  * Comment on the existing issue if you want to work on it or create one beforehand. 
+    Ensure that the issue not only describes a problem, but also describes a solution that had received a positive feedback. Propose a solution if there isn't any.
+    PRs with new API, but without a corresponding issue with a positive feedback about the proposed implementation are unlikely to
+    be approved or reviewed.
   * All new APIs must come with documentation and tests.
   * All new APIs are initially released with `@ExperimentalCoroutineApi` annotation and are graduated later.
   * [Update the public API dumps](#updating-the-public-api-dump) and commit the resulting changes as well. 
@@ -59,8 +63,6 @@ so do familiarize yourself with the following guidelines.
   * If you plan large API additions, then please start by submitting an issue with the proposed API design  
     to gather community feedback.
   * [Contact the maintainers](#contacting-maintainers) to coordinate any big piece of work in advance.
-* Comment on the existing issue if you want to work on it. Ensure that the issue not only describes a problem,
-  but also describes a solution that had received a positive feedback. Propose a solution if there isn't any.
 * Steps for contributing new integration modules are explained [here](integration/README.md#Contributing).
 
 ## Building
