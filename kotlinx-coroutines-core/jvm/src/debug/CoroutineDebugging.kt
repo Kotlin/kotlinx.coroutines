@@ -12,10 +12,11 @@ package _COROUTINE
  *
  * There are typically two ways in which one can encounter an artificial stack frame:
  * 1. By using the debug mode, via the stacktrace recovery mechanism; see
- * https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/topics/debugging.md#stacktrace-recovery. The usual way
- * to enable the debug mode is with the [kotlinx.coroutines.DEBUG_PROPERTY_NAME] system property.
- * 2. By looking at the output of DebugProbes; see
- * https://github.com/Kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-debug.
+ * [stacktrace recovery](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/topics/debugging.md#stacktrace-recovery)
+ * documentation. The usual way to enable the debug mode is with the [kotlinx.coroutines.DEBUG_PROPERTY_NAME] system
+ * property.
+ * 2. By looking at the output of DebugProbes; see the
+ * [kotlinx-coroutines-debug](https://github.com/Kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-debug) module.
  */
 internal class ArtificialStackFrames {
     /**
