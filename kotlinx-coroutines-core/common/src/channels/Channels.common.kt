@@ -37,40 +37,34 @@ public inline fun <E, R> BroadcastChannel<E>.consume(block: ReceiveChannel<E>.()
 }
 
 /**
- * Retrieves and removes the element from this channel suspending the caller while this channel [isEmpty]
- * or returns `null` if the channel is [closed][Channel.isClosedForReceive].
+ * This function is deprecated in the favour of [ReceiveChannel.receiveCatching].
  *
- * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
- * function is suspended, this function immediately resumes with [CancellationException].
- * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
- * suspended, it will not resume successfully. If the `receiveOrNull` call threw [CancellationException] there is no way
- * to tell if some element was already received from the channel or not. See [Channel] documentation for details.
+ * This function is considered error-prone for the following reasons;
+ * * Is throwing if the channel has failed even though its signature may suggest it returns 'null'
+ * * It is easy to forget that exception handling still have to be explicit
+ * * During code reviews and code reading, intentions of the code are frequently unclear:
+ *   are potential exceptions ignored deliberately or not?
  *
- * Note, that this function does not check for cancellation when it is not suspended.
- * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
- *
- * This extension is defined only for channels on non-null types, so that generic functions defined using
- * these extensions do not accidentally confuse `null` value and a normally closed channel, leading to hard
- * to find bugs.
+ * @suppress doc
  */
+@Deprecated(
+    "Deprecated in the favour of 'receiveCatching'",
+    ReplaceWith("receiveCatching().getOrNull()"),
+    DeprecationLevel.WARNING
+) // Warning since 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
-@ExperimentalCoroutinesApi // since 1.3.0, tentatively stable in 1.4.x
 public suspend fun <E : Any> ReceiveChannel<E>.receiveOrNull(): E? {
     @Suppress("DEPRECATION", "UNCHECKED_CAST")
     return (this as ReceiveChannel<E?>).receiveOrNull()
 }
 
 /**
- * Clause for [select] expression of [receiveOrNull] suspending function that selects with the element that
- * is received from the channel or selects with `null` if the channel
- * [isClosedForReceive][ReceiveChannel.isClosedForReceive] without cause. The [select] invocation fails with
- * the original [close][SendChannel.close] cause exception if the channel has _failed_.
- *
- * This extension is defined only for channels on non-null types, so that generic functions defined using
- * these extensions do not accidentally confuse `null` value and a normally closed channel, leading to hard
- * to find bugs.
- **/
-@ExperimentalCoroutinesApi // since 1.3.0, tentatively stable in 1.4.x
+ * This function is deprecated in the favour of [ReceiveChannel.onReceiveCatching]
+ */
+@Deprecated(
+    "Deprecated in the favour of 'onReceiveCatching'",
+    level = DeprecationLevel.WARNING
+)  // Warning since 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
 public fun <E : Any> ReceiveChannel<E>.onReceiveOrNull(): SelectClause1<E?> {
     @Suppress("DEPRECATION", "UNCHECKED_CAST")
     return (this as ReceiveChannel<E?>).onReceiveOrNull

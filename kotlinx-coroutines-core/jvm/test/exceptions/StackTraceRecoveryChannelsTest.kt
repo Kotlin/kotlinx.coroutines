@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.exceptions
@@ -38,13 +38,6 @@ class StackTraceRecoveryChannelsTest : TestBase() {
     }
 
     @Test
-    fun testReceiveOrNullFromClosedChannel() = runTest {
-        val channel = Channel<Int>()
-        channel.close(RecoverableTestException())
-        channelReceiveOrNull(channel)
-    }
-
-    @Test
     fun testSendToClosedChannel() = runTest {
         val channel = Channel<Int>()
         channel.close(RecoverableTestException())
@@ -67,7 +60,6 @@ class StackTraceRecoveryChannelsTest : TestBase() {
     }
 
     private suspend fun channelReceive(channel: Channel<Int>) = channelOp { channel.receive() }
-    private suspend fun channelReceiveOrNull(channel: Channel<Int>) = channelOp { channel.receiveOrNull() }
 
     private suspend inline fun channelOp(block: () -> Unit) {
         try {
@@ -75,6 +67,7 @@ class StackTraceRecoveryChannelsTest : TestBase() {
             block()
             expectUnreached()
         } catch (e: RecoverableTestException) {
+            e.printStackTrace()
             verifyStackTrace("channels/${name.methodName}", e)
         }
     }

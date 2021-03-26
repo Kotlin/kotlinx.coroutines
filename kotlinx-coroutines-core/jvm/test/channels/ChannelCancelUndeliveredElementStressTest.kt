@@ -89,7 +89,7 @@ class ChannelCancelUndeliveredElementStressTest : TestBase() {
     private suspend fun receiveOne(channel: Channel<Int>) {
         val received = when (Random.nextInt(3)) {
             0 -> channel.receive()
-            1 -> channel.receiveOrNull() ?: error("Cannot be closed yet")
+            1 -> channel.receiveCatching().getOrElse { error("Cannot be closed yet") }
             2 -> select {
                 channel.onReceive { it }
             }

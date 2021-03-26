@@ -120,31 +120,32 @@ buzz -> 'Buzz!'
 ## Selecting on close
 
 The [onReceive][ReceiveChannel.onReceive] clause in `select` fails when the channel is closed causing the corresponding
-`select` to throw an exception. We can use [onReceiveOrNull][onReceiveOrNull] clause to perform a
+`select` to throw an exception. We can use [onReceiveCatching][ReceiveChannel.onReceiveCatching] clause to perform a
 specific action when the channel is closed. The following example also shows that `select` is an expression that returns 
 the result of its selected clause:
 
 ```kotlin
 suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): String =
     select<String> {
-        a.onReceiveOrNull { value -> 
-            if (value == null) 
-                "Channel 'a' is closed" 
-            else 
+        a.onReceiveCatching { it ->
+            val value = it.getOrNull()
+            if (value != null) {
                 "a -> '$value'"
+            } else {
+                "Channel 'a' is closed"
+            }
         }
-        b.onReceiveOrNull { value -> 
-            if (value == null) 
-                "Channel 'b' is closed"
-            else    
+        b.onReceiveCatching { it ->
+            val value = it.getOrNull()
+            if (value != null) {
                 "b -> '$value'"
+            } else {
+                "Channel 'b' is closed"
+            }
         }
     }
 ```
 
-Note that [onReceiveOrNull][onReceiveOrNull] is an extension function defined only 
-for channels with non-nullable elements so that there is no accidental confusion between a closed channel
-and a null value. 
 
 Let's use it with channel `a` that produces "Hello" string four times and 
 channel `b` that produces "World" four times:
@@ -158,17 +159,21 @@ import kotlinx.coroutines.selects.*
 
 suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): String =
     select<String> {
-        a.onReceiveOrNull { value -> 
-            if (value == null) 
-                "Channel 'a' is closed" 
-            else 
+        a.onReceiveCatching { it ->
+            val value = it.getOrNull()
+            if (value != null) {
                 "a -> '$value'"
+            } else {
+                "Channel 'a' is closed"
+            }
         }
-        b.onReceiveOrNull { value -> 
-            if (value == null) 
-                "Channel 'b' is closed"
-            else    
+        b.onReceiveCatching { it ->
+            val value = it.getOrNull()
+            if (value != null) {
                 "b -> '$value'"
+            } else {
+                "Channel 'b' is closed"
+            }
         }
     }
     
@@ -215,7 +220,7 @@ the first one among them gets selected. Here, both channels are constantly produ
 being the first clause in select, wins. However, because we are using unbuffered channel, the `a` gets suspended from
 time to time on its [send][SendChannel.send] invocation and gives a chance for `b` to send, too.
 
-The second observation, is that [onReceiveOrNull][onReceiveOrNull] gets immediately selected when the 
+The second observation, is that [onReceiveCatching][ReceiveChannel.onReceiveCatching] gets immediately selected when the 
 channel is already closed.
 
 ## Selecting to send
@@ -375,19 +380,19 @@ Deferred 4 produced answer 'Waited for 128 ms'
 
 Let us write a channel producer function that consumes a channel of deferred string values, waits for each received
 deferred value, but only until the next deferred value comes over or the channel is closed. This example puts together 
-[onReceiveOrNull][onReceiveOrNull] and [onAwait][Deferred.onAwait] clauses in the same `select`:
+[onReceiveCatching][ReceiveChannel.onReceiveCatching] and [onAwait][Deferred.onAwait] clauses in the same `select`:
 
 ```kotlin
 fun CoroutineScope.switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) = produce<String> {
     var current = input.receive() // start with first received deferred value
     while (isActive) { // loop while not cancelled/closed
         val next = select<Deferred<String>?> { // return next deferred value from this select or null
-            input.onReceiveOrNull { update ->
-                update // replaces next value to wait
+            input.onReceiveCatching { update ->
+                update.getOrNull()
             }
-            current.onAwait { value ->  
+            current.onAwait { value ->
                 send(value) // send value that current deferred has produced
-                input.receiveOrNull() // and use the next deferred from the input channel
+                input.receiveCatching().getOrNull() // and use the next deferred from the input channel
             }
         }
         if (next == null) {
@@ -423,12 +428,12 @@ fun CoroutineScope.switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) =
     var current = input.receive() // start with first received deferred value
     while (isActive) { // loop while not cancelled/closed
         val next = select<Deferred<String>?> { // return next deferred value from this select or null
-            input.onReceiveOrNull { update ->
-                update // replaces next value to wait
+            input.onReceiveCatching { update ->
+                update.getOrNull()
             }
-            current.onAwait { value ->  
+            current.onAwait { value ->
                 send(value) // send value that current deferred has produced
-                input.receiveOrNull() // and use the next deferred from the input channel
+                input.receiveCatching().getOrNull() // and use the next deferred from the input channel
             }
         }
         if (next == null) {
@@ -491,7 +496,7 @@ Channel was closed
 
 [ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/receive.html
 [ReceiveChannel.onReceive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/on-receive.html
-[onReceiveOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/on-receive-or-null.html
+[ReceiveChannel.onReceiveCatching]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/on-receive-catching.html
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/send.html
 [SendChannel.onSend]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/on-send.html
 

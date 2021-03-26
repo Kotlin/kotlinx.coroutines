@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -36,15 +36,15 @@ class RendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testClosedReceiveOrNull() = runTest {
+    fun testClosedReceiveCatching() = runTest {
         val q = Channel<Int>(Channel.RENDEZVOUS)
         check(q.isEmpty && !q.isClosedForSend && !q.isClosedForReceive)
         expect(1)
         launch {
             expect(3)
-            assertEquals(42, q.receiveOrNull())
+            assertEquals(42, q.receiveCatching().getOrNull())
             expect(4)
-            assertNull(q.receiveOrNull())
+            assertNull(q.receiveCatching().getOrNull())
             expect(6)
         }
         expect(2)
@@ -233,9 +233,9 @@ class RendezvousChannelTest : TestBase() {
         expect(7)
         yield() // try to resume sender (it will not resume despite the close!)
         expect(8)
-        assertEquals(42, q.receiveOrNull())
+        assertEquals(42, q.receiveCatching().getOrNull())
         expect(9)
-        assertNull(q.receiveOrNull())
+        assertNull(q.receiveCatching().getOrNull())
         expect(10)
         yield() // to sender, it was resumed!
         finish(12)
@@ -266,7 +266,7 @@ class RendezvousChannelTest : TestBase() {
         q.cancel()
         check(q.isClosedForSend)
         check(q.isClosedForReceive)
-        assertFailsWith<CancellationException> { q.receiveOrNull() }
+        assertFailsWith<CancellationException> { q.receiveCatching().getOrThrow() }
         finish(12)
     }
 
@@ -274,6 +274,6 @@ class RendezvousChannelTest : TestBase() {
     fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
         val channel = Channel<Int>(Channel.RENDEZVOUS)
         channel.cancel(TestCancellationException())
-        channel.receiveOrNull()
+        channel.receiveCatching().getOrThrow()
     }
 }

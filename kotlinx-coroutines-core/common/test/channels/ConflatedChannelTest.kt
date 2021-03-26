@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -27,7 +27,7 @@ open class ConflatedChannelTest : TestBase() {
         val q = createConflatedChannel<Int>()
         q.send(1)
         q.send(2) // shall conflated previously sent
-        assertEquals(2, q.receiveOrNull())
+        assertEquals(2, q.receiveCatching().getOrNull())
     }
 
     @Test
@@ -41,7 +41,7 @@ open class ConflatedChannelTest : TestBase() {
         // not it is closed for receive, too
         assertTrue(q.isClosedForSend)
         assertTrue(q.isClosedForReceive)
-        assertNull(q.receiveOrNull())
+        assertNull(q.receiveCatching().getOrNull())
     }
 
     @Test
@@ -82,7 +82,7 @@ open class ConflatedChannelTest : TestBase() {
         q.cancel()
         check(q.isClosedForSend)
         check(q.isClosedForReceive)
-        assertFailsWith<CancellationException> { q.receiveOrNull() }
+        assertFailsWith<CancellationException> { q.receiveCatching().getOrThrow() }
         finish(2)
     }
 
@@ -90,6 +90,6 @@ open class ConflatedChannelTest : TestBase() {
     fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
         val channel = createConflatedChannel<Int>()
         channel.cancel(TestCancellationException())
-        channel.receiveOrNull()
+        channel.receive()
     }
 }
