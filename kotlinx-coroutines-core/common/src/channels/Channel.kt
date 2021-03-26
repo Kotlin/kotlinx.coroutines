@@ -31,14 +31,12 @@ public interface SendChannel<in E> {
     public val isClosedForSend: Boolean
 
     /**
-     * Returns `true` if the channel is full (out of capacity), which means that an attempt to [send] will suspend.
-     * This function returns `false`  if the channel [is closed for `send`][isClosedForSend].
+     * Warning in 1.2, error in 1.3, hidden in 1.5
      *
      * @suppress **Will be removed in next releases, no replacement.**
      */
-    @ExperimentalCoroutinesApi
-    @Deprecated(level = DeprecationLevel.ERROR, message = "Will be removed in next releases without replacement")
-    public val isFull: Boolean
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Will be removed in next releases without replacement")
+    public val isFull: Boolean get() = true
 
     /**
      * Sends the specified [element] to this channel, suspending the caller while the buffer of this channel is full
