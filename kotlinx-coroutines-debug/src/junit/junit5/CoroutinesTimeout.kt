@@ -3,7 +3,6 @@
  */
 
 package kotlinx.coroutines.debug.junit5
-import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.*
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.*
@@ -15,7 +14,7 @@ import java.lang.annotation.*
  * separate thread, failing them after the provided time limit and interrupting the thread.
  *
  * Additionally, it installs [DebugProbes] and dumps all coroutines at the moment of the timeout. It also cancels
- * coroutines on timeout if [cancelOnTimeout] set to `true`. The dumps contain the coroutine creation stack traces. If
+ * coroutines on timeout if [cancelOnTimeout] set to `true`. The dump contains the coroutine creation stack traces. If
  * there is need to disable the creation stack traces in order to speed tests up, consider directly using
  * [CoroutinesTimeoutExtension], which allows such configuration.
  *
@@ -36,7 +35,7 @@ import java.lang.annotation.*
  * ```
  * @CoroutinesTimeout(100)
  * class CoroutinesTimeoutSimpleTest {
- *      // times out in 150 ms
+ *     // does not time out, as the annotation on the method overrides the class-level one
  *     @CoroutinesTimeout(1000)
  *     @Test
  *     fun classTimeoutIsOverridden() {
@@ -45,7 +44,7 @@ import java.lang.annotation.*
  *         }
  *     }
  *
- *     // times out in 100 ms
+ *     // times out in 100 ms, timeout value is taken from the class-level annotation
  *     @Test
  *     fun classTimeoutIsUsed() {
  *         runBlocking {
@@ -58,12 +57,12 @@ import java.lang.annotation.*
  * @see Timeout
  * @see CoroutinesTimeoutExtension
  */
+@ExtendWith(CoroutinesTimeoutExtension::class)
+@Inherited
 @MustBeDocumented
+@ResourceLock("coroutines timeout", mode = ResourceAccessMode.READ)
 @Retention(value = AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-@ExtendWith(CoroutinesTimeoutExtension::class)
-@ResourceLock("coroutines timeout", mode = ResourceAccessMode.READ)
-@Inherited
 public annotation class CoroutinesTimeout(
     val testTimeoutMs: Long,
     val cancelOnTimeout: Boolean = false
