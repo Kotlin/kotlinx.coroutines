@@ -66,11 +66,6 @@ public abstract interface annotation class kotlinx/coroutines/debug/junit5/Corou
 	public abstract fun testTimeoutMs ()J
 }
 
-public final class kotlinx/coroutines/debug/junit5/CoroutinesTimeoutException : java/lang/Exception {
-	public fun <init> (J)V
-	public final fun getTimeoutMs ()J
-}
-
 public final class kotlinx/coroutines/debug/junit5/CoroutinesTimeoutExtension : org/junit/jupiter/api/extension/InvocationInterceptor {
 	public static final field Companion Lkotlinx/coroutines/debug/junit5/CoroutinesTimeoutExtension$Companion;
 	public fun <init> ()V
