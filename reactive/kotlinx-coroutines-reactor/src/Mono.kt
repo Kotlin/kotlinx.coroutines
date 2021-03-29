@@ -14,10 +14,10 @@ import kotlin.coroutines.*
 import kotlin.internal.*
 
 /**
- * Creates cold [mono][Mono] that will run a given [block] in a coroutine and emits its result.
+ * Creates cold [mono][Mono] that runs a given [block] in a coroutine and emits its result.
  * Every time the returned mono is subscribed, it starts a new coroutine.
- * If [block] completes with `null` or its execution was cancelled, [MonoSink.success] is invoked without a value.
- * Unsubscribing cancels running coroutine.
+ * If the result of [block] is `null`, [MonoSink.success] is invoked without a value.
+ * Unsubscribing cancels the running coroutine.
  *
  * Coroutine context can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
@@ -84,16 +84,16 @@ private class MonoCoroutine<in T>(
     }
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
-        try {
-            /** Cancellation exceptions that were caused by [dispose], that is, came from downstream, are not errors. */
-            if (getCancellationException() !== cause || !disposed) {
+        /** Cancellation exceptions that were caused by [dispose], that is, came from downstream, are not errors. */
+        if (getCancellationException() !== cause || !disposed) {
+            try {
                 /** If [sink] turns out to already be in a terminal state, this exception will be passed through the
                  * [Hooks.onErrorDropped] hook, which is the way to signal undeliverable exceptions in Reactor. */
                 sink.error(cause)
+            } catch (e: Throwable) {
+                // In case of improper error implementation or fatal exceptions
+                handleCoroutineException(context, cause)
             }
-        } catch (e: Throwable) {
-            // In case of improper error implementation or fatal exceptions
-            handleCoroutineException(context, cause)
         }
     }
 
