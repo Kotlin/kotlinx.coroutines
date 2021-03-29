@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -490,7 +490,7 @@ public interface ChildHandle : DisposableHandle {
  * ```
  */
 internal fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle =
-    invokeOnCompletion(handler = DisposeOnCompletion(this, handle).asHandler)
+    invokeOnCompletion(handler = DisposeOnCompletion(handle).asHandler)
 
 /**
  * Cancels the job and suspends the invoking coroutine until the cancelled job is complete.

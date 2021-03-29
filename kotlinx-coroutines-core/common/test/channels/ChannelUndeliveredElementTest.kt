@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.channels
 
 import kotlinx.atomicfu.*
@@ -48,6 +52,20 @@ class ChannelUndeliveredElementTest : TestBase() {
         assertTrue(resB.isCancelled) // send was cancelled
         channel.cancel() // now cancel the channel
         assertTrue(resA.isCancelled) // now cancelled in buffer
+    }
+
+    @Test
+    fun testUnlimitedChannelCancelled() = runTest {
+        val channel = Channel<Resource>(Channel.UNLIMITED) { it.cancel() }
+        val resA = Resource("A")
+        val resB = Resource("B")
+        channel.send(resA) // goes to buffer
+        channel.send(resB) // goes to buffer
+        assertFalse(resA.isCancelled) // it is in buffer, not cancelled
+        assertFalse(resB.isCancelled) //  it is in buffer, not cancelled
+        channel.cancel() // now cancel the channel
+        assertTrue(resA.isCancelled) // now cancelled in buffer
+        assertTrue(resB.isCancelled) // now cancelled in buffer
     }
 
     @Test

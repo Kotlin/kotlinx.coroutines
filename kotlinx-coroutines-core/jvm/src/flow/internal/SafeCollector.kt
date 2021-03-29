@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.flow.internal
@@ -36,7 +36,7 @@ internal actual class SafeCollector<T> actual constructor(
     override val context: CoroutineContext
         get() = completion?.context ?: EmptyCoroutineContext
 
-    override fun invokeSuspend(result: Result<Any?>): Any? {
+    override fun invokeSuspend(result: Result<Any?>): Any {
         result.onFailure { lastEmissionContext = DownstreamExceptionElement(it) }
         completion?.resumeWith(result as Result<Unit>)
         return COROUTINE_SUSPENDED

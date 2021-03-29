@@ -61,7 +61,7 @@ stacktraces will be dumped to the console.
 ### Using as JVM agent
 
 Debug module can also be used as a standalone JVM agent to enable debug probes on the application startup.
-You can run your application with an additional argument: `-javaagent:kotlinx-coroutines-debug-1.4.2.jar`.
+You can run your application with an additional argument: `-javaagent:kotlinx-coroutines-debug-1.4.3.jar`.
 Additionally, on Linux and Mac OS X you can use `kill -5 $pid` command in order to force your application to print all alive coroutines.
 When used as Java agent, `"kotlinx.coroutines.debug.enable.creation.stack.trace"` system property can be used to control 
 [DebugProbes.enableCreationStackTraces] along with agent startup.
@@ -264,10 +264,13 @@ More than one file was found with OS independent path 'win32-x86-64/attach_hotsp
 -->
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->
+
 [Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
+
 <!--- MODULE kotlinx-coroutines-debug -->
 <!--- INDEX kotlinx.coroutines.debug -->
+
 [DebugProbes]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/index.html
 [DebugProbes.install]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/install.html
 [DebugProbes.dumpCoroutines]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/dump-coroutines.html
@@ -275,6 +278,9 @@ More than one file was found with OS independent path 'win32-x86-64/attach_hotsp
 [DebugProbes.printJob]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-job.html
 [DebugProbes.printScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-scope.html
 [DebugProbes.enableCreationStackTraces]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/enable-creation-stack-traces.html
+
 <!--- INDEX kotlinx.coroutines.debug.junit4 -->
+
 [CoroutinesTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug.junit4/-coroutines-timeout/index.html
+
 <!--- END -->

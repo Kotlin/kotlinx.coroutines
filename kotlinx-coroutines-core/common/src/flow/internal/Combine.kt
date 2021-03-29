@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("UNCHECKED_CAST", "NON_APPLICABLE_CALL_FOR_BUILDER_INFERENCE") // KT-32203
 
@@ -23,7 +23,7 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
     val size = flows.size
     if (size == 0) return@flowScope // bail-out for empty input
     val latestValues = arrayOfNulls<Any?>(size)
-    latestValues.fill(UNINITIALIZED) // Smaller bytecode & faster that Array(size) { UNINITIALIZED }
+    latestValues.fill(UNINITIALIZED) // Smaller bytecode & faster than Array(size) { UNINITIALIZED }
     val resultChannel = Channel<Update>(size)
     val nonClosed = LocalAtomicInt(size)
     var remainingAbsentValues = size

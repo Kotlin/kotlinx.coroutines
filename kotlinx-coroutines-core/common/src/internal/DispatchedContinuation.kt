@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -23,7 +23,7 @@ internal class DispatchedContinuation<in T>(
     @JvmField
     @Suppress("PropertyName")
     internal var _state: Any? = UNDEFINED
-    override val callerFrame: CoroutineStackFrame? = continuation as? CoroutineStackFrame
+    override val callerFrame: CoroutineStackFrame? get() = continuation as? CoroutineStackFrame
     override fun getStackTraceElement(): StackTraceElement? = null
     @JvmField // pre-cached value to avoid ctx.fold on every resumption
     internal val countOrElement = threadContextElements(context)
@@ -235,7 +235,7 @@ internal class DispatchedContinuation<in T>(
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
     inline fun resumeUndispatchedWith(result: Result<T>) {
-        withCoroutineContext(context, countOrElement) {
+        withContinuationContext(continuation, countOrElement) {
             continuation.resumeWith(result)
         }
     }

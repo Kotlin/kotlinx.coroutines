@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:OptIn(ExperimentalContracts::class)
 
@@ -327,13 +327,13 @@ internal class SelectBuilderImpl<in R>(
     private fun initCancellability() {
         val parent = context[Job] ?: return
         val newRegistration = parent.invokeOnCompletion(
-            onCancelling = true, handler = SelectOnCancelling(parent).asHandler)
+            onCancelling = true, handler = SelectOnCancelling().asHandler)
         parentHandle = newRegistration
         // now check our state _after_ registering
         if (isSelected) newRegistration.dispose()
     }
 
-    private inner class SelectOnCancelling(job: Job) : JobCancellingNode<Job>(job) {
+    private inner class SelectOnCancelling : JobCancellingNode() {
         // Note: may be invoked multiple times, but only the first trySelect succeeds anyway
         override fun invoke(cause: Throwable?) {
             if (trySelect())
@@ -552,7 +552,7 @@ internal class SelectBuilderImpl<in R>(
             return decision
         }
 
-        override val atomicOp: AtomicOp<*>?
+        override val atomicOp: AtomicOp<*>
             get() = otherOp.atomicOp
     }
 

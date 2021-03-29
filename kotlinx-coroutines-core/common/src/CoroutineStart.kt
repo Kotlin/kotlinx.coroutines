@@ -1,7 +1,6 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-@file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE")
 package kotlinx.coroutines
 
 import kotlinx.coroutines.CoroutineStart.*
@@ -59,8 +58,8 @@ public enum class CoroutineStart {
     ATOMIC,
 
     /**
-     * Immediately executes the coroutine until its first suspension point _in the current thread_ as if the
-     * coroutine was started using [Dispatchers.Unconfined]. However, when the coroutine is resumed from suspension
+     * Immediately executes the coroutine until its first suspension point _in the current thread_ similarly to
+     * the coroutine being started using [Dispatchers.Unconfined]. However, when the coroutine is resumed from suspension
      * it is dispatched according to the [CoroutineDispatcher] in its context.
      *
      * This is similar to [ATOMIC] in the sense that coroutine starts executing even if it was already cancelled,
@@ -69,9 +68,11 @@ public enum class CoroutineStart {
      * Cancellability of coroutine at suspension points depends on the particular implementation details of
      * suspending functions as in [DEFAULT].
      *
-     * **Note: This is an experimental api.** Execution semantics of coroutines may change in the future when this mode is used.
+     * ### Unconfined event loop
+     *
+     * Unlike [Dispatchers.Unconfined] and [MainCoroutineDispatcher.immediate], nested undispatched coroutines do not form
+     * an event loop that otherwise prevents potential stack overflow in case of unlimited nesting.
      */
-    @ExperimentalCoroutinesApi  // Since 1.0.0, no ETA on stability
     UNDISPATCHED;
 
     /**

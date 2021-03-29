@@ -1,13 +1,11 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.*
 
 /**
  * Creates a coroutine execution context using a single thread with built-in [yield] support.

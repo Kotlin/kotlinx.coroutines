@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -207,25 +207,17 @@ private class LazyStandaloneCoroutine(
 }
 
 // Used by withContext when context changes, but dispatcher stays the same
-private class UndispatchedCoroutine<in T>(
+internal expect class UndispatchedCoroutine<in T>(
     context: CoroutineContext,
     uCont: Continuation<T>
-) : ScopeCoroutine<T>(context, uCont) {
-    override fun afterResume(state: Any?) {
-        // resume undispatched -- update context by stay on the same dispatcher
-        val result = recoverResult(state, uCont)
-        withCoroutineContext(uCont.context, null) {
-            uCont.resumeWith(result)
-        }
-    }
-}
+) : ScopeCoroutine<T>
 
 private const val UNDECIDED = 0
 private const val SUSPENDED = 1
 private const val RESUMED = 2
 
 // Used by withContext when context dispatcher changes
-private class DispatchedCoroutine<in T>(
+internal class DispatchedCoroutine<in T>(
     context: CoroutineContext,
     uCont: Continuation<T>
 ) : ScopeCoroutine<T>(context, uCont) {
