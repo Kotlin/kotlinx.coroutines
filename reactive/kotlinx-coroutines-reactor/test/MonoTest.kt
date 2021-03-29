@@ -5,6 +5,7 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
 import org.junit.*
@@ -14,6 +15,7 @@ import reactor.core.publisher.*
 import reactor.util.context.*
 import java.time.*
 import java.time.Duration.*
+import java.util.concurrent.*
 import java.util.function.*
 import kotlin.test.*
 
@@ -21,6 +23,7 @@ class MonoTest : TestBase() {
     @Before
     fun setup() {
         ignoreLostThreads("timer-", "parallel-")
+        Hooks.onErrorDropped { expectUnreached() }
     }
 
     @Test
@@ -286,17 +289,57 @@ class MonoTest : TestBase() {
         }
     }
 
+    /** Test that cancelling a [mono] due to a timeout does throw an exception. */
     @Test
     fun testTimeout() {
         val mono = mono {
             withTimeout(1) { delay(100) }
         }
-        mono.doOnSubscribe { expect(1) }
+        try {
+            mono.doOnSubscribe { expect(1) }
+                .doOnNext { expectUnreached() }
+                .doOnSuccess { expectUnreached() }
+                .doOnError { expect(2) }
+                .doOnCancel { expectUnreached() }
+                .block()
+        } catch (e: CancellationException) {
+            expect(3)
+        }
+        finish(4)
+    }
+
+    /** Test that when the reason for cancellation of a [mono] is that the downstream doesn't want its results anymore,
+     * this is considered normal behavior and exceptions are not propagated. */
+    @Test
+    fun testDownstreamCancellationDoesNotThrow() = runTest {
+        /** Attach a hook that handles exceptions from publishers that are known to be disposed of. We don't expect it
+         * to be fired in this case, as the reason for the publisher in this test to accept an exception is simply
+         * cancellation from the downstream. */
+        Hooks.onOperatorError("testDownstreamCancellationDoesNotThrow") { t, a ->
+            expectUnreached()
+            t
+        }
+        /** A Mono that doesn't emit a value and instead waits indefinitely. */
+        val mono = mono { expect(3); delay(Long.MAX_VALUE) }
+            .doOnSubscribe { expect(2) }
             .doOnNext { expectUnreached() }
-            .doOnSuccess { expect(2) }
+            .doOnSuccess { expectUnreached() }
             .doOnError { expectUnreached() }
-            .doOnCancel { expectUnreached() }
-            .block()
-        finish(3)
+            .doOnCancel { expect(4) }
+        /** There are no guarantees about the execution context in which the cancellation handler will run, but we have
+         * to somehow make sure that [Hooks.resetOnOperatorError] occurs after that, as otherwise, the test will pass
+         * successfully even for an incorrect implementation. This contraption seems to ensure that the cancellation
+         * handler does complete before [finish] is called. */
+        newSingleThreadContext("testDownstreamCancellationDoesNotThrow").use { pool ->
+            val job = launch(pool, start = CoroutineStart.UNDISPATCHED) {
+                expect(1)
+                mono.await()
+            }
+            launch(pool) {
+                job.cancelAndJoin()
+            }
+        }.join()
+        finish(5)
+        Hooks.resetOnOperatorError("testDownstreamCancellationDoesNotThrow")
     }
 }

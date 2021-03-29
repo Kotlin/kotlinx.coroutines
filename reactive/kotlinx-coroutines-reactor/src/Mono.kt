@@ -7,6 +7,7 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
+import org.reactivestreams.*
 import reactor.core.*
 import reactor.core.publisher.*
 import kotlin.coroutines.*
@@ -30,6 +31,22 @@ public fun <T> mono(
     require(context[Job] === null) { "Mono context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
     return monoInternal(GlobalScope, context, block)
+}
+
+@Suppress("UNCHECKED_CAST")
+internal suspend fun <T> Mono<T>.await(): T? = (this as Mono<T?>).awaitOrDefault(null)
+
+internal suspend fun <T> Mono<T>.awaitOrDefault(default: T): T = suspendCancellableCoroutine { cont ->
+    subscribe(object: CoreSubscriber<T> {
+        override fun onSubscribe(s: Subscription) {
+            cont.invokeOnCancellation { s.cancel() }
+            s.request(1)
+        }
+        override fun onNext(t: T) { cont.resume(t) }
+        override fun onError(t: Throwable) { cont.resumeWithException(t) }
+        override fun onComplete() { cont.resume(default) }
+
+    })
 }
 
 @Deprecated(
@@ -68,11 +85,8 @@ private class MonoCoroutine<in T>(
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
         try {
-            if (getCancellationException() === cause) {
-                /** Cancellation exceptions are meaningless to the user, so we present them as absences of a value. If
-                 * [sink] is already in a terminal state, this call will be ignored altogether, which is good. */
-                sink.success()
-            } else {
+            /** Cancellation exceptions that were caused by [dispose], that is, came from downstream, are not errors. */
+            if (getCancellationException() !== cause || !disposed) {
                 /** If [sink] turns out to already be in a terminal state, this exception will be passed through the
                  * [Hooks.onErrorDropped] hook, which is the way to signal undeliverable exceptions in Reactor. */
                 sink.error(cause)
