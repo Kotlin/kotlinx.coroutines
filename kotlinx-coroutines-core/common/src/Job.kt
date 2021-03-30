@@ -252,9 +252,9 @@ public interface Job : CoroutineContext.Element {
      * suspending function is invoked or while it is suspended, this function
      * throws [CancellationException].
      *
-     * In particular, it means that a parent coroutine invoking `join` on a child coroutine that was started using
-     * `launch(coroutineContext) { ... }` builder throws [CancellationException] if the child
-     * had crashed, unless a non-standard [CoroutineExceptionHandler] is installed in the context.
+     * In particular, it means that a parent coroutine invoking `join` on a child coroutine throws
+     * [CancellationException] if the child had failed, since a failure of a child coroutine cancels parent by default,
+     * unless the child was launched from within [supervisorScope].
      *
      * This function can be used in [select] invocation with [onJoin] clause.
      * Use [isCompleted] to check for a completion of this job without waiting.
