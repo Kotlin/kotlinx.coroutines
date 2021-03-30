@@ -333,7 +333,7 @@ class MonoTest : TestBase() {
         newSingleThreadContext("testDownstreamCancellationDoesNotThrow").use { pool ->
             val job = launch(pool, start = CoroutineStart.UNDISPATCHED) {
                 expect(1)
-                mono.await()
+                mono.awaitFirstOrNull()
             }
             launch(pool) {
                 job.cancelAndJoin()

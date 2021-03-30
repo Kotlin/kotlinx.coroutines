@@ -7,6 +7,7 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
 import org.reactivestreams.*
 import reactor.core.*
 import reactor.core.publisher.*
@@ -14,7 +15,7 @@ import kotlin.coroutines.*
 import kotlin.internal.*
 
 /**
- * Creates cold [mono][Mono] that runs a given [block] in a coroutine and emits its result.
+ * Creates a cold [mono][Mono] that runs a given [block] in a coroutine and emits its result.
  * Every time the returned mono is subscribed, it starts a new coroutine.
  * If the result of [block] is `null`, [MonoSink.success] is invoked without a value.
  * Unsubscribing cancels the running coroutine.
@@ -22,7 +23,7 @@ import kotlin.internal.*
  * Coroutine context can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  *
- * Method throws [IllegalArgumentException] if provided [context] contains a [Job] instance.
+ * @throws IllegalArgumentException if the provided [context] contains a [Job] instance.
  */
 public fun <T> mono(
     context: CoroutineContext = EmptyCoroutineContext,
@@ -31,22 +32,6 @@ public fun <T> mono(
     require(context[Job] === null) { "Mono context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
     return monoInternal(GlobalScope, context, block)
-}
-
-@Suppress("UNCHECKED_CAST")
-internal suspend fun <T> Mono<T>.await(): T? = (this as Mono<T?>).awaitOrDefault(null)
-
-internal suspend fun <T> Mono<T>.awaitOrDefault(default: T): T = suspendCancellableCoroutine { cont ->
-    subscribe(object: CoreSubscriber<T> {
-        override fun onSubscribe(s: Subscription) {
-            cont.invokeOnCancellation { s.cancel() }
-            s.request(1)
-        }
-        override fun onNext(t: T) { cont.resume(t) }
-        override fun onError(t: Throwable) { cont.resumeWithException(t) }
-        override fun onComplete() { cont.resume(default) }
-
-    })
 }
 
 @Deprecated(
