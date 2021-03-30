@@ -104,11 +104,11 @@ class FluxSingleTest : TestBase() {
     @Test
     fun testAwaitSingleOrNullException() {
         val flux = flux {
-            send((Flux.just("O", "#").awaitSingleOrNull() ?: "!") + "K")
+            send((Flux.just("!", "#").awaitSingleOrNull() ?: "O") + "K")
         }
 
-        checkErroneous(flux) {
-            assert(it is IllegalArgumentException)
+        checkSingleValue(flux) {
+            assertEquals("OK", it)
         }
     }
 
