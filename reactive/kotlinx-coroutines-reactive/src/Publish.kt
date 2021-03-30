@@ -12,22 +12,25 @@ import org.reactivestreams.*
 import kotlin.coroutines.*
 
 /**
- * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
- * Every time the returned flux is subscribed, it starts a new coroutine in the specified [context].
- * Coroutine emits ([Subscriber.onNext]) values with `send`, completes ([Subscriber.onComplete])
- * when the coroutine completes or channel is explicitly closed and emits error ([Subscriber.onError])
- * if coroutine throws an exception or closes channel with a cause.
- * Unsubscribing cancels running coroutine.
+ * Creates a cold reactive [Publisher] that runs a given [block] in a coroutine.
  *
- * Invocations of `send` are suspended appropriately when subscribers apply back-pressure and to ensure that
- * `onNext` is not invoked concurrently.
+ * Every time the returned flux is subscribed, it starts a new coroutine in the specified [context].
+ * The coroutine emits (via [Subscriber.onNext]) values with [send][ProducerScope.send],
+ * completes (via [Subscriber.onComplete]) when the coroutine completes or channel is explicitly closed, and emits
+ * errors (via [Subscriber.onError]) if the coroutine throws an exception or closes channel with a cause.
+ * Unsubscribing cancels the running coroutine.
+ *
+ * Invocations of [send][ProducerScope.send] are suspended appropriately when subscribers apply back-pressure and to
+ * ensure that [onNext][Subscriber.onNext] is not invoked concurrently.
  *
  * Coroutine context can be specified with [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
- * Method throws [IllegalArgumentException] if provided [context] contains a [Job] instance.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is
+ * used.
  *
  * **Note: This is an experimental api.** Behaviour of publishers that work as children in a parent scope with respect
  *        to cancellation and error handling may change in the future.
+ *
+ * @throws IllegalArgumentException if the provided [context] contains a [Job] instance.
  */
 @ExperimentalCoroutinesApi
 public fun <T> publish(
