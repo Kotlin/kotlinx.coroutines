@@ -29,7 +29,7 @@ import org.reactivestreams.FlowAdapters
  *        to cancellation and error handling may change in the future.
  */
 @ExperimentalCoroutinesApi // Since 1.3.x
-public fun <T> flowPublish(
+public fun <T : Any> flowPublish(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flow.Publisher<T> {

@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.reactive
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.reactivestreams.*
 import kotlin.coroutines.*
@@ -18,7 +19,10 @@ import kotlin.coroutines.*
 @Deprecated(message = "Deprecated in the favour of consumeAsFlow()",
     level = DeprecationLevel.WARNING, // Error in 1.4
     replaceWith = ReplaceWith("this.consumeAsFlow().asPublisher()"))
-public fun <T> ReceiveChannel<T>.asPublisher(context: CoroutineContext = EmptyCoroutineContext): Publisher<T> = publish(context) {
-    for (t in this@asPublisher)
-        send(t)
-}
+public fun <T> ReceiveChannel<T>.asPublisher(context: CoroutineContext = EmptyCoroutineContext): Publisher<T> =
+    // we call the deprecated version here because the non-deprecated one requires <T: Any> now
+    @Suppress("DEPRECATION_ERROR")
+    GlobalScope.publish(context) {
+        for (t in this@asPublisher)
+            send(t)
+    }

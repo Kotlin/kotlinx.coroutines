@@ -34,7 +34,7 @@ import kotlin.internal.*
  *        to cancellation and error handling may change in the future.
  */
 @ExperimentalCoroutinesApi
-public fun <T> publish(
+public fun <T : Any> publish(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> {
