@@ -20,7 +20,7 @@ public interface ChunkingMethod {
     public fun <T> Flow<T>.chunk(): Flow<List<T>>
 
     public companion object {
-        public fun Natural(maxSize: Int = Int.MAX_VALUE): ChunkingMethod = TimeBased(0, maxSize)
+        public fun Natural(maxSize: Int = Int.MAX_VALUE): ChunkingMethod = NaturalChunking(maxSize)
 
         public fun ByTime(intervalMs: Long, maxSize: Int = Int.MAX_VALUE): ChunkingMethod =
             TimeBased(intervalMs, maxSize)
@@ -31,15 +31,39 @@ public interface ChunkingMethod {
     }
 }
 
-private class TimeBased(private val intervalMs: Long, private val maxSize: Int) : ChunkingMethod {
+private class NaturalChunking(private val maxSize: Int) : ChunkingMethod {
 
     override fun <T> Flow<T>.chunk(): Flow<List<T>> = scopedFlow { downstream ->
         val upstream = buffer(maxSize).produceIn(this)
 
         while (!upstream.isClosedForReceive) {
-            delay(intervalMs)
             val chunk = upstream.awaitFirstAndDrain(maxSize)
             if (chunk.isNotEmpty()) downstream.emit(chunk)
+        }
+    }
+}
+
+private class TimeBased(private val intervalMs: Long, private val maxSize: Int) : ChunkingMethod {
+
+    override fun <T> Flow<T>.chunk(): Flow<List<T>> = scopedFlow { downstream ->
+        val upstreamCollection = Job()
+        val upstream = produce<T>(capacity = maxSize) {
+            collect { element -> channel.send(element) }
+            upstreamCollection.complete()
+        }
+
+        whileSelect {
+            upstreamCollection.onJoin {
+                val chunk = upstream.drain(maxElements = maxSize)
+                if (chunk.isNotEmpty()) downstream.emit(chunk)
+                false
+            }
+
+            onTimeout(intervalMs) {
+                val chunk = upstream.awaitFirstAndDrain(maxElements = maxSize)
+                if (chunk.isNotEmpty()) downstream.emit(chunk)
+                true
+            }
         }
     }
 }
