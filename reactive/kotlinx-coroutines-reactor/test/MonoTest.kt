@@ -15,7 +15,6 @@ import reactor.core.publisher.*
 import reactor.util.context.*
 import java.time.*
 import java.time.Duration.*
-import java.util.concurrent.*
 import java.util.function.*
 import kotlin.test.*
 
@@ -326,20 +325,57 @@ class MonoTest : TestBase() {
             .doOnSuccess { expectUnreached() }
             .doOnError { expectUnreached() }
             .doOnCancel { expect(4) }
-        /** There are no guarantees about the execution context in which the cancellation handler will run, but we have
-         * to somehow make sure that [Hooks.resetOnOperatorError] occurs after that, as otherwise, the test will pass
-         * successfully even for an incorrect implementation. This contraption seems to ensure that the cancellation
-         * handler does complete before [finish] is called. */
-        newSingleThreadContext("testDownstreamCancellationDoesNotThrow").use { pool ->
-            val job = launch(pool, start = CoroutineStart.UNDISPATCHED) {
-                expect(1)
-                mono.awaitFirstOrNull()
+        expect(1)
+        mono.awaitCancelAndJoin()
+        finish(5)
+        Hooks.resetOnOperatorError("testDownstreamCancellationDoesNotThrow")
+    }
+
+    /** Test that, when [Mono] is cancelled by the downstream and throws during handling the cancellation, the resulting
+     * error is propagated to [Hooks.onOperatorError]. */
+    @Test
+    fun testRethrowingDownstreamCancellation() = runTest {
+        /** Attach a hook that handles exceptions from publishers that are known to be disposed of. We expect it
+         * to be fired in this case. */
+        Hooks.onOperatorError("testDownstreamCancellationDoesNotThrow") { t, a ->
+            expect(5)
+            t
+        }
+        /** A Mono that doesn't emit a value and instead waits indefinitely, and, when cancelled, throws. */
+        val mono = mono {
+            expect(3);
+            try {
+                delay(Long.MAX_VALUE)
+            } catch (e: CancellationException) {
+                throw TestException()
             }
+        }
+            .doOnSubscribe { expect(2) }
+            .doOnNext { expectUnreached() }
+            .doOnSuccess { expectUnreached() }
+            .doOnError { expectUnreached() }
+            .doOnCancel { expect(4) }
+        expect(1)
+        mono.awaitCancelAndJoin()
+        finish(6) /** if this line fails, see the comment for [awaitCancelAndJoin] */
+        Hooks.resetOnOperatorError("testDownstreamCancellationDoesNotThrow")
+    }
+
+    /** Run the given [Mono], cancel it, wait for the cancellation handler to finish, and *return only then*.
+     *
+     * There are no guarantees about the execution context in which the cancellation handler will run, but we have
+     * to wait for it to finish to check its behavior. The contraption below seems to ensure that everything works out.
+     * If it stops giving that guarantee, then [testRethrowingDownstreamCancellation] should fail more or less
+     * consistently because the hook won't have enough time to fire before a call to [finish].
+     */
+    private suspend fun <T> Mono<T>.awaitCancelAndJoin() = coroutineScope {
+        val job = async(start = CoroutineStart.UNDISPATCHED) {
+            awaitFirstOrNull()
+        }
+        newSingleThreadContext("monoCancellationCleanup").use { pool ->
             launch(pool) {
                 job.cancelAndJoin()
             }
         }.join()
-        finish(5)
-        Hooks.resetOnOperatorError("testDownstreamCancellationDoesNotThrow")
     }
 }
