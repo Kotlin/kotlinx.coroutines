@@ -12,6 +12,11 @@ public actual object Dispatchers {
     public actual val Default: CoroutineDispatcher get() = DefaultDispatcher
     public actual val Main: MainCoroutineDispatcher = createMainDispatcher(Default)
     public actual val Unconfined: CoroutineDispatcher get() = kotlinx.coroutines.Unconfined // Avoid freezing
+
+    @ExperimentalCoroutinesApi
+    public fun CoroutineDispatcher.shutdown() {
+        if (this === DefaultDispatcher) shutdown()
+    }
 }
 
 internal expect fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher
@@ -39,8 +44,7 @@ internal object DefaultDispatcher : CoroutineDispatcher(), Delay, ThreadBoundInt
     override fun toString(): String =
         delegate.toString()
 
-    // only for tests
-    internal fun shutdown() {
+    fun shutdown() {
         _delegate.getAndSet(null)?.close()
     }
 }
