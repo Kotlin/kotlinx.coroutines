@@ -10,14 +10,16 @@ import kotlin.coroutines.*
 import kotlinx.coroutines.reactive.*
 
 /**
- * Wraps Reactor's [Context] into [CoroutineContext] element for seamless integration Reactor and kotlinx.coroutines.
- * [Context.asCoroutineContext] is defined to add Reactor's [Context] elements as part of [CoroutineContext].
- * Coroutine context element that propagates information about Reactor's [Context] through coroutines.
+ * Wraps Reactor's [Context] into a [CoroutineContext] element for seamless integration between
+ * Reactor and kotlinx.coroutines.
+ * [Context.asCoroutineContext] is defined to place Reactor's [Context] elements into a [CoroutineContext],
+ * which can be used to propagate the information about Reactor's [Context] through coroutines.
  *
- * This context element is implicitly propagated through subscriber's context by all Reactive integrations, such as [mono], [flux],
- * [Publisher.asFlow][asFlow], [Flow.asPublisher][asPublisher] and [Flow.asFlux][asFlux].
- * Functions that subscribe to the reactive stream (e.g. [Publisher.awaitFirst][kotlinx.coroutines.reactive.awaitFirst])
- * also propagate the [ReactorContext] to the subscriber's [Context].
+ * This context element is implicitly propagated through subscriber's context by all Reactive integrations,
+ * such as [mono], [flux], [Publisher.asFlow][asFlow], [Flow.asPublisher][asPublisher] and [Flow.asFlux][asFlux].
+ * Functions that subscribe to the reactive stream
+ * (e.g. [Publisher.awaitFirst][kotlinx.coroutines.reactive.awaitFirst]), too, propagate [ReactorContext]
+ * to the subscriber's [Context].
  **
  * ### Examples of Reactive context integration.
  *
