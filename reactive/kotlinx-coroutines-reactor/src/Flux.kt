@@ -44,10 +44,11 @@ private fun <T> reactorPublish(
     scope: CoroutineScope,
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Publisher<T> = Publisher { subscriber ->
-    // specification requires NPE on null subscriber
-    if (subscriber == null) throw NullPointerException("Subscriber cannot be null")
-    require(subscriber is CoreSubscriber) { "Subscriber is not an instance of CoreSubscriber, context can not be extracted." }
+): Publisher<T> = Publisher onSubscribe@{ subscriber: Subscriber<in T>? ->
+    if (subscriber !is CoreSubscriber) {
+        subscriber.reject(IllegalArgumentException("Subscriber is not an instance of CoreSubscriber, context can not be extracted."))
+        return@onSubscribe
+    }
     val currentContext = subscriber.currentContext()
     val reactorContext = (context[ReactorContext]?.context?.putAll(currentContext) ?: currentContext).asCoroutineContext()
     val newContext = scope.newCoroutineContext(context + reactorContext)
@@ -65,6 +66,23 @@ private val REACTOR_HANDLER: (Throwable, CoroutineContext) -> Unit = { cause, ct
             handleCoroutineException(ctx, cause)
         }
     }
+}
+
+/** The proper way to reject the subscriber, according to
+ * [the reactive spec](https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.3/README.md#1.9)
+ */
+private fun <T> Subscriber<T>?.reject(t: Throwable) {
+    if (this == null)
+        throw NullPointerException("The subscriber can not be null")
+    onSubscribe(object: Subscription {
+        override fun request(n: Long) {
+            // intentionally left blank
+        }
+        override fun cancel() {
+            // intentionally left blank
+        }
+    })
+    onError(t)
 }
 
 @Deprecated(
