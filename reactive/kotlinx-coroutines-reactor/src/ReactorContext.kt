@@ -5,9 +5,9 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import reactor.util.context.Context
 import kotlin.coroutines.*
 import kotlinx.coroutines.reactive.*
+import reactor.util.context.*
 
 /**
  * Wraps Reactor's [Context] into a [CoroutineContext] element for seamless integration between
@@ -51,12 +51,29 @@ import kotlinx.coroutines.reactive.*
  */
 @ExperimentalCoroutinesApi
 public class ReactorContext(public val context: Context) : AbstractCoroutineContextElement(ReactorContext) {
+
+    public constructor(contextView: ContextView): this(Context.of(contextView))
+
     public companion object Key : CoroutineContext.Key<ReactorContext>
 }
 
 /**
- * Wraps the given [Context] into [ReactorContext], so it can be added to coroutine's context
+ * Wraps the given [ContextView] into [ReactorContext], so it can be added to the coroutine's context
  * and later used via `coroutineContext[ReactorContext]`.
  */
 @ExperimentalCoroutinesApi
-public fun Context.asCoroutineContext(): ReactorContext = ReactorContext(this)
+public fun ContextView.asCoroutineContext(): ReactorContext = ReactorContext(this)
+
+/**
+ * Wraps the given [Context] into [ReactorContext], so it can be added to the coroutine's context
+ * and later used via `coroutineContext[ReactorContext]`.
+ */
+@ExperimentalCoroutinesApi
+@Deprecated("Use the more general version for ContextView instead", level = DeprecationLevel.HIDDEN)
+public fun Context.asCoroutineContext(): ReactorContext = readOnly().asCoroutineContext()
+
+/**
+ * Updates the Reactor context in this [CoroutineContext], adding (or possibly replacing) some values.
+ */
+internal fun CoroutineContext.extendReactorContext(extensions: ContextView): CoroutineContext =
+    (this[ReactorContext]?.context?.putAll(extensions) ?: extensions).asCoroutineContext()

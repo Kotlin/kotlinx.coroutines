@@ -50,7 +50,7 @@ private fun <T> reactorPublish(
         return@onSubscribe
     }
     val currentContext = subscriber.currentContext()
-    val reactorContext = (context[ReactorContext]?.context?.putAll(currentContext) ?: currentContext).asCoroutineContext()
+    val reactorContext = context.extendReactorContext(currentContext)
     val newContext = scope.newCoroutineContext(context + reactorContext)
     val coroutine = PublisherCoroutine(newContext, subscriber, REACTOR_HANDLER)
     subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions

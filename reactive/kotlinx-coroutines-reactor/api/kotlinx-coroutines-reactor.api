@@ -33,6 +33,7 @@ public final class kotlinx/coroutines/reactor/MonoKt {
 public final class kotlinx/coroutines/reactor/ReactorContext : kotlin/coroutines/AbstractCoroutineContextElement {
 	public static final field Key Lkotlinx/coroutines/reactor/ReactorContext$Key;
 	public fun <init> (Lreactor/util/context/Context;)V
+	public fun <init> (Lreactor/util/context/ContextView;)V
 	public final fun getContext ()Lreactor/util/context/Context;
 }
 
@@ -40,7 +41,8 @@ public final class kotlinx/coroutines/reactor/ReactorContext$Key : kotlin/corout
 }
 
 public final class kotlinx/coroutines/reactor/ReactorContextKt {
-	public static final fun asCoroutineContext (Lreactor/util/context/Context;)Lkotlinx/coroutines/reactor/ReactorContext;
+	public static final synthetic fun asCoroutineContext (Lreactor/util/context/Context;)Lkotlinx/coroutines/reactor/ReactorContext;
+	public static final fun asCoroutineContext (Lreactor/util/context/ContextView;)Lkotlinx/coroutines/reactor/ReactorContext;
 }
 
 public final class kotlinx/coroutines/reactor/ReactorFlowKt {
