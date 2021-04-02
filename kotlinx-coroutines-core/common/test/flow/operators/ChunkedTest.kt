@@ -132,6 +132,86 @@ class ChunkedTest : TestBase() {
         assertEquals(3, result.first().single())
     }
 
+    @Test
+    fun testTimeBasedChunkingOfMultipleElements() = withVirtualTime {
+        val producer = flow<Int> {
+            for (i in 1..10) {
+                delay(1000)
+                emit(i)
+            }
+        }
+
+        val result = producer.chunked(ChunkingMethod.ByTime(5500)).toList()
+
+        finish(1)
+
+        assertEquals(2, result.size)
+        assertEquals(5, result.first().size)
+        assertEquals(5, result[1].size)
+    }
+
+    @Test
+    fun testTimeBasedChunkingWithMaxChunkSizeSuspendingProducer() = runTest {
+        val producer = flow<Int> {
+            for (i in 1..10) {
+                emit(i)
+            }
+        }
+
+        val result = measureTimedValue { producer.chunked(ChunkingMethod.ByTime(200, maxSize = 5)).toList() }
+
+        finish(1)
+
+        assertEquals(2, result.value.size)
+        assertEquals(5, result.value.first().size)
+        assertEquals(5, result.value[1].size)
+        assertTrue(result.duration >= 200.milliseconds, "expected time at least 400 ms but was: ${result.duration}")
+    }
+
+    @Test
+    fun testEmptyFlowTimeOrSizeBasedChunking() = runTest {
+        val emptyFlow = emptyFlow<Int>()
+        val result = measureTimedValue {
+            emptyFlow.chunked(ChunkingMethod.ByTimeOrSize(intervalMs = 10 * 1000, maxSize = 5)).toList()
+        }
+        assertTrue(result.value.isEmpty())
+        assertTrue(result.duration < 500.milliseconds)
+    }
+
+    @Test
+    fun testMultipleElementsFillingBufferWithTimeOrSizeBasedChunking() = runTest {
+        val flow = flow<Int> {
+            for (i in 1..10) {
+                emit(i)
+            }
+        }
+        val result = measureTimedValue {
+            flow.chunked(ChunkingMethod.ByTimeOrSize(intervalMs = 10 * 1000, maxSize = 5)).toList()
+        }
+        assertEquals(2, result.value.size)
+        assertEquals(5, result.value.first().size)
+        assertEquals(5, result.value[1].size)
+        assertTrue(result.duration < 500.milliseconds)
+    }
+
+    @Test
+    fun testMultipleElementsNotFillingBufferWithTimeOrSizeBasedChunking() = runTest {
+        val flow = flow<Int> {
+            for (i in 1..10) {
+                delay(10)
+                emit(i)
+            }
+        }
+        val result = measureTimedValue {
+            flow.chunked(ChunkingMethod.ByTimeOrSize(intervalMs = 55, maxSize = 500)).toList()
+        }
+
+        assertEquals(2, result.value.size)
+        assertEquals(5, result.value.first().size)
+        assertEquals(5, result.value[1].size)
+        assertTrue(result.duration >= 100.milliseconds)
+    }
+
 //    @Test
 //    fun testEmptyFlowChunking() = runTest {
 //        val emptyFlow = emptyFlow<Int>()
