@@ -8,6 +8,7 @@ internal expect val DEBUG: Boolean
 internal expect val Any.hexAddress: String
 internal expect val Any.classSimpleName: String
 internal expect fun assert(value: () -> Boolean)
+internal inline fun assertNot(crossinline value: () -> Boolean) = assert { !value() }
 
 /**
  * Throwable which can be cloned during stacktrace recovery in a class-specific way.
