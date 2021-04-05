@@ -28,15 +28,21 @@ import kotlin.native.concurrent.*
  */
 public interface Mutex {
     /**
-     * Returns `true` when this mutex is locked.
+     * Returns `true` if this mutex is locked.
      */
     public val isLocked: Boolean
 
     /**
      * Tries to lock this mutex, returning `false` if this mutex is already locked.
      *
+     * It is recommended to use [withLock] for safety reasons, so that the acquired lock is always
+     * released at the end of your critical section and [unlock] is never invoked before a successful
+     * lock acquisition.
+     *
      * @param owner Optional owner token for debugging. When `owner` is specified (non-null value) and this mutex
      *        is already locked with the same token (same identity), this function throws [IllegalStateException].
+     *
+     *
      */
     public fun tryLock(owner: Any? = null): Boolean
 
@@ -58,6 +64,10 @@ public interface Mutex {
      *
      * This function is fair; suspended callers are resumed in first-in-first-out order.
      *
+     * It is recommended to use [withLock] for safety reasons, so that the acquired lock is always
+     * released at the end of your critical section and [unlock] is never invoked before a successful
+     * lock acquisition.
+     *
      * @param owner Optional owner token for debugging. When `owner` is specified (non-null value) and this mutex
      *        is already locked with the same token (same identity), this function throws [IllegalStateException].
      */
@@ -67,19 +77,29 @@ public interface Mutex {
      * Clause for [select] expression of [lock] suspending function that selects when the mutex is locked.
      * Additional parameter for the clause in the `owner` (see [lock]) and when the clause is selected
      * the reference to this mutex is passed into the corresponding block.
+     *
+     * It is recommended to use [withLock] for safety reasons, so that the acquired lock is always
+     * released at the end of your critical section and [unlock] is never invoked before a successful
+     * lock acquisition.
      */
     public val onLock: SelectClause2<Any?, Mutex>
 
     /**
-     * Checks mutex locked by owner
+     * Checks whether this mutex is locked by the specified owner.
      *
      * @return `true` on mutex lock by owner, `false` if not locker or it is locked by different owner
+     *
+     * TODO let's deprecate this method, as well as owners in general
      */
     public fun holdsLock(owner: Any): Boolean
 
     /**
      * Unlocks this mutex. Throws [IllegalStateException] if invoked on a mutex that is not locked or
      * was locked with a different owner token (by identity).
+     *
+     * It is recommended to use [withLock] for safety reasons, so that the acquired lock is always
+     * released  at the end of your critical section and [unlock] is never invoked before a successful
+     * lock acquisition.
      *
      * @param owner Optional owner token for debugging. When `owner` is specified (non-null value) and this mutex
      *        was locked with the different token (by identity), this function throws [IllegalStateException].

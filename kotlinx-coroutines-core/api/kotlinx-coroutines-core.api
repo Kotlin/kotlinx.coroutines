@@ -1271,6 +1271,18 @@ public final class kotlinx/coroutines/sync/MutexKt {
 	public static synthetic fun withLock$default (Lkotlinx/coroutines/sync/Mutex;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
+public abstract interface class kotlinx/coroutines/sync/ReadWriteMutex {
+	public abstract fun getWrite ()Lkotlinx/coroutines/sync/Mutex;
+	public abstract fun readLock (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun readUnlock ()V
+}
+
+public final class kotlinx/coroutines/sync/ReadWriteMutexKt {
+	public static final fun ReadWriteMutex ()Lkotlinx/coroutines/sync/ReadWriteMutex;
+	public static final fun read (Lkotlinx/coroutines/sync/ReadWriteMutex;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun write (Lkotlinx/coroutines/sync/ReadWriteMutex;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public abstract interface class kotlinx/coroutines/sync/Semaphore {
 	public abstract fun acquire (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getAvailablePermits ()I
