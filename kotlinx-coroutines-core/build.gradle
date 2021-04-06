@@ -208,8 +208,20 @@ jvmTest {
     }
 }
 
-jvmJar {
-    manifest {
+// Setup manifest for kotlinx-coroutines-core-jvm.jar
+jvmJar { setupManifest(it) }
+
+/*
+ * Setup manifest for kotlinx-coroutines-core.jar
+ * This is convenient for users that pass -javaagent arg manually and also is a workaround #2619 and KTIJ-5659.
+ * This manifest contains reference to AgentPremain that belongs to
+ * kotlinx-coroutines-core-jvm, but our resolving machinery guarantees that
+ * any JVM project that depends on -core artifact also depends on -core-jvm one.
+ */
+metadataJar { setupManifest(it) }
+
+static def setupManifest(Jar jar) {
+    jar.manifest {
         attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
         attributes "Can-Retransform-Classes": "true"
     }
