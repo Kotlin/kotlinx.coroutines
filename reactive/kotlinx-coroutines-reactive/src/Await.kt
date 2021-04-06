@@ -184,8 +184,9 @@ private suspend fun <T> Publisher<T>.awaitOne(
                     if ((mode == Mode.SINGLE || mode == Mode.SINGLE_OR_DEFAULT) && seenValue) {
                         sub.cancel()
                         // the check for `cont.isActive` is just a slight optimization and doesn't affect correctness
-                        if (cont.isActive)
+                        if (cont.isActive) {
                             cont.resumeWithException(IllegalArgumentException("More than one onNext value for $mode"))
+                        }
                     } else {
                         value = t
                         seenValue = true
@@ -200,8 +201,9 @@ private suspend fun <T> Publisher<T>.awaitOne(
                 return
             if (seenValue) {
                 // the check for `cont.isActive` is just a slight optimization and doesn't affect correctness
-                if (mode != Mode.FIRST_OR_DEFAULT && mode != Mode.FIRST && cont.isActive)
+                if (mode != Mode.FIRST_OR_DEFAULT && mode != Mode.FIRST && cont.isActive) {
                     cont.resume(value as T)
+                }
                 return
             }
             when {
@@ -216,8 +218,9 @@ private suspend fun <T> Publisher<T>.awaitOne(
         }
 
         override fun onError(e: Throwable) {
-            if (tryEnterTerminalState("onError"))
+            if (tryEnterTerminalState("onError")) {
                 cont.resumeWithException(e)
+            }
         }
 
         /**
