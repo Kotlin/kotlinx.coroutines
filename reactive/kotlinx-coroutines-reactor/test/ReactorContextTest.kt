@@ -74,7 +74,7 @@ class ReactorContextTest : TestBase() {
     }
 
 
-    private fun createFlux(): Flux<String?> = flux {
+    private fun createFlux(): Flux<String> = flux {
         val ctx = reactorContext()
         (1..3).forEach { send(ctx.getOrDefault(it, "noValue")) }
     }

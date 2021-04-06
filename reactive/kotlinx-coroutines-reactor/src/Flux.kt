@@ -34,7 +34,7 @@ import kotlin.internal.*
  *        to cancellation and error handling may change in the future.
  */
 @ExperimentalCoroutinesApi
-public fun <T> flux(
+public fun <T : Any> flux(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flux<T> {

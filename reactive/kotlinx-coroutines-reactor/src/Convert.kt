@@ -36,7 +36,7 @@ public fun Job.asMono(context: CoroutineContext): Mono<Unit> = mono(context) { t
  * @param context -- the coroutine context from which the resulting mono is going to be signalled
  */
 @ExperimentalCoroutinesApi
-public fun <T> Deferred<T?>.asMono(context: CoroutineContext): Mono<T> = mono(context) { this@asMono.await() }
+public fun <T : Any> Deferred<T?>.asMono(context: CoroutineContext): Mono<T> = mono(context) { this@asMono.await() }
 
 /**
  * Converts a stream of elements received from the channel to the hot reactive flux.
@@ -48,7 +48,10 @@ public fun <T> Deferred<T?>.asMono(context: CoroutineContext): Mono<T> = mono(co
 @Deprecated(message = "Deprecated in the favour of consumeAsFlow()",
     level = DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("this.consumeAsFlow().asFlux()"))
-public fun <T> ReceiveChannel<T>.asFlux(context: CoroutineContext = EmptyCoroutineContext): Flux<T> = flux(context) {
-    for (t in this@asFlux)
-        send(t)
-}
+public fun <T> ReceiveChannel<T>.asFlux(context: CoroutineContext = EmptyCoroutineContext): Flux<T> =
+    // use the deprecated version of `flux` here because the proper one has the <T : Any> boundary now
+    @Suppress("DEPRECATION_ERROR")
+    GlobalScope.flux(context) {
+        for (t in this@asFlux)
+            send(t)
+    }

@@ -23,7 +23,7 @@ import kotlin.internal.*
  *
  * Method throws [IllegalArgumentException] if provided [context] contains a [Job] instance.
  */
-public fun <T> mono(
+public fun <T : Any> mono(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> T?
 ): Mono<T> {

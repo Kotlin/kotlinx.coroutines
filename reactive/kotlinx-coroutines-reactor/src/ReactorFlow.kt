@@ -25,7 +25,7 @@ import kotlin.coroutines.*
  * is used, so calls are performed from an arbitrary thread.
  */
 @JvmOverloads // binary compatibility
-public fun <T: Any> Flow<T>.asFlux(context: CoroutineContext = EmptyCoroutineContext): Flux<T> =
+public fun <T : Any> Flow<T>.asFlux(context: CoroutineContext = EmptyCoroutineContext): Flux<T> =
     FlowAsFlux(this, Dispatchers.Unconfined + context)
 
 private class FlowAsFlux<T : Any>(

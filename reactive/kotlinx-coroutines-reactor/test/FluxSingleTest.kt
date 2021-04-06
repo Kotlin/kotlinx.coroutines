@@ -92,7 +92,7 @@ class FluxSingleTest : TestBase() {
 
     @Test
     fun testAwaitSingleOrNull() {
-        val flux = flux<String?> {
+        val flux = flux {
             send(Flux.empty<String>().awaitSingleOrNull() ?: "OK")
         }
 
@@ -169,7 +169,7 @@ class FluxSingleTest : TestBase() {
 
     @Test
     fun testAwaitFirstOrNull() {
-        val flux = flux<String?> {
+        val flux = flux {
             send(Flux.empty<String>().awaitFirstOrNull() ?: "OK")
         }
 
