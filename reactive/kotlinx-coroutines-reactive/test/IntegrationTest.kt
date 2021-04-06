@@ -133,6 +133,35 @@ class IntegrationTest(
     }
 
     /**
+     * Test that the continuation is not being resumed after it has already failed due to there having been too many
+     * values passed.
+     */
+    @Test
+    fun testNotCompletingFailedAwait() = runTest {
+        try {
+            expect(1)
+            Publisher<Int> { sub ->
+                sub.onSubscribe(object: Subscription {
+                    override fun request(n: Long) {
+                        expect(2)
+                        sub.onNext(1)
+                        sub.onNext(2)
+                        expect(4)
+                        sub.onComplete()
+                    }
+
+                    override fun cancel() {
+                        expect(3)
+                    }
+                })
+            }.awaitSingle()
+        } catch (e: java.lang.IllegalArgumentException) {
+            expect(5)
+        }
+        finish(6)
+    }
+
+    /**
      * Test the behavior of [awaitOne] on unconforming publishers.
      */
     @Test

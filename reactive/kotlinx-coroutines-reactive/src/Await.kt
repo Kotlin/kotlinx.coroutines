@@ -144,7 +144,7 @@ private suspend fun <T> Publisher<T>.awaitOne(
         private var inTerminalState = false
 
         override fun onSubscribe(sub: Subscription) {
-            /** cancelling the existing subscription due to rule 2.5, though the publisher would either have to
+            /** cancelling the new subscription due to rule 2.5, though the publisher would either have to
              * subscribe more than once, which would break 2.12, or leak this [Subscriber]. */
             if (subscription != null) {
                 sub.cancel()
@@ -183,7 +183,8 @@ private suspend fun <T> Publisher<T>.awaitOne(
                 Mode.LAST, Mode.SINGLE, Mode.SINGLE_OR_DEFAULT -> {
                     if ((mode == Mode.SINGLE || mode == Mode.SINGLE_OR_DEFAULT) && seenValue) {
                         sub.cancel()
-                        // the check for `cont.isActive` is just a slight optimization and doesn't affect correctness
+                        /* the check for `cont.isActive` is needed in case `sub.cancel() above calls `onComplete` or
+                         `onError` on its own. */
                         if (cont.isActive) {
                             cont.resumeWithException(IllegalArgumentException("More than one onNext value for $mode"))
                         }
@@ -197,10 +198,13 @@ private suspend fun <T> Publisher<T>.awaitOne(
 
         @Suppress("UNCHECKED_CAST")
         override fun onComplete() {
-            if (!tryEnterTerminalState("onComplete"))
+            if (!tryEnterTerminalState("onComplete")) {
                 return
+            }
             if (seenValue) {
-                // the check for `cont.isActive` is just a slight optimization and doesn't affect correctness
+                /* the check for `cont.isActive` is needed because otherwise, if the publisher doesn't acknowledge the
+                call to `cancel` for modes `SINGLE*` when more than one value was seen, it may call `onComplete`, and
+                here it `cont.resume` would fail. */
                 if (mode != Mode.FIRST_OR_DEFAULT && mode != Mode.FIRST && cont.isActive) {
                     cont.resume(value as T)
                 }
