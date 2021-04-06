@@ -56,11 +56,6 @@ Make sure it's configured for Kotlin 1.3 or higher.
     <groupId>org.jetbrains.kotlin</groupId>
     <artifactId>kotlin-maven-plugin</artifactId>
     ...
-    <configuration>
-        <args>
-            <arg>-Xcoroutines=enable</arg>
-        </args>
-    </configuration>
 </plugin>
 ```
 
