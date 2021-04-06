@@ -177,6 +177,18 @@ public interface SelectInstance<in R> {
  * corresponding non-suspending version that can be used with a regular `when` expression to select one
  * of the alternatives or to perform the default (`else`) action if none of them can be immediately selected.
  *
+ * ### List of supported select methods
+ *
+ * | **Receiver**     | **Suspending function**                           | **Select clause**
+ * | ---------------- | ---------------------------------------------     | -----------------------------------------------------
+ * | [Job]            | [join][Job.join]                                  | [onJoin][Job.onJoin]
+ * | [Deferred]       | [await][Deferred.await]                           | [onAwait][Deferred.onAwait]
+ * | [SendChannel]    | [send][SendChannel.send]                          | [onSend][SendChannel.onSend]
+ * | [ReceiveChannel] | [receive][ReceiveChannel.receive]                 | [onReceive][ReceiveChannel.onReceive]
+ * | [ReceiveChannel] | [receiveCatching][ReceiveChannel.receiveCatching] | [onReceiveCatching][ReceiveChannel.onReceiveCatching]
+ * | [Mutex]          | [lock][Mutex.lock]                                | [onLock][Mutex.onLock]
+ * | none             | [delay]                                           | [onTimeout][SelectBuilder.onTimeout]
+ *
  * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
  * function is suspended, this function immediately resumes with [CancellationException].
  * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was

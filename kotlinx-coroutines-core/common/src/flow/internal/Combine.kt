@@ -54,7 +54,6 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
         ++currentEpoch
         // Start batch
         // The very first receive in epoch should be suspending
-        // TODO closed with an exception ?
         var element = resultChannel.receiveCatching().getOrNull() ?: break // Channel is closed, nothing to do here
         while (true) {
             val index = element.index
