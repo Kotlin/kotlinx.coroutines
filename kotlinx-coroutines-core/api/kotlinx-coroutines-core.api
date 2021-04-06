@@ -567,7 +567,6 @@ public abstract interface class kotlinx/coroutines/channels/BroadcastChannel : k
 public final class kotlinx/coroutines/channels/BroadcastChannel$DefaultImpls {
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/channels/BroadcastChannel;Ljava/lang/Throwable;ILjava/lang/Object;)Z
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/channels/BroadcastChannel;Ljava/util/concurrent/CancellationException;ILjava/lang/Object;)V
-	public static synthetic fun isFull (Lkotlinx/coroutines/channels/BroadcastChannel;)Z
 	public static fun offer (Lkotlinx/coroutines/channels/BroadcastChannel;Ljava/lang/Object;)Z
 }
 
@@ -601,7 +600,6 @@ public abstract interface class kotlinx/coroutines/channels/Channel : kotlinx/co
 
 public final class kotlinx/coroutines/channels/Channel$DefaultImpls {
 	public static synthetic fun cancel (Lkotlinx/coroutines/channels/Channel;)V
-	public static synthetic fun isFull (Lkotlinx/coroutines/channels/Channel;)Z
 	public static fun offer (Lkotlinx/coroutines/channels/Channel;Ljava/lang/Object;)Z
 	public static fun poll (Lkotlinx/coroutines/channels/Channel;)Ljava/lang/Object;
 }
@@ -797,7 +795,6 @@ public final class kotlinx/coroutines/channels/ConflatedBroadcastChannel : kotli
 	public final fun getValueOrNull ()Ljava/lang/Object;
 	public fun invokeOnClose (Lkotlin/jvm/functions/Function1;)V
 	public fun isClosedForSend ()Z
-	public synthetic fun isFull ()Z
 	public fun offer (Ljava/lang/Object;)Z
 	public fun openSubscription ()Lkotlinx/coroutines/channels/ReceiveChannel;
 	public fun send (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -818,7 +815,6 @@ public abstract interface class kotlinx/coroutines/channels/ProducerScope : kotl
 }
 
 public final class kotlinx/coroutines/channels/ProducerScope$DefaultImpls {
-	public static synthetic fun isFull (Lkotlinx/coroutines/channels/ProducerScope;)Z
 	public static fun offer (Lkotlinx/coroutines/channels/ProducerScope;Ljava/lang/Object;)Z
 }
 
@@ -851,7 +847,6 @@ public abstract interface class kotlinx/coroutines/channels/SendChannel {
 	public abstract fun getOnSend ()Lkotlinx/coroutines/selects/SelectClause2;
 	public abstract fun invokeOnClose (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun isClosedForSend ()Z
-	public abstract synthetic fun isFull ()Z
 	public abstract fun offer (Ljava/lang/Object;)Z
 	public abstract fun send (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun trySend-JP2dKIU (Ljava/lang/Object;)Ljava/lang/Object;
@@ -859,7 +854,6 @@ public abstract interface class kotlinx/coroutines/channels/SendChannel {
 
 public final class kotlinx/coroutines/channels/SendChannel$DefaultImpls {
 	public static synthetic fun close$default (Lkotlinx/coroutines/channels/SendChannel;Ljava/lang/Throwable;ILjava/lang/Object;)Z
-	public static synthetic fun isFull (Lkotlinx/coroutines/channels/SendChannel;)Z
 	public static fun offer (Lkotlinx/coroutines/channels/SendChannel;Ljava/lang/Object;)Z
 }
 
