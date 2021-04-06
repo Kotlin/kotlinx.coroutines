@@ -57,7 +57,6 @@ public final class kotlinx/coroutines/reactive/PublisherCoroutine : kotlinx/coro
 	public fun invokeOnClose (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
 	public synthetic fun invokeOnClose (Lkotlin/jvm/functions/Function1;)V
 	public fun isClosedForSend ()Z
-	public fun isFull ()Z
 	public fun offer (Ljava/lang/Object;)Z
 	public synthetic fun onCompleted (Ljava/lang/Object;)V
 	public fun registerSelectClause2 (Lkotlinx/coroutines/selects/SelectInstance;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V

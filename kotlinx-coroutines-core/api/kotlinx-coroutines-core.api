@@ -802,7 +802,6 @@ public final class kotlinx/coroutines/channels/ConflatedBroadcastChannel : kotli
 	public final fun getValueOrNull ()Ljava/lang/Object;
 	public fun invokeOnClose (Lkotlin/jvm/functions/Function1;)V
 	public fun isClosedForSend ()Z
-	public fun isFull ()Z
 	public fun offer (Ljava/lang/Object;)Z
 	public fun openSubscription ()Lkotlinx/coroutines/channels/ReceiveChannel;
 	public fun send (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -857,7 +856,6 @@ public abstract interface class kotlinx/coroutines/channels/SendChannel {
 	public abstract fun getOnSend ()Lkotlinx/coroutines/selects/SelectClause2;
 	public abstract fun invokeOnClose (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun isClosedForSend ()Z
-	public abstract fun isFull ()Z
 	public abstract fun offer (Ljava/lang/Object;)Z
 	public abstract fun send (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun trySend-JP2dKIU (Ljava/lang/Object;)Ljava/lang/Object;

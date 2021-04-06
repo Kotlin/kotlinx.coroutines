@@ -10,7 +10,7 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 
 /**
- * Adds [element] into to this channel, **blocking** the caller while this channel [Channel.isFull],
+ * Adds [element] into to this channel, **blocking** the caller while this channel is full,
  * or throws exception if the channel [Channel.isClosedForSend] (see [Channel.close] for details).
  *
  * This is a way to call [Channel.send] method inside a blocking code using [runBlocking],
