@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -64,7 +64,9 @@ class ConflatedChannelCloseStressTest : TestBase() {
         }
         val receiver = async(pool + NonCancellable) {
             while (isActive) {
-                curChannel.get().receiveOrNull()
+                curChannel.get().receiveCatching().getOrElse {
+                    it?.let { throw it }
+                }
                 received.incrementAndGet()
             }
         }

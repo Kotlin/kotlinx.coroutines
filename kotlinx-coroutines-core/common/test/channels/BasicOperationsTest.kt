@@ -25,18 +25,8 @@ class BasicOperationsTest : TestBase() {
     }
 
     @Test
-    fun testReceiveOrNullAfterClose() = runTest {
-        TestChannelKind.values().forEach { kind -> testReceiveOrNull(kind) }
-    }
-
-    @Test
-    fun testReceiveOrNullAfterCloseWithException() = runTest {
-        TestChannelKind.values().forEach { kind -> testReceiveOrNullException(kind) }
-    }
-
-    @Test
     fun testReceiveCatching() = runTest {
-        TestChannelKind.values().forEach { kind -> testReceiveOrClosed(kind) }
+        TestChannelKind.values().forEach { kind -> testReceiveCatching(kind) }
     }
 
     @Test
@@ -90,24 +80,7 @@ class BasicOperationsTest : TestBase() {
         }
     }
 
-    private suspend fun testReceiveOrNull(kind: TestChannelKind) = coroutineScope {
-        val channel = kind.create<Int>()
-        val d = async(NonCancellable) {
-            channel.receive()
-        }
-
-        yield()
-        channel.close()
-        assertTrue(channel.isClosedForReceive)
-
-        assertNull(channel.receiveOrNull())
-        assertNull(channel.poll())
-
-        d.join()
-        assertTrue(d.getCancellationException().cause is ClosedReceiveChannelException)
-    }
-
-    private suspend fun testReceiveOrNullException(kind: TestChannelKind) = coroutineScope {
+    private suspend fun testReceiveCatchingException(kind: TestChannelKind) = coroutineScope {
         val channel = kind.create<Int>()
         val d = async(NonCancellable) {
             channel.receive()
@@ -119,8 +92,8 @@ class BasicOperationsTest : TestBase() {
 
         assertFailsWith<TestException> { channel.poll() }
         try {
-            channel.receiveOrNull()
-            fail()
+            channel.receiveCatching().getOrThrow()
+            expectUnreached()
         } catch (e: TestException) {
             // Expected
         }
@@ -130,7 +103,7 @@ class BasicOperationsTest : TestBase() {
     }
 
     @Suppress("ReplaceAssertBooleanWithAssertEquality")
-    private suspend fun testReceiveOrClosed(kind: TestChannelKind) = coroutineScope {
+    private suspend fun testReceiveCatching(kind: TestChannelKind) = coroutineScope {
         reset()
         val channel = kind.create<Int>()
         launch {

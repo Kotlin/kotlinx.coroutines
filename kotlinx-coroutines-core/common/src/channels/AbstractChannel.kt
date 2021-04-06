@@ -623,24 +623,6 @@ internal abstract class AbstractChannel<E>(
         if (result) onReceiveEnqueued()
     }
 
-    public final override suspend fun receiveOrNull(): E? {
-        // fast path -- try poll non-blocking
-        val result = pollInternal()
-        @Suppress("UNCHECKED_CAST")
-        if (result !== POLL_FAILED && result !is Closed<*>) return result as E
-        // slow-path does suspend
-        return receiveSuspend(RECEIVE_NULL_ON_CLOSE)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun receiveOrNullResult(result: Any?): E? {
-        if (result is Closed<*>) {
-            if (result.closeCause != null) throw recoverStackTrace(result.closeCause)
-            return null
-        }
-        return result as E
-    }
-
     @Suppress("UNCHECKED_CAST")
     public final override suspend fun receiveCatching(): ChannelResult<E> {
         // fast path -- try poll non-blocking
@@ -755,14 +737,6 @@ internal abstract class AbstractChannel<E>(
             }
         }
 
-    final override val onReceiveOrNull: SelectClause1<E?>
-        get() = object : SelectClause1<E?> {
-            @Suppress("UNCHECKED_CAST")
-            override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (E?) -> R) {
-                registerSelectReceiveMode(select, RECEIVE_NULL_ON_CLOSE, block as suspend (Any?) -> R)
-            }
-        }
-
     final override val onReceiveCatching: SelectClause1<ChannelResult<E>>
         get() = object : SelectClause1<ChannelResult<E>> {
             @Suppress("UNCHECKED_CAST")
@@ -798,14 +772,6 @@ internal abstract class AbstractChannel<E>(
                     RECEIVE_RESULT -> {
                         if (!select.trySelect()) return
                         startCoroutineUnintercepted(ChannelResult.closed<Any>(value.closeCause), select.completion)
-                    }
-                    RECEIVE_NULL_ON_CLOSE -> {
-                        if (value.closeCause == null) {
-                            if (!select.trySelect()) return
-                            startCoroutineUnintercepted(null, select.completion)
-                        } else {
-                            throw recoverStackTrace(value.receiveException)
-                        }
                     }
                 }
             }
@@ -942,7 +908,6 @@ internal abstract class AbstractChannel<E>(
 
         override fun resumeReceiveClosed(closed: Closed<*>) {
             when {
-                receiveMode == RECEIVE_NULL_ON_CLOSE && closed.closeCause == null -> cont.resume(null)
                 receiveMode == RECEIVE_RESULT -> cont.resume(closed.toResult<Any>())
                 else -> cont.resumeWithException(closed.receiveException)
             }
@@ -1022,11 +987,6 @@ internal abstract class AbstractChannel<E>(
             when (receiveMode) {
                 RECEIVE_THROWS_ON_CLOSE -> select.resumeSelectWithException(closed.receiveException)
                 RECEIVE_RESULT -> block.startCoroutineCancellable(ChannelResult.closed<R>(closed.closeCause), select.completion)
-                RECEIVE_NULL_ON_CLOSE -> if (closed.closeCause == null) {
-                    block.startCoroutineCancellable(null, select.completion)
-                } else {
-                    select.resumeSelectWithException(closed.receiveException)
-                }
             }
         }
 
@@ -1044,8 +1004,7 @@ internal abstract class AbstractChannel<E>(
 
 // receiveMode values
 internal const val RECEIVE_THROWS_ON_CLOSE = 0
-internal const val RECEIVE_NULL_ON_CLOSE = 1
-internal const val RECEIVE_RESULT = 2
+internal const val RECEIVE_RESULT = 1
 
 @JvmField
 @SharedImmutable

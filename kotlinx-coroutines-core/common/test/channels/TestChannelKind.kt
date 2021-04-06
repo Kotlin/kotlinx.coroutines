@@ -42,7 +42,6 @@ private class ChannelViaBroadcast<E>(
     override val isEmpty: Boolean get() = sub.isEmpty
 
     override suspend fun receive(): E = sub.receive()
-    override suspend fun receiveOrNull(): E? = sub.receiveOrNull()
     override suspend fun receiveCatching(): ChannelResult<E> = sub.receiveCatching()
     override fun iterator(): ChannelIterator<E> = sub.iterator()
     override fun tryReceive(): ChannelResult<E> = sub.tryReceive()
@@ -55,8 +54,6 @@ private class ChannelViaBroadcast<E>(
 
     override val onReceive: SelectClause1<E>
         get() = sub.onReceive
-    override val onReceiveOrNull: SelectClause1<E?>
-        get() = sub.onReceiveOrNull
     override val onReceiveCatching: SelectClause1<ChannelResult<E>>
         get() = sub.onReceiveCatching
 }

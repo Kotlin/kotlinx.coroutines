@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -46,7 +46,7 @@ class ArrayBroadcastChannelTest : TestBase() {
             assertEquals(2, first.receive()) // suspends
             assertFalse(first.isClosedForReceive)
             expect(10)
-            assertNull(first.receiveOrNull()) // suspends
+            assertTrue(first.receiveCatching().isClosed) // suspends
             assertTrue(first.isClosedForReceive)
             expect(14)
         }
@@ -62,7 +62,7 @@ class ArrayBroadcastChannelTest : TestBase() {
             assertEquals(2, second.receive()) // suspends
             assertFalse(second.isClosedForReceive)
             expect(11)
-            assertNull(second.receiveOrNull()) // suspends
+            assertNull(second.receiveCatching().getOrNull()) // suspends
             assertTrue(second.isClosedForReceive)
             expect(15)
         }
@@ -116,9 +116,9 @@ class ArrayBroadcastChannelTest : TestBase() {
         expect(6)
         assertFalse(sub.isClosedForReceive)
         for (x in 1..3)
-            assertEquals(x, sub.receiveOrNull())
+            assertEquals(x, sub.receiveCatching().getOrNull())
         // and receive close signal
-        assertNull(sub.receiveOrNull())
+        assertNull(sub.receiveCatching().getOrNull())
         assertTrue(sub.isClosedForReceive)
         finish(7)
     }
@@ -153,7 +153,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         // make sure all of them are consumed
         check(!sub.isClosedForReceive)
         for (x in 1..5) check(sub.receive() == x)
-        check(sub.receiveOrNull() == null)
+        check(sub.receiveCatching().getOrNull() == null)
         check(sub.isClosedForReceive)
     }
 
@@ -196,7 +196,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         val channel = BroadcastChannel<Int>(1)
         val subscription = channel.openSubscription()
         subscription.cancel(TestCancellationException())
-        subscription.receiveOrNull()
+        subscription.receive()
     }
 
     @Test
@@ -208,6 +208,6 @@ class ArrayBroadcastChannelTest : TestBase() {
         channel.cancel()
         assertTrue(channel.isClosedForSend)
         assertTrue(sub.isClosedForReceive)
-        check(sub.receiveOrNull() == null)
+        check(sub.receiveCatching().getOrNull() == null)
     }
 }

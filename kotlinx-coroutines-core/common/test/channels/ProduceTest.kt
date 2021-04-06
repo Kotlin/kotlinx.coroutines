@@ -24,7 +24,7 @@ class ProduceTest : TestBase() {
         expect(4)
         check(c.receive() == 2)
         expect(5)
-        check(c.receiveOrNull() == null)
+        assertNull(c.receiveCatching().getOrNull())
         finish(7)
     }
 
@@ -49,7 +49,7 @@ class ProduceTest : TestBase() {
         expect(4)
         c.cancel()
         expect(5)
-        assertFailsWith<CancellationException> { c.receiveOrNull() }
+        assertFailsWith<CancellationException> { c.receiveCatching().getOrThrow() }
         expect(6)
         yield() // to produce
         finish(8)
@@ -76,7 +76,7 @@ class ProduceTest : TestBase() {
         expect(4)
         c.cancel(TestCancellationException())
         try {
-            assertNull(c.receiveOrNull())
+            c.receive()
             expectUnreached()
         } catch (e: TestCancellationException) {
             expect(5)

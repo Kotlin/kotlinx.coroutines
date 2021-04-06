@@ -69,11 +69,11 @@ class ActorTest(private val capacity: Int) : TestBase() {
     @Test
     fun testCloseWithoutCause() = runTest {
         val actor = actor<Int>(capacity = capacity) {
-            val element = channel.receiveOrNull()
+            val element = channel.receive()
             expect(2)
             assertEquals(42, element)
-            val next = channel.receiveOrNull()
-            assertNull(next)
+            val next = channel.receiveCatching()
+            assertNull(next.exceptionOrNull())
             expect(3)
         }
 
@@ -88,11 +88,11 @@ class ActorTest(private val capacity: Int) : TestBase() {
     @Test
     fun testCloseWithCause() = runTest {
         val actor = actor<Int>(capacity = capacity) {
-            val element = channel.receiveOrNull()
+            val element = channel.receive()
             expect(2)
-            require(element!! == 42)
+            require(element == 42)
             try {
-                channel.receiveOrNull()
+                channel.receive()
             } catch (e: IOException) {
                 expect(3)
             }
@@ -111,7 +111,7 @@ class ActorTest(private val capacity: Int) : TestBase() {
         val job = async {
             actor<Int>(capacity = capacity) {
                 expect(1)
-                channel.receiveOrNull()
+                channel.receive()
                 expectUnreached()
             }
         }

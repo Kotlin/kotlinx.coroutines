@@ -188,8 +188,8 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                     val receivedData = when (receiveMode) {
                         1 -> channel.receive()
                         2 -> select { channel.onReceive { it } }
-                        3 -> channel.receiveOrNull() ?: error("Should not be closed")
-                        4 -> select { channel.onReceiveOrNull { it ?: error("Should not be closed") } }
+                        3 -> channel.receiveCatching().getOrElse { error("Should not be closed") }
+                        4 -> select { channel.onReceiveCatching { it.getOrElse { error("Should not be closed") } } }
                         5 -> channel.receiveCatching().getOrThrow()
                         6 -> {
                             val iterator = channel.iterator()

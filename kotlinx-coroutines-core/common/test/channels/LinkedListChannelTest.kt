@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -18,8 +18,8 @@ class LinkedListChannelTest : TestBase() {
         check(!c.close())
         assertEquals(1, c.receive())
         assertEquals(2, c.poll())
-        assertEquals(3, c.receiveOrNull())
-        assertNull(c.receiveOrNull())
+        assertEquals(3, c.receiveCatching().getOrNull())
+        assertNull(c.receiveCatching().getOrNull())
     }
 
     @Test
@@ -31,13 +31,13 @@ class LinkedListChannelTest : TestBase() {
         q.cancel()
         check(q.isClosedForSend)
         check(q.isClosedForReceive)
-        assertFailsWith<CancellationException> { q.receiveOrNull() }
+        assertFailsWith<CancellationException> { q.receive() }
     }
 
     @Test
     fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
         val channel = Channel<Int>(Channel.UNLIMITED)
         channel.cancel(TestCancellationException())
-        channel.receiveOrNull()
+        channel.receive()
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.reactive
@@ -262,5 +262,15 @@ class PublisherAsFlowTest : TestBase() {
             BufferOverflow.DROP_LATEST -> (1..runSize).toList()
         }
         assertEquals(expected, list)
+    }
+
+    @Test
+    fun testException() = runTest {
+        expect(1)
+        val p = publish<Int> { throw TestException() }.asFlow()
+        p.catch {
+            assertTrue { it is TestException }
+            finish(2)
+        }.collect()
     }
 }

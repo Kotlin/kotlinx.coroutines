@@ -14,6 +14,7 @@ import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
+import kotlin.contracts.*
 import kotlin.internal.*
 import kotlin.jvm.*
 
@@ -210,52 +211,49 @@ public interface ReceiveChannel<out E> {
     public val onReceive: SelectClause1<E>
 
     /**
-     * Retrieves and removes an element from this channel if it's not empty, or suspends the caller while the channel is empty,
-     * or returns `null` if the channel is [closed for `receive`][isClosedForReceive] without cause,
-     * or throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
+     * This function was deprecated since 1.3.0 and is no longer recommended to use
+     * or to implement in subclasses.
      *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
-     * function is suspended, this function immediately resumes with a [CancellationException].
-     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
-     * suspended, it will not resume successfully.  The `receiveOrNull` call can retrieve the element from the channel,
-     * but then throw [CancellationException], thus failing to deliver the element.
-     * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
+     * It had the following pitfalls:
+     * - Didn't allow to distinguish 'null' as "closed channel" from "null as a value"
+     * - Was throwing if the channel has failed even though its signature may suggest it returns 'null'
+     * - It didn't really belong to core channel API and can be exposed as an extension instead.
      *
-     * Note that this function does not check for cancellation when it is not suspended.
-     * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
-     *
-     * This function can be used in [select] invocations with the [onReceiveOrNull] clause.
-     * Use [poll] to try receiving from this channel without waiting.
-     *
-     * @suppress **Deprecated**: in favor of receiveOrClosed and receiveOrNull extension.
+     * @suppress doc
      */
-    @ObsoleteCoroutinesApi
     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
     @LowPriorityInOverloadResolution
     @Deprecated(
-        message = "Deprecated in favor of receiveCatching and receiveOrNull extension",
-        level = DeprecationLevel.WARNING,
-        replaceWith = ReplaceWith("receiveOrNull", "kotlinx.coroutines.channels.receiveOrNull")
-    )
-    public suspend fun receiveOrNull(): E?
+        message = "Deprecated in favor of receiveCatching",
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("receiveCatching().getOrNull()")
+    ) // Warning since 1.3.0, error in 1.5.0, will be hidden in 1.6.0
+    public suspend fun receiveOrNull(): E? = receiveCatching().getOrNull()
 
     /**
-     * Clause for the [select] expression of the [receiveOrNull] suspending function that selects with the element
-     * received from the channel or `null` if the channel is
-     * [closed for `receive`][isClosedForReceive] without a cause. The [select] invocation fails with
-     * the original [close][SendChannel.close] cause exception if the channel has _failed_.
+     * This function was deprecated since 1.3.0 and is no longer recommended to use
+     * or to implement in subclasses.
+     * See [receiveOrNull] documentation.
      *
-     * @suppress **Deprecated**: in favor of receiveCatching and onReceiveOrNull extension.
+     * @suppress **Deprecated**: in favor of onReceiveCatching extension.
      */
-    @ObsoleteCoroutinesApi
-    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-    @LowPriorityInOverloadResolution
     @Deprecated(
-        message = "Deprecated in favor of receiveCatching and onReceiveOrNull extension",
-        level = DeprecationLevel.WARNING,
-        replaceWith = ReplaceWith("onReceiveOrNull", "kotlinx.coroutines.channels.onReceiveOrNull")
-    )
+        message = "Deprecated in favor of onReceiveCatching extension",
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("onReceiveCatching")
+    ) // Warning since 1.3.0, error in 1.5.0, will be hidden or removed in 1.6.0
     public val onReceiveOrNull: SelectClause1<E?>
+        get() {
+            return object : SelectClause1<E?> {
+                @InternalCoroutinesApi
+                override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (E?) -> R) {
+                    onReceiveCatching.registerSelectClause1(select) {
+                        it.exceptionOrNull()?.let { throw it }
+                        block(it.getOrNull())
+                    }
+                }
+            }
+        }
 
     /**
      * Retrieves and removes an element from this channel if it's not empty, or suspends the caller while this channel is empty.
@@ -354,7 +352,7 @@ public interface ReceiveChannel<out E> {
  */
 @Suppress("UNCHECKED_CAST")
 public inline class ChannelResult<out T>
-@PublishedApi internal constructor(private val holder: Any?) {
+@PublishedApi internal constructor(@PublishedApi internal val holder: Any?) {
     /**
      * Returns `true` if this instance represents a successful
      * operation outcome.
@@ -438,6 +436,50 @@ public inline class ChannelResult<out T>
             is Closed -> holder.toString()
             else -> "Value($holder)"
         }
+}
+
+/**
+ * Returns the encapsulated value if this instance represents [success][ChannelResult.isSuccess] or the
+ * result of [onFailure] function for the encapsulated [Throwable] exception if it is failed or closed
+ * result.
+ */
+@OptIn(ExperimentalContracts::class)
+public inline fun <T> ChannelResult<T>.getOrElse(onFailure: (exception: Throwable?) -> T): T {
+    contract {
+        callsInPlace(onFailure, InvocationKind.AT_MOST_ONCE)
+    }
+    @Suppress("UNCHECKED_CAST")
+    return if (holder is ChannelResult.Failed) onFailure(exceptionOrNull()) else holder as T
+}
+
+/**
+ * Performs the given [action] on the encapsulated value if this instance represents [success][ChannelResult.isSuccess].
+ * Returns the original `ChannelResult` unchanged.
+ */
+@OptIn(ExperimentalContracts::class)
+public inline fun <T> ChannelResult<T>.onSuccess(action: (value: T) -> Unit): ChannelResult<T> {
+    contract {
+        callsInPlace(action, InvocationKind.AT_MOST_ONCE)
+    }
+    @Suppress("UNCHECKED_CAST")
+    if (holder !is ChannelResult.Failed) action(holder as T)
+    return this
+}
+
+/**
+ * Performs the given [action] on the encapsulated [Throwable] exception if this instance represents [failure][ChannelResult.isFailure].
+ * The result of [ChannelResult.exceptionOrNull] is passed to the [action] parameter.
+ *
+ * Returns the original `ChannelResult` unchanged.
+ */
+@OptIn(ExperimentalContracts::class)
+public inline fun <T> ChannelResult<T>.onFailure(action: (exception: Throwable?) -> Unit): ChannelResult<T> {
+    contract {
+        callsInPlace(action, InvocationKind.AT_MOST_ONCE)
+    }
+    @Suppress("UNCHECKED_CAST")
+    if (holder is ChannelResult.Failed) action(exceptionOrNull())
+    return this
 }
 
 /**

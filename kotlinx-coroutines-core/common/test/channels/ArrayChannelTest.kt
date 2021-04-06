@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -38,17 +38,17 @@ class ArrayChannelTest : TestBase() {
     }
 
     @Test
-    fun testClosedBufferedReceiveOrNull() = runTest {
+    fun testClosedBufferedReceiveCatching() = runTest {
         val q = Channel<Int>(1)
         check(q.isEmpty && !q.isClosedForSend && !q.isClosedForReceive)
         expect(1)
         launch {
             expect(5)
             check(!q.isEmpty && q.isClosedForSend && !q.isClosedForReceive)
-            assertEquals(42, q.receiveOrNull())
+            assertEquals(42, q.receiveCatching().getOrNull())
             expect(6)
             check(!q.isEmpty && q.isClosedForSend && q.isClosedForReceive)
-            assertNull(q.receiveOrNull())
+            assertNull(q.receiveCatching().getOrNull())
             expect(7)
         }
         expect(2)
@@ -134,7 +134,7 @@ class ArrayChannelTest : TestBase() {
         q.cancel()
         check(q.isClosedForSend)
         check(q.isClosedForReceive)
-        assertFailsWith<CancellationException> { q.receiveOrNull() }
+        assertFailsWith<CancellationException> { q.receiveCatching().getOrThrow() }
         finish(12)
     }
 
@@ -142,7 +142,7 @@ class ArrayChannelTest : TestBase() {
     fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
         val channel = Channel<Int>(5)
         channel.cancel(TestCancellationException())
-        channel.receiveOrNull()
+        channel.receive()
     }
 
     @Test
@@ -160,7 +160,7 @@ class ArrayChannelTest : TestBase() {
             channel.offer(-1)
         }
         repeat(4) {
-            channel.receiveOrNull()
+            channel.receiveCatching().getOrNull()
         }
         checkBufferChannel(channel, capacity)
     }

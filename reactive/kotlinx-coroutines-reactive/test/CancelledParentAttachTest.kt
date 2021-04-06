@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.*
 import org.junit.*
 
 
-class CancelledParentAttachTest : TestBase() {
+class CancelledParentAttachTest : TestBase() {;
 
     @Test
     fun testFlow() = runTest {
@@ -17,4 +17,5 @@ class CancelledParentAttachTest : TestBase() {
         val j = Job().also { it.cancel() }
         f.asPublisher(j).asFlow().collect()
     }
+
 }

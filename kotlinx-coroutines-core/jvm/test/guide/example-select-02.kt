@@ -11,17 +11,21 @@ import kotlinx.coroutines.selects.*
 
 suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): String =
     select<String> {
-        a.onReceiveOrNull { value -> 
-            if (value == null) 
-                "Channel 'a' is closed" 
-            else 
+        a.onReceiveCatching { it ->
+            val value = it.getOrNull()
+            if (value != null) {
                 "a -> '$value'"
+            } else {
+                "Channel 'a' is closed"
+            }
         }
-        b.onReceiveOrNull { value -> 
-            if (value == null) 
-                "Channel 'b' is closed"
-            else    
+        b.onReceiveCatching { it ->
+            val value = it.getOrNull()
+            if (value != null) {
                 "b -> '$value'"
+            } else {
+                "Channel 'b' is closed"
+            }
         }
     }
     
