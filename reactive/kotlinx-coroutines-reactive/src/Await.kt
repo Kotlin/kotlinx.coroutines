@@ -146,11 +146,9 @@ private suspend fun <T> Publisher<T>.awaitOne(
         override fun onSubscribe(sub: Subscription) {
             /** cancelling the existing subscription due to rule 2.5, though the publisher would either have to
              * subscribe more than once, which would break 2.12, or leak this [Subscriber]. */
-            subscription?.let {
-                value = null
-                seenValue = false
-                inTerminalState = false
-                it.cancel()
+            if (subscription != null) {
+                sub.cancel()
+                return
             }
             subscription = sub
             cont.invokeOnCancellation { sub.cancel() }
@@ -185,6 +183,7 @@ private suspend fun <T> Publisher<T>.awaitOne(
                 Mode.LAST, Mode.SINGLE, Mode.SINGLE_OR_DEFAULT -> {
                     if ((mode == Mode.SINGLE || mode == Mode.SINGLE_OR_DEFAULT) && seenValue) {
                         sub.cancel()
+                        // the check for `cont.isActive` is just a slight optimization and doesn't affect correctness
                         if (cont.isActive)
                             cont.resumeWithException(IllegalArgumentException("More than one onNext value for $mode"))
                     } else {
@@ -200,7 +199,9 @@ private suspend fun <T> Publisher<T>.awaitOne(
             if (!tryEnterTerminalState("onComplete"))
                 return
             if (seenValue) {
-                if (cont.isActive) cont.resume(value as T)
+                // the check for `cont.isActive` is just a slight optimization and doesn't affect correctness
+                if (mode != Mode.FIRST_OR_DEFAULT && mode != Mode.FIRST && cont.isActive)
+                    cont.resume(value as T)
                 return
             }
             when {
@@ -208,6 +209,7 @@ private suspend fun <T> Publisher<T>.awaitOne(
                     cont.resume(default as T)
                 }
                 cont.isActive -> {
+                    // the check for `cont.isActive` is just a slight optimization and doesn't affect correctness
                     cont.resumeWithException(NoSuchElementException("No value received via onNext for $mode"))
                 }
             }
