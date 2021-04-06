@@ -20,7 +20,7 @@ import kotlin.internal.*
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * Method throws [IllegalArgumentException] if provided [context] contains a [Job] instance.
  */
-public fun <T> rxMaybe(
+public fun <T : Any> rxMaybe(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> T?
 ): Maybe<T> {

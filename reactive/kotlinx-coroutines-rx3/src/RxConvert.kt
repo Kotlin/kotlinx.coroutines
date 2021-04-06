@@ -44,7 +44,7 @@ public fun Job.asCompletable(context: CoroutineContext): Completable = rxComplet
  * @param context -- the coroutine context from which the resulting maybe is going to be signalled
  */
 @ExperimentalCoroutinesApi
-public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T> = rxMaybe(context) {
+public fun <T : Any> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T> = rxMaybe(context) {
     this@asMaybe.await()
 }
 
