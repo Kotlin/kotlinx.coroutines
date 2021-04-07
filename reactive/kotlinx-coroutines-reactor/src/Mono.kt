@@ -7,21 +7,23 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
+import org.reactivestreams.*
 import reactor.core.*
 import reactor.core.publisher.*
 import kotlin.coroutines.*
 import kotlin.internal.*
 
 /**
- * Creates cold [mono][Mono] that will run a given [block] in a coroutine and emits its result.
+ * Creates a cold [mono][Mono] that runs a given [block] in a coroutine and emits its result.
  * Every time the returned mono is subscribed, it starts a new coroutine.
- * If [block] result is `null`, [MonoSink.success] is invoked without a value.
- * Unsubscribing cancels running coroutine.
+ * If the result of [block] is `null`, [MonoSink.success] is invoked without a value.
+ * Unsubscribing cancels the running coroutine.
  *
  * Coroutine context can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  *
- * Method throws [IllegalArgumentException] if provided [context] contains a [Job] instance.
+ * @throws IllegalArgumentException if the provided [context] contains a [Job] instance.
  */
 public fun <T> mono(
     context: CoroutineContext = EmptyCoroutineContext,
@@ -67,17 +69,16 @@ private class MonoCoroutine<in T>(
     }
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
-        try {
-            /*
-             * sink.error handles exceptions on its own and, by default, handling of undeliverable exceptions is a no-op.
-             * Guard potentially non-empty handlers against meaningless cancellation exceptions
-             */
-            if (getCancellationException() !== cause) {
+        /** Cancellation exceptions that were caused by [dispose], that is, came from downstream, are not errors. */
+        if (getCancellationException() !== cause || !disposed) {
+            try {
+                /** If [sink] turns out to already be in a terminal state, this exception will be passed through the
+                 * [Hooks.onOperatorError] hook, which is the way to signal undeliverable exceptions in Reactor. */
                 sink.error(cause)
+            } catch (e: Throwable) {
+                // In case of improper error implementation or fatal exceptions
+                handleCoroutineException(context, cause)
             }
-        } catch (e: Throwable) {
-            // In case of improper error implementation or fatal exceptions
-            handleCoroutineException(context, cause)
         }
     }
 
