@@ -435,7 +435,7 @@ public fun <T> Flow<T>.timeout(
 private fun <T> Flow<T>.timeoutInternal(
     timeoutMillis: Long,
     action: suspend FlowCollector<T>.() -> Unit
-): Flow<T> = scopedFlow<T> { downStream ->
+): Flow<T> = scopedFlow { downStream ->
     require(timeoutMillis >= 0L) { "Timeout should not be negative" }
 
     // Produce the values using the default (rendezvous) channel
@@ -451,7 +451,7 @@ private fun <T> Flow<T>.timeoutInternal(
 
                 send(it ?: NULL)
 
-                // We reset the job here!. The reason being is that the `flow.emit()` suspends, which in turn suspends `send()`.
+                // We reset the job here. The reason being is that the `flow.emit()` suspends, which in turn suspends `send()`.
                 // We only want to measure a timeout if the producer took longer than `timeoutMillis`, not producer + consumer
                 timeoutJob = launch {
                     delay(timeoutMillis)
@@ -464,24 +464,23 @@ private fun <T> Flow<T>.timeoutInternal(
         }
     }
 
-    // Await for values from our producer now
-    whileSelect {
-        values.onReceiveOrNull { value ->
-            if (value !== DONE) {
-                if (value === TIMEOUT) {
-                    throw InternalFlowTimeoutException()
+    try {
+        // Await for values from our producer now
+        whileSelect {
+            values.onReceiveOrNull { value ->
+                if (value !== DONE) {
+                    if (value === TIMEOUT) {
+                        throw InternalFlowTimeoutException()
+                    }
+                    downStream.emit(NULL.unbox(value))
+                    return@onReceiveOrNull true
                 }
-                downStream.emit(NULL.unbox(value))
-                return@onReceiveOrNull true
+                return@onReceiveOrNull false // We got the DONE signal, so exit the while loop
             }
-            return@onReceiveOrNull false // We got the DONE signal, so exit the while loop
         }
-    }
-}.catch { e ->
-    if (e is InternalFlowTimeoutException) {
-        action()
-    } else {
-        throw e
+    } catch (e: InternalFlowTimeoutException) {
+        action(downStream)
+        values.cancel(ChildCancelledException())
     }
 }
 
