@@ -202,9 +202,9 @@ private suspend fun <T> Publisher<T>.awaitOne(
                 return
             }
             if (seenValue) {
-                /* the check for `cont.isActive` is needed because otherwise, if the publisher doesn't acknowledge the
+                /* the check for `cont.isActive` is needed because, otherwise, if the publisher doesn't acknowledge the
                 call to `cancel` for modes `SINGLE*` when more than one value was seen, it may call `onComplete`, and
-                here it `cont.resume` would fail. */
+                here `cont.resume` would fail. */
                 if (mode != Mode.FIRST_OR_DEFAULT && mode != Mode.FIRST && cont.isActive) {
                     cont.resume(value as T)
                 }
