@@ -150,7 +150,7 @@ public suspend fun <T> withContext(
         val oldContext = uCont.context
         val newContext = oldContext + context
         // always check for cancellation of new context
-        newContext.checkCompletion()
+        newContext.ensureActive()
         // FAST PATH #1 -- new context is the same as the old one
         if (newContext === oldContext) {
             val coroutine = ScopeCoroutine(newContext, uCont)

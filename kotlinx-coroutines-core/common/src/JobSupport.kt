@@ -541,7 +541,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     public final override suspend fun join() {
         if (!joinInternal()) { // fast-path no wait
-            coroutineContext.checkCompletion()
+            coroutineContext.ensureActive()
             return // do not suspend
         }
         return joinSuspend() // slow-path wait
