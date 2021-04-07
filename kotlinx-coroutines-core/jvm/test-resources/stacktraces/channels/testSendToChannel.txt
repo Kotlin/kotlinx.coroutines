@@ -2,7 +2,7 @@ java.util.concurrent.CancellationException: RendezvousChannel was cancelled
 	at kotlinx.coroutines.channels.AbstractChannel.cancel(AbstractChannel.kt:630)
 	at kotlinx.coroutines.channels.ReceiveChannel$DefaultImpls.cancel$default(Channel.kt:311)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testSendToChannel$1$job$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt:52)
-	(Coroutine boundary)
+	at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest.channelSend(StackTraceRecoveryChannelsTest.kt:73)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testSendToChannel$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt:56)
 Caused by: java.util.concurrent.CancellationException: RendezvousChannel was cancelled

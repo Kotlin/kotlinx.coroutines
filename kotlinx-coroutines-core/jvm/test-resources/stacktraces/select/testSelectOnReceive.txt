@@ -12,7 +12,7 @@ kotlinx.coroutines.channels.ClosedReceiveChannelException: Channel was closed
 	at kotlinx.coroutines.exceptions.StackTraceRecoverySelectTest.doSelectOnReceive(StackTraceRecoverySelectTest.kt)
 	at kotlinx.coroutines.exceptions.StackTraceRecoverySelectTest.access$doSelectOnReceive(StackTraceRecoverySelectTest.kt)
 	at kotlinx.coroutines.exceptions.StackTraceRecoverySelectTest$testSelectOnReceive$1.invokeSuspend(StackTraceRecoverySelectTest.kt)
-	(Coroutine boundary)
+	at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)
 	at kotlinx.coroutines.selects.SelectImplementation.processResultAndInvokeBlockRecoveringException(Select.kt)
 	at kotlinx.coroutines.exceptions.StackTraceRecoverySelectTest$testSelectOnReceive$1.invokeSuspend(StackTraceRecoverySelectTest.kt)
 Caused by: kotlinx.coroutines.channels.ClosedReceiveChannelException: Channel was closed

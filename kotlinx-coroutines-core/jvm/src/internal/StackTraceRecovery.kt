@@ -7,6 +7,8 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.*
+import _COROUTINE.ARTIFICIAL_FRAME_PACKAGE_NAME
+import _COROUTINE.ArtificialStackFrames
 import java.util.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
@@ -17,6 +19,8 @@ import kotlin.coroutines.intrinsics.*
  */
 private const val baseContinuationImplClass = "kotlin.coroutines.jvm.internal.BaseContinuationImpl"
 private const val stackTraceRecoveryClass = "kotlinx.coroutines.internal.StackTraceRecoveryKt"
+
+private val ARTIFICIAL_FRAME = ArtificialStackFrames().coroutineBoundary()
 
 private val baseContinuationImplClassName = runCatching {
     Class.forName(baseContinuationImplClass).canonicalName
@@ -42,7 +46,7 @@ private fun <E : Throwable> E.sanitizeStackTrace(): E {
     val adjustment = if (endIndex == -1) 0 else size - endIndex
     val trace = Array(size - lastIntrinsic - adjustment) {
         if (it == 0) {
-            artificialFrame("Coroutine boundary")
+            ARTIFICIAL_FRAME
         } else {
             stackTrace[startIndex + it - 1]
         }
@@ -97,13 +101,13 @@ private fun <E : Throwable> tryCopyAndVerify(exception: E): E? {
  * IllegalStateException
  *   at foo
  *   at kotlin.coroutines.resumeWith
- *   (Coroutine boundary)
+ *   at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)
  *   at bar
  *   ...real stackTrace...
  * caused by "IllegalStateException" (original one)
  */
 private fun <E : Throwable> createFinalException(cause: E, result: E, resultStackTrace: ArrayDeque<StackTraceElement>): E {
-    resultStackTrace.addFirst(artificialFrame("Coroutine boundary"))
+    resultStackTrace.addFirst(ARTIFICIAL_FRAME)
     val causeTrace = cause.stackTrace
     val size = causeTrace.frameIndex(baseContinuationImplClassName)
     if (size == -1) {
@@ -193,12 +197,7 @@ private fun createStackTrace(continuation: CoroutineStackFrame): ArrayDeque<Stac
     return stack
 }
 
-/**
- * @suppress
- */
-@InternalCoroutinesApi
-public fun artificialFrame(message: String): StackTraceElement = java.lang.StackTraceElement("\b\b\b($message", "\b", "\b", -1)
-internal fun StackTraceElement.isArtificial() = className.startsWith("\b\b\b")
+internal fun StackTraceElement.isArtificial() = className.startsWith(ARTIFICIAL_FRAME_PACKAGE_NAME)
 private fun Array<StackTraceElement>.frameIndex(methodName: String) = indexOfFirst { methodName == it.className }
 
 private fun StackTraceElement.elementWiseEquals(e: StackTraceElement): Boolean {
