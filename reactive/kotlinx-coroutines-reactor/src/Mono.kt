@@ -73,7 +73,7 @@ private class MonoCoroutine<in T>(
         if (getCancellationException() !== cause || !disposed) {
             try {
                 /** If [sink] turns out to already be in a terminal state, this exception will be passed through the
-                 * [Hooks.onErrorDropped] hook, which is the way to signal undeliverable exceptions in Reactor. */
+                 * [Hooks.onOperatorError] hook, which is the way to signal undeliverable exceptions in Reactor. */
                 sink.error(cause)
             } catch (e: Throwable) {
                 // In case of improper error implementation or fatal exceptions
