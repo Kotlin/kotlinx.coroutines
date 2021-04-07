@@ -464,23 +464,20 @@ private fun <T> Flow<T>.timeoutInternal(
         }
     }
 
-    try {
-        // Await for values from our producer now
-        whileSelect {
-            values.onReceiveOrNull { value ->
-                if (value !== DONE) {
-                    if (value === TIMEOUT) {
-                        throw InternalFlowTimeoutException()
-                    }
-                    downStream.emit(NULL.unbox(value))
-                    return@onReceiveOrNull true
+    // Await for values from our producer now
+    whileSelect {
+        values.onReceiveOrNull { value ->
+            if (value !== DONE) {
+                if (value === TIMEOUT) {
+                    action(downStream)
+                    values.cancel(ChildCancelledException())
+                    return@onReceiveOrNull false // Just end the loop here. Nothing more to be done.
                 }
-                return@onReceiveOrNull false // We got the DONE signal, so exit the while loop
+                downStream.emit(NULL.unbox(value))
+                return@onReceiveOrNull true
             }
+            return@onReceiveOrNull false // We got the DONE signal, so exit the while loop
         }
-    } catch (e: InternalFlowTimeoutException) {
-        action(downStream)
-        values.cancel(ChildCancelledException())
     }
 }
 
@@ -501,6 +498,3 @@ internal fun FlowTimeoutException(time: Long) : FlowTimeoutException = FlowTimeo
 
 // Special timeout flag
 private val TIMEOUT = Symbol("TIMEOUT")
-
-// Special indicator exception
-private class InternalFlowTimeoutException : Exception("Internal flow timeout exception")
