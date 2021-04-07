@@ -10,85 +10,89 @@ import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 import java.lang.IllegalStateException
 import java.util.*
+import kotlin.NoSuchElementException
 import kotlin.coroutines.*
 
 /**
- * Awaits for the first value from the given publisher without blocking a thread and
- * returns the resulting value or throws the corresponding exception if this publisher had produced error.
+ * Awaits the first value from the given publisher without blocking the thread and returns the resulting value, or, if
+ * the publisher has produced an error, throws the corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * immediately resumes with [CancellationException].
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
  *
- * @throws NoSuchElementException if publisher does not emit any value
+ * @throws NoSuchElementException if the publisher does not emit any value
  */
 public suspend fun <T> Publisher<T>.awaitFirst(): T = awaitOne(Mode.FIRST)
 
 /**
- * Awaits for the first value from the given observable or the [default] value if none is emitted without blocking a
- * thread and returns the resulting value or throws the corresponding exception if this observable had produced error.
+ * Awaits the first value from the given observable, or returns the [default] value if none is emitted, without blocking
+ * the thread, and returns the resulting value, or, if this observable has produced an error, throws the corresponding
+ * exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * immediately resumes with [CancellationException].
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
  */
 public suspend fun <T> Publisher<T>.awaitFirstOrDefault(default: T): T = awaitOne(Mode.FIRST_OR_DEFAULT, default)
 
 /**
- * Awaits for the first value from the given observable or `null` value if none is emitted without blocking a
- * thread and returns the resulting value or throws the corresponding exception if this observable had produced error.
+ * Awaits the first value from the given observable, or returns `null` if none is emitted, without blocking the thread,
+ * and returns the resulting value, or, if this observable has produced an error, throws the corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * immediately resumes with [CancellationException].
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
  */
 public suspend fun <T> Publisher<T>.awaitFirstOrNull(): T? = awaitOne(Mode.FIRST_OR_DEFAULT)
 
 /**
- * Awaits for the first value from the given observable or call [defaultValue] to get a value if none is emitted without blocking a
- * thread and returns the resulting value or throws the corresponding exception if this observable had produced error.
+ * Awaits the first value from the given observable, or calls [defaultValue] to get a value if none is emitted, without
+ * blocking the thread, and returns the resulting value, or, if this observable has produced an error, throws the
+ * corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * immediately resumes with [CancellationException].
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
  */
 public suspend fun <T> Publisher<T>.awaitFirstOrElse(defaultValue: () -> T): T = awaitOne(Mode.FIRST_OR_DEFAULT) ?: defaultValue()
 
 /**
- * Awaits for the last value from the given publisher without blocking a thread and
- * returns the resulting value or throws the corresponding exception if this publisher had produced error.
+ * Awaits the last value from the given publisher without blocking the thread and
+ * returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * immediately resumes with [CancellationException].
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
  *
- * @throws NoSuchElementException if publisher does not emit any value
+ * @throws NoSuchElementException if the publisher does not emit any value
  */
 public suspend fun <T> Publisher<T>.awaitLast(): T = awaitOne(Mode.LAST)
 
 /**
- * Awaits for the single value from the given publisher without blocking a thread and
- * returns the resulting value or throws the corresponding exception if this publisher had produced error.
+ * Awaits the single value from the given publisher without blocking the thread and returns the resulting value, or,
+ * if this publisher has produced an error, throws the corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * immediately resumes with [CancellationException].
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
  *
- * @throws NoSuchElementException if publisher does not emit any value
- * @throws IllegalArgumentException if publisher emits more than one value
+ * @throws NoSuchElementException if the publisher does not emit any value
+ * @throws IllegalArgumentException if the publisher emits more than one value
  */
 public suspend fun <T> Publisher<T>.awaitSingle(): T = awaitOne(Mode.SINGLE)
 
 /**
- * Awaits for the single value from the given publisher or the [default] value if none is emitted without blocking a thread and
- * returns the resulting value or throws the corresponding exception if this publisher had produced error.
+ * Awaits the single value from the given observable, or returns the [default] value if none is emitted, without
+ * blocking the thread, and returns the resulting value, or, if this observable has produced an error, throws the
+ * corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * immediately resumes with [CancellationException].
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
  *
- * @throws NoSuchElementException if publisher does not emit any value
- * @throws IllegalArgumentException if publisher emits more than one value
+ * @throws NoSuchElementException if the publisher does not emit any value
+ * @throws IllegalArgumentException if the publisher emits more than one value
  */
 public suspend fun <T> Publisher<T>.awaitSingleOrDefault(default: T): T = awaitOne(Mode.SINGLE_OR_DEFAULT, default)
 
@@ -108,17 +112,18 @@ public suspend fun <T> Publisher<T>.awaitSingleOrNull(): T? = try {
 }
 
 /**
- * Awaits for the single value from the given publisher or call [defaultValue] to get a value if none is emitted without blocking a thread and
- * returns the resulting value or throws the corresponding exception if this publisher had produced error.
+ * Awaits the single value from the given observable, or calls [defaultValue] to get a value if none is emitted, without
+ * blocking the thread, and returns the resulting value, or, if this observable has produced an error, throws the
+ * corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * immediately resumes with [CancellationException].
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
  *
- * @throws NoSuchElementException if publisher does not emit any value
- * @throws IllegalArgumentException if publisher emits more than one value
+ * @throws IllegalArgumentException if the publisher emits more than one value
  */
-public suspend fun <T> Publisher<T>.awaitSingleOrElse(defaultValue: () -> T): T = awaitOne(Mode.SINGLE_OR_DEFAULT) ?: defaultValue()
+public suspend fun <T> Publisher<T>.awaitSingleOrElse(defaultValue: () -> T): T =
+    awaitOne(Mode.SINGLE_OR_DEFAULT) ?: defaultValue()
 
 // ------------------------ private ------------------------
 
