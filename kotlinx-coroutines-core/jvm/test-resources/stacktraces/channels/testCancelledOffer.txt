@@ -1,5 +1,5 @@
 kotlinx.coroutines.JobCancellationException: Job was cancelled; job=JobImpl{Cancelling}@2a06d350
-	(Coroutine boundary)
+	at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)
 	at kotlinx.coroutines.channels.AbstractSendChannel.offer(AbstractChannel.kt:170)
 	at kotlinx.coroutines.channels.ChannelCoroutine.offer(ChannelCoroutine.kt)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testCancelledOffer$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt:153)
