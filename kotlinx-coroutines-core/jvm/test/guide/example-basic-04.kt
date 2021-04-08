@@ -7,11 +7,21 @@ package kotlinx.coroutines.guide.exampleBasic04
 
 import kotlinx.coroutines.*
 
+// Sequentially executes doWorld followed by "Hello"
 fun main() = runBlocking {
-    val job = GlobalScope.launch { // launch a new coroutine and keep a reference to its Job
-        delay(1000L)
-        println("World!")
+    doWorld()
+    println("Done")
+}
+
+// Concurrently executes both sections
+suspend fun doWorld() = coroutineScope { // this: CoroutineScope
+    launch {
+        delay(2000L)
+        println("World 2")
     }
-    println("Hello,")
-    job.join() // wait until child coroutine completes
+    launch {
+        delay(1000L)
+        println("World 1")
+    }
+    println("Hello")
 }

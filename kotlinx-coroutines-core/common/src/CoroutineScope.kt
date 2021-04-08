@@ -124,25 +124,75 @@ public val CoroutineScope.isActive: Boolean
 
 /**
  * A global [CoroutineScope] not bound to any job.
- *
  * Global scope is used to launch top-level coroutines which are operating on the whole application lifetime
  * and are not cancelled prematurely.
- * Another use of the global scope is operators running in [Dispatchers.Unconfined], which don't have any job associated with them.
  *
- * Application code usually should use an application-defined [CoroutineScope]. Using
- * [async][CoroutineScope.async] or [launch][CoroutineScope.launch]
- * on the instance of [GlobalScope] is highly discouraged.
+ * Active coroutines launched in `GlobalScope` do not keep the process alive. They are like daemon threads.
  *
- * Usage of this interface may look like this:
+ * This is a **delicate** API. It is easy to accidentally create resource or memory leaks when
+ * `GlobalScope` is used. A coroutine launched in `GlobalScope` is not subject to the principle of structured
+ * concurrency, so if it hangs or gets delayed due to a problem (e.g. due to a slow network), it will stay working
+ * and consuming resources. For example, consider the following code:
  *
  * ```
- * fun ReceiveChannel<Int>.sqrt(): ReceiveChannel<Double> = GlobalScope.produce(Dispatchers.Unconfined) {
- *     for (number in this) {
- *         send(Math.sqrt(number))
+ * fun loadConfiguration() {
+ *     GlobalScope.launch {
+ *         val config = fetchConfigFromServer() // network request
+ *         updateConfiguration(config)
+ *     }
+ * }
+ * ```
+ *
+ * A call to `loadConfiguration` creates a coroutine in the `GlobalScope` that works in background without any
+ * provision to cancel it or to wait for its completion. If a network is slow, it keeps waiting in background,
+ * consuming resources. Repeated calls to `loadConfiguration` will consume more and more resources.
+ *
+ * ### Possible replacements
+ *
+ * In may cases uses of `GlobalScope` should be removed, marking the containing operation with `suspend`, e.g:
+ *
+ * ```
+ * suspend fun loadConfiguration() {
+ *     val config = fetchConfigFromServer() // network request
+ *     updateConfiguration(config)
+ * }
+ * ```
+ *
+ * In cases when `GlobalScope.launch` was used to launch multiple concurrent operations, they corresponding
+ * operation shall be grouped with [coroutineScope] instead:
+ *
+ * ```
+ * // concurrently load configuration and data
+ * suspend fun loadConfigurationAndData() {
+ *     coroutinesScope {
+ *         launch { loadConfiguration() }
+ *         launch { loadData() }
+ *     }
+ * }
+ * ```
+ *
+ * In top-level code, when launching a concurrent operation operation from a non-suspending context, an appropriately
+ * confined instance of [CoroutineScope] shall be used instead of a `GlobalScope`. See docs on [CoroutineScope] for
+ * details.
+ *
+ * ### Legitimate use-cases
+ *
+ * There are limited circumstances under which `GlobalScope` can be legitimately and safely used, such as top-level background
+ * processes that must stay active for the whole duration of the application's lifetime. Because of that, any use
+ * of `GlobalScope` requires an explicit opt-in with `@OptIn(DelicateCoroutinesApi::class)`, like this:
+ *
+ * ```
+ * // A global coroutine to log statistics every second, must be always active
+ * @OptIn(DelicateCoroutinesApi::class)
+ * val globalScopeReporter = GlobalScope.launch {
+ *     while (true) {
+ *         delay(1000)
+ *         logStatistics()
  *     }
  * }
  * ```
  */
+@DelicateCoroutinesApi
 public object GlobalScope : CoroutineScope {
     /**
      * Returns [EmptyCoroutineContext].

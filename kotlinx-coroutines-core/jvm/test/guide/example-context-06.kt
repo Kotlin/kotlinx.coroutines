@@ -10,9 +10,9 @@ import kotlinx.coroutines.*
 fun main() = runBlocking<Unit> {
     // launch a coroutine to process some kind of incoming request
     val request = launch {
-        // it spawns two other jobs, one with GlobalScope
-        GlobalScope.launch {
-            println("job1: I run in GlobalScope and execute independently!")
+        // it spawns two other jobs
+        launch(Job()) { 
+            println("job1: I run in my own Job and execute independently!")
             delay(1000)
             println("job1: I am not affected by cancellation of the request")
         }

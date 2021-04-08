@@ -17,7 +17,6 @@ In order to use coroutines as well as follow the examples in this guide, you nee
 ## Table of contents
 
 * [Coroutines basics](coroutines-basics.md)
-* [Tutorial: Create a basic coroutine](coroutines-basic-jvm.md)
 * [Hands-on: Intro to coroutines and channels](https://play.kotlinlang.org/hands-on/Introduction%20to%20Coroutines%20and%20Channels)
 * [Cancellation and timeouts](cancellation-and-timeouts.md)
 * [Composing suspending functions](composing-suspending-functions.md)
