@@ -13,7 +13,6 @@ import org.junit.Test
 import org.reactivestreams.*
 import reactor.core.publisher.*
 import reactor.util.context.*
-import java.time.*
 import java.time.Duration.*
 import java.util.function.*
 import kotlin.test.*
@@ -114,13 +113,13 @@ class MonoTest : TestBase() {
 
     @Test
     fun testMonoAwait() = runBlocking {
-        assertEquals("OK", Mono.just("O").awaitSingle() + "K")
+        assertEquals("OK", Mono.just("O").await() + "K")
     }
 
     @Test
     fun testMonoEmitAndAwait() {
         val mono = mono {
-            Mono.just("O").awaitSingle() + "K"
+            Mono.just("O").await() + "K"
         }
 
         checkMonoValue(mono) {
@@ -275,17 +274,22 @@ class MonoTest : TestBase() {
         finish(2)
     }
 
-    private fun timeBomb() = Mono.delay(Duration.ofMillis(1)).doOnSuccess { throw Exception("something went wrong") }
+    private fun timeBomb() = Mono.delay(ofMillis(1)).doOnSuccess { throw Exception("something went wrong") }
 
     @Test
     fun testLeakedException() = runBlocking {
         // Test exception is not reported to global handler
         val flow = mono<Unit> { throw TestException() }.toFlux().asFlow()
         repeat(10000) {
-            combine(flow, flow) { _, _ -> Unit }
+            combine(flow, flow) { _, _ -> }
                 .catch {}
                 .collect { }
         }
+    }
+
+    @Test
+    fun testMonoAwaitNull() = runBlocking {
+        assertNull(Mono.empty<String>().await())
     }
 
     /** Test that cancelling a [mono] due to a timeout does throw an exception. */

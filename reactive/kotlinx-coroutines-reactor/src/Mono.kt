@@ -8,11 +8,9 @@ package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.reactive.*
-import org.reactivestreams.*
 import reactor.core.*
 import reactor.core.publisher.*
 import kotlin.coroutines.*
-import kotlin.internal.*
 
 /**
  * Creates a cold [mono][Mono] that runs a given [block] in a coroutine and emits its result.
@@ -33,6 +31,17 @@ public fun <T> mono(
             "Its lifecycle should be managed via Disposable handle. Had $context" }
     return monoInternal(GlobalScope, context, block)
 }
+
+/**
+ * Awaits the completion of the [Mono] without blocking the thread.
+ * Returns the resulting value, or `null` if no value is produced, or throws the corresponding exception if this
+ * [Mono] has produced an error.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this
+ * function immediately resumes with [CancellationException] and cancels its subscription.
+ */
+public suspend fun <T> Mono<T>.await(): T? = awaitFirstOrNull()
 
 private fun <T> monoInternal(
     scope: CoroutineScope, // support for legacy mono in scope
