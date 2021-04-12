@@ -109,7 +109,7 @@ private class SubscriptionChannel<T>(
 
     override fun onNext(t: T) {
         _requested.decrementAndGet()
-        offer(t)
+        trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
     }
 
     override fun onComplete() {

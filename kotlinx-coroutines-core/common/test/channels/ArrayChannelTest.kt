@@ -86,9 +86,9 @@ class ArrayChannelTest : TestBase() {
     }
 
     @Test
-    fun testOfferAndPoll() = runTest {
+    fun testTryOp() = runTest {
         val q = Channel<Int>(1)
-        assertTrue(q.offer(1))
+        assertTrue(q.trySend(1).isSuccess)
         expect(1)
         launch {
             expect(3)
@@ -106,11 +106,11 @@ class ArrayChannelTest : TestBase() {
         expect(2)
         yield()
         expect(6)
-        assertTrue(q.offer(2))
+        assertTrue(q.trySend(2).isSuccess)
         expect(7)
-        assertTrue(q.offer(3))
+        assertTrue(q.trySend(3).isSuccess)
         expect(8)
-        assertFalse(q.offer(4))
+        assertFalse(q.trySend(4).isSuccess)
         yield()
         finish(12)
     }
@@ -157,7 +157,7 @@ class ArrayChannelTest : TestBase() {
         val capacity = 42
         val channel = Channel<Int>(capacity)
         repeat(4) {
-            channel.offer(-1)
+            channel.trySend(-1)
         }
         repeat(4) {
             channel.receiveCatching().getOrNull()

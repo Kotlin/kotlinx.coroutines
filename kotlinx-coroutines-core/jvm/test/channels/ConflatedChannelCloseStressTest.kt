@@ -5,11 +5,8 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
-import org.junit.After
-import org.junit.Test
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.*
+import org.junit.*
+import java.util.concurrent.atomic.*
 
 class ConflatedChannelCloseStressTest : TestBase() {
 
@@ -37,12 +34,9 @@ class ConflatedChannelCloseStressTest : TestBase() {
                 var x = senderId
                 try {
                     while (isActive) {
-                        try {
-                            curChannel.get().offer(x)
+                        curChannel.get().trySend(x).onSuccess {
                             x += nSenders
                             sent.incrementAndGet()
-                        } catch (e: ClosedSendChannelException) {
-                            // ignore
                         }
                     }
                 } finally {

@@ -42,7 +42,7 @@ class ShareInFusionTest : TestBase() {
         val flow = channelFlow {
             // send a batch of 10 elements using [offer]
             for (i in 1..10) {
-                assertTrue(offer(i)) // offer must succeed, because buffer
+                assertTrue(trySend(i).isSuccess) // offer must succeed, because buffer
             }
             send(0) // done
         }.buffer(10) // request a buffer of 10

@@ -39,7 +39,7 @@ class ReusableCancellableContinuationTest : TestBase() {
 
         repeat(iterations) {
             suspender {
-                assertTrue(channel.offer(it))
+                assertTrue(channel.trySend(it).isSuccess)
             }
         }
         channel.close()

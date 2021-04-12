@@ -68,7 +68,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
         try {
             block()
         } finally {
-            if (!done.offer(true))
+            if (!done.trySend(true).isSuccess)
                 error(IllegalStateException("failed to offer to done channel"))
         }
     }

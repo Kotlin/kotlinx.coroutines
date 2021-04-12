@@ -67,7 +67,6 @@ class StackTraceRecoveryChannelsTest : TestBase() {
             block()
             expectUnreached()
         } catch (e: RecoverableTestException) {
-            e.printStackTrace()
             verifyStackTrace("channels/${name.methodName}", e)
         }
     }
@@ -136,25 +135,6 @@ class StackTraceRecoveryChannelsTest : TestBase() {
         channel.cancel(RecoverableTestCancellationException())
         finish(3)
         deferred.await()
-    }
-
-    // See https://github.com/Kotlin/kotlinx.coroutines/issues/950
-    @Test
-    fun testCancelledOffer() = runTest {
-        expect(1)
-        val job = Job()
-        val actor = actor<Int>(job, Channel.UNLIMITED) {
-            consumeEach {
-                expectUnreached() // is cancelled before offer
-            }
-        }
-        job.cancel()
-        try {
-            actor.offer(1)
-        } catch (e: Exception) {
-            verifyStackTrace("channels/${name.methodName}", e)
-            finish(2)
-        }
     }
 
     private suspend fun Channel<Int>.sendWithContext(ctx: CoroutineContext) = withContext(ctx) {

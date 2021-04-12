@@ -261,7 +261,7 @@ class StackTraceRecoveryTest : TestBase() {
 
     private suspend fun awaitCallback(channel: Channel<Callback>) {
         suspendCancellableCoroutine<Unit> { cont ->
-            channel.offer(Callback(cont))
+            channel.trySend(Callback(cont))
         }
         yield() // nop to make sure it is not a tail call
     }

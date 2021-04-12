@@ -15,9 +15,9 @@ open class ConflatedChannelTest : TestBase() {
     fun testBasicConflationOfferPoll() {
         val q = createConflatedChannel<Int>()
         assertNull(q.poll())
-        assertTrue(q.offer(1))
-        assertTrue(q.offer(2))
-        assertTrue(q.offer(3))
+        assertTrue(q.trySend(1).isSuccess)
+        assertTrue(q.trySend(2).isSuccess)
+        assertTrue(q.trySend(3).isSuccess)
         assertEquals(3, q.poll())
         assertNull(q.poll())
     }

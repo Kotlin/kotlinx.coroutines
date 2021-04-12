@@ -82,7 +82,7 @@ class RendezvousChannelTest : TestBase() {
     @Test
     fun testOfferAndPool() = runTest {
         val q = Channel<Int>(Channel.RENDEZVOUS)
-        assertFalse(q.offer(1))
+        assertFalse(q.trySend(1).isSuccess)
         expect(1)
         launch {
             expect(3)
@@ -99,7 +99,7 @@ class RendezvousChannelTest : TestBase() {
         expect(2)
         yield()
         expect(5)
-        assertTrue(q.offer(2))
+        assertTrue(q.trySend(2).isSuccess)
         expect(6)
         yield()
         expect(8)

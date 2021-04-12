@@ -137,6 +137,7 @@ internal abstract class AbstractSendChannel<E>(
     }
 
     override fun offer(element: E): Boolean {
+        // Temporary migration for offer users who rely on onUndeliveredElement
         try {
             return super.offer(element)
         } catch (e: Throwable) {

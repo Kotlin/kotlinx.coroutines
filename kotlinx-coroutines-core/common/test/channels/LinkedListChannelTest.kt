@@ -12,7 +12,7 @@ class LinkedListChannelTest : TestBase() {
     fun testBasic() = runTest {
         val c = Channel<Int>(Channel.UNLIMITED)
         c.send(1)
-        check(c.offer(2))
+        assertTrue(c.trySend(2).isSuccess)
         c.send(3)
         check(c.close())
         check(!c.close())

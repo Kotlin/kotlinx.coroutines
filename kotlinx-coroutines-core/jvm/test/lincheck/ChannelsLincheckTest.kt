@@ -63,11 +63,12 @@ abstract class ChannelLincheckTestBase(
     }
 
     @Operation
-    fun offer(@Param(name = "value") value: Int): Any = try {
-        c.offer(value)
-    } catch (e: NumberedCancellationException) {
-        e.testResult
-    }
+    fun trySend(@Param(name = "value") value: Int): Any = c.trySend(value)
+            .onSuccess { return true }
+            .onFailure {
+                if (it is NumberedCancellationException) return it.testResult
+                else throw it!!
+            }
 
     // TODO: this operation should be (and can be!) linearizable, but is not
     // @Operation
