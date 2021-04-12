@@ -14,24 +14,87 @@ import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
 import kotlin.time.*
 
+/**
+ * Groups emissions from this Flow into lists, according to the chosen ChunkingMethod. Time based implementations
+ * collect upstream and emit to downstream in separate coroutines - concurrently, like Flow.buffer() operator.
+ * Exact timing of emissions is not guaranteed, as it depends on collector coroutine availability.
+ *
+ * Size based chunking happens in a single coroutine and is purely sequential.
+ *
+ * Emissions always preserve order.
+ *
+ * It is possible to pass custom implementation of ChunkingMethod to chunked() operator.
+ *
+ * @param method Defines constrains on chunk size and time of its emission.
+ */
+
+@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.chunked(method: ChunkingMethod): Flow<List<T>> = with(method) { chunk() }
 
+@ExperimentalCoroutinesApi
 public interface ChunkingMethod {
     public fun <T> Flow<T>.chunk(): Flow<List<T>>
 
     public companion object {
+
+        /**
+         * Collects upstream and emits to downstream in separate coroutines - as soon as possible. If consumer keeps
+         * up with the producer, it emits lists with single element.
+         *
+         * In case of slow consumer, it groups emissions into bigger lists. When consumer "speeds up", chunks
+         * will get smaller.
+         *
+         * @param maxSize Maximum size of a single chunk. If reached, producer gets suspended until consumer "consumes"
+         * a chunk. If maxSize is not specified, then chunk may grow indefinitely until jvm runs out of memory.
+         */
+        @Suppress("FunctionName")
         public fun Natural(maxSize: Int = Int.MAX_VALUE): ChunkingMethod = NaturalChunking(maxSize)
 
+        /**
+         * Collects upstream into a buffer and emits its content as a list at every interval. When upstream completes
+         * (or is empty), it will try to emit immediately what is left of a chunk, omitting the interval.
+         *
+         * @param intervalMs Interval between emissions in milliseconds. Every emission happens only after
+         * interval passes, unless upstream Flow completes sooner.
+         *
+         * @param maxSize Maximum size of a single chunk. If reached, producer gets suspended until consumer "consumes"
+         * a chunk. If maxSize is not specified, then chunk may grow indefinitely until jvm runs out of memory.
+         */
+        @Suppress("FunctionName")
         public fun ByTime(intervalMs: Long, maxSize: Int = Int.MAX_VALUE): ChunkingMethod =
             TimeBased(intervalMs, maxSize)
 
-        public fun BySize(size: Int): ChunkingMethod = SizeBased(size)
-
+        /**
+         * Collects upstream into a buffer and emits its content as a list at every interval or when its buffer reaches
+         * maximum size. When upstream completes (or is empty), it will try to emit immediately what is left of
+         * a chunk, omitting the interval and maxSize constraints.
+         *
+         * @param intervalMs Interval between emissions in milliseconds. Every emission happens only after
+         * interval passes, unless upstream Flow completes sooner or maximum size of a chunk is reached.
+         *
+         * @param maxSize Maximum size of a single chunk. If reached, it will try to emit a chunk, ignoring the
+         * interval constraint. If so happens, time-to-next-chunk gets reset to the interval value.
+         */
+        @Suppress("FunctionName")
         public fun ByTimeOrSize(intervalMs: Long, maxSize: Int): ChunkingMethod = TimeOrSizeBased(intervalMs, maxSize)
+
+        /**
+         * Collects upstream into a buffer and emits its content as a list, when specified size is reached.
+         * This implementation is purely sequential. If concurrent upstream collection and downstream emissions are
+         * desired, one can use a buffer() operator after chunking
+         *
+         * @param size Exact size of emitted chunks. Only the last emission may be smaller.
+         */
+        @Suppress("FunctionName")
+        public fun BySize(size: Int): ChunkingMethod = SizeBased(size)
     }
 }
 
 private class NaturalChunking(private val maxSize: Int) : ChunkingMethod {
+
+    init {
+        requirePositive(maxSize)
+    }
 
     override fun <T> Flow<T>.chunk(): Flow<List<T>> = scopedFlow { downstream ->
         val upstream = buffer(maxSize).produceIn(this)
@@ -44,6 +107,11 @@ private class NaturalChunking(private val maxSize: Int) : ChunkingMethod {
 }
 
 private class TimeBased(private val intervalMs: Long, private val maxSize: Int) : ChunkingMethod {
+
+    init {
+        requirePositive(intervalMs)
+        requirePositive(maxSize)
+    }
 
     override fun <T> Flow<T>.chunk(): Flow<List<T>> = scopedFlow { downstream ->
         val upstreamCollection = Job()
@@ -60,7 +128,7 @@ private class TimeBased(private val intervalMs: Long, private val maxSize: Int) 
             }
 
             onTimeout(intervalMs) {
-                val chunk = upstream.awaitFirstAndDrain(maxElements = maxSize)
+                val chunk = upstream.drain(maxElements = maxSize)
                 if (chunk.isNotEmpty()) downstream.emit(chunk)
                 true
             }
@@ -70,7 +138,11 @@ private class TimeBased(private val intervalMs: Long, private val maxSize: Int) 
 
 private class SizeBased(private val size: Int) : ChunkingMethod {
 
-    override fun <T> Flow<T>.chunk(): Flow<List<T>> = flow<List<T>> {
+    init {
+        requirePositive(size)
+    }
+
+    override fun <T> Flow<T>.chunk(): Flow<List<T>> = flow {
         val accumulator = ArrayList<T>(size)
         collect { element ->
             accumulator.add(element)
@@ -82,8 +154,13 @@ private class SizeBased(private val size: Int) : ChunkingMethod {
 
 private class TimeOrSizeBased(private val intervalMs: Long, private val maxSize: Int) : ChunkingMethod {
 
+    init {
+        requirePositive(intervalMs)
+        requirePositive(maxSize)
+    }
+
     override fun <T> Flow<T>.chunk(): Flow<List<T>> = scopedFlow { downstream ->
-        val emitNowAndMaybeContinue = Channel<Boolean>()
+        val emitNowAndMaybeContinue = Channel<Boolean>(capacity = Channel.RENDEZVOUS)
         val elements = produce<T>(capacity = maxSize) {
             collect { element ->
                 val hasCapacity = channel.offer(element)
@@ -103,63 +180,13 @@ private class TimeOrSizeBased(private val intervalMs: Long, private val maxSize:
             }
 
             onTimeout(intervalMs) {
-                val chunk = elements.awaitFirstAndDrain(maxElements = maxSize)
+                val chunk = elements.drain(maxElements = maxSize)
                 if (chunk.isNotEmpty()) downstream.emit(chunk)
                 true
             }
         }
     }
 
-}
-
-public object ChunkConstraint {
-    public const val NO_MAXIMUM: Int = Int.MAX_VALUE
-    public const val NO_INTERVAL: Long = Long.MAX_VALUE
-    public const val NATURAL_BATCHING: Long = 0
-}
-
-@ExperimentalTime
-public fun <T> Flow<T>.chunkedOld(
-    interval: Duration,
-    size: Int
-): Flow<List<T>> = chunkedOld(interval.toLongMilliseconds(), size)
-
-public fun <T> Flow<T>.chunkedOld(
-    intervalMs: Long,
-    size: Int
-): Flow<List<T>> {
-    require(intervalMs >= 0)
-    require(size > 0)
-
-    return chunkedTimeBased(intervalMs, size)
-}
-
-private fun <T> Flow<T>.chunkedTimeBased(intervalMs: Long, size: Int): Flow<List<T>> = scopedFlow { downstream ->
-    val buffer = Channel<T>(size)
-    val emitNowSemaphore = Channel<Unit>()
-
-    launch {
-        collect { value ->
-            val hasCapacity = buffer.offer(value)
-            if (!hasCapacity) {
-                emitNowSemaphore.send(Unit)
-                buffer.send(value)
-            }
-        }
-        emitNowSemaphore.close()
-        buffer.close()
-    }
-
-    whileSelect {
-        emitNowSemaphore.onReceiveOrClosed { valueOrClosed ->
-            buffer.drain(maxElements = size).takeIf { it.isNotEmpty() }?.let { downstream.emit(it) }
-            valueOrClosed.isClosed.not()
-        }
-        onTimeout(intervalMs) {
-            downstream.emit(buffer.awaitFirstAndDrain(maxElements = size))
-            true
-        }
-    }
 }
 
 private suspend fun <T> ReceiveChannel<T>.awaitFirstAndDrain(maxElements: Int): List<T> {
@@ -178,13 +205,7 @@ private tailrec fun <T> ReceiveChannel<T>.drain(acc: MutableList<T> = mutableLis
         }
     }
 
-private fun <T> Flow<T>.chunkedSizeBased(size: Int): Flow<List<T>> = flow {
-    val buffer = mutableListOf<T>()
-    collect { value ->
-        buffer.add(value)
-        if (buffer.size == size) emit(buffer.drain())
-    }
-    if (buffer.isNotEmpty()) emit(buffer)
-}
-
 private fun <T> MutableList<T>.drain() = toList().also { this.clear() }
+
+private fun requirePositive(size: Int) = require(size > 0)
+private fun requirePositive(intervalMs: Long) = require(intervalMs > 0)

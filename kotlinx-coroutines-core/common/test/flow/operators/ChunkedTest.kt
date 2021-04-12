@@ -20,10 +20,10 @@ class ChunkedTest : TestBase() {
 
     @Test
     fun testUndersizedFlowSizeBasedChunking() = runTest {
-        val undersizeFlow = flow<Int> {
+        val undersizedFlow = flow<Int> {
             for (i in 1..3) emit(i)
         }
-        val result = undersizeFlow.chunked(ChunkingMethod.BySize(5)).toList()
+        val result = undersizedFlow.chunked(ChunkingMethod.BySize(5)).toList()
         assertEquals(1, result.size)
         assertEquals(listOf(1, 2, 3), result.first())
     }
@@ -107,7 +107,7 @@ class ChunkedTest : TestBase() {
         val emptyFlow = emptyFlow<Int>()
         val result = measureTimedValue { emptyFlow.chunked(ChunkingMethod.ByTime(intervalMs = 10 * 1000)).toList() }
         assertTrue(result.value.isEmpty())
-        assertTrue(result.duration < 1000.milliseconds)
+        assertTrue(result.duration < 500.milliseconds)
     }
 
     @Test
@@ -165,7 +165,7 @@ class ChunkedTest : TestBase() {
         assertEquals(2, result.value.size)
         assertEquals(5, result.value.first().size)
         assertEquals(5, result.value[1].size)
-        assertTrue(result.duration >= 200.milliseconds, "expected time at least 400 ms but was: ${result.duration}")
+        assertTrue(result.duration >= 200.milliseconds, "expected time at least 200 ms but was: ${result.duration}")
     }
 
     @Test
@@ -195,83 +195,20 @@ class ChunkedTest : TestBase() {
     }
 
     @Test
-    fun testMultipleElementsNotFillingBufferWithTimeOrSizeBasedChunking() = runTest {
-        val flow = flow<Int> {
-            for (i in 1..10) {
-                delay(10)
+    fun testMultipleElementsNotFillingBufferWithTimeOrSizeBasedChunking() = withVirtualTime {
+        val flow = flow {
+            for (i in 1..5) {
+                delay(500)
                 emit(i)
             }
         }
-        val result = measureTimedValue {
-            flow.chunked(ChunkingMethod.ByTimeOrSize(intervalMs = 55, maxSize = 500)).toList()
-        }
+        val result = flow.chunked(ChunkingMethod.ByTimeOrSize(intervalMs = 1100, maxSize = 500)).toList()
 
-        assertEquals(2, result.value.size)
-        assertEquals(5, result.value.first().size)
-        assertEquals(5, result.value[1].size)
-        assertTrue(result.duration >= 100.milliseconds)
+        assertEquals(3, result.size)
+        assertEquals(2, result.first().size)
+        assertEquals(2, result[1].size)
+        assertEquals(1, result[2].size)
+
+        finish(1)
     }
-
-//    @Test
-//    fun testEmptyFlowChunking() = runTest {
-//        val emptyFlow = emptyFlow<Int>()
-//        val result = measureTimedValue {
-//            emptyFlow.chunked(10.seconds, ChunkConstraint.NO_MAXIMUM).toList()
-//        }
-//
-//        assertTrue { result.value.isEmpty() }
-//        assertTrue { result.duration.inSeconds < 1 }
-//    }
-//
-//    @ExperimentalTime
-//    @Test
-//    fun testSingleFastElementChunking() = runTest {
-//        val fastFlow = flow { emit(1) }
-//
-//        val result = measureTimedValue {
-//            fastFlow.chunked(10.seconds, ChunkConstraint.NO_MAXIMUM).toList()
-//        }
-//
-//        assertTrue { result.value.size == 1 && result.value.first().contains(1) }
-//        assertTrue { result.duration.inSeconds < 1 }
-//    }
-//
-//    @ExperimentalTime
-//    @Test
-//    fun testMultipleFastElementsChunking() = runTest {
-//        val fastFlow = flow {
-//            for(i in 1..1000) emit(1)
-//        }
-//
-//        val result = measureTimedValue {
-//            fastFlow.chunked(10.seconds, ChunkConstraint.NO_MAXIMUM).toList()
-//        }
-//
-//        assertTrue { result.value.size == 1 && result.value.first().size == 1000 }
-//        assertTrue { result.duration.inSeconds < 1 }
-//    }
-//
-//    @Test
-//    fun testRespectingSizeAndTimeLimit() = withVirtualTime {
-//        val intervalFlow = flow {
-//            delay(1500)
-//            emit(1)
-//            emit(2)
-//            emit(3)
-//            emit(4)
-//            delay(1500)
-//            emit(5)
-//            delay(1500)
-//            emit(6)
-//        }
-//        val chunks = intervalFlow.chunked(2.seconds, size = 3).toList()
-//
-//        assertEquals(3, chunks.size)
-//        assertEquals(3, chunks.first().size)
-//        assertEquals(2, chunks[1].size)
-//        assertTrue { chunks[1].containsAll(listOf(4, 5)) }
-//
-//        finish(1)
-//    }
-
 }
