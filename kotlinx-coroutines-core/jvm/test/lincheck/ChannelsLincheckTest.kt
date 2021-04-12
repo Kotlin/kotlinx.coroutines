@@ -66,8 +66,8 @@ abstract class ChannelLincheckTestBase(
     fun trySend(@Param(name = "value") value: Int): Any = c.trySend(value)
             .onSuccess { return true }
             .onFailure {
-                if (it is NumberedCancellationException) return it.testResult
-                else throw it!!
+                return if (it is NumberedCancellationException) it.testResult
+                else false
             }
 
     // TODO: this operation should be (and can be!) linearizable, but is not
@@ -85,11 +85,11 @@ abstract class ChannelLincheckTestBase(
         e.testResult
     }
 
-    @Operation
+//    @Operation TODO Lincheck doesn't work with inline classes
     fun tryReceive(): Any? =
         c.tryReceive()
-            .onSuccess { it }
-            .onFailure { if (it is NumberedCancellationException) it.testResult else throw it!! }
+            .onSuccess { return it }
+            .onFailure { return if (it is NumberedCancellationException) it.testResult else null }
 
     // TODO: this operation should be (and can be!) linearizable, but is not
     // @Operation
@@ -131,7 +131,7 @@ abstract class SequentialIntChannelBase(private val capacity: Int) : VerifierSta
     private val buffer = ArrayList<Int>()
     private var closedMessage: String? = null
 
-    suspend fun send(x: Int): Any = when (val offerRes = offer(x)) {
+    suspend fun send(x: Int): Any = when (val offerRes = trySend(x)) {
         true -> Unit
         false -> suspendCancellableCoroutine { cont ->
             senders.add(cont to x)
@@ -139,7 +139,7 @@ abstract class SequentialIntChannelBase(private val capacity: Int) : VerifierSta
         else -> offerRes
     }
 
-    fun offer(element: Int): Any {
+    fun trySend(element: Int): Any {
         if (closedMessage !== null) return closedMessage!!
         if (capacity == CONFLATED) {
             if (resumeFirstReceiver(element)) return true
