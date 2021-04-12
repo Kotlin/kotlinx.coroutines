@@ -10,7 +10,7 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 
 /**
- * ### Deprecation note.
+ * **Deprecated** blocking variant of send.
  *
  * This method is deprecated in the favour of [trySendBlocking].
  *
@@ -22,6 +22,25 @@ import kotlinx.coroutines.*
  * These bugs were hard-to-spot during code review and also forced users to write
  * their own wrappers around `sendBlocking`, so it was decided to deprecate
  * this function and provide a more explicit primitive instead.
+ *
+ * The real-world example of broken usage with Firebase:
+ * ```kotlin
+ * callbackFlow {
+ *     val listener = object : ValueEventListener {
+ *         override fun onDataChange(snapshot: com.google.firebase.database.DataSnapshot) {
+ *             // This line may fail and crash the app when the downstream flow is cancelled
+ *             sendBlocking(DataSnapshot(snapshot))
+ *         }
+ *
+ *         override fun onCancelled(error: com.google.firebase.database.DatabaseError) {
+ *             close(error.toException())
+ *         }
+ *     }
+ *
+ *     firebaseQuery.addValueEventListener(listener)
+ *     awaitClose { firebaseQuery.removeEventListener(listener) }
+ * }
+ * ```
  */
 @Deprecated(
     level = DeprecationLevel.WARNING,
@@ -59,6 +78,7 @@ public fun <E> SendChannel<E>.sendBlocking(element: E) {
  *
  * @throws [InterruptedException] if the current thread is interrupted during the blocking send operation.
  */
+@Throws(InterruptedException::class)
 public fun <E> SendChannel<E>.trySendBlocking(element: E): ChannelResult<Unit> {
     /*
      * Sent successfully -- bail out.
