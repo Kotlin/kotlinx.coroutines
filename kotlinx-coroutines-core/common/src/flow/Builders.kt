@@ -261,7 +261,6 @@ public fun <T> flowViaChannel(
  * }
  * ```
  */
-@ExperimentalCoroutinesApi
 public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> =
     ChannelFlowBuilder(block)
 
@@ -302,11 +301,10 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  *         override fun onNextValue(value: T) {
  *             // To avoid blocking you can configure channel capacity using
  *             // either buffer(Channel.CONFLATED) or buffer(Channel.UNLIMITED) to avoid overfill
- *             try {
- *                 sendBlocking(value)
- *             } catch (e: Exception) {
- *                 // Handle exception from the channel: failure in flow or premature closing
- *             }
+ *             trySendBlocking(value)
+ *                 .onFailure { throwable ->
+ *                     // Downstream has been cancelled or failed, can log here
+ *                 }
  *         }
  *         override fun onApiError(cause: Throwable) {
  *             cancel(CancellationException("API Error", cause))
@@ -327,7 +325,6 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  * > `awaitClose` block can be called at any time due to asynchronous nature of cancellation, even
  * > concurrently with the call of the callback.
  */
-@ExperimentalCoroutinesApi
 public fun <T> callbackFlow(@BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> = CallbackFlowBuilder(block)
 
 // ChannelFlow implementation that is the first in the chain of flow operations and introduces (builds) a flow
