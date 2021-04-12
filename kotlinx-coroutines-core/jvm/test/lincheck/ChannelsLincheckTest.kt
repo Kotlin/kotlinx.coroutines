@@ -86,11 +86,10 @@ abstract class ChannelLincheckTestBase(
     }
 
     @Operation
-    fun poll(): Any? = try {
-        c.poll()
-    } catch (e: NumberedCancellationException) {
-        e.testResult
-    }
+    fun tryReceive(): Any? =
+        c.tryReceive()
+            .onSuccess { it }
+            .onFailure { if (it is NumberedCancellationException) it.testResult else throw it!! }
 
     // TODO: this operation should be (and can be!) linearizable, but is not
     // @Operation
@@ -164,11 +163,11 @@ abstract class SequentialIntChannelBase(private val capacity: Int) : VerifierSta
         return false
     }
 
-    suspend fun receive(): Any = poll() ?: suspendCancellableCoroutine { cont ->
+    suspend fun receive(): Any = tryReceive() ?: suspendCancellableCoroutine { cont ->
         receivers.add(cont)
     }
 
-    fun poll(): Any? {
+    fun tryReceive(): Any? {
         if (buffer.isNotEmpty()) {
             val el = buffer.removeAt(0)
             resumeFirstSender().also {

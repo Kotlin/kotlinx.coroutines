@@ -80,28 +80,6 @@ class BasicOperationsTest : TestBase() {
         }
     }
 
-    private suspend fun testReceiveCatchingException(kind: TestChannelKind) = coroutineScope {
-        val channel = kind.create<Int>()
-        val d = async(NonCancellable) {
-            channel.receive()
-        }
-
-        yield()
-        channel.close(TestException())
-        assertTrue(channel.isClosedForReceive)
-
-        assertFailsWith<TestException> { channel.poll() }
-        try {
-            channel.receiveCatching().getOrThrow()
-            expectUnreached()
-        } catch (e: TestException) {
-            // Expected
-        }
-
-        d.join()
-        assertTrue(d.getCancellationException().cause is TestException)
-    }
-
     @Suppress("ReplaceAssertBooleanWithAssertEquality")
     private suspend fun testReceiveCatching(kind: TestChannelKind) = coroutineScope {
         reset()

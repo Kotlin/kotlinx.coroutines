@@ -92,15 +92,15 @@ class ArrayChannelTest : TestBase() {
         expect(1)
         launch {
             expect(3)
-            assertEquals(1, q.poll())
+            assertEquals(1, q.tryReceive().getOrNull())
             expect(4)
-            assertNull(q.poll())
+            assertNull(q.tryReceive().getOrNull())
             expect(5)
             assertEquals(2, q.receive()) // suspends
             expect(9)
-            assertEquals(3, q.poll())
+            assertEquals(3, q.tryReceive().getOrNull())
             expect(10)
-            assertNull(q.poll())
+            assertNull(q.tryReceive().getOrNull())
             expect(11)
         }
         expect(2)

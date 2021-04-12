@@ -42,7 +42,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
         launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             val sub = broadcast.openSubscription()
-            assertNull(sub.poll())
+            assertNull(sub.tryReceive().getOrNull())
             expect(3)
             assertEquals("one", sub.receive()) // suspends
             expect(6)

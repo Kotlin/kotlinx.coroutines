@@ -20,7 +20,7 @@ class ChannelBufferOverflowTest : TestBase() {
         assertTrue(c.trySend(6).isSuccess) // overflows, dropped
         assertEquals(2, c.receive())
         assertEquals(5, c.receive())
-        assertEquals(null, c.poll())
+        assertEquals(null, c.tryReceive().getOrNull())
     }
 
     @Test
@@ -35,6 +35,6 @@ class ChannelBufferOverflowTest : TestBase() {
         assertTrue(c.trySend(6).isSuccess) // overflows, keeps 5, 6
         assertEquals(5, c.receive())
         assertEquals(6, c.receive())
-        assertEquals(null, c.poll())
+        assertEquals(null, c.tryReceive().getOrNull())
     }
 }

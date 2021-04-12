@@ -17,7 +17,7 @@ class LinkedListChannelTest : TestBase() {
         check(c.close())
         check(!c.close())
         assertEquals(1, c.receive())
-        assertEquals(2, c.poll())
+        assertEquals(2, c.tryReceive().getOrNull())
         assertEquals(3, c.receiveCatching().getOrNull())
         assertNull(c.receiveCatching().getOrNull())
     }

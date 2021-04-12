@@ -65,7 +65,7 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
             // Received the second value from the same flow in the same epoch -- bail out
             if (lastReceivedEpoch[index] == currentEpoch) break
             lastReceivedEpoch[index] = currentEpoch
-            element = resultChannel.poll() ?: break
+            element = resultChannel.tryReceive().getOrNull() ?: break
         }
 
         // Process batch result if there is enough data

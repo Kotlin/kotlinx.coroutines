@@ -12,14 +12,14 @@ open class ConflatedChannelTest : TestBase() {
         Channel<T>(Channel.CONFLATED)
     
     @Test
-    fun testBasicConflationOfferPoll() {
+    fun testBasicConflationOfferTryReceive() {
         val q = createConflatedChannel<Int>()
-        assertNull(q.poll())
+        assertNull(q.tryReceive().getOrNull())
         assertTrue(q.trySend(1).isSuccess)
         assertTrue(q.trySend(2).isSuccess)
         assertTrue(q.trySend(3).isSuccess)
-        assertEquals(3, q.poll())
-        assertNull(q.poll())
+        assertEquals(3, q.tryReceive().getOrNull())
+        assertNull(q.tryReceive().getOrNull())
     }
 
     @Test
