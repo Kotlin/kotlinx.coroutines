@@ -27,8 +27,8 @@ import kotlinx.coroutines.flow.*
 public fun <T> ObservableValue<T>.asFlow(): Flow<T> = callbackFlow<T> {
     val listener = ChangeListener<T> { _, _, newValue ->
         /*
-         * Do not propagate an exception to the caller, it
-         * already should've been handle by the downstream
+         * Do not propagate the exception to the ObservableValue, it
+         * already should've been handled by the downstream
          */
         trySend(newValue)
     }

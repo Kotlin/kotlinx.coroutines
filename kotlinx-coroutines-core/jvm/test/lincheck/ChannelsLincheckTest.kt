@@ -85,7 +85,7 @@ abstract class ChannelLincheckTestBase(
         e.testResult
     }
 
-//    @Operation TODO Lincheck doesn't work with inline classes
+    @Operation
     fun tryReceive(): Any? =
         c.tryReceive()
             .onSuccess { return it }
