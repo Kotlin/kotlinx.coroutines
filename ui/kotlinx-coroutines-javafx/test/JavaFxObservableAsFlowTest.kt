@@ -83,4 +83,20 @@ class JavaFxObservableAsFlowTest : TestBase() {
         }
     }
 
+    @Test
+    fun testIntermediateCrash() = runTest {
+        if (!initPlatform()) {
+            println("Skipping JavaFxTest in headless environment")
+            return@runTest // ignore test in headless environments
+        }
+
+        val property = SimpleIntegerProperty(0)
+
+        assertFailsWith<TestException> {
+            property.asFlow().onEach {
+                yield()
+                throw TestException()
+            }.collect()
+        }
+    }
 }

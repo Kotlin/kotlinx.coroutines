@@ -84,11 +84,11 @@ private class SubscriptionChannel<T> :
     }
 
     override fun onSuccess(t: T) {
-        offer(t)
+        trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
     }
 
     override fun onNext(t: T) {
-        offer(t)
+        trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
     }
 
     override fun onComplete() {

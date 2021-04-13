@@ -78,7 +78,7 @@ private class RxObservableCoroutine<T: Any>(
 
     public override suspend fun send(element: T) {
         // fast-path -- try send without suspension
-        if (offer(element)) return
+        if (trySend(element).isSuccess) return
         // slow-path does suspend
         return sendSuspend(element)
     }

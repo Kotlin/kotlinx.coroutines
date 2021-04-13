@@ -15,8 +15,8 @@ class BasicOperationsTest : TestBase() {
     }
 
     @Test
-    fun testOfferAfterClose() = runTest {
-        TestChannelKind.values().forEach { kind -> testOffer(kind) }
+    fun testTrySendAfterClose() = runTest {
+        TestChannelKind.values().forEach { kind -> testTrySend(kind) }
     }
 
     @Test
@@ -39,7 +39,7 @@ class BasicOperationsTest : TestBase() {
             }
         }
         expect(1)
-        channel.offer(42)
+        channel.trySend(42)
         expect(2)
         channel.close(AssertionError())
         finish(4)
@@ -80,28 +80,6 @@ class BasicOperationsTest : TestBase() {
         }
     }
 
-    private suspend fun testReceiveCatchingException(kind: TestChannelKind) = coroutineScope {
-        val channel = kind.create<Int>()
-        val d = async(NonCancellable) {
-            channel.receive()
-        }
-
-        yield()
-        channel.close(TestException())
-        assertTrue(channel.isClosedForReceive)
-
-        assertFailsWith<TestException> { channel.poll() }
-        try {
-            channel.receiveCatching().getOrThrow()
-            expectUnreached()
-        } catch (e: TestException) {
-            // Expected
-        }
-
-        d.join()
-        assertTrue(d.getCancellationException().cause is TestException)
-    }
-
     @Suppress("ReplaceAssertBooleanWithAssertEquality")
     private suspend fun testReceiveCatching(kind: TestChannelKind) = coroutineScope {
         reset()
@@ -131,22 +109,21 @@ class BasicOperationsTest : TestBase() {
         finish(6)
     }
 
-    private suspend fun testOffer(kind: TestChannelKind) = coroutineScope {
+    private suspend fun testTrySend(kind: TestChannelKind) = coroutineScope {
         val channel = kind.create<Int>()
         val d = async { channel.send(42) }
         yield()
         channel.close()
 
         assertTrue(channel.isClosedForSend)
-        try {
-            channel.offer(2)
-            fail()
-        } catch (e: ClosedSendChannelException) {
-            if (!kind.isConflated) {
-                assertEquals(42, channel.receive())
+        channel.trySend(2)
+            .onSuccess { expectUnreached() }
+            .onFailure {
+                assertTrue { it is  ClosedSendChannelException}
+                if (!kind.isConflated) {
+                    assertEquals(42, channel.receive())
+                }
             }
-        }
-
         d.await()
     }
 

@@ -80,26 +80,26 @@ class RendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testOfferAndPool() = runTest {
+    fun testTrySendTryReceive() = runTest {
         val q = Channel<Int>(Channel.RENDEZVOUS)
-        assertFalse(q.offer(1))
+        assertFalse(q.trySend(1).isSuccess)
         expect(1)
         launch {
             expect(3)
-            assertNull(q.poll())
+            assertNull(q.tryReceive().getOrNull())
             expect(4)
             assertEquals(2, q.receive())
             expect(7)
-            assertNull(q.poll())
+            assertNull(q.tryReceive().getOrNull())
             yield()
             expect(9)
-            assertEquals(3, q.poll())
+            assertEquals(3, q.tryReceive().getOrNull())
             expect(10)
         }
         expect(2)
         yield()
         expect(5)
-        assertTrue(q.offer(2))
+        assertTrue(q.trySend(2).isSuccess)
         expect(6)
         yield()
         expect(8)

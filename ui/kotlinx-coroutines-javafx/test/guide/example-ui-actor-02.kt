@@ -67,6 +67,6 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     }
     // install a listener to offer events to this actor
     onMouseClicked = EventHandler { event ->
-        eventActor.offer(event)
+        eventActor.trySend(event)
     }
 }

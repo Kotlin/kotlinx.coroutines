@@ -132,7 +132,7 @@ private class ReactiveSubscriber<T : Any>(
 
     override fun onNext(value: T) {
         // Controlled by requestSize
-        require(channel.offer(value)) { "Element $value was not added to channel because it was full, $channel" }
+        require(channel.trySend(value).isSuccess) { "Element $value was not added to channel because it was full, $channel" }
     }
 
     override fun onComplete() {

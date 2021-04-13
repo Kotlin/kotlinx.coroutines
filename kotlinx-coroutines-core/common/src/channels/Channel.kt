@@ -24,7 +24,7 @@ import kotlin.jvm.*
 public interface SendChannel<in E> {
     /**
      * Returns `true` if this channel was closed by an invocation of [close]. This means that
-     * calling [send] or [offer] will result in an exception.
+     * calling [send] will result in an exception.
      *
      * **Note: This is an experimental api.** This property may change its semantics and/or name in the future.
      */
@@ -51,7 +51,7 @@ public interface SendChannel<in E> {
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
      * This function can be used in [select] invocations with the [onSend] clause.
-     * Use [offer] to try sending to this channel without waiting.
+     * Use [trySend] to try sending to this channel without waiting.
      */
     public suspend fun send(element: E)
 
@@ -64,23 +64,6 @@ public interface SendChannel<in E> {
      */
     public val onSend: SelectClause2<E, SendChannel<E>>
 
-    /**
-     * Immediately adds the specified [element] to this channel, if this doesn't violate its capacity restrictions,
-     * and returns `true`. Otherwise, just returns `false`. This is a synchronous variant of [send] which backs off
-     * in situations when `send` suspends.
-     *
-     * Throws an exception if the channel [is closed for `send`][isClosedForSend] (see [close] for details).
-     *
-     * When `offer` call returns `false` it guarantees that the element was not delivered to the consumer and it
-     * it does not call `onUndeliveredElement` that was installed for this channel. If the channel was closed,
-     * then it calls `onUndeliveredElement` before throwing an exception.
-     * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
-     */
-    public fun offer(element: E): Boolean {
-        val result = trySend(element)
-        if (result.isSuccess) return true
-        throw recoverStackTrace(result.exceptionOrNull() ?: return false)
-    }
 
     /**
      * Immediately adds the specified [element] to this channel, if this doesn't violate its capacity restrictions,
@@ -103,7 +86,7 @@ public interface SendChannel<in E> {
      * on the side of [ReceiveChannel] starts returning `true` only after all previously sent elements
      * are received.
      *
-     * A channel that was closed without a [cause] throws a [ClosedSendChannelException] on attempts to [send] or [offer]
+     * A channel that was closed without a [cause] throws a [ClosedSendChannelException] on attempts to [send]
      * and [ClosedReceiveChannelException] on attempts to [receive][ReceiveChannel.receive].
      * A channel that was closed with non-null [cause] is called a _failed_ channel. Attempts to send or
      * receive on a failed channel throw the specified [cause] exception.
@@ -122,10 +105,11 @@ public interface SendChannel<in E> {
      * * the cause of `close` or `cancel` otherwise.
      *
      * Example of usage (exception handling is omitted):
+     *
      * ```
      * val events = Channel(UNLIMITED)
      * callbackBasedApi.registerCallback { event ->
-     *   events.offer(event)
+     *   events.trySend(event)
      * }
      *
      * val uiUpdater = launch(Dispatchers.Main, parent = UILifecycle) {
@@ -134,7 +118,6 @@ public interface SendChannel<in E> {
      * }
      *
      * events.invokeOnClose { callbackBasedApi.stop() }
-     *
      * ```
      *
      * **Note: This is an experimental api.** This function may change its semantics, parameters or return type in the future.
@@ -146,6 +129,33 @@ public interface SendChannel<in E> {
      */
     @ExperimentalCoroutinesApi
     public fun invokeOnClose(handler: (cause: Throwable?) -> Unit)
+
+    /**
+     * **Deprecated** offer method.
+     *
+     * This method was deprecated in the favour of [trySend].
+     * It has proven itself as the most error-prone method in Channel API:
+     *
+     * * `Boolean` return type creates the false sense of security, implying that `false`
+     *    is returned instead of throwing an exception.
+     * * It was used mostly from non-suspending APIs where CancellationException triggered
+     *   internal failures in the application (the most common source of bugs).
+     * * Due to signature and explicit `if (ch.offer(...))` checks it was easy to
+     *   oversee such error during code review.
+     * * Its name was not aligned with the rest of the API and tried to mimic Java's queue instead.
+     *
+     * See https://github.com/Kotlin/kotlinx.coroutines/issues/974 for more context.
+     */
+    @Deprecated(
+        level = DeprecationLevel.WARNING,
+        message = "Deprecated in the favour of 'trySend' method",
+        replaceWith = ReplaceWith("trySend(element).isSuccess")
+    ) // Since 1.5.0
+    public fun offer(element: E): Boolean {
+        val result = trySend(element)
+        if (result.isSuccess) return true
+        throw recoverStackTrace(result.exceptionOrNull() ?: return false)
+    }
 }
 
 /**
@@ -188,7 +198,7 @@ public interface ReceiveChannel<out E> {
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
      * This function can be used in [select] invocations with the [onReceive] clause.
-     * Use [poll] to try receiving from this channel without waiting.
+     * Use [tryReceive] to try receiving from this channel without waiting.
      */
     public suspend fun receive(): E
 
@@ -199,6 +209,100 @@ public interface ReceiveChannel<out E> {
      * [is closed for `receive`][isClosedForReceive] (see [close][SendChannel.close] for details).
      */
     public val onReceive: SelectClause1<E>
+
+    /**
+     * Retrieves and removes an element from this channel if it's not empty, or suspends the caller while this channel is empty.
+     * This method returns [ChannelResult] with the value of an element successfully retrieved from the channel
+     * or the close cause if the channel was closed. Closed cause may be `null` if the channel was closed normally.
+     * The result cannot be [failed][ChannelResult.isFailure] without being [closed][ChannelResult.isClosed].
+     *
+     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
+     * function is suspended, this function immediately resumes with a [CancellationException].
+     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+     * suspended, it will not resume successfully. The `receiveCatching` call can retrieve the element from the channel,
+     * but then throw [CancellationException], thus failing to deliver the element.
+     * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
+     *
+     * Note that this function does not check for cancellation when it is not suspended.
+     * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
+     *
+     * This function can be used in [select] invocations with the [onReceiveCatching] clause.
+     * Use [tryReceive] to try receiving from this channel without waiting.
+     */
+    public suspend fun receiveCatching(): ChannelResult<E>
+
+    /**
+     * Clause for the [select] expression of the [onReceiveCatching] suspending function that selects with the [ChannelResult] with a value
+     * that is received from the channel or with a close cause if the channel
+     * [is closed for `receive`][isClosedForReceive].
+     */
+    public val onReceiveCatching: SelectClause1<ChannelResult<E>>
+
+    /**
+     * Retrieves and removes an element from this channel if it's not empty, returning a [successful][ChannelResult.success]
+     * result, returns [failed][ChannelResult.failed] result if the channel is empty, and [closed][ChannelResult.closed]
+     * result if the channel is closed.
+     */
+    public fun tryReceive(): ChannelResult<E>
+
+    /**
+     * Returns a new iterator to receive elements from this channel using a `for` loop.
+     * Iteration completes normally when the channel [is closed for `receive`][isClosedForReceive] without a cause and
+     * throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
+     */
+    public operator fun iterator(): ChannelIterator<E>
+
+    /**
+     * Cancels reception of remaining elements from this channel with an optional [cause].
+     * This function closes the channel and removes all buffered sent elements from it.
+     *
+     * A cause can be used to specify an error message or to provide other details on
+     * the cancellation reason for debugging purposes.
+     * If the cause is not specified, then an instance of [CancellationException] with a
+     * default message is created to [close][SendChannel.close] the channel.
+     *
+     * Immediately after invocation of this function [isClosedForReceive] and
+     * [isClosedForSend][SendChannel.isClosedForSend]
+     * on the side of [SendChannel] start returning `true`. Any attempt to send to or receive from this channel
+     * will lead to a [CancellationException].
+     */
+    public fun cancel(cause: CancellationException? = null)
+
+    /**
+     * @suppress This method implements old version of JVM ABI. Use [cancel].
+     */
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
+    public fun cancel(): Unit = cancel(null)
+
+    /**
+     * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [cancel].
+     */
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
+    public fun cancel(cause: Throwable? = null): Boolean
+
+    /**
+     * **Deprecated** poll method.
+     *
+     * This method was deprecated in the favour of [tryReceive].
+     * It has proven itself as error-prone method in Channel API:
+     *
+     * * Nullable return type creates the false sense of security, implying that `null`
+     *    is returned instead of throwing an exception.
+     * * It was used mostly from non-suspending APIs where CancellationException triggered
+     *   internal failures in the application (the most common source of bugs).
+     * * Its name was not aligned with the rest of the API and tried to mimic Java's queue instead.
+     *
+     * See https://github.com/Kotlin/kotlinx.coroutines/issues/974 for more context.
+     */
+    @Deprecated(level = DeprecationLevel.WARNING,
+        message = "Deprecated in the favour of 'tryReceive'",
+        replaceWith = ReplaceWith("tryReceive().getOrNull()")
+    ) // Since 1.5.0
+    public fun poll(): E? {
+        val result = tryReceive()
+        if (result.isSuccess) return result.getOrThrow()
+        throw recoverStackTrace(result.exceptionOrNull() ?: return null)
+    }
 
     /**
      * This function was deprecated since 1.3.0 and is no longer recommended to use
@@ -244,87 +348,6 @@ public interface ReceiveChannel<out E> {
                 }
             }
         }
-
-    /**
-     * Retrieves and removes an element from this channel if it's not empty, or suspends the caller while this channel is empty.
-     * This method returns [ChannelResult] with the value of an element successfully retrieved from the channel
-     * or the close cause if the channel was closed. Closed cause may be `null` if the channel was closed normally.
-     * The result cannot be [failed][ChannelResult.isFailure] without being [closed][ChannelResult.isClosed].
-     *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
-     * function is suspended, this function immediately resumes with a [CancellationException].
-     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
-     * suspended, it will not resume successfully. The `receiveCatching` call can retrieve the element from the channel,
-     * but then throw [CancellationException], thus failing to deliver the element.
-     * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
-     *
-     * Note that this function does not check for cancellation when it is not suspended.
-     * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
-     *
-     * This function can be used in [select] invocations with the [onReceiveCatching] clause.
-     * Use [poll] to try receiving from this channel without waiting.
-     */
-    public suspend fun receiveCatching(): ChannelResult<E>
-
-    /**
-     * Clause for the [select] expression of the [onReceiveCatching] suspending function that selects with the [ChannelResult] with a value
-     * that is received from the channel or with a close cause if the channel
-     * [is closed for `receive`][isClosedForReceive].
-     */
-    public val onReceiveCatching: SelectClause1<ChannelResult<E>>
-
-    /**
-     * Retrieves and removes an element from this channel if it's not empty or returns `null` if the channel is empty
-     * or is [is closed for `receive`][isClosedForReceive] without a cause.
-     * It throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
-     */
-    public fun poll(): E? {
-        val result = tryReceive()
-        if (result.isSuccess) return result.getOrThrow()
-        throw recoverStackTrace(result.exceptionOrNull() ?: return null)
-    }
-
-    /**
-     * Retrieves and removes an element from this channel if it's not empty, returning a [successful][ChannelResult.success]
-     * result, returns [failed][ChannelResult.failed] result if the channel is empty, and [closed][ChannelResult.closed]
-     * result if the channel is closed.
-     */
-    public fun tryReceive(): ChannelResult<E>
-
-    /**
-     * Returns a new iterator to receive elements from this channel using a `for` loop.
-     * Iteration completes normally when the channel [is closed for `receive`][isClosedForReceive] without a cause and
-     * throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
-     */
-    public operator fun iterator(): ChannelIterator<E>
-
-    /**
-     * Cancels reception of remaining elements from this channel with an optional [cause].
-     * This function closes the channel and removes all buffered sent elements from it.
-     *
-     * A cause can be used to specify an error message or to provide other details on
-     * the cancellation reason for debugging purposes.
-     * If the cause is not specified, then an instance of [CancellationException] with a
-     * default message is created to [close][SendChannel.close] the channel.
-     *
-     * Immediately after invocation of this function [isClosedForReceive] and
-     * [isClosedForSend][SendChannel.isClosedForSend]
-     * on the side of [SendChannel] start returning `true`. Any attempt to send to or receive from this channel
-     * will lead to a [CancellationException].
-     */
-    public fun cancel(cause: CancellationException? = null)
-
-    /**
-     * @suppress This method implements old version of JVM ABI. Use [cancel].
-     */
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
-    public fun cancel(): Unit = cancel(null)
-
-    /**
-     * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [cancel].
-     */
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
-    public fun cancel(cause: Throwable? = null): Boolean
 }
 
 /**
@@ -544,14 +567,14 @@ public interface ChannelIterator<out E> {
  *
  * * When `capacity` is [Channel.UNLIMITED] &mdash; it creates a channel with effectively unlimited buffer.
  *   This channel has a linked-list buffer of unlimited capacity (limited only by available memory).
- *   [Sending][send] to this channel never suspends, and [offer] always returns `true`.
+ *   [Sending][send] to this channel never suspends, and [trySend] always succeeds.
  *
  * * When `capacity` is [Channel.CONFLATED] &mdash; it creates a _conflated_ channel
- *   This channel buffers at most one element and conflates all subsequent `send` and `offer` invocations,
+ *   This channel buffers at most one element and conflates all subsequent `send` and `trySend` invocations,
  *   so that the receiver always gets the last element sent.
  *   Back-to-back sent elements are conflated &mdash; only the last sent element is received,
  *   while previously sent elements **are lost**.
- *   [Sending][send] to this channel never suspends, and [offer] always returns `true`.
+ *   [Sending][send] to this channel never suspends, and [trySend] always succeeds.
  *
  * * When `capacity` is positive but less than [UNLIMITED] &mdash; it creates an array-based channel with the specified capacity.
  *   This channel has an array buffer of a fixed `capacity`.
@@ -598,8 +621,6 @@ public interface ChannelIterator<out E> {
  *
  * * When [send][SendChannel.send] operation throws an exception because it was cancelled before it had a chance to actually
  *   send the element or because the channel was [closed][SendChannel.close] or [cancelled][ReceiveChannel.cancel].
- * * When [offer][SendChannel.offer] operation throws an exception when
- *   the channel was [closed][SendChannel.close] or [cancelled][ReceiveChannel.cancel].
  * * When [receive][ReceiveChannel.receive], [receiveOrNull][ReceiveChannel.receiveOrNull], or [hasNext][ChannelIterator.hasNext]
  *   operation throws an exception when it had retrieved the element from the
  *   channel but was cancelled before the code following the receive call resumed.

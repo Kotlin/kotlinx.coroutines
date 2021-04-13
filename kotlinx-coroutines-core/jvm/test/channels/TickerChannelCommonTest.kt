@@ -48,7 +48,7 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
 
             delayChannel.cancel()
             delay(5100)
-            assertFailsWith<CancellationException> { delayChannel.poll() }
+            assertFailsWith<CancellationException> { delayChannel.tryReceive().getOrThrow() }
         }
     }
 
@@ -159,9 +159,9 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
     }
 }
 
-fun ReceiveChannel<Unit>.checkEmpty() = assertNull(poll())
+fun ReceiveChannel<Unit>.checkEmpty() = assertNull(tryReceive().getOrNull())
 
 fun ReceiveChannel<Unit>.checkNotEmpty() {
-    assertNotNull(poll())
-    assertNull(poll())
+    assertNotNull(tryReceive().getOrNull())
+    assertNull(tryReceive().getOrNull())
 }

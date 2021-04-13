@@ -50,7 +50,7 @@ import kotlinx.coroutines.*
 )
 public fun <E> SendChannel<E>.sendBlocking(element: E) {
     // fast path
-    if (offer(element))
+    if (trySend(element).isSuccess)
         return
     // slow path
     runBlocking {

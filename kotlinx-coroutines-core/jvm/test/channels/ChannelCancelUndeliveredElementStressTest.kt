@@ -15,7 +15,7 @@ class ChannelCancelUndeliveredElementStressTest : TestBase() {
 
     // total counters
     private var sendCnt = 0
-    private var offerFailedCnt = 0
+    private var trySendFailedCnt = 0
     private var receivedCnt = 0
     private var undeliveredCnt = 0
 
@@ -23,7 +23,7 @@ class ChannelCancelUndeliveredElementStressTest : TestBase() {
     private var lastReceived = 0
     private var dSendCnt = 0
     private var dSendExceptionCnt = 0
-    private var dOfferFailedCnt = 0
+    private var dTrySendFailedCnt = 0
     private var dReceivedCnt = 0
     private val dUndeliveredCnt = AtomicInteger()
 
@@ -43,30 +43,30 @@ class ChannelCancelUndeliveredElementStressTest : TestBase() {
             joinAll(j1, j2)
 
             // All elements must be either received or undelivered (IN every run)
-            if (dSendCnt - dOfferFailedCnt != dReceivedCnt + dUndeliveredCnt.get()) {
+            if (dSendCnt - dTrySendFailedCnt != dReceivedCnt + dUndeliveredCnt.get()) {
                 println("          Send: $dSendCnt")
-                println("Send Exception: $dSendExceptionCnt")
-                println("  Offer failed: $dOfferFailedCnt")
+                println("Send exception: $dSendExceptionCnt")
+                println("trySend failed: $dTrySendFailedCnt")
                 println("      Received: $dReceivedCnt")
                 println("   Undelivered: ${dUndeliveredCnt.get()}")
                 error("Failed")
             }
-            offerFailedCnt += dOfferFailedCnt
+            trySendFailedCnt += dTrySendFailedCnt
             receivedCnt += dReceivedCnt
             undeliveredCnt += dUndeliveredCnt.get()
             // clear for next run
             dSendCnt = 0
             dSendExceptionCnt = 0
-            dOfferFailedCnt = 0
+            dTrySendFailedCnt = 0
             dReceivedCnt = 0
             dUndeliveredCnt.set(0)
         }
         // Stats
-        println("         Send: $sendCnt")
-        println(" Offer failed: $offerFailedCnt")
-        println("     Received: $receivedCnt")
-        println("  Undelivered: $undeliveredCnt")
-        assertEquals(sendCnt - offerFailedCnt, receivedCnt + undeliveredCnt)
+        println("          Send: $sendCnt")
+        println("trySend failed: $trySendFailedCnt")
+        println("      Received: $receivedCnt")
+        println("   Undelivered: $undeliveredCnt")
+        assertEquals(sendCnt - trySendFailedCnt, receivedCnt + undeliveredCnt)
     }
 
     private suspend fun sendOne(channel: Channel<Int>) {
@@ -75,11 +75,11 @@ class ChannelCancelUndeliveredElementStressTest : TestBase() {
         try {
             when (Random.nextInt(2)) {
                 0 -> channel.send(i)
-                1 -> if (!channel.offer(i)) {
-                    dOfferFailedCnt++
+                1 -> if (!channel.trySend(i).isSuccess) {
+                    dTrySendFailedCnt++
                 }
             }
-        } catch(e: Throwable) {
+        } catch (e: Throwable) {
             assertTrue(e is CancellationException) // the only exception possible in this test
             dSendExceptionCnt++
             throw e
