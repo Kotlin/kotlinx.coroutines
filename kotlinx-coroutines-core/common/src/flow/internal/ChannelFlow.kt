@@ -37,7 +37,7 @@ public interface FusibleFlow<T> : Flow<T> {
 /**
  * Operators that use channels as their "output" extend this `ChannelFlow` and are always fused with each other.
  * This class servers as a skeleton implementation of [FusibleFlow] and provides other cross-cutting
- * methods like ability to [produceIn] and [broadcastIn] the corresponding flow, thus making it
+ * methods like ability to [produceIn] the corresponding flow, thus making it
  * possible to directly use the backing channel if it exists (hence the `ChannelFlow` name).
  *
  * @suppress **This an internal API and should not be used from general code.**

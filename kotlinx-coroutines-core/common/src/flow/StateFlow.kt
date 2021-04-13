@@ -88,7 +88,7 @@ import kotlin.native.concurrent.*
  * ### StateFlow vs ConflatedBroadcastChannel
  *
  * Conceptually, state flow is similar to [ConflatedBroadcastChannel]
- * and is designed to completely replace `ConflatedBroadcastChannel` in the future.
+ * and is designed to completely replace it.
  * It has the following important differences:
  *
  * * `StateFlow` is simpler, because it does not have to implement all the [Channel] APIs, which allows

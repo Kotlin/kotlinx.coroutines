@@ -80,7 +80,7 @@ import kotlin.native.concurrent.*
  * ### SharedFlow vs BroadcastChannel
  *
  * Conceptually shared flow is similar to [BroadcastChannel][BroadcastChannel]
- * and is designed to completely replace `BroadcastChannel` in the future.
+ * and is designed to completely replace it.
  * It has the following important differences:
  *
  * * `SharedFlow` is simpler, because it does not have to implement all the [Channel] APIs, which allows

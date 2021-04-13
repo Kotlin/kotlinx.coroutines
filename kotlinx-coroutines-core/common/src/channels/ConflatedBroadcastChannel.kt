@@ -26,10 +26,10 @@ import kotlin.jvm.*
  * [opening][openSubscription] and [closing][ReceiveChannel.cancel] subscription takes O(N) time, where N is the
  * number of subscribers.
  *
- * **Note: This API is obsolete.** It will be deprecated and replaced by [StateFlow][kotlinx.coroutines.flow.StateFlow]
- * when it becomes stable.
+ * **Note: This API is obsolete since 1.5.0.** It will be deprecated with warning in 1.6.0
+ * and with error in 1.7.0. It is replaced with [StateFlow][kotlinx.coroutines.flow.StateFlow].
  */
-@ExperimentalCoroutinesApi // not @ObsoleteCoroutinesApi to reduce burden for people who are still using it
+@ObsoleteCoroutinesApi
 public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     /**
      * Creates an instance of this class that already holds a value.
