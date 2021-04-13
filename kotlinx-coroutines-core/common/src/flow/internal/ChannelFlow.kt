@@ -59,7 +59,7 @@ public abstract class ChannelFlow<T>(
     internal val collectToFun: suspend (ProducerScope<T>) -> Unit
         get() = { collectTo(it) }
 
-    private val produceCapacity: Int
+    internal val produceCapacity: Int
         get() = if (capacity == Channel.OPTIONAL_CHANNEL) Channel.BUFFERED else capacity
 
     /**
@@ -106,18 +106,6 @@ public abstract class ChannelFlow<T>(
     protected abstract fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T>
 
     protected abstract suspend fun collectTo(scope: ProducerScope<T>)
-
-    // broadcastImpl is used in broadcastIn operator which is obsolete and replaced by SharedFlow.
-    // BroadcastChannel does not support onBufferOverflow beyond simple conflation
-    public open fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> {
-        val broadcastCapacity = when (onBufferOverflow) {
-            BufferOverflow.SUSPEND -> produceCapacity
-            BufferOverflow.DROP_OLDEST -> Channel.CONFLATED
-            BufferOverflow.DROP_LATEST ->
-                throw IllegalArgumentException("Broadcast channel does not support BufferOverflow.DROP_LATEST")
-        }
-        return scope.broadcast(context, broadcastCapacity, start, block = collectToFun)
-    }
 
     /**
      * Here we use ATOMIC start for a reason (#1825).
@@ -201,7 +189,7 @@ internal class ChannelFlowOperatorImpl<T>(
     override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
         ChannelFlowOperatorImpl(flow, context, capacity, onBufferOverflow)
 
-    override fun dropChannelOperators(): Flow<T>? = flow
+    override fun dropChannelOperators(): Flow<T> = flow
 
     override suspend fun flowCollect(collector: FlowCollector<T>) =
         flow.collect(collector)

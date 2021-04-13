@@ -139,11 +139,6 @@ private class ChannelAsFlow<T>(
     override suspend fun collectTo(scope: ProducerScope<T>) =
         SendingCollector(scope).emitAllImpl(channel, consume) // use efficient channel receiving code from emitAll
 
-    override fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> {
-        markConsumed() // fail fast on repeated attempt to collect it
-        return super.broadcastImpl(scope, start)
-    }
-
     override fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> {
         markConsumed() // fail fast on repeated attempt to collect it
         return if (capacity == Channel.OPTIONAL_CHANNEL) {
@@ -201,7 +196,21 @@ public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
 public fun <T> Flow<T>.broadcastIn(
     scope: CoroutineScope,
     start: CoroutineStart = CoroutineStart.LAZY
-): BroadcastChannel<T> = asChannelFlow().broadcastImpl(scope, start)
+): BroadcastChannel<T> {
+    // Backwards compatibility with operator fusing
+    val channelFlow = asChannelFlow()
+    val capacity = when (channelFlow.onBufferOverflow) {
+        BufferOverflow.SUSPEND -> channelFlow.produceCapacity
+        BufferOverflow.DROP_OLDEST -> Channel.CONFLATED
+        BufferOverflow.DROP_LATEST ->
+            throw IllegalArgumentException("Broadcast channel does not support BufferOverflow.DROP_LATEST")
+    }
+    return scope.broadcast(channelFlow.context, capacity = capacity, start = start) {
+        collect { value ->
+            send(value)
+        }
+    }
+}
 
 /**
  * Creates a [produce] coroutine that collects the given flow.
