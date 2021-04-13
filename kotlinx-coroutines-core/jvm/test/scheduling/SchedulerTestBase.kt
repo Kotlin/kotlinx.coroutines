@@ -49,7 +49,7 @@ abstract class SchedulerTestBase : TestBase() {
 
         private fun maxSequenceNumber(): Int? {
             return Thread.getAllStackTraces().keys.asSequence().filter { it is CoroutineScheduler.Worker }
-                .map { sequenceNumber(it.name) }.max()
+                .map { sequenceNumber(it.name) }.maxOrNull()
         }
 
         private fun sequenceNumber(threadName: String): Int {
