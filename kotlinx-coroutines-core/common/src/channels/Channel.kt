@@ -105,6 +105,7 @@ public interface SendChannel<in E> {
      * * the cause of `close` or `cancel` otherwise.
      *
      * Example of usage (exception handling is omitted):
+     *
      * ```
      * val events = Channel(UNLIMITED)
      * callbackBasedApi.registerCallback { event ->
@@ -117,7 +118,6 @@ public interface SendChannel<in E> {
      * }
      *
      * events.invokeOnClose { callbackBasedApi.stop() }
-     *
      * ```
      *
      * **Note: This is an experimental api.** This function may change its semantics, parameters or return type in the future.
@@ -279,7 +279,6 @@ public interface ReceiveChannel<out E> {
      */
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     public fun cancel(cause: Throwable? = null): Boolean
-
 
     /**
      * **Deprecated** poll method.
