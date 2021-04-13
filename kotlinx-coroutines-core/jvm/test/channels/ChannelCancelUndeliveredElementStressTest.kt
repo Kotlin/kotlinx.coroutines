@@ -45,8 +45,8 @@ class ChannelCancelUndeliveredElementStressTest : TestBase() {
             // All elements must be either received or undelivered (IN every run)
             if (dSendCnt - dTrySendFailedCnt != dReceivedCnt + dUndeliveredCnt.get()) {
                 println("          Send: $dSendCnt")
-                println("Send Exception: $dSendExceptionCnt")
-                println("  TrySend failed: $dTrySendFailedCnt")
+                println("Send exception: $dSendExceptionCnt")
+                println("trySend failed: $dTrySendFailedCnt")
                 println("      Received: $dReceivedCnt")
                 println("   Undelivered: ${dUndeliveredCnt.get()}")
                 error("Failed")
@@ -62,10 +62,10 @@ class ChannelCancelUndeliveredElementStressTest : TestBase() {
             dUndeliveredCnt.set(0)
         }
         // Stats
-        println("         Send: $sendCnt")
-        println(" TrySend failed: $trySendFailedCnt")
-        println("     Received: $receivedCnt")
-        println("  Undelivered: $undeliveredCnt")
+        println("          Send: $sendCnt")
+        println("trySend failed: $trySendFailedCnt")
+        println("      Received: $receivedCnt")
+        println("   Undelivered: $undeliveredCnt")
         assertEquals(sendCnt - trySendFailedCnt, receivedCnt + undeliveredCnt)
     }
 
