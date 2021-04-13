@@ -130,3 +130,23 @@ class IntegrationTest(
     }
 
 }
+
+internal suspend inline fun <reified E: Throwable> assertCallsExceptionHandlerWith(
+    crossinline operation: suspend (CoroutineExceptionHandler) -> Unit): E
+{
+    val caughtExceptions = mutableListOf<Throwable>()
+    val exceptionHandler = object: AbstractCoroutineContextElement(CoroutineExceptionHandler),
+        CoroutineExceptionHandler
+    {
+        override fun handleException(context: CoroutineContext, exception: Throwable) {
+            caughtExceptions += exception
+        }
+    }
+    return withContext(exceptionHandler) {
+        operation(exceptionHandler)
+        caughtExceptions.single().let {
+            assertTrue(it is E, it.toString())
+            it
+        }
+    }
+}

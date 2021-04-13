@@ -66,6 +66,7 @@ private class MonoCoroutine<in T>(
                 sink.error(cause)
             } catch (e: Throwable) {
                 // In case of improper error implementation or fatal exceptions
+                cause.addSuppressed(e)
                 handleCoroutineException(context, cause)
             }
         }

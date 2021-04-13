@@ -123,42 +123,43 @@ class PublishTest : TestBase() {
 
     @Test
     fun testOnNextError() = runTest {
-        expect(1)
-        val publisher = publish(currentDispatcher()) {
-            expect(4)
-            try {
-                send("OK")
-            } catch(e: Throwable) {
-                expect(6)
-                assert(e is TestException)
-            }
-        }
-        expect(2)
         val latch = CompletableDeferred<Unit>()
-        publisher.subscribe(object : Subscriber<String> {
-            override fun onComplete() {
-                expectUnreached()
+        expect(1)
+        assertCallsExceptionHandlerWith<TestException> { exceptionHandler ->
+            val publisher = publish(currentDispatcher() + exceptionHandler) {
+                expect(4)
+                try {
+                    send("OK")
+                } catch(e: Throwable) {
+                    expect(6)
+                    assert(e is TestException)
+                    latch.complete(Unit)
+                }
             }
+            expect(2)
+            publisher.subscribe(object : Subscriber<String> {
+                override fun onComplete() {
+                    expectUnreached()
+                }
 
-            override fun onSubscribe(s: Subscription) {
-                expect(3)
-                s.request(1)
-            }
+                override fun onSubscribe(s: Subscription) {
+                    expect(3)
+                    s.request(1)
+                }
 
-            override fun onNext(t: String) {
-                expect(5)
-                assertEquals("OK", t)
-                throw TestException()
-            }
+                override fun onNext(t: String) {
+                    expect(5)
+                    assertEquals("OK", t)
+                    throw TestException()
+                }
 
-            override fun onError(t: Throwable) {
-                expect(7)
-                assert(t is TestException)
-                latch.complete(Unit)
-            }
-        })
-        latch.await()
-        finish(8)
+                override fun onError(t: Throwable) {
+                    expectUnreached()
+                }
+            })
+            latch.await()
+        }
+        finish(7)
     }
 
     @Test
