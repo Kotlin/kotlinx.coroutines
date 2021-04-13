@@ -11,28 +11,28 @@ import kotlinx.coroutines.*
 
 /**
  * **Deprecated** blocking variant of send.
- *
  * This method is deprecated in the favour of [trySendBlocking].
  *
- * `sendBlocking` is considered to be dangerous primitive -- it throws
+ * `sendBlocking` is a dangerous primitive &mdash; it throws an exception
  * if the channel was closed or, more commonly, cancelled.
- * Cancellation exceptions are not ignored by non-blocking code and frequently
+ * Cancellation exceptions in non-blocking code are unexpected and frequently
  * trigger internal failures.
  *
- * These bugs were hard-to-spot during code review and also forced users to write
- * their own wrappers around `sendBlocking`, so it was decided to deprecate
- * this function and provide a more explicit primitive instead.
+ * These bugs are hard-to-spot during code review and they forced users to write
+ * their own wrappers around `sendBlocking`.
+ * So this function is deprecated and replaced with a more explicit primitive.
  *
  * The real-world example of broken usage with Firebase:
+ *
  * ```kotlin
  * callbackFlow {
  *     val listener = object : ValueEventListener {
- *         override fun onDataChange(snapshot: com.google.firebase.database.DataSnapshot) {
+ *         override fun onDataChange(snapshot: DataSnapshot) {
  *             // This line may fail and crash the app when the downstream flow is cancelled
  *             sendBlocking(DataSnapshot(snapshot))
  *         }
  *
- *         override fun onCancelled(error: com.google.firebase.database.DatabaseError) {
+ *         override fun onCancelled(error: DatabaseError) {
  *             close(error.toException())
  *         }
  *     }
@@ -45,7 +45,7 @@ import kotlinx.coroutines.*
 @Deprecated(
     level = DeprecationLevel.WARNING,
     message = "Deprecated in the favour of 'trySendBlocking'. " +
-        "Consider handle the result of 'trySendBlocking' explicitly and rethrow exception if necessary",
+        "Consider handling the result of 'trySendBlocking' explicitly and rethrow exception if necessary",
     replaceWith = ReplaceWith("trySendBlocking(element)")
 )
 public fun <E> SendChannel<E>.sendBlocking(element: E) {
@@ -67,13 +67,14 @@ public fun <E> SendChannel<E>.sendBlocking(element: E) {
  * so this function should not be used from coroutine.
  *
  * Example of usage:
+ *
  * ```
  * // From callback API
  * channel.trySendBlocking(element)
  *     .onSuccess { /* request next element or debug log */ }
  *     .onFailure { t: Throwable? -> /* throw or log */ }
- *
  * ```
+ *
  * For this operation it is guaranteed that [failure][ChannelResult.failed] always contains an exception in it.
  *
  * @throws [InterruptedException] if the current thread is interrupted during the blocking send operation.
