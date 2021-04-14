@@ -80,7 +80,6 @@ public class PublisherCoroutine<in T>(
     override fun invokeOnClose(handler: (Throwable?) -> Unit): Nothing =
         throw UnsupportedOperationException("PublisherCoroutine doesn't support invokeOnClose")
 
-    // TODO: will throw if `null` is passed -- is throwing this kind of programmer-induced errors okay?
     override fun trySend(element: T): ChannelResult<Unit> =
         if (!mutex.tryLock()) {
             ChannelResult.failure()
@@ -134,7 +133,7 @@ public class PublisherCoroutine<in T>(
      */
     private fun doLockedNext(elem: T): Throwable? {
         if (elem == null) {
-            throw NullPointerException("Can not emit null")
+            throw NullPointerException("Attempted to emit `null` inside a reactive publisher")
         }
         /** This guards against the case when the caller of this function managed to lock the mutex not because some
          * elements were requested--and thus it is permitted to call `onNext`--but because the channel was closed.
