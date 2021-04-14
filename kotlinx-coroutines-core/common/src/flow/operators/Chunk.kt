@@ -208,4 +208,5 @@ private tailrec fun <T> ReceiveChannel<T>.drain(acc: MutableList<T> = mutableLis
 private fun <T> MutableList<T>.drain() = toList().also { this.clear() }
 
 private fun requirePositive(size: Int) = require(size > 0)
+
 private fun requirePositive(intervalMs: Long) = require(intervalMs > 0)

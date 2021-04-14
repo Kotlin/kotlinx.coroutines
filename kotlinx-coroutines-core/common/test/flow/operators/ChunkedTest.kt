@@ -103,6 +103,28 @@ class ChunkedTest : TestBase() {
     }
 
     @Test
+    fun testErrorPropagationInNaturalChunking() = runTest {
+        val exception = IllegalArgumentException()
+        val failedFlow = flow<Int> {
+            emit(1)
+            emit(2)
+            throw exception
+        }
+        var catchedException: Throwable? = null
+
+        val result = failedFlow
+            .chunked(ChunkingMethod.Natural())
+            .catch { e ->
+                catchedException = e
+                emit(listOf(3))
+            }
+            .toList()
+
+        assertTrue(catchedException is IllegalArgumentException)
+        assertEquals(3, result.first().single())
+    }
+
+    @Test
     fun testEmptyFlowWithSlowTimeBasedChunking() = runTest {
         val emptyFlow = emptyFlow<Int>()
         val result = measureTimedValue { emptyFlow.chunked(ChunkingMethod.ByTime(intervalMs = 10 * 1000)).toList() }
