@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -35,7 +35,7 @@ internal sealed class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay {
         messageQueue.enqueue(block)
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         val handle = setTimeout({ block.run() }, delayToInt(timeMillis))
         return ClearTimeout(handle)
     }
@@ -81,7 +81,7 @@ internal class WindowDispatcher(private val window: Window) : CoroutineDispatche
         window.setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         val handle = window.setTimeout({ block.run() }, delayToInt(timeMillis))
         return object : DisposableHandle {
             override fun dispose() {

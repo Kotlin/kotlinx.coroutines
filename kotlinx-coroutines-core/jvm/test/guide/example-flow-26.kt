@@ -8,7 +8,7 @@ package kotlinx.coroutines.guide.exampleFlow26
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun foo(): Flow<Int> = flow {
+fun simple(): Flow<Int> = flow {
     for (i in 1..3) {
         println("Emitting $i")
         emit(i) // emit next value
@@ -17,7 +17,7 @@ fun foo(): Flow<Int> = flow {
 
 fun main() = runBlocking<Unit> {
     try {
-        foo().collect { value ->         
+        simple().collect { value ->         
             println(value)
             check(value <= 1) { "Collected $value" }
         }

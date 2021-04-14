@@ -9,7 +9,7 @@ import kotlinx.coroutines.*
 
 fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception -> 
-        println("Caught $exception") 
+        println("CoroutineExceptionHandler got $exception") 
     }
     val job = GlobalScope.launch(handler) {
         launch { // the first child

@@ -18,6 +18,7 @@ Library support for Kotlin coroutines. This reference is a companion to
 | [kotlinx-coroutines-reactive](kotlinx-coroutines-reactive)           | Utilities for [Reactive Streams](https://www.reactive-streams.org) |
 | [kotlinx-coroutines-reactor](kotlinx-coroutines-reactor)             | Utilities for [Reactor](https://projectreactor.io) |
 | [kotlinx-coroutines-rx2](kotlinx-coroutines-rx2)                     | Utilities for [RxJava 2.x](https://github.com/ReactiveX/RxJava) |
+| [kotlinx-coroutines-rx3](kotlinx-coroutines-rx3)                     | Utilities for [RxJava 3.x](https://github.com/ReactiveX/RxJava) |
 | [kotlinx-coroutines-android](kotlinx-coroutines-android)             | `Main` dispatcher for Android applications |
 | [kotlinx-coroutines-javafx](kotlinx-coroutines-javafx)               | `JavaFx` dispatcher for JavaFX UI applications |
 | [kotlinx-coroutines-swing](kotlinx-coroutines-swing)                 | `Swing` dispatcher for Swing UI applications |

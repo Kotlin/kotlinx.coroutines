@@ -8,7 +8,7 @@ package kotlinx.coroutines.guide.exampleFlow06
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun foo(): Flow<Int> = flow { 
+fun simple(): Flow<Int> = flow { 
     for (i in 1..3) {
         delay(100)          
         println("Emitting $i")
@@ -18,7 +18,7 @@ fun foo(): Flow<Int> = flow {
 
 fun main() = runBlocking<Unit> {
     withTimeoutOrNull(250) { // Timeout after 250ms 
-        foo().collect { value -> println(value) } 
+        simple().collect { value -> println(value) } 
     }
     println("Done")
 }

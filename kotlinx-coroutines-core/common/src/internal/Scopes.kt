@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -15,12 +15,13 @@ import kotlin.jvm.*
 internal open class ScopeCoroutine<in T>(
     context: CoroutineContext,
     @JvmField val uCont: Continuation<T> // unintercepted continuation
-) : AbstractCoroutine<T>(context, true), CoroutineStackFrame {
-    final override val callerFrame: CoroutineStackFrame? get() = uCont as CoroutineStackFrame?
-    final override fun getStackTraceElement(): StackTraceElement? = null
-    final override val isScopedCoroutine: Boolean get() = true
+) : AbstractCoroutine<T>(context, true, true), CoroutineStackFrame {
 
-    internal val parent: Job? get() = parentContext[Job]
+    final override val callerFrame: CoroutineStackFrame? get() = uCont as? CoroutineStackFrame
+    final override fun getStackTraceElement(): StackTraceElement? = null
+
+    final override val isScopedCoroutine: Boolean get() = true
+    internal val parent: Job? get() = parentHandle?.parent
 
     override fun afterCompletion(state: Any?) {
         // Resume in a cancellable way by default when resuming from another context

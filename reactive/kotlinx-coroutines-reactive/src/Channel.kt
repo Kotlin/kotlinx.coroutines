@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.reactive
@@ -26,29 +26,31 @@ import org.reactivestreams.*
  */
 @Deprecated(
     message = "Transforming publisher to channel is deprecated, use asFlow() instead",
-    level = DeprecationLevel.WARNING) // Will be error in 1.4
+    level = DeprecationLevel.ERROR) // Will be error in 1.4
 public fun <T> Publisher<T>.openSubscription(request: Int = 1): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>(request)
     subscribe(channel)
     return channel
 }
 
-// Will be promoted to error in 1.3.0, removed in 1.4.0
-@Deprecated(message = "Use collect instead", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("this.collect(action)"))
-public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) =
-    openSubscription().consumeEach(action)
-
 /**
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  * Cancels subscription if any exception happens during collect.
  */
-public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit) =
-    openSubscription().consumeEach(action)
+public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit): Unit =
+    toChannel().consumeEach(action)
+
+@PublishedApi
+internal fun <T> Publisher<T>.toChannel(request: Int = 1): ReceiveChannel<T> {
+    val channel = SubscriptionChannel<T>(request)
+    subscribe(channel)
+    return channel
+}
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
 private class SubscriptionChannel<T>(
     private val request: Int
-) : LinkedListChannel<T>(), Subscriber<T> {
+) : LinkedListChannel<T>(null), Subscriber<T> {
     init {
         require(request >= 0) { "Invalid request size: $request" }
     }
@@ -107,7 +109,7 @@ private class SubscriptionChannel<T>(
 
     override fun onNext(t: T) {
         _requested.decrementAndGet()
-        offer(t)
+        trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
     }
 
     override fun onComplete() {

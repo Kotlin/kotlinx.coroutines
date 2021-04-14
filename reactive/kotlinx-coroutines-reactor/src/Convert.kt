@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.reactor
@@ -46,8 +46,8 @@ public fun <T> Deferred<T?>.asMono(context: CoroutineContext): Mono<T> = mono(co
  * @param context -- the coroutine context from which the resulting flux is going to be signalled
  */
 @Deprecated(message = "Deprecated in the favour of consumeAsFlow()",
-    level = DeprecationLevel.WARNING,
-    replaceWith = ReplaceWith("this.consumeAsFlow().asFlux()"))
+    level = DeprecationLevel.ERROR,
+    replaceWith = ReplaceWith("this.consumeAsFlow().asFlux(context)", imports = ["kotlinx.coroutines.flow.consumeAsFlow"]))
 public fun <T> ReceiveChannel<T>.asFlux(context: CoroutineContext = EmptyCoroutineContext): Flux<T> = flux(context) {
     for (t in this@asFlux)
         send(t)

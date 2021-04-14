@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -52,7 +52,7 @@ internal abstract class EventLoop : CoroutineDispatcher() {
      */
     public open fun processNextEvent(): Long {
         if (!processUnconfinedEvent()) return Long.MAX_VALUE
-        return nextTime
+        return 0
     }
 
     protected open val isEmpty: Boolean get() = isUnconfinedQueueEmpty
@@ -251,7 +251,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
 
     override fun processNextEvent(): Long {
         // unconfined events take priority
-        if (processUnconfinedEvent()) return nextTime
+        if (processUnconfinedEvent()) return 0
         // queue all delayed tasks that are due to be executed
         val delayed = _delayed.value
         if (delayed != null && !delayed.isEmpty) {
@@ -269,7 +269,11 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             }
         }
         // then process one event from queue
-        dequeue()?.run()
+        val task = dequeue()
+        if (task != null) {
+            task.run()
+            return 0
+        }
         return nextTime
     }
 

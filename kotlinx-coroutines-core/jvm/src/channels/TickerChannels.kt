@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -13,7 +13,7 @@ import kotlin.coroutines.*
  * **Note: Ticker channels are not currently integrated with structured concurrency and their api will change in the future.**
  */
 @ObsoleteCoroutinesApi
-enum class TickerMode {
+public enum class TickerMode {
     /**
      * Adjust delay to maintain fixed period if consumer cannot keep up or is otherwise slow.
      * **This is a default mode.**
@@ -21,13 +21,13 @@ enum class TickerMode {
      * ```
      * val channel = ticker(delay = 100)
      * delay(350) // 250 ms late
-     * println(channel.poll()) // prints Unit
-     * println(channel.poll()) // prints null
+     * println(channel.tryReceive().getOrNull()) // prints Unit
+     * println(channel.tryReceive().getOrNull()) // prints null
      *
      * delay(50)
-     * println(channel.poll()) // prints Unit, delay was adjusted
+     * println(channel.tryReceive().getOrNull()) // prints Unit, delay was adjusted
      * delay(50)
-     * println(channel.poll()) // prints null, we'are not late relatively to previous element
+     * println(channel.tryReceive().getOrNull()) // prints null, we're not late relatively to previous element
      * ```
      */
     FIXED_PERIOD,

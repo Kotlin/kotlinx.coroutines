@@ -1,9 +1,10 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 /**
@@ -87,7 +88,7 @@ public abstract class CoroutineDispatcher :
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
-    public open fun dispatchYield(context: CoroutineContext, block: Runnable) = dispatch(context, block)
+    public open fun dispatchYield(context: CoroutineContext, block: Runnable): Unit = dispatch(context, block)
 
     /**
      * Returns a continuation that wraps the provided [continuation], thus intercepting all resumptions.
@@ -100,7 +101,12 @@ public abstract class CoroutineDispatcher :
 
     @InternalCoroutinesApi
     public override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
-        (continuation as DispatchedContinuation<*>).reusableCancellableContinuation?.detachChild()
+        /*
+         * Unconditional cast is safe here: we only return DispatchedContinuation from `interceptContinuation`,
+         * any ClassCastException can only indicate compiler bug
+         */
+        val dispatched = continuation as DispatchedContinuation<*>
+        dispatched.release()
     }
 
     /**
@@ -115,7 +121,7 @@ public abstract class CoroutineDispatcher :
             "The dispatcher to the right of `+` just replaces the dispatcher to the left.",
         level = DeprecationLevel.ERROR
     )
-    public operator fun plus(other: CoroutineDispatcher) = other
+    public operator fun plus(other: CoroutineDispatcher): CoroutineDispatcher = other
 
     /** @suppress for nicer debugging */
     override fun toString(): String = "$classSimpleName@$hexAddress"

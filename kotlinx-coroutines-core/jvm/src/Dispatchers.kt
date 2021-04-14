@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("unused")
@@ -8,13 +8,12 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
-import java.util.*
 import kotlin.coroutines.*
 
 /**
  * Name of the property that defines the maximal number of threads that are used by [Dispatchers.IO] coroutines dispatcher.
  */
-public const val IO_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.io.parallelism"
+public const val IO_PARALLELISM_PROPERTY_NAME: String = "kotlinx.coroutines.io.parallelism"
 
 /**
  * Groups various implementations of [CoroutineDispatcher].
@@ -97,7 +96,7 @@ public actual object Dispatchers {
      * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
      *
      * Additional threads in this pool are created and are shutdown on demand.
-     * The number of threads used by this dispatcher is limited by the value of
+     * The number of threads used by tasks in this dispatcher is limited by the value of
      * "`kotlinx.coroutines.io.parallelism`" ([IO_PARALLELISM_PROPERTY_NAME]) system property.
      * It defaults to the limit of 64 threads or the number of cores (whichever is larger).
      *
@@ -106,9 +105,13 @@ public actual object Dispatchers {
      * If you need a higher number of parallel threads,
      * you should use a custom dispatcher backed by your own thread pool.
      *
+     * ### Implementation note
+     *
      * This dispatcher shares threads with a [Default][Dispatchers.Default] dispatcher, so using
      * `withContext(Dispatchers.IO) { ... }` does not lead to an actual switching to another thread &mdash;
      * typically execution continues in the same thread.
+     * As a result of thread sharing, more than 64 (default parallelism) threads can be created (but not used)
+     * during operations over IO dispatcher.
      */
     @JvmStatic
     public val IO: CoroutineDispatcher = DefaultScheduler.IO

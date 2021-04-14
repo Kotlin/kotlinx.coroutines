@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.flow
@@ -9,8 +9,7 @@ import kotlinx.coroutines.flow.internal.*
 import kotlin.coroutines.*
 
 /**
- * A cold asynchronous data stream that sequentially emits values
- * and completes normally or with an exception.
+ * An asynchronous data stream that sequentially emits values and completes normally or with an exception.
  *
  * _Intermediate operators_ on the flow such as [map], [filter], [take], [zip], etc are functions that are
  * applied to the _upstream_ flow or flows and return a _downstream_ flow where further operators can be applied to.
@@ -39,11 +38,12 @@ import kotlin.coroutines.*
  * with an exception for a few operations specifically designed to introduce concurrency into flow
  * execution such as [buffer] and [flatMapMerge]. See their documentation for details.
  *
- * The `Flow` interface does not carry information whether a flow truly is a cold stream that can be collected repeatedly and
- * triggers execution of the same code every time it is collected, or if it is a hot stream that emits different
- * values from the same running source on each collection. However, conventionally flows represent cold streams.
- * Transitions between hot and cold streams are supported via channels and the corresponding API:
- * [channelFlow], [produceIn], [broadcastIn].
+ * The `Flow` interface does not carry information whether a flow is a _cold_ stream that can be collected repeatedly and
+ * triggers execution of the same code every time it is collected, or if it is a _hot_ stream that emits different
+ * values from the same running source on each collection. Usually flows represent _cold_ streams, but
+ * there is a [SharedFlow] subtype that represents _hot_ streams. In addition to that, any flow can be turned
+ * into a _hot_ one by the [stateIn] and [shareIn] operators, or by converting the flow into a hot channel
+ * via the [produceIn] operator.
  *
  * ### Flow builders
  *
@@ -55,6 +55,8 @@ import kotlin.coroutines.*
  *   sequential calls to [emit][FlowCollector.emit] function.
  * * [channelFlow { ... }][channelFlow] builder function to construct arbitrary flows from
  *   potentially concurrent calls to the [send][kotlinx.coroutines.channels.SendChannel.send] function.
+ * * [MutableStateFlow] and [MutableSharedFlow] define the corresponding constructor functions to create
+ *   a _hot_ flow that can be directly updated.
  *
  * ### Flow constraints
  *
@@ -99,7 +101,7 @@ import kotlin.coroutines.*
  * From the implementation point of view, it means that all flow implementations should
  * only emit from the same coroutine.
  * This constraint is efficiently enforced by the default [flow] builder.
- * The [flow] builder should be used if flow implementation does not start any coroutines.
+ * The [flow] builder should be used if the flow implementation does not start any coroutines.
  * Its implementation prevents most of the development mistakes:
  *
  * ```
@@ -156,6 +158,12 @@ import kotlin.coroutines.*
  *
  * Flow is [Reactive Streams](http://www.reactive-streams.org/) compliant, you can safely interop it with
  * reactive streams using [Flow.asPublisher] and [Publisher.asFlow] from `kotlinx-coroutines-reactive` module.
+ *
+ * ### Not stable for inheritance
+ *
+ * **The `Flow` interface is not stable for inheritance in 3rd party libraries**, as new methods
+ * might be added to this interface in the future, but is stable for use.
+ * Use the `flow { ... }` builder function to create an implementation.
  */
 public interface Flow<out T> {
     /**
@@ -195,7 +203,7 @@ public interface Flow<out T> {
  * ```
  */
 @FlowPreview
-public abstract class AbstractFlow<T> : Flow<T> {
+public abstract class AbstractFlow<T> : Flow<T>, CancellableFlow<T> {
 
     @InternalCoroutinesApi
     public final override suspend fun collect(collector: FlowCollector<T>) {

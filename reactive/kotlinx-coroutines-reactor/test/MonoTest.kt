@@ -5,6 +5,7 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
 import org.junit.*
@@ -21,6 +22,7 @@ class MonoTest : TestBase() {
     @Before
     fun setup() {
         ignoreLostThreads("timer-", "parallel-")
+        Hooks.onErrorDropped { expectUnreached() }
     }
 
     @Test
@@ -235,7 +237,7 @@ class MonoTest : TestBase() {
             } finally {
                 throw TestException() // would not be able to handle it since mono is disposed
             }
-        }.subscriberContext { Context.of("reactor.onOperatorError.local", handler) }
+        }.contextWrite { Context.of("reactor.onOperatorError.local", handler) }
         mono.subscribe(object : Subscriber<Unit> {
             override fun onSubscribe(s: Subscription) {
                 expect(2)
@@ -284,5 +286,100 @@ class MonoTest : TestBase() {
                 .catch {}
                 .collect { }
         }
+    }
+
+    /** Test that cancelling a [mono] due to a timeout does throw an exception. */
+    @Test
+    fun testTimeout() {
+        val mono = mono {
+            withTimeout(1) { delay(100) }
+        }
+        try {
+            mono.doOnSubscribe { expect(1) }
+                .doOnNext { expectUnreached() }
+                .doOnSuccess { expectUnreached() }
+                .doOnError { expect(2) }
+                .doOnCancel { expectUnreached() }
+                .block()
+        } catch (e: CancellationException) {
+            expect(3)
+        }
+        finish(4)
+    }
+
+    /** Test that when the reason for cancellation of a [mono] is that the downstream doesn't want its results anymore,
+     * this is considered normal behavior and exceptions are not propagated. */
+    @Test
+    fun testDownstreamCancellationDoesNotThrow() = runTest {
+        var i = 0
+        /** Attach a hook that handles exceptions from publishers that are known to be disposed of. We don't expect it
+         * to be fired in this case, as the reason for the publisher in this test to accept an exception is simply
+         * cancellation from the downstream. */
+        Hooks.onOperatorError("testDownstreamCancellationDoesNotThrow") { t, a ->
+            expectUnreached()
+            t
+        }
+        /** A Mono that doesn't emit a value and instead waits indefinitely. */
+        val mono = mono(Dispatchers.Unconfined) { expect(5 * i + 3); delay(Long.MAX_VALUE) }
+            .doOnSubscribe { expect(5 * i + 2) }
+            .doOnNext { expectUnreached() }
+            .doOnSuccess { expectUnreached() }
+            .doOnError { expectUnreached() }
+            .doOnCancel { expect(5 * i + 4) }
+        val n = 1000
+        repeat(n) {
+            i = it
+            expect(5 * i + 1)
+            mono.awaitCancelAndJoin()
+            expect(5 * i + 5)
+        }
+        finish(5 * n + 1)
+        Hooks.resetOnOperatorError("testDownstreamCancellationDoesNotThrow")
+    }
+
+    /** Test that, when [Mono] is cancelled by the downstream and throws during handling the cancellation, the resulting
+     * error is propagated to [Hooks.onOperatorError]. */
+    @Test
+    fun testRethrowingDownstreamCancellation() = runTest {
+        var i = 0
+        /** Attach a hook that handles exceptions from publishers that are known to be disposed of. We expect it
+         * to be fired in this case. */
+        Hooks.onOperatorError("testDownstreamCancellationDoesNotThrow") { t, a ->
+            expect(i * 6 + 5)
+            t
+        }
+        /** A Mono that doesn't emit a value and instead waits indefinitely, and, when cancelled, throws. */
+        val mono = mono(Dispatchers.Unconfined) {
+            expect(i * 6 + 3)
+            try {
+                delay(Long.MAX_VALUE)
+            } catch (e: CancellationException) {
+                throw TestException()
+            }
+        }
+            .doOnSubscribe { expect(i * 6 + 2) }
+            .doOnNext { expectUnreached() }
+            .doOnSuccess { expectUnreached() }
+            .doOnError { expectUnreached() }
+            .doOnCancel { expect(i * 6 + 4) }
+        val n = 1000
+        repeat(n) {
+            i = it
+            expect(i * 6 + 1)
+            mono.awaitCancelAndJoin()
+            expect(i * 6 + 6)
+        }
+        finish(n * 6 + 1)
+        Hooks.resetOnOperatorError("testDownstreamCancellationDoesNotThrow")
+    }
+
+    /** Run the given [Publisher], cancel it, wait for the cancellation handler to finish, and return only then.
+     *
+     * Will not work in the general case, but here, when the publisher uses [Dispatchers.Unconfined], this seems to
+     * ensure that the cancellation handler will have nowhere to execute but serially with the cancellation. */
+    private suspend fun <T> Publisher<T>.awaitCancelAndJoin() = coroutineScope {
+        async(start = CoroutineStart.UNDISPATCHED) {
+            awaitFirstOrNull()
+        }.cancelAndJoin()
     }
 }

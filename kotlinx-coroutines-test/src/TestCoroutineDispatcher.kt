@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.test
@@ -65,7 +65,7 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     }
 
     /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         val node = postDelayed(block, timeMillis)
         return object : DisposableHandle {
             override fun dispose() {
@@ -105,7 +105,7 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     }
 
     /** @suppress */
-    override val currentTime get() = _time.value
+    override val currentTime: Long get() = _time.value
 
     /** @suppress */
     override fun advanceTimeBy(delayTimeMillis: Long): Long {
@@ -136,7 +136,7 @@ public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayControl
     }
 
     /** @suppress */
-    override fun runCurrent() = doActionsUntil(currentTime)
+    override fun runCurrent(): Unit  = doActionsUntil(currentTime)
 
     /** @suppress */
     override suspend fun pauseDispatcher(block: suspend () -> Unit) {

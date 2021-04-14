@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -10,7 +10,6 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
-import kotlin.native.concurrent.*
 
 /**
  * Broadcasts all elements of the channel.
@@ -34,19 +33,21 @@ import kotlin.native.concurrent.*
  *
  * This function has an inappropriate result type of [BroadcastChannel] which provides
  * [send][BroadcastChannel.send] and [close][BroadcastChannel.close] operations that interfere with
- * the broadcasting coroutine in hard-to-specify ways. It will be replaced with
- * sharing operators on [Flow][kotlinx.coroutines.flow.Flow] in the future.
+ * the broadcasting coroutine in hard-to-specify ways.
+ *
+ * **Note: This API is obsolete.** It will be deprecated and replaced with the
+ * [Flow.shareIn][kotlinx.coroutines.flow.shareIn] operator when it becomes stable.
  *
  * @param start coroutine start option. The default value is [CoroutineStart.LAZY].
  */
-fun <E> ReceiveChannel<E>.broadcast(
+public fun <E> ReceiveChannel<E>.broadcast(
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY
 ): BroadcastChannel<E> {
     val scope = GlobalScope + Dispatchers.Unconfined + CoroutineExceptionHandler { _, _ -> }
     // We can run this coroutine in the context that ignores all exceptions, because of `onCompletion = consume()`
     // which passes all exceptions upstream to the source ReceiveChannel
-    return scope.broadcast(capacity = capacity, start = start, onCompletion = consumes()) {
+    return scope.broadcast(capacity = capacity, start = start, onCompletion = { cancelConsumed(it) }) {
         for (e in this@broadcast) {
             send(e)
         }
@@ -126,7 +127,13 @@ private open class BroadcastCoroutine<E>(
     parentContext: CoroutineContext,
     protected val _channel: BroadcastChannel<E>,
     active: Boolean
-) : AbstractCoroutine<Unit>(parentContext, active), ProducerScope<E>, BroadcastChannel<E> by _channel {
+) : AbstractCoroutine<Unit>(parentContext, initParentJob = false, active = active),
+    ProducerScope<E>, BroadcastChannel<E> by _channel {
+
+    init {
+        initParentJob(parentContext[Job])
+    }
+
     override val isActive: Boolean get() = super.isActive
 
     override val channel: SendChannel<E>

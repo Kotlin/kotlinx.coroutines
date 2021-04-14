@@ -1,9 +1,6 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package kotlinx.coroutines.reactive
 
 import kotlinx.atomicfu.*
@@ -13,7 +10,7 @@ import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import org.reactivestreams.*
 import kotlin.coroutines.*
-import kotlin.internal.LowPriorityInOverloadResolution
+import kotlin.internal.*
 
 /**
  * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
@@ -43,17 +40,6 @@ public fun <T> publish(
     return publishInternal(GlobalScope, context, DEFAULT_HANDLER, block)
 }
 
-@Deprecated(
-    message = "CoroutineScope.publish is deprecated in favour of top-level publish",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("publish(context, block)")
-) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0. Binary compatibility with Spring
-@LowPriorityInOverloadResolution
-public fun <T> CoroutineScope.publish(
-    context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Publisher<T> = publishInternal(this, context, DEFAULT_HANDLER ,block)
-
 /** @suppress For internal use from other reactive integration modules only */
 @InternalCoroutinesApi
 public fun <T> publishInternal(
@@ -80,7 +66,7 @@ public class PublisherCoroutine<in T>(
     parentContext: CoroutineContext,
     private val subscriber: Subscriber<T>,
     private val exceptionOnCancelHandler: (Throwable, CoroutineContext) -> Unit
-) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Subscription, SelectClause2<T, SendChannel<T>> {
+) : AbstractCoroutine<Unit>(parentContext, false, true), ProducerScope<T>, Subscription, SelectClause2<T, SendChannel<T>> {
     override val channel: SendChannel<T> get() = this
 
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
@@ -91,20 +77,19 @@ public class PublisherCoroutine<in T>(
     private var cancelled = false // true when Subscription.cancel() is invoked
 
     override val isClosedForSend: Boolean get() = isCompleted
-    override val isFull: Boolean = mutex.isLocked
     override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
-    override fun invokeOnClose(handler: (Throwable?) -> Unit) =
+    override fun invokeOnClose(handler: (Throwable?) -> Unit): Nothing =
         throw UnsupportedOperationException("PublisherCoroutine doesn't support invokeOnClose")
 
-    override fun offer(element: T): Boolean {
-        if (!mutex.tryLock()) return false
+    override fun trySend(element: T): ChannelResult<Unit> {
+        if (!mutex.tryLock()) return ChannelResult.failure()
         doLockedNext(element)
-        return true
+        return ChannelResult.success(Unit)
     }
 
     public override suspend fun send(element: T) {
         // fast-path -- try send without suspension
-        if (offer(element)) return
+        if (trySend(element).isSuccess) return
         // slow-path does suspend
         return sendSuspend(element)
     }
@@ -289,3 +274,13 @@ public class PublisherCoroutine<in T>(
 
     private fun Throwable.isFatal() = this is VirtualMachineError || this is ThreadDeath || this is LinkageError
 }
+
+@Deprecated(
+    message = "CoroutineScope.publish is deprecated in favour of top-level publish",
+    level = DeprecationLevel.HIDDEN,
+    replaceWith = ReplaceWith("publish(context, block)")
+) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0. Binary compatibility with Spring
+public fun <T> CoroutineScope.publish(
+    context: CoroutineContext = EmptyCoroutineContext,
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+): Publisher<T> = publishInternal(this, context, DEFAULT_HANDLER, block)

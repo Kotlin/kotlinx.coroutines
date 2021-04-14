@@ -21,13 +21,13 @@ class DumpWithoutCreationStackTraceTest : DebugTestBase() {
         yield()
         verifyDump(
             "Coroutine \"coroutine#1\":BlockingCoroutine{Active}@70d1cb56, state: RUNNING\n" +
-                    "\tat java.lang.Thread.getStackTrace(Thread.java:1559)\n" +
-                    "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.enhanceStackTraceWithThreadDump(DebugProbesImpl.kt:188)\n" +
-                    "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.dumpCoroutinesSynchronized(DebugProbesImpl.kt:153)\n" +
-                    "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.dumpCoroutines(DebugProbesImpl.kt:141)",
+                    "\tat java.lang.Thread.getStackTrace(Thread.java)\n" +
+                    "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.enhanceStackTraceWithThreadDumpImpl(DebugProbesImpl.kt)\n" +
+                    "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.dumpCoroutinesSynchronized(DebugProbesImpl.kt)\n" +
+                    "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.dumpCoroutines(DebugProbesImpl.kt)",
 
             "Coroutine \"coroutine#2\":DeferredCoroutine{Active}@383fa309, state: SUSPENDED\n" +
-                    "\tat kotlinx.coroutines.debug.DumpWithoutCreationStackTraceTest\$createActiveDeferred\$1.invokeSuspend(DumpWithoutCreationStackTraceTest.kt:63)"
+                    "\tat kotlinx.coroutines.debug.DumpWithoutCreationStackTraceTest\$createActiveDeferred\$1.invokeSuspend(DumpWithoutCreationStackTraceTest.kt)"
         )
         deferred.cancelAndJoin()
     }

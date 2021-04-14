@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.future
@@ -489,5 +489,90 @@ class FutureTest : TestBase() {
                 block.run()
             }
         }
+    }
+
+    /**
+     * https://github.com/Kotlin/kotlinx.coroutines/issues/2456
+     */
+    @Test
+    fun testCompletedStageAwait() = runTest {
+        val stage = CompletableFuture.completedStage("OK")
+        assertEquals("OK", stage.await())
+    }
+
+    /**
+     * https://github.com/Kotlin/kotlinx.coroutines/issues/2456
+     */
+    @Test
+    fun testCompletedStageAsDeferredAwait() = runTest {
+        val stage = CompletableFuture.completedStage("OK")
+        val deferred = stage.asDeferred()
+        assertEquals("OK", deferred.await())
+    }
+
+    @Test
+    fun testCompletedStateThenApplyAwait() = runTest {
+        expect(1)
+        val cf = CompletableFuture<String>()
+        launch {
+            expect(3)
+            cf.complete("O")
+        }
+        expect(2)
+        val stage = cf.thenApply { it + "K" }
+        assertEquals("OK", stage.await())
+        finish(4)
+    }
+
+    @Test
+    fun testCompletedStateThenApplyAwaitCancel() = runTest {
+        expect(1)
+        val cf = CompletableFuture<String>()
+        launch {
+            expect(3)
+            cf.cancel(false)
+        }
+        expect(2)
+        val stage = cf.thenApply { it + "K" }
+        assertFailsWith<CancellationException> { stage.await() }
+        finish(4)
+    }
+
+    @Test
+    fun testCompletedStateThenApplyAsDeferredAwait() = runTest {
+        expect(1)
+        val cf = CompletableFuture<String>()
+        launch {
+            expect(3)
+            cf.complete("O")
+        }
+        expect(2)
+        val stage = cf.thenApply { it + "K" }
+        val deferred = stage.asDeferred()
+        assertEquals("OK", deferred.await())
+        finish(4)
+    }
+
+    @Test
+    fun testCompletedStateThenApplyAsDeferredAwaitCancel() = runTest {
+        expect(1)
+        val cf = CompletableFuture<String>()
+        expect(2)
+        val stage = cf.thenApply { it + "K" }
+        val deferred = stage.asDeferred()
+        launch {
+            expect(3)
+            deferred.cancel() // cancel the deferred!
+        }
+        assertFailsWith<CancellationException> { stage.await() }
+        finish(4)
+    }
+
+    @Test
+    fun testCancelledParent() = runTest({ it is java.util.concurrent.CancellationException }) {
+        cancel()
+        future { expectUnreached() }
+        future(start = CoroutineStart.ATOMIC) { }
+        future(start = CoroutineStart.UNDISPATCHED) { }
     }
 }

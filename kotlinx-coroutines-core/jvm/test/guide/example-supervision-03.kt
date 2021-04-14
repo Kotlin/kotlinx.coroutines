@@ -10,14 +10,14 @@ import kotlinx.coroutines.*
 
 fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception -> 
-        println("Caught $exception") 
+        println("CoroutineExceptionHandler got $exception") 
     }
     supervisorScope {
         val child = launch(handler) {
-            println("Child throws an exception")
+            println("The child throws an exception")
             throw AssertionError()
         }
-        println("Scope is completing")
+        println("The scope is completing")
     }
-    println("Scope is completed")
+    println("The scope is completed")
 }

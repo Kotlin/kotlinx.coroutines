@@ -33,7 +33,7 @@ class SegmentQueueTest : TestBase() {
         val s = q.enqueue(2)
         q.enqueue(3)
         assertEquals(3, q.numberOfSegments)
-        s.removeSegment()
+        s!!.removeSegment()
         assertEquals(2, q.numberOfSegments)
         assertEquals(1, q.dequeue())
         assertEquals(3, q.dequeue())
@@ -47,9 +47,19 @@ class SegmentQueueTest : TestBase() {
         val s = q.enqueue(2)
         assertEquals(1, q.dequeue())
         q.enqueue(3)
-        s.removeSegment()
+        s!!.removeSegment()
         assertEquals(3, q.dequeue())
         assertNull(q.dequeue())
+    }
+
+    @Test
+    fun testClose() {
+        val q = SegmentBasedQueue<Int>()
+        q.enqueue(1)
+        assertEquals(0, q.close().id)
+        assertEquals(null, q.enqueue(2))
+        assertEquals(1, q.dequeue())
+        assertEquals(null, q.dequeue())
     }
 
     @Test
@@ -64,6 +74,7 @@ class SegmentQueueTest : TestBase() {
                 expectedQueue.add(el)
             } else { // remove
                 assertEquals(expectedQueue.poll(), q.dequeue())
+                q.checkHeadPrevIsCleaned()
             }
         }
     }
@@ -78,7 +89,7 @@ class SegmentQueueTest : TestBase() {
         val N = 100_000 * stressTestMultiplier
         val T = 10
         val q = SegmentBasedQueue<Int>()
-        val segments = (1..N).map { q.enqueue(it) }.toMutableList()
+        val segments = (1..N).map { q.enqueue(it)!! }.toMutableList()
         if (random) segments.shuffle()
         assertEquals(N, q.numberOfSegments)
         val nextSegmentIndex = AtomicInteger()

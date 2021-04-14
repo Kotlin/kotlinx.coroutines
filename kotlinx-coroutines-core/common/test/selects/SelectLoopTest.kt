@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
@@ -24,19 +24,20 @@ class SelectLoopTest : TestBase() {
             expect(3)
             throw TestException()
         }
-        var isDone = false
-        while (!isDone) {
-            select<Unit> {
-                channel.onReceiveOrNull {
-                    expect(4)
-                    assertEquals(Unit, it)
-                }
-                job.onJoin {
-                    expect(5)
-                    isDone = true
+        try {
+            while (true) {
+                select<Unit> {
+                    channel.onReceiveCatching {
+                        expectUnreached()
+                    }
+                    job.onJoin {
+                        expectUnreached()
+                    }
                 }
             }
+        } catch (e: CancellationException) {
+            // select will get cancelled because of the failure of job
+            finish(4)
         }
-        finish(6)
     }
 }

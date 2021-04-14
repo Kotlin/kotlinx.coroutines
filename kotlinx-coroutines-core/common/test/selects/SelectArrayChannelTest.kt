@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.selects
@@ -295,10 +295,10 @@ class SelectArrayChannelTest : TestBase() {
         }
         expect(2)
         select<Unit> {
-            channel.onReceiveOrClosed {
+            channel.onReceiveCatching {
                 expect(5)
                 assertTrue(it.isClosed)
-                assertNull(it.closeCause)
+                assertNull(it.exceptionOrNull())
             }
         }
 
@@ -316,10 +316,10 @@ class SelectArrayChannelTest : TestBase() {
         }
         expect(2)
         select<Unit> {
-            channel.onReceiveOrClosed {
+            channel.onReceiveCatching {
                 expect(5)
                 assertTrue(it.isClosed)
-                assertTrue(it.closeCause is TestException)
+                assertTrue(it.exceptionOrNull() is TestException)
             }
         }
 
@@ -327,16 +327,16 @@ class SelectArrayChannelTest : TestBase() {
     }
 
     @Test
-    fun testSelectReceiveOrClosed() = runTest {
+    fun testSelectReceiveCatching() = runTest {
         val c = Channel<Int>(1)
         val iterations = 10
         expect(1)
         val job = launch {
             repeat(iterations) {
                 select<Unit> {
-                    c.onReceiveOrClosed { v ->
+                    c.onReceiveCatching { v ->
                         expect(4 + it * 2)
-                        assertEquals(it, v.value)
+                        assertEquals(it, v.getOrNull())
                     }
                 }
             }
@@ -360,9 +360,9 @@ class SelectArrayChannelTest : TestBase() {
         launch {
             expect(3)
             val res = select<String> {
-                c.onReceiveOrClosed { v ->
+                c.onReceiveCatching { v ->
                     expect(6)
-                    assertEquals(42, v.value)
+                    assertEquals(42, v.getOrNull())
                     yield() // back to main
                     expect(8)
                     "OK"
@@ -396,9 +396,9 @@ class SelectArrayChannelTest : TestBase() {
         expect(1)
         select<Unit> {
             expect(2)
-            channel.onReceiveOrClosed {
+            channel.onReceiveCatching {
                 assertTrue(it.isClosed)
-                assertNull(it.closeCause)
+                assertNull(it.exceptionOrNull())
                 finish(3)
             }
         }
@@ -412,9 +412,9 @@ class SelectArrayChannelTest : TestBase() {
         expect(1)
         select<Unit> {
             expect(2)
-            channel.onReceiveOrClosed {
+            channel.onReceiveCatching {
                 assertFalse(it.isClosed)
-                assertEquals(42, it.value)
+                assertEquals(42, it.getOrNull())
                 finish(3)
             }
         }

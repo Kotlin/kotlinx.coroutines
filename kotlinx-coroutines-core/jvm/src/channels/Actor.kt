@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -25,7 +25,7 @@ public interface ActorScope<E> : CoroutineScope, ReceiveChannel<E> {
      * All the [ReceiveChannel] functions on this interface delegate to
      * the channel instance returned by this function.
      */
-    val channel: Channel<E>
+    public val channel: Channel<E>
 }
 
 /**
@@ -127,7 +127,11 @@ private open class ActorCoroutine<E>(
     parentContext: CoroutineContext,
     channel: Channel<E>,
     active: Boolean
-) : ChannelCoroutine<E>(parentContext, channel, active), ActorScope<E> {
+) : ChannelCoroutine<E>(parentContext, channel, initParentJob = false, active = active), ActorScope<E> {
+
+    init {
+        initParentJob(parentContext[Job])
+    }
 
     override fun onCancelling(cause: Throwable?) {
         _channel.cancel(cause?.let {
@@ -162,6 +166,11 @@ private class LazyActorCoroutine<E>(
     override fun offer(element: E): Boolean {
         start()
         return super.offer(element)
+    }
+
+    override fun trySend(element: E): ChannelResult<Unit> {
+        start()
+        return super.trySend(element)
     }
 
     override fun close(cause: Throwable?): Boolean {

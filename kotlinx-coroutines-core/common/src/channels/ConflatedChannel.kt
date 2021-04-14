@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -7,18 +7,17 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
-import kotlin.native.concurrent.*
 
 /**
- * Channel that buffers at most one element and conflates all subsequent `send` and `offer` invocations,
+ * Channel that buffers at most one element and conflates all subsequent `send` and `trySend` invocations,
  * so that the receiver always gets the most recently sent element.
  * Back-to-send sent elements are _conflated_ -- only the most recently sent element is received,
  * while previously sent elements **are lost**.
- * Sender to this channel never suspends and [offer] always returns `true`.
+ * Sender to this channel never suspends and [trySend] always succeeds.
  *
  * This channel is created by `Channel(Channel.CONFLATED)` factory function invocation.
  */
-internal open class ConflatedChannel<E> : AbstractChannel<E>() {
+internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredElement<E>?) : AbstractChannel<E>(onUndeliveredElement) {
     protected final override val isBufferAlwaysEmpty: Boolean get() = false
     protected final override val isBufferEmpty: Boolean get() = value === EMPTY
     protected final override val isBufferAlwaysFull: Boolean get() = false
@@ -29,11 +28,6 @@ internal open class ConflatedChannel<E> : AbstractChannel<E>() {
     private val lock = ReentrantLock()
 
     private var value: Any? = EMPTY
-
-    private companion object {
-        @SharedImmutable
-        private val EMPTY = Symbol("EMPTY")
-    }
 
     // result is `OFFER_SUCCESS | Closed`
     protected override fun offerInternal(element: E): Any {
@@ -55,7 +49,7 @@ internal open class ConflatedChannel<E> : AbstractChannel<E>() {
                     }
                 }
             }
-            value = element
+            updateValueLocked(element)?.let { throw it }
             return OFFER_SUCCESS
         }
         // breaks here if offer meets receiver
@@ -88,7 +82,7 @@ internal open class ConflatedChannel<E> : AbstractChannel<E>() {
             if (!select.trySelect()) {
                 return ALREADY_SELECTED
             }
-            value = element
+            updateValueLocked(element)?.let { throw it }
             return OFFER_SUCCESS
         }
         // breaks here if offer meets receiver
@@ -121,12 +115,20 @@ internal open class ConflatedChannel<E> : AbstractChannel<E>() {
     }
 
     protected override fun onCancelIdempotent(wasClosed: Boolean) {
-        if (wasClosed) {
-            lock.withLock {
-                value = EMPTY
-            }
+        var undeliveredElementException: UndeliveredElementException? = null // resource cancel exception
+        lock.withLock {
+            undeliveredElementException = updateValueLocked(EMPTY)
         }
         super.onCancelIdempotent(wasClosed)
+        undeliveredElementException?.let { throw it } // throw UndeliveredElementException at the end if there was one
+    }
+
+    private fun updateValueLocked(element: Any?): UndeliveredElementException? {
+        val old = value
+        val undeliveredElementException = if (old === EMPTY) null else
+            onUndeliveredElement?.callUndeliveredElementCatchingException(old as E)
+        value = element
+        return undeliveredElementException
     }
 
     override fun enqueueReceiveInternal(receive: Receive<E>): Boolean = lock.withLock {

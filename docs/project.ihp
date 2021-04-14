@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ihp SYSTEM "http://helpserver.labs.intellij.net/help/ihp.dtd">
+
+<ihp version="2.0">
+    <categories src="c.list"/>
+    <topics dir="topics"/>
+    <images dir="images" web-path="/img/kotlin-coroutines/"/>
+    <vars src="v.list"/>
+    <product version="%coroutinesVersion%" id="help/kotlin-coroutines" src="kc.tree" web-path="/kotlin-coroutines/"/>
+    <settings>
+        <default-property element-name="toc-element" property-name="show-structure-depth" value="2"/>
+    </settings>
+</ihp>

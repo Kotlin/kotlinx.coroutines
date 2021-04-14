@@ -1,9 +1,10 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.flow.internal
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
@@ -20,7 +21,11 @@ private val emitFun =
 internal actual class SafeCollector<T> actual constructor(
     @JvmField internal actual val collector: FlowCollector<T>,
     @JvmField internal actual val collectContext: CoroutineContext
-) : FlowCollector<T>, ContinuationImpl(NoOpContinuation, EmptyCoroutineContext) {
+) : FlowCollector<T>, ContinuationImpl(NoOpContinuation, EmptyCoroutineContext), CoroutineStackFrame {
+
+    override val callerFrame: CoroutineStackFrame? get() = completion as? CoroutineStackFrame
+
+    override fun getStackTraceElement(): StackTraceElement? = null
 
     @JvmField // Note, it is non-capturing lambda, so no extra allocation during init of SafeCollector
     internal actual val collectContextSize = collectContext.fold(0) { count, _ -> count + 1 }
@@ -31,7 +36,7 @@ internal actual class SafeCollector<T> actual constructor(
     override val context: CoroutineContext
         get() = completion?.context ?: EmptyCoroutineContext
 
-    override fun invokeSuspend(result: Result<Any?>): Any? {
+    override fun invokeSuspend(result: Result<Any?>): Any {
         result.onFailure { lastEmissionContext = DownstreamExceptionElement(it) }
         completion?.resumeWith(result as Result<Unit>)
         return COROUTINE_SUSPENDED
@@ -62,6 +67,7 @@ internal actual class SafeCollector<T> actual constructor(
 
     private fun emit(uCont: Continuation<Unit>, value: T): Any? {
         val currentContext = uCont.context
+        currentContext.ensureActive()
         // This check is triggered once per flow on happy path.
         val previousContext = lastEmissionContext
         if (previousContext !== currentContext) {

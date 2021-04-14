@@ -4,7 +4,8 @@
 
 package kotlinx.coroutines
 
-import org.junit.*
+import org.junit.Test
+import kotlin.test.*
 
 class DefaultExecutorStressTest : TestBase() {
     @Test
@@ -34,5 +35,31 @@ class DefaultExecutorStressTest : TestBase() {
 
         }
         finish(2 + iterations * 4)
+    }
+
+    @Test
+    fun testWorkerShutdown() = withVirtualTimeSource {
+        val iterations = 1_000 * stressTestMultiplier
+        // wait for the worker to shut down
+        suspend fun awaitWorkerShutdown() {
+            val executorTimeoutMs = 1000L
+            delay(executorTimeoutMs)
+            while (DefaultExecutor.isThreadPresent) { delay(10) } // hangs if the thread refuses to stop
+            assertFalse(DefaultExecutor.isThreadPresent) // just to make sure
+        }
+        runTest {
+            awaitWorkerShutdown() // so that the worker shuts down after the initial launch
+            repeat (iterations) {
+                val job = launch(Dispatchers.Unconfined) {
+                    // this line runs in the main thread
+                    delay(1)
+                    // this line runs in the DefaultExecutor worker
+                }
+                delay(100) // yield the execution, allow the worker to spawn
+                assertTrue(DefaultExecutor.isThreadPresent) // the worker spawned
+                job.join()
+                awaitWorkerShutdown()
+            }
+        }
     }
 }
