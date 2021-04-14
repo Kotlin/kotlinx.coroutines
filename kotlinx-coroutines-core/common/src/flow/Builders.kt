@@ -289,7 +289,7 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  * resulting flow to specify a user-defined value and to control what happens when data is produced faster
  * than consumed, i.e. to control the back-pressure behavior.
  *
- * Adjacent applications of [callbackFlow], [flowOn], [buffer] and [produceIn] are
+ * Adjacent applications of [callbackFlow], [flowOn], [buffer], and [produceIn] are
  * always fused so that only one properly configured channel is used for execution.
  *
  * Example of usage that converts a multi-shot callback API to a flow.

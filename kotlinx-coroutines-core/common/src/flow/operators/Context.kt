@@ -79,7 +79,7 @@ import kotlin.jvm.*
  *
  * ### Operator fusion
  *
- * Adjacent applications of [channelFlow], [flowOn], [buffer] and [produceIn] are
+ * Adjacent applications of [channelFlow], [flowOn], [buffer], and [produceIn] are
  * always fused so that only one properly configured channel is used for execution.
  *
  * Explicitly specified buffer capacity takes precedence over `buffer()` or `buffer(Channel.BUFFERED)` calls,
@@ -219,7 +219,7 @@ public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
  *
  * ### Operator fusion
  *
- * Adjacent applications of [channelFlow], [flowOn], [buffer] and [produceIn] are
+ * Adjacent applications of [channelFlow], [flowOn], [buffer], and [produceIn] are
  * always fused so that only one properly configured channel is used for execution.
  *
  * Multiple `flowOn` operators fuse to a single `flowOn` with a combined context. The elements of the context of
