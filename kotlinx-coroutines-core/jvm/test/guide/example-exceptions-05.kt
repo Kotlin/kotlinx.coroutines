@@ -1,9 +1,9 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.exceptions05
+// This file was automatically generated from exception-handling.md by Knit tool. Do not edit.
+package kotlinx.coroutines.guide.exampleExceptions05
 
 import kotlinx.coroutines.exceptions.*
 
@@ -12,19 +12,19 @@ import java.io.*
 
 fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception ->
-        println("Caught $exception with suppressed ${exception.suppressed.contentToString()}")
+        println("CoroutineExceptionHandler got $exception with suppressed ${exception.suppressed.contentToString()}")
     }
     val job = GlobalScope.launch(handler) {
         launch {
             try {
-                delay(Long.MAX_VALUE)
+                delay(Long.MAX_VALUE) // it gets cancelled when another sibling fails with IOException
             } finally {
-                throw ArithmeticException()
+                throw ArithmeticException() // the second exception
             }
         }
         launch {
             delay(100)
-            throw IOException()
+            throw IOException() // the first exception
         }
         delay(Long.MAX_VALUE)
     }

@@ -1,14 +1,13 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.future
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
-import org.hamcrest.core.*
 import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
@@ -16,6 +15,7 @@ import java.util.function.*
 import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.reflect.*
+import kotlin.test.*
 
 class FutureTest : TestBase() {
     @Before
@@ -30,7 +30,7 @@ class FutureTest : TestBase() {
                 "O"
             }.await() + "K"
         }
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
     }
 
     @Test
@@ -40,7 +40,7 @@ class FutureTest : TestBase() {
         val future = GlobalScope.future {
             toAwait.await() + "K"
         }
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
     }
 
     @Test
@@ -51,7 +51,7 @@ class FutureTest : TestBase() {
         val future = GlobalScope.future {
             toAwait.await() + "K"
         }
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
     }
 
     @Test
@@ -62,7 +62,7 @@ class FutureTest : TestBase() {
         }
         assertFalse(future.isDone)
         toAwait.complete("O")
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
     }
 
     @Test
@@ -74,7 +74,7 @@ class FutureTest : TestBase() {
         }
         assertFalse(future.isDone)
         completable.complete("O")
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
     }
 
     @Test
@@ -88,7 +88,7 @@ class FutureTest : TestBase() {
                 e.message!!
             } + "K"
         }
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
     }
 
     @Test
@@ -104,7 +104,7 @@ class FutureTest : TestBase() {
                 e.message!!
             } + "K"
         }
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
     }
 
     @Test
@@ -125,7 +125,7 @@ class FutureTest : TestBase() {
         assertFalse(future.isDone)
         toAwait.completeExceptionally(TestException("O"))
         yield() // to future coroutine
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
         finish(5)
     }
 
@@ -142,7 +142,7 @@ class FutureTest : TestBase() {
         }
         assertFalse(future.isDone)
         completable.completeExceptionally(TestException("O"))
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
     }
 
     @Test
@@ -158,7 +158,7 @@ class FutureTest : TestBase() {
             fail("'get' should've throw an exception")
         } catch (e: ExecutionException) {
             assertTrue(e.cause is IllegalStateException)
-            assertThat(e.cause!!.message, IsEqual("OK"))
+            assertEquals("OK", e.cause!!.message)
         }
     }
 
@@ -191,22 +191,22 @@ class FutureTest : TestBase() {
             it()
             depth.andDecrement
         }) {
-            assertEquals("Part before first suspension must be wrapped", 1, depth.get())
+            assertEquals(1, depth.get(), "Part before first suspension must be wrapped")
             val result =
                     CompletableFuture.supplyAsync {
                         while (depth.get() > 0);
-                        assertEquals("Part inside suspension point should not be wrapped", 0, depth.get())
+                        assertEquals(0, depth.get(), "Part inside suspension point should not be wrapped")
                         "OK"
                     }.await()
-            assertEquals("Part after first suspension should be wrapped", 1, depth.get())
+            assertEquals(1, depth.get(), "Part after first suspension should be wrapped")
             CompletableFuture.supplyAsync {
                 while (depth.get() > 0);
-                assertEquals("Part inside suspension point should not be wrapped", 0, depth.get())
+                assertEquals(0, depth.get(), "Part inside suspension point should not be wrapped")
                 "ignored"
             }.await()
             result
         }
-        assertThat(future.get(), IsEqual("OK"))
+        assertEquals("OK", future.get())
     }
 
     @Test
@@ -489,5 +489,90 @@ class FutureTest : TestBase() {
                 block.run()
             }
         }
+    }
+
+    /**
+     * https://github.com/Kotlin/kotlinx.coroutines/issues/2456
+     */
+    @Test
+    fun testCompletedStageAwait() = runTest {
+        val stage = CompletableFuture.completedStage("OK")
+        assertEquals("OK", stage.await())
+    }
+
+    /**
+     * https://github.com/Kotlin/kotlinx.coroutines/issues/2456
+     */
+    @Test
+    fun testCompletedStageAsDeferredAwait() = runTest {
+        val stage = CompletableFuture.completedStage("OK")
+        val deferred = stage.asDeferred()
+        assertEquals("OK", deferred.await())
+    }
+
+    @Test
+    fun testCompletedStateThenApplyAwait() = runTest {
+        expect(1)
+        val cf = CompletableFuture<String>()
+        launch {
+            expect(3)
+            cf.complete("O")
+        }
+        expect(2)
+        val stage = cf.thenApply { it + "K" }
+        assertEquals("OK", stage.await())
+        finish(4)
+    }
+
+    @Test
+    fun testCompletedStateThenApplyAwaitCancel() = runTest {
+        expect(1)
+        val cf = CompletableFuture<String>()
+        launch {
+            expect(3)
+            cf.cancel(false)
+        }
+        expect(2)
+        val stage = cf.thenApply { it + "K" }
+        assertFailsWith<CancellationException> { stage.await() }
+        finish(4)
+    }
+
+    @Test
+    fun testCompletedStateThenApplyAsDeferredAwait() = runTest {
+        expect(1)
+        val cf = CompletableFuture<String>()
+        launch {
+            expect(3)
+            cf.complete("O")
+        }
+        expect(2)
+        val stage = cf.thenApply { it + "K" }
+        val deferred = stage.asDeferred()
+        assertEquals("OK", deferred.await())
+        finish(4)
+    }
+
+    @Test
+    fun testCompletedStateThenApplyAsDeferredAwaitCancel() = runTest {
+        expect(1)
+        val cf = CompletableFuture<String>()
+        expect(2)
+        val stage = cf.thenApply { it + "K" }
+        val deferred = stage.asDeferred()
+        launch {
+            expect(3)
+            deferred.cancel() // cancel the deferred!
+        }
+        assertFailsWith<CancellationException> { stage.await() }
+        finish(4)
+    }
+
+    @Test
+    fun testCancelledParent() = runTest({ it is java.util.concurrent.CancellationException }) {
+        cancel()
+        future { expectUnreached() }
+        future(start = CoroutineStart.ATOMIC) { }
+        future(start = CoroutineStart.UNDISPATCHED) { }
     }
 }

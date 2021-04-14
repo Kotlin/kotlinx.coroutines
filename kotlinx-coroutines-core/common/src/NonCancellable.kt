@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("DEPRECATION_ERROR")
 
@@ -18,6 +18,11 @@ import kotlin.coroutines.*
  *     // this code will not be cancelled
  * }
  * ```
+ *
+ * **WARNING**: This object is not designed to be used with [launch], [async], and other coroutine builders.
+ * if you write `launch(NonCancellable) { ... }` then not only the newly launched job will not be cancelled
+ * when the parent is cancelled, the whole parent-child relation between parent and child is severed.
+ * The parent will not wait for the child's completion, nor will be cancelled when the child crashed.
  */
 public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
     /**

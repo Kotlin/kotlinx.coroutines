@@ -1,18 +1,21 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.*
 
 /**
  * Creates a coroutine execution context using a single thread with built-in [yield] support.
  * **NOTE: The resulting [ExecutorCoroutineDispatcher] owns native resources (its thread).
  * Resources are reclaimed by [ExecutorCoroutineDispatcher.close].**
+ *
+ * If the resulting dispatcher is [closed][ExecutorCoroutineDispatcher.close] and
+ * attempt to submit a continuation task is made,
+ * then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
+ * [Dispatchers.IO], so that the affected coroutine can cleanup its resources and promptly complete.
  *
  * **NOTE: This API will be replaced in the future**. A different API to create thread-limited thread pools
  * that is based on a shared thread-pool and does not require the resulting dispatcher to be explicitly closed
@@ -27,13 +30,18 @@ import kotlin.coroutines.*
  * @param name the base name of the created thread.
  */
 @ObsoleteCoroutinesApi
-fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
+public fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
     newFixedThreadPoolContext(1, name)
 
 /**
  * Creates a coroutine execution context with the fixed-size thread-pool and built-in [yield] support.
  * **NOTE: The resulting [ExecutorCoroutineDispatcher] owns native resources (its threads).
  * Resources are reclaimed by [ExecutorCoroutineDispatcher.close].**
+ *
+ * If the resulting dispatcher is [closed][ExecutorCoroutineDispatcher.close] and
+ * attempt to submit a continuation task is made,
+ * then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
+ * [Dispatchers.IO], so that the affected coroutine can cleanup its resources and promptly complete.
  *
  * **NOTE: This API will be replaced in the future**. A different API to create thread-limited thread pools
  * that is based on a shared thread-pool and does not require the resulting dispatcher to be explicitly closed
@@ -49,7 +57,7 @@ fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
  * @param name the base name of the created threads.
  */
 @ObsoleteCoroutinesApi
-fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
+public fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
     require(nThreads >= 1) { "Expected at least one thread, but $nThreads specified" }
     return ThreadPoolDispatcher(nThreads, name)
 }

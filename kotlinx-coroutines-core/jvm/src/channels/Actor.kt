@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -25,7 +25,7 @@ public interface ActorScope<E> : CoroutineScope, ReceiveChannel<E> {
      * All the [ReceiveChannel] functions on this interface delegate to
      * the channel instance returned by this function.
      */
-    val channel: Channel<E>
+    public val channel: Channel<E>
 }
 
 /**
@@ -41,7 +41,7 @@ public interface ActorScope<E> : CoroutineScope, ReceiveChannel<E> {
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
- * with corresponding [coroutineContext] element.
+ * with corresponding [context] element.
  *
  * By default, the coroutine is immediately scheduled for execution.
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
@@ -127,7 +127,11 @@ private open class ActorCoroutine<E>(
     parentContext: CoroutineContext,
     channel: Channel<E>,
     active: Boolean
-) : ChannelCoroutine<E>(parentContext, channel, active), ActorScope<E> {
+) : ChannelCoroutine<E>(parentContext, channel, initParentJob = false, active = active), ActorScope<E> {
+
+    init {
+        initParentJob(parentContext[Job])
+    }
 
     override fun onCancelling(cause: Throwable?) {
         _channel.cancel(cause?.let {
@@ -164,9 +168,17 @@ private class LazyActorCoroutine<E>(
         return super.offer(element)
     }
 
-    override fun close(cause: Throwable?): Boolean {
+    override fun trySend(element: E): ChannelResult<Unit> {
         start()
-        return super.close(cause)
+        return super.trySend(element)
+    }
+
+    override fun close(cause: Throwable?): Boolean {
+        // close the channel _first_
+        val closed = super.close(cause)
+        // then start the coroutine (it will promptly fail if it was not started yet)
+        start()
+        return closed
     }
 
     override val onSend: SelectClause2<E, SendChannel<E>>

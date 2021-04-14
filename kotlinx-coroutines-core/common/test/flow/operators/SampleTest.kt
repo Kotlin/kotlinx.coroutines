@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.flow.operators
@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlin.test.*
+import kotlin.time.*
 
 class SampleTest : TestBase() {
     @Test
@@ -272,5 +273,29 @@ class SampleTest : TestBase() {
 
         assertFailsWith<TestException>(flow)
         finish(4)
+    }
+
+    @ExperimentalTime
+    @Test
+    public fun testDurationBasic() = withVirtualTime {
+        expect(1)
+        val flow = flow {
+            expect(3)
+            emit("A")
+            delay(1500.milliseconds)
+            emit("B")
+            delay(500.milliseconds)
+            emit("C")
+            delay(250.milliseconds)
+            emit("D")
+            delay(2000.milliseconds)
+            emit("E")
+            expect(4)
+        }
+
+        expect(2)
+        val result = flow.sample(1000.milliseconds).toList()
+        assertEquals(listOf("A", "B", "D"), result)
+        finish(5)
     }
 }

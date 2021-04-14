@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -7,45 +7,30 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 
-enum class TestChannelKind {
-    RENDEZVOUS {
-        override fun create(): Channel<Int> = Channel(Channel.RENDEZVOUS)
-        override fun toString(): String = "RendezvousChannel"
-    },
-    ARRAY_1 {
-        override fun create(): Channel<Int> = Channel(1)
-        override fun toString(): String = "ArrayChannel(1)"
-    },
-    ARRAY_10 {
-        override fun create(): Channel<Int> = Channel(10)
-        override fun toString(): String = "ArrayChannel(10)"
-    },
-    LINKED_LIST {
-        override fun create(): Channel<Int> = Channel(Channel.UNLIMITED)
-        override fun toString(): String = "LinkedListChannel"
-    },
-    CONFLATED {
-        override fun create(): Channel<Int> = Channel(Channel.CONFLATED)
-        override fun toString(): String = "ConflatedChannel"
-        override val isConflated: Boolean get() = true
-    },
-    ARRAY_BROADCAST_1 {
-        override fun create(): Channel<Int> = ChannelViaBroadcast(BroadcastChannel(1))
-        override fun toString(): String = "ArrayBroadcastChannel(1)"
-    },
-    ARRAY_BROADCAST_10 {
-        override fun create(): Channel<Int> = ChannelViaBroadcast(BroadcastChannel(10))
-        override fun toString(): String = "ArrayBroadcastChannel(10)"
-    },
-    CONFLATED_BROADCAST {
-        override fun create(): Channel<Int> = ChannelViaBroadcast(ConflatedBroadcastChannel<Int>())
-        override fun toString(): String = "ConflatedBroadcastChannel"
-        override val isConflated: Boolean get() = true
-    }
+enum class TestChannelKind(
+    val capacity: Int,
+    private val description: String,
+    val viaBroadcast: Boolean = false
+) {
+    RENDEZVOUS(0, "RendezvousChannel"),
+    ARRAY_1(1, "ArrayChannel(1)"),
+    ARRAY_2(2, "ArrayChannel(2)"),
+    ARRAY_10(10, "ArrayChannel(10)"),
+    LINKED_LIST(Channel.UNLIMITED, "LinkedListChannel"),
+    CONFLATED(Channel.CONFLATED, "ConflatedChannel"),
+    ARRAY_1_BROADCAST(1, "ArrayBroadcastChannel(1)", viaBroadcast = true),
+    ARRAY_10_BROADCAST(10, "ArrayBroadcastChannel(10)", viaBroadcast = true),
+    CONFLATED_BROADCAST(Channel.CONFLATED, "ConflatedBroadcastChannel", viaBroadcast = true)
     ;
 
-    abstract fun create(): Channel<Int>
-    open val isConflated: Boolean get() = false
+    fun <T> create(onUndeliveredElement: ((T) -> Unit)? = null): Channel<T> = when {
+        viaBroadcast && onUndeliveredElement != null -> error("Broadcast channels to do not support onUndeliveredElement")
+        viaBroadcast -> ChannelViaBroadcast(BroadcastChannel(capacity))
+        else -> Channel(capacity, onUndeliveredElement = onUndeliveredElement)
+    }
+
+    val isConflated get() = capacity == Channel.CONFLATED
+    override fun toString(): String = description
 }
 
 private class ChannelViaBroadcast<E>(
@@ -57,11 +42,10 @@ private class ChannelViaBroadcast<E>(
     override val isEmpty: Boolean get() = sub.isEmpty
 
     override suspend fun receive(): E = sub.receive()
-    override suspend fun receiveOrNull(): E? = sub.receiveOrNull()
-    override suspend fun receiveOrClosed(): ValueOrClosed<E> = sub.receiveOrClosed()
-    override fun poll(): E? = sub.poll()
+    override suspend fun receiveCatching(): ChannelResult<E> = sub.receiveCatching()
     override fun iterator(): ChannelIterator<E> = sub.iterator()
-    
+    override fun tryReceive(): ChannelResult<E> = sub.tryReceive()
+
     override fun cancel(cause: CancellationException?) = sub.cancel(cause)
 
     // implementing hidden method anyway, so can cast to an internal class
@@ -70,8 +54,6 @@ private class ChannelViaBroadcast<E>(
 
     override val onReceive: SelectClause1<E>
         get() = sub.onReceive
-    override val onReceiveOrNull: SelectClause1<E?>
-        get() = sub.onReceiveOrNull
-    override val onReceiveOrClosed: SelectClause1<ValueOrClosed<E>>
-        get() = sub.onReceiveOrClosed
+    override val onReceiveCatching: SelectClause1<ChannelResult<E>>
+        get() = sub.onReceiveCatching
 }

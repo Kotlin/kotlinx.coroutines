@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -32,7 +32,7 @@ public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHe
 
     public val isEmpty: Boolean get() = size == 0
 
-    public fun clear() = synchronized(this) {
+    public fun clear(): Unit = synchronized(this) {
         a?.fill(null)
         _size.value = 0
     }
@@ -57,7 +57,7 @@ public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHe
         }
     }
 
-    public fun addLast(node: T) = synchronized(this) { addImpl(node) }
+    public fun addLast(node: T): Unit = synchronized(this) { addImpl(node) }
 
     // @Synchronized // NOTE! NOTE! NOTE! inline fun cannot be @Synchronized
     // Condition also receives current first node in the heap

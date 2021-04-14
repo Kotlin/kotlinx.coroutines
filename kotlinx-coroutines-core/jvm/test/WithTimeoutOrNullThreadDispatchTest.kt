@@ -74,7 +74,7 @@ class WithTimeoutOrNullThreadDispatchTest : TestBase() {
                 }
             }
             assertEquals(thread, Thread.currentThread())
-            assertEquals(null, result)
+            assertNull(result)
             expect(5)
         }
         finish(6)

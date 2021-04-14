@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -7,10 +7,11 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
 import java.util.concurrent.atomic.*
+import kotlin.test.*
 
 @RunWith(Parameterized::class)
 class ChannelSendReceiveStressTest(
@@ -34,7 +35,7 @@ class ChannelSendReceiveStressTest(
 
     private val maxBuffer = 10_000 // artificial limit for LinkedListChannel
 
-    val channel = kind.create()
+    val channel = kind.create<Int>()
     private val sendersCompleted = AtomicInteger()
     private val receiversCompleted = AtomicInteger()
     private val dupes = AtomicInteger()
@@ -43,24 +44,32 @@ class ChannelSendReceiveStressTest(
     private val receivedTotal = AtomicInteger()
     private val receivedBy = IntArray(nReceivers)
 
+    private val pool =
+        newFixedThreadPoolContext(nSenders + nReceivers, "ChannelSendReceiveStressTest")
+
+    @After
+    fun tearDown() {
+        pool.close()
+    }
+
     @Test
     fun testSendReceiveStress() = runBlocking {
         println("--- ChannelSendReceiveStressTest $kind with nSenders=$nSenders, nReceivers=$nReceivers")
         val receivers = List(nReceivers) { receiverIndex ->
             // different event receivers use different code
-            launch(Dispatchers.Default + CoroutineName("receiver$receiverIndex")) {
+            launch(pool + CoroutineName("receiver$receiverIndex")) {
                 when (receiverIndex % 5) {
                     0 -> doReceive(receiverIndex)
-                    1 -> doReceiveOrNull(receiverIndex)
+                    1 -> doReceiveCatching(receiverIndex)
                     2 -> doIterator(receiverIndex)
                     3 -> doReceiveSelect(receiverIndex)
-                    4 -> doReceiveSelectOrNull(receiverIndex)
+                    4 -> doReceiveCatchingSelect(receiverIndex)
                 }
                 receiversCompleted.incrementAndGet()
             }
         }
         val senders = List(nSenders) { senderIndex ->
-            launch(Dispatchers.Default + CoroutineName("sender$senderIndex")) {
+            launch(pool + CoroutineName("sender$senderIndex")) {
                 when (senderIndex % 2) {
                     0 -> doSend(senderIndex)
                     1 -> doSendSelect(senderIndex)
@@ -101,7 +110,7 @@ class ChannelSendReceiveStressTest(
         assertEquals(nEvents, sentTotal.get())
         if (!kind.isConflated) assertEquals(nEvents, receivedTotal.get())
         repeat(nReceivers) { receiveIndex ->
-            assertTrue("Each receiver should have received something", receivedBy[receiveIndex] > 0)
+            assertTrue(receivedBy[receiveIndex] > 0, "Each receiver should have received something")
         }
     }
 
@@ -143,9 +152,9 @@ class ChannelSendReceiveStressTest(
         }
     }
 
-    private suspend fun doReceiveOrNull(receiverIndex: Int) {
+    private suspend fun doReceiveCatching(receiverIndex: Int) {
         while (true) {
-            doReceived(receiverIndex, channel.receiveOrNull() ?: break)
+            doReceived(receiverIndex, channel.receiveCatching().getOrNull() ?: break)
         }
     }
 
@@ -164,9 +173,9 @@ class ChannelSendReceiveStressTest(
         }
     }
 
-    private suspend fun doReceiveSelectOrNull(receiverIndex: Int) {
+    private suspend fun doReceiveCatchingSelect(receiverIndex: Int) {
         while (true) {
-            val event = select<Int?> { channel.onReceiveOrNull { it } } ?: break
+            val event = select<Int?> { channel.onReceiveCatching { it.getOrNull() } } ?: break
             doReceived(receiverIndex, event)
         }
     }

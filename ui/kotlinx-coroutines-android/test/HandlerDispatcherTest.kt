@@ -123,8 +123,8 @@ class HandlerDispatcherTest : TestBase() {
         ReflectionHelpers.setStaticField(Build.VERSION::class.java, "SDK_INT", 28)
         val main = Looper.getMainLooper().asHandler(async = true).asCoroutineDispatcher("testName")
         assertEquals("testName", main.toString())
-        assertEquals("testName [immediate]", main.immediate.toString())
-        assertEquals("testName [immediate]", main.immediate.immediate.toString())
+        assertEquals("testName.immediate", main.immediate.toString())
+        assertEquals("testName.immediate", main.immediate.immediate.toString())
     }
 
     private suspend fun Job.join(mainLooper: ShadowLooper) {
@@ -141,4 +141,24 @@ class HandlerDispatcherTest : TestBase() {
     // TODO compile against API 22+ so this can be invoked without reflection.
     private val Message.isAsynchronous: Boolean
         get() = Message::class.java.getDeclaredMethod("isAsynchronous").invoke(this) as Boolean
+
+    @Test
+    fun testImmediateDispatcherYield() = runBlocking(Dispatchers.Main) {
+        expect(1)
+        // launch in the immediate dispatcher
+        launch(Dispatchers.Main.immediate) {
+            expect(2)
+            yield()
+            expect(4)
+        }
+        expect(3) // after yield
+        yield() // yield back
+        finish(5)
+    }
+
+    @Test
+    fun testMainDispatcherToString() {
+        assertEquals("Dispatchers.Main", Dispatchers.Main.toString())
+        assertEquals("Dispatchers.Main.immediate", Dispatchers.Main.immediate.toString())
+    }
 }

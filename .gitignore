@@ -1,4 +1,10 @@
-.idea
+**/.idea/*
+!/.idea/icon.png
+!/.idea/vcs.xml
+!/.idea/copyright
+!/.idea/codeStyleSettings.xml
+!/.idea/codeStyles
+!/.idea/dictionaries
 *.iml
 .gradle
 .gradletasknamecache

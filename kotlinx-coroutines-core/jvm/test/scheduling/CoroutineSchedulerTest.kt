@@ -4,19 +4,20 @@
 
 package kotlinx.coroutines.scheduling
 
-import kotlinx.coroutines.TestBase
+import kotlinx.coroutines.*
 import org.junit.Test
 import java.lang.Runnable
 import java.util.concurrent.*
-import java.util.concurrent.CountDownLatch
 import kotlin.coroutines.*
+import kotlin.test.*
 
 class CoroutineSchedulerTest : TestBase() {
+    private val taskModes = listOf(TASK_NON_BLOCKING, TASK_PROBABLY_BLOCKING)
 
     @Test
     fun testModesExternalSubmission() { // Smoke
         CoroutineScheduler(1, 1).use {
-            for (mode in TaskMode.values()) {
+            for (mode in taskModes) {
                 val latch = CountDownLatch(1)
                 it.dispatch(Runnable {
                     latch.countDown()
@@ -30,9 +31,9 @@ class CoroutineSchedulerTest : TestBase() {
     @Test
     fun testModesInternalSubmission() { // Smoke
         CoroutineScheduler(2, 2).use {
-            val latch = CountDownLatch(TaskMode.values().size)
+            val latch = CountDownLatch(taskModes.size)
             it.dispatch(Runnable {
-                for (mode in TaskMode.values()) {
+                for (mode in taskModes) {
                     it.dispatch(Runnable {
                         latch.countDown()
                     }, TaskContextImpl(mode))
@@ -82,7 +83,7 @@ class CoroutineSchedulerTest : TestBase() {
                 it.dispatch(Runnable {
                     expect(2)
                     finishLatch.countDown()
-                }, fair = true)
+                }, tailDispatch = true)
             })
 
             startLatch.countDown()
@@ -128,6 +129,29 @@ class CoroutineSchedulerTest : TestBase() {
         latch.await()
     }
 
+    @Test
+    fun testInterruptionCleanup() {
+        ExperimentalCoroutineDispatcher(1, 1).use {
+            val executor = it.executor
+            var latch = CountDownLatch(1)
+            executor.execute {
+                Thread.currentThread().interrupt()
+                latch.countDown()
+            }
+            latch.await()
+            Thread.sleep(100) // I am really sorry
+            latch = CountDownLatch(1)
+            executor.execute {
+                try {
+                    assertFalse(Thread.currentThread().isInterrupted)
+                } finally {
+                    latch.countDown()
+                }
+            }
+            latch.await()
+        }
+    }
+
     private fun testUniformDistribution(worker: CoroutineScheduler.Worker, bound: Int) {
         val result = IntArray(bound)
         val iterations = 10_000_000
@@ -144,7 +168,7 @@ class CoroutineSchedulerTest : TestBase() {
         }
     }
 
-    private class TaskContextImpl(override val taskMode: TaskMode) : TaskContext {
+    private class TaskContextImpl(override val taskMode: Int) : TaskContext {
         override fun afterTask() {}
     }
 }

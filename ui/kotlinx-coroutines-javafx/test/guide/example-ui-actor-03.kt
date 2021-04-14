@@ -1,9 +1,9 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide-ui.md by Knit tool. Do not edit.
-package kotlinx.coroutines.javafx.guide.actor03
+package kotlinx.coroutines.javafx.guide.exampleUiActor03
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -65,8 +65,8 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     val eventActor = GlobalScope.actor<MouseEvent>(Dispatchers.Main, capacity = Channel.CONFLATED) { // <--- Changed here
         for (event in channel) action(event) // pass event to action
     }
-    // install a listener to offer events to this actor
+    // install a listener to send events to this actor
     onMouseClicked = EventHandler { event ->
-        eventActor.offer(event)
+        eventActor.trySend(event)
     }
 }

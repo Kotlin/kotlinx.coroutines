@@ -5,6 +5,7 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
 import org.junit.Test
@@ -35,5 +36,18 @@ class BackpressureTest : TestBase() {
                 expect(2)
             }
         finish(3)
+    }
+
+    @Test
+    fun testCooperativeCancellation() = runTest {
+        val flow = Flux.fromIterable((0L..Long.MAX_VALUE)).asFlow()
+        flow.onEach { if (it > 10) currentCoroutineContext().cancel() }.launchIn(this + Dispatchers.Default).join()
+    }
+
+    @Test
+    fun testCooperativeCancellationForBuffered() = runTest(expected = { it is CancellationException }) {
+        val flow = Flux.fromIterable((0L..Long.MAX_VALUE)).asFlow()
+        val channel = flow.onEach { if (it > 10) currentCoroutineContext().cancel() }.produceIn(this + Dispatchers.Default)
+        channel.consumeEach { /* Do nothing, just consume elements */ }
     }
 }

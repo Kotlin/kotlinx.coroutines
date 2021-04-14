@@ -1,8 +1,6 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
 package kotlinx.coroutines.rx2
 
@@ -14,21 +12,18 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import kotlin.coroutines.*
-import kotlin.internal.*
 
 /**
  * Creates cold [observable][Observable] that will run a given [block] in a coroutine.
  * Every time the returned observable is subscribed, it starts a new coroutine.
- * Coroutine emits items with `send`. Unsubscribing cancels running coroutine.
+ *
+ * Coroutine emits ([ObservableEmitter.onNext]) values with `send`, completes ([ObservableEmitter.onComplete])
+ * when the coroutine completes or channel is explicitly closed and emits error ([ObservableEmitter.onError])
+ * if coroutine throws an exception or closes channel with a cause.
+ * Unsubscribing cancels running coroutine.
  *
  * Invocations of `send` are suspended appropriately to ensure that `onNext` is not invoked concurrently.
- * Note that Rx 2.x [Observable] **does not support backpressure**. Use [rxFlowable].
- *
- * | **Coroutine action**                         | **Signal to subscriber**
- * | -------------------------------------------- | ------------------------
- * | `send`                                       | `onNext`
- * | Normal completion or `close` without cause   | `onComplete`
- * | Failure with exception or `close` with cause | `onError`
+ * Note that Rx 2.x [Observable] **does not support backpressure**.
  *
  * Coroutine context can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
@@ -43,17 +38,6 @@ public fun <T : Any> rxObservable(
             "Its lifecycle should be managed via Disposable handle. Had $context" }
     return rxObservableInternal(GlobalScope, context, block)
 }
-
-@Deprecated(
-    message = "CoroutineScope.rxObservable is deprecated in favour of top-level rxObservable",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("rxObservable(context, block)")
-) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
-@LowPriorityInOverloadResolution
-public fun <T : Any> CoroutineScope.rxObservable(
-    context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Observable<T> = rxObservableInternal(this, context, block)
 
 private fun <T : Any> rxObservableInternal(
     scope: CoroutineScope, // support for legacy rxObservable in scope
@@ -70,10 +54,10 @@ private const val OPEN = 0        // open channel, still working
 private const val CLOSED = -1     // closed, but have not signalled onCompleted/onError yet
 private const val SIGNALLED = -2  // already signalled subscriber onCompleted/onError
 
-private class RxObservableCoroutine<T: Any>(
+private class RxObservableCoroutine<T : Any>(
     parentContext: CoroutineContext,
     private val subscriber: ObservableEmitter<T>
-) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, SelectClause2<T, SendChannel<T>> {
+) : AbstractCoroutine<Unit>(parentContext, false, true), ProducerScope<T>, SelectClause2<T, SendChannel<T>> {
     override val channel: SendChannel<T> get() = this
 
     // Mutex is locked when while subscriber.onXXX is being invoked
@@ -82,7 +66,6 @@ private class RxObservableCoroutine<T: Any>(
     private val _signal = atomic(OPEN)
 
     override val isClosedForSend: Boolean get() = isCompleted
-    override val isFull: Boolean = mutex.isLocked
     override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
     override fun invokeOnClose(handler: (Throwable?) -> Unit) =
         throw UnsupportedOperationException("RxObservableCoroutine doesn't support invokeOnClose")
@@ -93,9 +76,15 @@ private class RxObservableCoroutine<T: Any>(
         return true
     }
 
+    override fun trySend(element: T): ChannelResult<Unit> {
+        if (!mutex.tryLock()) return ChannelResult.failure()
+        doLockedNext(element)
+        return ChannelResult.success(Unit)
+    }
+
     public override suspend fun send(element: T) {
         // fast-path -- try send without suspension
-        if (offer(element)) return
+        if (trySend(element).isSuccess) return
         // slow-path does suspend
         return sendSuspend(element)
     }
@@ -170,9 +159,9 @@ private class RxObservableCoroutine<T: Any>(
                          * by coroutines machinery, anyway, they should not be present in regular program flow,
                          * thus our goal here is just to expose it as soon as possible.
                          */
-                        subscriber.onError(cause)
+                        subscriber.tryOnError(cause)
                         if (!handled && cause.isFatal()) {
-                            handleCoroutineException(context, cause)
+                            handleUndeliverableException(cause, context)
                         }
                     }
                     else {
@@ -180,7 +169,7 @@ private class RxObservableCoroutine<T: Any>(
                     }
                 } catch (e: Throwable) {
                     // Unhandled exception (cannot handle in other way, since we are already complete)
-                    handleCoroutineException(context, e)
+                    handleUndeliverableException(e, context)
                 }
             }
         } finally {
@@ -209,3 +198,13 @@ internal fun Throwable.isFatal() = try {
 } catch (e: Throwable) {
     true
 }
+
+@Deprecated(
+    message = "CoroutineScope.rxObservable is deprecated in favour of top-level rxObservable",
+    level = DeprecationLevel.HIDDEN,
+    replaceWith = ReplaceWith("rxObservable(context, block)")
+) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
+public fun <T : Any> CoroutineScope.rxObservable(
+    context: CoroutineContext = EmptyCoroutineContext,
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+): Observable<T> = rxObservableInternal(this, context, block)

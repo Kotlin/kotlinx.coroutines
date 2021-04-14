@@ -1,14 +1,68 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-apply plugin: 'kotlin-multiplatform'
-apply from: rootProject.file("gradle/targets.gradle")
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply from: rootProject.file("gradle/compile-jvm-multiplatform.gradle")
 apply from: rootProject.file("gradle/compile-common.gradle")
+
+if (rootProject.ext.native_targets_enabled) {
+    apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
+}
+
 apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
-apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
 apply from: rootProject.file('gradle/publish-npm-js.gradle')
+
+/* ==========================================================================
+  Configure source sets structure for kotlinx-coroutines-core:
+
+  TARGETS                            SOURCE SETS
+  -------         ----------------------------------------------
+
+     js -----------------------------------------------------+
+                                                             |
+                                                             V
+     jvm -------------------------------> concurrent ---> common
+                                              ^
+     ios     \                                |
+     macos   | ---> nativeDarwin ---> native --+
+     tvos    |                         ^
+     watchos /                         |
+                                       |
+     linux  \  ---> nativeOther -------+
+     mingw  /
+
+   ========================================================================== */
+
+project.ext.sourceSetSuffixes = ["Main", "Test"]
+
+void defineSourceSet(newName, dependsOn, includedInPred) {
+    for (suffix in project.ext.sourceSetSuffixes) {
+        def newSS = kotlin.sourceSets.maybeCreate(newName + suffix)
+        for (dep in dependsOn) {
+            newSS.dependsOn(kotlin.sourceSets[dep + suffix])
+        }
+        for (curSS in kotlin.sourceSets) {
+            def curName = curSS.name
+            if (curName.endsWith(suffix)) {
+                def prefix = curName.substring(0, curName.length() - suffix.length())
+                if (includedInPred(prefix)) curSS.dependsOn(newSS)
+            }
+        }
+    }
+}
+
+static boolean isNativeDarwin(String name) { return ["ios", "macos", "tvos", "watchos"].any { name.startsWith(it) } }
+static boolean isNativeOther(String name) { return ["linux", "mingw"].any { name.startsWith(it) } }
+
+defineSourceSet("concurrent", ["common"]) { it in ["jvm", "native"] }
+
+if (rootProject.ext.native_targets_enabled) {
+    defineSourceSet("nativeDarwin", ["native"]) { isNativeDarwin(it) }
+    defineSourceSet("nativeOther", ["native"]) { isNativeOther(it) }
+}
+
+/* ========================================================================== */
 
 /*
  * All platform plugins and configuration magic happens here instead of build.gradle
@@ -18,7 +72,7 @@ kotlin {
     configure(sourceSets) {
         def srcDir = name.endsWith('Main') ? 'src' : 'test'
         def platform = name[0..-5]
-        kotlin.srcDir "$platform/$srcDir"
+        kotlin.srcDirs = ["$platform/$srcDir"]
         if (name == "jvmMain") {
             resources.srcDirs = ["$platform/resources"]
         } else if (name == "jvmTest") {
@@ -31,12 +85,18 @@ kotlin {
     }
 
     configure(targets) {
-        def targetName = it.name
-        compilations.all { compilation ->
-            def compileTask = tasks.getByName(compilation.compileKotlinTaskName)
-            // binary compatibility support
-            if (targetName.contains("jvm") && compilation.compilationName == "main") {
-                compileTask.kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
+        // Configure additional binaries and test runs -- one for each OS
+        if (["macos", "linux", "mingw"].any { name.startsWith(it) }) {
+            binaries {
+                // Test for memory leaks using a special entry point that does not exit but returns from main
+                binaries.getTest("DEBUG").freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
+                // Configure a separate test where code runs in background
+                test("background", [org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType.DEBUG]) {
+                    freeCompilerArgs += ["-e", "kotlinx.coroutines.mainBackground"]
+                }
+            }
+            testRuns {
+                background { setExecutionSourceFrom(binaries.backgroundDebugTest) }
             }
         }
     }
@@ -46,11 +106,60 @@ configurations {
     configureKotlinJvmPlatform(kotlinCompilerPluginClasspath)
 }
 
+// Update module name for metadata artifact to avoid conflicts
+// see https://github.com/Kotlin/kotlinx.coroutines/issues/1797
+compileKotlinMetadata {
+    kotlinOptions {
+        freeCompilerArgs += ["-module-name", "kotlinx-coroutines-core-common"]
+    }
+}
+
+// :KLUDGE: Idea.active: This is needed to workaround resolve problems after importing this project to IDEA
+def configureNativeSourceSetPreset(name, preset) {
+    def hostMainCompilation = project.kotlin.targetFromPreset(preset).compilations.main
+    // Look for platform libraries in "implementation" for default source set
+    def implementationConfiguration = configurations[hostMainCompilation.defaultSourceSet.implementationMetadataConfigurationName]
+    // Now find the libraries: Finds platform libs & stdlib, but platform declarations are still not resolved due to IDE bugs
+    def hostNativePlatformLibs = files(
+        provider {
+            implementationConfiguration.findAll {
+                it.path.endsWith(".klib") || it.absolutePath.contains("klib${File.separator}platform") || it.absolutePath.contains("stdlib")
+            }
+        }
+    )
+    // Add all those dependencies
+    for (suffix in sourceSetSuffixes) {
+        configure(kotlin.sourceSets[name + suffix]) {
+            dependencies.add(implementationMetadataConfigurationName, hostNativePlatformLibs)
+        }
+    }
+}
+
+// :KLUDGE: Idea.active: Configure platform libraries for native source sets when working in IDEA
+if (Idea.active && rootProject.ext.native_targets_enabled) {
+    def manager = project.ext.hostManager
+    def linuxPreset = kotlin.presets.linuxX64
+    def macosPreset = kotlin.presets.macosX64
+    // linux should be always available (cross-compilation capable) -- use it as default
+    assert manager.isEnabled(linuxPreset.konanTarget)
+    // use macOS libs for nativeDarwin if available
+    def macosAvailable = manager.isEnabled(macosPreset.konanTarget)
+    // configure source sets
+    configureNativeSourceSetPreset("native", linuxPreset)
+    configureNativeSourceSetPreset("nativeOther", linuxPreset)
+    configureNativeSourceSetPreset("nativeDarwin", macosAvailable ? macosPreset : linuxPreset)
+}
+
 kotlin.sourceSets {
+    jvmMain.dependencies {
+        compileOnly "com.google.android:annotations:4.1.1.4"
+    }
+
     jvmTest.dependencies {
-        api "com.devexperts.lincheck:lincheck:$lincheck_version"
+        api "org.jetbrains.kotlinx:lincheck:$lincheck_version"
+        api "org.jetbrains.kotlinx:kotlinx-knit-test:$knit_version"
         api "com.esotericsoftware:kryo:4.0.0"
-        implementation project (":android-unit-tests")
+        implementation project(":android-unit-tests")
     }
 }
 
@@ -75,17 +184,66 @@ jvmTest {
     minHeapSize = '1g'
     maxHeapSize = '1g'
     enableAssertions = true
-    systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
-    exclude '**/*LFStressTest.*'
-    systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
+    if (!Idea.active) {
+        // We should not set this security manager when `jvmTest`
+        // is invoked by IntelliJ IDEA since we need to pass
+        // system properties for Lincheck and stress tests.
+        // TODO Remove once IDEA is smart enough to select between `jvmTest`/`jvmStressTest`/`jvmLincheckTest` #KTIJ-599
+        systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
+    }
+    // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
+    if (!Idea.active && rootProject.properties['stress'] == null) {
+        exclude '**/*LincheckTest.*'
+        exclude '**/*StressTest.*'
+    }
+    if (Idea.active) {
+        // Configure the IDEA runner for Lincheck
+        configureJvmForLincheck(jvmTest)
+    }
+    // TODO: JVM IR generates different stacktrace so temporary disable stacktrace tests
+    if (rootProject.ext.jvm_ir_enabled) {
+        filter {
+            excludeTestsMatching('kotlinx.coroutines.exceptions.StackTraceRecovery*')
+        }
+    }
 }
 
-task lockFreedomTest(type: Test, dependsOn: compileTestKotlinJvm) {
+jvmJar {
+    manifest {
+        attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
+        attributes "Can-Retransform-Classes": "true"
+    }
+}
+
+task jvmStressTest(type: Test, dependsOn: compileTestKotlinJvm) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
-    include '**/*LFStressTest.*'
+    minHeapSize = '1g'
+    maxHeapSize = '1g'
+    include '**/*StressTest.*'
     enableAssertions = true
     testLogging.showStandardStreams = true
+    systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
+    systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2'
+    systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '10'
+}
+
+task jvmLincheckTest(type: Test, dependsOn: compileTestKotlinJvm) {
+    classpath = files { jvmTest.classpath }
+    testClassesDirs = files { jvmTest.testClassesDirs }
+    include '**/*LincheckTest.*'
+    enableAssertions = true
+    testLogging.showStandardStreams = true
+    configureJvmForLincheck(jvmLincheckTest)
+}
+
+static void configureJvmForLincheck(task) {
+    task.minHeapSize = '1g'
+    task.maxHeapSize = '6g' // we may need more space for building an interleaving tree in the model checking mode
+    task.jvmArgs = ['--add-opens', 'java.base/jdk.internal.misc=ALL-UNNAMED',   // required for transformation
+                     '--add-exports', 'java.base/jdk.internal.util=ALL-UNNAMED'] // in the model checking mode
+    task.systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2'
+    task.systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '1' // better for the model checking mode
 }
 
 task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
@@ -93,17 +251,18 @@ task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
     testClassesDirs = files { jvmTest.testClassesDirs }
     executable = "$System.env.JDK_16/bin/java"
     exclude '**/*LFStressTest.*' // lock-freedom tests use LockFreedomTestEnvironment which needs JDK8
-    exclude '**/*LCStressTest.*' // lic-check tests use LinChecker which needs JDK8
+    exclude '**/*LincheckTest.*' // Lincheck tests use LinChecker which needs JDK8
     exclude '**/exceptions/**'   // exceptions tests check suppressed exception which needs JDK8
     exclude '**/ExceptionsGuideTest.*'
+    exclude '**/RunInterruptibleStressTest.*' // fails on JDK 1.6 due to JDK bug
 }
 
-// Run these tests only during nightly stress test
+// Run jdk16Test test only during nightly stress test
 jdk16Test.onlyIf { project.properties['stressTest'] != null }
 
-// Always run those tests
-task moreTest(dependsOn: [lockFreedomTest, jdk16Test])
-build.dependsOn moreTest
+// Always check additional test sets
+task moreTest(dependsOn: [jvmStressTest, jvmLincheckTest, jdk16Test])
+check.dependsOn moreTest
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {
     classifier = 'tests'

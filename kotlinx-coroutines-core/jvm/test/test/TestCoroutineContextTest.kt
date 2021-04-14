@@ -6,8 +6,9 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import kotlin.coroutines.*
+import kotlin.test.*
 
 class TestCoroutineContextTest {
     private val injectedContext = TestCoroutineContext()
@@ -309,7 +310,7 @@ class TestCoroutineContextTest {
         advanceTimeBy(delay)
 
         val e = result.getCompletionExceptionOrNull()
-        assertTrue("Expected to be thrown: '$expectedError' but was '$e'", expectedError === e)
+        assertTrue(expectedError === e, "Expected to be thrown: '$expectedError' but was '$e'")
     }
 
     @Test
@@ -341,7 +342,7 @@ class TestCoroutineContextTest {
         } catch (e: AssertionError) {
             throw e
         } catch (e: Throwable) {
-            assertTrue("Expected to be thrown: '$expectedError' but was '$e'", expectedError === e)
+            assertTrue(expectedError === e, "Expected to be thrown: '$expectedError' but was '$e'")
         }
     }
 

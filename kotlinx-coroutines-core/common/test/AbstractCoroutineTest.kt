@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -13,13 +13,13 @@ class AbstractCoroutineTest : TestBase() {
     fun testNotifications() = runTest {
         expect(1)
         val coroutineContext = coroutineContext // workaround for KT-22984
-        val coroutine = object : AbstractCoroutine<String>(coroutineContext, false) {
+        val coroutine = object : AbstractCoroutine<String>(coroutineContext, true, false) {
             override fun onStart() {
                 expect(3)
             }
 
             override fun onCancelling(cause: Throwable?) {
-                assertEquals(null, cause)
+                assertNull(cause)
                 expect(5)
             }
 
@@ -34,12 +34,12 @@ class AbstractCoroutineTest : TestBase() {
         }
 
         coroutine.invokeOnCompletion(onCancelling = true) {
-            assertEquals(null, it)
+            assertNull(it)
             expect(7)
         }
 
         coroutine.invokeOnCompletion {
-            assertEquals(null, it)
+            assertNull(it)
             expect(8)
         }
         expect(2)
@@ -53,7 +53,7 @@ class AbstractCoroutineTest : TestBase() {
     fun testNotificationsWithException() = runTest {
         expect(1)
         val coroutineContext = coroutineContext // workaround for KT-22984
-        val coroutine = object : AbstractCoroutine<String>(coroutineContext + NonCancellable, false) {
+        val coroutine = object : AbstractCoroutine<String>(coroutineContext + NonCancellable, true, false) {
             override fun onStart() {
                 expect(3)
             }

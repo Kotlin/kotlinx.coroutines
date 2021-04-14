@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 apply plugin: "com.github.johnrengelman.shadow"
@@ -14,7 +14,7 @@ configurations {
      * but in that case it changes dependency type to "runtime" and resolves it
      * (so it cannot be further modified). Otherwise, shadow just ignores all dependencies.
      */
-    shadow.extendsFrom(compile) // shadow - resulting configuration with shaded jar file
+    shadow.extendsFrom(api) // shadow - resulting configuration with shaded jar file
     configureKotlinJvmPlatform(shadow)
 }
 
@@ -22,6 +22,20 @@ dependencies {
     compileOnly "junit:junit:$junit_version"
     shadowDeps "net.bytebuddy:byte-buddy:$byte_buddy_version"
     shadowDeps "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
+    compileOnly "io.projectreactor.tools:blockhound:$blockhound_version"
+    testImplementation "io.projectreactor.tools:blockhound:$blockhound_version"
+    api "net.java.dev.jna:jna:$jna_version"
+    api "net.java.dev.jna:jna-platform:$jna_version"
+}
+
+// TODO: JVM IR generates different stacktrace so temporary disable stacktrace tests
+if (rootProject.ext.jvm_ir_enabled) {
+    tasks.named('test', Test) {
+        filter {
+//            excludeTest('kotlinx.coroutines.debug.CoroutinesDumpTest', 'testCreationStackTrace')
+            excludeTestsMatching('kotlinx.coroutines.debug.DebugProbesTest')
+        }
+    }
 }
 
 jar {
@@ -35,5 +49,5 @@ shadowJar {
     classifier null
     // Shadow only byte buddy, do not package kotlin stdlib
     configurations = [project.configurations.shadowDeps]
-    relocate 'net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy'
+    relocate('net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy')
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.test.internal
@@ -46,8 +46,8 @@ internal class TestMainDispatcher(private val mainFactory: MainDispatcherFactory
         delay.delay(time)
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
-        return delay.invokeOnTimeout(timeMillis, block)
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
+        return delay.invokeOnTimeout(timeMillis, block, context)
     }
 
     public fun setDispatcher(dispatcher: CoroutineDispatcher) {
@@ -64,7 +64,7 @@ internal class TestMainDispatcherFactory : MainDispatcherFactory {
     override fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher {
         val originalFactory = allFactories.asSequence()
             .filter { it !== this }
-            .maxBy { it.loadPriority } ?: MissingMainCoroutineDispatcherFactory
+            .maxByOrNull { it.loadPriority } ?: MissingMainCoroutineDispatcherFactory
         return TestMainDispatcher(originalFactory)
     }
 

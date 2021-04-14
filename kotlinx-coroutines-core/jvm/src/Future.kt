@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -20,7 +20,7 @@ import java.util.concurrent.*
  */
 @InternalCoroutinesApi
 public fun Job.cancelFutureOnCompletion(future: Future<*>): DisposableHandle =
-    invokeOnCompletion(handler = CancelFutureOnCompletion(this, future)) // TODO make it work only on cancellation as well?
+    invokeOnCompletion(handler = CancelFutureOnCompletion(future)) // TODO make it work only on cancellation as well?
 
 /**
  * Cancels a specified [future] when this job is cancelled.
@@ -29,19 +29,17 @@ public fun Job.cancelFutureOnCompletion(future: Future<*>): DisposableHandle =
  * invokeOnCancellation { future.cancel(false) }
  * ```
  */
-public fun CancellableContinuation<*>.cancelFutureOnCancellation(future: Future<*>) =
+public fun CancellableContinuation<*>.cancelFutureOnCancellation(future: Future<*>): Unit =
     invokeOnCancellation(handler = CancelFutureOnCancel(future))
 
 private class CancelFutureOnCompletion(
-    job: Job,
     private val future: Future<*>
-) : JobNode<Job>(job)  {
+) : JobNode() {
     override fun invoke(cause: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this
         // interruption flag and it will cause spurious failures elsewhere
         future.cancel(false)
     }
-    override fun toString() = "CancelFutureOnCompletion[$future]"
 }
 
 private class CancelFutureOnCancel(private val future: Future<*>) : CancelHandler()  {

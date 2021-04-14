@@ -131,4 +131,18 @@ class TakeTest : TestBase() {
             }
         finish(2)
     }
+
+    @Test
+    fun testNestedTake() = runTest {
+        val inner = flow {
+            emit(1)
+            expectUnreached()
+        }.take(1)
+        val outer = flow {
+            while(true) {
+                emitAll(inner)
+            }
+        }
+        assertEquals(listOf(1, 1, 1), outer.take(3).toList())
+    }
 }

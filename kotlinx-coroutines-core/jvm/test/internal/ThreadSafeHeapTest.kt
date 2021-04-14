@@ -21,7 +21,7 @@ class ThreadSafeHeapTest : TestBase() {
     @Test
     fun testBasic() {
         val h = ThreadSafeHeap<Node>()
-        assertEquals(null, h.peek())
+        assertNull(h.peek())
         val n1 = Node(1)
         h.addLast(n1)
         assertEquals(n1, h.peek())
@@ -47,7 +47,7 @@ class ThreadSafeHeapTest : TestBase() {
         h.remove(n3)
         assertEquals(n5, h.peek())
         h.remove(n5)
-        assertEquals(null, h.peek())
+        assertNull(h.peek())
     }
 
     @Test
@@ -59,7 +59,7 @@ class ThreadSafeHeapTest : TestBase() {
         repeat(n) { h.addLast(Node(a[it])) }
         a.sort()
         repeat(n) { assertEquals(Node(a[it]), h.removeFirstOrNull()) }
-        assertEquals(null, h.peek())
+        assertNull(h.peek())
     }
 
     @Test

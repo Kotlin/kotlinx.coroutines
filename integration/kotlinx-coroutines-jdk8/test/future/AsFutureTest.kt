@@ -5,10 +5,10 @@
 package kotlinx.coroutines.future
 
 import kotlinx.coroutines.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import java.util.concurrent.*
 import java.util.concurrent.CancellationException
+import kotlin.test.*
 
 class AsFutureTest : TestBase() {
 

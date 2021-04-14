@@ -20,4 +20,63 @@ class CancellableContinuationJvmTest : TestBase() {
         }
         suspend {}() // Eliminate tail-call optimization
     }
+
+    @Test
+    fun testExceptionIsNotReported() = runTest({ it is CancellationException }) {
+        val ctx = coroutineContext
+        suspendCancellableCoroutine<Unit> {
+            ctx.cancel()
+            it.resumeWith(Result.failure(TestException()))
+        }
+    }
+
+    @Test
+    fun testBlockingIntegration() = runTest {
+        val source = BlockingSource()
+        val job = launch(Dispatchers.Default) {
+            source.await()
+        }
+        source.cancelAndJoin(job)
+    }
+
+    @Test
+    fun testBlockingIntegrationAlreadyCancelled() = runTest {
+        val source = BlockingSource()
+        val job = launch(Dispatchers.Default) {
+            cancel()
+            source.await()
+        }
+        source.cancelAndJoin(job)
+    }
+
+    private suspend fun BlockingSource.cancelAndJoin(job: Job) {
+        while (!hasSubscriber) {
+            Thread.sleep(10)
+        }
+        job.cancelAndJoin()
+    }
+
+    private suspend fun BlockingSource.await() = suspendCancellableCoroutine<Unit> {
+        it.invokeOnCancellation { this.cancel() }
+        subscribe()
+    }
+
+    private class BlockingSource {
+        @Volatile
+        private var isCancelled = false
+
+        @Volatile
+        public var hasSubscriber = false
+
+        public fun subscribe() {
+            hasSubscriber = true
+            while (!isCancelled) {
+                Thread.sleep(10)
+            }
+        }
+
+        public fun cancel() {
+            isCancelled = true
+        }
+    }
 }

@@ -13,7 +13,7 @@ class CoroutinesTimeoutTest : TestBase() {
     @Rule
     @JvmField
     public val validation = TestFailureValidation(
-        1000, false,
+        1000, false, true,
         TestResultSpec("throwingTest", error = RuntimeException::class.java),
         TestResultSpec("successfulTest"),
         TestResultSpec(

@@ -5,6 +5,7 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.internal.*
 import kotlin.test.*
 
 class OnCompletionTest : TestBase() {
@@ -49,7 +50,7 @@ class OnCompletionTest : TestBase() {
         }.onEach {
             expect(2)
         }.onCompletion {
-            assertNull(it)
+            assertTrue(it is TestException) // flow fails because of this exception
             expect(4)
         }.onEach {
             expect(3)
@@ -64,7 +65,7 @@ class OnCompletionTest : TestBase() {
     @Test
     fun testMultipleOnCompletions() = runTest {
         flowOf(1).onCompletion {
-            assertNull(it)
+            assertTrue(it is TestException)
             expect(2)
         }.onEach {
             expect(1)
@@ -144,12 +145,12 @@ class OnCompletionTest : TestBase() {
                 .onCompletion { e ->
                     expect(8)
                     assertTrue(e is TestException)
-                    emit(TestData.Done(e))
+                    emit(TestData.Done(e)) // will fail
                 }.collect {
                     collected += it
                 }
         }
-        val expected = (1..5).map { TestData.Value(it) } + TestData.Done(TestException("OK"))
+        val expected: List<TestData> = (1..5).map { TestData.Value(it) }
         assertEquals(expected, collected)
         finish(9)
     }
@@ -170,15 +171,123 @@ class OnCompletionTest : TestBase() {
                     }
                     .onCompletion { e ->
                         expect(8)
-                        assertNull(e)
-                        emit(TestData.Done(e))
+                        assertTrue(e is CancellationException)
+                        try {
+                            emit(TestData.Done(e))
+                            expectUnreached()
+                        } finally {
+                            expect(9)
+                        }
                     }.collect {
                         collected += it
                     }
             }
         }
-        val expected = (1..5).map { TestData.Value(it) } + TestData.Done(null)
+        val expected = (1..5).map<Int, TestData> { TestData.Value(it) }
         assertEquals(expected, collected)
-        finish(9)
+        finish(10)
+    }
+
+    @Test
+    fun testFailedEmit() = runTest {
+        val cause = TestException()
+        assertFailsWith<TestException> {
+            flow<TestData> {
+                expect(1)
+                emit(TestData.Value(2))
+                expectUnreached()
+            }.onCompletion {
+                assertSame(cause, it) // flow failed because of the exception in downstream
+                expect(3)
+                try {
+                    emit(TestData.Done(it))
+                    expectUnreached()
+                } catch (e: TestException) {
+                    assertSame(cause, e)
+                    finish(4)
+                }
+            }.collect {
+                expect((it as TestData.Value).i)
+                throw cause
+            }
+        }
+    }
+
+    @Test
+    fun testFirst() = runTest {
+        val value = flowOf(239).onCompletion {
+            assertNotNull(it) // the flow did not complete normally
+            expect(1)
+            try {
+                emit(42)
+                expectUnreached()
+            } catch (e: Throwable) {
+                assertTrue { e is AbortFlowException }
+            }
+        }.first()
+        assertEquals(239, value)
+        finish(2)
+    }
+
+    @Test
+    fun testSingle() = runTest {
+        assertFailsWith<IllegalArgumentException> {
+            flowOf(239).onCompletion {
+                assertNull(it)
+                expect(1)
+                try {
+                    emit(42)
+                    expectUnreached()
+                } catch (e: Throwable) {
+                    // Second emit -- failure
+                    assertTrue { e is IllegalArgumentException }
+                    throw e
+                }
+            }.single()
+            expectUnreached()
+        }
+        finish(2)
+    }
+
+    @Test
+    fun testEmptySingleInterference() = runTest {
+        val value = emptyFlow<Int>().onCompletion {
+            assertNull(it)
+            expect(1)
+            emit(42)
+        }.single()
+        assertEquals(42, value)
+        finish(2)
+    }
+
+    @Test
+    fun testTransparencyViolation() = runTest {
+        val flow = emptyFlow<Int>().onCompletion {
+            expect(2)
+            coroutineScope {
+                launch {
+                    try {
+                        emit(1)
+                    } catch (e: IllegalStateException) {
+                        expect(3)
+                    }
+                }
+            }
+        }
+        expect(1)
+        assertNull(flow.singleOrNull())
+        finish(4)
+    }
+
+    @Test
+    fun testTakeOnCompletion() = runTest {
+        // even though it uses "take" from the outside it completes normally
+        val flow = (1..10).asFlow().take(5)
+        val result = flow.onCompletion { cause ->
+            assertNull(cause)
+            emit(-1)
+        }.toList()
+        val expected = (1..5).toList() + (-1)
+        assertEquals(expected, result)
     }
 }

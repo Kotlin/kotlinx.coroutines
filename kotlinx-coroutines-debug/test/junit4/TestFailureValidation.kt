@@ -11,13 +11,19 @@ import org.junit.runners.model.*
 import java.io.*
 import kotlin.test.*
 
-internal fun TestFailureValidation(timeoutMs: Long, cancelOnTimeout: Boolean, vararg specs: TestResultSpec): RuleChain =
+internal fun TestFailureValidation(
+    timeoutMs: Long,
+    cancelOnTimeout: Boolean,
+    creationStackTraces: Boolean,
+    vararg specs: TestResultSpec
+): RuleChain =
     RuleChain
         .outerRule(TestFailureValidation(specs.associateBy { it.testName }))
         .around(
             CoroutinesTimeout(
                 timeoutMs,
-                cancelOnTimeout
+                cancelOnTimeout,
+                creationStackTraces
             )
         )
 

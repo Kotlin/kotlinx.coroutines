@@ -1,10 +1,11 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.intrinsics
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
@@ -13,17 +14,20 @@ import kotlin.coroutines.intrinsics.*
  * while waiting to be dispatched.
  */
 @InternalCoroutinesApi
-public fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>) = runSafely(completion) {
-    createCoroutineUnintercepted(completion).intercepted().resumeCancellable(Unit)
+public fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>): Unit = runSafely(completion) {
+    createCoroutineUnintercepted(completion).intercepted().resumeCancellableWith(Result.success(Unit))
 }
 
 /**
  * Use this function to start coroutine in a cancellable way, so that it can be cancelled
  * while waiting to be dispatched.
  */
-internal fun <R, T> (suspend (R) -> T).startCoroutineCancellable(receiver: R, completion: Continuation<T>) =
+internal fun <R, T> (suspend (R) -> T).startCoroutineCancellable(
+    receiver: R, completion: Continuation<T>,
+    onCancellation: ((cause: Throwable) -> Unit)? = null
+) =
     runSafely(completion) {
-        createCoroutineUnintercepted(receiver, completion).intercepted().resumeCancellable(Unit)
+        createCoroutineUnintercepted(receiver, completion).intercepted().resumeCancellableWith(Result.success(Unit), onCancellation)
     }
 
 /**
@@ -32,7 +36,7 @@ internal fun <R, T> (suspend (R) -> T).startCoroutineCancellable(receiver: R, co
  */
 internal fun Continuation<Unit>.startCoroutineCancellable(fatalCompletion: Continuation<*>) =
     runSafely(fatalCompletion) {
-        intercepted().resumeCancellable(Unit)
+        intercepted().resumeCancellableWith(Result.success(Unit))
     }
 
 /**
