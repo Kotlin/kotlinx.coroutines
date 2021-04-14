@@ -23,7 +23,7 @@ dependencies {
     shadowDeps "net.bytebuddy:byte-buddy:$byte_buddy_version"
     shadowDeps "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
     compileOnly "io.projectreactor.tools:blockhound:$blockhound_version"
-    testCompile "io.projectreactor.tools:blockhound:$blockhound_version"
+    testImplementation "io.projectreactor.tools:blockhound:$blockhound_version"
     api "net.java.dev.jna:jna:$jna_version"
     api "net.java.dev.jna:jna-platform:$jna_version"
 }

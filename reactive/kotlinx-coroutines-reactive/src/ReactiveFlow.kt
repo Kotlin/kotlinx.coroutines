@@ -112,7 +112,7 @@ private class PublisherAsFlow<T : Any>(
         collectImpl(scope.coroutineContext, SendingCollector(scope.channel))
 }
 
-@Suppress("SubscriberImplementation")
+@Suppress("ReactiveStreamsSubscriberImplementation")
 private class ReactiveSubscriber<T : Any>(
     capacity: Int,
     onBufferOverflow: BufferOverflow,
@@ -124,11 +124,15 @@ private class ReactiveSubscriber<T : Any>(
     // be reliable with rendezvous channel, so a rendezvous channel is replaced with buffer=1 channel
     private val channel = Channel<T>(if (capacity == Channel.RENDEZVOUS) 1 else capacity, onBufferOverflow)
 
-    suspend fun takeNextOrNull(): T? = channel.receiveOrNull()
+    suspend fun takeNextOrNull(): T? {
+        val result = channel.receiveCatching()
+        result.exceptionOrNull()?.let { throw it }
+        return result.getOrElse { null } // Closed channel
+    }
 
     override fun onNext(value: T) {
         // Controlled by requestSize
-        require(channel.offer(value)) { "Element $value was not added to channel because it was full, $channel" }
+        require(channel.trySend(value).isSuccess) { "Element $value was not added to channel because it was full, $channel" }
     }
 
     override fun onComplete() {
@@ -184,7 +188,11 @@ public class FlowSubscription<T>(
     @JvmField public val flow: Flow<T>,
     @JvmField public val subscriber: Subscriber<in T>,
     context: CoroutineContext
-) : Subscription, AbstractCoroutine<Unit>(context, true) {
+) : Subscription, AbstractCoroutine<Unit>(context, initParentJob = false, true) {
+    /*
+     * We deliberately set initParentJob to false and do not establish parent-child
+     * relationship because FlowSubscription doesn't support it
+     */
     private val requested = atomic(0L)
     private val producer = atomic<Continuation<Unit>?>(createInitialContinuation())
 
@@ -243,7 +251,7 @@ public class FlowSubscription<T>(
         if (old <= 0L) {
             assert(old == 0L)
             // Emitter is not started yet or has suspended -- spin on race with suspendCancellableCoroutine
-            while(true) {
+            while (true) {
                 val producer = producer.getAndSet(null) ?: continue // spin if not set yet
                 producer.resume(Unit)
                 break

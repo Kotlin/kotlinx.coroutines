@@ -96,7 +96,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          ~ waits for start
          >> start / join / await invoked
        ## ACTIVE: state == EMPTY_ACTIVE | is JobNode | is NodeList
-         + onStartInternal / onStart (lazy coroutine is started)
+         + onStart (lazy coroutine is started)
          ~ active coroutine is working (or scheduled to execution)
          >> childCancelled / cancelImpl invoked
        ## CANCELLING: state is Finishing, state.rootCause != null
@@ -139,7 +139,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * Initializes parent job.
      * It shall be invoked at most once after construction after all other initialization.
      */
-    internal fun initParentJobInternal(parent: Job?) {
+    protected fun initParentJob(parent: Job?) {
         assert { parentHandle == null }
         if (parent == null) {
             parentHandle = NonDisposableHandle
@@ -393,12 +393,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             is Empty -> { // EMPTY_X state -- no completion handlers
                 if (state.isActive) return FALSE // already active
                 if (!_state.compareAndSet(state, EMPTY_ACTIVE)) return RETRY
-                onStartInternal()
+                onStart()
                 return TRUE
             }
             is InactiveNodeList -> { // LIST state -- inactive with a list of completion handlers
                 if (!_state.compareAndSet(state, state.list)) return RETRY
-                onStartInternal()
+                onStart()
                 return TRUE
             }
             else -> return FALSE // not a new state
@@ -409,7 +409,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * Override to provide the actual [start] action.
      * This function is invoked exactly once when non-active coroutine is [started][start].
      */
-    internal open fun onStartInternal() {}
+    protected open fun onStart() {}
 
     public final override fun getCancellationException(): CancellationException =
         when (val state = this.state) {
@@ -541,7 +541,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     public final override suspend fun join() {
         if (!joinInternal()) { // fast-path no wait
-            coroutineContext.checkCompletion()
+            coroutineContext.ensureActive()
             return // do not suspend
         }
         return joinSuspend() // slow-path wait
@@ -1228,6 +1228,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          * thrown and not a JobCancellationException.
          */
         val cont = AwaitContinuation(uCont.intercepted(), this)
+        // we are mimicking suspendCancellableCoroutine here and call initCancellability, too.
+        cont.initCancellability()
         cont.disposeOnCancellation(invokeOnCompletion(ResumeAwaitOnCompletion(cont).asHandler))
         cont.getResult()
     }
@@ -1311,7 +1313,7 @@ private class Empty(override val isActive: Boolean) : Incomplete {
 }
 
 internal open class JobImpl(parent: Job?) : JobSupport(true), CompletableJob {
-    init { initParentJobInternal(parent) }
+    init { initParentJob(parent) }
     override val onCancelComplete get() = true
     /*
      * Check whether parent is able to handle exceptions as well.
@@ -1459,6 +1461,7 @@ private class InvokeOnCancelling(
 internal class ChildHandleNode(
     @JvmField val childJob: ChildJob
 ) : JobCancellingNode(), ChildHandle {
+    override val parent: Job get() = job
     override fun invoke(cause: Throwable?) = childJob.parentCancelled(job)
     override fun childCancelled(cause: Throwable): Boolean = job.childCancelled(cause)
 }

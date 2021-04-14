@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
@@ -27,7 +27,7 @@ class SelectLoopTest : TestBase() {
         try {
             while (true) {
                 select<Unit> {
-                    channel.onReceiveOrNull {
+                    channel.onReceiveCatching {
                         expectUnreached()
                     }
                     job.onJoin {

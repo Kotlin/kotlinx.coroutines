@@ -123,7 +123,7 @@ Coroutine "coroutine#2":DeferredCoroutine{Active}@289d1c02, state: SUSPENDED
 	at ExampleKt.combineResults(Example.kt:11)
 	at ExampleKt$computeValue$2.invokeSuspend(Example.kt:7)
 	at ExampleKt$main$1$deferred$1.invokeSuspend(Example.kt:25)
-	(Coroutine creation stacktrace)
+	at _COROUTINE._CREATION._(CoroutineDebugging.kt)
 	at kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)
 	at kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:25)
 	at kotlinx.coroutines.BuildersKt.async$default(Unknown Source)

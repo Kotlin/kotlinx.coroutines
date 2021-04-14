@@ -26,7 +26,7 @@ internal class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : Coroutine
                     ?: error("Event loop is missing, virtual time source works only as part of event loop")
                 if (delayNanos <= 0) continue
                 if (delayNanos > 0 && delayNanos != Long.MAX_VALUE) error("Unexpected external delay: $delayNanos")
-                val nextTask = heap.minBy { it.deadline } ?: return@launch
+                val nextTask = heap.minByOrNull { it.deadline } ?: return@launch
                 heap.remove(nextTask)
                 currentTime = nextTask.deadline
                 nextTask.run()

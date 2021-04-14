@@ -82,10 +82,14 @@ public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
         override fun onComplete() { close() }
         override fun onSubscribe(d: Disposable) { if (!disposableRef.compareAndSet(null, d)) d.dispose() }
         override fun onNext(t: T) {
+            /*
+             * Channel was closed by the downstream, so the exception (if any)
+             * also was handled by the same downstream
+             */
             try {
-                sendBlocking(t)
-            } catch (ignored: Throwable) { // TODO: Replace when this issue is fixed: https://github.com/Kotlin/kotlinx.coroutines/issues/974
-                // Is handled by the downstream flow
+                trySendBlocking(t)
+            } catch (e: InterruptedException) {
+                // RxJava interrupts the source
             }
         }
         override fun onError(e: Throwable) { close(e) }

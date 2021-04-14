@@ -9,7 +9,7 @@ import kotlinx.coroutines.selects.*
 
 /**
  * Channel with linked-list buffer of a unlimited capacity (limited only by available memory).
- * Sender to this channel never suspends and [offer] always returns `true`.
+ * Sender to this channel never suspends and [trySend] always succeeds.
  *
  * This channel is created by `Channel(Channel.UNLIMITED)` factory function invocation.
  *

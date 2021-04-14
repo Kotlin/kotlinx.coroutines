@@ -30,7 +30,7 @@ public suspend fun <T> FlowCollector<T>.emitAll(channel: ReceiveChannel<T>): Uni
     emitAllImpl(channel, consume = true)
 
 private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>, consume: Boolean) {
-    // Manually inlined "consumeEach" implementation that does not use iterator but works via "receiveOrClosed".
+    // Manually inlined "consumeEach" implementation that does not use iterator but works via "receiveCatching".
     // It has smaller and more efficient spilled state which also allows to implement a manual kludge to
     // fix retention of the last emitted value.
     // See https://youtrack.jetbrains.com/issue/KT-16222
@@ -47,9 +47,9 @@ private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>,
             //     L$1 <- channel
             //     L$2 <- cause
             //     L$3 <- this$run (actually equal to this)
-            val result = run { channel.receiveOrClosed() }
+            val result = run { channel.receiveCatching() }
             if (result.isClosed) {
-                result.closeCause?.let { throw it }
+                result.exceptionOrNull()?.let { throw it }
                 break // returns normally when result.closeCause == null
             }
             // result is spilled here to the coroutine state and retained after the call, even though
@@ -58,7 +58,7 @@ private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>,
             //     L$1 <- channel
             //     L$2 <- cause
             //     L$3 <- result
-            emit(result.value)
+            emit(result.getOrThrow())
         }
     } catch (e: Throwable) {
         cause = e

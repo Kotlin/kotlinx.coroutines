@@ -268,7 +268,7 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     }
     // install a listener to offer events to this actor
     onMouseClicked = EventHandler { event ->
-        eventActor.offer(event)
+        eventActor.trySend(event)
     }
 }
 ```  
@@ -276,12 +276,12 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
 > You can get the full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-actor-02.kt).
   
 The key idea that underlies an integration of an actor coroutine and a regular event handler is that 
-there is an [offer][SendChannel.offer] function on [SendChannel] that does not wait. It sends an element to the actor immediately,
-if it is possible, or discards an element otherwise. An `offer` actually returns a `Boolean` result which we ignore here.
+there is an [trySend][SendChannel.trySend] function on [SendChannel] that does not wait. It sends an element to the actor immediately,
+if it is possible, or discards an element otherwise. A `trySend` actually returns a `ChanneResult` instance which we ignore here.
 
 Try clicking repeatedly on a circle in this version of the code. The clicks are just ignored while the countdown 
 animation is running. This happens because the actor is busy with an animation and does not receive from its channel.
-By default, an actor's mailbox is backed by `RendezvousChannel`, whose `offer` operation succeeds only when 
+By default, an actor's mailbox is backed by `RendezvousChannel`, whose `trySend` operation succeeds only when 
 the `receive` is active. 
 
 > On Android, there is `View` sent in OnClickListener, so we send the `View` to the actor as a signal. 
@@ -295,7 +295,7 @@ fun View.onClick(action: suspend (View) -> Unit) {
     }
     // install a listener to activate this actor
     setOnClickListener { 
-        eventActor.offer(it)
+        eventActor.trySend(it)
     }
 }
 ```
@@ -319,9 +319,9 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     val eventActor = GlobalScope.actor<MouseEvent>(Dispatchers.Main, capacity = Channel.CONFLATED) { // <--- Changed here
         for (event in channel) action(event) // pass event to action
     }
-    // install a listener to offer events to this actor
+    // install a listener to send events to this actor
     onMouseClicked = EventHandler { event ->
-        eventActor.offer(event)
+        eventActor.trySend(event)
     }
 }
 ```  
@@ -359,7 +359,7 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
         for (event in channel) action(event) // pass event to action
     }
     onMouseClicked = EventHandler { event ->
-        eventActor.offer(event)
+        eventActor.trySend(event)
     }
 }
 -->
@@ -623,7 +623,7 @@ After delay
 <!--- INDEX kotlinx.coroutines.channels -->
 
 [actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/actor.html
-[SendChannel.offer]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/offer.html
+[SendChannel.trySend]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/try-send.html
 [SendChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html
 [Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/index.html
 [Channel.CONFLATED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/-c-o-n-f-l-a-t-e-d.html

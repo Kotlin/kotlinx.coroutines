@@ -49,7 +49,6 @@ internal open class ArrayChannel<E>(
     protected final override val isBufferAlwaysFull: Boolean get() = false
     protected final override val isBufferFull: Boolean get() = size.value == capacity && onBufferOverflow == BufferOverflow.SUSPEND
 
-    override val isFull: Boolean get() = lock.withLock { isFullImpl }
     override val isEmpty: Boolean get() = lock.withLock { isEmptyImpl }
     override val isClosedForReceive: Boolean get() = lock.withLock { super.isClosedForReceive }
 

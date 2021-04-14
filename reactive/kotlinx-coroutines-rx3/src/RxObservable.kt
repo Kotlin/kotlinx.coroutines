@@ -57,7 +57,7 @@ private const val SIGNALLED = -2  // already signalled subscriber onCompleted/on
 private class RxObservableCoroutine<T: Any>(
     parentContext: CoroutineContext,
     private val subscriber: ObservableEmitter<T>
-) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, SelectClause2<T, SendChannel<T>> {
+) : AbstractCoroutine<Unit>(parentContext, false, true), ProducerScope<T>, SelectClause2<T, SendChannel<T>> {
     override val channel: SendChannel<T> get() = this
 
     // Mutex is locked when while subscriber.onXXX is being invoked
@@ -66,20 +66,19 @@ private class RxObservableCoroutine<T: Any>(
     private val _signal = atomic(OPEN)
 
     override val isClosedForSend: Boolean get() = isCompleted
-    override val isFull: Boolean = mutex.isLocked
     override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
     override fun invokeOnClose(handler: (Throwable?) -> Unit) =
         throw UnsupportedOperationException("RxObservableCoroutine doesn't support invokeOnClose")
 
-    override fun offer(element: T): Boolean {
-        if (!mutex.tryLock()) return false
+    override fun trySend(element: T): ChannelResult<Unit> {
+        if (!mutex.tryLock()) return ChannelResult.failure()
         doLockedNext(element)
-        return true
+        return ChannelResult.success(Unit)
     }
 
     public override suspend fun send(element: T) {
         // fast-path -- try send without suspension
-        if (offer(element)) return
+        if (trySend(element).isSuccess) return
         // slow-path does suspend
         return sendSuspend(element)
     }

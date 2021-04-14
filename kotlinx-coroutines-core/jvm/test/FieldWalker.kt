@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -56,7 +56,7 @@ object FieldWalker {
      * Reflectively starts to walk through object graph and map to all the reached object to their path
      * in from root. Use [showPath] do display a path if needed.
      */
-    private fun walkRefs(root: Any?, rootStatics: Boolean): Map<Any, Ref> {
+    private fun walkRefs(root: Any?, rootStatics: Boolean): IdentityHashMap<Any, Ref> {
         val visited = IdentityHashMap<Any, Ref>()
         if (root == null) return visited
         visited[root] = Ref.RootRef

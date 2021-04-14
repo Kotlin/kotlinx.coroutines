@@ -107,7 +107,7 @@ import kotlin.native.concurrent.*
  *
  * To migrate [ConflatedBroadcastChannel] usage to [StateFlow], start by replacing usages of the `ConflatedBroadcastChannel()`
  * constructor with `MutableStateFlow(initialValue)`, using `null` as an initial value if you don't have one.
- * Replace [send][ConflatedBroadcastChannel.send] and [offer][ConflatedBroadcastChannel.offer] calls
+ * Replace [send][ConflatedBroadcastChannel.send] and [trySend][ConflatedBroadcastChannel.trySend] calls
  * with updates to the state flow's [MutableStateFlow.value], and convert subscribers' code to flow operators.
  * You can use the [filterNotNull] operator to mimic behavior of a `ConflatedBroadcastChannel` without initial value.
  *

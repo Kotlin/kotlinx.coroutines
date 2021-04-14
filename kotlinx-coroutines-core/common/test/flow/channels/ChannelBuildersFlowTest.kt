@@ -166,15 +166,15 @@ class ChannelBuildersFlowTest : TestBase() {
 
         var expected = 0
         launch {
-            assertTrue(channel.offer(1)) // Handed to the coroutine
-            assertTrue(channel.offer(2)) // Buffered
-            assertFalse(channel.offer(3)) // Failed to offer
+            assertTrue(channel.trySend(1).isSuccess) // Handed to the coroutine
+            assertTrue(channel.trySend(2).isSuccess) // Buffered
+            assertFalse(channel.trySend(3).isSuccess) // Failed to offer
             channel.send(3)
             yield()
             assertEquals(1, expected)
-            assertTrue(channel.offer(4)) // Handed to the coroutine
-            assertTrue(channel.offer(5)) // Buffered
-            assertFalse(channel.offer(6))  // Failed to offer
+            assertTrue(channel.trySend(4).isSuccess) // Handed to the coroutine
+            assertTrue(channel.trySend(5).isSuccess) // Buffered
+            assertFalse(channel.trySend(6).isSuccess)  // Failed to offer
             channel.send(6)
             assertEquals(2, expected)
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.future
@@ -566,5 +566,13 @@ class FutureTest : TestBase() {
         }
         assertFailsWith<CancellationException> { stage.await() }
         finish(4)
+    }
+
+    @Test
+    fun testCancelledParent() = runTest({ it is java.util.concurrent.CancellationException }) {
+        cancel()
+        future { expectUnreached() }
+        future(start = CoroutineStart.ATOMIC) { }
+        future(start = CoroutineStart.UNDISPATCHED) { }
     }
 }

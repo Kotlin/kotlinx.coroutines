@@ -21,13 +21,13 @@ public enum class TickerMode {
      * ```
      * val channel = ticker(delay = 100)
      * delay(350) // 250 ms late
-     * println(channel.poll()) // prints Unit
-     * println(channel.poll()) // prints null
+     * println(channel.tryReceive().getOrNull()) // prints Unit
+     * println(channel.tryReceive().getOrNull()) // prints null
      *
      * delay(50)
-     * println(channel.poll()) // prints Unit, delay was adjusted
+     * println(channel.tryReceive().getOrNull()) // prints Unit, delay was adjusted
      * delay(50)
-     * println(channel.poll()) // prints null, we'are not late relatively to previous element
+     * println(channel.tryReceive().getOrNull()) // prints null, we're not late relatively to previous element
      * ```
      */
     FIXED_PERIOD,

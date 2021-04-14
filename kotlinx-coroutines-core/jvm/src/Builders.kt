@@ -63,7 +63,8 @@ private class BlockingCoroutine<T>(
     parentContext: CoroutineContext,
     private val blockedThread: Thread,
     private val eventLoop: EventLoop?
-) : AbstractCoroutine<T>(parentContext, true) {
+) : AbstractCoroutine<T>(parentContext, true, true) {
+
     override val isScopedCoroutine: Boolean get() = true
 
     override fun afterCompletion(state: Any?) {

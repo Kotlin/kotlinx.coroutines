@@ -129,6 +129,9 @@ public fun <T> merge(vararg flows: Flow<T>): Flow<T> = flows.asIterable().merge(
  * Applications of [flowOn], [buffer], [produceIn], and [broadcastIn] _after_ this operator are fused with
  * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
  *
+ * When [concurrency] is greater than 1, this operator is [buffered][buffer] by default
+ * and size of its output buffer can be changed by applying subsequent [buffer] operator.
+ *
  * @param concurrency controls the number of in-flight flows, at most [concurrency] flows are collected
  * at the same time. By default it is equal to [DEFAULT_CONCURRENCY].
  */

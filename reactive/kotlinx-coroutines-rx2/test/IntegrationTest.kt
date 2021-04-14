@@ -92,7 +92,7 @@ class IntegrationTest(
         assertEquals(n, observable.awaitLast())
         assertFailsWith<IllegalArgumentException> { observable.awaitSingle() }
         checkNumbers(n, observable)
-        val channel = observable.openSubscription()
+        val channel = observable.toChannel()
         checkNumbers(n, channel.consumeAsFlow().asObservable(ctx(coroutineContext)))
         channel.cancel()
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -67,10 +67,10 @@ class BroadcastChannelMultiReceiveStressTest(
                 val channel = broadcast.openSubscription()
                     when (receiverIndex % 5) {
                         0 -> doReceive(channel, receiverIndex)
-                        1 -> doReceiveOrNull(channel, receiverIndex)
+                        1 -> doReceiveCatching(channel, receiverIndex)
                         2 -> doIterator(channel, receiverIndex)
                         3 -> doReceiveSelect(channel, receiverIndex)
-                        4 -> doReceiveSelectOrNull(channel, receiverIndex)
+                        4 -> doReceiveCatchingSelect(channel, receiverIndex)
                     }
                 channel.cancel()
             }
@@ -124,9 +124,9 @@ class BroadcastChannelMultiReceiveStressTest(
         }
     }
 
-    private suspend fun doReceiveOrNull(channel: ReceiveChannel<Long>, receiverIndex: Int) {
+    private suspend fun doReceiveCatching(channel: ReceiveChannel<Long>, receiverIndex: Int) {
         while (true) {
-            val stop = doReceived(receiverIndex, channel.receiveOrNull() ?: break)
+            val stop = doReceived(receiverIndex, channel.receiveCatching().getOrNull() ?: break)
             if (stop) break
         }
     }
@@ -148,9 +148,9 @@ class BroadcastChannelMultiReceiveStressTest(
         }
     }
 
-    private suspend fun doReceiveSelectOrNull(channel: ReceiveChannel<Long>, receiverIndex: Int) {
+    private suspend fun doReceiveCatchingSelect(channel: ReceiveChannel<Long>, receiverIndex: Int) {
         while (true) {
-            val event = select<Long?> { channel.onReceiveOrNull { it } } ?: break
+            val event = select<Long?> { channel.onReceiveCatching { it.getOrNull() } } ?: break
             val stop = doReceived(receiverIndex, event)
             if (stop) break
         }
