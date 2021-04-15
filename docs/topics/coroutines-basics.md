@@ -52,7 +52,7 @@ their code.
 the code with coroutines inside of `runBlocking { ... }` curly braces. This is highlighted in an IDE by
 `this: CoroutineScope` hint right after the `runBlocking` opening curly brace.
 
-If you remove or forget `runBlocking` in this code, we'll get an error on the [launch] call, since `launch`
+If you remove or forget `runBlocking` in this code, you'll get an error on the [launch] call, since `launch`
 is declared only in the [CoroutineScope]:
 
 ```Plain Text
