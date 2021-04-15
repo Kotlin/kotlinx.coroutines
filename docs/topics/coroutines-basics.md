@@ -6,6 +6,10 @@ This section covers basic coroutine concepts.
 
 ## Your first coroutine
 
+A _coroutine_ is an instance of suspendable computation. It is conceptually similar to a thread, in the sense that it 
+takes a block of code to run that works concurrently with the rest of the code.
+However, a coroutine is not bound to any particular thread. It may suspend its execution in one thread and resume in another one. 
+
 Coroutines can be thought of as light-weight threads, but there is a number
 of important differences that make their real-life usage very different from threads.
 
@@ -60,7 +64,7 @@ Unresolved reference: launch
 ```
 
 The name of `runBlocking` means that the thread that runs it (in this case &mdash; the main thread) gets _blocked_ for 
-the duration of the call, until all the coroutine inside `runBlocking { ... }` complete their execution. You will 
+the duration of the call, until all the coroutines inside `runBlocking { ... }` complete their execution. You will 
 often see `runBlocking` used like that at the very top-level of the application and quite rarely inside the real code, 
 as threads are expensive resources and blocking them is inefficient and is often not desired. 
 
@@ -68,7 +72,7 @@ as threads are expensive resources and blocking them is inefficient and is often
 
 Coroutines follow a principle of 
 **structured concurrency** which means that new coroutines can be only launched in a specific [CoroutineScope]
-which delimits the life-time of the coroutine. The above example shows that [runBlocking] establishes the corresponding
+which delimits the lifetime of the coroutine. The above example shows that [runBlocking] establishes the corresponding
 scope and that is why the previous example waits until `World!` is printed after a second's delay and only then exits.
 
 In the real application, you will be launching a lot of coroutines. Structured concurrency ensures that they are not
@@ -205,7 +209,7 @@ Done
 ## An explicit job
 
 A [launch] coroutine builder returns a [Job] object that is a handle to the launched coroutine and can be 
-used to explicitly wait for its completion. For example, you can wait for the completion of the child coroutine
+used to explicitly wait for its completion. For example, you can wait for completion of the child coroutine
 and then print "Done" string:
 
 ```kotlin
