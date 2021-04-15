@@ -363,8 +363,8 @@ public interface ReceiveChannel<out E> {
  *
  * The closed result represents an operation attempt to a closed channel and also implies that the operation has failed.
  */
-@Suppress("UNCHECKED_CAST")
-public inline class ChannelResult<out T>
+@JvmInline
+public value class ChannelResult<out T>
 @PublishedApi internal constructor(@PublishedApi internal val holder: Any?) {
     /**
      * Returns `true` if this instance represents a successful
