@@ -860,6 +860,20 @@ public abstract class kotlinx/coroutines/flow/AbstractFlow : kotlinx/coroutines/
 	public abstract fun collectSafely (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public abstract interface class kotlinx/coroutines/flow/ChunkingMethod {
+	public static final field Companion Lkotlinx/coroutines/flow/ChunkingMethod$Companion;
+	public abstract fun chunk (Lkotlinx/coroutines/flow/Flow;)Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class kotlinx/coroutines/flow/ChunkingMethod$Companion {
+	public final fun BySize (I)Lkotlinx/coroutines/flow/ChunkingMethod;
+	public final fun ByTime (JI)Lkotlinx/coroutines/flow/ChunkingMethod;
+	public static synthetic fun ByTime$default (Lkotlinx/coroutines/flow/ChunkingMethod$Companion;JIILjava/lang/Object;)Lkotlinx/coroutines/flow/ChunkingMethod;
+	public final fun ByTimeOrSize (JI)Lkotlinx/coroutines/flow/ChunkingMethod;
+	public final fun Natural (I)Lkotlinx/coroutines/flow/ChunkingMethod;
+	public static synthetic fun Natural$default (Lkotlinx/coroutines/flow/ChunkingMethod$Companion;IILjava/lang/Object;)Lkotlinx/coroutines/flow/ChunkingMethod;
+}
+
 public abstract interface class kotlinx/coroutines/flow/Flow {
 	public abstract fun collect (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
@@ -894,6 +908,7 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun cancellable (Lkotlinx/coroutines/flow/Flow;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun catch (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun channelFlow (Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun chunked (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/ChunkingMethod;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun collect (Lkotlinx/coroutines/flow/Flow;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun collect (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun collectIndexed (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
