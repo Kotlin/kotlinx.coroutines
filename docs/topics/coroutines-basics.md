@@ -42,7 +42,7 @@ World!
 Let's dissect what this code does. 
 
 [launch] is a _coroutine builder_. It launches a new coroutine concurrently with 
-the rest of the code, which continues to work on its own, so that is why we see `Hello` printed first. 
+the rest of the code, which continues to work independently. That's why `Hello` has been printed first.
 
 [delay] is a special _suspending function_. It _suspends_ the coroutine for a specific time. Suspending a coroutine
 does not _block_ the underlying thread, but allows other coroutines to run and use the underlying thread for 
