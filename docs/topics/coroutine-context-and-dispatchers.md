@@ -304,7 +304,7 @@ are recursively cancelled, too.
 
 However, this parent-child relation can be explicitly overriden in one of two ways:
 
-1. When a different scope is explicitly specified when launching a coroutine (e.g. `GlobalScope.launch`), 
+1. When a different scope is explicitly specified when launching a coroutine (for example, `GlobalScope.launch`), 
    then it does not inherit a `Job` from the parent scope.
 2. When a different `Job` object is passed as the context for the new coroutine (as show in the example below),
    then it overrides the `Job` of the parent scope.
