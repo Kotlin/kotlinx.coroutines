@@ -20,7 +20,7 @@ exception, for example via [await][Deferred.await] or [receive][ReceiveChannel.r
 It can be demonstrated by a simple example that creates root coroutines using the [GlobalScope]:
 
 > [GlobalScope] is a delicate API that can backfire in non-trivial ways. Creating a root coroutine for the
-> whole application is one of the rare legitimate uses for `GlobalScope`, so we must explicitly opt-in into 
+> whole application is one of the rare legitimate uses for `GlobalScope`, so you must explicitly opt-in into 
 > using `GlobalScope` with `@OptIn(DelicateCoroutinesApi::class)`.
 >
 {type="note"}
