@@ -12,7 +12,6 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
-import kotlin.time.*
 
 /**
  * Groups emissions from this Flow into lists, according to the chosen ChunkingMethod. Time based implementations
@@ -163,7 +162,7 @@ private class TimeOrSizeBased(private val intervalMs: Long, private val maxSize:
         val emitNowAndMaybeContinue = Channel<Boolean>(capacity = Channel.RENDEZVOUS)
         val elements = produce<T>(capacity = maxSize) {
             collect { element ->
-                val hasCapacity = channel.offer(element)
+                val hasCapacity = channel.trySend(element).isSuccess
                 if (!hasCapacity) {
                     emitNowAndMaybeContinue.send(true)
                     channel.send(element)
@@ -189,20 +188,20 @@ private class TimeOrSizeBased(private val intervalMs: Long, private val maxSize:
 
 }
 
-private suspend fun <T> ReceiveChannel<T>.awaitFirstAndDrain(maxElements: Int): List<T> {
-    val first = receiveOrClosed().takeIf { it.isClosed.not() }?.value ?: return emptyList()
-    return drain(mutableListOf(first), maxElements)
+private suspend fun <T> ReceiveChannel<T>.awaitFirstAndDrain(maxElements: Int): List<T> = try {
+    val first = receive()
+    drain(mutableListOf(first), maxElements)
+} catch (e: ClosedReceiveChannelException) {
+    emptyList()
 }
+
 
 private tailrec fun <T> ReceiveChannel<T>.drain(acc: MutableList<T> = mutableListOf(), maxElements: Int): List<T> =
     if (acc.size == maxElements) acc
     else {
-        val item = poll()
-        if (item == null) acc
-        else {
-            acc.add(item)
-            drain(acc, maxElements)
-        }
+        val nextValue = tryReceive().getOrElse { error: Throwable? -> error?.let { throw(it) } ?: return acc }
+        acc.add(nextValue)
+        drain(acc, maxElements)
     }
 
 private fun <T> MutableList<T>.drain() = toList().also { this.clear() }
