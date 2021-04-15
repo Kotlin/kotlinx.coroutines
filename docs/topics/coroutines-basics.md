@@ -121,7 +121,7 @@ while [coroutineScope][_coroutineScope] just suspends, releasing the underlying 
 Because of that difference, [runBlocking] is a regular function and [coroutineScope][_coroutineScope] is a suspending function.
 
 You can use `coroutineScope` from any suspending function. 
-For example, we can move our concurrent printing of `Hello` and `World` into a `suspend fun doWorld()` function: 
+For example, you can move the concurrent printing of `Hello` and `World` into a `suspend fun doWorld()` function: 
 
 ```kotlin
 import kotlinx.coroutines.*
