@@ -120,7 +120,7 @@ The main difference is that the [runBlocking] method _blocks_ the current thread
 while [coroutineScope][_coroutineScope] just suspends, releasing the underlying thread for other usages.
 Because of that difference, [runBlocking] is a regular function and [coroutineScope][_coroutineScope] is a suspending function.
 
-We can use `coroutineScope` from any suspending function. 
+You can use `coroutineScope` from any suspending function. 
 For example, we can move our concurrent printing of `Hello` and `World` into a `suspend fun doWorld()` function: 
 
 ```kotlin
