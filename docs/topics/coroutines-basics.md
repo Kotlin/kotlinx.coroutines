@@ -68,7 +68,7 @@ as threads are expensive resources and blocking them is inefficient and is often
 
 Coroutines follow a principle of 
 **structured concurrency** which means that new coroutines can be only launched in a specific [CoroutineScope]
-which delimits the life-time of the coroutine. In the above example [runBlocking] establishes the corresponding
+which delimits the life-time of the coroutine. The above example shows that [runBlocking] establishes the corresponding
 scope and that is why the previous example waits until `World!` is printed after a second's delay and only then exits.
 
 In the real application, you will be launching a lot of coroutines. Structured concurrency ensures that they are not
