@@ -62,7 +62,7 @@ Unresolved reference: launch
 The name of `runBlocking` means that the thread that runs it (in this case &mdash; the main thread) gets _blocked_ for 
 the duration of the call, until all the coroutine inside `runBlocking { ... }` complete their execution. You will 
 often see `runBlocking` used like that at the very top-level of the application and quite rarely inside the real code, 
-as thread are expensive resources and blocking them is inefficient and is often not desired. 
+as threads are expensive resources and blocking them is inefficient and is often not desired. 
 
 ### Structured concurrency
 
