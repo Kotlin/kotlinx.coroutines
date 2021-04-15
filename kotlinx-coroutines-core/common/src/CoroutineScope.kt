@@ -16,7 +16,10 @@ import kotlin.coroutines.intrinsics.*
  * is an extension on [CoroutineScope] and inherits its [coroutineContext][CoroutineScope.coroutineContext]
  * to automatically propagate all its elements and cancellation.
  *
- * The best ways to obtain a standalone instance of the scope are [CoroutineScope()] and [MainScope()] factory functions.
+ * The best ways to obtain a standalone instance of the scope are [CoroutineScope()] and [MainScope()] factory functions,
+ * taking care to cancel these coroutine scopes when they are no longer needed (see section on custom usage below for
+ * explanation and example).
+ *
  * Additional context elements can be appended to the scope using the [plus][CoroutineScope.plus] operator.
  *
  * ### Convention for structured concurrency
@@ -38,12 +41,23 @@ import kotlin.coroutines.intrinsics.*
  *
  * ### Custom usage
  *
- * [CoroutineScope] should be implemented or declared as a property on entities with a well-defined lifecycle that are
- * responsible for launching children coroutines, for example:
+ * `CoroutineScope` should be declared as a property on entities with a well-defined lifecycle that are
+ * responsible for launching children coroutines. The corresponding instance of `CoroutineScope` shall be created
+ * with either `CoroutineScope()` or `MainScope()` functions. The difference between them is only in the
+ * [CoroutineDispatcher]:
+ *
+ * * `CoroutineScope()` uses [Dispatchers.Default] for its coroutines.
+ * * `MainScope()` uses [Dispatchers.Main] for its coroutines.
+ *
+ * **The key part of custom usage of `CustomScope` is cancelling it and the end of the lifecycle.**
+ * The [CoroutineScope.cancel] extension function shall be used when the entity that was launching coroutines
+ * is no longer needed. It cancels all the coroutines that might still be running on behalf of it.
+ *
+ * For example:
  *
  * ```
  * class MyUIClass {
- *     val scope = MainScope() // the scope of MyUIClass
+ *     val scope = MainScope() // the scope of MyUIClass, uses Dispatchers.Main
  *
  *     fun destroy() { // destroys an instance of MyUIClass
  *         scope.cancel() // cancels all coroutines launched in this scope
@@ -149,7 +163,7 @@ public val CoroutineScope.isActive: Boolean
  *
  * ### Possible replacements
  *
- * In may cases uses of `GlobalScope` should be removed, marking the containing operation with `suspend`, e.g:
+ * In may cases uses of `GlobalScope` should be removed, marking the containing operation with `suspend`, for example:
  *
  * ```
  * suspend fun loadConfiguration() {
@@ -158,8 +172,8 @@ public val CoroutineScope.isActive: Boolean
  * }
  * ```
  *
- * In cases when `GlobalScope.launch` was used to launch multiple concurrent operations, they corresponding
- * operation shall be grouped with [coroutineScope] instead:
+ * In cases when `GlobalScope.launch` was used to launch multiple concurrent operations, the corresponding
+ * operations shall be grouped with [coroutineScope] instead:
  *
  * ```
  * // concurrently load configuration and data
@@ -174,6 +188,12 @@ public val CoroutineScope.isActive: Boolean
  * In top-level code, when launching a concurrent operation operation from a non-suspending context, an appropriately
  * confined instance of [CoroutineScope] shall be used instead of a `GlobalScope`. See docs on [CoroutineScope] for
  * details.
+ *
+ * ### GlobalScope vs custom scope
+ *
+ * Do not replace `GlobalScope.launch { ... }` with `CoroutineScope().launch { ... }` constructor function call.
+ * The latter has the same pitfalls as `GlobalScope`. See [CoroutineScope] documentation on the intended usage of
+ * `CoroutineScope()` constructor function.
  *
  * ### Legitimate use-cases
  *
