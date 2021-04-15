@@ -205,7 +205,7 @@ Done
 ## An explicit job
 
 A [launch] coroutine builder returns a [Job] object that is a handle to the launched coroutine and can be 
-used to explicitly wait for its completion. For example, we can wait for the completion of the child coroutine
+used to explicitly wait for its completion. For example, you can wait for the completion of the child coroutine
 and then print "Done" string:
 
 ```kotlin
