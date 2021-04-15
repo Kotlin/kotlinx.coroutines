@@ -28,7 +28,6 @@ class SanitizedProbesTest : DebugTestBase() {
             "java.util.concurrent.ExecutionException\n" +
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$createDeferredNested\$1.invokeSuspend(SanitizedProbesTest.kt:97)\n" +
                     "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
-                    "\tat kotlinx.coroutines.DeferredCoroutine.await\$suspendImpl(Builders.common.kt:99)\n" +
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.oneMoreNestedMethod(SanitizedProbesTest.kt:67)\n" +
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.nestedMethod(SanitizedProbesTest.kt:61)\n" +
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$testRecoveredStackTrace\$1.invokeSuspend(SanitizedProbesTest.kt:50)\n" +

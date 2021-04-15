@@ -267,7 +267,7 @@ public final class kotlinx/coroutines/Delay$DefaultImpls {
 public final class kotlinx/coroutines/DelayKt {
 	public static final fun awaitCancellation (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun delay-VtjQ1oo (DLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun delay-VtjQ1oo (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/Dispatchers {
@@ -535,9 +535,9 @@ public final class kotlinx/coroutines/TimeoutCancellationException : java/util/c
 
 public final class kotlinx/coroutines/TimeoutKt {
 	public static final fun withTimeout (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun withTimeout-KLykuaI (DLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun withTimeout-KLykuaI (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun withTimeoutOrNull (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun withTimeoutOrNull-KLykuaI (DLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun withTimeoutOrNull-KLykuaI (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/YieldKt {
@@ -920,7 +920,7 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun count (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun debounce (Lkotlinx/coroutines/flow/Flow;J)Lkotlinx/coroutines/flow/Flow;
 	public static final fun debounce (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/Flow;
-	public static final fun debounce-HG0u8IE (Lkotlinx/coroutines/flow/Flow;D)Lkotlinx/coroutines/flow/Flow;
+	public static final fun debounce-HG0u8IE (Lkotlinx/coroutines/flow/Flow;J)Lkotlinx/coroutines/flow/Flow;
 	public static final fun debounceDuration (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun delayEach (Lkotlinx/coroutines/flow/Flow;J)Lkotlinx/coroutines/flow/Flow;
 	public static final fun delayFlow (Lkotlinx/coroutines/flow/Flow;J)Lkotlinx/coroutines/flow/Flow;
@@ -997,7 +997,7 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun runningFold (Lkotlinx/coroutines/flow/Flow;Ljava/lang/Object;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun runningReduce (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun sample (Lkotlinx/coroutines/flow/Flow;J)Lkotlinx/coroutines/flow/Flow;
-	public static final fun sample-HG0u8IE (Lkotlinx/coroutines/flow/Flow;D)Lkotlinx/coroutines/flow/Flow;
+	public static final fun sample-HG0u8IE (Lkotlinx/coroutines/flow/Flow;J)Lkotlinx/coroutines/flow/Flow;
 	public static final fun scan (Lkotlinx/coroutines/flow/Flow;Ljava/lang/Object;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun scanFold (Lkotlinx/coroutines/flow/Flow;Ljava/lang/Object;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun scanReduce (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
@@ -1084,8 +1084,8 @@ public final class kotlinx/coroutines/flow/SharingStarted$Companion {
 }
 
 public final class kotlinx/coroutines/flow/SharingStartedKt {
-	public static final fun WhileSubscribed-5qebJ5I (Lkotlinx/coroutines/flow/SharingStarted$Companion;DD)Lkotlinx/coroutines/flow/SharingStarted;
-	public static synthetic fun WhileSubscribed-5qebJ5I$default (Lkotlinx/coroutines/flow/SharingStarted$Companion;DDILjava/lang/Object;)Lkotlinx/coroutines/flow/SharingStarted;
+	public static final fun WhileSubscribed-5qebJ5I (Lkotlinx/coroutines/flow/SharingStarted$Companion;JJ)Lkotlinx/coroutines/flow/SharingStarted;
+	public static synthetic fun WhileSubscribed-5qebJ5I$default (Lkotlinx/coroutines/flow/SharingStarted$Companion;JJILjava/lang/Object;)Lkotlinx/coroutines/flow/SharingStarted;
 }
 
 public abstract interface class kotlinx/coroutines/flow/StateFlow : kotlinx/coroutines/flow/SharedFlow {
@@ -1215,7 +1215,7 @@ public abstract interface class kotlinx/coroutines/selects/SelectInstance {
 }
 
 public final class kotlinx/coroutines/selects/SelectKt {
-	public static final fun onTimeout-8Mi8wO0 (Lkotlinx/coroutines/selects/SelectBuilder;DLkotlin/jvm/functions/Function1;)V
+	public static final fun onTimeout-8Mi8wO0 (Lkotlinx/coroutines/selects/SelectBuilder;JLkotlin/jvm/functions/Function1;)V
 	public static final fun select (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 

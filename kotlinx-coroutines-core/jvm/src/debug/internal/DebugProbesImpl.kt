@@ -281,7 +281,7 @@ internal object DebugProbesImpl {
                     it.fileName == "ContinuationImpl.kt"
         }
 
-        val (continuationStartFrame, frameSkipped) = findContinuationStartIndex(
+        val (continuationStartFrame, delta) = findContinuationStartIndex(
             indexOfResumeWith,
             actualTrace,
             coroutineTrace
@@ -289,7 +289,6 @@ internal object DebugProbesImpl {
 
         if (continuationStartFrame == -1) return coroutineTrace
 
-        val delta = if (frameSkipped) 1 else 0
         val expectedSize = indexOfResumeWith + coroutineTrace.size - continuationStartFrame - 1 - delta
         val result = ArrayList<StackTraceElement>(expectedSize)
         for (index in 0 until indexOfResumeWith - delta) {
@@ -311,16 +310,22 @@ internal object DebugProbesImpl {
      * If method above `resumeWith` has no line number (thus it is `stateMachine.invokeSuspend`),
      * it's skipped and attempt to match next one is made because state machine could have been missing in the original coroutine stacktrace.
      *
-     * Returns index of such frame (or -1) and flag indicating whether frame with state machine was skipped
+     * Returns index of such frame (or -1) and number of skipped frames (up to 2, for state machine and for access$).
      */
     private fun findContinuationStartIndex(
         indexOfResumeWith: Int,
         actualTrace: Array<StackTraceElement>,
         coroutineTrace: List<StackTraceElement>
-    ): Pair<Int, Boolean> {
-        val result = findIndexOfFrame(indexOfResumeWith - 1, actualTrace, coroutineTrace)
-        if (result == -1) return findIndexOfFrame(indexOfResumeWith - 2, actualTrace, coroutineTrace) to true
-        return result to false
+    ): Pair<Int, Int> {
+        /*
+         * Since Kotlin 1.5.0 we have these access$ methods that we have to skip.
+         * So we have to test next frame for invokeSuspend, for $access and for actual suspending call.
+         */
+        repeat(3) {
+            val result = findIndexOfFrame(indexOfResumeWith - 1 - it, actualTrace, coroutineTrace)
+            if (result != -1) return result to it
+        }
+        return -1 to 0
     }
 
     private fun findIndexOfFrame(
