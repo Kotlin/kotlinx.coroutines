@@ -57,7 +57,7 @@ public fun <T, R> Flow<T>.flatMapConcat(transform: suspend (value: T) -> Flow<R>
  *
  * ### Operator fusion
  *
- * Applications of [flowOn], [buffer], [produceIn], and [broadcastIn] _after_ this operator are fused with
+ * Applications of [flowOn], [buffer], and [produceIn] _after_ this operator are fused with
  * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
  *
  * @param concurrency controls the number of in-flight flows, at most [concurrency] flows are collected
@@ -87,7 +87,7 @@ public fun <T> Flow<Flow<T>>.flattenConcat(): Flow<T> = flow {
  *
  * ### Operator fusion
  *
- * Applications of [flowOn], [buffer], [produceIn], and [broadcastIn] _after_ this operator are fused with
+ * Applications of [flowOn], [buffer], and [produceIn] _after_ this operator are fused with
  * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
  */
 @ExperimentalCoroutinesApi
@@ -111,7 +111,7 @@ public fun <T> Iterable<Flow<T>>.merge(): Flow<T> {
  *
  * ### Operator fusion
  *
- * Applications of [flowOn], [buffer], [produceIn], and [broadcastIn] _after_ this operator are fused with
+ * Applications of [flowOn], [buffer], and [produceIn] _after_ this operator are fused with
  * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
  */
 @ExperimentalCoroutinesApi
@@ -126,7 +126,7 @@ public fun <T> merge(vararg flows: Flow<T>): Flow<T> = flows.asIterable().merge(
  *
  * ### Operator fusion
  *
- * Applications of [flowOn], [buffer], [produceIn], and [broadcastIn] _after_ this operator are fused with
+ * Applications of [flowOn], [buffer], and [produceIn] _after_ this operator are fused with
  * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
  *
  * When [concurrency] is greater than 1, this operator is [buffered][buffer] by default

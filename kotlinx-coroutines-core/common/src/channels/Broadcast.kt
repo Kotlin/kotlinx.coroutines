@@ -35,11 +35,13 @@ import kotlin.coroutines.intrinsics.*
  * [send][BroadcastChannel.send] and [close][BroadcastChannel.close] operations that interfere with
  * the broadcasting coroutine in hard-to-specify ways.
  *
- * **Note: This API is obsolete.** It will be deprecated and replaced with the
- * [Flow.shareIn][kotlinx.coroutines.flow.shareIn] operator when it becomes stable.
+ * **Note: This API is obsolete since 1.5.0.** It will be deprecated with warning in 1.6.0
+ * and with error in 1.7.0. It is replaced with [Flow.shareIn][kotlinx.coroutines.flow.shareIn]
+ * operator.
  *
  * @param start coroutine start option. The default value is [CoroutineStart.LAZY].
  */
+@ObsoleteCoroutinesApi
 public fun <E> ReceiveChannel<E>.broadcast(
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY
@@ -95,10 +97,12 @@ public fun <E> ReceiveChannel<E>.broadcast(
  *
  * ### Future replacement
  *
+ * This API is obsolete since 1.5.0.
  * This function has an inappropriate result type of [BroadcastChannel] which provides
  * [send][BroadcastChannel.send] and [close][BroadcastChannel.close] operations that interfere with
- * the broadcasting coroutine in hard-to-specify ways. It will be replaced with
- * sharing operators on [Flow][kotlinx.coroutines.flow.Flow] in the future.
+ * the broadcasting coroutine in hard-to-specify ways. It will be deprecated with warning in 1.6.0
+ * and with error in 1.7.0. It is replaced with [Flow.shareIn][kotlinx.coroutines.flow.shareIn]
+ * operator.
  *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param capacity capacity of the channel's buffer (1 by default).
@@ -106,6 +110,7 @@ public fun <E> ReceiveChannel<E>.broadcast(
  * @param onCompletion optional completion handler for the producer coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
+@ObsoleteCoroutinesApi
 public fun <E> CoroutineScope.broadcast(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 1,
