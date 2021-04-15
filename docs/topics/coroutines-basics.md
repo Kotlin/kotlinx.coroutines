@@ -188,7 +188,7 @@ suspend fun doWorld() = coroutineScope { // this: CoroutineScope
 >
 {type="note"}
 
-We see that both pieces of code inside `launch { ... }` blocks execute _concurrently_, with 
+Both pieces of code inside `launch { ... }` blocks execute _concurrently_, with 
 `World 1` printed first, after a second from start, and `World 2` printed next, after two seconds from start.
 A [coroutineScope][_coroutineScope] in `doWorld` completes only after both are complete, so `doWorld` returns and 
 allows `Done` string to be printed only after that:
