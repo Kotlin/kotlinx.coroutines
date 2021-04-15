@@ -71,7 +71,7 @@ Coroutines follow a principle of
 which delimits the life-time of the coroutine. In the above example [runBlocking] establishes the corresponding
 scope and that is why the previous example waits until `World!` is printed after a second's delay and only then exits.
 
-In the real application you will be launching a lot of coroutines. Structured concurrency ensures that they are not
+In the real application, you will be launching a lot of coroutines. Structured concurrency ensures that they are not
 lost and do not leak. An outer scope cannot complete until all its children coroutines complete. 
 Structured concurrency also ensures that any errors in the code are properly reported and are never lost.  
 
