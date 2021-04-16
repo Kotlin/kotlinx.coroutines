@@ -7,6 +7,7 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
 import org.reactivestreams.*
 import reactor.core.*
 import reactor.core.publisher.*
@@ -43,7 +44,7 @@ public fun <T> mono(
  * function immediately cancels its [Subscription] and resumes with [CancellationException].
  */
 public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCoroutine { cont ->
-    subscribe(object : Subscriber<T> {
+    injectCoroutineContext(cont.context).subscribe(object : Subscriber<T> {
         private var seenValue = false
 
         override fun onSubscribe(s: Subscription) {
