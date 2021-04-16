@@ -155,7 +155,7 @@ private class RxObservableCoroutine<T : Any>(
                 } catch (e: Exception) {
                     handleUndeliverableException(e, context)
                 }
-            } else if (cause is UndeliverableException) {
+            } else if (cause is UndeliverableException && !handled) {
                 /** Such exceptions are not reported to `onError`, as, according to the reactive specifications,
                  * exceptions thrown from the Subscriber methods must be treated as if the Subscriber was already
                  * cancelled. */

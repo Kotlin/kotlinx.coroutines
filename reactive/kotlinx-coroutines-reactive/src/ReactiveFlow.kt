@@ -195,6 +195,8 @@ public class FlowSubscription<T>(
      */
     private val requested = atomic(0L)
     private val producer = atomic<Continuation<Unit>?>(createInitialContinuation())
+    @Volatile
+    private var cancellationRequested = false
 
     // This code wraps startCoroutineCancellable into continuation
     private fun createInitialContinuation(): Continuation<Unit> = Continuation(coroutineContext) {
@@ -202,18 +204,29 @@ public class FlowSubscription<T>(
     }
 
     private suspend fun flowProcessing() {
-        try {
+        val consumeSucceeded = try {
             consumeFlow()
-            subscriber.onComplete()
-        } catch (e: Throwable) {
-            try {
-                if (e is CancellationException) {
-                    subscriber.onComplete()
-                } else {
-                    subscriber.onError(e)
+            true
+        } catch (cause: Throwable) {
+            if (cancellationRequested && cause === getCancellationException()) {
+                return
+            } else {
+                // TODO: this branch gets entered even when `cause` looks identical to `getCancellationException()`.
+                // Is stack sanitization to blame?
+                try {
+                    subscriber.onError(cause)
+                } catch (e: Throwable) {
+                    // Last ditch report
+                    cause.addSuppressed(e)
+                    handleCoroutineException(coroutineContext, cause)
                 }
+            }
+            false
+        }
+        if (consumeSucceeded) {
+            try {
+                subscriber.onComplete()
             } catch (e: Throwable) {
-                // Last ditch report
                 handleCoroutineException(coroutineContext, e)
             }
         }
@@ -239,6 +252,7 @@ public class FlowSubscription<T>(
     }
 
     override fun cancel() {
+        cancellationRequested = true
         cancel(null)
     }
 

@@ -9,13 +9,14 @@ import kotlinx.coroutines.flow.*
 import org.junit.Test
 import org.reactivestreams.*
 import java.util.concurrent.*
+import java.util.concurrent.CancellationException
 import kotlin.test.*
 
 class FlowAsPublisherTest : TestBase() {
     @Test
     fun testErrorOnCancellationIsReported() {
         expect(1)
-        flow<Int> {
+        flow {
             try {
                 emit(2)
             } finally {
@@ -50,13 +51,13 @@ class FlowAsPublisherTest : TestBase() {
     @Test
     fun testCancellationIsNotReported() {
         expect(1)
-        flow<Int>    {
+        flow {
             emit(2)
         }.asPublisher().subscribe(object : Subscriber<Int> {
             private lateinit var subscription: Subscription
 
             override fun onComplete() {
-                expect(3)
+                expectUnreached() // we stop signalling after cancellation
             }
 
             override fun onSubscribe(s: Subscription?) {
@@ -73,7 +74,7 @@ class FlowAsPublisherTest : TestBase() {
                 expectUnreached()
             }
         })
-        finish(4)
+        finish(3)
     }
 
     @Test
@@ -148,5 +149,20 @@ class FlowAsPublisherTest : TestBase() {
             completed.await()
         }
         finish(5)
+    }
+
+    @Test
+    fun testFlowWithTimeout() = runTest {
+        val publisher = flow<Int> {
+            expect(2)
+            withTimeout(1) { delay(Long.MAX_VALUE) }
+        }.asPublisher()
+        try {
+            expect(1)
+            publisher.awaitFirstOrNull()
+        } catch (e: CancellationException) {
+            expect(3)
+        }
+        finish(4)
     }
 }
