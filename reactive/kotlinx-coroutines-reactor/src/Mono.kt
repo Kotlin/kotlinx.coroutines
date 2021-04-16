@@ -7,12 +7,10 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.reactive.*
 import org.reactivestreams.*
 import reactor.core.*
 import reactor.core.publisher.*
 import kotlin.coroutines.*
-import kotlin.internal.*
 import kotlinx.coroutines.internal.*
 
 /**
@@ -34,6 +32,50 @@ public fun <T> mono(
             "Its lifecycle should be managed via Disposable handle. Had $context" }
     return monoInternal(GlobalScope, context, block)
 }
+
+/**
+ * Awaits the single value from the given [Mono] without blocking the thread and returns the resulting value, or, if
+ * this publisher has produced an error, throws the corresponding exception. If the Mono completed without a value,
+ * `null` is returned.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
+ */
+public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCoroutine { cont ->
+    subscribe(object : Subscriber<T> {
+        private var seenValue = false
+
+        override fun onSubscribe(s: Subscription) {
+            cont.invokeOnCancellation { s.cancel() }
+            s.request(Long.MAX_VALUE)
+        }
+
+        override fun onComplete() {
+            if (!seenValue)
+                cont.resume(null)
+        }
+
+        override fun onNext(t: T) {
+            seenValue = true
+            cont.resume(t)
+        }
+
+        override fun onError(error: Throwable) { cont.resumeWithException(error) }
+    })
+}
+
+/**
+ * Awaits the single value from the given [Mono] without blocking the thread and returns the resulting value, or,
+ * if this Mono has produced an error, throws the corresponding exception.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
+ *
+ * @throws NoSuchElementException if the Mono does not emit any value
+ */
+public suspend fun <T> Mono<T>.awaitSingle(): T = awaitSingleOrNull() ?: throw NoSuchElementException()
 
 private fun <T> monoInternal(
     scope: CoroutineScope, // support for legacy mono in scope
@@ -92,3 +134,88 @@ public fun <T> CoroutineScope.mono(
     block: suspend CoroutineScope.() -> T?
 ): Mono<T> = monoInternal(this, context, block)
 
+/**
+ * Awaits the first value from the given publisher without blocking the thread and returns the resulting value, or, if
+ * the publisher has produced an error, throws the corresponding exception.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
+ *
+ * @throws NoSuchElementException if the publisher does not emit any value
+ */
+@Deprecated(
+    message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
+        "Please use awaitSingle() instead.",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("this.awaitSingle()")
+)
+public suspend fun <T> Mono<T>.awaitFirst(): T = awaitSingle()
+
+/**
+ * Awaits the first value from the given publisher, or returns the [default] value if none is emitted, without blocking
+ * the thread, and returns the resulting value, or, if this publisher has produced an error, throws the corresponding
+ * exception.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
+ */
+@Deprecated(
+    message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
+        "Please use awaitSingleOrNull() instead.",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("this.awaitSingleOrNull() ?: default")
+)
+public suspend fun <T> Mono<T>.awaitFirstOrDefault(default: T): T = awaitSingleOrNull() ?: default
+
+/**
+ * Awaits the first value from the given publisher, or returns `null` if none is emitted, without blocking the thread,
+ * and returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
+ */
+@Deprecated(
+    message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
+        "Please use awaitSingleOrNull() instead.",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("this.awaitSingleOrNull()")
+)
+public suspend fun <T> Mono<T>.awaitFirstOrNull(): T? = awaitSingleOrNull()
+
+/**
+ * Awaits the first value from the given publisher, or calls [defaultValue] to get a value if none is emitted, without
+ * blocking the thread, and returns the resulting value, or, if this publisher has produced an error, throws the
+ * corresponding exception.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
+ */
+@Deprecated(
+    message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
+        "Please use awaitSingleOrNull() instead.",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("this.awaitSingleOrNull() ?: defaultValue()")
+)
+public suspend fun <T> Mono<T>.awaitFirstOrElse(defaultValue: () -> T): T = awaitSingleOrNull() ?: defaultValue()
+
+/**
+ * Awaits the last value from the given publisher without blocking the thread and
+ * returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * function immediately cancels its [Subscription] and resumes with [CancellationException].
+ *
+ * @throws NoSuchElementException if the publisher does not emit any value
+ */
+@Deprecated(
+    message = "Mono produces at most one value, so the last element is the same as the first. " +
+        "Please use awaitSingle() instead.",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("this.awaitSingle()")
+)
+public suspend fun <T> Mono<T>.awaitLast(): T = awaitSingle()

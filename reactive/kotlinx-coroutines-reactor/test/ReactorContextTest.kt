@@ -20,7 +20,7 @@ class ReactorContextTest : TestBase() {
             }
         }  .contextWrite(Context.of(2, "2", 3, "3", 4, "4", 5, "5"))
            .contextWrite { ctx -> ctx.put(6, "6") }
-        assertEquals(mono.awaitFirst(), "1234567")
+        assertEquals(mono.awaitSingle(), "1234567")
     }
 
     @Test
@@ -43,22 +43,18 @@ class ReactorContextTest : TestBase() {
                 (1..3).forEach { append(ctx.getOrDefault(it, "noValue")) }
             }
         }  .contextWrite(Context.of(2, "2"))
-            .awaitFirst()
+            .awaitSingle()
         assertEquals(result, "123")
     }
 
     @Test
     fun testMonoAwaitContextPropagation() = runBlocking(Context.of(7, "7").asCoroutineContext()) {
-        assertEquals(createMono().awaitFirst(), "7")
-        assertEquals(createMono().awaitFirstOrDefault("noValue"), "7")
-        assertEquals(createMono().awaitFirstOrNull(), "7")
-        assertEquals(createMono().awaitFirstOrElse { "noValue" }, "7")
-        assertEquals(createMono().awaitLast(), "7")
         assertEquals(createMono().awaitSingle(), "7")
+        assertEquals(createMono().awaitSingleOrNull(), "7")
     }
 
     @Test
-    fun testFluxAwaitContextPropagation() = runBlocking<Unit>(
+    fun testFluxAwaitContextPropagation() = runBlocking(
         Context.of(1, "1", 2, "2", 3, "3").asCoroutineContext()
     ) {
         assertEquals(createFlux().awaitFirst(), "1")
