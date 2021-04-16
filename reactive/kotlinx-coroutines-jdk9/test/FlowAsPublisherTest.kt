@@ -57,7 +57,7 @@ class FlowAsPublisherTest : TestBase() {
             private lateinit var subscription: JFlow.Subscription
 
             override fun onComplete() {
-                expectUnreached() // we stop signalling after cancellation
+                expect(3)
             }
 
             override fun onSubscribe(s: JFlow.Subscription?) {
@@ -74,7 +74,7 @@ class FlowAsPublisherTest : TestBase() {
                 expectUnreached()
             }
         })
-        finish(3)
+        finish(4)
     }
 
     @Test

@@ -62,7 +62,6 @@ class PublisherRequestStressTest : TestBase() {
     private lateinit var subscription: Subscription
 
     @Test
-    @Ignore // for now, given that it fails for strange reasons
     fun testRequestStress() {
         val expectedValue = AtomicLong(0)
         val requestedTill = AtomicLong(0)

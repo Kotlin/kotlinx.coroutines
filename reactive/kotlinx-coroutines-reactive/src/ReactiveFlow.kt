@@ -208,11 +208,9 @@ public class FlowSubscription<T>(
             consumeFlow()
             true
         } catch (cause: Throwable) {
-            if (cancellationRequested && cause === getCancellationException()) {
-                return
+            if (cancellationRequested && !isActive && (cause === getCancellationException() || cause.cause === getCancellationException() && cause.message == getCancellationException().message)) {
+                subscriber.onComplete()
             } else {
-                // TODO: this branch gets entered even when `cause` looks identical to `getCancellationException()`.
-                // Is stack sanitization to blame?
                 try {
                     subscriber.onError(cause)
                 } catch (e: Throwable) {
