@@ -9,7 +9,6 @@ import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 import java.lang.IllegalStateException
-import java.util.*
 import kotlin.NoSuchElementException
 import kotlin.coroutines.*
 
@@ -26,8 +25,8 @@ import kotlin.coroutines.*
 public suspend fun <T> Publisher<T>.awaitFirst(): T = awaitOne(Mode.FIRST)
 
 /**
- * Awaits the first value from the given observable, or returns the [default] value if none is emitted, without blocking
- * the thread, and returns the resulting value, or, if this observable has produced an error, throws the corresponding
+ * Awaits the first value from the given publisher, or returns the [default] value if none is emitted, without blocking
+ * the thread, and returns the resulting value, or, if this publisher has produced an error, throws the corresponding
  * exception.
  *
  * This suspending function is cancellable.
@@ -37,8 +36,8 @@ public suspend fun <T> Publisher<T>.awaitFirst(): T = awaitOne(Mode.FIRST)
 public suspend fun <T> Publisher<T>.awaitFirstOrDefault(default: T): T = awaitOne(Mode.FIRST_OR_DEFAULT, default)
 
 /**
- * Awaits the first value from the given observable, or returns `null` if none is emitted, without blocking the thread,
- * and returns the resulting value, or, if this observable has produced an error, throws the corresponding exception.
+ * Awaits the first value from the given publisher, or returns `null` if none is emitted, without blocking the thread,
+ * and returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
@@ -47,8 +46,8 @@ public suspend fun <T> Publisher<T>.awaitFirstOrDefault(default: T): T = awaitOn
 public suspend fun <T> Publisher<T>.awaitFirstOrNull(): T? = awaitOne(Mode.FIRST_OR_DEFAULT)
 
 /**
- * Awaits the first value from the given observable, or calls [defaultValue] to get a value if none is emitted, without
- * blocking the thread, and returns the resulting value, or, if this observable has produced an error, throws the
+ * Awaits the first value from the given publisher, or calls [defaultValue] to get a value if none is emitted, without
+ * blocking the thread, and returns the resulting value, or, if this publisher has produced an error, throws the
  * corresponding exception.
  *
  * This suspending function is cancellable.
@@ -83,8 +82,8 @@ public suspend fun <T> Publisher<T>.awaitLast(): T = awaitOne(Mode.LAST)
 public suspend fun <T> Publisher<T>.awaitSingle(): T = awaitOne(Mode.SINGLE)
 
 /**
- * Awaits the single value from the given observable, or returns the [default] value if none is emitted, without
- * blocking the thread, and returns the resulting value, or, if this observable has produced an error, throws the
+ * Awaits the single value from the given publisher, or returns the [default] value if none is emitted, without
+ * blocking the thread, and returns the resulting value, or, if this publisher has produced an error, throws the
  * corresponding exception.
  *
  * This suspending function is cancellable.
@@ -94,26 +93,34 @@ public suspend fun <T> Publisher<T>.awaitSingle(): T = awaitOne(Mode.SINGLE)
  * @throws NoSuchElementException if the publisher does not emit any value
  * @throws IllegalArgumentException if the publisher emits more than one value
  */
+@Deprecated(
+    message = "Deprecated without a replacement due to its name incorrectly conveying the behavior",
+    level = DeprecationLevel.WARNING
+)
 public suspend fun <T> Publisher<T>.awaitSingleOrDefault(default: T): T = awaitOne(Mode.SINGLE_OR_DEFAULT, default)
 
 /**
- * Awaits the single value from the given observable without blocking the thread and returns the resulting value, or, if
- * this observable has produced an error, throws the corresponding exception. If more than one value or none were
+ * Awaits the single value from the given publisher without blocking the thread and returns the resulting value, or, if
+ * this publisher has produced an error, throws the corresponding exception. If more than one value or none were
  * produced by the publisher, `null` is returned.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
  * function immediately cancels its [Subscription] and resumes with [CancellationException].
+ *
+ * @throws IllegalArgumentException if the publisher emits more than one value
  */
-public suspend fun <T> Publisher<T>.awaitSingleOrNull(): T? = try {
-    awaitOne(Mode.SINGLE_OR_DEFAULT)
-} catch (e: TooManyElementsException) {
-    null
-}
+@Deprecated(
+    message = "Deprecated without a replacement due to its name incorrectly conveying the behavior. " +
+        "There is a specialized version for Reactor's Mono, please use that where applicable.",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("this.awaitSingleOrNull()", "kotlinx.coroutines.reactor")
+)
+public suspend fun <T> Publisher<T>.awaitSingleOrNull(): T? = awaitOne(Mode.SINGLE_OR_DEFAULT)
 
 /**
- * Awaits the single value from the given observable, or calls [defaultValue] to get a value if none is emitted, without
- * blocking the thread, and returns the resulting value, or, if this observable has produced an error, throws the
+ * Awaits the single value from the given publisher, or calls [defaultValue] to get a value if none is emitted, without
+ * blocking the thread, and returns the resulting value, or, if this publisher has produced an error, throws the
  * corresponding exception.
  *
  * This suspending function is cancellable.
@@ -122,12 +129,14 @@ public suspend fun <T> Publisher<T>.awaitSingleOrNull(): T? = try {
  *
  * @throws IllegalArgumentException if the publisher emits more than one value
  */
+@Deprecated(
+    message = "Deprecated without a replacement due to its name incorrectly conveying the behavior",
+    level = DeprecationLevel.WARNING
+)
 public suspend fun <T> Publisher<T>.awaitSingleOrElse(defaultValue: () -> T): T =
     awaitOne(Mode.SINGLE_OR_DEFAULT) ?: defaultValue()
 
 // ------------------------ private ------------------------
-
-private class TooManyElementsException(message: String): IllegalArgumentException(message)
 
 private enum class Mode(val s: String) {
     FIRST("awaitFirst"),
@@ -195,7 +204,7 @@ private suspend fun <T> Publisher<T>.awaitOne(
                         /* the check for `cont.isActive` is needed in case `sub.cancel() above calls `onComplete` or
                          `onError` on its own. */
                         if (cont.isActive) {
-                            cont.resumeWithException(TooManyElementsException("More than one onNext value for $mode"))
+                            cont.resumeWithException(IllegalArgumentException("More than one onNext value for $mode"))
                         }
                     } else {
                         value = t

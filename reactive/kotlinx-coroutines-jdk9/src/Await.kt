@@ -23,8 +23,8 @@ public suspend fun <T> Flow.Publisher<T>.awaitFirst(): T =
     FlowAdapters.toPublisher(this).awaitFirst()
 
 /**
- * Awaits the first value from the given observable, or returns the [default] value if none is emitted, without blocking
- * the thread, and returns the resulting value, or, if this observable has produced an error, throws the corresponding
+ * Awaits the first value from the given publisher, or returns the [default] value if none is emitted, without blocking
+ * the thread, and returns the resulting value, or, if this publisher has produced an error, throws the corresponding
  * exception.
  *
  * This suspending function is cancellable.
@@ -35,8 +35,8 @@ public suspend fun <T> Flow.Publisher<T>.awaitFirstOrDefault(default: T): T =
     FlowAdapters.toPublisher(this).awaitFirstOrDefault(default)
 
 /**
- * Awaits the first value from the given observable, or returns `null` if none is emitted, without blocking the thread,
- * and returns the resulting value, or, if this observable has produced an error, throws the corresponding exception.
+ * Awaits the first value from the given publisher, or returns `null` if none is emitted, without blocking the thread,
+ * and returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
@@ -46,8 +46,8 @@ public suspend fun <T> Flow.Publisher<T>.awaitFirstOrNull(): T? =
     FlowAdapters.toPublisher(this).awaitFirstOrNull()
 
 /**
- * Awaits the first value from the given observable, or calls [defaultValue] to get a value if none is emitted, without
- * blocking the thread, and returns the resulting value, or, if this observable has produced an error, throws the
+ * Awaits the first value from the given publisher, or calls [defaultValue] to get a value if none is emitted, without
+ * blocking the thread, and returns the resulting value, or, if this publisher has produced an error, throws the
  * corresponding exception.
  *
  * This suspending function is cancellable.
