@@ -75,7 +75,7 @@ public class PublisherCoroutine<in T>(
     @Volatile
     private var cancelled = false // true after Subscription.cancel() is invoked
 
-    override val isClosedForSend: Boolean get() = isCompleted
+    override val isClosedForSend: Boolean get() = !isActive
     override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
     override fun invokeOnClose(handler: (Throwable?) -> Unit): Nothing =
         throw UnsupportedOperationException("PublisherCoroutine doesn't support invokeOnClose")
@@ -133,6 +133,7 @@ public class PublisherCoroutine<in T>(
      */
     private fun doLockedNext(elem: T): Throwable? {
         if (elem == null) {
+            unlockAndCheckCompleted()
             throw NullPointerException("Attempted to emit `null` inside a reactive publisher")
         }
         /** This guards against the case when the caller of this function managed to lock the mutex not because some
@@ -212,7 +213,7 @@ public class PublisherCoroutine<in T>(
             _nRequested.value = SIGNALLED // we'll signal onError/onCompleted (the final state, so no CAS needed)
             // Specification requires that after the cancellation is requested we eventually stop calling onXXX
             if (cancelled) {
-                // If the parent had failed to handle our exception, then we must not lose this exception
+                // If the parent failed to handle this exception, then we must not lose the exception
                 if (cause != null && !handled) exceptionOnCancelHandler(cause, context)
                 return
             }

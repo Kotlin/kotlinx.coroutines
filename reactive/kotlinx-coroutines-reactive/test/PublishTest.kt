@@ -5,8 +5,11 @@
 package kotlinx.coroutines.reactive
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import org.junit.Test
 import org.reactivestreams.*
+import java.lang.NullPointerException
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.*
 
 class PublishTest : TestBase() {
@@ -121,6 +124,25 @@ class PublishTest : TestBase() {
         finish(7)
     }
 
+    /** Tests that, as soon as `ProducerScope.close` is called, `isClosedForSend` starts returning `true`. */
+    @Test
+    fun testChannelClosing() = runTest {
+        expect(1)
+        val publisher = publish<Int>(Dispatchers.Unconfined) {
+            expect(3)
+            close()
+            assert(isClosedForSend)
+            expect(4)
+        }
+        try {
+            expect(2)
+            publisher.awaitFirstOrNull()
+        } catch (e: CancellationException) {
+            expect(5)
+        }
+        finish(6)
+    }
+
     @Test
     fun testOnNextError() = runTest {
         val latch = CompletableDeferred<Unit>()
@@ -130,9 +152,10 @@ class PublishTest : TestBase() {
                 expect(4)
                 try {
                     send("OK")
-                } catch(e: Throwable) {
+                } catch (e: Throwable) {
                     expect(6)
                     assert(e is TestException)
+                    assert(isClosedForSend)
                     latch.complete(Unit)
                 }
             }
@@ -162,6 +185,51 @@ class PublishTest : TestBase() {
         finish(7)
     }
 
+    /** Tests the behavior when a call to `onNext` fails after the channel is already closed. */
+    @Test
+    fun testOnNextErrorAfterCancellation() = runTest {
+        assertCallsExceptionHandlerWith<TestException> { handler ->
+            var producerScope: ProducerScope<Int>? = null
+            CompletableDeferred<Unit>()
+            expect(1)
+            var job: Job? = null
+            val publisher = publish<Int>(handler + Dispatchers.Unconfined) {
+                producerScope = this
+                expect(4)
+                job = launch {
+                    delay(Long.MAX_VALUE)
+                }
+            }
+            expect(2)
+            publisher.subscribe(object: Subscriber<Int> {
+                override fun onSubscribe(s: Subscription) {
+                    expect(3)
+                    s.request(Long.MAX_VALUE)
+                }
+                override fun onNext(t: Int) {
+                    expect(6)
+                    assertEquals(1, t)
+                    job!!.cancel()
+                    throw TestException()
+                }
+                override fun onError(t: Throwable?) {
+                    /* Correct changes to the implementation could lead to us entering or not entering this method, but
+                    it only matters that if we do, it is the "correct" exception that was validly used to cancel the
+                    coroutine that gets passed here and not `TestException`. */
+                    assertTrue(t is CancellationException)
+                }
+                override fun onComplete() { expectUnreached() }
+            })
+            expect(5)
+            val result: ChannelResult<Unit> = producerScope!!.trySend(1)
+            val e = result.exceptionOrNull()!!
+            assertTrue(e is CancellationException, "The actual error: $e")
+            assertTrue(producerScope!!.isClosedForSend)
+            assertTrue(result.isFailure)
+        }
+        finish(7)
+    }
+
     @Test
     fun testFailingConsumer() = runTest {
         val pub = publish(currentDispatcher()) {
@@ -182,5 +250,40 @@ class PublishTest : TestBase() {
     @Test
     fun testIllegalArgumentException() {
         assertFailsWith<IllegalArgumentException> { publish<Int>(Job()) { } }
+    }
+
+    /** Tests that `trySend` doesn't throw in `publish`. */
+    @Test
+    fun testTrySendNotThrowing() = runTest {
+        var producerScope: ProducerScope<Int>? = null
+        expect(1)
+        val publisher = publish<Int>(Dispatchers.Unconfined) {
+            producerScope = this
+            expect(3)
+            delay(Long.MAX_VALUE)
+        }
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            publisher.awaitFirstOrNull()
+            expectUnreached()
+        }
+        job.cancel()
+        expect(4)
+        val result = producerScope!!.trySend(1)
+        assertTrue(result.isFailure)
+        finish(5)
+    }
+
+    /** Tests that all methods on `publish` fail without closing the channel when attempting to emit `null`. */
+    @Test
+    fun testEmittingNull() = runTest {
+        val publisher = publish {
+            assertFailsWith<NullPointerException> { send(null) }
+            assertFailsWith<NullPointerException> { trySend(null) }
+            @Suppress("DEPRECATION")
+            assertFailsWith<NullPointerException> { offer(null) }
+            send("OK")
+        }
+        assertEquals("OK", publisher.awaitFirstOrNull())
     }
 }

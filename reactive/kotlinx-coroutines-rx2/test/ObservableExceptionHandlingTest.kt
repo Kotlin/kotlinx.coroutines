@@ -8,6 +8,7 @@ import io.reactivex.exceptions.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
+import java.util.concurrent.*
 import kotlin.test.*
 
 class ObservableExceptionHandlingTest : TestBase() {
@@ -82,14 +83,22 @@ class ObservableExceptionHandlingTest : TestBase() {
 
     @Test
     fun testFatalExceptionFromSubscribe() = withExceptionHandler(handler<LinkageError>(3)) {
+        val latch = CountDownLatch(1)
         rxObservable(Dispatchers.Unconfined) {
             expect(1)
-            send(Unit)
+            val result = trySend(Unit)
+            val exception = result.exceptionOrNull()
+            assertTrue(exception is UndeliverableException)
+            assertTrue(exception.cause is LinkageError)
+            assertTrue(isClosedForSend)
+            expect(4)
+            latch.countDown()
         }.subscribe({
             expect(2)
             throw LinkageError()
         }, { expectUnreached() }) // Unreached because RxJava bubbles up fatal exceptions, causing `onNext` to throw.
-        finish(4)
+        latch.await()
+        finish(5)
     }
 
     @Test

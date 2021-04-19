@@ -5,6 +5,7 @@
 package kotlinx.coroutines.jdk9
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.exceptions.*
 import org.junit.Test
 import kotlinx.coroutines.flow.flowOn
 import org.junit.runner.*
@@ -132,21 +133,13 @@ class IntegrationTest(
 }
 
 internal suspend inline fun <reified E: Throwable> assertCallsExceptionHandlerWith(
-    crossinline operation: suspend (CoroutineExceptionHandler) -> Unit): E
-{
-    val caughtExceptions = mutableListOf<Throwable>()
-    val exceptionHandler = object: AbstractCoroutineContextElement(CoroutineExceptionHandler),
-        CoroutineExceptionHandler
-    {
-        override fun handleException(context: CoroutineContext, exception: Throwable) {
-            caughtExceptions += exception
+    crossinline operation: suspend (CoroutineExceptionHandler) -> Unit): E =
+    CapturingHandler().let { handler ->
+        withContext(handler) {
+            operation(handler)
+            handler.getException().let {
+                assertTrue(it is E, it.toString())
+                it
+            }
         }
     }
-    return withContext(exceptionHandler) {
-        operation(exceptionHandler)
-        caughtExceptions.single().let {
-            assertTrue(it is E, it.toString())
-            it
-        }
-    }
-}
