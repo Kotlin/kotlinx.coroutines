@@ -13,6 +13,7 @@ import reactor.core.*
 import reactor.core.publisher.*
 import kotlin.coroutines.*
 import kotlin.internal.*
+import kotlinx.coroutines.internal.*
 
 /**
  * Creates a cold [mono][Mono] that runs a given [block] in a coroutine and emits its result.
@@ -59,7 +60,8 @@ private class MonoCoroutine<in T>(
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
         /** Cancellation exceptions that were caused by [dispose], that is, came from downstream, are not errors. */
-        if (getCancellationException() !== cause || !disposed) {
+        val unwrappedCause = unwrap(cause)
+        if (getCancellationException() !== unwrappedCause || !disposed) {
             try {
                 /** If [sink] turns out to already be in a terminal state, this exception will be passed through the
                  * [Hooks.onOperatorError] hook, which is the way to signal undeliverable exceptions in Reactor. */

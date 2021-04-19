@@ -65,7 +65,6 @@ class PublisherRequestStressTest : TestBase() {
     fun testRequestStress() {
         val expectedValue = AtomicLong(0)
         val requestedTill = AtomicLong(0)
-        val completionLatch = CountDownLatch(1)
         val callingOnNext = AtomicInteger()
 
         val publisher = mtFlow().asPublisher()
@@ -75,7 +74,7 @@ class PublisherRequestStressTest : TestBase() {
             private var demand = 0L // only updated from reqPool
 
             override fun onComplete() {
-                completionLatch.countDown()
+                expectUnreached()
             }
 
             override fun onSubscribe(sub: Subscription) {
@@ -124,7 +123,9 @@ class PublisherRequestStressTest : TestBase() {
         }
         if (!error) {
             subscription.cancel()
-            completionLatch.await()
+            runBlocking {
+                (subscription as AbstractCoroutine<*>).join()
+            }
         }
     }
 

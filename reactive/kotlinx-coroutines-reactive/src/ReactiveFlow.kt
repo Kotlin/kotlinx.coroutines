@@ -13,6 +13,7 @@ import kotlinx.coroutines.intrinsics.*
 import org.reactivestreams.*
 import java.util.*
 import kotlin.coroutines.*
+import kotlinx.coroutines.internal.*
 
 /**
  * Transforms the given reactive [Publisher] into [Flow].
@@ -204,17 +205,12 @@ public class FlowSubscription<T>(
     }
 
     private suspend fun flowProcessing() {
-        val consumeSucceeded = try {
+        try {
             consumeFlow()
-            true
         } catch (cause: Throwable) {
-            /* TODO: The part after "||" is a hack needed due to [cause] having travelled over a coroutine boundary and
-                being changed from the result of [getCancellationException()]. */
-            if (cancellationRequested && !isActive && (cause === getCancellationException() || cause.cause === getCancellationException() && cause.message == getCancellationException().message)) {
-                /* TODO: This is incorrect, as [Subscriber.onComplete] denotes the end of the stream and not just any
-                    non-erroneous terminal state. */
-                subscriber.onComplete()
-            } else {
+            @Suppress("INVISIBLE_MEMBER")
+            val unwrappedCause = unwrap(cause)
+            if (!cancellationRequested || isActive || unwrappedCause !== getCancellationException()) {
                 try {
                     subscriber.onError(cause)
                 } catch (e: Throwable) {
@@ -223,14 +219,13 @@ public class FlowSubscription<T>(
                     handleCoroutineException(coroutineContext, cause)
                 }
             }
-            false
+            return
         }
-        if (consumeSucceeded) {
-            try {
-                subscriber.onComplete()
-            } catch (e: Throwable) {
-                handleCoroutineException(coroutineContext, e)
-            }
+        // We only call this if `consumeFlow()` finished successfully
+        try {
+            subscriber.onComplete()
+        } catch (e: Throwable) {
+            handleCoroutineException(coroutineContext, e)
         }
     }
 

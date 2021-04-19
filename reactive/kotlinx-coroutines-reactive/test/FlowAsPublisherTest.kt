@@ -57,7 +57,7 @@ class FlowAsPublisherTest : TestBase() {
             private lateinit var subscription: Subscription
 
             override fun onComplete() {
-                expect(3)
+                expectUnreached()
             }
 
             override fun onSubscribe(s: Subscription?) {
@@ -74,7 +74,7 @@ class FlowAsPublisherTest : TestBase() {
                 expectUnreached()
             }
         })
-        finish(4)
+        finish(3)
     }
 
     @Test

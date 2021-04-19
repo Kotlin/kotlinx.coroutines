@@ -9,6 +9,7 @@ import io.reactivex.exceptions.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import java.lang.RuntimeException
@@ -149,18 +150,20 @@ private class RxObservableCoroutine<T : Any>(
             if (_signal.value == SIGNALLED)
                 return
             _signal.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
-            if (cause == null) {
+            @Suppress("INVISIBLE_MEMBER")
+            val unwrappedCause = cause?.let { unwrap(it) }
+            if (unwrappedCause == null) {
                 try {
                     subscriber.onComplete()
                 } catch (e: Exception) {
                     handleUndeliverableException(e, context)
                 }
-            } else if (cause is UndeliverableException && !handled) {
+            } else if (unwrappedCause is UndeliverableException && !handled) {
                 /** Such exceptions are not reported to `onError`, as, according to the reactive specifications,
                  * exceptions thrown from the Subscriber methods must be treated as if the Subscriber was already
                  * cancelled. */
                 handleUndeliverableException(cause, context)
-            } else if (cause !== getCancellationException() || !subscriber.isDisposed) {
+            } else if (unwrappedCause !== getCancellationException() || !subscriber.isDisposed) {
                 try {
                     /** If the subscriber is already in a terminal state, the error will be signalled to
                      * `RxJavaPlugins.onError`. */
