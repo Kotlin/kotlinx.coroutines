@@ -78,4 +78,14 @@ public expect object Dispatchers {
      * the value of [CoroutineStart.UNDISPATCHED].
      */
     public val Unconfined: CoroutineDispatcher
+
+    /**
+     * Shuts down the dispatcher.
+     *
+     * Its implementation depends on the platform:
+     * - On Kotlin/JVM and Kotlin/JS takes no effect.
+     * - On Kotlin/Native requests termination of the worker created by the [Default] dispatcher.
+     */
+    @ExperimentalCoroutinesApi
+    public fun CoroutineDispatcher.shutdown()
 }
