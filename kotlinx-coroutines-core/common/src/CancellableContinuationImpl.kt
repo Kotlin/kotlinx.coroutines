@@ -260,9 +260,13 @@ internal open class CancellableContinuationImpl<in T>(
         // or we got async cancellation from parent.
         if (trySuspend()) {
             /*
+             * Invariant: parentHandle is `null` *only* for reusable continuations.
              * We were neither resumed nor cancelled, time to suspend.
              * But first we have to install parent cancellation handle (if we didn't yet),
              * so CC could be properly resumed on parent cancellation.
+             *
+             * This read has benign data-race with write of 'NonDisposableHandle'
+             * in 'detachChildIfNotReusable'.
              */
             if (parentHandle == null) {
                 installParentHandle()
