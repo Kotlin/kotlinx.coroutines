@@ -75,6 +75,7 @@ public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCorou
  *
  * @throws NoSuchElementException if the Mono does not emit any value
  */
+// TODO: consider using https://github.com/Kotlin/kotlinx.coroutines/issues/2607 once that lands
 public suspend fun <T> Mono<T>.awaitSingle(): T = awaitSingleOrNull() ?: throw NoSuchElementException()
 
 private fun <T> monoInternal(
