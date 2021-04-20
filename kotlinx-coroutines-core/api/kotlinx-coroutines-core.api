@@ -270,6 +270,9 @@ public final class kotlinx/coroutines/DelayKt {
 	public static final fun delay-VtjQ1oo (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public abstract interface annotation class kotlinx/coroutines/DelicateCoroutinesApi : java/lang/annotation/Annotation {
+}
+
 public final class kotlinx/coroutines/Dispatchers {
 	public static final field INSTANCE Lkotlinx/coroutines/Dispatchers;
 	public static final fun getDefault ()Lkotlinx/coroutines/CoroutineDispatcher;

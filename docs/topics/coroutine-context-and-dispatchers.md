@@ -65,9 +65,8 @@ context of the main `runBlocking` coroutine which runs in the `main` thread.
 [Dispatchers.Unconfined] is a special dispatcher that also appears to run in the `main` thread, but it is,
 in fact, a different mechanism that is explained later.
 
-The default dispatcher that is used when coroutines are launched in [GlobalScope]
-is represented by [Dispatchers.Default] and uses a shared background pool of threads,
-so `launch(Dispatchers.Default) { ... }` uses the same dispatcher as `GlobalScope.launch { ... }`.
+The default dispatcher that is used when no other dispatcher is explicitly specified in the scope.
+It is represented by [Dispatchers.Default] and uses a shared background pool of threads.
   
 [newSingleThreadContext] creates a thread for the coroutine to run. 
 A dedicated thread is a very expensive resource. 
@@ -303,8 +302,14 @@ the [Job] of the new coroutine becomes
 a _child_ of the parent coroutine's job. When the parent coroutine is cancelled, all its children
 are recursively cancelled, too. 
 
-However, when [GlobalScope] is used to launch a coroutine, there is no parent for the job of the new coroutine.
-It is therefore not tied to the scope it was launched from and operates independently.
+However, this parent-child relation can be explicitly overriden in one of two ways:
+
+1. When a different scope is explicitly specified when launching a coroutine (for example, `GlobalScope.launch`), 
+   then it does not inherit a `Job` from the parent scope.
+2. When a different `Job` object is passed as the context for the new coroutine (as show in the example below),
+   then it overrides the `Job` of the parent scope.
+   
+In both cases, the launched coroutine is not tied to the scope it was launched from and operates independently.
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -313,9 +318,9 @@ fun main() = runBlocking<Unit> {
 //sampleStart
     // launch a coroutine to process some kind of incoming request
     val request = launch {
-        // it spawns two other jobs, one with GlobalScope
-        GlobalScope.launch {
-            println("job1: I run in GlobalScope and execute independently!")
+        // it spawns two other jobs
+        launch(Job()) { 
+            println("job1: I run in my own Job and execute independently!")
             delay(1000)
             println("job1: I am not affected by cancellation of the request")
         }
@@ -343,7 +348,7 @@ fun main() = runBlocking<Unit> {
 The output of this code is:
 
 ```text
-job1: I run in GlobalScope and execute independently!
+job1: I run in my own Job and execute independently!
 job2: I am a child of the request coroutine
 job1: I am not affected by cancellation of the request
 main: Who has survived request cancellation?
@@ -659,7 +664,6 @@ that should be implemented.
 [async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
 [Dispatchers.Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-unconfined.html
-[GlobalScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-global-scope/index.html
 [Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
 [newSingleThreadContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/new-single-thread-context.html
 [ExecutorCoroutineDispatcher.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-executor-coroutine-dispatcher/close.html
