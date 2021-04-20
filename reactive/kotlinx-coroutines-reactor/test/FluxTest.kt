@@ -5,9 +5,9 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
-import org.junit.*
 import org.junit.Test
 import kotlin.test.*
 
@@ -140,5 +140,40 @@ class FluxTest : TestBase() {
                 .catch {}
                 .collect { }
         }
+    }
+
+    /** Tests that `trySend` doesn't throw in `flux`. */
+    @Test
+    fun testTrySendNotThrowing() = runTest {
+        var producerScope: ProducerScope<Int>? = null
+        expect(1)
+        val flux = flux<Int>(Dispatchers.Unconfined) {
+            producerScope = this
+            expect(3)
+            delay(Long.MAX_VALUE)
+        }
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            flux.awaitFirstOrNull()
+            expectUnreached()
+        }
+        job.cancel()
+        expect(4)
+        val result = producerScope!!.trySend(1)
+        assertTrue(result.isFailure)
+        finish(5)
+    }
+
+    /** Tests that all methods on `flux` fail without closing the channel when attempting to emit `null`. */
+    @Test
+    fun testEmittingNull() = runTest {
+        val flux = flux {
+            assertFailsWith<NullPointerException> { send(null) }
+            assertFailsWith<NullPointerException> { trySend(null) }
+            @Suppress("DEPRECATION")
+            assertFailsWith<NullPointerException> { offer(null) }
+            send("OK")
+        }
+        assertEquals("OK", flux.awaitFirstOrNull())
     }
 }

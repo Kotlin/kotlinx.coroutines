@@ -55,12 +55,13 @@ private fun <T> reactorPublish(
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
-private val REACTOR_HANDLER: (Throwable, CoroutineContext) -> Unit = { e, ctx ->
-    if (e !is CancellationException) {
+private val REACTOR_HANDLER: (Throwable, CoroutineContext) -> Unit = { cause, ctx ->
+    if (cause !is CancellationException) {
         try {
-            Operators.onOperatorError(e, ctx[ReactorContext]?.context ?: Context.empty())
+            Operators.onOperatorError(cause, ctx[ReactorContext]?.context ?: Context.empty())
         } catch (e: Throwable) {
-            handleCoroutineException(ctx, e)
+            cause.addSuppressed(e)
+            handleCoroutineException(ctx, cause)
         }
     }
 }

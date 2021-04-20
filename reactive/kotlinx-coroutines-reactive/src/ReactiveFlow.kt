@@ -13,6 +13,7 @@ import kotlinx.coroutines.intrinsics.*
 import org.reactivestreams.*
 import java.util.*
 import kotlin.coroutines.*
+import kotlinx.coroutines.internal.*
 
 /**
  * Transforms the given reactive [Publisher] into [Flow].
@@ -195,6 +196,8 @@ public class FlowSubscription<T>(
      */
     private val requested = atomic(0L)
     private val producer = atomic<Continuation<Unit>?>(createInitialContinuation())
+    @Volatile
+    private var cancellationRequested = false
 
     // This code wraps startCoroutineCancellable into continuation
     private fun createInitialContinuation(): Continuation<Unit> = Continuation(coroutineContext) {
@@ -204,18 +207,25 @@ public class FlowSubscription<T>(
     private suspend fun flowProcessing() {
         try {
             consumeFlow()
+        } catch (cause: Throwable) {
+            @Suppress("INVISIBLE_MEMBER")
+            val unwrappedCause = unwrap(cause)
+            if (!cancellationRequested || isActive || unwrappedCause !== getCancellationException()) {
+                try {
+                    subscriber.onError(cause)
+                } catch (e: Throwable) {
+                    // Last ditch report
+                    cause.addSuppressed(e)
+                    handleCoroutineException(coroutineContext, cause)
+                }
+            }
+            return
+        }
+        // We only call this if `consumeFlow()` finished successfully
+        try {
             subscriber.onComplete()
         } catch (e: Throwable) {
-            try {
-                if (e is CancellationException) {
-                    subscriber.onComplete()
-                } else {
-                    subscriber.onError(e)
-                }
-            } catch (e: Throwable) {
-                // Last ditch report
-                handleCoroutineException(coroutineContext, e)
-            }
+            handleCoroutineException(coroutineContext, e)
         }
     }
 
@@ -239,6 +249,7 @@ public class FlowSubscription<T>(
     }
 
     override fun cancel() {
+        cancellationRequested = true
         cancel(null)
     }
 

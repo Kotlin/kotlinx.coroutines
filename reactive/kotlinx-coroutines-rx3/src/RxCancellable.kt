@@ -20,6 +20,7 @@ internal fun handleUndeliverableException(cause: Throwable, context: CoroutineCo
     try {
         RxJavaPlugins.onError(cause)
     } catch (e: Throwable) {
+        cause.addSuppressed(e)
         handleCoroutineException(context, cause)
     }
 }

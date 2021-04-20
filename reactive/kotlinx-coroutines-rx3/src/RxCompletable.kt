@@ -50,11 +50,12 @@ private class RxCompletableCoroutine(
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
         try {
-            if (!subscriber.tryOnError(cause)) {
-                handleUndeliverableException(cause, context)
+            if (subscriber.tryOnError(cause)) {
+                return
             }
         } catch (e: Throwable) {
-            handleUndeliverableException(e, context)
+            cause.addSuppressed(e)
         }
+        handleUndeliverableException(cause, context)
     }
 }
