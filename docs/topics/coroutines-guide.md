@@ -31,6 +31,6 @@ In order to use coroutines as well as follow the examples in this guide, you nee
 
 ## Additional references
 
-* [Guide to UI programming with coroutines](https://github.com/Kotlin/kotlinx.coroutines/blob/develop/ui/coroutines-guide-ui.md)
+* [Guide to UI programming with coroutines](https://github.com/Kotlin/kotlinx.coroutines/blob/master/ui/coroutines-guide-ui.md)
 * [Coroutines design document (KEEP)](https://github.com/Kotlin/KEEP/blob/master/proposals/coroutines.md)
 * [Full kotlinx.coroutines API reference](https://kotlin.github.io/kotlinx.coroutines)
