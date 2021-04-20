@@ -7,9 +7,6 @@ package kotlinx.coroutines.jdk9
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.junit.Test
-import java.lang.NullPointerException
-import java.util.concurrent.*
-import java.util.concurrent.CancellationException
 import java.util.concurrent.Flow as JFlow
 import kotlin.test.*
 

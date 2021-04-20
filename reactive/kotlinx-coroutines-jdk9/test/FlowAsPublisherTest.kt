@@ -7,7 +7,6 @@ package kotlinx.coroutines.jdk9
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.junit.Test
-import java.util.concurrent.CancellationException
 import java.util.concurrent.Flow as JFlow
 import kotlin.test.*
 

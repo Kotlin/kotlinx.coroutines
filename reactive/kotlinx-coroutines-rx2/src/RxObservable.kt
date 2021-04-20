@@ -12,7 +12,6 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
-import java.lang.RuntimeException
 import kotlin.coroutines.*
 
 /**

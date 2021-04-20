@@ -8,8 +8,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.junit.Test
 import org.reactivestreams.*
-import java.lang.NullPointerException
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.*
 
 class PublishTest : TestBase() {

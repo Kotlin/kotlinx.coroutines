@@ -45,7 +45,7 @@ class FlowableExceptionHandlingTest : TestBase() {
         }.subscribe({
             expectUnreached()
         }, {
-            expect(2) // Fatal exception are not treated as special
+            expect(2) // Fatal exceptions are not treated as special
         })
         finish(3)
     }

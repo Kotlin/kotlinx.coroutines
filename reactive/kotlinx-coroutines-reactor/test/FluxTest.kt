@@ -5,12 +5,10 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
 import org.junit.Test
-import java.lang.NullPointerException
 import kotlin.test.*
 
 class FluxTest : TestBase() {
