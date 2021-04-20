@@ -136,66 +136,111 @@ public fun <T> CoroutineScope.mono(
 ): Mono<T> = monoInternal(this, context, block)
 
 /**
- * This function is deprecated in favor of [Mono.awaitSingle].
- * Both functions await the first value, or throw [NoSuchElementException] if there is none, but the name
- * [Mono.awaitSingle] better reflects the semantics of [Mono].
+ * This is a lint function that was added already deprecated in order to guard against confusing usages on [Mono].
+ * On [Publisher] instances other than [Mono], this function is not deprecated.
+ *
+ * Both [awaitFirst] and [awaitSingle] await the first value, or throw [NoSuchElementException] if there is none, but
+ * the name [Mono.awaitSingle] better reflects the semantics of [Mono].
+ *
+ * For example, consider this code:
+ * ```
+ * myDbClient.findById(uniqueId).awaitFirst() // findById returns a `Mono`
+ * ```
+ * It looks like more than one value could be returned from `findById` and [awaitFirst] discards the extra elements,
+ * when in fact, at most a single value can be present.
  */
 @Deprecated(
     message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
         "Please use awaitSingle() instead.",
     level = DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("this.awaitSingle()")
-) // Warning since 1.5, error in 1.6, hidden in 1.7
+) // Warning since 1.5, error in 1.6
 public suspend fun <T> Mono<T>.awaitFirst(): T = awaitSingle()
 
 /**
- * This function is deprecated in favor of [Mono.awaitSingleOrNull].
- * Both functions await the first value or return some special value if there is none, but the name
- * [Mono.awaitSingleOrNull] better reflects the semantics of [Mono] than an operation with a "first" in its name.
+ * This is a lint function that was added already deprecated in order to guard against confusing usages on [Mono].
+ * On [Publisher] instances other than [Mono], this function is not deprecated.
+ *
+ * Both [awaitFirstOrDefault] and [awaitSingleOrNull] await the first value, or return some special value if there
+ * is none, but the name [Mono.awaitSingleOrNull] better reflects the semantics of [Mono].
+ *
+ * For example, consider this code:
+ * ```
+ * myDbClient.findById(uniqueId).awaitFirstOrDefault(default) // findById returns a `Mono`
+ * ```
+ * It looks like more than one value could be returned from `findById` and [awaitFirstOrDefault] discards the extra
+ * elements, when in fact, at most a single value can be present.
  */
 @Deprecated(
     message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
         "Please use awaitSingleOrNull() instead.",
     level = DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("this.awaitSingleOrNull() ?: default")
-) // Warning since 1.5, error in 1.6, hidden in 1.7
+) // Warning since 1.5, error in 1.6
 public suspend fun <T> Mono<T>.awaitFirstOrDefault(default: T): T = awaitSingleOrNull() ?: default
 
 /**
- * This function is deprecated in favor of [Mono.awaitSingleOrNull].
- * Both functions await the first value or return some special value if there is none, but the name
- * [Mono.awaitSingleOrNull] better reflects the semantics of [Mono].
+ * This is a lint function that was added already deprecated in order to guard against confusing usages on [Mono].
+ * On [Publisher] instances other than [Mono], this function is not deprecated.
+ *
+ * Both [awaitFirstOrNull] and [awaitSingleOrNull] await the first value, or return some special value if there
+ * is none, but the name [Mono.awaitSingleOrNull] better reflects the semantics of [Mono].
+ *
+ * For example, consider this code:
+ * ```
+ * myDbClient.findById(uniqueId).awaitFirstOrNull() // findById returns a `Mono`
+ * ```
+ * It looks like more than one value could be returned from `findById` and [awaitFirstOrNull] discards the extra
+ * elements, when in fact, at most a single value can be present.
  */
 @Deprecated(
     message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
         "Please use awaitSingleOrNull() instead.",
     level = DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("this.awaitSingleOrNull()")
-) // Warning since 1.5, error in 1.6, hidden in 1.7
+) // Warning since 1.5, error in 1.6
 public suspend fun <T> Mono<T>.awaitFirstOrNull(): T? = awaitSingleOrNull()
 
 /**
- * This function is deprecated in favor of [Mono.awaitSingleOrNull].
- * Both functions await the first value or return some special value if there is none, but the name
- * [Mono.awaitSingleOrNull] better reflects the semantics of [Mono] than an operation with a "first" in its name.
+ * This is a lint function that was added already deprecated in order to guard against confusing usages on [Mono].
+ * On [Publisher] instances other than [Mono], this function is not deprecated.
+ *
+ * Both [awaitFirstOrElse] and [awaitSingleOrNull] await the first value, or return some special value if there
+ * is none, but the name [Mono.awaitSingleOrNull] better reflects the semantics of [Mono].
+ *
+ * For example, consider this code:
+ * ```
+ * myDbClient.findById(uniqueId).awaitFirstOrElse(defaultValue) // findById returns a `Mono`
+ * ```
+ * It looks like more than one value could be returned from `findById` and [awaitFirstOrElse] discards the extra
+ * elements, when in fact, at most a single value can be present.
  */
 @Deprecated(
     message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
         "Please use awaitSingleOrNull() instead.",
     level = DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("this.awaitSingleOrNull() ?: defaultValue()")
-) // Warning since 1.5, error in 1.6, hidden in 1.7
+) // Warning since 1.5, error in 1.6
 public suspend fun <T> Mono<T>.awaitFirstOrElse(defaultValue: () -> T): T = awaitSingleOrNull() ?: defaultValue()
 
 /**
- * This function is deprecated in favor of [Mono.awaitSingle].
- * Both functions await the only value or return some special value if there is none, but the name
- * "awaitLast" strongly suggests that there is more than one value, which is not the case.
+ * This is a lint function that was added already deprecated in order to guard against confusing usages on [Mono].
+ * On [Publisher] instances other than [Mono], this function is not deprecated.
+ *
+ * Both [awaitLast] and [awaitSingle] await the single value, or throw [NoSuchElementException] if there is none, but
+ * the name [Mono.awaitSingle] better reflects the semantics of [Mono].
+ *
+ * For example, consider this code:
+ * ```
+ * myDbClient.findById(uniqueId).awaitLast() // findById returns a `Mono`
+ * ```
+ * It looks like more than one value could be returned from `findById` and [awaitLast] discards the initial elements,
+ * when in fact, at most a single value can be present.
  */
 @Deprecated(
     message = "Mono produces at most one value, so the last element is the same as the first. " +
         "Please use awaitSingle() instead.",
     level = DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("this.awaitSingle()")
-) // Warning since 1.5, error in 1.6, hidden in 1.7
+) // Warning since 1.5, error in 1.6
 public suspend fun <T> Mono<T>.awaitLast(): T = awaitSingle()
