@@ -144,3 +144,28 @@ public suspend fun <T> Flow<T>.firstOrNull(predicate: suspend (T) -> Boolean): T
     }
     return result
 }
+
+/**
+ * The terminal operator that returns the last element emitted by the flow.
+ *
+ * Throws [NoSuchElementException] if the flow was empty.
+ */
+public suspend fun <T> Flow<T>.last(): T {
+    var result: Any? = NULL
+    collect {
+        result = it
+    }
+    if (result === NULL) throw NoSuchElementException("Expected at least one element")
+    return result as T
+}
+
+/**
+ * The terminal operator that returns the last element emitted by the flow or `null` if the flow was empty.
+ */
+public suspend fun <T> Flow<T>.lastOrNull(): T? {
+    var result: T? = null
+    collect {
+        result = it
+    }
+    return result
+}
