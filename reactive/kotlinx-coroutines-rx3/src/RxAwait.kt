@@ -71,12 +71,17 @@ public suspend fun <T> MaybeSource<T>.awaitSingle(): T = awaitSingleOrNull() ?: 
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
+ *
+ * ### Deprecation
+ *
+ * Deprecated in favor of [awaitSingleOrNull] in order to reflect that `null` can be returned to denote the absence of
+ * a value, as opposed to throwing in such case.
  */
 @Deprecated(
     message = "Deprecated in favor of awaitSingleOrNull()",
     level = DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("this.awaitSingleOrNull()")
-)
+) // Warning since 1.5, error in 1.6, hidden in 1.7
 public suspend fun <T> MaybeSource<T>.await(): T? = awaitSingleOrNull()
 
 /**
@@ -87,12 +92,17 @@ public suspend fun <T> MaybeSource<T>.await(): T? = awaitSingleOrNull()
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
+ *
+ * ### Deprecation
+ *
+ * Deprecated in favor of [awaitSingleOrNull] for naming consistency (see the deprecation of [MaybeSource.await] for
+ * details).
  */
 @Deprecated(
     message = "Deprecated in favor of awaitSingleOrNull()",
     level = DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("this.awaitSingleOrNull() ?: default")
-)
+) // Warning since 1.5, error in 1.6, hidden in 1.7
 public suspend fun <T> MaybeSource<T>.awaitOrDefault(default: T): T = awaitSingleOrNull() ?: default
 
 // ------------------------ SingleSource ------------------------

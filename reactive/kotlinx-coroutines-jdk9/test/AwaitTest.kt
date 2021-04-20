@@ -5,9 +5,8 @@
 package kotlinx.coroutines.jdk9
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.CancellationException
 import org.junit.*
-import java.util.concurrent.*
+import java.util.concurrent.Flow as JFlow
 
 class AwaitTest: TestBase() {
 
@@ -16,8 +15,8 @@ class AwaitTest: TestBase() {
     @Test
     fun testAwaitCancellation() = runTest {
         expect(1)
-        val publisher = Flow.Publisher<Int> { s ->
-            s.onSubscribe(object : Flow.Subscription {
+        val publisher = JFlow.Publisher<Int> { s ->
+            s.onSubscribe(object : JFlow.Subscription {
                 override fun request(n: Long) {
                     expect(3)
                 }

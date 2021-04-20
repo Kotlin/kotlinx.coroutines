@@ -9,10 +9,10 @@ import io.reactivex.rxjava3.disposables.*
 import io.reactivex.rxjava3.exceptions.*
 import io.reactivex.rxjava3.internal.functions.Functions.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
-import java.util.concurrent.CancellationException as jCancellationException
 import kotlin.test.*
 
 class MaybeTest : TestBase() {
@@ -235,7 +235,7 @@ class MaybeTest : TestBase() {
             expect(4)
             try {
                 delay(Long.MAX_VALUE)
-            } catch (e: jCancellationException) {
+            } catch (e: CancellationException) {
                 expect(6)
             }
             42
