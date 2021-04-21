@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+#
+# Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+#
+
 # Abort on first error
 set -e
 
@@ -47,7 +51,8 @@ git rm `find . -type f -not -name '*.html' -not -name '.git'` > /dev/null
 echo "Redirecting experimental pages"
 git_add=()
 git_rm=()
-for file in `find . -type f -name '*.html'` ; do
+`find . -type f -name '*.html'` | while read file
+do
     match=nothing_is_found
     if [[ $file =~ \.experimental ]] ; then
         match="${file//\.experimental/}"
