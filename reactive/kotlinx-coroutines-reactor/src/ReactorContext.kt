@@ -12,12 +12,12 @@ import reactor.util.context.*
 /**
  * Wraps Reactor's [Context] into a [CoroutineContext] element for seamless integration between
  * Reactor and kotlinx.coroutines.
- * [Context.asCoroutineContext] is defined to place Reactor's [Context] elements into a [CoroutineContext],
+ * [Context.asCoroutineContext] puts Reactor's [Context] elements into a [CoroutineContext],
  * which can be used to propagate the information about Reactor's [Context] through coroutines.
  *
- * This context element is implicitly propagated through subscriber's context by all Reactive integrations,
+ * This context element is implicitly propagated through subscribers' context by all Reactive integrations,
  * such as [mono], [flux], [Publisher.asFlow][asFlow], [Flow.asPublisher][asPublisher] and [Flow.asFlux][asFlux].
- * Functions that subscribe to the reactive stream
+ * Functions that subscribe to a reactive stream
  * (e.g. [Publisher.awaitFirst][kotlinx.coroutines.reactive.awaitFirst]), too, propagate [ReactorContext]
  * to the subscriber's [Context].
  **
@@ -52,6 +52,7 @@ import reactor.util.context.*
 @ExperimentalCoroutinesApi
 public class ReactorContext(public val context: Context) : AbstractCoroutineContextElement(ReactorContext) {
 
+    // `Context.of` is zero-cost if the argument is a `Context`
     public constructor(contextView: ContextView): this(Context.of(contextView))
 
     public companion object Key : CoroutineContext.Key<ReactorContext>
@@ -69,8 +70,8 @@ public fun ContextView.asCoroutineContext(): ReactorContext = ReactorContext(thi
  * and later used via `coroutineContext[ReactorContext]`.
  */
 @ExperimentalCoroutinesApi
-@Deprecated("Use the more general version for ContextView instead", level = DeprecationLevel.HIDDEN)
-public fun Context.asCoroutineContext(): ReactorContext = readOnly().asCoroutineContext()
+@Deprecated("The more general version for ContextView should be used instead", level = DeprecationLevel.HIDDEN)
+public fun Context.asCoroutineContext(): ReactorContext = readOnly().asCoroutineContext() // `readOnly()` is zero-cost.
 
 /**
  * Updates the Reactor context in this [CoroutineContext], adding (or possibly replacing) some values.

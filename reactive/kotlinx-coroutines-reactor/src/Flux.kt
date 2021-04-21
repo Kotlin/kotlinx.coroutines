@@ -11,15 +11,14 @@ import org.reactivestreams.*
 import reactor.core.*
 import reactor.core.publisher.*
 import reactor.util.context.*
-import java.lang.IllegalArgumentException
 import kotlin.coroutines.*
 
 /**
- * Creates a cold reactive [Flux] that runs a given [block] in a coroutine.
+ * Creates a cold reactive [Flux] that runs the given [block] in a coroutine.
  * Every time the returned flux is subscribed, it starts a new coroutine in the specified [context].
- * Coroutine emits ([Subscriber.onNext]) values with [send][ProducerScope.send], completes ([Subscriber.onComplete])
- * when the coroutine completes, or the channel is explicitly closed and emits an error ([Subscriber.onError])
- * if the coroutine throws an exception or closes the channel with a cause.
+ * The coroutine emits ([Subscriber.onNext]) values with [send][ProducerScope.send], completes ([Subscriber.onComplete])
+ * when the coroutine completes, or, in case the coroutine throws an exception or the channel is closed,
+ * emits the error ([Subscriber.onError]) and closes the channel with the cause.
  * Unsubscribing cancels the running coroutine.
  *
  * Invocations of [send][ProducerScope.send] are suspended appropriately when subscribers apply back-pressure and to
