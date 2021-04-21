@@ -23,11 +23,10 @@ kotlin {
 
 // For kotlinx-html
 repositories {
-    maven("https://kotlin.bintray.com/kotlinx")
+    maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
 }
 
 dependencies {
-
     implementation("org.jetbrains.kotlinx:kotlinx-html-js:${version("html")}")
     implementation(devNpm("html-webpack-plugin", "3.2.0"))
 }
