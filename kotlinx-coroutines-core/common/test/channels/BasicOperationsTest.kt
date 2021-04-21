@@ -15,6 +15,11 @@ class BasicOperationsTest : TestBase() {
     }
 
     @Test
+    fun testTrySendToFullChannel() = runTest {
+        TestChannelKind.values().forEach { kind -> testTrySendToFullChannel(kind) }
+    }
+
+    @Test
     fun testTrySendAfterClose() = runTest {
         TestChannelKind.values().forEach { kind -> testTrySend(kind) }
     }
@@ -118,13 +123,28 @@ class BasicOperationsTest : TestBase() {
         assertTrue(channel.isClosedForSend)
         channel.trySend(2)
             .onSuccess { expectUnreached() }
-            .onFailure {
+            .onClosed {
                 assertTrue { it is  ClosedSendChannelException}
                 if (!kind.isConflated) {
                     assertEquals(42, channel.receive())
                 }
             }
         d.await()
+    }
+
+    private suspend fun testTrySendToFullChannel(kind: TestChannelKind) = coroutineScope {
+        if (kind.isConflated || kind.capacity == Int.MAX_VALUE) return@coroutineScope
+        val channel = kind.create<Int>()
+        // Make it full
+        repeat(11) {
+            channel.trySend(42)
+        }
+        channel.trySend(1)
+            .onSuccess { expectUnreached() }
+            .onFailure { assertNull(it) }
+            .onClosed {
+                expectUnreached()
+            }
     }
 
     /**

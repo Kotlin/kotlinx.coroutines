@@ -144,13 +144,22 @@ public interface SendChannel<in E> {
      *   oversee such error during code review.
      * * Its name was not aligned with the rest of the API and tried to mimic Java's queue instead.
      *
+     * **NB** Automatic migration provides best-effort for the user experience, but requires removal
+     * or adjusting of the code that relied on the exception handling.
+     * The complete replacement has a more verbose form:
+     * ```
+     * channel.trySend(element)
+     *     .onClosed { throw it ?: ClosedSendChannelException("Channel was closed normally") }
+     *     .isSuccess
+     * ```
+     *
      * See https://github.com/Kotlin/kotlinx.coroutines/issues/974 for more context.
      */
     @Deprecated(
         level = DeprecationLevel.WARNING,
         message = "Deprecated in the favour of 'trySend' method",
         replaceWith = ReplaceWith("trySend(element).isSuccess")
-    ) // Since 1.5.0
+    ) // Warning since 1.5.0
     public fun offer(element: E): Boolean {
         val result = trySend(element)
         if (result.isSuccess) return true
@@ -297,7 +306,7 @@ public interface ReceiveChannel<out E> {
     @Deprecated(level = DeprecationLevel.WARNING,
         message = "Deprecated in the favour of 'tryReceive'",
         replaceWith = ReplaceWith("tryReceive().getOrNull()")
-    ) // Since 1.5.0
+    ) // Warning since 1.5.0
     public fun poll(): E? {
         val result = tryReceive()
         if (result.isSuccess) return result.getOrThrow()
@@ -362,6 +371,8 @@ public interface ReceiveChannel<out E> {
  * E.g. when the channel is full, [Channel.trySend] returns failed result, but the channel itself is not in the failed state.
  *
  * The closed result represents an operation attempt to a closed channel and also implies that the operation has failed.
+ * It is guaranteed that if the result is _closed_, then the target channel is either [closed for send][Channel.isClosedForSend]
+ * or is [closed for receive][Channel.isClosedForReceive] depending on whether the failed operation was sending or receiving.
  */
 @JvmInline
 public value class ChannelResult<out T>
@@ -399,12 +410,14 @@ public value class ChannelResult<out T>
     /**
      * Returns the encapsulated value if this instance represents success or `null` if it represents failed result.
      */
+    @Suppress("UNCHECKED_CAST")
     public fun getOrNull(): T? = if (holder !is Failed) holder as T else null
 
     /**
      *  Returns the encapsulated value if this instance represents success or throws an exception if it is closed or failed.
      */
     public fun getOrThrow(): T {
+        @Suppress("UNCHECKED_CAST")
         if (holder !is Failed) return holder as T
         if (holder is Closed && holder.cause != null) throw holder.cause
         error("Trying to call 'getOrThrow' on a failed channel result: $holder")
@@ -492,6 +505,25 @@ public inline fun <T> ChannelResult<T>.onFailure(action: (exception: Throwable?)
     }
     @Suppress("UNCHECKED_CAST")
     if (holder is ChannelResult.Failed) action(exceptionOrNull())
+    return this
+}
+
+/**
+ * Performs the given [action] on the encapsulated [Throwable] exception if this instance represents [failure][ChannelResult.isFailure]
+ * due to channel being [closed][Channel.close].
+ * The result of [ChannelResult.exceptionOrNull] is passed to the [action] parameter.
+ * It is guaranteed that if action is invoked, then the channel is either [closed for send][Channel.isClosedForSend]
+ * or is [closed for receive][Channel.isClosedForReceive] depending on the failed operation.
+ *
+ * Returns the original `ChannelResult` unchanged.
+ */
+@OptIn(ExperimentalContracts::class)
+public inline fun <T> ChannelResult<T>.onClosed(action: (exception: Throwable?) -> Unit): ChannelResult<T> {
+    contract {
+        callsInPlace(action, InvocationKind.AT_MOST_ONCE)
+    }
+    @Suppress("UNCHECKED_CAST")
+    if (holder is ChannelResult.Closed) action(exceptionOrNull())
     return this
 }
 
