@@ -16,8 +16,8 @@ import kotlinx.coroutines.reactive.*
  *
  * This context element is implicitly propagated through subscriber's context by all Reactive integrations, such as [mono], [flux],
  * [Publisher.asFlow][asFlow], [Flow.asPublisher][asPublisher] and [Flow.asFlux][asFlux].
- * Functions that subscribe to the reactive stream (e.g. [Publisher.awaitFirst][awaitFirst]) also propagate [ReactorContext] to the
- * subscriber's [Context].
+ * Functions that subscribe to the reactive stream (e.g. [Publisher.awaitFirst][kotlinx.coroutines.reactive.awaitFirst])
+ * also propagate the [ReactorContext] to the subscriber's [Context].
  **
  * ### Examples of Reactive context integration.
  *
