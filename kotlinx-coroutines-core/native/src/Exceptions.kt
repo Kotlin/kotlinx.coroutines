@@ -11,6 +11,7 @@ package kotlinx.coroutines
  * (see [CoroutineExceptionHandler]).
  */
 public actual typealias CancellationException = kotlin.coroutines.cancellation.CancellationException
+
 /**
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled or completed
  * without cause, or with a cause or exception that is not [CancellationException]
