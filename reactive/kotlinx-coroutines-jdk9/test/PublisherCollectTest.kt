@@ -2,12 +2,14 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.reactive
+package kotlinx.coroutines.jdk9
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
 import org.junit.Test
 import org.reactivestreams.*
 import kotlin.test.*
+import java.util.concurrent.Flow as JFlow
 
 class PublisherCollectTest: TestBase() {
 
@@ -16,10 +18,10 @@ class PublisherCollectTest: TestBase() {
     fun testCollect() = runTest {
         val x = 100
         val xSum = x * (x + 1) / 2
-        val publisher = Publisher<Int> { subscriber ->
+        val publisher = JFlow.Publisher<Int> { subscriber ->
             var requested = 0L
             var lastOutput = 0
-            subscriber.onSubscribe(object: Subscription {
+            subscriber.onSubscribe(object: JFlow.Subscription {
 
                 override fun request(n: Long) {
                     requested += n
