@@ -9,6 +9,7 @@ import io.reactivex.rxjava3.disposables.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.flow.*
 
 /**
  * Subscribes to this [MaybeSource] and returns a channel to receive elements emitted by it.
@@ -40,14 +41,18 @@ internal fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
 
 /**
  * Subscribes to this [MaybeSource] and performs the specified action for each received element.
- * Cancels subscription if any exception happens during collect.
+ *
+ * If [action] throws an exception at some point or if the [MaybeSource] raises an error, the exception is rethrown from
+ * [collect].
  */
 public suspend inline fun <T> MaybeSource<T>.collect(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
 
 /**
  * Subscribes to this [ObservableSource] and performs the specified action for each received element.
- * Cancels subscription if any exception happens during collect.
+ *
+ * If [action] throws an exception at some point, the subscription is cancelled, and the exception is rethrown from
+ * [collect]. Also, if the [ObservableSource] signals an error, that error is rethrown from [collect].
  */
 public suspend inline fun <T> ObservableSource<T>.collect(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
@@ -69,7 +74,8 @@ private class SubscriptionChannel<T> :
     }
 
     override fun onSuccess(t: T) {
-        trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
+        trySend(t)
+        close(cause = null)
     }
 
     override fun onNext(t: T) {

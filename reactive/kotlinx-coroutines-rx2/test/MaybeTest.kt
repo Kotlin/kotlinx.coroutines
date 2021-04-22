@@ -254,6 +254,56 @@ class MaybeTest : TestBase() {
         finish(7)
     }
 
+    /** Tests the simple scenario where the Maybe doesn't output a value. */
+    @Test
+    fun testMaybeCollectEmpty() = runTest {
+        expect(1)
+        Maybe.empty<Int>().collect {
+            expectUnreached()
+        }
+        finish(2)
+    }
+
+    /** Tests the simple scenario where the Maybe doesn't output a value. */
+    @Test
+    fun testMaybeCollectSingle() = runTest {
+        expect(1)
+        Maybe.just("OK").collect {
+            assertEquals("OK", it)
+            expect(2)
+        }
+        finish(3)
+    }
+
+    /** Tests the behavior of [collect] when the Maybe raises an error. */
+    @Test
+    fun testMaybeCollectThrowingMaybe() = runTest {
+        expect(1)
+        try {
+            Maybe.error<Int>(TestException()).collect {
+                expectUnreached()
+            }
+        } catch (e: TestException) {
+            expect(2)
+        }
+        finish(3)
+    }
+
+    /** Tests the behavior of [collect] when the action throws. */
+    @Test
+    fun testMaybeCollectThrowingAction() = runTest {
+        expect(1)
+        try {
+            Maybe.just("OK").collect {
+                expect(2)
+                throw TestException()
+            }
+        } catch (e: TestException) {
+            expect(3)
+        }
+        finish(4)
+    }
+
     @Test
     fun testSuppressedException() = runTest {
         val maybe = rxMaybe(currentDispatcher()) {

@@ -17,12 +17,12 @@ import kotlinx.coroutines.internal.*
 
 /**
  * Transforms the given reactive [Publisher] into [Flow].
- * Use [buffer] operator on the resulting flow to specify the size of the backpressure.
- * More precisely, it specifies the value of the subscription's [request][Subscription.request].
- * [buffer] default capacity is used by default.
+ * Use the [buffer] operator on the resulting flow to specify the size of the back-pressure.
+ * In effect, it specifies the value of the subscription's [request][Subscription.request].
+ * The [default buffer capacity][Channel.BUFFERED] for a suspending channel is used by default.
  *
- * If any of the resulting flow transformations fails, subscription is immediately cancelled and all in-flight elements
- * are discarded.
+ * If any of the resulting flow transformations fails, the subscription is immediately cancelled and all the in-flight
+ * elements are discarded.
  *
  * This function is integrated with `ReactorContext` from `kotlinx-coroutines-reactor` module,
  * see its documentation for additional details.
@@ -31,13 +31,13 @@ public fun <T : Any> Publisher<T>.asFlow(): Flow<T> =
     PublisherAsFlow(this)
 
 /**
- * Transforms the given flow to a reactive specification compliant [Publisher].
+ * Transforms the given flow into a reactive specification compliant [Publisher].
  *
  * This function is integrated with `ReactorContext` from `kotlinx-coroutines-reactor` module,
  * see its documentation for additional details.
  *
- * An optional [context] can be specified to control the execution context of calls to [Subscriber] methods.
- * You can set a [CoroutineDispatcher] to confine them to a specific thread and/or various [ThreadContextElement] to
+ * An optional [context] can be specified to control the execution context of calls to the [Subscriber] methods.
+ * A [CoroutineDispatcher] can be set to confine them to a specific thread; various [ThreadContextElement] can be set to
  * inject additional context into the caller thread. By default, the [Unconfined][Dispatchers.Unconfined] dispatcher
  * is used, so calls are performed from an arbitrary thread.
  */
@@ -55,8 +55,8 @@ private class PublisherAsFlow<T : Any>(
         PublisherAsFlow(publisher, context, capacity, onBufferOverflow)
 
     /*
-     * Suppress for Channel.CHANNEL_DEFAULT_CAPACITY.
-     * It's too counter-intuitive to be public and moving it to Flow companion
+     * The @Suppress is for Channel.CHANNEL_DEFAULT_CAPACITY.
+     * It's too counter-intuitive to be public, and moving it to Flow companion
      * will also create undesired effect.
      */
     @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
