@@ -85,3 +85,12 @@ class BadClass {
     override fun hashCode(): Int = error("hashCode")
     override fun toString(): String = error("toString")
 }
+
+/**
+ * Tries to resume this continuation, returns `true` if succeeds and `false` otherwise.
+ */
+internal fun <T> CancellableContinuation<T>.tryResume0(value: T, onCancellation: ((cause: Throwable) -> Unit)?): Boolean {
+    val token = tryResume(value, null, onCancellation) ?: return false
+    completeResume(token)
+    return true
+}

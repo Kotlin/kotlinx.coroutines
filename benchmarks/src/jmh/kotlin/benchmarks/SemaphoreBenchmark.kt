@@ -14,8 +14,8 @@ import org.openjdk.jmh.annotations.*
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.TimeUnit
 
-@Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MICROSECONDS)
-@Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MICROSECONDS)
+@Warmup(iterations = 2, time = 500, timeUnit = TimeUnit.MICROSECONDS)
+@Measurement(iterations = 5, time = 500, timeUnit = TimeUnit.MICROSECONDS)
 @Fork(value = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -31,7 +31,6 @@ open class SemaphoreBenchmark {
     private var _3_maxPermits: Int = 0
 
     @Param("1", "2", "4") // local machine
-//    @Param("1", "2", "4", "8", "16", "32", "64", "128", "144") // dasquad
 //    @Param("1", "2", "4", "8", "16", "32", "64", "96") // Google Cloud
     private var _4_parallelism: Int = 0
 
@@ -51,7 +50,7 @@ open class SemaphoreBenchmark {
         val semaphore = Semaphore(_3_maxPermits)
         val jobs = ArrayList<Job>(coroutines)
         repeat(coroutines) {
-            jobs += GlobalScope.launch {
+            jobs += GlobalScope.launch(dispatcher) {
                 repeat(n) {
                     semaphore.withPermit {
                         doGeomDistrWork(WORK_INSIDE)
@@ -69,7 +68,7 @@ open class SemaphoreBenchmark {
         val semaphore = Channel<Unit>(_3_maxPermits)
         val jobs = ArrayList<Job>(coroutines)
         repeat(coroutines) {
-            jobs += GlobalScope.launch {
+            jobs += GlobalScope.launch(dispatcher) {
                 repeat(n) {
                     semaphore.send(Unit) // acquire
                     doGeomDistrWork(WORK_INSIDE)
@@ -89,4 +88,4 @@ enum class SemaphoreBenchDispatcherCreator(val create: (parallelism: Int) -> Cor
 
 private const val WORK_INSIDE = 80
 private const val WORK_OUTSIDE = 40
-private const val BATCH_SIZE = 1000000
+private const val BATCH_SIZE = 1_000_000
