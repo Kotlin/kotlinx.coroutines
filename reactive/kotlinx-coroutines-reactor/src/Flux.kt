@@ -14,20 +14,20 @@ import reactor.util.context.*
 import kotlin.coroutines.*
 
 /**
- * Creates cold reactive [Flux] that runs a given [block] in a coroutine.
+ * Creates a cold reactive [Flux] that runs the given [block] in a coroutine.
  * Every time the returned flux is subscribed, it starts a new coroutine in the specified [context].
- * Coroutine emits ([Subscriber.onNext]) values with `send`, completes ([Subscriber.onComplete])
- * when the coroutine completes or channel is explicitly closed and emits error ([Subscriber.onError])
- * if coroutine throws an exception or closes channel with a cause.
- * Unsubscribing cancels running coroutine.
+ * The coroutine emits ([Subscriber.onNext]) values with [send][ProducerScope.send], completes ([Subscriber.onComplete])
+ * when the coroutine completes, or, in case the coroutine throws an exception or the channel is closed,
+ * emits the error ([Subscriber.onError]) and closes the channel with the cause.
+ * Unsubscribing cancels the running coroutine.
  *
- * Invocations of `send` are suspended appropriately when subscribers apply back-pressure and to ensure that
- * `onNext` is not invoked concurrently.
- *
- * Method throws [IllegalArgumentException] if provided [context] contains a [Job] instance.
+ * Invocations of [send][ProducerScope.send] are suspended appropriately when subscribers apply back-pressure and to
+ * ensure that [onNext][Subscriber.onNext] is not invoked concurrently.
  *
  * **Note: This is an experimental api.** Behaviour of publishers that work as children in a parent scope with respect
  *        to cancellation and error handling may change in the future.
+ *
+ * @throws IllegalArgumentException if the provided [context] contains a [Job] instance.
  */
 @ExperimentalCoroutinesApi
 public fun <T> flux(
@@ -43,12 +43,13 @@ private fun <T> reactorPublish(
     scope: CoroutineScope,
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Publisher<T> = Publisher { subscriber ->
-    // specification requires NPE on null subscriber
-    if (subscriber == null) throw NullPointerException("Subscriber cannot be null")
-    require(subscriber is CoreSubscriber) { "Subscriber is not an instance of CoreSubscriber, context can not be extracted." }
+): Publisher<T> = Publisher onSubscribe@{ subscriber: Subscriber<in T>? ->
+    if (subscriber !is CoreSubscriber) {
+        subscriber.reject(IllegalArgumentException("Subscriber is not an instance of CoreSubscriber, context can not be extracted."))
+        return@onSubscribe
+    }
     val currentContext = subscriber.currentContext()
-    val reactorContext = (context[ReactorContext]?.context?.putAll(currentContext) ?: currentContext).asCoroutineContext()
+    val reactorContext = context.extendReactorContext(currentContext)
     val newContext = scope.newCoroutineContext(context + reactorContext)
     val coroutine = PublisherCoroutine(newContext, subscriber, REACTOR_HANDLER)
     subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
@@ -64,6 +65,23 @@ private val REACTOR_HANDLER: (Throwable, CoroutineContext) -> Unit = { cause, ct
             handleCoroutineException(ctx, cause)
         }
     }
+}
+
+/** The proper way to reject the subscriber, according to
+ * [the reactive spec](https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.3/README.md#1.9)
+ */
+private fun <T> Subscriber<T>?.reject(t: Throwable) {
+    if (this == null)
+        throw NullPointerException("The subscriber can not be null")
+    onSubscribe(object: Subscription {
+        override fun request(n: Long) {
+            // intentionally left blank
+        }
+        override fun cancel() {
+            // intentionally left blank
+        }
+    })
+    onError(t)
 }
 
 @Deprecated(

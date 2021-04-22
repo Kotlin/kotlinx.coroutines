@@ -83,7 +83,7 @@ private fun <T> monoInternal(
     context: CoroutineContext,
     block: suspend CoroutineScope.() -> T?
 ): Mono<T> = Mono.create { sink ->
-    val reactorContext = (context[ReactorContext]?.context?.putAll(sink.currentContext()) ?: sink.currentContext()).asCoroutineContext()
+    val reactorContext = context.extendReactorContext(sink.currentContext())
     val newContext = scope.newCoroutineContext(context + reactorContext)
     val coroutine = MonoCoroutine(newContext, sink)
     sink.onDispose(coroutine)

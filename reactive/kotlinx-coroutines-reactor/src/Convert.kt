@@ -41,8 +41,8 @@ public fun <T> Deferred<T?>.asMono(context: CoroutineContext): Mono<T> = mono(co
 /**
  * Converts a stream of elements received from the channel to the hot reactive flux.
  *
- * Every subscriber receives values from this channel in **fan-out** fashion. If the are multiple subscribers,
- * they'll receive values in round-robin way.
+ * Every subscriber receives values from this channel in a **fan-out** fashion. If the are multiple subscribers,
+ * they'll receive values in a round-robin way.
  * @param context -- the coroutine context from which the resulting flux is going to be signalled
  */
 @Deprecated(message = "Deprecated in the favour of consumeAsFlow()",
