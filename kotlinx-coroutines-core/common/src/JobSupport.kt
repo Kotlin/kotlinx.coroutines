@@ -456,7 +456,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // Create node upfront -- for common cases it just initializes JobNode.job field,
         // for user-defined handlers it allocates a JobNode object that we might not need, but this is Ok.
         val node: JobNode = makeNode(handler, onCancelling)
-        var nodeAdded: JobNode? = null
+        var nodeAdded: JobNode? = null // prevents handler from double invocation
         loopOnState { state ->
             when (state) {
                 is Empty -> { // EMPTY_X state -- no completion handlers
@@ -484,6 +484,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                                 // or we are adding a child to a coroutine that is not completing yet
                                 if (rootCause == null || handler.isHandlerOf<ChildHandleNode>() && !state.isCompleting) {
                                     // Note: add node the list while holding lock on state (make sure it cannot change)
+                                    nodeAdded = node
                                     if (!addLast(state, list, node)) {
                                         // parent failed to add ChildCompletion node to the child, the child became Completed
                                         // if ChildCompletion is already invoked, child started parent completion
@@ -510,6 +511,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                             return handle
                         } else {
                             // if ChildCompletion is already invoked, return handler, so that parent would wait for the child to complete
+                            nodeAdded = node
                             if (addLast(state, list, node) || node is ChildCompletion && !node.markInvoked()) {
                                 return node
                             }
