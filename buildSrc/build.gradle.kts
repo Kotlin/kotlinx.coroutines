@@ -17,6 +17,7 @@ repositories {
         maven("https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlin-dev")
     } else {
         maven("https://plugins.gradle.org/m2")
+        // Leftover until we migrated to Dokka 1.4.30
         maven("https://dl.bintray.com/kotlin/kotlin-dev")
     }
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
