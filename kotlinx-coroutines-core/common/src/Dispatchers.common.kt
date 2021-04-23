@@ -80,12 +80,20 @@ public expect object Dispatchers {
     public val Unconfined: CoroutineDispatcher
 
     /**
-     * Shuts down the dispatcher.
+     * Shuts down the [Default] dispatcher.
      *
      * Its implementation depends on the platform:
      * - On Kotlin/JVM and Kotlin/JS takes no effect.
-     * - On Kotlin/Native requests termination of the worker created by the [Default] dispatcher.
+     * - On Kotlin/Native requests termination of the Worker created by the [Default] dispatcher.
+     *   [Default] dispatcher is backed by a [SingleThreadDispatcher] that creates a Worker and never shuts it down.
+     *   According to the current implementation, Kotlin/Native memory leak checker can not do it’s job while
+     *   there are active workers left at the program shutdown. Thus, if the memory leak checker is activated
+     *   (`Platform.isMemoryLeakCheckerActive = true`) this method should be called before program termination
+     *   to avoid the leaking worker.
+     *
+     * **Note**: For now this declaration is only present in `native-mt` versions of `kotlinx.coroutines`.
+     *           It will be available in regular versions when #2558 is implemeted.
      */
     @ExperimentalCoroutinesApi
-    public fun CoroutineDispatcher.shutdown()
+    public fun Dispatchers.shutdownDefaultDispatcher()
 }

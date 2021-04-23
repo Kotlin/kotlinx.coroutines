@@ -116,5 +116,5 @@ public actual object Dispatchers {
     @JvmStatic
     public val IO: CoroutineDispatcher = DefaultScheduler.IO
 
-    public actual fun CoroutineDispatcher.shutdown() {}
+    public actual fun Dispatchers.shutdownDefaultDispatcher() {}
 }
