@@ -49,7 +49,6 @@ import reactor.util.context.*
  *     .subscribe() // Will print "Reactor context in Flow: Context{'answer'=42}"
  * ```
  */
-@ExperimentalCoroutinesApi
 public class ReactorContext(public val context: Context) : AbstractCoroutineContextElement(ReactorContext) {
 
     // `Context.of` is zero-cost if the argument is a `Context`
@@ -62,14 +61,12 @@ public class ReactorContext(public val context: Context) : AbstractCoroutineCont
  * Wraps the given [ContextView] into [ReactorContext], so it can be added to the coroutine's context
  * and later used via `coroutineContext[ReactorContext]`.
  */
-@ExperimentalCoroutinesApi
 public fun ContextView.asCoroutineContext(): ReactorContext = ReactorContext(this)
 
 /**
  * Wraps the given [Context] into [ReactorContext], so it can be added to the coroutine's context
  * and later used via `coroutineContext[ReactorContext]`.
  */
-@ExperimentalCoroutinesApi
 @Deprecated("The more general version for ContextView should be used instead", level = DeprecationLevel.HIDDEN)
 public fun Context.asCoroutineContext(): ReactorContext = readOnly().asCoroutineContext() // `readOnly()` is zero-cost.
 

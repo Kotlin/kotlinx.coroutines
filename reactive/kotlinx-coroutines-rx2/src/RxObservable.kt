@@ -30,7 +30,6 @@ import kotlin.coroutines.*
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * Method throws [IllegalArgumentException] if provided [context] contains a [Job] instance.
  */
-@ExperimentalCoroutinesApi
 public fun <T : Any> rxObservable(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
