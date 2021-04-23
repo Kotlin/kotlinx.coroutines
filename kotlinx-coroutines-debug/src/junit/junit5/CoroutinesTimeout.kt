@@ -14,12 +14,10 @@ import java.lang.annotation.*
  * separate thread, failing them after the provided time limit and interrupting the thread.
  *
  * Additionally, it installs [DebugProbes] and dumps all coroutines at the moment of the timeout. It also cancels
- * coroutines on timeout if [cancelOnTimeout] set to `true`. The dump contains the coroutine creation stack traces. If
- * there is need to disable the creation stack traces in order to speed tests up, consider directly using
- * [CoroutinesTimeoutExtension], which allows such configuration.
+ * coroutines on timeout if [cancelOnTimeout] set to `true`. The dump contains the coroutine creation stack traces.
  *
- * This annotation registers [CoroutinesTimeoutExtension] on test, test factory, test template, and lifecycle methods
- * and test classes that are annotated with it.
+ * This annotation has an effect on test, test factory, test template, and lifecycle methods and test classes that are
+ * annotated with it.
  *
  * Annotating a class is the same as annotating every test, test factory, and test template method (but not lifecycle
  * methods) of that class and its inner test classes, unless any of them is annotated with [CoroutinesTimeout], in which
@@ -27,9 +25,6 @@ import java.lang.annotation.*
  *
  * Declaring [CoroutinesTimeout] on a test factory checks that it finishes in the specified time, but does not check
  * whether the methods that it produces obey the timeout as well.
- *
- * Beware that registering the extension via this annotation conflicts with manually registering the extension on the
- * same tests via other methods (most notably, [RegisterExtension]) and is prohibited.
  *
  * Example usage:
  * ```
@@ -55,7 +50,6 @@ import java.lang.annotation.*
  * ```
  *
  * @see Timeout
- * @see CoroutinesTimeoutExtension
  */
 @ExtendWith(CoroutinesTimeoutExtension::class)
 @Inherited

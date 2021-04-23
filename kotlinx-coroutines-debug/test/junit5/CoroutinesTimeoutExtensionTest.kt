@@ -22,7 +22,7 @@ class CoroutinesTimeoutExtensionTest {
     class DisabledStackTracesTest {
         @JvmField
         @RegisterExtension
-        val timeout = CoroutinesTimeoutExtension(500, true, false)
+        internal val timeout = CoroutinesTimeoutExtension(500, true, false)
 
         private val job = GlobalScope.launch(Dispatchers.Unconfined) { hangForever() }
 
@@ -55,7 +55,7 @@ class CoroutinesTimeoutExtensionTest {
 
         @JvmField
         @RegisterExtension
-        val timeout = CoroutinesTimeoutExtension(500)
+        internal val timeout = CoroutinesTimeoutExtension(500)
 
         private val job = GlobalScope.launch(Dispatchers.Unconfined) { hangForever() }
 
@@ -87,7 +87,7 @@ class CoroutinesTimeoutExtensionTest {
 
         @JvmField
         @RegisterExtension
-        public val timeout = CoroutinesTimeoutExtension(1000, false, true)
+        internal val timeout = CoroutinesTimeoutExtension(1000, false, true)
 
         @Test
         fun hangingTest() = runBlocking<Unit> {

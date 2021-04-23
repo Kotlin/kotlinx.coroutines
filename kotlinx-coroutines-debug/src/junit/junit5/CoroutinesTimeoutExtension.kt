@@ -54,7 +54,7 @@ internal class CoroutinesTimeoutException(val timeoutMs: Long): Exception("test 
  * @see [CoroutinesTimeout]
  * */
 // NB: the constructor is not private so that JUnit is able to call it via reflection.
-public class CoroutinesTimeoutExtension internal constructor(
+internal class CoroutinesTimeoutExtension internal constructor(
     private val enableCoroutineCreationStackTraces: Boolean = true,
     private val timeoutMs: Long? = null,
     private val cancelOnTimeout: Boolean? = null): InvocationInterceptor
@@ -80,9 +80,6 @@ public class CoroutinesTimeoutExtension internal constructor(
     private val debugProbesOwnershipPassed = AtomicBoolean(false)
 
     private fun tryPassDebugProbesOwnership() = debugProbesOwnershipPassed.compareAndSet(false, true)
-
-    private val isDebugProbesOwnershipPassed
-        get() = debugProbesOwnershipPassed.get()
 
     /* We install the debug probes early so that the coroutines launched from the test constructor are captured as well.
     However, this is not enough as the same extension instance may be reused several times, even cleaning up its

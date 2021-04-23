@@ -11,7 +11,7 @@ import org.junit.jupiter.api.extension.*
 class RegisterExtensionExample {
     @JvmField
     @RegisterExtension
-    val timeout = CoroutinesTimeoutExtension.seconds(5)
+    internal val timeout = CoroutinesTimeoutExtension.seconds(5)
 
     @Test
     fun testThatHangs() = runBlocking {
