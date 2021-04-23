@@ -21,7 +21,6 @@ import kotlin.coroutines.*
  *
  * @param context -- the coroutine context from which the resulting mono is going to be signalled
  */
-@ExperimentalCoroutinesApi
 public fun Job.asMono(context: CoroutineContext): Mono<Unit> = mono(context) { this@asMono.join() }
 /**
  * Converts this deferred value to the hot reactive mono that signals
@@ -35,7 +34,6 @@ public fun Job.asMono(context: CoroutineContext): Mono<Unit> = mono(context) { t
  *
  * @param context -- the coroutine context from which the resulting mono is going to be signalled
  */
-@ExperimentalCoroutinesApi
 public fun <T> Deferred<T?>.asMono(context: CoroutineContext): Mono<T> = mono(context) { this@asMono.await() }
 
 /**
