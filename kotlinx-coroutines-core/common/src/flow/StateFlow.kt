@@ -21,7 +21,7 @@ import kotlin.native.concurrent.*
  * neither does a coroutine started by the [Flow.launchIn] function. An active collector of a state flow is called a _subscriber_.
  *
  * A [mutable state flow][MutableStateFlow] is created using `MutableStateFlow(value)` constructor function with
- * the initial value. The value of mutable state flow can be  updated by setting its [value] property.
+ * the initial value. The value of mutable state flow can be updated by setting its [value] property.
  * Updates to the [value] are always [conflated][Flow.conflate]. So a slow collector skips fast updates,
  * but always collects the most recently emitted value.
  *
