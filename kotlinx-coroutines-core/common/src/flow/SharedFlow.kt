@@ -33,7 +33,7 @@ import kotlin.native.concurrent.*
  *
  * [SharedFlow] is useful for broadcasting events that happen inside an application to subscribers that can come and go.
  * For example, the following class encapsulates an event bus that distributes events to all subscribers
- * in a _rendezvous_ manner, suspending until all subscribers process each event:
+ * in a _rendezvous_ manner, suspending until all subscribers receive emitted event:
  *
  * ```
  * class EventBus {
@@ -68,6 +68,13 @@ import kotlin.native.concurrent.*
  * the `onBufferOverflow` parameter, which is equal to one of the entries of the [BufferOverflow] enum. When a strategy other
  * than [SUSPENDED][BufferOverflow.SUSPEND] is configured, emissions to the shared flow never suspend.
  *
+ * **Buffer overflow condition can happen only when there is at least one subscriber that is not ready to accept
+ * the new value.**  In the absence of subscribers only the most recent `replay` values are stored and the buffer
+ * overflow behavior is never triggered and has no effect. In particular, in the absence of subscribers emitter never
+ * suspends despite [BufferOverflow.SUSPEND] option and [BufferOverflow.DROP_LATEST] option does not have effect either.
+ * Essentially, the behavior in the absence of subscribers is always similar to [BufferOverflow.DROP_OLDEST],
+ * but the buffer is just of `replay` size (without any `extraBufferCapacity`).
+ *
  * ### Unbuffered shared flow
  *
  * A default implementation of a shared flow that is created with `MutableSharedFlow()` constructor function
@@ -80,7 +87,7 @@ import kotlin.native.concurrent.*
  * ### SharedFlow vs BroadcastChannel
  *
  * Conceptually shared flow is similar to [BroadcastChannel][BroadcastChannel]
- * and is designed to completely replace `BroadcastChannel` in the future.
+ * and is designed to completely replace it.
  * It has the following important differences:
  *
  * * `SharedFlow` is simpler, because it does not have to implement all the [Channel] APIs, which allows
@@ -92,7 +99,7 @@ import kotlin.native.concurrent.*
  *
  * To migrate [BroadcastChannel] usage to [SharedFlow], start by replacing usages of the `BroadcastChannel(capacity)`
  * constructor with `MutableSharedFlow(0, extraBufferCapacity=capacity)` (broadcast channel does not replay
- * values to new subscribers). Replace [send][BroadcastChannel.send] and [offer][BroadcastChannel.offer] calls
+ * values to new subscribers). Replace [send][BroadcastChannel.send] and [trySend][BroadcastChannel.trySend] calls
  * with [emit][MutableStateFlow.emit] and [tryEmit][MutableStateFlow.tryEmit], and convert subscribers' code to flow operators.
  *
  * ### Concurrency
@@ -221,9 +228,12 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
  * @param replay the number of values replayed to new subscribers (cannot be negative, defaults to zero).
  * @param extraBufferCapacity the number of values buffered in addition to `replay`.
  *   [emit][MutableSharedFlow.emit] does not suspend while there is a buffer space remaining (optional, cannot be negative, defaults to zero).
- * @param onBufferOverflow configures an action on buffer overflow (optional, defaults to
- *   [suspending][BufferOverflow.SUSPEND] attempts to [emit][MutableSharedFlow.emit] a value,
- *   supported only when `replay > 0` or `extraBufferCapacity > 0`).
+ * @param onBufferOverflow configures an [emit][MutableSharedFlow.emit] action on buffer overflow. Optional, defaults to
+ *   [suspending][BufferOverflow.SUSPEND] attempts to emit a value.
+ *   Values other than [BufferOverflow.SUSPEND] are supported only when `replay > 0` or `extraBufferCapacity > 0`.
+ *   **Buffer overflow can happen only when there is at least one subscriber that is not ready to accept
+ *   the new value.** In the absence of subscribers only the most recent [replay] values are stored and
+ *   the buffer overflow behavior is never triggered and has no effect.
  */
 @Suppress("FunctionName", "UNCHECKED_CAST")
 public fun <T> MutableSharedFlow(

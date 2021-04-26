@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.guava
@@ -746,5 +746,13 @@ class ListenableFutureTest : TestBase() {
         expect(3)
         latch.countDown()
         return future
+    }
+
+    @Test
+    fun testCancelledParent() = runTest({ it is CancellationException }) {
+        cancel()
+        future { expectUnreached() }
+        future(start = CoroutineStart.ATOMIC) { }
+        future(start = CoroutineStart.UNDISPATCHED) { }
     }
 }

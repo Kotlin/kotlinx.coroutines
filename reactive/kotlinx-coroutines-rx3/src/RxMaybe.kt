@@ -40,7 +40,7 @@ private fun <T> rxMaybeInternal(
 private class RxMaybeCoroutine<T>(
     parentContext: CoroutineContext,
     private val subscriber: MaybeEmitter<T>
-) : AbstractCoroutine<T>(parentContext, true) {
+) : AbstractCoroutine<T>(parentContext, false, true) {
     override fun onCompleted(value: T) {
         try {
             if (value == null) subscriber.onComplete() else subscriber.onSuccess(value)
@@ -51,11 +51,12 @@ private class RxMaybeCoroutine<T>(
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
         try {
-            if (!subscriber.tryOnError(cause)) {
-                handleUndeliverableException(cause, context)
+            if (subscriber.tryOnError(cause)) {
+                return
             }
         } catch (e: Throwable) {
-            handleUndeliverableException(e, context)
+            cause.addSuppressed(e)
         }
+        handleUndeliverableException(cause, context)
     }
 }

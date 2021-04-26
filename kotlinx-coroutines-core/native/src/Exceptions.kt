@@ -10,12 +10,7 @@ package kotlinx.coroutines
  * **It is not printed to console/log by default uncaught exception handler**.
  * (see [CoroutineExceptionHandler]).
  */
-public actual open class CancellationException(
-    message: String?,
-    cause: Throwable?
-) : IllegalStateException(message, cause) {
-    public actual constructor(message: String?) : this(message, null)
-}
+public actual typealias CancellationException = kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled or completed

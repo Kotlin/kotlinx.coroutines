@@ -6,19 +6,27 @@ This section covers basic coroutine concepts.
 
 ## Your first coroutine
 
-Run the following code:
+A _coroutine_ is an instance of suspendable computation. It is conceptually similar to a thread, in the sense that it 
+takes a block of code to run that works concurrently with the rest of the code.
+However, a coroutine is not bound to any particular thread. It may suspend its execution in one thread and resume in another one. 
+
+Coroutines can be thought of as light-weight threads, but there is a number
+of important differences that make their real-life usage very different from threads.
+
+Run the following code to get to your first working coroutine:
 
 ```kotlin
 import kotlinx.coroutines.*
 
-fun main() {
-    GlobalScope.launch { // launch a new coroutine in background and continue
+//sampleStart
+fun main() = runBlocking { // this: CoroutineScope
+    launch { // launch a new coroutine and continue
         delay(1000L) // non-blocking delay for 1 second (default time unit is ms)
         println("World!") // print after delay
     }
-    println("Hello,") // main thread continues while coroutine is delayed
-    Thread.sleep(2000L) // block main thread for 2 seconds to keep JVM alive
+    println("Hello") // main coroutine continues while a previous one is delayed
 }
+//sampleEnd
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
@@ -29,49 +37,71 @@ fun main() {
 You will see the following result:
 
 ```text
-Hello,
+Hello
 World!
 ```
 
 <!--- TEST -->
 
-Essentially, coroutines are light-weight threads.
-They are launched with [launch] _coroutine builder_ in a context of some [CoroutineScope].
-Here we are launching a new coroutine in the [GlobalScope], meaning that the lifetime of the new
-coroutine is limited only by the lifetime of the whole application.  
+Let's dissect what this code does. 
 
-You can achieve the same result by replacing
-`GlobalScope.launch { ... }` with `thread { ... }`, and `delay(...)` with `Thread.sleep(...)`. 
-Try it (don't forget to import `kotlin.concurrent.thread`).
+[launch] is a _coroutine builder_. It launches a new coroutine concurrently with 
+the rest of the code, which continues to work independently. That's why `Hello` has been printed first.
 
-If you start by replacing `GlobalScope.launch` with `thread`, the compiler produces the following error:
+[delay] is a special _suspending function_. It _suspends_ the coroutine for a specific time. Suspending a coroutine
+does not _block_ the underlying thread, but allows other coroutines to run and use the underlying thread for 
+their code. 
+
+[runBlocking] is also a coroutine builder that bridges the non-coroutine world of a regular `fun main()` and 
+the code with coroutines inside of `runBlocking { ... }` curly braces. This is highlighted in an IDE by
+`this: CoroutineScope` hint right after the `runBlocking` opening curly brace.
+
+If you remove or forget `runBlocking` in this code, you'll get an error on the [launch] call, since `launch`
+is declared only in the [CoroutineScope]:
 
 ```Plain Text
-Error: Kotlin: Suspend functions are only allowed to be called from a coroutine or another suspend function
+Unresolved reference: launch
 ```
 
-That is because [delay] is a special _suspending function_ that does not block a thread, but _suspends_ the
-coroutine, and it can be only used from a coroutine.
+The name of `runBlocking` means that the thread that runs it (in this case &mdash; the main thread) gets _blocked_ for 
+the duration of the call, until all the coroutines inside `runBlocking { ... }` complete their execution. You will 
+often see `runBlocking` used like that at the very top-level of the application and quite rarely inside the real code, 
+as threads are expensive resources and blocking them is inefficient and is often not desired. 
 
-## Bridging blocking and non-blocking worlds
+### Structured concurrency
 
-The first example mixes _non-blocking_ `delay(...)` and _blocking_ `Thread.sleep(...)` in the same code. 
-It is easy to lose track of which one is blocking and which one is not. 
-Let's be explicit about blocking using the [runBlocking] coroutine builder:
+Coroutines follow a principle of 
+**structured concurrency** which means that new coroutines can be only launched in a specific [CoroutineScope]
+which delimits the lifetime of the coroutine. The above example shows that [runBlocking] establishes the corresponding
+scope and that is why the previous example waits until `World!` is printed after a second's delay and only then exits.
+
+In the real application, you will be launching a lot of coroutines. Structured concurrency ensures that they are not
+lost and do not leak. An outer scope cannot complete until all its children coroutines complete. 
+Structured concurrency also ensures that any errors in the code are properly reported and are never lost.  
+
+## Extract function refactoring
+
+Let's extract the block of code inside `launch { ... }` into a separate function. When you
+perform "Extract function" refactoring on this code, you get a new function with the `suspend` modifier.
+This is your first _suspending function_. Suspending functions can be used inside coroutines
+just like regular functions, but their additional feature is that they can, in turn,
+use other suspending functions (like `delay` in this example) to _suspend_ execution of a coroutine.
 
 ```kotlin
 import kotlinx.coroutines.*
 
-fun main() { 
-    GlobalScope.launch { // launch a new coroutine in background and continue
-        delay(1000L)
-        println("World!")
-    }
-    println("Hello,") // main thread continues here immediately
-    runBlocking {     // but this expression blocks the main thread
-        delay(2000L)  // ... while we delay for 2 seconds to keep JVM alive
-    } 
+//sampleStart
+fun main() = runBlocking { // this: CoroutineScope
+    launch { doWorld() }
+    println("Hello")
 }
+
+// this is your first suspending function
+suspend fun doWorld() {
+    delay(1000L)
+    println("World!")
+}
+//sampleEnd
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
@@ -80,27 +110,39 @@ fun main() {
 {type="note"}
 
 <!--- TEST
-Hello,
+Hello
 World!
 -->
 
-The result is the same, but this code uses only non-blocking [delay]. 
-The main thread invoking `runBlocking` _blocks_ until the coroutine inside `runBlocking` completes. 
+## Scope builder
 
-This example can be also rewritten in a more idiomatic way, using `runBlocking` to wrap 
-the execution of the main function:
+In addition to the coroutine scope provided by different builders, it is possible to declare your own scope using the
+[coroutineScope][_coroutineScope] builder. It creates a coroutine scope and does not complete until all launched children complete.
+
+[runBlocking] and [coroutineScope][_coroutineScope] builders may look similar because they both wait for their body and all its children to complete.
+The main difference is that the [runBlocking] method _blocks_ the current thread for waiting,
+while [coroutineScope][_coroutineScope] just suspends, releasing the underlying thread for other usages.
+Because of that difference, [runBlocking] is a regular function and [coroutineScope][_coroutineScope] is a suspending function.
+
+You can use `coroutineScope` from any suspending function. 
+For example, you can move the concurrent printing of `Hello` and `World` into a `suspend fun doWorld()` function: 
 
 ```kotlin
 import kotlinx.coroutines.*
 
-fun main() = runBlocking<Unit> { // start main coroutine
-    GlobalScope.launch { // launch a new coroutine in background and continue
+//sampleStart
+fun main() = runBlocking {
+    doWorld()
+}
+
+suspend fun doWorld() = coroutineScope {  // this: CoroutineScope
+    launch {
         delay(1000L)
         println("World!")
     }
-    println("Hello,") // main coroutine continues here immediately
-    delay(2000L)      // delaying for 2 seconds to keep JVM alive
+    println("Hello")
 }
+//sampleEnd
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
@@ -108,49 +150,41 @@ fun main() = runBlocking<Unit> { // start main coroutine
 >
 {type="note"}
 
+This code also prints:
+
 <!--- TEST
-Hello,
+Hello
 World!
 -->
 
-Here `runBlocking<Unit> { ... }` works as an adaptor that is used to start the top-level main coroutine. 
-We explicitly specify its `Unit` return type, because a well-formed `main` function in Kotlin has to return `Unit`.
+## Scope builder and concurrency
 
-This is also a way to write unit tests for suspending functions:
-
-<!--- INCLUDE
-import kotlinx.coroutines.*
--->
-
-```kotlin
-class MyTest {
-    @Test
-    fun testMySuspendingFunction() = runBlocking<Unit> {
-        // here we can use suspending functions using any assertion style that we like
-    }
-}
-```
-
-<!--- CLEAR -->
-
-## Waiting for a job
-
-Delaying for a time while another coroutine is working is not a good approach. Let's explicitly 
-wait (in a non-blocking way) until the background [Job] that we have launched is complete:
+A [coroutineScope][_coroutineScope] builder can be used inside any suspending function to perform multiple concurrent operations.
+Let's launch two concurrent coroutines inside a `doWorld` suspending function:
 
 ```kotlin
 import kotlinx.coroutines.*
 
-fun main() = runBlocking {
 //sampleStart
-    val job = GlobalScope.launch { // launch a new coroutine and keep a reference to its Job
-        delay(1000L)
-        println("World!")
-    }
-    println("Hello,")
-    job.join() // wait until child coroutine completes
-//sampleEnd    
+// Sequentially executes doWorld followed by "Hello"
+fun main() = runBlocking {
+    doWorld()
+    println("Done")
 }
+
+// Concurrently executes both sections
+suspend fun doWorld() = coroutineScope { // this: CoroutineScope
+    launch {
+        delay(2000L)
+        println("World 2")
+    }
+    launch {
+        delay(1000L)
+        println("World 1")
+    }
+    println("Hello")
+}
+//sampleEnd
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
@@ -158,42 +192,39 @@ fun main() = runBlocking {
 >
 {type="note"}
 
-<!--- TEST
-Hello,
-World!
--->
+Both pieces of code inside `launch { ... }` blocks execute _concurrently_, with 
+`World 1` printed first, after a second from start, and `World 2` printed next, after two seconds from start.
+A [coroutineScope][_coroutineScope] in `doWorld` completes only after both are complete, so `doWorld` returns and 
+allows `Done` string to be printed only after that:
 
-Now the result is still the same, but the code of the main coroutine is not tied to the duration of
-the background job in any way. Much better.
+```text
+Hello
+World 1
+World 2
+Done
+```
 
-## Structured concurrency
+<!--- TEST -->
 
-There is still something to be desired for practical usage of coroutines. 
-When we use `GlobalScope.launch`, we create a top-level coroutine. Even though it is light-weight, it still 
-consumes some memory resources while it runs. If we forget to keep a reference to the newly launched 
-coroutine, it still runs. What if the code in the coroutine hangs (for example, we erroneously
-delay for too long), what if we launched too many coroutines and ran out of memory? 
-Having to manually keep references to all the launched coroutines and [join][Job.join] them is error-prone. 
+## An explicit job
 
-There is a better solution. We can use structured concurrency in our code. 
-Instead of launching coroutines in the [GlobalScope], just like we usually do with threads (threads are always global), 
-we can launch coroutines in the specific scope of the operation we are performing. 
-
-In our example, we have a `main` function that is turned into a coroutine using the [runBlocking] coroutine builder.
-Every coroutine builder, including `runBlocking`, adds an instance of [CoroutineScope] to the scope of its code block. 
-We can launch coroutines in this scope without having to `join` them explicitly, because
-an outer coroutine (`runBlocking` in our example) does not complete until all the coroutines launched
-in its scope complete. Thus, we can make our example simpler:
+A [launch] coroutine builder returns a [Job] object that is a handle to the launched coroutine and can be 
+used to explicitly wait for its completion. For example, you can wait for completion of the child coroutine
+and then print "Done" string:
 
 ```kotlin
 import kotlinx.coroutines.*
 
-fun main() = runBlocking { // this: CoroutineScope
-    launch { // launch a new coroutine in the scope of runBlocking
+fun main() = runBlocking {
+//sampleStart
+    val job = launch { // launch a new coroutine and keep a reference to its Job
         delay(1000L)
         println("World!")
     }
-    println("Hello,")
+    println("Hello")
+    job.join() // wait until child coroutine completes
+    println("Done") 
+//sampleEnd    
 }
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
@@ -202,101 +233,15 @@ fun main() = runBlocking { // this: CoroutineScope
 >
 {type="note"}
 
-<!--- TEST
-Hello,
+This code produces: 
+
+```text
+Hello
 World!
--->
-
-## Scope builder
-
-In addition to the coroutine scope provided by different builders, it is possible to declare your own scope using the
-[coroutineScope][_coroutineScope] builder. It creates a coroutine scope and does not complete until all launched children complete. 
-
-[runBlocking] and [coroutineScope][_coroutineScope] may look similar because they both wait for their body and all its children to complete.
-The main difference is that the [runBlocking] method _blocks_ the current thread for waiting,
-while [coroutineScope][_coroutineScope] just suspends, releasing the underlying thread for other usages.
-Because of that difference, [runBlocking] is a regular function and [coroutineScope][_coroutineScope] is a suspending function.
-
-It can be demonstrated by the following example:
-
-```kotlin
-import kotlinx.coroutines.*
-
-fun main() = runBlocking { // this: CoroutineScope
-    launch { 
-        delay(200L)
-        println("Task from runBlocking")
-    }
-    
-    coroutineScope { // Creates a coroutine scope
-        launch {
-            delay(500L) 
-            println("Task from nested launch")
-        }
-    
-        delay(100L)
-        println("Task from coroutine scope") // This line will be printed before the nested launch
-    }
-    
-    println("Coroutine scope is over") // This line is not printed until the nested launch completes
-}
+Done
 ```
-{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-06.kt).
->
-{type="note"}
-
-<!--- TEST
-Task from coroutine scope
-Task from runBlocking
-Task from nested launch
-Coroutine scope is over
--->
-
-Note that right after the "Task from coroutine scope" message (while waiting for nested launch)
- "Task from runBlocking" is executed and printed — even though the [coroutineScope][_coroutineScope] is not completed yet. 
-
-## Extract function refactoring
-
-Let's extract the block of code inside `launch { ... }` into a separate function. When you 
-perform "Extract function" refactoring on this code, you get a new function with the `suspend` modifier.
-This is your first _suspending function_. Suspending functions can be used inside coroutines
-just like regular functions, but their additional feature is that they can, in turn, 
-use other suspending functions (like `delay` in this example) to _suspend_ execution of a coroutine.
-
-```kotlin
-import kotlinx.coroutines.*
-
-fun main() = runBlocking {
-    launch { doWorld() }
-    println("Hello,")
-}
-
-// this is your first suspending function
-suspend fun doWorld() {
-    delay(1000L)
-    println("World!")
-}
-```
-{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-07.kt).
->
-{type="note"}
-
-<!--- TEST
-Hello,
-World!
--->
-
-But what if the extracted function contains a coroutine builder which is invoked on the current scope?
-In this case, the `suspend` modifier on the extracted function is not enough. Making `doWorld` an extension
-method on `CoroutineScope` is one of the solutions, but it may not always be applicable as it does not make the API clearer.
-The idiomatic solution is to have either an explicit `CoroutineScope` as a field in a class containing the target function
-or an implicit one when the outer class implements `CoroutineScope`.
-As a last resort, [CoroutineScope(coroutineContext)][CoroutineScope()] can be used, but such an approach is structurally unsafe 
-because you no longer have control on the scope of execution of this method. Only private APIs can use this builder.
+<!--- TEST -->
 
 ## Coroutines ARE light-weight
 
@@ -305,6 +250,7 @@ Run the following code:
 ```kotlin
 import kotlinx.coroutines.*
 
+//sampleStart
 fun main() = runBlocking {
     repeat(100_000) { // launch a lot of coroutines
         launch {
@@ -313,9 +259,10 @@ fun main() = runBlocking {
         }
     }
 }
+//sampleEnd
 ```
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-08.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-06.kt).
 >
 {type="note"}
 
@@ -323,57 +270,17 @@ fun main() = runBlocking {
 
 It launches 100K coroutines and, after 5 seconds, each coroutine prints a dot. 
 
-Now, try that with threads. What would happen? (Most likely your code will produce some sort of out-of-memory error)
-
-## Global coroutines are like daemon threads
-
-The following code launches a long-running coroutine in [GlobalScope] that prints "I'm sleeping" twice a second and then 
-returns from the main function after some delay:
-
-```kotlin
-import kotlinx.coroutines.*
-
-fun main() = runBlocking {
-//sampleStart
-    GlobalScope.launch {
-        repeat(1000) { i ->
-            println("I'm sleeping $i ...")
-            delay(500L)
-        }
-    }
-    delay(1300L) // just quit after delay
-//sampleEnd    
-}
-```
-{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-09.kt).
->
-{type="note"}
-
-You can run and see that it prints three lines and terminates:
-
-```text
-I'm sleeping 0 ...
-I'm sleeping 1 ...
-I'm sleeping 2 ...
-```
-
-<!--- TEST -->
-
-Active coroutines that were launched in [GlobalScope] do not keep the process alive. They are like daemon threads.
+Now, try that with threads (remove `runBlocking`, replace `launch` with `thread`, and replace `delay` with `Thread.sleep`). 
+What would happen? (Most likely your code will produce some sort of out-of-memory error)
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->
 
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html
-[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
-[GlobalScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-global-scope/index.html
 [delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
-[Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
-[Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/join.html
+[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
 [_coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
-[CoroutineScope()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope.html
+[Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
 
 <!--- END -->

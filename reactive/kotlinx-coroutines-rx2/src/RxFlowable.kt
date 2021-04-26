@@ -31,7 +31,6 @@ import kotlin.internal.*
  *
  * **Note: This is an experimental api.** Behaviour of publishers that work as children in a parent scope with respect
  */
-@ExperimentalCoroutinesApi
 public fun <T: Any> rxFlowable(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
@@ -43,7 +42,7 @@ public fun <T: Any> rxFlowable(
 
 @Deprecated(
     message = "CoroutineScope.rxFlowable is deprecated in favour of top-level rxFlowable",
-    level = DeprecationLevel.ERROR,
+    level = DeprecationLevel.HIDDEN,
     replaceWith = ReplaceWith("rxFlowable(context, block)")
 ) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
 @LowPriorityInOverloadResolution

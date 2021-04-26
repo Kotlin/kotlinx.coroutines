@@ -167,11 +167,11 @@ class ShareInTest : TestBase() {
                 subs += shared
                     .onEach { value -> // only the first threshold subscribers get the value
                         when (i) {
-                            in 1..threshold -> log.offer("sub$i: $value")
+                            in 1..threshold -> log.trySend("sub$i: $value")
                             else -> expectUnreached()
                         }
                     }
-                    .onCompletion { log.offer("sub$i: completion") }
+                    .onCompletion { log.trySend("sub$i: completion") }
                     .launchIn(this)
                 checkStartTransition(i)
             }

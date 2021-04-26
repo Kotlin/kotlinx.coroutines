@@ -2,14 +2,11 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
-import kotlin.internal.*
 
 /**
  * Creates cold [maybe][Maybe] that will run a given [block] in a coroutine and emits its result.
@@ -29,17 +26,6 @@ public fun <T> rxMaybe(
     return rxMaybeInternal(GlobalScope, context, block)
 }
 
-@Deprecated(
-    message = "CoroutineScope.rxMaybe is deprecated in favour of top-level rxMaybe",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("rxMaybe(context, block)")
-) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
-@LowPriorityInOverloadResolution
-public fun <T> CoroutineScope.rxMaybe(
-    context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend CoroutineScope.() -> T?
-): Maybe<T> = rxMaybeInternal(this, context, block)
-
 private fun <T> rxMaybeInternal(
     scope: CoroutineScope, // support for legacy rxMaybe in scope
     context: CoroutineContext,
@@ -54,7 +40,7 @@ private fun <T> rxMaybeInternal(
 private class RxMaybeCoroutine<T>(
     parentContext: CoroutineContext,
     private val subscriber: MaybeEmitter<T>
-) : AbstractCoroutine<T>(parentContext, true) {
+) : AbstractCoroutine<T>(parentContext, false, true) {
     override fun onCompleted(value: T) {
         try {
             if (value == null) subscriber.onComplete() else subscriber.onSuccess(value)
@@ -65,11 +51,22 @@ private class RxMaybeCoroutine<T>(
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
         try {
-            if (!subscriber.tryOnError(cause)) {
-                handleUndeliverableException(cause, context)
+            if (subscriber.tryOnError(cause)) {
+                return
             }
         } catch (e: Throwable) {
-            handleUndeliverableException(e, context)
+            cause.addSuppressed(e)
         }
+        handleUndeliverableException(cause, context)
     }
 }
+
+@Deprecated(
+    message = "CoroutineScope.rxMaybe is deprecated in favour of top-level rxMaybe",
+    level = DeprecationLevel.HIDDEN,
+    replaceWith = ReplaceWith("rxMaybe(context, block)")
+) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
+public fun <T> CoroutineScope.rxMaybe(
+    context: CoroutineContext = EmptyCoroutineContext,
+    block: suspend CoroutineScope.() -> T?
+): Maybe<T> = rxMaybeInternal(this, context, block)

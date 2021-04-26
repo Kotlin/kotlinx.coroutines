@@ -11,8 +11,10 @@ import kotlin.coroutines.*
 internal open class ChannelCoroutine<E>(
     parentContext: CoroutineContext,
     protected val _channel: Channel<E>,
+    initParentJob: Boolean,
     active: Boolean
-) : AbstractCoroutine<Unit>(parentContext, active), Channel<E> by _channel {
+) : AbstractCoroutine<Unit>(parentContext, initParentJob, active), Channel<E> by _channel {
+
     val channel: Channel<E> get() = this
 
     override fun cancel() {

@@ -1,5 +1,5 @@
 kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 200 ms
-	(Coroutine boundary)
+	at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryWithTimeoutTest.suspendForever(StackTraceRecoveryWithTimeoutTest.kt:42)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryWithTimeoutTest$outerWithTimeout$2.invokeSuspend(StackTraceRecoveryWithTimeoutTest.kt:32)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryWithTimeoutTest.outerWithTimeout(StackTraceRecoveryWithTimeoutTest.kt:31)

@@ -46,17 +46,15 @@ internal class DispatchedContinuation<in T>(
      * 4) [Throwable] continuation was cancelled with this cause while being in [suspendCancellableCoroutineReusable],
      *    [CancellableContinuationImpl.getResult] will check for cancellation later.
      *
-     * [REUSABLE_CLAIMED] state is required to prevent the lost resume in the channel.
-     * AbstractChannel.receive method relies on the fact that the following pattern
+     * [REUSABLE_CLAIMED] state is required to prevent double-use of the reused continuation.
+     * In the `getResult`, we have the following code:
      * ```
-     * suspendCancellableCoroutineReusable { cont ->
-     *     val result = pollFastPath()
-     *     if (result != null) cont.resume(result)
+     * if (trySuspend()) {
+     *     // <- at this moment current continuation can be redispatched and claimed again.
+     *     attachChildToParent()
+     *     releaseClaimedContinuation()
      * }
      * ```
-     * always succeeds.
-     * To make it always successful, we actually postpone "reusable" cancellation
-     * to this phase and set cancellation only at the moment of instantiation.
      */
     private val _reusableCancellableContinuation = atomic<Any?>(null)
 
@@ -66,9 +64,9 @@ internal class DispatchedContinuation<in T>(
     public fun isReusable(requester: CancellableContinuationImpl<*>): Boolean {
         /*
          * Reusability control:
-         * `null` -> no reusability at all, false
+         * `null` -> no reusability at all, `false`
          * If current state is not CCI, then we are within `suspendCancellableCoroutineReusable`, true
-         * Else, if result is CCI === requester.
+         * Else, if result is CCI === requester, then it's our reusable continuation
          * Identity check my fail for the following pattern:
          * ```
          * loop:
@@ -80,6 +78,27 @@ internal class DispatchedContinuation<in T>(
         val value = _reusableCancellableContinuation.value ?: return false
         if (value is CancellableContinuationImpl<*>) return value === requester
         return true
+    }
+
+
+    /**
+     * Awaits until previous call to `suspendCancellableCoroutineReusable` will
+     * stop mutating cached instance
+     */
+    public fun awaitReusability() {
+        _reusableCancellableContinuation.loop { it ->
+            if (it !== REUSABLE_CLAIMED) return
+        }
+    }
+
+    public fun release() {
+        /*
+         * Called from `releaseInterceptedContinuation`, can be concurrent with
+         * the code in `getResult` right after `trySuspend` returned `true`, so we have
+         * to wait for a release here.
+         */
+        awaitReusability()
+        reusableCancellableContinuation?.detachChild()
     }
 
     /**
@@ -103,10 +122,19 @@ internal class DispatchedContinuation<in T>(
                     _reusableCancellableContinuation.value = REUSABLE_CLAIMED
                     return null
                 }
+                // potentially competing with cancel
                 state is CancellableContinuationImpl<*> -> {
                     if (_reusableCancellableContinuation.compareAndSet(state, REUSABLE_CLAIMED)) {
                         return state as CancellableContinuationImpl<T>
                     }
+                }
+                state === REUSABLE_CLAIMED -> {
+                    // Do nothing, wait until reusable instance will be returned from
+                    // getResult() of a previous `suspendCancellableCoroutineReusable`
+                }
+                state is Throwable -> {
+                    // Also do nothing, Throwable can only indicate that the CC
+                    // is in REUSABLE_CLAIMED state, but with postponed cancellation
                 }
                 else -> error("Inconsistent state $state")
             }
@@ -127,14 +155,13 @@ internal class DispatchedContinuation<in T>(
      *
      * See [CancellableContinuationImpl.getResult].
      */
-    fun checkPostponedCancellation(continuation: CancellableContinuation<*>): Throwable? {
+    fun tryReleaseClaimedContinuation(continuation: CancellableContinuation<*>): Throwable? {
         _reusableCancellableContinuation.loop { state ->
             // not when(state) to avoid Intrinsics.equals call
             when {
                 state === REUSABLE_CLAIMED -> {
                     if (_reusableCancellableContinuation.compareAndSet(REUSABLE_CLAIMED, continuation)) return null
                 }
-                state === null -> return null
                 state is Throwable -> {
                     require(_reusableCancellableContinuation.compareAndSet(state, null))
                     return state

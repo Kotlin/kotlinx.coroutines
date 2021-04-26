@@ -57,7 +57,7 @@ class DispatcherGuideTest {
     @Test
     fun testExampleContext06() {
         test("ExampleContext06") { kotlinx.coroutines.guide.exampleContext06.main() }.verifyLines(
-            "job1: I run in GlobalScope and execute independently!",
+            "job1: I run in my own Job and execute independently!",
             "job2: I am a child of the request coroutine",
             "job1: I am not affected by cancellation of the request",
             "main: Who has survived request cancellation?"

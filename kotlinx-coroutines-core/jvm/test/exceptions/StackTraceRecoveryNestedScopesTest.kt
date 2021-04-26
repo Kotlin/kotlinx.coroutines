@@ -12,7 +12,7 @@ class StackTraceRecoveryNestedScopesTest : TestBase() {
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest.failure(StackTraceRecoveryNestedScopesTest.kt:9)\n" +
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest.access\$failure(StackTraceRecoveryNestedScopesTest.kt:7)\n" +
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$createFailingAsync\$1.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:12)\n" +
-            "\t(Coroutine boundary)\n" +
+            "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$callWithTimeout\$2.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:23)\n" +
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$callCoroutineScope\$2.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:29)\n" +
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$$TEST_MACROS\$1.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:36)\n" +
@@ -82,11 +82,10 @@ class StackTraceRecoveryNestedScopesTest : TestBase() {
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest.failure(StackTraceRecoveryNestedScopesTest.kt:23)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest.access\$failure(StackTraceRecoveryNestedScopesTest.kt:7)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$createFailingAsync\$1.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:26)\n" +
-                    "\t(Coroutine boundary)\n" +
+                    "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$callWithTimeout\$2.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:37)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$callCoroutineScope\$2.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:43)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$testAwaitNestedScopes\$1\$deferred\$1.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:68)\n" +
-                    "\tat kotlinx.coroutines.DeferredCoroutine.await\$suspendImpl(Builders.common.kt:99)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest.verifyAwait(StackTraceRecoveryNestedScopesTest.kt:76)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$testAwaitNestedScopes\$1.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:71)\n" +
                 "Caused by: kotlinx.coroutines.RecoverableTestException\n" +

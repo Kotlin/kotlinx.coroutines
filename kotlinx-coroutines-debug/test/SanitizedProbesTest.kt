@@ -27,12 +27,11 @@ class SanitizedProbesTest : DebugTestBase() {
         val traces = listOf(
             "java.util.concurrent.ExecutionException\n" +
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$createDeferredNested\$1.invokeSuspend(SanitizedProbesTest.kt:97)\n" +
-                    "\t(Coroutine boundary)\n" +
-                    "\tat kotlinx.coroutines.DeferredCoroutine.await\$suspendImpl(Builders.common.kt:99)\n" +
+                    "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.oneMoreNestedMethod(SanitizedProbesTest.kt:67)\n" +
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.nestedMethod(SanitizedProbesTest.kt:61)\n" +
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$testRecoveredStackTrace\$1.invokeSuspend(SanitizedProbesTest.kt:50)\n" +
-                    "\t(Coroutine creation stacktrace)\n" +
+                    "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                     "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
                     "\tat kotlinx.coroutines.TestBase.runTest\$default(TestBase.kt:141)\n" +
@@ -52,7 +51,7 @@ class SanitizedProbesTest : DebugTestBase() {
         verifyDump(
             "Coroutine \"coroutine#3\":BlockingCoroutine{Active}@7d68ef40, state: RUNNING\n" +
                 "\tat java.lang.Thread.getStackTrace(Thread.java)\n" +
-                "\t(Coroutine creation stacktrace)\n" +
+                "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                 "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
                 "\tat kotlinx.coroutines.TestBase.runTest\$default(TestBase.kt:141)\n" +
@@ -60,7 +59,7 @@ class SanitizedProbesTest : DebugTestBase() {
 
             "Coroutine \"coroutine#4\":DeferredCoroutine{Active}@75c072cb, state: SUSPENDED\n" +
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$createActiveDeferred\$1.invokeSuspend(SanitizedProbesTest.kt:63)\n" +
-                    "\t(Coroutine creation stacktrace)\n" +
+                    "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                     "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
                     "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt)\n" +
@@ -84,12 +83,12 @@ class SanitizedProbesTest : DebugTestBase() {
         expect(3)
         verifyDump("Coroutine \"coroutine#1\":BlockingCoroutine{Active}@35fc6dc4, state: RUNNING\n" +
                 "\tat java.lang.Thread.getStackTrace(Thread.java:1552)\n" + // Skip the rest
-                "\t(Coroutine creation stacktrace)\n" +
+                "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)",
 
             "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@1b68b9a4, state: SUSPENDED\n" +
                 "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$launchSelector\$1\$1\$1.invokeSuspend(SanitizedProbesTest.kt)\n" +
-                "\t(Coroutine creation stacktrace)\n" +
+                "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                 "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:25)\n" +
                 "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.launch\$default(Builders.common.kt)\n" +

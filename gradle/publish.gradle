@@ -4,7 +4,7 @@
 
 import org.gradle.util.VersionNumber
 
-// Configures publishing of Maven artifacts to Bintray
+// Configures publishing of Maven artifacts to Maven Central
 
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
@@ -37,12 +37,7 @@ if (!isMultiplatform && !isBom) {
 
 publishing {
     repositories {
-        def bintrayUpload = System.getenv("libs.bintray.upload") != null
-        if (bintrayUpload) {
-            PublishingKt.configureBintrayPublication(delegate, project)
-        } else {
-            PublishingKt.configureMavenPublication(delegate, project)
-        }
+        PublishingKt.configureMavenPublication(delegate, project)
     }
 
     if (!isMultiplatform && !isBom) {
@@ -61,10 +56,7 @@ publishing {
 
     publications.all {
         PublishingKt.configureMavenCentralMetadata(pom, project)
-        def bintrayUpload = System.getenv("libs.bintray.upload") != null
-        if (!bintrayUpload) {
-            PublishingKt.signPublicationIfKeyPresent(project, it)
-        }
+        PublishingKt.signPublicationIfKeyPresent(project, it)
         // add empty javadocs
         if (!isBom && it.name != "kotlinMultiplatform") {
             it.artifact(javadocJar)

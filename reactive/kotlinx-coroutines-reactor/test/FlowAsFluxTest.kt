@@ -14,8 +14,8 @@ import kotlin.test.*
 class FlowAsFluxTest : TestBase() {
     @Test
     fun testFlowAsFluxContextPropagation() {
-        val flux = flow<String> {
-            (1..4).forEach { i -> emit(createMono(i).awaitFirst()) }
+        val flux = flow {
+            (1..4).forEach { i -> emit(createMono(i).awaitSingle()) }
         }
             .asFlux()
             .contextWrite(Context.of(1, "1"))

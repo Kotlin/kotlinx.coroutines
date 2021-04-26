@@ -19,9 +19,16 @@ exception, for example via [await][Deferred.await] or [receive][ReceiveChannel.r
 
 It can be demonstrated by a simple example that creates root coroutines using the [GlobalScope]:
 
+> [GlobalScope] is a delicate API that can backfire in non-trivial ways. Creating a root coroutine for the
+> whole application is one of the rare legitimate uses for `GlobalScope`, so you must explicitly opt-in into 
+> using `GlobalScope` with `@OptIn(DelicateCoroutinesApi::class)`.
+>
+{type="note"}
+
 ```kotlin
 import kotlinx.coroutines.*
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() = runBlocking {
     val job = GlobalScope.launch { // root coroutine with launch
         println("Throwing exception from launch")
@@ -90,6 +97,7 @@ so its `CoroutineExceptionHandler` has no effect either.
 ```kotlin
 import kotlinx.coroutines.*
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() = runBlocking {
 //sampleStart
     val handler = CoroutineExceptionHandler { _, exception -> 
@@ -184,6 +192,7 @@ which is demonstrated by the following example.
 ```kotlin
 import kotlinx.coroutines.*
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() = runBlocking {
 //sampleStart
     val handler = CoroutineExceptionHandler { _, exception -> 
@@ -242,6 +251,7 @@ import kotlinx.coroutines.exceptions.*
 import kotlinx.coroutines.*
 import java.io.*
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception ->
         println("CoroutineExceptionHandler got $exception with suppressed ${exception.suppressed.contentToString()}")
@@ -292,6 +302,7 @@ Cancellation exceptions are transparent and are unwrapped by default:
 import kotlinx.coroutines.*
 import java.io.*
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() = runBlocking {
 //sampleStart
     val handler = CoroutineExceptionHandler { _, exception ->

@@ -39,7 +39,7 @@ private fun <T : Any> rxSingleInternal(
 private class RxSingleCoroutine<T: Any>(
     parentContext: CoroutineContext,
     private val subscriber: SingleEmitter<T>
-) : AbstractCoroutine<T>(parentContext, true) {
+) : AbstractCoroutine<T>(parentContext, false, true) {
     override fun onCompleted(value: T) {
         try {
             subscriber.onSuccess(value)
@@ -50,11 +50,12 @@ private class RxSingleCoroutine<T: Any>(
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
         try {
-            if (!subscriber.tryOnError(cause)) {
-                handleUndeliverableException(cause, context)
+            if (subscriber.tryOnError(cause)) {
+                return
             }
         } catch (e: Throwable) {
-            handleUndeliverableException(e, context)
+            cause.addSuppressed(e)
         }
+        handleUndeliverableException(cause, context)
     }
 }

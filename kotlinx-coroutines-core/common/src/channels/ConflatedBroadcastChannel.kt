@@ -17,7 +17,7 @@ import kotlin.jvm.*
  * Back-to-send sent elements are _conflated_ -- only the the most recently sent value is received,
  * while previously sent elements **are lost**.
  * Every subscriber immediately receives the most recently sent element.
- * Sender to this broadcast channel never suspends and [offer] always returns `true`.
+ * Sender to this broadcast channel never suspends and [trySend] always succeeds.
  *
  * A secondary constructor can be used to create an instance of this class that already holds a value.
  * This channel is also created by `BroadcastChannel(Channel.CONFLATED)` factory function invocation.
@@ -26,10 +26,10 @@ import kotlin.jvm.*
  * [opening][openSubscription] and [closing][ReceiveChannel.cancel] subscription takes O(N) time, where N is the
  * number of subscribers.
  *
- * **Note: This API is obsolete.** It will be deprecated and replaced by [StateFlow][kotlinx.coroutines.flow.StateFlow]
- * when it becomes stable.
+ * **Note: This API is obsolete since 1.5.0.** It will be deprecated with warning in 1.6.0
+ * and with error in 1.7.0. It is replaced with [StateFlow][kotlinx.coroutines.flow.StateFlow].
  */
-@ExperimentalCoroutinesApi // not @ObsoleteCoroutinesApi to reduce burden for people who are still using it
+@ObsoleteCoroutinesApi
 public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     /**
      * Creates an instance of this class that already holds a value.
@@ -94,7 +94,6 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     }
 
     public override val isClosedForSend: Boolean get() = _state.value is Closed
-    public override val isFull: Boolean get() = false
 
     @Suppress("UNCHECKED_CAST")
     public override fun openSubscription(): ReceiveChannel<E> {
@@ -229,12 +228,12 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
 
     /**
      * Sends the value to all subscribed receives and stores this value as the most recent state for
-     * future subscribers. This implementation always returns `true`.
-     * It throws exception if the channel [isClosedForSend] (see [close] for details).
+     * future subscribers. This implementation always returns either successful result
+     * or closed with an exception.
      */
-    public override fun offer(element: E): Boolean {
-        offerInternal(element)?.let { throw it.sendException }
-        return true
+    public override fun trySend(element: E): ChannelResult<Unit> {
+        offerInternal(element)?.let { return ChannelResult.closed(it.sendException)  }
+        return ChannelResult.success(Unit)
     }
 
     @Suppress("UNCHECKED_CAST")

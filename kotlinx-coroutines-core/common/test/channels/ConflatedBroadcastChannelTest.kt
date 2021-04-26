@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -42,7 +42,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
         launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             val sub = broadcast.openSubscription()
-            assertNull(sub.poll())
+            assertNull(sub.tryReceive().getOrNull())
             expect(3)
             assertEquals("one", sub.receive()) // suspends
             expect(6)
@@ -68,7 +68,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
             expect(14)
             assertEquals("three", sub.receive()) // suspends
             expect(17)
-            assertNull(sub.receiveOrNull()) // suspends until closed
+            assertNull(sub.receiveCatching().getOrNull()) // suspends until closed
             expect(20)
             sub.cancel()
             expect(21)

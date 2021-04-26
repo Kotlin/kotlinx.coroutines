@@ -48,7 +48,7 @@ public fun <T> CoroutineScope.future(
 private class CompletableFutureCoroutine<T>(
     context: CoroutineContext,
     private val future: CompletableFuture<T>
-) : AbstractCoroutine<T>(context), BiConsumer<T?, Throwable?> {
+) : AbstractCoroutine<T>(context, initParentJob = true, active = true), BiConsumer<T?, Throwable?> {
     override fun accept(value: T?, exception: Throwable?) {
         cancel()
     }

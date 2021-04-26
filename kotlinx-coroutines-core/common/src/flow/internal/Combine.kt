@@ -54,7 +54,7 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
         ++currentEpoch
         // Start batch
         // The very first receive in epoch should be suspending
-        var element = resultChannel.receiveOrNull() ?: break // Channel is closed, nothing to do here
+        var element = resultChannel.receiveCatching().getOrNull() ?: break // Channel is closed, nothing to do here
         while (true) {
             val index = element.index
             // Update values
@@ -65,7 +65,7 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
             // Received the second value from the same flow in the same epoch -- bail out
             if (lastReceivedEpoch[index] == currentEpoch) break
             lastReceivedEpoch[index] = currentEpoch
-            element = resultChannel.poll() ?: break
+            element = resultChannel.tryReceive().getOrNull() ?: break
         }
 
         // Process batch result if there is enough data
@@ -129,7 +129,9 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
                 withContextUndispatched(coroutineContext + collectJob, Unit) {
                     flow.collect { value ->
                         withContextUndispatched(scopeContext, Unit, cnt) {
-                            val otherValue = second.receiveOrNull() ?: throw AbortFlowException(this@unsafeFlow)
+                            val otherValue = second.receiveCatching().getOrElse {
+                                throw it ?:AbortFlowException(this@unsafeFlow)
+                            }
                             emit(transform(value, NULL.unbox(otherValue)))
                         }
                     }

@@ -11,7 +11,7 @@ import kotlin.test.*
 class ChannelsJvmTest : TestBase() {
 
     @Test
-    fun testBlocking() {
+    fun testTrySendBlocking() {
         val ch = Channel<Int>()
         val sum = GlobalScope.async {
             var sum = 0
@@ -19,9 +19,38 @@ class ChannelsJvmTest : TestBase() {
             sum
         }
         repeat(10) {
-            ch.sendBlocking(it)
+            assertTrue(ch.trySendBlocking(it).isSuccess)
         }
         ch.close()
         assertEquals(45, runBlocking { sum.await() })
     }
+
+    // Uncomment lines when migrated to 1.5, these are bugs in inline classes codegen
+    @Test
+    fun testTrySendBlockingClosedChannel() {
+        run {
+            val channel = Channel<Unit>().also { it.close() }
+            channel.trySendBlocking(Unit)
+                .onSuccess { expectUnreached() }
+                .onFailure { assertTrue(it is ClosedSendChannelException) }
+//                .also { assertTrue { it.isClosed } }
+        }
+
+        run {
+            val channel = Channel<Unit>().also { it.close(TestException()) }
+            channel.trySendBlocking(Unit)
+                .onSuccess { expectUnreached() }
+                .onFailure { assertTrue(it is TestException) }
+//                .also { assertTrue { it.isClosed } }
+        }
+
+        run {
+            val channel = Channel<Unit>().also { it.cancel(TestCancellationException()) }
+            channel.trySendBlocking(Unit)
+                .onSuccess { expectUnreached() }
+                .onFailure { assertTrue(it is TestCancellationException) }
+//                .also { assertTrue { it.isClosed } }
+        }
+    }
+
 }

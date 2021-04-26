@@ -54,9 +54,9 @@ helper function. [NonCancellable] job object is provided to suppress cancellatio
 | ---------------- | --------------------------------------------- | ------------------------------------------------ | --------------------------
 | [Job]            | [join][Job.join]                              | [onJoin][Job.onJoin]                   | [isCompleted][Job.isCompleted]
 | [Deferred]       | [await][Deferred.await]                       | [onAwait][Deferred.onAwait]                 | [isCompleted][Job.isCompleted]
-| [SendChannel][kotlinx.coroutines.channels.SendChannel]    | [send][kotlinx.coroutines.channels.SendChannel.send]                      | [onSend][kotlinx.coroutines.channels.SendChannel.onSend]                   | [offer][kotlinx.coroutines.channels.SendChannel.offer]
-| [ReceiveChannel][kotlinx.coroutines.channels.ReceiveChannel] | [receive][kotlinx.coroutines.channels.ReceiveChannel.receive]             | [onReceive][kotlinx.coroutines.channels.ReceiveChannel.onReceive]             | [poll][kotlinx.coroutines.channels.ReceiveChannel.poll]
-| [ReceiveChannel][kotlinx.coroutines.channels.ReceiveChannel] | [receiveOrNull][kotlinx.coroutines.channels.receiveOrNull] | [onReceiveOrNull][kotlinx.coroutines.channels.onReceiveOrNull] | [poll][kotlinx.coroutines.channels.ReceiveChannel.poll]
+| [SendChannel][kotlinx.coroutines.channels.SendChannel]    | [send][kotlinx.coroutines.channels.SendChannel.send]                      | [onSend][kotlinx.coroutines.channels.SendChannel.onSend]                   | [trySend][kotlinx.coroutines.channels.SendChannel.trySend]
+| [ReceiveChannel][kotlinx.coroutines.channels.ReceiveChannel] | [receive][kotlinx.coroutines.channels.ReceiveChannel.receive]             | [onReceive][kotlinx.coroutines.channels.ReceiveChannel.onReceive]             | [tryReceive][kotlinx.coroutines.channels.ReceiveChannel.tryReceive]
+| [ReceiveChannel][kotlinx.coroutines.channels.ReceiveChannel] | [receiveCatching][kotlinx.coroutines.channels.ReceiveChannel.receiveCatching] | [onReceiveCatching][kotlinx.coroutines.channels.ReceiveChannel.onReceiveCatching] | [tryReceive][kotlinx.coroutines.channels.ReceiveChannel.tryReceive]
 | [Mutex][kotlinx.coroutines.sync.Mutex]          | [lock][kotlinx.coroutines.sync.Mutex.lock]                            | [onLock][kotlinx.coroutines.sync.Mutex.onLock]                   | [tryLock][kotlinx.coroutines.sync.Mutex.tryLock]
 | none            | [delay]                                        | [onTimeout][kotlinx.coroutines.selects.SelectBuilder.onTimeout]                   | none
 
@@ -133,11 +133,11 @@ Obsolete and deprecated module to test coroutines. Replaced with `kotlinx-corout
 [kotlinx.coroutines.channels.ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/receive.html
 [kotlinx.coroutines.channels.SendChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html
 [kotlinx.coroutines.channels.SendChannel.onSend]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/on-send.html
-[kotlinx.coroutines.channels.SendChannel.offer]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/offer.html
+[kotlinx.coroutines.channels.SendChannel.trySend]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/try-send.html
 [kotlinx.coroutines.channels.ReceiveChannel.onReceive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/on-receive.html
-[kotlinx.coroutines.channels.ReceiveChannel.poll]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/poll.html
-[kotlinx.coroutines.channels.receiveOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/receive-or-null.html
-[kotlinx.coroutines.channels.onReceiveOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/on-receive-or-null.html
+[kotlinx.coroutines.channels.ReceiveChannel.tryReceive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/try-receive.html
+[kotlinx.coroutines.channels.ReceiveChannel.receiveCatching]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/receive-catching.html
+[kotlinx.coroutines.channels.ReceiveChannel.onReceiveCatching]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/on-receive-catching.html
 
 <!--- INDEX kotlinx.coroutines.selects -->
 

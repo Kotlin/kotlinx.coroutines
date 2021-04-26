@@ -7,7 +7,6 @@ package kotlinx.coroutines.debug.internal
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.*
-import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.internal.ScopeCoroutine
 import java.io.*
 import java.lang.StackTraceElement
@@ -18,10 +17,10 @@ import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 import kotlin.synchronized
-import kotlinx.coroutines.internal.artificialFrame as createArtificialFrame // IDEA bug workaround
+import _COROUTINE.ArtificialStackFrames
 
 internal object DebugProbesImpl {
-    private const val ARTIFICIAL_FRAME_MESSAGE = "Coroutine creation stacktrace"
+    private val ARTIFICIAL_FRAME = ArtificialStackFrames().coroutineCreation()
     private val dateFormat = SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
 
     private var weakRefCleanerThread: Thread? = null
@@ -219,7 +218,7 @@ internal object DebugProbesImpl {
                     info.state
                 out.print("\n\nCoroutine ${owner.delegate}, state: $state")
                 if (observedStackTrace.isEmpty()) {
-                    out.print("\n\tat ${createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE)}")
+                    out.print("\n\tat $ARTIFICIAL_FRAME")
                     printStackTrace(out, info.creationStackTrace)
                 } else {
                     printStackTrace(out, enhancedStackTrace)
@@ -282,7 +281,7 @@ internal object DebugProbesImpl {
                     it.fileName == "ContinuationImpl.kt"
         }
 
-        val (continuationStartFrame, frameSkipped) = findContinuationStartIndex(
+        val (continuationStartFrame, delta) = findContinuationStartIndex(
             indexOfResumeWith,
             actualTrace,
             coroutineTrace
@@ -290,7 +289,6 @@ internal object DebugProbesImpl {
 
         if (continuationStartFrame == -1) return coroutineTrace
 
-        val delta = if (frameSkipped) 1 else 0
         val expectedSize = indexOfResumeWith + coroutineTrace.size - continuationStartFrame - 1 - delta
         val result = ArrayList<StackTraceElement>(expectedSize)
         for (index in 0 until indexOfResumeWith - delta) {
@@ -312,16 +310,22 @@ internal object DebugProbesImpl {
      * If method above `resumeWith` has no line number (thus it is `stateMachine.invokeSuspend`),
      * it's skipped and attempt to match next one is made because state machine could have been missing in the original coroutine stacktrace.
      *
-     * Returns index of such frame (or -1) and flag indicating whether frame with state machine was skipped
+     * Returns index of such frame (or -1) and number of skipped frames (up to 2, for state machine and for access$).
      */
     private fun findContinuationStartIndex(
         indexOfResumeWith: Int,
         actualTrace: Array<StackTraceElement>,
         coroutineTrace: List<StackTraceElement>
-    ): Pair<Int, Boolean> {
-        val result = findIndexOfFrame(indexOfResumeWith - 1, actualTrace, coroutineTrace)
-        if (result == -1) return findIndexOfFrame(indexOfResumeWith - 2, actualTrace, coroutineTrace) to true
-        return result to false
+    ): Pair<Int, Int> {
+        /*
+         * Since Kotlin 1.5.0 we have these access$ methods that we have to skip.
+         * So we have to test next frame for invokeSuspend, for $access and for actual suspending call.
+         */
+        repeat(3) {
+            val result = findIndexOfFrame(indexOfResumeWith - 1 - it, actualTrace, coroutineTrace)
+            if (result != -1) return result to it
+        }
+        return -1 to 0
     }
 
     private fun findIndexOfFrame(
@@ -416,15 +420,17 @@ internal object DebugProbesImpl {
         return createOwner(completion, frame)
     }
 
-    private fun List<StackTraceElement>.toStackTraceFrame(): StackTraceFrame? =
-        foldRight<StackTraceElement, StackTraceFrame?>(null) { frame, acc ->
-            StackTraceFrame(acc, frame)
-        }
+    private fun List<StackTraceElement>.toStackTraceFrame(): StackTraceFrame =
+        StackTraceFrame(
+            foldRight<StackTraceElement, StackTraceFrame?>(null) { frame, acc ->
+                StackTraceFrame(acc, frame)
+            }, ARTIFICIAL_FRAME
+        )
 
     private fun <T> createOwner(completion: Continuation<T>, frame: StackTraceFrame?): Continuation<T> {
         if (!isInstalled) return completion
         val info = DebugCoroutineInfoImpl(completion.context, frame, sequenceNumber.incrementAndGet())
-        val owner = CoroutineOwner(completion, info, frame)
+        val owner = CoroutineOwner(completion, info)
         capturedCoroutinesMap[owner] = true
         if (!isInstalled) capturedCoroutinesMap.clear()
         return owner
@@ -447,9 +453,9 @@ internal object DebugProbesImpl {
      */
     private class CoroutineOwner<T>(
         @JvmField val delegate: Continuation<T>,
-        @JvmField val info: DebugCoroutineInfoImpl,
-        private val frame: CoroutineStackFrame?
+        @JvmField val info: DebugCoroutineInfoImpl
     ) : Continuation<T> by delegate, CoroutineStackFrame {
+        private val frame get() = info.creationStackBottom
 
         override val callerFrame: CoroutineStackFrame?
             get() = frame?.callerFrame
@@ -467,12 +473,10 @@ internal object DebugProbesImpl {
     private fun <T : Throwable> sanitizeStackTrace(throwable: T): List<StackTraceElement> {
         val stackTrace = throwable.stackTrace
         val size = stackTrace.size
-        val probeIndex = stackTrace.indexOfLast { it.className == "kotlin.coroutines.jvm.internal.DebugProbesKt" }
+        val traceStart = 1 + stackTrace.indexOfLast { it.className == "kotlin.coroutines.jvm.internal.DebugProbesKt" }
 
         if (!sanitizeStackTraces) {
-            return List(size - probeIndex) {
-                if (it == 0) createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE) else stackTrace[it + probeIndex]
-            }
+            return List(size - traceStart) { stackTrace[it + traceStart] }
         }
 
         /*
@@ -483,9 +487,8 @@ internal object DebugProbesImpl {
          * If an interval of internal methods ends in a synthetic method, the outermost non-synthetic method in that
          * interval will also be included.
          */
-        val result = ArrayList<StackTraceElement>(size - probeIndex + 1)
-        result += createArtificialFrame(ARTIFICIAL_FRAME_MESSAGE)
-        var i = probeIndex + 1
+        val result = ArrayList<StackTraceElement>(size - traceStart + 1)
+        var i = traceStart
         while (i < size) {
             if (stackTrace[i].isInternalMethod) {
                 result += stackTrace[i] // we include the boundary of the span in any case

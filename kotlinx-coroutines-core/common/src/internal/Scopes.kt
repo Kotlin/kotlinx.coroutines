@@ -15,12 +15,13 @@ import kotlin.jvm.*
 internal open class ScopeCoroutine<in T>(
     context: CoroutineContext,
     @JvmField val uCont: Continuation<T> // unintercepted continuation
-) : AbstractCoroutine<T>(context, true), CoroutineStackFrame {
+) : AbstractCoroutine<T>(context, true, true), CoroutineStackFrame {
+
     final override val callerFrame: CoroutineStackFrame? get() = uCont as? CoroutineStackFrame
     final override fun getStackTraceElement(): StackTraceElement? = null
-    final override val isScopedCoroutine: Boolean get() = true
 
-    internal val parent: Job? get() = parentContext[Job]
+    final override val isScopedCoroutine: Boolean get() = true
+    internal val parent: Job? get() = parentHandle?.parent
 
     override fun afterCompletion(state: Any?) {
         // Resume in a cancellable way by default when resuming from another context

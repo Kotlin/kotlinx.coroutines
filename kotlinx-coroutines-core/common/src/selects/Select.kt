@@ -177,15 +177,17 @@ public interface SelectInstance<in R> {
  * corresponding non-suspending version that can be used with a regular `when` expression to select one
  * of the alternatives or to perform the default (`else`) action if none of them can be immediately selected.
  *
- * | **Receiver**     | **Suspending function**                       | **Select clause**                                | **Non-suspending version**
- * | ---------------- | --------------------------------------------- | ------------------------------------------------ | --------------------------
- * | [Job]            | [join][Job.join]                              | [onJoin][Job.onJoin]                             | [isCompleted][Job.isCompleted]
- * | [Deferred]       | [await][Deferred.await]                       | [onAwait][Deferred.onAwait]                      | [isCompleted][Job.isCompleted]
- * | [SendChannel]    | [send][SendChannel.send]                      | [onSend][SendChannel.onSend]                     | [offer][SendChannel.offer]
- * | [ReceiveChannel] | [receive][ReceiveChannel.receive]             | [onReceive][ReceiveChannel.onReceive]            | [poll][ReceiveChannel.poll]
- * | [ReceiveChannel] | [receiveOrNull][ReceiveChannel.receiveOrNull] | [onReceiveOrNull][ReceiveChannel.onReceiveOrNull]| [poll][ReceiveChannel.poll]
- * | [Mutex]          | [lock][Mutex.lock]                            | [onLock][Mutex.onLock]                           | [tryLock][Mutex.tryLock]
- * | none             | [delay]                                       | [onTimeout][SelectBuilder.onTimeout]             | none
+ * ### List of supported select methods
+ *
+ * | **Receiver**     | **Suspending function**                           | **Select clause**
+ * | ---------------- | ---------------------------------------------     | -----------------------------------------------------
+ * | [Job]            | [join][Job.join]                                  | [onJoin][Job.onJoin]
+ * | [Deferred]       | [await][Deferred.await]                           | [onAwait][Deferred.onAwait]
+ * | [SendChannel]    | [send][SendChannel.send]                          | [onSend][SendChannel.onSend]
+ * | [ReceiveChannel] | [receive][ReceiveChannel.receive]                 | [onReceive][ReceiveChannel.onReceive]
+ * | [ReceiveChannel] | [receiveCatching][ReceiveChannel.receiveCatching] | [onReceiveCatching][ReceiveChannel.onReceiveCatching]
+ * | [Mutex]          | [lock][Mutex.lock]                                | [onLock][Mutex.onLock]
+ * | none             | [delay]                                           | [onTimeout][SelectBuilder.onTimeout]
  *
  * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
  * function is suspended, this function immediately resumes with [CancellationException].

@@ -16,8 +16,8 @@ import kotlin.coroutines.*
  * @param context -- the coroutine context from which the resulting observable is going to be signalled
  */
 @Deprecated(message = "Deprecated in the favour of consumeAsFlow()",
-    level = DeprecationLevel.WARNING, // Error in 1.4
-    replaceWith = ReplaceWith("this.consumeAsFlow().asPublisher()"))
+    level = DeprecationLevel.ERROR, // Error in 1.4
+    replaceWith = ReplaceWith("this.consumeAsFlow().asPublisher(context)", imports = ["kotlinx.coroutines.flow.consumeAsFlow"]))
 public fun <T> ReceiveChannel<T>.asPublisher(context: CoroutineContext = EmptyCoroutineContext): Publisher<T> = publish(context) {
     for (t in this@asPublisher)
         send(t)

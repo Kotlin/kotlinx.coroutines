@@ -24,7 +24,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 
 What do we do if we need them to be invoked _sequentially_ &mdash; first `doSomethingUsefulOne` _and then_ 
 `doSomethingUsefulTwo`, and compute the sum of their results? 
-In practice we do this if we use the result of the first function to make a decision on whether we need 
+In practice, we do this if we use the result of the first function to make a decision on whether we need 
 to invoke the second one or to decide on how to invoke it.
 
 We use a normal sequential invocation, because the code in the coroutine, just like in the regular 
@@ -190,18 +190,26 @@ standard `lazy` function in cases when computation of the value involves suspend
 ## Async-style functions
 
 We can define async-style functions that invoke `doSomethingUsefulOne` and `doSomethingUsefulTwo`
-_asynchronously_ using the [async] coroutine builder with an explicit [GlobalScope] reference.
+_asynchronously_ using the [async] coroutine builder using a [GlobalScope] reference to 
+opt-out of the structured concurrency.
 We name such functions with the 
 "...Async" suffix to highlight the fact that they only start asynchronous computation and one needs
 to use the resulting deferred value to get the result.
 
+> [GlobalScope] is a delicate API that can backfire in non-trivial ways, one of which will be explained
+> below, so you must explicitly opt-in into using `GlobalScope` with `@OptIn(DelicateCoroutinesApi::class)`. 
+>
+{type="note"}
+
 ```kotlin
 // The result type of somethingUsefulOneAsync is Deferred<Int>
+@OptIn(DelicateCoroutinesApi::class)
 fun somethingUsefulOneAsync() = GlobalScope.async {
     doSomethingUsefulOne()
 }
 
 // The result type of somethingUsefulTwoAsync is Deferred<Int>
+@OptIn(DelicateCoroutinesApi::class)
 fun somethingUsefulTwoAsync() = GlobalScope.async {
     doSomethingUsefulTwo()
 }
@@ -236,10 +244,12 @@ fun main() {
 }
 //sampleEnd
 
+@OptIn(DelicateCoroutinesApi::class)
 fun somethingUsefulOneAsync() = GlobalScope.async {
     doSomethingUsefulOne()
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 fun somethingUsefulTwoAsync() = GlobalScope.async {
     doSomethingUsefulTwo()
 }
@@ -272,9 +282,9 @@ Completed in 1085 ms
 {type="note"}
 
 Consider what happens if between the `val one = somethingUsefulOneAsync()` line and `one.await()` expression there is some logic
-error in the code and the program throws an exception and the operation that was being performed by the program aborts. 
+error in the code, and the program throws an exception, and the operation that was being performed by the program aborts. 
 Normally, a global error-handler could catch this exception, log and report the error for developers, but the program 
-could otherwise continue doing other operations. But here we have `somethingUsefulOneAsync` still running in the background,
+could otherwise continue doing other operations. However, here we have `somethingUsefulOneAsync` still running in the background,
 even though the operation that initiated it was aborted. This problem does not happen with structured
 concurrency, as shown in the section below.
 
@@ -293,7 +303,7 @@ suspend fun concurrentSum(): Int = coroutineScope {
 }
 ```
 
-This way, if something goes wrong inside the code of the `concurrentSum` function and it throws an exception,
+This way, if something goes wrong inside the code of the `concurrentSum` function, and it throws an exception,
 all the coroutines that were launched in its scope will be cancelled.
 
 <!--- CLEAR -->

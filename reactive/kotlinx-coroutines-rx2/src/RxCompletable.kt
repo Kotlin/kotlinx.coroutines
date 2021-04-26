@@ -2,14 +2,11 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
-import kotlin.internal.*
 
 /**
  * Creates cold [Completable] that runs a given [block] in a coroutine and emits its result.
@@ -28,17 +25,6 @@ public fun rxCompletable(
     return rxCompletableInternal(GlobalScope, context, block)
 }
 
-@Deprecated(
-    message = "CoroutineScope.rxCompletable is deprecated in favour of top-level rxCompletable",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("rxCompletable(context, block)")
-) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
-@LowPriorityInOverloadResolution
-public fun CoroutineScope.rxCompletable(
-    context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend CoroutineScope.() -> Unit
-): Completable = rxCompletableInternal(this, context, block)
-
 private fun rxCompletableInternal(
     scope: CoroutineScope, // support for legacy rxCompletable in scope
     context: CoroutineContext,
@@ -53,7 +39,7 @@ private fun rxCompletableInternal(
 private class RxCompletableCoroutine(
     parentContext: CoroutineContext,
     private val subscriber: CompletableEmitter
-) : AbstractCoroutine<Unit>(parentContext, true) {
+) : AbstractCoroutine<Unit>(parentContext, false, true) {
     override fun onCompleted(value: Unit) {
         try {
             subscriber.onComplete()
@@ -64,11 +50,22 @@ private class RxCompletableCoroutine(
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
         try {
-            if (!subscriber.tryOnError(cause)) {
-                handleUndeliverableException(cause, context)
+            if (subscriber.tryOnError(cause)) {
+                return
             }
         } catch (e: Throwable) {
-            handleUndeliverableException(e, context)
+            cause.addSuppressed(e)
         }
+        handleUndeliverableException(cause, context)
     }
 }
+
+@Deprecated(
+    message = "CoroutineScope.rxCompletable is deprecated in favour of top-level rxCompletable",
+    level = DeprecationLevel.HIDDEN,
+    replaceWith = ReplaceWith("rxCompletable(context, block)")
+) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
+public fun CoroutineScope.rxCompletable(
+    context: CoroutineContext = EmptyCoroutineContext,
+    block: suspend CoroutineScope.() -> Unit
+): Completable = rxCompletableInternal(this, context, block)

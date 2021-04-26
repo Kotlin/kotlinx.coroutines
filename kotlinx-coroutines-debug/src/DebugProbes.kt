@@ -134,7 +134,7 @@ public object DebugProbes {
      *
      * Coroutine "coroutine#42":StandaloneCoroutine{Active}@58fdd99, state: SUSPENDED
      *     at MyClass$awaitData.invokeSuspend(MyClass.kt:37)
-     * (Coroutine creation stacktrace)
+     *     at _COROUTINE._CREATION._(CoroutineDebugging.kt)
      *     at MyClass.createIoRequest(MyClass.kt:142)
      *     at MyClass.fetchData(MyClass.kt:154)
      *     at MyClass.showData(MyClass.kt:31)

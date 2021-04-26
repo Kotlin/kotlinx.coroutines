@@ -20,10 +20,13 @@ configurations {
 
 dependencies {
     compileOnly "junit:junit:$junit_version"
+    compileOnly "org.junit.jupiter:junit-jupiter-api:$junit5_version"
+    testCompile "org.junit.jupiter:junit-jupiter-engine:$junit5_version"
+    testCompile "org.junit.platform:junit-platform-testkit:1.7.0"
     shadowDeps "net.bytebuddy:byte-buddy:$byte_buddy_version"
     shadowDeps "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
     compileOnly "io.projectreactor.tools:blockhound:$blockhound_version"
-    testCompile "io.projectreactor.tools:blockhound:$blockhound_version"
+    testImplementation "io.projectreactor.tools:blockhound:$blockhound_version"
     api "net.java.dev.jna:jna:$jna_version"
     api "net.java.dev.jna:jna-platform:$jna_version"
 }
@@ -36,6 +39,12 @@ if (rootProject.ext.jvm_ir_enabled) {
             excludeTestsMatching('kotlinx.coroutines.debug.DebugProbesTest')
         }
     }
+}
+
+java {
+    /* This is needed to be able to run JUnit5 tests. Otherwise, Gradle complains that it can't find the
+    JVM1.6-compatible version of the `junit-jupiter-api` artifact. */
+    disableAutoTargetJvm()
 }
 
 jar {
