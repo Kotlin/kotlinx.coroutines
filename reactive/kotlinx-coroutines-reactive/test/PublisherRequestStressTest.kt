@@ -74,7 +74,7 @@ class PublisherRequestStressTest : TestBase() {
             private var demand = 0L // only updated from reqPool
 
             override fun onComplete() {
-                expectUnreached()
+                // Typically unreached, but, rarely, `emitPool` may shut down before the cancellation is performed.
             }
 
             override fun onSubscribe(sub: Subscription) {
