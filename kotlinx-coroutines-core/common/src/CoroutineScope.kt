@@ -163,7 +163,7 @@ public val CoroutineScope.isActive: Boolean
  *
  * ### Possible replacements
  *
- * In may cases uses of `GlobalScope` should be removed, marking the containing operation with `suspend`, for example:
+ * In many cases uses of `GlobalScope` should be removed, marking the containing operation with `suspend`, for example:
  *
  * ```
  * suspend fun loadConfiguration() {
