@@ -10,7 +10,6 @@
     <toc-element id="coroutines-guide.md"/>
     <toc-element id="async-programming.md"/>
     <toc-element id="coroutines-basics.md"/>
-    <toc-element id="coroutines-basic-jvm.md"/>
     <toc-element toc-title="Intro to coroutines and channels – hands-on tutorial" href="https://play.kotlinlang.org/hands-on/Introduction%20to%20Coroutines%20and%20Channels/"/>
     <toc-element id="cancellation-and-timeouts.md"/>
     <toc-element id="composing-suspending-functions.md"/>
