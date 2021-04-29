@@ -35,6 +35,7 @@ public final class kotlinx/coroutines/reactor/ReactorContext : kotlin/coroutines
 	public fun <init> (Lreactor/util/context/Context;)V
 	public fun <init> (Lreactor/util/context/ContextView;)V
 	public final fun getContext ()Lreactor/util/context/Context;
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class kotlinx/coroutines/reactor/ReactorContext$Key : kotlin/coroutines/CoroutineContext$Key {
