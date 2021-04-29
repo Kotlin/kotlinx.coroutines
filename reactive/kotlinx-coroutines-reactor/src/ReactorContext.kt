@@ -27,18 +27,18 @@ import reactor.util.context.*
  * ```
  * val flux = myDatabaseService.getUsers()
  *     .contextWrite { ctx -> println(ctx); ctx }
- * flux.await() // Will print "null"
+ * flux.awaitFirst() // Will print "null"
  *
  * // Now add ReactorContext
  * withContext(Context.of("answer", "42").asCoroutineContext()) {
- *    flux.await() // Will print "Context{'key'='value'}"
+ *    flux.awaitFirst() // Will print "Context{'key'='value'}"
  * }
  * ```
  *
  * #### Propagating subscriber's Context to ReactorContext:
  * ```
  * val flow = flow {
- *     println("Reactor context in Flow: " + coroutineContext[ReactorContext])
+ *     println("Reactor context in Flow: " + currentCoroutineContext()[ReactorContext])
  * }
  * // No context
  * flow.asFlux()
@@ -55,6 +55,8 @@ public class ReactorContext(public val context: Context) : AbstractCoroutineCont
     public constructor(contextView: ContextView): this(Context.of(contextView))
 
     public companion object Key : CoroutineContext.Key<ReactorContext>
+
+    override fun toString(): String = context.toString()
 }
 
 /**
