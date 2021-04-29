@@ -469,7 +469,7 @@ private fun <T> Flow<T>.timeoutInternal(
         values.onReceiveOrNull { value ->
             if (value !== DONE) {
                 if (value === TIMEOUT) {
-                    action(downStream)
+                    downStream.action()
                     values.cancel(ChildCancelledException())
                     return@onReceiveOrNull false // Just end the loop here. Nothing more to be done.
                 }
