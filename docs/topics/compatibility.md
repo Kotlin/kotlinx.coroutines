@@ -80,9 +80,9 @@ It is done in order to produce compilation warning about using experimental or o
 Warnings can be disabled either programmatically for a specific call site or globally for the whole module.
 
 ### Programmatically
-For a specific call-site, warning can be disabled by using [UseExperimental](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-use-experimental/index.html) annotation:
+For a specific call-site, warning can be disabled by using [OptIn](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-opt-in/) annotation:
 ```kotlin
-@UseExperimental(ExperimentalCoroutinesApi::class) // Disables warning about experimental coroutines API 
+@OptIn(ExperimentalCoroutinesApi::class) // Disables warning about experimental coroutines API 
 fun experimentalApiUsage() {
     someKotlinxCoroutinesExperimentalMethod()
 }
