@@ -153,7 +153,7 @@ public suspend fun <T> withContext(
         newContext.ensureActive()
         // FAST PATH #1 -- new context is the same as the old one
         if (newContext === oldContext) {
-            val coroutine = ScopeCoroutine(newContext, uCont)
+            val coroutine = ScopeCoroutine(newContext, uCont, true)
             return@sc coroutine.startUndispatchedOrReturn(coroutine, block)
         }
         // FAST PATH #2 -- the new dispatcher is the same as the old one (something else changed)
@@ -267,7 +267,7 @@ private const val RESUMED = 2
 internal class DispatchedCoroutine<in T>(
     context: CoroutineContext,
     uCont: Continuation<T>
-) : ScopeCoroutine<T>(context, uCont) {
+) : ScopeCoroutine<T>(context, uCont, true) {
     // this is copy-and-paste of a decision state machine inside AbstractionContinuation
     // todo: we may some-how abstract it via inline class
     private val _decision = atomic(UNDECIDED)

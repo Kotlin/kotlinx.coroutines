@@ -13,7 +13,8 @@ import kotlin.jvm.*
  */
 internal open class ScopeCoroutine<in T>(
     context: CoroutineContext,
-    uCont: Continuation<T>
+    uCont: Continuation<T>,
+    useInitNativeKludge: Boolean
 ) : AbstractCoroutine<T>(context, true, true), CoroutineStackFrame {
     @JvmField
     val uCont: Continuation<T> = uCont.asShareable() // unintercepted continuation, shareable
@@ -25,7 +26,7 @@ internal open class ScopeCoroutine<in T>(
 
     init {
         // Kludge for native
-        if (!isReuseSupportedInPlatform()) initParentForNativeUndispatchedCoroutine()
+        if (useInitNativeKludge && !isReuseSupportedInPlatform()) initParentForNativeUndispatchedCoroutine()
     }
 
     protected open fun initParentForNativeUndispatchedCoroutine() {

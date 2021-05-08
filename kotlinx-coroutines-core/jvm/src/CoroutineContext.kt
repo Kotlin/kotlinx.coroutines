@@ -113,7 +113,7 @@ private object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Ke
 internal actual class UndispatchedCoroutine<in T>actual constructor (
     context: CoroutineContext,
     uCont: Continuation<T>
-) : ScopeCoroutine<T>(if (context[UndispatchedMarker] == null) context + UndispatchedMarker else context, uCont) {
+) : ScopeCoroutine<T>(if (context[UndispatchedMarker] == null) context + UndispatchedMarker else context, uCont, true) {
 
     private var savedContext: CoroutineContext? = null
     private var savedOldValue: Any? = null
