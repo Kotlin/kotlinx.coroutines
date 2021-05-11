@@ -12,7 +12,7 @@ import java.lang.reflect.*
 import java.util.*
 import java.util.concurrent.atomic.*
 
-internal class CoroutinesTimeoutException(val timeoutMs: Long): Exception("test timed out ofter $timeoutMs ms")
+internal class CoroutinesTimeoutException(val timeoutMs: Long): Exception("test timed out after $timeoutMs ms")
 
 /**
  * This JUnit5 extension allows running test, test factory, test template, and lifecycle methods in a separate thread,
