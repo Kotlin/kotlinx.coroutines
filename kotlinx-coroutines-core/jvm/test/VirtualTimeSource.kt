@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -42,7 +42,7 @@ private const val REAL_PARK_NANOS = 10_000_000L // 10 ms -- park for a little to
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 internal class VirtualTimeSource(
     private val log: PrintStream?
-) : TimeSource {
+) : AbstractTimeSource() {
     private val mainThread: Thread = Thread.currentThread()
     private var checkpointNanos: Long = System.nanoTime()
 
