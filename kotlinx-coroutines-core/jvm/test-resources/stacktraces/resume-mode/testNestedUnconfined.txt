@@ -1,7 +1,7 @@
 kotlinx.coroutines.RecoverableTestException
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest.testResumeModeFastPath(StackTraceRecoveryResumeModeTest.kt:61)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$testNestedUnconfined$1$1.invokeSuspend(StackTraceRecoveryResumeModeTest.kt:27)
-	at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)
+	(Coroutine boundary)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$withContext$2.invokeSuspend(StackTraceRecoveryResumeModeTest.kt:76)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest.doFastPath(StackTraceRecoveryResumeModeTest.kt:71)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest.testResumeModeFastPath(StackTraceRecoveryResumeModeTest.kt:62)
