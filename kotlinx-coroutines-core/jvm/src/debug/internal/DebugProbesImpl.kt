@@ -58,6 +58,11 @@ internal object DebugProbesImpl {
      */
     private val dynamicAttach = getDynamicAttach()
 
+    init {
+        Class.forName("_COROUTINE._CREATION")
+        Class.forName("_COROUTINE._BOUNDARY")
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun getDynamicAttach(): Function1<Boolean, Unit>? = runCatching {
         val clz = Class.forName("kotlinx.coroutines.debug.internal.ByteBuddyDynamicAttach")
