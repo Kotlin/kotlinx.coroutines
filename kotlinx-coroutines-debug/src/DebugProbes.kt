@@ -143,10 +143,3 @@ public object DebugProbes {
      */
     public fun dumpCoroutines(out: PrintStream = System.out): Unit = DebugProbesImpl.dumpCoroutines(out)
 }
-
-// Stubs which are injected as coroutine probes. Require direct match of signatures
-internal fun probeCoroutineResumed(frame: Continuation<*>) = DebugProbesImpl.probeCoroutineResumed(frame)
-
-internal fun probeCoroutineSuspended(frame: Continuation<*>) = DebugProbesImpl.probeCoroutineSuspended(frame)
-internal fun <T> probeCoroutineCreated(completion: Continuation<T>): Continuation<T> =
-    DebugProbesImpl.probeCoroutineCreated(completion)

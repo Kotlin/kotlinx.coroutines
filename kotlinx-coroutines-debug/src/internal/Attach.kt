@@ -20,7 +20,7 @@ internal class ByteBuddyDynamicAttach : Function1<Boolean, Unit> {
     private fun attach() {
         ByteBuddyAgent.install(ByteBuddyAgent.AttachmentProvider.ForEmulatedAttachment.INSTANCE)
         val cl = Class.forName("kotlin.coroutines.jvm.internal.DebugProbesKt")
-        val cl2 = Class.forName("kotlinx.coroutines.debug.DebugProbesKt")
+        val cl2 = Class.forName("kotlinx.coroutines.debug.internal.DebugProbesKt")
 
         ByteBuddy()
             .redefine(cl2)
