@@ -302,9 +302,18 @@ public interface ReceiveChannel<out E> {
      * * Its name was not aligned with the rest of the API and tried to mimic Java's queue instead.
      *
      * See https://github.com/Kotlin/kotlinx.coroutines/issues/974 for more context.
+     *
+     * ### Replacement note
+     *
+     * The replacement `tryReceive().getOrNull()` is a default that ignores all close exceptions and
+     * proceeds with `null`, while `poll` throws an exception if the channel was closed with an exception.
+     * Replacement with the very same 'poll' semantics is `tryReceive().onClosed { if (it != null) throw it }.getOrNull()`
      */
-    @Deprecated(level = DeprecationLevel.WARNING,
-        message = "Deprecated in the favour of 'tryReceive'",
+    @Deprecated(
+        level = DeprecationLevel.WARNING,
+        message = "Deprecated in the favour of 'tryReceive'. " +
+            "Please note that the provided replacement does not rethrow channel's close cause as 'poll' did, " +
+            "for the precise replacement please refer to the 'poll' documentation",
         replaceWith = ReplaceWith("tryReceive().getOrNull()")
     ) // Warning since 1.5.0
     public fun poll(): E? {
@@ -322,12 +331,18 @@ public interface ReceiveChannel<out E> {
      * - Was throwing if the channel has failed even though its signature may suggest it returns 'null'
      * - It didn't really belong to core channel API and can be exposed as an extension instead.
      *
-     * @suppress doc
+     * ### Replacement note
+     *
+     * The replacement `receiveCatching().getOrNull()` is a safe default that ignores all close exceptions and
+     * proceeds with `null`, while `receiveOrNull` throws an exception if the channel was closed with an exception.
+     * Replacement with the very same `receiveOrNull` semantics is `receiveCatching().onClosed { if (it != null) throw it }.getOrNull()`.
      */
     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
     @LowPriorityInOverloadResolution
     @Deprecated(
-        message = "Deprecated in favor of receiveCatching",
+        message = "Deprecated in favor of 'receiveCatching'. " +
+            "Please note that the provided replacement does not rethrow channel's close cause as 'receiveOrNull' did, " +
+            "for the detailed replacement please refer to the 'receiveOrNull' documentation",
         level = DeprecationLevel.ERROR,
         replaceWith = ReplaceWith("receiveCatching().getOrNull()")
     ) // Warning since 1.3.0, error in 1.5.0, will be hidden in 1.6.0
