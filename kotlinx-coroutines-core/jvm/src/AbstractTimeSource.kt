@@ -10,21 +10,21 @@ package kotlinx.coroutines
 import java.util.concurrent.locks.*
 import kotlin.internal.InlineOnly
 
-internal interface TimeSource {
-    fun currentTimeMillis(): Long
-    fun nanoTime(): Long
-    fun wrapTask(block: Runnable): Runnable
-    fun trackTask()
-    fun unTrackTask()
-    fun registerTimeLoopThread()
-    fun unregisterTimeLoopThread()
-    fun parkNanos(blocker: Any, nanos: Long) // should return immediately when nanos <= 0
-    fun unpark(thread: Thread)
+internal abstract class AbstractTimeSource {
+    abstract fun currentTimeMillis(): Long
+    abstract fun nanoTime(): Long
+    abstract fun wrapTask(block: Runnable): Runnable
+    abstract fun trackTask()
+    abstract fun unTrackTask()
+    abstract fun registerTimeLoopThread()
+    abstract fun unregisterTimeLoopThread()
+    abstract fun parkNanos(blocker: Any, nanos: Long) // should return immediately when nanos <= 0
+    abstract fun unpark(thread: Thread)
 }
 
 // For tests only
 // @JvmField: Don't use JvmField here to enable R8 optimizations via "assumenosideeffects"
-internal var timeSource: TimeSource? = null
+internal var timeSource: AbstractTimeSource? = null
 
 @InlineOnly
 internal inline fun currentTimeMillis(): Long =
