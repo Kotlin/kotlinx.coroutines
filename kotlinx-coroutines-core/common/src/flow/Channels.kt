@@ -30,6 +30,7 @@ public suspend fun <T> FlowCollector<T>.emitAll(channel: ReceiveChannel<T>): Uni
     emitAllImpl(channel, consume = true)
 
 private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>, consume: Boolean) {
+    ensureActive()
     // Manually inlined "consumeEach" implementation that does not use iterator but works via "receiveCatching".
     // It has smaller and more efficient spilled state which also allows to implement a manual kludge to
     // fix retention of the last emitted value.
