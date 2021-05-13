@@ -145,7 +145,7 @@ public fun <T> Flow<T>.shareIn(
     )
     @Suppress("UNCHECKED_CAST")
     val job = scope.launchSharing(config.context, config.upstream, shared, started, NO_VALUE as T)
-    return ReadonlySharedFlowWithJob(shared, job)
+    return ReadonlySharedFlow(shared, job)
 }
 
 private class SharingConfig<T>(
@@ -303,7 +303,7 @@ public fun <T> Flow<T>.stateIn(
     val config = configureSharing(1)
     val state = MutableStateFlow(initialValue)
     val job = scope.launchSharing(config.context, config.upstream, state, started, initialValue)
-    return ReadonlyStateFlowWithJob(state, job)
+    return ReadonlyStateFlow(state, job)
 }
 
 /**
@@ -331,7 +331,7 @@ private fun <T> CoroutineScope.launchSharingDeferred(
             upstream.collect { value ->
                 state?.let { it.value = value } ?: run {
                     state = MutableStateFlow(value).also {
-                        result.complete(ReadonlyStateFlowWithJob(it, coroutineContext.job))
+                        result.complete(ReadonlyStateFlow(it, coroutineContext.job))
                     }
                 }
             }
@@ -350,37 +350,31 @@ private fun <T> CoroutineScope.launchSharingDeferred(
  * Represents this mutable shared flow as a read-only shared flow.
  */
 public fun <T> MutableSharedFlow<T>.asSharedFlow(): SharedFlow<T> =
-    ReadonlySharedFlow(this)
+    ReadonlySharedFlow(this, null)
 
 /**
  * Represents this mutable state flow as a read-only state flow.
  */
 public fun <T> MutableStateFlow<T>.asStateFlow(): StateFlow<T> =
-    ReadonlyStateFlow(this)
+    ReadonlyStateFlow(this, null)
 
-private open class ReadonlySharedFlow<T>(
-    flow: SharedFlow<T>
+private class ReadonlySharedFlow<T>(
+    flow: SharedFlow<T>,
+    @Suppress("unused")
+    private val job: Job? // keeps a strong reference to the job (if present)
 ) : SharedFlow<T> by flow, CancellableFlow<T>, FusibleFlow<T> {
     override fun fuse(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow) =
         fuseSharedFlow(context, capacity, onBufferOverflow)
 }
 
-private class ReadonlySharedFlowWithJob<T>(
-    flow: SharedFlow<T>,
-    private val job: Job // keeps a strong reference to the job
-) : ReadonlySharedFlow<T>(flow)
-
-private open class ReadonlyStateFlow<T>(
-    flow: StateFlow<T>
+private class ReadonlyStateFlow<T>(
+    flow: StateFlow<T>,
+    @Suppress("unused")
+    private val job: Job? // keeps a strong reference to the job (if present)
 ) : StateFlow<T> by flow, CancellableFlow<T>, FusibleFlow<T> {
     override fun fuse(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow) =
         fuseStateFlow(context, capacity, onBufferOverflow)
 }
-
-private class ReadonlyStateFlowWithJob<T>(
-    flow: StateFlow<T>,
-    private val job: Job // keeps a strong reference to the job
-) : ReadonlyStateFlow<T>(flow)
 
 // -------------------------------- onSubscription --------------------------------
 
