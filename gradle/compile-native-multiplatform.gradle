@@ -24,6 +24,7 @@ kotlin {
         addTarget(presets.watchosArm32)
         addTarget(presets.watchosArm64)
         addTarget(presets.watchosX86)
+        addTarget(presets.watchosX64)
     }
 
     sourceSets {
