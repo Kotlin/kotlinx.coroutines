@@ -25,7 +25,7 @@ class CoroutinesDumpTest : DebugTestBase() {
             "Coroutine \"coroutine#1\":DeferredCoroutine{Active}@1e4a7dd4, state: SUSPENDED\n" +
                     "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.sleepingNestedMethod(CoroutinesDumpTest.kt:95)\n" +
                     "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.sleepingOuterMethod(CoroutinesDumpTest.kt:88)\n" +
-                    "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
+                    "\t(Coroutine creation stacktrace)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                     "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
                     "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n",
@@ -51,7 +51,7 @@ class CoroutinesDumpTest : DebugTestBase() {
                     "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.nestedActiveMethod(CoroutinesDumpTest.kt:141)\n" +
                     "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.activeMethod(CoroutinesDumpTest.kt:133)\n" +
                     "\tat kotlinx.coroutines.debug.CoroutinesDumpTest\$testRunningCoroutine\$1$deferred\$1.invokeSuspend(CoroutinesDumpTest.kt:41)\n" +
-                    "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
+                    "\t(Coroutine creation stacktrace)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                     "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
                     "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n" +
@@ -81,7 +81,7 @@ class CoroutinesDumpTest : DebugTestBase() {
                     "\tat java.lang.Thread.sleep(Native Method)\n" +
                     "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.nestedActiveMethod(CoroutinesDumpTest.kt:111)\n" +
                     "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.activeMethod(CoroutinesDumpTest.kt:106)\n" +
-                    "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
+                    "\t(Coroutine creation stacktrace)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                     "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
                     "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n" +

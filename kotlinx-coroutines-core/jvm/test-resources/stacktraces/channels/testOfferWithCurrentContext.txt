@@ -1,6 +1,6 @@
 kotlinx.coroutines.RecoverableTestException
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testOfferWithCurrentContext$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt:86)
-	at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)
+	(Coroutine boundary)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest.sendInChannel(StackTraceRecoveryChannelsTest.kt:210)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$sendWithContext$2.invokeSuspend(StackTraceRecoveryChannelsTest.kt:205)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testOfferWithCurrentContext$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt:89)
