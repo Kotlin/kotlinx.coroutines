@@ -9,7 +9,7 @@ import kotlin.native.*
 
 internal actual val DEBUG: Boolean = false
 
-internal actual val Any.hexAddress: String get() = abs(identityHashCode().let { if (it == Int.MIN_VALUE) 0 else it }).toString(16)
+internal actual val Any.hexAddress: String get() = identityHashCode().toUInt().toString(16)
 
 internal actual val Any.classSimpleName: String get() = this::class.simpleName ?: "Unknown"
 
