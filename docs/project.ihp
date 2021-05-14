@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE ihp SYSTEM "http://helpserver.labs.intellij.net/help/ihp.dtd">
+<!DOCTYPE ihp SYSTEM "https://resources.jetbrains.com/stardust/ihp.dtd">
 
 <ihp version="2.0">
     <categories src="c.list"/>
