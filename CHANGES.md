@@ -24,12 +24,13 @@ Note that this is a full changelog relative to 1.4.3 version. Changelog relative
 
 ### Other improvements
 
+* Kotlin version is upgraded to 1.5.0 and JVM target is updated to 1.8.
 * `Flow.last` and `Flow.lastOrNull` operators (#2246).
 * `Flow.runningFold` operator (#2641).
 * `CoroutinesTimeout` rule for JUnit5 (#2197).
 * Internals of `Job` and `AbstractCoroutine` was reworked, resulting in smaller code size, less memory footprint, and better performance (#2513, #2512).
 * `CancellationException` from Kotlin standard library is used for cancellation on Koltin/JS and Kotlin/Native (#2638).
-* Introduced new `DelicateCoroutineApi` annotation that warns users about potential target API pitfalls and suggests studying API's documentation first. The only delicate API right now is `GlobalScope` (#2637).
+* Introduced new `DelicateCoroutinesApi` annotation that warns users about potential target API pitfalls and suggests studying API's documentation first. The only delicate API right now is `GlobalScope` (#2637).
 * Fixed bug introduced in `1.4.3` when `kotlinx-coroutines-core.jar` triggered IDEA debugger failure (#2619).
 * Fixed memory leak of `ChildHandlerNode` with reusable continuations (#2564).
 * Various documentation improvements (#2555, #2589, #2592, #2583, #2437, #2616, #2633, #2560).
