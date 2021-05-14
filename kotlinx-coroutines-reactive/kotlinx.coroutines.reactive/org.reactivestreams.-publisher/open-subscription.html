@@ -37,14 +37,14 @@
 
 <p><strong>Deprecated:</strong> Transforming publisher to channel is deprecated, use asFlow() instead</p>
 
-<p>Subscribes to this <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a> and returns a channel to receive elements emitted by it.
-The resulting channel shall be <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/cancel.html">cancelled</a> to unsubscribe from this publisher.</p>
+<p>Subscribes to this <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a> and returns a channel to receive the elements emitted by it.
+The resulting channel needs to be <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/cancel.html">cancelled</a> in order to unsubscribe from this publisher.</p>
 
 <h3 id="parameters">Parameters</h3>
 
 <p><code>request</code> -</p>
 
-<p>how many items to request from publisher in advance (optional, one by default).</p>
+<p>how many items to request from the publisher in advance (optional, a single element by default).</p>
 
 <p>This method is deprecated in the favor of <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>.
 Instead of iterating over the resulting channel please use <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/collect.html">collect</a>:</p>

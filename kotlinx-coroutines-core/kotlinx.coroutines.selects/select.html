@@ -33,7 +33,7 @@
 
 <h1 id="select">select</h1>
 
-<div class="signature"><code><span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">select</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">crossinline</span> <span class="parameterName" id="kotlinx.coroutines.selects$select(kotlin.Function1((kotlinx.coroutines.selects.SelectBuilder((kotlinx.coroutines.selects.select.R)), kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-select-builder/index.html"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><a href="select.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="select.html#R"><span class="identifier">R</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/selects/Select.kt#L198">(source)</a></div>
+<div class="signature"><code><span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">select</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">crossinline</span> <span class="parameterName" id="kotlinx.coroutines.selects$select(kotlin.Function1((kotlinx.coroutines.selects.SelectBuilder((kotlinx.coroutines.selects.select.R)), kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-select-builder/index.html"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><a href="select.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="select.html#R"><span class="identifier">R</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/selects/Select.kt#L200">(source)</a></div>
 
 <p>Waits for the result of multiple suspending functions simultaneously, which are specified using <em>clauses</em>
 in the <a href="select.html#kotlinx.coroutines.selects$select(kotlin.Function1((kotlinx.coroutines.selects.SelectBuilder((kotlinx.coroutines.selects.select.R)), kotlin.Unit)))/builder">builder</a> scope of this select invocation. The caller is suspended until one of the clauses
@@ -51,13 +51,14 @@ the clauses.</p>
 corresponding non-suspending version that can be used with a regular <code>when</code> expression to select one
 of the alternatives or to perform the default (<code>else</code>) action if none of them can be immediately selected.</p>
 
+<h3 id="list-of-supported-select-methods">List of supported select methods</h3>
+
 <table>
   <thead>
     <tr>
       <th><strong>Receiver</strong></th>
       <th><strong>Suspending function</strong></th>
       <th><strong>Select clause</strong></th>
-      <th><strong>Non-suspending version</strong></th>
     </tr>
   </thead>
   <tbody>
@@ -65,43 +66,36 @@ of the alternatives or to perform the default (<code>else</code>) action if none
       <td><a href="../kotlinx.coroutines/-job/index.html">Job</a></td>
       <td><a href="../kotlinx.coroutines/-job/join.html">join</a></td>
       <td><a href="../kotlinx.coroutines/-job/on-join.html">onJoin</a></td>
-      <td><a href="../kotlinx.coroutines/-job/is-completed.html">isCompleted</a></td>
     </tr>
     <tr>
       <td><a href="../kotlinx.coroutines/-deferred/index.html">Deferred</a></td>
       <td><a href="../kotlinx.coroutines/-deferred/await.html">await</a></td>
       <td><a href="../kotlinx.coroutines/-deferred/on-await.html">onAwait</a></td>
-      <td><a href="../kotlinx.coroutines/-job/is-completed.html">isCompleted</a></td>
     </tr>
     <tr>
       <td><a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a></td>
       <td><a href="../kotlinx.coroutines.channels/-send-channel/send.html">send</a></td>
       <td><a href="../kotlinx.coroutines.channels/-send-channel/on-send.html">onSend</a></td>
-      <td><a href="../kotlinx.coroutines.channels/-send-channel/offer.html">offer</a></td>
     </tr>
     <tr>
       <td><a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a></td>
       <td><a href="../kotlinx.coroutines.channels/-receive-channel/receive.html">receive</a></td>
       <td><a href="../kotlinx.coroutines.channels/-receive-channel/on-receive.html">onReceive</a></td>
-      <td><a href="../kotlinx.coroutines.channels/-receive-channel/poll.html">poll</a></td>
     </tr>
     <tr>
       <td><a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a></td>
-      <td><a href="#">receiveOrNull</a></td>
-      <td><a href="#">onReceiveOrNull</a></td>
-      <td><a href="../kotlinx.coroutines.channels/-receive-channel/poll.html">poll</a></td>
+      <td><a href="../kotlinx.coroutines.channels/-receive-channel/receive-catching.html">receiveCatching</a></td>
+      <td><a href="../kotlinx.coroutines.channels/-receive-channel/on-receive-catching.html">onReceiveCatching</a></td>
     </tr>
     <tr>
       <td><a href="../kotlinx.coroutines.sync/-mutex/index.html">Mutex</a></td>
       <td><a href="../kotlinx.coroutines.sync/-mutex/lock.html">lock</a></td>
       <td><a href="../kotlinx.coroutines.sync/-mutex/on-lock.html">onLock</a></td>
-      <td><a href="../kotlinx.coroutines.sync/-mutex/try-lock.html">tryLock</a></td>
     </tr>
     <tr>
       <td>none</td>
       <td><a href="../kotlinx.coroutines/delay.html">delay</a></td>
       <td><a href="-select-builder/on-timeout.html">onTimeout</a></td>
-      <td>none</td>
     </tr>
   </tbody>
 </table>

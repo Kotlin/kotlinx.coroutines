@@ -33,14 +33,17 @@
 
 <h1 id="coroutinescope">CoroutineScope</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineScope</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L64">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineScope</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L78">(source)</a></div>
 
 <p>Defines a scope for new coroutines. Every <strong>coroutine builder</strong> (like <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, etc)
 is an extension on <a href="./index.html">CoroutineScope</a> and inherits its <a href="coroutine-context.html">coroutineContext</a>
 to automatically propagate all its elements and cancellation.</p>
 
-<p>The best ways to obtain a standalone instance of the scope are <a href="./index.html">CoroutineScope</a> and <a href="../-main-scope.html">MainScope</a> factory functions.
-Additional context elements can be appended to the scope using the <a href="../plus.html">plus</a> operator.</p>
+<p>The best ways to obtain a standalone instance of the scope are <a href="./index.html">CoroutineScope</a> and <a href="../-main-scope.html">MainScope</a> factory functions,
+taking care to cancel these coroutine scopes when they are no longer needed (see section on custom usage below for
+explanation and example).</p>
+
+<p>Additional context elements can be appended to the scope using the <a href="../plus.html">plus</a> operator.</p>
 
 <h3 id="convention-for-structured-concurrency">Convention for structured concurrency</h3>
 
@@ -61,11 +64,24 @@ See <a href="https://developer.android.com/topic/libraries/architecture/coroutin
 
 <h3 id="custom-usage">Custom usage</h3>
 
-<p><a href="./index.html">CoroutineScope</a> should be implemented or declared as a property on entities with a well-defined lifecycle that are
-responsible for launching children coroutines, for example:</p>
+<p><code>CoroutineScope</code> should be declared as a property on entities with a well-defined lifecycle that are
+responsible for launching children coroutines. The corresponding instance of <code>CoroutineScope</code> shall be created
+with either <code>CoroutineScope()</code> or <code>MainScope()</code> functions. The difference between them is only in the
+<a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a>:</p>
+
+<ul>
+  <li><code>CoroutineScope()</code> uses <a href="../-dispatchers/-default.html">Dispatchers.Default</a> for its coroutines.</li>
+  <li><code>MainScope()</code> uses <a href="../-dispatchers/-main.html">Dispatchers.Main</a> for its coroutines.</li>
+</ul>
+
+<p><strong>The key part of custom usage of <code>CustomScope</code> is cancelling it and the end of the lifecycle.</strong>
+The <a href="../cancel.html">CoroutineScope.cancel</a> extension function shall be used when the entity that was launching coroutines
+is no longer needed. It cancels all the coroutines that might still be running on behalf of it.</p>
+
+<p>For example:</p>
 
 <pre>class MyUIClass {
-    val scope = MainScope() // the scope of MyUIClass
+    val scope = MainScope() // the scope of MyUIClass, uses Dispatchers.Main
 
     fun destroy() { // destroys an instance of MyUIClass
         scope.cancel() // cancels all coroutines launched in this scope
@@ -304,7 +320,9 @@ object can be used to <a href="../../kotlinx.coroutines.channels/-receive-channe
 <td>
         <div class="signature"><code><span class="keyword">object </span><span class="identifier">GlobalScope</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.html"><span class="identifier">CoroutineScope</span></a></code></div>
 
-        <p>A global <a href="./index.html">CoroutineScope</a> not bound to any job.</p>
+        <p>A global <a href="./index.html">CoroutineScope</a> not bound to any job.
+Global scope is used to launch top-level coroutines which are operating on the whole application lifetime
+and are not cancelled prematurely.</p>
 
       </td>
 </tr>

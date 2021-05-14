@@ -35,12 +35,12 @@
 
 <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/SingleSource.html"><span class="identifier">SingleSource</span></a><span class="symbol">&lt;</span><a href="await.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await.html#T"><span class="identifier">T</span></a></code></div>
 
-<p>Awaits for completion of the single value without blocking a thread.
-Returns the resulting value or throws the corresponding exception if this single had produced error.</p>
+<p>Awaits for completion of the single value response without blocking the thread.
+Returns the resulting value, or throws the corresponding exception if this response produces an error.</p>
 
 <p>This suspending function is cancellable.
-If the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
-immediately resumes with <a href="#">CancellationException</a>.</p>
+If the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> of the current coroutine is cancelled or completed while the suspending function is waiting, this
+function immediately disposes of its subscription and resumes with <a href="#">CancellationException</a>.</p>
 
 
       </div>

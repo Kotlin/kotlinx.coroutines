@@ -33,14 +33,14 @@
 
 <h1 id="conflatedbroadcastchannel">ConflatedBroadcastChannel</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">class </span><span class="identifier">ConflatedBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/ConflatedBroadcastChannel.kt#L33">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ObsoleteCoroutinesApi</span> <span class="keyword">class </span><span class="identifier">ConflatedBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/ConflatedBroadcastChannel.kt#L33">(source)</a></div>
 
 <p>Broadcasts the most recently sent element (aka <a href="value.html">value</a>) to all <a href="open-subscription.html">openSubscription</a> subscribers.</p>
 
 <p>Back-to-send sent elements are <em>conflated</em> – only the the most recently sent value is received,
 while previously sent elements <strong>are lost</strong>.
 Every subscriber immediately receives the most recently sent element.
-Sender to this broadcast channel never suspends and <a href="offer.html">offer</a> always returns <code>true</code>.</p>
+Sender to this broadcast channel never suspends and <a href="try-send.html">trySend</a> always succeeds.</p>
 
 <p>A secondary constructor can be used to create an instance of this class that already holds a value.
 This channel is also created by <code>BroadcastChannel(Channel.CONFLATED)</code> factory function invocation.</p>
@@ -49,8 +49,8 @@ This channel is also created by <code>BroadcastChannel(Channel.CONFLATED)</code>
 <a href="open-subscription.html">opening</a> and <a href="../-receive-channel/cancel.html">closing</a> subscription takes O(N) time, where N is the
 number of subscribers.</p>
 
-<p><strong>Note: This API is obsolete.</strong> It will be deprecated and replaced by <a href="../../kotlinx.coroutines.flow/-state-flow/index.html">StateFlow</a>
-when it becomes stable.</p>
+<p><strong>Note: This API is obsolete since 1.5.0.</strong> It will be deprecated with warning in 1.6.0
+and with error in 1.7.0. It is replaced with <a href="../../kotlinx.coroutines.flow/-state-flow/index.html">StateFlow</a>.</p>
 
 <h3 id="constructors">Constructors</h3>
 
@@ -90,7 +90,7 @@ when it becomes stable.</p>
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if this channel was closed by an invocation of <a href="close.html">close</a>. This means that
-calling <a href="send.html">send</a> or <a href="offer.html">offer</a> will result in an exception.</p>
+calling <a href="send.html">send</a> will result in an exception.</p>
 
       </td>
 </tr>
@@ -196,21 +196,6 @@ If the channel is closed already, the handler is invoked immediately.</p>
 <tr>
 <td>
 
-        <p><a href="offer.html">offer</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">offer</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.ConflatedBroadcastChannel$offer(kotlinx.coroutines.channels.ConflatedBroadcastChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-        <p>Sends the value to all subscribed receives and stores this value as the most recent state for
-future subscribers. This implementation always returns <code>true</code>.
-It throws exception if the channel <a href="is-closed-for-send.html">isClosedForSend</a> (see <a href="close.html">close</a> for details).</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
         <p><a href="open-subscription.html">openSubscription</a></p>
 
       </td>
@@ -238,6 +223,21 @@ It throws exception if the channel <a href="is-closed-for-send.html">isClosedFor
 
       </td>
 </tr>
+<tr>
+<td>
+
+        <p><a href="try-send.html">trySend</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">trySend</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.ConflatedBroadcastChannel$trySend(kotlinx.coroutines.channels.ConflatedBroadcastChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-result/index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Sends the value to all subscribed receives and stores this value as the most recent state for
+future subscribers. This implementation always returns either successful result
+or closed with an exception.</p>
+
+      </td>
+</tr>
 </tbody>
 </table>
 
@@ -252,7 +252,7 @@ It throws exception if the channel <a href="is-closed-for-send.html">isClosedFor
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.flow/as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asFlow</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.flow/-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.flow/as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.flow/as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">asFlow</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.flow/-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.flow/as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Represents the given broadcast channel as a hot flow.
 Every flow collector will trigger a new broadcast channel subscription.</p>

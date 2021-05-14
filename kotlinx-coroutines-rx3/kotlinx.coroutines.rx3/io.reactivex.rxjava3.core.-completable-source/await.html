@@ -35,11 +35,12 @@
 
 <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/CompletableSource.html"><span class="identifier">CompletableSource</span></a><span class="symbol">.</span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-<p>Awaits for completion of this completable without blocking a thread.
-Returns <code>Unit</code> or throws the corresponding exception if this completable had produced error.</p>
+<p>Awaits for completion of this completable without blocking the thread.
+Returns <code>Unit</code>, or throws the corresponding exception if this completable produces an error.</p>
 
 <p>This suspending function is cancellable. If the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> of the invoking coroutine is cancelled or completed while this
-suspending function is suspended, this function immediately resumes with <a href="#">CancellationException</a>.</p>
+suspending function is suspended, this function immediately resumes with <a href="#">CancellationException</a> and disposes of its
+subscription.</p>
 
 
       </div>

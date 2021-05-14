@@ -33,7 +33,7 @@
 
 <h1 id="children">children</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">children</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/-sequence/index.html"><span class="identifier">Sequence</span></a><span class="symbol">&lt;</span><a href="index.html"><span class="identifier">Job</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Job.kt#L226">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">children</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/-sequence/index.html"><span class="identifier">Sequence</span></a><span class="symbol">&lt;</span><a href="index.html"><span class="identifier">Job</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Job.kt#L216">(source)</a></div>
 
 <p>Returns a sequence of this job’s children.</p>
 
@@ -47,11 +47,10 @@
 immediately cancels all its children.</li>
   <li>Parent cannot complete until all its children are complete. Parent waits for all its children to
 complete in <em>completing</em> or <em>cancelling</em> state.</li>
-  <li>Uncaught exception in a child, by default, cancels parent. In particular, this applies to
-children created with <a href="../launch.html">launch</a> coroutine builder. Note that
-<a href="../async.html">async</a> and other future-like
-coroutine builders do not have uncaught exceptions by definition, since all their exceptions are
-caught and are encapsulated in their result.</li>
+  <li>Uncaught exception in a child, by default, cancels parent. This applies even to
+children created with <a href="../async.html">async</a> and other future-like
+coroutine builders, even though their exceptions are caught and are encapsulated in their result.
+This default behavior can be overridden with <a href="../-supervisor-job.html">SupervisorJob</a>.</li>
 </ul>
 
       </div>

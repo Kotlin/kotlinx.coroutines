@@ -224,7 +224,9 @@ Instances of <a href="-executor-coroutine-dispatcher/index.html">ExecutorCorouti
 <td>
         <div class="signature"><code><span class="keyword">object </span><span class="identifier">GlobalScope</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a></code></div>
 
-        <p>A global <a href="-coroutine-scope/index.html">CoroutineScope</a> not bound to any job.</p>
+        <p>A global <a href="-coroutine-scope/index.html">CoroutineScope</a> not bound to any job.
+Global scope is used to launch top-level coroutines which are operating on the whole application lifetime
+and are not cancelled prematurely.</p>
 
       </td>
 </tr>
@@ -302,6 +304,23 @@ every time the coroutine with this element in the context is resumed on a thread
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+
+        <p><a href="-delicate-coroutines-api/index.html">DelicateCoroutinesApi</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">annotation</span> <span class="keyword">class </span><span class="identifier">DelicateCoroutinesApi</span></code></div>
+
+        <p>Marks declarations in the coroutines that are <strong>delicate</strong> —
+they have limited use-case and shall be used with care in general code.
+Any use of a delicate declaration has to be carefully reviewed to make sure it is
+properly used and does not create problems like memory and resource leaks.
+Carefully read documentation of any declaration marked as <code>DelicateCoroutinesApi</code>.</p>
+
+      </td>
+</tr>
 <tr>
 <td>
 

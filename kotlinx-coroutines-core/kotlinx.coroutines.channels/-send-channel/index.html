@@ -33,7 +33,7 @@
 
 <h1 id="sendchannel">SendChannel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L23">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L24">(source)</a></div>
 
 <p>Sender’s interface to <a href="../-channel/index.html">Channel</a>.</p>
 
@@ -51,7 +51,7 @@
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if this channel was closed by an invocation of <a href="close.html">close</a>. This means that
-calling <a href="send.html">send</a> or <a href="offer.html">offer</a> will result in an exception.</p>
+calling <a href="send.html">send</a> will result in an exception.</p>
 
       </td>
 </tr>
@@ -116,11 +116,9 @@ If the channel is closed already, the handler is invoked immediately.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">offer</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><s><span class="identifier">offer</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Immediately adds the specified <a href="offer.html#kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</a> to this channel, if this doesn’t violate its capacity restrictions,
-and returns <code>true</code>. Otherwise, just returns <code>false</code>. This is a synchronous variant of <a href="send.html">send</a> which backs off
-in situations when <code>send</code> suspends.</p>
+        <p><strong>Deprecated</strong> offer method.</p>
 
       </td>
 </tr>
@@ -138,6 +136,21 @@ or if it does not exist, or throws an exception if the channel <a href="is-close
 
       </td>
 </tr>
+<tr>
+<td>
+
+        <p><a href="try-send.html">trySend</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">trySend</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$trySend(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-result/index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Immediately adds the specified <a href="try-send.html#kotlinx.coroutines.channels.SendChannel$trySend(kotlinx.coroutines.channels.SendChannel.E)/element">element</a> to this channel, if this doesn’t violate its capacity restrictions,
+and returns the successful result. Otherwise, returns failed or closed result.
+This is synchronous variant of <a href="send.html">send</a>, which backs off in situations when <code>send</code> suspends or throws.</p>
+
+      </td>
+</tr>
 </tbody>
 </table>
 
@@ -151,10 +164,23 @@ or if it does not exist, or throws an exception if the channel <a href="is-close
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="../send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sendBlocking</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels$sendBlocking(kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.channels.sendBlocking.E)), kotlinx.coroutines.channels.sendBlocking.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="../send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="../send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">sendBlocking</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels$sendBlocking(kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.channels.sendBlocking.E)), kotlinx.coroutines.channels.sendBlocking.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="../send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Adds <a href="../send-blocking.html#kotlinx.coroutines.channels$sendBlocking(kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.channels.sendBlocking.E)), kotlinx.coroutines.channels.sendBlocking.E)/element">element</a> into to this channel, <strong>blocking</strong> the caller while this channel <a href="#">Channel.isFull</a>,
-or throws exception if the channel <a href="is-closed-for-send.html">Channel.isClosedForSend</a> (see <a href="close.html">Channel.close</a> for details).</p>
+        <p><strong>Deprecated</strong> blocking variant of send.
+This method is deprecated in the favour of <a href="../try-send-blocking.html">trySendBlocking</a>.</p>
+
+      </td>
+</tr><tr data-platform="JVM"><td>
+
+        <p><a href="../try-send-blocking.html">trySendBlocking</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="../try-send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">trySendBlocking</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$trySendBlocking(kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.channels.trySendBlocking.E)), kotlinx.coroutines.channels.trySendBlocking.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="../try-send-blocking.html#E"><span class="identifier">E</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-result/index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Adds <a href="../try-send-blocking.html#kotlinx.coroutines.channels$trySendBlocking(kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.channels.trySendBlocking.E)), kotlinx.coroutines.channels.trySendBlocking.E)/element">element</a> into to this channel, <strong>blocking</strong> the caller while this channel is full,
+and returning either <a href="../-channel-result/is-success.html">successful</a> result when the element was added, or
+failed result representing closed channel with a corresponding exception.</p>
 
       </td>
 </tr></tbody>

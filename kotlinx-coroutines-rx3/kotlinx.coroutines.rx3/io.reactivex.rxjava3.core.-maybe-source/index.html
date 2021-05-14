@@ -42,7 +42,7 @@
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/MaybeSource.html"><span class="identifier">MaybeSource</span></a><span class="symbol">&lt;</span><a href="await.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/MaybeSource.html"><span class="identifier">MaybeSource</span></a><span class="symbol">&lt;</span><a href="await.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">await</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
 
         <p>Awaits for completion of the maybe without blocking a thread.
 Returns the resulting value, null if no value was produced or throws the corresponding exception if this
@@ -57,11 +57,40 @@ maybe had produced error.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/MaybeSource.html"><span class="identifier">MaybeSource</span></a><span class="symbol">&lt;</span><a href="await-or-default.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitOrDefault</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.rx3$awaitOrDefault(io.reactivex.rxjava3.core.MaybeSource((kotlinx.coroutines.rx3.awaitOrDefault.T)), kotlinx.coroutines.rx3.awaitOrDefault.T)/default">default</span><span class="symbol">:</span>&nbsp;<a href="await-or-default.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="await-or-default.html#T"><span class="identifier">T</span></a></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/MaybeSource.html"><span class="identifier">MaybeSource</span></a><span class="symbol">&lt;</span><a href="await-or-default.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">awaitOrDefault</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.rx3$awaitOrDefault(io.reactivex.rxjava3.core.MaybeSource((kotlinx.coroutines.rx3.awaitOrDefault.T)), kotlinx.coroutines.rx3.awaitOrDefault.T)/default">default</span><span class="symbol">:</span>&nbsp;<a href="await-or-default.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="await-or-default.html#T"><span class="identifier">T</span></a></code></div>
 
         <p>Awaits for completion of the maybe without blocking a thread.
 Returns the resulting value, <a href="await-or-default.html#kotlinx.coroutines.rx3$awaitOrDefault(io.reactivex.rxjava3.core.MaybeSource((kotlinx.coroutines.rx3.awaitOrDefault.T)), kotlinx.coroutines.rx3.awaitOrDefault.T)/default">default</a> if no value was produced or throws the corresponding exception if this
 maybe had produced error.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="await-single.html">awaitSingle</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/MaybeSource.html"><span class="identifier">MaybeSource</span></a><span class="symbol">&lt;</span><a href="await-single.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitSingle</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await-single.html#T"><span class="identifier">T</span></a></code></div>
+
+        <p>Awaits for completion of the <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/MaybeSource.html">MaybeSource</a> without blocking the thread.
+Returns the resulting value, or throws if either no value is produced or this <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/MaybeSource.html">MaybeSource</a> produces an error.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="await-single-or-null.html">awaitSingleOrNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/MaybeSource.html"><span class="identifier">MaybeSource</span></a><span class="symbol">&lt;</span><a href="await-single-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitSingleOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await-single-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
+
+        <p>Awaits for completion of the <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/MaybeSource.html">MaybeSource</a> without blocking the thread.
+Returns the resulting value, or <code>null</code> if no value is produced, or throws the corresponding exception if this
+<a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/MaybeSource.html">MaybeSource</a> produces an error.</p>
 
       </td>
 </tr>
@@ -74,8 +103,7 @@ maybe had produced error.</p>
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/MaybeSource.html"><span class="identifier">MaybeSource</span></a><span class="symbol">&lt;</span><a href="collect.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">collect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx3$collect(io.reactivex.rxjava3.core.MaybeSource((kotlinx.coroutines.rx3.collect.T)), kotlin.Function1((kotlinx.coroutines.rx3.collect.T, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="collect.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Subscribes to this <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/MaybeSource.html">MaybeSource</a> and performs the specified action for each received element.
-Cancels subscription if any exception happens during collect.</p>
+        <p>Subscribes to this <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/MaybeSource.html">MaybeSource</a> and performs the specified action for each received element.</p>
 
       </td>
 </tr>

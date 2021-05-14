@@ -33,7 +33,7 @@
 
 <h1 id="join">join</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Job.kt#L274">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Job.kt#L264">(source)</a></div>
 
 <p>Suspends the coroutine until this job is complete. This invocation resumes normally (without exception)
 when the job is complete for any reason and the <a href="index.html">Job</a> of the invoking coroutine is still <a href="is-active.html">active</a>.
@@ -46,9 +46,9 @@ If the <a href="index.html">Job</a> of the invoking coroutine is cancelled or co
 suspending function is invoked or while it is suspended, this function
 throws <a href="../-cancellation-exception/index.html">CancellationException</a>.</p>
 
-<p>In particular, it means that a parent coroutine invoking <code>join</code> on a child coroutine that was started using
-<code>launch(coroutineContext) { ... }</code> builder throws <a href="../-cancellation-exception/index.html">CancellationException</a> if the child
-had crashed, unless a non-standard <a href="../-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a> is installed in the context.</p>
+<p>In particular, it means that a parent coroutine invoking <code>join</code> on a child coroutine throws
+<a href="../-cancellation-exception/index.html">CancellationException</a> if the child had failed, since a failure of a child coroutine cancels parent by default,
+unless the child was launched from within <a href="../supervisor-scope.html">supervisorScope</a>.</p>
 
 <p>This function can be used in <a href="../../kotlinx.coroutines.selects/select.html">select</a> invocation with <a href="on-join.html">onJoin</a> clause.
 Use <a href="is-completed.html">isCompleted</a> to check for a completion of this job without waiting.</p>

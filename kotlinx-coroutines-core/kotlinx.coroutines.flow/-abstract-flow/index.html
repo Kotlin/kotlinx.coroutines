@@ -125,7 +125,7 @@ This method should never be implemented or used directly.</p>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../broadcast-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">broadcastIn</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$broadcastIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.broadcastIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineStart)/scope">scope</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$broadcastIn(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.broadcastIn.T)), kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineStart)/start">start</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.LAZY<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.channels/-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="../broadcast-in.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Creates a <a href="../../kotlinx.coroutines.channels/broadcast.html">broadcast</a> coroutine that collects the given flow.</p>
+        <h3 id="deprecated">Deprecated</h3>
 
       </td>
 </tr>
@@ -402,7 +402,7 @@ Throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgume
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../filter.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filter</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$filter(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.filter.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.filter.T, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="../filter.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../filter.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Returns a flow containing only values of the original flow that matches the given <a href="../filter.html#kotlinx.coroutines.flow$filter(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.filter.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.filter.T, kotlin.Boolean)))/predicate">predicate</a>.</p>
+        <p>Returns a flow containing only values of the original flow that match the given <a href="../filter.html#kotlinx.coroutines.flow$filter(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.filter.T)), kotlin.SuspendFunction1((kotlinx.coroutines.flow.filter.T, kotlin.Boolean)))/predicate">predicate</a>.</p>
 
       </td>
 </tr>
@@ -564,6 +564,32 @@ This operator is context preserving and does not affect the context of the prece
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../fold.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">fold</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$fold(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.fold.T)), kotlinx.coroutines.flow.fold.R, kotlin.SuspendFunction2((kotlinx.coroutines.flow.fold.R, kotlinx.coroutines.flow.fold.T, )))/initial">initial</span><span class="symbol">:</span>&nbsp;<a href="../fold.html#R"><span class="identifier">R</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$fold(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.fold.T)), kotlinx.coroutines.flow.fold.R, kotlin.SuspendFunction2((kotlinx.coroutines.flow.fold.R, kotlinx.coroutines.flow.fold.T, )))/operation">operation</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">acc</span><span class="symbol">:</span>&nbsp;<a href="../fold.html#R"><span class="identifier">R</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../fold.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../fold.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../fold.html#R"><span class="identifier">R</span></a></code></div>
 
         <p>Accumulates value starting with <a href="../fold.html#kotlinx.coroutines.flow$fold(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.fold.T)), kotlinx.coroutines.flow.fold.R, kotlin.SuspendFunction2((kotlinx.coroutines.flow.fold.R, kotlinx.coroutines.flow.fold.T, )))/initial">initial</a> value and applying <a href="../fold.html#kotlinx.coroutines.flow$fold(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.fold.T)), kotlinx.coroutines.flow.fold.R, kotlin.SuspendFunction2((kotlinx.coroutines.flow.fold.R, kotlinx.coroutines.flow.fold.T, )))/operation">operation</a> current accumulator value and each element</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../last.html">last</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../last.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">last</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../last.html#T"><span class="identifier">T</span></a></code></div>
+
+        <p>The terminal operator that returns the last element emitted by the flow.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../last-or-null.html">lastOrNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../last-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">lastOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../last-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
+
+        <p>The terminal operator that returns the last element emitted by the flow or <code>null</code> if the flow was empty.</p>
 
       </td>
 </tr>
@@ -759,6 +785,21 @@ in downstream flow and does not retry on exceptions that are thrown to cancel th
 <a href="../retry-when.html#kotlinx.coroutines.flow$retryWhen(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.retryWhen.T)), kotlin.SuspendFunction3((kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.retryWhen.T)), kotlin.Throwable, kotlin.Long, kotlin.Boolean)))/predicate">predicate</a> returns true. The predicate also receives an <code>attempt</code> number as parameter,
 starting from zero on the initial call. This operator is <em>transparent</em> to exceptions that occur
 in downstream flow and does not retry on exceptions that are thrown to cancel the flow.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../running-fold.html">runningFold</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../running-fold.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">runningFold</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$runningFold(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.runningFold.T)), kotlinx.coroutines.flow.runningFold.R, kotlin.SuspendFunction2((kotlinx.coroutines.flow.runningFold.R, kotlinx.coroutines.flow.runningFold.T, )))/initial">initial</span><span class="symbol">:</span>&nbsp;<a href="../running-fold.html#R"><span class="identifier">R</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$runningFold(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.runningFold.T)), kotlinx.coroutines.flow.runningFold.R, kotlin.SuspendFunction2((kotlinx.coroutines.flow.runningFold.R, kotlinx.coroutines.flow.runningFold.T, )))/operation">operation</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">accumulator</span><span class="symbol">:</span>&nbsp;<a href="../running-fold.html#R"><span class="identifier">R</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../running-fold.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../running-fold.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../running-fold.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Folds the given flow with <a href="../running-fold.html#kotlinx.coroutines.flow$runningFold(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.runningFold.T)), kotlinx.coroutines.flow.runningFold.R, kotlin.SuspendFunction2((kotlinx.coroutines.flow.runningFold.R, kotlinx.coroutines.flow.runningFold.T, )))/operation">operation</a>, emitting every intermediate result, including <a href="../running-fold.html#kotlinx.coroutines.flow$runningFold(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.runningFold.T)), kotlinx.coroutines.flow.runningFold.R, kotlin.SuspendFunction2((kotlinx.coroutines.flow.runningFold.R, kotlinx.coroutines.flow.runningFold.T, )))/initial">initial</a> value.
+Note that initial value should be immutable (or should not be mutated) as it is shared between different collectors.
+For example:</p>
 
       </td>
 </tr>

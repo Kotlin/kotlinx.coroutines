@@ -33,35 +33,44 @@
 
 <h1 id="init">&lt;init&gt;</h1>
 
-<div class="signature"><code><span class="identifier">ReactorContext</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.reactor.ReactorContext$&lt;init&gt;(reactor.util.context.Context)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html"><span class="identifier">Context</span></a><span class="symbol">)</span></code></div>
+<div class="overload-group">
 
-<p>Wraps Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> into <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> element for seamless integration Reactor and kotlinx.coroutines.
-<a href="../reactor.util.context.-context/as-coroutine-context.html">Context.asCoroutineContext</a> is defined to add Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> elements as part of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>.
-Coroutine context element that propagates information about Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> through coroutines.</p>
+  <div class="signature"><code><span class="identifier">ReactorContext</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.reactor.ReactorContext$&lt;init&gt;(reactor.util.context.ContextView)/contextView">contextView</span><span class="symbol">:</span>&nbsp;<a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/ContextView.html"><span class="identifier">ContextView</span></a><span class="symbol">)</span></code></div>
 
-<p>This context element is implicitly propagated through subscriber’s context by all Reactive integrations, such as <a href="../mono.html">mono</a>, <a href="../flux.html">flux</a>,
-<a href="#">Publisher.asFlow</a>, <a href="#">Flow.asPublisher</a> and <a href="../kotlinx.coroutines.channels.-receive-channel/as-flux.html">Flow.asFlux</a>.
-Functions that subscribe to the reactive stream (e.g. <a href="#">Publisher.awaitFirst</a>) also propagate <a href="index.html">ReactorContext</a> to the
-subscriber’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a>.</p>
+</div>
+<div class="overload-group">
 
-<h3 id="examples-of-reactive-context-integration">Examples of Reactive context integration.</h3>
+  <div class="signature"><code><span class="identifier">ReactorContext</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.reactor.ReactorContext$&lt;init&gt;(reactor.util.context.Context)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html"><span class="identifier">Context</span></a><span class="symbol">)</span></code></div>
 
-<h4 id="propagating-reactorcontext-to-reactors-context">Propagating ReactorContext to Reactor’s Context</h4>
+  <p>Wraps Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> element for seamless integration between
+Reactor and kotlinx.coroutines.
+<a href="../reactor.util.context.-context-view/as-coroutine-context.html">Context.asCoroutineContext</a> puts Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> elements into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>,
+which can be used to propagate the information about Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> through coroutines.</p>
 
-<pre>val flux = myDatabaseService.getUsers()
+  <p>This context element is implicitly propagated through subscribers’ context by all Reactive integrations,
+such as <a href="../mono.html">mono</a>, <a href="../flux.html">flux</a>, <a href="#">Publisher.asFlow</a>, <a href="#">Flow.asPublisher</a> and <a href="../kotlinx.coroutines.channels.-receive-channel/as-flux.html">Flow.asFlux</a>.
+Functions that subscribe to a reactive stream
+(e.g. <a href="#">Publisher.awaitFirst</a>), too, propagate <a href="index.html">ReactorContext</a>
+to the subscriber’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a>.</p>
+
+  <h3 id="examples-of-reactive-context-integration">Examples of Reactive context integration.</h3>
+
+  <h4 id="propagating-reactorcontext-to-reactors-context">Propagating ReactorContext to Reactor’s Context</h4>
+
+  <pre>val flux = myDatabaseService.getUsers()
     .contextWrite { ctx -&gt; println(ctx); ctx }
-flux.await() // Will print "null"
+flux.awaitFirst() // Will print "null"
 
 // Now add ReactorContext
 withContext(Context.of("answer", "42").asCoroutineContext()) {
-   flux.await() // Will print "Context{'key'='value'}"
+   flux.awaitFirst() // Will print "Context{'key'='value'}"
 }
 </pre>
 
-<h4 id="propagating-subscribers-context-to-reactorcontext">Propagating subscriber’s Context to ReactorContext:</h4>
+  <h4 id="propagating-subscribers-context-to-reactorcontext">Propagating subscriber’s Context to ReactorContext:</h4>
 
-<pre>val flow = flow {
-    println("Reactor context in Flow: " + coroutineContext[ReactorContext])
+  <pre>val flow = flow {
+    println("Reactor context in Flow: " + currentCoroutineContext()[ReactorContext])
 }
 // No context
 flow.asFlux()
@@ -71,6 +80,8 @@ flow.asFlux()
     .contextWrite { ctx -&gt; ctx.put("answer", 42) }
     .subscribe() // Will print "Reactor context in Flow: Context{'answer'=42}"
 </pre>
+
+</div>
 
       </div>
     </main>

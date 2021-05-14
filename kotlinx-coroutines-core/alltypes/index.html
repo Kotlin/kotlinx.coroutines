@@ -141,6 +141,14 @@ from concurrent coroutines.</p>
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.channels/-channel-result/index.html">kotlinx.coroutines.channels.ChannelResult</a></p>
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.channels/-closed-receive-channel-exception/index.html">kotlinx.coroutines.channels.ClosedReceiveChannelException</a></p>
       </td>
 <td>
@@ -297,6 +305,20 @@ It is used in <code>start</code> parameter of <a href="../kotlinx.coroutines/lau
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines/-delicate-coroutines-api/index.html">kotlinx.coroutines.DelicateCoroutinesApi</a></p>
+      </td>
+<td>
+
+        <p>Marks declarations in the coroutines that are <strong>delicate</strong> —
+they have limited use-case and shall be used with care in general code.
+Any use of a delicate declaration has to be carefully reviewed to make sure it is
+properly used and does not create problems like memory and resource leaks.
+Carefully read documentation of any declaration marked as <code>DelicateCoroutinesApi</code>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines/-dispatchers/index.html">kotlinx.coroutines.Dispatchers</a></p>
       </td>
 <td>
@@ -400,7 +422,9 @@ an entity that accepts values emitted by the <a href="../kotlinx.coroutines.flow
       </td>
 <td>
 
-        <p>A global <a href="../kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a> not bound to any job.</p>
+        <p>A global <a href="../kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a> not bound to any job.
+Global scope is used to launch top-level coroutines which are operating on the whole application lifetime
+and are not cancelled prematurely.</p>
 
       </td>
 </tr>

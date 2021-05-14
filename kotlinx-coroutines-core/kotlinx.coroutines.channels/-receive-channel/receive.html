@@ -33,7 +33,7 @@
 
 <h1 id="receive">receive</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#E"><span class="identifier">E</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L187">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#E"><span class="identifier">E</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L212">(source)</a></div>
 
 <p>Retrieves and removes an element from this channel if it’s not empty, or suspends the caller while the channel is empty,
 or throws a <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a> if the channel <a href="is-closed-for-receive.html">is closed for <code>receive</code></a>.
@@ -51,7 +51,7 @@ See “Undelivered elements” section in <a href="../-channel/index.html">Chann
 Use <a href="../../kotlinx.coroutines/yield.html">yield</a> or <a href="../../kotlinx.coroutines/is-active.html">CoroutineScope.isActive</a> to periodically check for cancellation in tight loops if needed.</p>
 
 <p>This function can be used in <a href="../../kotlinx.coroutines.selects/select.html">select</a> invocations with the <a href="on-receive.html">onReceive</a> clause.
-Use <a href="poll.html">poll</a> to try receiving from this channel without waiting.</p>
+Use <a href="try-receive.html">tryReceive</a> to try receiving from this channel without waiting.</p>
 
 
       </div>

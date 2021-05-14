@@ -44,10 +44,10 @@
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asFlow</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Transforms the given reactive <a href="#">Publisher</a> into <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>.
-Use <a href="#">buffer</a> operator on the resulting flow to specify the size of the backpressure.
-More precisely, it specifies the value of the subscription’s <a href="#">request</a>.
-<a href="#">buffer</a> default capacity is used by default.</p>
+        <p>Transforms the given reactive <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Publisher.html">Flow Publisher</a> into <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>.
+Use the <a href="#">buffer</a> operator on the resulting flow to specify the size of the back-pressure.
+In effect, it specifies the value of the subscription’s <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Subscription.html#request(long)">request</a>.
+The <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/-factory/-b-u-f-f-e-r-e-d.html">default buffer capacity</a> for a suspending channel is used by default.</p>
 
       </td>
 </tr>
@@ -60,8 +60,8 @@ More precisely, it specifies the value of the subscription’s <a href="#">reque
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="await-first.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirst</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await-first.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>Awaits for the first value from the given publisher without blocking a thread and
-returns the resulting value or throws the corresponding exception if this publisher had produced error.</p>
+        <p>Awaits the first value from the given publisher without blocking the thread and returns the resulting value, or, if
+the publisher has produced an error, throws the corresponding exception.</p>
 
       </td>
 </tr>
@@ -74,8 +74,9 @@ returns the resulting value or throws the corresponding exception if this publis
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="await-first-or-default.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirstOrDefault</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.jdk9$awaitFirstOrDefault(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.awaitFirstOrDefault.T)), kotlinx.coroutines.jdk9.awaitFirstOrDefault.T)/default">default</span><span class="symbol">:</span>&nbsp;<a href="await-first-or-default.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="await-first-or-default.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>Awaits for the first value from the given observable or the <a href="await-first-or-default.html#kotlinx.coroutines.jdk9$awaitFirstOrDefault(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.awaitFirstOrDefault.T)), kotlinx.coroutines.jdk9.awaitFirstOrDefault.T)/default">default</a> value if none is emitted without blocking a
-thread and returns the resulting value or throws the corresponding exception if this observable had produced error.</p>
+        <p>Awaits the first value from the given publisher, or returns the <a href="await-first-or-default.html#kotlinx.coroutines.jdk9$awaitFirstOrDefault(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.awaitFirstOrDefault.T)), kotlinx.coroutines.jdk9.awaitFirstOrDefault.T)/default">default</a> value if none is emitted, without blocking
+the thread, and returns the resulting value, or, if this publisher has produced an error, throws the corresponding
+exception.</p>
 
       </td>
 </tr>
@@ -88,8 +89,9 @@ thread and returns the resulting value or throws the corresponding exception if 
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="await-first-or-else.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirstOrElse</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.jdk9$awaitFirstOrElse(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.awaitFirstOrElse.T)), kotlin.Function0((kotlinx.coroutines.jdk9.awaitFirstOrElse.T)))/defaultValue">defaultValue</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="await-first-or-else.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="await-first-or-else.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>Awaits for the first value from the given observable or call <a href="await-first-or-else.html#kotlinx.coroutines.jdk9$awaitFirstOrElse(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.awaitFirstOrElse.T)), kotlin.Function0((kotlinx.coroutines.jdk9.awaitFirstOrElse.T)))/defaultValue">defaultValue</a> to get a value if none is emitted without blocking a
-thread and returns the resulting value or throws the corresponding exception if this observable had produced error.</p>
+        <p>Awaits the first value from the given publisher, or calls <a href="await-first-or-else.html#kotlinx.coroutines.jdk9$awaitFirstOrElse(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.awaitFirstOrElse.T)), kotlin.Function0((kotlinx.coroutines.jdk9.awaitFirstOrElse.T)))/defaultValue">defaultValue</a> to get a value if none is emitted, without
+blocking the thread, and returns the resulting value, or, if this publisher has produced an error, throws the
+corresponding exception.</p>
 
       </td>
 </tr>
@@ -102,8 +104,8 @@ thread and returns the resulting value or throws the corresponding exception if 
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="await-first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirstOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await-first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
 
-        <p>Awaits for the first value from the given observable or <code>null</code> value if none is emitted without blocking a
-thread and returns the resulting value or throws the corresponding exception if this observable had produced error.</p>
+        <p>Awaits the first value from the given publisher, or returns <code>null</code> if none is emitted, without blocking the thread,
+and returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.</p>
 
       </td>
 </tr>
@@ -116,8 +118,8 @@ thread and returns the resulting value or throws the corresponding exception if 
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="await-last.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitLast</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await-last.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>Awaits for the last value from the given publisher without blocking a thread and
-returns the resulting value or throws the corresponding exception if this publisher had produced error.</p>
+        <p>Awaits the last value from the given publisher without blocking the thread and
+returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.</p>
 
       </td>
 </tr>
@@ -130,8 +132,8 @@ returns the resulting value or throws the corresponding exception if this publis
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="await-single.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitSingle</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await-single.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>Awaits for the single value from the given publisher without blocking a thread and
-returns the resulting value or throws the corresponding exception if this publisher had produced error.</p>
+        <p>Awaits the single value from the given publisher without blocking the thread and returns the resulting value, or,
+if this publisher has produced an error, throws the corresponding exception.</p>
 
       </td>
 </tr>
@@ -144,8 +146,7 @@ returns the resulting value or throws the corresponding exception if this publis
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="collect.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">collect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.jdk9$collect(java.util.concurrent.Flow.Publisher((kotlinx.coroutines.jdk9.collect.T)), kotlin.Function1((kotlinx.coroutines.jdk9.collect.T, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="collect.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Subscribes to this <a href="#">Publisher</a> and performs the specified action for each received element.
-Cancels subscription if any exception happens during collect.</p>
+        <p>Subscribes to this <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Publisher.html">Flow Publisher</a> and performs the specified action for each received element.</p>
 
       </td>
 </tr>

@@ -52,7 +52,7 @@ immediately sending an element: <code>ConflatedBroadcastChannel().apply { offer(
   <p>Back-to-send sent elements are <em>conflated</em> – only the the most recently sent value is received,
 while previously sent elements <strong>are lost</strong>.
 Every subscriber immediately receives the most recently sent element.
-Sender to this broadcast channel never suspends and <a href="offer.html">offer</a> always returns <code>true</code>.</p>
+Sender to this broadcast channel never suspends and <a href="try-send.html">trySend</a> always succeeds.</p>
 
   <p>A secondary constructor can be used to create an instance of this class that already holds a value.
 This channel is also created by <code>BroadcastChannel(Channel.CONFLATED)</code> factory function invocation.</p>
@@ -61,8 +61,8 @@ This channel is also created by <code>BroadcastChannel(Channel.CONFLATED)</code>
 <a href="open-subscription.html">opening</a> and <a href="../-receive-channel/cancel.html">closing</a> subscription takes O(N) time, where N is the
 number of subscribers.</p>
 
-  <p><strong>Note: This API is obsolete.</strong> It will be deprecated and replaced by <a href="../../kotlinx.coroutines.flow/-state-flow/index.html">StateFlow</a>
-when it becomes stable.</p>
+  <p><strong>Note: This API is obsolete since 1.5.0.</strong> It will be deprecated with warning in 1.6.0
+and with error in 1.7.0. It is replaced with <a href="../../kotlinx.coroutines.flow/-state-flow/index.html">StateFlow</a>.</p>
 
 </div>
 

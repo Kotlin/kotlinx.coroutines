@@ -64,7 +64,7 @@ created by <code>buffer(onBufferOverflow = </code><a href="../kotlinx.coroutines
 
   <h3 id="operator-fusion">Operator fusion</h3>
 
-  <p>Adjacent applications of <code>conflate</code>/<a href="buffer.html">buffer</a>, <a href="channel-flow.html">channelFlow</a>, <a href="flow-on.html">flowOn</a>, <a href="produce-in.html">produceIn</a>, and <a href="broadcast-in.html">broadcastIn</a> are
+  <p>Adjacent applications of <code>conflate</code>/<a href="buffer.html">buffer</a>, <a href="channel-flow.html">channelFlow</a>, <a href="flow-on.html">flowOn</a> and <a href="produce-in.html">produceIn</a> are
 always fused so that only one properly configured channel is used for execution.
 <strong>Conflation takes precedence over <code>buffer()</code> calls with any other capacity.</strong></p>
 

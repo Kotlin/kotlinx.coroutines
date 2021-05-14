@@ -33,7 +33,9 @@
 
 <h1 id="awaitordefault">awaitOrDefault</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeSource.html"><span class="identifier">MaybeSource</span></a><span class="symbol">&lt;</span><a href="await-or-default.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitOrDefault</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.rx2$awaitOrDefault(io.reactivex.MaybeSource((kotlinx.coroutines.rx2.awaitOrDefault.T)), kotlinx.coroutines.rx2.awaitOrDefault.T)/default">default</span><span class="symbol">:</span>&nbsp;<a href="await-or-default.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="await-or-default.html#T"><span class="identifier">T</span></a></code></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeSource.html"><span class="identifier">MaybeSource</span></a><span class="symbol">&lt;</span><a href="await-or-default.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">awaitOrDefault</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.rx2$awaitOrDefault(io.reactivex.MaybeSource((kotlinx.coroutines.rx2.awaitOrDefault.T)), kotlinx.coroutines.rx2.awaitOrDefault.T)/default">default</span><span class="symbol">:</span>&nbsp;<a href="await-or-default.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="await-or-default.html#T"><span class="identifier">T</span></a></code></div>
+
+<p><strong>Deprecated:</strong> Deprecated in favor of awaitSingleOrNull()</p>
 
 <p>Awaits for completion of the maybe without blocking a thread.
 Returns the resulting value, <a href="await-or-default.html#kotlinx.coroutines.rx2$awaitOrDefault(io.reactivex.MaybeSource((kotlinx.coroutines.rx2.awaitOrDefault.T)), kotlinx.coroutines.rx2.awaitOrDefault.T)/default">default</a> if no value was produced or throws the corresponding exception if this
@@ -42,6 +44,11 @@ maybe had produced error.</p>
 <p>This suspending function is cancellable.
 If the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
 immediately resumes with <a href="#">CancellationException</a>.</p>
+
+<h3 id="deprecation">Deprecation</h3>
+
+<p>Deprecated in favor of <a href="await-single-or-null.html">awaitSingleOrNull</a> for naming consistency (see the deprecation of <a href="await.html">MaybeSource.await</a> for
+details).</p>
 
 
       </div>

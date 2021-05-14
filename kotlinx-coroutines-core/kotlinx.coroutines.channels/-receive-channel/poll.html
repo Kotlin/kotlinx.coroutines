@@ -33,11 +33,30 @@
 
 <h1 id="poll">poll</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">poll</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L285">(source)</a></div>
+<div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><s><span class="identifier">poll</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L319">(source)</a></div>
 
-<p>Retrieves and removes an element from this channel if its not empty, or returns <code>null</code> if the channel is empty
-or is <a href="is-closed-for-receive.html">is closed for <code>receive</code></a> without a cause.
-It throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+<p><strong>Deprecated:</strong> DeprecationLevel.WARNING</p>
+
+<p><strong>Deprecated</strong> poll method.</p>
+
+<p>This method was deprecated in the favour of <a href="try-receive.html">tryReceive</a>.
+It has proven itself as error-prone method in Channel API:</p>
+
+<ul>
+  <li>Nullable return type creates the false sense of security, implying that <code>null</code>
+  is returned instead of throwing an exception.</li>
+  <li>It was used mostly from non-suspending APIs where CancellationException triggered
+internal failures in the application (the most common source of bugs).</li>
+  <li>Its name was not aligned with the rest of the API and tried to mimic Java’s queue instead.</li>
+</ul>
+
+<p>See https://github.com/Kotlin/kotlinx.coroutines/issues/974 for more context.</p>
+
+<h3 id="replacement-note">Replacement note</h3>
+
+<p>The replacement <code>tryReceive().getOrNull()</code> is a default that ignores all close exceptions and
+proceeds with <code>null</code>, while <code>poll</code> throws an exception if the channel was closed with an exception.
+Replacement with the very same ‘poll’ semantics is <code>tryReceive().onClosed { if (it != null) throw it }.getOrNull()</code></p>
 
 
       </div>

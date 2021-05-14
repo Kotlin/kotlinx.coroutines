@@ -132,6 +132,21 @@ The <a href="../../kotlinx.coroutines.selects/select.html">select</a> invocation
 
       </td>
 </tr>
+<tr>
+<td>
+
+        <p><a href="../-receive-channel/on-receive-catching.html">onReceiveCatching</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">onReceiveCatching</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.selects/-select-clause1.html"><span class="identifier">SelectClause1</span></a><span class="symbol">&lt;</span><a href="../-channel-result/index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Clause for the <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of the <a href="../-receive-channel/on-receive-catching.html">onReceiveCatching</a> suspending function that selects with the <a href="../-channel-result/index.html">ChannelResult</a> with a value
+that is received from the channel or with a close cause if the channel
+<a href="../-receive-channel/is-closed-for-receive.html">is closed for <code>receive</code></a>.</p>
+
+      </td>
+</tr>
 </tbody>
 </table>
 
@@ -161,11 +176,9 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">poll</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code></div>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><s><span class="identifier">poll</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code></div>
 
-        <p>Retrieves and removes an element from this channel if its not empty, or returns <code>null</code> if the channel is empty
-or is <a href="../-receive-channel/is-closed-for-receive.html">is closed for <code>receive</code></a> without a cause.
-It throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+        <p><strong>Deprecated</strong> poll method.</p>
 
       </td>
 </tr>
@@ -182,6 +195,51 @@ It throws the original <a href="../-send-channel/close.html">close</a> cause exc
 or throws a <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a> if the channel <a href="../-receive-channel/is-closed-for-receive.html">is closed for <code>receive</code></a>.
 If the channel was closed because of an exception, it is called a <em>failed</em> channel and this function
 will throw the original <a href="../-send-channel/close.html">close</a> cause exception.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../-receive-channel/receive-catching.html">receiveCatching</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveCatching</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-result/index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Retrieves and removes an element from this channel if it’s not empty, or suspends the caller while this channel is empty.
+This method returns <a href="../-channel-result/index.html">ChannelResult</a> with the value of an element successfully retrieved from the channel
+or the close cause if the channel was closed. Closed cause may be <code>null</code> if the channel was closed normally.
+The result cannot be <a href="../-channel-result/is-failure.html">failed</a> without being <a href="../-channel-result/is-closed.html">closed</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../-receive-channel/receive-or-null.html">receiveOrNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><s><span class="identifier">receiveOrNull</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code></div>
+
+        <p>This function was deprecated since 1.3.0 and is no longer recommended to use
+or to implement in subclasses.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../-receive-channel/try-receive.html">tryReceive</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">tryReceive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-result/index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Retrieves and removes an element from this channel if it’s not empty, returning a <a href="../-channel-result/success.html">successful</a>
+result, returns <a href="#">failed</a> result if the channel is empty, and <a href="../-channel-result/closed.html">closed</a>
+result if the channel is closed.</p>
 
       </td>
 </tr>

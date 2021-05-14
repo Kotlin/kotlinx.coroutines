@@ -35,8 +35,10 @@
 
 <div class="signature"><code><span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/ObservableSource.html"><span class="identifier">ObservableSource</span></a><span class="symbol">&lt;</span><a href="collect.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">collect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx3$collect(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.collect.T)), kotlin.Function1((kotlinx.coroutines.rx3.collect.T, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="collect.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-<p>Subscribes to this <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/ObservableSource.html">ObservableSource</a> and performs the specified action for each received element.
-Cancels subscription if any exception happens during collect.</p>
+<p>Subscribes to this <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/ObservableSource.html">ObservableSource</a> and performs the specified action for each received element.</p>
+
+<p>If <a href="collect.html#kotlinx.coroutines.rx3$collect(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.collect.T)), kotlin.Function1((kotlinx.coroutines.rx3.collect.T, kotlin.Unit)))/action">action</a> throws an exception at some point, the subscription is cancelled, and the exception is rethrown from
+<a href="../io.reactivex.rxjava3.core.-maybe-source/collect.html">collect</a>. Also, if the <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/ObservableSource.html">ObservableSource</a> signals an error, that error is rethrown from <a href="../io.reactivex.rxjava3.core.-maybe-source/collect.html">collect</a>.</p>
 
 
       </div>

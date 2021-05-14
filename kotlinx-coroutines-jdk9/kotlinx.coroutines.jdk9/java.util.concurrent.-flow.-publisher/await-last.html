@@ -35,16 +35,16 @@
 
 <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="await-last.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitLast</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await-last.html#T"><span class="identifier">T</span></a></code></div>
 
-<p>Awaits for the last value from the given publisher without blocking a thread and
-returns the resulting value or throws the corresponding exception if this publisher had produced error.</p>
+<p>Awaits the last value from the given publisher without blocking the thread and
+returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.</p>
 
 <p>This suspending function is cancellable.
-If the <a href="#">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
-immediately resumes with <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CancellationException.html">CancellationException</a>.</p>
+If the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> of the current coroutine is cancelled or completed while the suspending function is waiting, this
+function immediately cancels its <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Subscription.html">Flow.Subscription</a> and resumes with <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CancellationException.html">CancellationException</a>.</p>
 
 <h3 id="exceptions">Exceptions</h3>
 
-<p><code>NoSuchElementException</code> - if publisher does not emit any value</p>
+<p><code>NoSuchElementException</code> - if the publisher does not emit any value</p>
 
       </div>
     </main>

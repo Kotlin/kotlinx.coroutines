@@ -3,3 +3,4 @@ $dokka.linkExtension:html
 
 kotlinx.coroutines.debug
 kotlinx.coroutines.debug.junit4
+kotlinx.coroutines.debug.junit5

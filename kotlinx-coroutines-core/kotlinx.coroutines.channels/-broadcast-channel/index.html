@@ -33,7 +33,7 @@
 
 <h1 id="broadcastchannel">BroadcastChannel</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">interface </span><span class="identifier">BroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/BroadcastChannel.kt#L27">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ObsoleteCoroutinesApi</span> <span class="keyword">interface </span><span class="identifier">BroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/BroadcastChannel.kt#L27">(source)</a></div>
 
 <p>Broadcast channel is a non-blocking primitive for communication between the sender and multiple receivers
 that subscribe for the elements using <a href="open-subscription.html">openSubscription</a> function and unsubscribe using <a href="../-receive-channel/cancel.html">ReceiveChannel.cancel</a>
@@ -42,8 +42,8 @@ function.</p>
 <p>See <code>BroadcastChannel()</code> factory function for the description of available
 broadcast channel implementations.</p>
 
-<p><strong>Note: This API is obsolete.</strong> It will be deprecated and replaced by <a href="../../kotlinx.coroutines.flow/-shared-flow/index.html">SharedFlow</a>
-when it becomes stable.</p>
+<p><strong>Note: This API is obsolete since 1.5.0.</strong> It will be deprecated with warning in 1.6.0
+and with error in 1.7.0. It is replaced with <a href="../../kotlinx.coroutines.flow/-shared-flow/index.html">SharedFlow</a>.</p>
 
 <h3 id="inherited-properties">Inherited Properties</h3>
 
@@ -59,7 +59,7 @@ when it becomes stable.</p>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if this channel was closed by an invocation of <a href="../-send-channel/close.html">close</a>. This means that
-calling <a href="../-send-channel/send.html">send</a> or <a href="../-send-channel/offer.html">offer</a> will result in an exception.</p>
+calling <a href="../-send-channel/send.html">send</a> will result in an exception.</p>
 
       </td>
 </tr>
@@ -164,11 +164,9 @@ If the channel is closed already, the handler is invoked immediately.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">offer</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><s><span class="identifier">offer</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Immediately adds the specified <a href="../-send-channel/offer.html#kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</a> to this channel, if this doesn’t violate its capacity restrictions,
-and returns <code>true</code>. Otherwise, just returns <code>false</code>. This is a synchronous variant of <a href="../-send-channel/send.html">send</a> which backs off
-in situations when <code>send</code> suspends.</p>
+        <p><strong>Deprecated</strong> offer method.</p>
 
       </td>
 </tr>
@@ -186,6 +184,21 @@ or if it does not exist, or throws an exception if the channel <a href="../-send
 
       </td>
 </tr>
+<tr>
+<td>
+
+        <p><a href="../-send-channel/try-send.html">trySend</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">trySend</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$trySend(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-result/index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Immediately adds the specified <a href="../-send-channel/try-send.html#kotlinx.coroutines.channels.SendChannel$trySend(kotlinx.coroutines.channels.SendChannel.E)/element">element</a> to this channel, if this doesn’t violate its capacity restrictions,
+and returns the successful result. Otherwise, returns failed or closed result.
+This is synchronous variant of <a href="../-send-channel/send.html">send</a>, which backs off in situations when <code>send</code> suspends or throws.</p>
+
+      </td>
+</tr>
 </tbody>
 </table>
 
@@ -200,7 +213,7 @@ or if it does not exist, or throws an exception if the channel <a href="../-send
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.flow/as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asFlow</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.flow/-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.flow/as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.flow/as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">asFlow</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.flow/-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.flow/as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Represents the given broadcast channel as a hot flow.
 Every flow collector will trigger a new broadcast channel subscription.</p>

@@ -33,7 +33,7 @@
 
 <h1 id="callbackflow">callbackFlow</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">callbackFlow</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$callbackFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.callbackFlow.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="callback-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="callback-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Builders.kt#L331">(source)</a></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">callbackFlow</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$callbackFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.callbackFlow.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="callback-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="callback-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Builders.kt#L328">(source)</a></div>
 
 <p>Creates an instance of a <em>cold</em> <a href="-flow/index.html">Flow</a> with elements that are sent to a <a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>
 provided to the builder’s <a href="callback-flow.html#kotlinx.coroutines.flow$callbackFlow(kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.flow.callbackFlow.T)), kotlin.Unit)))/block">block</a> of code via <a href="../kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>. It allows elements to be
@@ -59,10 +59,10 @@ is not closed yet.</p>
 resulting flow to specify a user-defined value and to control what happens when data is produced faster
 than consumed, i.e. to control the back-pressure behavior.</p>
 
-<p>Adjacent applications of <a href="./callback-flow.md">callbackFlow</a>, <a href="flow-on.html">flowOn</a>, <a href="buffer.html">buffer</a>, <a href="produce-in.html">produceIn</a>, and <a href="broadcast-in.html">broadcastIn</a> are
+<p>Adjacent applications of <a href="./callback-flow.md">callbackFlow</a>, <a href="flow-on.html">flowOn</a>, <a href="buffer.html">buffer</a>, and <a href="produce-in.html">produceIn</a> are
 always fused so that only one properly configured channel is used for execution.</p>
 
-<p>Example of usage that converts a multi-short callback API to a flow.
+<p>Example of usage that converts a multi-shot callback API to a flow.
 For single-shot callbacks use <a href="../kotlinx.coroutines/suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a>.</p>
 
 <pre>fun flowFrom(api: CallbackBasedApi): Flow&lt;T&gt; = callbackFlow {
@@ -70,11 +70,10 @@ For single-shot callbacks use <a href="../kotlinx.coroutines/suspend-cancellable
         override fun onNextValue(value: T) {
             // To avoid blocking you can configure channel capacity using
             // either buffer(Channel.CONFLATED) or buffer(Channel.UNLIMITED) to avoid overfill
-            try {
-                sendBlocking(value)
-            } catch (e: Exception) {
-                // Handle exception from the channel: failure in flow or premature closing
-            }
+            trySendBlocking(value)
+                .onFailure { throwable -&gt;
+                    // Downstream has been cancelled or failed, can log here
+                }
         }
         override fun onApiError(cause: Throwable) {
             cancel(CancellationException("API Error", cause))

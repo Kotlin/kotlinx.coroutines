@@ -35,13 +35,13 @@
 
 <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asFlow</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="as-flow.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
 
-<p>Transforms the given reactive <a href="#">Publisher</a> into <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>.
-Use <a href="#">buffer</a> operator on the resulting flow to specify the size of the backpressure.
-More precisely, it specifies the value of the subscription’s <a href="#">request</a>.
-<a href="#">buffer</a> default capacity is used by default.</p>
+<p>Transforms the given reactive <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Publisher.html">Flow Publisher</a> into <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>.
+Use the <a href="#">buffer</a> operator on the resulting flow to specify the size of the back-pressure.
+In effect, it specifies the value of the subscription’s <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Flow/Subscription.html#request(long)">request</a>.
+The <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/-factory/-b-u-f-f-e-r-e-d.html">default buffer capacity</a> for a suspending channel is used by default.</p>
 
-<p>If any of the resulting flow transformations fails, subscription is immediately cancelled and all in-flight elements
-are discarded.</p>
+<p>If any of the resulting flow transformations fails, the subscription is immediately cancelled and all the in-flight
+elements are discarded.</p>
 
 
       </div>

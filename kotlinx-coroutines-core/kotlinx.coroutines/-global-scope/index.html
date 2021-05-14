@@ -33,23 +33,75 @@
 
 <h1 id="globalscope">GlobalScope</h1>
 
-<div class="signature"><code><span class="keyword">object </span><span class="identifier">GlobalScope</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L146">(source)</a></div>
+<div class="signature"><code><span class="identifier">@DelicateCoroutinesApi</span> <span class="keyword">object </span><span class="identifier">GlobalScope</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L216">(source)</a></div>
 
-<p>A global <a href="../-coroutine-scope/index.html">CoroutineScope</a> not bound to any job.</p>
+<p>A global <a href="../-coroutine-scope/index.html">CoroutineScope</a> not bound to any job.
+Global scope is used to launch top-level coroutines which are operating on the whole application lifetime
+and are not cancelled prematurely.</p>
 
-<p>Global scope is used to launch top-level coroutines which are operating on the whole application lifetime
-and are not cancelled prematurely.
-Another use of the global scope is operators running in <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a>, which don’t have any job associated with them.</p>
+<p>Active coroutines launched in <code>GlobalScope</code> do not keep the process alive. They are like daemon threads.</p>
 
-<p>Application code usually should use an application-defined <a href="../-coroutine-scope/index.html">CoroutineScope</a>. Using
-<a href="../async.html">async</a> or <a href="../launch.html">launch</a>
-on the instance of <a href="./index.html">GlobalScope</a> is highly discouraged.</p>
+<p>This is a <strong>delicate</strong> API. It is easy to accidentally create resource or memory leaks when
+<code>GlobalScope</code> is used. A coroutine launched in <code>GlobalScope</code> is not subject to the principle of structured
+concurrency, so if it hangs or gets delayed due to a problem (e.g. due to a slow network), it will stay working
+and consuming resources. For example, consider the following code:</p>
 
-<p>Usage of this interface may look like this:</p>
+<pre>fun loadConfiguration() {
+    GlobalScope.launch {
+        val config = fetchConfigFromServer() // network request
+        updateConfiguration(config)
+    }
+}
+</pre>
 
-<pre>fun ReceiveChannel&lt;Int&gt;.sqrt(): ReceiveChannel&lt;Double&gt; = GlobalScope.produce(Dispatchers.Unconfined) {
-    for (number in this) {
-        send(Math.sqrt(number))
+<p>A call to <code>loadConfiguration</code> creates a coroutine in the <code>GlobalScope</code> that works in background without any
+provision to cancel it or to wait for its completion. If a network is slow, it keeps waiting in background,
+consuming resources. Repeated calls to <code>loadConfiguration</code> will consume more and more resources.</p>
+
+<h3 id="possible-replacements">Possible replacements</h3>
+
+<p>In many cases uses of <code>GlobalScope</code> should be removed, marking the containing operation with <code>suspend</code>, for example:</p>
+
+<pre>suspend fun loadConfiguration() {
+    val config = fetchConfigFromServer() // network request
+    updateConfiguration(config)
+}
+</pre>
+
+<p>In cases when <code>GlobalScope.launch</code> was used to launch multiple concurrent operations, the corresponding
+operations shall be grouped with <a href="../coroutine-scope.html">coroutineScope</a> instead:</p>
+
+<pre>// concurrently load configuration and data
+suspend fun loadConfigurationAndData() {
+    coroutinesScope {
+        launch { loadConfiguration() }
+        launch { loadData() }
+    }
+}
+</pre>
+
+<p>In top-level code, when launching a concurrent operation operation from a non-suspending context, an appropriately
+confined instance of <a href="../-coroutine-scope/index.html">CoroutineScope</a> shall be used instead of a <code>GlobalScope</code>. See docs on <a href="../-coroutine-scope/index.html">CoroutineScope</a> for
+details.</p>
+
+<h3 id="globalscope-vs-custom-scope">GlobalScope vs custom scope</h3>
+
+<p>Do not replace <code>GlobalScope.launch { ... }</code> with <code>CoroutineScope().launch { ... }</code> constructor function call.
+The latter has the same pitfalls as <code>GlobalScope</code>. See <a href="../-coroutine-scope/index.html">CoroutineScope</a> documentation on the intended usage of
+<code>CoroutineScope()</code> constructor function.</p>
+
+<h3 id="legitimate-use-cases">Legitimate use-cases</h3>
+
+<p>There are limited circumstances under which <code>GlobalScope</code> can be legitimately and safely used, such as top-level background
+processes that must stay active for the whole duration of the application’s lifetime. Because of that, any use
+of <code>GlobalScope</code> requires an explicit opt-in with <code>@OptIn(DelicateCoroutinesApi::class)</code>, like this:</p>
+
+<pre>// A global coroutine to log statistics every second, must be always active
+@OptIn(DelicateCoroutinesApi::class)
+val globalScopeReporter = GlobalScope.launch {
+    while (true) {
+        delay(1000)
+        logStatistics()
     }
 }
 </pre>

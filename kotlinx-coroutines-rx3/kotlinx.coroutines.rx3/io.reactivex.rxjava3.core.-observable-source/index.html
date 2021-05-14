@@ -57,8 +57,8 @@
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/ObservableSource.html"><span class="identifier">ObservableSource</span></a><span class="symbol">&lt;</span><a href="await-first.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirst</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await-first.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>Awaits for the first value from the given observable without blocking a thread.
-Returns the resulting value or throws the corresponding exception if this observable had produced error.</p>
+        <p>Awaits the first value from the given <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/Observable.html">Observable</a> without blocking the thread and returns the resulting value, or,
+if the observable has produced an error, throws the corresponding exception.</p>
 
       </td>
 </tr>
@@ -71,8 +71,9 @@ Returns the resulting value or throws the corresponding exception if this observ
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/ObservableSource.html"><span class="identifier">ObservableSource</span></a><span class="symbol">&lt;</span><a href="await-first-or-default.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirstOrDefault</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx3$awaitFirstOrDefault(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.awaitFirstOrDefault.T)), kotlinx.coroutines.rx3.awaitFirstOrDefault.T)/default">default</span><span class="symbol">:</span>&nbsp;<a href="await-first-or-default.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="await-first-or-default.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>Awaits for the first value from the given observable or the <a href="await-first-or-default.html#kotlinx.coroutines.rx3$awaitFirstOrDefault(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.awaitFirstOrDefault.T)), kotlinx.coroutines.rx3.awaitFirstOrDefault.T)/default">default</a> value if none is emitted without blocking a
-thread and returns the resulting value or throws the corresponding exception if this observable had produced error.</p>
+        <p>Awaits the first value from the given <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/Observable.html">Observable</a>, or returns the <a href="await-first-or-default.html#kotlinx.coroutines.rx3$awaitFirstOrDefault(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.awaitFirstOrDefault.T)), kotlinx.coroutines.rx3.awaitFirstOrDefault.T)/default">default</a> value if none is emitted, without
+blocking the thread, and returns the resulting value, or, if this observable has produced an error, throws the
+corresponding exception.</p>
 
       </td>
 </tr>
@@ -85,8 +86,9 @@ thread and returns the resulting value or throws the corresponding exception if 
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/ObservableSource.html"><span class="identifier">ObservableSource</span></a><span class="symbol">&lt;</span><a href="await-first-or-else.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirstOrElse</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx3$awaitFirstOrElse(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.awaitFirstOrElse.T)), kotlin.Function0((kotlinx.coroutines.rx3.awaitFirstOrElse.T)))/defaultValue">defaultValue</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="await-first-or-else.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="await-first-or-else.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>Awaits for the first value from the given observable or call <a href="await-first-or-else.html#kotlinx.coroutines.rx3$awaitFirstOrElse(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.awaitFirstOrElse.T)), kotlin.Function0((kotlinx.coroutines.rx3.awaitFirstOrElse.T)))/defaultValue">defaultValue</a> to get a value if none is emitted without blocking a
-thread and returns the resulting value or throws the corresponding exception if this observable had produced error.</p>
+        <p>Awaits the first value from the given <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/Observable.html">Observable</a>, or calls <a href="await-first-or-else.html#kotlinx.coroutines.rx3$awaitFirstOrElse(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.awaitFirstOrElse.T)), kotlin.Function0((kotlinx.coroutines.rx3.awaitFirstOrElse.T)))/defaultValue">defaultValue</a> to get a value if none is emitted,
+without blocking the thread, and returns the resulting value, or, if this observable has produced an error, throws
+the corresponding exception.</p>
 
       </td>
 </tr>
@@ -99,8 +101,9 @@ thread and returns the resulting value or throws the corresponding exception if 
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/ObservableSource.html"><span class="identifier">ObservableSource</span></a><span class="symbol">&lt;</span><a href="await-first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirstOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await-first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
 
-        <p>Awaits for the first value from the given observable or <code>null</code> value if none is emitted without blocking a
-thread and returns the resulting value or throws the corresponding exception if this observable had produced error.</p>
+        <p>Awaits the first value from the given <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/Observable.html">Observable</a>, or returns <code>null</code> if none is emitted, without blocking the
+thread, and returns the resulting value, or, if this observable has produced an error, throws the corresponding
+exception.</p>
 
       </td>
 </tr>
@@ -113,8 +116,8 @@ thread and returns the resulting value or throws the corresponding exception if 
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/ObservableSource.html"><span class="identifier">ObservableSource</span></a><span class="symbol">&lt;</span><a href="await-last.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitLast</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await-last.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>Awaits for the last value from the given observable without blocking a thread.
-Returns the resulting value or throws the corresponding exception if this observable had produced error.</p>
+        <p>Awaits the last value from the given <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/Observable.html">Observable</a> without blocking the thread and
+returns the resulting value, or, if this observable has produced an error, throws the corresponding exception.</p>
 
       </td>
 </tr>
@@ -127,8 +130,8 @@ Returns the resulting value or throws the corresponding exception if this observ
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/ObservableSource.html"><span class="identifier">ObservableSource</span></a><span class="symbol">&lt;</span><a href="await-single.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitSingle</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await-single.html#T"><span class="identifier">T</span></a></code></div>
 
-        <p>Awaits for the single value from the given observable without blocking a thread.
-Returns the resulting value or throws the corresponding exception if this observable had produced error.</p>
+        <p>Awaits the single value from the given observable without blocking the thread and returns the resulting value, or,
+if this observable has produced an error, throws the corresponding exception.</p>
 
       </td>
 </tr>
@@ -141,8 +144,7 @@ Returns the resulting value or throws the corresponding exception if this observ
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/ObservableSource.html"><span class="identifier">ObservableSource</span></a><span class="symbol">&lt;</span><a href="collect.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">collect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx3$collect(io.reactivex.rxjava3.core.ObservableSource((kotlinx.coroutines.rx3.collect.T)), kotlin.Function1((kotlinx.coroutines.rx3.collect.T, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="collect.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Subscribes to this <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/ObservableSource.html">ObservableSource</a> and performs the specified action for each received element.
-Cancels subscription if any exception happens during collect.</p>
+        <p>Subscribes to this <a href="http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/ObservableSource.html">ObservableSource</a> and performs the specified action for each received element.</p>
 
       </td>
 </tr>

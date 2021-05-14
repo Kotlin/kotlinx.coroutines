@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CoroutinesTimeout - kotlinx-coroutines-debug</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug.junit5/-coroutines-timeout/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-debug</a> / <a href="../index.html">kotlinx.coroutines.debug.junit5</a> / <a href="./index.html">CoroutinesTimeout</a></div>
+
+<h1 id="coroutinestimeout">CoroutinesTimeout</h1>
+
+<div class="signature"><code><span class="identifier">@ExtendWith</span><span class="symbol">(</span>[CoroutinesTimeoutExtension]<span class="symbol">)</span> <span class="identifier">@Inherited</span> <span class="identifier">@Target</span><span class="symbol">(</span>[AnnotationTarget.CLASS, AnnotationTarget.FUNCTION]<span class="symbol">)</span> <span class="keyword">annotation</span> <span class="keyword">class </span><span class="identifier">CoroutinesTimeout</span></code></div>
+
+<p>Coroutines timeout annotation that is similar to JUnit5’s <a href="#">Timeout</a> annotation. It allows running test methods in a
+separate thread, failing them after the provided time limit and interrupting the thread.</p>
+
+<p>Additionally, it installs <a href="../../kotlinx.coroutines.debug/-debug-probes/index.html">DebugProbes</a> and dumps all coroutines at the moment of the timeout. It also cancels
+coroutines on timeout if <a href="cancel-on-timeout.html">cancelOnTimeout</a> set to <code>true</code>. The dump contains the coroutine creation stack traces.</p>
+
+<p>This annotation has an effect on test, test factory, test template, and lifecycle methods and test classes that are
+annotated with it.</p>
+
+<p>Annotating a class is the same as annotating every test, test factory, and test template method (but not lifecycle
+methods) of that class and its inner test classes, unless any of them is annotated with <a href="./index.html">CoroutinesTimeout</a>, in which
+case their annotation overrides the one on the containing class.</p>
+
+<p>Declaring <a href="./index.html">CoroutinesTimeout</a> on a test factory checks that it finishes in the specified time, but does not check
+whether the methods that it produces obey the timeout as well.</p>
+
+<p>Example usage:</p>
+
+<pre>@CoroutinesTimeout(100)
+class CoroutinesTimeoutSimpleTest {
+    // does not time out, as the annotation on the method overrides the class-level one
+    @CoroutinesTimeout(1000)
+    @Test
+    fun classTimeoutIsOverridden() {
+        runBlocking {
+            delay(150)
+        }
+    }
+
+    // times out in 100 ms, timeout value is taken from the class-level annotation
+    @Test
+    fun classTimeoutIsUsed() {
+        runBlocking {
+            delay(150)
+        }
+    }
+}
+</pre>
+
+<p><strong>See Also</strong></p>
+
+<p><a href="#">Timeout</a></p>
+
+<h3 id="constructors">Constructors</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-init-.html">&lt;init&gt;</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="identifier">CoroutinesTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit5.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean)/testTimeoutMs">testTimeoutMs</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit5.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean)/cancelOnTimeout">cancelOnTimeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">)</span></code></div>
+
+        <p>Coroutines timeout annotation that is similar to JUnit5’s <a href="#">Timeout</a> annotation. It allows running test methods in a
+separate thread, failing them after the provided time limit and interrupting the thread.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="properties">Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="cancel-on-timeout.html">cancelOnTimeout</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">cancelOnTimeout</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="test-timeout-ms.html">testTimeoutMs</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">testTimeoutMs</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code></div>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

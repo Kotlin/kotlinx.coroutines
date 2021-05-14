@@ -33,18 +33,35 @@
 
 <h1 id="offer">offer</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">offer</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L88">(source)</a></div>
+<div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><s><span class="identifier">offer</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L163">(source)</a></div>
 
-<p>Immediately adds the specified <a href="offer.html#kotlinx.coroutines.channels.SendChannel$offer(kotlinx.coroutines.channels.SendChannel.E)/element">element</a> to this channel, if this doesn’t violate its capacity restrictions,
-and returns <code>true</code>. Otherwise, just returns <code>false</code>. This is a synchronous variant of <a href="send.html">send</a> which backs off
-in situations when <code>send</code> suspends.</p>
+<p><strong>Deprecated:</strong> DeprecationLevel.WARNING</p>
 
-<p>Throws an exception if the channel <a href="is-closed-for-send.html">is closed for <code>send</code></a> (see <a href="close.html">close</a> for details).</p>
+<p><strong>Deprecated</strong> offer method.</p>
 
-<p>When <code>offer</code> call returns <code>false</code> it guarantees that the element was not delivered to the consumer and it
-it does not call <code>onUndeliveredElement</code> that was installed for this channel. If the channel was closed,
-then it calls <code>onUndeliveredElement</code> before throwing an exception.
-See “Undelivered elements” section in <a href="../-channel/index.html">Channel</a> documentation for details on handling undelivered elements.</p>
+<p>This method was deprecated in the favour of <a href="try-send.html">trySend</a>.
+It has proven itself as the most error-prone method in Channel API:</p>
+
+<ul>
+  <li><code>Boolean</code> return type creates the false sense of security, implying that <code>false</code>
+  is returned instead of throwing an exception.</li>
+  <li>It was used mostly from non-suspending APIs where CancellationException triggered
+internal failures in the application (the most common source of bugs).</li>
+  <li>Due to signature and explicit <code>if (ch.offer(...))</code> checks it was easy to
+oversee such error during code review.</li>
+  <li>Its name was not aligned with the rest of the API and tried to mimic Java’s queue instead.</li>
+</ul>
+
+<p><strong>NB</strong> Automatic migration provides best-effort for the user experience, but requires removal
+or adjusting of the code that relied on the exception handling.
+The complete replacement has a more verbose form:</p>
+
+<pre>channel.trySend(element)
+    .onClosed { throw it ?: ClosedSendChannelException("Channel was closed normally") }
+    .isSuccess
+</pre>
+
+<p>See https://github.com/Kotlin/kotlinx.coroutines/issues/974 for more context.</p>
 
 
       </div>
