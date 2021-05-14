@@ -157,10 +157,7 @@ Hello
 World!
 ```
 
-<!--- TEST
-Hello
-World!
--->
+<!--- TEST -->
 
 ## Scope builder and concurrency
 

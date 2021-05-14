@@ -7,7 +7,7 @@ package kotlinx.coroutines.guide.exampleBasic04
 
 import kotlinx.coroutines.*
 
-// Sequentially executes doWorld followed by "Hello"
+// Sequentially executes doWorld followed by "Done"
 fun main() = runBlocking {
     doWorld()
     println("Done")
