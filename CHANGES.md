@@ -1,5 +1,48 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.5.0
+
+Note that this is a full changelog relative to 1.4.3 version. Changelog relative to 1.5.0-RC can be found in the end.
+
+### Channels API
+
+* Major channels API rework (#330, #974). Existing `offer`, `poll`, and `sendBlocking` methods are deprecated, internal `receiveCatching` and `onReceiveCatching` removed, `receiveOrNull` and `onReceiveOrNull` are completely deprecated. Previously deprecated `SendChannel.isFull` declaration is removed. Channel operators deprecated with `ERROR` are now `HIDDEN`.
+* New methods `receiveCatching`, `onReceiveCatching` `trySend`, `tryReceive`, and `trySendBlocking` along with the new result type `ChannelResult` are introduced. They provide better type safety, are less error-prone, and have a consistent future-proof naming scheme.  The full rationale behind this change can be found [here](https://github.com/Kotlin/kotlinx.coroutines/issues/974#issuecomment-806569582).
+* `BroadcastChannel` and `ConflatedBroadcastChannel` are marked as `ObsoleteCoroutinesApi` in the favor or `SharedFlow` and `StateFlow`. The migration scheme can be found in their documentation. These classes will be deprecated in the next major release.
+* `callbackFlow` and `channelFlow` are promoted to stable API.
+
+### Reactive integrations
+
+* All existing API in modules `kotlinx-coroutines-rx2`, `kotlinx-coroutines-rx3`, `kotlinx-coroutines-reactive`, `kotlinx-coroutines-reactor`, and `kotlinx-coroutines-jdk9` were revisited and promoted to stable (#2545).
+* `publish` is no longer allowed to emit `null` values (#2646).
+* Misleading `awaitSingleOr*` functions on `Publisher` type are deprecated (#2591).
+* `MaybeSource.await` is deprecated in the favor of `awaitSingle`, additional lint functions for `Mono` are added in order to prevent ambiguous `Publisher` usages (#2628, #1587).
+* `ContextView` support in `kotlinx-coroutines-reactor` (#2575).
+* All reactive builders no longer ignore inner cancellation exceptions preventing their completion (#2262, #2646).
+* `MaybeSource.collect` and `Maybe.collect` properly finish when they are completed without a value (#2617).
+* All exceptions are now consistently handled according to reactive specification, whether they are considered 'fatal' or not by reactive frameworks (#2646).
+
+### Other improvements
+
+* `Flow.last` and `Flow.lastOrNull` operators (#2246).
+* `Flow.runningFold` operator (#2641).
+* `CoroutinesTimeout` rule for JUnit5 (#2197).
+* Internals of `Job` and `AbstractCoroutine` was reworked, resulting in smaller code size, less memory footprint, and better performance (#2513, #2512).
+* `CancellationException` from Kotlin standard library is used for cancellation on Koltin/JS and Kotlin/Native (#2638).
+* Introduced new `DelicateCoroutineApi` annotation that warns users about potential target API pitfalls and suggests studying API's documentation first. The only delicate API right now is `GlobalScope` (#2637).
+* Fixed bug introduced in `1.4.3` when `kotlinx-coroutines-core.jar` triggered IDEA debugger failure (#2619).
+* Fixed memory leak of `ChildHandlerNode` with reusable continuations (#2564).
+* Various documentation improvements (#2555, #2589, #2592, #2583, #2437, #2616, #2633, #2560).
+
+### Changelog relative to version 1.5.0-RC
+
+* Fail-fast during `emitAll` called from cancelled `onCompletion` operator (#2700).
+* Flows returned by `stateIn`/`shareIn` keep strong reference to sharing job (#2557).
+* Rename internal `TimeSource` to `AbstractTimeSource` due to import issues (#2691).
+* Reverted the change that triggered IDEA coroutines debugger crash (#2695, reverted #2291).
+* `watchosX64` target support for Kotlin/Native (#2524).
+* Various documentation fixes and improvements.
+
 ## Version 1.5.0-RC
 
 ### Channels API

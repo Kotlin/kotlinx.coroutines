@@ -127,5 +127,7 @@ public suspend fun <T> Flow<T>.collectLatest(action: suspend (value: T) -> Unit)
  * Collects all the values from the given [flow] and emits them to the collector.
  * It is a shorthand for `flow.collect { value -> emit(value) }`.
  */
-@BuilderInference
-public suspend inline fun <T> FlowCollector<T>.emitAll(flow: Flow<T>): Unit = flow.collect(this)
+public suspend fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) {
+    ensureActive()
+    flow.collect(this)
+}

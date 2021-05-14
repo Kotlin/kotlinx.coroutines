@@ -1,6 +1,6 @@
 kotlinx.coroutines.RecoverableTestException
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$testResumeModeSuspending$2.invokeSuspend(StackTraceRecoveryResumeModeTest.kt:128)
-	at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)
+	(Coroutine boundary)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$withContext$4.invokeSuspend(StackTraceRecoveryResumeModeTest.kt:148)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest.doSuspendingPath(StackTraceRecoveryResumeModeTest.kt:140)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest.testResumeModeSuspending(StackTraceRecoveryResumeModeTest.kt:130)

@@ -194,7 +194,15 @@ public fun <T> Flow<T>.onEmpty(
     }
 }
 
-private class ThrowingCollector(private val e: Throwable) : FlowCollector<Any?> {
+/*
+ * 'emitAll' methods call this to fail-fast before starting to collect
+ * their sources (that may not have any elements for a long time).
+ */
+internal fun FlowCollector<*>.ensureActive() {
+    if (this is ThrowingCollector) throw e
+}
+
+internal class ThrowingCollector(@JvmField val e: Throwable) : FlowCollector<Any?> {
     override suspend fun emit(value: Any?) {
         throw e
     }

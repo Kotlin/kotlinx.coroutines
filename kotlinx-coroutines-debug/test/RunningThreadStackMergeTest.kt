@@ -32,7 +32,7 @@ class RunningThreadStackMergeTest : DebugTestBase() {
                     "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$suspendingFunction\$2.invokeSuspend(RunningThreadStackMergeTest.kt:77)\n" +
                     "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.suspendingFunction(RunningThreadStackMergeTest.kt:75)\n" +
                     "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$launchCoroutine\$1.invokeSuspend(RunningThreadStackMergeTest.kt:68)\n" +
-                    "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
+                    "\t(Coroutine creation stacktrace)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)",
             ignoredCoroutine = ":BlockingCoroutine"
         ) {
@@ -87,7 +87,7 @@ class RunningThreadStackMergeTest : DebugTestBase() {
                     "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$suspendingFunctionWithContext\$2.invokeSuspend(RunningThreadStackMergeTest.kt:124)\n" +
                     "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.suspendingFunctionWithContext(RunningThreadStackMergeTest.kt:122)\n" +
                     "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$launchEscapingCoroutine\$1.invokeSuspend(RunningThreadStackMergeTest.kt:116)\n" +
-                    "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
+                    "\t(Coroutine creation stacktrace)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)",
             ignoredCoroutine = ":BlockingCoroutine"
         ) {
@@ -126,7 +126,7 @@ class RunningThreadStackMergeTest : DebugTestBase() {
                     "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.nonSuspendingFun(RunningThreadStackMergeTest.kt:83)\n" +
                     "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.suspendingFunctionWithoutContext(RunningThreadStackMergeTest.kt:160)\n" +
                     "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$launchEscapingCoroutineWithoutContext\$1.invokeSuspend(RunningThreadStackMergeTest.kt:153)\n" +
-                    "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
+                    "\t(Coroutine creation stacktrace)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)",
             ignoredCoroutine = ":BlockingCoroutine"
         ) {
@@ -158,7 +158,7 @@ class RunningThreadStackMergeTest : DebugTestBase() {
                 "\tat kotlinx.coroutines.debug.StacktraceUtilsKt.verifyDump(StacktraceUtils.kt)\n" +
                 "\tat kotlinx.coroutines.debug.StacktraceUtilsKt.verifyDump\$default(StacktraceUtils.kt)\n" +
                 "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$testRunBlocking\$1.invokeSuspend(RunningThreadStackMergeTest.kt)\n" +
-                "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
+                "\t(Coroutine creation stacktrace)\n" +
                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n")
     }
 
