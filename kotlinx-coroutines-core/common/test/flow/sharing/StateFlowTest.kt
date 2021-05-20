@@ -193,4 +193,59 @@ class StateFlowTest : TestBase() {
         assertTrue(state.compareAndSet(d1_1, d0)) // updates, reference changes
         assertSame(d0, state.value)
     }
+
+    @Test
+    fun testGetAndUpdateContended() = runTest {
+        val state = MutableStateFlow(0)
+
+        // use a barrier to ensure j2 at least doesn't finish before j3 starts
+        val barrier = Job()
+        val j2 = async {
+            barrier.join()
+            state.getAndUpdate { it + 2 }
+        }
+        val j3 = async {
+            barrier.join()
+            state.getAndUpdate { it + 3 }
+        }
+        barrier.complete()
+        when (j2.await()) {
+            0 -> assertEquals(2, j3.await())
+            3 -> assertEquals(0, j3.await())
+            else -> fail()
+        }
+        assertEquals(5, state.value)
+    }
+
+    @Test
+    fun testUpdateAndGetContended() = runTest {
+        val state = MutableStateFlow(0)
+
+        // use a barrier to ensure j2 at least doesn't finish before j3 starts
+        val barrier = Job()
+        val j2 = async {
+            barrier.join()
+            state.updateAndGet { it + 2 }
+        }
+        val j3 = async {
+            barrier.join()
+            state.updateAndGet { it + 3 }
+        }
+        barrier.complete()
+        when (j2.await()) {
+            5 -> assertEquals(3, j3.await())
+            3 -> assertEquals(5, j3.await())
+            else -> fail()
+        }
+        assertEquals(5, state.value)
+    }
+
+    @Test
+    fun update() = runTest {
+        val state = MutableStateFlow(0)
+        state.update { it + 2 }
+        assertEquals(2, state.value)
+        state.update { it + 3 }
+        assertEquals(5, state.value)
+    }
 }
