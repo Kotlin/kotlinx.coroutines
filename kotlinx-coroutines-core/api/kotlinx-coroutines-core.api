@@ -1100,6 +1100,9 @@ public abstract interface class kotlinx/coroutines/flow/StateFlow : kotlinx/coro
 
 public final class kotlinx/coroutines/flow/StateFlowKt {
 	public static final fun MutableStateFlow (Ljava/lang/Object;)Lkotlinx/coroutines/flow/MutableStateFlow;
+	public static final fun getAndUpdate (Lkotlinx/coroutines/flow/MutableStateFlow;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public static final fun update (Lkotlinx/coroutines/flow/MutableStateFlow;Lkotlin/jvm/functions/Function1;)V
+	public static final fun updateAndGet (Lkotlinx/coroutines/flow/MutableStateFlow;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
 }
 
 public abstract class kotlinx/coroutines/flow/internal/ChannelFlow : kotlinx/coroutines/flow/internal/FusibleFlow {

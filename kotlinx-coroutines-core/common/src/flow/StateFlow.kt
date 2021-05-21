@@ -210,7 +210,7 @@ public inline fun <T> MutableStateFlow<T>.updateAndGet(function: (T) -> T): T {
  *
  * [function] may be evaluated multiple times, if [value] is being concurrently updated.
  */
-public inline fun <T> MutableStateFlow<T>.updateAndGet(function: (T) -> T): T {
+public inline fun <T> MutableStateFlow<T>.getAndUpdate(function: (T) -> T): T {
     while (true) {
         val prevValue = value
         val nextValue = function(prevValue)
@@ -226,7 +226,7 @@ public inline fun <T> MutableStateFlow<T>.updateAndGet(function: (T) -> T): T {
  *
  * [function] may be evaluated multiple times, if [value] is being concurrently updated.
  */
-public inline fun <T> MutableStateFlow<T>.update(function: (T) -> T): T {
+public inline fun <T> MutableStateFlow<T>.update(function: (T) -> T) {
     while (true) {
         val prevValue = value
         val nextValue = function(prevValue)
