@@ -26,7 +26,9 @@ public fun handleCoroutineException(context: CoroutineContext, exception: Throwa
             return
         }
     } catch (t: Throwable) {
-        handleCoroutineExceptionImpl(context, handlerException(exception, t))
+        // Try to aggregate the exception, but handle potential OOM. Use the latest exception otherwise.
+        val aggregatedCause = runCatching { handlerException(exception, t) }.getOrDefault(t)
+        handleCoroutineExceptionImpl(context, aggregatedCause)
         return
     }
     // If a handler is not present in the context or an exception was thrown, fallback to the global handler
