@@ -241,7 +241,7 @@ class StateFlowTest : TestBase() {
     }
 
     @Test
-    fun update() = runTest {
+    fun testUpdate() = runTest {
         val state = MutableStateFlow(0)
         state.update { it + 2 }
         assertEquals(2, state.value)
