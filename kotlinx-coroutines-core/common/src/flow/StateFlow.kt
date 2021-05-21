@@ -37,7 +37,7 @@ import kotlin.native.concurrent.*
  *     val counter = _counter.asStateFlow() // publicly exposed as read-only state flow
  *
  *     fun inc() {
- *         _counter.update { count -> count + 1 }
+ *         _counter.update { count -> count + 1 } // atomic, safe for concurrent use
  *     }
  * }
  * ```
