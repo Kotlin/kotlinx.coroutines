@@ -8,9 +8,9 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
-public fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher = ClosedAfterGuideTestDispatcher(1, name)
+internal fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher = ClosedAfterGuideTestDispatcher(1, name)
 
-public fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher =
+internal fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher =
     ClosedAfterGuideTestDispatcher(nThreads, name)
 
 internal class PoolThread(
