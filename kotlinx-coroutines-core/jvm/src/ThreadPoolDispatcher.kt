@@ -59,40 +59,11 @@ public fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
 @ObsoleteCoroutinesApi
 public fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
     require(nThreads >= 1) { "Expected at least one thread, but $nThreads specified" }
-    return ThreadPoolDispatcher(nThreads, name)
-}
-
-internal class PoolThread(
-    @JvmField val dispatcher: ThreadPoolDispatcher, // for debugging & tests
-    target: Runnable, name: String
-) : Thread(target, name) {
-    init { isDaemon = true }
-}
-
-/**
- * Dispatches coroutine execution to a thread pool of a fixed size. Instances of this dispatcher are
- * created with [newSingleThreadContext] and [newFixedThreadPoolContext].
- */
-internal class ThreadPoolDispatcher internal constructor(
-    private val nThreads: Int,
-    private val name: String
-) : ExecutorCoroutineDispatcherBase() {
-    private val threadNo = AtomicInteger()
-
-    override val executor: Executor = Executors.newScheduledThreadPool(nThreads) { target ->
-        PoolThread(this, target, if (nThreads == 1) name else name + "-" + threadNo.incrementAndGet())
+    val threadNo = AtomicInteger()
+    val executor = Executors.newScheduledThreadPool(nThreads) { runnable ->
+        val t = Thread(runnable, if (nThreads == 1) name else name + "-" + threadNo.incrementAndGet())
+        t.isDaemon = true
+        t
     }
-
-    init {
-        initFutureCancellation()
-    }
-
-    /**
-     * Closes this dispatcher -- shuts down all threads in this pool and releases resources.
-     */
-    public override fun close() {
-        (executor as ExecutorService).shutdown()
-    }
-
-    override fun toString(): String = "ThreadPoolDispatcher[$nThreads, $name]"
+    return executor.asCoroutineDispatcher()
 }

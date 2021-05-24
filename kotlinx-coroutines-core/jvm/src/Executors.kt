@@ -75,19 +75,9 @@ private class DispatcherExecutor(@JvmField val dispatcher: CoroutineDispatcher) 
     override fun toString(): String = dispatcher.toString()
 }
 
-private class ExecutorCoroutineDispatcherImpl(override val executor: Executor) : ExecutorCoroutineDispatcherBase() {
-    init {
-        initFutureCancellation()
-    }
-}
+internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) : ExecutorCoroutineDispatcher(), Delay {
 
-internal abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispatcher(), Delay {
-
-    private var removesFutureOnCancellation: Boolean = false
-
-    internal fun initFutureCancellation() {
-        removesFutureOnCancellation = removeFutureOnCancel(executor)
-    }
+    private var removesFutureOnCancellation: Boolean = removeFutureOnCancel(executor)
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         try {
@@ -149,7 +139,7 @@ internal abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispa
     }
 
     override fun toString(): String = executor.toString()
-    override fun equals(other: Any?): Boolean = other is ExecutorCoroutineDispatcherBase && other.executor === executor
+    override fun equals(other: Any?): Boolean = other is ExecutorCoroutineDispatcherImpl && other.executor === executor
     override fun hashCode(): Int = System.identityHashCode(executor)
 }
 
