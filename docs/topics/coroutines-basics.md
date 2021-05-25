@@ -152,10 +152,12 @@ suspend fun doWorld() = coroutineScope {  // this: CoroutineScope
 
 This code also prints:
 
-<!--- TEST
+```text
 Hello
 World!
--->
+```
+
+<!--- TEST -->
 
 ## Scope builder and concurrency
 
@@ -166,7 +168,7 @@ Let's launch two concurrent coroutines inside a `doWorld` suspending function:
 import kotlinx.coroutines.*
 
 //sampleStart
-// Sequentially executes doWorld followed by "Hello"
+// Sequentially executes doWorld followed by "Done"
 fun main() = runBlocking {
     doWorld()
     println("Done")

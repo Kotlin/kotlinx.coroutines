@@ -68,7 +68,7 @@ import kotlin.jvm.*
  * ### Upstream completion and error handling
  *
  * **Normal completion of the upstream flow has no effect on subscribers**, and the sharing coroutine continues to run. If a
- * a strategy like [SharingStarted.WhileSubscribed] is used, then the upstream can get restarted again. If a special
+ * strategy like [SharingStarted.WhileSubscribed] is used, then the upstream can get restarted again. If a special
  * action on upstream completion is needed, then an [onCompletion] operator can be used before the
  * `shareIn` operator to emit a special value in this case, like this:
  *
