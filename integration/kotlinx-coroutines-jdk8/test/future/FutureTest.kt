@@ -575,4 +575,22 @@ class FutureTest : TestBase() {
         future(start = CoroutineStart.ATOMIC) { }
         future(start = CoroutineStart.UNDISPATCHED) { }
     }
+
+    @Test
+    fun testStackOverflow() = runTest {
+        val future = CompletableFuture<Int>()
+        val completed = AtomicLong()
+        val count = 10000L
+        for (i in 0 until count) {
+            launch(Dispatchers.Default) {
+                future.asDeferred().await()
+                completed.incrementAndGet()
+            }
+        }
+        future.complete(1)
+        withTimeout(60_000) {
+            coroutineContext.job.children.toList().joinAll()
+            assertEquals(count, completed.get())
+        }
+    }
 }
