@@ -581,15 +581,16 @@ class FutureTest : TestBase() {
         val future = CompletableFuture<Int>()
         val completed = AtomicLong()
         val count = 10000L
+        val children = ArrayList<Job>()
         for (i in 0 until count) {
-            launch(Dispatchers.Default) {
+            children += launch(Dispatchers.Default) {
                 future.asDeferred().await()
                 completed.incrementAndGet()
             }
         }
         future.complete(1)
         withTimeout(60_000) {
-            coroutineContext.job.children.toList().joinAll()
+            children.forEach { it.join() }
             assertEquals(count, completed.get())
         }
     }

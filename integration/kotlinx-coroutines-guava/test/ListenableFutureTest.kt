@@ -762,15 +762,16 @@ class ListenableFutureTest : TestBase() {
         val future = SettableFuture.create<Int>()
         val completed = AtomicLong()
         val count = 10000L
+        val children = ArrayList<Job>()
         for (i in 0 until count) {
-            launch(Dispatchers.Default) {
+            children += launch(Dispatchers.Default) {
                 future.asDeferred().await()
                 completed.incrementAndGet()
             }
         }
         future.set(1)
         withTimeout(60_000) {
-            coroutineContext.job.children.toList().joinAll()
+            children.forEach { it.join() }
             assertEquals(count, completed.get())
         }
     }
