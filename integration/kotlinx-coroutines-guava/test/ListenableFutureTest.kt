@@ -11,6 +11,7 @@ import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.*
 import kotlin.test.*
 
 class ListenableFutureTest : TestBase() {
@@ -754,5 +755,24 @@ class ListenableFutureTest : TestBase() {
         future { expectUnreached() }
         future(start = CoroutineStart.ATOMIC) { }
         future(start = CoroutineStart.UNDISPATCHED) { }
+    }
+
+    @Test
+    fun testStackOverflow() = runTest {
+        val future = SettableFuture.create<Int>()
+        val completed = AtomicLong()
+        val count = 10000L
+        val children = ArrayList<Job>()
+        for (i in 0 until count) {
+            children += launch(Dispatchers.Default) {
+                future.asDeferred().await()
+                completed.incrementAndGet()
+            }
+        }
+        future.set(1)
+        withTimeout(60_000) {
+            children.forEach { it.join() }
+            assertEquals(count, completed.get())
+        }
     }
 }

@@ -136,11 +136,13 @@ public fun <T> ListenableFuture<T>.asDeferred(): Deferred<T> {
         override fun onSuccess(result: T?) {
             // Here we work with flexible types, so we unchecked cast to trick the type system
             @Suppress("UNCHECKED_CAST")
-            deferred.complete(result as T)
+            runCatching { deferred.complete(result as T) }
+                .onFailure { handleCoroutineException(EmptyCoroutineContext, it) }
         }
 
         override fun onFailure(t: Throwable) {
-            deferred.completeExceptionally(t)
+            runCatching { deferred.completeExceptionally(t) }
+                .onFailure { handleCoroutineException(EmptyCoroutineContext, it) }
         }
     }, MoreExecutors.directExecutor())
 
