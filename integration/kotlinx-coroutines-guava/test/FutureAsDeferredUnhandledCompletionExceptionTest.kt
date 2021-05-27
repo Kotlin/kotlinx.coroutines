@@ -40,10 +40,7 @@ class FutureAsDeferredUnhandledCompletionExceptionTest : TestBase() {
         val future = SettableFuture.create<Int>()
         val deferred = future.asDeferred()
         deferred.invokeOnCompletion { throw TestException() }
-        val failedFuture = CompletableDeferred<Int>().apply {
-            completeExceptionally(TestException2())
-        }.asListenableFuture()
-        future.setFuture(failedFuture)
+        future.setException(TestException2())
         assertTrue { caughtException is CompletionHandlerException && caughtException.cause is TestException }
     }
 }
