@@ -136,7 +136,7 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
                 result.completeExceptionally((exception as? CompletionException)?.cause ?: exception)
             }
         } catch (e: Throwable) {
-            // We can come here iff the upstream future is completed and the deferred internals threw an exception from its handler
+            // We come here iff the internals of Deferred threw an exception during its completion
             handleCoroutineException(EmptyCoroutineContext, e)
         }
     }
