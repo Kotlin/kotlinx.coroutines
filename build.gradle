@@ -227,7 +227,7 @@ configure(subprojects.findAll {
 }
 
 def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/$coreModule/"
-def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
+def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/html/kotlinx-coroutines-core/package-list"
 apply plugin: "org.jetbrains.dokka"
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
