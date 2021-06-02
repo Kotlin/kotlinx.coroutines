@@ -348,3 +348,90 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMil
 @ExperimentalTime
 @FlowPreview
 public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())
+
+/**
+ * Returns a flow that emits at most one item per [period][periodMillis]. If the original flow emits items more rapidly
+ * than this, those items will be delayed. If multiple values are delayed, only the latest value from the original flow
+ * will be emitted
+ *
+ * Example:
+ *
+ * ```kotlin
+ * flow {
+ *     repeat(10) {
+ *         emit(it)
+ *         delay(90)
+ *     }
+ * }.throttle(200)
+ * ```
+ * <!--- KNIT example-delay-04.kt -->
+ *
+ * produces the following emissions
+ *
+ * ```text
+ * 0 (at t = 0),
+ * 2 (at t = 200, 20ms delayed),
+ * 4 (at t = 400, 40ms delayed),
+ * 6 (at t = 600, 60ms delayed),
+ * 8 (at t = 800, 80ms delayed),
+ * 9 (at t = 1000, 190ms delayed)
+ * ```
+ * <!--- TEST -->
+ *
+ * Note that the first and last elements of the original flow are always emitted.
+ */
+@FlowPreview
+public fun <T> Flow<T>.throttle(periodMillis: Long): Flow<T> {
+    require(periodMillis > 0) { "Sample period should be positive" }
+    return scopedFlow { downstream ->
+        var lastValue: Any? = UNINITIALIZED
+        var timeout: Deferred<Unit>? = null
+        suspend fun flush() {
+            require(lastValue !== UNINITIALIZED)
+            downstream.emit(NULL.unbox(lastValue))
+            lastValue = UNINITIALIZED
+        }
+        val values = produce(capacity = Channel.CONFLATED) {
+            collect { value -> send(value ?: NULL) }
+        }
+        // Keep polling until the original flow is complete.
+        while (!values.isClosedForReceive) {
+            select<Unit> {
+                values.onReceiveCatching { result ->
+                    result
+                        .onSuccess {
+                            lastValue = it
+                            // If we are within a throttling window, wait for it to end.
+                            // If we are not, immediately flush the value and then start throttling.
+                            if (timeout == null) {
+                                flush()
+                                timeout = async { delay(periodMillis) }
+                            }
+                        }
+                        .onFailure { err ->
+                            err?.let { throw it }
+                        }
+                }
+
+                // When a throttling window ends, check to see if there is a pending
+                // value waiting to be emitted. If so, flush it now and then resume throttling.
+                timeout?.onAwait {
+                    timeout = null
+                    if (lastValue !== UNINITIALIZED) {
+                        flush()
+                        timeout = async { delay(periodMillis) }
+                    }
+                }
+            }
+        }
+        // Once the original flow has completed, there may still be a pending value
+        // waiting to be emitted. If so, wait for the throttling window to end and then
+        // flush it. That will complete this throttled flow.
+        if (lastValue !== UNINITIALIZED) {
+            timeout?.await()
+            flush()
+        } else {
+            timeout?.cancel()
+        }
+    }
+}
