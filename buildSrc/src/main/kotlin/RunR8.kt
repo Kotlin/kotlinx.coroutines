@@ -40,6 +40,7 @@ open class RunR8 : JavaExec() {
         val arguments = mutableListOf(
             "--release",
             "--no-desugaring",
+            "--min-api", "26",
             "--output", outputDex.absolutePath,
             "--pg-conf", inputConfig.absolutePath
         )

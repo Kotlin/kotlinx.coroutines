@@ -18,7 +18,7 @@ dependencies {
     testImplementation("org.robolectric:robolectric:${version("robolectric")}")
     testImplementation("org.smali:baksmali:${version("baksmali")}")
 
-    "r8"("com.android.tools.build:builder:7.0.0-alpha14")
+    "r8"("com.android.tools.build:builder:7.1.0-alpha01")
 }
 
 val optimizedDexDir = File(buildDir, "dex-optim/")
@@ -43,21 +43,21 @@ val runR8NoOptim by tasks.registering(RunR8::class) {
 
 // TODO: Disable the test until we have published version of R8 that supports Kotlin 1.5.0 metadata
 
-//tasks.test {
-//    // Ensure the R8-processed dex is built and supply its path as a property to the test.
-//    dependsOn(runR8)
-//    dependsOn(runR8NoOptim)
-//
-//    inputs.files(optimizedDexFile, unOptimizedDexFile)
-//
-//    systemProperty("dexPath", optimizedDexFile.absolutePath)
-//    systemProperty("noOptimDexPath", unOptimizedDexFile.absolutePath)
-//
-//    // Output custom metric with the size of the optimized dex
-//    doLast {
-//        println("##teamcity[buildStatisticValue key='optimizedDexSize' value='${optimizedDexFile.length()}']")
-//    }
-//}
+tasks.test {
+    // Ensure the R8-processed dex is built and supply its path as a property to the test.
+    dependsOn(runR8)
+    dependsOn(runR8NoOptim)
+
+    inputs.files(optimizedDexFile, unOptimizedDexFile)
+
+    systemProperty("dexPath", optimizedDexFile.absolutePath)
+    systemProperty("noOptimDexPath", unOptimizedDexFile.absolutePath)
+
+    // Output custom metric with the size of the optimized dex
+    doLast {
+        println("##teamcity[buildStatisticValue key='optimizedDexSize' value='${optimizedDexFile.length()}']")
+    }
+}
 
 externalDocumentationLink(
     url = "https://developer.android.com/reference/"
