@@ -1,8 +1,9 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.konan.target.HostManager
-import org.gradle.util.VersionNumber
 
 apply plugin: 'jdk-convention'
 apply from: rootProject.file("gradle/experimental.gradle")
@@ -74,9 +75,6 @@ buildscript {
 
     CacheRedirector.configureBuildScript(buildscript, rootProject)
 }
-
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-
 // todo:KLUDGE: Hierarchical project structures are not fully supported in IDEA, enable only for a regular built
 if (!Idea.active) {
     ext.set("kotlin.mpp.enableGranularSourceSetsMetadata", "true")
@@ -290,7 +288,20 @@ if (jvm_ir_enabled) {
     }
 }
 
-buildScan {
-    termsOfServiceUrl = 'https://gradle.com/terms-of-service'
-    termsOfServiceAgree = 'yes'
+try {
+    buildScan {
+        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+        termsOfServiceAgree = 'yes'
+    }
+} catch (Throwable e) {
+    // No --scan has been passed to the build
+}
+
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        substitute(module("org.jetbrains.kotlinx:kotlinx-coroutines-core"))
+                .using(project(":kotlinx-coroutines-core"))
+                .because("Because Kotlin compiler embeddable leaks coroutines into the runtime classpath, " +
+                        "triggering all sort of incompatible class changes errors")
+    }
 }
