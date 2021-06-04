@@ -108,8 +108,7 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
             get() = _disposer.value
             set(value) { _disposer.value = value }
 
-        override fun invoke(cause: Throwable?) {
-            if (!markInvoked()) return
+        override fun invokeOnce(cause: Throwable?) {
             if (cause != null) {
                 val token = continuation.tryResumeWithException(cause)
                 if (token != null) {

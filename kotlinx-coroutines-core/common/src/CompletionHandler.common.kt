@@ -43,5 +43,3 @@ internal expect val CancelHandlerBase.asHandler: CompletionHandler
 // :KLUDGE: We have to invoke a handler in platform-specific way via `invokeIt` extension,
 // because we play type tricks on Kotlin/JS and handler is not necessarily a function there
 internal expect fun CompletionHandler.invokeIt(cause: Throwable?)
-
-internal inline fun <reified T> CompletionHandler.isHandlerOf(): Boolean = this is T
