@@ -3,6 +3,7 @@
  */
 
 dependencies {
+    kotlinCompilerPluginClasspathMain(project(":kotlinx-coroutines-core"))
     testImplementation("com.google.android:android:${version("android")}")
     testImplementation("org.robolectric:robolectric:${version("robolectric")}")
     testImplementation(project(":kotlinx-coroutines-test"))
