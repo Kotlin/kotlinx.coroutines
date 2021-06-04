@@ -275,7 +275,7 @@ private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long) : F
  * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
 @FlowPreview
-public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
+public fun <T> Flow<T>.sample(periodMillis: Long, preserveLatest: Boolean = false): Flow<T> {
     require(periodMillis > 0) { "Sample period should be positive" }
     return scopedFlow { downstream ->
         val values = produce(capacity = Channel.CONFLATED) {
@@ -283,15 +283,13 @@ public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
         }
         var lastValue: Any? = null
         val ticker = fixedPeriodTicker(periodMillis)
-        while (lastValue !== DONE) {
+        while (!values.isClosedForReceive) {
             select<Unit> {
                 values.onReceiveCatching { result ->
                     result
                         .onSuccess { lastValue = it }
                         .onFailure {
                             it?.let { throw it }
-                            ticker.cancel(ChildCancelledException())
-                            lastValue = DONE
                         }
                 }
 
@@ -302,6 +300,10 @@ public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
                     downstream.emit(NULL.unbox(value))
                 }
             }
+        }
+        ticker.cancel(ChildCancelledException())
+        if (preserveLatest && lastValue != null) {
+            downstream.emit(NULL.unbox(lastValue))
         }
     }
 }
