@@ -297,11 +297,20 @@ try {
     // No --scan has been passed to the build
 }
 
-configurations.all {
-    resolutionStrategy.dependencySubstitution {
-        substitute(module("org.jetbrains.kotlinx:kotlinx-coroutines-core"))
-                .using(project(":kotlinx-coroutines-core"))
-                .because("Because Kotlin compiler embeddable leaks coroutines into the runtime classpath, " +
-                        "triggering all sort of incompatible class changes errors")
-    }
+allprojects { subProject ->
+    subProject
+            .configurations
+            .matching {
+                // Excluding substituted project itself because of circular dependencies, but still do it
+                // for "*Test*" configurations
+                subProject.name != "kotlinx-coroutines-core" || it.name.contains("Test")
+            }
+            .configureEach { conf ->
+                conf.resolutionStrategy.dependencySubstitution {
+                    substitute(module("org.jetbrains.kotlinx:kotlinx-coroutines-core"))
+                            .using(project(":kotlinx-coroutines-core"))
+                            .because("Because Kotlin compiler embeddable leaks coroutines into the runtime classpath, " +
+                                    "triggering all sort of incompatible class changes errors")
+                }
+            }
 }
