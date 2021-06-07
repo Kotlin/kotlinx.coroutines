@@ -261,18 +261,4 @@ class StackTraceRecoveryTest : TestBase() {
         }
         yield() // nop to make sure it is not a tail call
     }
-
-    @Test
-    fun testWrongMessageException() = runTest {
-        val result = runCatching {
-            coroutineScope<Unit> {
-                throw WrongMessageException("OK")
-            }
-        }
-        val ex = result.exceptionOrNull() ?: error("Expected to fail")
-        assertTrue(ex is WrongMessageException)
-        assertEquals("Token OK", ex.message)
-    }
-
-    public class WrongMessageException(token: String) : RuntimeException("Token $token")
 }
