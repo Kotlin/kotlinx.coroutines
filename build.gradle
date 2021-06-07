@@ -1,8 +1,9 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.konan.target.HostManager
-import org.gradle.util.VersionNumber
 
 apply plugin: 'jdk-convention'
 apply from: rootProject.file("gradle/experimental.gradle")
@@ -74,9 +75,6 @@ buildscript {
 
     CacheRedirector.configureBuildScript(buildscript, rootProject)
 }
-
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-
 // todo:KLUDGE: Hierarchical project structures are not fully supported in IDEA, enable only for a regular built
 if (!Idea.active) {
     ext.set("kotlin.mpp.enableGranularSourceSetsMetadata", "true")
@@ -287,4 +285,35 @@ if (jvm_ir_enabled) {
             enabled = enabled && jvm_ir_api_check_enabled
         }
     }
+}
+
+// Opt-in for build scan in order to troubleshoot Gradle on TC
+if (hasProperty('buildScan')) {
+    buildScan {
+        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+        termsOfServiceAgree = 'yes'
+    }
+}
+
+/*
+ * kotlinx-coroutines-core dependency leaks into test runtime classpath via kotlin-compiler-embeddable
+ * and conflicts with our own test/runtime incompatibilities (e.g. when class is moved from a main to test),
+ * so we do substitution here
+ */
+allprojects { subProject ->
+    subProject
+            .configurations
+            .matching {
+                // Excluding substituted project itself because of circular dependencies, but still do it
+                // for "*Test*" configurations
+                subProject.name != "kotlinx-coroutines-core" || it.name.contains("Test")
+            }
+            .configureEach { conf ->
+                conf.resolutionStrategy.dependencySubstitution {
+                    substitute(module("org.jetbrains.kotlinx:kotlinx-coroutines-core"))
+                            .using(project(":kotlinx-coroutines-core"))
+                            .because("Because Kotlin compiler embeddable leaks coroutines into the runtime classpath, " +
+                                    "triggering all sort of incompatible class changes errors")
+                }
+            }
 }
