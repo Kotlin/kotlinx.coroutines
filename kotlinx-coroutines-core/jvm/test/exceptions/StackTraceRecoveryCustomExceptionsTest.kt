@@ -89,16 +89,39 @@ class StackTraceRecoveryCustomExceptionsTest : TestBase() {
 
     @Test
     fun testWrongMessageExceptionInChannel() = runTest {
-        // Separate code path
         val result = produce<Unit>(SupervisorJob() + Dispatchers.Unconfined) {
             throw WrongMessageException("OK")
         }
         val ex = runCatching {
+            @Suppress("ControlFlowWithEmptyBody")
             for (unit in result) {
                 // Iterator has a special code path
             }
         }.exceptionOrNull() ?: error("Expected to fail")
         assertTrue(ex is WrongMessageException)
         assertEquals("Token OK", ex.message)
+    }
+
+    class CopyableWithCustomMessage(
+        message: String?,
+        cause: Throwable? = null
+    ) : RuntimeException(message, cause),
+        CopyableThrowable<CopyableWithCustomMessage> {
+
+        override fun createCopy(): CopyableWithCustomMessage {
+            return CopyableWithCustomMessage("Recovered: [$message]", cause)
+        }
+    }
+
+    @Test
+    fun testCustomCopyableMessage() = runTest {
+        val result = runCatching {
+            coroutineScope<Unit> {
+                throw CopyableWithCustomMessage("OK")
+            }
+        }
+        val ex = result.exceptionOrNull() ?: error("Expected to fail")
+        assertTrue(ex is CopyableWithCustomMessage)
+        assertEquals("Recovered: [OK]", ex.message)
     }
 }
