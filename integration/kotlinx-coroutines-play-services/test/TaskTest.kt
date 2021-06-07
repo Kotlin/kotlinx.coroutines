@@ -154,11 +154,10 @@ class TaskTest : TestBase() {
         var taskCompletionSource: TaskCompletionSource<Int>? = null
 
         val deferred: Deferred<Int> = async(start = CoroutineStart.UNDISPATCHED) {
-            val taskCreator: suspend (CancellationToken) -> Task<Int> = { cancellationToken ->
+            awaitTask { cancellationToken ->
                 taskCompletionSource = TaskCompletionSource<Int>(cancellationToken)
                 taskCompletionSource!!.task
             }
-            taskCreator.await()
         }
 
         assertFalse(deferred.isCompleted)
@@ -173,11 +172,10 @@ class TaskTest : TestBase() {
         var taskCompletionSource: TaskCompletionSource<Int>? = null
 
         val deferred: Deferred<Int> = GlobalScope.async(start = CoroutineStart.UNDISPATCHED) {
-            val taskCreator: suspend (CancellationToken) -> Task<Int> = { cancellationToken ->
+            awaitTask { cancellationToken ->
                 taskCompletionSource = TaskCompletionSource<Int>(cancellationToken)
                 taskCompletionSource!!.task
             }
-            taskCreator.await()
         }
 
         assertFalse(deferred.isCompleted)
@@ -193,11 +191,10 @@ class TaskTest : TestBase() {
         var task: Task<Int>? = null
 
         val deferred: Deferred<Int> = async(start = CoroutineStart.UNDISPATCHED) {
-            val taskCreator: suspend (CancellationToken) -> Task<Int> = { cancellationToken ->
+            awaitTask { cancellationToken ->
                 task = TaskCompletionSource<Int>(cancellationToken).task
                 task!!
             }
-            taskCreator.await()
         }
 
         assertFalse(deferred.isCompleted)

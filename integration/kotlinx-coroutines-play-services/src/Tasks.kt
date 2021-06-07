@@ -67,41 +67,19 @@ public fun <T> Task<T>.asDeferred(): Deferred<T> {
 /**
  * Awaits for completion of the task without blocking a thread.
  *
+ * Prefer [awaitTask] if a [Task] can be constructed with a [CancellationToken], to allow propagating cancellation to
+ * that [Task].
+ *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * stops waiting for the completion stage and immediately resumes with [CancellationException].
+ *
+ * @see [awaitTask]
  */
-public suspend fun <T> Task<T>.await(): T {
-    // fast path
-    if (isComplete) {
-        val e = exception
-        return if (e == null) {
-            if (isCanceled) {
-                throw CancellationException("Task $this was cancelled normally.")
-            } else {
-                @Suppress("UNCHECKED_CAST")
-                result as T
-            }
-        } else {
-            throw e
-        }
-    }
-
-    return suspendCancellableCoroutine { cont ->
-        addOnCompleteListener {
-            val e = exception
-            if (e == null) {
-                @Suppress("UNCHECKED_CAST")
-                if (isCanceled) cont.cancel() else cont.resume(result as T)
-            } else {
-                cont.resumeWithException(e)
-            }
-        }
-    }
-}
+public suspend fun <T> Task<T>.await(): T = awaitTask { this }
 
 /**
- * Awaits for completion of the created task without blocking a thread.
+ * Awaits for completion of the created task via [block] without blocking a thread.
  *
  * Prefer this method over [Task.await] if a [Task] can be constructed with a [CancellationToken], to cancel the task
  * if this function is cancelled.
@@ -114,16 +92,39 @@ public suspend fun <T> Task<T>.await(): T {
  */
 @OptIn(ExperimentalContracts::class)
 @ExperimentalCoroutinesApi
-public suspend fun <T> (suspend (CancellationToken) -> Task<T>).await(): T {
-    contract { callsInPlace(this@await, InvocationKind.EXACTLY_ONCE) }
+public suspend inline fun <T> awaitTask(block: (CancellationToken) -> Task<T>): T {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
 
     val cancellation = CancellationTokenSource()
-    val task = this(cancellation.token)
+    val task = block(cancellation.token)
 
-    return try {
-        task.await()
-    } catch (cancellationException: CancellationException) {
-        cancellation.cancel()
-        throw cancellationException
+    // fast path
+    if (task.isComplete) {
+        val e = task.exception
+        return if (e == null) {
+            if (task.isCanceled) {
+                throw CancellationException("Task $task was cancelled normally.")
+            } else {
+                @Suppress("UNCHECKED_CAST")
+                task.result as T
+            }
+        } else {
+            throw e
+        }
+    }
+
+    return suspendCancellableCoroutine { cont ->
+        task.addOnCompleteListener {
+            val e = it.exception
+            if (e == null) {
+                @Suppress("UNCHECKED_CAST")
+                if (it.isCanceled) cont.cancel() else cont.resume(it.result as T)
+            } else {
+                cont.resumeWithException(e)
+            }
+        }
+        cont.invokeOnCancellation {
+            cancellation.cancel()
+        }
     }
 }

@@ -6,7 +6,7 @@ Extension functions:
 
 | **Name** | **Description**
 | -------- | ---------------
-| [((CancellationToken) -> Task).await][((CancellationToken) -> Task).await] | Awaits for completion of a Task constructed with a CancellationToken
+| [awaitTask][awaitTask] | Awaits for completion of a Task constructed with a CancellationToken
 | [Task.await][await] | Awaits for completion of the Task (cancellable)
 | [Deferred.asTask][asTask] | Converts a deferred value to a Task
 
@@ -26,6 +26,6 @@ val snapshot = try {
 // Do stuff
 ```
 
-[((CancellationToken) -> Task).await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.tasks/awaitConstructedTask.html
+[awaitTask]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.tasks/awaitTask.html
 [await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.tasks/com.google.android.gms.tasks.-task/await.html
 [asTask]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.tasks/kotlinx.coroutines.-deferred/as-task.html
