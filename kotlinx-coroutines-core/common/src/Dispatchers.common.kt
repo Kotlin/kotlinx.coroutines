@@ -83,7 +83,7 @@ public expect object Dispatchers {
      * Shuts down the [Default] dispatcher.
      *
      * Its implementation depends on the platform:
-     * - On Kotlin/JVM and Kotlin/JS takes no effect.
+     * - On Kotlin/JVM and Kotlin/JS has no effect.
      * - On Kotlin/Native requests termination of the Worker created by the [Default] dispatcher.
      *   [Default] dispatcher is backed by a [SingleThreadDispatcher] that creates a Worker and never shuts it down.
      *   According to the current implementation, Kotlin/Native memory leak checker can not do it’s job while
