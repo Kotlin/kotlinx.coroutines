@@ -479,7 +479,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                                 rootCause = state.rootCause // != null if cancelling job
                                 // We add node to the list in two cases --- either the job is not being cancelled
                                 // or we are adding a child to a coroutine that is not completing yet
-                                if (rootCause == null || handler is ChildHandleNode && !state.isCompleting) {
+                                if (rootCause == null || handler.isHandlerOf<ChildHandleNode>() && !state.isCompleting) {
                                     // Note: add node the list while holding lock on state (make sure it cannot change)
                                     nodeAdded = node
                                     if (!addLast(state, list, node)) {
