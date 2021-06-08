@@ -95,5 +95,5 @@ public expect object Dispatchers {
      *           It will be available in regular versions when #2558 is implemeted.
      */
     @ExperimentalCoroutinesApi
-    public fun Dispatchers.shutdownDefaultDispatcher()
+    public fun shutdownDefaultDispatcher()
 }

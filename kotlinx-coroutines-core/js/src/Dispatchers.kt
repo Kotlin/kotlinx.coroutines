@@ -10,7 +10,7 @@ public actual object Dispatchers {
     public actual val Default: CoroutineDispatcher = createDefaultDispatcher()
     public actual val Main: MainCoroutineDispatcher = JsMainDispatcher(Default, false)
     public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.Unconfined
-    public actual fun Dispatchers.shutdownDefaultDispatcher() {}
+    public actual fun shutdownDefaultDispatcher() {}
 }
 
 private class JsMainDispatcher(

@@ -13,7 +13,7 @@ public actual object Dispatchers {
     public actual val Main: MainCoroutineDispatcher = createMainDispatcher(Default)
     public actual val Unconfined: CoroutineDispatcher get() = kotlinx.coroutines.Unconfined // Avoid freezing
 
-    public actual fun Dispatchers.shutdownDefaultDispatcher() {
+    public actual fun shutdownDefaultDispatcher() {
         DefaultDispatcher.shutdown()
     }
 }
