@@ -8,7 +8,6 @@ package kotlinx.coroutines.tasks
 
 import com.google.android.gms.tasks.*
 import kotlinx.coroutines.*
-import kotlin.contracts.*
 import kotlin.coroutines.*
 
 /**
@@ -38,83 +37,113 @@ public fun <T> Deferred<T>.asTask(): Task<T> {
 
 /**
  * Converts this task to an instance of [Deferred].
+ *
+ * Prefer passing the corresponding [CancellationTokenSource] if the [Task] can be created with a [CancellationToken]
+ * to support bi-directional cancellation.
+ *
  * If task is cancelled then resulting deferred will be cancelled as well.
  */
-public fun <T> Task<T>.asDeferred(): Deferred<T> {
+public fun <T> Task<T>.asDeferred(): Deferred<T> = asDeferred(CancellationTokenSource())
+
+/**
+ * Converts this task to an instance of [Deferred] with a [CancellationTokenSource] to control cancellation.
+ *
+ * If the task is cancelled, then the [cancellationTokenSource] and the resulting deferred will be cancelled.
+ * If the deferred is cancelled, then the [cancellationTokenSource] will be cancelled.
+ * If the [cancellationTokenSource] is cancelled, then the deferred will be cancelled.
+ */
+@ExperimentalCoroutinesApi
+public fun <T> Task<T>.asDeferred(cancellationTokenSource: CancellationTokenSource): Deferred<T> {
+    val deferred = CompletableDeferred<T>()
+
     if (isComplete) {
         val e = exception
-        return if (e == null) {
-            @Suppress("UNCHECKED_CAST")
-            CompletableDeferred<T>().apply { if (isCanceled) cancel() else complete(result as T) }
+        if (e == null) {
+            if (isCanceled) {
+                deferred.cancel()
+            } else {
+                @Suppress("UNCHECKED_CAST")
+                deferred.complete(this.result as T)
+            }
         } else {
-            CompletableDeferred<T>().apply { completeExceptionally(e) }
+            deferred.completeExceptionally(e)
+        }
+    } else if (cancellationTokenSource.token.isCancellationRequested) {
+        // The task hasn't completed, yet cancellation was already requested.
+        // Interpret this by cancelling immediately (no way to cancel the task)
+        deferred.cancel()
+    } else {
+        addOnCompleteListener {
+            val e = it.exception
+            if (e == null) {
+                @Suppress("UNCHECKED_CAST")
+                if (it.isCanceled) deferred.cancel() else deferred.complete(it.result as T)
+            } else {
+                deferred.completeExceptionally(e)
+            }
+        }
+
+        cancellationTokenSource.token.onCanceledRequested {
+            deferred.cancel()
         }
     }
 
-    val result = CompletableDeferred<T>()
-    addOnCompleteListener {
-        val e = it.exception
-        if (e == null) {
-            @Suppress("UNCHECKED_CAST")
-            if (isCanceled) result.cancel() else result.complete(it.result as T)
-        } else {
-            result.completeExceptionally(e)
+    deferred.invokeOnCompletion {
+        if (it is CancellationException) {
+            cancellationTokenSource.cancel()
         }
     }
-    return result
+
+    return deferred
 }
 
 /**
  * Awaits for completion of the task without blocking a thread.
  *
- * Prefer [awaitTask] if a [Task] can be constructed with a [CancellationToken], to allow propagating cancellation to
- * that [Task].
+ * Prefer passing the corresponding [CancellationTokenSource] if the [Task] can be created with a [CancellationToken]
+ * to support bi-directional cancellation.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * stops waiting for the completion stage and immediately resumes with [CancellationException].
- *
- * @see [awaitTask]
  */
-public suspend fun <T> Task<T>.await(): T = awaitTask { this }
+public suspend fun <T> Task<T>.await(): T = await(CancellationTokenSource())
 
 /**
- * Awaits for completion of the created task via [block] without blocking a thread.
- *
- * Prefer this method over [Task.await] if a [Task] can be constructed with a [CancellationToken], to cancel the task
- * if this function is cancelled.
+ * Awaits for completion of the task with a [CancellationTokenSource] to control cancellation.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * stops waiting for the completion stage and immediately resumes with [CancellationException].
+ * cancels the [cancellationTokenSource] and throws a [CancellationException].
  *
- * @see [Task.await]
+ * If the task is cancelled, then [cancellationTokenSource] will be canceled and this function will throw a
+ * [CancellationException].
+ * If the [cancellationTokenSource] is cancelled, then this function will throw a [CancellationException].
  */
-@OptIn(ExperimentalContracts::class)
 @ExperimentalCoroutinesApi
-public suspend inline fun <T> awaitTask(block: (CancellationToken) -> Task<T>): T {
-    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
-
-    val cancellation = CancellationTokenSource()
-    val task = block(cancellation.token)
-
+public suspend fun <T> Task<T>.await(cancellationTokenSource: CancellationTokenSource): T {
     // fast path
-    if (task.isComplete) {
-        val e = task.exception
+    if (isComplete) {
+        val e = exception
         return if (e == null) {
-            if (task.isCanceled) {
-                throw CancellationException("Task $task was cancelled normally.")
+            if (isCanceled) {
+                cancellationTokenSource.cancel()
+                throw CancellationException("Task $this was cancelled normally.")
             } else {
                 @Suppress("UNCHECKED_CAST")
-                task.result as T
+                result as T
             }
         } else {
             throw e
         }
+    } else if (cancellationTokenSource.token.isCancellationRequested) {
+        // The task hasn't completed, yet cancellation was already requested.
+        // Interpret this by throwing immediately (no way to cancel the task)
+        throw CancellationException("Cancellation was already requested")
     }
 
     return suspendCancellableCoroutine { cont ->
-        task.addOnCompleteListener {
+        addOnCompleteListener {
             val e = it.exception
             if (e == null) {
                 @Suppress("UNCHECKED_CAST")
@@ -123,8 +152,12 @@ public suspend inline fun <T> awaitTask(block: (CancellationToken) -> Task<T>): 
                 cont.resumeWithException(e)
             }
         }
+        cancellationTokenSource.token.onCanceledRequested {
+            cont.cancel()
+        }
+
         cont.invokeOnCancellation {
-            cancellation.cancel()
+            cancellationTokenSource.cancel()
         }
     }
 }
