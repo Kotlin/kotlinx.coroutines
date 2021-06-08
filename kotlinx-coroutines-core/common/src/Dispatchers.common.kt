@@ -92,7 +92,7 @@ public expect object Dispatchers {
      *   to avoid the leaking worker.
      *
      * **Note**: For now this declaration is only present in `native-mt` versions of `kotlinx.coroutines`.
-     *           It will be available in regular versions when #2558 is implemeted.
+     *           It will be available in regular versions when #2558 is implemented, potentially under different name
      */
     @ExperimentalCoroutinesApi
     public fun shutdownDefaultDispatcher()
