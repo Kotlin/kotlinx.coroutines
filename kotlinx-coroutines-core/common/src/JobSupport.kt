@@ -497,7 +497,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                                      * for this particular kind of node -- the caller makes a decision based on whether the node was added
                                      * or not and that decision should be made **once**.
                                      * To be more precise, the caller of ChildCompletion, in case when it's the last child,
-                                     * should made a decision whether to start transition to the final state, based on
+                                     * should make a decision whether to start transition to the final state, based on
                                      * whether the ChildCompletion was added to the list or not. If not -- the JobNode.invoke will do that.
                                      * See comment to JobNode.invoke, we cannot differentiate the situation when external state updater
                                      * invoked or skipped the node, thus we additionally synchronize on 'markInvoked'.
@@ -563,7 +563,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          * the next iteration.
          *
          * Alternatively, we could've checked that the node is already added to the list,
-         * but it'd significantly complicated the reasoning about the code
+         * but it'd significantly complicate the reasoning about the code.
          */
         node.dispose()
         return false
