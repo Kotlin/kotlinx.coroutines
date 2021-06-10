@@ -459,7 +459,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         /*
          * Here we have to ensure that on races we use the same node for immediate invoke
          * and list addition (see comment to JobNode.invoke) in order to prevent double invocations
-         * and have single markInvoked to syncrhonize on.
+         * and have single markInvoked to synchronize on.
          */
         var nodeAdded: JobNode? = null
         loopOnState { state ->
@@ -644,7 +644,11 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                     // remove node from the list if there is a list
                     if (state.list != null) {
                         // Completely remove so the node might be re-added
-                        if (!node.remove()) node.helpRemove()
+                        if (!node.remove() && node.isRemoved) {
+                            // Note: .remove() returns 'false' if the node wasn't added at all, e.g.
+                            // because it was an optimized "single element list"
+                            node.helpRemove()
+                        }
                     }
                     return
                 }
