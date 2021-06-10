@@ -39,14 +39,11 @@ public fun SupervisorJob(parent: Job? = null) : CompletableJob = SupervisorJobIm
 public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
 
 /**
- * Creates a [CoroutineScope] with [SupervisorJob] and calls the specified suspend block with this scope.
- * The provided scope inherits its [coroutineContext][CoroutineScope.coroutineContext] from the outer scope, but overrides
- * context's [Job] with [SupervisorJob].
- *
- * A failure of a child does not cause this scope to fail and does not affect its other children,
+ * Works like [coroutineScope][CoroutineContext.coroutineScope] with the following exception.
+ * Failure of a child does not cause the scope created by this function to fail and does not affect its other children,
  * so a custom policy for handling failures of its children can be implemented. See [SupervisorJob] for details.
  * A failure of the scope itself (exception thrown in the [block] or cancellation) fails the scope with all its children,
- * but does not cancel parent job.
+ * but does not cancel the parent job.
  */
 public suspend fun <R> supervisorScope(block: suspend CoroutineScope.() -> R): R {
     contract {
