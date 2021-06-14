@@ -887,7 +887,7 @@ Collecting 1
 Collecting 2
 Collecting 3
 Done 3
-Collected in 741 ms
+Collected in 641 ms
 ``` 
 
 <!--- TEST ARBITRARY_TIME -->
