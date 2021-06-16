@@ -48,9 +48,11 @@ public fun <T> Task<T>.asDeferred(): Deferred<T> = asDeferred(CancellationTokenS
 /**
  * Converts this task to an instance of [Deferred] with a [CancellationTokenSource] to control cancellation.
  *
- * If the task is cancelled, then the [cancellationTokenSource] and the resulting deferred will be cancelled.
+ * If the task is cancelled, then the resulting deferred will be cancelled.
  * If the deferred is cancelled, then the [cancellationTokenSource] will be cancelled.
- * If the [cancellationTokenSource] is cancelled, then the deferred will be cancelled.
+ *
+ * Providing a [CancellationTokenSource] that is unrelated to the receiving [Task] is not supported, as this function
+ * won't listen for the token being cancelled directly. Instead, prefer to just cancel the corresponding [Job].
  */
 @ExperimentalCoroutinesApi
 public fun <T> Task<T>.asDeferred(cancellationTokenSource: CancellationTokenSource): Deferred<T> {
@@ -68,10 +70,6 @@ public fun <T> Task<T>.asDeferred(cancellationTokenSource: CancellationTokenSour
         } else {
             deferred.completeExceptionally(e)
         }
-    } else if (cancellationTokenSource.token.isCancellationRequested) {
-        // The task hasn't completed, yet cancellation was already requested.
-        // Interpret this by cancelling immediately (no way to cancel the task)
-        deferred.cancel()
     } else {
         addOnCompleteListener {
             val e = it.exception
@@ -82,10 +80,6 @@ public fun <T> Task<T>.asDeferred(cancellationTokenSource: CancellationTokenSour
                 deferred.completeExceptionally(e)
             }
         }
-
-        cancellationTokenSource.token.onCanceledRequested {
-            deferred.cancel()
-        }
     }
 
     deferred.invokeOnCompletion {
@@ -94,7 +88,7 @@ public fun <T> Task<T>.asDeferred(cancellationTokenSource: CancellationTokenSour
         }
     }
 
-    return deferred
+    return object : Deferred<T> by deferred {}
 }
 
 /**
@@ -110,15 +104,15 @@ public fun <T> Task<T>.asDeferred(cancellationTokenSource: CancellationTokenSour
 public suspend fun <T> Task<T>.await(): T = await(CancellationTokenSource())
 
 /**
- * Awaits for completion of the task with a [CancellationTokenSource] to control cancellation.
+ * Awaits for completion of the task that is linked to the given [CancellationTokenSource] to control cancellation.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * cancels the [cancellationTokenSource] and throws a [CancellationException].
+ * If the task is cancelled, then this function will throw a [CancellationException].
  *
- * If the task is cancelled, then [cancellationTokenSource] will be canceled and this function will throw a
- * [CancellationException].
- * If the [cancellationTokenSource] is cancelled, then this function will throw a [CancellationException].
+ * Providing a [CancellationTokenSource] that is unrelated to the receiving [Task] is not supported, as this function
+ * won't listen for the token being cancelled directly. Instead, prefer to just cancel the corresponding [Job].
  */
 @ExperimentalCoroutinesApi
 public suspend fun <T> Task<T>.await(cancellationTokenSource: CancellationTokenSource): T {
@@ -127,7 +121,6 @@ public suspend fun <T> Task<T>.await(cancellationTokenSource: CancellationTokenS
         val e = exception
         return if (e == null) {
             if (isCanceled) {
-                cancellationTokenSource.cancel()
                 throw CancellationException("Task $this was cancelled normally.")
             } else {
                 @Suppress("UNCHECKED_CAST")
@@ -136,10 +129,6 @@ public suspend fun <T> Task<T>.await(cancellationTokenSource: CancellationTokenS
         } else {
             throw e
         }
-    } else if (cancellationTokenSource.token.isCancellationRequested) {
-        // The task hasn't completed, yet cancellation was already requested.
-        // Interpret this by throwing immediately (no way to cancel the task)
-        throw CancellationException("Cancellation was already requested")
     }
 
     return suspendCancellableCoroutine { cont ->
@@ -151,9 +140,6 @@ public suspend fun <T> Task<T>.await(cancellationTokenSource: CancellationTokenS
             } else {
                 cont.resumeWithException(e)
             }
-        }
-        cancellationTokenSource.token.onCanceledRequested {
-            cont.cancel()
         }
 
         cont.invokeOnCancellation {

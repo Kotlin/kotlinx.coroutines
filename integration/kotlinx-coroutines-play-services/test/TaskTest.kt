@@ -222,12 +222,6 @@ class TaskTest : TestBase() {
 
         cancellationTokenSource.cancel()
 
-        try {
-            deferred.await()
-            fail("deferred.await() should be cancelled")
-        } catch (e: Exception) {
-            assertTrue(e is CancellationException)
-        }
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
         assertFalse(task.isCanceled)
     }
@@ -375,16 +369,13 @@ class TaskTest : TestBase() {
         assertFalse(deferred.isCompleted)
         cancellationTokenSource.cancel()
 
-        try {
-            deferred.await()
-            fail("deferred.await() should be cancelled")
-        } catch (e: Exception) {
-            assertTrue(e is CancellationException)
-        }
-
-        // We couldn't cancel the task, but the deferred should have been cancelled
-        assertFalse(taskCompletionSource.task.isCanceled)
+        // Cancelling the token doesn't cancel the deferred
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
+        assertFalse(taskCompletionSource.task.isCanceled)
+        assertFalse(deferred.isCompleted)
+
+        // Cleanup
+        deferred.cancel()
     }
 
     @Test
@@ -400,42 +391,13 @@ class TaskTest : TestBase() {
         assertFalse(deferred.isCompleted)
         cancellationTokenSource.cancel()
 
-        try {
-            deferred.await()
-            fail("deferred.await() should be cancelled")
-        } catch (e: Exception) {
-            assertTrue(e is CancellationException)
-        }
-
-        // We couldn't cancel the task, but the deferred should have been cancelled
-        assertFalse(taskCompletionSource.task.isCanceled)
+        // Cancelling the token doesn't cancel the deferred
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
-    }
-
-    @Test
-    fun testFastPathSeparateCancelledAwaitCancellableTask() = runTest {
-        val firstCancellationTokenSource = CancellationTokenSource()
-        val secondCancellationTokenSource = CancellationTokenSource()
-        // Construct a task with a different cancellation token source
-        val taskCompletionSource = TaskCompletionSource<Int>(firstCancellationTokenSource.token)
-
-        val deferred: Deferred<Int> = async(start = CoroutineStart.LAZY) {
-            taskCompletionSource.task.await(secondCancellationTokenSource)
-        }
-
+        assertFalse(taskCompletionSource.task.isCanceled)
         assertFalse(deferred.isCompleted)
-        firstCancellationTokenSource.cancel()
 
-        try {
-            deferred.await()
-            fail("deferred.await() should be cancelled")
-        } catch (e: Exception) {
-            assertTrue(e is CancellationException)
-        }
-
-        assertTrue(taskCompletionSource.task.isCanceled)
-        assertTrue(firstCancellationTokenSource.token.isCancellationRequested)
-        assertTrue(secondCancellationTokenSource.token.isCancellationRequested)
+        // Cleanup
+        deferred.cancel()
     }
 
     @Test
@@ -457,32 +419,6 @@ class TaskTest : TestBase() {
 
         assertEquals(42, deferred.await())
         assertTrue(deferred.isCompleted)
-    }
-
-    @Test
-    fun testSlowPathSeparateCancelledAwaitCancellableTask() = runTest {
-        val firstCancellationTokenSource = CancellationTokenSource()
-        val secondCancellationTokenSource = CancellationTokenSource()
-        // Construct a task with a different cancellation token source
-        val taskCompletionSource = TaskCompletionSource<Int>(firstCancellationTokenSource.token)
-
-        val deferred: Deferred<Int> = async(start = CoroutineStart.UNDISPATCHED) {
-            taskCompletionSource.task.await(secondCancellationTokenSource)
-        }
-
-        assertFalse(deferred.isCompleted)
-        firstCancellationTokenSource.cancel()
-
-        try {
-            deferred.await()
-            fail("deferred.await() should be cancelled")
-        } catch (e: Exception) {
-            assertTrue(e is CancellationException)
-        }
-
-        assertTrue(taskCompletionSource.task.isCanceled)
-        assertTrue(firstCancellationTokenSource.token.isCancellationRequested)
-        assertTrue(secondCancellationTokenSource.token.isCancellationRequested)
     }
 
     class TestException(message: String) : Exception(message)
