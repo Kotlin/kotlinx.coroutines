@@ -50,7 +50,7 @@ public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
  * but does not cancel parent job.
  *
  * The method may throw a [CancellationException] if the current job was cancelled externally,
- * or the exception thrown by the given [block].
+ * or rethrow an exception thrown by the given [block].
  */
 public suspend fun <R> supervisorScope(block: suspend CoroutineScope.() -> R): R {
     contract {
