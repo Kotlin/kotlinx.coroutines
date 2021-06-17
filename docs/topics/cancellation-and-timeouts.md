@@ -169,6 +169,8 @@ fun main() = runBlocking {
                 println("job: I'm sleeping $i ...")
                 delay(500L)
             }
+        } catch(exception: CancellationException) {
+            println("job: I'm cancelled.")
         } finally {
             println("job: I'm running finally")
         }
@@ -194,6 +196,7 @@ job: I'm sleeping 0 ...
 job: I'm sleeping 1 ...
 job: I'm sleeping 2 ...
 main: I'm tired of waiting!
+job: I'm cancelled.
 job: I'm running finally
 main: Now I can quit.
 ```
