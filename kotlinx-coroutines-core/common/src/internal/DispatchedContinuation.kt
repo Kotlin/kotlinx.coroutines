@@ -58,16 +58,16 @@ internal class DispatchedContinuation<in T>(
      */
     private val _reusableCancellableContinuation = atomic<Any?>(null)
 
-    public val reusableCancellableContinuation: CancellableContinuationImpl<*>?
+    val reusableCancellableContinuation: CancellableContinuationImpl<*>?
         get() = _reusableCancellableContinuation.value as? CancellableContinuationImpl<*>
 
-    public fun isReusable(requester: CancellableContinuationImpl<*>): Boolean {
+    fun isReusable(requester: CancellableContinuationImpl<*>): Boolean {
         /*
          * Reusability control:
          * `null` -> no reusability at all, `false`
          * If current state is not CCI, then we are within `suspendCancellableCoroutineReusable`, true
          * Else, if result is CCI === requester, then it's our reusable continuation
-         * Identity check my fail for the following pattern:
+         * Identity check may fail for the following pattern:
          * ```
          * loop:
          * suspendCancellableCoroutineReusable { } // Reusable, outer coroutine stores the child handle
@@ -80,13 +80,12 @@ internal class DispatchedContinuation<in T>(
         return true
     }
 
-
     /**
      * Awaits until previous call to `suspendCancellableCoroutineReusable` will
      * stop mutating cached instance
      */
     public fun awaitReusability() {
-        _reusableCancellableContinuation.loop { it ->
+        _reusableCancellableContinuation.loop {
             if (it !== REUSABLE_CLAIMED) return
         }
     }

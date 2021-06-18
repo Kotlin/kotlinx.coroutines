@@ -91,6 +91,18 @@ internal open class CancellableContinuationImpl<in T>(
 
     public override fun initCancellability() {
         /*
+         * We could've been in the following situation:
+         * suspendCancellableCoroutineReusable {} // <- CLAIMED, trySuspend(), now blocked by OS schedulder
+         * suspendCancellableCoroutine {} // <- we are here
+         *
+         * In such rare cases, we explicitly await for reusable continuation to became available and
+         * for `isReusable` to start returning `false`.
+         */
+        if (isReusable()) {
+            (delegate as DispatchedContinuation<*>).awaitReusability()
+        }
+
+        /*
         * Invariant: at the moment of invocation, `this` has not yet
         * leaked to user code and no one is able to invoke `resume` or `cancel`
         * on it yet. Also, this function is not invoked for reusable continuations.
