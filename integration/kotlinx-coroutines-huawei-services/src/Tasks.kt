@@ -6,15 +6,9 @@
 
 package kotlinx.coroutines.tasks
 
-import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.android.gms.tasks.RuntimeExecutionException
-import com.google.android.gms.tasks.Task
-import com.google.android.gms.tasks.TaskCompletionSource
+import com.huawei.hmf.tasks.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.*
 
 /**
@@ -35,7 +29,7 @@ public fun <T> Deferred<T>.asTask(): Task<T> {
         if (t == null) {
             source.setResult(getCompleted())
         } else {
-            source.setException(t as? Exception ?: RuntimeExecutionException(t))
+            source.setException(t as? Exception ?: RuntimeException(t))
         }
     }
 

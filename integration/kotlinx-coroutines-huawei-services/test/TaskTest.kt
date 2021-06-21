@@ -4,7 +4,7 @@
 
 package kotlinx.coroutines.tasks
 
-import com.google.android.gms.tasks.*
+import com.huawei.hmf.tasks.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
@@ -75,7 +75,7 @@ class TaskTest : TestBase() {
     fun testStateAsTask() = runTest {
         val lock = ReentrantLock().apply { lock() }
 
-        val deferred: Deferred<Int> = Tasks.call {
+        val deferred: Deferred<Int> = Tasks.callInBackground {
             lock.withLock { 42 }
         }.asDeferred()
 
@@ -88,18 +88,18 @@ class TaskTest : TestBase() {
 
     @Test
     fun testTaskAsDeferred() = runTest {
-        val deferred = Tasks.forResult(42).asDeferred()
+        val deferred = Tasks.fromResult(42).asDeferred()
         assertEquals(42, deferred.await())
     }
 
     @Test
     fun testNullResultTaskAsDeferred() = runTest {
-        assertNull(Tasks.forResult(null).asDeferred().await())
+        assertNull(Tasks.fromResult(null).asDeferred().await())
     }
 
     @Test
     fun testCancelledTaskAsDeferred() = runTest {
-        val deferred = Tasks.forCanceled<Int>().asDeferred()
+        val deferred = Tasks.fromCanceled<Int>().asDeferred()
 
         assertTrue(deferred.isCancelled)
         try {
@@ -112,7 +112,7 @@ class TaskTest : TestBase() {
 
     @Test
     fun testFailedTaskAsDeferred() = runTest {
-        val deferred = Tasks.forException<Int>(TestException("something went wrong")).asDeferred()
+        val deferred = Tasks.fromException<Int>(TestException("something went wrong")).asDeferred()
 
         assertTrue(deferred.isCancelled && deferred.isCompleted)
         val completionException = deferred.getCompletionExceptionOrNull()!!
@@ -132,7 +132,7 @@ class TaskTest : TestBase() {
     fun testFailingTaskAsDeferred() = runTest {
         val lock = ReentrantLock().apply { lock() }
 
-        val deferred: Deferred<Int> = Tasks.call {
+        val deferred: Deferred<Int> = Tasks.callInBackground {
             lock.withLock { throw TestException("something went wrong") }
         }.asDeferred()
 
