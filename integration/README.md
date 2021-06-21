@@ -9,6 +9,7 @@ Module name below corresponds to the artifact name in Maven/Gradle.
 * [kotlinx-coroutines-guava](kotlinx-coroutines-guava/README.md) -- integration with Guava [ListenableFuture](https://github.com/google/guava/wiki/ListenableFutureExplained).
 * [kotlinx-coroutines-slf4j](kotlinx-coroutines-slf4j/README.md) -- integration with SLF4J [MDC](https://logback.qos.ch/manual/mdc.html).
 * [kotlinx-coroutines-play-services](kotlinx-coroutines-play-services) -- integration with Google Play Services [Tasks API](https://developers.google.com/android/guides/tasks).
+* [kotlinx-coroutines-huawei-services](kotlinx-coroutines-huawei-services) -- integration with Huawei Mobile Services [Tasks API](https://developer.huawei.com/consumer/en/doc/HMSCore-References-V5/tasks-overview-0000001050202661-V5).
 
 ## Contributing
 

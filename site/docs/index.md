@@ -25,7 +25,8 @@ Library support for Kotlin coroutines. This reference is a companion to
 | [kotlinx-coroutines-jdk8](kotlinx-coroutines-jdk8)                   | Integration with JDK8 `CompletableFuture` (Android API level 24) |
 | [kotlinx-coroutines-guava](kotlinx-coroutines-guava)                 | Integration with Guava [ListenableFuture](https://github.com/google/guava/wiki/ListenableFutureExplained) |
 | [kotlinx-coroutines-slf4j](kotlinx-coroutines-slf4j)                 | Integration with SLF4J [MDC](https://logback.qos.ch/manual/mdc.html) |
-| [kotlinx-coroutines-play-services](kotlinx-coroutines-play-services) | Integration with Google Play Services [Tasks API](https://developers.google.com/android/guides/tasks) |
+| [kotlinx-coroutines-play-services](kotlinx-coroutines-play-services) | Integration with Google Play Services [Tasks API](https://developers.google.com/android/guides/tasks)
+| [kotlinx-coroutines-huawei-services](kotlinx-coroutines-huawei-services) | Integration with Huawei Mobile Services [Tasks API](https://developer.huawei.com/consumer/en/doc/HMSCore-References-V5/tasks-overview-0000001050202661-V5) ||
 
 ## Examples
 

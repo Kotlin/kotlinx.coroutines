@@ -55,7 +55,7 @@ suspend fun main() = coroutineScope {
 * [ui](ui/README.md) &mdash; modules that provide coroutine dispatchers for various single-threaded UI libraries:
   * Android, JavaFX, and Swing.
 * [integration](integration/README.md) &mdash; modules that provide integration with various asynchronous callback- and future-based libraries:
-  * JDK8 [CompletionStage.await], Guava [ListenableFuture.await], and Google Play Services [Task.await];
+  * JDK8 [CompletionStage.await], Guava [ListenableFuture.await], Google Play Services [Task.await][gms.Task.await] and Huawei Mobile Services [Task.await][hms.Task.await];
   * SLF4J MDC integration via [MDCContext].
 
 ## Documentation
@@ -291,7 +291,12 @@ See [Contributing Guidelines](CONTRIBUTING.md).
 <!--- MODULE kotlinx-coroutines-play-services -->
 <!--- INDEX kotlinx.coroutines.tasks -->
 
-[Task.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.tasks/com.google.android.gms.tasks.-task/await.html
+[gms.Task.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.tasks/com.google.android.gms.tasks.-task/await.html
+
+<!--- MODULE kotlinx-coroutines-huawei-services -->
+<!--- INDEX kotlinx.coroutines.tasks -->
+
+[hms.Task.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-huawei-services/kotlinx.coroutines.tasks/com.google.android.gms.tasks.-task/await.html
 
 <!--- MODULE kotlinx-coroutines-reactive -->
 <!--- INDEX kotlinx.coroutines.reactive -->

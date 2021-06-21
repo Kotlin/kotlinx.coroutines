@@ -1,29 +1,26 @@
-# Module kotlinx-coroutines-play-services
+# Module kotlinx-coroutines-huawei-services
 
-Integration with Google Play Services [Tasks API](https://developers.google.com/android/guides/tasks).
+Integration with Huawei Mobile Services [Tasks API](https://developer.huawei.com/consumer/en/doc/HMSCore-References-V5/tasks-overview-0000001050202661-V5).
 
 Extension functions:
 
 | **Name** | **Description**
 | -------- | ---------------
-| [Task.await][await] | Awaits for completion of the Task (cancellable)
+| [Task.await][await] | Awaits for completion of the Task
+| [Task.asDeferred][asDeferred] | Awaits for a result of the Task
 | [Deferred.asTask][asTask] | Converts a deferred value to a Task
 
 ## Example
-
-Using Firebase APIs becomes simple:
-
 ```kotlin
-FirebaseAuth.getInstance().signInAnonymously().await()
-val snapshot = try {
-    FirebaseFirestore.getInstance().document("users/$id").get().await() // Cancellable await
-} catch (e: FirebaseFirestoreException) {
-    // Handle exception
-    return@async
+val locationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+
+scope.launch {
+    val location: Location = locationProviderClient.getLastLocation().await()
 }
 
-// Do stuff
+val deferredLocation = locationProviderClient.getLastLocation().asDeferred()
 ```
 
-[await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.tasks/com.google.android.gms.tasks.-task/await.html
-[asTask]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.tasks/kotlinx.coroutines.-deferred/as-task.html
+[await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-huawei-services/kotlinx.coroutines.tasks/com.huawei.hmf.tasks.-task/await.html
+[asDeferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-huawei-services/kotlinx.coroutines.tasks/com.huawei.hmf.tasks.-task/as-deferred.html
+[asTask]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-huawei-services/kotlinx.coroutines.tasks/kotlinx.coroutines.-deferred/as-task.html
