@@ -218,7 +218,7 @@ class TaskTest : TestBase() {
     fun testSeparatelyCancelledCancellableTaskAsDeferred() = runTest {
         val cancellationTokenSource = CancellationTokenSource()
         val task = TaskCompletionSource<Int>().task
-        val deferred = task.asDeferred(cancellationTokenSource)
+        task.asDeferred(cancellationTokenSource)
 
         cancellationTokenSource.cancel()
 
@@ -318,7 +318,7 @@ class TaskTest : TestBase() {
         }
 
         assertFalse(deferred.isCompleted)
-        // Cancel the deferred token source
+        // Cancel the deferred
         deferred.cancel()
 
         try {
