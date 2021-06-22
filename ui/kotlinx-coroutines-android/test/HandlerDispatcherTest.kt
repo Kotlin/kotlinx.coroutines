@@ -29,7 +29,7 @@ class HandlerDispatcherTest : TestBase() {
     fun mainIsAsync() = runTest {
         ReflectionHelpers.setStaticField(Build.VERSION::class.java, "SDK_INT", 28)
 
-        val mainLooper = ShadowLooper.getShadowMainLooper()
+        val mainLooper = shadowOf(Looper.getMainLooper())
         mainLooper.pause()
         val mainMessageQueue = shadowOf(Looper.getMainLooper().queue)
 
@@ -48,7 +48,7 @@ class HandlerDispatcherTest : TestBase() {
 
         val main = Looper.getMainLooper().asHandler(async = true).asCoroutineDispatcher()
 
-        val mainLooper = ShadowLooper.getShadowMainLooper()
+        val mainLooper = shadowOf(Looper.getMainLooper())
         mainLooper.pause()
         val mainMessageQueue = shadowOf(Looper.getMainLooper().queue)
 
@@ -67,7 +67,7 @@ class HandlerDispatcherTest : TestBase() {
 
         val main = Looper.getMainLooper().asHandler(async = true).asCoroutineDispatcher()
 
-        val mainLooper = ShadowLooper.getShadowMainLooper()
+        val mainLooper = shadowOf(Looper.getMainLooper())
         mainLooper.pause()
         val mainMessageQueue = shadowOf(Looper.getMainLooper().queue)
 
@@ -86,7 +86,7 @@ class HandlerDispatcherTest : TestBase() {
 
         val main = Looper.getMainLooper().asHandler(async = true).asCoroutineDispatcher()
 
-        val mainLooper = ShadowLooper.getShadowMainLooper()
+        val mainLooper = shadowOf(Looper.getMainLooper())
         mainLooper.pause()
         val mainMessageQueue = shadowOf(Looper.getMainLooper().queue)
 
@@ -105,7 +105,7 @@ class HandlerDispatcherTest : TestBase() {
 
         val main = Looper.getMainLooper().asHandler(async = false).asCoroutineDispatcher()
 
-        val mainLooper = ShadowLooper.getShadowMainLooper()
+        val mainLooper = shadowOf(Looper.getMainLooper())
         mainLooper.pause()
         val mainMessageQueue = shadowOf(Looper.getMainLooper().queue)
 
