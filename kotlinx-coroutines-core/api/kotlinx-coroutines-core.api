@@ -158,7 +158,7 @@ public abstract class kotlinx/coroutines/CoroutineDispatcher : kotlin/coroutines
 	public fun isDispatchNeeded (Lkotlin/coroutines/CoroutineContext;)Z
 	public fun minusKey (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
 	public final fun plus (Lkotlinx/coroutines/CoroutineDispatcher;)Lkotlinx/coroutines/CoroutineDispatcher;
-	public fun releaseInterceptedContinuation (Lkotlin/coroutines/Continuation;)V
+	public final fun releaseInterceptedContinuation (Lkotlin/coroutines/Continuation;)V
 	public fun toString ()Ljava/lang/String;
 }
 
