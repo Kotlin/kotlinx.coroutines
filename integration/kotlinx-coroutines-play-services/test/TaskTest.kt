@@ -328,7 +328,6 @@ class TaskTest : TestBase() {
             assertTrue(e is CancellationException)
         }
 
-        assertTrue(taskCompletionSource.task.isCanceled)
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
     }
 
@@ -352,7 +351,6 @@ class TaskTest : TestBase() {
             assertTrue(e is CancellationException)
         }
 
-        assertTrue(taskCompletionSource.task.isCanceled)
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
     }
 
@@ -371,7 +369,6 @@ class TaskTest : TestBase() {
 
         // Cancelling the token doesn't cancel the deferred
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
-        assertFalse(taskCompletionSource.task.isCanceled)
         assertFalse(deferred.isCompleted)
 
         // Cleanup
@@ -393,7 +390,6 @@ class TaskTest : TestBase() {
 
         // Cancelling the token doesn't cancel the deferred
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
-        assertFalse(taskCompletionSource.task.isCanceled)
         assertFalse(deferred.isCompleted)
 
         // Cleanup
