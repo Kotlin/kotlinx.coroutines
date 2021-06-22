@@ -193,7 +193,6 @@ class TaskTest : TestBase() {
             assertTrue(e is CancellationException)
         }
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
-        assertTrue(task.isCanceled)
     }
 
     @Test
@@ -211,7 +210,6 @@ class TaskTest : TestBase() {
             assertTrue(e is CancellationException)
         }
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
-        assertTrue(task.isCanceled)
     }
 
     @Test
@@ -223,7 +221,6 @@ class TaskTest : TestBase() {
         cancellationTokenSource.cancel()
 
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
-        assertFalse(task.isCanceled)
     }
 
     @Test
