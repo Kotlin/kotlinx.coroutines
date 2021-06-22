@@ -154,14 +154,14 @@ class TaskTest : TestBase() {
         val cancellationTokenSource = CancellationTokenSource()
         val deferred = Tasks.forResult(42).asDeferred(cancellationTokenSource)
         assertEquals(42, deferred.await())
-        assertFalse(cancellationTokenSource.token.isCancellationRequested)
+        assertTrue(cancellationTokenSource.token.isCancellationRequested)
     }
 
     @Test
     fun testNullResultCancellableTaskAsDeferred() = runTest {
         val cancellationTokenSource = CancellationTokenSource()
         assertNull(Tasks.forResult(null).asDeferred(cancellationTokenSource).await())
-        assertFalse(cancellationTokenSource.token.isCancellationRequested)
+        assertTrue(cancellationTokenSource.token.isCancellationRequested)
     }
 
     @Test
@@ -243,7 +243,7 @@ class TaskTest : TestBase() {
             assertTrue(e is TestException)
             assertEquals("something went wrong", e.message)
         }
-        assertFalse(cancellationTokenSource.token.isCancellationRequested)
+        assertTrue(cancellationTokenSource.token.isCancellationRequested)
     }
 
     @Test
@@ -266,7 +266,7 @@ class TaskTest : TestBase() {
             assertEquals("something went wrong", e.message)
             assertSame(e.cause, deferred.getCompletionExceptionOrNull()) // debug mode stack augmentation
         }
-        assertFalse(cancellationTokenSource.token.isCancellationRequested)
+        assertTrue(cancellationTokenSource.token.isCancellationRequested)
     }
 
     @Test

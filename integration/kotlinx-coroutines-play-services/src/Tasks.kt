@@ -49,7 +49,7 @@ public fun <T> Task<T>.asDeferred(): Deferred<T> = asDeferred(CancellationTokenS
  * Converts this task to an instance of [Deferred] with a [CancellationTokenSource] to control cancellation.
  *
  * If the task is cancelled, then the resulting deferred will be cancelled.
- * If the deferred is cancelled, then the [cancellationTokenSource] will be cancelled.
+ * When the deferred is completed, the [cancellationTokenSource] will be cancelled.
  *
  * Providing a [CancellationTokenSource] that is unrelated to the receiving [Task] is not supported, as this function
  * won't listen for the token being cancelled directly. Instead, prefer to just cancel the corresponding [Job].
@@ -83,9 +83,7 @@ public fun <T> Task<T>.asDeferred(cancellationTokenSource: CancellationTokenSour
     }
 
     deferred.invokeOnCompletion {
-        if (it is CancellationException) {
-            cancellationTokenSource.cancel()
-        }
+        cancellationTokenSource.cancel()
     }
 
     return object : Deferred<T> by deferred {}
