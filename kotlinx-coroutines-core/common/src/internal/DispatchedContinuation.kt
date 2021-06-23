@@ -58,40 +58,30 @@ internal class DispatchedContinuation<in T>(
      */
     private val _reusableCancellableContinuation = atomic<Any?>(null)
 
-    public val reusableCancellableContinuation: CancellableContinuationImpl<*>?
+    private val reusableCancellableContinuation: CancellableContinuationImpl<*>?
         get() = _reusableCancellableContinuation.value as? CancellableContinuationImpl<*>
 
-    public fun isReusable(requester: CancellableContinuationImpl<*>): Boolean {
+    fun isReusable(): Boolean {
         /*
+        Invariant: caller.resumeMode.isReusableMode
          * Reusability control:
          * `null` -> no reusability at all, `false`
-         * If current state is not CCI, then we are within `suspendCancellableCoroutineReusable`, true
-         * Else, if result is CCI === requester, then it's our reusable continuation
-         * Identity check my fail for the following pattern:
-         * ```
-         * loop:
-         * suspendCancellableCoroutineReusable { } // Reusable, outer coroutine stores the child handle
-         * suspendCancellableCoroutine { } // **Not reusable**, handle should be disposed after {}, otherwise
-         * it will leak because it won't be freed by `releaseInterceptedContinuation`
-         * ```
+         * anything else -> reusable.
          */
-        val value = _reusableCancellableContinuation.value ?: return false
-        if (value is CancellableContinuationImpl<*>) return value === requester
-        return true
+        return _reusableCancellableContinuation.value != null
     }
-
 
     /**
      * Awaits until previous call to `suspendCancellableCoroutineReusable` will
      * stop mutating cached instance
      */
-    public fun awaitReusability() {
-        _reusableCancellableContinuation.loop { it ->
+    fun awaitReusability() {
+        _reusableCancellableContinuation.loop {
             if (it !== REUSABLE_CLAIMED) return
         }
     }
 
-    public fun release() {
+    fun release() {
         /*
          * Called from `releaseInterceptedContinuation`, can be concurrent with
          * the code in `getResult` right after `trySuspend` returned `true`, so we have
