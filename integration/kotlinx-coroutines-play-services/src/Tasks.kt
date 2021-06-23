@@ -37,27 +37,26 @@ public fun <T> Deferred<T>.asTask(): Task<T> {
 
 /**
  * Converts this task to an instance of [Deferred].
- *
- * Prefer passing the corresponding [CancellationTokenSource] if the [Task] can be created with a [CancellationToken]
- * to support bi-directional cancellation.
- *
  * If task is cancelled then resulting deferred will be cancelled as well.
+ * For bi-directional cancellation, an overload that accepts [CancellationTokenSource] can be used.
  */
-public fun <T> Task<T>.asDeferred(): Deferred<T> = asDeferred(CancellationTokenSource())
+public fun <T> Task<T>.asDeferred(): Deferred<T> = asDeferredImpl(null)
 
 /**
  * Converts this task to an instance of [Deferred] with a [CancellationTokenSource] to control cancellation.
+ * The cancellation of this function is bi-directional:
+ * If the given task is cancelled, the resulting deferred will be cancelled.
+ * If the resulting deferred is cancelled, the provided [cancellationTokenSource] will be cancelled.
  *
- * If the task is cancelled, then the resulting deferred will be cancelled.
- * When the deferred is completed, the [cancellationTokenSource] will be cancelled.
- *
- * Providing a [CancellationTokenSource] that is unrelated to the receiving [Task] is not supported, as this function
- * won't listen for the token being cancelled directly. Instead, prefer to just cancel the corresponding [Job].
+ * Providing a [CancellationTokenSource] that is unrelated to the receiving [Task] is not supported and
+ * leads to an unspecified behaviour.
  */
-@ExperimentalCoroutinesApi
-public fun <T> Task<T>.asDeferred(cancellationTokenSource: CancellationTokenSource): Deferred<T> {
-    val deferred = CompletableDeferred<T>()
+@ExperimentalCoroutinesApi // Since 1.5.1, tentatively until 1.6.0
+public fun <T> Task<T>.asDeferred(cancellationTokenSource: CancellationTokenSource): Deferred<T> =
+    asDeferredImpl(cancellationTokenSource)
 
+private fun <T> Task<T>.asDeferredImpl(cancellationTokenSource: CancellationTokenSource?): Deferred<T> {
+    val deferred = CompletableDeferred<T>()
     if (isComplete) {
         val e = exception
         if (e == null) {
@@ -82,8 +81,10 @@ public fun <T> Task<T>.asDeferred(cancellationTokenSource: CancellationTokenSour
         }
     }
 
-    deferred.invokeOnCompletion {
-        cancellationTokenSource.cancel()
+    if (cancellationTokenSource != null) {
+        deferred.invokeOnCompletion {
+            cancellationTokenSource.cancel()
+        }
     }
 
     return object : Deferred<T> by deferred {}
@@ -92,28 +93,29 @@ public fun <T> Task<T>.asDeferred(cancellationTokenSource: CancellationTokenSour
 /**
  * Awaits for completion of the task without blocking a thread.
  *
- * Prefer passing the corresponding [CancellationTokenSource] if the [Task] can be created with a [CancellationToken]
- * to support bi-directional cancellation.
- *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * stops waiting for the completion stage and immediately resumes with [CancellationException].
+ *
+ * For bi-directional cancellation, an overload that accepts [CancellationTokenSource] can be used.
  */
-public suspend fun <T> Task<T>.await(): T = await(CancellationTokenSource())
+public suspend fun <T> Task<T>.await(): T = awaitImpl(null)
 
 /**
  * Awaits for completion of the task that is linked to the given [CancellationTokenSource] to control cancellation.
  *
- * This suspending function is cancellable.
+ * This suspending function is cancellable and cancellation is bi-directional:
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * cancels the [cancellationTokenSource] and throws a [CancellationException].
  * If the task is cancelled, then this function will throw a [CancellationException].
  *
- * Providing a [CancellationTokenSource] that is unrelated to the receiving [Task] is not supported, as this function
- * won't listen for the token being cancelled directly. Instead, prefer to just cancel the corresponding [Job].
+ * Providing a [CancellationTokenSource] that is unrelated to the receiving [Task] is not supported and
+ * leads to an unspecified behaviour.
  */
-@ExperimentalCoroutinesApi
-public suspend fun <T> Task<T>.await(cancellationTokenSource: CancellationTokenSource): T {
+@ExperimentalCoroutinesApi // Since 1.5.1, tentatively until 1.6.0
+public suspend fun <T> Task<T>.await(cancellationTokenSource: CancellationTokenSource): T = awaitImpl(cancellationTokenSource)
+
+private suspend fun <T> Task<T>.awaitImpl(cancellationTokenSource: CancellationTokenSource?): T {
     // fast path
     if (isComplete) {
         val e = exception
@@ -140,6 +142,7 @@ public suspend fun <T> Task<T>.await(cancellationTokenSource: CancellationTokenS
             }
         }
 
+        if (cancellationTokenSource == null) return@suspendCancellableCoroutine
         cont.invokeOnCancellation {
             cancellationTokenSource.cancel()
         }
