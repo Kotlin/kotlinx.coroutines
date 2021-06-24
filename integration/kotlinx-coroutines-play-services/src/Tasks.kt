@@ -38,6 +38,7 @@ public fun <T> Deferred<T>.asTask(): Task<T> {
 /**
  * Converts this task to an instance of [Deferred].
  * If task is cancelled then resulting deferred will be cancelled as well.
+ * However, the opposite is not true: if the deferred is cancelled, the [Task] will not be cancelled.
  * For bi-directional cancellation, an overload that accepts [CancellationTokenSource] can be used.
  */
 public fun <T> Task<T>.asDeferred(): Deferred<T> = asDeferredImpl(null)
