@@ -65,7 +65,7 @@ private fun <T> Task<T>.asDeferredImpl(cancellationTokenSource: CancellationToke
                 deferred.cancel()
             } else {
                 @Suppress("UNCHECKED_CAST")
-                deferred.complete(this.result as T)
+                deferred.complete(result as T)
             }
         } else {
             deferred.completeExceptionally(e)
@@ -87,12 +87,12 @@ private fun <T> Task<T>.asDeferredImpl(cancellationTokenSource: CancellationToke
             cancellationTokenSource.cancel()
         }
     }
-
+    // Prevent casting to CompletableDeferred and manual completion.
     return object : Deferred<T> by deferred {}
 }
 
 /**
- * Awaits for completion of the task without blocking a thread.
+ * Awaits the completion of the task without blocking a thread.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
@@ -103,7 +103,7 @@ private fun <T> Task<T>.asDeferredImpl(cancellationTokenSource: CancellationToke
 public suspend fun <T> Task<T>.await(): T = awaitImpl(null)
 
 /**
- * Awaits for completion of the task that is linked to the given [CancellationTokenSource] to control cancellation.
+ * Awaits the completion of the task that is linked to the given [CancellationTokenSource] to control cancellation.
  *
  * This suspending function is cancellable and cancellation is bi-directional:
  * * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
@@ -143,9 +143,10 @@ private suspend fun <T> Task<T>.awaitImpl(cancellationTokenSource: CancellationT
             }
         }
 
-        if (cancellationTokenSource == null) return@suspendCancellableCoroutine
-        cont.invokeOnCancellation {
-            cancellationTokenSource.cancel()
+        if (cancellationTokenSource != null) {
+            cont.invokeOnCancellation {
+                cancellationTokenSource.cancel()
+            }
         }
     }
 }
