@@ -46,8 +46,8 @@ public fun <T> Task<T>.asDeferred(): Deferred<T> = asDeferredImpl(null)
 /**
  * Converts this task to an instance of [Deferred] with a [CancellationTokenSource] to control cancellation.
  * The cancellation of this function is bi-directional:
- * If the given task is cancelled, the resulting deferred will be cancelled.
- * If the resulting deferred is cancelled, the provided [cancellationTokenSource] will be cancelled.
+ * * If the given task is cancelled, the resulting deferred will be cancelled.
+ * * If the resulting deferred is cancelled, the provided [cancellationTokenSource] will be cancelled.
  *
  * Providing a [CancellationTokenSource] that is unrelated to the receiving [Task] is not supported and
  * leads to an unspecified behaviour.
