@@ -106,9 +106,9 @@ public suspend fun <T> Task<T>.await(): T = awaitImpl(null)
  * Awaits for completion of the task that is linked to the given [CancellationTokenSource] to control cancellation.
  *
  * This suspending function is cancellable and cancellation is bi-directional:
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * cancels the [cancellationTokenSource] and throws a [CancellationException].
- * If the task is cancelled, then this function will throw a [CancellationException].
+ * * If the task is cancelled, then this function will throw a [CancellationException].
  *
  * Providing a [CancellationTokenSource] that is unrelated to the receiving [Task] is not supported and
  * leads to an unspecified behaviour.
