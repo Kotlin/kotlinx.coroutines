@@ -66,7 +66,7 @@ internal class AndroidDispatcherFactory : MainDispatcherFactory {
  *
  * ## Rejected execution
  *
- * If the underlying handler is closed and its post-related methods start to return `false` on
+ * If the underlying handler is closed and its message-scheduling methods start to return `false` on
  * an attempt to submit a continuation task to the resulting dispatcher,
  * then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
  * [Dispatchers.IO], so that the affected coroutine can cleanup its resources and promptly complete.
