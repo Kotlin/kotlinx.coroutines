@@ -161,7 +161,7 @@ internal class HandlerContext private constructor(
     }
 
     private fun cancelOnRejection(context: CoroutineContext, block: Runnable) {
-        context.cancel(CancellationException("The task was rejected"))
+        context.cancel(CancellationException("The task was rejected, the underlying handler '$handler' was closed"))
         Dispatchers.IO.dispatch(context, block)
     }
 
