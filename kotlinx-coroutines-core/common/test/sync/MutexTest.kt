@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.sync
 
-import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
@@ -32,7 +31,7 @@ class MutexTest : TestBase() {
     }
 
     @Test
-    fun tryLockTest() {
+    fun testTryLock() {
         val mutex = Mutex()
         assertFalse(mutex.isLocked)
         assertTrue(mutex.tryLock())
@@ -50,7 +49,7 @@ class MutexTest : TestBase() {
     }
 
     @Test
-    fun withLockTest() = runTest {
+    fun testWithLock() = runTest {
         val mutex = Mutex()
         assertFalse(mutex.isLocked)
         mutex.withLock {
@@ -60,7 +59,7 @@ class MutexTest : TestBase() {
     }
 
     @Test
-    fun holdLock() = runTest {
+    fun testHoldsLock() = runTest {
         val mutex = Mutex()
         val firstOwner = Any()
         val secondOwner = Any()
@@ -90,5 +89,41 @@ class MutexTest : TestBase() {
         // no lock
         assertFalse(mutex.holdsLock(firstOwner))
         assertFalse(mutex.holdsLock(secondOwner))
+    }
+
+    @Test
+    fun testUnlockWithoutOwner() {
+        val owner = Any()
+        val mutex = Mutex()
+        assertTrue(mutex.tryLock(owner))
+        assertFailsWith<IllegalStateException> { mutex.unlock(Any()) }
+        assertFailsWith<IllegalStateException> { mutex.unlock() }
+        assertFailsWith<IllegalStateException> { mutex.unlock(null) }
+        assertTrue(mutex.holdsLock(owner))
+        mutex.unlock(owner)
+        assertFalse(mutex.isLocked)
+    }
+
+    @Test
+    fun testUnlockWithoutOwnerWithLockedQueue() = runTest {
+        val owner = Any()
+        val owner2 = Any()
+        val mutex = Mutex()
+        assertTrue(mutex.tryLock(owner))
+        expect(1)
+        launch {
+            expect(2)
+            mutex.lock(owner2)
+        }
+        yield()
+        expect(3)
+        assertFailsWith<IllegalStateException> { mutex.unlock(owner2) }
+        assertFailsWith<IllegalStateException> { mutex.unlock() }
+        assertFailsWith<IllegalStateException> { mutex.unlock(null) }
+        assertTrue(mutex.holdsLock(owner))
+        mutex.unlock(owner)
+        assertTrue(mutex.isLocked)
+        assertTrue(mutex.holdsLock(owner2))
+        finish(4)
     }
 }

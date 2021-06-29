@@ -10,7 +10,6 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
-import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlin.native.concurrent.*
 
@@ -20,11 +19,6 @@ import kotlin.native.concurrent.*
  * Mutex has two states: _locked_ and _unlocked_.
  * It is **non-reentrant**, that is invoking [lock] even from the same thread/coroutine that currently holds
  * the lock still suspends the invoker.
- *
- * JVM API note:
- * Memory semantic of the [Mutex] is similar to `synchronized` block on JVM:
- * An unlock on a [Mutex] happens-before every subsequent successful lock on that [Mutex].
- * Unsuccessful call to [tryLock] do not have any memory effects.
  */
 public interface Mutex {
     /**
@@ -81,8 +75,8 @@ public interface Mutex {
      * Unlocks this mutex. Throws [IllegalStateException] if invoked on a mutex that is not locked or
      * was locked with a different owner token (by identity).
      *
-     * @param owner Optional owner token for debugging. When `owner` is specified (non-null value) and this mutex
-     *        was locked with the different token (by identity), this function throws [IllegalStateException].
+     * @param owner Optional owner token for debugging. When `owner` does not match the owner (or its absence)
+     *        that locked this mutex, this function throws [IllegalStateException].
      */
     public fun unlock(owner: Any? = null)
 }
@@ -136,6 +130,12 @@ private val EMPTY_LOCKED = Empty(LOCKED)
 private val EMPTY_UNLOCKED = Empty(UNLOCKED)
 
 private class Empty(
+    /*
+     * State of the lock:
+     * - LOCKED
+     * - UNLOCKED
+     * - owner (of the lock, passed via 'lock(owner)')
+     */
     @JvmField val locked: Any
 ) {
     override fun toString(): String = "Empty[$locked]"
@@ -163,7 +163,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         return state is LockedQueue && state.isEmpty
     }
 
-    public override fun tryLock(owner: Any?): Boolean {
+    override fun tryLock(owner: Any?): Boolean {
         _state.loop { state ->
             when (state) {
                 is Empty -> {
@@ -183,7 +183,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         }
     }
 
-    public override suspend fun lock(owner: Any?) {
+    override suspend fun lock(owner: Any?) {
         // fast-path -- try lock
         if (tryLock(owner)) return
         // slow-path -- suspend
@@ -304,16 +304,23 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         _state.loop { state ->
             when (state) {
                 is Empty -> {
-                    if (owner == null)
+                    if (owner == null) {
                         check(state.locked !== UNLOCKED) { "Mutex is not locked" }
-                    else
-                        check(state.locked === owner) { "Mutex is locked by ${state.locked} but expected $owner" }
+                        expectNoOwner(state.locked)
+                    }
+                    else {
+                        val actualOwner = state.locked
+                        expectOwner(actualOwner, owner)
+                    }
                     if (_state.compareAndSet(state, EMPTY_UNLOCKED)) return
                 }
                 is OpDescriptor -> state.perform(this)
                 is LockedQueue -> {
-                    if (owner != null)
-                        check(state.owner === owner) { "Mutex is locked by ${state.owner} but expected $owner" }
+                    if (owner != null) {
+                        expectOwner(state.owner, owner)
+                    } else {
+                        expectNoOwner(state.owner)
+                    }
                     val waiter = state.removeFirstOrNull()
                     if (waiter == null) {
                         val op = UnlockOp(state)
@@ -330,6 +337,14 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                 else -> error("Illegal state $state")
             }
         }
+    }
+
+    private fun expectNoOwner(l: Any) {
+        check(l == LOCKED) { "Mutex is locked by $l but expected no owner" }
+    }
+
+    private fun expectOwner(actualOwner: Any, owner: Any?) {
+        check(actualOwner === owner) { "Mutex is locked by $actualOwner but expected $owner" }
     }
 
     override fun toString(): String {
