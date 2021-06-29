@@ -60,22 +60,6 @@ class MutexTest : TestBase() {
     }
 
     @Test
-    fun testUnconfinedStackOverflow() {
-        val waiters = 10000
-        val mutex = Mutex(true)
-        var done = 0
-        repeat(waiters) {
-            GlobalScope.launch(Dispatchers.Unconfined) {  // a lot of unconfined waiters
-                mutex.withLock {
-                    done++
-                }
-            }
-        }
-        mutex.unlock() // should not produce StackOverflowError
-        assertEquals(waiters, done)
-    }
-
-    @Test
     fun holdLock() = runTest {
         val mutex = Mutex()
         val firstOwner = Any()
