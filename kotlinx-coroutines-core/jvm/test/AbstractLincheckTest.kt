@@ -15,7 +15,7 @@ abstract class AbstractLincheckTest : VerifierState() {
     open fun StressOptions.customize(isStressTest: Boolean): StressOptions = this
 
     @Test
-    open fun modelCheckingTest() = ModelCheckingOptions()
+    fun modelCheckingTest() = ModelCheckingOptions()
         .iterations(if (isStressTest) 100 else 20)
         .invocationsPerIteration(if (isStressTest) 10_000 else 1_000)
         .commonConfiguration()
