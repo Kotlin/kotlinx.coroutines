@@ -5,11 +5,14 @@
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
+import kotlin.system.exitProcess
+import kotlin.native.*
+import kotlin.native.concurrent.*
 
 internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) {
-    // log exception
-//    println("Exception in \"${Worker.current}\"")
-//    exception.printStackTrace()
-// todo: printing exception does not make it easy to debug (no source location), so let it crash instead
-    throw exception
+    // Use unhandled exception hook if it is set, otherwise print the stacktrace
+    val hook = setUnhandledExceptionHook({ _: Throwable -> }.freeze())
+    if (hook != null) hook(exception) else exception.printStackTrace()
+    // Terminate the process
+    exitProcess(-1)
 }
