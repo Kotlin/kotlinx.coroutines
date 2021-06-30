@@ -23,4 +23,7 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Build with Gradle
-        run: ./gradlew jvmTest
+        run: |
+          export JDK_16="$JAVA_HOME"
+          export JDK_18="$JAVA_HOME"
+          ./gradlew jvmTest
