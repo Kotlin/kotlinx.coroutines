@@ -132,7 +132,7 @@ public interface SharedFlow<out T> : Flow<T> {
 
     /**
      * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
-     * This method should never be implemented or used directly. To collect shared flow into a specific collector, either `collector.emitAll(flow)` or `collect { ... }` extension
+     * This method should never be used directly. To collect shared flow into a specific collector, either `collector.emitAll(flow)` or `collect { ... }` extension
      * should be used.
      *
      * **Shared flow never completes**. A call to [Flow.collect] or any other terminal operator
