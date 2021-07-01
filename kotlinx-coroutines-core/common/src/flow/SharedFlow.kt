@@ -129,6 +129,19 @@ public interface SharedFlow<out T> : Flow<T> {
      * A snapshot of the replay cache.
      */
     public val replayCache: List<T>
+
+    /**
+     * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
+     * This method should never be implemented or used directly. To collect shared flow into a specific collector, either `collector.emitAll(flow)` or `collect { ... }` extension
+     * should be used.
+     *
+     * **Shared flow never completes**. A call to [Flow.collect] or any other terminal operator
+     * on a shared flow never complete normally.
+     *
+     * @see [Flow.collect]
+     */
+    @InternalCoroutinesApi
+    override suspend fun collect(collector: FlowCollector<T>): Nothing
 }
 
 /**
@@ -335,7 +348,7 @@ private class SharedFlowImpl<T>(
         }
 
     @Suppress("UNCHECKED_CAST")
-    override suspend fun collect(collector: FlowCollector<T>) {
+    override suspend fun collect(collector: FlowCollector<T>): Nothing {
         val slot = allocateSlot()
         try {
             if (collector is SubscribedFlowCollector) collector.onSubscription()
