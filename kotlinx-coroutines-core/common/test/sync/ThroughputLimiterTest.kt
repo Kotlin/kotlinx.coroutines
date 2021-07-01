@@ -2,13 +2,13 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines
+package kotlinx.coroutines.sync
 
 import org.junit.Test
 import kotlin.test.*
 import kotlinx.coroutines.*
 
-internal class RateLimiterTest {
+internal class ThroughputLimiterTest {
 
     private val testDelays = listOf(1, 10, 100, 1000, 1200, 1990, 100_000)
 

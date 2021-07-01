@@ -1,9 +1,9 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-package kotlinx.coroutines
+package kotlinx.coroutines.sync
 
-import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.max
 import kotlinx.coroutines.delay
 
 /**
@@ -12,7 +12,14 @@ import kotlinx.coroutines.delay
  * okay to pass the rate limiter.
  */
 public interface RateLimiter {
-    public abstract suspend fun acquire()
+    /**
+     * Acquires a single permit from this RateLimiter, blocking until the request can be granted. Tells the amount of time slept, if any.
+     */
+    public abstract suspend fun acquire(): Long
+    /**
+     * Acquires the given number of permits from this RateLimiter, blocking until the request can be granted.
+     */
+    public abstract suspend fun acquire(permits: Int): Long
 }
 
 public fun rateLimiter(eventsPerSecond: Int):RateLimiter = RateLimiterImpl(eventsPerSecond)
@@ -25,7 +32,8 @@ internal class RateLimiterImpl(private val eventsPerSecond: Int) : RateLimiter {
         }
     }
 
-    private val last = AtomicLong()
+    private val mutex = Mutex()
+    private var next = 0L
     private val delaySequence: Iterator<Long> = createDelaySequence().iterator()
 
     /**
@@ -51,23 +59,29 @@ internal class RateLimiterImpl(private val eventsPerSecond: Int) : RateLimiter {
         }
     }
 
-    /**
-     * Suspend the current coroutine until it's calculated time of exit
-     * from the rate limiter
-     */
-    override suspend fun acquire() {
+    override suspend fun acquire(): Long {
+        val delayMillis: Long = delaySequence.next()
+        return acquireDelay(delayMillis)
+    }
+
+    override suspend fun acquire(permits: Int): Long {
+        val delayMillis: Long = (1..permits).map { delaySequence.next() }.sum()
+        return acquireDelay(delayMillis)
+    }
+
+    private suspend fun acquireDelay(delayMillis: Long): Long {
         val now: Long = System.currentTimeMillis()
-        val delay: Long = delaySequence.next()
-        val until: Long = last.accumulateAndGet(now) { current, nowTime ->
-            val currentPlus = current + delay
-            if (currentPlus <= nowTime) {
-                nowTime
-            } else {
-                currentPlus
+        val until = mutex.withLock {
+            max(next, now).also {
+                next = it + delayMillis
             }
         }
-        if (until != now) {
-            delay(until - now)
+        return if (until != now) {
+            (until - now).also { sleep ->
+                delay(sleep)
+            }
+        } else {
+            0L
         }
     }
 }
